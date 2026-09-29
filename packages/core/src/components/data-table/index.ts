@@ -9,6 +9,7 @@ export { createColumnHelper } from "./field-helpers";
 
 // Types — DataTable-specific
 export type {
+  BadgeCellEditOptions,
   BadgeCellOptions,
   BadgeVariant,
   CellEditState,
@@ -19,6 +20,7 @@ export type {
   HeaderRenderContext,
   DataTableData,
   DataTableFilterConfig,
+  DateCellEditOptions,
   DateCellOptions,
   LinkCellOptions,
   MetadataFieldOptions,

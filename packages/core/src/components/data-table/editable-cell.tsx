@@ -10,10 +10,18 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  type RefObject,
   type TouchEvent,
 } from "react";
+import { Popover } from "@base-ui/react/popover";
+import { parseDate, type CalendarDate } from "@internationalized/date";
+import { CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BadgeList } from "@/components/badge-list";
+import { Button } from "@/components/button";
+import { Calendar } from "@/components/calendar";
 import { Input } from "@/components/input";
+import { SelectParts } from "@/components/select";
 import { Table } from "@/components/table";
 import { Tooltip } from "@/components/tooltip";
 import type { Column } from "./types";
@@ -28,13 +36,20 @@ import {
   evaluateNumberDraft,
   evaluateTextDraft,
   isAllowedNumberText,
+  isIsoDate,
   isLiveError,
   isPromiseLike,
   normalizeNumberText,
+  optionLabel,
+  resolveBadgeOptions,
+  sameDate,
   sameNumber,
+  toCalendarDate,
+  toIsoDateTime,
   toNumberEditText,
   toNumberValue,
   toTextValue,
+  toTimeText,
   type CellEditError,
   type DraftEvaluation,
   type NumberEditRules,
@@ -49,31 +64,62 @@ import { useDataTableT } from "./i18n";
  */
 export type EditableColumn<TRow extends Record<string, unknown>> = Extract<
   Column<TRow>,
-  { type: "text" | "number" | "money" | "link" }
+  { type: "text" | "number" | "money" | "date" | "badge" | "link" }
 >;
 
+type ChoiceColumn<TRow extends Record<string, unknown>> = Extract<
+  EditableColumn<TRow>,
+  { type: "text" | "link" | "badge" }
+>;
+
+type DateColumn<TRow extends Record<string, unknown>> = Extract<
+  EditableColumn<TRow>,
+  { type: "date" }
+>;
+
+// The dropdown choices a column offers, or `undefined` when it's typed into.
+function columnChoices<TRow extends Record<string, unknown>>(col: Column<TRow>) {
+  if (col.type === "badge")
+    return resolveBadgeOptions(col.edit?.options, col.typeOptions, col.filter);
+  if (col.type === "text" || col.type === "link") return col.edit?.options;
+  return undefined;
+}
+
 /**
- * Whether the column carries an `edit` config on a type that supports it.
+ * Whether the column carries an `edit` config it can use: any typed column
+ * except a `badge` one with no choices to offer.
  *
  * @internal
  */
 export function isEditableColumn<TRow extends Record<string, unknown>>(
   col: Column<TRow>,
 ): col is EditableColumn<TRow> {
-  if (col.edit === undefined) return false;
-  return (
-    col.type === "text" || col.type === "number" || col.type === "money" || col.type === "link"
-  );
+  if (col.edit === undefined || col.type === undefined) return false;
+  return col.type !== "badge" || (columnChoices(col)?.length ?? 0) > 0;
 }
 
-// The editor sits over the cell's static content (the sizer) instead of taking
+// Editors sit over the cell's static content (the sizer) instead of taking
 // part in layout, so a cell becoming editable — or being edited — never
 // changes row height or column width. Reaching 6px past the content on every
 // side leaves the 2px focus ring inside the cell's 8px padding.
-const EDITOR_CLASS_NAME = cn(
-  "astw:absolute astw:-top-1.5 astw:-left-1.5 astw:h-[calc(100%+0.75rem)] astw:w-[calc(100%+0.75rem)]",
+const OVERLAY_CLASS_NAME =
+  "astw:absolute astw:-top-1.5 astw:-left-1.5 astw:h-[calc(100%+0.75rem)] astw:w-[calc(100%+0.75rem)]";
+
+const INPUT_CLASS_NAME = cn(
+  OVERLAY_CLASS_NAME,
   "astw:rounded-sm astw:px-[5px] astw:py-0 astw:shadow-none astw:bg-transparent astw:dark:bg-transparent",
   "astw:border-input/60 astw:hover:border-input astw:focus-visible:ring-2",
+);
+
+// Dropdown and calendar triggers: a transparent button over the cell's own
+// display (badges, labels, dates), with the chevron / calendar icon at its end.
+const TRIGGER_CLASS_NAME = cn(
+  OVERLAY_CLASS_NAME,
+  "astw:flex astw:items-center astw:justify-end astw:rounded-sm astw:border astw:border-input/60 astw:px-1.5 astw:py-0",
+  "astw:bg-transparent astw:dark:bg-transparent astw:shadow-none astw:cursor-pointer astw:outline-none",
+  "astw:hover:border-input astw:data-popup-open:border-ring",
+  "astw:focus-visible:border-ring astw:focus-visible:ring-2 astw:focus-visible:ring-ring/50",
+  "astw:aria-invalid:border-destructive astw:aria-invalid:ring-destructive/20",
 );
 
 interface PendingCommit<TRow> {
@@ -85,6 +131,126 @@ interface PendingCommit<TRow> {
 }
 
 type CellValidate<TRow> = ((value: unknown, row: TRow) => string | null | undefined) | undefined;
+
+/**
+ * The value a cell shows and the `save` that hands a new one to
+ * `edit.onCommit`. A save still in flight — or settled but not yet reflected
+ * in `data` — keeps showing its value; fresh data for the row (a new row
+ * object) supersedes it, and a rejected save reverts the cell.
+ */
+function useCellCommit<TRow extends Record<string, unknown>>(row: TRow, col: EditableColumn<TRow>) {
+  const [pending, setPending] = useState<PendingCommit<TRow> | null>(null);
+  const commitIdRef = useRef(0);
+  const inFlight = pending && (!pending.settled || pending.row === row) ? pending : null;
+  const current = inFlight ? inFlight.value : getCellValue(row, col);
+
+  const save = (value: unknown) => {
+    const id = ++commitIdRef.current;
+    const returned = (col.edit?.onCommit as ((row: TRow, value: unknown) => unknown) | undefined)?.(
+      row,
+      value,
+    );
+    if (!isPromiseLike(returned)) {
+      setPending(null);
+      return;
+    }
+    setPending({ id, value, row, settled: false });
+    // Only the latest save for this cell may settle it, so an older request
+    // failing late can't revert a newer value.
+    returned.then(
+      () => setPending((p) => (p?.id === id ? { ...p, settled: true } : p)),
+      () => setPending((p) => (p?.id === id ? null : p)),
+    );
+  };
+
+  let display: ReactNode;
+  if (inFlight) display = renderTypedValue(row, col, inFlight.value, { linkAsText: true });
+  else if (col.render) display = col.render(row);
+  else display = renderTypedValue(row, col, current, { linkAsText: true });
+
+  return { current, display, save };
+}
+
+/**
+ * Registers the cell's focusable element with the table's Enter / Tab
+ * navigation. Unregisters on every detach instead of returning a ref cleanup:
+ * `Input` and `Select.Trigger` merge refs with a plain callback that calls ours
+ * with `null` and drops any cleanup we return.
+ */
+function useNavigationRef<T extends HTMLElement>(
+  navigation: CellEditNavigation,
+  rowKey: string,
+  colKey: string,
+) {
+  const elementRef = useRef<T | null>(null);
+  const unregisterRef = useRef<(() => void) | null>(null);
+  const register = useCallback(
+    (element: T | null) => {
+      unregisterRef.current?.();
+      unregisterRef.current = element ? navigation.register(rowKey, colKey, element) : null;
+      elementRef.current = element;
+    },
+    [navigation, rowKey, colKey],
+  );
+  return { register, elementRef };
+}
+
+function EditableCellFrame({
+  cellProps,
+  display,
+  truncate,
+  hideDisplay,
+  focusTarget,
+  errorId,
+  description,
+  children,
+}: {
+  cellProps: ComponentProps<typeof Table.Cell>;
+  display: ReactNode;
+  truncate?: boolean;
+  /** Typing cells hide the display while the input shows the raw value. */
+  hideDisplay?: "focused" | "forced-colors";
+  focusTarget: RefObject<HTMLElement | null>;
+  errorId: string;
+  description: string | undefined;
+  children: ReactNode;
+}) {
+  return (
+    <Table.Cell
+      {...cellProps}
+      // Editing a cell must never fire `onClickRow`.
+      onClick={(event) => event.stopPropagation()}
+      // A click in the cell's padding, outside the editor, still starts editing.
+      onMouseDown={(event) => {
+        if (event.target !== event.currentTarget || event.button !== 0) return;
+        event.preventDefault();
+        focusTarget.current?.focus();
+      }}
+    >
+      <span data-slot="data-table-cell-editor" className="astw:relative astw:block">
+        <span
+          aria-hidden="true"
+          className={cn(
+            "astw:block",
+            truncate && "astw:truncate",
+            // Transparent input text is forced visible in forced-colors mode;
+            // hide the display instead so the two don't overlap.
+            hideDisplay && "astw:forced-colors:invisible",
+            hideDisplay === "focused" && "astw:invisible",
+          )}
+        >
+          {display}
+        </span>
+        {children}
+        {description !== undefined && (
+          <span id={errorId} className="astw:sr-only">
+            {description}
+          </span>
+        )}
+      </span>
+    </Table.Cell>
+  );
+}
 
 function defaultMaxDecimals<TRow extends Record<string, unknown>>(
   col: EditableColumn<TRow>,
@@ -123,9 +289,12 @@ function numberInputMode(rules: NumberEditRules): "numeric" | "decimal" | "text"
   return rules.maxDecimals === 0 ? "numeric" : "decimal";
 }
 
-interface DataTableEditableCellProps<TRow extends Record<string, unknown>> {
+interface DataTableEditableCellProps<
+  TRow extends Record<string, unknown>,
+  TColumn extends EditableColumn<TRow> = EditableColumn<TRow>,
+> {
   row: TRow;
-  col: EditableColumn<TRow>;
+  col: TColumn;
   rowKey: string;
   colKey: string;
   /** Accessible name for the editor — the column's label. */
@@ -137,14 +306,31 @@ interface DataTableEditableCellProps<TRow extends Record<string, unknown>> {
 }
 
 /**
- * A body cell whose value can be typed over in place (`text`, `number`,
- * `money`, `link`). The value belongs to the consumer: the cell only holds a
- * draft while it is focused, and hands the parsed value to `edit.onCommit`
- * when the user leaves the cell or presses Enter / Tab.
+ * A body cell whose value can be edited in place. The value belongs to the
+ * consumer: the cell only holds a draft while it is being edited, and hands
+ * the new value to `edit.onCommit` when the user leaves the cell, presses
+ * Enter / Tab, or picks a choice.
+ *
+ * - `number`, `money`, and `text` / `link` without choices are typed into.
+ * - `badge`, and `text` / `link` with `edit.options`, open a dropdown.
+ * - `date` opens a calendar.
  *
  * @internal
  */
-export function DataTableEditableCell<TRow extends Record<string, unknown>>({
+export function DataTableEditableCell<TRow extends Record<string, unknown>>(
+  props: DataTableEditableCellProps<TRow>,
+) {
+  const { col } = props;
+  if (col.type === "date") return <DateEditCell {...props} col={col} />;
+  if (col.type === "badge" || ((col.type === "text" || col.type === "link") && col.edit?.options)) {
+    return <ChoiceEditCell {...props} col={col} />;
+  }
+  return <TypingEditCell {...props} col={col} />;
+}
+
+// ── Typing: text, number, money, link ───────────────────────────────────────
+
+function TypingEditCell<TRow extends Record<string, unknown>>({
   row,
   col,
   rowKey,
@@ -158,6 +344,8 @@ export function DataTableEditableCell<TRow extends Record<string, unknown>>({
   const errorId = useId();
   const edit = col.edit;
   const validate = edit?.validate as CellValidate<TRow>;
+  const { current, display, save } = useCellCommit(row, col);
+  const { register, elementRef } = useNavigationRef<HTMLInputElement>(navigation, rowKey, colKey);
 
   const [draft, setDraftState] = useState<string | null>(null);
   // Read by handlers that run before the next render: the blur fired by moving
@@ -171,17 +359,9 @@ export function DataTableEditableCell<TRow extends Record<string, unknown>>({
   // Errors that typing can still fix wait for a save attempt; after one fails,
   // every error shows (and clears) live until the draft is committed or reverted.
   const [showAllErrors, setShowAllErrors] = useState(false);
-  const [pending, setPending] = useState<PendingCommit<TRow> | null>(null);
-  const commitIdRef = useRef(0);
   const pastingRef = useRef(false);
   const composingRef = useRef(false);
   const selectOnMouseUpRef = useRef(false);
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  // A save still in flight — or settled but not yet reflected in `data` — keeps
-  // showing its value. Fresh data for the row (a new row object) supersedes it.
-  const inFlight = pending && (!pending.settled || pending.row === row) ? pending : null;
-  const current = inFlight ? inFlight.value : getCellValue(row, col);
 
   const rules = resolveNumberRules(col, row);
   const baselineText = rules
@@ -231,25 +411,6 @@ export function DataTableEditableCell<TRow extends Record<string, unknown>>({
   };
   const message = visibleError ? describe(visibleError) : undefined;
 
-  const save = (value: unknown) => {
-    const id = ++commitIdRef.current;
-    const returned = (edit?.onCommit as ((row: TRow, value: unknown) => unknown) | undefined)?.(
-      row,
-      value,
-    );
-    if (!isPromiseLike(returned)) {
-      setPending(null);
-      return;
-    }
-    setPending({ id, value, row, settled: false });
-    // Only the latest save for this cell may settle it, so an older request
-    // failing late can't revert a newer value.
-    returned.then(
-      () => setPending((p) => (p?.id === id ? { ...p, settled: true } : p)),
-      () => setPending((p) => (p?.id === id ? null : p)),
-    );
-  };
-
   const revert = () => {
     setDraft(null);
     setShowAllErrors(false);
@@ -273,19 +434,6 @@ export function DataTableEditableCell<TRow extends Record<string, unknown>>({
     save(result.value);
     return true;
   };
-
-  const registerInput = useCallback(
-    (element: HTMLInputElement | null) => {
-      inputRef.current = element;
-      if (!element) return;
-      const unregister = navigation.register(rowKey, colKey, element);
-      return () => {
-        inputRef.current = null;
-        unregister();
-      };
-    },
-    [navigation, rowKey, colKey],
-  );
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const next = event.target.value;
@@ -380,84 +528,330 @@ export function DataTableEditableCell<TRow extends Record<string, unknown>>({
     if (focused) event.stopPropagation();
   };
 
-  let display: ReactNode;
-  if (inFlight) display = renderTypedValue(row, col, inFlight.value, { linkAsText: true });
-  else if (col.render) display = col.render(row);
-  else display = renderTypedValue(row, col, current, { linkAsText: true });
+  return (
+    <EditableCellFrame
+      cellProps={cellProps}
+      display={display}
+      truncate={col.truncate}
+      hideDisplay={focused ? "focused" : "forced-colors"}
+      focusTarget={elementRef}
+      errorId={errorId}
+      description={message === undefined ? undefined : `${message}. ${t("editRevertHint")}`}
+    >
+      <Tooltip.Root open={focused && message !== undefined}>
+        <Tooltip.Trigger
+          render={
+            <Input
+              ref={register}
+              type="text"
+              value={text}
+              aria-label={label}
+              aria-invalid={message !== undefined ? true : undefined}
+              aria-describedby={message !== undefined ? errorId : undefined}
+              inputMode={rules ? numberInputMode(rules) : undefined}
+              enterKeyHint="next"
+              autoComplete="off"
+              spellCheck={rules ? false : undefined}
+              className={cn(
+                INPUT_CLASS_NAME,
+                !focused && "astw:text-transparent",
+                rules && "astw:tabular-nums",
+                align === "right" && "astw:text-right",
+              )}
+              style={focused ? { WebkitTouchCallout: "default" } : undefined}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              onPaste={() => {
+                pastingRef.current = true;
+              }}
+              onCompositionStart={() => {
+                composingRef.current = true;
+              }}
+              onCompositionEnd={handleCompositionEnd}
+              onMouseDown={handleMouseDown}
+              onMouseUp={handleMouseUp}
+              onContextMenu={stopWhileFocused}
+              onTouchStart={stopWhileFocused}
+            />
+          }
+        />
+        <Tooltip.Content>
+          {message}
+          <span className="astw:block astw:opacity-70">{t("editRevertHint")}</span>
+        </Tooltip.Content>
+      </Tooltip.Root>
+    </EditableCellFrame>
+  );
+}
+
+// ── Shared by the dropdown and calendar editors ─────────────────────────────
+
+/**
+ * Validates and commits a picked value, and owns the message shown when the
+ * consumer's `validate` rejects it. Picking the current value is a no-op.
+ */
+function usePickCommit<TRow extends Record<string, unknown>>(
+  row: TRow,
+  col: EditableColumn<TRow>,
+  save: (value: unknown) => void,
+  isSame: (next: string | null) => boolean,
+) {
+  const [message, setMessage] = useState<string | undefined>(undefined);
+  const commit = (next: string | null) => {
+    setMessage(undefined);
+    if (isSame(next)) return;
+    if (next === null && col.edit?.required) return;
+    const problem = (col.edit?.validate as CellValidate<TRow>)?.(next, row);
+    if (problem) {
+      setMessage(problem);
+      return;
+    }
+    save(next);
+  };
+  return { message, clearMessage: () => setMessage(undefined), commit };
+}
+
+// Tab / Shift+Tab from a closed dropdown or calendar moves between editable
+// cells, the same way it does from a typing cell.
+function tabBetweenCells(
+  event: KeyboardEvent<HTMLElement>,
+  open: boolean,
+  navigation: CellEditNavigation,
+  from: { rowKey: string; colKey: string },
+) {
+  if (event.key !== "Tab" || open) return;
+  if (navigation.move(from, event.shiftKey ? "prev" : "next")) event.preventDefault();
+}
+
+// ── Dropdown: badge, and text / link with choices ────────────────────────────
+
+function ChoiceEditCell<TRow extends Record<string, unknown>>({
+  row,
+  col,
+  rowKey,
+  colKey,
+  label,
+  navigation,
+  cellProps,
+}: DataTableEditableCellProps<TRow, ChoiceColumn<TRow>>) {
+  const t = useDataTableT();
+  const errorId = useId();
+  const { current, display, save } = useCellCommit(row, col);
+  const { register, elementRef } = useNavigationRef<HTMLButtonElement>(navigation, rowKey, colKey);
+  const value = toTextValue(current);
+  const { message, clearMessage, commit } = usePickCommit(row, col, save, (next) => next === value);
+  const [open, setOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const choices = columnChoices(col) ?? [];
 
   return (
-    <Table.Cell
-      {...cellProps}
-      // Editing a cell must never fire `onClickRow`.
-      onClick={(event) => event.stopPropagation()}
-      // A click in the cell's padding, outside the editor, still starts editing.
-      onMouseDown={(event) => {
-        if (event.target !== event.currentTarget || event.button !== 0) return;
-        event.preventDefault();
-        inputRef.current?.focus();
-      }}
+    <EditableCellFrame
+      cellProps={cellProps}
+      display={display}
+      truncate={col.truncate}
+      focusTarget={elementRef}
+      errorId={errorId}
+      description={message}
     >
-      <span data-slot="data-table-cell-editor" className="astw:relative astw:block">
-        <span
-          aria-hidden="true"
-          className={cn(
-            "astw:block astw:forced-colors:invisible",
-            col.truncate && "astw:truncate",
-            focused && "astw:invisible",
-          )}
-        >
-          {display}
-        </span>
-        <Tooltip.Root open={focused && message !== undefined}>
+      <SelectParts.Root<string | null>
+        value={value}
+        onValueChange={(next) => commit(next)}
+        open={open}
+        onOpenChange={setOpen}
+        itemToStringLabel={(item) => String(optionLabel(choices, item) ?? t("editNone"))}
+      >
+        <Tooltip.Root open={focused && !open && message !== undefined}>
           <Tooltip.Trigger
             render={
-              <Input
-                ref={registerInput}
-                type="text"
-                value={text}
+              <SelectParts.Trigger
+                ref={register}
                 aria-label={label}
                 aria-invalid={message !== undefined ? true : undefined}
                 aria-describedby={message !== undefined ? errorId : undefined}
-                inputMode={rules ? numberInputMode(rules) : undefined}
-                enterKeyHint="next"
-                autoComplete="off"
-                spellCheck={rules ? false : undefined}
-                className={cn(
-                  EDITOR_CLASS_NAME,
-                  !focused && "astw:text-transparent",
-                  rules && "astw:tabular-nums",
-                  align === "right" && "astw:text-right",
-                )}
-                style={focused ? { WebkitTouchCallout: "default" } : undefined}
-                onChange={handleChange}
-                onKeyDown={handleKeyDown}
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-                onPaste={() => {
-                  pastingRef.current = true;
+                className={TRIGGER_CLASS_NAME}
+                onKeyDown={(event) => tabBetweenCells(event, open, navigation, { rowKey, colKey })}
+                onFocus={() => setFocused(true)}
+                onBlur={() => {
+                  setFocused(false);
+                  clearMessage();
                 }}
-                onCompositionStart={() => {
-                  composingRef.current = true;
-                }}
-                onCompositionEnd={handleCompositionEnd}
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
-                onContextMenu={stopWhileFocused}
-                onTouchStart={stopWhileFocused}
-              />
+              >
+                <span className="astw:sr-only">
+                  <SelectParts.Value />
+                </span>
+              </SelectParts.Trigger>
             }
           />
-          <Tooltip.Content>
-            {message}
-            <span className="astw:block astw:opacity-70">{t("editRevertHint")}</span>
-          </Tooltip.Content>
+          <Tooltip.Content>{message}</Tooltip.Content>
         </Tooltip.Root>
-        {message !== undefined && (
-          <span id={errorId} className="astw:sr-only">
-            {`${message}. ${t("editRevertHint")}`}
-          </span>
-        )}
-      </span>
-    </Table.Cell>
+        {/* At least as wide as the cell, and wide enough that choices don't wrap. */}
+        <SelectParts.Content
+          alignItemWithTrigger={false}
+          className="astw:w-max astw:min-w-(--anchor-width) astw:max-w-80"
+        >
+          {!col.edit?.required && (
+            <SelectParts.Item value={null}>
+              <span className="astw:text-muted-foreground">{t("editNone")}</span>
+            </SelectParts.Item>
+          )}
+          {choices.map((choice) => (
+            <SelectParts.Item key={choice.value} value={choice.value}>
+              {col.type === "badge" ? (
+                <BadgeList
+                  value={choice.value}
+                  options={col.typeOptions}
+                  resolveLabel={() => choice.label}
+                />
+              ) : (
+                choice.label
+              )}
+            </SelectParts.Item>
+          ))}
+        </SelectParts.Content>
+      </SelectParts.Root>
+    </EditableCellFrame>
+  );
+}
+
+// ── Calendar: date ───────────────────────────────────────────────────────────
+
+const POPUP_CLASS_NAME = cn(
+  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:flex-col astw:gap-3 astw:rounded-md astw:border astw:border-border astw:p-3 astw:shadow-md",
+  "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
+);
+
+function DateEditCell<TRow extends Record<string, unknown>>({
+  row,
+  col,
+  rowKey,
+  colKey,
+  label,
+  navigation,
+  cellProps,
+}: DataTableEditableCellProps<TRow, DateColumn<TRow>>) {
+  const t = useDataTableT();
+  const errorId = useId();
+  const withTime = col.typeOptions?.dateFormat === "datetime";
+  const { current, display, save } = useCellCommit(row, col);
+  const { register, elementRef } = useNavigationRef<HTMLButtonElement>(navigation, rowKey, colKey);
+  const { message, clearMessage, commit } = usePickCommit(row, col, save, (next) =>
+    sameDate(next, current, withTime),
+  );
+  const [open, setOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
+  // A date-time is picked in two steps (day, then time), so it's committed when
+  // the calendar closes; a date commits as soon as a day is picked.
+  const [draftDay, setDraftDay] = useState<CalendarDate | null>(null);
+  const [draftTime, setDraftTime] = useState("");
+  const min = isIsoDate(col.edit?.min) ? parseDate(col.edit.min) : undefined;
+  const max = isIsoDate(col.edit?.max) ? parseDate(col.edit.max) : undefined;
+
+  const handleOpenChange = (next: boolean, details?: { reason?: string }) => {
+    if (next) {
+      setDraftDay(toCalendarDate(current));
+      setDraftTime(toTimeText(current));
+    } else if (withTime && draftDay && details?.reason !== "escape-key") {
+      commit(toIsoDateTime(draftDay, draftTime));
+    }
+    setOpen(next);
+  };
+
+  const handlePick = (day: CalendarDate) => {
+    if (withTime) {
+      setDraftDay(day);
+      return;
+    }
+    commit(day.toString());
+    setOpen(false);
+  };
+
+  return (
+    <EditableCellFrame
+      cellProps={cellProps}
+      display={display}
+      truncate={col.truncate}
+      focusTarget={elementRef}
+      errorId={errorId}
+      description={message}
+    >
+      <Popover.Root open={open} onOpenChange={handleOpenChange}>
+        <Tooltip.Root open={focused && !open && message !== undefined}>
+          <Tooltip.Trigger
+            render={
+              <Popover.Trigger
+                ref={register}
+                aria-label={label}
+                aria-invalid={message !== undefined ? true : undefined}
+                aria-describedby={message !== undefined ? errorId : undefined}
+                className={TRIGGER_CLASS_NAME}
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowDown" && !open) {
+                    event.preventDefault();
+                    handleOpenChange(true);
+                    return;
+                  }
+                  tabBetweenCells(event, open, navigation, { rowKey, colKey });
+                }}
+                onFocus={() => setFocused(true)}
+                onBlur={() => {
+                  setFocused(false);
+                  clearMessage();
+                }}
+              >
+                <CalendarDays className="astw:size-3.5 astw:opacity-50" aria-hidden="true" />
+              </Popover.Trigger>
+            }
+          />
+          <Tooltip.Content>{message}</Tooltip.Content>
+        </Tooltip.Root>
+        <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+          <Popover.Positioner sideOffset={4} side="bottom" align="start">
+            <Popover.Popup data-slot="data-table-cell-calendar" className={POPUP_CLASS_NAME}>
+              <Calendar
+                aria-label={label}
+                value={withTime ? draftDay : toCalendarDate(current)}
+                onChange={handlePick}
+                minValue={min}
+                maxValue={max}
+              />
+              {withTime && (
+                <Input
+                  type="time"
+                  aria-label={`${label} (${t("chooseTime")})`}
+                  value={draftTime}
+                  onChange={(event) => setDraftTime(event.target.value)}
+                  className="astw:h-8 astw:text-sm"
+                />
+              )}
+              {(withTime || !col.edit?.required) && (
+                <div className="astw:flex astw:justify-between astw:gap-2">
+                  {!col.edit?.required ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        commit(null);
+                        setOpen(false);
+                      }}
+                    >
+                      {t("editClear")}
+                    </Button>
+                  ) : (
+                    <span />
+                  )}
+                  {withTime && (
+                    <Button size="sm" onClick={() => handleOpenChange(false)}>
+                      {t("editDone")}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </Popover.Popup>
+          </Popover.Positioner>
+        </Popover.Portal>
+      </Popover.Root>
+    </EditableCellFrame>
   );
 }

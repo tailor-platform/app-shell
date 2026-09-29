@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { BadgeList, toValueArray } from "@/components/badge-list";
-import { currencyFractionDigits } from "./cell-edit";
+import type { SelectOption } from "@/types/collection";
+import { currencyFractionDigits, isIsoDate, optionLabel } from "./cell-edit";
 import type {
   BadgeCellOptions,
   Column,
@@ -55,6 +56,12 @@ function isEmpty(value: unknown): boolean {
 function toDate(value: unknown): Date | null {
   if (value == null) return null;
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  // A date-only "YYYY-MM-DD" is that day in the local zone. `new Date()` would
+  // read it as UTC midnight — the previous day anywhere west of UTC.
+  if (isIsoDate(value)) {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
   if (typeof value === "string" || typeof value === "number") {
     const d = new Date(value);
     return Number.isNaN(d.getTime()) ? null : d;
@@ -188,11 +195,23 @@ function renderDate(value: unknown, options: DateCellOptions | undefined): React
   return new Intl.DateTimeFormat(options?.locale, formatOptions).format(date);
 }
 
-function renderBadge(value: unknown, options: BadgeCellOptions | undefined): ReactNode {
+function renderBadge(
+  value: unknown,
+  options: BadgeCellOptions | undefined,
+  choices: readonly SelectOption[] | undefined,
+): ReactNode {
   const items = toValueArray(value);
   const nonEmpty = items.filter((v) => v != null && v !== "");
   if (nonEmpty.length === 0) return PLACEHOLDER;
-  return <BadgeList value={value} options={options} maxVisible={options?.maxVisible} />;
+  return (
+    <BadgeList
+      value={value}
+      options={options}
+      maxVisible={options?.maxVisible}
+      // An editable column's choices label its badges, like its dropdown does.
+      resolveLabel={choices ? (v) => String(optionLabel(choices, v)) : undefined}
+    />
+  );
 }
 
 function renderLink<TRow extends Record<string, unknown>>(
@@ -246,10 +265,14 @@ export function renderTypedValue<TRow extends Record<string, unknown>>(
     case "date":
       return renderDate(value, col.typeOptions);
     case "badge":
-      return renderBadge(value, col.typeOptions);
-    case "link":
-      return options?.linkAsText ? renderText(value) : renderLink(value, row, col.typeOptions);
+      return renderBadge(value, col.typeOptions, col.edit?.options);
+    case "link": {
+      // A column with dropdown choices stores an option's value and shows its label.
+      const label = optionLabel(col.edit?.options, value);
+      return options?.linkAsText ? renderText(label) : renderLink(label, row, col.typeOptions);
+    }
     case "text":
+      return renderText(optionLabel(col.edit?.options, value));
     default:
       return renderText(value);
   }

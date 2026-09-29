@@ -376,7 +376,19 @@ The trigger is a native `<button>`, so Enter/Space activation and the focus ring
 
 ## Inline editing
 
-Give a `text`, `number`, `money` or `link` column an `edit` config and users can type straight into its cells — no form, no popover. The table never stores the edits: when the user leaves a cell (or presses Enter / Tab) with a changed value that passes every rule, `edit.onCommit(row, value)` runs, and you update `data` from there. Filtering, sorting, pagination, selection, row actions and pinned columns keep working, and columns without `edit` are unaffected.
+Give a typed column an `edit` config and users can change its values right in the list — no form, no dialog. The table never stores the edits: when the user leaves a cell (or presses Enter / Tab, or picks a choice) with a changed value that passes every rule, `edit.onCommit(row, value)` runs, and you update `data` from there. Filtering, sorting, pagination, selection, row actions and pinned columns keep working, and columns without `edit` are unaffected.
+
+| Column                              | Editor                                                        | `onCommit` receives                                       |
+| ----------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------- |
+| `text`                              | Typed into                                                    | `string \| null`                                          |
+| `number`                            | Typed into, with `min` / `max` / `maxDecimals`                | `number \| null`                                          |
+| `money`                             | Same as `number`; decimals follow the currency (USD 2, JPY 0) | `number \| null`                                          |
+| `text` / `link` with `edit.options` | Dropdown of the choices; the cell shows the choice's label    | the choice's `value`, or `null`                           |
+| `badge`                             | Dropdown whose choices are the same badges                    | the choice's `value`, or `null`                           |
+| `date`                              | Calendar (plus a time field for `dateFormat: "datetime"`)     | `"YYYY-MM-DD"`, an ISO timestamp for date-time, or `null` |
+| `link` without `options`            | Typed into; shows its label as plain text while editable      | `string \| null`                                          |
+
+Untyped columns (drawn with `render` alone) can't be edited.
 
 ```tsx
 const { column } = createColumnHelper<ReceiptLine>();
@@ -411,14 +423,16 @@ Editable cells read like the rest of the table — formatted money, placeholder 
 
 ### `edit` options
 
-| Option        | Column types      | Description                                                                                                                                                                                                                                                                                              |
-| ------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `onCommit`    | all               | `(row, value) => void \| Promise<unknown>`. Required. Runs once per changed, valid value. `value` is `string \| null` for `text` / `link` and `number \| null` for `number` / `money`; an emptied cell commits `null`.                                                                                   |
-| `canEdit`     | all               | `(row, { selected }) => boolean`. Decides per row whether the cell can be edited — `(_, { selected }) => selected` for "editable once ticked". Default: every row with an `id`.                                                                                                                          |
-| `required`    | all               | Rejects an emptied cell with "Required", so `validate` and `onCommit` never receive `null` at runtime.                                                                                                                                                                                                   |
-| `validate`    | all               | `(value, row) => string \| null \| undefined`. Your own rule, checked after the built-in ones. Return a message to block the save.                                                                                                                                                                       |
-| `min` / `max` | `number`, `money` | Inclusive bounds. With `min >= 0` a minus sign can't be typed.                                                                                                                                                                                                                                           |
-| `maxDecimals` | `number`, `money` | Digits allowed after the decimal point; `0` means whole numbers. Defaults to what the cell displays: `typeOptions.maxDecimals` (else `0`) for `number`, the currency's decimals for `money` (USD 2, JPY 0). The cell also _displays_ up to this many decimals, so a typed `2.5` never reads back as `3`. |
+| Option                | Column types            | Description                                                                                                                                                                                                                                                                                                                                                                                                             |
+| --------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `onCommit`            | all                     | `(row, value) => void \| Promise<unknown>`. Required. Runs once per changed, valid value — see the table above for what `value` is per column type. An emptied or cleared cell commits `null`.                                                                                                                                                                                                                          |
+| `canEdit`             | all                     | `(row, { selected }) => boolean`. Decides per row whether the cell can be edited — `(_, { selected }) => selected` for "editable once ticked". Default: every row with an `id`.                                                                                                                                                                                                                                         |
+| `required`            | all                     | Rejects an emptied cell with "Required", so `validate` and `onCommit` never receive `null` at runtime.                                                                                                                                                                                                                                                                                                                  |
+| `validate`            | all                     | `(value, row) => string \| null \| undefined`. Your own rule, checked after the built-in ones. Return a message to block the save.                                                                                                                                                                                                                                                                                      |
+| `min` / `max`         | `number`, `money`       | Inclusive bounds. With `min >= 0` a minus sign can't be typed.                                                                                                                                                                                                                                                                                                                                                          |
+| `maxDecimals`         | `number`, `money`       | Digits allowed after the decimal point; `0` means whole numbers. Defaults to what the cell displays: `typeOptions.maxDecimals` (else `0`) for `number`, the currency's decimals for `money` (USD 2, JPY 0). The cell also _displays_ up to this many decimals, so a typed `2.5` never reads back as `3`.                                                                                                                |
+| `options`             | `text`, `link`, `badge` | `{ value, label }[]` — the dropdown's choices. On `text` / `link` it turns the cell into a dropdown: the column's value is a choice's `value`, and every cell in the column shows its `label`. On `badge` it defaults to the entries of `typeOptions.badgeLabelMap`, else the column's enum `filter` options; a badge column with neither can't be edited. Unless `required`, the dropdown starts with a "None" choice. |
+| `min` / `max` (dates) | `date`                  | Earliest / latest day that can be picked, as `"YYYY-MM-DD"`.                                                                                                                                                                                                                                                                                                                                                            |
 
 ### Rules and errors
 
@@ -434,9 +448,10 @@ Editable cells read like the rest of the table — formatted money, placeholder 
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | Enter / Shift+Enter | Save, then move to the same column in the next / previous editable row.                                                        |
 | Tab / Shift+Tab     | Save, then move to the next / previous editable cell, skipping read-only ones. At either end, focus leaves the table as usual. |
-| Esc                 | Undo the change in the focused cell.                                                                                           |
+| Esc                 | Undo the change in the focused cell, or close an open dropdown / calendar without picking.                                     |
+| Enter / Space / ↓   | On a dropdown or date cell, open it. Arrow keys move through the choices or days; Enter picks.                                 |
 
-Focusing a cell selects its value, so typing replaces it. While an IME is composing, Enter confirms the conversion rather than the cell.
+Focusing a typing cell selects its value, so typing replaces it. While an IME is composing, Enter confirms the conversion rather than the cell. A pick in a dropdown or calendar commits straight away and returns focus to the cell; a date-time commits when its calendar closes (Done, or clicking away).
 
 ### Saving
 
@@ -463,7 +478,8 @@ While a returned promise is pending, the cell keeps showing the new value, with 
 - A `link` column shows its label as plain text while the cell can be edited; rows where `canEdit` returns `false` keep the link.
 - Editing doesn't re-run sorting or filtering — rows stay where they are until your query refetches.
 - Only `.` is accepted as the decimal separator for now.
-- `date` and `badge` columns, a bring-your-own editor for custom `render` columns, multi-cell paste, fill-down and undo aren't supported yet.
+- A date-only `"YYYY-MM-DD"` value is shown as that day in every time zone (it used to render a day early west of UTC).
+- Multi-value badge columns, a bring-your-own editor for custom `render` columns, multi-cell paste, fill-down and undo aren't supported yet.
 
 ## `useDataTable`
 
@@ -530,8 +546,8 @@ A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated 
 | `"text"`    | _(not allowed)_                                              | `TextCellEditOptions<TRow>`                |
 | `"number"`  | `NumberCellOptions`                                          | `NumberCellEditOptions<TRow>`              |
 | `"money"`   | `MoneyCellOptions<TRow>`                                     | `NumberCellEditOptions<TRow>`              |
-| `"date"`    | `DateCellOptions`                                            | _(not allowed)_                            |
-| `"badge"`   | `BadgeCellOptions`                                           | _(not allowed)_                            |
+| `"date"`    | `DateCellOptions`                                            | `DateCellEditOptions<TRow>`                |
+| `"badge"`   | `BadgeCellOptions`                                           | `BadgeCellEditOptions<TRow>`               |
 | `"link"`    | **Required** — `LinkCellOptions<TRow>` (must include `href`) | `TextCellEditOptions<TRow>`                |
 
 ## Cell types

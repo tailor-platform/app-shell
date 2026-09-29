@@ -127,6 +127,9 @@ export const dataTableLabels = defineI18nLabels({
     editMin: (props: { min: string }) => `Must be ${props.min} or more`,
     editMax: (props: { max: string }) => `Must be ${props.max} or less`,
     editRevertHint: "Press Esc to undo",
+    editNone: "None",
+    editClear: "Clear",
+    editDone: "Done",
   },
   ja: {
     loading: "読み込み中...",
@@ -242,6 +245,9 @@ export const dataTableLabels = defineI18nLabels({
     editMin: (props: { min: string }) => `${props.min}以上で入力してください`,
     editMax: (props: { max: string }) => `${props.max}以下で入力してください`,
     editRevertHint: "Escキーで元に戻せます",
+    editNone: "なし",
+    editClear: "クリア",
+    editDone: "完了",
   },
 });
 

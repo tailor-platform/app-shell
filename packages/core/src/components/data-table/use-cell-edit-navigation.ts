@@ -29,6 +29,12 @@ export function createCellEditNavigation(): CellEditNavigation {
   let rowKeys: readonly string[] = [];
   let colKeys: readonly string[] = [];
 
+  // A cell that unmounted without unregistering is skipped, not focused.
+  const at = (rowKey: string, colKey: string) => {
+    const cell = cells.get(cellId(rowKey, colKey));
+    return cell?.isConnected ? cell : undefined;
+  };
+
   const find = (from: { rowKey: string; colKey: string }, direction: CellEditDirection) => {
     const row = rowKeys.indexOf(from.rowKey);
     const col = colKeys.indexOf(from.colKey);
@@ -37,7 +43,7 @@ export function createCellEditNavigation(): CellEditNavigation {
     if (direction === "up" || direction === "down") {
       const step = direction === "down" ? 1 : -1;
       for (let r = row + step; r >= 0 && r < rowKeys.length; r += step) {
-        const cell = cells.get(cellId(rowKeys[r], from.colKey));
+        const cell = at(rowKeys[r], from.colKey);
         if (cell) return cell;
       }
       return undefined;
@@ -47,8 +53,7 @@ export function createCellEditNavigation(): CellEditNavigation {
     const step = direction === "next" ? 1 : -1;
     const total = rowKeys.length * colKeys.length;
     for (let i = row * colKeys.length + col + step; i >= 0 && i < total; i += step) {
-      const r = Math.floor(i / colKeys.length);
-      const cell = cells.get(cellId(rowKeys[r], colKeys[i % colKeys.length]));
+      const cell = at(rowKeys[Math.floor(i / colKeys.length)], colKeys[i % colKeys.length]);
       if (cell) return cell;
     }
     return undefined;

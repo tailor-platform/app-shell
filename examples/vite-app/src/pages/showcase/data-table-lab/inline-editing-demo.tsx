@@ -4,83 +4,106 @@ import { useState } from "react";
 // ─── Dummy data ──────────────────────────────────────────────────────────────
 // 🧪 Dummy Data: Replace with a real goods-receipt query later.
 
+type LineStatus = "pending" | "partial" | "received" | "damaged";
+
 type ReceiptLine = {
   id: string;
   sku: string;
   product: string;
-  supplier: string;
+  supplierId: string;
   ordered: number;
   received: number | null;
   unitPrice: number;
   currency: "USD" | "JPY";
+  expected: string | null;
+  status: LineStatus;
   note: string | null;
 };
+
+const SUPPLIERS = [
+  { value: "globex", label: "Globex Apparel" },
+  { value: "kanto", label: "Kanto Textile" },
+  { value: "initech", label: "Initech Goods" },
+  { value: "umbrella", label: "Umbrella Supply" },
+];
 
 const RECEIPT_LINES: ReceiptLine[] = [
   {
     id: "GR-1",
     sku: "TS-NAVY-S",
     product: "Tee · Navy · S",
-    supplier: "Globex Apparel",
+    supplierId: "globex",
     ordered: 24,
     received: 24,
     unitPrice: 8.5,
     currency: "USD",
+    expected: "2026-10-02",
+    status: "received",
     note: null,
   },
   {
     id: "GR-2",
     sku: "TS-NAVY-M",
     product: "Tee · Navy · M",
-    supplier: "Globex Apparel",
+    supplierId: "globex",
     ordered: 36,
     received: null,
     unitPrice: 8.5,
     currency: "USD",
+    expected: "2026-10-05",
+    status: "pending",
     note: null,
   },
   {
     id: "GR-3",
     sku: "TS-NAVY-L",
     product: "Tee · Navy · L",
-    supplier: "Globex Apparel",
+    supplierId: "globex",
     ordered: 36,
     received: 30,
     unitPrice: 8.5,
     currency: "USD",
+    expected: "2026-10-02",
+    status: "partial",
     note: "6 short — backorder",
   },
   {
     id: "GR-4",
     sku: "HD-GREY-M",
     product: "Hoodie · Grey · M",
-    supplier: "Kanto Textile",
+    supplierId: "kanto",
     ordered: 12,
     received: null,
     unitPrice: 4200,
     currency: "JPY",
+    expected: "2026-10-09",
+    status: "pending",
     note: null,
   },
   {
     id: "GR-5",
     sku: "HD-GREY-L",
     product: "Hoodie · Grey · L",
-    supplier: "Kanto Textile",
+    supplierId: "kanto",
     ordered: 12,
     received: 12,
     unitPrice: 4200,
     currency: "JPY",
-    note: null,
+    expected: "2026-10-01",
+    status: "damaged",
+    note: "2 with torn seams",
   },
   {
     id: "GR-6",
     sku: "CP-BLK-OS",
     product: "Cap · Black · One size",
-    supplier: "Initech Goods",
+    supplierId: "initech",
     ordered: 50,
     received: null,
     unitPrice: 5.25,
     currency: "USD",
+    expected: null,
+    status: "pending",
     note: null,
   },
 ];
@@ -99,8 +122,9 @@ function saveUnitPrice(value: number): Promise<void> {
 const { column } = createColumnHelper<ReceiptLine>();
 
 /**
- * Goods receipt with inline editing: tick a row to enter its received
- * quantity; unit price autosaves to a (fake) server; notes save on leave.
+ * Goods receipt with every inline editor: a dropdown (Supplier), a badge
+ * dropdown (Status), a date (Expected), numbers (Received, Unit price) and text
+ * (Note).
  */
 export function InlineEditingDemo() {
   const toast = useToast();
@@ -113,27 +137,29 @@ export function InlineEditingDemo() {
   };
 
   const columns = [
-    column({ id: "sku", label: "SKU", type: "text", width: 120 }),
+    column({ id: "sku", label: "SKU", type: "text", width: 120, pin: "left" }),
     column({ id: "product", label: "Product", type: "text" }),
     column({
-      id: "supplier",
+      id: "supplierId",
       label: "Supplier",
       type: "link",
+      width: 170,
       typeOptions: { href: () => "/showcase/data-table-lab" },
-      // Suppliers can only be corrected on lines nothing has been received for.
+      // A dropdown while the line is still pending; afterwards a read-only link.
       edit: {
-        canEdit: (row) => row.received === null,
+        options: SUPPLIERS,
         required: true,
+        canEdit: (row) => row.status === "pending",
         onCommit: (row, value) =>
-          update(row.id, { supplier: value ?? row.supplier }, `Supplier → ${value}`),
+          update(row.id, { supplierId: value ?? row.supplierId }, `Supplier → ${value}`),
       },
     }),
-    column({ id: "ordered", label: "Ordered", type: "number", width: 96 }),
+    column({ id: "ordered", label: "Ordered", type: "number", width: 88 }),
     column({
       id: "received",
       label: "Received",
       type: "number",
-      width: 112,
+      width: 104,
       edit: {
         canEdit: (_row, { selected }) => selected,
         min: 0,
@@ -150,7 +176,7 @@ export function InlineEditingDemo() {
       id: "unitPrice",
       label: "Unit price",
       type: "money",
-      width: 128,
+      width: 120,
       typeOptions: { currency: (row) => row.currency },
       edit: {
         min: 0,
@@ -174,16 +200,53 @@ export function InlineEditingDemo() {
       id: "total",
       label: "Total",
       type: "money",
-      width: 128,
+      width: 120,
       accessor: (row) => (row.received ?? 0) * row.unitPrice,
       typeOptions: { currency: (row) => row.currency },
+    }),
+    column({
+      id: "expected",
+      label: "Expected",
+      type: "date",
+      width: 140,
+      edit: {
+        min: "2026-09-01",
+        onCommit: (row, value) =>
+          update(row.id, { expected: value }, `Expected → ${value ?? "cleared"}`),
+      },
+    }),
+    column({
+      id: "status",
+      label: "Status",
+      type: "badge",
+      width: 130,
+      typeOptions: {
+        badgeLabelMap: {
+          pending: "Pending",
+          partial: "Partial",
+          received: "Received",
+          damaged: "Damaged",
+        },
+        badgeVariantMap: {
+          pending: "outline-neutral",
+          partial: "outline-warning",
+          received: "outline-success",
+          damaged: "outline-error",
+        },
+      },
+      // Choices come from `badgeLabelMap`, rendered as the same badges.
+      edit: {
+        required: true,
+        onCommit: (row, value) =>
+          update(row.id, { status: (value ?? row.status) as LineStatus }, `Status → ${value}`),
+      },
     }),
     column({
       id: "note",
       label: "Note",
       type: "text",
       truncate: true,
-      width: 200,
+      width: 180,
       edit: {
         onCommit: (row, value) => update(row.id, { note: value }, `Note → ${value ?? "empty"}`),
       },
@@ -193,7 +256,7 @@ export function InlineEditingDemo() {
   const table = useDataTable<ReceiptLine>({
     columns,
     data: { rows: lines, total: lines.length },
-    tableId: "lab-inline-editing",
+    tableId: "lab-inline-editing-v2",
     onSelectionChange: () => {},
   });
 

@@ -1,6 +1,6 @@
 # Decision: inline cell editing in DataTable
 
-> Status: **Open — for team input.** PR 1's scope (text, number, money and link) is implemented in the same PR, so the proposal can be tried in the vite example (`/showcase/data-table-lab`) while the questions below are settled.
+> Status: **Open — for team input.** Every column type is implemented in this PR (text, number, money, link, dropdowns via `edit.options`, badge dropdowns and dates), so the proposal can be tried in the vite example (`/showcase/data-table-lab`) while the questions below are settled.
 >
 > Context: [platform-planning#1750](https://github.com/tailor-inc/platform-planning/issues/1750) (the UI Catalogue inline-edit pattern, left with @itsprade), the Larson IMS request in Slack (`#prj-larson-ims`), and [platform-planning#1428](https://github.com/tailor-inc/platform-planning/issues/1428). Related: [platform-planning#1115](https://github.com/tailor-inc/platform-planning/issues/1115) (optimistic rows) and [platform-planning#1161](https://github.com/tailor-inc/platform-planning/issues/1161) (LineItems).
 >
@@ -146,7 +146,7 @@ column({
   - pattern updates: rewrite `list-dense-scan`, and move the #1750 inline-edit pattern into `docs-src/patterns/`
   - a vite example
   - a `minor` changeset
-- **PR 2:** date and badge editing, with the matching docs and example additions.
+- **PR 2 (folded in):** date and badge editing, plus dropdowns for `text` / `link` columns via `edit.options`, with the matching docs and example additions — built in the same PR so every column type can be reviewed together.
 
 ## For the call
 

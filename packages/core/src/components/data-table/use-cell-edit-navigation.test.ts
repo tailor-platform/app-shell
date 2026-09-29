@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { createCellEditNavigation } from "./use-cell-edit-navigation";
 
-function cell() {
-  return { focus: vi.fn() } as unknown as HTMLElement & { focus: ReturnType<typeof vi.fn> };
+function cell(isConnected = true) {
+  return { focus: vi.fn(), isConnected } as unknown as HTMLElement & {
+    focus: ReturnType<typeof vi.fn>;
+  };
 }
 
 // A 3×3 grid where only some cells are editable:
@@ -57,6 +59,15 @@ describe("createCellEditNavigation", () => {
     const unregister = navigation.register("r2", "a", cell());
     unregister();
     navigation.move({ rowKey: "r1", colKey: "a" }, "down");
+    expect(cells.r3a.focus).toHaveBeenCalled();
+  });
+
+  it("skips a cell that left the page without unregistering", () => {
+    const { navigation, cells } = setup();
+    const detached = cell(false);
+    navigation.register("r2", "a", detached);
+    navigation.move({ rowKey: "r1", colKey: "a" }, "down");
+    expect(detached.focus).not.toHaveBeenCalled();
     expect(cells.r3a.focus).toHaveBeenCalled();
   });
 

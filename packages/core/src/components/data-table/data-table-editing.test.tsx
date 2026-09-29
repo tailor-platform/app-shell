@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { StrictMode, useState } from "react";
@@ -17,6 +17,8 @@ afterEach(() => {
 type Line = {
   id: string;
   sku: string;
+  status?: string;
+  expected?: string | null;
   ordered: number;
   received: number | null;
   price: number;
@@ -552,6 +554,293 @@ describe("DataTable inline editing", () => {
     });
   });
 
+  describe("dropdowns", () => {
+    const SUPPLIERS = [
+      { value: "acme", label: "Acme Corp" },
+      { value: "globex", label: "Globex" },
+    ];
+
+    function supplierColumn(
+      onCommit: (id: string, value: string | null) => void,
+      update: Update,
+      edit: { required?: boolean; validate?: (value: string | null) => string | undefined } = {},
+    ): Column<Line> {
+      return column({
+        id: "supplier",
+        label: "Supplier",
+        type: "text",
+        edit: {
+          options: SUPPLIERS,
+          ...edit,
+          onCommit: (row, value) => {
+            onCommit(row.id, value);
+            update(row.id, { supplier: value ?? "" });
+          },
+        },
+      });
+    }
+
+    const rowsWith = (supplier: string) => LINES.map((line) => ({ ...line, supplier }));
+
+    it("shows choice labels and commits the picked value", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onCommit, update)]}
+        />,
+      );
+      const [trigger] = screen.getAllByRole("combobox", { name: "Supplier" });
+      expect(trigger.closest("td")?.textContent).toContain("Acme Corp");
+      await user.click(trigger);
+      await user.click(await screen.findByRole("option", { name: "Globex" }));
+      expect(onCommit).toHaveBeenCalledWith("1", "globex");
+      expect(trigger.closest("td")?.textContent).toContain("Globex");
+    });
+
+    it("offers None unless the column is required", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onCommit, update)]}
+        />,
+      );
+      await user.click(screen.getAllByRole("combobox", { name: "Supplier" })[0]);
+      await user.click(await screen.findByRole("option", { name: "None" }));
+      expect(onCommit).toHaveBeenCalledWith("1", null);
+
+      cleanup();
+      const user2 = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onCommit, update, { required: true })]}
+        />,
+      );
+      await user2.click(screen.getAllByRole("combobox", { name: "Supplier" })[0]);
+      await screen.findByRole("option", { name: "Globex" });
+      expect(screen.queryByRole("option", { name: "None" })).toBeNull();
+    });
+
+    it("lets validate reject a pick", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [
+            supplierColumn(onCommit, update, {
+              validate: (value) => (value === "globex" ? "Globex is on hold" : undefined),
+            }),
+          ]}
+        />,
+      );
+      const [trigger] = screen.getAllByRole("combobox", { name: "Supplier" });
+      await user.click(trigger);
+      await user.click(await screen.findByRole("option", { name: "Globex" }));
+      expect(onCommit).not.toHaveBeenCalled();
+      expect(trigger.getAttribute("aria-invalid")).toBe("true");
+      expect(errorText(trigger)).toBe("Globex is on hold");
+    });
+
+    it("shows a read-only link cell's choice label as the link", () => {
+      renderTable(
+        <Harness
+          rows={rowsWith("globex")}
+          columns={() => [
+            column({
+              id: "supplier",
+              label: "Supplier",
+              type: "link",
+              typeOptions: { href: (row) => `/suppliers/${row.supplier}` },
+              edit: { options: SUPPLIERS, canEdit: (row) => row.id === "1", onCommit: () => {} },
+            }),
+          ]}
+        />,
+      );
+      expect(screen.getAllByRole("combobox", { name: "Supplier" })).toHaveLength(1);
+      expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
+        "Globex",
+        "Globex",
+      ]);
+    });
+
+    it("offers a badge column's labelled values as badges", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={LINES.map((line) => ({ ...line, status: "pending" }))}
+          columns={(update) => [
+            column({
+              id: "status",
+              label: "Status",
+              type: "badge",
+              typeOptions: {
+                badgeLabelMap: { pending: "Pending", received: "Received" },
+                badgeVariantMap: { pending: "outline-neutral", received: "success" },
+              },
+              edit: {
+                required: true,
+                onCommit: (row, value) => {
+                  onCommit(row.id, value);
+                  update(row.id, { status: value ?? undefined });
+                },
+              },
+            }),
+          ]}
+        />,
+      );
+      const [trigger] = screen.getAllByRole("combobox", { name: "Status" });
+      await user.click(trigger);
+      const received = await screen.findByRole("option", { name: "Received" });
+      expect(received.querySelector('[data-slot="badge"], .astw\\:inline-flex')).not.toBeNull();
+      await user.click(received);
+      expect(onCommit).toHaveBeenCalledWith("1", "received");
+      expect(trigger.closest("td")?.textContent).toContain("Received");
+    });
+
+    it("isn't editable when a badge column has no choices to offer", () => {
+      renderTable(
+        <Harness
+          rows={LINES.map((line) => ({ ...line, status: "pending" }))}
+          columns={() => [
+            column({ id: "status", label: "Status", type: "badge", edit: { onCommit: () => {} } }),
+          ]}
+        />,
+      );
+      expect(screen.queryAllByRole("combobox")).toHaveLength(0);
+    });
+
+    it("moves on with Tab from a closed dropdown", async () => {
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(vi.fn(), update), receivedColumn(vi.fn(), update)]}
+        />,
+      );
+      const [supplier] = screen.getAllByRole("combobox", { name: "Supplier" });
+      act(() => supplier.focus());
+      await user.tab();
+      expect(document.activeElement).toBe(screen.getAllByRole("textbox", { name: "Received" })[0]);
+    });
+  });
+
+  describe("dates", () => {
+    const dateRows = LINES.map((line) => ({ ...line, expected: "2026-10-02" }));
+
+    function expectedColumn(
+      onCommit: (id: string, value: string | null) => void,
+      update: Update,
+      edit: { required?: boolean; datetime?: boolean } = {},
+    ): Column<Line> {
+      return column({
+        id: "expected",
+        label: "Expected",
+        type: "date",
+        typeOptions: { dateFormat: edit.datetime ? "datetime" : "short" },
+        edit: {
+          required: edit.required,
+          onCommit: (row, value) => {
+            onCommit(row.id, value);
+            update(row.id, { expected: value });
+          },
+        },
+      });
+    }
+
+    const dayButton = (day: string) =>
+      within(document.querySelector<HTMLElement>('[data-slot="data-table-cell-calendar"]')!)
+        .getAllByRole("button")
+        .find((button) => button.textContent === day && !button.dataset.outsideMonth)!;
+
+    it("shows a date-only value as that day in any time zone", () => {
+      const tz = process.env.TZ;
+      process.env.TZ = "America/Los_Angeles";
+      try {
+        renderTable(
+          <Harness
+            rows={dateRows}
+            columns={() => [
+              column({
+                id: "expected",
+                label: "Expected",
+                type: "date",
+                typeOptions: { locale: "en-US" },
+              }),
+            ]}
+          />,
+        );
+        expect(screen.getAllByText("Oct 2, 2026")).toHaveLength(3);
+      } finally {
+        process.env.TZ = tz;
+      }
+    });
+
+    it("commits a picked day as YYYY-MM-DD", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness rows={dateRows} columns={(update) => [expectedColumn(onCommit, update)]} />,
+      );
+      await user.click(screen.getAllByRole("button", { name: "Expected" })[0]);
+      await user.click(dayButton("15"));
+      expect(onCommit).toHaveBeenCalledWith("1", "2026-10-15");
+    });
+
+    it("clears to null unless the column is required", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness rows={dateRows} columns={(update) => [expectedColumn(onCommit, update)]} />,
+      );
+      await user.click(screen.getAllByRole("button", { name: "Expected" })[0]);
+      await user.click(screen.getByRole("button", { name: "Clear" }));
+      expect(onCommit).toHaveBeenCalledWith("1", null);
+
+      cleanup();
+      const user2 = renderTable(
+        <Harness
+          rows={dateRows}
+          columns={(update) => [expectedColumn(onCommit, update, { required: true })]}
+        />,
+      );
+      await user2.click(screen.getAllByRole("button", { name: "Expected" })[0]);
+      expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
+    });
+
+    it("commits a date-time as an ISO timestamp when Done is pressed", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={dateRows}
+          columns={(update) => [expectedColumn(onCommit, update, { datetime: true })]}
+        />,
+      );
+      await user.click(screen.getAllByRole("button", { name: "Expected" })[0]);
+      await user.click(dayButton("20"));
+      fireEvent.change(screen.getByLabelText("Expected (Choose time)"), {
+        target: { value: "14:30" },
+      });
+      await user.click(screen.getByRole("button", { name: "Done" }));
+      expect(onCommit).toHaveBeenCalledWith("1", new Date(2026, 9, 20, 14, 30).toISOString());
+    });
+  });
+
+  it("drops an unticked row's editor from Enter navigation", async () => {
+    const user = renderTable(
+      <Harness
+        columns={(update) => [
+          receivedColumn(vi.fn(), update, { canEdit: (_, { selected }) => selected }),
+        ]}
+        options={{ onSelectionChange: () => {} }}
+      />,
+    );
+    const boxes = screen.getAllByRole("checkbox", { name: "Select row" });
+    for (const box of boxes) await user.click(box);
+    await user.click(boxes[1]);
+    const [first, third] = screen.getAllByRole("textbox", { name: "Received" });
+    act(() => first.focus());
+    await user.keyboard("{Enter}");
+    expect(document.activeElement).toBe(third);
+  });
+
   it("types each column's edit config", () => {
     column({
       id: "received",
@@ -600,8 +889,33 @@ describe("DataTable inline editing", () => {
     });
     // @ts-expect-error — `min` is a number / money rule
     column({ id: "note", type: "text", edit: { min: 0, onCommit: () => {} } });
-    // @ts-expect-error — date columns can't be edited yet
-    column({ id: "sku", type: "date", edit: { onCommit: () => {} } });
+    column({
+      id: "expected",
+      type: "date",
+      edit: {
+        min: "2026-01-01",
+        onCommit: (_row, value) => {
+          expectTypeOf(value).toEqualTypeOf<string | null>();
+        },
+      },
+    });
+    column({
+      id: "status",
+      type: "badge",
+      edit: {
+        options: [{ value: "open", label: "Open" }],
+        onCommit: (_row, value) => {
+          expectTypeOf(value).toEqualTypeOf<string | null>();
+        },
+      },
+    });
+    column({
+      id: "supplier",
+      type: "text",
+      edit: { options: [{ value: "acme", label: "Acme" }], onCommit: () => {} },
+    });
+    // @ts-expect-error — dropdown choices aren't a number / money option
+    column({ id: "received", type: "number", edit: { options: [], onCommit: () => {} } });
     // @ts-expect-error — columns without a `type` have no built-in editor
     column({ id: "sku", render: () => null, edit: { onCommit: () => {} } });
     column({

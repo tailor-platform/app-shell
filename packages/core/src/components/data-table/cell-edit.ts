@@ -7,6 +7,10 @@
  * @internal
  */
 
+import { CalendarDate } from "@internationalized/date";
+import type { SelectOption } from "@/types/collection";
+import type { BadgeCellOptions, DataTableFilterConfig } from "./types";
+
 /** Rules a `number` / `money` cell enforces while the user types and on commit. */
 export interface NumberEditRules {
   min?: number;
@@ -189,6 +193,89 @@ export function currencyFractionDigits(currency: string): number {
     currencyDigits.set(currency, digits);
   }
   return digits;
+}
+
+// ── Choices (dropdown and badge editors) ─────────────────────────────────────
+
+/** The label a choice shows, or the raw value when it isn't one of the choices. */
+export function optionLabel(options: readonly SelectOption[] | undefined, value: unknown): unknown {
+  if (!options || value == null || value === "") return value;
+  return options.find((option) => option.value === String(value))?.label ?? value;
+}
+
+/**
+ * The choices a badge column offers: `edit.options`, else the entries of
+ * `typeOptions.badgeLabelMap`, else the column's enum filter options.
+ */
+export function resolveBadgeOptions(
+  options: readonly SelectOption[] | undefined,
+  typeOptions: BadgeCellOptions | undefined,
+  filter: DataTableFilterConfig | undefined,
+): readonly SelectOption[] {
+  if (options) return options;
+  const labels = typeOptions?.badgeLabelMap;
+  if (labels) return Object.entries(labels).map(([value, label]) => ({ value, label }));
+  if (filter?.type === "enum") return filter.options;
+  return [];
+}
+
+// ── Dates ────────────────────────────────────────────────────────────────────
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Whether `value` is a date-only ISO string (`"YYYY-MM-DD"`). */
+export function isIsoDate(value: unknown): value is string {
+  return typeof value === "string" && ISO_DATE.test(value);
+}
+
+// A raw date cell value as a local `Date`. `"YYYY-MM-DD"` is read as that day
+// in the local zone — `new Date("2026-10-02")` is UTC midnight, which is the
+// previous day anywhere west of UTC.
+function toLocalDate(raw: unknown): Date | null {
+  if (raw == null || raw === "") return null;
+  if (isIsoDate(raw)) {
+    const [year, month, day] = raw.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+  if (!(raw instanceof Date) && typeof raw !== "string" && typeof raw !== "number") return null;
+  const date = raw instanceof Date ? raw : new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** A raw date cell value as the calendar day it shows. */
+export function toCalendarDate(raw: unknown): CalendarDate | null {
+  const date = toLocalDate(raw);
+  return date ? new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate()) : null;
+}
+
+/** The local time of a raw date cell value as `"HH:mm"`; `""` when there is none. */
+export function toTimeText(raw: unknown): string {
+  const date = toLocalDate(raw);
+  if (!date) return "";
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+/** A calendar day plus a local `"HH:mm"` as an ISO 8601 timestamp. */
+export function toIsoDateTime(day: CalendarDate, time: string): string {
+  const [hours = 0, minutes = 0] = time ? time.split(":").map(Number) : [];
+  return new Date(day.year, day.month - 1, day.day, hours, minutes).toISOString();
+}
+
+/**
+ * Whether two raw date values mean the same thing: the same day for a date
+ * column, the same minute for a date-time one — so `"2026-10-02"` equals a
+ * `Date` for that day, and string formatting differences don't count.
+ */
+export function sameDate(a: unknown, b: unknown, withTime: boolean): boolean {
+  const left = toLocalDate(a);
+  const right = toLocalDate(b);
+  if (!left || !right) return left === right;
+  if (withTime) return Math.floor(left.getTime() / 60_000) === Math.floor(right.getTime() / 60_000);
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
 }
 
 /** Whether a value `onCommit` returned is a promise-like the cell should wait on. */

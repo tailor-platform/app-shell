@@ -6,6 +6,7 @@ import type {
   FilterConfig,
   OperatorForFilterType,
   PageInfo,
+  SelectOption,
   SortConfig,
   SortState,
 } from "@/types/collection";
@@ -121,11 +122,58 @@ interface CellEditBase<TRow extends Record<string, unknown>, TValue> {
 }
 
 /**
- * `edit` config for `type: "text"` and `type: "link"` columns. The value is the
- * text as typed; an emptied cell commits `null`. A `link` column shows its label
- * as plain text while the cell can be edited.
+ * `edit` config for `type: "text"` and `type: "link"` columns. Without
+ * `options` the cell is typed into: the value is the text as typed, and an
+ * emptied cell commits `null`. A `link` column shows its label as plain text
+ * while the cell can be edited.
  */
-export type TextCellEditOptions<TRow extends Record<string, unknown>> = CellEditBase<TRow, string>;
+export interface TextCellEditOptions<TRow extends Record<string, unknown>> extends CellEditBase<
+  TRow,
+  string
+> {
+  /**
+   * Turns the cell into a dropdown of these choices (a supplier, a warehouse,
+   * a unit of measure). The column's value is an option's `value`, and every
+   * cell in the column — editable or not — shows the matching `label`.
+   * Picking a choice commits it; unless `required`, a "None" choice commits
+   * `null`.
+   */
+  options?: readonly SelectOption[];
+}
+
+/**
+ * `edit` config for `type: "badge"` columns: a dropdown whose choices render as
+ * the same badges the cell shows. Picking one commits its `value`; unless
+ * `required`, a "None" choice commits `null`. Single-value columns only.
+ */
+export interface BadgeCellEditOptions<TRow extends Record<string, unknown>> extends CellEditBase<
+  TRow,
+  string
+> {
+  /**
+   * The choices. Default: the entries of `typeOptions.badgeLabelMap`, else the
+   * column's enum `filter` options. A badge column with neither can't be
+   * edited.
+   */
+  options?: readonly SelectOption[];
+}
+
+/**
+ * `edit` config for `type: "date"` columns: a calendar that opens from the
+ * cell. Picking a day commits `"YYYY-MM-DD"`. With `dateFormat: "datetime"`
+ * the calendar comes with a time field and commits an ISO 8601 timestamp
+ * (`Date#toISOString()`) when it closes. Unless `required`, "Clear" commits
+ * `null`.
+ */
+export interface DateCellEditOptions<TRow extends Record<string, unknown>> extends CellEditBase<
+  TRow,
+  string
+> {
+  /** Earliest day that can be picked, as `"YYYY-MM-DD"`. */
+  min?: string;
+  /** Latest day that can be picked, as `"YYYY-MM-DD"`. */
+  max?: string;
+}
 
 /**
  * `edit` config for `type: "number"` and `type: "money"` columns. Characters
@@ -351,8 +399,8 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
  * `—` placeholder.
  *
  * `edit` makes the cells editable in place and also narrows per branch, so
- * `onCommit` receives the value type the column holds. `text`, `number`,
- * `money` and `link` columns support it.
+ * `onCommit` receives the value type the column holds. Every typed column
+ * supports it; untyped (`render`-only) columns don't.
  *
  * Prefer `Column<TRow>` in most cases; this is exported so consumers can
  * compose more specific column types.
@@ -381,13 +429,13 @@ export type ColumnTypeBranch<TRow extends Record<string, unknown>> =
       type: "date";
       typeOptions?: DateCellOptions;
       accessor?: (row: TRow) => Date | string | number | null | undefined;
-      edit?: never;
+      edit?: DateCellEditOptions<TRow>;
     }
   | {
       type: "badge";
       typeOptions?: BadgeCellOptions;
       accessor?: (row: TRow) => string | string[] | number | boolean | null | undefined;
-      edit?: never;
+      edit?: BadgeCellEditOptions<TRow>;
     }
   | {
       type: "link";

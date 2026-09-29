@@ -553,12 +553,14 @@ const DataTableLabPage = () => {
           title="Inline editing"
           description={
             <>
-              A goods receipt. Tick a row to enter its <strong>Received</strong> quantity — whole
-              numbers only, no negatives, and never more than was ordered.{" "}
-              <strong>Unit price</strong> autosaves to a pretend server when you leave the cell;
-              prices over 10,000 are rejected and the cell goes back to the old value. Enter moves
-              down a column, Tab to the next editable cell, Esc undoes. <strong>Supplier</strong>{" "}
-              can only be changed on lines with nothing received yet.
+              A goods receipt with every editor. <strong>Supplier</strong> is a dropdown on pending
+              lines (a link on the rest), <strong>Status</strong> a badge dropdown and{" "}
+              <strong>Expected</strong> a calendar. Tick a row to enter its{" "}
+              <strong>Received</strong> quantity — whole numbers only, no negatives, never more than
+              was ordered. <strong>Unit price</strong> autosaves to a pretend server when you leave
+              the cell; prices over 10,000 are rejected and the cell goes back to the old value.{" "}
+              <strong>Note</strong> is free text. Enter moves down a column, Tab to the next
+              editable cell, Esc undoes.
             </>
           }
         >

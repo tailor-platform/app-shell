@@ -63,18 +63,18 @@ repo publishes via changesets (§6) — you won't run `changeset:publish` by han
 
 ### Repository layout
 
-| Path                   | What it is                                                                        |
-| ---------------------- | --------------------------------------------------------------------------------- |
-| `packages/core`        | `@tailor-platform/app-shell` — the published library (components, hooks, layouts) |
-| `packages/vite-plugin` | `@tailor-platform/vite-plugin-app-shell` — file-based routing                     |
-| `packages/sdk-plugin`  | `@tailor-platform/sdk-plugin-app-shell` — Tailor SDK plugin                       |
-| `examples/`            | `vite-app` reference app and consolidated showcase (what `pnpm dev` runs)         |
-| `e2e/`                 | Playwright suite + a real Tailor backend definition                               |
-| `docs-src/`            | Authored doc sources — outlines + runnable examples (the only hand-edited docs)   |
-| `docs/`                | **Generated** user-facing documentation — never hand-edited (`pnpm docs:sync`)    |
-| `docs-browser/`        | AppShell app that renders `docs/` with live examples                              |
-| `.agents/skills/`      | **Contributor procedures** — the source of truth for how to do the work           |
-| `.github/`             | Agents, prompts, and workflows (CI + agentic bots)                                |
+| Path                   | What it is                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------- |
+| `packages/core`        | `@tailor-platform/app-shell` — the published library (components, hooks, layouts)                 |
+| `packages/vite-plugin` | `@tailor-platform/vite-plugin-app-shell` — file-based routing                                     |
+| `packages/sdk-plugin`  | `@tailor-platform/sdk-plugin-app-shell` — Tailor SDK plugin                                       |
+| `examples/`            | `vite-app` reference app and consolidated showcase (what `pnpm dev` runs)                         |
+| `e2e/`                 | Playwright suite + a real Tailor backend definition                                               |
+| `docs-src/`            | Authored doc sources — outlines (incl. `guides/`) + runnable examples (the only hand-edited docs) |
+| `docs/`                | **Generated** user-facing documentation — never hand-edited (`pnpm docs:sync`)                    |
+| `docs-browser/`        | AppShell app that renders `docs/` with live examples                                              |
+| `.agents/skills/`      | **Contributor procedures** — the source of truth for how to do the work                           |
+| `.github/`             | Agents, prompts, and workflows (CI + agentic bots)                                                |
 
 ---
 

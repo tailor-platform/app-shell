@@ -36,6 +36,8 @@ import { useDataTableT } from "./i18n";
 import { getCellValue, renderTypedCell } from "./cell-renderers";
 import { isTemporalFilterType, normalizeTemporalFilterValue } from "./filter-value-utils";
 import { useCellContextMenu, type CellContextMenuState } from "./use-cell-context-menu";
+import { useCellEditNavigation } from "./use-cell-edit-navigation";
+import { DataTableEditableCell, isEditableColumn } from "./editable-cell";
 import {
   DataTableToolbar,
   DataTableFilters,
@@ -1226,16 +1228,24 @@ function DataTableRows<TRow extends Record<string, unknown>>({
     handleContextMenuCloseComplete: handleCellContextMenuCloseComplete,
     getCellContextMenuHandlers,
   } = useCellContextMenu();
+  const navigation = useCellEditNavigation();
+  // Namespaced so an id-less row's index fallback can't collide with a real
+  // id of the same digits — React reconciles duplicate keys by position,
+  // pairing a detail panel with the wrong row.
+  const rowKeys = rows.map((row, rowIndex) => {
+    const rowId = (row as Record<string, unknown>)["id"];
+    return rowId != null ? `id:${String(rowId)}` : `idx:${rowIndex}`;
+  });
+  // Enter / Tab move between editable cells in the order they render.
+  navigation.setOrder(rowKeys, ordered?.map((col) => keys.get(col) as string) ?? []);
+  const warnedMissingIdRef = useRef(false);
 
   return (
     <>
       {rows.map((row, rowIndex) => {
         const rowId = (row as Record<string, unknown>)["id"];
         const selected = isRowSelected?.(row) ?? false;
-        // Namespaced so an id-less row's index fallback can't collide with a real
-        // id of the same digits — React reconciles duplicate keys by position,
-        // pairing a detail panel with the wrong row.
-        const rowKey = rowId != null ? `id:${String(rowId)}` : `idx:${rowIndex}`;
+        const rowKey = rowKeys[rowIndex];
         // Expansion is keyed by id, so a row without one gets no chevron at all
         // rather than a disabled one — it must never be un-toggleable (D5).
         const expandable = hasExpand && rowId != null && (rowExpansion?.canExpand?.(row) ?? true);
@@ -1312,7 +1322,18 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               })()}
             {ordered?.map((col) => {
               const key = keys.get(col) as string;
-              const content = col.render ? col.render(row) : renderTypedCell(row, col);
+              const editableColumn = isEditableColumn(col);
+              if (editableColumn && rowId == null && !warnedMissingIdRef.current) {
+                warnedMissingIdRef.current = true;
+                console.warn(
+                  `[DataTable] Column "${key}" has an \`edit\` config, but a row has no \`id\`. Rows without an \`id\` are shown read-only.`,
+                );
+              }
+              const editable =
+                editableColumn && rowId != null && (col.edit?.canEdit?.(row, { selected }) ?? true);
+              // An editable cell renders its own display; skip rendering it twice.
+              let content: ReactNode;
+              if (!editable) content = col.render ? col.render(row) : renderTypedCell(row, col);
 
               const { style: cellStyle, className: cellClassName } = pinCellProps(
                 placements.get(col),
@@ -1364,6 +1385,22 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                 className: cellClassName,
                 ...cellContextMenuHandlers,
               };
+              if (editable) {
+                return (
+                  <DataTableEditableCell
+                    key={key}
+                    row={row}
+                    col={col}
+                    rowKey={rowKey}
+                    colKey={key}
+                    label={headerLabel}
+                    align={resolveAlign(col)}
+                    navigation={navigation}
+                    cellProps={cellProps}
+                  />
+                );
+              }
+
               const cellElement = <Table.Cell {...cellProps} />;
 
               if (tooltipLabel !== undefined) {

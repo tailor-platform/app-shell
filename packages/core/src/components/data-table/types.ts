@@ -84,6 +84,70 @@ export interface LinkCellOptions<TRow extends Record<string, unknown>> {
   href: (row: TRow) => string | null | undefined;
 }
 
+// =============================================================================
+// Inline editing
+// =============================================================================
+
+/** Row state passed to `edit.canEdit` alongside the row. */
+export interface CellEditState {
+  /** Whether the row is selected. Always `false` when row selection is off. */
+  selected: boolean;
+}
+
+interface CellEditBase<TRow extends Record<string, unknown>, TValue> {
+  /**
+   * Decides, per row, whether the cell can be edited. Receives the row and
+   * whether it is selected, so "editable once selected" is
+   * `(_, { selected }) => selected`. Default: every row with an `id`.
+   */
+  canEdit?: (row: TRow, state: CellEditState) => boolean;
+  /**
+   * Rejects an emptied cell with a "Required" message, so `validate` and
+   * `onCommit` never receive `null` at runtime. Default: `false`.
+   */
+  required?: boolean;
+  /**
+   * The screen's own rule, checked after the built-in ones. Return a message to
+   * block the save — it shows in the cell's tooltip — or nothing to allow it.
+   */
+  validate?: (value: TValue | null, row: TRow) => string | null | undefined;
+  /**
+   * Runs when the user leaves the cell (or presses Enter / Tab) with a value
+   * that changed and passes every rule. Update `data` from here. It may return
+   * a promise: while it is pending the cell keeps showing the new value, and
+   * if it rejects the cell goes back to the old one.
+   */
+  onCommit: (row: TRow, value: TValue | null) => void | Promise<unknown>;
+}
+
+/**
+ * `edit` config for `type: "text"` and `type: "link"` columns. The value is the
+ * text as typed; an emptied cell commits `null`. A `link` column shows its label
+ * as plain text while the cell can be edited.
+ */
+export type TextCellEditOptions<TRow extends Record<string, unknown>> = CellEditBase<TRow, string>;
+
+/**
+ * `edit` config for `type: "number"` and `type: "money"` columns. Characters
+ * that can never be valid are blocked as the user types; `max` and `validate`
+ * errors show immediately, `min` and `required` when the user tries to save.
+ */
+export interface NumberCellEditOptions<TRow extends Record<string, unknown>> extends CellEditBase<
+  TRow,
+  number
+> {
+  /** Smallest allowed value. With `min >= 0` a minus sign can't be typed. */
+  min?: number;
+  /** Largest allowed value. */
+  max?: number;
+  /**
+   * Digits allowed after the decimal point; `0` means whole numbers only.
+   * Defaults to what the cell displays — `typeOptions.maxDecimals` for
+   * `number` (else `0`), the currency's decimals for `money` (USD 2, JPY 0).
+   */
+  maxDecimals?: number;
+}
+
 /**
  * Header render context for non-sortable columns.
  */
@@ -286,40 +350,50 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
  * and `undefined` are always allowed: every built-in renderer maps them to the
  * `—` placeholder.
  *
+ * `edit` makes the cells editable in place and also narrows per branch, so
+ * `onCommit` receives the value type the column holds. `text`, `number`,
+ * `money` and `link` columns support it.
+ *
  * Prefer `Column<TRow>` in most cases; this is exported so consumers can
  * compose more specific column types.
  */
 export type ColumnTypeBranch<TRow extends Record<string, unknown>> =
-  | { type?: undefined; typeOptions?: never; accessor?: (row: TRow) => unknown }
+  | { type?: undefined; typeOptions?: never; accessor?: (row: TRow) => unknown; edit?: never }
   | {
       type: "text";
       typeOptions?: never;
       accessor?: (row: TRow) => string | number | boolean | bigint | null | undefined;
+      edit?: TextCellEditOptions<TRow>;
     }
   | {
       type: "number";
       typeOptions?: NumberCellOptions;
       accessor?: (row: TRow) => number | null | undefined;
+      edit?: NumberCellEditOptions<TRow>;
     }
   | {
       type: "money";
       typeOptions?: MoneyCellOptions<TRow>;
       accessor?: (row: TRow) => number | null | undefined;
+      edit?: NumberCellEditOptions<TRow>;
     }
   | {
       type: "date";
       typeOptions?: DateCellOptions;
       accessor?: (row: TRow) => Date | string | number | null | undefined;
+      edit?: never;
     }
   | {
       type: "badge";
       typeOptions?: BadgeCellOptions;
       accessor?: (row: TRow) => string | string[] | number | boolean | null | undefined;
+      edit?: never;
     }
   | {
       type: "link";
       typeOptions: LinkCellOptions<TRow>;
       accessor?: (row: TRow) => string | number | boolean | null | undefined;
+      edit?: TextCellEditOptions<TRow>;
     };
 
 /**

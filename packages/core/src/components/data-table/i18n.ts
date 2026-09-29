@@ -117,6 +117,16 @@ export const dataTableLabels = defineI18nLabels({
       `${props.column} ${props.operator} ${props.value}`,
     filterChipLabelEnum: (props: { column: string; operator: string; value: string }) =>
       `${props.column} ${props.operator}: ${props.value}`,
+
+    // Inline cell editing — rule errors (tooltip + screen-reader description)
+    editRequired: "Required",
+    editNotANumber: "Enter a number",
+    editWholeNumber: "Enter a whole number",
+    editMaxDecimals: (props: { count: number }) =>
+      props.count === 1 ? "Use up to 1 decimal place" : `Use up to ${props.count} decimal places`,
+    editMin: (props: { min: string }) => `Must be ${props.min} or more`,
+    editMax: (props: { max: string }) => `Must be ${props.max} or less`,
+    editRevertHint: "Press Esc to undo",
   },
   ja: {
     loading: "読み込み中...",
@@ -222,6 +232,16 @@ export const dataTableLabels = defineI18nLabels({
       `${props.column}: ${props.value} ${props.operator}`,
     filterChipLabelEnum: (props: { column: string; operator: string; value: string }) =>
       `${props.column} ${props.operator}: ${props.value}`,
+
+    // Inline cell editing
+    editRequired: "入力してください",
+    editNotANumber: "数値を入力してください",
+    editWholeNumber: "整数で入力してください",
+    editMaxDecimals: (props: { count: number }) =>
+      `小数点以下${props.count}桁までで入力してください`,
+    editMin: (props: { min: string }) => `${props.min}以上で入力してください`,
+    editMax: (props: { max: string }) => `${props.max}以下で入力してください`,
+    editRevertHint: "Escキーで元に戻せます",
   },
 });
 

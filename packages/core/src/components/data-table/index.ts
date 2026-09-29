@@ -11,6 +11,7 @@ export { createColumnHelper } from "./field-helpers";
 export type {
   BadgeCellOptions,
   BadgeVariant,
+  CellEditState,
   Column,
   ColumnBase,
   ColumnCellType,
@@ -22,8 +23,10 @@ export type {
   LinkCellOptions,
   MetadataFieldOptions,
   MoneyCellOptions,
+  NumberCellEditOptions,
   NumberCellOptions,
   RowAction,
+  TextCellEditOptions,
   UseDataTableOptions,
   UseDataTableReturn,
 } from "./types";

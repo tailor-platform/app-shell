@@ -419,7 +419,7 @@ const columns = [
 const table = useDataTable({ columns, data: { rows: lines }, onSelectionChange: setSelectedIds });
 ```
 
-Editable cells read like the rest of the table — formatted money, placeholder dashes — with a faint outline so they can be told apart; hover and focus show the full input outline. Row height and column width don't change when a cell becomes editable or while it is being edited. Rows need an `id` to be editable: rows without one are shown read-only, with a one-time console warning.
+Editable cells look exactly like the rest of the table, spreadsheet-style: no input boxes, and the whole cell — edge to edge — is the click target. The cursor tells cells apart: a text cursor over cells you type into (`text`, `number`, `money`), a pointer over dropdown and date cells, and "not allowed" over every cell that can't be edited (when rows aren't clickable). The cell being edited outlines its edges; dropdown and date cells show their chevron or calendar icon on hover and focus. Row height and column width don't change when a cell becomes editable or while it is being edited. Rows need an `id` to be editable: rows without one are shown read-only, with a one-time console warning.
 
 ### `edit` options
 

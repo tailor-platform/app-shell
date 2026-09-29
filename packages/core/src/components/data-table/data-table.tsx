@@ -1238,6 +1238,10 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   });
   // Enter / Tab move between editable cells in the order they render.
   navigation.setOrder(rowKeys, ordered?.map((col) => keys.get(col) as string) ?? []);
+  // In a table people edit, every data cell says what a click does: editors
+  // show a text or pointer cursor, and the rest show "not allowed". Skipped when
+  // rows are clickable, where the row click is what the cursor should promise.
+  const blockReadOnlyCells = !onClickRow && (ordered?.some(isEditableColumn) ?? false);
   const warnedMissingIdRef = useRef(false);
 
   return (
@@ -1387,7 +1391,10 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               const cellProps = {
                 "data-slot": "data-table-cell" as const,
                 style: { ...cellStyle, WebkitTouchCallout: "none" } satisfies CSSProperties,
-                className: cellClassName,
+                className: cn(
+                  cellClassName,
+                  blockReadOnlyCells && !editable && "astw:cursor-not-allowed",
+                ),
                 ...cellContextMenuHandlers,
               };
               if (editable) {

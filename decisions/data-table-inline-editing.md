@@ -35,9 +35,10 @@ Today DataTable only displays data. An app that needs editing draws its own inpu
 Build inline editing into DataTable and configure it per column.
 
 1. **Type straight into a cell.** Click or Tab into an editable cell and type. There's no popover and no form. This is where the proposal differs from the catalogue pattern (see [Alternatives](#alternatives-considered)).
-2. **Show what's editable.**
-   - Editable cells carry a faint outline, and hover and focus show the full input outline.
-   - Read-only cells look as they do today.
+2. **Show what's editable — spreadsheet-style.**
+   - Editable cells look like the rest of the table: no input boxes, and the whole cell is the click target.
+   - The cursor tells cells apart: a text cursor for typing cells, a pointer for dropdown and date cells, and "not allowed" for cells that can't be edited.
+   - The cell being edited outlines its edges; dropdown and date icons appear on hover and focus.
    - Row height and column width don't shift when a row becomes editable.
 3. **Block impossible input as it's typed.**
    - With "no negatives" there's no minus sign. With "whole numbers" there's no decimal point. With "2 decimals" there's no third decimal digit.

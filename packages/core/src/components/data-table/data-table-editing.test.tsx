@@ -123,6 +123,9 @@ function receivedColumn(
   });
 }
 
+const blocked = (cell: Element | null | undefined) =>
+  cell?.className.includes("astw:cursor-not-allowed") ?? false;
+
 const errorText = (input: HTMLElement) =>
   document.getElementById(input.getAttribute("aria-describedby") ?? "")?.textContent;
 
@@ -537,6 +540,37 @@ describe("DataTable inline editing", () => {
       expect(screen.getAllByRole("textbox", { name: "Received" })).toHaveLength(1);
       await user.click(selectFirst);
       expect(screen.queryAllByRole("textbox")).toHaveLength(0);
+    });
+
+    it("shows a not-allowed cursor on read-only cells of a table people edit", () => {
+      renderTable(
+        <Harness
+          columns={(update) => [
+            skuColumn,
+            receivedColumn(vi.fn(), update, { canEdit: (row) => row.id !== "2" }),
+          ]}
+        />,
+      );
+      const skuCell = screen.getByText("TS-M").closest("td");
+      const [editable] = screen.getAllByRole("textbox", { name: "Received" });
+      const lockedRow = screen.getByText("TS-L").closest("tr");
+      expect(blocked(skuCell)).toBe(true);
+      expect(blocked(editable.closest("td"))).toBe(false);
+      // Row 2's Received cell is locked by canEdit.
+      expect(blocked(lockedRow?.querySelectorAll("td")[1])).toBe(true);
+    });
+
+    it("keeps the default cursor when no column is editable, or rows are clickable", () => {
+      renderTable(<Harness columns={() => [skuColumn]} />);
+      expect(screen.getByText("TS-M").closest("td")?.className).not.toContain("cursor-not-allowed");
+      cleanup();
+      renderTable(
+        <Harness
+          columns={(update) => [skuColumn, receivedColumn(vi.fn(), update)]}
+          options={{ onClickRow: () => {} }}
+        />,
+      );
+      expect(screen.getByText("TS-M").closest("td")?.className).not.toContain("cursor-not-allowed");
     });
 
     it("never fires onClickRow from an editable cell", async () => {

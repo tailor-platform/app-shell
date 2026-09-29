@@ -10,7 +10,6 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
-  type RefObject,
   type TouchEvent,
 } from "react";
 import { Popover } from "@base-ui/react/popover";
@@ -98,28 +97,38 @@ export function isEditableColumn<TRow extends Record<string, unknown>>(
   return col.type !== "badge" || (columnChoices(col)?.length ?? 0) > 0;
 }
 
-// Editors sit over the cell's static content (the sizer) instead of taking
-// part in layout, so a cell becoming editable — or being edited — never
-// changes row height or column width. Reaching 6px past the content on every
-// side leaves the 2px focus ring inside the cell's 8px padding.
+// Editors cover the whole cell, end to end, instead of taking part in layout,
+// so a cell becoming editable — or being edited — never changes row height or
+// column width. They inherit the cell's padding (they're its direct children),
+// so their text lines up exactly with the cell's own display underneath.
 const OVERLAY_CLASS_NAME =
-  "astw:absolute astw:-top-1.5 astw:-left-1.5 astw:h-[calc(100%+0.75rem)] astw:w-[calc(100%+0.75rem)]";
+  "astw:absolute astw:inset-0 astw:h-full astw:w-full astw:p-[inherit] astw:rounded-none astw:border-0 astw:shadow-none astw:bg-transparent astw:dark:bg-transparent";
 
-const INPUT_CLASS_NAME = cn(
-  OVERLAY_CLASS_NAME,
-  "astw:rounded-sm astw:px-[5px] astw:py-0 astw:shadow-none astw:bg-transparent astw:dark:bg-transparent",
-  "astw:border-input/60 astw:hover:border-input astw:focus-visible:ring-2",
+// Spreadsheet-style: nothing at rest, and the cell being edited outlines its
+// edges (an inset ring, so it never spills onto neighbouring cells).
+const CELL_FOCUS_CLASS_NAME = cn(
+  "astw:outline-none astw:focus:ring-2 astw:focus:ring-inset astw:focus:ring-primary",
+  "astw:focus-visible:ring-2 astw:focus-visible:ring-inset astw:focus-visible:ring-primary",
+  "astw:aria-invalid:ring-2 astw:aria-invalid:ring-inset astw:aria-invalid:ring-destructive astw:dark:aria-invalid:ring-destructive",
 );
 
-// Dropdown and calendar triggers: a transparent button over the cell's own
-// display (badges, labels, dates), with the chevron / calendar icon at its end.
+// Text and number cells: the whole cell shows a text cursor.
+const INPUT_CLASS_NAME = cn(
+  OVERLAY_CLASS_NAME,
+  CELL_FOCUS_CLASS_NAME,
+  "astw:text-sm astw:cursor-text",
+);
+
+// Dropdown and calendar cells: a transparent button over the cell's own display
+// (labels, badges, dates) with a pointer cursor. Like a spreadsheet's dropdown
+// arrow, the chevron / calendar icon appears only on hover, focus or while open.
 const TRIGGER_CLASS_NAME = cn(
   OVERLAY_CLASS_NAME,
-  "astw:flex astw:items-center astw:justify-end astw:rounded-sm astw:border astw:border-input/60 astw:px-1.5 astw:py-0",
-  "astw:bg-transparent astw:dark:bg-transparent astw:shadow-none astw:cursor-pointer astw:outline-none",
-  "astw:hover:border-input astw:data-popup-open:border-ring",
-  "astw:focus-visible:border-ring astw:focus-visible:ring-2 astw:focus-visible:ring-ring/50",
-  "astw:aria-invalid:border-destructive astw:aria-invalid:ring-destructive/20",
+  CELL_FOCUS_CLASS_NAME,
+  "astw:flex astw:items-center astw:justify-end astw:cursor-pointer",
+  "astw:data-popup-open:ring-2 astw:data-popup-open:ring-inset astw:data-popup-open:ring-primary",
+  "astw:[&_svg]:opacity-0 astw:[&_svg]:transition-opacity",
+  "astw:hover:[&_svg]:opacity-50 astw:focus:[&_svg]:opacity-50 astw:data-popup-open:[&_svg]:opacity-50",
 );
 
 interface PendingCommit<TRow> {
@@ -182,17 +191,14 @@ function useNavigationRef<T extends HTMLElement>(
   rowKey: string,
   colKey: string,
 ) {
-  const elementRef = useRef<T | null>(null);
   const unregisterRef = useRef<(() => void) | null>(null);
-  const register = useCallback(
+  return useCallback(
     (element: T | null) => {
       unregisterRef.current?.();
       unregisterRef.current = element ? navigation.register(rowKey, colKey, element) : null;
-      elementRef.current = element;
     },
     [navigation, rowKey, colKey],
   );
-  return { register, elementRef };
 }
 
 function EditableCellFrame({
@@ -200,7 +206,6 @@ function EditableCellFrame({
   display,
   truncate,
   hideDisplay,
-  focusTarget,
   errorId,
   description,
   children,
@@ -210,7 +215,6 @@ function EditableCellFrame({
   truncate?: boolean;
   /** Typing cells hide the display while the input shows the raw value. */
   hideDisplay?: "focused" | "forced-colors";
-  focusTarget: RefObject<HTMLElement | null>;
   errorId: string;
   description: string | undefined;
   children: ReactNode;
@@ -218,36 +222,32 @@ function EditableCellFrame({
   return (
     <Table.Cell
       {...cellProps}
+      data-editable=""
+      // The editor is positioned against the cell. A pinned cell is already
+      // positioned (sticky), which its inline style keeps.
+      className={cn(cellProps.className, "astw:relative")}
       // Editing a cell must never fire `onClickRow`.
       onClick={(event) => event.stopPropagation()}
-      // A click in the cell's padding, outside the editor, still starts editing.
-      onMouseDown={(event) => {
-        if (event.target !== event.currentTarget || event.button !== 0) return;
-        event.preventDefault();
-        focusTarget.current?.focus();
-      }}
     >
-      <span data-slot="data-table-cell-editor" className="astw:relative astw:block">
-        <span
-          aria-hidden="true"
-          className={cn(
-            "astw:block",
-            truncate && "astw:truncate",
-            // Transparent input text is forced visible in forced-colors mode;
-            // hide the display instead so the two don't overlap.
-            hideDisplay && "astw:forced-colors:invisible",
-            hideDisplay === "focused" && "astw:invisible",
-          )}
-        >
-          {display}
-        </span>
-        {children}
-        {description !== undefined && (
-          <span id={errorId} className="astw:sr-only">
-            {description}
-          </span>
+      <span
+        aria-hidden="true"
+        className={cn(
+          "astw:block",
+          truncate && "astw:truncate",
+          // Transparent input text is forced visible in forced-colors mode;
+          // hide the display instead so the two don't overlap.
+          hideDisplay && "astw:forced-colors:invisible",
+          hideDisplay === "focused" && "astw:invisible",
         )}
+      >
+        {display}
       </span>
+      {children}
+      {description !== undefined && (
+        <span id={errorId} className="astw:sr-only">
+          {description}
+        </span>
+      )}
     </Table.Cell>
   );
 }
@@ -345,7 +345,7 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
   const edit = col.edit;
   const validate = edit?.validate as CellValidate<TRow>;
   const { current, display, save } = useCellCommit(row, col);
-  const { register, elementRef } = useNavigationRef<HTMLInputElement>(navigation, rowKey, colKey);
+  const register = useNavigationRef<HTMLInputElement>(navigation, rowKey, colKey);
 
   const [draft, setDraftState] = useState<string | null>(null);
   // Read by handlers that run before the next render: the blur fired by moving
@@ -534,7 +534,6 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
       display={display}
       truncate={col.truncate}
       hideDisplay={focused ? "focused" : "forced-colors"}
-      focusTarget={elementRef}
       errorId={errorId}
       description={message === undefined ? undefined : `${message}. ${t("editRevertHint")}`}
     >
@@ -639,7 +638,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
   const t = useDataTableT();
   const errorId = useId();
   const { current, display, save } = useCellCommit(row, col);
-  const { register, elementRef } = useNavigationRef<HTMLButtonElement>(navigation, rowKey, colKey);
+  const register = useNavigationRef<HTMLButtonElement>(navigation, rowKey, colKey);
   const value = toTextValue(current);
   const { message, clearMessage, commit } = usePickCommit(row, col, save, (next) => next === value);
   const [open, setOpen] = useState(false);
@@ -651,7 +650,6 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
       cellProps={cellProps}
       display={display}
       truncate={col.truncate}
-      focusTarget={elementRef}
       errorId={errorId}
       description={message}
     >
@@ -735,7 +733,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
   const errorId = useId();
   const withTime = col.typeOptions?.dateFormat === "datetime";
   const { current, display, save } = useCellCommit(row, col);
-  const { register, elementRef } = useNavigationRef<HTMLButtonElement>(navigation, rowKey, colKey);
+  const register = useNavigationRef<HTMLButtonElement>(navigation, rowKey, colKey);
   const { message, clearMessage, commit } = usePickCommit(row, col, save, (next) =>
     sameDate(next, current, withTime),
   );
@@ -775,7 +773,6 @@ function DateEditCell<TRow extends Record<string, unknown>>({
       cellProps={cellProps}
       display={display}
       truncate={col.truncate}
-      focusTarget={elementRef}
       errorId={errorId}
       description={message}
     >

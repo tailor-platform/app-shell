@@ -152,4 +152,42 @@ describe("Form", () => {
     await user.click(screen.getByRole("button", { name: "Reset" }));
     expect((screen.getByRole("textbox", { name: "Email" }) as HTMLInputElement).value).toBe("");
   });
+
+  // ==========================================================================
+  // `id` — lets a submit button outside the form submit it via the native
+  // `form` attribute (e.g. actions rendered in a page header).
+  // ==========================================================================
+
+  it("sets id on the form element", () => {
+    const { container } = render(
+      <Form id="product-form">
+        <span>Content</span>
+      </Form>,
+    );
+    expect(container.querySelector("form")?.id).toBe("product-form");
+  });
+
+  it("is submitted by a submit button rendered outside the form", async () => {
+    const user = userEvent.setup();
+    const onFormSubmit = vi.fn();
+
+    render(
+      <div>
+        <button type="submit" form="product-form">
+          Save
+        </button>
+        <Form id="product-form" onFormSubmit={onFormSubmit}>
+          <Field.Root name="sku">
+            <Field.Label>SKU</Field.Label>
+            <Field.Control defaultValue="ABC-1234" />
+          </Field.Root>
+        </Form>
+      </div>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onFormSubmit).toHaveBeenCalledTimes(1);
+    expect(onFormSubmit.mock.calls[0][0]).toMatchObject({ sku: "ABC-1234" });
+  });
 });

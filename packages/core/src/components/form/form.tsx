@@ -22,7 +22,7 @@ type FormSubmitEventDetails =
 // form values when a type argument is provided (e.g. `<Form<MyValues>>`).
 type FormProps<FormValues extends Record<string, any> = Record<string, any>> = Pick<
   React.ComponentProps<typeof BaseForm>,
-  "errors" | "actionsRef" | "validationMode" | "noValidate" | "ref" | "className" | "style"
+  "errors" | "actionsRef" | "validationMode" | "noValidate" | "ref" | "className" | "style" | "id"
 > & {
   children: React.ReactNode;
   /**
@@ -116,6 +116,25 @@ interface FormComponent {
  *     <Field.Error />
  *   </Field.Root>
  *   <button type="submit">Submit</button>
+ * </Form>
+ * ```
+ *
+ * @example
+ * ### Submitting from outside the form
+ * Give the form an `id` and point a detached submit button at it with the
+ * native `form` attribute. Useful when the save action lives in a page
+ * header or a dialog footer rather than beside the fields.
+ * ```tsx
+ * <Layout.Header
+ *   title="Create product"
+ *   actions={[
+ *     <Button key="save" type="submit" form="product-form">
+ *       Save
+ *     </Button>,
+ *   ]}
+ * />
+ * <Form id="product-form" onFormSubmit={(values) => save(values)}>
+ *   …
  * </Form>
  * ```
  */

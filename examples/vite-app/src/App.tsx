@@ -1,15 +1,17 @@
 import {
   AppShell,
-  AppearanceSwitcher,
-  Button,
+  GlobalHeaderLayout,
   SidebarGroup,
   SidebarItem,
-  SidebarLayout,
+  SidebarMenuButton,
+  SidebarMenuItem,
   type SearchSource,
 } from "@tailor-platform/app-shell";
-import { BellIcon, CircleUserIcon } from "lucide-react";
+import { BellIcon, LayersIcon } from "lucide-react";
 import { searchOrders, searchRecentOrders } from "./fake-search";
 import { labels } from "./i18n-labels";
+import { headerActions, PanelsBody } from "./panels-body";
+import { AssistantProvider } from "./assistant-context";
 
 // Demonstrates multiple search sources in the command palette
 const searchSources: SearchSource[] = [
@@ -25,45 +27,71 @@ const searchSources: SearchSource[] = [
   },
 ];
 
-const App = () => {
+const AppInner = () => {
   return (
     <AppShell title="File-Based Routing Demo" searchSources={searchSources}>
-      <SidebarLayout
-        header={
-          <SidebarLayout.DefaultHeader
-            actions={[
-              <Button key="notifications" variant="outline" size="icon" aria-label="Notifications">
-                <BellIcon />
-              </Button>,
-              <Button key="account" variant="outline" size="icon" aria-label="Account">
-                <CircleUserIcon />
-              </Button>,
-              // Opt back into the appearance switcher — `actions` replaces the
-              // default right-hand cluster, so include it explicitly to keep it.
-              <AppearanceSwitcher key="appearance" />,
-            ]}
-          />
-        }
+      {/* GlobalHeaderLayout bundles the "global header + icon rail" mode: an
+          app-wide top bar over the whole shell and a sidebar that collapses to a
+          persistent icon rail (toggle at the bottom-left). */}
+      <GlobalHeaderLayout
+        header={<GlobalHeaderLayout.DefaultHeader actions={headerActions} />}
+        body={<PanelsBody />}
         sidebar={
-          <SidebarLayout.DefaultSidebar>
+          <GlobalHeaderLayout.DefaultSidebar>
+            {/* A custom sidebar action, composed from the low-level primitives
+                so it collapses to an icon (with tooltip) in icon-rail mode,
+                exactly like the built-in nav items. */}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                render={<button type="button" />}
+                tooltip="Notifications"
+                onClick={() => alert("Notifications")}
+              >
+                <BellIcon className="size-4" />
+                <span>Notifications</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
             <SidebarItem to="/" />
-            <SidebarGroup title={labels.t("navMain")}>
+            <SidebarGroup title={labels.t("navMain")} icon={<LayersIcon />}>
               <SidebarItem to="/dashboard" activeMatch="exact" />
               <SidebarItem to="/dashboard/orders" />
               <SidebarItem to="/dashboard/products" />
-              <SidebarItem to="/dashboard/document-progress" />
+              <SidebarItem to="/settings" />
+              <SidebarItem to="/dashboard/panels" />
             </SidebarGroup>
-            <SidebarItem to="/date-picker" />
-            <SidebarItem to="/data-table" />
-            <SidebarItem to="/data-table-lab" />
-            <SidebarItem to="/data-table-selection" />
-            <SidebarItem to="/alert-tokens" />
-            <SidebarItem to="/settings" />
-          </SidebarLayout.DefaultSidebar>
+            <SidebarGroup title="Showcase">
+              <SidebarItem to="/showcase/colors" />
+              <SidebarItem to="/showcase/primitives" />
+              <SidebarItem to="/showcase/dropdown" />
+              <SidebarItem to="/showcase/forms" />
+              <SidebarItem to="/showcase/forms/zod-rhf" />
+              <SidebarItem to="/showcase/csv-importer" />
+              <SidebarItem to="/showcase/metric-card" />
+              <SidebarItem to="/showcase/activity-card" />
+              <SidebarItem to="/showcase/layouts" />
+              <SidebarItem to="/showcase/grid" />
+              <SidebarItem to="/showcase/timeline" />
+              <SidebarItem to="/showcase/ai-chat" />
+              <SidebarItem to="/showcase/document-progress" />
+              <SidebarItem to="/showcase/date-picker" />
+              <SidebarItem to="/showcase/toolbar" />
+              <SidebarItem to="/showcase/data-table" />
+              <SidebarItem to="/showcase/data-table-lab" />
+              <SidebarItem to="/showcase/data-table-selection" />
+              <SidebarItem to="/showcase/alert-tokens" />
+              <SidebarItem to="/showcase/spinner" />
+            </SidebarGroup>
+          </GlobalHeaderLayout.DefaultSidebar>
         }
       />
     </AppShell>
   );
 };
+
+const App = () => (
+  <AssistantProvider>
+    <AppInner />
+  </AssistantProvider>
+);
 
 export default App;

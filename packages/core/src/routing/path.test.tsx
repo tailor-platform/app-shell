@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { processPathSegments, filterRoutes } from "./path";
+import { filterRoutes, hasDynamicSegment, parseDynamicSegment, processPathSegments } from "./path";
 import { defineModule, defineResource } from "@/resource";
 
 /**
@@ -87,6 +87,16 @@ const createMockModules = () => [
     ],
   }),
 ];
+
+describe("dynamic path segments", () => {
+  it("parses parameter names and detects dynamic paths", () => {
+    expect(parseDynamicSegment(":orderId")).toBe("orderId");
+    expect(parseDynamicSegment("orders")).toBeNull();
+    expect(hasDynamicSegment("orders/:orderId/activity")).toBe(true);
+    expect(hasDynamicSegment("orders/activity")).toBe(false);
+    expect(hasDynamicSegment("report:daily")).toBe(false);
+  });
+});
 
 describe.concurrent("processPathSegments", () => {
   const mockModules = createMockModules();

@@ -46,9 +46,6 @@ const DashboardPage = () => {
         </p>
         <div className="flex gap-3">
           <Button render={<Link to={paths.for("/dashboard/orders")} />}>View Orders</Button>
-          <Button variant="outline" render={<Link to={paths.for("/settings")} />}>
-            Go to Settings
-          </Button>
         </div>
       </Layout.Column>
     </Layout>

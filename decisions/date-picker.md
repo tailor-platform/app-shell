@@ -281,7 +281,7 @@ function DatePicker({ label, description, errorMessage, timeZone, locale, classN
             />
           )}
         </DateInput>
-        <Button className="astw:text-muted-foreground hover:astw:text-foreground astw:cursor-pointer">
+        <Button className="astw:text-muted-foreground astw:hover:text-foreground astw:cursor-pointer">
           <CalendarIcon className="astw:size-4" />
         </Button>
       </Group>

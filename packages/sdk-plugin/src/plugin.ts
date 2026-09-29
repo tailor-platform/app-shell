@@ -60,7 +60,7 @@ function toCamelCase(str: string): string {
  *
  * ```ts
  * import { definePlugins } from "@tailor-platform/sdk";
- * import { appShellPlugin } from "@tailor-platform/app-shell-sdk-plugin";
+ * import { appShellPlugin } from "@tailor-platform/sdk-plugin-app-shell";
  *
  * export const plugins = definePlugins(
  *   appShellPlugin({

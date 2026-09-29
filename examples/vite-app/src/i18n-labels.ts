@@ -7,7 +7,7 @@ export const labels = defineI18nLabels({
     greeting: (args: { name: string }) => `Hello, ${args.name}!`,
     navRoot: "Root",
     navMain: "Main",
-    navSettings: "Configuration",
+    navSettings: "Settings",
     ordersTitle: "Orders",
     dashboardTitle: "Dashboard",
   },

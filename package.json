@@ -7,15 +7,18 @@
     "type-check": "turbo type-check",
     "lint": "turbo lint",
     "test": "turbo test",
+    "docs:sync": "turbo run build --filter=@tailor-platform/app-shell-docs-kit && docs-kit sync",
+    "docs:check": "turbo run build --filter=@tailor-platform/app-shell-docs-kit && docs-kit check",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "changeset:create": "changeset",
-    "changeset:publish": "pnpm build && changeset publish",
+    "changeset:publish": "pnpm build && pnpm docs:sync && changeset publish",
     "prepare": "lefthook install"
   },
   "devDependencies": {
-    "@changesets/cli": "3.0.1",
-    "lefthook": "2.1.10",
+    "@changesets/cli": "3.0.3",
+    "@tailor-platform/app-shell-docs-kit": "workspace:*",
+    "lefthook": "2.1.14",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "pkg-pr-new": "0.0.88",
@@ -24,5 +27,5 @@
   "engines": {
     "node": "24.x"
   },
-  "packageManager": "pnpm@11.17.0"
+  "packageManager": "pnpm@12.4.0"
 }

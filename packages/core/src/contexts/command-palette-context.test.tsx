@@ -1,6 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { ReactNode } from "react";
+import { MemoryRouter, useNavigate } from "react-router";
+import {
+  AppShellConfigContext,
+  AppShellDataContext,
+  buildConfigurations,
+} from "@/contexts/appshell-context";
+import { defineModule, defineResource, pass, type Guard } from "@/resource";
 import {
   CommandPaletteProvider,
   useCommandPaletteDispatch,
@@ -12,8 +19,41 @@ import {
 } from "./command-palette-context";
 
 const wrapper = ({ children }: { children: ReactNode }) => (
-  <CommandPaletteProvider>{children}</CommandPaletteProvider>
+  <MemoryRouter>
+    <CommandPaletteProvider>{children}</CommandPaletteProvider>
+  </MemoryRouter>
 );
+
+const dynamicRoutesWrapper = (guard: Guard) => {
+  const configurations = buildConfigurations({
+    locale: "en",
+    modules: [
+      defineModule({
+        path: "users",
+        meta: { title: "Users" },
+        component: () => null,
+        resources: [
+          defineResource({
+            path: ":id",
+            meta: { title: "User" },
+            component: () => null,
+            guards: [guard],
+          }),
+        ],
+      }),
+    ],
+  });
+
+  return ({ children }: { children: ReactNode }) => (
+    <AppShellConfigContext.Provider value={{ configurations }}>
+      <AppShellDataContext.Provider value={{ contextData: {} }}>
+        <MemoryRouter initialEntries={["/users/42"]}>
+          <CommandPaletteProvider>{children}</CommandPaletteProvider>
+        </MemoryRouter>
+      </AppShellDataContext.Provider>
+    </AppShellConfigContext.Provider>
+  );
+};
 
 const createAction = (overrides: Partial<CommandPaletteAction> = {}): CommandPaletteAction => ({
   key: "test-key",
@@ -219,6 +259,72 @@ describe("CommandPaletteProvider", () => {
       });
 
       expect(result.current.state.open).toBe(true);
+    });
+
+    it("resolves dynamic routes only after opening", async () => {
+      const guard = vi.fn(() => pass());
+      const { result } = renderHook(
+        () => ({ openCommandPalette: useOpenCommandPalette(), state: useCommandPaletteState() }),
+        { wrapper: dynamicRoutesWrapper(guard) },
+      );
+
+      expect(guard).not.toHaveBeenCalled();
+
+      act(() => {
+        result.current.openCommandPalette();
+      });
+
+      expect(result.current.state.isLoadingDynamicRoutes).toBe(true);
+      await waitFor(() => expect(result.current.state.isLoadingDynamicRoutes).toBe(false));
+      expect(result.current.state.dynamicRoutes).toMatchObject([{ path: "users/42" }]);
+      expect(guard).toHaveBeenCalledOnce();
+    });
+
+    it("discards routes resolved after the palette closes", async () => {
+      let resolveGuard: (value: ReturnType<typeof pass>) => void;
+      const guard = () =>
+        new Promise<ReturnType<typeof pass>>((resolve) => {
+          resolveGuard = resolve;
+        });
+      const { result } = renderHook(
+        () => ({ openCommandPalette: useOpenCommandPalette(), state: useCommandPaletteState() }),
+        { wrapper: dynamicRoutesWrapper(guard) },
+      );
+
+      act(() => {
+        result.current.openCommandPalette();
+        result.current.state.setOpen(false);
+      });
+      await act(async () => {
+        resolveGuard(pass());
+      });
+
+      expect(result.current.state.open).toBe(false);
+      expect(result.current.state.dynamicRoutes).toEqual([]);
+      expect(result.current.state.isLoadingDynamicRoutes).toBe(false);
+    });
+
+    it("closes the palette when its pathname changes", async () => {
+      const { result } = renderHook(
+        () => ({
+          openCommandPalette: useOpenCommandPalette(),
+          state: useCommandPaletteState(),
+          navigate: useNavigate(),
+        }),
+        { wrapper: dynamicRoutesWrapper(() => pass()) },
+      );
+
+      act(() => {
+        result.current.openCommandPalette();
+      });
+      await waitFor(() => expect(result.current.state.isLoadingDynamicRoutes).toBe(false));
+
+      act(() => {
+        result.current.navigate("/users/43");
+      });
+
+      await waitFor(() => expect(result.current.state.open).toBe(false));
+      expect(result.current.state.dynamicRoutes).toEqual([]);
     });
   });
 

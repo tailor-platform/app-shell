@@ -43,7 +43,7 @@ function radioItemClasses(active: boolean) {
     "astw:relative astw:flex astw:h-auto astw:w-full astw:cursor-default astw:select-none astw:flex-col astw:items-center astw:justify-center astw:gap-1.5 astw:rounded-xl astw:border-0 astw:bg-transparent astw:px-2 astw:py-2 astw:text-center astw:text-xs astw:font-medium astw:leading-tight astw:outline-hidden",
     "astw:data-highlighted:bg-muted/80 astw:data-highlighted:text-foreground",
     "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
-    "[&_[data-slot=menu-radio-item-indicator]]:astw:hidden",
+    "astw:[&_[data-slot=menu-radio-item-indicator]]:hidden",
     active &&
       "astw:bg-primary/12 astw:ring-1 astw:ring-primary/25 astw:data-highlighted:bg-primary/[0.14]",
   );

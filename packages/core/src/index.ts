@@ -1,5 +1,12 @@
 export { AppShell, type AppShellProps } from "./components/appshell";
 export { SidebarLayout, DefaultSidebar, DefaultHeader } from "./components/sidebar";
+export {
+  GlobalHeaderLayout,
+  GlobalHeader,
+  type GlobalHeaderLayoutProps,
+  type GlobalHeaderProps,
+} from "./components/sidebar/index";
+export { DynamicBreadcrumb, usePathSegments } from "./components/sidebar/dynamic-breadcrumb";
 export { CommandPalette } from "./components/command-palette";
 export {
   useOpenCommandPalette,
@@ -9,6 +16,10 @@ export {
   type OpenCommandPaletteOptions,
   type SearchSource,
 } from "./contexts/command-palette-context";
+
+// Low-level sidebar primitives — for composing custom sidebar entries
+// (e.g. an action button) that behave in icon-rail mode like the built-ins.
+export { SidebarMenuItem, SidebarMenuButton } from "./components/sidebar";
 
 // Sidebar navigation components
 export {
@@ -20,7 +31,12 @@ export {
   type SidebarLayoutProps,
   type DefaultSidebarProps,
   type DefaultHeaderProps,
+  type ContentContainerProps,
 } from "./components/sidebar";
+
+// Sidebar collapse state — the supported alternative to observing
+// `[data-slot="sidebar"][data-state]` or clicking the trigger via the DOM.
+export { useAppShellSidebar, type AppShellSidebarState } from "./components/sidebar";
 
 // Guard component for conditional rendering
 export { WithGuard, type WithGuardProps } from "./components/with-guard";
@@ -56,6 +72,17 @@ export {
   type AIChatCompletionEvent,
 } from "./ai/client";
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
+export {
+  AIChat,
+  type AIChatProps,
+  type AIChatHeaderProps,
+  type AIChatConversationProps,
+  type AIChatComposerProps,
+  type ToolState,
+  type ChainOfThoughtStepStatus,
+  type ChatHistoryGroupData,
+  type ChatHistoryItemData,
+} from "./components/ai-chat";
 
 // Re-export auth-public-client types for advanced use cases
 export type { AuthClient } from "@tailor-platform/auth-public-client";
@@ -164,6 +191,7 @@ export { Layout, type LayoutProps } from "./components/layout";
 export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
+export { Spinner, type SpinnerProps } from "./components/spinner";
 export { Input, type InputProps } from "./components/input";
 export { Textarea, type TextareaProps } from "./components/textarea";
 export { Checkbox, type CheckboxProps } from "./components/checkbox";
@@ -178,6 +206,7 @@ export { Menu } from "./components/menu";
 export type { PositionProps } from "./lib/position";
 export { Sheet } from "./components/sheet";
 export { Tabs } from "./components/tabs";
+export { Toolbar, type ToolbarProps } from "./components/toolbar";
 export { Tooltip } from "./components/tooltip";
 export { Select, type SelectAsyncFetcher } from "./components/select";
 export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox";

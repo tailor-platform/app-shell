@@ -182,6 +182,13 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    * `type` is set). Always wins over the built-in renderer when both are
    * present.
    *
+   * `render` is a **presentation** hook. Built-in behaviors that need the raw
+   * cell value — such as truncation tooltips, cell context-menu copy/filter
+   * actions, and typed renderers — still resolve that value from `accessor`
+   * first, then `row[col.id]`. When neither exists, those behaviors fall back
+   * to the return value of `render(row)` only if it is a primitive
+   * (`string`/`number`/`boolean`/`bigint`).
+   *
    * Kept on the base (not per-branch) so callback contextual typing works
    * across spread-then-override patterns like `column({ ...inferred, render })`.
    */
@@ -189,17 +196,21 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   /**
    * Custom header renderer.
    *
-   * When omitted, the built-in header renders `label` and, for sortable
-   * columns, owns the sort button and indicator. When provided, the return
-   * value replaces the built-in header entirely. Sortable custom headers
-   * receive `sortDirection` and `activateSort()` and must render their own
-   * click surface and sort indicator.
+   * `header` is a **presentation** hook. When omitted, the built-in header
+   * renders `label` and, for sortable columns, owns the sort button and
+   * indicator. When provided, the return value replaces the built-in header
+   * entirely. Sortable custom headers receive `sortDirection` and
+   * `activateSort()` and must render their own click surface and sort
+   * indicator for left-click sorting; built-in header context-menu actions are
+   * still driven by `label`, `sort`, and other column metadata.
    */
   header?: (ctx: HeaderRenderContext) => ReactNode;
   /**
-   * Stable identifier used for column visibility toggling and as the React key.
-   * Falls back to `label` when omitted. Set this explicitly when `label` is
-   * absent or not unique.
+   * Stable identifier used for column visibility toggling, persisted layout
+   * state, raw-value fallback (`row[col.id]`), and as the React key. Falls
+   * back to `label` when omitted. Set this explicitly when `label` is absent,
+   * not unique, or when a custom-rendered column should still participate in
+   * built-in cell behaviors that need a raw value.
    */
   id?: string;
   /** Fixed column width in pixels. When omitted the column sizes naturally. */
@@ -224,9 +235,8 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   align?: "left" | "right";
   /**
    * When `true`, the cell content is truncated with an ellipsis when it
-   * overflows. A `<Tooltip>` is wired up automatically when `accessor`
-   * returns a string or number, so hovering the cell reveals the full
-   * value.
+   * overflows. A `<Tooltip>` is wired up automatically when the resolved raw
+   * value is a string or number (`accessor` first, then `row[col.id]`).
    *
    * Truncation requires the cell to be shrinkable — the body cell sets
    * `max-w-0`, which collapses unless another column anchors the row width.
@@ -235,19 +245,24 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    */
   truncate?: boolean;
   /**
-   * Sort configuration. When set, the column header becomes clickable and
-   * cycles through `Asc → Desc → undefined`.
+   * Sort configuration. When set, the column participates in built-in sort
+   * behaviors such as the default clickable header and the header context-menu
+   * sort submenu. Left-click sorting from a custom `header` still requires that
+   * renderer to call `ctx.activateSort()`.
+   *
    * Use `fieldTypeToSortConfig` or `inferColumns` to derive this automatically.
    */
   sort?: SortConfig;
   /**
    * Filter configuration. When set, this column appears as an option in
-   * `DataTable.Filters`.
+   * `DataTable.Filters` and, when collection `control` is available, can also
+   * drive the built-in cell context-menu filter actions.
    *
    * `operators` optionally narrows the conditions exposed by the built-in
    * filter UI for this column. Order controls both the menu order and the
    * default operator. This affects the DataTable UI only — collection control
    * APIs and persisted filter state still accept the full backend operator set.
+   * The cell context-menu narrows this further to single-value operators only.
    *
    * Use `fieldTypeToFilterConfig` or `inferColumns` to derive this automatically.
    */
@@ -262,11 +277,13 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
  * - `type: "text"` rejects `typeOptions` entirely.
  *
  * `accessor` lives on each branch (rather than `ColumnBase`) so the built-in
- * renderers can constrain what a column produces. Returning an array or a
- * non-Date object is a compile error on a typed branch, instead of silently
- * rendering `[object Object]`. Untyped columns (`type?: undefined`) still
- * accept `unknown` — they're rendered by an explicit `render`. `null` and
- * `undefined` are always allowed: every built-in renderer maps them to the
+ * renderers can constrain what a column produces. It is also the primary
+ * source of truth for built-in cell behaviors that need the raw value
+ * (truncate tooltip, cell context-menu copy/filter actions). Returning an
+ * array or a non-Date object is a compile error on a typed branch, instead of
+ * silently rendering `[object Object]`. Untyped columns (`type?: undefined`)
+ * still accept `unknown` — they're rendered by an explicit `render`. `null`
+ * and `undefined` are always allowed: every built-in renderer maps them to the
  * `—` placeholder.
  *
  * Prefer `Column<TRow>` in most cases; this is exported so consumers can

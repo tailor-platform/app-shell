@@ -216,6 +216,32 @@ describe("SidebarLayout", () => {
     });
   });
 
+  describe("topBar slot", () => {
+    it("renders the top bar and publishes its height to offset the sidebar", async () => {
+      renderSidebarLayout({ topBar: <div data-testid="global-bar">Bar</div> });
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-testid="global-bar"]')).not.toBeNull();
+      });
+
+      // The wrapper publishes --appshell-topbar-h so the fixed sidebar starts
+      // beneath the bar.
+      const wrapper = document.querySelector('[data-slot="sidebar-wrapper"]');
+      expect(wrapper?.className).toContain("--appshell-topbar-h");
+    });
+
+    it("does not render a top bar or set its height by default (backward compatible)", async () => {
+      renderSidebarLayout();
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-slot="sidebar-wrapper"]')).not.toBeNull();
+      });
+
+      const wrapper = document.querySelector('[data-slot="sidebar-wrapper"]');
+      expect(wrapper?.className).not.toContain("--appshell-topbar-h");
+    });
+  });
+
   describe("namespace", () => {
     it("exposes DefaultSidebar and DefaultHeader on SidebarLayout", () => {
       expect(SidebarLayout.DefaultSidebar).toBe(DefaultSidebar);

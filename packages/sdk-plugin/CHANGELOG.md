@@ -1,4 +1,22 @@
-# @tailor-platform/app-shell-sdk-plugin
+# @tailor-platform/sdk-plugin-app-shell
+
+## 0.2.0
+
+### Minor Changes
+
+- 23cfd1f: Rename the AppShell SDK plugin package to `@tailor-platform/sdk-plugin-app-shell`.
+  
+  Before:
+  
+  ```ts
+  import { appShellPlugin } from "@tailor-platform/app-shell-sdk-plugin";
+  ```
+  
+  After:
+  
+  ```ts
+  import { appShellPlugin } from "@tailor-platform/sdk-plugin-app-shell";
+  ```
 
 ## 0.1.1
 

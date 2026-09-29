@@ -1,6 +1,6 @@
 # Vite Example
 
-Example AppShell application using Vite with file-based routing.
+Example AppShell application using Vite with file-based routing and the consolidated UI showcase.
 
 ## Run
 

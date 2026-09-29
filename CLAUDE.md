@@ -16,14 +16,34 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 
 ## Documentation
 
-**📖 For component and API documentation, see:** [`docs/`](./docs/)
+Everything under [`docs/`](./docs/) is **generated** by the `docs-kit` pipeline and must **never be
+hand-edited** — the pre-commit hook warns and `pnpm docs:check` in CI blocks on any hand edit or
+drift. See [decisions/documentation-management-overhaul.md](./decisions/documentation-management-overhaul.md)
+and the [`resync-docs`](./.agents/skills/resync-docs/SKILL.md) skill.
+
+To change or add a doc, edit the authored **source** under `docs-src/`, then run `pnpm docs:sync`:
+
+| To document…                                  | Edit (authored source)                                                                                    |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| a component / hook / pattern / page / concept | `docs-src/<kind>/<slug>.docs.outline.md` (prose) + optional `<slug>.docs.examples.tsx` (runnable example) |
+| the consumer `app-shell-patterns` skill       | emitted from `docs-src/` by `docs:sync` — never edit `packages/core/skills/`                              |
+
+`docs-src/<kind>/` maps to `docs/<kind>/` (components→components, hooks→api, plus concepts, patterns,
+pages). Every outline declares `kind: code-backed` or `kind: prose` in its frontmatter — code-backed
+units also declare a `sources:` glob binding them to the exports they document, and `docs:check`
+reconciles that against `index.ts` both ways. Frontmatter is a closed schema: an unrecognised key is
+an error, not a silent no-op.
+
+The only hand-authored files under `docs/` are the four root guides — `introduction.md`,
+`quickstart.md`, `design-philosophy.md`, `migrations.md` — which have no `docs-src/` source and are
+edited in place (`migrations.md` is also copied into the generated skill).
 
 ## Key Architecture Points (LLM Orientation)
 
 ### Monorepo Structure
 
 - **packages/core**: Main library (@tailor-platform/app-shell) - React components with shadcn/ui, built with Vite
-- **examples/**: Next.js and Vite example implementations
+- **examples/**: Vite example implementation plus consolidated UI showcase
 
 ### Essential Concepts for Code Navigation
 

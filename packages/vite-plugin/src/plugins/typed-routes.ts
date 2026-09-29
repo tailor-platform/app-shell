@@ -37,12 +37,17 @@ export function createTypedRoutesPlugin(ctx: PluginContext): Plugin {
 
     // Ensure output directory exists
     const outputDir = path.dirname(outputPath);
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
+    fs.mkdirSync(outputDir, { recursive: true });
 
     // Write file only if content changed
-    const existingContent = fs.existsSync(outputPath) ? fs.readFileSync(outputPath, "utf-8") : "";
+    let existingContent = "";
+    try {
+      existingContent = fs.readFileSync(outputPath, "utf-8");
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw error;
+      }
+    }
 
     if (existingContent !== code) {
       fs.writeFileSync(outputPath, code, "utf-8");

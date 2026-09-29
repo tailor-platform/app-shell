@@ -1,4 +1,28 @@
-# @tailor-platform/app-shell-vite-plugin
+# @tailor-platform/vite-plugin-app-shell
+
+## 0.3.0
+
+### Minor Changes
+
+- 387efec: Rename the AppShell Vite plugin package to `@tailor-platform/vite-plugin-app-shell`.
+  
+  Before:
+  
+  ```ts
+  import { appShellRoutes } from "@tailor-platform/app-shell-vite-plugin";
+  ```
+  
+  After:
+  
+  ```ts
+  import { appShellRoutes } from "@tailor-platform/vite-plugin-app-shell";
+  ```
+
+### Patch Changes
+
+- b624df2: Fix typed routes generation to avoid a file existence check before reading or writing the generated output.
+  
+  This keeps the generated routes file behavior the same while removing the race-prone filesystem pattern flagged by code scanning.
 
 ## 0.2.3
 

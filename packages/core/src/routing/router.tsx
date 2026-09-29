@@ -22,12 +22,13 @@ const createRootRoute = (params: {
 }): RouteObject => {
   const { configurations, contentRoutes, children } = params;
 
-  // --- Loader: load navigation items ---
-  const { loaderID, loader } = createNavItemsLoader({
+  // The root loader supplies sidebar items to every page. It must stay separate
+  // from pathname-sensitive palette routes so navigation does not rerun all guards.
+  const { loaderID: navItemsLoaderID, loader: navItemsLoader } = createNavItemsLoader({
     modules: configurations.modules,
     locale: configurations.locale,
+    basePath: configurations.basePath,
   });
-
   // --- Children: wrap with error boundary when configured ---
   const globalErrorBoundary = configurations.errorBoundary;
   const routeChildren = globalErrorBoundary
@@ -41,8 +42,8 @@ const createRootRoute = (params: {
     : contentRoutes;
 
   return {
-    id: loaderID,
-    loader,
+    id: navItemsLoaderID,
+    loader: navItemsLoader,
     element: (
       <>
         <DocumentHead />

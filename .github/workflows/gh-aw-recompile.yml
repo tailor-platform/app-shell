@@ -1,0 +1,139 @@
+name: gh-aw Recompile
+
+# Keeps generated gh-aw files current.
+#
+# Lock files bake in a compile-time snapshot: pinned action SHAs, container
+# digests, and the fallback model id. Nothing else in this repo refreshes them —
+# Renovate has never opened a PR against a *.lock.yml — so the snapshot silently
+# rots until a workflow breaks, e.g. the baked model is retired by the provider
+# and every run fails with a 400. The lock files here were compiled with gh-aw
+# v0.80.9.
+#
+# Runs monthly, recompiles with the latest gh-aw, and opens a draft PR when
+# anything changed. Never commits to main.
+#
+# Auth: GITHUB_TOKEN cannot push files under .github/workflows/ — `workflows`
+# is not a grantable GITHUB_TOKEN permission, only a GitHub App one. The lock
+# file *is* a workflow file, so this mints a token from a GitHub App installed
+# on this repo instead (RECOMPILE_APP_ID / RECOMPILE_APP_PRIVATE_KEY).
+
+on:
+  schedule:
+    - cron: "0 6 1 * *" # 06:00 UTC on the 1st of each month
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: gh-aw-recompile
+  cancel-in-progress: false
+
+jobs:
+  recompile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Mint App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RECOMPILE_APP_ID }}
+          private-key: ${{ secrets.RECOMPILE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-workflows: write
+          permission-pull-requests: write
+
+      # Checkout stays credential-free (public repo, read-only). The App token
+      # is applied only to the push below, which is the single step that needs
+      # `workflows` write — the permission GITHUB_TOKEN cannot carry.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install gh-aw (latest)
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: gh extension install github/gh-aw
+
+      - name: Recompile workflows
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # `upgrade` bumps .github/aw/actions-lock.json and applies codemods to
+          # the authored *.md sources; `compile` must run last because the two
+          # disagree on a few generated values, and compile's output is the one
+          # that matches what a reviewer gets locally.
+          gh aw upgrade
+          gh aw compile
+
+      - name: Open draft PR if anything changed
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # Stage everything gh-aw regenerated under .github, then drop the
+          # authoring scaffolding it also emits. `-A` is what captures deletions:
+          # gh-aw v0.87.10 stopped generating agentics-maintenance.yml, so a
+          # recompile removes that file rather than editing it.
+          #
+          # .gitattributes is deliberately NOT staged. Current gh-aw emits it
+          # without the `merge=ours` on *.lock.yml that this repo relies on to
+          # resolve lock-file conflicts, and staging it would silently drop that.
+          git add -A -- .github
+
+          # gh-aw also writes .github/agents/agentic-workflows.md and
+          # .github/skills/agentic-workflows/ — local authoring aids, not part of
+          # the compiled output. Unstage per path: a single unmatched pathspec
+          # makes `git reset` fail and unstage *nothing*, which would quietly
+          # commit the scaffolding.
+          for path in .github/agents .github/skills; do
+            git reset -q -- "$path" 2>/dev/null || true
+          done
+
+          if git diff --cached --quiet; then
+            echo "Generated files already current — nothing to do."
+            exit 0
+          fi
+
+          # `gh aw version` prints to stderr, not stdout — redirect or VERSION is
+          # empty and the branch/title silently degrade to a date.
+          VERSION="$(gh aw version 2>&1 | grep -o 'v[0-9][0-9.]*' | head -1)"
+          BRANCH="chore/gh-aw-recompile-${VERSION:-$(date +%Y%m%d)}"
+
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "Branch $BRANCH already exists — a PR is likely open. Skipping."
+            exit 0
+          fi
+
+          git config user.name "tailor-skills-recompile[bot]"
+          git config user.email "tailor-skills-recompile[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git commit -m "chore(gh-aw): recompile generated files with ${VERSION:-latest}"
+
+          # Nothing is persisted in .git/config: the token is passed to this one
+          # push. It is registered as a secret by create-github-app-token, so it
+          # stays masked in the logs.
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$BRANCH"
+
+          {
+            echo "Automated monthly recompile of gh-aw generated files."
+            echo
+            echo "Lock files pin action SHAs, container digests, and the fallback model"
+            echo "id at compile time. This PR refreshes that snapshot so it does not rot"
+            echo "into a broken workflow."
+            echo
+            echo "**Review the diff before merging** - particularly any change to the"
+            echo "baked model fallback, container digests, or workflow permissions."
+            echo
+            echo "Opened by \`.github/workflows/gh-aw-recompile.yml\`."
+          } > /tmp/pr-body.md
+
+          # --head is required: the push above went through an explicit token URL
+          # rather than a tracking remote, so the branch has no upstream and gh
+          # cannot infer the head on its own.
+          gh pr create --draft \
+            --base "${GITHUB_REF_NAME}" \
+            --head "$BRANCH" \
+            --title "chore(gh-aw): recompile generated files with ${VERSION:-latest}" \
+            --body-file /tmp/pr-body.md

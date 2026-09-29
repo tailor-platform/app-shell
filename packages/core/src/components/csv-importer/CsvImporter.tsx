@@ -14,6 +14,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Combobox } from "@/components/combobox";
+import { Spinner } from "@/components/spinner";
 import type {
   CsvImporterProps,
   CsvImporterStep,
@@ -233,7 +234,7 @@ function MappingStep({
                 <tr
                   key={col.key}
                   className={cn(
-                    "astw:border-b astw:border-border last:astw:border-b-0 astw:transition-colors",
+                    "astw:border-b astw:border-border astw:last:border-b-0 astw:transition-colors",
                     !isMapped && col.required && "astw:bg-destructive/5",
                   )}
                 >
@@ -373,7 +374,7 @@ function ReviewStep({
         )}
         {validating && (
           <span className="astw:inline-flex astw:items-center astw:gap-1 astw:text-muted-foreground">
-            <span className="astw:size-3 astw:animate-spin astw:rounded-full astw:border-2 astw:border-current astw:border-t-transparent" />
+            <Spinner size="xs" />
             {t("reviewValidating")}
           </span>
         )}
@@ -866,7 +867,7 @@ export function CsvImporter<T extends CsvSchema>({
                           >
                             {importing ? (
                               <span className="astw:inline-flex astw:items-center astw:gap-2">
-                                <span className="astw:size-4 astw:animate-spin astw:rounded-full astw:border-2 astw:border-current astw:border-t-transparent" />
+                                <Spinner />
                                 {t("importingButton")}
                               </span>
                             ) : (

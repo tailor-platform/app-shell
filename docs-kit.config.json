@@ -1,0 +1,33 @@
+{
+  "$comment": "Config for @tailor-platform/app-shell-docs-kit. See decisions/documentation-management-overhaul.md.",
+  "inputs": {
+    "outlines": { "roots": ["docs-src"] },
+    "api": {
+      "tsconfig": "packages/core/tsconfig.json",
+      "entrypoint": "packages/core/src/index.ts"
+    },
+    "snapshots": { "dir": "packages/core/__snapshots__" }
+  },
+  "outputs": {
+    "documents": {
+      "mappings": [
+        { "match": "docs-src/components/**", "dir": "docs/components" },
+        { "match": "docs-src/hooks/**", "dir": "docs/api" },
+        { "match": "docs-src/concepts/**", "dir": "docs/concepts" },
+        { "match": "docs-src/patterns/**", "dir": "docs/patterns" },
+        { "match": "docs-src/pages/**", "dir": "docs/pages" },
+        { "match": "docs-src/references/**", "dir": "docs/references" }
+      ]
+    },
+    "manifest": "docs-manifest.json",
+    "skill": {
+      "outDir": "packages/core/skills/app-shell-patterns",
+      "templatePath": "docs-src/skill/SKILL.template.md",
+      "migrationsSource": "docs/migrations.md",
+      "repoBlobUrl": "https://github.com/tailor-platform/app-shell/blob/main"
+    }
+  },
+  "policy": {
+    "coverage": { "enforce": false, "exclusions": [] }
+  }
+}

@@ -43,16 +43,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # Chains must start with an example app (nextjs-app, vite-app), never
+      # Chains must start with a non-published harness (vite-app, e2e), never
       # @tailor-platform/app-shell itself — package-exceptions may excuse a
-      # license issue in a non-published example, never in the published
-      # package.
+      # license issue in a non-published app/test harness, never in the
+      # published package.
       - name: Load and validate package exceptions
         id: package-exceptions
         run: |
           node <<'EOF'
           const fs = require("node:fs");
-          const ALLOWED_ROOTS = ["nextjs-app", "vite-app"];
+          const ALLOWED_ROOTS = ["e2e", "vite-app"];
           const configPath = ".github/license-package-exceptions.json";
           const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
           const violations = [];

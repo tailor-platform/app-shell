@@ -9,6 +9,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useLocation } from "react-router";
+import { useAppShellConfig } from "@/contexts/appshell-context";
+import { buildCurrentPathAwareRoutes } from "@/routing/navigation";
+import type { NavigatableRoute } from "@/routing/path";
 
 /**
  * An action entry displayed in the CommandPalette.
@@ -90,6 +94,8 @@ type StateContextValue = {
   openRequest: OpenCommandPaletteOptions | null;
   clearOpenRequest: () => void;
   openCommandPalette: (options?: OpenCommandPaletteOptions) => void;
+  dynamicRoutes: Array<NavigatableRoute>;
+  isLoadingDynamicRoutes: boolean;
 };
 
 const CommandPaletteDispatchContext = createContext<DispatchContextValue | null>(null);
@@ -111,10 +117,17 @@ export function CommandPaletteProvider({
   children: ReactNode;
   searchSources?: readonly SearchSource[];
 }) {
+  const { pathname } = useLocation();
+  const { configurations } = useAppShellConfig();
   const registryRef = useRef(new Map<string, CommandPaletteAction[]>());
+  const dynamicRoutesRequestRef = useRef(0);
+  const previousPathnameRef = useRef(pathname);
   const [actions, setActions] = useState<CommandPaletteAction[]>([]);
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(false);
   const [openRequest, setOpenRequest] = useState<OpenCommandPaletteOptions | null>(null);
+  const [dynamicRoutes, setDynamicRoutes] = useState<Array<NavigatableRoute>>([]);
+  const [dynamicRoutesPathname, setDynamicRoutesPathname] = useState<string | null>(null);
+  const [isLoadingDynamicRoutes, setIsLoadingDynamicRoutes] = useState(false);
 
   const updateActions = useCallback(() => {
     setActions(Array.from(registryRef.current.values()).flat());
@@ -136,22 +149,74 @@ export function CommandPaletteProvider({
     setOpenRequest(null);
   }, []);
 
-  const openCommandPalette = useCallback((options: OpenCommandPaletteOptions = {}) => {
-    setOpen(true);
-    setOpenRequest({ search: options.search });
+  const closeCommandPalette = useCallback(() => {
+    dynamicRoutesRequestRef.current += 1;
+    setOpenState(false);
+    setDynamicRoutes([]);
+    setDynamicRoutesPathname(null);
+    setIsLoadingDynamicRoutes(false);
   }, []);
+
+  const loadDynamicRoutes = useCallback(() => {
+    const requestID = dynamicRoutesRequestRef.current + 1;
+    dynamicRoutesRequestRef.current = requestID;
+    setDynamicRoutes([]);
+    setDynamicRoutesPathname(pathname);
+    setIsLoadingDynamicRoutes(true);
+
+    void buildCurrentPathAwareRoutes({
+      modules: configurations.modules,
+      locale: configurations.locale,
+      basePath: configurations.basePath,
+      pathname,
+    })
+      .then((routes) => {
+        if (dynamicRoutesRequestRef.current !== requestID) return;
+        setDynamicRoutes(routes);
+        setIsLoadingDynamicRoutes(false);
+      })
+      .catch(() => {
+        if (dynamicRoutesRequestRef.current !== requestID) return;
+        setIsLoadingDynamicRoutes(false);
+      });
+  }, [configurations.basePath, configurations.locale, configurations.modules, pathname]);
+
+  const openCommandPalette = useCallback(
+    (options: OpenCommandPaletteOptions = {}) => {
+      setOpenState(true);
+      setOpenRequest({ search: options.search });
+      loadDynamicRoutes();
+    },
+    [loadDynamicRoutes],
+  );
+
+  const setOpen = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen) openCommandPalette();
+      else closeCommandPalette();
+    },
+    [closeCommandPalette, openCommandPalette],
+  );
+
+  // Close rather than display routes resolved for a different dynamic path.
+  useEffect(() => {
+    const pathnameChanged = previousPathnameRef.current !== pathname;
+    previousPathnameRef.current = pathname;
+    if (pathnameChanged && open) closeCommandPalette();
+  }, [closeCommandPalette, open, pathname]);
 
   // Global keyboard shortcut: Cmd+K (Mac) / Ctrl+K (Windows)
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        setOpen((prev) => !prev);
+        if (open) closeCommandPalette();
+        else openCommandPalette();
       }
     };
     document.addEventListener("keydown", handleGlobalKeyDown);
     return () => document.removeEventListener("keydown", handleGlobalKeyDown);
-  }, []);
+  }, [closeCommandPalette, open, openCommandPalette]);
 
   const dispatchValue = useMemo(() => ({ register }), [register]);
   const stateValue = useMemo(
@@ -163,8 +228,23 @@ export function CommandPaletteProvider({
       openRequest,
       clearOpenRequest,
       openCommandPalette,
+      dynamicRoutes: dynamicRoutesPathname === pathname ? dynamicRoutes : [],
+      isLoadingDynamicRoutes:
+        isLoadingDynamicRoutes || (open && dynamicRoutesPathname !== pathname),
     }),
-    [actions, searchSources, open, openRequest, clearOpenRequest, openCommandPalette],
+    [
+      actions,
+      searchSources,
+      open,
+      openRequest,
+      clearOpenRequest,
+      openCommandPalette,
+      dynamicRoutes,
+      dynamicRoutesPathname,
+      isLoadingDynamicRoutes,
+      pathname,
+      setOpen,
+    ],
   );
 
   return (

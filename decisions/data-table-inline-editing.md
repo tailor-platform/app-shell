@@ -154,7 +154,7 @@ column({
 - **Naming.** `edit` / `canEdit` / `onCommit`, or Base UI's `onValueCommitted` wording?
 - **Leaving an invalid cell reverts it.** This is AG-Grid's default, and it means the data never disagrees with the screen, but the typed value is lost. Keep it? The other option is keeping the red value until it's fixed, and giving screens a way to ask "any invalid cells?" before Save.
 - **Enter moves down** to the same column, spreadsheet-style, instead of staying put. OK?
-- **Two PRs** as described above?
+- **One PR.** Date and badge editing were planned as a follow-up but are folded in, so every column type is reviewed together. OK, or split them back out?
 - **#1115.** Ship the simple pending/revert behaviour with PR 1 and let `useOptimisticRows` build on it later, or wait for #1115?
 - **Catalogue pattern.** Move #1750 into `docs-src/patterns/`, rewritten around the built-in feature, and retire the popover version?
 - **Bring-your-own editor** (for flags, product search and similar): leave it out until a team asks?

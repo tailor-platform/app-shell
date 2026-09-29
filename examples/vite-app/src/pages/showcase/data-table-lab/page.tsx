@@ -553,14 +553,19 @@ const DataTableLabPage = () => {
           title="Inline editing"
           description={
             <>
-              A goods receipt with every editor. <strong>Supplier</strong> is a dropdown on pending
-              lines (a link on the rest), <strong>Status</strong> a badge dropdown and{" "}
-              <strong>Expected</strong> a calendar. Tick a row to enter its{" "}
-              <strong>Received</strong> quantity — whole numbers only, no negatives, never more than
-              was ordered. <strong>Unit price</strong> autosaves to a pretend server when you leave
-              the cell; prices over 10,000 are rejected and the cell goes back to the old value.{" "}
-              <strong>Note</strong> is free text. Enter moves down a column, Tab to the next
-              editable cell, Esc undoes.
+              A goods receipt with every editor and rule — scroll right for more columns.{" "}
+              <strong>Numbers:</strong> tick a row to enter its <strong>Received</strong> quantity
+              (whole numbers, never more than ordered); <strong>Discount %</strong> is limited to
+              0–100 with one decimal (try 150); <strong>Weight (kg)</strong> takes three decimals up
+              to 500; <strong>Unit price</strong> autosaves, and prices over 10,000 are rejected so
+              the cell reverts. <strong>Text:</strong> <strong>Lot no.</strong> is required,{" "}
+              <strong>Note</strong> free. <strong>Dropdowns:</strong> <strong>Supplier</strong>{" "}
+              (required, pending lines only) and <strong>Warehouse</strong> (optional).{" "}
+              <strong>Badges:</strong> <strong>Status</strong> (required) and <strong>QC</strong>{" "}
+              (optional). <strong>Dates:</strong> <strong>Expected</strong>,{" "}
+              <strong>Received at</strong> (with time) and <strong>Best before</strong> (Oct
+              2026–Dec 2027 only). Enter moves down a column, Tab to the next editable cell, Esc
+              undoes.
             </>
           }
         >

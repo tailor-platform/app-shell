@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import { BadgeList, toValueArray } from "@/components/badge-list";
 import type { SelectOption } from "@/types/collection";
-import { currencyFractionDigits, isIsoDate, optionLabel } from "./cell-edit";
+import { currencyFractionDigits, optionLabel, toLocalDate } from "./cell-edit";
 import type {
   BadgeCellOptions,
   Column,
@@ -51,22 +51,6 @@ export function getCellValue<TRow extends Record<string, unknown>>(
 
 function isEmpty(value: unknown): boolean {
   return value == null || value === "";
-}
-
-function toDate(value: unknown): Date | null {
-  if (value == null) return null;
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-  // A date-only "YYYY-MM-DD" is that day in the local zone. `new Date()` would
-  // read it as UTC midnight — the previous day anywhere west of UTC.
-  if (isIsoDate(value)) {
-    const [year, month, day] = value.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  }
-  if (typeof value === "string" || typeof value === "number") {
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  return null;
 }
 
 function renderText(value: unknown): ReactNode {
@@ -188,7 +172,7 @@ export function formatColumnNumber<TRow extends Record<string, unknown>>(
 
 function renderDate(value: unknown, options: DateCellOptions | undefined): ReactNode {
   if (isEmpty(value)) return PLACEHOLDER;
-  const date = toDate(value);
+  const date = toLocalDate(value);
   if (!date) return PLACEHOLDER;
   const format = options?.dateFormat ?? "short";
   const formatOptions = resolveDateFormatOptions(format);

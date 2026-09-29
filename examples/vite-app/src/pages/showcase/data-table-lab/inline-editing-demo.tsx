@@ -21,10 +21,10 @@ type ReceiptLine = {
 };
 
 const SUPPLIERS = [
-  { value: "globex", label: "Globex Apparel" },
+  { value: "hanover", label: "Hanover Apparel Co." },
   { value: "kanto", label: "Kanto Textile" },
-  { value: "initech", label: "Initech Goods" },
-  { value: "umbrella", label: "Umbrella Supply" },
+  { value: "sagami", label: "Sagami Cap Works" },
+  { value: "northfield", label: "Northfield Knitting" },
 ];
 
 const RECEIPT_LINES: ReceiptLine[] = [
@@ -32,7 +32,7 @@ const RECEIPT_LINES: ReceiptLine[] = [
     id: "GR-1",
     sku: "TS-NAVY-S",
     product: "Tee · Navy · S",
-    supplierId: "globex",
+    supplierId: "hanover",
     ordered: 24,
     received: 24,
     unitPrice: 8.5,
@@ -45,7 +45,7 @@ const RECEIPT_LINES: ReceiptLine[] = [
     id: "GR-2",
     sku: "TS-NAVY-M",
     product: "Tee · Navy · M",
-    supplierId: "globex",
+    supplierId: "hanover",
     ordered: 36,
     received: null,
     unitPrice: 8.5,
@@ -58,7 +58,7 @@ const RECEIPT_LINES: ReceiptLine[] = [
     id: "GR-3",
     sku: "TS-NAVY-L",
     product: "Tee · Navy · L",
-    supplierId: "globex",
+    supplierId: "hanover",
     ordered: 36,
     received: 30,
     unitPrice: 8.5,
@@ -97,7 +97,7 @@ const RECEIPT_LINES: ReceiptLine[] = [
     id: "GR-6",
     sku: "CP-BLK-OS",
     product: "Cap · Black · One size",
-    supplierId: "initech",
+    supplierId: "sagami",
     ordered: 50,
     received: null,
     unitPrice: 5.25,

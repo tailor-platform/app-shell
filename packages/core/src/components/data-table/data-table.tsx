@@ -1330,7 +1330,12 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                 );
               }
               const editable =
-                editableColumn && rowId != null && (col.edit?.canEdit?.(row, { selected }) ?? true);
+                editableColumn &&
+                rowId != null &&
+                // A badge dropdown picks one value; a cell holding several stays
+                // read-only rather than have its list replaced by a single pick.
+                !(col.type === "badge" && Array.isArray(getCellValue(row, col))) &&
+                (col.edit?.canEdit?.(row, { selected }) ?? true);
               // An editable cell renders its own display; skip rendering it twice.
               let content: ReactNode;
               if (!editable) content = col.render ? col.render(row) : renderTypedCell(row, col);

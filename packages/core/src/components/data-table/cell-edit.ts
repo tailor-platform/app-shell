@@ -228,14 +228,20 @@ export function isIsoDate(value: unknown): value is string {
   return typeof value === "string" && ISO_DATE.test(value);
 }
 
-// A raw date cell value as a local `Date`. `"YYYY-MM-DD"` is read as that day
-// in the local zone — `new Date("2026-10-02")` is UTC midnight, which is the
-// previous day anywhere west of UTC.
-function toLocalDate(raw: unknown): Date | null {
+/**
+ * A raw date cell value as a local `Date`, or `null` when it isn't one.
+ * `"YYYY-MM-DD"` is read as that day in the local zone — `new Date("2026-10-02")`
+ * is UTC midnight, which is the previous day anywhere west of UTC.
+ */
+export function toLocalDate(raw: unknown): Date | null {
   if (raw == null || raw === "") return null;
   if (isIsoDate(raw)) {
     const [year, month, day] = raw.split("-").map(Number);
-    return new Date(year, month - 1, day);
+    const date = new Date(year, month - 1, day);
+    // `Date` rolls an impossible day over ("2026-13-45" → Feb 2027); reject it.
+    const exact =
+      date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    return exact ? date : null;
   }
   if (!(raw instanceof Date) && typeof raw !== "string" && typeof raw !== "number") return null;
   const date = raw instanceof Date ? raw : new Date(raw);

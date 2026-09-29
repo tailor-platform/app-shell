@@ -745,6 +745,9 @@ function DateEditCell<TRow extends Record<string, unknown>>({
   // the calendar closes; a date commits as soon as a day is picked.
   const [draftDay, setDraftDay] = useState<CalendarDate | null>(null);
   const [draftTime, setDraftTime] = useState("");
+  // The trigger shows only an icon (the date is the cell's own display, hidden
+  // from screen readers), so its accessible name carries the date.
+  const accessibleName = typeof display === "string" ? `${label}, ${display}` : label;
   const min = isIsoDate(col.edit?.min) ? parseDate(col.edit.min) : undefined;
   const max = isIsoDate(col.edit?.max) ? parseDate(col.edit.max) : undefined;
 
@@ -782,7 +785,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
             render={
               <Popover.Trigger
                 ref={register}
-                aria-label={label}
+                aria-label={accessibleName}
                 aria-invalid={message !== undefined ? true : undefined}
                 aria-describedby={message !== undefined ? errorId : undefined}
                 className={TRIGGER_CLASS_NAME}

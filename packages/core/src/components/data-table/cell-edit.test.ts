@@ -2,6 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   currencyFractionDigits,
   evaluateNumberDraft,
+  isIsoDate,
+  optionLabel,
+  resolveBadgeOptions,
+  sameDate,
+  toCalendarDate,
+  toIsoDateTime,
+  toLocalDate,
+  toTimeText,
   evaluateTextDraft,
   isAllowedNumberText,
   isLiveError,
@@ -209,5 +217,80 @@ describe("value helpers", () => {
     expect(currencyFractionDigits("JPY")).toBe(0);
     expect(currencyFractionDigits("KWD")).toBe(3);
     expect(currencyFractionDigits("NOT-A-CODE")).toBe(2);
+  });
+});
+
+describe("choices", () => {
+  const choices = [
+    { value: "acme", label: "Acme Corp" },
+    { value: "7", label: "Seven" },
+  ];
+
+  it("labels a value by its choice, and leaves unknown or empty values alone", () => {
+    expect(optionLabel(choices, "acme")).toBe("Acme Corp");
+    expect(optionLabel(choices, 7)).toBe("Seven");
+    expect(optionLabel(choices, "other")).toBe("other");
+    expect(optionLabel(choices, null)).toBeNull();
+    expect(optionLabel(undefined, "acme")).toBe("acme");
+  });
+
+  it("takes a badge column's choices from edit.options, then badgeLabelMap, then an enum filter", () => {
+    const filter = {
+      field: "status",
+      type: "enum" as const,
+      options: [{ value: "a", label: "A" }],
+    };
+    const typeOptions = { badgeLabelMap: { open: "Open", closed: "Closed" } };
+    expect(resolveBadgeOptions(choices, typeOptions, filter)).toBe(choices);
+    expect(resolveBadgeOptions(undefined, typeOptions, filter)).toEqual([
+      { value: "open", label: "Open" },
+      { value: "closed", label: "Closed" },
+    ]);
+    expect(resolveBadgeOptions(undefined, undefined, filter)).toEqual(filter.options);
+    expect(resolveBadgeOptions(undefined, undefined, { field: "status", type: "string" })).toEqual(
+      [],
+    );
+  });
+});
+
+describe("dates", () => {
+  it("recognises date-only strings", () => {
+    expect(isIsoDate("2026-10-02")).toBe(true);
+    expect(isIsoDate("2026-10-02T09:00:00Z")).toBe(false);
+    expect(isIsoDate(20261002)).toBe(false);
+  });
+
+  it("reads a date-only string as that local day, and rejects impossible ones", () => {
+    const day = toLocalDate("2026-10-02");
+    expect([day?.getFullYear(), day?.getMonth(), day?.getDate()]).toEqual([2026, 9, 2]);
+    expect(toLocalDate("2026-13-45")).toBeNull();
+    expect(toLocalDate("2026-02-30")).toBeNull();
+    expect(toLocalDate("not a date")).toBeNull();
+    expect(toLocalDate({})).toBeNull();
+  });
+
+  it("converts cell values to the calendar day and local time they show", () => {
+    expect(toCalendarDate("2026-10-02")?.toString()).toBe("2026-10-02");
+    expect(toCalendarDate(new Date(2026, 9, 2, 23, 30))?.toString()).toBe("2026-10-02");
+    expect(toCalendarDate(null)).toBeNull();
+    expect(toTimeText(new Date(2026, 9, 2, 9, 5))).toBe("09:05");
+    expect(toTimeText("2026-10-02")).toBe("00:00");
+    expect(toTimeText(undefined)).toBe("");
+  });
+
+  it("builds an ISO timestamp from a day and a local time", () => {
+    const day = toCalendarDate("2026-10-20")!;
+    expect(toIsoDateTime(day, "14:30")).toBe(new Date(2026, 9, 20, 14, 30).toISOString());
+    expect(toIsoDateTime(day, "")).toBe(new Date(2026, 9, 20).toISOString());
+  });
+
+  it("compares by day for dates and by minute for date-times", () => {
+    expect(sameDate("2026-10-02", new Date(2026, 9, 2, 18), false)).toBe(true);
+    expect(sameDate("2026-10-02", "2026-10-03", false)).toBe(false);
+    const at = new Date(2026, 9, 2, 14, 30, 5);
+    expect(sameDate(at.toISOString(), new Date(2026, 9, 2, 14, 30, 50), true)).toBe(true);
+    expect(sameDate(at.toISOString(), new Date(2026, 9, 2, 14, 31), true)).toBe(false);
+    expect(sameDate(null, undefined, false)).toBe(true);
+    expect(sameDate(null, "2026-10-02", false)).toBe(false);
   });
 });

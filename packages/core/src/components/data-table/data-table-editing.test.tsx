@@ -698,6 +698,27 @@ describe("DataTable inline editing", () => {
       expect(trigger.closest("td")?.textContent).toContain("Received");
     });
 
+    it("keeps a badge cell with several values read-only", () => {
+      renderTable(
+        <Harness
+          rows={LINES.map((line, i) =>
+            i === 0 ? { ...line, status: ["pending", "partial"] as unknown as string } : line,
+          )}
+          columns={() => [
+            column({
+              id: "status",
+              label: "Status",
+              type: "badge",
+              typeOptions: { badgeLabelMap: { pending: "Pending", partial: "Partial" } },
+              edit: { onCommit: () => {} },
+            }),
+          ]}
+        />,
+      );
+      // Rows 2 and 3 have no status, so only row 1's list cell is at stake.
+      expect(screen.queryAllByRole("combobox", { name: "Status" })).toHaveLength(2);
+    });
+
     it("isn't editable when a badge column has no choices to offer", () => {
       renderTable(
         <Harness
@@ -775,12 +796,30 @@ describe("DataTable inline editing", () => {
       }
     });
 
+    it("names the date trigger with its current value", () => {
+      renderTable(
+        <Harness
+          rows={dateRows}
+          columns={() => [
+            column({
+              id: "expected",
+              label: "Expected",
+              type: "date",
+              typeOptions: { locale: "en-US" },
+              edit: { onCommit: () => {} },
+            }),
+          ]}
+        />,
+      );
+      expect(screen.getAllByRole("button", { name: "Expected, Oct 2, 2026" })).toHaveLength(3);
+    });
+
     it("commits a picked day as YYYY-MM-DD", async () => {
       const onCommit = vi.fn();
       const user = renderTable(
         <Harness rows={dateRows} columns={(update) => [expectedColumn(onCommit, update)]} />,
       );
-      await user.click(screen.getAllByRole("button", { name: "Expected" })[0]);
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
       await user.click(dayButton("15"));
       expect(onCommit).toHaveBeenCalledWith("1", "2026-10-15");
     });
@@ -790,7 +829,7 @@ describe("DataTable inline editing", () => {
       const user = renderTable(
         <Harness rows={dateRows} columns={(update) => [expectedColumn(onCommit, update)]} />,
       );
-      await user.click(screen.getAllByRole("button", { name: "Expected" })[0]);
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
       await user.click(screen.getByRole("button", { name: "Clear" }));
       expect(onCommit).toHaveBeenCalledWith("1", null);
 
@@ -801,7 +840,7 @@ describe("DataTable inline editing", () => {
           columns={(update) => [expectedColumn(onCommit, update, { required: true })]}
         />,
       );
-      await user2.click(screen.getAllByRole("button", { name: "Expected" })[0]);
+      await user2.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
       expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
     });
 
@@ -813,7 +852,7 @@ describe("DataTable inline editing", () => {
           columns={(update) => [expectedColumn(onCommit, update, { datetime: true })]}
         />,
       );
-      await user.click(screen.getAllByRole("button", { name: "Expected" })[0]);
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
       await user.click(dayButton("20"));
       fireEvent.change(screen.getByLabelText("Expected (Choose time)"), {
         target: { value: "14:30" },

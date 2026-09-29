@@ -1,6 +1,6 @@
 # Decision: inline cell editing in DataTable
 
-> Status: **Open — for team input. No code yet.**
+> Status: **Open — for team input.** PR 1's scope (text, number, money and link) is implemented in the same PR, so the proposal can be tried in the vite example (`/showcase/data-table-lab`) while the questions below are settled.
 >
 > Context: [platform-planning#1750](https://github.com/tailor-inc/platform-planning/issues/1750) (the UI Catalogue inline-edit pattern, left with @itsprade), the Larson IMS request in Slack (`#prj-larson-ims`), and [platform-planning#1428](https://github.com/tailor-inc/platform-planning/issues/1428). Related: [platform-planning#1115](https://github.com/tailor-inc/platform-planning/issues/1115) (optimistic rows) and [platform-planning#1161](https://github.com/tailor-inc/platform-planning/issues/1161) (LineItems).
 >
@@ -91,7 +91,7 @@ column({
     maxDecimals: 0, // whole numbers only
     required: true,
     validate: (value, row) =>
-      value > row.ordered ? `Can't exceed ordered (${row.ordered})` : undefined,
+      value !== null && value > row.ordered ? `Can't exceed ordered (${row.ordered})` : undefined,
     // May return a promise; if it rejects, the cell reverts.
     onCommit: (row, value) => saveReceivedQty(row.id, value),
   },

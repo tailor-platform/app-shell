@@ -11,6 +11,7 @@ import {
 } from "@tailor-platform/app-shell";
 import { FlaskConical } from "lucide-react";
 import { useMemo } from "react";
+import { InlineEditingDemo } from "./inline-editing-demo";
 
 // ─── Dummy data ──────────────────────────────────────────────────────────────
 // 🧪 Dummy Data: Replace with a real GraphQL-backed source later.
@@ -547,6 +548,22 @@ const DataTableLabPage = () => {
           left / Scrollable / Fixed right zones; scroll horizontally to see pinned columns stay put.
           Layout persists per table via <code>tableId</code>.
         </div>
+
+        <Section
+          title="Inline editing"
+          description={
+            <>
+              A goods receipt. Tick a row to enter its <strong>Received</strong> quantity — whole
+              numbers only, no negatives, and never more than was ordered.{" "}
+              <strong>Unit price</strong> autosaves to a pretend server when you leave the cell;
+              prices over 10,000 are rejected and the cell goes back to the old value. Enter moves
+              down a column, Tab to the next editable cell, Esc undoes. <strong>Supplier</strong>{" "}
+              can only be changed on lines with nothing received yet.
+            </>
+          }
+        >
+          <InlineEditingDemo />
+        </Section>
 
         <Section
           title="Toolbar — filters + column settings"

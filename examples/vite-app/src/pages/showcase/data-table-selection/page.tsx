@@ -1,10 +1,11 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import {
   Layout,
   Button,
   DataTable,
+  Dialog,
+  Toolbar,
   useDataTable,
-  useDataTableContext,
   useCollectionVariables,
   useToast,
   createColumnHelper,
@@ -12,8 +13,9 @@ import {
   type CollectionVariables,
   type DataTableData,
   type PageInfo,
+  type SelectionAction,
 } from "@tailor-platform/app-shell";
-import { CheckSquare, Pause, Play, Trash2 } from "lucide-react";
+import { CheckSquare, Download, Pause, Play, Trash2 } from "lucide-react";
 
 // ─── Dummy data ──────────────────────────────────────────────────────────────
 // 🧪 Dummy Data: Replace with a real GraphQL-backed source later.
@@ -83,20 +85,20 @@ function makeVendors(count: number): Vendor[] {
   return rows;
 }
 
-const ALL_VENDORS = makeVendors(240);
+const INITIAL_VENDORS = makeVendors(240);
 
 // ─── Local data source (stub for a GraphQL query) ────────────────────────────
 // Sync (no simulated latency) so paging while a selection is open stays snappy
 // — the point of this page is the footer, not the loading states.
 
-function selectPage(variables: CollectionVariables): DataTableData<Vendor> {
-  let rows = ALL_VENDORS;
+function selectPage(vendors: Vendor[], variables: CollectionVariables): DataTableData<Vendor> {
+  let rows = vendors;
 
   if (variables.order?.length) {
     const [{ field, direction }] = variables.order;
     const dir = direction === "Desc" ? -1 : 1;
     // `toSorted` would satisfy the lint rule but the app targets ES2020, so
-    // sort a copy — ALL_VENDORS must not be mutated.
+    // sort a copy — the vendors state must not be mutated.
     // oxlint-disable-next-line unicorn/no-array-sort
     rows = [...rows].sort((a, b) => {
       const av = a[field as keyof Vendor];
@@ -202,229 +204,150 @@ const columns = [
   }),
 ];
 
-// ─── Selection footer bar ────────────────────────────────────────────────────
-// ✅ Reusable Component: candidate for `DataTable.SelectionActions` in core —
-// the bulk-action bar that takes over the footer while a selection is open.
-//
-// Actions live in the footer rather than the toolbar for two reasons: the row
-// count already lives here (so the count and the things you can do to it stay
-// together), and the footer is the only strip that is always on screen in a
-// `<Layout fill>` table — the toolbar scrolls away on long pages.
-
-type SelectionAction = {
-  id: string;
-  label: string;
-  icon?: ReactNode;
-  /** Rows in the selection this action actually applies to. Shown as "(n)". */
-  count: number;
-  variant?: "secondary" | "ghost" | "destructive";
-  onClick: () => void;
-};
-
-function SelectionBar({ actions }: { actions: SelectionAction[] }) {
-  const { selectedIds, clearSelection, total } = useDataTableContext<Vendor>();
-
-  return (
-    <div className="flex min-w-0 shrink-0 items-center gap-2">
-      {/* "20 of 240 selected" — the denominator is the whole filtered
-          collection, not the current page, which is the scope the actions act
-          on. `total` is null when the backend returns no count, so the bar
-          falls back to the bare selected count. */}
-      <span className="shrink-0 text-sm font-medium tabular-nums">
-        {total === null
-          ? `${selectedIds.length} selected`
-          : `${selectedIds.length} of ${total} selected`}
-      </span>
-      <span aria-hidden className="mx-1 h-4 w-px shrink-0 bg-current opacity-25" />
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-        {actions.map((action) => (
-          <Button
-            key={action.id}
-            size="sm"
-            variant={action.variant ?? "secondary"}
-            disabled={action.count === 0}
-            onClick={action.onClick}
-          >
-            {action.icon}
-            {action.label} ({action.count})
-          </Button>
-        ))}
-      </div>
-      <span aria-hidden className="mx-1 h-4 w-px shrink-0 bg-current opacity-25" />
-      <Button size="sm" variant="ghost" onClick={clearSelection}>
-        Clear
-      </Button>
-    </div>
-  );
-}
-
-// 🧪 Two candidate treatments for the active footer: `primary` is brand-tinted,
-// `neutral` is a plain inverted surface (near-black in light mode, near-white in
-// dark). `surface` is a class on the footer itself; `ink` feeds `toneTokens`,
-// which re-points the surface tokens for everything inside the bar.
-//
-// Re-pointing tokens (rather than overriding class by class) is what lets the
-// footer keep the *same* `DataTable.Pagination` in both states: its buttons,
-// labels and page-size Select read `--foreground` / `--muted-foreground` /
-// `--border` / `--accent`, so they re-theme themselves to the inverted surface
-// with no `!important` and no descendant selectors.
-//
-// `ink` deliberately points at tokens `toneTokens` does not itself redefine
-// (`--primary-foreground`, `--card`), otherwise the reference would be circular.
-const TONES = {
-  primary: { surface: "bg-primary", ink: "var(--primary-foreground)" },
-  neutral: { surface: "bg-foreground", ink: "var(--card)" },
-} as const;
-
-type FooterTone = keyof typeof TONES;
-
-function toneTokens(ink: string): CSSProperties {
-  const tint = (pct: number) => `color-mix(in srgb, ${ink} ${pct}%, transparent)`;
-  return {
-    color: ink,
-    "--foreground": ink,
-    "--muted-foreground": tint(75),
-    // Outline controls read as ghost chips on the bar rather than light cards.
-    "--background": "transparent",
-    "--border": tint(25),
-    "--input": tint(25),
-    "--accent": tint(15),
-    "--accent-foreground": ink,
-    "--secondary": tint(15),
-    "--secondary-foreground": ink,
-    "--ring": tint(45),
-  } as CSSProperties;
-}
-
 // ─── Page ────────────────────────────────────────────────────────────────────
+
+type PendingDelete = { rows: Vendor[]; clearSelection: () => void };
 
 const DataTableSelectionPage = () => {
   const toast = useToast();
-  const [tone, setTone] = useState<FooterTone>("primary");
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  // 🧪 Dummy Data: local state stands in for mutations + a refetch.
+  const [vendors, setVendors] = useState(INITIAL_VENDORS);
+  // 🧪 Showcase control: compare the pinned footer with a page-scrolling table.
+  const [fill, setFill] = useState(true);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
 
-  const { variables, control } = useCollectionVariables({
-    params: { pageSize: 25 },
-  });
+  const { variables, control } = useCollectionVariables({ params: { pageSize: 25 } });
+  const data = useMemo(() => selectPage(vendors, variables), [vendors, variables]);
 
-  const data = useMemo(() => selectPage(variables), [variables]);
+  const setStatus = (rows: Vendor[], status: VendorStatus) => {
+    const ids = new Set(rows.map((row) => row.id));
+    setVendors((prev) => prev.map((v) => (ids.has(v.id) ? { ...v, status } : v)));
+  };
+
+  // 🔽 Bulk actions. `appliesTo` gives each action its "(n)" count and passes
+  // only the eligible rows to `onClick`; the footer disables an action at 0.
+  const selectionActions: SelectionAction<Vendor>[] = [
+    {
+      id: "activate",
+      label: "Activate",
+      icon: <Play />,
+      appliesTo: (v) => v.status === "inactive",
+      onClick: (rows, { clearSelection }) => {
+        setStatus(rows, "active");
+        toast.success(`Activated ${rows.length} vendor(s)`);
+        clearSelection();
+      },
+    },
+    {
+      id: "deactivate",
+      label: "Deactivate",
+      icon: <Pause />,
+      appliesTo: (v) => v.status === "active",
+      onClick: (rows, { clearSelection }) => {
+        setStatus(rows, "inactive");
+        toast.success(`Deactivated ${rows.length} vendor(s)`);
+        clearSelection();
+      },
+    },
+    {
+      id: "export",
+      label: "Export",
+      icon: <Download />,
+      // No `appliesTo`: applies to every selected row, so no count is shown.
+      // Keeps the selection — exporting doesn't change the rows.
+      onClick: (rows) => toast.success(`Exported ${rows.length} vendor(s)`),
+    },
+    {
+      // Fourth action: lands in the footer's "More actions" menu.
+      id: "delete",
+      label: "Delete",
+      icon: <Trash2 />,
+      variant: "destructive",
+      appliesTo: (v) => v.status === "archived",
+      // Destructive: confirm first (interaction/confirm pattern).
+      onClick: (rows, { clearSelection }) => setPendingDelete({ rows, clearSelection }),
+    },
+  ];
 
   const table = useDataTable({
     columns,
     data,
     loading: false,
     control,
-    // Providing `onSelectionChange` is what adds the checkbox column at the
-    // left edge (header checkbox = select all on the current page).
-    onSelectionChange: setSelectedIds,
+    // `selectionActions` alone turns on the checkbox column.
+    selectionActions,
   });
 
-  // Per-action eligibility, counted across the whole selection — not just the
-  // visible page — because selection is id-based and survives paging.
-  const selectedRows = useMemo(() => {
-    const ids = new Set(selectedIds);
-    return ALL_VENDORS.filter((v) => ids.has(v.id));
-  }, [selectedIds]);
-
-  const countBy = (status: VendorStatus) =>
-    selectedRows.filter((row) => row.status === status).length;
-
-  const actions: SelectionAction[] = [
-    {
-      id: "activate",
-      label: "Activate",
-      icon: <Play />,
-      count: countBy("inactive"),
-      onClick: () => toast.success(`Activated ${countBy("inactive")} vendor(s)`),
-    },
-    {
-      id: "deactivate",
-      label: "Deactivate",
-      icon: <Pause />,
-      count: countBy("active"),
-      onClick: () => toast.success(`Deactivated ${countBy("active")} vendor(s)`),
-    },
-    {
-      id: "delete",
-      label: "Delete",
-      icon: <Trash2 />,
-      variant: "destructive",
-      count: countBy("archived"),
-      onClick: () => toast.error(`Deleted ${countBy("archived")} vendor(s)`),
-    },
-  ];
-
-  const hasSelection = selectedIds.length > 0;
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    const ids = new Set(pendingDelete.rows.map((row) => row.id));
+    setVendors((prev) => prev.filter((v) => !ids.has(v.id)));
+    toast.error(`Deleted ${pendingDelete.rows.length} vendor(s)`);
+    pendingDelete.clearSelection();
+    setPendingDelete(null);
+  };
 
   return (
-    // `fill` pins the toolbar and footer so the selection bar stays on screen
-    // while the 240 rows scroll behind it.
-    <Layout fill>
-      <Layout.Header title="Multi-select — footer actions" />
+    <Layout fill={fill}>
+      <Layout.Header title="Bulk actions" />
       <Layout.Column>
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <p className="max-w-3xl text-sm text-muted-foreground">
-            240 vendor records with a checkbox column. Select a few rows — the footer swaps the row
-            count for the bulk-action bar and inverts its surface. Each action is counted against
-            the selection — <em>Activate</em> only applies to inactive vendors, <em>Delete</em> only
-            to archived ones — and disables at zero. Selection is id-based, so it survives paging.
+            240 vendor records. Select a few rows: the footer becomes the bulk-action bar, and each
+            action counts the selected rows it applies to — <em>Activate</em> only inactive vendors,{" "}
+            <em>Delete</em> only archived ones — and disables at zero. Selection survives paging,
+            and the header checkbox only adds or removes the current page. In <em>Page scroll</em>,
+            the bar rides the bottom of the window until the table&apos;s end scrolls into view.
           </p>
-          {/* 🧪 Prototype control: compare the two active-footer treatments. */}
+          {/* 🧪 Showcase control */}
           <div className="flex shrink-0 items-center gap-1 rounded-md border border-border p-1">
-            {(Object.keys(TONES) as FooterTone[]).map((key) => (
-              <Button
-                key={key}
-                size="xs"
-                variant={tone === key ? "secondary" : "ghost"}
-                onClick={() => setTone(key)}
-                className="capitalize"
-              >
-                {key}
-              </Button>
-            ))}
+            <Button size="xs" variant={fill ? "secondary" : "ghost"} onClick={() => setFill(true)}>
+              Pinned footer
+            </Button>
+            <Button size="xs" variant={fill ? "ghost" : "secondary"} onClick={() => setFill(false)}>
+              Page scroll
+            </Button>
           </div>
         </div>
 
         <DataTable.Root value={table}>
-          <DataTable.Toolbar columnSettings>
-            <DataTable.Filters />
-          </DataTable.Toolbar>
+          <Toolbar.Root>
+            <Toolbar.Row justify="between" aria-label="Vendor table controls">
+              <Toolbar.Group>
+                <DataTable.Filters />
+              </Toolbar.Group>
+              <Toolbar.Group>
+                <DataTable.ColumnSettings />
+              </Toolbar.Group>
+            </Toolbar.Row>
+          </Toolbar.Root>
           <DataTable.Table />
-          {/* `rounded-b-md` matches the Root's own corner radius: the footer's
-              background is what paints the bottom of the card once a selection
-              tints it, so without this it would square off the rounded frame.
-              `min-h-13` keeps both states the same height so switching between
-              them doesn't nudge the table above. */}
-          <DataTable.Footer
-            className={`min-h-13 rounded-b-md transition-colors ${
-              hasSelection ? TONES[tone].surface : ""
-            }`}
-          >
-            {/* Inner row carries the tone's token overrides — the footer itself
-                only paints the surface, so its own tokens stay intact. */}
-            <div
-              className="flex w-full flex-wrap items-center gap-x-3 gap-y-2"
-              style={hasSelection ? toneTokens(TONES[tone].ink) : undefined}
-            >
-              {hasSelection && <SelectionBar actions={actions} />}
-              {/* One Pagination in both states, so the right-hand cluster (rows
-                  per page, page counter, first/prev/next/last) is identical
-                  whether or not a selection is open. While the bar is up its
-                  row-info text is hidden — the bar's own "N selected" owns that
-                  slot — leaving the controls pushed right by their own ml-auto.
-                  min-w-110: below ~440px of leftover space the cluster drops to
-                  its own line instead of squeezing the bar. `whitespace-nowrap`
-                  is inherited, so the page counter stays on one line. */}
-              <div
-                className={`min-w-110 flex-1 whitespace-nowrap ${
-                  hasSelection ? "[&>div>div:first-child]:hidden" : ""
-                }`}
-              >
-                <DataTable.Pagination pageSizeOptions={[25, 50, 100]} />
-              </div>
-            </div>
+          <DataTable.Footer>
+            <DataTable.Pagination pageSizeOptions={[25, 50, 100]} />
           </DataTable.Footer>
         </DataTable.Root>
+
+        <Dialog.Root
+          open={pendingDelete !== null}
+          onOpenChange={(open) => {
+            if (!open) setPendingDelete(null);
+          }}
+        >
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Delete {pendingDelete?.rows.length} archived vendor(s)?</Dialog.Title>
+              <Dialog.Description>
+                They will be removed from the vendor list. This action cannot be undone.
+              </Dialog.Description>
+            </Dialog.Header>
+            <Dialog.Footer>
+              <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Delete
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>
       </Layout.Column>
     </Layout>
   );
@@ -432,7 +355,7 @@ const DataTableSelectionPage = () => {
 
 DataTableSelectionPage.appShellPageProps = {
   meta: {
-    title: "Multi-select footer",
+    title: "Bulk actions",
     icon: <CheckSquare size={16} />,
   },
 } satisfies AppShellPageProps;

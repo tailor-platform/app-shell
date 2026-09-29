@@ -6,9 +6,9 @@ import {
   createColumnHelper,
   type AppShellPageProps,
   type RowAction,
+  type SelectionAction,
 } from "@tailor-platform/app-shell";
 import { Package } from "lucide-react";
-import { useState } from "react";
 import { type Product, useProductsQuery } from "../../../mock-products";
 
 const productMetadata = {
@@ -86,6 +86,33 @@ const rowActions: RowAction<Product>[] = [
   },
 ];
 
+const names = (rows: Product[]) => rows.map((row) => row.name).join(", ");
+
+// Bulk actions in the footer while rows are selected. `appliesTo` scopes each
+// action to the selected rows it can act on and shows that count.
+const selectionActions: SelectionAction<Product>[] = [
+  {
+    id: "publish",
+    label: "Publish",
+    appliesTo: (row) => row.status === "Draft",
+    onClick: (rows) => alert(`Publish: ${names(rows)}`),
+  },
+  {
+    id: "archive",
+    label: "Archive",
+    appliesTo: (row) => row.status !== "Archived",
+    onClick: (rows) => alert(`Archive: ${names(rows)}`),
+  },
+  {
+    id: "delete",
+    label: "Delete",
+    variant: "destructive",
+    // Same rule as the row action: active products can't be deleted.
+    appliesTo: (row) => row.status !== "Active",
+    onClick: (rows) => alert(`Delete: ${names(rows)}`),
+  },
+];
+
 const ProductsPage = () => {
   // Single composed hook: filter/sort/pagination state is persisted to the URL
   // (bookmarkable, back-button friendly) and the URL seeds the initial state
@@ -97,7 +124,6 @@ const ProductsPage = () => {
   });
 
   const { data, loading } = useProductsQuery(variables);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const table = useDataTable({
     columns,
@@ -112,7 +138,7 @@ const ProductsPage = () => {
     control,
     rowActions,
     onClickRow: (row) => alert(`Clicked: ${row.name}`),
-    onSelectionChange: (ids) => setSelectedIds(ids),
+    selectionActions,
   });
 
   return (
@@ -137,9 +163,6 @@ const ProductsPage = () => {
             <DataTable.Pagination pageSizeOptions={[10, 25, 50, 100]} />
           </DataTable.Footer>
         </DataTable.Root>
-        {selectedIds.length > 0 && (
-          <p className="mt-3 text-sm text-muted-foreground">Selected: {selectedIds.join(", ")}</p>
-        )}
       </Layout.Column>
     </Layout>
   );

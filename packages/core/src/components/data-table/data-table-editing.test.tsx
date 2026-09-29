@@ -858,6 +858,26 @@ describe("DataTable inline editing", () => {
       expect(onCommit).toHaveBeenCalledWith("1", "2026-10-15");
     });
 
+    it("opens an empty bounded calendar on the nearest day that can be picked", async () => {
+      const user = renderTable(
+        <Harness
+          rows={LINES.map((line) => ({ ...line, expected: null }))}
+          columns={() => [
+            column({
+              id: "expected",
+              label: "Expected",
+              type: "date",
+              edit: { min: "2099-03-01", onCommit: () => {} },
+            }),
+          ]}
+        />,
+      );
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
+      expect(
+        document.querySelector('[data-slot="data-table-cell-calendar"]')?.textContent,
+      ).toContain("March 2099");
+    });
+
     it("clears to null unless the column is required", async () => {
       const onCommit = vi.fn();
       const user = renderTable(

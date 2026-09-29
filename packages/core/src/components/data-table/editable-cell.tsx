@@ -13,7 +13,7 @@ import {
   type TouchEvent,
 } from "react";
 import { Popover } from "@base-ui/react/popover";
-import { parseDate, type CalendarDate } from "@internationalized/date";
+import { getLocalTimeZone, parseDate, today, type CalendarDate } from "@internationalized/date";
 import { CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BadgeList } from "@/components/badge-list";
@@ -715,6 +715,15 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
 
 // ── Calendar: date ───────────────────────────────────────────────────────────
 
+// Where an empty calendar opens: today, or — when today can't be picked — the
+// nearest day that can, so a bounded date never opens on a fully disabled month.
+function nearestPickableDay(min: CalendarDate | undefined, max: CalendarDate | undefined) {
+  const now = today(getLocalTimeZone());
+  if (min && now.compare(min) < 0) return min;
+  if (max && now.compare(max) > 0) return max;
+  return undefined;
+}
+
 const POPUP_CLASS_NAME = cn(
   "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:flex-col astw:gap-3 astw:rounded-md astw:border astw:border-border astw:p-3 astw:shadow-md",
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
@@ -748,6 +757,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
   const accessibleName = typeof display === "string" ? `${label}, ${display}` : label;
   const min = isIsoDate(col.edit?.min) ? parseDate(col.edit.min) : undefined;
   const max = isIsoDate(col.edit?.max) ? parseDate(col.edit.max) : undefined;
+  const pickedDay = withTime ? draftDay : toCalendarDate(current);
 
   const handleOpenChange = (next: boolean, details?: { reason?: string }) => {
     if (next) {
@@ -811,7 +821,8 @@ function DateEditCell<TRow extends Record<string, unknown>>({
             <Popover.Popup data-slot="data-table-cell-calendar" className={POPUP_CLASS_NAME}>
               <Calendar
                 aria-label={label}
-                value={withTime ? draftDay : toCalendarDate(current)}
+                value={pickedDay}
+                defaultFocusedValue={pickedDay ?? nearestPickableDay(min, max)}
                 onChange={handlePick}
                 minValue={min}
                 maxValue={max}

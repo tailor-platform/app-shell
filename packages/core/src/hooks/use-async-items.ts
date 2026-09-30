@@ -133,6 +133,7 @@ export function useAsyncItems<T>({
   const [error, setError] = useState<unknown>(undefined);
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentFetchQueryRef = useRef<string | null>(null);
 
   // Keep fetcher/callback in refs so the callback identity stays stable
   const fetcherRef = useRef(fetcherFn);
@@ -204,8 +205,10 @@ export function useAsyncItems<T>({
   const onInputValueChange = useCallback(
     (value: string) => {
       setQuery(value);
+      const fetchQuery = value.trim() || null;
+      currentFetchQueryRef.current = fetchQuery;
 
-      if (value.trim().length === 0) {
+      if (fetchQuery === null) {
         abortControllerRef.current?.abort();
         abortControllerRef.current = null;
         if (debounceTimerRef.current) {
@@ -216,7 +219,7 @@ export function useAsyncItems<T>({
         return;
       }
 
-      doFetch(value.trim(), true);
+      doFetch(fetchQuery, true);
     },
     [doFetch],
   );
@@ -227,7 +230,7 @@ export function useAsyncItems<T>({
     (open: boolean) => {
       if (open && !hasFetchedOnOpenRef.current) {
         hasFetchedOnOpenRef.current = true;
-        doFetch(null, false);
+        doFetch(currentFetchQueryRef.current, false);
       }
     },
     [doFetch],

@@ -10,6 +10,7 @@ Add semantic colour roles (`--{info|success|warning|danger|neutral}-{surface|sur
 
 Visible changes in the default palette:
 
-- `bg-status-*` and `bg-alert-*` keep their names but change values. `--status-*` are fill colours; do not use them as text (below 4.5:1 in dark mode). Use `text-{intent}-text`.
+- `bg-status-*` and `bg-alert-*` keep their names but change values. `--status-*` are fill colours; do not use them as text (below 4.5:1 in dark mode). Use `text-{intent}-text` instead (for example `text-status-completed` becomes `text-success-text`).
+- Badge reads the semantic roles instead of `--status-*`. To recolour Badge, override `--{intent}-*`; overriding `--status-*` no longer changes Badge.
 - Badge `error` and `subtle-error`, and Alert `error`, follow `--danger-*` instead of `--destructive`. Button and `text-destructive` still follow `--destructive`.
 - The warning Badge text is dark instead of white. Alert description text now has the same colour as the Alert title.

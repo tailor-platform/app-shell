@@ -175,7 +175,7 @@ There are no `-hover` or `-active` brand tokens. Express interaction states with
 
 #### Status
 
-Five status colors, used for badge fills and status dots. They are aliases of the [semantic color roles](#semantic-color-roles) below, so status colors and Alert colors agree by default:
+Five status colors for custom surfaces. They are aliases of the [semantic color roles](#semantic-color-roles) below, so status colors and Alert colors agree by default:
 
 | Token                | Use                      | Tailwind              |
 | -------------------- | ------------------------ | --------------------- |

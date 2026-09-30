@@ -60,7 +60,7 @@ A unit test (`semantic-contrast.test.ts`) computes contrast from `default.css` f
 
 Not guaranteed:
 
-- Hover surfaces. Light-mode text on `surface-hover` is 4.22:1 (danger, over both pages), 4.34:1 (success over `--background`) and 4.51:1 (success over `--card`). Subtle Badge hover can fall below 4.5:1 for danger and success.
+- Hover surfaces. Light-mode text on `surface-hover` is 4.22:1 (danger, over both pages), 4.34:1 (success over `--background`) and 4.51:1 (success over `--card`). Subtle Badge hover can fall below 4.5:1 for danger and success. The test holds `text` on `surface-hover` at a floor of 4.2:1 so it cannot get worse unnoticed. This is a floor, not a pass. Changing the step is a design decision for a later change.
 - The `cream` and `bloom` palettes and their tinted shell backgrounds (for example `text` on `surface` over the bloom light shell `#efe8ff` is 4.16:1 for success and 4.15:1 for danger).
 - The neutral intent, which keeps the pre-existing system tokens.
 - Warning `solid` against the card as a fill: 2.15:1 in light mode. `--status-attention` is unchanged (`#f59e0b`), so `text-status-attention` is still low contrast on light surfaces. CsvImporter now uses the warning text role instead.
@@ -86,5 +86,5 @@ The "alpha" steps are translucent only where the generator could express them. I
 - Badge `error` and `subtle-error`, and Alert `error`, no longer follow `--destructive`. They use the danger role in both modes. Button and `text-destructive` still follow `--destructive`, so in dark mode a Badge error (`#dc2626`) and a destructive Button (`#f87171`) differ. Consumers who override `--destructive` for Alert or Badge must override `--danger-*` or `--alert-error-*` instead.
 - The warning Badge text is dark (`#4f3515`) instead of white.
 - Alert description text is the same colour as the Alert title in the default palette.
-- Consumers who override `--status-*` or `--alert-*` keep working; the aliases are only the default values.
+- Consumers who override `--status-*` or `--alert-*` keep working for `bg-status-*`, `bg-alert-*` and Alert, which read those tokens. Badge reads the roles, not `--status-*`. To recolour Badge, override the roles (`--{intent}-*`); overriding `--status-*` no longer changes Badge.
 - cream, bloom and `_template.css` values are not edited. The header comments now list `--{intent}-{role}` among the inherited tokens.

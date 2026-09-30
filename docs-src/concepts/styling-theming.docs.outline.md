@@ -266,7 +266,7 @@ Pair a role with a color token from the Color section above. These pairings are 
 <span className="text-body-sm text-muted-foreground">Updated 2h ago</span>
 ```
 
-On an `h1` to `h6` element, the `cream` and `bloom` palettes ignore `leading-none`; see "Change a role" below. AppShell's own components still use the stock utilities (`text-sm`, `font-medium`, and so on) today. They will move to the roles in later changes, so the two sets can appear side by side for now.
+On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's line height and letter spacing, including `leading-none`; see "Change a role" below. AppShell's own components still use the stock utilities (`text-sm`, `font-medium`, and so on) today. They will move to the roles in later changes, so the two sets can appear side by side for now.
 
 **Rules**
 

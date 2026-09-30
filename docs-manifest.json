@@ -443,10 +443,10 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "199f1cb9d06e3c15",
-        "outline": "2458512deac6c312",
+        "typeSurface": "014a9036a3b9b0af",
+        "outline": "f1bea006bdeb43a4",
         "snapshot": null,
-        "outputMd": "d4212ff859cfb879",
+        "outputMd": "dd2da884d7550daf",
         "examples": null
       }
     },
@@ -1307,6 +1307,23 @@
         "examples": null
       }
     },
+    "toolbar": {
+      "slug": "toolbar",
+      "kind": "code-backed",
+      "outline": "docs-src/components/toolbar.docs.outline.md",
+      "output": "docs/components/toolbar.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/toolbar/**"],
+      "claims": [],
+      "symbols": ["Toolbar", "ToolbarProps"],
+      "hashes": {
+        "typeSurface": "2d88f0306efcaa77",
+        "outline": "1257a84ccd91d5c3",
+        "snapshot": "3b402cab18147ef9",
+        "outputMd": "91d70b140c7bb747",
+        "examples": null
+      }
+    },
     "tooltip": {
       "slug": "tooltip",
       "kind": "code-backed",
@@ -1588,7 +1605,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "d4212ff859cfb879",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "dd2da884d7550daf",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "33902be121ff69db",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
@@ -1612,6 +1629,7 @@
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "30bb32e57fc78bd9",
     "packages/core/skills/app-shell-patterns/references/components/textarea.md": "c940bc01cd573334",
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
+    "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
@@ -1650,6 +1668,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "8062ea0df9403fbb",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "c3fb2588a0699c26",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "15845e186f68fe7e",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "165761adda4fbfc0"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "814325f4ea06ffae"
   }
 }

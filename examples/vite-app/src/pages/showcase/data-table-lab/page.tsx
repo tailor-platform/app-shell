@@ -3,6 +3,7 @@ import {
   Badge,
   Button,
   DataTable,
+  Toolbar,
   useDataTable,
   useCollectionVariables,
   createColumnHelper,
@@ -552,16 +553,24 @@ const DataTableLabPage = () => {
           description={
             <>
               <strong>Add filter</strong> (left) and the <strong>Columns</strong> control (right)
-              share one toolbar row. Open <strong>Columns</strong> to show/hide, drag to reorder,
-              and drag between zones to pin left/right. The <em>Invoice</em> column is pinned left
-              and the actions column is pinned right by default. Changes persist across reloads.
+              share one generic <code>Toolbar.Row</code>. Open <strong>Columns</strong> to
+              show/hide, drag to reorder, and drag between zones to pin left/right. The{" "}
+              <em>Invoice</em> column is pinned left and the actions column is pinned right by
+              default. Changes persist across reloads.
             </>
           }
         >
           <DataTable.Root value={settingsTable}>
-            <DataTable.Toolbar columnSettings>
-              <DataTable.Filters />
-            </DataTable.Toolbar>
+            <Toolbar.Root>
+              <Toolbar.Row justify="between" aria-label="Invoice table controls">
+                <Toolbar.Group>
+                  <DataTable.Filters />
+                </Toolbar.Group>
+                <Toolbar.Group>
+                  <DataTable.ColumnSettings />
+                </Toolbar.Group>
+              </Toolbar.Row>
+            </Toolbar.Root>
             <DataTable.Table />
           </DataTable.Root>
         </Section>

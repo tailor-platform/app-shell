@@ -74,6 +74,7 @@ const AppInner = () => {
               <SidebarItem to="/showcase/ai-chat" />
               <SidebarItem to="/showcase/document-progress" />
               <SidebarItem to="/showcase/date-picker" />
+              <SidebarItem to="/showcase/toolbar" />
               <SidebarItem to="/showcase/data-table" />
               <SidebarItem to="/showcase/data-table-lab" />
               <SidebarItem to="/showcase/alert-tokens" />

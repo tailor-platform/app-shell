@@ -14,6 +14,13 @@ const here = dirname(fileURLToPath(import.meta.url));
 const bridge = readFileSync(join(here, "theme.bridge.css"), "utf8");
 const defaultTheme = readFileSync(join(here, "themes/default.css"), "utf8");
 
+/**
+ * Semantic colour roles: 5 intents x 8 roles. The intent list is explicit so
+ * `--semantic-shadow-*` (bridged as `--shadow-*`, not `--color-*`) is not
+ * mistaken for a colour role.
+ */
+const SEMANTIC_PREFIX = "semantic-(?:info|success|warning|danger|neutral)";
+
 /** Token names defined in the default palette for a given prefix, e.g. `alert`. */
 function definedTokens(prefix: string): string[] {
   const matches = defaultTheme.matchAll(new RegExp(`^\\s*--(${prefix}-[a-z-]+):`, "gm"));
@@ -29,7 +36,11 @@ function bridgedTokens(prefix: string): Map<string, string> {
 }
 
 describe("theme bridge", () => {
-  describe.each(["alert", "status"])("--%s-* tokens", (prefix) => {
+  describe.each([
+    ["alert", "alert"],
+    ["status", "status"],
+    ["semantic colour role", SEMANTIC_PREFIX],
+  ])("--%s-* tokens", (_label, prefix) => {
     const defined = definedTokens(prefix);
     const bridged = bridgedTokens(prefix);
 
@@ -55,5 +66,16 @@ describe("theme bridge", () => {
     // would still satisfy the symmetry checks above if it were removed from
     // both files — fails loudly.
     expect(bridgedTokens("alert").size).toBe(20);
+  });
+
+  it("bridges all 40 semantic colour roles", () => {
+    // 5 intents x 8 roles, pinned for the same reason as the alert count.
+    expect(bridgedTokens(SEMANTIC_PREFIX).size).toBe(40);
+  });
+
+  it("does not treat --semantic-shadow-* as a colour role", () => {
+    expect(definedTokens(SEMANTIC_PREFIX).some((name) => name.startsWith("semantic-shadow"))).toBe(
+      false,
+    );
   });
 });

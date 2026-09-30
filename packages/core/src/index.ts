@@ -302,6 +302,7 @@ export {
   type DataTableFilterConfig,
   type HeaderRenderContext,
   type RowAction,
+  type SelectionAction,
   type UseDataTableOptions,
   type UseDataTableReturn,
   type MetadataFieldOptions,

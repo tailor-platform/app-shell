@@ -75,6 +75,7 @@ export function useDataTable<
     onClickRow,
     rowActions,
     onSelectionChange,
+    selectionActions,
     rowExpansion,
     sort: sortOption,
   } = options;
@@ -285,64 +286,90 @@ export function useDataTable<
     return id != null ? String(id) : null;
   }, []);
 
-  const [selectedRowIds, setSelectedRowIds] = useState<Set<string>>(new Set());
-  // Mirrors the state so the toggle can compute the next set outside an updater.
+  // Bulk actions need rows to act on, so offering them turns selection on even
+  // without an `onSelectionChange` listener.
+  const selectionEnabled = !!onSelectionChange || (selectionActions?.length ?? 0) > 0;
+
+  // Selected ids in selection order, each mapped to the row as last seen. The
+  // row is kept so rows selected on other pages can still be counted and handed
+  // to `selectionActions`; `selectedRows` below prefers the current page's copy.
+  const [selection, setSelection] = useState<Map<string, TRow>>(() => new Map());
+  // Mirrors the state so the toggle can compute the next map outside an updater.
   // Every writer below must also assign it: this render-time sync only catches
   // up on commit, so without an eager write two dispatches in the same commit
   // both read the same base and the first is lost. A functional updater got
   // this for free from `prev`; computing outside one makes it our job.
-  const selectedRowIdsRef = useRef(selectedRowIds);
-  selectedRowIdsRef.current = selectedRowIds;
+  const selectionRef = useRef(selection);
+  selectionRef.current = selection;
 
   const isRowSelected = useCallback(
     (row: TRow) => {
       const id = getRowId(row);
       if (id === null) return false;
-      return selectedRowIds.has(id);
+      return selection.has(id);
     },
-    [selectedRowIds, getRowId],
+    [selection, getRowId],
   );
 
   // Computed outside the updater: updaters must be pure, and StrictMode
   // double-invokes them, so dispatching from inside fired `onSelectionChange`
-  // twice per toggle in dev. Matches `selectAllRows` / `clearSelection`.
-  const toggleRowSelection = onSelectionChange
+  // twice per toggle in dev. Every writer goes through here.
+  const commitSelection = (next: Map<string, TRow>) => {
+    selectionRef.current = next;
+    setSelection(next);
+    onSelectionChange?.([...next.keys()]);
+  };
+
+  const toggleRowSelection = selectionEnabled
     ? (row: TRow) => {
         const id = getRowId(row);
         if (id === null) return;
-        const next = new Set(selectedRowIdsRef.current);
+        const next = new Map(selectionRef.current);
         if (next.has(id)) {
           next.delete(id);
         } else {
-          next.add(id);
+          next.set(id, row);
         }
-        selectedRowIdsRef.current = next;
-        setSelectedRowIds(next);
-        onSelectionChange([...next]);
+        commitSelection(next);
       }
     : undefined;
 
-  const selectAllRows = onSelectionChange
+  // Page-scoped on purpose: rows selected on other pages are left alone, so the
+  // header checkbox never silently drops part of a cross-page selection.
+  const selectAllRows = selectionEnabled
     ? () => {
-        const allIds = new Set(
-          rows.map((r) => getRowId(r)).filter((id): id is string => id !== null),
-        );
-        selectedRowIdsRef.current = allIds;
-        setSelectedRowIds(allIds);
-        onSelectionChange([...allIds]);
+        const next = new Map(selectionRef.current);
+        for (const row of rows) {
+          const id = getRowId(row);
+          if (id !== null) next.set(id, row);
+        }
+        commitSelection(next);
       }
     : undefined;
 
-  const clearSelection = onSelectionChange
+  const deselectAllRows = selectionEnabled
     ? () => {
-        const empty = new Set<string>();
-        selectedRowIdsRef.current = empty;
-        setSelectedRowIds(empty);
-        onSelectionChange([]);
+        const next = new Map(selectionRef.current);
+        for (const row of rows) {
+          const id = getRowId(row);
+          if (id !== null) next.delete(id);
+        }
+        commitSelection(next);
       }
     : undefined;
 
-  const selectedIds = useMemo(() => [...selectedRowIds], [selectedRowIds]);
+  const clearSelection = selectionEnabled ? () => commitSelection(new Map()) : undefined;
+
+  const selectedIds = useMemo(() => [...selection.keys()], [selection]);
+
+  const selectedRows = useMemo(() => {
+    const onPage = new Map<string, TRow>();
+    for (const row of rows) {
+      const id = getRowId(row);
+      if (id !== null && selection.has(id)) onPage.set(id, row);
+    }
+    return [...selection].map(([id, lastSeen]) => onPage.get(id) ?? lastSeen);
+  }, [selection, rows, getRowId]);
 
   const selectableCount = rows.filter((r) => getRowId(r) !== null).length;
   const isAllSelected =
@@ -350,9 +377,9 @@ export function useDataTable<
     rows.every((r) => {
       const id = getRowId(r);
       // Rows without id are not selectable — skip them in the check
-      return id === null || selectedRowIds.has(id);
+      return id === null || selection.has(id);
     });
-  const isIndeterminate = selectedRowIds.size > 0 && !isAllSelected;
+  const isIndeterminate = selection.size > 0 && !isAllSelected;
 
   // ---------------------------------------------------------------------------
   // Row expansion
@@ -463,10 +490,13 @@ export function useDataTable<
     control: control as CollectionControl | undefined,
     onClickRow,
     rowActions,
+    selectionActions,
     selectedIds,
+    selectedRows,
     isRowSelected,
     toggleRowSelection,
     selectAllRows,
+    deselectAllRows,
     clearSelection,
     isAllSelected,
     isIndeterminate,

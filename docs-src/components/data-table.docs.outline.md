@@ -29,6 +29,7 @@ import {
   type DataTableRootProps,
   type DataTablePaginationProps,
   type RowAction,
+  type SelectionAction,
   type UseDataTableOptions,
   type UseDataTableReturn,
   type MetadataFieldOptions,
@@ -150,15 +151,15 @@ function JournalsPage() {
 
 `DataTable` is a namespace object. All sub-components read state from `DataTable.Root` via context.
 
-| Sub-component              | Description                                                                                                                                                  |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `DataTable.Root`           | Context provider. Wraps all other sub-components. Required.                                                                                                  |
-| `DataTable.Table`          | Renders the `<table>` with headers and body. Required.                                                                                                       |
-| `DataTable.Toolbar`        | DataTable-specific toolbar container. Optional; pass `columnSettings` for the built-in Columns control.                                                      |
-| `DataTable.ColumnSettings` | The placeable Columns control (show/hide + reorder + pin). Use it in a generic [`Toolbar`](./toolbar.md) for custom layouts.                                 |
-| `DataTable.Filters`        | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                         |
-| `DataTable.Footer`         | Footer container for pagination and other footer content. Optional.                                                                                          |
-| `DataTable.Pagination`     | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`. |
+| Sub-component              | Description                                                                                                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DataTable.Root`           | Context provider. Wraps all other sub-components. Required.                                                                                                            |
+| `DataTable.Table`          | Renders the `<table>` with headers and body. Required.                                                                                                                 |
+| `DataTable.Toolbar`        | DataTable-specific toolbar container. Optional; pass `columnSettings` for the built-in Columns control.                                                                |
+| `DataTable.ColumnSettings` | The placeable Columns control (show/hide + reorder + pin). Use it in a generic [`Toolbar`](./toolbar.md) for custom layouts.                                           |
+| `DataTable.Filters`        | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                                   |
+| `DataTable.Footer`         | Footer container for pagination and other footer content. Optional. Becomes the bulk-action bar while rows are selected — see [Selection actions](#selection-actions). |
+| `DataTable.Pagination`     | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`.           |
 
 ### `DataTable.Root` Props
 
@@ -226,7 +227,7 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 | Rows selected and `total` is not provided | `Y row(s) selected`      |
 | No selection enabled and no `total`       | _(nothing displayed)_    |
 
-Row selection is enabled by providing `onSelectionChange` to `useDataTable`. The `total` value comes from `DataTableData.total`.
+Row selection is enabled by providing `onSelectionChange` or `selectionActions` to `useDataTable`. The `total` value comes from `DataTableData.total`. While the footer shows the bulk-action bar (see [Selection actions](#selection-actions)), the bar owns the selection count and this text is omitted.
 
 When pagination changes page or page size, `DataTable.Table` resets its own scroll container to the top automatically. That applies whether navigation comes from the built-in `DataTable.Pagination` or from custom controls using the same table context.
 
@@ -374,6 +375,54 @@ The trigger is a native `<button>`, so Enter/Space activation and the focus ring
 
 **Known limitation — row count.** Detail rows are real `<tr>` elements, so a screen reader counts them: ten records with two expanded announces as twelve rows. Fixing this needs `aria-rowcount` plus explicit `aria-rowindex` on every row (with detail rows sharing their parent's index) and correct interaction with pagination; `role="presentation"` on the detail row would fix the count but remove the panel from screen-reader table navigation. Neither is implemented.
 
+## Selection actions
+
+Pass `selectionActions` to `useDataTable` and, while at least one row is selected, `DataTable.Footer` becomes a bulk-action bar: the selection count, your actions, and a **Clear** button, with the footer's own children (usually `DataTable.Pagination`) kept alongside. Providing the option also enables row selection, so `onSelectionChange` is optional. There is nothing new to compose in JSX — just keep `DataTable.Footer` in the tree.
+
+```tsx
+const table = useDataTable<Vendor>({
+  columns,
+  data,
+  control,
+  selectionActions: [
+    {
+      id: "activate",
+      label: "Activate",
+      icon: <Play />,
+      appliesTo: (vendor) => vendor.status === "inactive",
+      onClick: async (vendors, { clearSelection }) => {
+        await activateVendors(vendors.map((vendor) => vendor.id));
+        clearSelection();
+      },
+    },
+    {
+      id: "export",
+      label: "Export",
+      icon: <Download />,
+      onClick: (vendors) => exportCsv(vendors),
+    },
+  ],
+});
+
+<DataTable.Root value={table}>
+  <DataTable.Table />
+  <DataTable.Footer>
+    <DataTable.Pagination />
+  </DataTable.Footer>
+</DataTable.Root>;
+```
+
+- **`appliesTo` scopes an action to part of the selection.** The button shows how many selected rows qualify — `Activate (6)` — is disabled when none do, and `onClick` receives only those rows. Omit it for actions that apply to every selected row; no count is shown then.
+- **Selection spans pages.** The table remembers each selected row as it was last loaded, so counts and `onClick` cover rows selected on other pages too. Rows on the current page are always their latest version, so refetching after an action updates the counts. The header checkbox adds or removes only the current page; **Clear** empties everything.
+- **Clear when the work is done.** The bar doesn't clear the selection after an action — call the `clearSelection` helper when it should. An export usually keeps the selection; an archive usually clears it.
+- **Three actions stay inline.** The fourth onward collapse into a **More actions** menu, in array order. Put the most frequent first; a destructive action placed last sits safely in the menu.
+- **Confirm destructive actions.** `variant: "destructive"` only styles the action. Open a confirm dialog from `onClick` before deleting — see the [confirm pattern](../patterns/interaction-confirm.md).
+- **The bar stays reachable.** In `<Layout fill>` the footer is already pinned. On a page that scrolls, the bar sticks to the bottom of the viewport while rows are selected and settles back into place at the end of the table.
+
+### Accessibility
+
+The bar is a `role="toolbar"` named "Bulk actions", so Arrow, Home, and End move between its controls (see [`Toolbar`](./toolbar.md)) while Tab still reaches each one. The selection count is announced through a polite live region from the first selection on. When the bar closes while focus is inside it — after **Clear**, or an action that clears — focus returns to the header checkbox instead of dropping to `<body>`.
+
 ## `useDataTable`
 
 Creates the table state object to pass to `DataTable.Root`.
@@ -399,7 +448,8 @@ const table = useDataTable({
 | `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                               |
 | `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.            |
 | `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                         |
-| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this enables the checkbox column. Rows must have a string `id`.                                                               |
+| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this (or `selectionActions`) enables the checkbox column. Rows must have a string or number `id`.                             |
+| `selectionActions`  | `SelectionAction<TRow>[]`          | Bulk actions shown in `DataTable.Footer` while rows are selected. A non-empty array also enables selection. See [Selection actions](#selection-actions).                        |
 | `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows). |
 | `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                       |
 
@@ -758,6 +808,19 @@ When `caseSensitive` is omitted or `false`, the filter is case-insensitive. When
 | `isDisabled` | `(row: TRow) => boolean`     | Return `true` to disable the action for a given row. |
 | `onClick`    | `(row: TRow) => void`        | Called when the action is clicked.                   |
 
+## `SelectionAction`
+
+A bulk action for the rows currently selected. See [Selection actions](#selection-actions).
+
+| Property    | Type                                                              | Description                                                                                                                         |
+| ----------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `id`        | `string`                                                          | Stable identifier for the action.                                                                                                   |
+| `label`     | `string`                                                          | Button label, also used for its menu item once it overflows into **More actions**.                                                  |
+| `icon`      | `ReactNode`                                                       | Optional icon shown before the label.                                                                                               |
+| `variant`   | `"default" \| "destructive"`                                      | Visual style. A destructive action still needs its own confirmation step.                                                           |
+| `appliesTo` | `(row: TRow) => boolean`                                          | Scopes the action to the selected rows it applies to: shows their count, disables at zero, and passes only those rows to `onClick`. |
+| `onClick`   | `(rows: TRow[], helpers: { clearSelection: () => void }) => void` | Called with the selected rows the action applies to, including rows selected on other pages.                                        |
+
 ## `createColumnHelper`
 
 Factory that captures the row type once and returns `column` and `inferColumns` with `TRow` already bound. Prefer this over the standalone `column()` function to avoid repeating the generic parameter.
@@ -917,6 +980,8 @@ function MyCustomPagination() {
   // ...
 }
 ```
+
+The selection is here too — `selectedIds`, `selectedRows` (each selected row as last loaded, across pages), `selectAllRows` / `deselectAllRows` for the current page, and `clearSelection` — for the rare case the built-in [selection actions](#selection-actions) bar doesn't fit.
 
 ## SDK Plugin (`@tailor-platform/sdk-plugin-app-shell`)
 

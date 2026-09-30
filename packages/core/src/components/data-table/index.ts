@@ -24,6 +24,7 @@ export type {
   MoneyCellOptions,
   NumberCellOptions,
   RowAction,
+  SelectionAction,
   UseDataTableOptions,
   UseDataTableReturn,
 } from "./types";

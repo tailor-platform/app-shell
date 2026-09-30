@@ -174,7 +174,7 @@
  * selectors; only the hue scales differ per mode.
  *
  * Roles: `--{info|success|warning|danger|neutral}-{surface|surface-hover|
- * border|solid|solid-hover|text|on-solid|indicator}`. Hue intents read the hue
+ * border|solid|solid-hover|text|contrast|indicator}`. Hue intents read the hue
  * scales; `neutral` reads the system tokens. `--status-*` and `--alert-*` below
  * are aliases of these roles, so both families agree by construction.
  */
@@ -186,7 +186,7 @@
   --neutral-solid: var(--secondary);
   --neutral-solid-hover: var(--accent);
   --neutral-text: var(--foreground);
-  --neutral-on-solid: var(--secondary-foreground);
+  --neutral-contrast: var(--secondary-foreground);
   --neutral-indicator: var(--muted-foreground);
   --info-surface: var(--primitive-blue-a3);
   --info-surface-hover: var(--primitive-blue-a4);
@@ -194,7 +194,7 @@
   --info-solid: var(--primitive-blue-9);
   --info-solid-hover: var(--primitive-blue-10);
   --info-text: var(--primitive-blue-11);
-  --info-on-solid: var(--primitive-blue-contrast);
+  --info-contrast: var(--primitive-blue-contrast);
   --info-indicator: var(--primitive-blue-9);
   --success-surface: var(--primitive-green-a3);
   --success-surface-hover: var(--primitive-green-a4);
@@ -202,7 +202,7 @@
   --success-solid: var(--primitive-green-9);
   --success-solid-hover: var(--primitive-green-10);
   --success-text: var(--primitive-green-11);
-  --success-on-solid: var(--primitive-green-contrast);
+  --success-contrast: var(--primitive-green-contrast);
   --success-indicator: var(--primitive-green-9);
   --warning-surface: var(--primitive-amber-a3);
   --warning-surface-hover: var(--primitive-amber-a4);
@@ -210,7 +210,7 @@
   --warning-solid: var(--primitive-amber-9);
   --warning-solid-hover: var(--primitive-amber-10);
   --warning-text: var(--primitive-amber-12);
-  --warning-on-solid: var(--primitive-amber-contrast);
+  --warning-contrast: var(--primitive-amber-contrast);
   --warning-indicator: var(--primitive-amber-9);
   --danger-surface: var(--primitive-red-a3);
   --danger-surface-hover: var(--primitive-red-a4);
@@ -218,7 +218,7 @@
   --danger-solid: var(--primitive-red-9);
   --danger-solid-hover: var(--primitive-red-10);
   --danger-text: var(--primitive-red-11);
-  --danger-on-solid: var(--primitive-red-contrast);
+  --danger-contrast: var(--primitive-red-contrast);
   --danger-indicator: var(--primitive-red-9);
 
   --status-default: var(--neutral-indicator);

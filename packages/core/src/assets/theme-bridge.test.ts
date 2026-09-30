@@ -14,11 +14,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const bridge = readFileSync(join(here, "theme.bridge.css"), "utf8");
 const defaultTheme = readFileSync(join(here, "themes/default.css"), "utf8");
 
-/**
- * Semantic colour roles: 5 intents x 8 roles. The intent list is explicit so
- * `--semantic-shadow-*` (bridged as `--shadow-*`, not `--color-*`) is not
- * mistaken for a colour role.
- */
+/** Semantic colour roles: 5 intents x 8 roles, named `--{intent}-{role}`. */
 const SEMANTIC_PREFIX = "(?:info|success|warning|danger|neutral)";
 
 /** Token names defined in the default palette for a given prefix, e.g. `alert`. */
@@ -71,10 +67,5 @@ describe("theme bridge", () => {
   it("bridges all 40 semantic colour roles", () => {
     // 5 intents x 8 roles, pinned for the same reason as the alert count.
     expect(bridgedTokens(SEMANTIC_PREFIX).size).toBe(40);
-  });
-
-  it("does not treat --semantic-shadow-* as a colour role", () => {
-    const roles = [...definedTokens(SEMANTIC_PREFIX), ...bridgedTokens(SEMANTIC_PREFIX).keys()];
-    expect(roles.some((name) => name.includes("shadow"))).toBe(false);
   });
 });

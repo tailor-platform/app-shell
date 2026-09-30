@@ -106,7 +106,7 @@
   --color-neutral-solid: var(--neutral-solid);
   --color-neutral-solid-hover: var(--neutral-solid-hover);
   --color-neutral-text: var(--neutral-text);
-  --color-neutral-on-solid: var(--neutral-on-solid);
+  --color-neutral-contrast: var(--neutral-contrast);
   --color-neutral-indicator: var(--neutral-indicator);
   --color-info-surface: var(--info-surface);
   --color-info-surface-hover: var(--info-surface-hover);
@@ -114,7 +114,7 @@
   --color-info-solid: var(--info-solid);
   --color-info-solid-hover: var(--info-solid-hover);
   --color-info-text: var(--info-text);
-  --color-info-on-solid: var(--info-on-solid);
+  --color-info-contrast: var(--info-contrast);
   --color-info-indicator: var(--info-indicator);
   --color-success-surface: var(--success-surface);
   --color-success-surface-hover: var(--success-surface-hover);
@@ -122,7 +122,7 @@
   --color-success-solid: var(--success-solid);
   --color-success-solid-hover: var(--success-solid-hover);
   --color-success-text: var(--success-text);
-  --color-success-on-solid: var(--success-on-solid);
+  --color-success-contrast: var(--success-contrast);
   --color-success-indicator: var(--success-indicator);
   --color-warning-surface: var(--warning-surface);
   --color-warning-surface-hover: var(--warning-surface-hover);
@@ -130,7 +130,7 @@
   --color-warning-solid: var(--warning-solid);
   --color-warning-solid-hover: var(--warning-solid-hover);
   --color-warning-text: var(--warning-text);
-  --color-warning-on-solid: var(--warning-on-solid);
+  --color-warning-contrast: var(--warning-contrast);
   --color-warning-indicator: var(--warning-indicator);
   --color-danger-surface: var(--danger-surface);
   --color-danger-surface-hover: var(--danger-surface-hover);
@@ -138,7 +138,7 @@
   --color-danger-solid: var(--danger-solid);
   --color-danger-solid-hover: var(--danger-solid-hover);
   --color-danger-text: var(--danger-text);
-  --color-danger-on-solid: var(--danger-on-solid);
+  --color-danger-contrast: var(--danger-contrast);
   --color-danger-indicator: var(--danger-indicator);
 
   --shadow-xs: var(--semantic-shadow-xs);

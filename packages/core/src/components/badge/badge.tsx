@@ -11,14 +11,14 @@ const badgeVariants = cva(
         default:
           "astw:border-transparent astw:bg-primary astw:text-primary-foreground astw:hover:bg-primary/80",
         success:
-          "astw:border-transparent astw:bg-success-solid astw:text-success-on-solid astw:hover:bg-success-solid-hover",
+          "astw:border-transparent astw:bg-success-solid astw:text-success-contrast astw:hover:bg-success-solid-hover",
         warning:
-          "astw:border-transparent astw:bg-warning-solid astw:text-warning-on-solid astw:hover:bg-warning-solid-hover",
+          "astw:border-transparent astw:bg-warning-solid astw:text-warning-contrast astw:hover:bg-warning-solid-hover",
         error:
-          "astw:border-transparent astw:bg-danger-solid astw:text-danger-on-solid astw:hover:bg-danger-solid-hover",
+          "astw:border-transparent astw:bg-danger-solid astw:text-danger-contrast astw:hover:bg-danger-solid-hover",
         neutral:
           "astw:border-transparent astw:bg-secondary astw:text-secondary-foreground astw:hover:bg-secondary/80",
-        info: "astw:border-transparent astw:bg-info-solid astw:text-info-on-solid astw:hover:bg-info-solid-hover",
+        info: "astw:border-transparent astw:bg-info-solid astw:text-info-contrast astw:hover:bg-info-solid-hover",
         "subtle-success":
           "astw:border-transparent astw:bg-success-surface astw:text-success-text astw:hover:bg-success-surface-hover",
         "subtle-warning":

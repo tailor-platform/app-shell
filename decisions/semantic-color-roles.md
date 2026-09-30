@@ -36,7 +36,7 @@ They are not bridged to Tailwind. Consumers use the semantic roles, not steps. T
 | solid         | 9                               | `var(--secondary)`            |
 | solid-hover   | 10                              | `var(--accent)`               |
 | text          | 11 (warning: 12 light, 11 dark) | `var(--foreground)`           |
-| on-solid      | contrast                        | `var(--secondary-foreground)` |
+| contrast      | contrast                        | `var(--secondary-foreground)` |
 | indicator     | 9                               | `var(--muted-foreground)`     |
 
 The full set is bridged, including roles no component uses yet (neutral solid roles, hue `border`), so the set is one coherent vocabulary and `--alert-*` can alias every role.
@@ -56,7 +56,7 @@ Filled, subtle and outline-dot variants read the semantic roles with `astw:` uti
 
 ### Contrast contract
 
-A unit test (`semantic-contrast.test.ts`) computes contrast from `default.css` for light and dark and asserts at least 4.5:1 for: `on-solid` on `solid` and on `solid-hover`; `text` on `surface`; the alert foreground and description on the alert background. The last two are checked over `--card` and `--background`.
+A unit test (`semantic-contrast.test.ts`) computes contrast from `default.css` for light and dark and asserts at least 4.5:1 for: `contrast` on `solid` and on `solid-hover`; `text` on `surface`; the alert foreground and description on the alert background. The last two are checked over `--card` and `--background`.
 
 Not guaranteed:
 

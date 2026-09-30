@@ -184,14 +184,14 @@ Each intent has eight roles. The intents are `info`, `success`, `warning`, `dang
 | `solid`         | `bg-info-solid`         | Filled background                   |
 | `solid-hover`   | `bg-info-solid-hover`   | Hover state of a filled background  |
 | `text`          | `text-info-text`        | Text and icons on a soft background |
-| `on-solid`      | `text-info-on-solid`    | Text on a filled background         |
+| `contrast`      | `text-info-contrast`    | Text on a filled background         |
 | `indicator`     | `bg-info-indicator`     | Dots and small marks                |
 
 ```tsx
 <span className="rounded-md bg-success-surface px-2 py-0.5 text-success-text">Paid</span>
 ```
 
-In the default palette, `text` on `surface` and `on-solid` on `solid` and `solid-hover` are at least 4.5:1 for the four hue intents, in light and dark mode, on `--card` and `--background`. A unit test checks this from the shipped CSS. It does not cover hover surfaces, the `cream` and `bloom` palettes, or the `neutral` intent. Text on `surface-hover` is below 4.5:1 for some roles.
+In the default palette, `text` on `surface` and `contrast` on `solid` and `solid-hover` are at least 4.5:1 for the four hue intents, in light and dark mode, on `--card` and `--background`. A unit test checks this from the shipped CSS. It does not cover hover surfaces, the `cream` and `bloom` palettes, or the `neutral` intent. Text on `surface-hover` is below 4.5:1 for some roles.
 
 Some light-mode values are opaque instead of translucent: the `warning` surface, surface-hover and border, the `info` border and the `danger` surface-hover. They do not blend with a tinted parent. All dark-mode values are translucent.
 

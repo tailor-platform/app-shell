@@ -112,14 +112,14 @@ describe.each(modes)("semantic colour contrast (%s)", (mode) => {
   describe.each(intents)("%s", (intent) => {
     const role = (name: string) => `--${intent}-${name}`;
 
-    it("on-solid text meets 4.5:1 on solid", () => {
-      expect(contrast(color(role("on-solid")), color(role("solid")))).toBeGreaterThanOrEqual(
+    it("the contrast role meets 4.5:1 on solid", () => {
+      expect(contrast(color(role("contrast")), color(role("solid")))).toBeGreaterThanOrEqual(
         MIN_TEXT,
       );
     });
 
-    it("on-solid text meets 4.5:1 on solid-hover", () => {
-      expect(contrast(color(role("on-solid")), color(role("solid-hover")))).toBeGreaterThanOrEqual(
+    it("the contrast role meets 4.5:1 on solid-hover", () => {
+      expect(contrast(color(role("contrast")), color(role("solid-hover")))).toBeGreaterThanOrEqual(
         MIN_TEXT,
       );
     });

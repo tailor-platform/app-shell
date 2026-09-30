@@ -2,7 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add semantic colour roles (`--{info|success|warning|danger|neutral}-{surface|surface-hover|border|solid|solid-hover|text|on-solid|indicator}`), available as Tailwind colours. `--status-*` and `--alert-*` now alias these roles, and Badge reads them, so `text` on `surface` and `on-solid` on `solid` are at least 4.5:1 in the default palette, in light and dark mode.
+Add semantic colour roles (`--{info|success|warning|danger|neutral}-{surface|surface-hover|border|solid|solid-hover|text|contrast|indicator}`), available as Tailwind colours. `--status-*` and `--alert-*` now alias these roles, and Badge reads them, so `text` on `surface` and `contrast` on `solid` are at least 4.5:1 in the default palette, in light and dark mode.
 
 ```tsx
 <span className="rounded-md bg-success-surface px-2 py-0.5 text-success-text">Paid</span>

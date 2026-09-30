@@ -94,6 +94,15 @@ describe("typography role utilities", () => {
     for (const role of roles) {
       const decls = declarationsOf(css, `.text-${role}`);
       expect(decls.get("font-size"), role).toBe(`var(--app-shell-type-${role}-size)`);
+      expect(decls.get("line-height"), role).toBe(
+        `var(--tw-leading, var(--app-shell-type-${role}-line-height))`,
+      );
+      expect(decls.get("letter-spacing"), role).toBe(
+        `var(--tw-tracking, var(--app-shell-type-${role}-letter-spacing))`,
+      );
+      expect(decls.get("font-weight"), role).toBe(
+        `var(--tw-font-weight, var(--app-shell-type-${role}-weight))`,
+      );
       expect(decls.size, role).toBe(4);
     }
   });

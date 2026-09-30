@@ -71,12 +71,13 @@ function over(top: Rgba, base: Rgba): Rgba {
   return { r: mix(top.r, base.r), g: mix(top.g, base.g), b: mix(top.b, base.b), a };
 }
 
+function linearize(channel: number): number {
+  const s = channel / 255;
+  return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+}
+
 function luminance({ r, g, b }: Rgba): number {
-  const lin = (c: number) => {
-    const s = c / 255;
-    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  };
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b);
 }
 
 function contrast(a: Rgba, b: Rgba): number {

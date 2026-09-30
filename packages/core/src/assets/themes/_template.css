@@ -17,7 +17,8 @@
  *    `@tailor-platform/app-shell/styles` in the consuming app.
  *
  * DO NOT SET (inherited from `:root` in default.css):
- *   --ring, --sidebar-*, --status-*, --alert-*
+ *   --ring, --sidebar-*, --status-*, --alert-*, --app-shell-type-*
+ *   (typography roles; override `--app-shell-type-*` only if the brand needs different type)
  *
  * PREVIEW: `/showcase/colors` in the Vite example app.
  * ═══════════════════════════════════════════════════════════════════════════

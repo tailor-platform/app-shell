@@ -92,6 +92,53 @@
   --alert-info-foreground-muted: color-mix(in srgb, var(--alert-info-foreground) 80%, transparent);
   --alert-info-background: color-mix(in srgb, #3b82f6 10%, transparent);
   --alert-info-border: color-mix(in srgb, #3b82f6 20%, transparent);
+
+  /* ── 7. TYPOGRAPHY — composite roles; light only, no dark variant ──────────
+   * Four variables per role: size, line-height (unitless ratio), weight and
+   * letter-spacing. theme.bridge.css maps them to `text-<role>` utilities.
+   * Palettes inherit these; override `--app-shell-type-*` on `:root` to change a role.
+   * See decisions/typography-roles.md.
+   */
+  --app-shell-type-heading-lg-size: 1.5rem;
+  --app-shell-type-heading-lg-line-height: calc(32 / 24);
+  --app-shell-type-heading-lg-weight: 700;
+  --app-shell-type-heading-lg-letter-spacing: -0.025em;
+  --app-shell-type-heading-md-size: 1.125rem;
+  --app-shell-type-heading-md-line-height: calc(28 / 18);
+  --app-shell-type-heading-md-weight: 600;
+  --app-shell-type-heading-md-letter-spacing: 0em;
+  --app-shell-type-heading-sm-size: 0.875rem;
+  --app-shell-type-heading-sm-line-height: calc(20 / 14);
+  --app-shell-type-heading-sm-weight: 600;
+  --app-shell-type-heading-sm-letter-spacing: 0em;
+  --app-shell-type-body-md-size: 0.875rem;
+  --app-shell-type-body-md-line-height: calc(20 / 14);
+  --app-shell-type-body-md-weight: 400;
+  --app-shell-type-body-md-letter-spacing: 0em;
+  --app-shell-type-body-sm-size: 0.75rem;
+  --app-shell-type-body-sm-line-height: calc(16 / 12);
+  --app-shell-type-body-sm-weight: 400;
+  --app-shell-type-body-sm-letter-spacing: 0em;
+  --app-shell-type-label-md-size: 0.875rem;
+  --app-shell-type-label-md-line-height: calc(20 / 14);
+  --app-shell-type-label-md-weight: 500;
+  --app-shell-type-label-md-letter-spacing: 0em;
+  --app-shell-type-label-sm-size: 0.75rem;
+  --app-shell-type-label-sm-line-height: calc(16 / 12);
+  --app-shell-type-label-sm-weight: 500;
+  --app-shell-type-label-sm-letter-spacing: 0em;
+  --app-shell-type-code-sm-size: 0.75rem;
+  --app-shell-type-code-sm-line-height: calc(18 / 12);
+  --app-shell-type-code-sm-weight: 400;
+  --app-shell-type-code-sm-letter-spacing: 0em;
+  --app-shell-type-body-md-relaxed-size: 0.875rem;
+  --app-shell-type-body-md-relaxed-line-height: calc(24 / 14);
+  --app-shell-type-body-md-relaxed-weight: 400;
+  --app-shell-type-body-md-relaxed-letter-spacing: 0em;
+  --app-shell-type-body-sm-relaxed-size: 0.75rem;
+  --app-shell-type-body-sm-relaxed-line-height: calc(20 / 12);
+  --app-shell-type-body-sm-relaxed-weight: 400;
+  --app-shell-type-body-sm-relaxed-letter-spacing: 0em;
 }
 
 /*

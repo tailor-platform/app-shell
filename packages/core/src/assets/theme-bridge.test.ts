@@ -19,7 +19,7 @@ const defaultTheme = readFileSync(join(here, "themes/default.css"), "utf8");
  * `--semantic-shadow-*` (bridged as `--shadow-*`, not `--color-*`) is not
  * mistaken for a colour role.
  */
-const SEMANTIC_PREFIX = "semantic-(?:info|success|warning|danger|neutral)";
+const SEMANTIC_PREFIX = "(?:info|success|warning|danger|neutral)";
 
 /** Token names defined in the default palette for a given prefix, e.g. `alert`. */
 function definedTokens(prefix: string): string[] {
@@ -74,8 +74,7 @@ describe("theme bridge", () => {
   });
 
   it("does not treat --semantic-shadow-* as a colour role", () => {
-    expect(definedTokens(SEMANTIC_PREFIX).some((name) => name.startsWith("semantic-shadow"))).toBe(
-      false,
-    );
+    const roles = [...definedTokens(SEMANTIC_PREFIX), ...bridgedTokens(SEMANTIC_PREFIX).keys()];
+    expect(roles.some((name) => name.includes("shadow"))).toBe(false);
   });
 });

@@ -106,7 +106,7 @@ describe.each(modes)("semantic colour contrast (%s)", (mode) => {
   });
 
   describe.each(intents)("%s", (intent) => {
-    const role = (name: string) => `--semantic-${intent}-${name}`;
+    const role = (name: string) => `--${intent}-${name}`;
 
     it("on-solid text meets 4.5:1 on solid", () => {
       expect(contrast(color(role("on-solid")), color(role("solid")))).toBeGreaterThanOrEqual(

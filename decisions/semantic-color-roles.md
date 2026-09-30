@@ -20,13 +20,13 @@ Tracking issues (tailor-inc/platform-planning):
 
 Four hues, each with 12 steps, 12 alpha steps and a contrast colour, for light (`:root`) and dark (`.dark`):
 
-`--palette-{blue|green|amber|red}-{1..12}`, `--palette-{hue}-a{1..12}`, `--palette-{hue}-contrast`
+`--primitive-{blue|green|amber|red}-{1..12}`, `--primitive-{hue}-a{1..12}`, `--primitive-{hue}-contrast`
 
-They are not bridged to Tailwind. Consumers use the semantic roles, not steps. The `--palette-` prefix avoids collisions with a consumer's own copy of Radix Colors. The word "palette" also names the theme files (default, cream, bloom) in the docs, so the prefix could be renamed later without touching the roles.
+They are not bridged to Tailwind. Consumers use the semantic roles, not steps. The `--primitive-` prefix keeps the two layers readable as primitive then semantic, and avoids collisions with a consumer's own copy of Radix Colors. It is not `--palette-` because "palette" already names the theme files (default, cream, bloom). The role tokens have no prefix. The existing `--semantic-shadow-*` tokens are a different kind of token and are not part of this set.
 
 ### Semantic roles (public, bridged)
 
-`--semantic-{info|success|warning|danger|neutral}-{role}`, bridged as `--color-semantic-*` (5 intents x 8 roles = 40 utilities such as `bg-semantic-info-solid`).
+`--{info|success|warning|danger|neutral}-{role}`, bridged as `--color-{intent}-{role}` (5 intents x 8 roles = 40 utilities such as `bg-info-solid`).
 
 | role          | hue source                      | neutral source                |
 | ------------- | ------------------------------- | ----------------------------- |
@@ -41,7 +41,7 @@ They are not bridged to Tailwind. Consumers use the semantic roles, not steps. T
 
 The full set is bridged, including roles no component uses yet (neutral solid roles, hue `border`), so the set is one coherent vocabulary and `--alert-*` can alias every role.
 
-The roles and the aliases are declared for `:root, .dark`, so a nested `.dark` wrapper resolves them against its own scales. The only per-mode override is `--semantic-warning-text` (step 12 in light, step 11 in dark).
+The roles and the aliases are declared for `:root, .dark`, so a nested `.dark` wrapper resolves them against its own scales. The only per-mode override is `--warning-text` (step 12 in light, step 11 in dark).
 
 ### Aliases
 
@@ -82,9 +82,9 @@ The "alpha" steps are translucent only where the generator could express them. I
 ## Consequences
 
 - Names do not change: `bg-status-*`, `bg-alert-*` and `text-destructive` keep working. Values do.
-- `--status-*` are now fill and indicator colours. In dark mode they are step 9 values (`#15803d`, `#dc2626`, `#2563eb`), which are below 4.5:1 as text on the dark card (success 3.57:1, danger 3.71:1, info 3.47:1). CsvImporter text and the custom-components example moved to `text-semantic-*-text`. Other consumers that use `text-status-*` in dark mode will see lower contrast.
-- Badge `error` and `subtle-error`, and Alert `error`, no longer follow `--destructive`. They use the danger role in both modes. Button and `text-destructive` still follow `--destructive`, so in dark mode a Badge error (`#dc2626`) and a destructive Button (`#f87171`) differ. Consumers who override `--destructive` for Alert or Badge must override `--semantic-danger-*` or `--alert-error-*` instead.
+- `--status-*` are now fill and indicator colours. In dark mode they are step 9 values (`#15803d`, `#dc2626`, `#2563eb`), which are below 4.5:1 as text on the dark card (success 3.57:1, danger 3.71:1, info 3.47:1). CsvImporter text and the custom-components example moved to `text-{intent}-text`. Other consumers that use `text-status-*` in dark mode will see lower contrast.
+- Badge `error` and `subtle-error`, and Alert `error`, no longer follow `--destructive`. They use the danger role in both modes. Button and `text-destructive` still follow `--destructive`, so in dark mode a Badge error (`#dc2626`) and a destructive Button (`#f87171`) differ. Consumers who override `--destructive` for Alert or Badge must override `--danger-*` or `--alert-error-*` instead.
 - The warning Badge text is dark (`#4f3515`) instead of white.
 - Alert description text is the same colour as the Alert title in the default palette.
 - Consumers who override `--status-*` or `--alert-*` keep working; the aliases are only the default values.
-- cream, bloom and `_template.css` values are not edited. The header comments now list `--semantic-*` among the inherited tokens.
+- cream, bloom and `_template.css` values are not edited. The header comments now list `--{intent}-{role}` among the inherited tokens.

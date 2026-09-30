@@ -11,22 +11,22 @@ const badgeVariants = cva(
         default:
           "astw:border-transparent astw:bg-primary astw:text-primary-foreground astw:hover:bg-primary/80",
         success:
-          "astw:border-transparent astw:bg-semantic-success-solid astw:text-semantic-success-on-solid astw:hover:bg-semantic-success-solid-hover",
+          "astw:border-transparent astw:bg-success-solid astw:text-success-on-solid astw:hover:bg-success-solid-hover",
         warning:
-          "astw:border-transparent astw:bg-semantic-warning-solid astw:text-semantic-warning-on-solid astw:hover:bg-semantic-warning-solid-hover",
+          "astw:border-transparent astw:bg-warning-solid astw:text-warning-on-solid astw:hover:bg-warning-solid-hover",
         error:
-          "astw:border-transparent astw:bg-semantic-danger-solid astw:text-semantic-danger-on-solid astw:hover:bg-semantic-danger-solid-hover",
+          "astw:border-transparent astw:bg-danger-solid astw:text-danger-on-solid astw:hover:bg-danger-solid-hover",
         neutral:
           "astw:border-transparent astw:bg-secondary astw:text-secondary-foreground astw:hover:bg-secondary/80",
-        info: "astw:border-transparent astw:bg-semantic-info-solid astw:text-semantic-info-on-solid astw:hover:bg-semantic-info-solid-hover",
+        info: "astw:border-transparent astw:bg-info-solid astw:text-info-on-solid astw:hover:bg-info-solid-hover",
         "subtle-success":
-          "astw:border-transparent astw:bg-semantic-success-surface astw:text-semantic-success-text astw:hover:bg-semantic-success-surface-hover",
+          "astw:border-transparent astw:bg-success-surface astw:text-success-text astw:hover:bg-success-surface-hover",
         "subtle-warning":
-          "astw:border-transparent astw:bg-semantic-warning-surface astw:text-semantic-warning-text astw:hover:bg-semantic-warning-surface-hover",
+          "astw:border-transparent astw:bg-warning-surface astw:text-warning-text astw:hover:bg-warning-surface-hover",
         "subtle-error":
-          "astw:border-transparent astw:bg-semantic-danger-surface astw:text-semantic-danger-text astw:hover:bg-semantic-danger-surface-hover",
+          "astw:border-transparent astw:bg-danger-surface astw:text-danger-text astw:hover:bg-danger-surface-hover",
         "subtle-info":
-          "astw:border-transparent astw:bg-semantic-info-surface astw:text-semantic-info-text astw:hover:bg-semantic-info-surface-hover",
+          "astw:border-transparent astw:bg-info-surface astw:text-info-text astw:hover:bg-info-surface-hover",
         // Outline variants with status dots - matches Figma design
         "outline-success":
           "astw:gap-0.5 astw:pl-1.5 astw:pr-2 astw:border-border astw:bg-card astw:text-foreground",
@@ -48,11 +48,11 @@ const badgeVariants = cva(
 
 // Status dot colors for outline variants
 const statusDotColors: Record<string, string> = {
-  "outline-success": "astw:bg-semantic-success-indicator",
-  "outline-warning": "astw:bg-semantic-warning-indicator",
-  "outline-error": "astw:bg-semantic-danger-indicator",
-  "outline-info": "astw:bg-semantic-info-indicator",
-  "outline-neutral": "astw:bg-semantic-neutral-indicator",
+  "outline-success": "astw:bg-success-indicator",
+  "outline-warning": "astw:bg-warning-indicator",
+  "outline-error": "astw:bg-danger-indicator",
+  "outline-info": "astw:bg-info-indicator",
+  "outline-neutral": "astw:bg-neutral-indicator",
 };
 
 function StatusDot({ variant }: { variant: string }) {

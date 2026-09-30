@@ -372,9 +372,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "9d8ffad15d9b3347",
+        "outline": "8668ad90672475c7",
         "snapshot": null,
-        "outputMd": "88466a0159cc0216",
+        "outputMd": "18b8fc747d52455a",
         "examples": null
       }
     },
@@ -1216,9 +1216,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "e3d84f4a19a8028f",
+        "outline": "7800c7acb9be603e",
         "snapshot": null,
-        "outputMd": "2715f58f113da4de",
+        "outputMd": "f4d6ead675a73699",
         "examples": "d3cca347b055a503"
       }
     },
@@ -1582,13 +1582,13 @@
   },
   "skill": {
     "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "ce27a191becaca3a",
-    "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "88466a0159cc0216",
+    "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "18b8fc747d52455a",
     "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "caa1ea6264d3b543",
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "ba5107604e4f42e8",
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "2f3ff3f095c2b1cc",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "96f1cf893c231861",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "2715f58f113da4de",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "f4d6ead675a73699",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",

@@ -364,10 +364,10 @@ function ReviewStep({
         <span>Total: {rawRows.length} rows</span>
         {errorCount > 0 && <span className="astw:text-destructive">Errors: {errorCount}</span>}
         {warningCount > 0 && (
-          <span className="astw:text-semantic-warning-text">Warnings: {warningCount}</span>
+          <span className="astw:text-warning-text">Warnings: {warningCount}</span>
         )}
         {validated && errorCount === 0 && !validating && (
-          <span className="astw:inline-flex astw:items-center astw:gap-1 astw:text-semantic-success-text">
+          <span className="astw:inline-flex astw:items-center astw:gap-1 astw:text-success-text">
             <CheckCircle2Icon className="astw:size-3" />
             {t("reviewNoErrors")}
           </span>
@@ -438,7 +438,7 @@ function ReviewStep({
                               "astw:text-xs astw:px-2",
                               issue.level === "error"
                                 ? "astw:text-destructive"
-                                : "astw:text-semantic-warning-text",
+                                : "astw:text-warning-text",
                             )}
                           >
                             {issue.message}

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { badgeVariants } from "./badge";
 
 /**
- * Badge is precompiled with `astw:` utilities. A `bg-semantic-*` class whose
+ * Badge is precompiled with `astw:` utilities. A `bg-{intent}-{role}` class whose
  * token is missing from the Tailwind bridge emits no CSS and fails silently,
  * so check every semantic utility a variant uses against `theme.bridge.css`.
  */
@@ -29,7 +29,12 @@ describe("badgeVariants semantic colour classes", () => {
   it.each(variants)("%s uses only bridged semantic tokens", (variant) => {
     const classes = badgeVariants({ variant }).split(/\s+/);
     const tokens = classes
-      .map((c) => /^astw:(?:hover:)?(?:bg|text)-(semantic-[a-z-]+)$/.exec(c)?.[1])
+      .map(
+        (c) =>
+          /^astw:(?:hover:)?(?:bg|text)-((?:info|success|warning|danger|neutral)-[a-z-]+)$/.exec(
+            c,
+          )?.[1],
+      )
       .filter((t): t is string => t !== undefined);
 
     expect(tokens.length).toBeGreaterThanOrEqual(3);

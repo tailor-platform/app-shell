@@ -206,6 +206,7 @@ export { Menu } from "./components/menu";
 export type { PositionProps } from "./lib/position";
 export { Sheet } from "./components/sheet";
 export { Tabs } from "./components/tabs";
+export { Toolbar, type ToolbarProps } from "./components/toolbar";
 export { Tooltip } from "./components/tooltip";
 export { Select, type SelectAsyncFetcher } from "./components/select";
 export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox";

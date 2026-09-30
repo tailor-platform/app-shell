@@ -11,7 +11,7 @@ Styling is done with **Tailwind CSS v4** against `@tailor-platform/app-shell`'s 
 
 **The tokens are the rails.** Consistency across customers, apps, and AI runs comes from the token system, not from rules written in prose. A hand-typed `#fff` or `padding: 13px` is not a "small deviation" — it is the mechanism by which consistency dies.
 
-**Every token in this document is verified against the shipped CSS.** If a token is not listed here, assume it does not exist. Inventing a plausible-sounding token (`bg-surface-1`, `text-fg-muted`, `--space-4`) is the worst failure mode available: Tailwind emits **no CSS at all** for an unknown utility, so the class is silently dropped and the element renders unstyled — no error, no warning, nothing in the console. When unsure, read `node_modules/@tailor-platform/app-shell/dist/themes/default.css`; it is the ground truth.
+**Every token in this document is verified against the shipped CSS.** If a token is not listed here, assume it does not exist. The hue scales (`--palette-*`) are internal: they are not bridged to Tailwind and are not listed. Inventing a plausible-sounding token (`bg-surface-1`, `text-fg-muted`, `--space-4`) is the worst failure mode available: Tailwind emits **no CSS at all** for an unknown utility, so the class is silently dropped and the element renders unstyled — no error, no warning, nothing in the console. When unsure, read `node_modules/@tailor-platform/app-shell/dist/themes/default.css`; it is the ground truth.
 
 ## Setup
 
@@ -92,7 +92,7 @@ Theme tokens live in `packages/core/src/assets/themes/`. Copy `_template.css` to
 | **2. Shell gradient** | Branded palettes only | `--shell-gradient-base`, `--shell-gradient-tint`                               |
 | **3. System**         | Tune or copy default  | Surfaces: background, card, popover, muted, borders                            |
 | **4. Palette**        | Optional              | Radius, chart colors, shadows                                                  |
-| **5. Semantic**       | Do not duplicate      | Status and alert tokens inherit from `default.css`                             |
+| **5. Semantic**       | Do not duplicate      | Semantic roles, status and alert tokens inherit from `default.css`             |
 | **6. Structural**     | Branded palettes      | Copy the structural override block from `bloom.css` or `cream.css` when needed |
 
 A palette is selected by CSS import, not by an AppShell prop. Import exactly one theme file after `@tailor-platform/app-shell/styles`; if you import none, the default palette from `styles` is used.
@@ -158,7 +158,7 @@ There are no `-hover` or `-active` brand tokens. Express interaction states with
 
 #### Status
 
-Five status colors, used for badge fills and status dots:
+Five status colors, used for badge fills and status dots. They are aliases of the [semantic color roles](#semantic-color-roles) below, so status colors and Alert colors agree by default:
 
 | Token                | Use                      | Tailwind              |
 | -------------------- | ------------------------ | --------------------- |
@@ -170,6 +170,35 @@ Five status colors, used for badge fills and status dots:
 
 Prefer `Badge` with a semantic variant (`success`, `warning`, `error`, `info`, `neutral`) over applying these directly — the variants already pair fill and foreground correctly. Reach for the raw token only on custom surfaces.
 
+These are fill and indicator colors. Do not use them as text color: `--status-completed`, `--status-danger` and `--status-neutral` are below 4.5:1 on a dark card, and `--status-attention` is below 3:1 on a light one. For text, use `text-semantic-{intent}-text`.
+
+#### Semantic color roles
+
+Each intent has eight roles. The intents are `info`, `success`, `warning`, `danger` and `neutral`. The hue intents read internal color scales; `neutral` reads the system tokens. Every role is a token named `--semantic-{intent}-{role}` and a Tailwind color named `semantic-{intent}-{role}`:
+
+| Role            | Tailwind                         | Use for                             |
+| --------------- | -------------------------------- | ----------------------------------- |
+| `surface`       | `bg-semantic-info-surface`       | Soft background                     |
+| `surface-hover` | `bg-semantic-info-surface-hover` | Hover state of a soft background    |
+| `border`        | `border-semantic-info-border`    | Border on a soft background         |
+| `solid`         | `bg-semantic-info-solid`         | Filled background                   |
+| `solid-hover`   | `bg-semantic-info-solid-hover`   | Hover state of a filled background  |
+| `text`          | `text-semantic-info-text`        | Text and icons on a soft background |
+| `on-solid`      | `text-semantic-info-on-solid`    | Text on a filled background         |
+| `indicator`     | `bg-semantic-info-indicator`     | Dots and small marks                |
+
+```tsx
+<span className="rounded-md bg-semantic-success-surface px-2 py-0.5 text-semantic-success-text">
+  Paid
+</span>
+```
+
+In the default palette, `text` on `surface` and `on-solid` on `solid` and `solid-hover` are at least 4.5:1 for the four hue intents, in light and dark mode, on `--card` and `--background`. A unit test checks this from the shipped CSS. It does not cover hover surfaces, the `cream` and `bloom` palettes, or the `neutral` intent. Text on `surface-hover` is below 4.5:1 for some roles.
+
+Some light-mode values are opaque instead of translucent: the `warning` surface, surface-hover and border, the `info` border and the `danger` surface-hover. They do not blend with a tinted parent. All dark-mode values are translucent.
+
+`Badge` and `Alert` read these roles. `Badge` `error` and `subtle-error`, and `Alert` `error`, follow `--semantic-danger-*`. They no longer follow `--destructive`, which still drives `Button` and `text-destructive`.
+
 #### Sidebar & charts
 
 `--sidebar`, `--sidebar-foreground`, `--sidebar-border`, `--sidebar-primary(-foreground)`, `--sidebar-accent(-foreground)`, `--sidebar-ring` → `bg-sidebar`, `text-sidebar-foreground`, and so on. These let a palette tint the shell independently of page content.
@@ -178,14 +207,14 @@ Prefer `Badge` with a semantic variant (`success`, `warning`, `error`, `info`, `
 
 #### Alerts
 
-`--alert-{neutral,success,warning,error,info}-{background,foreground,foreground-muted,border}` — five variants × four slots, each bridged into Tailwind:
+`--alert-{neutral,success,warning,error,info}-{background,foreground,foreground-muted,border}` — five variants × four slots, each bridged into Tailwind. In the default palette they are aliases of the semantic color roles (`error` reads the `danger` role); `foreground-muted` follows `foreground`, so overriding `foreground` changes both:
 
-| Slot               | Tailwind                           | Use for                    |
-| ------------------ | ---------------------------------- | -------------------------- |
-| `background`       | `bg-alert-info-background`         | Callout fill               |
-| `foreground`       | `text-alert-info-foreground`       | Primary text and icons     |
-| `foreground-muted` | `text-alert-info-foreground-muted` | Secondary/description text |
-| `border`           | `border-alert-info-border`         | Callout border             |
+| Slot               | Tailwind                           | Use for                |
+| ------------------ | ---------------------------------- | ---------------------- |
+| `background`       | `bg-alert-info-background`         | Callout fill           |
+| `foreground`       | `text-alert-info-foreground`       | Primary text and icons |
+| `foreground-muted` | `text-alert-info-foreground-muted` | Description text       |
+| `border`           | `border-alert-info-border`         | Callout border         |
 
 Prefer the `Alert` component — it already pairs the four slots per variant and supplies the icon. Reach for the utilities directly only on custom surfaces `Alert` doesn't cover, such as a status-highlighted table row or an inline note:
 
@@ -195,7 +224,7 @@ Prefer the `Alert` component — it already pairs the four slots per variant and
 </div>
 ```
 
-The `background` and `border` slots are already semi-transparent tints (~10% and ~20%), so an opacity modifier compounds rather than replaces — `bg-alert-info-background/50` lands near 5% alpha, not 50%.
+Most `background` and `border` values are translucent tints, so an opacity modifier compounds rather than replaces — `bg-alert-info-background/50` halves the tint's alpha instead of setting it to 50%. In light mode the `warning` background and border and the `info` border are opaque, so an opacity modifier does not blend them with a tinted parent.
 
 ```tsx
 // Good — semantic token pairs, and a variant where one exists

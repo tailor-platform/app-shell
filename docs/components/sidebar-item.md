@@ -7,7 +7,7 @@ description: Individual navigation item for customizing sidebar with icons, acti
 
 # SidebarItem
 
-`SidebarItem` represents an individual navigation link in the sidebar. It automatically resolves titles and icons from resource definitions and provides active state highlighting.
+`SidebarItem` represents an individual navigation link in the sidebar. It automatically resolves titles and icons from resource definitions, supports localized title overrides, and provides active state highlighting.
 
 ## Import
 
@@ -34,7 +34,7 @@ When you only provide `to`, the title and icon are automatically resolved from t
 | Prop          | Type                   | Default       | Description                                    |
 | ------------- | ---------------------- | ------------- | ---------------------------------------------- |
 | `to`          | `string`               | **Required**  | Target URL (internal or external)              |
-| `title`       | `string`               | Auto-resolved | Override the display title                     |
+| `title`       | `LocalizedString`      | Auto-resolved | Override the display title (i18n supported)    |
 | `icon`        | `React.ReactNode`      | Auto-resolved | Override the icon                              |
 | `external`    | `boolean`              | `false`       | Opens link in new tab with external icon       |
 | `activeMatch` | `"exact" \| "prefix"`  | `"prefix"`    | How to match the current path for active state |
@@ -102,6 +102,14 @@ const modules = [
   to="/dashboard"
   title="My Dashboard" // Override auto-resolved title
 />
+```
+
+### Localized Override
+
+Pass a `LocalizedString`, such as a value from `defineI18nLabels`, to resolve the override using the current AppShell locale:
+
+```tsx
+<SidebarItem to="/dashboard" title={labels.t("dashboard")} />
 ```
 
 ### Override Icon

@@ -72,13 +72,13 @@ A navigation item that automatically resolves title and icon from resource defin
 
 #### Props
 
-| Prop       | Type        | Required | Description                                                           |
-| ---------- | ----------- | -------- | --------------------------------------------------------------------- |
-| `to`       | `string`    | Yes      | Target URL. External URLs (http://...) are rendered as external links |
-| `title`    | `string`    | No       | Override title. When omitted, auto-resolved from resource meta        |
-| `icon`     | `ReactNode` | No       | Override icon. When omitted, auto-resolved from resource meta         |
-| `external` | `boolean`   | No       | Opens link in new tab with external link icon                         |
-| `render`   | `function`  | No       | Custom render function for full UI control                            |
+| Prop       | Type              | Required | Description                                                                     |
+| ---------- | ----------------- | -------- | ------------------------------------------------------------------------------- |
+| `to`       | `string`          | Yes      | Target URL. External URLs (http://...) are rendered as external links           |
+| `title`    | `LocalizedString` | No       | Override title (i18n supported). When omitted, auto-resolved from resource meta |
+| `icon`     | `ReactNode`       | No       | Override icon. When omitted, auto-resolved from resource meta                   |
+| `external` | `boolean`         | No       | Opens link in new tab with external link icon                                   |
+| `render`   | `function`        | No       | Custom render function for full UI control                                      |
 
 #### Examples
 

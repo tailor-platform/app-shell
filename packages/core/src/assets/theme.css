@@ -16,9 +16,9 @@
  *   4. PALETTE        — optional: radius, charts, shadows, destructive.
  *
  * Inherited from default.css — do not duplicate in new palettes:
- *   --ring, --sidebar-*, --status-*, --alert-*, --app-shell-type-*.
- * Typography roles (--app-shell-type-*) are not part of a palette. A palette may
- * override them on `:root` when it needs different typography.
+ *   --ring, --sidebar-*, --status-*, --alert-*.
+ * Typography roles (--app-shell-type-*) are also inherited from default.css. Do not
+ * copy the default values into a palette. Override only the variables whose values differ.
  *
  * Light/dark mode is controlled separately via `.dark` on <html>.
  * Palette selection is by CSS import; there is no runtime palette prop.

@@ -113,21 +113,24 @@ describe("theme bridge", () => {
     });
 
     it("keeps the line boxes on the spec values", () => {
-      // size (px) x line-height ratio = line box (px). Values from decisions/typography-roles.md.
-      const spec: Record<string, [size: number, lineBox: number, weight: number]> = {
-        "heading-lg": [24, 32, 700],
-        "heading-md": [18, 28, 600],
-        "heading-sm": [14, 20, 600],
-        "body-md": [14, 20, 400],
-        "body-sm": [12, 16, 400],
-        "label-md": [14, 20, 500],
-        "label-sm": [12, 16, 500],
-        "code-sm": [12, 18, 400],
-        "body-md-relaxed": [14, 24, 400],
-        "body-sm-relaxed": [12, 20, 400],
+      // size (px) x line-height ratio = line box (px); weight and letter spacing are pinned too. Values from decisions/typography-roles.md.
+      const spec: Record<
+        string,
+        [size: number, lineBox: number, weight: number, letterSpacing: string]
+      > = {
+        "heading-lg": [24, 32, 700, "-0.025em"],
+        "heading-md": [18, 28, 600, "0em"],
+        "heading-sm": [14, 20, 600, "0em"],
+        "body-md": [14, 20, 400, "0em"],
+        "body-sm": [12, 16, 400, "0em"],
+        "label-md": [14, 20, 500, "0em"],
+        "label-sm": [12, 16, 500, "0em"],
+        "code-sm": [12, 18, 400, "0em"],
+        "body-md-relaxed": [14, 24, 400, "0em"],
+        "body-sm-relaxed": [12, 20, 400, "0em"],
       };
       expect([...defined.keys()].toSorted()).toEqual(Object.keys(spec).toSorted());
-      for (const [role, [size, lineBox, weight]] of Object.entries(spec)) {
+      for (const [role, [size, lineBox, weight, letterSpacing]] of Object.entries(spec)) {
         const values = defined.get(role)!;
         const rem = /^([0-9.]+)rem$/.exec(values.get("size") ?? "");
         expect(rem, `${role} size`).not.toBeNull();
@@ -137,6 +140,7 @@ describe("theme bridge", () => {
         expect(Number(ratio![2]), `${role} ratio base`).toBe(size);
         expect(Number(ratio![1]), `${role} line box`).toBe(lineBox);
         expect(Number(values.get("weight")), `${role} weight`).toBe(weight);
+        expect(values.get("letter-spacing"), `${role} letter-spacing`).toBe(letterSpacing);
       }
     });
   });

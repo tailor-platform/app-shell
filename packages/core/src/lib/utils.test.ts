@@ -28,6 +28,12 @@ describe("cn", () => {
     );
   });
 
+  it("keeps leading-none only when it comes after the role", () => {
+    // Same behavior as a stock size such as text-lg: a size class drops an earlier leading class.
+    expect(cn("text-heading-md", "leading-none")).toBe("text-heading-md leading-none");
+    expect(cn("leading-none", "text-heading-md")).toBe("text-heading-md");
+  });
+
   it("lets a later role or stock font size replace an earlier one", () => {
     expect(cn("text-body-md", "text-heading-lg")).toBe("text-heading-lg");
     expect(cn("text-label-md", "text-sm")).toBe("text-sm");

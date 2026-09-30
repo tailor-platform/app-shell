@@ -18,7 +18,7 @@
  *
  * DO NOT SET (inherited from `:root` in default.css):
  *   --ring, --sidebar-*, --status-*, --alert-*, --app-shell-type-*
- *   (typography roles; override `--app-shell-type-*` only if the brand needs different type)
+ *   (typography roles: do not copy the defaults; override only the variables whose values differ)
  *
  * PREVIEW: `/showcase/colors` in the Vite example app.
  * ═══════════════════════════════════════════════════════════════════════════

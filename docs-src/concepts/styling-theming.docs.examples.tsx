@@ -13,73 +13,73 @@ export function AppearanceToggle() {
   return <AppearanceSwitcher />;
 }
 
-const TYPOGRAPHY_SAMPLES = [
-  {
-    role: "heading-lg",
-    className: "text-heading-lg",
-    en: "Purchase orders",
-    ja: "発注管理",
-  },
-  {
-    role: "heading-md",
-    className: "text-heading-md",
-    en: "Purchase orders by supplier",
-    ja: "仕入先別の発注一覧",
-  },
-  {
-    role: "heading-sm",
-    className: "text-heading-sm",
-    en: "Delivery address",
-    ja: "納品先",
-  },
-  {
-    role: "body-md",
-    className: "text-body-md",
-    en: "The order was sent to the supplier on 12 March.",
-    ja: "発注書は3月12日に仕入先へ送付されました。",
-  },
-  {
-    role: "body-sm",
-    className: "text-body-sm text-muted-foreground",
-    en: "Updated 2 hours ago",
-    ja: "2時間前に更新",
-  },
-  {
-    role: "label-md",
-    className: "text-label-md",
-    en: "Order quantity",
-    ja: "発注数量",
-  },
-  {
-    role: "label-sm",
-    className: "text-label-sm",
-    en: "Draft",
-    ja: "下書き",
-  },
-  {
-    role: "code-sm",
-    className: "font-mono text-code-sm",
-    en: "PO-2026-000184",
-    ja: "PO-2026-000184",
-  },
-  {
-    role: "body-md-relaxed",
-    className: "text-body-md-relaxed",
-    en: "Please confirm the delivery date with the supplier before you approve this order.",
-    ja: "この発注を承認する前に、納期を仕入先に確認してください。",
-  },
-  {
-    role: "body-sm-relaxed",
-    className: "text-body-sm-relaxed text-muted-foreground",
-    en: "Changes to a confirmed order are recorded in the order history.",
-    ja: "確定済みの発注への変更は、発注履歴に記録されます。",
-  },
-];
-
 export function TypographyRoles() {
+  const rows = [
+    {
+      role: "heading-lg",
+      className: "text-heading-lg",
+      en: "Purchase orders",
+      ja: "発注管理",
+    },
+    {
+      role: "heading-md",
+      className: "text-heading-md",
+      en: "Purchase orders by supplier",
+      ja: "仕入先別の発注一覧",
+    },
+    {
+      role: "heading-sm",
+      className: "text-heading-sm",
+      en: "Delivery address",
+      ja: "納品先",
+    },
+    {
+      role: "body-md",
+      className: "text-body-md",
+      en: "The order was sent to the supplier on 12 March.",
+      ja: "発注書は3月12日に仕入先へ送付されました。",
+    },
+    {
+      role: "body-sm",
+      className: "text-body-sm text-muted-foreground",
+      en: "Updated 2 hours ago",
+      ja: "2時間前に更新",
+    },
+    {
+      role: "label-md",
+      className: "text-label-md",
+      en: "Order quantity",
+      ja: "発注数量",
+    },
+    {
+      role: "label-sm",
+      className: "text-label-sm",
+      en: "Draft",
+      ja: "下書き",
+    },
+    {
+      role: "code-sm",
+      className: "font-mono text-code-sm",
+      en: "PO-2026-000184",
+      ja: "PO-2026-000184",
+    },
+    {
+      role: "body-md-relaxed",
+      className: "text-body-md-relaxed",
+      en: "Please confirm the delivery date with the supplier before you approve this order.",
+      ja: "この発注を承認する前に、納期を仕入先に確認してください。",
+    },
+    {
+      role: "body-sm-relaxed",
+      className: "text-body-sm-relaxed text-muted-foreground",
+      en: "Changes to a confirmed order are recorded in the order history.",
+      ja: "確定済みの発注への変更は、発注履歴に記録されます。",
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-4">
-      {TYPOGRAPHY_SAMPLES.map(({ role, className, en, ja }) => (
+      {rows.map(({ role, className, en, ja }) => (
         <div key={role} className="grid grid-cols-[9rem_1fr] items-baseline gap-4">
           <span className="font-mono text-code-sm text-muted-foreground">{role}</span>
           <div className="flex flex-col gap-1">

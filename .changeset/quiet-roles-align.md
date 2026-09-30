@@ -9,4 +9,4 @@ Add typography role tokens. A role sets font size, line height, font weight, and
 <p className="text-body-md text-muted-foreground">Orders sent to suppliers this month.</p>
 ```
 
-Each role reads four CSS variables named `--app-shell-type-<role>-<size|line-height|weight|letter-spacing>`, which you can override on `:root`. AppShell's `cn()` now keeps a role together with a text color class. If your app has its own `tailwind-merge` setup, see the Typography section of the styling guide.
+Each role reads four CSS variables named `--app-shell-type-<role>-<size|line-height|weight|letter-spacing>`, which you can override on `:root`. AppShell's `cn()` now keeps a role together with a text color class, for example in `className="text-label-md text-muted-foreground"` passed to an AppShell component. If your app has its own `tailwind-merge` setup, see the Typography section of the styling guide.

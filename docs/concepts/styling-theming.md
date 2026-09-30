@@ -268,7 +268,7 @@ Pair a role with a color token from the Color section above. These pairings are 
 | --------------------------------- | ---------------------------------------------- |
 | Page title (`Layout.Header`)      | `text-heading-lg`                              |
 | Section heading                   | `text-heading-md`                              |
-| Card title                        | `text-heading-md leading-none`                 |
+| Card title (`div` or `span`)      | `text-heading-md leading-none`                 |
 | Body copy                         | `text-body-md`                                 |
 | Secondary copy, descriptions      | `text-body-md text-muted-foreground`           |
 | Caption, timestamp, metadata      | `text-body-sm text-muted-foreground`           |
@@ -279,9 +279,72 @@ Pair a role with a color token from the Color section above. These pairings are 
 
 ```tsx
 function TypographyRoles() {
+  const rows = [
+    {
+      role: "heading-lg",
+      className: "text-heading-lg",
+      en: "Purchase orders",
+      ja: "発注管理",
+    },
+    {
+      role: "heading-md",
+      className: "text-heading-md",
+      en: "Purchase orders by supplier",
+      ja: "仕入先別の発注一覧",
+    },
+    {
+      role: "heading-sm",
+      className: "text-heading-sm",
+      en: "Delivery address",
+      ja: "納品先",
+    },
+    {
+      role: "body-md",
+      className: "text-body-md",
+      en: "The order was sent to the supplier on 12 March.",
+      ja: "発注書は3月12日に仕入先へ送付されました。",
+    },
+    {
+      role: "body-sm",
+      className: "text-body-sm text-muted-foreground",
+      en: "Updated 2 hours ago",
+      ja: "2時間前に更新",
+    },
+    {
+      role: "label-md",
+      className: "text-label-md",
+      en: "Order quantity",
+      ja: "発注数量",
+    },
+    {
+      role: "label-sm",
+      className: "text-label-sm",
+      en: "Draft",
+      ja: "下書き",
+    },
+    {
+      role: "code-sm",
+      className: "font-mono text-code-sm",
+      en: "PO-2026-000184",
+      ja: "PO-2026-000184",
+    },
+    {
+      role: "body-md-relaxed",
+      className: "text-body-md-relaxed",
+      en: "Please confirm the delivery date with the supplier before you approve this order.",
+      ja: "この発注を承認する前に、納期を仕入先に確認してください。",
+    },
+    {
+      role: "body-sm-relaxed",
+      className: "text-body-sm-relaxed text-muted-foreground",
+      en: "Changes to a confirmed order are recorded in the order history.",
+      ja: "確定済みの発注への変更は、発注履歴に記録されます。",
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-4">
-      {TYPOGRAPHY_SAMPLES.map(({ role, className, en, ja }) => (
+      {rows.map(({ role, className, en, ja }) => (
         <div key={role} className="grid grid-cols-[9rem_1fr] items-baseline gap-4">
           <span className="font-mono text-code-sm text-muted-foreground">{role}</span>
           <div className="flex flex-col gap-1">
@@ -301,14 +364,15 @@ function TypographyRoles() {
 <span className="text-body-sm text-muted-foreground">Updated 2h ago</span>
 ```
 
-AppShell's own components still use the stock utilities (`text-sm`, `font-medium`, and so on) today. They will move to the roles in later changes, so the two sets can appear side by side for now.
+On an `h1` to `h6` element, the `cream` and `bloom` palettes ignore `leading-none`; see "Change a role" below. AppShell's own components still use the stock utilities (`text-sm`, `font-medium`, and so on) today. They will move to the roles in later changes, so the two sets can appear side by side for now.
 
 **Rules**
 
 - **A role carries no color.** Set the color with a token such as `text-muted-foreground`.
 - **A role does not choose the HTML element.** Pick `h2`, `p`, or `span` from the document structure, not from the size.
+- **A role sets weight and letter spacing on its own element.** It does not inherit them from a parent. Put an emphasis or tracking class on the element that has the role, not on its parent.
 - **Four modifiers may be combined with a role.** All are stock Tailwind utilities:
-  - Compact line height: `leading-none`. Use it only for single-line text, such as a card title.
+  - Compact line height: `leading-none`. Use it only for single-line text, such as a card title. Write it after the role when you merge with `cn()`.
   - Tabular figures: `tabular-nums`.
   - Emphasis on inline text: `font-medium` or `font-semibold`.
   - Uppercase: `uppercase`.
@@ -328,9 +392,9 @@ Always use `tabular-nums` for numbers that stack in a column — without it, dig
 }
 ```
 
-The `cream` and `bloom` palettes set `line-height` and `letter-spacing` on `h1` to `h6`. These rules are outside any `@layer`, so they win over a role utility on those elements. Under these palettes, an `h1` to `h6` element takes its line height and letter spacing from the palette, not from the role. Font size and weight still come from the role. The `default` palette has no such rule.
+The `cream` and `bloom` palettes set `line-height` and `letter-spacing` on `h1` to `h6`. These rules are outside any `@layer`, so they win over a role utility, and over any `leading-*` or `tracking-*` class, on those elements. Under these palettes, an `h1` to `h6` element takes its line height (1.2) and letter spacing (`-0.03em`) from the palette. This includes `leading-none`: `<h3 className="text-heading-md leading-none">` has a line height of 1.2, while a `div` with the same classes has 1.0. Font size and weight still come from the role. The `default` palette has no such rule.
 
-**`tailwind-merge`.** AppShell's `cn()` already knows the role names. If your app has its own `cn()` built on `tailwind-merge`, register them. Without this, `twMerge("text-label-md text-muted-foreground")` removes the role and keeps only the color.
+**`tailwind-merge`.** AppShell's `cn()` keeps a role together with a text color class, for example when you pass `className="text-label-md text-muted-foreground"` to an AppShell component. It cannot replace a size that a component sets itself, because component classes carry the internal `astw:` prefix (see "Why a plain utility can't override an AppShell default" below). If your app has its own `cn()` built on `tailwind-merge`, register the role names. Without this, `twMerge("text-label-md text-muted-foreground")` removes the role and keeps only the color.
 
 ```ts
 import { extendTailwindMerge } from "tailwind-merge";

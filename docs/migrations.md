@@ -15,6 +15,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.15.0        | [Base UI 1.8.0 breaks closed-`Select` and dialog-click tests](#1150-base-ui-180-breaks-closed-select-and-dialog-click-tests) |
 | 1.12.0        | [`DateField` / `DatePicker` field chrome moved to `Field.Root`](#1120-datefield--datepicker-field-chrome-moved-to-fieldroot) |
 | 1.11.0        | [React 19.2.7 and React Router v8 required](#1110-react-1927-and-react-router-v8-are-now-required)                           |
 | 1.11.0        | [Non-modal `Sheet` renders no backdrop](#1110-non-modal-sheet-no-longer-renders-a-backdrop)                                  |
@@ -24,6 +25,37 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
+
+## 1.15.0: Base UI 1.8.0 breaks closed-`Select` and dialog-click tests
+
+**Applies to:** apps with unit tests that assert `Select` options without opening the `Select`, and apps with Playwright tests that click buttons inside a `Dialog` or `AlertDialog`.
+
+1.15.0 updates the bundled `@base-ui/react` from 1.6.0 to 1.8.0 (1.12.0 to 1.14.0 used 1.6.0). The AppShell API is unchanged and the app behaves the same for the people using it. Two upstream behaviour changes do break tests that relied on the old behaviour, so an app that changes nothing can still go red in CI after upgrading. The fix is in the tests, not the app.
+
+### `Select` options are not in the DOM until it opens
+
+A closed `Select` used to render its options into the DOM. It no longer does, so a test that asserts option text with `getByText` on a closed `Select` fails with "Unable to find an element".
+
+Open the `Select` first, then wait for the option:
+
+```tsx
+await userEvent.click(screen.getByRole("combobox", { name: "Auto Renewal Period" }));
+expect(await screen.findByText("1 Month")).toBeInTheDocument();
+```
+
+### Dialog scroll lock can move a button under a Playwright click
+
+Opening a `Dialog` or `AlertDialog` applies a scroll lock that shifts the layout slightly. Playwright can judge a button stable and then click where it used to be, so the click lands on the backdrop and closes the dialog. The test then times out waiting for the dialog, and the Playwright call log shows the click being retried after "element was detached from the DOM".
+
+Press the button instead of clicking it. `press` does not use coordinates, so the layout shift cannot affect it:
+
+```ts
+const confirm = page.getByRole("alertdialog").getByRole("button", { name: "Delete" });
+await expect(confirm).toBeVisible();
+await confirm.press("Enter");
+```
+
+Do not reach for `click({ force: true })`. It only skips Playwright's stability check, and the click can still miss.
 
 ## 1.12.0: `DateField` / `DatePicker` field chrome moved to `Field.Root`
 

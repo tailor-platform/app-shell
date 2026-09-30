@@ -10,8 +10,10 @@ import { describe, expect, it } from "vitest";
  *
  * Scope of the guarantee: the default state of each pair, on the default
  * palette's `--card` and `--background`. Not covered on purpose:
- * - hover states (`surface-hover`): subtle-badge hover text is below 4.5:1 for
- *   some roles, see decisions/semantic-color-roles.md;
+ * - hover states (`surface-hover`) against 4.5:1: subtle-badge hover text is
+ *   below 4.5:1 for some roles (danger and success in light mode). They are held
+ *   at a documented floor (MIN_HOVER_TEXT) so they cannot get worse unnoticed,
+ *   see decisions/semantic-color-roles.md;
  * - branded palettes (cream, bloom) and their tinted shell backgrounds;
  * - the neutral intent, whose values are the pre-existing system tokens;
  * - the warning `solid` fill against the card (a fill, not a text pair).
@@ -86,6 +88,8 @@ function contrast(a: Rgba, b: Rgba): number {
 }
 
 const MIN_TEXT = 4.5;
+/** Known and accepted: subtle hover text is below AA for some roles. A floor, not a pass. */
+const MIN_HOVER_TEXT = 4.2;
 const modes: Mode[] = ["light", "dark"];
 const intents = ["info", "success", "warning", "danger"] as const;
 const alertVariantFor = { info: "info", success: "success", warning: "warning", danger: "error" };
@@ -123,6 +127,15 @@ describe.each(modes)("semantic colour contrast (%s)", (mode) => {
     it.each(pages)("text meets 4.5:1 on surface over %s", (page) => {
       expect(pair(role("text"), role("surface"), page)).toBeGreaterThanOrEqual(MIN_TEXT);
     });
+
+    it.each(pages)(
+      "text stays above the documented hover floor on surface-hover over %s",
+      (page) => {
+        expect(pair(role("text"), role("surface-hover"), page)).toBeGreaterThanOrEqual(
+          MIN_HOVER_TEXT,
+        );
+      },
+    );
 
     const variant = alertVariantFor[intent];
 

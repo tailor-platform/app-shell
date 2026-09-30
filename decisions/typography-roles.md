@@ -7,16 +7,16 @@
 
 Tracking issue: tailor-inc/platform-planning#1580 ([analysis comment](https://github.com/tailor-inc/platform-planning/issues/1580#issuecomment-5855498547)).
 
-Until now, AppShell defined only the font family (`--font-sans`). `docs/concepts/styling-theming.md` told consumers to compose text from stock Tailwind utilities and gave a table of eight pairings. A sample of four sources on 2026-09-27 measured how often real code matched that table, counting whole combinations of size, weight, and line height:
+Until now, AppShell defined only the font family (`--font-sans`). `docs/concepts/styling-theming.md` told consumers to compose text from stock Tailwind utilities and gave a table of eight pairings. A measurement of four sources on 2026-09-27 counted how often real code matched that table. The match rate counts only className strings that set a size and at least one more property (weight, line height, or letter spacing):
 
-| Source                          | Usages | Combinations that match the table |
-| ------------------------------- | ------ | --------------------------------- |
-| AppShell components             | 238    | 17%                               |
-| UI catalogue pages and patterns | 321    | 15%                               |
-| erp-kit templates               | 528    | 35% (\*)                          |
-| Catalogue (small sample)        | 24     | 50%, from 6 combinations          |
+| Source                                                            | Usages | Combinations that match the table |
+| ----------------------------------------------------------------- | ------ | --------------------------------- |
+| AppShell components (`packages/core/src/components`, `ebd92cf`)   | 238    | 17%                               |
+| UI Catalogue pages and patterns (`tailor-inc/app-web`, `a5872bb`) | 321    | 15%                               |
+| erp-kit scaffold (`tailor-platform/erp-kit`, `a736aeb`)           | 528    | 40%                               |
+| AppShell catalogue folder (AI reference code, `ebd92cf`)          | 24     | 50%, from 6 combinations          |
 
-(\*) 40% if the denominator is only the combinations that include a size. The catalogue sample is too small to compare with the others.
+The catalogue folder is the AI reference code that has since moved to `docs-src/`. Its sample is too small to compare with the others. The same numbers are in the analysis comment on #1580.
 
 The most common unlisted combination was `text-sm font-medium` (a label). It appears in all four sources. Code also used arbitrary sizes such as `text-[10px]`, and set line height explicitly in about 8 to 11% of places.
 

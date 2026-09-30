@@ -655,7 +655,7 @@ describe("useAsyncItems", () => {
       expect(result.current.items).toEqual(["a", "b"]);
     });
 
-    it("fetches the current query when the first open follows an input change", async () => {
+    it("does not interrupt a pending query when first opening", async () => {
       const fetcher = createFetcher(["a"]);
       const { result } = renderHook(() => useAsyncItems({ fetcher }));
 
@@ -665,14 +665,14 @@ describe("useAsyncItems", () => {
       });
       await advanceAndFlush(0);
 
+      expect(fetcher).not.toHaveBeenCalled();
+
+      await advanceAndFlush(300);
       expect(fetcher).toHaveBeenCalledOnce();
       expect(fetcher).toHaveBeenCalledWith(
         "abc",
         expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
-
-      await advanceAndFlush(300);
-      expect(fetcher).toHaveBeenCalledOnce();
     });
 
     it("does not fetch again on subsequent opens", async () => {

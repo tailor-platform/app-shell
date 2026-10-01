@@ -15,8 +15,7 @@ import { useFieldRootContext } from "@base-ui/react/internals/field-root-context
 import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
 import {
   useDateFieldState,
-  type DateFieldInvalidReason,
-  type DateFieldStateChangeSource,
+  type DateFieldStateChange,
   type Granularity,
   type HourCycle,
 } from "./use-date-field-state";
@@ -27,6 +26,7 @@ import { DatePopover, DatePickerPopoverTrigger } from "./date-input-group";
 import { DateRangeInputGroup } from "./date-range-input-group";
 import { useDateFieldT } from "./i18n";
 import {
+  assignRef,
   invalidMessageKey,
   isTargetWithin,
   useDateFieldFieldBridge,
@@ -89,13 +89,6 @@ export type DateRangePickerProps<T extends DateValue = DateValue> = {
   timeZone?: string;
 };
 
-/** One-end snapshot the combined funnel reads to synthesize the range state. */
-interface EndSnapshot {
-  fieldValue: DateValue | null;
-  hasInput: boolean;
-  invalidReason: DateFieldInvalidReason | null;
-}
-
 /** Combined proxy value: empty until BOTH ends are complete. */
 function serializeRange(start: DateValue | null, end: DateValue | null): string {
   return start != null && end != null ? `${start.toString()}/${end.toString()}` : "";
@@ -105,6 +98,8 @@ function rangesEqual(a: DateRange | null, b: DateRange | null): boolean {
   if (a == null || b == null) return a == null && b == null;
   return a.start.compare(b.start as never) === 0 && a.end.compare(b.end as never) === 0;
 }
+
+function noopEmitCombined(): void {}
 
 const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue = DateValue>(
   {
@@ -150,9 +145,8 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
   const fieldRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const hasFocusWithinRef = useRef(false);
-  const emitCombinedRef = useRef<
-    (which: "start" | "end", source: DateFieldStateChangeSource) => void
-  >(() => {});
+  let emitCombined: (which: "start" | "end", change: DateFieldStateChange) => void =
+    noopEmitCombined;
 
   // Each end is staged separately so editing one field never clobbers the
   // other; `onChange` only ever sees a complete range (or null). `null` is a
@@ -225,23 +219,14 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
     ...fieldShared,
     value: startVal,
     onChange: setStart,
-    onStateChange: (change) => emitCombinedRef.current("start", change.source),
+    onStateChange: (change) => emitCombined("start", change),
   });
   const endField = useDateFieldState({
     ...fieldShared,
     value: endVal,
     onChange: setEnd,
-    onStateChange: (change) => emitCombinedRef.current("end", change.source),
+    onStateChange: (change) => emitCombined("end", change),
   });
-
-  // Latest per-end state, read for the *other* end at event time (the changed
-  // end's own state is already reflected here on the next render, so reading the
-  // rendered value is correct once both engines settle).
-  const endsStateRef = useRef<{ start: EndSnapshot; end: EndSnapshot }>({
-    start: startField,
-    end: endField,
-  });
-  endsStateRef.current = { start: startField, end: endField };
 
   const calendarState = useRangeCalendarState({
     value: startVal != null && endVal != null ? { start: startVal, end: endVal } : null,
@@ -303,14 +288,21 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
     ariaLabel,
     onBlur,
     groupRef: fieldRef,
-    forwardedRef: ref,
   });
+  const setProxyInput = useCallback(
+    (node: HTMLInputElement | null) => {
+      bindings.setProxyNode(node);
+      assignRef(ref, node);
+    },
+    [bindings, ref],
+  );
 
   // Event-time funnel: synthesize a combined change from both ends and drive the
-  // single bridge. The changed end's fresh state is read from the rendered
-  // engine (it settles this render); we read the sibling from the same ref.
-  emitCombinedRef.current = (_which, source) => {
-    const { start, end } = endsStateRef.current;
+  // single bridge. Each field action closes over this render's local binding, so
+  // it receives both rendered endpoint snapshots without a state mirror ref.
+  emitCombined = (which, change) => {
+    const start = which === "start" ? change : startField;
+    const end = which === "end" ? change : endField;
     const reversed =
       start.fieldValue != null &&
       end.fieldValue != null &&
@@ -320,7 +312,7 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
     if (reversed) message = t("rangeReversed");
     else if (key) message = t(key);
     bindings.handleStateChange({
-      source,
+      source: change.source,
       fieldValue: null,
       inputValue: serializeRange(start.fieldValue, end.fieldValue),
       hasInput: start.hasInput || end.hasInput,
@@ -367,7 +359,7 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
   return (
     <div data-slot="date-range-picker" className={cn("astw:relative", className)}>
       <input
-        ref={bindings.proxyRef}
+        ref={setProxyInput}
         id={bindings.controlId}
         name={bindings.name}
         tabIndex={-1}

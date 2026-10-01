@@ -376,7 +376,6 @@ export function useOrdersQuery(variables: CollectionVariables) {
   // DataTable's loading state is exercised (skeleton rows, disabled controls).
   const [data, setData] = useState<typeof result | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const loading = data !== result;
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -388,5 +387,5 @@ export function useOrdersQuery(variables: CollectionVariables) {
     };
   }, [result]);
 
-  return { data, loading };
+  return { data, loading: data !== result };
 }

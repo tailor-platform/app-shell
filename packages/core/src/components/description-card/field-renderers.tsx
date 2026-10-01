@@ -228,6 +228,7 @@ function CopyButton({ value }: { value: string }) {
       <Tooltip.Trigger
         render={
           <button
+            aria-label={copied ? "Copied" : "Copy"}
             onClick={handleCopy}
             className="astw:ml-0.5 astw:inline-flex astw:items-center astw:justify-center astw:p-1 astw:rounded astw:hover:bg-muted astw:transition-colors astw:text-muted-foreground astw:hover:text-foreground"
           />
@@ -265,16 +266,13 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
 
   // Check if text is actually truncated after layout
   React.useEffect(() => {
-    if (!truncateLines) {
-      setIsTruncated(false);
-      return;
-    }
+    if (!truncateLines) return;
 
     const checkTruncation = () => {
       if (textRef.current) {
         const el = textRef.current;
-        // Check if content overflows
-        setIsTruncated(el.scrollHeight > el.clientHeight + 1);
+        // Check the committed value so a delayed measurement cannot use stale content.
+        setIsTruncated(el.textContent === value && el.scrollHeight > el.clientHeight + 1);
       }
     };
 

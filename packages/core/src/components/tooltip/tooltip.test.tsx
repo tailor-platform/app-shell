@@ -109,7 +109,7 @@ describe("Tooltip", () => {
 
     render(
       <Tooltip.Root>
-        <Tooltip.Trigger render={<button />} data-testid="trigger">
+        <Tooltip.Trigger render={<button aria-label="Focus tooltip" />} data-testid="trigger">
           Focus me
         </Tooltip.Trigger>
         <Tooltip.Content data-testid="tooltip-content">Tooltip text</Tooltip.Content>

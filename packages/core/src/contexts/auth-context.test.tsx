@@ -31,62 +31,84 @@ afterEach(() => {
 const LoadingGuard = () => <div>Loading...</div>;
 const LoginGuard = () => <div>Please log in</div>;
 
-describe("AuthProvider", () => {
-  // Create a mock auth client with a stable state object
-  // useSyncExternalStore requires getSnapshot to return the same reference if the state hasn't changed
-  const createMockAuthClient = (
-    initialState?: {
-      isAuthenticated: boolean;
-      error: string | null;
-      isReady: boolean;
-    },
-    overrides?: Partial<EnhancedAuthClient>,
-  ): EnhancedAuthClient => {
-    // Use a stable reference for the state object
-    const state = initialState ?? {
-      isAuthenticated: false,
-      error: null,
-      isReady: false,
-    };
-
-    const baseHandleCallback = overrides?.handleCallback ?? vi.fn();
-    let handleCallbackInFlight: Promise<void> | null = null;
-    const handleCallback = vi.fn(() => {
-      if (handleCallbackInFlight) {
-        return handleCallbackInFlight;
-      }
-
-      const callbackPromise = Promise.resolve(baseHandleCallback()).finally(() => {
-        handleCallbackInFlight = null;
-      });
-      handleCallbackInFlight = callbackPromise;
-      return callbackPromise;
-    });
-
-    const { handleCallback: _ignoredHandleCallback, ...otherOverrides } = overrides ?? {};
-
-    return {
-      getState: vi.fn(() => state),
-      login: vi.fn(),
-      logout: vi.fn(),
-      getAuthUrl: vi.fn(),
-      checkAuthStatus: vi.fn().mockResolvedValue({
-        isAuthenticated: false,
-        error: null,
-        isReady: true,
-      }),
-      refreshTokens: vi.fn(),
-      ready: vi.fn(() => Promise.resolve()),
-      configure: vi.fn(),
-      addEventListener: vi.fn(() => () => {}),
-      getAuthHeaders: vi.fn(),
-      fetch: vi.fn(),
-      getAppUri: vi.fn(() => "https://api.test.com"),
-      ...otherOverrides,
-      handleCallback,
-    } as EnhancedAuthClient;
+// Create a mock auth client with a stable state object. useSyncExternalStore
+// requires getSnapshot to return the same reference if state hasn't changed.
+const createMockAuthClient = (
+  initialState?: {
+    isAuthenticated: boolean;
+    error: string | null;
+    isReady: boolean;
+  },
+  overrides?: Partial<EnhancedAuthClient>,
+): EnhancedAuthClient => {
+  const state = initialState ?? {
+    isAuthenticated: false,
+    error: null,
+    isReady: false,
   };
 
+  const baseHandleCallback = overrides?.handleCallback ?? vi.fn();
+  let handleCallbackInFlight: Promise<void> | null = null;
+  const handleCallback = vi.fn(() => {
+    if (handleCallbackInFlight) return handleCallbackInFlight;
+
+    const callbackPromise = Promise.resolve(baseHandleCallback()).finally(() => {
+      handleCallbackInFlight = null;
+    });
+    handleCallbackInFlight = callbackPromise;
+    return callbackPromise;
+  });
+
+  const { handleCallback: _ignoredHandleCallback, ...otherOverrides } = overrides ?? {};
+
+  return {
+    getState: vi.fn(() => state),
+    login: vi.fn(),
+    logout: vi.fn(),
+    getAuthUrl: vi.fn(),
+    checkAuthStatus: vi.fn().mockResolvedValue({
+      isAuthenticated: false,
+      error: null,
+      isReady: true,
+    }),
+    refreshTokens: vi.fn(),
+    ready: vi.fn(() => Promise.resolve()),
+    configure: vi.fn(),
+    addEventListener: vi.fn(() => () => {}),
+    getAuthHeaders: vi.fn(),
+    fetch: vi.fn(),
+    getAppUri: vi.fn(() => "https://api.test.com"),
+    ...otherOverrides,
+    handleCallback,
+  } as EnhancedAuthClient;
+};
+
+const AuthSuspenseContent = () => {
+  const { isAuthenticated } = useAuthSuspense();
+  return <div>Content Loaded: {isAuthenticated ? "authenticated" : "not authenticated"}</div>;
+};
+
+const makeBaseClient = (mockHandleCallback: ReturnType<typeof vi.fn>) => ({
+  handleCallback: mockHandleCallback,
+  getState: vi.fn(() => ({
+    isAuthenticated: false,
+    error: null,
+    isReady: false,
+  })),
+  login: vi.fn(),
+  logout: vi.fn(),
+  getAuthUrl: vi.fn(),
+  checkAuthStatus: vi.fn(),
+  refreshTokens: vi.fn(),
+  ready: vi.fn(() => Promise.resolve()),
+  configure: vi.fn(),
+  addEventListener: vi.fn(() => () => {}),
+  getAuthHeaders: vi.fn(),
+  fetch: vi.fn(),
+  getAuthHeadersForQuery: vi.fn(),
+});
+
+describe("AuthProvider", () => {
   describe("useEnsureAuthInitialized", () => {
     it("should initialize auth status on mount", async () => {
       const state = {
@@ -534,32 +556,16 @@ describe("AuthProvider", () => {
         ready: mockReady,
       });
 
-      let suspenseTriggered = false;
-
-      const TestComponent = () => {
-        try {
-          useAuthSuspense();
-          return <div>Content Loaded</div>;
-        } catch (error) {
-          if (error instanceof Promise) {
-            suspenseTriggered = true;
-            throw error;
-          }
-          throw error;
-        }
-      };
-
       render(
         <AuthProvider client={mockClient}>
           <Suspense fallback={<div>Loading...</div>}>
-            <TestComponent />
+            <AuthSuspenseContent />
           </Suspense>
         </AuthProvider>,
       );
 
-      // Initially should show loading
+      // Initially should show loading, which proves the hook suspended.
       expect(screen.getByText("Loading...")).toBeDefined();
-      expect(suspenseTriggered).toBe(true);
     });
 
     it("should resolve suspense when auth becomes ready", async () => {
@@ -588,15 +594,10 @@ describe("AuthProvider", () => {
         ready: mockReady,
       });
 
-      const TestComponent = () => {
-        const { isAuthenticated } = useAuthSuspense();
-        return <div>Content Loaded: {isAuthenticated ? "authenticated" : "not authenticated"}</div>;
-      };
-
       render(
         <AuthProvider client={mockClient}>
           <Suspense fallback={<div>Loading...</div>}>
-            <TestComponent />
+            <AuthSuspenseContent />
           </Suspense>
         </AuthProvider>,
       );
@@ -632,22 +633,17 @@ describe("AuthProvider", () => {
       };
       const mockClient = createMockAuthClient(state);
 
-      const TestComponent = () => {
-        const { isAuthenticated } = useAuthSuspense();
-        return <div>Loaded: {isAuthenticated ? "authenticated" : "unauthenticated"}</div>;
-      };
-
       render(
         <AuthProvider client={mockClient}>
           <Suspense fallback={<div>Suspense Loading...</div>}>
-            <TestComponent />
+            <AuthSuspenseContent />
           </Suspense>
         </AuthProvider>,
       );
 
       // Should show unauthenticated state immediately (not suspended)
       await waitFor(() => {
-        expect(screen.getByText("Loaded: unauthenticated")).toBeDefined();
+        expect(screen.getByText("Content Loaded: not authenticated")).toBeDefined();
       });
     });
   });
@@ -990,26 +986,6 @@ describe("AuthProvider", () => {
 });
 
 describe("createAuthClient", () => {
-  const makeBaseClient = (mockHandleCallback: ReturnType<typeof vi.fn>) => ({
-    handleCallback: mockHandleCallback,
-    getState: vi.fn(() => ({
-      isAuthenticated: false,
-      error: null,
-      isReady: false,
-    })),
-    login: vi.fn(),
-    logout: vi.fn(),
-    getAuthUrl: vi.fn(),
-    checkAuthStatus: vi.fn(),
-    refreshTokens: vi.fn(),
-    ready: vi.fn(() => Promise.resolve()),
-    configure: vi.fn(),
-    addEventListener: vi.fn(() => () => {}),
-    getAuthHeaders: vi.fn(),
-    fetch: vi.fn(),
-    getAuthHeadersForQuery: vi.fn(),
-  });
-
   it("calls handleCallback immediately when URL contains OAuth callback parameters", () => {
     window.history.replaceState({}, "", "/?code=auth-code-123");
 

@@ -26,6 +26,20 @@ const testConfig: RootConfiguration = {
   locale: "en",
   errorBoundary: <DefaultErrorBoundary />,
 };
+const alwaysPass: Guard = () => pass();
+const alwaysHidden: Guard = () => hidden();
+const guard1: Guard = () => pass();
+const guard2: Guard = () => hidden();
+const guard3: Guard = () => pass();
+const asyncPass: Guard = async () => {
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  return pass();
+};
+const asyncHidden: Guard = async () => {
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  return hidden();
+};
+const redirectGuard: Guard = () => redirectTo("/login");
 
 /**
  * Wrapper to render WithGuard with required providers.
@@ -41,8 +55,6 @@ const renderWithProviders = (ui: React.ReactNode, contextData: TestContextData) 
 describe("WithGuard", () => {
   describe("synchronous guards", () => {
     it("renders children when guard passes", async () => {
-      const alwaysPass: Guard = () => pass();
-
       renderWithProviders(
         <WithGuard guards={[alwaysPass]}>
           <div>Protected Content</div>
@@ -56,8 +68,6 @@ describe("WithGuard", () => {
     });
 
     it("renders fallback when guard returns hidden", async () => {
-      const alwaysHidden: Guard = () => hidden();
-
       renderWithProviders(
         <WithGuard guards={[alwaysHidden]} fallback={<div>Access Denied</div>}>
           <div>Protected Content</div>
@@ -72,8 +82,6 @@ describe("WithGuard", () => {
     });
 
     it("renders nothing when guard returns hidden and no fallback provided", async () => {
-      const alwaysHidden: Guard = () => hidden();
-
       const { container } = renderWithProviders(
         <WithGuard guards={[alwaysHidden]}>
           <div>Protected Content</div>
@@ -121,10 +129,6 @@ describe("WithGuard", () => {
     });
 
     it("stops on first non-pass guard", async () => {
-      const guard1: Guard = () => pass();
-      const guard2: Guard = () => hidden();
-      const guard3: Guard = () => pass();
-
       renderWithProviders(
         <WithGuard guards={[guard1, guard2, guard3]} fallback={<div>Blocked</div>}>
           <div>Protected Content</div>
@@ -141,11 +145,6 @@ describe("WithGuard", () => {
 
   describe("asynchronous guards", () => {
     it("renders children when async guard passes", async () => {
-      const asyncPass: Guard = async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        return pass();
-      };
-
       renderWithProviders(
         <WithGuard guards={[asyncPass]}>
           <div>Async Protected</div>
@@ -159,11 +158,6 @@ describe("WithGuard", () => {
     });
 
     it("renders fallback when async guard returns hidden", async () => {
-      const asyncHidden: Guard = async () => {
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        return hidden();
-      };
-
       renderWithProviders(
         <WithGuard guards={[asyncHidden]} fallback={<div>Async Denied</div>}>
           <div>Async Protected</div>
@@ -244,8 +238,6 @@ describe("WithGuard", () => {
 
   describe("redirectTo handling", () => {
     it("treats redirectTo as hidden (renders fallback)", async () => {
-      const redirectGuard: Guard = () => redirectTo("/login");
-
       renderWithProviders(
         <WithGuard guards={[redirectGuard]} fallback={<div>Redirecting...</div>}>
           <div>Protected</div>

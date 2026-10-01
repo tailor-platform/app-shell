@@ -106,10 +106,10 @@ export function DateRangeInputGroup({
       data-disabled={isDisabled || undefined}
       data-invalid={isInvalid || undefined}
       className={cn(groupClasses, "astw:min-w-[272px]", className)}
-      onFocus={(e) => {
+      onFocusCapture={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onGroupFocus?.();
       }}
-      onBlur={handleBlur}
+      onBlurCapture={handleBlur}
     >
       <DateFieldRow
         {...rowShared}

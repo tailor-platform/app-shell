@@ -52,6 +52,7 @@ const CUSTOMERS = [
   "Stark Industries",
 ];
 const STATUSES: InvoiceStatus[] = ["draft", "sent", "paid", "overdue"];
+const pad = (n: number) => String(n).padStart(2, "0");
 
 // Deterministic pseudo-random so the dataset is stable across renders/reloads.
 function makeInvoices(count: number): Invoice[] {
@@ -70,7 +71,6 @@ function makeInvoices(count: number): Invoice[] {
     const minute = Math.floor(rand() * 60);
     const dueMs = base + dayOffset * 86_400_000;
     const createdMs = dueMs + hour * 3_600_000 + minute * 60_000;
-    const pad = (n: number) => String(n).padStart(2, "0");
     rows.push({
       id: `INV-${String(1000 + i)}`,
       externalId: `${hex(8)}-${hex(4)}-${hex(4)}-${hex(4)}-${hex(12)}`,
@@ -147,7 +147,7 @@ async function queryInvoices(variables: CollectionVariables): Promise<DataTableD
   if (variables.order?.length) {
     const [{ field, direction }] = variables.order;
     const dir = direction === "Desc" ? -1 : 1;
-    rows = [...rows].sort((a, b) => {
+    rows = rows.toSorted((a, b) => {
       const av = a[field as keyof Invoice];
       const bv = b[field as keyof Invoice];
       if (av < bv) return -1 * dir;
@@ -303,6 +303,40 @@ function StatusTabs({ control }: { control: CollectionControl }) {
 
 // Reusable invoice table (own control + data). `toolbar` gets the collection
 // control so each example can arrange the preset tabs + Add filter differently.
+const tabbedToolbar = (control: CollectionControl) => (
+  <Toolbar.Root>
+    <Toolbar.Row justify="between" aria-label="Invoice table controls">
+      <Toolbar.Group>
+        <DataTable.Filters slot="add" addIconOnly />
+        <StatusTabs control={control} />
+      </Toolbar.Group>
+      <Toolbar.Group>
+        <DataTable.ColumnSettings />
+      </Toolbar.Group>
+    </Toolbar.Row>
+    <Toolbar.Row aria-label="Active invoice filters">
+      <Toolbar.Group>
+        <DataTable.Filters slot="chips" />
+      </Toolbar.Group>
+    </Toolbar.Row>
+  </Toolbar.Root>
+);
+
+const plainToolbar = () => (
+  <Toolbar.Root>
+    <Toolbar.Row aria-label="Invoice table controls">
+      <Toolbar.Group>
+        <DataTable.Filters slot="add" addIconOnly />
+      </Toolbar.Group>
+    </Toolbar.Row>
+    <Toolbar.Row aria-label="Active invoice filters">
+      <Toolbar.Group>
+        <DataTable.Filters slot="chips" />
+      </Toolbar.Group>
+    </Toolbar.Row>
+  </Toolbar.Root>
+);
+
 function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => ReactNode }) {
   const { variables, control } = useCollectionVariables({
     params: {
@@ -360,47 +394,13 @@ const DataTablePage = () => {
         {/* With preset tabs */}
         <section className="mb-8">
           <h3 className="mb-2 text-sm font-semibold">With preset tabs</h3>
-          <InvoiceTable
-            toolbar={(control) => (
-              <Toolbar.Root>
-                <Toolbar.Row justify="between" aria-label="Invoice table controls">
-                  <Toolbar.Group>
-                    <DataTable.Filters slot="add" addIconOnly />
-                    <StatusTabs control={control} />
-                  </Toolbar.Group>
-                  <Toolbar.Group>
-                    <DataTable.ColumnSettings />
-                  </Toolbar.Group>
-                </Toolbar.Row>
-                <Toolbar.Row aria-label="Active invoice filters">
-                  <Toolbar.Group>
-                    <DataTable.Filters slot="chips" />
-                  </Toolbar.Group>
-                </Toolbar.Row>
-              </Toolbar.Root>
-            )}
-          />
+          <InvoiceTable toolbar={tabbedToolbar} />
         </section>
 
         {/* Without tabs */}
         <section className="mb-8">
           <h3 className="mb-2 text-sm font-semibold">Without tabs</h3>
-          <InvoiceTable
-            toolbar={() => (
-              <Toolbar.Root>
-                <Toolbar.Row aria-label="Invoice table controls">
-                  <Toolbar.Group>
-                    <DataTable.Filters slot="add" addIconOnly />
-                  </Toolbar.Group>
-                </Toolbar.Row>
-                <Toolbar.Row aria-label="Active invoice filters">
-                  <Toolbar.Group>
-                    <DataTable.Filters slot="chips" />
-                  </Toolbar.Group>
-                </Toolbar.Row>
-              </Toolbar.Root>
-            )}
-          />
+          <InvoiceTable toolbar={plainToolbar} />
         </section>
       </Layout.Column>
     </Layout>

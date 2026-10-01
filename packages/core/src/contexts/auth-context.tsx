@@ -598,7 +598,7 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
     ensureAuthInitialized().catch((error) => {
       console.error("Failed to check auth status:", error);
     });
-  }, [client, ensureAuthInitialized]);
+  }, [ensureAuthInitialized]);
 
   // While handling an OAuth callback, keep unguarded children hidden until
   // the callback settles. Guarded trees already wait on auth state instead.

@@ -31,6 +31,14 @@ const columns: Column<Order>[] = [
 
 type PendingCancel = { orders: Order[]; clearSelection: () => void };
 
+// Stand-ins for real mutations.
+const confirmOrders = async (orders: Order[]) => {
+  window.alert(`Confirming ${orders.length} order(s)`);
+};
+const exportOrders = async (orders: Order[]) => {
+  window.alert(`Exporting ${orders.length} order(s)`);
+};
+
 export function InteractionMultiSelect() {
   const [pendingCancel, setPendingCancel] = useState<PendingCancel | null>(null);
 
@@ -39,29 +47,31 @@ export function InteractionMultiSelect() {
       id: "confirm",
       label: "Confirm",
       // Only open orders can be confirmed: the bar shows "Confirm (n)".
-      appliesTo: (order) => order.status === "Open",
-      onClick: (orders, { clearSelection }) => {
-        window.alert(`Confirming ${orders.length} order(s)`);
-        clearSelection();
-      },
+      canApply: (order) => order.status === "Open",
+      // Return the promise: the bar disables its actions while it runs, then
+      // clears the selection.
+      onClick: (orders) => confirmOrders(orders),
     },
     {
       id: "export",
       label: "Export",
-      onClick: (orders) => window.alert(`Exporting ${orders.length} order(s)`),
+      // Exporting doesn't change the rows, so keep them selected.
+      keepSelection: true,
+      onClick: (orders) => exportOrders(orders),
     },
     {
       id: "assign",
       label: "Assign owner",
-      onClick: (orders) => window.alert(`Assigning ${orders.length} order(s)`),
+      onClick: async (orders) => window.alert(`Assigning ${orders.length} order(s)`),
     },
     {
       // 4th action: lands in the More actions menu.
       id: "cancel",
       label: "Cancel",
       variant: "destructive",
-      appliesTo: (order) => order.status !== "Shipped",
-      // Destructive: confirm first (interaction/confirm).
+      canApply: (order) => order.status !== "Shipped",
+      // Destructive: confirm first (interaction/confirm). Opening the dialog is
+      // synchronous, so the selection is cleared on confirm instead.
       onClick: (orders, { clearSelection }) => setPendingCancel({ orders, clearSelection }),
     },
   ];

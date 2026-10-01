@@ -490,13 +490,51 @@ export type UseDataTableOptions<
 // =============================================================================
 
 /**
- * A single row action definition for the actions column.
+ * What `RowAction` and `SelectionAction` share: how an action looks, and which
+ * rows it can act on. Define an action once and spread it into both arrays —
+ * only `onClick` differs, since one row and many rows need different handling.
+ *
+ * @example
+ * ```tsx
+ * const activate: DataTableAction<Vendor> = {
+ *   id: "activate",
+ *   label: "Activate",
+ *   canApply: (vendor) => vendor.status === "inactive",
+ * };
+ *
+ * useDataTable({
+ *   rowActions: [{ ...activate, onClick: (vendor) => activateOne(vendor) }],
+ *   selectionActions: [{ ...activate, onClick: (vendors) => activateMany(vendors) }],
+ * });
+ * ```
  */
-export interface RowAction<TRow extends Record<string, unknown>> {
+export interface DataTableAction<TRow extends Record<string, unknown>> {
   id: string;
   label: string;
   icon?: ReactNode;
   variant?: "default" | "destructive";
+  /**
+   * Whether the action can act on `row`. Omit it for actions that apply to
+   * every row. A row action is disabled for rows where it returns `false`; a
+   * selection action shows how many selected rows it returns `true` for
+   * ("Activate (6)"), is disabled when there are none, and passes only those
+   * rows to `onClick`.
+   */
+  canApply?: (row: TRow) => boolean;
+}
+
+/**
+ * A single row action definition for the actions column.
+ */
+export interface RowAction<TRow extends Record<string, unknown>> extends DataTableAction<TRow> {
+  /**
+   * Return `true` to disable the action for a given row.
+   *
+   * @deprecated Use `canApply`, which reads the other way round:
+   * `isDisabled: (row) => x` is `canApply: (row) => !x`. It is shared with
+   * `SelectionAction`, so one definition serves both. If both are set, the
+   * action is disabled when either one says so.
+   */
   isDisabled?: (row: TRow) => boolean;
   onClick: (row: TRow) => void;
 }
@@ -505,24 +543,27 @@ export interface RowAction<TRow extends Record<string, unknown>> {
  * A bulk action for the selected rows, shown in `DataTable.Footer` while a
  * selection is open. See `UseDataTableOptions.selectionActions`.
  */
-export interface SelectionAction<TRow extends Record<string, unknown>> {
-  id: string;
-  label: string;
-  icon?: ReactNode;
-  variant?: "default" | "destructive";
+export interface SelectionAction<
+  TRow extends Record<string, unknown>,
+> extends DataTableAction<TRow> {
   /**
-   * Narrows the action to the selected rows it applies to — e.g. "Activate"
-   * only for inactive rows. When set, the button shows how many selected rows
-   * qualify ("Activate (6)"), is disabled when none do, and `onClick` receives
-   * only those rows. Omit it for actions that apply to every selected row.
+   * Called with the selected rows the action can act on (see `canApply`),
+   * including rows selected on other pages, as they were last loaded.
+   *
+   * **Return the promise** for asynchronous work. While it is pending, the bar
+   * disables its actions and shows a spinner on this one; once it resolves, the
+   * selection is cleared — those rows may have changed, and rows remembered
+   * from other pages would otherwise be stale — unless `keepSelection` is set.
+   * A rejected promise leaves the selection as it was, so the action can be
+   * retried. Synchronous handlers (such as opening a confirm dialog) leave the
+   * selection alone: call `clearSelection` once the work is done.
    */
-  appliesTo?: (row: TRow) => boolean;
+  onClick: (rows: TRow[], helpers: { clearSelection: () => void }) => void | Promise<unknown>;
   /**
-   * Called with the selected rows the action applies to, including rows
-   * selected on other pages (as they were last loaded). Call `clearSelection`
-   * once the action has done its work.
+   * Keep the selection after this action's promise resolves — for actions that
+   * don't change the rows, such as an export.
    */
-  onClick: (rows: TRow[], helpers: { clearSelection: () => void }) => void;
+  keepSelection?: boolean;
 }
 
 /**

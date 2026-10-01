@@ -28,6 +28,7 @@ import {
   type DataTableData,
   type DataTableRootProps,
   type DataTablePaginationProps,
+  type DataTableAction,
   type RowAction,
   type SelectionAction,
   type UseDataTableOptions,
@@ -389,16 +390,15 @@ const table = useDataTable<Vendor>({
       id: "activate",
       label: "Activate",
       icon: <Play />,
-      appliesTo: (vendor) => vendor.status === "inactive",
-      onClick: async (vendors, { clearSelection }) => {
-        await activateVendors(vendors.map((vendor) => vendor.id));
-        clearSelection();
-      },
+      canApply: (vendor) => vendor.status === "inactive",
+      // Returning the promise: the bar waits, then clears the selection.
+      onClick: (vendors) => activateVendors(vendors.map((vendor) => vendor.id)),
     },
     {
       id: "export",
       label: "Export",
       icon: <Download />,
+      keepSelection: true, // exporting doesn't change the rows
       onClick: (vendors) => exportCsv(vendors),
     },
   ],
@@ -412,12 +412,14 @@ const table = useDataTable<Vendor>({
 </DataTable.Root>;
 ```
 
-- **`appliesTo` scopes an action to part of the selection.** The button shows how many selected rows qualify — `Activate (6)` — is disabled when none do, and `onClick` receives only those rows. Omit it for actions that apply to every selected row; no count is shown then.
-- **Selection spans pages.** The table remembers each selected row as it was last loaded, so counts and `onClick` cover rows selected on other pages too. Rows on the current page are always their latest version, so refetching after an action updates the counts. The header checkbox adds or removes only the current page; **Clear** empties everything.
-- **Clear when the work is done.** The bar doesn't clear the selection after an action — call the `clearSelection` helper when it should. An export usually keeps the selection; an archive usually clears it.
+- **`canApply` scopes an action to part of the selection.** The button shows how many selected rows qualify — `Activate (6)` — is disabled when none do, and `onClick` receives only those rows. Omit it for actions that apply to every selected row; no count is shown then.
+- **Return the promise from `onClick`.** While it is pending, the bar disables every action and shows a spinner on the running one, so a slow request can't be fired twice. When it resolves, the selection is cleared — the rows may have changed, and copies remembered from other pages can't refresh themselves. Set `keepSelection: true` for actions that don't change the rows, such as an export. If the promise rejects, the selection stays so the action can be retried, and the error is logged as `[DataTable] Selection action "…" failed`; showing it to the user is up to your `onClick`.
+- **Synchronous handlers own the selection.** An `onClick` that returns nothing — typically one that opens a confirm dialog — leaves the selection alone; call the `clearSelection` helper once the work is done.
+- **Selection spans pages.** The table remembers each selected row as it was last loaded, so counts and `onClick` cover rows selected on other pages too. Rows on the current page are always their latest version. The header checkbox adds or removes only the current page; **Clear** empties everything.
 - **Three actions stay inline.** The fourth onward collapse into a **More actions** menu, in array order. Put the most frequent first; a destructive action placed last sits safely in the menu.
 - **Confirm destructive actions.** `variant: "destructive"` only styles the action. Open a confirm dialog from `onClick` before deleting — see the [confirm pattern](../patterns/interaction-confirm.md).
-- **The bar stays reachable.** In `<Layout fill>` the footer is already pinned. On a page that scrolls, the bar sticks to the bottom of the viewport while rows are selected and settles back into place at the end of the table.
+- **The bar stays reachable.** In `<Layout fill>` the footer is already pinned. On a page that scrolls, the bar sticks to the bottom of the viewport while rows are selected and settles back into place at the end of the table. It sticks to the nearest scrolling container: inside a scrolling drawer or panel it rides that container instead, and inside a wrapper that clips its overflow (such as a card with `overflow: hidden`) it simply stays in the footer.
+- **Share definitions with `rowActions`.** `SelectionAction` and `RowAction` both extend [`DataTableAction`](#datatableaction), so an action defined once — label, icon, `canApply` — can be spread into both arrays with a different `onClick`.
 
 ### Accessibility
 
@@ -799,27 +801,50 @@ When `caseSensitive` is omitted or `false`, the filter is case-insensitive. When
 
 ## `RowAction`
 
-| Property     | Type                         | Description                                          |
-| ------------ | ---------------------------- | ---------------------------------------------------- |
-| `id`         | `string`                     | Stable identifier for the action.                    |
-| `label`      | `string`                     | Display label in the kebab menu.                     |
-| `icon`       | `ReactNode`                  | Optional icon shown beside the label.                |
-| `variant`    | `"default" \| "destructive"` | Visual style of the menu item.                       |
-| `isDisabled` | `(row: TRow) => boolean`     | Return `true` to disable the action for a given row. |
-| `onClick`    | `(row: TRow) => void`        | Called when the action is clicked.                   |
+A row action in the kebab-menu column. Extends [`DataTableAction`](#datatableaction) (`id`, `label`, `icon`, `variant`, `canApply`).
+
+| Property     | Type                     | Description                                                                                                                     |
+| ------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `canApply`   | `(row: TRow) => boolean` | Return `false` to disable the action for a given row.                                                                           |
+| `isDisabled` | `(row: TRow) => boolean` | **Deprecated** — use `canApply`, which reads the other way round. Still honoured: the action is disabled if either one says so. |
+| `onClick`    | `(row: TRow) => void`    | Called when the action is clicked.                                                                                              |
 
 ## `SelectionAction`
 
-A bulk action for the rows currently selected. See [Selection actions](#selection-actions).
+A bulk action for the rows currently selected. Extends [`DataTableAction`](#datatableaction). See [Selection actions](#selection-actions).
 
-| Property    | Type                                                              | Description                                                                                                                         |
-| ----------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `id`        | `string`                                                          | Stable identifier for the action.                                                                                                   |
-| `label`     | `string`                                                          | Button label, also used for its menu item once it overflows into **More actions**.                                                  |
-| `icon`      | `ReactNode`                                                       | Optional icon shown before the label.                                                                                               |
-| `variant`   | `"default" \| "destructive"`                                      | Visual style. A destructive action still needs its own confirmation step.                                                           |
-| `appliesTo` | `(row: TRow) => boolean`                                          | Scopes the action to the selected rows it applies to: shows their count, disables at zero, and passes only those rows to `onClick`. |
-| `onClick`   | `(rows: TRow[], helpers: { clearSelection: () => void }) => void` | Called with the selected rows the action applies to, including rows selected on other pages.                                        |
+| Property        | Type                                                                                  | Description                                                                                                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `canApply`      | `(row: TRow) => boolean`                                                              | Scopes the action to the selected rows it can act on: shows their count, disables at zero, and passes only those rows to `onClick`.                                                                       |
+| `onClick`       | `(rows: TRow[], helpers: { clearSelection: () => void }) => void \| Promise<unknown>` | Called with the selected rows the action can act on, including rows selected on other pages. Return a promise to get the pending state and clear-on-success; see [Selection actions](#selection-actions). |
+| `keepSelection` | `boolean`                                                                             | Keep the selection after the promise resolves — for actions that don't change the rows, such as an export.                                                                                                |
+
+## `DataTableAction`
+
+What `RowAction` and `SelectionAction` share. Define an action once and spread it into both arrays — only `onClick` differs.
+
+| Property   | Type                         | Description                                                                                                                                      |
+| ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `id`       | `string`                     | Stable identifier for the action.                                                                                                                |
+| `label`    | `string`                     | Display label — the menu item for a row action, the button (or **More actions** item) for a selection action.                                    |
+| `icon`     | `ReactNode`                  | Optional icon shown beside the label.                                                                                                            |
+| `variant`  | `"default" \| "destructive"` | Visual style. A destructive action still needs its own confirmation step.                                                                        |
+| `canApply` | `(row: TRow) => boolean`     | Which rows the action can act on. A row action is disabled where it returns `false`; a selection action counts the rows where it returns `true`. |
+
+```tsx
+const archive: DataTableAction<Order> = {
+  id: "archive",
+  label: "Archive",
+  canApply: (order) => order.status !== "Archived",
+};
+
+useDataTable({
+  columns,
+  data,
+  rowActions: [{ ...archive, onClick: (order) => archiveOrders([order]) }],
+  selectionActions: [{ ...archive, onClick: (orders) => archiveOrders(orders) }],
+});
+```
 
 ## `createColumnHelper`
 

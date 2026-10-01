@@ -403,6 +403,7 @@
         "CollectionVariables",
         "Column",
         "DataTable",
+        "DataTableAction",
         "DataTableContextValue",
         "DataTableData",
         "DataTableFilterConfig",
@@ -444,10 +445,10 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "0d4ba72f71285f5f",
-        "outline": "550236054e542de5",
+        "typeSurface": "fc6551ad164ad460",
+        "outline": "7da9d1c06ab1a20e",
         "snapshot": null,
-        "outputMd": "da6979ebef99d190",
+        "outputMd": "fc7efe94754d5f71",
         "examples": null
       }
     },
@@ -911,10 +912,10 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "af754afbf0ea9be9",
+        "outline": "2b07d9a974858c60",
         "snapshot": null,
-        "outputMd": "cefbf2068796a92c",
-        "examples": "a4b15f38a7b209fe"
+        "outputMd": "7e2fb7ebd1eb57fe",
+        "examples": "f19fb01970649857"
       }
     },
     "interaction-toast": {
@@ -1606,7 +1607,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "da6979ebef99d190",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "fc7efe94754d5f71",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "33902be121ff69db",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
@@ -1664,7 +1665,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/form-single-page.md": "10a0f4d91a120752",
     "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "851afb4672da6673",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
-    "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "cefbf2068796a92c",
+    "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "7e2fb7ebd1eb57fe",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "c3fb2588a0699c26",

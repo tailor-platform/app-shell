@@ -1712,7 +1712,11 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
         />
         <Menu.Content>
           {actions.map((action) => {
-            const disabled = action.isDisabled?.(row) ?? false;
+            // `canApply` is the shared, positive form; the deprecated
+            // `isDisabled` still counts, so either one can switch it off.
+            const disabled =
+              (action.canApply ? !action.canApply(row) : false) ||
+              (action.isDisabled?.(row) ?? false);
             return (
               <Menu.Item
                 key={action.id}

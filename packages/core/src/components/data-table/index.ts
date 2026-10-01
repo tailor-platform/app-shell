@@ -23,6 +23,7 @@ export type {
   MetadataFieldOptions,
   MoneyCellOptions,
   NumberCellOptions,
+  DataTableAction,
   RowAction,
   SelectionAction,
   UseDataTableOptions,

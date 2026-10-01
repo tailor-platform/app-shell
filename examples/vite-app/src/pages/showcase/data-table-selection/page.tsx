@@ -219,43 +219,49 @@ const DataTableSelectionPage = () => {
   const { variables, control } = useCollectionVariables({ params: { pageSize: 25 } });
   const data = useMemo(() => selectPage(vendors, variables), [vendors, variables]);
 
-  const setStatus = (rows: Vendor[], status: VendorStatus) => {
+  // 🧪 Dummy Data: a fake request, slow enough to see the bar's pending state.
+  const setStatus = async (rows: Vendor[], status: VendorStatus) => {
+    await new Promise((resolve) => setTimeout(resolve, 900));
     const ids = new Set(rows.map((row) => row.id));
     setVendors((prev) => prev.map((v) => (ids.has(v.id) ? { ...v, status } : v)));
   };
 
-  // 🔽 Bulk actions. `appliesTo` gives each action its "(n)" count and passes
+  // 🔽 Bulk actions. `canApply` gives each action its "(n)" count and passes
   // only the eligible rows to `onClick`; the footer disables an action at 0.
+  // Returning the promise makes the bar wait: actions are disabled with a
+  // spinner meanwhile, and the selection clears once it resolves.
   const selectionActions: SelectionAction<Vendor>[] = [
     {
       id: "activate",
       label: "Activate",
       icon: <Play />,
-      appliesTo: (v) => v.status === "inactive",
-      onClick: (rows, { clearSelection }) => {
-        setStatus(rows, "active");
+      canApply: (v) => v.status === "inactive",
+      onClick: async (rows) => {
+        await setStatus(rows, "active");
         toast.success(`Activated ${rows.length} vendor(s)`);
-        clearSelection();
       },
     },
     {
       id: "deactivate",
       label: "Deactivate",
       icon: <Pause />,
-      appliesTo: (v) => v.status === "active",
-      onClick: (rows, { clearSelection }) => {
-        setStatus(rows, "inactive");
+      canApply: (v) => v.status === "active",
+      onClick: async (rows) => {
+        await setStatus(rows, "inactive");
         toast.success(`Deactivated ${rows.length} vendor(s)`);
-        clearSelection();
       },
     },
     {
       id: "export",
       label: "Export",
       icon: <Download />,
-      // No `appliesTo`: applies to every selected row, so no count is shown.
-      // Keeps the selection — exporting doesn't change the rows.
-      onClick: (rows) => toast.success(`Exported ${rows.length} vendor(s)`),
+      // No `canApply`: applies to every selected row, so no count is shown.
+      // `keepSelection`: exporting doesn't change the rows.
+      keepSelection: true,
+      onClick: async (rows) => {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        toast.success(`Exported ${rows.length} vendor(s)`);
+      },
     },
     {
       // Fourth action: lands in the footer's "More actions" menu.
@@ -263,8 +269,10 @@ const DataTableSelectionPage = () => {
       label: "Delete",
       icon: <Trash2 />,
       variant: "destructive",
-      appliesTo: (v) => v.status === "archived",
-      // Destructive: confirm first (interaction/confirm pattern).
+      canApply: (v) => v.status === "archived",
+      // Destructive: confirm first (interaction/confirm pattern). Opening the
+      // dialog is synchronous, so the bar leaves the selection alone and the
+      // dialog clears it on confirm.
       onClick: (rows, { clearSelection }) => setPendingDelete({ rows, clearSelection }),
     },
   ];

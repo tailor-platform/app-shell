@@ -1,8 +1,9 @@
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Menu } from "@/components/menu";
+import { Spinner } from "@/components/spinner";
 import { Toolbar } from "@/components/toolbar";
 import { useDataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
@@ -37,11 +38,15 @@ function useSelectionCountText(): string {
 
 type ResolvedAction<TRow extends Record<string, unknown>> = {
   action: SelectionAction<TRow>;
-  /** The selected rows this action applies to — what `onClick` receives. */
+  /** The selected rows this action can act on — what `onClick` receives. */
   rows: TRow[];
   /** Shown as "(n)" only when the action narrows the selection. */
   count: number | null;
 };
+
+function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
+  return typeof (value as PromiseLike<unknown> | null | undefined)?.then === "function";
+}
 
 /**
  * The bulk-action bar `DataTable.Footer` renders while rows are selected:
@@ -68,14 +73,44 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
     };
   }, []);
 
+  // Id of the action whose promise is still pending. While set, every action
+  // is disabled, so a slow request can't be fired twice or overlapped by
+  // another action against the same selection.
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const busy = pendingId !== null;
+
   const clear = () => clearSelection?.();
   const resolved: ResolvedAction<TRow>[] = selectionActions.map((action) => {
-    const { appliesTo } = action;
-    const rows = appliesTo ? selectedRows.filter((row) => appliesTo(row)) : selectedRows;
-    return { action, rows, count: appliesTo ? rows.length : null };
+    const { canApply } = action;
+    const rows = canApply ? selectedRows.filter((row) => canApply(row)) : selectedRows;
+    return { action, rows, count: canApply ? rows.length : null };
   });
   const inline = resolved.slice(0, MAX_INLINE_ACTIONS);
   const overflow = resolved.slice(MAX_INLINE_ACTIONS);
+
+  const run = ({ action, rows }: ResolvedAction<TRow>) => {
+    if (busy || rows.length === 0) return;
+    const result = action.onClick(rows, { clearSelection: clear });
+    // Synchronous handlers (e.g. one that opens a confirm dialog) own the
+    // selection from here; only a returned promise is waited on.
+    if (!isPromiseLike(result)) return;
+    setPendingId(action.id);
+    result.then(
+      () => {
+        setPendingId(null);
+        // The rows it acted on may have changed, and copies remembered from
+        // other pages can't refresh — clear rather than keep stale rows around.
+        if (!action.keepSelection) clear();
+      },
+      (error: unknown) => {
+        // Keep the selection so the action can be retried. Report instead of
+        // rethrowing: a rethrow from this chain would surface as an unhandled
+        // rejection even when the app already handled the error itself.
+        setPendingId(null);
+        console.error(`[DataTable] Selection action "${action.id}" failed:`, error);
+      },
+    );
+  };
 
   return (
     // max-w-full + shrink-0: next to Pagination in the footer's wrapping row,
@@ -84,6 +119,7 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
     <Toolbar.Row
       ref={rowRef}
       aria-label={t("selectionActionsLabel")}
+      aria-busy={busy || undefined}
       className="astw:max-w-full astw:shrink-0"
     >
       <Toolbar.Group>
@@ -91,40 +127,46 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
           {countText}
         </span>
         <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />
-        {inline.map(({ action, rows, count }) => (
-          <Button
-            key={action.id}
-            size="sm"
-            variant={action.variant === "destructive" ? "destructive" : "outline"}
-            disabled={rows.length === 0}
-            onClick={() => action.onClick(rows, { clearSelection: clear })}
-          >
-            {action.icon}
-            {action.label}
-            {count !== null && <span className="astw:tabular-nums">({count})</span>}
-          </Button>
-        ))}
+        {inline.map((resolvedAction) => {
+          const { action, rows, count } = resolvedAction;
+          return (
+            <Button
+              key={action.id}
+              size="sm"
+              variant={action.variant === "destructive" ? "destructive" : "outline"}
+              disabled={busy || rows.length === 0}
+              onClick={() => run(resolvedAction)}
+            >
+              {pendingId === action.id ? <Spinner /> : action.icon}
+              {action.label}
+              {count !== null && <span className="astw:tabular-nums">({count})</span>}
+            </Button>
+          );
+        })}
         {overflow.length > 0 && (
           <Menu.Root>
             <Menu.Trigger
+              disabled={busy}
               render={
                 <Button variant="ghost" size="sm" aria-label={t("selectionMoreActions")}>
-                  <Ellipsis className="astw:size-4" />
+                  {overflow.some(({ action }) => action.id === pendingId) ? (
+                    <Spinner />
+                  ) : (
+                    <Ellipsis className="astw:size-4" />
+                  )}
                 </Button>
               }
             />
             {/* Opens upward: the bar sits at the bottom of the table, and often
                 at the bottom of the viewport while it is stuck there. */}
             <Menu.Content position={{ side: "top", align: "end" }}>
-              {overflow.map(({ action, rows, count }) => {
-                const disabled = rows.length === 0;
+              {overflow.map((resolvedAction) => {
+                const { action, rows, count } = resolvedAction;
                 return (
                   <Menu.Item
                     key={action.id}
-                    disabled={disabled}
-                    onClick={() => {
-                      if (!disabled) action.onClick(rows, { clearSelection: clear });
-                    }}
+                    disabled={busy || rows.length === 0}
+                    onClick={() => run(resolvedAction)}
                     className={cn(action.variant === "destructive" && "astw:text-destructive")}
                   >
                     {action.icon}

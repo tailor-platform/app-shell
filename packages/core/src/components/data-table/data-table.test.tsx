@@ -1855,6 +1855,92 @@ describe("DataTable", () => {
   });
 
   // -------------------------------------------------------------------------
+  // Row actions
+  // -------------------------------------------------------------------------
+  describe("row actions", () => {
+    function TestRowActions({ rowActions }: { rowActions: RowAction<TestRow>[] }) {
+      const table = useDataTable<TestRow>({ columns: testColumns, data: testData, rowActions });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Table />
+        </DataTable.Root>
+      );
+    }
+
+    // Opens the kebab menu of the row at `index` and returns its "Activate" item.
+    async function activateItemFor(index: number) {
+      const user = userEvent.setup();
+      await user.click(screen.getAllByRole("button", { name: "Row actions" })[index]);
+      return screen.findByRole("menuitem", { name: "Activate" });
+    }
+
+    it("disables an action for rows where canApply returns false", async () => {
+      const onClick = vi.fn();
+      render(
+        <TestRowActions
+          rowActions={[
+            { id: "activate", label: "Activate", canApply: (r) => r.status !== "Active", onClick },
+          ]}
+        />,
+        { wrapper },
+      );
+
+      // Alice is Active → disabled; Bob is Inactive → enabled.
+      expect((await activateItemFor(0)).getAttribute("aria-disabled")).toBe("true");
+      cleanup();
+      render(
+        <TestRowActions
+          rowActions={[
+            { id: "activate", label: "Activate", canApply: (r) => r.status !== "Active", onClick },
+          ]}
+        />,
+        { wrapper },
+      );
+      const bobItem = await activateItemFor(1);
+      expect(bobItem.getAttribute("aria-disabled")).not.toBe("true");
+      fireEvent.click(bobItem);
+      expect(onClick).toHaveBeenCalledWith(testData.rows[1]);
+    });
+
+    it("still honours the deprecated isDisabled", async () => {
+      render(
+        <TestRowActions
+          rowActions={[
+            {
+              id: "activate",
+              label: "Activate",
+              isDisabled: (r) => r.status === "Active",
+              onClick: vi.fn(),
+            },
+          ]}
+        />,
+        { wrapper },
+      );
+
+      expect((await activateItemFor(0)).getAttribute("aria-disabled")).toBe("true");
+    });
+
+    it("shares one action definition with selectionActions", () => {
+      // Type-level check that the shared base spreads into both arrays.
+      const activate = {
+        id: "activate",
+        label: "Activate",
+        canApply: (r: TestRow) => r.status !== "Active",
+      };
+      const options: UseDataTableOptions<TestRow> = {
+        columns: testColumns,
+        data: testData,
+        rowActions: [{ ...activate, onClick: (row) => void row }],
+        selectionActions: [{ ...activate, onClick: (rows) => void rows }],
+      };
+      expectTypeOf(options.rowActions![0].canApply).toEqualTypeOf<
+        ((row: TestRow) => boolean) | undefined
+      >();
+      expect(options.selectionActions).toHaveLength(1);
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // Expandable rows
   // -------------------------------------------------------------------------
   describe("expandable rows", () => {

@@ -55,10 +55,11 @@ Pass `selectionActions` to `useDataTable`. The moment one row is selected, `Data
 
 - Declare bulk actions with `selectionActions` on `useDataTable` — do NOT hand-build the bar, a floating panel, or checkbox state; the footer renders the count, actions, overflow menu, and Clear
 - Keep `DataTable.Footer` in the tree — it is where the bar renders
-- Give an action `appliesTo` when it fits only some rows: the bar shows the eligible count, disables the action at 0, and passes only those rows to `onClick`
+- Give an action `canApply` when it fits only some rows: the bar shows the eligible count, disables the action at 0, and passes only those rows to `onClick`
+- Return the promise from `onClick` for async work: the bar disables its actions while it runs and clears the selection when it resolves; set `keepSelection: true` on actions that don't change rows (export)
 - At most 3 actions render inline, in array order; the 4th onward move to the More actions menu — order by frequency and put a destructive action last
-- Destructive bulk actions MUST open an `interaction/confirm` dialog from `onClick`
-- Call the `clearSelection` helper from `onClick` once an action that changes the rows has succeeded
+- Destructive bulk actions MUST open an `interaction/confirm` dialog from `onClick`; that synchronous `onClick` leaves the selection alone, so call the `clearSelection` helper on confirm
+- When an action also exists per row, define it once as a `DataTableAction` and spread it into both `rowActions` and `selectionActions`
 - Selection persists across pagination, filter, and sort changes — do NOT clear it on those
 
 ## Anti-patterns
@@ -66,6 +67,7 @@ Pass `selectionActions` to `useDataTable`. The moment one row is selected, `Data
 - Hand-rolled selection (`useState<Set>`, raw `<input type="checkbox">`, `Table.Root`) when the list is a DataTable
 - A floating or fixed-position action bar over the table instead of the footer bar
 - Placing bulk-action buttons in the page header or the table toolbar
-- Counting eligible rows per action by hand instead of `appliesTo`
+- Counting eligible rows per action by hand instead of `canApply`
+- Fire-and-forget async `onClick` that doesn't return its promise — users can fire it twice, and the selection goes stale
 - Firing destructive bulk actions without an interaction/confirm step
 - Per-row `Menu` actions as a substitute for bulk actions when selection > 0

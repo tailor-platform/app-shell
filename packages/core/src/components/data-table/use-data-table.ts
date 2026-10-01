@@ -358,7 +358,15 @@ export function useDataTable<
       }
     : undefined;
 
-  const clearSelection = selectionEnabled ? () => commitSelection(new Map()) : undefined;
+  // A no-op on an empty selection: a selection action may clear inside its
+  // `onClick` and then be cleared again by the bar once its promise resolves,
+  // and that second call must not fire another `onSelectionChange([])`.
+  const clearSelection = selectionEnabled
+    ? () => {
+        if (selectionRef.current.size === 0) return;
+        commitSelection(new Map());
+      }
+    : undefined;
 
   const selectedIds = useMemo(() => [...selection.keys()], [selection]);
 

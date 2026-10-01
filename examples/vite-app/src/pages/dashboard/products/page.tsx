@@ -5,6 +5,7 @@ import {
   useURLCollectionVariables,
   createColumnHelper,
   type AppShellPageProps,
+  type DataTableAction,
   type RowAction,
   type SelectionAction,
 } from "@tailor-platform/app-shell";
@@ -71,46 +72,43 @@ const columns = [
   }),
 ];
 
+// Defined once, used by both the row menu and the bulk-action bar — only
+// `onClick` differs. `canApply` disables the row action for active products
+// and scopes the bulk action to the selected rows it can delete.
+const deleteProduct: DataTableAction<Product> = {
+  id: "delete",
+  label: "Delete",
+  variant: "destructive",
+  canApply: (row) => row.status !== "Active",
+};
+
 const rowActions: RowAction<Product>[] = [
   {
     id: "edit",
     label: "Edit",
     onClick: (row) => alert(`Edit: ${row.name}`),
   },
-  {
-    id: "delete",
-    label: "Delete",
-    variant: "destructive",
-    isDisabled: (row) => row.status === "Active",
-    onClick: (row) => alert(`Delete: ${row.name}`),
-  },
+  { ...deleteProduct, onClick: (row) => alert(`Delete: ${row.name}`) },
 ];
 
 const names = (rows: Product[]) => rows.map((row) => row.name).join(", ");
 
-// Bulk actions in the footer while rows are selected. `appliesTo` scopes each
+// Bulk actions in the footer while rows are selected. `canApply` scopes each
 // action to the selected rows it can act on and shows that count.
 const selectionActions: SelectionAction<Product>[] = [
   {
     id: "publish",
     label: "Publish",
-    appliesTo: (row) => row.status === "Draft",
+    canApply: (row) => row.status === "Draft",
     onClick: (rows) => alert(`Publish: ${names(rows)}`),
   },
   {
     id: "archive",
     label: "Archive",
-    appliesTo: (row) => row.status !== "Archived",
+    canApply: (row) => row.status !== "Archived",
     onClick: (rows) => alert(`Archive: ${names(rows)}`),
   },
-  {
-    id: "delete",
-    label: "Delete",
-    variant: "destructive",
-    // Same rule as the row action: active products can't be deleted.
-    appliesTo: (row) => row.status !== "Active",
-    onClick: (rows) => alert(`Delete: ${names(rows)}`),
-  },
+  { ...deleteProduct, onClick: (rows) => alert(`Delete: ${names(rows)}`) },
 ];
 
 const ProductsPage = () => {

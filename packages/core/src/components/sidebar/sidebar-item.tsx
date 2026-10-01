@@ -3,6 +3,8 @@ import { useLocation, Link } from "react-router";
 import { ExternalLink } from "lucide-react";
 import { SidebarMenuItem, SidebarMenuButton } from "./primitives";
 import { usePageMeta } from "@/hooks/use-page-meta";
+import { useAppShellConfig } from "@/contexts/appshell-context";
+import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
 
 export type SidebarItemRenderProps = {
   /** Title auto-resolved from resource meta */
@@ -23,10 +25,10 @@ export type SidebarItemProps = {
   to: string;
 
   /**
-   * Override title.
+   * Override title (i18n supported).
    * When omitted, title is auto-resolved from resource meta.
    */
-  title?: string;
+  title?: LocalizedString;
 
   /**
    * Override icon.
@@ -96,13 +98,19 @@ export const SidebarItem = (props: SidebarItemProps) => {
     icon: iconOverride,
   } = props;
   const { pathname: currentPath } = useLocation();
+  const { configurations } = useAppShellConfig();
   const pageMeta = usePageMeta(to);
+  const resolve = buildLocaleResolver(configurations.locale);
 
   const isActive =
     activeMatch === "exact"
       ? currentPath === to
       : currentPath === to || currentPath.startsWith(`${to}/`);
-  const title = titleOverride ?? pageMeta?.title ?? extractTitleFromUrl(to);
+  const fallbackTitle = pageMeta?.title ?? extractTitleFromUrl(to);
+  const title =
+    typeof titleOverride === "function"
+      ? resolve(titleOverride, fallbackTitle)
+      : (titleOverride ?? fallbackTitle);
   const icon = iconOverride ?? pageMeta?.icon;
 
   const renderProps: SidebarItemRenderProps = {

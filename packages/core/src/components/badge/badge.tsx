@@ -6,6 +6,7 @@ const badgeVariants = cva(
   "astw:inline-flex astw:cursor-default astw:items-center astw:rounded-md astw:border astw:px-2 astw:py-0.5 astw:text-xs astw:font-medium astw:transition-colors astw:focus:outline-none astw:focus:ring-2 astw:focus:ring-ring astw:focus:ring-offset-2",
   {
     variants: {
+      /** Visual style variant */
       variant: {
         default:
           "astw:border-transparent astw:bg-primary astw:text-primary-foreground astw:hover:bg-primary/80",

@@ -141,6 +141,7 @@ export function useAsyncItems<T>({
   const abortControllerRef = useRef<AbortController | null>(null);
   const activeRequestIdRef = useRef<number | null>(null);
   const nextRequestIdRef = useRef(0);
+  const requestRef = useRef<PendingRequest | null>(null);
   // Whether we are currently in an error state, so onFetchError fires once per
   // outage (on the failing->error transition) rather than per failed keystroke.
   const inErrorStateRef = useRef(false);
@@ -149,7 +150,9 @@ export function useAsyncItems<T>({
   const scheduleFetch = useCallback((fetchQuery: string | null, debounce: boolean) => {
     abortControllerRef.current?.abort();
     setLastFetchQuery(fetchQuery);
-    setRequest({ id: ++nextRequestIdRef.current, query: fetchQuery, debounce });
+    const nextRequest = { id: ++nextRequestIdRef.current, query: fetchQuery, debounce };
+    requestRef.current = nextRequest;
+    setRequest(nextRequest);
   }, []);
 
   // The request descriptor is React state; this effect owns its timer/network
@@ -181,7 +184,11 @@ export function useAsyncItems<T>({
       } finally {
         if (activeRequestIdRef.current === request.id) {
           activeRequestIdRef.current = null;
-          setRequest((current) => (current?.id === request.id ? null : current));
+          setRequest((current) => {
+            const nextRequest = current?.id === request.id ? null : current;
+            requestRef.current = nextRequest;
+            return nextRequest;
+          });
         }
       }
     };
@@ -209,6 +216,7 @@ export function useAsyncItems<T>({
     (open: boolean) => {
       if (open && !hasFetchedOnOpenRef.current) {
         hasFetchedOnOpenRef.current = true;
+        if (requestRef.current?.debounce) return;
         scheduleFetch(null, false);
       }
     },

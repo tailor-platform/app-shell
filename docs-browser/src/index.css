@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "@tailor-platform/app-shell/styles";
+@import "@tailor-platform/app-shell/themes/bloom";
+
+/* The live examples live at the repo root (docs/), outside this app's own tree,
+   so Tailwind won't discover their utility classes by default. Point it at them
+   explicitly so classes like `flex gap-2` used in examples get generated. */
+@source "../../../docs/**/*.examples.tsx";
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}

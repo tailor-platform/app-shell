@@ -18,9 +18,11 @@ Tracking issues (tailor-inc/platform-planning):
 
 ### Hue scales (internal)
 
-Four hues, each with 12 steps, 12 alpha steps and a contrast colour, for light (`:root`) and dark (`.dark`):
+One gray scale and four hues. Each hue has 12 steps, 12 alpha steps and a contrast colour, for light (`:root`) and dark (`.dark`):
 
 `--primitive-{blue|green|amber|red}-{1..12}`, `--primitive-{hue}-a{1..12}`, `--primitive-{hue}-contrast`
+
+Gray is the Tailwind `neutral` family, `--primitive-gray-{50..950}`, declared once because it is the same in both modes. It is not generated with Radix: the default palette already used these exact values (`#0a0a0a`, `#737373`, `#e5e5e5`, `#fafafa`, `#a3a3a3`), and the Radix generator cannot produce them. In the default palette `--foreground`, `--muted-foreground`, `--border` and `--input` read gray steps (light 950 / 500 / 200 / 200, dark 50 / 400 for the two text tokens). Dark `--border` and `--input` stay translucent white, and all surfaces stay literal: they are theme inputs, not scale steps. No default value changes. cream and bloom keep their own values; a theme can later pick another family (slate for their navy ink). Gray has no alpha steps.
 
 They are not bridged to Tailwind. Consumers use the semantic roles, not steps. The `--primitive-` prefix keeps the two layers readable as primitive then semantic, and avoids collisions with a consumer's own copy of Radix Colors. It is not `--palette-` because "palette" already names the theme files (default, cream, bloom). The role tokens have no prefix. The existing `--semantic-shadow-*` tokens are a different kind of token and are not part of this set.
 
@@ -71,10 +73,24 @@ Seeds: blue `#2563eb` (Tailwind blue-600), green `#15803d` (green-700), amber `#
 
 The "alpha" steps are translucent only where the generator could express them. In light mode, warning a3, a4 and a6, info a6 and danger a4 are opaque 6-digit hex. So the warning surface, surface-hover and border, the info border and the danger surface-hover do not blend with a tinted parent. Dark mode has no opaque values among a3, a4 and a6. Fixing the generator is a later step.
 
+## Target shape
+
+This step is the status part of a two-axis palette. The rest is planned as follows, so the roles added here do not need to change later:
+
+| Axis               | Scale                                                                          | Roles                                                                                                                          | Step                           |
+| ------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
+| Status (this step) | `--primitive-{blue,green,amber,red}-*`                                         | `--{info,success,warning,danger}-{role}`                                                                                       | done                           |
+| Ink and lines      | `--primitive-gray-*`                                                           | base tokens read it (`--foreground`, `--muted-foreground`, `--border`, `--input`)                                              | done for default; themes later |
+| Danger action      | red                                                                            | `--destructive` becomes an alias of `--danger-solid` once its text and border uses move to `--danger-text` / `--danger-border` | next                           |
+| Brand              | an accent scale per theme (bloom and cream read blue, theme-tailor reads cyan) | `--primary`, `--ring` and brand tints read accent steps                                                                        | with the Theme Generator       |
+
+`--status-*` and `--alert-*` stay as aliases for consumer code. Shipped components read the roles.
+
 ## Out of scope
 
 - `--destructive` and `--destructive-foreground` aliasing. Themes override `--destructive`, and it is used as solid, text and border at once, so it needs its own change. Button is untouched.
-- Gray scale and base-palette remap, theme accent scales, Theme Generator.
+- Remapping surfaces or other themes onto the gray scale; gray alpha steps.
+- Theme accent scales (the brand axis) and the Theme Generator.
 - Bridging hue scales to Tailwind.
 - New Badge or Alert variants, icons in Badge.
 - Semantic-role swatches on the `/showcase/colors` page.

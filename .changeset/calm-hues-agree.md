@@ -8,6 +8,8 @@ Add semantic colour roles (`--{info|success|warning|danger|neutral}-{surface|sur
 <span className="rounded-md bg-success-surface px-2 py-0.5 text-success-text">Paid</span>
 ```
 
+A gray scale (`--primitive-gray-{50..950}`, Tailwind neutral) is also added; the default palette's text and line tokens read it, with no value change.
+
 Visible changes in the default palette:
 
 - `bg-status-*` and `bg-alert-*` keep their names but change values. `--status-*` are fill colours; do not use them as text (below 4.5:1 in dark mode). Use `text-{intent}-text` instead (for example `text-status-completed` becomes `text-success-text`).

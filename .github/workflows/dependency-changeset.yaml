@@ -1,0 +1,21 @@
+name: Add Dependency Changeset
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  add-changeset:
+    if: contains(github.event.pull_request.labels.*.name, 'dependencies')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: IzumiSy/deps2changesets@e6224362658fa941bf2f1bc34f2a41591eb875be # main

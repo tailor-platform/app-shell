@@ -655,6 +655,26 @@ describe("useAsyncItems", () => {
       expect(result.current.items).toEqual(["a", "b"]);
     });
 
+    it("does not interrupt a pending query when first opening", async () => {
+      const fetcher = createFetcher(["a"]);
+      const { result } = renderHook(() => useAsyncItems({ fetcher }));
+
+      act(() => {
+        result.current.onInputValueChange("abc");
+        result.current.onOpenChange(true);
+      });
+      await advanceAndFlush(0);
+
+      expect(fetcher).not.toHaveBeenCalled();
+
+      await advanceAndFlush(300);
+      expect(fetcher).toHaveBeenCalledOnce();
+      expect(fetcher).toHaveBeenCalledWith(
+        "abc",
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
+      );
+    });
+
     it("does not fetch again on subsequent opens", async () => {
       const fetcher = createFetcher(["a"]);
       const { result } = renderHook(() => useAsyncItems({ fetcher }));

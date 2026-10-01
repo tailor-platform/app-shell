@@ -154,9 +154,14 @@
   - **`ActionPanel`'s `actions` was documented as `{ label, onSelect, variant?, disabled?, hidden? }`.** The real row requires `key`, `label` and `icon`, the handler is `onClick`, and there is no `hidden` — the documented example could not compile. The row type isn't exported separately, so an actions array annotates as `ActionPanelProps["actions"]`.
   
   Also recorded: `DescriptionCard`'s `type: "date"` parses a date-only `"YYYY-MM-DD"` string with `new Date(...)`, i.e. as UTC midnight, so it renders the previous day in negative-offset timezones. Date-only fields should be pre-formatted through `render`; real timestamps keep `type: "date"`.
-- 6e4f783: Update the bundled Base UI dependency to 1.8.0.
+- 6e4f783: Update the bundled `@base-ui/react` from 1.6.0 to 1.8.0. The AppShell public API is unchanged, but two upstream behaviour changes can break consumer tests:
   
-  This picks up upstream accessibility and behavior fixes across popup-backed controls while keeping the AppShell public API unchanged.
+  - `Select` no longer renders its options into the DOM until it is opened. Tests that assert option text on a closed `Select` must open it first, then query the option (for example with `findByText`).
+  - Opening a `Dialog` or `AlertDialog` applies a scroll lock that can shift layout while Playwright is clicking, so a coordinate click can land on the backdrop and close the dialog. Press dialog buttons with `locator.press("Enter")` instead of `click()`. `click({ force: true })` only skips Playwright's stability check and is not recommended.
+  
+  See the [1.15.0 migration entry](https://github.com/tailor-platform/app-shell/blob/main/docs/migrations.md#1150-base-ui-180-breaks-closed-select-and-dialog-click-tests) for examples.
+  
+  _This entry was amended after release to name the from-version and the two behaviour changes. The original text gave only the new version and named no behaviour change._
 - 821bb49: Prefer literal route metadata when resolving `SidebarItem` labels and icons, even when a dynamic sibling route was registered first.
 
 ## 1.14.0

@@ -156,9 +156,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "3b92ce72609132dd",
+        "outline": "3db1c08e4cd01d94",
         "snapshot": null,
-        "outputMd": "ce27a191becaca3a",
+        "outputMd": "71f5f42c0fa0698e",
         "examples": null
       }
     },
@@ -1147,10 +1147,10 @@
       "claims": [],
       "symbols": ["SidebarItem", "SidebarItemProps"],
       "hashes": {
-        "typeSurface": "7be21739c231ede3",
-        "outline": "1cc674b956d09fab",
+        "typeSurface": "37530cafa374d799",
+        "outline": "d1bbcfac50071047",
         "snapshot": null,
-        "outputMd": "d55d38352040ef2c",
+        "outputMd": "9236c03e53aa79f2",
         "examples": null
       }
     },
@@ -1182,9 +1182,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "74f353988f15c82b",
+        "outline": "91f0fa065f3a3192",
         "snapshot": null,
-        "outputMd": "96f1cf893c231861",
+        "outputMd": "dc6b3afc049b4148",
         "examples": null
       }
     },
@@ -1581,13 +1581,13 @@
     }
   },
   "skill": {
-    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "ce27a191becaca3a",
+    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "71f5f42c0fa0698e",
     "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "18b8fc747d52455a",
     "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "caa1ea6264d3b543",
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "ba5107604e4f42e8",
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "2f3ff3f095c2b1cc",
-    "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "96f1cf893c231861",
+    "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "dc6b3afc049b4148",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "a1a8b39e9fd0e146",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
@@ -1622,7 +1622,7 @@
     "packages/core/skills/app-shell-patterns/references/components/select.md": "ae287e2bb5abc1c6",
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "1f81ebd562c50371",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "7288fdf8bb5c19b9",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "d55d38352040ef2c",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "e50b2d649289d772",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",
@@ -1667,7 +1667,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "8062ea0df9403fbb",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "c3fb2588a0699c26",
-    "packages/core/skills/app-shell-patterns/references/migrations.md": "799fd5010635b2c2",
+    "packages/core/skills/app-shell-patterns/references/migrations.md": "15845e186f68fe7e",
     "packages/core/skills/app-shell-patterns/SKILL.md": "814325f4ea06ffae"
   }
 }

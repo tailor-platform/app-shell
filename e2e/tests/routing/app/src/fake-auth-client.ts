@@ -65,7 +65,7 @@ export const createFakeAuthClient = (): EnhancedAuthClient => {
       setState({ isAuthenticated: false, error: null, isReady: true });
     },
     getAuthUrl: async () => window.location.href,
-    handleCallback: async () => {},
+    handleCallback: async () => ({ ok: true, returnTo: null }),
     checkAuthStatus: async () => {
       // Re-hydrate from localStorage so reload-based tests observe the same
       // session behavior that a real persisted auth client would expose.

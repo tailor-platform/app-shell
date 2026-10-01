@@ -417,7 +417,7 @@ function ReviewStep({
                       className={cn(
                         "astw:px-1 astw:py-1",
                         issue?.level === "error" && "astw:bg-destructive/10",
-                        issue?.level === "warning" && "astw:bg-status-attention/10",
+                        issue?.level === "warning" && "astw:bg-warning-surface",
                       )}
                     >
                       <div className="astw:flex astw:flex-col astw:gap-0.5">
@@ -426,7 +426,7 @@ function ReviewStep({
                           className={cn(
                             "astw:w-full astw:rounded astw:border astw:px-2 astw:py-1 astw:text-sm astw:bg-transparent",
                             issue?.level === "error" && "astw:border-destructive",
-                            issue?.level === "warning" && "astw:border-status-attention",
+                            issue?.level === "warning" && "astw:border-warning-solid",
                             !issue && "astw:border-transparent",
                           )}
                           value={displayValue}

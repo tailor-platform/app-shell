@@ -86,14 +86,14 @@ Only import one palette at a time.
 
 Theme tokens live in `packages/core/src/assets/themes/`. Copy `_template.css` to start a new palette — it lists exactly which sections to fill in for light and dark mode.
 
-| Section               | Required?             | What to set                                                                    |
-| --------------------- | --------------------- | ------------------------------------------------------------------------------ |
-| **1. Brand**          | Yes                   | `primary`, `secondary`, `accent` (+ foregrounds) — both modes                  |
-| **2. Shell gradient** | Branded palettes only | `--shell-gradient-base`, `--shell-gradient-tint`                               |
-| **3. System**         | Tune or copy default  | Surfaces: background, card, popover, muted, borders                            |
-| **4. Palette**        | Optional              | Radius, chart colors, shadows                                                  |
-| **5. Semantic**       | Do not duplicate      | Semantic roles, status and alert tokens inherit from `default.css`             |
-| **6. Structural**     | Branded palettes      | Copy the structural override block from `bloom.css` or `cream.css` when needed |
+| Section               | Required?             | What to set                                                                                                                                            |
+| --------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **1. Brand**          | Yes                   | `primary`, `secondary`, `accent` (+ foregrounds) — both modes                                                                                          |
+| **2. Shell gradient** | Branded palettes only | `--shell-gradient-base`, `--shell-gradient-tint`                                                                                                       |
+| **3. System**         | Tune or copy default  | Surfaces: background, card, popover, muted, borders                                                                                                    |
+| **4. Palette**        | Optional              | Radius, chart colors, shadows                                                                                                                          |
+| **5. Semantic**       | Inherit               | Colour scales, status and alert tokens inherit from `default.css`. Override a colour role (`--{intent}-{role}`) only to recolour the status components |
+| **6. Structural**     | Branded palettes      | Copy the structural override block from `bloom.css` or `cream.css` when needed                                                                         |
 
 A palette is selected by CSS import, not by an AppShell prop. Import exactly one theme file after `@tailor-platform/app-shell/styles`; if you import none, the default palette from `styles` is used.
 
@@ -160,17 +160,17 @@ There are no `-hover` or `-active` brand tokens. Express interaction states with
 
 Five status colors for custom surfaces. They are aliases of the [semantic color roles](#semantic-color-roles) below, so status colors and Alert colors agree by default:
 
-| Token                | Use                      | Tailwind              |
-| -------------------- | ------------------------ | --------------------- |
-| `--status-default`   | none / not applicable    | `bg-status-default`   |
-| `--status-neutral`   | informational            | `bg-status-neutral`   |
-| `--status-completed` | success, completed       | `bg-status-completed` |
-| `--status-attention` | warning, needs attention | `bg-status-attention` |
-| `--status-danger`    | error, blocked           | `bg-status-danger`    |
+| Token                | Use                                                  | Tailwind              |
+| -------------------- | ---------------------------------------------------- | --------------------- |
+| `--status-default`   | none / not applicable (follows `--muted-foreground`) | `bg-status-default`   |
+| `--status-neutral`   | informational                                        | `bg-status-neutral`   |
+| `--status-completed` | success, completed                                   | `bg-status-completed` |
+| `--status-attention` | warning, needs attention                             | `bg-status-attention` |
+| `--status-danger`    | error, blocked                                       | `bg-status-danger`    |
 
 Prefer `Badge` with a semantic variant (`success`, `warning`, `error`, `info`, `neutral`) over applying these directly — the variants already pair fill and foreground correctly. Reach for the raw token only on custom surfaces.
 
-These are fill and indicator colors. Do not use them as text color: `--status-completed`, `--status-danger` and `--status-neutral` are below 4.5:1 on a dark card, and `--status-attention` is below 3:1 on a light one. For text, use `text-{intent}-text`.
+These are fill and indicator colors. `--status-default` follows `--muted-foreground`, so it is theme-dependent and translucent in `cream` and `bloom`; the four hue tokens are opaque in every palette. Do not use them as text color: `--status-completed`, `--status-danger` and `--status-neutral` are below 4.5:1 on a dark card, and `--status-attention` is below 3:1 on a light one. For text, use `text-{intent}-text`.
 
 #### Semantic color roles
 

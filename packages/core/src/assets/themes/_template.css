@@ -17,7 +17,10 @@
  *    `@tailor-platform/app-shell/styles` in the consuming app.
  *
  * DO NOT SET (inherited from `:root` in default.css):
- *   --ring, --sidebar-*, --{info|success|warning|danger|neutral}-* (colour roles), --status-*, --alert-*
+ *   --ring, --sidebar-*, --primitive-* (colour scales), --status-*, --alert-*
+ * The colour roles --{info|success|warning|danger|neutral}-{role} also inherit.
+ * Override a role only to recolour the status components (Badge, Alert, ...)
+ * for this palette; never set --status-* or --alert-*, they alias the roles.
  *
  * PREVIEW: `/showcase/colors` in the Vite example app.
  * ═══════════════════════════════════════════════════════════════════════════

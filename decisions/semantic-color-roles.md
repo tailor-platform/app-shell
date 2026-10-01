@@ -1,7 +1,7 @@
 # Decision: hue scales and semantic colour roles under `--status-*` and `--alert-*`
 
 > Status: **Decided for the first step. Hue scales and semantic roles are added; `--status-*` and hue `--alert-*` alias the roles; Badge, Alert, CsvImporter and MetricCard read the roles.**
-> Scope: `packages/core/src/assets/themes/default.css`, the Tailwind bridge, Badge. `--destructive`, the gray scale and theme accent scales are not part of this step.
+> Scope: `packages/core/src/assets/themes/default.css` (hue scales, gray scale, roles, aliases), the Tailwind bridge, and the components that read the roles: Badge, Alert, CsvImporter, MetricCard. `--destructive` and the theme accent scales are not part of this step.
 
 ## Context
 
@@ -47,7 +47,7 @@ The roles and the aliases are declared for `:root, .dark`, so a nested `.dark` w
 
 ### Aliases
 
-- `--status-default | neutral | completed | attention | danger` alias the neutral indicator and the info, success, warning and danger `solid` roles.
+- `--status-default | neutral | completed | attention | danger` alias the neutral indicator and the info, success, warning and danger `solid` roles. `--status-default` therefore follows `--muted-foreground` instead of the fixed `#737373` it had: `#a3a3a3` in dark default, and translucent ink in cream and bloom.
 - `--alert-{success,warning,error,info}-{background,border,foreground}` alias `surface`, `border` and `text` (`error` reads the `danger` intent).
 - `--alert-{h}-foreground-muted` aliases `--alert-{h}-foreground` at full strength. The first plan used 85% of the text colour; over the surface that is 4.26:1 (info), 3.78:1 (success) and 4.23:1 (danger) in light mode, and no opacity below about 97% passes. Keeping the alias on `--alert-{h}-foreground` also keeps the override chain: a consumer who overrides the foreground gets a matching description.
 - `--alert-neutral-*` keeps its values, expressed through the neutral roles.

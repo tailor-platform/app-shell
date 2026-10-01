@@ -53,6 +53,7 @@ For each drifting unit:
 
 ## Rules
 
+- The root guides (`introduction`, `quickstart`, `design-philosophy`, `migrations`) are ordinary prose units in `docs-src/guides/` that output to the `docs/` root — edit the outline, not the generated file.
 - Never edit files under `docs/` by hand — only `*.docs.outline.md` and `*.docs.examples.tsx`. docs-browser derives its routes from `docs-manifest.json` (declarative `modules` in `App.tsx`); there are no generated route stubs.
 - One example export per token; keep them runnable (they are type-checked in CI).
 - Regenerate only what changed; a clean tree must produce a zero-diff `sync`.

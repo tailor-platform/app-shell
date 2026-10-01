@@ -156,9 +156,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "3b92ce72609132dd",
+        "outline": "3db1c08e4cd01d94",
         "snapshot": null,
-        "outputMd": "ce27a191becaca3a",
+        "outputMd": "71f5f42c0fa0698e",
         "examples": null
       }
     },
@@ -1581,7 +1581,7 @@
     }
   },
   "skill": {
-    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "ce27a191becaca3a",
+    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "71f5f42c0fa0698e",
     "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "551e04b1abbfa101",
     "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "caa1ea6264d3b543",
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "ba5107604e4f42e8",

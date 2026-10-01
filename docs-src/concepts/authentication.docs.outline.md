@@ -66,7 +66,7 @@ const UserProfile = () => {
   }
 
   if (!isAuthenticated) {
-    return <button onClick={login}>Sign In</button>;
+    return <button onClick={() => void login()}>Sign In</button>;
   }
 
   return <button onClick={logout}>Sign Out</button>;
@@ -75,14 +75,30 @@ const UserProfile = () => {
 
 ### Return Value
 
-| Property          | Type                       | Description                                            |
-| ----------------- | -------------------------- | ------------------------------------------------------ |
-| `isAuthenticated` | `boolean`                  | Whether the user is currently authenticated            |
-| `isReady`         | `boolean`                  | Whether the initial authentication check has completed |
-| `error`           | `string \| null`           | Error message if authentication failed                 |
-| `login`           | `() => Promise<void>`      | Initiates the login/redirect flow                      |
-| `logout`          | `() => Promise<void>`      | Clears tokens and ends the session                     |
-| `checkAuthStatus` | `() => Promise<AuthState>` | Re-checks auth status (always makes a network request) |
+| Property          | Type                                                 | Description                                                                  |
+| ----------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `isAuthenticated` | `boolean`                                            | Whether the user is currently authenticated                                  |
+| `isReady`         | `boolean`                                            | Whether the initial authentication check has completed                       |
+| `error`           | `string \| null`                                     | Error message if authentication failed                                       |
+| `login`           | `(options?: { returnTo?: string }) => Promise<void>` | Initiates the login/redirect flow and returns to the current page by default |
+| `logout`          | `() => Promise<void>`                                | Clears tokens and ends the session                                           |
+| `checkAuthStatus` | `() => Promise<AuthState>`                           | Re-checks auth status (always makes a network request)                       |
+
+### Return to the current page
+
+`autoLogin` records the current path, query string, and hash before redirecting, then returns there after a successful callback. Manual `login()` calls do the same by default. Pass `returnTo` to choose another same-origin destination:
+
+```tsx
+function SignInButton() {
+  const { login } = useAuth();
+
+  return (
+    <button onClick={() => void login({ returnTo: "/orders/42?tab=activity#history" })}>
+      Sign in
+    </button>
+  );
+}
+```
 
 ### Suspense-Compatible Hook
 
@@ -107,7 +123,7 @@ function ProtectedContent() {
   const { isAuthenticated, login, logout } = useAuthSuspense();
 
   if (!isAuthenticated) {
-    return <button onClick={login}>Log In</button>;
+    return <button onClick={() => void login()}>Log In</button>;
   }
 
   return <button onClick={logout}>Log Out</button>;
@@ -235,7 +251,7 @@ const AuthGate = () => {
     return (
       <div>
         <p>Sign-in failed: {error}</p>
-        <button onClick={() => login()}>Try again</button>
+        <button onClick={() => void login()}>Try again</button>
       </div>
     );
   }

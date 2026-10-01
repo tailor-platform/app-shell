@@ -195,7 +195,7 @@ In the default palette, `text` on `surface` and `contrast` on `solid` and `solid
 
 Some light-mode values are opaque instead of translucent: the `warning` surface, surface-hover and border, the `info` border and the `danger` surface-hover. They do not blend with a tinted parent. All dark-mode values are translucent.
 
-`Badge`, `Alert` and `CsvImporter` read these roles directly, not `--status-*` or `--alert-*`. To recolour them, override the roles. `Badge` `error` and `subtle-error`, and `Alert` `error`, follow `--danger-*`. They no longer follow `--destructive`, which still drives `Button` and `text-destructive`.
+`Badge`, `Alert`, `CsvImporter` and `MetricCard` read these roles directly, not `--status-*` or `--alert-*`. To recolour them, override the roles. `Badge` `error` and `subtle-error`, and `Alert` `error`, follow `--danger-*`. They no longer follow `--destructive`, which still drives `Button` and `text-destructive`.
 
 #### Sidebar & charts
 

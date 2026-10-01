@@ -1,6 +1,6 @@
 # Decision: hue scales and semantic colour roles under `--status-*` and `--alert-*`
 
-> Status: **Decided for the first step. Hue scales and semantic roles are added; `--status-*` and hue `--alert-*` alias the roles; Badge, Alert and CsvImporter read the roles.**
+> Status: **Decided for the first step. Hue scales and semantic roles are added; `--status-*` and hue `--alert-*` alias the roles; Badge, Alert, CsvImporter and MetricCard read the roles.**
 > Scope: `packages/core/src/assets/themes/default.css`, the Tailwind bridge, Badge. `--destructive`, the gray scale and theme accent scales are not part of this step.
 
 ## Context
@@ -102,5 +102,5 @@ This step is the status part of a two-axis palette. The rest is planned as follo
 - Badge `error` and `subtle-error`, and Alert `error`, no longer follow `--destructive`. They use the danger role in both modes. Button and `text-destructive` still follow `--destructive`, so in dark mode a Badge error (`#dc2626`) and a destructive Button (`#f87171`) differ. Consumers who override `--destructive` for Alert or Badge must override `--danger-*` or `--alert-error-*` instead.
 - The warning Badge text is dark (`#4f3515`) instead of white.
 - Alert description text is the same colour as the Alert title in the default palette.
-- Consumers who override `--status-*` or `--alert-*` keep working for their own `bg-status-*` and `bg-alert-*` utilities, which read those tokens. The shipped components (Badge, Alert, CsvImporter) read the roles, not `--status-*` or `--alert-*`. To recolour them, override the roles (`--{intent}-*`); overriding `--status-*` or `--alert-*` no longer changes the components. `--status-*` and `--alert-*` remain for existing consumer code and are not used by components any more.
+- Consumers who override `--status-*` or `--alert-*` keep working for their own `bg-status-*` and `bg-alert-*` utilities, which read those tokens. The shipped components (Badge, Alert, CsvImporter, MetricCard — its trend colours were literal `green-600` / `red-600` before) read the roles, not `--status-*` or `--alert-*`. To recolour them, override the roles (`--{intent}-*`); overriding `--status-*` or `--alert-*` no longer changes the components. `--status-*` and `--alert-*` remain for existing consumer code and are not used by components any more.
 - cream, bloom and `_template.css` values are not edited. The header comments now list `--{intent}-{role}` among the inherited tokens.

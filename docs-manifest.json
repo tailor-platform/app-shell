@@ -420,6 +420,7 @@
         "PageInfo",
         "PaginationVariables",
         "RowAction",
+        "RowSelectionOptions",
         "SelectOption",
         "SortConfig",
         "SortState",
@@ -443,7 +444,7 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "014a9036a3b9b0af",
+        "typeSurface": "8ccdd3c7cc7220b8",
         "outline": "f1bea006bdeb43a4",
         "snapshot": null,
         "outputMd": "dd2da884d7550daf",
@@ -484,7 +485,7 @@
       "claims": [],
       "symbols": ["DefaultHeader", "DefaultHeaderProps"],
       "hashes": {
-        "typeSurface": "dfc505929b8ef505",
+        "typeSurface": "dd9b87248a820435",
         "outline": "efdd10f3fe946e62",
         "snapshot": null,
         "outputMd": "375e55f4b12fa2be",
@@ -501,7 +502,7 @@
       "claims": [],
       "symbols": ["DefaultSidebar", "DefaultSidebarProps"],
       "hashes": {
-        "typeSurface": "48705640a924a509",
+        "typeSurface": "bf340b79a7b366d7",
         "outline": "4b3d7147c6b24de8",
         "snapshot": null,
         "outputMd": "3422388a0cc78571",
@@ -1130,7 +1131,7 @@
       "claims": [],
       "symbols": ["SidebarGroup", "SidebarGroupProps"],
       "hashes": {
-        "typeSurface": "cc25e488e6896569",
+        "typeSurface": "4344853f1a13543b",
         "outline": "97f5f584d13b992e",
         "snapshot": null,
         "outputMd": "7288fdf8bb5c19b9",
@@ -1147,7 +1148,7 @@
       "claims": [],
       "symbols": ["SidebarItem", "SidebarItemProps"],
       "hashes": {
-        "typeSurface": "37530cafa374d799",
+        "typeSurface": "cd0f6a224275e27e",
         "outline": "d1bbcfac50071047",
         "snapshot": null,
         "outputMd": "9236c03e53aa79f2",
@@ -1572,7 +1573,7 @@
       "claims": [],
       "symbols": ["WithGuard", "WithGuardProps"],
       "hashes": {
-        "typeSurface": "82ec0e51747a308b",
+        "typeSurface": "85c5ae69f704983d",
         "outline": "bd0a93da4ee5e548",
         "snapshot": null,
         "outputMd": "d79aaf40cb97073f",

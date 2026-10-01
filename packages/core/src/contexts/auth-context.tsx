@@ -229,11 +229,9 @@ export function createAuthClient(config: AuthClientConfig): EnhancedAuthClient {
       // recording the error — so resolve-vs-throw is the wrong signal, and using
       // it would let those two skip the retry ceiling and loop.
       //
-      // Note the URL is deliberately NOT cleaned here. auth-public-client owns
-      // callback URL cleanup and currently performs it only on success
-      // (tailor-platform/auth-public-client#139); on failure the parameters
-      // remain until that is fixed upstream. app-shell stays correct regardless,
-      // because auto-login is gated on this settled status, not on the URL.
+      // auth-public-client owns callback URL cleanup. app-shell still gates
+      // auto-login on this settled status, so a best-effort URL rewrite cannot
+      // leave the application treating an already handled callback as pending.
       const settle = () => {
         if (baseClient.getState().isAuthenticated) {
           clearCallbackFailures();
@@ -310,6 +308,11 @@ export type AuthState = {
   isReady: boolean;
 };
 
+type Login = {
+  (): ReturnType<AuthClient["login"]>;
+  (options: NonNullable<Parameters<AuthClient["login"]>[0]>): ReturnType<AuthClient["login"]>;
+};
+
 type AuthContextType = {
   /**
    * Current authentication state.
@@ -324,7 +327,7 @@ type AuthContextType = {
    *
    * This redirects the user to the Tailor Platform authentication page.
    */
-  login: () => Promise<void>;
+  login: Login;
 
   /**
    * Logs out the current user.
@@ -361,6 +364,11 @@ const isCurrentOAuthCallbackUrl = () => {
 
   return isOAuthCallbackUrl(new URL(window.location.href));
 };
+
+const getCurrentLocation = () =>
+  typeof window === "undefined"
+    ? undefined
+    : `${window.location.pathname}${window.location.search}${window.location.hash}`;
 
 /**
  * Guard component that shows a fallback UI while auth is not ready or
@@ -437,10 +445,8 @@ const useAutoLogin = (props: {
       // starts the exchange itself whenever it is constructed on a callback
       // URL, so "idle" here means nobody is handling these parameters and
       // redirecting is unsafe. Once a callback has run, its status is the
-      // authority — reading the URL instead is what used to strand the app:
-      // upstream cleans the URL only on success, so a failed callback leaves
-      // its parameters in place (auth-public-client#139) and a URL-based gate
-      // treats the page as a live callback forever.
+      // authority — URL cleanup is best effort, so using it after a callback
+      // settles could still treat an already handled callback as live forever.
       (props.callbackStatus === "idle" && isCurrentOAuthCallbackUrl()) ||
       !authState.isReady ||
       authState.isAuthenticated ||
@@ -450,7 +456,7 @@ const useAutoLogin = (props: {
     }
 
     loginInFlightRef.current = props.client
-      .login()
+      .login({ returnTo: getCurrentLocation() })
       .then(() => undefined)
       .catch((error) => {
         console.error("Failed to auto-login after session expiry:", error);
@@ -605,10 +611,11 @@ export const AuthProvider = (props: React.PropsWithChildren<AuthProviderProps>) 
   const resolvedChildren =
     callbackStatus === "pending" && props.guardComponent == null ? null : props.children;
 
-  const authContextValue = useMemo(
+  const authContextValue = useMemo<AuthContextType>(
     () => ({
       authState,
-      login: () => client.login(),
+      login: (options?: NonNullable<Parameters<AuthClient["login"]>[0]>) =>
+        client.login({ returnTo: options?.returnTo ?? getCurrentLocation() }),
       logout: () => client.logout(),
       checkAuthStatus: () => client.checkAuthStatus(),
       ready: () => client.ready(),
@@ -651,7 +658,7 @@ const useAuthContext = () => {
  *   const { isAuthenticated, isReady, login, logout } = useAuth();
  *
  *   if (!isReady) return <Loading />;
- *   if (!isAuthenticated) return <button onClick={login}>Log In</button>;
+ *   if (!isAuthenticated) return <button onClick={() => void login()}>Log In</button>;
  *
  *   return <button onClick={logout}>Log Out</button>;
  * }
@@ -710,7 +717,7 @@ export const useAuth = () => {
  *   // isReady is guaranteed to be true here (Suspense handles loading)
  *
  *   if (!isAuthenticated) {
- *     return <button onClick={login}>Log In</button>;
+ *     return <button onClick={() => void login()}>Log In</button>;
  *   }
  *
  *   return (

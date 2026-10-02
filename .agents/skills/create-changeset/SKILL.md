@@ -68,6 +68,7 @@ The file format is:
 - Write 2-3 lines describing the change from an end-user perspective
 - For API-level changes, include minimal code examples showing how to use the new API
 - For breaking changes, provide before/after migration examples
+- For a UI-foundation dependency bump (`@base-ui/react` and similar), state the from→to versions and list each behaviour or test-visible change. Find them by reviewing the snapshot diffs in the PR: an updated snapshot is a render change that consumer tests can hit too. "Picks up upstream fixes" is not enough on its own.
 - Include usage examples for new components, hooks, or utilities
 
 #### Example — Minor (new feature):

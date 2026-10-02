@@ -605,7 +605,7 @@
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
         "outline": "bda40376d6e3e008",
-        "snapshot": "d4fa33f2da19d5ee",
+        "snapshot": "b845d4c54453b0f0",
         "outputMd": "ec6a0ac098d1d87a",
         "examples": "934c52d4e8761404"
       }
@@ -1013,7 +1013,7 @@
       "hashes": {
         "typeSurface": "943616def28cafb0",
         "outline": "8f06df28129676c8",
-        "snapshot": "02dfd02003105939",
+        "snapshot": "6233cd9de511210f",
         "outputMd": "ceb4a05822538d20",
         "examples": "cff0508bb5520ae6"
       }
@@ -1046,9 +1046,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "ef857eb4425c36cf",
+        "outline": "1910bd8718ea6b25",
         "snapshot": null,
-        "outputMd": "87e819351e53b6bd",
+        "outputMd": "397a696ec2822549",
         "examples": null
       }
     },
@@ -1166,7 +1166,7 @@
       "hashes": {
         "typeSurface": "429710973dfa912b",
         "outline": "721e8995f53f0e8f",
-        "snapshot": "f6fcbd73e127f2f4",
+        "snapshot": "0ceac9786fb4ce3c",
         "outputMd": "ae287e2bb5abc1c6",
         "examples": "1ce89cec30045466"
       }
@@ -1183,7 +1183,7 @@
       "hashes": {
         "typeSurface": "e760949efcbe4c38",
         "outline": "464d91acc48f7c9d",
-        "snapshot": "12c20fc6f44d1b4c",
+        "snapshot": "40d15c3f1003fdb0",
         "outputMd": "1f81ebd562c50371",
         "examples": "b0eebb8c5e2219dc"
       }
@@ -1735,7 +1735,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "8062ea0df9403fbb",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "c3fb2588a0699c26",
-    "packages/core/skills/app-shell-patterns/references/migrations.md": "20fb5d88b76dd933",
+    "packages/core/skills/app-shell-patterns/references/migrations.md": "be5cf59a00aac335",
     "packages/core/skills/app-shell-patterns/SKILL.md": "814325f4ea06ffae"
   }
 }

@@ -156,9 +156,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "3b92ce72609132dd",
+        "outline": "3db1c08e4cd01d94",
         "snapshot": null,
-        "outputMd": "ce27a191becaca3a",
+        "outputMd": "71f5f42c0fa0698e",
         "examples": null
       }
     },
@@ -576,6 +576,23 @@
         "examples": "8e45ff2d2e3cd59b"
       }
     },
+    "design-philosophy": {
+      "slug": "design-philosophy",
+      "kind": "prose",
+      "outline": "docs-src/guides/design-philosophy.docs.outline.md",
+      "output": "docs/design-philosophy.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "bdf8d430a76790a2",
+        "snapshot": null,
+        "outputMd": "b78335ee38bfd71f",
+        "examples": null
+      }
+    },
     "dialog": {
       "slug": "dialog",
       "kind": "code-backed",
@@ -933,6 +950,23 @@
         "examples": "7089e7331b95df31"
       }
     },
+    "introduction": {
+      "slug": "introduction",
+      "kind": "prose",
+      "outline": "docs-src/guides/introduction.docs.outline.md",
+      "output": "docs/introduction.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "019ef7a912b92831",
+        "snapshot": null,
+        "outputMd": "6c212f2bd28ba8c6",
+        "examples": null
+      }
+    },
     "layout": {
       "slug": "layout",
       "kind": "code-backed",
@@ -1001,6 +1035,23 @@
         "examples": "22b876f43b26922c"
       }
     },
+    "migrations": {
+      "slug": "migrations",
+      "kind": "prose",
+      "outline": "docs-src/guides/migrations.docs.outline.md",
+      "output": "docs/migrations.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "ef857eb4425c36cf",
+        "snapshot": null,
+        "outputMd": "87e819351e53b6bd",
+        "examples": null
+      }
+    },
     "modules-and-resources": {
       "slug": "modules-and-resources",
       "kind": "prose",
@@ -1015,6 +1066,23 @@
         "outline": "5dc437fe5f4c9975",
         "snapshot": null,
         "outputMd": "bf15b5460f22d165",
+        "examples": null
+      }
+    },
+    "quickstart": {
+      "slug": "quickstart",
+      "kind": "prose",
+      "outline": "docs-src/guides/quickstart.docs.outline.md",
+      "output": "docs/quickstart.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "d5b840df87bc79e9",
+        "snapshot": null,
+        "outputMd": "6eb4056555d8ae7b",
         "examples": null
       }
     },
@@ -1581,7 +1649,7 @@
     }
   },
   "skill": {
-    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "ce27a191becaca3a",
+    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "71f5f42c0fa0698e",
     "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "551e04b1abbfa101",
     "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "caa1ea6264d3b543",
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "ba5107604e4f42e8",
@@ -1667,7 +1735,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "8062ea0df9403fbb",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "c3fb2588a0699c26",
-    "packages/core/skills/app-shell-patterns/references/migrations.md": "15845e186f68fe7e",
+    "packages/core/skills/app-shell-patterns/references/migrations.md": "20fb5d88b76dd933",
     "packages/core/skills/app-shell-patterns/SKILL.md": "814325f4ea06ffae"
   }
 }

@@ -88,6 +88,8 @@ This step is the status part of a two-axis palette. The rest is planned as follo
 
 `--status-*` and `--alert-*` stay as aliases for consumer code. Shipped components read the roles.
 
+The component variant names (`Badge` and `Alert` `error`, Badge `neutral`) are public API and are not renamed here. Aligning them with the intent names (`error` → `danger`) is a breaking change; it is a candidate for the next major, together with deprecating `--status-*` and `--alert-*`.
+
 ## Out of scope
 
 - `--destructive` and `--destructive-foreground` aliasing. Themes override `--destructive`, and it is used as solid, text and border at once, so it needs its own change. Button is untouched.

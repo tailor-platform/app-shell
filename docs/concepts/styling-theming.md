@@ -523,7 +523,7 @@ AppShell's UI components support data-attribute-based styling, following the [Ba
 ```css
 /* Style a component based on its state */
 .SwitchThumb[data-checked] {
-  background-color: var(--status-completed);
+  background-color: var(--success-solid);
 }
 
 .MenuItem[data-highlighted] {
@@ -594,9 +594,9 @@ These are visual-composition rules every screen must follow, regardless of patte
 | Intent                             | Pick                                                                                                    |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Destructive action (delete, void)  | `Button variant="destructive"`; `bg-destructive` on custom surfaces; confirm in a dialog at `shadow-lg` |
-| Non-blocking caution               | `Badge variant="warning"`, or `bg-status-attention`                                                     |
-| Confirmation / completed state     | `Badge variant="success"`, or `bg-status-completed`                                                     |
-| Neutral callout                    | `Badge variant="info"`, or the `Alert` component                                                        |
+| Non-blocking caution               | `Badge variant="warning"`, or `bg-warning-surface text-warning-text`                                    |
+| Confirmation / completed state     | `Badge variant="success"`, or `bg-success-surface text-success-text`                                    |
+| Neutral callout                    | `Badge variant="info"`, or `Alert variant="info"`                                                       |
 | Persistent panel (sidebar, header) | `shadow-sm`                                                                                             |
 | Hovered / sticky surface           | `shadow-md`                                                                                             |
 | Popover / menu / tooltip           | `bg-popover`, `shadow-md`, `duration-150`                                                               |

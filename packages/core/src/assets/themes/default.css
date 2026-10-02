@@ -27,15 +27,15 @@
 
   /* ── 4. SYSTEM ────────────────────────────────────────────────────────── */
   --background: rgba(250, 250, 250, 1);
-  --foreground: rgba(10, 10, 10, 1);
+  --foreground: var(--primitive-gray-950);
   --card: rgba(255, 255, 255, 1);
   --card-foreground: rgba(10, 10, 10, 1);
   --popover: rgba(255, 255, 255, 1);
   --popover-foreground: rgba(10, 10, 10, 1);
   --muted: rgba(245, 245, 245, 1);
-  --muted-foreground: rgba(115, 115, 115, 1);
-  --border: rgba(229, 229, 229, 1);
-  --input: rgba(229, 229, 229, 1);
+  --muted-foreground: var(--primitive-gray-500);
+  --border: var(--primitive-gray-200);
+  --input: var(--primitive-gray-200);
   --sidebar: rgba(250, 250, 250, 1);
   --sidebar-foreground: rgba(10, 10, 10, 1);
   --sidebar-border: rgba(229, 229, 229, 1);
@@ -53,51 +53,12 @@
   --semantic-shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.08);
   --semantic-shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.09), 0 2px 4px -2px rgb(15 23 42 / 0.06);
   --semantic-shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.12), 0 4px 6px -4px rgb(15 23 42 / 0.09);
-
-  /* ── 6. SEMANTIC — product-wide; inherited by all palettes, do not override */
-  --status-default: #737373;
-  --status-neutral: #0ea5e9;
-  --status-completed: #22c55e;
-  --status-attention: #f59e0b;
-  --status-danger: #ef4444;
-  --alert-neutral-background: var(--muted);
-  --alert-neutral-foreground: var(--foreground);
-  --alert-neutral-foreground-muted: var(--muted-foreground);
-  --alert-neutral-border: var(--border);
-  --alert-success-foreground: #15803d;
-  --alert-success-foreground-muted: color-mix(
-    in srgb,
-    var(--alert-success-foreground) 80%,
-    transparent
-  );
-  --alert-success-background: color-mix(in srgb, #22c55e 10%, transparent);
-  --alert-success-border: color-mix(in srgb, #22c55e 20%, transparent);
-  --alert-warning-foreground: #a16207;
-  --alert-warning-foreground-muted: color-mix(
-    in srgb,
-    var(--alert-warning-foreground) 80%,
-    transparent
-  );
-  --alert-warning-background: color-mix(in srgb, #eab308 10%, transparent);
-  --alert-warning-border: color-mix(in srgb, #eab308 20%, transparent);
-  --alert-error-foreground: var(--destructive);
-  --alert-error-foreground-muted: color-mix(
-    in srgb,
-    var(--alert-error-foreground) 80%,
-    transparent
-  );
-  --alert-error-background: color-mix(in srgb, var(--destructive) 10%, transparent);
-  --alert-error-border: color-mix(in srgb, var(--destructive) 20%, transparent);
-  --alert-info-foreground: #1d4ed8;
-  --alert-info-foreground-muted: color-mix(in srgb, var(--alert-info-foreground) 80%, transparent);
-  --alert-info-background: color-mix(in srgb, #3b82f6 10%, transparent);
-  --alert-info-border: color-mix(in srgb, #3b82f6 20%, transparent);
 }
 
 /*
- * Dark variant. Overrides BRAND + SYSTEM (+ semantic foregrounds that differ).
- * Shared aliases/ring re-resolve when BRAND changes; `--radius` and `--status-*`
- * inherit from the light block.
+ * Dark variant. Overrides BRAND + SYSTEM + PALETTE. The primitive scales (6)
+ * and the semantic roles (7) follow below. Shared aliases/ring re-resolve
+ * when BRAND changes; `--radius` inherits from the light block.
  */
 .dark {
   color-scheme: dark;
@@ -112,13 +73,13 @@
 
   /* ── 4. SYSTEM (dark) ─────────────────────────────────────────────────── */
   --background: rgba(10, 10, 10, 1);
-  --foreground: rgba(250, 250, 250, 1);
+  --foreground: var(--primitive-gray-50);
   --card: rgba(23, 23, 23, 1);
   --card-foreground: rgba(250, 250, 250, 1);
   --popover: rgba(38, 38, 38, 1);
   --popover-foreground: rgba(250, 250, 250, 1);
   --muted: rgba(38, 38, 38, 1);
-  --muted-foreground: rgba(163, 163, 163, 1);
+  --muted-foreground: var(--primitive-gray-400);
   --border: rgba(255, 255, 255, 0.1);
   --input: rgba(255, 255, 255, 0.15);
   --sidebar: rgba(10, 10, 10, 1);
@@ -137,26 +98,333 @@
   --semantic-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.38), 0 1px 2px -1px rgb(0 0 0 / 0.32);
   --semantic-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.28);
   --semantic-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.42), 0 4px 6px -4px rgb(0 0 0 / 0.35);
+}
 
-  /* ── 6. SEMANTIC (dark foreground adjustments) ──────────────────────── */
-  --alert-success-foreground: #86efac;
-  --alert-success-foreground-muted: color-mix(
-    in srgb,
-    var(--alert-success-foreground) 85%,
-    transparent
-  );
-  --alert-warning-foreground: #fde047;
-  --alert-warning-foreground-muted: color-mix(
-    in srgb,
-    var(--alert-warning-foreground) 85%,
-    transparent
-  );
-  --alert-error-foreground: #fca5a5;
-  --alert-error-foreground-muted: color-mix(
-    in srgb,
-    var(--alert-error-foreground) 85%,
-    transparent
-  );
-  --alert-info-foreground: #93c5fd;
-  --alert-info-foreground-muted: color-mix(in srgb, var(--alert-info-foreground) 85%, transparent);
+/*
+ * 6. PRIMITIVE SCALES — internal; consumers use the semantic roles (7) below.
+ *
+ * One gray scale and four Radix-style 12-step + alpha hue scales, light then
+ * dark. Names are prefixed to avoid colliding with a consumer's own copy of
+ * Radix Colors. Not bridged to Tailwind. See decisions/semantic-color-roles.md
+ * for how they were made. The hue "alpha" steps are translucent only where the
+ * generator could express them; some light steps (for example amber a2-a6)
+ * resolve to opaque hex.
+ *
+ * Gray is the Tailwind `neutral` family (the values this palette already used)
+ * and is the same in both modes, so it is declared once; the SYSTEM text and
+ * line tokens (4) read it. Surfaces stay literal: they are theme inputs.
+ */
+:root {
+  /* gray — both modes */
+  --primitive-gray-50: #fafafa;
+  --primitive-gray-100: #f5f5f5;
+  --primitive-gray-200: #e5e5e5;
+  --primitive-gray-300: #d4d4d4;
+  --primitive-gray-400: #a3a3a3;
+  --primitive-gray-500: #737373;
+  --primitive-gray-600: #525252;
+  --primitive-gray-700: #404040;
+  --primitive-gray-800: #262626;
+  --primitive-gray-900: #171717;
+  --primitive-gray-950: #0a0a0a;
+
+  /* hues — light */
+  --primitive-blue-1: #f7f8f9;
+  --primitive-blue-2: #f0f4fa;
+  --primitive-blue-3: #e5ecf9;
+  --primitive-blue-4: #d6e4fd;
+  --primitive-blue-5: #c5d9ff;
+  --primitive-blue-6: #b0cbff;
+  --primitive-blue-7: #98b9f7;
+  --primitive-blue-8: #769ff0;
+  --primitive-blue-9: #2563eb;
+  --primitive-blue-10: #2057d1;
+  --primitive-blue-11: #1e55cf;
+  --primitive-blue-12: #152e63;
+  --primitive-blue-a1: #3b7bbb04;
+  --primitive-blue-a2: #136ffa0b;
+  --primitive-blue-a3: #0758ef16;
+  --primitive-blue-a4: #bed6ff99;
+  --primitive-blue-a5: #c5d9ff;
+  --primitive-blue-a6: #b0cbff;
+  --primitive-blue-a7: #0155f364;
+  --primitive-blue-a8: #004ee787;
+  --primitive-blue-a9: #014ae9da;
+  --primitive-blue-a10: #0140ccdf;
+  --primitive-blue-a11: #013fcae1;
+  --primitive-blue-a12: #001b55ea;
+  --primitive-blue-contrast: #ffffff;
+
+  --primitive-green-1: #f5f9f6;
+  --primitive-green-2: #eff5f0;
+  --primitive-green-3: #e1f1e3;
+  --primitive-green-4: #d1ead5;
+  --primitive-green-5: #bfe2c5;
+  --primitive-green-6: #a7d7b0;
+  --primitive-green-7: #88c895;
+  --primitive-green-8: #57b36f;
+  --primitive-green-9: #15803d;
+  --primitive-green-10: #00722f;
+  --primitive-green-11: #047936;
+  --primitive-green-12: #1e3c25;
+  --primitive-green-a1: #26d05006;
+  --primitive-green-a2: #1190260c;
+  --primitive-green-a3: #04a1181a;
+  --primitive-green-a4: #02991a2a;
+  --primitive-green-a5: #04961d3d;
+  --primitive-green-a6: #01911c55;
+  --primitive-green-a7: #028e1e75;
+  --primitive-green-a8: #028e26a7;
+  --primitive-green-a9: #00752cea;
+  --primitive-green-a10: #00722f;
+  --primitive-green-a11: #007733fb;
+  --primitive-green-a12: #012309e1;
+  --primitive-green-contrast: #ffffff;
+
+  --primitive-amber-1: #f9f7f5;
+  --primitive-amber-2: #fff2e1;
+  --primitive-amber-3: #ffe7bd;
+  --primitive-amber-4: #ffdca5;
+  --primitive-amber-5: #ffd089;
+  --primitive-amber-6: #ffbe5d;
+  --primitive-amber-7: #f8ad4a;
+  --primitive-amber-8: #e99300;
+  --primitive-amber-9: #f59e0b;
+  --primitive-amber-10: #e99300;
+  --primitive-amber-11: #a35f00;
+  --primitive-amber-12: #4f3515;
+  --primitive-amber-a1: #d07b2606;
+  --primitive-amber-a2: #fff2e1;
+  --primitive-amber-a3: #ffe7bd;
+  --primitive-amber-a4: #ffdca5;
+  --primitive-amber-a5: #ffd089;
+  --primitive-amber-a6: #ffbe5d;
+  --primitive-amber-a7: #f78c00b4;
+  --primitive-amber-a8: #e99300;
+  --primitive-amber-a9: #f59a00f4;
+  --primitive-amber-a10: #e99300;
+  --primitive-amber-a11: #a35f00;
+  --primitive-amber-a12: #3f2300ea;
+  --primitive-amber-contrast: #4f3515;
+
+  --primitive-red-1: #faf7f6;
+  --primitive-red-2: #f9f2f1;
+  --primitive-red-3: #f9e5e2;
+  --primitive-red-4: #ffd4ce;
+  --primitive-red-5: #ffc5bd;
+  --primitive-red-6: #f9b4ab;
+  --primitive-red-7: #f19f95;
+  --primitive-red-8: #e88479;
+  --primitive-red-9: #dc2626;
+  --primitive-red-10: #cc0615;
+  --primitive-red-11: #ce0c17;
+  --primitive-red-12: #641c18;
+  --primitive-red-a1: #fb622f05;
+  --primitive-red-a2: #e12e150a;
+  --primitive-red-a3: #f0240619;
+  --primitive-red-a4: #ffd4ce;
+  --primitive-red-a5: #ffc5bd;
+  --primitive-red-a6: #f71d0151;
+  --primitive-red-a7: #e41b0368;
+  --primitive-red-a8: #d7160084;
+  --primitive-red-a9: #d70101d9;
+  --primitive-red-a10: #cb000ff9;
+  --primitive-red-a11: #cc000cf3;
+  --primitive-red-a12: #540400e7;
+  --primitive-red-contrast: #ffffff;
+}
+
+.dark {
+  /* hues — dark */
+  --primitive-blue-1: #050a16;
+  --primitive-blue-2: #0e1626;
+  --primitive-blue-3: #11244c;
+  --primitive-blue-4: #132e66;
+  --primitive-blue-5: #1a397a;
+  --primitive-blue-6: #22448b;
+  --primitive-blue-7: #2b509f;
+  --primitive-blue-8: #325ebb;
+  --primitive-blue-9: #2563eb;
+  --primitive-blue-10: #315dba;
+  --primitive-blue-11: #88b5ff;
+  --primitive-blue-12: #d1e2ff;
+  --primitive-blue-a1: #000af60d;
+  --primitive-blue-a2: #2c70f81e;
+  --primitive-blue-a3: #246bfe45;
+  --primitive-blue-a4: #226aff60;
+  --primitive-blue-a5: #2d71ff75;
+  --primitive-blue-a6: #3777fe87;
+  --primitive-blue-a7: #407dfe9c;
+  --primitive-blue-a8: #417efeb9;
+  --primitive-blue-a9: #276afeeb;
+  --primitive-blue-a10: #407dfeb8;
+  --primitive-blue-a11: #88b5ff;
+  --primitive-blue-a12: #d1e2ff;
+  --primitive-blue-contrast: #ffffff;
+
+  --primitive-green-1: #050c06;
+  --primitive-green-2: #101a12;
+  --primitive-green-3: #152b1a;
+  --primitive-green-4: #0f3c1d;
+  --primitive-green-5: #124b24;
+  --primitive-green-6: #155b2c;
+  --primitive-green-7: #166c34;
+  --primitive-green-8: #137f3c;
+  --primitive-green-9: #15803d;
+  --primitive-green-10: #1b6f37;
+  --primitive-green-11: #71d088;
+  --primitive-green-12: #acf7bb;
+  --primitive-green-a1: #00b40003;
+  --primitive-green-a2: #64fa8211;
+  --primitive-green-a3: #5bfb7f23;
+  --primitive-green-a4: #23fb6635;
+  --primitive-green-a5: #28fe6c44;
+  --primitive-green-a6: #2bfd7055;
+  --primitive-green-a7: #28ff7366;
+  --primitive-green-a8: #1dff737a;
+  --primitive-green-a9: #21ff747b;
+  --primitive-green-a10: #33fd776a;
+  --primitive-green-a11: #89fea5cf;
+  --primitive-green-a12: #b2ffc1f7;
+  --primitive-green-contrast: #ffffff;
+
+  --primitive-amber-1: #0d0906;
+  --primitive-amber-2: #1c150e;
+  --primitive-amber-3: #2f1f0c;
+  --primitive-amber-4: #412500;
+  --primitive-amber-5: #4e2e00;
+  --primitive-amber-6: #5d3c0f;
+  --primitive-amber-7: #724d1e;
+  --primitive-amber-8: #926426;
+  --primitive-amber-9: #f59e0b;
+  --primitive-amber-10: #e99300;
+  --primitive-amber-11: #fbb050;
+  --primitive-amber-12: #fde2c4;
+  --primitive-amber-a1: #ca000004;
+  --primitive-amber-a2: #fc9e4013;
+  --primitive-amber-a3: #fc941827;
+  --primitive-amber-a4: #fc81003a;
+  --primitive-amber-a5: #ff8c0047;
+  --primitive-amber-a6: #fd9c1857;
+  --primitive-amber-a7: #fda7396d;
+  --primitive-amber-a8: #ffac3d8e;
+  --primitive-amber-a9: #ffa40bf5;
+  --primitive-amber-a10: #fea000e9;
+  --primitive-amber-a11: #ffb351fb;
+  --primitive-amber-a12: #ffe4c6fd;
+  --primitive-amber-contrast: #4f3515;
+
+  --primitive-red-1: #100807;
+  --primitive-red-2: #1f1210;
+  --primitive-red-3: #3c110e;
+  --primitive-red-4: #530b0a;
+  --primitive-red-5: #641210;
+  --primitive-red-6: #76201c;
+  --primitive-red-7: #8f312a;
+  --primitive-red-8: #b94038;
+  --primitive-red-9: #dc2626;
+  --primitive-red-10: #b63d36;
+  --primitive-red-11: #ff9083;
+  --primitive-red-12: #ffd1ca;
+  --primitive-red-a1: #e5000007;
+  --primitive-red-a2: #fe675016;
+  --primitive-red-a3: #fb2c1e35;
+  --primitive-red-a4: #ff0e0a4c;
+  --primitive-red-a5: #ff201b5e;
+  --primitive-red-a6: #fd3b3271;
+  --primitive-red-a7: #fe51448b;
+  --primitive-red-a8: #fe554ab7;
+  --primitive-red-a9: #ff2b2bdb;
+  --primitive-red-a10: #fe5248b4;
+  --primitive-red-a11: #ff9083;
+  --primitive-red-a12: #ffd1ca;
+  --primitive-red-contrast: #ffffff;
+}
+
+/*
+ * 7. SEMANTIC — product-wide; inherited by all palettes, do not override.
+ *
+ * Declared for both `:root` and `.dark` so a nested `.dark` wrapper re-resolves
+ * the roles against its own hue scales (6). The values are identical in both
+ * selectors; only the hue scales differ per mode. The one per-mode exception,
+ * `--warning-text`, is declared in the `.dark` rule after this block.
+ *
+ * Roles: `--{info|success|warning|danger|neutral}-{surface|surface-hover|
+ * border|solid|solid-hover|text|contrast|indicator}`. Hue intents read the hue
+ * scales; `neutral` reads the system tokens. `--status-*` and `--alert-*` below
+ * are aliases of these roles, so both families agree by construction.
+ */
+:root,
+.dark {
+  --neutral-surface: var(--muted);
+  --neutral-surface-hover: var(--accent);
+  --neutral-border: var(--border);
+  --neutral-solid: var(--secondary);
+  --neutral-solid-hover: var(--accent);
+  --neutral-text: var(--foreground);
+  --neutral-contrast: var(--secondary-foreground);
+  --neutral-indicator: var(--muted-foreground);
+  --info-surface: var(--primitive-blue-a3);
+  --info-surface-hover: var(--primitive-blue-a4);
+  --info-border: var(--primitive-blue-a6);
+  --info-solid: var(--primitive-blue-9);
+  --info-solid-hover: var(--primitive-blue-10);
+  --info-text: var(--primitive-blue-11);
+  --info-contrast: var(--primitive-blue-contrast);
+  --info-indicator: var(--primitive-blue-9);
+  --success-surface: var(--primitive-green-a3);
+  --success-surface-hover: var(--primitive-green-a4);
+  --success-border: var(--primitive-green-a6);
+  --success-solid: var(--primitive-green-9);
+  --success-solid-hover: var(--primitive-green-10);
+  --success-text: var(--primitive-green-11);
+  --success-contrast: var(--primitive-green-contrast);
+  --success-indicator: var(--primitive-green-9);
+  --warning-surface: var(--primitive-amber-a3);
+  --warning-surface-hover: var(--primitive-amber-a4);
+  --warning-border: var(--primitive-amber-a6);
+  --warning-solid: var(--primitive-amber-9);
+  --warning-solid-hover: var(--primitive-amber-10);
+  --warning-text: var(--primitive-amber-12);
+  --warning-contrast: var(--primitive-amber-contrast);
+  --warning-indicator: var(--primitive-amber-9);
+  --danger-surface: var(--primitive-red-a3);
+  --danger-surface-hover: var(--primitive-red-a4);
+  --danger-border: var(--primitive-red-a6);
+  --danger-solid: var(--primitive-red-9);
+  --danger-solid-hover: var(--primitive-red-10);
+  --danger-text: var(--primitive-red-11);
+  --danger-contrast: var(--primitive-red-contrast);
+  --danger-indicator: var(--primitive-red-9);
+
+  --status-default: var(--neutral-indicator);
+  --status-neutral: var(--info-solid);
+  --status-completed: var(--success-solid);
+  --status-attention: var(--warning-solid);
+  --status-danger: var(--danger-solid);
+  --alert-neutral-background: var(--neutral-surface);
+  --alert-neutral-foreground: var(--neutral-text);
+  --alert-neutral-foreground-muted: var(--muted-foreground);
+  --alert-neutral-border: var(--neutral-border);
+  --alert-success-background: var(--success-surface);
+  --alert-success-foreground: var(--success-text);
+  --alert-success-foreground-muted: var(--alert-success-foreground);
+  --alert-success-border: var(--success-border);
+  --alert-warning-background: var(--warning-surface);
+  --alert-warning-foreground: var(--warning-text);
+  --alert-warning-foreground-muted: var(--alert-warning-foreground);
+  --alert-warning-border: var(--warning-border);
+  --alert-error-background: var(--danger-surface);
+  --alert-error-foreground: var(--danger-text);
+  --alert-error-foreground-muted: var(--alert-error-foreground);
+  --alert-error-border: var(--danger-border);
+  --alert-info-background: var(--info-surface);
+  --alert-info-foreground: var(--info-text);
+  --alert-info-foreground-muted: var(--alert-info-foreground);
+  --alert-info-border: var(--info-border);
+}
+
+.dark {
+  /* Warning text: step 12 on the light surface, step 11 on the dark one. */
+  --warning-text: var(--primitive-amber-11);
 }

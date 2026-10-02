@@ -43,6 +43,8 @@ They are not bridged to Tailwind. Consumers use the semantic roles, not steps. T
 
 The full set is bridged, including roles no component uses yet (neutral solid roles, hue `border`), so the set is one coherent vocabulary and `--alert-*` can alias every role.
 
+Adding a role or an intent touches four places in one commit: `default.css` (both the `:root, .dark` block and, if the role has a per-mode exception, the `.dark` rule), `theme.bridge.css`, the pinned counts in `theme-bridge.test.ts`, and the roles table in `docs-src/concepts/styling-theming.docs.outline.md`. The docs table is hand-written; only the bridge count is checked by a test.
+
 The roles and the aliases are declared for `:root, .dark`, so a nested `.dark` wrapper resolves them against its own scales. The only per-mode override is `--warning-text` (step 12 in light, step 11 in dark).
 
 ### Aliases

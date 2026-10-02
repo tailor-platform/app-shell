@@ -193,7 +193,7 @@ Each intent has eight roles. The intents are `info`, `success`, `warning`, `dang
 
 In the default palette, `text` on `surface` and `contrast` on `solid` and `solid-hover` are at least 4.5:1 for the four hue intents, in light and dark mode, on `--card` and `--background`. A unit test checks this from the shipped CSS. It does not cover hover surfaces, the `cream` and `bloom` palettes, or the `neutral` intent. Text on `surface-hover` is below 4.5:1 for some roles.
 
-Some light-mode values are opaque instead of translucent: the `warning` surface, surface-hover and border, the `info` border and the `danger` surface-hover. They do not blend with a tinted parent. All dark-mode values are translucent.
+Most `surface` and `border` values are translucent tints, so an opacity modifier compounds rather than replaces — `bg-info-surface/50` halves the tint's alpha instead of setting it to 50%. Some light-mode values are opaque instead of translucent: the `warning` surface, surface-hover and border, the `info` border and the `danger` surface-hover. They do not blend with a tinted parent. All dark-mode values are translucent.
 
 `Badge`, `Alert`, `CsvImporter` and `MetricCard` read these roles directly, not `--status-*` or `--alert-*`. To recolour them, override the roles. `Badge` `error` and `subtle-error`, and `Alert` `error`, follow `--danger-*`. They no longer follow `--destructive`, which still drives `Button` and `text-destructive`.
 
@@ -205,24 +205,15 @@ Some light-mode values are opaque instead of translucent: the `warning` surface,
 
 #### Alerts
 
-`--alert-{neutral,success,warning,error,info}-{background,foreground,foreground-muted,border}` — five variants × four slots, each bridged into Tailwind. In the default palette they are aliases of the semantic color roles (`error` reads the `danger` role); `foreground-muted` follows `foreground`, so overriding `foreground` changes both. They are kept for custom surfaces in consumer code; the `Alert` component reads the roles, so overriding `--alert-*` changes these utilities but not `Alert`:
+`--alert-{neutral,success,warning,error,info}-{background,foreground,foreground-muted,border}` and the matching utilities (`bg-alert-info-background`, `text-alert-info-foreground`, ...) remain for existing code. In the default palette they are aliases of the semantic color roles: `background` is `surface`, `border` is `border`, `foreground` is `text`, and `foreground-muted` follows `foreground`; `error` reads the `danger` intent. The `Alert` component reads the roles, so overriding `--alert-*` changes these utilities but not `Alert`.
 
-| Slot               | Tailwind                           | Use for                |
-| ------------------ | ---------------------------------- | ---------------------- |
-| `background`       | `bg-alert-info-background`         | Callout fill           |
-| `foreground`       | `text-alert-info-foreground`       | Primary text and icons |
-| `foreground-muted` | `text-alert-info-foreground-muted` | Description text       |
-| `border`           | `border-alert-info-border`         | Callout border         |
-
-Prefer the `Alert` component — it already pairs surface, border and text per variant and supplies the icon. Reach for the utilities directly only on custom surfaces `Alert` doesn't cover, such as a status-highlighted table row or an inline note:
+For new custom surfaces, use the roles instead of the alert slots:
 
 ```tsx
-<div className="rounded-lg border bg-alert-warning-background text-alert-warning-foreground border-alert-warning-border">
+<div className="rounded-lg border bg-warning-surface text-warning-text border-warning-border">
   …
 </div>
 ```
-
-Most `background` and `border` values are translucent tints, so an opacity modifier compounds rather than replaces — `bg-alert-info-background/50` halves the tint's alpha instead of setting it to 50%. In light mode the `warning` background and border and the `info` border are opaque, so an opacity modifier does not blend them with a tinted parent.
 
 ```tsx
 // Good — semantic token pairs, and a variant where one exists

@@ -12,7 +12,9 @@ A gray scale (`--primitive-gray-{50..950}`, Tailwind neutral) is also added; the
 
 Visible changes in the default palette:
 
-- `--status-*` and `--alert-*` are deprecated. `bg-status-*` and `bg-alert-*` keep working and change values; they will be removed in the next major. New code uses the roles. `--status-default` now follows `--muted-foreground` (it was a fixed `#737373`), so it is theme-dependent and translucent in the `cream` and `bloom` palettes. `--status-*` are fill colours; do not use them as text (below 4.5:1 in dark mode). Use `text-{intent}-text` instead (for example `text-status-completed` becomes `text-success-text`).
-- Badge, Alert, CsvImporter and MetricCard read the semantic roles instead of `--status-*` and `--alert-*`. To recolour them, override `--{intent}-*`; overriding `--status-*` or `--alert-*` no longer changes these components. The old names remain for your own `bg-status-*` / `bg-alert-*` utilities.
+- `--status-*` and `--alert-*` are deprecated and will be removed in the next major. `bg-status-*` and `bg-alert-*` keep working; new code uses the roles.
+- `bg-status-*` and `bg-alert-*` change values. `--status-default` now follows `--muted-foreground` (it was a fixed `#737373`), so it is theme-dependent and translucent in the `cream` and `bloom` palettes.
+- `--status-*` are fill colours; do not use them as text (below 4.5:1 in dark mode). Use `text-{intent}-text` instead (for example `text-status-completed` becomes `text-success-text`).
+- Badge, Alert, CsvImporter and MetricCard read the semantic roles. To recolour them, override `--{intent}-*`; overriding `--status-*` or `--alert-*` no longer changes these components.
 - Badge `error` and `subtle-error`, and Alert `error`, follow `--danger-*` instead of `--destructive`. Button and `text-destructive` still follow `--destructive`.
 - The warning Badge text is dark instead of white. Alert description text now has the same colour as the Alert title.

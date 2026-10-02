@@ -11,7 +11,7 @@ Styling is done with **Tailwind CSS v4** against `@tailor-platform/app-shell`'s 
 
 **The tokens are the rails.** Consistency across customers, apps, and AI runs comes from the token system, not from rules written in prose. A hand-typed `#fff` or `padding: 13px` is not a "small deviation" — it is the mechanism by which consistency dies.
 
-**Every token in this document is verified against the shipped CSS.** If a token is not listed here, assume it does not exist. The hue scales (`--primitive-*`) are internal: they are not bridged to Tailwind and are not listed. Inventing a plausible-sounding token (`bg-surface-1`, `text-fg-muted`, `--space-4`) is the worst failure mode available: Tailwind emits **no CSS at all** for an unknown utility, so the class is silently dropped and the element renders unstyled — no error, no warning, nothing in the console. When unsure, read `node_modules/@tailor-platform/app-shell/dist/themes/default.css`; it is the ground truth.
+**Every token in this document is verified against the shipped CSS.** If a token is not listed here, assume it does not exist. The colour scales (`--primitive-*`) are internal: they are not bridged to Tailwind and are not listed. Inventing a plausible-sounding token (`bg-surface-1`, `text-fg-muted`, `--space-4`) is the worst failure mode available: Tailwind emits **no CSS at all** for an unknown utility, so the class is silently dropped and the element renders unstyled — no error, no warning, nothing in the console. When unsure, read `node_modules/@tailor-platform/app-shell/dist/themes/default.css`; it is the ground truth.
 
 ## Setup
 
@@ -596,7 +596,8 @@ These are visual-composition rules every screen must follow, regardless of patte
 | Destructive action (delete, void)  | `Button variant="destructive"`; `bg-destructive` on custom surfaces; confirm in a dialog at `shadow-lg` |
 | Non-blocking caution               | `Badge variant="warning"`, or `bg-warning-surface text-warning-text`                                    |
 | Confirmation / completed state     | `Badge variant="success"`, or `bg-success-surface text-success-text`                                    |
-| Neutral callout                    | `Badge variant="info"`, or `Alert variant="info"`                                                       |
+| Informational callout              | `Badge variant="info"`, or `Alert variant="info"`                                                       |
+| Neutral callout                    | `Badge variant="neutral"`, or `Alert variant="neutral"`                                                 |
 | Persistent panel (sidebar, header) | `shadow-sm`                                                                                             |
 | Hovered / sticky surface           | `shadow-md`                                                                                             |
 | Popover / menu / tooltip           | `bg-popover`, `shadow-md`, `duration-150`                                                               |

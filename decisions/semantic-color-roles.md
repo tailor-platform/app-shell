@@ -86,9 +86,9 @@ This step is the status part of a two-axis palette. The rest is planned as follo
 | Danger action      | red                                                                            | `--destructive` becomes an alias of `--danger-solid` once its text and border uses move to `--danger-text` / `--danger-border` | next                           |
 | Brand              | an accent scale per theme (bloom and cream read blue, theme-tailor reads cyan) | `--primary`, `--ring` and brand tints read accent steps                                                                        | with the Theme Generator       |
 
-`--status-*` and `--alert-*` stay as aliases for consumer code. Shipped components read the roles.
+`--status-*` and `--alert-*` stay as aliases for consumer code and are deprecated: the docs and changeset say so, and they are removed in the next major. Shipped components read the roles. An ESLint rule in `@tailor-platform/eslint-plugin-app-shell` that flags the old utilities and offers the role as a fix is a separate change.
 
-The component variant names (`Badge` and `Alert` `error`, Badge `neutral`) are public API and are not renamed here. Aligning them with the intent names (`error` → `danger`) is a breaking change; it is a candidate for the next major, together with deprecating `--status-*` and `--alert-*`.
+The component variant names (`Badge` and `Alert` `error`, Badge `neutral`) are public API and are not renamed here. Aligning them with the intent names (`error` → `danger`) is a breaking change; it is a candidate for the next major, together with removing `--status-*` and `--alert-*`.
 
 ## Out of scope
 

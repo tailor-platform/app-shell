@@ -158,17 +158,17 @@ There are no `-hover` or `-active` brand tokens. Express interaction states with
 
 #### Status
 
-Five status colors for custom surfaces. They are aliases of the [semantic color roles](#semantic-color-roles) below, so status colors and Alert colors agree by default:
+**Deprecated.** These five tokens and their utilities remain for existing code and will be removed in the next major. New code uses the [semantic color roles](#semantic-color-roles) below. In the default palette they are aliases of those roles, so status colors and Alert colors agree:
 
-| Token                | Use                                                  | Tailwind              |
-| -------------------- | ---------------------------------------------------- | --------------------- |
-| `--status-default`   | none / not applicable (follows `--muted-foreground`) | `bg-status-default`   |
-| `--status-neutral`   | informational                                        | `bg-status-neutral`   |
-| `--status-completed` | success, completed                                   | `bg-status-completed` |
-| `--status-attention` | warning, needs attention                             | `bg-status-attention` |
-| `--status-danger`    | error, blocked                                       | `bg-status-danger`    |
+| Token                | Use                                                  | Tailwind              | Use instead            |
+| -------------------- | ---------------------------------------------------- | --------------------- | ---------------------- |
+| `--status-default`   | none / not applicable (follows `--muted-foreground`) | `bg-status-default`   | `bg-neutral-indicator` |
+| `--status-neutral`   | informational                                        | `bg-status-neutral`   | `bg-info-solid`        |
+| `--status-completed` | success, completed                                   | `bg-status-completed` | `bg-success-solid`     |
+| `--status-attention` | warning, needs attention                             | `bg-status-attention` | `bg-warning-solid`     |
+| `--status-danger`    | error, blocked                                       | `bg-status-danger`    | `bg-danger-solid`      |
 
-Prefer `Badge` with a semantic variant (`success`, `warning`, `error`, `info`, `neutral`) over applying these directly — the variants already pair fill and foreground correctly. Reach for the raw token only on custom surfaces.
+Prefer `Badge` with a semantic variant (`success`, `warning`, `error`, `info`, `neutral`) over applying a fill directly — the variants already pair fill and foreground correctly.
 
 These are fill and indicator colors. `--status-default` follows `--muted-foreground`, so it is theme-dependent and translucent in `cream` and `bloom`; the four hue tokens are opaque in every palette. Do not use them as text color: `--status-completed`, `--status-danger` and `--status-neutral` are below 4.5:1 on a dark card, and `--status-attention` is below 3:1 on a light one. For text, use `text-{intent}-text`.
 
@@ -205,7 +205,7 @@ Most `surface` and `border` values are translucent tints, so an opacity modifier
 
 #### Alerts
 
-`--alert-{neutral,success,warning,error,info}-{background,foreground,foreground-muted,border}` and the matching utilities (`bg-alert-info-background`, `text-alert-info-foreground`, ...) remain for existing code. In the default palette they are aliases of the semantic color roles: `background` is `surface`, `border` is `border`, `foreground` is `text`, and `foreground-muted` follows `foreground`; `error` reads the `danger` intent. The `Alert` component reads the roles, so overriding `--alert-*` changes these utilities but not `Alert`.
+**Deprecated.** `--alert-{neutral,success,warning,error,info}-{background,foreground,foreground-muted,border}` and the matching utilities (`bg-alert-info-background`, `text-alert-info-foreground`, ...) remain for existing code and will be removed in the next major. In the default palette they are aliases of the semantic color roles: `background` is `surface`, `border` is `border`, `foreground` is `text`, and `foreground-muted` follows `foreground`; `error` reads the `danger` intent. The `Alert` component reads the roles, so overriding `--alert-*` changes these utilities but not `Alert`.
 
 For new custom surfaces, use the roles instead of the alert slots:
 

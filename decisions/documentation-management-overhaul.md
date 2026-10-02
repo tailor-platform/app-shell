@@ -83,6 +83,7 @@ Pattern and page units additionally declare the presentation metadata the genera
 **Rule 9 is advisory, not blocking,** because claiming by name is sometimes the lesser evil. `BadgeVariant` and `BadgeOptions` are declared in `components/badge-list/`; widening the badge unit's glob to reach them would drag in `BadgeList`'s whole surface too. That trade is a judgement call — it just shouldn't pass unremarked.
 
 Declaring `kind` also puts a consequential change where review can see it. A unit that stops being hashed shows up as `- kind: code-backed` / `+ kind: prose` in an authored file's diff, rather than as a `typeSurface` quietly going `null` inside an 83-unit JSON blob.
+
 ---
 
 ## Workflow

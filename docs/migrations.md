@@ -13,25 +13,25 @@ This page is deliberately narrow. It is **not** a changelog — see [`packages/c
 
 Each entry states which versions are affected, what breaks, how to detect it, and what to change. Entries stay here permanently; they are not pruned when they get old, because apps upgrade across arbitrary version gaps.
 
-| Version       | Change                                                                                                                                     |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1.17.0        | [Status colour tokens become aliases of the semantic colour roles](#1170-status-colour-tokens-become-aliases-of-the-semantic-colour-roles) |
-| 1.15.0        | [Base UI 1.8.0 breaks closed-`Select` and dialog-click tests](#1150-base-ui-180-breaks-closed-select-and-dialog-click-tests)               |
-| 1.12.0        | [`DateField` / `DatePicker` field chrome moved to `Field.Root`](#1120-datefield--datepicker-field-chrome-moved-to-fieldroot)               |
-| 1.11.0        | [React 19.2.7 and React Router v8 required](#1110-react-1927-and-react-router-v8-are-now-required)                                         |
-| 1.11.0        | [Non-modal `Sheet` renders no backdrop](#1110-non-modal-sheet-no-longer-renders-a-backdrop)                                                |
-| 1.8.0         | [`stream` removed from `useAIChat()`](#180-stream-removed-from-useaichat)                                                                  |
-| 1.5.0 → 1.7.0 | [Remove the theme bridge workaround](#150--170-remove-the-theme-bridge-workaround)                                                         |
-| 1.5.0         | [`loader` removed from file-based pages](#150-loader-removed-from-file-based-page-definitions)                                             |
-| 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                                            |
-| 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                                      |
-| before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                                     |
+| Version       | Change                                                                                                                       |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.17.0        | [Status and alert tokens now resolve to the colour roles](#1170-status-and-alert-tokens-now-resolve-to-the-colour-roles)     |
+| 1.15.0        | [Base UI 1.8.0 breaks closed-`Select` and dialog-click tests](#1150-base-ui-180-breaks-closed-select-and-dialog-click-tests) |
+| 1.12.0        | [`DateField` / `DatePicker` field chrome moved to `Field.Root`](#1120-datefield--datepicker-field-chrome-moved-to-fieldroot) |
+| 1.11.0        | [React 19.2.7 and React Router v8 required](#1110-react-1927-and-react-router-v8-are-now-required)                           |
+| 1.11.0        | [Non-modal `Sheet` renders no backdrop](#1110-non-modal-sheet-no-longer-renders-a-backdrop)                                  |
+| 1.8.0         | [`stream` removed from `useAIChat()`](#180-stream-removed-from-useaichat)                                                    |
+| 1.5.0 → 1.7.0 | [Remove the theme bridge workaround](#150--170-remove-the-theme-bridge-workaround)                                           |
+| 1.5.0         | [`loader` removed from file-based pages](#150-loader-removed-from-file-based-page-definitions)                               |
+| 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
+| 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
+| before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
 
-## 1.17.0: status colour tokens become aliases of the semantic colour roles
+## 1.17.0: status and alert tokens now resolve to the colour roles
 
 **Applies to:** apps that use `bg-status-*`, `text-status-*` or `bg-alert-*` utilities, and apps whose theme overrides `--status-*`, `--alert-*` or `--destructive` to recolour `Badge`, `Alert`, `CsvImporter` or `MetricCard`.
 
-1.17.0 adds semantic colour roles, `--{info|success|warning|danger|neutral}-{surface|surface-hover|border|solid|solid-hover|text|contrast|indicator}`, bridged as Tailwind colours such as `bg-success-surface` and `text-danger-text`. The old `--status-*` and `--alert-*` tokens still exist and still work, but they are now aliases of the roles and are deprecated; they will be removed in the next major. Nothing errors. Three things change silently:
+1.17.0 adds semantic colour roles, `--{info|success|warning|danger|neutral}-{surface|surface-hover|border|solid|solid-hover|text|contrast|indicator}`, bridged as Tailwind colours such as `bg-success-surface` and `text-danger-text`. The old `--status-*` and `--alert-*` tokens still exist and still work, but they no longer hold their own colours: each one now resolves to a role (for example `--status-completed` is `var(--success-solid)`). They are deprecated and will be removed in the next major. Nothing errors. Three things change silently:
 
 - **Colours change.** `bg-status-*` and `bg-alert-*` resolve to the role values. For example `bg-status-completed` is `#15803d` instead of `#22c55e`. `--status-default` follows `--muted-foreground` instead of a fixed `#737373`.
 - **Component recolouring moves to the roles.** `Badge`, `Alert`, `CsvImporter` and `MetricCard` read the roles directly. A theme that overrides `--status-*` or `--alert-*` no longer changes these components; override `--{intent}-*` instead. `Badge` `error` / `subtle-error` and `Alert` `error` read `--danger-*`, so overriding `--destructive` no longer reaches them either. `Button variant="destructive"` and `text-destructive` still follow `--destructive`.

@@ -191,7 +191,7 @@ Each intent has eight roles. The intents are `info`, `success`, `warning`, `dang
 <span className="rounded-md bg-success-surface px-2 py-0.5 text-success-text">Paid</span>
 ```
 
-In the default palette, `text` on `surface` and `contrast` on `solid` and `solid-hover` are at least 4.5:1 for the four hue intents, in light and dark mode, on `--card` and `--background`. A unit test checks this from the shipped CSS. It does not cover hover surfaces, the `cream` and `bloom` palettes, or the `neutral` intent. Text on `surface-hover` is below 4.5:1 for some roles.
+In the default palette, `text` on `surface` and `contrast` on `solid` and `solid-hover` are at least 4.5:1 for the four hue intents, in light and dark mode, on `--card` and `--background`. A unit test checks this from the shipped CSS. `text` on `surface-hover` is held at 4.2:1 by the same test; it is below 4.5:1 for `danger` and `success` in light mode. The test does not cover the `cream` and `bloom` palettes or the `neutral` intent.
 
 Most `surface` and `border` values are translucent tints, so an opacity modifier compounds rather than replaces — `bg-info-surface/50` halves the tint's alpha instead of setting it to 50%. Some light-mode values are opaque instead of translucent: the `warning` surface, surface-hover and border, the `info` border and the `danger` surface-hover. They do not blend with a tinted parent. All dark-mode values are translucent.
 
@@ -214,6 +214,8 @@ For new custom surfaces, use the roles instead of the alert slots:
   …
 </div>
 ```
+
+Across all colour tokens:
 
 ```tsx
 // Good — semantic token pairs, and a variant where one exists

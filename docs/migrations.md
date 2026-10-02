@@ -45,7 +45,7 @@ What to change:
 - Replace `bg-status-completed/10 border-status-completed/30` style tints with `bg-success-surface border-success-border`. The same applies to the other intents and to `bg-alert-*` / `border-alert-*`.
 - In a theme that recolours the status components, set the roles (`--success-solid`, `--danger-text`, ...) instead of `--status-*`, `--alert-*` or `--destructive`.
 
-The roles are documented in [Styling & theming](../concepts/styling-theming.md#semantic-color-roles). The decision record is `decisions/semantic-color-roles.md`.
+The roles are documented in [Styling & theming](./concepts/styling-theming.md#semantic-color-roles). The decision record is `decisions/semantic-color-roles.md`.
 
 ## 1.15.0: Base UI 1.8.0 breaks closed-`Select` and dialog-click tests
 

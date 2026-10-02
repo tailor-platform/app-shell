@@ -53,19 +53,69 @@
   --semantic-shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.08);
   --semantic-shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.09), 0 2px 4px -2px rgb(15 23 42 / 0.06);
   --semantic-shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.12), 0 4px 6px -4px rgb(15 23 42 / 0.09);
+}
 
-  /* ── 6. PRIMITIVE SCALES (light) — internal; consumers use the semantic roles below ──
-   * One gray scale and four Radix-style 12-step + alpha hue scales. Names are
-   * prefixed to avoid colliding with a consumer's own copy of Radix Colors.
-   * Not bridged to Tailwind. See decisions/semantic-color-roles.md for how
-   * they were made. The hue "alpha" steps are translucent only where the
-   * generator could express them; some light steps (for example amber a2-a6)
-   * resolve to opaque hex.
-   *
-   * Gray is the Tailwind `neutral` family (the values this palette already
-   * used) and is the same in both modes; the SYSTEM text and line tokens
-   * above read it. Surfaces stay literal: they are theme inputs.
-   */
+/*
+ * Dark variant. Overrides BRAND + SYSTEM + PALETTE. The primitive scales (6)
+ * and the semantic roles (7) follow below. Shared aliases/ring re-resolve
+ * when BRAND changes; `--radius` inherits from the light block.
+ */
+.dark {
+  color-scheme: dark;
+
+  /* ── 1. BRAND (dark) ──────────────────────────────────────────────────── */
+  --primary: rgba(229, 229, 229, 1);
+  --primary-foreground: rgba(23, 23, 23, 1);
+  --secondary: rgba(38, 38, 38, 1);
+  --secondary-foreground: rgba(250, 250, 250, 1);
+  --accent: rgb(48, 48, 48);
+  --accent-foreground: rgba(250, 250, 250, 1);
+
+  /* ── 4. SYSTEM (dark) ─────────────────────────────────────────────────── */
+  --background: rgba(10, 10, 10, 1);
+  --foreground: var(--primitive-gray-50);
+  --card: rgba(23, 23, 23, 1);
+  --card-foreground: rgba(250, 250, 250, 1);
+  --popover: rgba(38, 38, 38, 1);
+  --popover-foreground: rgba(250, 250, 250, 1);
+  --muted: rgba(38, 38, 38, 1);
+  --muted-foreground: var(--primitive-gray-400);
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --sidebar: rgba(10, 10, 10, 1);
+  --sidebar-foreground: rgba(250, 250, 250, 1);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+
+  /* ── 5. PALETTE (dark) ────────────────────────────────────────────────── */
+  --destructive: rgba(248, 113, 113, 1);
+  --destructive-foreground: rgba(254, 242, 242, 1);
+  --chart-1: rgba(29, 78, 216, 1);
+  --chart-2: rgba(16, 185, 129, 1);
+  --chart-3: rgba(245, 158, 11, 1);
+  --chart-4: rgba(168, 85, 247, 1);
+  --chart-5: rgba(244, 63, 94, 1);
+  --semantic-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+  --semantic-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.38), 0 1px 2px -1px rgb(0 0 0 / 0.32);
+  --semantic-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.28);
+  --semantic-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.42), 0 4px 6px -4px rgb(0 0 0 / 0.35);
+}
+
+/*
+ * 6. PRIMITIVE SCALES — internal; consumers use the semantic roles (7) below.
+ *
+ * One gray scale and four Radix-style 12-step + alpha hue scales, light then
+ * dark. Names are prefixed to avoid colliding with a consumer's own copy of
+ * Radix Colors. Not bridged to Tailwind. See decisions/semantic-color-roles.md
+ * for how they were made. The hue "alpha" steps are translucent only where the
+ * generator could express them; some light steps (for example amber a2-a6)
+ * resolve to opaque hex.
+ *
+ * Gray is the Tailwind `neutral` family (the values this palette already used)
+ * and is the same in both modes, so it is declared once; the SYSTEM text and
+ * line tokens (4) read it. Surfaces stay literal: they are theme inputs.
+ */
+:root {
+  /* gray — both modes */
   --primitive-gray-50: #fafafa;
   --primitive-gray-100: #f5f5f5;
   --primitive-gray-200: #e5e5e5;
@@ -77,6 +127,8 @@
   --primitive-gray-800: #262626;
   --primitive-gray-900: #171717;
   --primitive-gray-950: #0a0a0a;
+
+  /* hues — light */
   --primitive-blue-1: #f7f8f9;
   --primitive-blue-2: #f0f4fa;
   --primitive-blue-3: #e5ecf9;
@@ -182,134 +234,8 @@
   --primitive-red-contrast: #ffffff;
 }
 
-/*
- * 6. SEMANTIC — product-wide; inherited by all palettes, do not override.
- *
- * Declared for both `:root` and `.dark` so a nested `.dark` wrapper re-resolves
- * the roles against its own hue scales. The values are identical in both
- * selectors; only the hue scales differ per mode.
- *
- * Roles: `--{info|success|warning|danger|neutral}-{surface|surface-hover|
- * border|solid|solid-hover|text|contrast|indicator}`. Hue intents read the hue
- * scales; `neutral` reads the system tokens. `--status-*` and `--alert-*` below
- * are aliases of these roles, so both families agree by construction.
- */
-:root,
 .dark {
-  --neutral-surface: var(--muted);
-  --neutral-surface-hover: var(--accent);
-  --neutral-border: var(--border);
-  --neutral-solid: var(--secondary);
-  --neutral-solid-hover: var(--accent);
-  --neutral-text: var(--foreground);
-  --neutral-contrast: var(--secondary-foreground);
-  --neutral-indicator: var(--muted-foreground);
-  --info-surface: var(--primitive-blue-a3);
-  --info-surface-hover: var(--primitive-blue-a4);
-  --info-border: var(--primitive-blue-a6);
-  --info-solid: var(--primitive-blue-9);
-  --info-solid-hover: var(--primitive-blue-10);
-  --info-text: var(--primitive-blue-11);
-  --info-contrast: var(--primitive-blue-contrast);
-  --info-indicator: var(--primitive-blue-9);
-  --success-surface: var(--primitive-green-a3);
-  --success-surface-hover: var(--primitive-green-a4);
-  --success-border: var(--primitive-green-a6);
-  --success-solid: var(--primitive-green-9);
-  --success-solid-hover: var(--primitive-green-10);
-  --success-text: var(--primitive-green-11);
-  --success-contrast: var(--primitive-green-contrast);
-  --success-indicator: var(--primitive-green-9);
-  --warning-surface: var(--primitive-amber-a3);
-  --warning-surface-hover: var(--primitive-amber-a4);
-  --warning-border: var(--primitive-amber-a6);
-  --warning-solid: var(--primitive-amber-9);
-  --warning-solid-hover: var(--primitive-amber-10);
-  --warning-text: var(--primitive-amber-12);
-  --warning-contrast: var(--primitive-amber-contrast);
-  --warning-indicator: var(--primitive-amber-9);
-  --danger-surface: var(--primitive-red-a3);
-  --danger-surface-hover: var(--primitive-red-a4);
-  --danger-border: var(--primitive-red-a6);
-  --danger-solid: var(--primitive-red-9);
-  --danger-solid-hover: var(--primitive-red-10);
-  --danger-text: var(--primitive-red-11);
-  --danger-contrast: var(--primitive-red-contrast);
-  --danger-indicator: var(--primitive-red-9);
-
-  --status-default: var(--neutral-indicator);
-  --status-neutral: var(--info-solid);
-  --status-completed: var(--success-solid);
-  --status-attention: var(--warning-solid);
-  --status-danger: var(--danger-solid);
-  --alert-neutral-background: var(--neutral-surface);
-  --alert-neutral-foreground: var(--neutral-text);
-  --alert-neutral-foreground-muted: var(--muted-foreground);
-  --alert-neutral-border: var(--neutral-border);
-  --alert-success-background: var(--success-surface);
-  --alert-success-foreground: var(--success-text);
-  --alert-success-foreground-muted: var(--alert-success-foreground);
-  --alert-success-border: var(--success-border);
-  --alert-warning-background: var(--warning-surface);
-  --alert-warning-foreground: var(--warning-text);
-  --alert-warning-foreground-muted: var(--alert-warning-foreground);
-  --alert-warning-border: var(--warning-border);
-  --alert-error-background: var(--danger-surface);
-  --alert-error-foreground: var(--danger-text);
-  --alert-error-foreground-muted: var(--alert-error-foreground);
-  --alert-error-border: var(--danger-border);
-  --alert-info-background: var(--info-surface);
-  --alert-info-foreground: var(--info-text);
-  --alert-info-foreground-muted: var(--alert-info-foreground);
-  --alert-info-border: var(--info-border);
-}
-
-/*
- * Dark variant. Overrides BRAND + SYSTEM + the hue scales. The semantic roles
- * and aliases live in the shared block above and re-resolve against these
- * scales. Shared aliases/ring re-resolve when BRAND changes; `--radius`
- * inherits from the light block.
- */
-.dark {
-  color-scheme: dark;
-
-  /* ── 1. BRAND (dark) ──────────────────────────────────────────────────── */
-  --primary: rgba(229, 229, 229, 1);
-  --primary-foreground: rgba(23, 23, 23, 1);
-  --secondary: rgba(38, 38, 38, 1);
-  --secondary-foreground: rgba(250, 250, 250, 1);
-  --accent: rgb(48, 48, 48);
-  --accent-foreground: rgba(250, 250, 250, 1);
-
-  /* ── 4. SYSTEM (dark) ─────────────────────────────────────────────────── */
-  --background: rgba(10, 10, 10, 1);
-  --foreground: var(--primitive-gray-50);
-  --card: rgba(23, 23, 23, 1);
-  --card-foreground: rgba(250, 250, 250, 1);
-  --popover: rgba(38, 38, 38, 1);
-  --popover-foreground: rgba(250, 250, 250, 1);
-  --muted: rgba(38, 38, 38, 1);
-  --muted-foreground: var(--primitive-gray-400);
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.15);
-  --sidebar: rgba(10, 10, 10, 1);
-  --sidebar-foreground: rgba(250, 250, 250, 1);
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-
-  /* ── 5. PALETTE (dark) ────────────────────────────────────────────────── */
-  --destructive: rgba(248, 113, 113, 1);
-  --destructive-foreground: rgba(254, 242, 242, 1);
-  --chart-1: rgba(29, 78, 216, 1);
-  --chart-2: rgba(16, 185, 129, 1);
-  --chart-3: rgba(245, 158, 11, 1);
-  --chart-4: rgba(168, 85, 247, 1);
-  --chart-5: rgba(244, 63, 94, 1);
-  --semantic-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.35);
-  --semantic-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.38), 0 1px 2px -1px rgb(0 0 0 / 0.32);
-  --semantic-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.28);
-  --semantic-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.42), 0 4px 6px -4px rgb(0 0 0 / 0.35);
-
-  /* ── 6. PRIMITIVE SCALES (dark) — gray is declared once above ────────── */
+  /* hues — dark */
   --primitive-blue-1: #050a16;
   --primitive-blue-2: #0e1626;
   --primitive-blue-3: #11244c;
@@ -413,7 +339,92 @@
   --primitive-red-a11: #ff9083;
   --primitive-red-a12: #ffd1ca;
   --primitive-red-contrast: #ffffff;
+}
 
+/*
+ * 7. SEMANTIC — product-wide; inherited by all palettes, do not override.
+ *
+ * Declared for both `:root` and `.dark` so a nested `.dark` wrapper re-resolves
+ * the roles against its own hue scales (6). The values are identical in both
+ * selectors; only the hue scales differ per mode. The one per-mode exception,
+ * `--warning-text`, is declared in the `.dark` rule after this block.
+ *
+ * Roles: `--{info|success|warning|danger|neutral}-{surface|surface-hover|
+ * border|solid|solid-hover|text|contrast|indicator}`. Hue intents read the hue
+ * scales; `neutral` reads the system tokens. `--status-*` and `--alert-*` below
+ * are aliases of these roles, so both families agree by construction.
+ */
+:root,
+.dark {
+  --neutral-surface: var(--muted);
+  --neutral-surface-hover: var(--accent);
+  --neutral-border: var(--border);
+  --neutral-solid: var(--secondary);
+  --neutral-solid-hover: var(--accent);
+  --neutral-text: var(--foreground);
+  --neutral-contrast: var(--secondary-foreground);
+  --neutral-indicator: var(--muted-foreground);
+  --info-surface: var(--primitive-blue-a3);
+  --info-surface-hover: var(--primitive-blue-a4);
+  --info-border: var(--primitive-blue-a6);
+  --info-solid: var(--primitive-blue-9);
+  --info-solid-hover: var(--primitive-blue-10);
+  --info-text: var(--primitive-blue-11);
+  --info-contrast: var(--primitive-blue-contrast);
+  --info-indicator: var(--primitive-blue-9);
+  --success-surface: var(--primitive-green-a3);
+  --success-surface-hover: var(--primitive-green-a4);
+  --success-border: var(--primitive-green-a6);
+  --success-solid: var(--primitive-green-9);
+  --success-solid-hover: var(--primitive-green-10);
+  --success-text: var(--primitive-green-11);
+  --success-contrast: var(--primitive-green-contrast);
+  --success-indicator: var(--primitive-green-9);
+  --warning-surface: var(--primitive-amber-a3);
+  --warning-surface-hover: var(--primitive-amber-a4);
+  --warning-border: var(--primitive-amber-a6);
+  --warning-solid: var(--primitive-amber-9);
+  --warning-solid-hover: var(--primitive-amber-10);
+  --warning-text: var(--primitive-amber-12);
+  --warning-contrast: var(--primitive-amber-contrast);
+  --warning-indicator: var(--primitive-amber-9);
+  --danger-surface: var(--primitive-red-a3);
+  --danger-surface-hover: var(--primitive-red-a4);
+  --danger-border: var(--primitive-red-a6);
+  --danger-solid: var(--primitive-red-9);
+  --danger-solid-hover: var(--primitive-red-10);
+  --danger-text: var(--primitive-red-11);
+  --danger-contrast: var(--primitive-red-contrast);
+  --danger-indicator: var(--primitive-red-9);
+
+  --status-default: var(--neutral-indicator);
+  --status-neutral: var(--info-solid);
+  --status-completed: var(--success-solid);
+  --status-attention: var(--warning-solid);
+  --status-danger: var(--danger-solid);
+  --alert-neutral-background: var(--neutral-surface);
+  --alert-neutral-foreground: var(--neutral-text);
+  --alert-neutral-foreground-muted: var(--muted-foreground);
+  --alert-neutral-border: var(--neutral-border);
+  --alert-success-background: var(--success-surface);
+  --alert-success-foreground: var(--success-text);
+  --alert-success-foreground-muted: var(--alert-success-foreground);
+  --alert-success-border: var(--success-border);
+  --alert-warning-background: var(--warning-surface);
+  --alert-warning-foreground: var(--warning-text);
+  --alert-warning-foreground-muted: var(--alert-warning-foreground);
+  --alert-warning-border: var(--warning-border);
+  --alert-error-background: var(--danger-surface);
+  --alert-error-foreground: var(--danger-text);
+  --alert-error-foreground-muted: var(--alert-error-foreground);
+  --alert-error-border: var(--danger-border);
+  --alert-info-background: var(--info-surface);
+  --alert-info-foreground: var(--info-text);
+  --alert-info-foreground-muted: var(--alert-info-foreground);
+  --alert-info-border: var(--info-border);
+}
+
+.dark {
   /* Warning text: step 12 on the light surface, step 11 on the dark one. */
   --warning-text: var(--primitive-amber-11);
 }

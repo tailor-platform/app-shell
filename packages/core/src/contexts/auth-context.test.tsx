@@ -483,7 +483,27 @@ describe("AuthProvider", () => {
       });
 
       await result.current.login();
-      expect(mockLogin).toHaveBeenCalled();
+      expect(mockLogin).toHaveBeenCalledWith({ returnTo: "/" });
+    });
+
+    it("should forward an explicit return location to login", async () => {
+      const state = {
+        isAuthenticated: false,
+        error: null,
+        isReady: true,
+      };
+      const mockLogin = vi.fn().mockResolvedValue(undefined);
+      const mockClient = createMockAuthClient(state, {
+        login: mockLogin,
+      });
+
+      const { result } = renderHook(() => useAuth(), {
+        wrapper: ({ children }) => <AuthProvider client={mockClient}>{children}</AuthProvider>,
+      });
+
+      await result.current.login({ returnTo: "/orders/42?tab=activity#history" });
+
+      expect(mockLogin).toHaveBeenCalledWith({ returnTo: "/orders/42?tab=activity#history" });
     });
 
     it("should call logout method", async () => {
@@ -683,7 +703,9 @@ describe("AuthProvider", () => {
       });
     });
 
-    it("should login when auth state changes to unauthenticated", async () => {
+    it("should return to the current location when auth state changes to unauthenticated", async () => {
+      window.history.replaceState({}, "", "/orders/42?tab=activity#history");
+
       let authEventListener: ((event: { type: string; data?: unknown }) => void) | undefined;
 
       const mockAddEventListener = vi.fn(
@@ -727,7 +749,7 @@ describe("AuthProvider", () => {
       });
 
       await waitFor(() => {
-        expect(mockLogin).toHaveBeenCalledTimes(1);
+        expect(mockLogin).toHaveBeenCalledWith({ returnTo: "/orders/42?tab=activity#history" });
       });
     });
 
@@ -1068,7 +1090,12 @@ describe("createAuthClient", () => {
       const mockLogin = vi.fn().mockResolvedValue(undefined);
       const client = renderWithClient(
         { getState: vi.fn(() => readyUnauthenticated), login: mockLogin },
-        vi.fn().mockRejectedValue(new Error("Missing session data")),
+        // auth-public-client 0.7.0 reports callback failures as a resolved outcome.
+        vi.fn().mockResolvedValue({
+          ok: false,
+          error: new Error("Missing session data"),
+          returnTo: null,
+        }),
       );
 
       render(
@@ -1215,8 +1242,8 @@ describe("createAuthClient", () => {
       });
 
       expect(mockLogin).not.toHaveBeenCalled();
-      // The parameters stay in the URL until upstream cleans failed callbacks
-      // too (auth-public-client#139) — correctness here rests on the status.
+      // The mock leaves the parameters in the URL; correctness still rests on
+      // the settled callback status rather than the address bar.
       expect(window.location.search).toBe("?error=access_denied");
     });
   });

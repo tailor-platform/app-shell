@@ -309,9 +309,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "171ba8a5b6eda15b",
+        "outline": "ad6adf21742598f2",
         "snapshot": null,
-        "outputMd": "7eaff97521a14ab0",
+        "outputMd": "c9813319e3089d5d",
         "examples": null
       }
     },
@@ -605,7 +605,7 @@
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
         "outline": "bda40376d6e3e008",
-        "snapshot": "d4fa33f2da19d5ee",
+        "snapshot": "b845d4c54453b0f0",
         "outputMd": "ec6a0ac098d1d87a",
         "examples": "934c52d4e8761404"
       }
@@ -1013,7 +1013,7 @@
       "hashes": {
         "typeSurface": "943616def28cafb0",
         "outline": "8f06df28129676c8",
-        "snapshot": "02dfd02003105939",
+        "snapshot": "6233cd9de511210f",
         "outputMd": "ceb4a05822538d20",
         "examples": "cff0508bb5520ae6"
       }
@@ -1166,7 +1166,7 @@
       "hashes": {
         "typeSurface": "429710973dfa912b",
         "outline": "721e8995f53f0e8f",
-        "snapshot": "f6fcbd73e127f2f4",
+        "snapshot": "0ceac9786fb4ce3c",
         "outputMd": "ae287e2bb5abc1c6",
         "examples": "1ce89cec30045466"
       }
@@ -1183,7 +1183,7 @@
       "hashes": {
         "typeSurface": "e760949efcbe4c38",
         "outline": "464d91acc48f7c9d",
-        "snapshot": "12c20fc6f44d1b4c",
+        "snapshot": "40d15c3f1003fdb0",
         "outputMd": "1f81ebd562c50371",
         "examples": "b0eebb8c5e2219dc"
       }
@@ -1420,9 +1420,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "4cf294ec6ae1492f",
+        "outline": "12b1942ef141b400",
         "snapshot": null,
-        "outputMd": "f4a88f636000fd60",
+        "outputMd": "fdf6dbc029caf986",
         "examples": null
       }
     },
@@ -1700,7 +1700,7 @@
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
-    "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
+    "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "c9813319e3089d5d",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",
     "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "f5a392adf633adfc",
     "packages/core/skills/app-shell-patterns/references/api/define-module.md": "ce6b48d7ae55cea8",
@@ -1712,7 +1712,7 @@
     "packages/core/skills/app-shell-patterns/references/api/router/use-location.md": "ddb44cc51af636cc",
     "packages/core/skills/app-shell-patterns/references/api/router/use-navigate.md": "d018cb13a7ddc38b",
     "packages/core/skills/app-shell-patterns/references/api/router/use-params.md": "535f701e77dfc4e6",
-    "packages/core/skills/app-shell-patterns/references/api/use-ai-chat.md": "f4a88f636000fd60",
+    "packages/core/skills/app-shell-patterns/references/api/use-ai-chat.md": "fdf6dbc029caf986",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell.md": "866e5e30c1e13d9a",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "36ada5565b21c577",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "fad92e84dbbb8a86",
@@ -1736,6 +1736,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "8062ea0df9403fbb",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "c3fb2588a0699c26",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "20fb5d88b76dd933",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "814325f4ea06ffae"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "867fe27eb41bf06c"
   }
 }

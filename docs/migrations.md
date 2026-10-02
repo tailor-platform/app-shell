@@ -167,7 +167,7 @@ grep -rnE "@theme inline|@custom-variant|app-shell/theme\.css|--(card|popover|mu
 
 Excluding `node_modules` matters: AppShell's own palette files declare these tokens too, and they must not be touched. In your own CSS, hits are either the workaround, which goes, or deliberate overrides, which should take the `:root` / `:root.dark` form described in [Overriding tokens](./concepts/styling-theming.md#overriding-tokens).
 
-What remains is short — [`examples/vite-app/src/index.css`](https://github.com/tailor-platform/app-shell/blob/main/examples/vite-app/src/index.css) is a working reference for the shape (it also imports a branded palette, which is optional):
+What remains is short — [`examples/vite-app/src/index.css`](../examples/vite-app/src/index.css) is a working reference for the shape (it also imports a branded palette, which is optional):
 
 ```css
 @import "tailwindcss";

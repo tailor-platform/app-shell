@@ -1,6 +1,6 @@
 {
   "name": "@tailor-platform/app-shell",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "description": "An opinionated React application framework for building ERP applications on Tailor Platform",
   "keywords": [
     "app-shell",
@@ -57,7 +57,7 @@
   },
   "dependencies": {
     "@base-ui/react": "1.8.0",
-    "@internationalized/date": "3.12.2",
+    "@internationalized/date": "3.12.4",
     "@standard-schema/spec": "^1.1.0",
     "@tailor-platform/auth-public-client": "^0.7.0",
     "@tailor-platform/vite-plugin-app-shell": "workspace:*",
@@ -69,7 +69,7 @@
     "openai": "6.45.0",
     "papaparse": "^5.5.3",
     "react-router": "^8.3.0",
-    "sonner": "^2.0.7",
+    "sonner": "^2.0.8",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
@@ -84,8 +84,8 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
-    "@vitest/coverage-v8": "4.1.10",
-    "happy-dom": "20.9.0",
+    "@vitest/coverage-v8": "4.1.11",
+    "happy-dom": "20.14.5",
     "postcss": "8.5.28",
     "react": "catalog:",
     "react-dom": "catalog:",

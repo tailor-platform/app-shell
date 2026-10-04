@@ -66,14 +66,14 @@ export function TypographyRoles() {
     {
       role: "body-md-relaxed",
       className: "text-body-md-relaxed",
-      en: "Please confirm the delivery date with the supplier before you approve this order.",
-      ja: "この発注を承認する前に、納期を仕入先に確認してください。",
+      en: "Please confirm the delivery date with the supplier before you approve this order. If the supplier cannot deliver by the requested date, change the date or choose another supplier. Approved orders are sent to the supplier by email.",
+      ja: "この発注を承認する前に、納期を仕入先に確認してください。希望日までに納品できない場合は、納期を変更するか、別の仕入先を選んでください。承認した発注は、メールで仕入先に送られます。",
     },
     {
       role: "body-sm-relaxed",
       className: "text-body-sm-relaxed text-muted-foreground",
-      en: "Changes to a confirmed order are recorded in the order history.",
-      ja: "確定済みの発注への変更は、発注履歴に記録されます。",
+      en: "Changes to a confirmed order are recorded in the order history. Each record shows who made the change, when it was made, and the values before and after the change.",
+      ja: "確定済みの発注への変更は、発注履歴に記録されます。記録には、変更した人、変更した日時、変更前と変更後の値が含まれます。",
     },
   ];
 

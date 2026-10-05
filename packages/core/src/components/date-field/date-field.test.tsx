@@ -868,6 +868,20 @@ describe("DatePicker", () => {
     });
   });
 
+  // The Positioner is a stacking context (transform), so the layer must sit on
+  // the portal container or the calendar renders behind a Dialog.
+  it("puts the popup layer on the portal container", async () => {
+    const user = userEvent.setup();
+    render(<DatePicker aria-label="Date" />);
+
+    await user.click(screen.getAllByRole("button")[0]);
+    const popup = await screen.findByRole("dialog");
+
+    const portal = popup.parentElement?.parentElement;
+    expect(portal?.style.position).toBe("relative");
+    expect(portal?.getAttribute("style")).toContain("z-index: var(--z-popup)");
+  });
+
   it("fires onChange when a calendar date cell is clicked", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

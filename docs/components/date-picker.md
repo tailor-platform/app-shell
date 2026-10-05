@@ -195,7 +195,7 @@ Set it once for the whole app on `AppShell`, or per field (the prop wins):
 
 ### Weekday
 
-`showWeekday` adds the locale's short weekday where the locale places it — `2025年12月19日(金)` for ja-JP, `Fri, 12/19/2025` for en-US. It is read-only and derived from the entered date: it shows a placeholder until the date is complete, and while a segment is mid-entry (so typing `25` into the day never flashes the 2nd's weekday).
+`showWeekday` adds the locale's short weekday where the locale places it — `2025年12月19日(金)` for ja-JP, `Fri, 12/19/2025` for en-US. It is read-only and derived from the entered date: it shows a placeholder until the date is complete, and while a date segment is mid-entry it keeps the previous weekday (muted), so typing `25` into the day never flashes the 2nd's. Screen readers hear the full weekday name with each date segment's value.
 
 ```tsx
 <DatePicker aria-label="Closing date" showWeekday />

@@ -132,6 +132,16 @@ export function DateFieldRow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The settled weekday's full name, announced with each date segment's value
+  // so screen-reader users hear it as they edit (the visible span is hidden).
+  const weekdayLabel = segments.find((s) => s.type === "weekday")?.label;
+
+  const segmentValueText = (segment: Segment): string => {
+    if (segment.isPlaceholder) return t("empty");
+    const isDate = segment.type === "year" || segment.type === "month" || segment.type === "day";
+    return isDate && weekdayLabel ? `${segment.text}, ${weekdayLabel}` : segment.text;
+  };
+
   // Index editable segments for left/right focus movement.
   const editableIndexById = useMemo(() => {
     const map = new Map<number, number>();
@@ -266,11 +276,12 @@ export function DateFieldRow({
           );
         }
         if (segment.type === "weekday") {
-          // Derived from the composed date, so read-only — but unlike the
-          // separators it carries meaning, so it stays exposed to assistive tech.
+          // Derived from the composed date, so read-only. Hidden from assistive
+          // tech: the date segments' `aria-valuetext` carries it instead.
           return (
             <span
               key={idx}
+              aria-hidden="true"
               data-slot="date-segment"
               data-type="weekday"
               data-placeholder={segment.isPlaceholder || undefined}
@@ -306,7 +317,7 @@ export function DateFieldRow({
             aria-valuemin={segment.minValue}
             aria-valuemax={segment.maxValue}
             aria-valuenow={segment.value}
-            aria-valuetext={segment.isPlaceholder ? t("empty") : segment.text}
+            aria-valuetext={segmentValueText(segment)}
             onFocus={() => {
               typedCountRef.current = 0;
             }}

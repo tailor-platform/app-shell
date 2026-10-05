@@ -4,6 +4,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   CalendarDate,
+  CalendarDateTime,
   parseDate,
   today,
   getLocalTimeZone,
@@ -907,16 +908,48 @@ describe("dateFormat / showWeekday", () => {
     expect(weekday()?.hasAttribute("data-placeholder")).toBe(true);
   });
 
-  it("holds the weekday while a segment is mid-entry, so '25' never flashes the 2nd", async () => {
+  it("holds the pre-entry weekday while a date segment is mid-entry, so '25' never flashes the 2nd", async () => {
     const user = userEvent.setup();
     render(<DateField aria-label="Date" locale="en-US" showWeekday defaultValue={value} />);
 
     await user.click(screen.getByRole("spinbutton", { name: "day" }));
     await user.keyboard("2");
+    // Still Friday (the pre-entry 19th), muted — never Tuesday (the 2nd).
+    expect(weekday()?.textContent).toBe("Fri");
     expect(weekday()?.hasAttribute("data-placeholder")).toBe(true);
     await user.keyboard("5");
     expect(weekday()?.textContent).toBe("Thu"); // 25 Dec 2025
     expect(weekday()?.hasAttribute("data-placeholder")).toBe(false);
+  });
+
+  it("never holds the weekday while editing a time segment", async () => {
+    const user = userEvent.setup();
+    render(
+      <DateField
+        aria-label="Date"
+        locale="en-GB"
+        granularity="minute"
+        showWeekday
+        defaultValue={new CalendarDateTime(2025, 12, 19, 10, 30)}
+      />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "hour" }));
+    await user.keyboard("1");
+    expect(weekday()?.textContent).toBe("Fri");
+    expect(weekday()?.hasAttribute("data-placeholder")).toBe(false);
+  });
+
+  it("announces the weekday with the date segments' values", async () => {
+    const user = userEvent.setup();
+    render(<DateField aria-label="Date" locale="en-US" showWeekday defaultValue={value} />);
+    const day = screen.getByRole("spinbutton", { name: "day" });
+    expect(day.getAttribute("aria-valuetext")).toBe("19, Friday");
+    expect(weekday()?.getAttribute("aria-hidden")).toBe("true");
+
+    await user.click(day);
+    await user.keyboard("{ArrowUp}");
+    expect(day.getAttribute("aria-valuetext")).toBe("20, Saturday");
   });
 
   it("settles a single-digit entry when the segment loses focus", async () => {

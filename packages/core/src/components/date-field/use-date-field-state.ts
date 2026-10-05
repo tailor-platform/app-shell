@@ -71,6 +71,8 @@ export interface Segment {
   value?: number;
   minValue?: number;
   maxValue?: number;
+  /** Weekday only: the full weekday name for assistive tech, once settled. */
+  label?: string;
 }
 
 /**
@@ -321,10 +323,14 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   );
   const fields = internalFields;
 
-  // The segment mid-way through typed entry (a first digit that may still take
-  // a second). The weekday waits for it to settle, so typing "25" into the day
-  // never flashes the 2nd's weekday.
-  const [pendingSegment, setPendingSegment] = useState<EditableSegmentType | null>(null);
+  // The date segment mid-way through typed entry (a first digit that may still
+  // take a second), plus the fields from before that entry began. Until it
+  // settles, the weekday keeps showing the pre-entry date's (muted), so typing
+  // "25" never flashes the 2nd's weekday and the field doesn't reflow.
+  const [pendingEntry, setPendingEntry] = useState<{
+    type: EditableSegmentType;
+    fallback: Fields;
+  } | null>(null);
 
   const lastEmitted = useRef<DateValue | null>(controlledValue ?? defaultValue ?? null);
 
@@ -427,7 +433,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       const f = intent === "edit" ? clampCompleteDay(next) : next;
       const change = buildStateChange(f, intent === "clear" ? "clear" : "edit");
       setInternalFields(f);
-      setPendingSegment(null);
+      setPendingEntry(null);
       onStateChange?.(change);
 
       // While editing, only emit a *complete & valid* value — never `null` for a
@@ -464,7 +470,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       const nextFields = fieldsFromValue(cv);
       lastEmitted.current = cv;
       setInternalFields(nextFields);
-      setPendingSegment(null);
+      setPendingEntry(null);
       onStateChange?.(buildStateChange(nextFields, "external"));
     }
   }, [buildStateChange, controlledValue, isControlled, onStateChange]);
@@ -511,14 +517,19 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       // "02" advances, while "2" still waits for a possible second digit).
       const advance = next * 10 > max || digitCount >= SEGMENT_MAX_DIGITS[type];
       commit({ ...fields, [type]: next });
-      setPendingSegment(advance ? null : type);
+      // Time segments never affect the weekday, so only date entry can pend.
+      if (!advance && DATE_SEGMENTS.includes(type)) {
+        setPendingEntry((prev) => (prev?.type === type ? prev : { type, fallback: fields }));
+      } else {
+        setPendingEntry(null);
+      }
       return { advance };
     },
     [fields, getLimits, commit, isReadOnly],
   );
 
   /** Typed entry in the focused segment is over (it lost focus). */
-  const settleEntry = useCallback(() => setPendingSegment(null), []);
+  const settleEntry = useCallback(() => setPendingEntry(null), []);
 
   const setDayPeriod = useCallback(
     (pm: boolean) => {
@@ -689,8 +700,9 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     // Pinned to UTC on both sides so the weekday is the calendar date's, never
     // shifted by the host timezone.
     const weekdayFmt = new DateFormatter(locale, { weekday: "short", timeZone: "UTC" });
-    const formatWeekday = (value: DateValue): string =>
-      weekdayFmt.format(toCalendarDate(value as never).toDate("UTC"));
+    const weekdayLongFmt = new DateFormatter(locale, { weekday: "long", timeZone: "UTC" });
+    const formatWeekday = (value: DateValue, long = false): string =>
+      (long ? weekdayLongFmt : weekdayFmt).format(toCalendarDate(value as never).toDate("UTC"));
     return { parts, formatSegment, formatWeekday };
   }, [locale, hasTime, granularity, is12, timeZone, anchor, dateFormat, showWeekday]);
 
@@ -698,12 +710,14 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     return segmentFormat.parts.map<Segment>((part) => {
       const rawType = part.type;
       if (rawType === "weekday") {
-        const date = pendingSegment == null ? composeValue(fields) : null;
+        const settled = pendingEntry == null ? composeValue(fields) : null;
+        const shown = settled ?? (pendingEntry ? composeValue(pendingEntry.fallback) : null);
         return {
           type: "weekday",
-          text: date ? segmentFormat.formatWeekday(date) : WEEKDAY_PLACEHOLDER,
+          text: shown ? segmentFormat.formatWeekday(shown) : WEEKDAY_PLACEHOLDER,
           isEditable: false,
-          isPlaceholder: date == null,
+          isPlaceholder: settled == null,
+          label: settled ? segmentFormat.formatWeekday(settled, true) : undefined,
         };
       }
       if (!editableTypes.includes(rawType as EditableSegmentType)) {
@@ -723,7 +737,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
         maxValue: max,
       };
     });
-  }, [segmentFormat, fields, editableTypes, getLimits, pendingSegment, composeValue]);
+  }, [segmentFormat, fields, editableTypes, getLimits, pendingEntry, composeValue]);
 
   const currentChange = buildStateChange(fields, "edit");
 

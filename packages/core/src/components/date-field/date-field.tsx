@@ -81,8 +81,8 @@ interface DateControlProps<T extends DateValue> {
    * Set `"numeric"` explicitly to keep the numeric layout across that upgrade.
    */
   dateFormat?: DateInputDateFormat;
-  /** Show the locale's short weekday next to the date (e.g. `(金)`, `Fri,`). */
-  showWeekday?: boolean;
+  /** Show the locale's short day of the week next to the date (e.g. `(金)`, `Fri,`). */
+  showDayOfWeek?: boolean;
 }
 
 export type DateFieldProps<T extends DateValue = DateValue> = DateControlProps<T>;
@@ -120,7 +120,7 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
     autoFocus,
     firstDayOfWeek,
     dateFormat,
-    showWeekday,
+    showDayOfWeek,
     name,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledby,
@@ -131,7 +131,7 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
   const fieldRoot = useFieldRootContext();
   const { locale: shellLocale } = useResolvedLocale();
   const resolvedLocale = localeProp ?? shellLocale;
-  const shellDateFormat = useDateInputDateFormat();
+  const appShellDateFormat = useDateInputDateFormat();
   const resolvedDisabled = fieldRoot.disabled || !!isDisabled;
   const resolvedReadOnly = !!isReadOnly;
   const groupRef = useRef<HTMLDivElement>(null);
@@ -151,8 +151,8 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
     maxValue,
     isDateUnavailable,
     firstDayOfWeek,
-    dateFormat: dateFormat ?? shellDateFormat,
-    showWeekday,
+    dateFormat: dateFormat ?? appShellDateFormat,
+    showDayOfWeek,
     isReadOnly: resolvedReadOnly,
   });
 
@@ -252,7 +252,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     autoFocus,
     firstDayOfWeek,
     dateFormat,
-    showWeekday,
+    showDayOfWeek,
     name,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledby,
@@ -264,7 +264,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
   const { locale: shellLocale } = useResolvedLocale();
   const shellTz = useTimeZone();
   const resolvedLocale = localeProp ?? shellLocale;
-  const shellDateFormat = useDateInputDateFormat();
+  const appShellDateFormat = useDateInputDateFormat();
   const resolvedTz = timeZoneProp ?? shellTz.value;
   const resolvedDisabled = fieldRoot.disabled || !!isDisabled;
   const resolvedReadOnly = !!isReadOnly;
@@ -294,8 +294,8 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     maxValue,
     isDateUnavailable,
     firstDayOfWeek,
-    dateFormat: dateFormat ?? shellDateFormat,
-    showWeekday,
+    dateFormat: dateFormat ?? appShellDateFormat,
+    showDayOfWeek,
     isReadOnly: resolvedReadOnly,
   });
 

@@ -467,10 +467,10 @@
         "DateRangePickerProps"
       ],
       "hashes": {
-        "typeSurface": "3752efb11b50974c",
-        "outline": "f831c389eee7e4fc",
+        "typeSurface": "97f771503044256f",
+        "outline": "a8a74f48a1700029",
         "snapshot": null,
-        "outputMd": "0bf21d61d456aa94",
+        "outputMd": "95acdb31950ea562",
         "examples": null
       }
     },
@@ -1674,7 +1674,7 @@
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
     "packages/core/skills/app-shell-patterns/references/components/data-table.md": "dd2da884d7550daf",
-    "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "0bf21d61d456aa94",
+    "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "95acdb31950ea562",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",

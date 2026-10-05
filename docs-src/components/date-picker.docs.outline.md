@@ -197,12 +197,12 @@ Set it once for the whole app with `AppShell`'s `dateInputDateFormat`, or per fi
 
 > **Planned default change:** the default is planned to become `"regional"` in a future major release. Apps that want to keep the numeric layout should set `"numeric"` explicitly now; apps already on `"regional"` won't be affected.
 
-### Weekday
+### Day of the week
 
-`showWeekday` adds the locale's short weekday where the locale places it — `2025年12月19日(金)` for ja-JP, `Fri, 12/19/2025` for en-US. It is read-only and derived from the entered date: it shows a placeholder until the date is complete, and while a date segment is mid-entry it keeps the previous weekday (muted), so typing `25` into the day never flashes the 2nd's. Screen readers hear the full weekday name with each date segment's value.
+`showDayOfWeek` adds the locale's short day of the week where the locale places it — `2025年12月19日(金)` for ja-JP, `Fri, 12/19/2025` for en-US. It is read-only and derived from the entered date: it shows a placeholder until the date is complete, and while a date segment is mid-entry it keeps the previous day of the week (muted), so typing `25` into the day never flashes the 2nd's. Screen readers hear the full day name with each date segment's value.
 
 ```tsx
-<DatePicker aria-label="Closing date" showWeekday />
+<DatePicker aria-label="Closing date" showDayOfWeek />
 ```
 
 ## Keyboard
@@ -230,7 +230,7 @@ Set it once for the whole app with `AppShell`'s `dateInputDateFormat`, or per fi
 | `autoFocus`                      | `boolean`                                                     | Focus the first segment on mount                                                                               |
 | `locale`                         | `string`                                                      | BCP-47 locale override                                                                                         |
 | `dateFormat`                     | `"numeric" \| "regional"`                                     | Segment layout; defaults to the `AppShell` `dateInputDateFormat` (`"numeric"`; planned to become `"regional"`) |
-| `showWeekday`                    | `boolean`                                                     | Show the locale's short weekday next to the date                                                               |
+| `showDayOfWeek`                  | `boolean`                                                     | Show the locale's short day of the week next to the date                                                       |
 | `name`                           | `string`                                                      | Emits a form value through the proxy input                                                                     |
 | `id`                             | `string`                                                      | Proxy input id (use with external `<label htmlFor>`).                                                          |
 | `firstDayOfWeek`                 | `"sun" \| "mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat"` | Override the locale week start used by `w` / `k` shortcuts                                                     |
@@ -253,7 +253,7 @@ See the calendar docs in-code: controlled/uncontrolled value, min/max, unavailab
 
 ### DateRangePickerProps
 
-The `DatePickerProps` surface (labeling, `isInvalid`, `min/maxValue`, `isDateUnavailable`, `granularity`, `firstDayOfWeek`, `timeZone`, `locale`, `dateFormat`, `showWeekday`, `autoFocus`, `isDisabled/ReadOnly/Required`), with the range-specific differences:
+The `DatePickerProps` surface (labeling, `isInvalid`, `min/maxValue`, `isDateUnavailable`, `granularity`, `firstDayOfWeek`, `timeZone`, `locale`, `dateFormat`, `showDayOfWeek`, `autoFocus`, `isDisabled/ReadOnly/Required`), with the range-specific differences:
 
 | Prop                     | Type                             | Description                                                                     |
 | ------------------------ | -------------------------------- | ------------------------------------------------------------------------------- |

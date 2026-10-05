@@ -62,8 +62,8 @@ const SEGMENT_MAX_DIGITS: Record<EditableSegmentType, number> = {
 type Fields = Partial<Record<EditableSegmentType, number>>;
 
 export interface Segment {
-  /** `weekday` is read-only, derived from the composed date. */
-  type: EditableSegmentType | "literal" | "weekday";
+  /** `dayOfWeek` is read-only, derived from the composed date. */
+  type: EditableSegmentType | "literal" | "dayOfWeek";
   /** Display text (locale-formatted value, or placeholder when empty). */
   text: string;
   isEditable: boolean;
@@ -71,7 +71,7 @@ export interface Segment {
   value?: number;
   minValue?: number;
   maxValue?: number;
-  /** Weekday only: the full weekday name for assistive tech, once settled. */
+  /** Day-of-week only: the full day name for assistive tech, once settled. */
   label?: string;
 }
 
@@ -137,8 +137,8 @@ export interface DateFieldStateOptions {
   firstDayOfWeek?: FirstDayOfWeek;
   /** Segment layout; see {@link DateInputDateFormat}. Defaults to `"numeric"`. */
   dateFormat?: DateInputDateFormat;
-  /** Append the locale's short weekday as a read-only segment. */
-  showWeekday?: boolean;
+  /** Append the locale's short day of the week as a read-only segment. */
+  showDayOfWeek?: boolean;
   isDisabled?: boolean;
   isReadOnly?: boolean;
 }
@@ -152,7 +152,7 @@ const PLACEHOLDERS: Record<EditableSegmentType, string> = {
   second: "––",
   dayPeriod: "AM",
 };
-const WEEKDAY_PLACEHOLDER = "––";
+const DAY_OF_WEEK_PLACEHOLDER = "––";
 
 const NUMERIC_PART = /^(\d+)(\D*)$/;
 
@@ -299,7 +299,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     isDateUnavailable,
     firstDayOfWeek,
     dateFormat = "numeric",
-    showWeekday = false,
+    showDayOfWeek = false,
     isReadOnly,
   } = options;
 
@@ -325,8 +325,8 @@ export function useDateFieldState(options: DateFieldStateOptions) {
 
   // The date segment mid-way through typed entry (a first digit that may still
   // take a second), plus the fields from before that entry began. Until it
-  // settles, the weekday keeps showing the pre-entry date's (muted), so typing
-  // "25" never flashes the 2nd's weekday and the field doesn't reflow.
+  // settles, the day of the week keeps showing the pre-entry date's (muted), so typing
+  // "25" never flashes the 2nd's day of the week and the field doesn't reflow.
   const [pendingEntry, setPendingEntry] = useState<{
     type: EditableSegmentType;
     fallback: Fields;
@@ -517,7 +517,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       // "02" advances, while "2" still waits for a possible second digit).
       const advance = next * 10 > max || digitCount >= SEGMENT_MAX_DIGITS[type];
       commit({ ...fields, [type]: next });
-      // Time segments never affect the weekday, so only date entry can pend.
+      // Time segments never affect the day of the week, so only date entry can pend.
       if (!advance && DATE_SEGMENTS.includes(type)) {
         setPendingEntry((prev) => (prev?.type === type ? prev : { type, fallback: fields }));
       } else {
@@ -651,7 +651,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
 
   // ── Display segments (locale-ordered) ────────────────────────────────────────
   // The Intl objects + the locale's part order/separators only depend on
-  // locale / granularity / hour-cycle / format / weekday / timezone (via the
+  // locale / granularity / hour-cycle / format / day of the week / timezone (via the
   // anchor) — never on `fields`. Build them once here so a keystroke (which only
   // changes `fields`) doesn't spin up a fresh DateFormatter + formatToParts.
   const segmentFormat = useMemo(() => {
@@ -664,7 +664,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
             hour12: is12,
           }
         : {}),
-      ...(showWeekday ? { weekday: "short" } : {}),
+      ...(showDayOfWeek ? { weekday: "short" } : {}),
       ...(timeZone ? { timeZone } : {}),
     };
     // Format the (always-valid) anchor to get the locale's segment ORDER and the
@@ -697,14 +697,14 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       if (type === "year") return yearFmt.format(value);
       return pad2.format(value);
     };
-    // Pinned to UTC on both sides so the weekday is the calendar date's, never
+    // Pinned to UTC on both sides so the day of the week is the calendar date's, never
     // shifted by the host timezone.
-    const weekdayFmt = new DateFormatter(locale, { weekday: "short", timeZone: "UTC" });
-    const weekdayLongFmt = new DateFormatter(locale, { weekday: "long", timeZone: "UTC" });
-    const formatWeekday = (value: DateValue, long = false): string =>
-      (long ? weekdayLongFmt : weekdayFmt).format(toCalendarDate(value as never).toDate("UTC"));
-    return { parts, formatSegment, formatWeekday };
-  }, [locale, hasTime, granularity, is12, timeZone, anchor, dateFormat, showWeekday]);
+    const dayOfWeekFmt = new DateFormatter(locale, { weekday: "short", timeZone: "UTC" });
+    const dayOfWeekLongFmt = new DateFormatter(locale, { weekday: "long", timeZone: "UTC" });
+    const formatDayOfWeek = (value: DateValue, long = false): string =>
+      (long ? dayOfWeekLongFmt : dayOfWeekFmt).format(toCalendarDate(value as never).toDate("UTC"));
+    return { parts, formatSegment, formatDayOfWeek };
+  }, [locale, hasTime, granularity, is12, timeZone, anchor, dateFormat, showDayOfWeek]);
 
   const segments = useMemo<Segment[]>(() => {
     return segmentFormat.parts.map<Segment>((part) => {
@@ -713,11 +713,11 @@ export function useDateFieldState(options: DateFieldStateOptions) {
         const settled = pendingEntry == null ? composeValue(fields) : null;
         const shown = settled ?? (pendingEntry ? composeValue(pendingEntry.fallback) : null);
         return {
-          type: "weekday",
-          text: shown ? segmentFormat.formatWeekday(shown) : WEEKDAY_PLACEHOLDER,
+          type: "dayOfWeek",
+          text: shown ? segmentFormat.formatDayOfWeek(shown) : DAY_OF_WEEK_PLACEHOLDER,
           isEditable: false,
           isPlaceholder: settled == null,
-          label: settled ? segmentFormat.formatWeekday(settled, true) : undefined,
+          label: settled ? segmentFormat.formatDayOfWeek(settled, true) : undefined,
         };
       }
       if (!editableTypes.includes(rawType as EditableSegmentType)) {

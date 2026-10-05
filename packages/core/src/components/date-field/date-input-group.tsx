@@ -58,7 +58,7 @@ interface DateFieldRowProps {
   clearSegment: (type: EditableSegmentType) => void;
   /** Apply a whole-date keyboard shortcut (today, month/year/week jumps, ±day). */
   applyShortcut: (cmd: DateShortcut) => void;
-  /** A segment lost focus, ending its typed entry (lets the weekday settle). */
+  /** A segment lost focus, ending its typed entry (lets the day of the week settle). */
   settleEntry?: () => void;
   /** Open the calendar popover (Alt+↓). Omitted for the popover-less `DateField`. */
   onOpenCalendar?: () => void;
@@ -132,14 +132,14 @@ export function DateFieldRow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // The settled weekday's full name, announced with each date segment's value
+  // The settled day's full name, announced with each date segment's value
   // so screen-reader users hear it as they edit (the visible span is hidden).
-  const weekdayLabel = segments.find((s) => s.type === "weekday")?.label;
+  const dayOfWeekLabel = segments.find((s) => s.type === "dayOfWeek")?.label;
 
   const segmentValueText = (segment: Segment): string => {
     if (segment.isPlaceholder) return t("empty");
     const isDate = segment.type === "year" || segment.type === "month" || segment.type === "day";
-    return isDate && weekdayLabel ? `${segment.text}, ${weekdayLabel}` : segment.text;
+    return isDate && dayOfWeekLabel ? `${segment.text}, ${dayOfWeekLabel}` : segment.text;
   };
 
   // Index editable segments for left/right focus movement.
@@ -170,7 +170,7 @@ export function DateFieldRow({
     segment: Segment,
     editableIndex: number,
   ) => {
-    if (segment.type === "literal" || segment.type === "weekday") return;
+    if (segment.type === "literal" || segment.type === "dayOfWeek") return;
     const type = segment.type;
 
     // Alt+↓ opens the calendar popover (APG date-picker pattern + QBO). No-op on
@@ -275,7 +275,7 @@ export function DateFieldRow({
             </span>
           );
         }
-        if (segment.type === "weekday") {
+        if (segment.type === "dayOfWeek") {
           // Derived from the composed date, so read-only. Hidden from assistive
           // tech: the date segments' `aria-valuetext` carries it instead.
           return (
@@ -283,7 +283,7 @@ export function DateFieldRow({
               key={idx}
               aria-hidden="true"
               data-slot="date-segment"
-              data-type="weekday"
+              data-type="dayOfWeek"
               data-placeholder={segment.isPlaceholder || undefined}
               className="astw:select-none astw:px-px astw:data-[placeholder]:text-muted-foreground"
             >

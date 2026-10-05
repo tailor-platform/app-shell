@@ -476,16 +476,16 @@ describe("DateRangePicker popover", () => {
   });
 });
 
-describe("DateRangePicker dateFormat / showWeekday", () => {
+describe("DateRangePicker dateFormat / showDayOfWeek", () => {
   const range = { start: new CalendarDate(2025, 12, 19), end: new CalendarDate(2025, 12, 22) };
 
-  it("applies the format and weekday to both ends", () => {
+  it("applies the format and day of the week to both ends", () => {
     render(
       <DateRangePicker
         aria-label="Period"
         locale="ja-JP"
         dateFormat="regional"
-        showWeekday
+        showDayOfWeek
         defaultValue={range}
       />,
     );

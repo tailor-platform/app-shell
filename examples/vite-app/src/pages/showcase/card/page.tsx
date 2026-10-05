@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from "react";
 import {
   Layout,
   Badge,
+  Button,
   Card,
   DataTable,
   Table,
@@ -94,7 +95,77 @@ function paginate(rows: Line[], { pagination }: CollectionVariables): DataTableD
   };
 }
 
-// ─── Examples ──────────────────────────────────────────────────────────────────
+// ─── Basics ────────────────────────────────────────────────────────────────────
+
+function BasicCards() {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <Card.Root>
+        <Card.Header title="Header + content" description="The default composition" />
+        <Card.Content>
+          <p className="text-sm">Content is padded 24px on the sides and bottom.</p>
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root>
+        <Card.Header title="Header only" description="No Card.Content, e.g. a summary tile" />
+      </Card.Root>
+
+      <Card.Root>
+        <Card.Content>
+          <p className="text-sm">
+            Content only. With no header above it, the content also gets 24px top padding.
+          </p>
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root>
+        <Card.Header title="Custom header content">
+          <div>
+            <Button size="sm" variant="outline">
+              View all
+            </Button>
+          </div>
+        </Card.Header>
+        <Card.Content>
+          <p className="text-sm">Header children render below the title and description.</p>
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root>
+        <Card.Header
+          className="border-b"
+          title="Divided header"
+          description="A border-b header gets matching bottom padding"
+        />
+        <Card.Content className="pt-6">
+          <p className="text-sm">Content sits below the divider.</p>
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root>
+        <Card.Header title="Mixed content" description="Padded text, then a flush list" />
+        <Card.Content>
+          <p className="text-sm text-muted-foreground">Backordered lines ship separately.</p>
+        </Card.Content>
+        <Card.Content padding="none">
+          <ul className="divide-y divide-border border-t border-border">
+            {LINES.filter((line) => line.status === "backordered")
+              .slice(0, 3)
+              .map((line) => (
+                <li key={line.id} className="flex justify-between px-6 py-3 text-sm">
+                  <span>{line.description}</span>
+                  <span className="text-muted-foreground">{line.qty} pcs</span>
+                </li>
+              ))}
+          </ul>
+        </Card.Content>
+      </Card.Root>
+    </div>
+  );
+}
+
+// ─── Edge-to-edge examples ─────────────────────────────────────────────────────
 
 function PaginatedLines() {
   const { variables, control } = useCollectionVariables({ params: { pageSize: 5 } });
@@ -219,7 +290,17 @@ const CardDemoPage = () => (
   <Layout>
     <Layout.Header title="Card Demo" />
     <Layout.Column>
-      <p className="text-sm text-muted-foreground mb-6">
+      <h2 className="mb-1 text-base font-semibold">Basics</h2>
+      <p className="mb-4 text-sm text-muted-foreground">
+        <code>Card.Root</code>, <code>Card.Header</code> and <code>Card.Content</code> in their
+        common combinations.
+      </p>
+      <section className="mb-10">
+        <BasicCards />
+      </section>
+
+      <h2 className="mb-1 text-base font-semibold">Edge-to-edge content</h2>
+      <p className="mb-4 text-sm text-muted-foreground">
         <code>Card.Content padding="none"</code> renders tables and lists edge-to-edge. Cells keep
         their own 24px inset, so the first column lines up with the card title.
       </p>

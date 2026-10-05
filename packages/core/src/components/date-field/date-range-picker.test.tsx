@@ -475,3 +475,27 @@ describe("DateRangePicker popover", () => {
     expect(isSameDay(range.end, d("2025-03-12"))).toBe(true);
   });
 });
+
+describe("DateRangePicker dateFormat / showWeekday", () => {
+  const range = { start: new CalendarDate(2025, 12, 19), end: new CalendarDate(2025, 12, 22) };
+
+  it("applies the format and weekday to both ends", () => {
+    render(
+      <DateRangePicker
+        aria-label="Period"
+        locale="ja-JP"
+        dateFormat="regional"
+        showWeekday
+        defaultValue={range}
+      />,
+    );
+    expect(screen.getByRole("group").textContent).toBe("2025年12月19日(金)–2025年12月22日(月)");
+  });
+
+  it("takes the AppShell dateFormat by default", () => {
+    render(<DateRangePicker aria-label="Period" defaultValue={range} />, {
+      wrapper: createAppShellWrapper("ja-JP", { dateFormat: "regional" }),
+    });
+    expect(screen.getByRole("group").textContent).toBe("2025年12月19日–2025年12月22日");
+  });
+});

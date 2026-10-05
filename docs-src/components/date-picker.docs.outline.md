@@ -183,6 +183,26 @@ Locale and timezone come from AppShell automatically. Override per field with `l
 <DatePicker aria-label="Date" locale="ja-JP" />
 ```
 
+### Date format
+
+By default the segments follow the locale's **numeric** form (`2025/12/19` for ja-JP, `12/19/2025` for en-US). `dateFormat="regional"` switches to the locale's written business form wherever that form keeps the month numeric — `2025年12月19日` for ja / zh, `2025년 12월 19일` for ko. Locales whose written form spells the month as a word (en, de, fr, …) stay numeric, so one setting is safe for a multi-locale app.
+
+Set it once for the whole app on `AppShell`, or per field (the prop wins):
+
+```tsx
+<AppShell dateFormat="regional" modules={modules} />
+
+<DatePicker aria-label="Date" dateFormat="numeric" />
+```
+
+### Weekday
+
+`showWeekday` adds the locale's short weekday where the locale places it — `2025年12月19日(金)` for ja-JP, `Fri, 12/19/2025` for en-US. It is read-only and derived from the entered date: it shows a placeholder until the date is complete, and while a segment is mid-entry (so typing `25` into the day never flashes the 2nd's weekday).
+
+```tsx
+<DatePicker aria-label="Closing date" showWeekday />
+```
+
 ## Keyboard
 
 - **Segments:** `↑`/`↓` increment/decrement, digits type-to-fill (auto-advance), `←`/`→` move between segments, `Backspace` clears, `/` commits the current segment and advances.
@@ -193,26 +213,28 @@ Locale and timezone come from AppShell automatically. Override per field with `l
 
 ### DateFieldProps
 
-| Prop                             | Type                                                          | Description                                                |
-| -------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------- |
-| `value` / `defaultValue`         | `DateValue \| null`                                           | Controlled / uncontrolled value                            |
-| `onChange`                       | `(v: DateValue \| null) => void`                              | Fires when the value changes                               |
-| `onBlur`                         | `() => void`                                                  | Fires when focus leaves the whole segmented control        |
-| `minValue` / `maxValue`          | `DateValue`                                                   | Inclusive date range bounds                                |
-| `isDateUnavailable`              | `(date: DateValue) => boolean`                                | Marks specific dates unavailable                           |
-| `isDisabled`                     | `boolean`                                                     | Disables interaction and form submission                   |
-| `isReadOnly`                     | `boolean`                                                     | Allows focus/navigation without editing                    |
-| `isRequired`                     | `boolean`                                                     | Marks the control required                                 |
-| `isInvalid`                      | `boolean`                                                     | Adds invalid styling / `aria-invalid` to the segmented UI  |
-| `placeholderValue`               | `DateValue`                                                   | Seeds unset segments                                       |
-| `autoFocus`                      | `boolean`                                                     | Focus the first segment on mount                           |
-| `locale`                         | `string`                                                      | BCP-47 locale override                                     |
-| `name`                           | `string`                                                      | Emits a form value through the proxy input                 |
-| `id`                             | `string`                                                      | Proxy input id (use with external `<label htmlFor>`).      |
-| `firstDayOfWeek`                 | `"sun" \| "mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat"` | Override the locale week start used by `w` / `k` shortcuts |
-| `aria-label` / `aria-labelledby` | `string`                                                      | Accessible name                                            |
-| `aria-describedby`               | `string`                                                      | IDs of description / error elements                        |
-| `className`                      | `string`                                                      | Root element class                                         |
+| Prop                             | Type                                                          | Description                                                           |
+| -------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `value` / `defaultValue`         | `DateValue \| null`                                           | Controlled / uncontrolled value                                       |
+| `onChange`                       | `(v: DateValue \| null) => void`                              | Fires when the value changes                                          |
+| `onBlur`                         | `() => void`                                                  | Fires when focus leaves the whole segmented control                   |
+| `minValue` / `maxValue`          | `DateValue`                                                   | Inclusive date range bounds                                           |
+| `isDateUnavailable`              | `(date: DateValue) => boolean`                                | Marks specific dates unavailable                                      |
+| `isDisabled`                     | `boolean`                                                     | Disables interaction and form submission                              |
+| `isReadOnly`                     | `boolean`                                                     | Allows focus/navigation without editing                               |
+| `isRequired`                     | `boolean`                                                     | Marks the control required                                            |
+| `isInvalid`                      | `boolean`                                                     | Adds invalid styling / `aria-invalid` to the segmented UI             |
+| `placeholderValue`               | `DateValue`                                                   | Seeds unset segments                                                  |
+| `autoFocus`                      | `boolean`                                                     | Focus the first segment on mount                                      |
+| `locale`                         | `string`                                                      | BCP-47 locale override                                                |
+| `dateFormat`                     | `"numeric" \| "regional"`                                     | Segment layout; defaults to the `AppShell` `dateFormat` (`"numeric"`) |
+| `showWeekday`                    | `boolean`                                                     | Show the locale's short weekday next to the date                      |
+| `name`                           | `string`                                                      | Emits a form value through the proxy input                            |
+| `id`                             | `string`                                                      | Proxy input id (use with external `<label htmlFor>`).                 |
+| `firstDayOfWeek`                 | `"sun" \| "mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat"` | Override the locale week start used by `w` / `k` shortcuts            |
+| `aria-label` / `aria-labelledby` | `string`                                                      | Accessible name                                                       |
+| `aria-describedby`               | `string`                                                      | IDs of description / error elements                                   |
+| `className`                      | `string`                                                      | Root element class                                                    |
 
 ### DatePickerProps
 
@@ -229,7 +251,7 @@ See the calendar docs in-code: controlled/uncontrolled value, min/max, unavailab
 
 ### DateRangePickerProps
 
-The `DatePickerProps` surface (labeling, `isInvalid`, `min/maxValue`, `isDateUnavailable`, `granularity`, `firstDayOfWeek`, `timeZone`, `locale`, `autoFocus`, `isDisabled/ReadOnly/Required`), with the range-specific differences:
+The `DatePickerProps` surface (labeling, `isInvalid`, `min/maxValue`, `isDateUnavailable`, `granularity`, `firstDayOfWeek`, `timeZone`, `locale`, `dateFormat`, `showWeekday`, `autoFocus`, `isDisabled/ReadOnly/Required`), with the range-specific differences:
 
 | Prop                     | Type                             | Description                                                                     |
 | ------------------------ | -------------------------------- | ------------------------------------------------------------------------------- |

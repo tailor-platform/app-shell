@@ -1,14 +1,19 @@
 import type { ReactNode } from "react";
-import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
+import {
+  AppShellConfigContext,
+  buildConfigurations,
+  type DateFormat,
+} from "@/contexts/appshell-context";
 
 /**
  * Test wrapper that provides AppShellConfigContext for components/hooks
  * that depend on `useAppShellConfig()` (e.g., `useT()` from `defineI18nLabels`).
  */
-export function createAppShellWrapper(locale = "en") {
+export function createAppShellWrapper(locale = "en", options: { dateFormat?: DateFormat } = {}) {
   const configurations = buildConfigurations({
     modules: [],
     locale,
+    dateFormat: options.dateFormat,
   });
 
   return function AppShellWrapper({ children }: { children: ReactNode }) {

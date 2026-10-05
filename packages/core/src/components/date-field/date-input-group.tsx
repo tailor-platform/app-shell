@@ -47,17 +47,19 @@ export interface DateFieldRowHandle {
 
 interface DateFieldRowProps {
   segments: Segment[];
-  cycle: (type: Exclude<Segment["type"], "literal">, delta: number) => void;
+  cycle: (type: EditableSegmentType, delta: number) => void;
   setDigit: (
-    type: Exclude<Segment["type"], "literal">,
+    type: EditableSegmentType,
     digit: number,
     replace?: boolean,
     digitCount?: number,
   ) => { advance: boolean };
   setDayPeriod: (pm: boolean) => void;
-  clearSegment: (type: Exclude<Segment["type"], "literal">) => void;
+  clearSegment: (type: EditableSegmentType) => void;
   /** Apply a whole-date keyboard shortcut (today, month/year/week jumps, ±day). */
   applyShortcut: (cmd: DateShortcut) => void;
+  /** A segment lost focus, ending its typed entry (lets the weekday settle). */
+  settleEntry?: () => void;
   /** Open the calendar popover (Alt+↓). Omitted for the popover-less `DateField`. */
   onOpenCalendar?: () => void;
   isDisabled?: boolean;
@@ -95,6 +97,7 @@ export function DateFieldRow({
   setDayPeriod,
   clearSegment,
   applyShortcut,
+  settleEntry,
   onOpenCalendar,
   isDisabled,
   isReadOnly,
@@ -157,7 +160,7 @@ export function DateFieldRow({
     segment: Segment,
     editableIndex: number,
   ) => {
-    if (segment.type === "literal") return;
+    if (segment.type === "literal" || segment.type === "weekday") return;
     const type = segment.type;
 
     // Alt+↓ opens the calendar popover (APG date-picker pattern + QBO). No-op on
@@ -262,6 +265,21 @@ export function DateFieldRow({
             </span>
           );
         }
+        if (segment.type === "weekday") {
+          // Derived from the composed date, so read-only — but unlike the
+          // separators it carries meaning, so it stays exposed to assistive tech.
+          return (
+            <span
+              key={idx}
+              data-slot="date-segment"
+              data-type="weekday"
+              data-placeholder={segment.isPlaceholder || undefined}
+              className="astw:select-none astw:px-px astw:data-[placeholder]:text-muted-foreground"
+            >
+              {segment.text}
+            </span>
+          );
+        }
         const editableIndex = editableIndexById.get(idx)!;
         return (
           // Editable date segment: the APG spinbutton pattern. A <div role="spinbutton">
@@ -292,6 +310,7 @@ export function DateFieldRow({
             onFocus={() => {
               typedCountRef.current = 0;
             }}
+            onBlur={settleEntry}
             onKeyDown={(e) => handleKeyDown(e, segment, editableIndex)}
             className={cn(
               "astw:rounded astw:px-0.5 astw:tabular-nums astw:caret-transparent astw:outline-none",

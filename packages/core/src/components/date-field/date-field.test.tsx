@@ -831,6 +831,120 @@ describe("DateField keyboard shortcuts", () => {
   });
 });
 
+// ─── Date format + weekday ────────────────────────────────────────────────────
+
+const groupText = () => screen.getByRole("group").textContent;
+const weekday = () => document.querySelector('[data-slot="date-segment"][data-type="weekday"]');
+
+describe("dateFormat / showWeekday", () => {
+  const value = new CalendarDate(2025, 12, 19); // a Friday
+
+  it("keeps the numeric form by default, even for ja-JP", () => {
+    render(<DateField aria-label="Date" locale="ja-JP" defaultValue={value} />);
+    expect(groupText()).toBe("2025/12/19");
+  });
+
+  it('"regional" uses the written form for ja-JP and zh-CN', () => {
+    render(
+      <DateField aria-label="Date" locale="ja-JP" dateFormat="regional" defaultValue={value} />,
+    );
+    expect(groupText()).toBe("2025年12月19日");
+    cleanup();
+    render(
+      <DateField aria-label="Date" locale="zh-CN" dateFormat="regional" defaultValue={value} />,
+    );
+    expect(groupText()).toBe("2025年12月19日");
+  });
+
+  it('"regional" splits the unit fused onto ko-KR numbers into a literal', () => {
+    render(
+      <DateField aria-label="Date" locale="ko-KR" dateFormat="regional" defaultValue={value} />,
+    );
+    expect(groupText()).toBe("2025년 12월 19일");
+    expect(screen.getByRole("spinbutton", { name: "month" }).textContent).toBe("12");
+  });
+
+  it('"regional" stays numeric where the written form spells the month (en-US, de-DE)', () => {
+    render(
+      <DateField aria-label="Date" locale="en-US" dateFormat="regional" defaultValue={value} />,
+    );
+    expect(groupText()).toBe("12/19/2025");
+    cleanup();
+    render(
+      <DateField aria-label="Date" locale="de-DE" dateFormat="regional" defaultValue={value} />,
+    );
+    expect(groupText()).toBe("19.12.2025");
+  });
+
+  it("takes the AppShell dateFormat by default, and the prop overrides it", () => {
+    const wrapper = createAppShellWrapper("ja-JP", { dateFormat: "regional" });
+    render(<DatePicker aria-label="Date" defaultValue={value} />, { wrapper });
+    expect(groupText()).toBe("2025年12月19日");
+    cleanup();
+    render(<DatePicker aria-label="Date" dateFormat="numeric" defaultValue={value} />, { wrapper });
+    expect(groupText()).toBe("2025/12/19");
+  });
+
+  it("shows the weekday where the locale puts it", () => {
+    render(
+      <DateField
+        aria-label="Date"
+        locale="ja-JP"
+        dateFormat="regional"
+        showWeekday
+        defaultValue={value}
+      />,
+    );
+    expect(groupText()).toBe("2025年12月19日(金)");
+    cleanup();
+    render(<DateField aria-label="Date" locale="en-US" showWeekday defaultValue={value} />);
+    expect(groupText()).toBe("Fri, 12/19/2025");
+  });
+
+  it("shows a placeholder weekday until the date is complete", () => {
+    render(<DateField aria-label="Date" locale="en-US" showWeekday />);
+    expect(weekday()?.textContent).toBe("––");
+    expect(weekday()?.hasAttribute("data-placeholder")).toBe(true);
+  });
+
+  it("holds the weekday while a segment is mid-entry, so '25' never flashes the 2nd", async () => {
+    const user = userEvent.setup();
+    render(<DateField aria-label="Date" locale="en-US" showWeekday defaultValue={value} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("2");
+    expect(weekday()?.hasAttribute("data-placeholder")).toBe(true);
+    await user.keyboard("5");
+    expect(weekday()?.textContent).toBe("Thu"); // 25 Dec 2025
+    expect(weekday()?.hasAttribute("data-placeholder")).toBe(false);
+  });
+
+  it("settles a single-digit entry when the segment loses focus", async () => {
+    const user = userEvent.setup();
+    render(<DateField aria-label="Date" locale="en-US" showWeekday defaultValue={value} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("2");
+    await user.tab();
+    expect(weekday()?.textContent).toBe("Tue"); // 2 Dec 2025
+  });
+
+  it("updates the weekday immediately on arrow-key stepping", async () => {
+    const user = userEvent.setup();
+    render(<DateField aria-label="Date" locale="en-US" showWeekday defaultValue={value} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("{ArrowUp}");
+    expect(weekday()?.textContent).toBe("Sat");
+  });
+
+  it("keeps the weekday out of the tab order", () => {
+    render(<DateField aria-label="Date" locale="en-US" showWeekday defaultValue={value} />);
+    expect(weekday()?.hasAttribute("tabindex")).toBe(false);
+    expect(screen.getAllByRole("spinbutton")).toHaveLength(3);
+  });
+});
+
 // ─── DatePicker ───────────────────────────────────────────────────────────────
 
 describe("DatePicker", () => {

@@ -16,6 +16,7 @@ import {
   buildConfigurations,
   type AppInfo,
   type ContextData,
+  type DateFormat,
 } from "@/contexts/appshell-context";
 import { RouterContainer, type RouterContainerProps } from "@/routing/router";
 import { ThemeProvider, type ColorTheme } from "@/contexts/theme-context";
@@ -123,6 +124,16 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * If not provided, date/time components fall back to the user's local timezone.
    */
   timeZone?: string;
+
+  /**
+   * Default segment layout for date inputs (`DateField`, `DatePicker`,
+   * `DateRangePicker`). Each component's own `dateFormat` prop overrides it.
+   *
+   * - `"numeric"` (default) — the locale's numeric form, e.g. `2025/12/19`.
+   * - `"regional"` — the locale's written business form where it keeps the
+   *   month numeric, e.g. `2025年12月19日` for ja; other locales stay numeric.
+   */
+  dateFormat?: DateFormat;
 
   /**
    * Global error boundary component applied to all routes.
@@ -333,6 +344,7 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
             errorBoundary: props.errorBoundary,
             locale: props.locale,
             timeZone: props.timeZone,
+            dateFormat: props.dateFormat,
           })
         : null,
     [
@@ -342,6 +354,7 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
       props.errorBoundary,
       props.locale,
       props.timeZone,
+      props.dateFormat,
     ],
   );
 

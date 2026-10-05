@@ -30,7 +30,7 @@ Each role is a named set of four values: size, line height, weight, and letter s
 
 ### Two layers, as for colors
 
-- `themes/default.css` holds the values as `--app-shell-type-<role>-<size|line-height|weight|letter-spacing>` on `:root`. A palette or an app can override them.
+- `themes/default.css` holds the values as `--app-shell-type-<role>-<size|line-height|weight|letter-spacing>` on `:root`. A palette or an app can override them. The `--app-shell-` prefix follows the existing `--app-shell-font-sans` override variable and keeps these `:root` variables apart from variables defined by the app or other libraries.
 - `theme.bridge.css` maps them to Tailwind with `--text-<role>` and its `--line-height`, `--font-weight`, and `--letter-spacing` suffixes, inside the existing `@theme inline`.
 
 `@theme inline` writes literal values into the utility. If the values sat in the bridge, they could not be overridden on `:root`. So the bridge holds only `var()` references.

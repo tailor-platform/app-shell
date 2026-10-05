@@ -241,10 +241,10 @@
       "symbols": ["Card"],
       "hashes": {
         "typeSurface": "6ce6f0fdf2450cec",
-        "outline": "794fbe3b6440047a",
-        "snapshot": "98e09e5019fa1368",
-        "outputMd": "29b147ccc0c5ab88",
-        "examples": "b7b2d28f20fe0a18"
+        "outline": "a8c217856c9c367a",
+        "snapshot": "31ad44b3faa1da06",
+        "outputMd": "675dc665e5082ff0",
+        "examples": "b20054836086ced0"
       }
     },
     "checkbox": {
@@ -605,7 +605,7 @@
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
         "outline": "bda40376d6e3e008",
-        "snapshot": "d4fa33f2da19d5ee",
+        "snapshot": "b845d4c54453b0f0",
         "outputMd": "ec6a0ac098d1d87a",
         "examples": "934c52d4e8761404"
       }
@@ -621,9 +621,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "41d9abcae59b27b4",
+        "outline": "ead7d94daf36e8da",
         "snapshot": null,
-        "outputMd": "c3fb2588a0699c26",
+        "outputMd": "717ef4e7ae835aff",
         "examples": null
       }
     },
@@ -1013,7 +1013,7 @@
       "hashes": {
         "typeSurface": "943616def28cafb0",
         "outline": "8f06df28129676c8",
-        "snapshot": "02dfd02003105939",
+        "snapshot": "6233cd9de511210f",
         "outputMd": "ceb4a05822538d20",
         "examples": "cff0508bb5520ae6"
       }
@@ -1166,7 +1166,7 @@
       "hashes": {
         "typeSurface": "429710973dfa912b",
         "outline": "721e8995f53f0e8f",
-        "snapshot": "f6fcbd73e127f2f4",
+        "snapshot": "0ceac9786fb4ce3c",
         "outputMd": "ae287e2bb5abc1c6",
         "examples": "1ce89cec30045466"
       }
@@ -1183,7 +1183,7 @@
       "hashes": {
         "typeSurface": "e760949efcbe4c38",
         "outline": "464d91acc48f7c9d",
-        "snapshot": "12c20fc6f44d1b4c",
+        "snapshot": "40d15c3f1003fdb0",
         "outputMd": "1f81ebd562c50371",
         "examples": "b0eebb8c5e2219dc"
       }
@@ -1284,9 +1284,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "96d4bfc1c2681154",
+        "outline": "cfb216313ceef95b",
         "snapshot": null,
-        "outputMd": "0133fdae405f467c",
+        "outputMd": "e49df6a34ffb844e",
         "examples": "d3cca347b055a503"
       }
     },
@@ -1656,7 +1656,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "2f3ff3f095c2b1cc",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "dc6b3afc049b4148",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "0133fdae405f467c",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "e49df6a34ffb844e",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
@@ -1668,7 +1668,7 @@
     "packages/core/skills/app-shell-patterns/references/components/avatar.md": "a874b74c176bcb47",
     "packages/core/skills/app-shell-patterns/references/components/badge.md": "0cb27fbce6f76e2e",
     "packages/core/skills/app-shell-patterns/references/components/button.md": "bce0e2fada1d1638",
-    "packages/core/skills/app-shell-patterns/references/components/card.md": "29b147ccc0c5ab88",
+    "packages/core/skills/app-shell-patterns/references/components/card.md": "675dc665e5082ff0",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
@@ -1734,7 +1734,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "09e99e5035da6e81",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "8062ea0df9403fbb",
-    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "c3fb2588a0699c26",
+    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "20fb5d88b76dd933",
     "packages/core/skills/app-shell-patterns/SKILL.md": "814325f4ea06ffae"
   }

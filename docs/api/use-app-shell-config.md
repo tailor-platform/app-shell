@@ -7,24 +7,49 @@ description: Hook to access AppShell configuration data
 
 # useAppShellConfig
 
-React hook to access only the AppShell configuration (title, icon, basePath, modules, settingsResources). This is a lighter alternative to `useAppShell` when you only need configuration data.
+React hook to access only the AppShell configuration (title, icon, favicon, appInfo, and the resolved `configurations` object with modules, settingsResources, basePath, locale, and timeZone). This is a lighter alternative to `useAppShell` when you only need configuration data.
 
 ## Signature
 
 ```typescript
-const useAppShellConfig: () => AppShellConfig;
+const useAppShellConfig: () => {
+  title?: string;
+  icon?: React.ReactNode;
+  favicon?: string;
+  appInfo?: AppInfo;
+  configurations: {
+    modules: Module[];
+    settingsResources: Resource[];
+    basePath?: string;
+    locale: string;
+    resolvedLocale?: string;
+    timeZone?: string;
+    errorBoundary: ErrorBoundaryComponent;
+  };
+};
 ```
 
 ## Return Value
 
-| Property            | Type                           | Description                                      |
-| ------------------- | ------------------------------ | ------------------------------------------------ |
-| `title`             | `string \| undefined`          | App title                                        |
-| `icon`              | `React.ReactNode \| undefined` | App icon                                         |
-| `basePath`          | `string \| undefined`          | Base path for all routes                         |
-| `modules`           | `Module[]`                     | Registered modules                               |
-| `settingsResources` | `Resource[]`                   | Resources that appear only in Settings menu      |
-| `appInfo`           | `AppInfo \| undefined`         | Configuration for the built-in `/__appinfo` page |
+| Property         | Type                           | Description                                      |
+| ---------------- | ------------------------------ | ------------------------------------------------ |
+| `title`          | `string \| undefined`          | App title                                        |
+| `icon`           | `React.ReactNode \| undefined` | App icon                                         |
+| `favicon`        | `string \| undefined`          | Favicon URL                                      |
+| `appInfo`        | `AppInfo \| undefined`         | Configuration for the built-in `/__appinfo` page |
+| `configurations` | object                         | Resolved configuration, see below                |
+
+### `configurations`
+
+| Property            | Type                     | Description                                           |
+| ------------------- | ------------------------ | ----------------------------------------------------- |
+| `modules`           | `Module[]`               | Registered modules                                    |
+| `settingsResources` | `Resource[]`             | Resources that appear only in Settings menu           |
+| `basePath`          | `string \| undefined`    | Base path for all routes                              |
+| `locale`            | `string`                 | Language subtag used for built-in UI strings (`"en"`) |
+| `resolvedLocale`    | `string \| undefined`    | Full BCP-47 tag used for Intl / date formatting       |
+| `timeZone`          | `string \| undefined`    | IANA timezone used by date/time components            |
+| `errorBoundary`     | `ErrorBoundaryComponent` | Global error boundary element                         |
 
 ## Usage
 
@@ -34,12 +59,12 @@ const useAppShellConfig: () => AppShellConfig;
 import { useAppShellConfig } from "@tailor-platform/app-shell";
 
 function AppInfo() {
-  const { title, basePath } = useAppShellConfig();
+  const { title, configurations } = useAppShellConfig();
 
   return (
     <div>
       <h2>{title}</h2>
-      <p>Base: {basePath}</p>
+      <p>Base: {configurations.basePath}</p>
     </div>
   );
 }
@@ -49,32 +74,14 @@ function AppInfo() {
 
 ```typescript
 function ModuleList() {
-  const { modules } = useAppShellConfig();
+  const { configurations } = useAppShellConfig();
 
   return (
     <ul>
-      {modules.map((module) => (
-        <li key={module.path}>{module.meta?.title}</li>
+      {configurations.modules.map((module) => (
+        <li key={module.path}>{module.path}</li>
       ))}
     </ul>
-  );
-}
-```
-
-### Build Custom Navigation
-
-```typescript
-function CustomNav() {
-  const { modules } = useAppShellConfig();
-
-  return (
-    <nav>
-      {modules.map((module) => (
-        <a key={module.path} href={`/${module.path}`}>
-          {module.meta?.title}
-        </a>
-      ))}
-    </nav>
   );
 }
 ```
@@ -83,15 +90,13 @@ function CustomNav() {
 
 ```typescript
 function SettingsMenu() {
-  const { settingsResources } = useAppShellConfig();
+  const { configurations } = useAppShellConfig();
 
   return (
     <div>
       <h3>Settings</h3>
-      {settingsResources.map((resource) => (
-        <button key={resource.path}>
-          {resource.meta?.title}
-        </button>
+      {configurations.settingsResources.map((resource) => (
+        <button key={resource.path}>{resource.path}</button>
       ))}
     </div>
   );
@@ -103,12 +108,11 @@ function SettingsMenu() {
 Use `useAppShellConfig` when you only need configuration data:
 
 ```typescript
-// ✅ Good - only need config
-const { modules } = useAppShellConfig();
+// ✅ Good - subscribes to configuration only
+const { configurations } = useAppShellConfig();
 
-// ❌ Overkill - useAppShell returns more data
+// ❌ Overkill - useAppShell also subscribes to contextData changes
 const { configurations } = useAppShell();
-const modules = configurations.modules;
 ```
 
 ## Comparison with Other Hooks

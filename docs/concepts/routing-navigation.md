@@ -165,9 +165,9 @@ const MyComponent = () => {
 import { Navigate, useAppShellData } from "@tailor-platform/app-shell";
 
 const AdminPage = () => {
-  const { currentUser } = useAppShellData();
+  const { contextData } = useAppShellData();
 
-  if (currentUser?.role !== "admin") {
+  if (contextData.currentUser?.role !== "admin") {
     return <Navigate to="/dashboard" replace />;
   }
 

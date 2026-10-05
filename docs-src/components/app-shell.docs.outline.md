@@ -295,11 +295,11 @@ Access the context data in your components:
 import { useAppShell } from "@tailor-platform/app-shell";
 
 function MyComponent() {
-  const { context } = useAppShell();
+  const { contextData } = useAppShell();
 
   // Fully typed!
-  const user = context.currentUser;
-  const client = context.apiClient;
+  const user = contextData.currentUser;
+  const client = contextData.apiClient;
 
   return <div>Welcome, {user?.name}</div>;
 }

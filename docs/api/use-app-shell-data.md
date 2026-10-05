@@ -12,14 +12,16 @@ React hook to access only the custom context data. This is a lighter alternative
 ## Signature
 
 ```typescript
-const useAppShellData: () => ContextData;
+const useAppShellData: () => {
+  contextData: ContextData;
+};
 ```
 
 ## Return Value
 
-| Type          | Description                                                               |
-| ------------- | ------------------------------------------------------------------------- |
-| `ContextData` | Custom context data passed to AppShell (type-safe via `AppShellRegister`) |
+| Property      | Type          | Description                                                               |
+| ------------- | ------------- | ------------------------------------------------------------------------- |
+| `contextData` | `ContextData` | Custom context data passed to AppShell (type-safe via `AppShellRegister`) |
 
 ## Usage
 
@@ -29,7 +31,7 @@ const useAppShellData: () => ContextData;
 import { useAppShellData } from "@tailor-platform/app-shell";
 
 function UserProfile() {
-  const contextData = useAppShellData();
+  const { contextData } = useAppShellData();
 
   return (
     <div>
@@ -44,16 +46,16 @@ function UserProfile() {
 
 ```typescript
 function UserInfo() {
-  const data = useAppShellData();
+  const { contextData } = useAppShellData();
 
-  if (!data.currentUser) {
+  if (!contextData.currentUser) {
     return <div>Not logged in</div>;
   }
 
   return (
     <div>
-      <h2>{data.currentUser.name}</h2>
-      <p>{data.currentUser.email}</p>
+      <h2>{contextData.currentUser.name}</h2>
+      <p>{contextData.currentUser.email}</p>
     </div>
   );
 }
@@ -63,8 +65,8 @@ function UserInfo() {
 
 ```typescript
 function AdminPanel() {
-  const { permissions } = useAppShellData();
-  const canManageUsers = permissions.includes("users:manage");
+  const { contextData } = useAppShellData();
+  const canManageUsers = contextData.permissions.includes("users:manage");
 
   if (!canManageUsers) {
     return <AccessDenied />;
@@ -78,9 +80,9 @@ function AdminPanel() {
 
 ```typescript
 function BetaFeature() {
-  const { featureFlags } = useAppShellData();
+  const { contextData } = useAppShellData();
 
-  if (!featureFlags?.newEditor) {
+  if (!contextData.featureFlags?.newEditor) {
     return <LegacyEditor />;
   }
 
@@ -112,10 +114,10 @@ declare module "@tailor-platform/app-shell" {
 Now `useAppShellData()` returns fully typed data:
 
 ```typescript
-const data = useAppShellData();
-data.currentUser; // Type: User | null
-data.permissions; // Type: string[]
-data.featureFlags; // Type: { newEditor: boolean, betaDashboard: boolean }
+const { contextData } = useAppShellData();
+contextData.currentUser; // Type: User | null
+contextData.permissions; // Type: string[]
+contextData.featureFlags; // Type: { newEditor: boolean, betaDashboard: boolean }
 ```
 
 ## When to Use
@@ -123,11 +125,11 @@ data.featureFlags; // Type: { newEditor: boolean, betaDashboard: boolean }
 Use `useAppShellData` when you only need context data:
 
 ```typescript
-// ✅ Good - only need context
-const data = useAppShellData();
+// ✅ Good - subscribes to context data only
+const { contextData } = useAppShellData();
 
-// ❌ Overkill - useAppShell returns more than needed
-const { context } = useAppShell();
+// ❌ Overkill - useAppShell also subscribes to configuration changes
+const { contextData } = useAppShell();
 ```
 
 ## Comparison with Other Hooks

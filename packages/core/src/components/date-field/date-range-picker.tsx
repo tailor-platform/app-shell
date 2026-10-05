@@ -13,10 +13,10 @@ import { toCalendarDate, type DateValue } from "@internationalized/date";
 import { cn } from "@/lib/utils";
 import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
 import {
-  useDateFormat,
+  useDateInputDateFormat,
   useResolvedLocale,
   useTimeZone,
-  type DateFormat,
+  type DateInputDateFormat,
 } from "@/contexts/appshell-context";
 import {
   useDateFieldState,
@@ -93,10 +93,11 @@ export type DateRangePickerProps<T extends DateValue = DateValue> = {
   /** IANA timezone; defaults to the AppShell `timeZone`. */
   timeZone?: string;
   /**
-   * Segment layout for both ends; defaults to the AppShell `dateFormat` (itself
-   * `"numeric"`). See `DatePicker`.
+   * Segment layout for both ends; defaults to the AppShell `dateInputDateFormat`
+   * (itself `"numeric"`, planned to become `"regional"` in a future major
+   * release). See `DatePicker`.
    */
-  dateFormat?: DateFormat;
+  dateFormat?: DateInputDateFormat;
   /** Show the locale's short weekday next to each date. */
   showWeekday?: boolean;
 };
@@ -156,7 +157,7 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
   const shellTz = useTimeZone();
   const resolvedLocale = localeProp ?? shellLocale;
   const resolvedTz = timeZoneProp ?? shellTz.value;
-  const shellDateFormat = useDateFormat();
+  const shellDateFormat = useDateInputDateFormat();
   const resolvedDisabled = fieldRoot.disabled || !!isDisabled;
   const resolvedReadOnly = !!isReadOnly;
   const t = useDateFieldT();

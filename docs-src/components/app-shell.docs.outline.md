@@ -226,17 +226,19 @@ Supported locales: `en`, `ja`
 </AppShell>
 ```
 
-### dateFormat
+### dateInputDateFormat
 
 - **Type:** `"numeric" | "regional"` (optional)
-- **Default:** `"numeric"`
+- **Default:** `"numeric"` (planned to become `"regional"` — see below)
 - **Description:** Default segment layout for `DateField`, `DatePicker`, and `DateRangePicker`. `"numeric"` uses the locale's numeric form (`2025/12/19`). `"regional"` uses the locale's written business form where it keeps the month numeric (`2025年12月19日` for ja / zh, `2025년 12월 19일` for ko) and stays numeric for every other locale. Each component's own `dateFormat` prop overrides it.
 
 ```tsx
-<AppShell dateFormat="regional" modules={modules}>
+<AppShell dateInputDateFormat="regional" modules={modules}>
   {/* ... */}
 </AppShell>
 ```
+
+> **Planned default change:** the default is planned to become `"regional"` in a future major release. Apps that want to keep the numeric layout should set `"numeric"` explicitly now; apps already on `"regional"` won't be affected.
 
 Access the configured timezone in components using [`useTimeZone`](../api/use-time-zone.md).
 

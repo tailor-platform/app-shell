@@ -444,10 +444,12 @@ watch("period")?.start.toString(); // "2025-06-10"
             <p className="text-sm text-muted-foreground">
               <code className="bg-muted px-1 py-0.5 rounded">dateFormat="regional"</code> uses the
               locale's written form where it keeps the month numeric (ja / zh / ko); other locales
-              stay numeric. Set it once on{" "}
-              <code className="bg-muted px-1 py-0.5 rounded">AppShell</code> or per field.{" "}
-              <code className="bg-muted px-1 py-0.5 rounded">showWeekday</code> appends the locale's
-              short weekday.
+              stay numeric. Set it app-wide with{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">
+                {"<AppShell dateInputDateFormat>"}
+              </code>{" "}
+              or per field. <code className="bg-muted px-1 py-0.5 rounded">showWeekday</code>{" "}
+              appends the locale's short weekday.
             </p>
             <div className="flex flex-wrap gap-6 items-start">
               <DemoField id="date-picker-ja-regional" label="ja-JP regional + weekday">

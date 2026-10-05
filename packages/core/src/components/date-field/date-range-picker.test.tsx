@@ -492,9 +492,9 @@ describe("DateRangePicker dateFormat / showWeekday", () => {
     expect(screen.getByRole("group").textContent).toBe("2025年12月19日(金)–2025年12月22日(月)");
   });
 
-  it("takes the AppShell dateFormat by default", () => {
+  it("takes the AppShell dateInputDateFormat by default", () => {
     render(<DateRangePicker aria-label="Period" defaultValue={range} />, {
-      wrapper: createAppShellWrapper("ja-JP", { dateFormat: "regional" }),
+      wrapper: createAppShellWrapper("ja-JP", { dateInputDateFormat: "regional" }),
     });
     expect(screen.getByRole("group").textContent).toBe("2025年12月19日–2025年12月22日");
   });

@@ -97,10 +97,10 @@
       "claims": [],
       "symbols": ["AppShell", "AppShellProps"],
       "hashes": {
-        "typeSurface": "90728bd25426ec7f",
-        "outline": "6d3f27d6895dcbb8",
+        "typeSurface": "eb9f3d56e647a63e",
+        "outline": "955c171b278f254f",
         "snapshot": null,
-        "outputMd": "497b4430353b8087",
+        "outputMd": "05824f5645ed4996",
         "examples": null
       }
     },
@@ -467,10 +467,10 @@
         "DateRangePickerProps"
       ],
       "hashes": {
-        "typeSurface": "c8f6d3af0cd59502",
-        "outline": "0549bd1074b0a882",
+        "typeSurface": "3752efb11b50974c",
+        "outline": "f831c389eee7e4fc",
         "snapshot": null,
-        "outputMd": "ec73b7e0ebdae5ea",
+        "outputMd": "0bf21d61d456aa94",
         "examples": null
       }
     },
@@ -1661,7 +1661,7 @@
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "db2c4388ca783a75",
-    "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "497b4430353b8087",
+    "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "05824f5645ed4996",
     "packages/core/skills/app-shell-patterns/references/components/appearance-switcher.md": "b55f1d538651d467",
     "packages/core/skills/app-shell-patterns/references/components/attachment.md": "35bebce540d6ac28",
     "packages/core/skills/app-shell-patterns/references/components/autocomplete.md": "bd6ae01bf39d1ad6",
@@ -1674,7 +1674,7 @@
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
     "packages/core/skills/app-shell-patterns/references/components/data-table.md": "dd2da884d7550daf",
-    "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "ec73b7e0ebdae5ea",
+    "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "0bf21d61d456aa94",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",

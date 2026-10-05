@@ -13,7 +13,7 @@ import {
   type DateValue,
 } from "@internationalized/date";
 import { resolveDateShortcut, type DateShortcut, type FirstDayOfWeek } from "@/lib/date-shortcuts";
-import type { DateFormat } from "@/contexts/appshell-context";
+import type { DateInputDateFormat } from "@/contexts/appshell-context";
 
 /**
  * Hand-rolled segmented-date-field state.
@@ -135,8 +135,8 @@ export interface DateFieldStateOptions {
   isDateUnavailable?: (date: DateValue) => boolean;
   /** Week-start for the `w`/`k` shortcuts; defaults to the locale convention. */
   firstDayOfWeek?: FirstDayOfWeek;
-  /** Segment layout; see {@link DateFormat}. Defaults to `"numeric"`. */
-  dateFormat?: DateFormat;
+  /** Segment layout; see {@link DateInputDateFormat}. Defaults to `"numeric"`. */
+  dateFormat?: DateInputDateFormat;
   /** Append the locale's short weekday as a read-only segment. */
   showWeekday?: boolean;
   isDisabled?: boolean;

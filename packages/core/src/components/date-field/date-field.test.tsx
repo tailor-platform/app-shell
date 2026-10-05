@@ -877,8 +877,8 @@ describe("dateFormat / showWeekday", () => {
     expect(groupText()).toBe("19.12.2025");
   });
 
-  it("takes the AppShell dateFormat by default, and the prop overrides it", () => {
-    const wrapper = createAppShellWrapper("ja-JP", { dateFormat: "regional" });
+  it("takes the AppShell dateInputDateFormat by default, and the prop overrides it", () => {
+    const wrapper = createAppShellWrapper("ja-JP", { dateInputDateFormat: "regional" });
     render(<DatePicker aria-label="Date" defaultValue={value} />, { wrapper });
     expect(groupText()).toBe("2025年12月19日");
     cleanup();

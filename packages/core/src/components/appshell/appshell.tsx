@@ -16,7 +16,7 @@ import {
   buildConfigurations,
   type AppInfo,
   type ContextData,
-  type DateFormat,
+  type DateInputDateFormat,
 } from "@/contexts/appshell-context";
 import { RouterContainer, type RouterContainerProps } from "@/routing/router";
 import { ThemeProvider, type ColorTheme } from "@/contexts/theme-context";
@@ -132,8 +132,11 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * - `"numeric"` (default) — the locale's numeric form, e.g. `2025/12/19`.
    * - `"regional"` — the locale's written business form where it keeps the
    *   month numeric, e.g. `2025年12月19日` for ja; other locales stay numeric.
+   *
+   * The default is planned to change to `"regional"` in a future major release.
+   * Set `"numeric"` explicitly to keep the numeric layout across that upgrade.
    */
-  dateFormat?: DateFormat;
+  dateInputDateFormat?: DateInputDateFormat;
 
   /**
    * Global error boundary component applied to all routes.
@@ -344,7 +347,7 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
             errorBoundary: props.errorBoundary,
             locale: props.locale,
             timeZone: props.timeZone,
-            dateFormat: props.dateFormat,
+            dateInputDateFormat: props.dateInputDateFormat,
           })
         : null,
     [
@@ -354,7 +357,7 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
       props.errorBoundary,
       props.locale,
       props.timeZone,
-      props.dateFormat,
+      props.dateInputDateFormat,
     ],
   );
 

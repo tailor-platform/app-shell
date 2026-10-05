@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router";
+import { Link, MemoryRouter, createMemoryRouter } from "react-router";
+import { RouterProvider } from "react-router/dom";
+import { AppShellRouterContext } from "@/routing/router-context";
 import { StrictMode, useState } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
@@ -88,6 +90,33 @@ function renderTable(ui: React.ReactElement, locale = "en") {
   const user = userEvent.setup();
   render(<MemoryRouter>{ui}</MemoryRouter>, { wrapper: createAppShellWrapper(locale) });
   return user;
+}
+
+// Renders below a data router marked as AppShell's own, where leaving the page
+// can be blocked, next to a link away from it.
+function renderInAppRouter(ui: React.ReactElement) {
+  const user = userEvent.setup();
+  const router = createMemoryRouter([
+    {
+      path: "/",
+      element: (
+        <AppShellRouterContext.Provider value={true}>
+          {ui}
+          <Link to="/elsewhere">Elsewhere</Link>
+        </AppShellRouterContext.Provider>
+      ),
+    },
+    { path: "/elsewhere", element: <p>Somewhere else</p> },
+  ]);
+  render(<RouterProvider router={router} />, { wrapper: createAppShellWrapper("en") });
+  return user;
+}
+
+// Whether closing or reloading the tab right now would ask the user first.
+function wouldWarnOnUnload() {
+  const event = new Event("beforeunload", { cancelable: true });
+  window.dispatchEvent(event);
+  return event.defaultPrevented;
 }
 
 const { column } = createColumnHelper<Line>();
@@ -295,7 +324,7 @@ describe("DataTable inline editing", () => {
   });
 
   describe("rules", () => {
-    it("blocks characters that can never be valid", async () => {
+    it("lets anything be typed, and judges it when the user tries to save", async () => {
       const user = renderTable(
         <Harness
           columns={(update) => [
@@ -311,44 +340,70 @@ describe("DataTable inline editing", () => {
         />,
       );
       const [received] = screen.getAllByRole("textbox", { name: "Received" });
-      // min: 0 blocks "-", maxDecimals: 0 blocks "."
+      // Nothing is blocked or flagged while typing…
       await retype(user, received, "-3.5");
-      expect((received as HTMLInputElement).value).toBe("35");
+      expect((received as HTMLInputElement).value).toBe("-3.5");
+      expect(received.getAttribute("aria-invalid")).toBeNull();
+      // …the rules speak up when the user tries to save.
+      await user.keyboard("{Enter}");
+      expect(errorText(received)).toBe("Enter a whole number. Press Esc to undo");
+      await user.keyboard("{Escape}");
 
       const [usd, jpy] = screen.getAllByRole("textbox", { name: "Price" });
-      await retype(user, usd, "9.999");
-      // USD allows two decimals; the third digit is dropped.
-      expect((usd as HTMLInputElement).value).toBe("9.99");
-      await retype(user, jpy, "12.5");
-      // JPY has no minor unit, so the decimal point can't be typed.
-      expect((jpy as HTMLInputElement).value).toBe("125");
+      await retype(user, usd, "9.999{Enter}");
+      // USD allows two decimals; JPY has no minor unit.
+      expect(errorText(usd)).toBe("Use up to 2 decimal places. Press Esc to undo");
+      await user.keyboard("{Escape}");
+      await retype(user, jpy, "12.5{Enter}");
+      expect(errorText(jpy)).toBe("Enter a whole number. Press Esc to undo");
     });
 
-    it("judges text inserted in one go (autofill, dictation) instead of dropping it", () => {
-      renderTable(<Harness columns={(update) => [receivedColumn(vi.fn(), update)]} />);
-      const [input] = screen.getAllByRole("textbox", { name: "Received" }) as HTMLInputElement[];
-      act(() => input.focus());
-      fireEvent.input(input, {
-        target: { value: "3.5" },
-        data: "3.5",
-        inputType: "insertText",
-      });
-      expect(input.value).toBe("3.5");
-      expect(errorText(input)).toBe("Enter a whole number. Press Esc to undo");
+    it("reads full-width digits and thousands separators when saving", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness
+          columns={(update) => [
+            column({
+              id: "price",
+              label: "Price",
+              type: "money",
+              typeOptions: { currency: (row) => row.currency },
+              edit: {
+                onCommit: (row, value) => {
+                  onCommit(row.id, value);
+                  update(row.id, { price: value ?? 0 });
+                },
+              },
+            }),
+          ]}
+        />,
+      );
+      const [usd, jpy] = screen.getAllByRole("textbox", { name: "Price" });
+      await user.click(usd);
+      await user.clear(usd);
+      await user.paste("1,234.50");
+      await user.keyboard("{Enter}");
+      expect(onCommit).toHaveBeenCalledWith("1", 1234.5);
+      await retype(user, jpy, "１５００{Enter}");
+      expect(onCommit).toHaveBeenCalledWith("2", 1500);
     });
 
-    it("shows an over-the-limit error while typing and blocks Enter", async () => {
+    it("shows a broken rule only once the user tries to save, and holds Enter", async () => {
       const onCommit = vi.fn();
       const user = renderTable(
         <Harness columns={(update) => [receivedColumn(onCommit, update, { max: 24 })]} />,
       );
       const [input] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, input, "30");
+      expect(input.getAttribute("aria-invalid")).toBeNull();
+      await user.keyboard("{Enter}");
       expect(input.getAttribute("aria-invalid")).toBe("true");
       expect(errorText(input)).toBe("Must be 24 or less. Press Esc to undo");
-      await user.keyboard("{Enter}");
       expect(onCommit).not.toHaveBeenCalled();
       expect(document.activeElement).toBe(input);
+      // Once shown, the message follows the draft and clears as soon as it's fixed.
+      await user.keyboard("{Backspace}");
+      expect(input.getAttribute("aria-invalid")).toBeNull();
     });
 
     it("waits for a save attempt before reporting min and required", async () => {
@@ -385,14 +440,16 @@ describe("DataTable inline editing", () => {
       expect(onCommit).toHaveBeenCalledWith("1", 15);
     });
 
-    it("shows the consumer's own validation message", async () => {
+    it("shows the consumer's own validation message when the user tries to save", async () => {
       const user = renderTable(<Harness columns={(update) => [receivedColumn(vi.fn(), update)]} />);
       const [input] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, input, "25");
+      expect(errorText(input)).toBeUndefined();
+      await user.keyboard("{Enter}");
       expect(errorText(input)).toBe("Can't exceed ordered (24). Press Esc to undo");
     });
 
-    it("reverts an invalid value when the cell loses focus", async () => {
+    it("keeps an invalid value, marked, when the user clicks away", async () => {
       const onCommit = vi.fn();
       const user = renderTable(
         <Harness columns={(update) => [receivedColumn(onCommit, update)]} />,
@@ -401,8 +458,33 @@ describe("DataTable inline editing", () => {
       await retype(user, input, "99");
       await user.click(document.body);
       expect(onCommit).not.toHaveBeenCalled();
+      // Still on screen, flagged orange, and never saved…
+      expect((input as HTMLInputElement).value).toBe("99");
+      expect(input.getAttribute("aria-invalid")).toBe("true");
+      expect(input.className).toContain("astw:ring-status-attention");
+      expect(errorText(input)).toBe(
+        "Can't exceed ordered (24). Not saved. Click to fix it, or press Esc to undo.",
+      );
+      // …until the user comes back: red while they fix it, and Esc undoes it.
+      await user.click(input);
+      expect(input.className).toContain("astw:ring-destructive");
+      await user.keyboard("{Escape}");
       expect((input as HTMLInputElement).value).toBe("12");
       expect(input.getAttribute("aria-invalid")).toBeNull();
+    });
+
+    it("saves a kept value once the user fixes it", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness columns={(update) => [receivedColumn(onCommit, update)]} />,
+      );
+      const [input] = screen.getAllByRole("textbox", { name: "Received" });
+      await retype(user, input, "99");
+      await user.click(document.body);
+      await retype(user, input, "20{Enter}");
+      expect(onCommit).toHaveBeenCalledWith("1", 20);
+      expect(input.getAttribute("aria-invalid")).toBeNull();
+      expect(input.className).not.toContain("astw:ring-status-attention");
     });
 
     it("localizes messages", async () => {
@@ -411,7 +493,7 @@ describe("DataTable inline editing", () => {
         "ja",
       );
       const [input] = screen.getAllByRole("textbox", { name: "Received" });
-      await retype(user, input, "30");
+      await retype(user, input, "30{Enter}");
       expect(errorText(input)).toBe("24以下で入力してください. Escキーで元に戻せます");
     });
   });
@@ -677,7 +759,82 @@ describe("DataTable inline editing", () => {
       await user.click(await screen.findByRole("option", { name: "Globex" }));
       expect(onCommit).not.toHaveBeenCalled();
       expect(trigger.getAttribute("aria-invalid")).toBe("true");
-      expect(errorText(trigger)).toBe("Globex is on hold");
+      expect(errorText(trigger)).toBe("Globex is on hold. Press Esc to undo");
+      // The rejected pick stays on screen, marked orange, once the user moves on.
+      await user.click(document.body);
+      expect(trigger.closest("td")?.textContent).toContain("Globex");
+      expect(trigger.className).toContain("astw:ring-status-attention");
+    });
+
+    it("filters the choices as the user types, and Enter picks the highlighted one", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onCommit, update)]}
+        />,
+      );
+      const [first, second] = screen.getAllByRole("combobox", { name: "Supplier" });
+      await user.click(first);
+      await user.clear(first);
+      await user.keyboard("glo");
+      const options = await screen.findAllByRole("option");
+      expect(options.map((option) => option.textContent)).toEqual(["Globex"]);
+      await user.keyboard("{Enter}");
+      expect(onCommit).toHaveBeenCalledWith("1", "globex");
+      // …and moves down the column, like any other cell.
+      await waitFor(() => expect(document.activeElement).toBe(second));
+    });
+
+    it("takes the highlighted match on Tab after typing", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onCommit, update)]}
+        />,
+      );
+      const [first] = screen.getAllByRole("combobox", { name: "Supplier" });
+      await user.click(first);
+      await user.clear(first);
+      await user.keyboard("glo");
+      await screen.findByRole("option", { name: "Globex" });
+      await user.keyboard("{Tab}");
+      expect(onCommit).toHaveBeenCalledWith("1", "globex");
+    });
+
+    it("picks a choice whose name is typed in full when the user leaves the cell", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onCommit, update)]}
+        />,
+      );
+      const [first] = screen.getAllByRole("combobox", { name: "Supplier" });
+      await user.click(first);
+      await user.clear(first);
+      await user.keyboard("GLOBEX");
+      await user.click(document.body);
+      expect(onCommit).toHaveBeenCalledWith("1", "globex");
+    });
+
+    it("says so when nothing matches, and leaves the value alone", async () => {
+      const onCommit = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onCommit, update)]}
+        />,
+      );
+      const [first] = screen.getAllByRole("combobox", { name: "Supplier" });
+      await user.click(first);
+      await user.clear(first);
+      await user.keyboard("zzz");
+      expect(await screen.findByText("No matches")).toBeTruthy();
+      await user.click(document.body);
+      expect(onCommit).not.toHaveBeenCalled();
+      expect(first.closest("td")?.textContent).toContain("Acme Corp");
     });
 
     it("shows a read-only link cell's choice label as the link", () => {
@@ -1046,6 +1203,147 @@ describe("DataTable inline editing", () => {
       type: "number",
       // @ts-expect-error — the committed value can be null (an emptied cell)
       edit: { onCommit: (_row, _value: number) => {} },
+    });
+  });
+
+  describe("icons", () => {
+    it("marks every editable cell with an icon for its editor", () => {
+      renderTable(
+        <Harness
+          rows={LINES.map((line) => ({ ...line, expected: "2026-10-01" }))}
+          columns={(update) => [
+            skuColumn,
+            receivedColumn(vi.fn(), update),
+            column({
+              id: "supplier",
+              label: "Supplier",
+              type: "text",
+              edit: { options: [{ value: "Acme", label: "Acme" }], onCommit: noop },
+            }),
+            column({ id: "expected", label: "Expected", type: "date", edit: { onCommit: noop } }),
+          ]}
+        />,
+      );
+      const cells = screen.getAllByRole("row")[1].querySelectorAll("td");
+      expect(cells[0].querySelector("svg")).toBeNull();
+      expect(cells[1].querySelector(".lucide-pencil")).not.toBeNull();
+      expect(cells[2].querySelector(".lucide-chevron-down")).not.toBeNull();
+      expect(cells[3].querySelector(".lucide-calendar-days")).not.toBeNull();
+    });
+
+    it("puts a pen after the title of every editable column", () => {
+      renderTable(<Harness columns={(update) => [skuColumn, receivedColumn(vi.fn(), update)]} />);
+      const [sku, received] = screen.getAllByRole("columnheader");
+      expect(sku.querySelector(".lucide-pencil")).toBeNull();
+      expect(received.querySelector(".lucide-pencil")).not.toBeNull();
+      expect(received.textContent).toBe("Received");
+    });
+
+    it("shows no icon on rows that can't be edited", () => {
+      renderTable(
+        <Harness
+          columns={(update) => [
+            receivedColumn(vi.fn(), update, { canEdit: (row) => row.id === "1" }),
+          ]}
+        />,
+      );
+      const [first, second] = screen.getAllByRole("row").slice(1);
+      expect(first.querySelector(".lucide-pencil")).not.toBeNull();
+      expect(second.querySelector(".lucide-pencil")).toBeNull();
+    });
+  });
+
+  describe("leaving the page", () => {
+    it("asks before leaving a value that can't be saved", async () => {
+      const user = renderInAppRouter(
+        <Harness columns={(update) => [receivedColumn(vi.fn(), update)]} />,
+      );
+      const [input] = screen.getAllByRole("textbox", { name: "Received" });
+      await retype(user, input, "99");
+      await user.click(screen.getByRole("link", { name: "Elsewhere" }));
+      expect(await screen.findByRole("dialog", { name: "Leave without saving?" })).toBeTruthy();
+      await user.click(screen.getByRole("button", { name: "Stay" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect((input as HTMLInputElement).value).toBe("99");
+
+      await user.click(screen.getByRole("link", { name: "Elsewhere" }));
+      await user.click(await screen.findByRole("button", { name: "Leave anyway" }));
+      expect(await screen.findByText("Somewhere else")).toBeTruthy();
+    });
+
+    it("waits for an autosave in flight, then leaves without asking", async () => {
+      let finish = noop;
+      const user = renderInAppRouter(
+        <Harness
+          columns={() => [
+            column({
+              id: "received",
+              label: "Received",
+              type: "number",
+              edit: {
+                onCommit: () =>
+                  new Promise<void>((resolve) => {
+                    finish = () => resolve();
+                  }),
+              },
+            }),
+          ]}
+        />,
+      );
+      const [input] = screen.getAllByRole("textbox", { name: "Received" });
+      await retype(user, input, "20");
+      await user.click(screen.getByRole("link", { name: "Elsewhere" }));
+      // Held while the save runs…
+      expect(screen.queryByText("Somewhere else")).toBeNull();
+      expect(screen.queryByRole("dialog")).toBeNull();
+      await act(async () => finish());
+      // …then on its way.
+      expect(await screen.findByText("Somewhere else")).toBeTruthy();
+    });
+
+    it("asks when an autosave in flight fails", async () => {
+      let fail = noop;
+      const user = renderInAppRouter(
+        <Harness
+          columns={() => [
+            column({
+              id: "received",
+              label: "Received",
+              type: "number",
+              edit: {
+                onCommit: () =>
+                  new Promise<void>((_resolve, reject) => {
+                    fail = () => reject(new Error("Server error"));
+                  }),
+              },
+            }),
+          ]}
+        />,
+      );
+      const [input] = screen.getAllByRole("textbox", { name: "Received" });
+      await retype(user, input, "20");
+      await user.click(screen.getByRole("link", { name: "Elsewhere" }));
+      await act(async () => fail());
+      expect(await screen.findByRole("dialog", { name: "Leave without saving?" })).toBeTruthy();
+    });
+
+    it("leaves straight away when everything is saved", async () => {
+      const user = renderInAppRouter(
+        <Harness columns={(update) => [receivedColumn(vi.fn(), update)]} />,
+      );
+      const [input] = screen.getAllByRole("textbox", { name: "Received" });
+      await retype(user, input, "20");
+      await user.click(screen.getByRole("link", { name: "Elsewhere" }));
+      expect(await screen.findByText("Somewhere else")).toBeTruthy();
+    });
+
+    it("has the browser confirm closing the tab while something is unsaved", async () => {
+      const user = renderTable(<Harness columns={(update) => [receivedColumn(vi.fn(), update)]} />);
+      const [input] = screen.getAllByRole("textbox", { name: "Received" });
+      expect(wouldWarnOnUnload()).toBe(false);
+      await retype(user, input, "99");
+      await user.click(document.body);
+      expect(wouldWarnOnUnload()).toBe(true);
     });
   });
 });

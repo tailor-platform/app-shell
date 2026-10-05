@@ -1,8 +1,8 @@
 /**
- * Pure helpers behind DataTable's inline cell editing: which keystrokes a number
- * cell accepts, how typed or pasted text becomes a value, which rules a draft
- * breaks, and whether a draft is a real change or a cosmetic one (`10` vs
- * `10.00`). Kept free of React so every rule can be unit-tested directly.
+ * Pure helpers behind DataTable's inline cell editing: how typed or pasted text
+ * becomes a value, which rules a draft breaks, and whether a draft is a real
+ * change or a cosmetic one (`10` vs `10.00`). Kept free of React so every rule
+ * can be unit-tested directly.
  *
  * @internal
  */
@@ -11,7 +11,7 @@ import { CalendarDate } from "@internationalized/date";
 import type { SelectOption } from "@/types/collection";
 import type { BadgeCellOptions, DataTableFilterConfig } from "./types";
 
-/** Rules a `number` / `money` cell enforces while the user types and on commit. */
+/** Rules a `number` / `money` cell checks when the user tries to save. */
 export interface NumberEditRules {
   min?: number;
   max?: number;
@@ -37,40 +37,15 @@ export interface DraftEvaluation<TValue> {
 
 type Validate<TValue> = ((value: TValue | null) => string | null | undefined) | undefined;
 
-/**
- * Errors worth showing while the user is still typing. More keystrokes can't
- * fix these (a value over `max` only grows), whereas `min`, `required` and a
- * half-typed number are ordinary mid-typing states — those wait until the user
- * tries to save, so the cell doesn't flash red on every keystroke.
- */
-export function isLiveError(error: CellEditError): boolean {
-  return error.code === "max" || error.code === "decimals" || error.code === "custom";
-}
-
-/**
- * Whether `text` is something the user could be partway through typing into a
- * number cell. Characters that can never be valid are rejected here: a minus
- * sign when negatives aren't allowed, a decimal point for whole numbers, and
- * digits past `maxDecimals`.
- */
-export function isAllowedNumberText(
-  text: string,
-  rules: Pick<NumberEditRules, "min" | "maxDecimals">,
-): boolean {
-  const sign = rules.min === undefined || rules.min < 0 ? "-?" : "";
-  const fraction = rules.maxDecimals > 0 ? `(?:\\.\\d{0,${rules.maxDecimals}})?` : "";
-  return new RegExp(`^${sign}\\d*${fraction}$`).test(text);
-}
-
 // Thousands grouping with commas, e.g. "1,234,567.89".
 const GROUPED_NUMBER = /^-?\d{1,3}(?:,\d{3})+(?:\.\d*)?$/;
 
 /**
- * Cleans number text that arrived all at once (a paste, or the end of an IME
- * composition): full-width digits and signs become ASCII, whitespace and
- * currency symbols are dropped, and commas are removed only when they form
- * strict thousands groups — so "1,234.5" becomes "1234.5", while "1,5" is left
- * alone to fail as "not a number" instead of silently turning into 15.
+ * Cleans number text before it's checked: full-width digits and signs become
+ * ASCII, whitespace and currency symbols are dropped, and commas are removed
+ * only when they form strict thousands groups — so "1,234.5" becomes "1234.5",
+ * while "1,5" is left alone to fail as "not a number" instead of silently
+ * turning into 15.
  */
 export function normalizeNumberText(text: string): string {
   const compact = text

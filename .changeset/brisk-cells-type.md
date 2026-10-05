@@ -2,7 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add inline cell editing to `DataTable`. Give a typed column an `edit` config and users can change its values right in the list: `text`, `number` and `money` cells are typed into; `text` / `link` columns with `edit.options` and `badge` columns become dropdowns; `date` columns open a calendar. Rules (`min`, `max`, `maxDecimals`, `required`, `validate`), per-row control (`canEdit(row, { selected })`) and Enter / Tab keyboard entry come built in. The value reaches `edit.onCommit(row, value)` when the user leaves the cell or picks a choice; return a promise to autosave, and the cell reverts if it rejects.
+Add inline cell editing to `DataTable`. Give a typed column an `edit` config and users can change its values right in the list: `text`, `number` and `money` cells are typed into; `text` / `link` columns with `edit.options` and `badge` columns become dropdowns you can type into to search; `date` columns open a calendar. Editable columns show a pen after their title, and each cell shows a pen, chevron or calendar icon on hover. Rules (`min`, `max`, `maxDecimals`, `required`, `validate`) are checked when the user saves; a value that breaks one stays on screen, outlined in orange, and is never saved until it's fixed or undone. Per-row control (`canEdit(row, { selected })`) and Enter / Tab keyboard entry come built in. The value reaches `edit.onCommit(row, value)` when the user leaves the cell or picks a choice; return a promise to autosave, and the cell reverts if it rejects. Leaving the page with unsaved edits asks first.
 
 ```tsx
 column({

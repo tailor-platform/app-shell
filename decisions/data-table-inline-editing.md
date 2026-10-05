@@ -35,28 +35,29 @@ Today DataTable only displays data. An app that needs editing draws its own inpu
 Build inline editing into DataTable and configure it per column.
 
 1. **Type straight into a cell.** Click or Tab into an editable cell and type. There's no popover and no form. This is where the proposal differs from the catalogue pattern (see [Alternatives](#alternatives-considered)).
-2. **Show what's editable — spreadsheet-style.**
-   - Editable cells look like the rest of the table: no input boxes, and the whole cell is the click target.
-   - The cursor tells cells apart: a text cursor for typing cells, a pointer for dropdown and date cells, and "not allowed" for cells that can't be edited.
-   - The cell being edited outlines its edges; dropdown and date icons appear on hover and focus, in a space kept free at the right edge so they never cover the value.
-   - Row height and column width don't shift when a row becomes editable.
-3. **Block impossible input as it's typed.**
-   - With "no negatives" there's no minus sign. With "whole numbers" there's no decimal point. With "2 decimals" there's no third decimal digit.
-   - Pasted text is cleaned up (thousands separators, full-width digits) and then checked. It is never silently rounded.
-4. **Explain the other rules.**
-   - A required value, a maximum, or the screen's own rule ("can't receive more than ordered") turns the cell red, with a tooltip saying why.
-   - Enter and Tab won't save until it's fixed, and Esc puts the old value back.
-   - Leaving the cell while it's still invalid reverts it.
+2. **Show what's editable — spreadsheet-style, with an icon.**
+   - Editable cells look like the rest of the table (no input boxes). An editable column has a pen after its title, so it can be told apart without hovering, on touch screens too. Hovering a cell shows its editor's icon at the right edge: a pen for typing, a chevron for dropdowns, a calendar for dates. The icon is only a cue: a click anywhere in the cell edits it.
+   - The cursor agrees: a text cursor for typing cells, a pointer for dropdown and date cells, and "not allowed" for cells that can't be edited.
+   - The cell being edited outlines its edges.
+   - Values stop before the icon, and row height and column width don't shift when a row becomes editable.
+3. **Check rules on save, not while typing.**
+   - Anything can be typed. Rules are checked when the user presses Enter or Tab or leaves the cell, so a half-typed value is never flagged.
+   - Pasted and IME text is cleaned up (thousands separators, full-width digits) and then checked. It is never silently rounded.
+4. **Explain broken rules, and never lose what was typed.**
+   - A broken rule — a required value, a maximum, or the screen's own rule ("can't receive more than ordered") — turns the cell red, with a tooltip saying why. Enter and Tab stay in the cell until it's fixed, and Esc puts the old value back.
+   - Clicking away from an invalid cell keeps the value on screen, outlined in orange, with its message on hover. It's never saved until the user fixes it or presses Esc.
 5. **Let the screen decide which rows are editable.** The per-row check also knows whether the row is selected, so "editable once ticked" and "only while Draft" are one line each.
 6. **Make keyboard data entry fast.**
    - Enter saves and moves down to the same column.
    - Tab saves and moves to the next editable cell, skipping read-only ones.
    - Esc undoes.
+   - In a dropdown, typing filters the choices: Enter picks the highlighted one, Tab takes it and moves on.
    - Japanese IME input is respected: pressing Enter to confirm a conversion doesn't save.
 7. **Autosave on leave.**
    - A value saves when the user leaves the cell or presses Enter or Tab, and only if it actually changed: going from `10` to `10.00` is not a change.
-   - There is no saving indicator.
+   - Autosave is the default: there is no Save button and no saving indicator.
    - If the screen's save fails, the cell goes back to the old value, and the screen can show its own toast.
+   - Leaving the page while something is unsaved — a cell mid-edit, a kept invalid value, or a save still in flight — asks first. A save in flight is waited for, so the prompt only appears when something can't be saved.
    - Screens that hold edits for a Save button work the same way; their save just never fails.
 8. **Leave everything else alone.** Filtering, sorting, paging, selection, row actions, pinned columns and column settings keep working. Existing tables don't change unless a column opts in.
 
@@ -152,10 +153,35 @@ column({
 ## For the call
 
 - **Naming.** `edit` / `canEdit` / `onCommit`, or Base UI's `onValueCommitted` wording?
-- **Leaving an invalid cell reverts it.** This is AG-Grid's default, and it means the data never disagrees with the screen, but the typed value is lost. Keep it? The other option is keeping the red value until it's fixed, and giving screens a way to ask "any invalid cells?" before Save.
+- ~~**Leaving an invalid cell reverts it.**~~ Decided in review: the value is kept, outlined in orange, and never saved until it's fixed or undone (see [Review round 1](#review-round-1-2026-10-05)).
 - **Enter moves down** to the same column, spreadsheet-style, instead of staying put. OK?
 - **One PR.** Date and badge editing were planned as a follow-up but are folded in, so every column type is reviewed together. OK, or split them back out?
 - **#1115.** Ship the simple pending/revert behaviour with PR 1 and let `useOptimisticRows` build on it later, or wait for #1115?
 - **Catalogue pattern.** Move #1750 into `docs-src/patterns/`, rewritten around the built-in feature, and retire the popover version?
 - **Bring-your-own editor** (for flags, product search and similar): leave it out until a team asks?
 - **Out of scope here.** The two open notes in `docs-src/pages/document-detail.docs.outline.md`, "a shared line-items component" and "in-place editing versus an edit route", stay open. This proposal covers list tables only.
+
+## Review round 1 (2026-10-05)
+
+Review comments from IzumiSy and Sean on app-shell#560, split into experience calls (made by @itsprade) and technical calls (for the team).
+
+**Experience — decided and built in this PR:**
+
+- **Editable columns are recognisable at rest** (Sean, with platform-planning#1563): a pen after the column title (50% opacity), and each cell shows its editor's icon — pen, chevron or calendar — on hover. A click anywhere in the cell edits it.
+- **Autosave is the default**, with no Save button. Leaving the page with unsaved edits asks first (Sean's two save patterns; the batch-and-save mode stays a technical call below).
+- **An invalid value is kept, outlined in orange, with its message** instead of being reverted when the user clicks away (Sean).
+- **Rules are checked only when the user leaves the cell or saves**, custom `validate` rules included (Sean).
+- **No keys are blocked while typing**; the rules judge the value on save, with the same red outline and tooltip (follows from IzumiSy's schema proposal).
+- **Dropdowns are typable**: typing filters the choices.
+
+**Experience — still open:** what an edited row does when it no longer matches the current sort or filter. Research across Airtable, Excel, Google Sheets, Smartsheet, AG Grid, MUI X, Salesforce, SAP Fiori, Odoo, NetSuite, Retool and others found five patterns: stay put until refresh (the most common, and AG Grid's default), hide when the user moves on, live re-apply, pin and explain, and an explicit edit mode. The leading option for this table is to keep the row in place, mark rows that no longer match ("Not in view — hidden on refresh"), and offer a table-level "Refresh". An explicit edit mode is worth it only for document-style flows that are posted as a set (draft PO lines, a stock count).
+
+**Technical — for the team:**
+
+1. **Rules API** (IzumiSy): replace `min` / `max` / `maxDecimals` / `required` / `validate` with one `edit.schema` (Standard Schema, as `CsvImporter` does), and settle the empty-value, parsing, change-detection, async, row-context, stale-row, multiple-issue and picker-bounds questions IzumiSy listed.
+2. **Save API** (Sean): a table-level edit setting with a mode (autosave, or collect then save), one save handler or hook instead of `onCommit` per column, `onCommit` returning the updated row or the table applying the value itself, and how it fits `useOptimisticRows` (#1115).
+3. **Rapid edits** (Sean): a quick second edit must never save a row that's missing the first edit.
+4. **Row editability set once** for the table instead of in every column's `canEdit` (Sean).
+5. **Choices API** (Sean): match `Select`'s `items` / `mapItem` (and its planned changes) instead of `options`.
+6. **Keeping data fresh** (Sean): refetching after saves, and row / bulk actions acting on stale data after a failed save.
+7. **When to merge**: hold this PR until 1 and 2 are settled, or merge and accept a breaking change later.

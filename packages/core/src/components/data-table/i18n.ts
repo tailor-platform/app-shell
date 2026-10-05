@@ -127,9 +127,17 @@ export const dataTableLabels = defineI18nLabels({
     editMin: (props: { min: string }) => `Must be ${props.min} or more`,
     editMax: (props: { max: string }) => `Must be ${props.max} or less`,
     editRevertHint: "Press Esc to undo",
+    editKeptHint: "Not saved. Click to fix it, or press Esc to undo.",
     editNone: "None",
+    editNoMatches: "No matches",
     editClear: "Clear",
     editDone: "Done",
+    // Leaving a page whose table has unsaved edits
+    editLeaveTitle: "Leave without saving?",
+    editLeaveDescription:
+      "Some changes in this table haven't been saved. If you leave now, they'll be lost.",
+    editLeaveStay: "Stay",
+    editLeaveConfirm: "Leave anyway",
   },
   ja: {
     loading: "読み込み中...",
@@ -245,9 +253,16 @@ export const dataTableLabels = defineI18nLabels({
     editMin: (props: { min: string }) => `${props.min}以上で入力してください`,
     editMax: (props: { max: string }) => `${props.max}以下で入力してください`,
     editRevertHint: "Escキーで元に戻せます",
+    editKeptHint: "保存されていません。クリックして修正するか、Escキーで元に戻せます。",
     editNone: "なし",
+    editNoMatches: "一致する項目がありません",
     editClear: "クリア",
     editDone: "完了",
+    // 保存されていない編集がある表のページを離れるとき
+    editLeaveTitle: "保存せずに移動しますか？",
+    editLeaveDescription: "この表に保存されていない変更があります。移動すると変更は失われます。",
+    editLeaveStay: "このページに留まる",
+    editLeaveConfirm: "保存せずに移動",
   },
 });
 

@@ -553,19 +553,24 @@ const DataTableLabPage = () => {
           title="Inline editing"
           description={
             <>
-              A goods receipt with every editor and rule — scroll right for more columns.{" "}
-              <strong>Numbers:</strong> tick a row to enter its <strong>Received</strong> quantity
-              (whole numbers, never more than ordered); <strong>Discount %</strong> is limited to
-              0–100 with one decimal (try 150); <strong>Weight (kg)</strong> takes three decimals up
-              to 500; <strong>Unit price</strong> autosaves, and prices over 10,000 are rejected so
-              the cell reverts. <strong>Text:</strong> <strong>Lot no.</strong> is required,{" "}
-              <strong>Note</strong> free. <strong>Dropdowns:</strong> <strong>Supplier</strong>{" "}
-              (required, pending lines only) and <strong>Warehouse</strong> (optional).{" "}
-              <strong>Badges:</strong> <strong>Status</strong> (required) and <strong>QC</strong>{" "}
-              (optional). <strong>Dates:</strong> <strong>Expected</strong>,{" "}
-              <strong>Received at</strong> (with time) and <strong>Best before</strong> (Oct
-              2026–Dec 2027 only). Enter moves down a column, Tab to the next editable cell, Esc
-              undoes.
+              A goods receipt with every editor and rule — scroll right for more columns. Editable
+              columns have a pen after their title; hover a cell to see how it's edited (pen,
+              chevron or calendar), and click anywhere in it to edit. Rules are checked when you
+              leave the cell: a value that breaks one stays, outlined in orange, and is never saved
+              until you fix it or press Esc. <strong>Numbers:</strong> tick a row to enter its{" "}
+              <strong>Received</strong> quantity (whole numbers, never more than ordered);{" "}
+              <strong>Discount %</strong> is limited to 0–100 with one decimal (try 150);{" "}
+              <strong>Weight (kg)</strong> takes three decimals up to 500;{" "}
+              <strong>Unit price</strong> autosaves, and prices over 10,000 are rejected so the cell
+              reverts. <strong>Text:</strong> <strong>Lot no.</strong> is required,{" "}
+              <strong>Note</strong> free. <strong>Dropdowns</strong> (type to search):{" "}
+              <strong>Supplier</strong> (required, pending lines only) and{" "}
+              <strong>Warehouse</strong> (optional). <strong>Badges:</strong>{" "}
+              <strong>Status</strong> (required) and <strong>QC</strong> (optional).{" "}
+              <strong>Dates:</strong> <strong>Expected</strong>, <strong>Received at</strong> (with
+              time) and <strong>Best before</strong> (Oct 2026–Dec 2027 only). Enter moves down a
+              column, Tab to the next editable cell, Esc undoes. Leave a wrong value behind and
+              click a sidebar link: you're asked before leaving.
             </>
           }
         >

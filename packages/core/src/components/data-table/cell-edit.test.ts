@@ -11,8 +11,6 @@ import {
   toLocalDate,
   toTimeText,
   evaluateTextDraft,
-  isAllowedNumberText,
-  isLiveError,
   normalizeNumberText,
   parseNumberText,
   sameNumber,
@@ -30,38 +28,12 @@ const rules = (overrides: Partial<NumberEditRules> = {}): NumberEditRules => ({
   ...overrides,
 });
 
-describe("isAllowedNumberText", () => {
-  it("accepts digits and the empty string", () => {
-    expect(isAllowedNumberText("", rules())).toBe(true);
-    expect(isAllowedNumberText("120", rules())).toBe(true);
-  });
-
-  it("blocks a minus sign when negatives aren't allowed", () => {
-    expect(isAllowedNumberText("-", rules({ min: 0 }))).toBe(false);
-    expect(isAllowedNumberText("-5", rules({ min: 0 }))).toBe(false);
-    expect(isAllowedNumberText("-5", rules({ min: -10 }))).toBe(true);
-    expect(isAllowedNumberText("-", rules())).toBe(true);
-  });
-
-  it("only accepts a minus sign in first position", () => {
-    expect(isAllowedNumberText("5-", rules())).toBe(false);
-    expect(isAllowedNumberText("--5", rules())).toBe(false);
-  });
-
-  it("blocks the decimal point for whole numbers", () => {
-    expect(isAllowedNumberText("5.", rules({ maxDecimals: 0 }))).toBe(false);
-    expect(isAllowedNumberText("5", rules({ maxDecimals: 0 }))).toBe(true);
-  });
-
-  it("blocks digits past maxDecimals and a second decimal point", () => {
-    expect(isAllowedNumberText("1.25", rules())).toBe(true);
-    expect(isAllowedNumberText("1.255", rules())).toBe(false);
-    expect(isAllowedNumberText("1.2.5", rules())).toBe(false);
-  });
-
-  it("rejects letters, exponents and signs Number() would accept", () => {
-    for (const text of ["e", "1e5", "+5", "0x1f", "1,000", "12a"]) {
-      expect(isAllowedNumberText(text, rules())).toBe(false);
+describe("typed text that isn't a number", () => {
+  it("is reported as not a number, not silently accepted", () => {
+    for (const text of ["e", "1e5", "+5", "0x1f", "12a", "1,5"]) {
+      expect(evaluateNumberDraft(normalizeNumberText(text), rules()).error).toEqual({
+        code: "number",
+      });
     }
   });
 });
@@ -174,17 +146,6 @@ describe("evaluateTextDraft", () => {
       code: "custom",
       message: "No x",
     });
-  });
-});
-
-describe("isLiveError", () => {
-  it("shows errors more typing can't fix right away, and defers the rest", () => {
-    expect(isLiveError({ code: "max", max: 1 })).toBe(true);
-    expect(isLiveError({ code: "decimals", maxDecimals: 0 })).toBe(true);
-    expect(isLiveError({ code: "custom", message: "x" })).toBe(true);
-    expect(isLiveError({ code: "min", min: 1 })).toBe(false);
-    expect(isLiveError({ code: "required" })).toBe(false);
-    expect(isLiveError({ code: "number" })).toBe(false);
   });
 });
 

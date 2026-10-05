@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 
 import { loadConfig } from "./config";
 import { type Finding, reconcile } from "./coverage";
@@ -8,6 +8,7 @@ import { readManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { loadSurface, snapshotHashForSlug } from "./project";
 import { computeSkill } from "./skill";
+import { unmanagedOutputs, walkMarkdown } from "./tree";
 
 export interface CheckResult {
   findings: Finding[];
@@ -141,5 +142,27 @@ export function check(repoRoot: string): CheckResult {
     }
   }
 
+  // Nothing unmanaged may live in the generated tree. Every .md under an output
+  // root must be a unit's output; anything else was hand-authored where it will
+  // never be regenerated, and no other check would ever see it.
+  const outputRoots = new Set(config.categories.map((c) => c.outDir.split("/")[0]));
+  const found = [...outputRoots].flatMap((root) =>
+    walkMarkdown(join(repoRoot, root)).map((abs) => toPosix(relative(repoRoot, abs))),
+  );
+  for (const rel of unmanagedOutputs(
+    found,
+    outlines.map((o) => o.mdPath),
+  )) {
+    findings.push({
+      level: "block",
+      slug: rel,
+      message: `${rel} has no source — everything under ${rel.split("/")[0]}/ is generated. Author an outline under \`docs-src/\` and run sync.`,
+    });
+  }
+
   return { findings, ok: !findings.some((f) => f.level === "block") };
+}
+
+function toPosix(p: string): string {
+  return p.split("\\").join("/");
 }

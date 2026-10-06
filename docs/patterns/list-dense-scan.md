@@ -68,6 +68,7 @@ Omit `fill` on pages that should flow and scroll naturally (forms, dashboards, a
 - **Tabs only above `DataTable`** — best when workflows are organized as obvious buckets
 - **Tabs + chips** — when buckets are primary and finer filters help
 - **Bulk selection** — `onSelectionChange` hook on `useDataTable`; combine with `interaction/multi-select`
+- **Inline entry** — give the one or two columns operators fill in (a received quantity, a price) an `edit` config; gate rows with `edit.canEdit` (e.g. only selected rows) and save from `edit.onCommit`. See DataTable → Inline editing
 - **`Table` primitives** — small static lists without collection hooks
 
 ## Constraints
@@ -89,5 +90,6 @@ Omit `fill` on pages that should flow and scroll naturally (forms, dashboards, a
 - Tabs that mutate only local UI state while pagination/filters assume the full server set
 - Using `<table>` directly instead of `<DataTable>` for live collections
 - Client-side filtering on 1000+ records without server-side support
-- Inline editable cells — use `pattern/detail/*` or `pattern/form/modal` instead
+- Hand-rolled inputs in a column's `render` — use the column's `edit` config, which keeps typed formatting, row click and the cell menu working
+- Making most columns editable, or editing fields that must be checked together — use `pattern/detail/*` or `pattern/form/modal` instead
 - Per-row "View" / "Open" buttons duplicating the row-click navigation

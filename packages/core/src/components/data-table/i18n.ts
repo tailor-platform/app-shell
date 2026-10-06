@@ -117,6 +117,27 @@ export const dataTableLabels = defineI18nLabels({
       `${props.column} ${props.operator} ${props.value}`,
     filterChipLabelEnum: (props: { column: string; operator: string; value: string }) =>
       `${props.column} ${props.operator}: ${props.value}`,
+
+    // Inline cell editing — rule errors (tooltip + screen-reader description)
+    editRequired: "Required",
+    editNotANumber: "Enter a number",
+    editWholeNumber: "Enter a whole number",
+    editMaxDecimals: (props: { count: number }) =>
+      props.count === 1 ? "Use up to 1 decimal place" : `Use up to ${props.count} decimal places`,
+    editMin: (props: { min: string }) => `Must be ${props.min} or more`,
+    editMax: (props: { max: string }) => `Must be ${props.max} or less`,
+    editRevertHint: "Press Esc to undo",
+    editKeptHint: "Not saved. Click to fix it, or press Esc to undo.",
+    editNone: "None",
+    editNoMatches: "No matches",
+    editClear: "Clear",
+    editDone: "Done",
+    // Leaving a page whose table has unsaved edits
+    editLeaveTitle: "Leave without saving?",
+    editLeaveDescription:
+      "Some changes in this table haven't been saved. If you leave now, they'll be lost.",
+    editLeaveStay: "Stay",
+    editLeaveConfirm: "Leave anyway",
   },
   ja: {
     loading: "読み込み中...",
@@ -222,6 +243,26 @@ export const dataTableLabels = defineI18nLabels({
       `${props.column}: ${props.value} ${props.operator}`,
     filterChipLabelEnum: (props: { column: string; operator: string; value: string }) =>
       `${props.column} ${props.operator}: ${props.value}`,
+
+    // Inline cell editing
+    editRequired: "入力してください",
+    editNotANumber: "数値を入力してください",
+    editWholeNumber: "整数で入力してください",
+    editMaxDecimals: (props: { count: number }) =>
+      `小数点以下${props.count}桁までで入力してください`,
+    editMin: (props: { min: string }) => `${props.min}以上で入力してください`,
+    editMax: (props: { max: string }) => `${props.max}以下で入力してください`,
+    editRevertHint: "Escキーで元に戻せます",
+    editKeptHint: "保存されていません。クリックして修正するか、Escキーで元に戻せます。",
+    editNone: "なし",
+    editNoMatches: "一致する項目がありません",
+    editClear: "クリア",
+    editDone: "完了",
+    // 保存されていない編集がある表のページを離れるとき
+    editLeaveTitle: "保存せずに移動しますか？",
+    editLeaveDescription: "この表に保存されていない変更があります。移動すると変更は失われます。",
+    editLeaveStay: "このページに留まる",
+    editLeaveConfirm: "保存せずに移動",
   },
 });
 

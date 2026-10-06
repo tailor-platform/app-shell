@@ -12,7 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import { ContextMenu } from "@base-ui/react/context-menu";
-import { ChevronRight, Ellipsis } from "lucide-react";
+import { ChevronRight, Ellipsis, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   CollectionControlProvider,
@@ -36,6 +36,10 @@ import { useDataTableT } from "./i18n";
 import { getCellValue, renderTypedCell } from "./cell-renderers";
 import { isTemporalFilterType, normalizeTemporalFilterValue } from "./filter-value-utils";
 import { useCellContextMenu, type CellContextMenuState } from "./use-cell-context-menu";
+import { useCellEditNavigation } from "./use-cell-edit-navigation";
+import { useCellEditStore, type CellEditStore } from "./use-cell-edit-store";
+import { CellEditLeaveGuard } from "./edit-leave-guard";
+import { DataTableEditableCell, ICON_SPACE_CLASS_NAME, isEditableColumn } from "./editable-cell";
 import {
   DataTableToolbar,
   DataTableFilters,
@@ -1007,9 +1011,18 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
             : { label, sortable: false };
 
           const align = resolveAlign(col);
+          // An editable column says so at rest: a pen after its title.
+          const title = isEditableColumn(col) ? (
+            <span className="astw:inline-flex astw:items-center astw:gap-1.5">
+              {label}
+              <Pencil aria-hidden="true" className="astw:size-3 astw:shrink-0 astw:opacity-50" />
+            </span>
+          ) : (
+            label
+          );
           const content = col.header
             ? col.header(headerContext)
-            : renderDefaultHeader(label, headerContext, align, {
+            : renderDefaultHeader(title, headerContext, align, {
                 bleedLeft: !hasSelection && !hasExpand && index === 0,
                 bleedRight: !hasRowActions && index === ordered.length - 1,
               });
@@ -1122,9 +1135,22 @@ function DataTableBody({ className }: { className?: string }) {
     "data-slot": "data-table-body",
     className,
   };
+  // What the body hasn't saved yet. It lives here, above the loading / empty
+  // states, so a value left in a cell survives a refetch.
+  const editStore = useCellEditStore();
+  const editGuard = allColumns?.some(isEditableColumn) ? (
+    <CellEditLeaveGuard store={editStore} />
+  ) : null;
+  // The guard keeps its place in every state, so it isn't remounted.
+  const withEditGuard = (body: ReactNode) => (
+    <>
+      {editGuard}
+      {body}
+    </>
+  );
 
   if (loading) {
-    return (
+    return withEditGuard(
       <Table.Body {...tableBodyProps}>
         <DataTableLoaderRows
           rowCount={rowCount}
@@ -1133,33 +1159,33 @@ function DataTableBody({ className }: { className?: string }) {
           hasExpand={hasExpand}
           hasRowActions={hasRowActions}
         />
-      </Table.Body>
+      </Table.Body>,
     );
   }
 
   if (error) {
-    return (
+    return withEditGuard(
       <Table.Body {...tableBodyProps}>
         <DataTableStatusRow totalColSpan={totalColSpan} state="error">
           <span className="astw:text-destructive">
             {t("errorPrefix")} {error.message}
           </span>
         </DataTableStatusRow>
-      </Table.Body>
+      </Table.Body>,
     );
   }
 
   if (!rows || rows.length === 0) {
-    return (
+    return withEditGuard(
       <Table.Body {...tableBodyProps}>
         <DataTableStatusRow totalColSpan={totalColSpan} state="empty">
           <span className="astw:text-muted-foreground">{t("noData")}</span>
         </DataTableStatusRow>
-      </Table.Body>
+      </Table.Body>,
     );
   }
 
-  return (
+  return withEditGuard(
     <Table.Body {...tableBodyProps}>
       <DataTableRows
         rows={rows}
@@ -1174,8 +1200,9 @@ function DataTableBody({ className }: { className?: string }) {
         rowExpansion={rowExpansion}
         isRowExpanded={isRowExpanded}
         toggleRowExpansion={toggleRowExpansion}
+        editStore={editStore}
       />
-    </Table.Body>
+    </Table.Body>,
   );
 }
 DataTableBody.displayName = "DataTable.Body";
@@ -1198,6 +1225,8 @@ interface DataTableRowsProps<TRow extends Record<string, unknown>> {
   /** Optional — `DataTableContextValue` may be hand-constructed without it. */
   isRowExpanded?: (row: TRow) => boolean;
   toggleRowExpansion?: (row: TRow) => void;
+  /** Unsaved edits of this body, shared by its editable cells. */
+  editStore: CellEditStore;
 }
 
 /** @internal */
@@ -1214,6 +1243,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   rowExpansion,
   isRowExpanded,
   toggleRowExpansion,
+  editStore,
 }: DataTableRowsProps<TRow>) {
   const t = useDataTableT();
   const baseId = useId();
@@ -1226,16 +1256,28 @@ function DataTableRows<TRow extends Record<string, unknown>>({
     handleContextMenuCloseComplete: handleCellContextMenuCloseComplete,
     getCellContextMenuHandlers,
   } = useCellContextMenu();
+  const navigation = useCellEditNavigation();
+  // Namespaced so an id-less row's index fallback can't collide with a real
+  // id of the same digits — React reconciles duplicate keys by position,
+  // pairing a detail panel with the wrong row.
+  const rowKeys = rows.map((row, rowIndex) => {
+    const rowId = (row as Record<string, unknown>)["id"];
+    return rowId != null ? `id:${String(rowId)}` : `idx:${rowIndex}`;
+  });
+  // Enter / Tab move between editable cells in the order they render.
+  navigation.setOrder(rowKeys, ordered?.map((col) => keys.get(col) as string) ?? []);
+  // In a table people edit, every data cell says what a click does: editors
+  // show a text or pointer cursor, and the rest show "not allowed". Skipped when
+  // rows are clickable, where the row click is what the cursor should promise.
+  const blockReadOnlyCells = !onClickRow && (ordered?.some(isEditableColumn) ?? false);
+  const warnedMissingIdRef = useRef(false);
 
   return (
     <>
       {rows.map((row, rowIndex) => {
         const rowId = (row as Record<string, unknown>)["id"];
         const selected = isRowSelected?.(row) ?? false;
-        // Namespaced so an id-less row's index fallback can't collide with a real
-        // id of the same digits — React reconciles duplicate keys by position,
-        // pairing a detail panel with the wrong row.
-        const rowKey = rowId != null ? `id:${String(rowId)}` : `idx:${rowIndex}`;
+        const rowKey = rowKeys[rowIndex];
         // Expansion is keyed by id, so a row without one gets no chevron at all
         // rather than a disabled one — it must never be un-toggleable (D5).
         const expandable = hasExpand && rowId != null && (rowExpansion?.canExpand?.(row) ?? true);
@@ -1312,7 +1354,23 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               })()}
             {ordered?.map((col) => {
               const key = keys.get(col) as string;
-              const content = col.render ? col.render(row) : renderTypedCell(row, col);
+              const editableColumn = isEditableColumn(col);
+              if (editableColumn && rowId == null && !warnedMissingIdRef.current) {
+                warnedMissingIdRef.current = true;
+                console.warn(
+                  `[DataTable] Column "${key}" has an \`edit\` config, but a row has no \`id\`. Rows without an \`id\` are shown read-only.`,
+                );
+              }
+              const editable =
+                editableColumn &&
+                rowId != null &&
+                // A badge dropdown picks one value; a cell holding several stays
+                // read-only rather than have its list replaced by a single pick.
+                !(col.type === "badge" && Array.isArray(getCellValue(row, col))) &&
+                (col.edit?.canEdit?.(row, { selected }) ?? true);
+              // An editable cell renders its own display; skip rendering it twice.
+              let content: ReactNode;
+              if (!editable) content = col.render ? col.render(row) : renderTypedCell(row, col);
 
               const { style: cellStyle, className: cellClassName } = pinCellProps(
                 placements.get(col),
@@ -1330,11 +1388,23 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                 "body",
               );
               // Truncate via an inner element so the cell's overflow stays visible.
-              const cellBody = col.truncate ? (
-                <span className="astw:block astw:truncate">{content}</span>
-              ) : (
-                content
-              );
+              // A read-only cell of an editable column keeps the icon's space
+              // like its editable neighbours, so the column's width never shifts.
+              const iconSpace = editableColumn;
+              const cellBody =
+                col.truncate || iconSpace ? (
+                  <span
+                    className={cn(
+                      "astw:block",
+                      col.truncate && "astw:truncate",
+                      iconSpace && ICON_SPACE_CLASS_NAME,
+                    )}
+                  >
+                    {content}
+                  </span>
+                ) : (
+                  content
+                );
               const menuValue = getCellContextValue(row, col, content);
               const headerLabel = col.label ?? key;
 
@@ -1361,9 +1431,29 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               const cellProps = {
                 "data-slot": "data-table-cell" as const,
                 style: { ...cellStyle, WebkitTouchCallout: "none" } satisfies CSSProperties,
-                className: cellClassName,
+                className: cn(
+                  cellClassName,
+                  blockReadOnlyCells && !editable && "astw:cursor-not-allowed",
+                ),
                 ...cellContextMenuHandlers,
               };
+              if (editable) {
+                return (
+                  <DataTableEditableCell
+                    key={key}
+                    row={row}
+                    col={col}
+                    rowKey={rowKey}
+                    colKey={key}
+                    label={headerLabel}
+                    align={resolveAlign(col)}
+                    navigation={navigation}
+                    store={editStore}
+                    cellProps={cellProps}
+                  />
+                );
+              }
+
               const cellElement = <Table.Cell {...cellProps} />;
 
               if (tooltipLabel !== undefined) {

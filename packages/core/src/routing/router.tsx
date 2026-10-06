@@ -6,6 +6,7 @@ import { createContentRoutes, wrapErrorBoundary } from "./routes";
 import { useAppShellConfig, type RootConfiguration } from "@/contexts/appshell-context";
 import { createNavItemsLoader } from "@/routing/navigation";
 import { DocumentHead } from "./document-head";
+import { AppShellRouterContext } from "./router-context";
 
 // ============================================================================
 // Root Route
@@ -45,10 +46,10 @@ const createRootRoute = (params: {
     id: navItemsLoaderID,
     loader: navItemsLoader,
     element: (
-      <>
+      <AppShellRouterContext.Provider value={true}>
         <DocumentHead />
         {children}
-      </>
+      </AppShellRouterContext.Provider>
     ),
     children: routeChildren,
     // Hydration fallback is unused in CSR-only usage of AppShell.

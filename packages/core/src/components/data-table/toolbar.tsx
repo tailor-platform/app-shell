@@ -671,6 +671,7 @@ function PanelDateRangeInput({
     t("filterBetweenFrom"),
     t("filterBetweenTo"),
     t,
+    shellTz.value,
   );
 
   return (
@@ -774,7 +775,7 @@ function PanelValueEditor({
     }
     if (isBetween) {
       const draft: AddFilterDraftValue = [min, max];
-      if (!isAddFilterDraftValueValid(type, "between", draft)) return;
+      if (!isAddFilterDraftValueValid(type, "between", draft, shellTz.value)) return;
       if (!isRangeOrdered(type, min, max)) return;
       control.addFilter(
         field,
@@ -787,7 +788,7 @@ function PanelValueEditor({
       control.removeFilter(field);
       return;
     }
-    if (!isAddFilterDraftValueValid(type, operator, text)) return;
+    if (!isAddFilterDraftValueValid(type, operator, text, shellTz.value)) return;
     control.addFilter(
       field,
       operator,
@@ -1060,13 +1061,16 @@ function betweenOrderError(
   minLabel: string,
   maxLabel: string,
   t: ReturnType<typeof useDataTableT>,
+  timeZone?: string,
 ): string | undefined {
   if (min.trim() === "" || max.trim() === "") return undefined;
   let bothValid = true;
   if (type === "number") {
     bothValid = !Number.isNaN(Number(min)) && !Number.isNaN(Number(max));
   } else if (isTemporalFilterType(type)) {
-    bothValid = isTemporalFilterValueValid(type, min) && isTemporalFilterValueValid(type, max);
+    bothValid =
+      isTemporalFilterValueValid(type, min, timeZone) &&
+      isTemporalFilterValueValid(type, max, timeZone);
   }
   if (!bothValid) return undefined;
   if (isRangeOrdered(type, min, max)) return undefined;
@@ -1970,12 +1974,14 @@ function TemporalFilterEditor({
       if (minEmpty && maxEmpty) return true; // will removeFilter
       if (minEmpty || maxEmpty) return false; // both required
       return (
-        isTemporalFilterValueValid(config.type, localValue) &&
-        isTemporalFilterValueValid(config.type, localValueMax) &&
+        isTemporalFilterValueValid(config.type, localValue, shellTz.value) &&
+        isTemporalFilterValueValid(config.type, localValueMax, shellTz.value) &&
         isRangeOrdered(config.type, localValue, localValueMax)
       );
     }
-    return localValue.trim() === "" || isTemporalFilterValueValid(config.type, localValue);
+    return (
+      localValue.trim() === "" || isTemporalFilterValueValid(config.type, localValue, shellTz.value)
+    );
   })();
 
   const handleCommit = useCallback(() => {
@@ -1985,8 +1991,8 @@ function TemporalFilterEditor({
       if (minEmpty && maxEmpty) {
         control.removeFilter(config.field);
       } else if (!minEmpty && !maxEmpty) {
-        const minValid = isTemporalFilterValueValid(config.type, localValue);
-        const maxValid = isTemporalFilterValueValid(config.type, localValueMax);
+        const minValid = isTemporalFilterValueValid(config.type, localValue, shellTz.value);
+        const maxValid = isTemporalFilterValueValid(config.type, localValueMax, shellTz.value);
         if (!minValid || !maxValid) return;
         if (!isRangeOrdered(config.type, localValue, localValueMax)) return;
         if (config.type === "datetime") {
@@ -2007,7 +2013,7 @@ function TemporalFilterEditor({
     } else {
       if (localValue.trim() === "") {
         control.removeFilter(config.field);
-      } else if (isTemporalFilterValueValid(config.type, localValue)) {
+      } else if (isTemporalFilterValueValid(config.type, localValue, shellTz.value)) {
         if (config.type === "datetime") {
           const value = normalizeTemporalFilterValue("datetime", localValue, shellTz.value);
           if (!value) return;
@@ -2129,6 +2135,7 @@ function isAddFilterDraftValueValid(
   type: FilterConfig["type"],
   operator: FilterOperator,
   value: AddFilterDraftValue,
+  timeZone?: string,
 ): boolean {
   if (type === "enum") {
     return Array.isArray(value) && value.length > 0;
@@ -2147,7 +2154,10 @@ function isAddFilterDraftValueValid(
       return !Number.isNaN(Number(min)) && !Number.isNaN(Number(max));
     }
     if (isTemporalFilterType(type)) {
-      return isTemporalFilterValueValid(type, min) && isTemporalFilterValueValid(type, max);
+      return (
+        isTemporalFilterValueValid(type, min, timeZone) &&
+        isTemporalFilterValueValid(type, max, timeZone)
+      );
     }
     return true;
   }
@@ -2158,7 +2168,7 @@ function isAddFilterDraftValueValid(
     return !Number.isNaN(Number(value));
   }
   if (isTemporalFilterType(type)) {
-    return isTemporalFilterValueValid(type, value);
+    return isTemporalFilterValueValid(type, value, timeZone);
   }
   return value.trim() !== "";
 }

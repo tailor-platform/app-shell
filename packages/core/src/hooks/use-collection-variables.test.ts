@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, expectTypeOf, vi } from "vitest";
 import type { TableMetadataMap } from "@/types/collection";
 import { useCollectionVariables } from "./use-collection-variables";
 
@@ -644,9 +644,41 @@ describe("useCollectionVariables", () => {
           },
           { name: "dueDate", type: "date", required: false },
           { name: "count", type: "number", required: false },
+          { name: "amount", type: "decimal", required: false },
         ],
       },
     } as const satisfies TableMetadataMap;
+
+    it.each(["gte", "in", "nin", "between"] as const)(
+      "builds string-based decimal %s variables compatible with GraphQL inputs",
+      (operator) => {
+        const min = "9007199254740993.123456789";
+        const max = "9007199254740994.123456789";
+        const value = { between: { min, max }, gte: min, in: [min, max], nin: [min, max] }[
+          operator
+        ];
+        const { result } = renderHook(() =>
+          useCollectionVariables({ tableMetadata: testMetadata.task }),
+        );
+        act(() => {
+          result.current.control.addFilter("amount", operator, value);
+          result.current.control.setSort("amount", "Asc");
+        });
+        expect(result.current.variables.query).toEqual({ amount: { [operator]: value } });
+        expect(result.current.variables.order).toEqual([{ field: "amount", direction: "Asc" }]);
+        expectTypeOf(result.current.variables.query).toExtend<
+          | {
+              amount?: {
+                gte?: string;
+                in?: string[];
+                nin?: string[];
+                between?: { min: string; max: string };
+              };
+            }
+          | undefined
+        >();
+      },
+    );
 
     it("works with tableMetadata", () => {
       const { result } = renderHook(() =>

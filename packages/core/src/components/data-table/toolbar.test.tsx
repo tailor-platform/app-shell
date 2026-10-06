@@ -149,6 +149,12 @@ const numberColumn: Column<TestRow> = {
   filter: { type: "number", field: "count" },
 };
 
+const decimalColumn: Column<TestRow> = {
+  id: "amount",
+  label: "Amount",
+  filter: { type: "decimal", field: "amount" },
+};
+
 const dateColumn: Column<TestRow> = {
   id: "createdAt",
   label: "Created At",
@@ -839,6 +845,138 @@ describe("NumericFilterEditor", () => {
     await user.keyboard("{Enter}");
 
     expect(control.addFilter).toHaveBeenCalledWith("count", "eq", 7);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Decimal filters — numeric operators with precision-preserving string values
+// ---------------------------------------------------------------------------
+
+describe("Decimal filters", () => {
+  const preciseValue = "9007199254740993.123456789";
+  const preciseMax = "9007199254740993.123456790";
+
+  it.each(["panel", "chip"] as const)(
+    "%s submits scalar decimals as exact strings",
+    async (surface) => {
+      const user = userEvent.setup();
+      const control = makeControl({
+        filters: surface === "chip" ? [{ field: "amount", operator: "eq", value: "1" }] : [],
+      });
+      render(<TestFilters control={control} columns={[decimalColumn]} />, { wrapper });
+
+      if (surface === "panel") await user.click(screen.getByRole("button", { name: "Add filter" }));
+      else await openValueEditor(user);
+
+      const input = await screen.findByPlaceholderText("Enter amount");
+      expect(input.getAttribute("type")).toBe("text");
+      expect(input.getAttribute("inputmode")).toBe("decimal");
+      await user.clear(input);
+      await user.type(input, preciseValue);
+      await user.click(screen.getByRole("button", { name: "Apply" }));
+
+      if (surface === "panel") {
+        expect(control.addFilter).toHaveBeenCalledWith("amount", "eq", preciseValue, undefined);
+      } else {
+        expect(control.addFilter).toHaveBeenCalledWith("amount", "eq", preciseValue);
+      }
+    },
+  );
+
+  it.each(["panel", "chip"] as const)(
+    "%s submits precise ranges and rejects reversed bounds",
+    async (surface) => {
+      const user = userEvent.setup();
+      const control = makeControl({
+        filters:
+          surface === "chip"
+            ? [
+                {
+                  field: "amount",
+                  operator: "between",
+                  value: { min: preciseValue, max: preciseMax },
+                },
+              ]
+            : [],
+      });
+      render(<TestFilters control={control} columns={[decimalColumn]} />, { wrapper });
+
+      if (surface === "panel") {
+        await user.click(screen.getByRole("button", { name: "Add filter" }));
+        await user.click(await screen.findByRole("button", { name: "is between" }));
+      } else {
+        expect(screen.getByText(`${preciseValue} - ${preciseMax}`)).toBeDefined();
+        await openValueEditor(user);
+      }
+
+      const min = await screen.findByRole("textbox", { name: "Min" });
+      const max = screen.getByRole("textbox", { name: "Max" });
+      fireEvent.change(min, { target: { value: "9007199254740993" } });
+      fireEvent.change(max, { target: { value: "9007199254740992" } });
+      expect((screen.getByRole("button", { name: "Apply" }) as HTMLButtonElement).disabled).toBe(
+        true,
+      );
+      expect(screen.getByText(/must be greater than or equal to/i)).toBeDefined();
+      fireEvent.keyDown(max, { key: "Enter" });
+      expect(control.addFilter).not.toHaveBeenCalled();
+
+      fireEvent.change(min, { target: { value: preciseValue } });
+      fireEvent.change(max, { target: { value: preciseMax } });
+      await user.click(screen.getByRole("button", { name: "Apply" }));
+      expect(control.addFilter).toHaveBeenCalledWith("amount", "between", {
+        min: preciseValue,
+        max: preciseMax,
+      });
+    },
+  );
+
+  it("chip editing rejects invalid decimals without clearing the active filter", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "amount", operator: "eq", value: preciseValue }],
+    });
+    render(<TestFilters control={control} columns={[decimalColumn]} />, { wrapper });
+    await openValueEditor(user);
+
+    const input = await screen.findByRole("textbox");
+    fireEvent.change(input, { target: { value: "not-a-decimal" } });
+    expect((screen.getByRole("button", { name: "Apply" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(control.addFilter).not.toHaveBeenCalled();
+    expect(control.removeFilter).not.toHaveBeenCalled();
+
+    fireEvent.change(input, { target: { value: "-1.23456789123456789e-100" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(control.addFilter).toHaveBeenCalledWith("amount", "eq", "-1.23456789123456789e-100");
+  });
+
+  it("operator transitions preserve decimal strings in both directions", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "amount", operator: "eq", value: preciseValue }],
+    });
+    const { rerender } = render(<TestFilters control={control} columns={[decimalColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: "is" }));
+    await user.click(await screen.findByRole("button", { name: "is between" }));
+    expect(control.addFilter).toHaveBeenCalledWith("amount", "between", {
+      min: preciseValue,
+      max: preciseValue,
+    });
+
+    const rangeControl = makeControl({
+      filters: [
+        { field: "amount", operator: "between", value: { min: preciseValue, max: preciseMax } },
+      ],
+    });
+    rerender(<TestFilters control={rangeControl} columns={[decimalColumn]} />);
+    await user.click(screen.getByRole("button", { name: "is between" }));
+    await user.click(await screen.findByRole("button", { name: "is" }));
+    expect(rangeControl.addFilter).toHaveBeenCalledWith("amount", "eq", preciseValue);
   });
 });
 

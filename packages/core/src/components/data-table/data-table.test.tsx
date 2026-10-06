@@ -481,6 +481,31 @@ describe("DataTable", () => {
       expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice");
     });
 
+    it("preserves decimal strings when filtering by a cell value", async () => {
+      const user = userEvent.setup();
+      const control = makeControl();
+      const amount = "9007199254740993.123456789";
+      function Harness() {
+        const table = useDataTable<{ amount: string }>({
+          columns: [
+            { id: "amount", label: "Amount", filter: { type: "decimal", field: "amount" } },
+          ],
+          data: { rows: [{ amount }] },
+          control,
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      openCellContextMenu(container, amount);
+      hoverMenuItem("Add filter");
+      await user.click(await screen.findByRole("menuitem", { name: "is" }));
+      expect(control.addFilter).toHaveBeenCalledWith("amount", "eq", amount);
+    });
+
     it("normalizes local date filters from Date values", async () => {
       const user = userEvent.setup();
       const control = makeControl();

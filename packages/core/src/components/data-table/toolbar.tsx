@@ -14,7 +14,12 @@ import { parseDate, DateFormatter } from "@internationalized/date";
 import { useResolvedLocale } from "@/contexts/appshell-context";
 import { DataTableColumnSettings } from "./column-settings";
 import { useDataTableContext } from "./data-table-context";
-import { isTemporalFilterType, isTemporalFilterValueValid } from "./filter-value-utils";
+import {
+  isDecimalFilterValueValid,
+  isDecimalRangeOrdered,
+  isTemporalFilterType,
+  isTemporalFilterValueValid,
+} from "./filter-value-utils";
 import { useDataTableT } from "./i18n";
 import type {
   CollectionControl,
@@ -72,6 +77,7 @@ const DEFAULT_OPERATOR: Record<FilterConfig["type"], FilterOperator> = {
   boolean: "eq",
   string: "contains",
   number: "eq",
+  decimal: "eq",
   datetime: "eq",
   date: "eq",
   time: "eq",
@@ -133,6 +139,7 @@ function getDefaultFilterOperators(type: FilterConfig["type"]): FilterOperator[]
     case "date":
       return [...DATE_OPERATORS];
     case "number":
+    case "decimal":
     case "datetime":
     case "time":
       return [...NUMERIC_TEMPORAL_OPERATORS];
@@ -152,6 +159,7 @@ function isUiOperatorAllowedForType(type: FilterConfig["type"], operator: Filter
     case "date":
       return (DATE_OPERATORS as readonly string[]).includes(operator);
     case "number":
+    case "decimal":
     case "datetime":
     case "time":
       return (NUMERIC_TEMPORAL_OPERATORS as readonly string[]).includes(operator);
@@ -865,7 +873,9 @@ function PanelValueEditor({
     );
   } else if (isBetween) {
     // Non-date range: two simple From/To (or Min/Max) text boxes.
-    const numeric = type === "number";
+    const numeric = type === "number" || type === "decimal";
+    const numericInputProps =
+      type === "decimal" ? { type: "text", inputMode: "decimal" as const } : { type: "number" };
     const labels: [string, string] = numeric
       ? [t("filterBetweenMin"), t("filterBetweenMax")]
       : [t("filterBetweenFrom"), t("filterBetweenTo")];
@@ -878,7 +888,7 @@ function PanelValueEditor({
           onChangeMax={setMax}
           onSubmit={apply}
           inputProps={
-            numeric ? { type: "number" } : getTemporalInputProps(type as "datetime" | "time")
+            numeric ? numericInputProps : getTemporalInputProps(type as "datetime" | "time")
           }
           error={betweenOrderError(type, min, max, labels[0], labels[1], t)}
         />
@@ -918,6 +928,7 @@ function PanelValueEditor({
       <div className="astw:p-2">
         <Input
           type={type === "number" ? "number" : "text"}
+          inputMode={type === "decimal" ? "decimal" : undefined}
           value={text}
           placeholder={t("filterValuePlaceholder", { field: label })}
           onChange={(e) => setText(e.target.value)}
@@ -1048,6 +1059,8 @@ function betweenOrderError(
   let bothValid = true;
   if (type === "number") {
     bothValid = !Number.isNaN(Number(min)) && !Number.isNaN(Number(max));
+  } else if (type === "decimal") {
+    bothValid = isDecimalFilterValueValid(min) && isDecimalFilterValueValid(max);
   } else if (isTemporalFilterType(type)) {
     bothValid = isTemporalFilterValueValid(type, min) && isTemporalFilterValueValid(type, max);
   }
@@ -1424,6 +1437,7 @@ function FilterPopoverContent({
         <UuidFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
       );
     case "number":
+    case "decimal":
       return (
         <NumericFilterEditor
           config={config}
@@ -1725,7 +1739,7 @@ function UuidFilterEditor({
 }
 
 // =============================================================================
-// Number filter — operator selector + number input
+// Numeric filter — operator selector + number/decimal input
 // =============================================================================
 
 function NumericFilterEditor({
@@ -1735,7 +1749,7 @@ function NumericFilterEditor({
   onClose,
   hideOperator = false,
 }: {
-  config: Extract<DataTableFilterConfig, { type: "number" }>;
+  config: Extract<DataTableFilterConfig, { type: "number" | "decimal" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
@@ -1772,12 +1786,11 @@ function NumericFilterEditor({
       if (minEmpty && maxEmpty) return true; // will removeFilter
       if (minEmpty || maxEmpty) return false; // both required
       return (
-        !Number.isNaN(Number(localValue)) &&
-        !Number.isNaN(Number(localValueMax)) &&
-        isRangeOrdered("number", localValue, localValueMax)
+        isAddFilterDraftValueValid(config.type, "between", [localValue, localValueMax]) &&
+        isRangeOrdered(config.type, localValue, localValueMax)
       );
     }
-    return localValue.trim() === "" || !Number.isNaN(Number(localValue));
+    return localValue.trim() === "" || isAddFilterDraftValueValid(config.type, localOp, localValue);
   })();
 
   const handleCommit = useCallback(() => {
@@ -1787,13 +1800,27 @@ function NumericFilterEditor({
       if (minEmpty && maxEmpty) {
         control.removeFilter(config.field);
       } else if (!minEmpty && !maxEmpty) {
-        const min = Number(localValue);
-        const max = Number(localValueMax);
-        if (!Number.isNaN(min) && !Number.isNaN(max) && min <= max) {
-          control.addFilter(config.field, localOp, { min, max });
+        const draft: AddFilterDraftValue = [localValue, localValueMax];
+        if (
+          isAddFilterDraftValueValid(config.type, localOp, draft) &&
+          isRangeOrdered(config.type, localValue, localValueMax)
+        ) {
+          control.addFilter(
+            config.field,
+            localOp,
+            toAddFilterSubmittedValue(config.type, localOp, draft),
+          );
         } else {
           return;
         }
+      } else {
+        return;
+      }
+    } else if (config.type === "decimal") {
+      if (localValue.trim() === "") {
+        control.removeFilter(config.field);
+      } else if (isDecimalFilterValueValid(localValue)) {
+        control.addFilter(config.field, localOp, localValue.trim());
       } else {
         return;
       }
@@ -1806,11 +1833,11 @@ function NumericFilterEditor({
       }
     }
     onClose();
-  }, [localValue, localValueMax, localOp, control, config.field, onClose]);
+  }, [localValue, localValueMax, localOp, control, config.field, config.type, onClose]);
 
   return (
     <div
-      data-slot="data-table-filter-number"
+      data-slot={`data-table-filter-${config.type}`}
       className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
     >
       {!hideOperator && (
@@ -1831,9 +1858,11 @@ function NumericFilterEditor({
           onChangeMin={setLocalValue}
           onChangeMax={setLocalValueMax}
           onSubmit={handleCommit}
-          inputProps={{ type: "number" }}
+          inputProps={
+            config.type === "decimal" ? { type: "text", inputMode: "decimal" } : { type: "number" }
+          }
           error={betweenOrderError(
-            "number",
+            config.type,
             localValue,
             localValueMax,
             t("filterBetweenMin"),
@@ -1843,7 +1872,8 @@ function NumericFilterEditor({
         />
       ) : (
         <Input
-          type="number"
+          type={config.type === "decimal" ? "text" : "number"}
+          inputMode={config.type === "decimal" ? "decimal" : undefined}
           value={localValue}
           placeholder={t("filterValuePlaceholder", { field: config.field })}
           onChange={(e) => setLocalValue(e.target.value)}
@@ -2064,6 +2094,9 @@ function isAddFilterDraftValueValid(
     if (type === "number") {
       return !Number.isNaN(Number(min)) && !Number.isNaN(Number(max));
     }
+    if (type === "decimal") {
+      return isDecimalFilterValueValid(min) && isDecimalFilterValueValid(max);
+    }
     if (isTemporalFilterType(type)) {
       return isTemporalFilterValueValid(type, min) && isTemporalFilterValueValid(type, max);
     }
@@ -2075,6 +2108,7 @@ function isAddFilterDraftValueValid(
     if (value.trim() === "") return false;
     return !Number.isNaN(Number(value));
   }
+  if (type === "decimal") return isDecimalFilterValueValid(value);
   if (isTemporalFilterType(type)) {
     return isTemporalFilterValueValid(type, value);
   }
@@ -2110,7 +2144,7 @@ function toAddFilterSubmittedValue(
 
     if (trimmedMin === "" || trimmedMax === "") return undefined;
 
-    // temporal types
+    // Decimal and temporal types keep their string representation.
     return { min: trimmedMin, max: trimmedMax };
   }
 
@@ -2129,6 +2163,7 @@ function toAddFilterSubmittedValue(
  */
 function isRangeOrdered(type: FilterConfig["type"], min: string, max: string): boolean {
   if (type === "number") return Number(min) <= Number(max);
+  if (type === "decimal") return isDecimalRangeOrdered(min, max);
   if (isTemporalFilterType(type)) return min <= max;
   return true;
 }
@@ -2269,7 +2304,7 @@ function formatFilterValue(
     return filter.value === true ? t("filterBooleanTrue") : t("filterBooleanFalse");
   }
 
-  if (config.type === "number" && filter.operator === "between") {
+  if ((config.type === "number" || config.type === "decimal") && filter.operator === "between") {
     const range = filter.value as { min?: unknown; max?: unknown } | null;
     if (!range || typeof range !== "object") return "";
     const min = range.min != null ? String(range.min) : "";

@@ -103,6 +103,29 @@ describe("inferColumns()", () => {
   });
 });
 
+describe("decimal metadata", () => {
+  it("infers numeric sort and string-backed numeric filtering", () => {
+    const metadata = {
+      name: "order",
+      pluralForm: "orders",
+      fields: [{ name: "amount", type: "decimal", required: false }],
+    } as const;
+    const infer = createColumnHelper<{ amount: string }>().inferColumns(metadata);
+    expect(infer("amount")).toMatchObject({
+      id: "amount",
+      sort: { field: "amount", type: "number" },
+      filter: { field: "amount", type: "decimal" },
+    });
+    expect(infer("amount", { filter: { operators: ["gte", "between"] } }).filter).toEqual({
+      field: "amount",
+      type: "decimal",
+      operators: ["gte", "between"],
+    });
+    // @ts-expect-error decimal fields do not support string-only operators
+    infer("amount", { filter: { operators: ["contains"] } });
+  });
+});
+
 describe("fieldTypeToSortConfig", () => {
   it("maps string to string sort", () => {
     expect(fieldTypeToSortConfig("name", "string")).toEqual({

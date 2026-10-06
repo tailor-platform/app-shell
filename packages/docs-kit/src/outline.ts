@@ -21,7 +21,7 @@ export const OUTLINE_KEYS = new Set([
   "sources",
   "claims",
   "upstream",
-  // Presentation metadata for pattern/page units, consumed by skill.ts.
+  // Authored pattern/page metadata.
   "slug",
   "name",
   "category",

@@ -9,7 +9,7 @@ description: Breaking changes and required migration steps for AppShell upgrades
 
 Every change that requires you to edit your application before or after upgrading, newest first.
 
-This page is deliberately narrow. It is **not** a changelog — see [`packages/core/CHANGELOG.md`](../packages/core/CHANGELOG.md) for the full release history including features and fixes. A change belongs here only if an app that does nothing will break, misbehave, or silently drift.
+This page is deliberately narrow. It is **not** a changelog — see [`packages/core/CHANGELOG.md`](https://github.com/tailor-platform/app-shell/blob/main/packages/core/CHANGELOG.md) for the full release history including features and fixes. A change belongs here only if an app that does nothing will break, misbehave, or silently drift.
 
 Each entry states which versions are affected, what breaks, how to detect it, and what to change. Entries stay here permanently; they are not pruned when they get old, because apps upgrade across arbitrary version gaps.
 
@@ -213,7 +213,7 @@ The prop is removed, and toasts no longer colour-code the success, error, warnin
 
 Pre-1.0 releases changed the public API often, mostly around authentication and routing. If you are upgrading from a 0.x version, work through these in order — several supersede each other, so applying them out of sequence will not land you in the right place.
 
-Each is summarised here; [`packages/core/CHANGELOG.md`](../packages/core/CHANGELOG.md) carries the full before/after code for every one.
+Each is summarised here; [`packages/core/CHANGELOG.md`](https://github.com/tailor-platform/app-shell/blob/main/packages/core/CHANGELOG.md) carries the full before/after code for every one.
 
 | Version | Change                                                                                                                                                                                                                                                                                                                                                                             |
 | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

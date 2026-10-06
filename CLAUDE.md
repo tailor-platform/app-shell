@@ -23,10 +23,10 @@ and the [`resync-docs`](./.agents/skills/resync-docs/SKILL.md) skill.
 
 To change or add a doc, edit the authored **source** under `docs-src/`, then run `pnpm docs:sync`:
 
-| To document…                                  | Edit (authored source)                                                                                    |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| a component / hook / pattern / page / concept | `docs-src/<kind>/<slug>.docs.outline.md` (prose) + optional `<slug>.docs.examples.tsx` (runnable example) |
-| the consumer `app-shell-patterns` skill       | emitted from `docs-src/` by `docs:sync` — never edit `packages/core/skills/`                              |
+| To document…                                  | Edit (authored source)                                                                                        |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| a component / hook / pattern / page / concept | `docs-src/<kind>/<slug>.docs.outline.md` (prose) + optional `<slug>.docs.examples.tsx` (runnable example)     |
+| the consumer `app-shell-patterns` skill       | `skills/app-shell-patterns/SKILL.md` + its `scripts/` — hand-authored, Git-managed, distributed from the repo |
 
 `docs-src/<kind>/` maps to `docs/<kind>/` (components→components, hooks→api, plus concepts, patterns,
 pages). Every outline declares `kind: code-backed` or `kind: prose` in its frontmatter — code-backed
@@ -35,9 +35,16 @@ reconciles that against `index.ts` both ways. Frontmatter is a closed schema: an
 an error, not a silent no-op.
 
 There are **no exceptions**: every file under `docs/` comes from an outline. The root guides
-(`introduction`, `quickstart`, `design-philosophy`, `migrations`) are `kind: prose` units in
+(`index`, `introduction`, `quickstart`, `design-philosophy`, `migrations`) are `kind: prose` units in
 `docs-src/guides/` that happen to output to the `docs/` root. Creating a file under `docs/` that no
 outline produces is a blocking `docs:check` failure.
+
+`docs/index.md` is the content-routing entrypoint. Edit its reading guidance in
+`docs-src/guides/index.docs.outline.md`; the `<!-- docs-index -->` token generates the document
+list from outline titles, descriptions, and output paths. Core's `prepack` copies the whole
+`docs/` tree into ignored `packages/core/docs/` for npm. Skills are not generated or bundled in
+npm; they locate the installed package's version-matched docs. See
+[decisions/skill-documentation-separation.md](./decisions/skill-documentation-separation.md).
 
 ## Key Architecture Points (LLM Orientation)
 

@@ -550,6 +550,10 @@ These are visual-composition rules every screen must follow, regardless of patte
   - Reserve **`default`** (brand fill) for non-status emphasis — never the brand color as a routine status. The defect to avoid: making _every_ chip a loud fill, or giving secondary statuses the same weight as the primary one. (Variants: [`Badge`](../components/badge.md).)
 - **Color:** status colors signal meaning, not decoration — don't tint neutral content.
 
+**Action placement.** Put the primary CTA and status in `Layout.Header`, workflow actions in `ActionPanel`, and back/navigation in the breadcrumb — never in `ActionPanel`. An action lives in exactly one place: do not repeat it in the header and action panel.
+
+**Metric tiles.** Always place metric tiles in a `Grid` with responsive columns, for example `columns={{ initial: 1, md: 2, xl: 4 }}` — never one tile per row.
+
 **Hierarchy.** One `h1` per page (the `Layout.Header` title). Section headings step down in weight and size; never skip levels for size — pick the role from the Tokens → Typography table, not the pixel size.
 
 **States — never ship only the happy path.** Every data-backed screen handles:

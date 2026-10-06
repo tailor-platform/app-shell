@@ -3,11 +3,11 @@ import { join, relative } from "node:path";
 
 import { loadConfig } from "./config";
 import { type Finding, reconcile } from "./coverage";
+import { DOCS_INDEX_TOKEN, renderDocsIndex } from "./docs-index";
 import { hash, normalizeText } from "./hash";
 import { readManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { loadSurface, snapshotHashForSlug } from "./project";
-import { computeSkill } from "./skill";
 import { unmanagedOutputs, walkMarkdown } from "./tree";
 
 export interface CheckResult {
@@ -81,6 +81,18 @@ export function check(repoRoot: string): CheckResult {
       });
     }
 
+    // An index depends on every outline's metadata, not just its own source.
+    if (DOCS_INDEX_TOKEN.test(outline.body)) {
+      const catalogue = hash(normalizeText(renderDocsIndex(outlines, outline)));
+      if (catalogue !== entry.hashes.catalogue) {
+        findings.push({
+          level: "block",
+          slug,
+          message: `documentation index is stale — run sync.`,
+        });
+      }
+    }
+
     if (entry.hashes.examples) {
       const exAbs = join(repoRoot, outline.examplesPath);
       if (!existsSync(exAbs)) {
@@ -106,37 +118,6 @@ export function check(repoRoot: string): CheckResult {
           level: "block",
           slug,
           message: `orphaned output ${manifest.units[slug].output} — its outline was removed; delete the generated file and run sync.`,
-        });
-      }
-    }
-  }
-
-  if (config.skill) {
-    const expected = manifest?.skill ?? {};
-    const actual = new Map(
-      [...computeSkill(repoRoot, config, outlines)].map(([p, c]) => [p, hash(normalizeText(c))]),
-    );
-    for (const [p, h] of actual) {
-      if (expected[p] === undefined) {
-        findings.push({
-          level: "block",
-          slug: "skill",
-          message: `skill file ${p} is new — run sync.`,
-        });
-      } else if (expected[p] !== h) {
-        findings.push({
-          level: "block",
-          slug: "skill",
-          message: `skill file ${p} drifted — run sync.`,
-        });
-      }
-    }
-    for (const p of Object.keys(expected)) {
-      if (!actual.has(p)) {
-        findings.push({
-          level: "block",
-          slug: "skill",
-          message: `skill file ${p} removed — run sync.`,
         });
       }
     }

@@ -22,6 +22,12 @@ We've made sensible default choices so you can focus on what matters most — bu
 
 ## Documentation
 
+The installed package bundles its version-matched documentation under `docs/`; start with
+`docs/index.md` to find the relevant guide, pattern, or API reference. Coding agents can use
+the repo-managed [app-shell-patterns skill](https://github.com/tailor-platform/app-shell/tree/main/skills/app-shell-patterns),
+which discovers those local docs. Skills are installed from the repo, not bundled in npm.
+
+- [Documentation Index](https://github.com/tailor-platform/app-shell/blob/main/docs/index.md) — Reading routes and the complete documentation catalogue
 - [Introduction](https://github.com/tailor-platform/app-shell/blob/main/docs/introduction.md) — What is AppShell and why use it
 - [Quick Start](https://github.com/tailor-platform/app-shell/blob/main/docs/quickstart.md) — Installation, setup, and first steps
 - [Migrations](https://github.com/tailor-platform/app-shell/blob/main/docs/migrations.md) — Breaking changes and the steps each one requires, newest first. Check this when upgrading, or when something looks wrong after a version bump.

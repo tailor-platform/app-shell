@@ -13,7 +13,7 @@ export interface OutlineFrontmatter {
   group: string;
   /** REQUIRED. */
   title: string;
-  /** REQUIRED. One line; feeds the generated frontmatter and the consumer skill. */
+  /** REQUIRED. One line; feeds the generated frontmatter and documentation index. */
   description: string;
   /** Required iff `kind` is "code-backed", forbidden otherwise: globs
    * (repo-relative) whose exported symbols this unit owns. */
@@ -25,14 +25,13 @@ export interface OutlineFrontmatter {
   /** Upstream docs URL for claimed symbols. */
   upstream?: string;
 
-  // Presentation metadata for pattern and page units — consumed by the
-  // generated `app-shell-patterns` skill (see skill.ts).
+  // Authored pattern/page metadata describing each recipe.
   /** Catalogue-era display path, e.g. `pattern/form/composer`. */
   slug?: string;
-  /** Display name in the skill's pattern table. */
+  /** Display name of the recipe. */
   name?: string;
   category?: string;
-  /** Groups rows within the skill's pattern/page tables. */
+  /** Recipe grouping within its category. */
   subcategory?: string;
   requiredImports?: string[];
   tags?: string[];
@@ -66,6 +65,8 @@ export interface UnitHashes {
   snapshot: string | null;
   outputMd: string | null;
   examples: string | null;
+  /** Only for index units: catalogue content derived from all outline metadata. */
+  catalogue?: string;
 }
 
 export interface ManifestEntry {
@@ -84,8 +85,6 @@ export interface ManifestEntry {
 export interface Manifest {
   version: number;
   units: Record<string, ManifestEntry>;
-  /** Generated skill file (repo-relative) -> content hash. Absent when no skill is configured. */
-  skill?: Record<string, string>;
 }
 
 export interface CategoryRule {
@@ -93,17 +92,6 @@ export interface CategoryRule {
   match: string;
   /** Repo-relative output directory for matching outlines. */
   outDir: string;
-}
-
-export interface SkillConfig {
-  /** Repo-relative output dir for the generated consumer skill. */
-  outDir: string;
-  /** Repo-relative SKILL.md template with {{CATEGORY_TABLE}} placeholders. */
-  templatePath: string;
-  /** Repo-relative migrations doc copied (with links rewritten) into the skill. */
-  migrationsSource: string;
-  /** Base blob URL for rewriting the migrations doc's relative links. */
-  repoBlobUrl: string;
 }
 
 export interface DocsConfig {
@@ -122,6 +110,4 @@ export interface DocsConfig {
   exclusions: string[];
   /** Repo-relative dir holding centralized test snapshots (advisory signal). */
   snapshotDir?: string;
-  /** Consumer-skill generation. When set, sync emits it and check validates it. */
-  skill?: SkillConfig;
 }

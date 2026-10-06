@@ -15,6 +15,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.18.0        | [Destructive colours now resolve to the danger roles](#1180-destructive-colours-now-resolve-to-the-danger-roles)             |
 | 1.17.0        | [Status and alert tokens now resolve to the colour roles](#1170-status-and-alert-tokens-now-resolve-to-the-colour-roles)     |
 | 1.15.0        | [Base UI 1.8.0 breaks closed-`Select` and dialog-click tests](#1150-base-ui-180-breaks-closed-select-and-dialog-click-tests) |
 | 1.12.0        | [`DateField` / `DatePicker` field chrome moved to `Field.Root`](#1120-datefield--datepicker-field-chrome-moved-to-fieldroot) |
@@ -26,6 +27,26 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
+
+## 1.18.0: destructive colours now resolve to the danger roles
+
+**Applies to:** apps that show `Button variant="destructive"` in dark mode, apps that use `text-destructive`, `border-destructive` or `bg-destructive` on their own elements, and apps whose theme overrides `--destructive` or `--destructive-foreground`.
+
+1.18.0 makes `--destructive` and `--destructive-foreground` aliases of `--danger-solid` and `--danger-contrast`. The names, `Button variant="destructive"` and `text-destructive` keep working and are not deprecated. Nothing errors. Three things change silently:
+
+- **Dark-mode `Button variant="destructive"` is a full `#dc2626` fill.** It was `#f87171` at 60% opacity. The text is `--danger-contrast` (white) and the hover fill is `--danger-solid-hover` instead of 90% opacity. Light mode keeps `#dc2626`.
+- **`text-destructive` resolves to the solid.** In dark mode it changes from `#f87171` to `#dc2626`, which is 3.71:1 on the dark card, below 4.5:1 for text. Components shipped with AppShell now use `text-danger-text` for error text, and invalid borders and focus rings read `--danger-solid`. In dark mode the invalid border changes from `#f87171` to `#dc2626`.
+- **Themes that override `--destructive` no longer reach the components.** `Button`, invalid `Input`, `Textarea`, `Checkbox`, `Field` and `DateField` borders and rings, error text and the `CsvImporter` error cells read `--danger-*`. An override of `--destructive` still changes `bg-destructive` and `text-destructive` on your own elements, so the two reds can drift apart. The `cream` and `bloom` palettes no longer set `--destructive`; their values were the same as the default.
+
+How to detect it: search the app for `destructive` in class names and in theme CSS, including Theme Generator output that sets `--destructive`. Compare `Button variant="destructive"`, an invalid `Input` and an error message in light and dark mode after upgrading.
+
+What to change:
+
+- For text, replace `text-destructive` with `text-danger-text`. `text-destructive` still works; use it only where the solid colour is intended.
+- For tints and borders, use `bg-danger-surface` and `border-danger-border` instead of `bg-destructive/10` and `border-destructive/30`.
+- In a theme that recolours destructive actions, set `--danger-solid` (and `--danger-solid-hover`, `--danger-text`, `--danger-contrast` as needed) instead of `--destructive`. Remove `--destructive` and `--destructive-foreground` from the theme.
+
+The roles are documented in [Styling & theming](./concepts/styling-theming.md#brand--action). The decision record is `decisions/semantic-color-roles.md`.
 
 ## 1.17.0: status and alert tokens now resolve to the colour roles
 

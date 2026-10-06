@@ -45,13 +45,7 @@
         }
       ]
     },
-    "manifest": "docs-manifest.json",
-    "skill": {
-      "outDir": "packages/core/skills/app-shell-patterns",
-      "templatePath": "docs-src/skill/SKILL.template.md",
-      "migrationsSource": "docs/migrations.md",
-      "repoBlobUrl": "https://github.com/tailor-platform/app-shell/blob/main"
-    }
+    "manifest": "docs-manifest.json"
   },
   "policy": {
     "coverage": {

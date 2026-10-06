@@ -1,5 +1,11 @@
 # Documentation Management Overhaul
 
+> **Skill generation and packaging are superseded** by
+> [Skill/documentation separation](./skill-documentation-separation.md). Consumer skills now
+> live as hand-authored, Git-managed files under `skills/`; docs-kit generates docs and their
+> content index only, and npm bundles docs rather than skills. The skill-related sections
+> below preserve the original decision, not the current contract.
+
 ## Context
 
 Today all ~65 docs (`docs/components/` ×37, `docs/api/` ×22, `docs/concepts/` ×6) are maintained by hand, with no enforced link between a component's source and its doc. Nothing detects when an API changes but its doc doesn't — drift is invisible. The failure that motivated this design: `timeline.tsx` shipped a component, a test, **and** `docs/components/timeline.md`, yet was never exported from `index.ts` — a documented component consumers couldn't import. (It has since been exported and migrated to a docs-kit unit; the reverse coverage check below is what now catches this class of bug.)

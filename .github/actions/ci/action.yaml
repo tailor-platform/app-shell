@@ -22,7 +22,54 @@ runs:
     # sets skipLibCheck: true and never looks at the emitted declarations.
     - run: pnpm exec turbo run lint test type-check check-dts
       shell: bash
-    # Deterministic docs + generated-skill drift gate (no LLM). Runs uncached
-    # so a docs/ change always re-validates the manifest and consumer skill.
+    # Deterministic docs drift gate (no LLM). Runs uncached
+    # so a docs/ change always re-validates the manifest and content index.
     - run: pnpm docs:check
       shell: bash
+    - name: Smoke test bundled docs and repository skill discovery
+      shell: bash
+      run: |
+        set -euo pipefail
+        scratch=$(mktemp -d "${RUNNER_TEMP:-/tmp}/app-shell-docs.XXXXXX")
+        scratch=$(cd "$scratch" && pwd -P)
+        trap 'rm -rf "$scratch"' EXIT
+        pnpm --filter @tailor-platform/app-shell pack --pack-destination "$scratch"
+        tar -xzf "$scratch"/*.tgz -C "$scratch"
+
+        # Only resolution is needed: use the real tarball without installing its dependencies.
+        mkdir -p "$scratch/app/node_modules/@tailor-platform"
+        package="$scratch/app/node_modules/@tailor-platform/app-shell"
+        mv "$scratch/package" "$package"
+        cp -R skills/app-shell-patterns "$scratch/skill"
+        test ! -e "$package/skills"
+        diff -r docs "$package/docs"
+
+        index=$(node "$scratch/skill/scripts/discover-docs.mjs" "$scratch/app")
+        test "$index" = "$package/docs/index.md"
+        test "$(cd "$scratch/app" && node "$scratch/skill/scripts/discover-docs.mjs")" = "$index"
+        node --input-type=module - "$index" <<'NODE'
+        import assert from 'node:assert/strict';
+        import { existsSync, readFileSync } from 'node:fs';
+        import { dirname, resolve } from 'node:path';
+        const index = process.argv[2];
+        const content = readFileSync(index, 'utf8');
+        assert(!content.includes('<!-- docs-index -->'), 'Index token was not expanded');
+        const links = [...content.matchAll(/\]\(([^)\s]+)\)/g)];
+        assert(links.length > 0, 'Documentation index has no links');
+        for (const [, href] of links) {
+          if (/^[a-z]+:/i.test(href)) continue;
+          assert(existsSync(resolve(dirname(index), href.split('#')[0])), `Missing doc: ${href}`);
+        }
+        NODE
+
+        if node "$scratch/skill/scripts/discover-docs.mjs" "$scratch" 2>"$scratch/error"; then
+          echo 'Discovery should fail without an installed package' >&2
+          exit 1
+        fi
+        grep -q 'Cannot resolve' "$scratch/error"
+        rm "$index"
+        if node "$scratch/skill/scripts/discover-docs.mjs" "$scratch/app" 2>"$scratch/error"; then
+          echo 'Discovery should fail without bundled docs' >&2
+          exit 1
+        fi
+        grep -q 'Bundled documentation is missing' "$scratch/error"

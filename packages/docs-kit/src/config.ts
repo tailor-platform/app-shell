@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import type { CategoryRule, DocsConfig, SkillConfig } from "./types";
+import type { CategoryRule, DocsConfig } from "./types";
 
 /** On-disk shape of `docs-kit.config.json` — grouped by data flow (inputs →
  * outputs → policy). It is parsed into the flat internal {@link DocsConfig}. */
@@ -14,7 +14,6 @@ interface RawConfig {
   outputs?: {
     documents?: { mappings?: Array<{ match: string; dir: string }> };
     manifest?: string;
-    skill?: SkillConfig;
   };
   policy?: { coverage?: { enforce?: boolean; exclusions?: string[] } };
 }
@@ -36,6 +35,5 @@ export function loadConfig(repoRoot: string): DocsConfig {
     enforceCoverage: c.policy?.coverage?.enforce ?? false,
     exclusions: c.policy?.coverage?.exclusions ?? [],
     snapshotDir: c.inputs?.snapshots?.dir,
-    skill: c.outputs?.skill,
   };
 }

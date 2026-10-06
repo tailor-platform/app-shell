@@ -26,7 +26,7 @@ points at them. That keeps this file from drifting out of sync with what actuall
   │
   ├─ 2. Branch from main
   │
-  ├─ 3. Develop ................... .agents/skills/code-review, docs-src/ (docs + skill source)
+  ├─ 3. Develop ................... .agents/skills/code-review, docs-src/ (docs), skills/ (consumer skills)
   │
   ├─ 4. Quality-check locally ..... .agents/skills/quality-check
   │
@@ -73,6 +73,7 @@ repo publishes via changesets (§6) — you won't run `changeset:publish` by han
 | `docs-src/`            | Authored doc sources — outlines (incl. `guides/`) + runnable examples (the only hand-edited docs) |
 | `docs/`                | **Generated** user-facing documentation — never hand-edited (`pnpm docs:sync`)                    |
 | `docs-browser/`        | AppShell app that renders `docs/` with live examples                                              |
+| `skills/`              | Hand-authored consumer skills + scripts, Git-managed and installed from this repo                 |
 | `.agents/skills/`      | **Contributor procedures** — the source of truth for how to do the work                           |
 | `.github/`             | Agents, prompts, and workflows (CI + agentic bots)                                                |
 
@@ -109,16 +110,21 @@ Conventions are encoded as skills under **`.agents/skills/`**. Read the relevant
 this guide won't restate their rules (they'd only go stale here).
 
 - **Changing implementation under `packages/**`** → `.agents/skills/code-review/SKILL.md` (the code review skill routes you to the shared cross-cutting and area references for the change).
-- **Building pages / picking UI patterns** → the **`app-shell-patterns`** skill. It is
-  **generated** by `docs-kit` from `docs-src/` into `packages/core/skills/app-shell-patterns/`,
-  which is gitignored and shipped to consumers via the npm package. **Edit the source under
-  `docs-src/` and regenerate with `pnpm docs:sync`** — never hand-edit the generated skill.
-  `pnpm docs:check` blocks in CI if the two drift, so if you change a public API, design tokens,
-  or a pattern, update the `docs-src/` source too.
+- **Building pages / picking UI patterns** → the **`app-shell-patterns`** skill under
+  `skills/app-shell-patterns/`. Its `SKILL.md` and discovery script are **hand-authored and
+  Git-managed**, installed from this repo rather than bundled in npm. Edit them directly when
+  the agent's workflow changes. The skill reads `docs/index.md` inside the installed package
+  for version-matched API and pattern guidance; if a public API, design token, or pattern
+  changes, update its `docs-src/` source and regenerate docs, not the skill's catalogue.
 - **Changing documentation** → `.agents/skills/resync-docs/SKILL.md`. Everything under `docs/` is
   generated; edit the `*.docs.outline.md` (prose) and `*.docs.examples.tsx` (runnable examples)
   under `docs-src/`, then run `pnpm docs:sync`. Outline frontmatter is a closed schema — see
   [`decisions/documentation-management-overhaul.md`](./decisions/documentation-management-overhaul.md).
+  `docs-src/guides/index.docs.outline.md` owns the content-routing guidance; its
+  `<!-- docs-index -->` token generates the document list from outline titles, descriptions,
+  and output paths. Core's `prepack` copies all generated docs into ignored
+  `packages/core/docs/` for npm; run `pnpm docs:sync` before packing if docs have changed.
+  See [`decisions/skill-documentation-separation.md`](./decisions/skill-documentation-separation.md).
 
 ---
 
@@ -185,9 +191,10 @@ Rather than duplicate file-by-file details here (they go stale — see `.agents/
 
 - **`.agents/skills/`** — contributor procedures, primarily `code-review`, `quality-check`, and
   `create-changeset`.
-- **`docs-src/`** — authored source for `docs/` and for the `app-shell-patterns` skill shipped to
-  consumers; both generated via `pnpm docs:sync` (the skill into `packages/core/skills/`,
-  gitignored).
+- **`docs-src/`** — authored source for `docs/`, generated via `pnpm docs:sync` and bundled in
+  npm at pack time. `docs/index.md` routes readers to the relevant guides and reference docs.
+- **`skills/`** — hand-authored consumer skills and scripts, distributed from this repo;
+  independent of docs-kit generation and not bundled in npm.
 - **`.github/agents/`** and **`.github/prompts/`** — reviewer personas and IDE-agent prompts.
 - **`.github/workflows/`** — CI and gh-aw agentic workflows (source `.md` files are compiled to
   `*.lock.yml` via `gh aw compile`; never hand-edit `*.lock.yml`).

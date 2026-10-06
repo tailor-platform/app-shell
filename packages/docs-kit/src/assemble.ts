@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import { Project } from "ts-morph";
 
+import { DOCS_INDEX_TOKEN, renderDocsIndex } from "./docs-index";
 import type { Surface } from "./project";
 import type { Outline, UnitKind } from "./types";
 
@@ -110,10 +111,11 @@ function renderApi(opts: {
 export function assembleMarkdown(opts: {
   repoRoot: string;
   outline: Outline;
+  outlines: Outline[];
   surface: Surface;
   owned: string[];
 }): string {
-  const { repoRoot, outline, surface, owned } = opts;
+  const { repoRoot, outline, outlines, surface, owned } = opts;
   const examples = extractExamples(join(repoRoot, outline.examplesPath));
 
   // The frontmatter title is the canonical H1 (prepended below). Drop a leading
@@ -156,7 +158,10 @@ export function assembleMarkdown(opts: {
   // components (sub-component props, no single `*Props`) and prose units keep
   // their hand-written tables and omit the token.
   const API_TOKEN = /<!--\s*api\s*-->/;
-  const composed = API_TOKEN.test(body) ? body.replace(API_TOKEN, api).trim() : body.trim();
+  const composed = body
+    .replace(API_TOKEN, () => api)
+    .replace(DOCS_INDEX_TOKEN, () => renderDocsIndex(outlines, outline))
+    .trim();
 
   return [front, note, `# ${title}`, composed].filter(Boolean).join("\n\n") + "\n";
 }

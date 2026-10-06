@@ -15,6 +15,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.17.0        | [Status and alert tokens now resolve to the colour roles](#1170-status-and-alert-tokens-now-resolve-to-the-colour-roles)     |
 | 1.15.0        | [Base UI 1.8.0 breaks closed-`Select` and dialog-click tests](#1150-base-ui-180-breaks-closed-select-and-dialog-click-tests) |
 | 1.12.0        | [`DateField` / `DatePicker` field chrome moved to `Field.Root`](#1120-datefield--datepicker-field-chrome-moved-to-fieldroot) |
 | 1.11.0        | [React 19.2.7 and React Router v8 required](#1110-react-1927-and-react-router-v8-are-now-required)                           |
@@ -25,6 +26,26 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
+
+## 1.17.0: status and alert tokens now resolve to the colour roles
+
+**Applies to:** apps that use `bg-status-*`, `text-status-*` or `bg-alert-*` utilities, and apps whose theme overrides `--status-*`, `--alert-*` or `--destructive` to recolour `Badge`, `Alert`, `CsvImporter` or `MetricCard`.
+
+1.17.0 adds semantic colour roles, `--{info|success|warning|danger|neutral}-{surface|surface-hover|border|solid|solid-hover|text|contrast|indicator}`, bridged as Tailwind colours such as `bg-success-surface` and `text-danger-text`. The old `--status-*` and `--alert-*` tokens still exist and still work, but they no longer hold their own colours: each one now resolves to a role (for example `--status-completed` is `var(--success-solid)`). They are deprecated and will be removed in the next major. Nothing errors. Three things change silently:
+
+- **Colours change.** `bg-status-*` and `bg-alert-*` resolve to the role values. For example `bg-status-completed` is `#15803d` instead of `#22c55e`. `--status-default` follows `--muted-foreground` instead of a fixed `#737373`.
+- **Component recolouring moves to the roles.** `Badge`, `Alert`, `CsvImporter` and `MetricCard` read the roles directly. A theme that overrides `--status-*` or `--alert-*` no longer changes these components; override `--{intent}-*` instead. `Badge` `error` / `subtle-error` and `Alert` `error` read `--danger-*`, so overriding `--destructive` no longer reaches them either. `Button variant="destructive"` and `text-destructive` still follow `--destructive`.
+- **`text-status-*` loses contrast in dark mode.** The `--status-*` values are now the step-9 fills, which are below 4.5:1 as text on the dark card.
+
+How to detect it: search the app for `status-`, `alert-` and theme overrides of `--status-`, `--alert-` and `--destructive`. Compare `Badge` and `Alert` in light and dark mode after upgrading.
+
+What to change:
+
+- Replace `text-status-completed` with `text-success-text`, `text-status-attention` with `text-warning-text`, `text-status-danger` with `text-danger-text`, and `text-status-neutral` with `text-info-text`.
+- Replace `bg-status-completed/10 border-status-completed/30` style tints with `bg-success-surface border-success-border`. The same applies to the other intents and to `bg-alert-*` / `border-alert-*`.
+- In a theme that recolours the status components, set the roles (`--success-solid`, `--danger-text`, ...) instead of `--status-*`, `--alert-*` or `--destructive`.
+
+The roles are documented in [Styling & theming](./concepts/styling-theming.md#semantic-color-roles). The decision record is `decisions/semantic-color-roles.md`.
 
 ## 1.15.0: Base UI 1.8.0 breaks closed-`Select` and dialog-click tests
 
@@ -146,7 +167,7 @@ grep -rnE "@theme inline|@custom-variant|app-shell/theme\.css|--(card|popover|mu
 
 Excluding `node_modules` matters: AppShell's own palette files declare these tokens too, and they must not be touched. In your own CSS, hits are either the workaround, which goes, or deliberate overrides, which should take the `:root` / `:root.dark` form described in [Overriding tokens](./concepts/styling-theming.md#overriding-tokens).
 
-What remains is short — [`examples/vite-app/src/index.css`](https://github.com/tailor-platform/app-shell/blob/main/examples/vite-app/src/index.css) is a working reference for the shape (it also imports a branded palette, which is optional):
+What remains is short — [`examples/vite-app/src/index.css`](../examples/vite-app/src/index.css) is a working reference for the shape (it also imports a branded palette, which is optional):
 
 ```css
 @import "tailwindcss";

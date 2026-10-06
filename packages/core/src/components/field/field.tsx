@@ -220,7 +220,7 @@ function Error({ className, ...props }: React.ComponentProps<typeof BaseField.Er
   return (
     <BaseField.Error
       data-slot="field-error"
-      className={cn("astw:text-destructive astw:text-sm astw:font-medium", className)}
+      className={cn("astw:text-danger-text astw:text-sm astw:font-medium", className)}
       {...props}
     />
   );
@@ -261,7 +261,7 @@ Error.displayName = "Field.Error";
  *   <Field.Validity>
  *     {(state) =>
  *       state.validity.valid === false && (
- *         <p className="text-destructive text-sm">
+ *         <p className="text-danger-text text-sm">
  *           {state.validity.typeMismatch
  *             ? "Please enter a valid URL (e.g. https://example.com)"
  *             : "This field is required."}

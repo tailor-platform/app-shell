@@ -703,7 +703,7 @@ function PanelDateRangeInput({
         />
       )}
 
-      {error && <p className="astw:text-destructive astw:text-xs">{error}</p>}
+      {error && <p className="astw:text-danger-text astw:text-xs">{error}</p>}
     </div>
   );
 }
@@ -1026,7 +1026,7 @@ function BetweenInputGroup({
           className={inputCell}
         />
       </div>
-      {error && <p className="astw:text-destructive astw:text-xs">{error}</p>}
+      {error && <p className="astw:text-danger-text astw:text-xs">{error}</p>}
     </div>
   );
 }
@@ -1980,7 +1980,7 @@ function TemporalFilterEditor({
             value={localValueMax}
             onChange={setLocalValueMax}
           />
-          {betweenError && <p className="astw:text-destructive astw:text-xs">{betweenError}</p>}
+          {betweenError && <p className="astw:text-danger-text astw:text-xs">{betweenError}</p>}
         </div>
       ) : (
         <BetweenInputGroup

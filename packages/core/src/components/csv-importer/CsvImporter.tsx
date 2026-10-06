@@ -156,7 +156,7 @@ function UploadStep({
         />
       </button>
       {error && (
-        <div className="astw:flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-destructive/10 astw:px-3 astw:py-2 astw:text-sm astw:text-destructive">
+        <div className="astw:flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-destructive/10 astw:px-3 astw:py-2 astw:text-sm astw:text-danger-text">
           <AlertTriangleIcon className="astw:size-4 astw:shrink-0" />
           {error}
         </div>
@@ -242,7 +242,7 @@ function MappingStep({
                   <td className="astw:px-3 astw:py-2 astw:align-middle astw:text-center">
                     {isMapped && <CheckCircle2Icon className="astw:size-5 astw:text-primary" />}
                     {!isMapped && col.required && (
-                      <CircleAlertIcon className="astw:size-5 astw:text-destructive" />
+                      <CircleAlertIcon className="astw:size-5 astw:text-danger-text" />
                     )}
                     {!isMapped && !col.required && (
                       <CircleDashedIcon className="astw:size-5 astw:text-muted-foreground/40" />
@@ -255,7 +255,7 @@ function MappingStep({
                       <span className="astw:font-medium">
                         {col.label}
                         {col.required && (
-                          <span className="astw:text-destructive astw:ml-0.5">*</span>
+                          <span className="astw:text-danger-text astw:ml-0.5">*</span>
                         )}
                       </span>
                       {col.description && (
@@ -362,7 +362,7 @@ function ReviewStep({
     >
       <div className="astw:flex astw:gap-4 astw:text-sm">
         <span>Total: {rawRows.length} rows</span>
-        {errorCount > 0 && <span className="astw:text-destructive">Errors: {errorCount}</span>}
+        {errorCount > 0 && <span className="astw:text-danger-text">Errors: {errorCount}</span>}
         {warningCount > 0 && (
           <span className="astw:text-warning-text">Warnings: {warningCount}</span>
         )}
@@ -437,7 +437,7 @@ function ReviewStep({
                             className={cn(
                               "astw:text-xs astw:px-2",
                               issue.level === "error"
-                                ? "astw:text-destructive"
+                                ? "astw:text-danger-text"
                                 : "astw:text-warning-text",
                             )}
                           >

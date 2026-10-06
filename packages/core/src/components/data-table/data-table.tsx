@@ -1141,7 +1141,7 @@ function DataTableBody({ className }: { className?: string }) {
     return (
       <Table.Body {...tableBodyProps}>
         <DataTableStatusRow totalColSpan={totalColSpan} state="error">
-          <span className="astw:text-destructive">
+          <span className="astw:text-danger-text">
             {t("errorPrefix")} {error.message}
           </span>
         </DataTableStatusRow>
@@ -1706,7 +1706,7 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
                     action.onClick(row);
                   }
                 }}
-                className={cn(action.variant === "destructive" && "astw:text-destructive")}
+                className={cn(action.variant === "destructive" && "astw:text-danger-text")}
               >
                 {action.icon}
                 {action.label}

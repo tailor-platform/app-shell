@@ -29,7 +29,7 @@ toast.dismiss(id?);
 
 ### ExternalToast
 
-The options type exported by sonner (`import type { ExternalToast } from "sonner"`). The most common fields:
+The options type of sonner's `toast`. Inside an app that depends only on `@tailor-platform/app-shell`, name it as `Parameters<ReturnType<typeof useToast>>[1]` (importing it from `sonner` requires sonner as a direct dependency). The most common fields:
 
 ```typescript
 {

@@ -78,7 +78,7 @@ Define your context type with module augmentation:
 
 ```typescript
 // types.d.ts
-type User = { name: string; email: string };
+type User = { name: string; email: string; role: string };
 
 declare module "@tailor-platform/app-shell" {
   interface AppShellRegister {

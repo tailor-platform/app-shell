@@ -261,7 +261,7 @@ const GlobalErrorBoundary = () => {
 First, define your context data type using module augmentation:
 
 ```typescript
-// types.d.ts
+// types.d.ts — `User` and `ApiClient` are your application's own types
 declare module "@tailor-platform/app-shell" {
   interface AppShellRegister {
     contextData: {

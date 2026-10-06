@@ -9,9 +9,8 @@ type AddressDraft = {
 };
 
 export function ModalForm() {
-  const [isOpen, setOpen] = useState(false);
   return (
-    <Dialog.Root open={isOpen} onOpenChange={setOpen}>
+    <Dialog.Root>
       <Dialog.Trigger render={<Button />}>Add address</Dialog.Trigger>
       <Dialog.Content>
         <Dialog.Header>
@@ -21,14 +20,10 @@ export function ModalForm() {
         {/*
          * `onFormSubmit` fires only after validation passes and receives the
          * registered field values — no `<form onSubmit>` + `new FormData(...)`.
-         * Close the dialog once the save succeeds.
          */}
         <Form<AddressDraft>
           noValidate
-          onFormSubmit={(values) => {
-            window.alert(`Saving ${values.label}`);
-            setOpen(false);
-          }}
+          onFormSubmit={(values) => window.alert(`Saving ${values.label}`)}
         >
           <div className="flex flex-col gap-4 py-4">
             <Field.Root name="label">

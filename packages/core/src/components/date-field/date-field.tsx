@@ -8,7 +8,7 @@ import {
   type ReactElement,
   type Ref,
 } from "react";
-import type { DateValue } from "@internationalized/date";
+import { toCalendarDate, today, type DateValue } from "@internationalized/date";
 import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
 import { cn } from "@/lib/utils";
 import {
@@ -315,6 +315,15 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     timeZone: resolvedTz,
   });
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    // The calendar's focus outlives the popover, so re-land it on the current
+    // (possibly typed) value each time it opens — today when empty (APG).
+    if (nextOpen) {
+      calState.setFocusedDate(val != null ? toCalendarDate(val as never) : today(resolvedTz));
+    }
+  };
+
   const localValidationMessage = useMemo(() => {
     const key = invalidMessageKey(fieldState.invalidReason);
     return key ? t(key) : undefined;
@@ -388,7 +397,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
       />
       <DatePopover
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={handleOpenChange}
         ariaLabel={popoverAriaLabel}
         ariaLabelledby={bindings.labelledBy}
         popupRef={popupRef}
@@ -405,7 +414,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
             settleEntry={fieldState.settleEntry}
             commitOnBlur={fieldState.commitOnBlur}
             expandShortYear={fieldState.expandShortYear}
-            onOpenCalendar={() => setOpen(true)}
+            onOpenCalendar={() => handleOpenChange(true)}
             isDisabled={bindings.isDisabled}
             isReadOnly={bindings.isReadOnly}
             isInvalid={bindings.isInvalid}

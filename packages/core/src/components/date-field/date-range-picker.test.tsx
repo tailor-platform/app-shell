@@ -37,6 +37,9 @@ async function typeDate(user: ReturnType<typeof userEvent.setup>, field: Field, 
   await user.keyboard(year);
 }
 
+/** Accessible name of the focused element — the roving-focus day cell once the popover opens. */
+const focusedLabel = () => document.activeElement?.getAttribute("aria-label") ?? "";
+
 const normalizeIds = (html: string) => html.replace(/id="base-ui-[^"]+"/g, 'id="base-ui-ID"');
 
 // ─── Snapshot ─────────────────────────────────────────────────────────────────
@@ -446,6 +449,21 @@ describe("DateRangePicker popover", () => {
     seg("end date", "month").focus();
     await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
     expect(await screen.findByRole("dialog")).toBeDefined();
+  });
+
+  it("opens on a typed end date when only the end is set, not a stale month", async () => {
+    const user = userEvent.setup();
+    render(<DateRangePicker aria-label="Billing period" />);
+
+    // Page away from today and dismiss — the next open must not reuse that month.
+    await user.click(screen.getByRole("button", { name: "Open calendar" }));
+    await screen.findByRole("dialog");
+    await user.keyboard("{Shift>}{PageUp}{/Shift}{Escape}");
+
+    await typeDate(user, "end date", "2025-12-20");
+    seg("end date", "year").focus();
+    await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
+    await waitFor(() => expect(focusedLabel()).toMatch(/December 20, 2025/));
   });
 
   it("drops a dangling anchor when the popover is dismissed mid-selection", async () => {

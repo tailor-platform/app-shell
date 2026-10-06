@@ -9,7 +9,7 @@ import {
   type ReactElement,
   type Ref,
 } from "react";
-import { toCalendarDate, type DateValue } from "@internationalized/date";
+import { toCalendarDate, today, type DateValue } from "@internationalized/date";
 import { cn } from "@/lib/utils";
 import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
 import {
@@ -284,8 +284,13 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
     if (nextOpen) {
-      // Land the roving focus on the range start (react-aria's autofocus target).
-      if (startVal != null) calendarState.setFocusedDate(toCalendarDate(startVal as never));
+      // Land the roving focus on the range start (react-aria's autofocus target),
+      // else whichever end is typed, else today — never a stale month from a
+      // previous open.
+      const target = startVal ?? endVal;
+      calendarState.setFocusedDate(
+        target != null ? toCalendarDate(target as never) : today(resolvedTz),
+      );
     } else {
       // Dismissed mid-selection — drop the dangling anchor.
       calendarState.cancelSelection();

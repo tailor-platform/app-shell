@@ -103,7 +103,7 @@ describe("Button", () => {
     expect(screen.getByRole("button").className).toContain("bg-primary");
 
     rerender(<Button variant="destructive">Destructive</Button>);
-    expect(screen.getByRole("button").className).toContain("bg-destructive");
+    expect(screen.getByRole("button").className).toContain("bg-danger-solid");
 
     rerender(<Button variant="outline">Outline</Button>);
     expect(screen.getByRole("button").className).toContain("border");

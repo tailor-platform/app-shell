@@ -11,7 +11,7 @@ Styling is done with **Tailwind CSS v4** against `@tailor-platform/app-shell`'s 
 
 **The tokens are the rails.** Consistency across customers, apps, and AI runs comes from the token system, not from rules written in prose. A hand-typed `#fff` or `padding: 13px` is not a "small deviation" — it is the mechanism by which consistency dies.
 
-**Every token in this document is verified against the shipped CSS.** If a token is not listed here, assume it does not exist. Inventing a plausible-sounding token (`bg-surface-1`, `text-fg-muted`, `--space-4`) is the worst failure mode available: Tailwind emits **no CSS at all** for an unknown utility, so the class is silently dropped and the element renders unstyled — no error, no warning, nothing in the console. When unsure, read `node_modules/@tailor-platform/app-shell/dist/themes/default.css`; it is the ground truth.
+**Every token in this document is verified against the shipped CSS.** If a token is not listed here, assume it does not exist. The colour scales (`--primitive-*`) are internal: they are not bridged to Tailwind and are not listed. Inventing a plausible-sounding token (`bg-surface-1`, `text-fg-muted`, `--space-4`) is the worst failure mode available: Tailwind emits **no CSS at all** for an unknown utility, so the class is silently dropped and the element renders unstyled — no error, no warning, nothing in the console. When unsure, read `node_modules/@tailor-platform/app-shell/dist/themes/default.css`; it is the ground truth.
 
 ## Setup
 
@@ -86,14 +86,14 @@ Only import one palette at a time.
 
 Theme tokens live in `packages/core/src/assets/themes/`. Copy `_template.css` to start a new palette — it lists exactly which sections to fill in for light and dark mode.
 
-| Section               | Required?             | What to set                                                                    |
-| --------------------- | --------------------- | ------------------------------------------------------------------------------ |
-| **1. Brand**          | Yes                   | `primary`, `secondary`, `accent` (+ foregrounds) — both modes                  |
-| **2. Shell gradient** | Branded palettes only | `--shell-gradient-base`, `--shell-gradient-tint`                               |
-| **3. System**         | Tune or copy default  | Surfaces: background, card, popover, muted, borders                            |
-| **4. Palette**        | Optional              | Radius, chart colors, shadows                                                  |
-| **5. Semantic**       | Do not duplicate      | Status and alert tokens inherit from `default.css`                             |
-| **6. Structural**     | Branded palettes      | Copy the structural override block from `bloom.css` or `cream.css` when needed |
+| Section               | Required?             | What to set                                                                                                                                            |
+| --------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **1. Brand**          | Yes                   | `primary`, `secondary`, `accent` (+ foregrounds) — both modes                                                                                          |
+| **2. Shell gradient** | Branded palettes only | `--shell-gradient-base`, `--shell-gradient-tint`                                                                                                       |
+| **3. System**         | Tune or copy default  | Surfaces: background, card, popover, muted, borders                                                                                                    |
+| **4. Palette**        | Optional              | Radius, chart colors, shadows                                                                                                                          |
+| **5. Semantic**       | Inherit               | Colour scales, status and alert tokens inherit from `default.css`. Override a colour role (`--{intent}-{role}`) only to recolour the status components |
+| **6. Structural**     | Branded palettes      | Copy the structural override block from `bloom.css` or `cream.css` when needed                                                                         |
 
 A palette is selected by CSS import, not by an AppShell prop. Import exactly one theme file after `@tailor-platform/app-shell/styles`; if you import none, the default palette from `styles` is used.
 
@@ -175,17 +175,44 @@ There are no `-hover` or `-active` brand tokens. Express interaction states with
 
 #### Status
 
-Five status colors, used for badge fills and status dots:
+**Deprecated.** These five tokens and their utilities remain for existing code and will be removed in the next major. New code uses the [semantic color roles](#semantic-color-roles) below. In the default palette they are aliases of those roles, so status colors and Alert colors agree:
 
-| Token                | Use                      | Tailwind              |
-| -------------------- | ------------------------ | --------------------- |
-| `--status-default`   | none / not applicable    | `bg-status-default`   |
-| `--status-neutral`   | informational            | `bg-status-neutral`   |
-| `--status-completed` | success, completed       | `bg-status-completed` |
-| `--status-attention` | warning, needs attention | `bg-status-attention` |
-| `--status-danger`    | error, blocked           | `bg-status-danger`    |
+| Token                | Use                                                  | Tailwind              | Use instead            |
+| -------------------- | ---------------------------------------------------- | --------------------- | ---------------------- |
+| `--status-default`   | none / not applicable (follows `--muted-foreground`) | `bg-status-default`   | `bg-neutral-indicator` |
+| `--status-neutral`   | informational                                        | `bg-status-neutral`   | `bg-info-solid`        |
+| `--status-completed` | success, completed                                   | `bg-status-completed` | `bg-success-solid`     |
+| `--status-attention` | warning, needs attention                             | `bg-status-attention` | `bg-warning-solid`     |
+| `--status-danger`    | error, blocked                                       | `bg-status-danger`    | `bg-danger-solid`      |
 
-Prefer `Badge` with a semantic variant (`success`, `warning`, `error`, `info`, `neutral`) over applying these directly — the variants already pair fill and foreground correctly. Reach for the raw token only on custom surfaces.
+Prefer `Badge` with a semantic variant (`success`, `warning`, `error`, `info`, `neutral`) over applying a fill directly — the variants already pair fill and foreground correctly.
+
+These are fill and indicator colors. `--status-default` follows `--muted-foreground`, so it is theme-dependent and translucent in `cream` and `bloom`; the four hue tokens are opaque in every palette. Do not use them as text color: `--status-completed`, `--status-danger` and `--status-neutral` are below 4.5:1 on a dark card, and `--status-attention` is below 3:1 on a light one. For text, use `text-{intent}-text`.
+
+#### Semantic color roles
+
+Each intent has eight roles. The intents are `info`, `success`, `warning`, `danger` and `neutral`. The hue intents read internal color scales; `neutral` reads the system tokens. Every role is a token named `--{intent}-{role}` and a Tailwind color named `{intent}-{role}`:
+
+| Role            | Tailwind                | Use for                             |
+| --------------- | ----------------------- | ----------------------------------- |
+| `surface`       | `bg-info-surface`       | Soft background                     |
+| `surface-hover` | `bg-info-surface-hover` | Hover state of a soft background    |
+| `border`        | `border-info-border`    | Border on a soft background         |
+| `solid`         | `bg-info-solid`         | Filled background                   |
+| `solid-hover`   | `bg-info-solid-hover`   | Hover state of a filled background  |
+| `text`          | `text-info-text`        | Text and icons on a soft background |
+| `contrast`      | `text-info-contrast`    | Text on a filled background         |
+| `indicator`     | `bg-info-indicator`     | Dots and small marks                |
+
+```tsx
+<span className="rounded-md bg-success-surface px-2 py-0.5 text-success-text">Paid</span>
+```
+
+In the default palette, `text` on `surface` and `contrast` on `solid` and `solid-hover` are at least 4.5:1 for the four hue intents, in light and dark mode, on `--card` and `--background`. A unit test checks this from the shipped CSS. `text` on `surface-hover` is held at 4.2:1 by the same test; it is below 4.5:1 for `danger` and `success` in light mode. The test does not cover the `cream` and `bloom` palettes or the `neutral` intent.
+
+Most `surface` and `border` values are translucent tints, so an opacity modifier compounds rather than replaces — `bg-info-surface/50` halves the tint's alpha instead of setting it to 50%. Some light-mode values are opaque instead of translucent: the `warning` surface, surface-hover and border, the `info` border and the `danger` surface-hover. They do not blend with a tinted parent. All dark-mode values are translucent.
+
+`Badge`, `Alert`, `CsvImporter` and `MetricCard` read these roles directly, not `--status-*` or `--alert-*`. To recolour them, override the roles. `Badge` `error` and `subtle-error`, and `Alert` `error`, follow `--danger-*`. They no longer follow `--destructive`, which still drives `Button` and `text-destructive`.
 
 #### Sidebar & charts
 
@@ -195,24 +222,17 @@ Prefer `Badge` with a semantic variant (`success`, `warning`, `error`, `info`, `
 
 #### Alerts
 
-`--alert-{neutral,success,warning,error,info}-{background,foreground,foreground-muted,border}` — five variants × four slots, each bridged into Tailwind:
+**Deprecated.** `--alert-{neutral,success,warning,error,info}-{background,foreground,foreground-muted,border}` and the matching utilities (`bg-alert-info-background`, `text-alert-info-foreground`, ...) remain for existing code and will be removed in the next major. In the default palette they are aliases of the semantic color roles: `background` is `surface`, `border` is `border`, `foreground` is `text`, and `foreground-muted` follows `foreground`; `error` reads the `danger` intent. The `Alert` component reads the roles, so overriding `--alert-*` changes these utilities but not `Alert`.
 
-| Slot               | Tailwind                           | Use for                    |
-| ------------------ | ---------------------------------- | -------------------------- |
-| `background`       | `bg-alert-info-background`         | Callout fill               |
-| `foreground`       | `text-alert-info-foreground`       | Primary text and icons     |
-| `foreground-muted` | `text-alert-info-foreground-muted` | Secondary/description text |
-| `border`           | `border-alert-info-border`         | Callout border             |
-
-Prefer the `Alert` component — it already pairs the four slots per variant and supplies the icon. Reach for the utilities directly only on custom surfaces `Alert` doesn't cover, such as a status-highlighted table row or an inline note:
+For new custom surfaces, use the roles instead of the alert slots:
 
 ```tsx
-<div className="rounded-lg border bg-alert-warning-background text-alert-warning-foreground border-alert-warning-border">
+<div className="rounded-lg border bg-warning-surface text-warning-text border-warning-border">
   …
 </div>
 ```
 
-The `background` and `border` slots are already semi-transparent tints (~10% and ~20%), so an opacity modifier compounds rather than replaces — `bg-alert-info-background/50` lands near 5% alpha, not 50%.
+Across all colour tokens:
 
 ```tsx
 // Good — semantic token pairs, and a variant where one exists
@@ -503,7 +523,7 @@ AppShell's UI components support data-attribute-based styling, following the [Ba
 ```css
 /* Style a component based on its state */
 .SwitchThumb[data-checked] {
-  background-color: var(--status-completed);
+  background-color: var(--success-solid);
 }
 
 .MenuItem[data-highlighted] {
@@ -574,9 +594,10 @@ These are visual-composition rules every screen must follow, regardless of patte
 | Intent                             | Pick                                                                                                    |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Destructive action (delete, void)  | `Button variant="destructive"`; `bg-destructive` on custom surfaces; confirm in a dialog at `shadow-lg` |
-| Non-blocking caution               | `Badge variant="warning"`, or `bg-status-attention`                                                     |
-| Confirmation / completed state     | `Badge variant="success"`, or `bg-status-completed`                                                     |
-| Neutral callout                    | `Badge variant="info"`, or the `Alert` component                                                        |
+| Non-blocking caution               | `Badge variant="warning"`, or `bg-warning-surface text-warning-text`                                    |
+| Confirmation / completed state     | `Badge variant="success"`, or `bg-success-surface text-success-text`                                    |
+| Informational callout              | `Badge variant="info"`, or `Alert variant="info"`                                                       |
+| Neutral callout                    | `Badge variant="neutral"`, or `Alert variant="neutral"`                                                 |
 | Persistent panel (sidebar, header) | `shadow-sm`                                                                                             |
 | Hovered / sticky surface           | `shadow-md`                                                                                             |
 | Popover / menu / tooltip           | `bg-popover`, `shadow-md`, `duration-150`                                                               |

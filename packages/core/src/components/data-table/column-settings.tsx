@@ -56,9 +56,7 @@ function effectiveSection(
  * that edge (or unpin it), and drag within a zone to reorder. Each row has a
  * visibility checkbox. State persists when `useDataTable` has a `tableId`.
  *
- * @internal Rendered by `DataTable.Toolbar` when its `columnSettings` prop is
- * set — not exported on the `DataTable` namespace, since the control always
- * lives in the same place and needs no per-consumer composition.
+ * Place inside any toolbar or other action layout within `DataTable.Root`.
  */
 function DataTableColumnSettings({ className }: { className?: string }) {
   const t = useDataTableT();

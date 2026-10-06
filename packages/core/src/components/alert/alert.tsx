@@ -16,15 +16,14 @@ const alertVariants = cva(
     variants: {
       /** Visual style and automatic icon */
       variant: {
+        // Each variant reads the semantic colour roles of its intent. The
+        // description inherits the title colour; only neutral mutes it.
         neutral:
-          "astw:bg-alert-neutral-background astw:text-alert-neutral-foreground astw:border-alert-neutral-border astw:*:data-[slot=alert-description]:text-alert-neutral-foreground-muted",
-        success:
-          "astw:bg-alert-success-background astw:text-alert-success-foreground astw:border-alert-success-border astw:*:data-[slot=alert-description]:text-alert-success-foreground-muted",
-        warning:
-          "astw:bg-alert-warning-background astw:text-alert-warning-foreground astw:border-alert-warning-border astw:*:data-[slot=alert-description]:text-alert-warning-foreground-muted",
-        error:
-          "astw:bg-alert-error-background astw:text-alert-error-foreground astw:border-alert-error-border astw:*:data-[slot=alert-description]:text-alert-error-foreground-muted",
-        info: "astw:bg-alert-info-background astw:text-alert-info-foreground astw:border-alert-info-border astw:*:data-[slot=alert-description]:text-alert-info-foreground-muted",
+          "astw:bg-neutral-surface astw:text-neutral-text astw:border-neutral-border astw:*:data-[slot=alert-description]:text-muted-foreground",
+        success: "astw:bg-success-surface astw:text-success-text astw:border-success-border",
+        warning: "astw:bg-warning-surface astw:text-warning-text astw:border-warning-border",
+        error: "astw:bg-danger-surface astw:text-danger-text astw:border-danger-border",
+        info: "astw:bg-info-surface astw:text-info-text astw:border-info-border",
       },
     },
     defaultVariants: {

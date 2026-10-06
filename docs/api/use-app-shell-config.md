@@ -72,6 +72,8 @@ function AppInfo() {
 
 ### Access Modules
 
+Module titles are `LocalizedString` values (a string or a `(locale) => string` function), so the example lists `path` instead of rendering `meta.title` directly.
+
 ```typescript
 function ModuleList() {
   const { configurations } = useAppShellConfig();

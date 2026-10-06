@@ -159,7 +159,7 @@ const MyComponent = () => {
 
 ## Declarative Redirects
 
-`Navigate` redirects as a render result, which avoids the `useEffect` + `navigate()` pattern (that pattern renders the old page for a frame before it redirects):
+`Navigate` redirects as a render result, which avoids the `useEffect` + `navigate()` pattern (that pattern renders the old page for a frame before it redirects). `contextData` is typed through the `AppShellRegister` augmentation described in [useAppShell](../api/use-app-shell.md):
 
 ```tsx
 import { Navigate, useAppShellData } from "@tailor-platform/app-shell";

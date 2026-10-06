@@ -1148,9 +1148,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "77c7a422bb9e3700",
+        "outline": "31ab460607860fec",
         "snapshot": null,
-        "outputMd": "d0531ab2c04cad95",
+        "outputMd": "4becc2090217bfd2",
         "examples": null
       }
     },
@@ -1454,9 +1454,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "98ee7385ef9e9948",
+        "outline": "71327bfa981d5627",
         "snapshot": null,
-        "outputMd": "1355b5ce4edd9347",
+        "outputMd": "363237c68db59ad3",
         "examples": null
       }
     },
@@ -1624,9 +1624,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "e52df4cb162d7dc6",
+        "outline": "6340b100ea30b76c",
         "snapshot": null,
-        "outputMd": "fa285e1d5d56fa67",
+        "outputMd": "bdb9722aa61c1222",
         "examples": null
       }
     },
@@ -1654,7 +1654,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "caa1ea6264d3b543",
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "ba5107604e4f42e8",
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
-    "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "d0531ab2c04cad95",
+    "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "4becc2090217bfd2",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "dc6b3afc049b4148",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "0133fdae405f467c",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
@@ -1714,7 +1714,7 @@
     "packages/core/skills/app-shell-patterns/references/api/router/use-params.md": "535f701e77dfc4e6",
     "packages/core/skills/app-shell-patterns/references/api/use-ai-chat.md": "f4a88f636000fd60",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell.md": "00c1282fc969d629",
-    "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "1355b5ce4edd9347",
+    "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "363237c68db59ad3",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "65d935f1365f32ef",
     "packages/core/skills/app-shell-patterns/references/api/use-auth.md": "a7d907ac79d24944",
     "packages/core/skills/app-shell-patterns/references/api/use-override-breadcrumb.md": "6ec55fc3dfd8c21d",
@@ -1724,7 +1724,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-route-error.md": "068fa5e47296467b",
     "packages/core/skills/app-shell-patterns/references/api/use-theme.md": "c338022de386d5e4",
     "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "30c15545ab3c4954",
-    "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "fa285e1d5d56fa67",
+    "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "bdb9722aa61c1222",
     "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
     "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "850e620f5cc222fa",
     "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",

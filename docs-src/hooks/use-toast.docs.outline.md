@@ -7,15 +7,15 @@ description: Hook for displaying toast notifications
 
 # useToast
 
-React hook to display toast notifications for user feedback. It returns the [sonner](https://sonner.emilkowal.ski/toast) `toast` function. AppShell renders the toaster for you, so no provider setup is needed.
+React hook to display toast notifications for user feedback. It returns the `toast` function exported by [sonner](https://sonner.emilkowal.ski/toast). The built-in layouts (`SidebarLayout`, `GlobalHeaderLayout`) already render the toaster, so no provider setup is needed.
 
 ## Signature
 
 ```typescript
-const useToast: () => typeof toast;
+const useToast: () => typeof toast; // `toast` is sonner's export
 
 // The returned function
-toast(message: React.ReactNode, options?: ToastOptions): string | number;
+toast(message: React.ReactNode, options?: ExternalToast): string | number;
 toast.success(message, options?);
 toast.error(message, options?);
 toast.info(message, options?);
@@ -27,9 +27,9 @@ toast.dismiss(id?);
 
 ## Parameters
 
-### ToastOptions
+### ExternalToast
 
-The most common options. See the sonner documentation for the full list.
+The options type exported by sonner (`import type { ExternalToast } from "sonner"`). The most common fields:
 
 ```typescript
 {
@@ -101,3 +101,4 @@ toast("Processing...", { duration: 5000 }); // 5 seconds
 ## Related
 
 - [Toast pattern](../patterns/interaction-toast.md) - When to use a toast and how to word it
+- [SidebarLayout](../components/sidebar-layout.md) - Renders the toaster

@@ -425,7 +425,7 @@ function ReviewStep({
                           type="text"
                           className={cn(
                             "astw:w-full astw:rounded astw:border astw:px-2 astw:py-1 astw:text-sm astw:bg-transparent",
-                            issue?.level === "error" && "astw:border-destructive",
+                            issue?.level === "error" && "astw:border-danger-solid",
                             issue?.level === "warning" && "astw:border-warning-solid",
                             !issue && "astw:border-transparent",
                           )}

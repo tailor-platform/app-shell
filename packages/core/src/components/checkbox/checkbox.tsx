@@ -30,8 +30,8 @@ const checkboxBoxClasses = cn(
   "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
   "astw:data-indeterminate:bg-primary astw:data-indeterminate:border-primary astw:data-indeterminate:text-primary-foreground",
   "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
-  "astw:data-invalid:border-destructive astw:data-invalid:ring-destructive/20 astw:dark:data-invalid:ring-destructive/40",
-  "astw:aria-invalid:border-destructive astw:aria-invalid:ring-destructive/20 astw:dark:aria-invalid:ring-destructive/40",
+  "astw:data-invalid:border-danger-solid astw:data-invalid:ring-danger-solid/20 astw:dark:data-invalid:ring-danger-solid/40",
+  "astw:aria-invalid:border-danger-solid astw:aria-invalid:ring-danger-solid/20 astw:dark:aria-invalid:ring-danger-solid/40",
   "astw:data-disabled:cursor-not-allowed",
 );
 

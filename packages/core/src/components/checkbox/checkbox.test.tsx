@@ -127,7 +127,7 @@ describe("Checkbox", () => {
     render(<Checkbox aria-label="Accept" aria-invalid />);
     // shadcn's FormControl signals invalid via aria-invalid (no Base UI Field
     // in play), so the box must key its destructive styling off it too.
-    expect(screen.getByRole("checkbox").className).toContain("aria-invalid:border-destructive");
+    expect(screen.getByRole("checkbox").className).toContain("aria-invalid:border-danger-solid");
   });
 
   describe("Field integration", () => {

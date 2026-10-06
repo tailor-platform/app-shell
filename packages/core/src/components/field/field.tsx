@@ -140,7 +140,7 @@ function Control({ className, ...props }: React.ComponentProps<typeof BaseField.
       data-slot="field-control"
       className={cn(
         inputBaseClasses,
-        "astw:data-invalid:ring-destructive/20 astw:dark:data-invalid:ring-destructive/40 astw:data-invalid:border-destructive",
+        "astw:data-invalid:ring-danger-solid/20 astw:dark:data-invalid:ring-danger-solid/40 astw:data-invalid:border-danger-solid",
         className,
       )}
       {...props}

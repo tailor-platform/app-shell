@@ -990,7 +990,7 @@ function BetweenInputGroup({
     "astw:flex astw:items-center astw:h-8 astw:rounded-md astw:border astw:shadow-xs astw:has-focus-visible:ring-[3px]";
   const rowOk =
     "astw:border-input astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50";
-  const rowError = "astw:border-destructive astw:has-focus-visible:ring-destructive/30";
+  const rowError = "astw:border-danger-solid astw:has-focus-visible:ring-danger-solid/30";
   const labelCell =
     "astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-muted astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14";
   const inputCell =

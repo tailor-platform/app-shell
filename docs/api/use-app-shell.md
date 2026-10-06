@@ -15,8 +15,8 @@ React hook to access AppShell context data and configuration within your compone
 const useAppShell: () => {
   contextData: ContextData;
   configurations: {
-    modules: Module[];
-    settingsResources: Resource[];
+    modules: ReturnType<typeof defineModule>[];
+    settingsResources: ReturnType<typeof defineResource>[];
     basePath?: string;
     locale: string;
     resolvedLocale?: string;
@@ -78,6 +78,8 @@ Define your context type with module augmentation:
 
 ```typescript
 // types.d.ts
+type User = { name: string; email: string };
+
 declare module "@tailor-platform/app-shell" {
   interface AppShellRegister {
     contextData: {

@@ -18,8 +18,8 @@ const useAppShellConfig: () => {
   favicon?: string;
   appInfo?: AppInfo;
   configurations: {
-    modules: Module[];
-    settingsResources: Resource[];
+    modules: ReturnType<typeof defineModule>[];
+    settingsResources: ReturnType<typeof defineResource>[];
     basePath?: string;
     locale: string;
     resolvedLocale?: string;
@@ -41,15 +41,15 @@ const useAppShellConfig: () => {
 
 ### `configurations`
 
-| Property            | Type                     | Description                                           |
-| ------------------- | ------------------------ | ----------------------------------------------------- |
-| `modules`           | `Module[]`               | Registered modules                                    |
-| `settingsResources` | `Resource[]`             | Resources that appear only in Settings menu           |
-| `basePath`          | `string \| undefined`    | Base path for all routes                              |
-| `locale`            | `string`                 | Language subtag used for built-in UI strings (`"en"`) |
-| `resolvedLocale`    | `string \| undefined`    | Full BCP-47 tag used for Intl / date formatting       |
-| `timeZone`          | `string \| undefined`    | IANA timezone used by date/time components            |
-| `errorBoundary`     | `ErrorBoundaryComponent` | Global error boundary element                         |
+| Property            | Type                                  | Description                                           |
+| ------------------- | ------------------------------------- | ----------------------------------------------------- |
+| `modules`           | `ReturnType<typeof defineModule>[]`   | Registered modules (`Module` itself is not exported)  |
+| `settingsResources` | `ReturnType<typeof defineResource>[]` | Resources that appear only in Settings menu           |
+| `basePath`          | `string \| undefined`                 | Base path for all routes                              |
+| `locale`            | `string`                              | Language subtag used for built-in UI strings (`"en"`) |
+| `resolvedLocale`    | `string \| undefined`                 | Full BCP-47 tag used for Intl / date formatting       |
+| `timeZone`          | `string \| undefined`                 | IANA timezone used by date/time components            |
+| `errorBoundary`     | `ErrorBoundaryComponent`              | Global error boundary element                         |
 
 ## Usage
 
@@ -119,11 +119,11 @@ const { configurations } = useAppShell();
 
 ## Comparison with Other Hooks
 
-| Hook                | Returns               | Use When            |
-| ------------------- | --------------------- | ------------------- |
-| `useAppShellConfig` | Configuration only    | Need config data    |
-| `useAppShellData`   | Context data only     | Need custom context |
-| `useAppShell`       | Both config + context | Need both           |
+| Hook                | Returns                                             | Use When            |
+| ------------------- | --------------------------------------------------- | ------------------- |
+| `useAppShellConfig` | `{ title, icon, favicon, appInfo, configurations }` | Need config data    |
+| `useAppShellData`   | `{ contextData }`                                   | Need custom context |
+| `useAppShell`       | Both, merged into one object                        | Need both           |
 
 ## Related
 

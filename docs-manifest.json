@@ -1437,9 +1437,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "3462a5de4c74127d",
+        "outline": "0904a9f39b3efdc5",
         "snapshot": null,
-        "outputMd": "00c1282fc969d629",
+        "outputMd": "75b35c2649032245",
         "examples": null
       }
     },
@@ -1454,9 +1454,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "71327bfa981d5627",
+        "outline": "9444a5bb4732ede1",
         "snapshot": null,
-        "outputMd": "363237c68db59ad3",
+        "outputMd": "1a0a937f3a412c13",
         "examples": null
       }
     },
@@ -1471,9 +1471,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "2c1dda957ba7570b",
+        "outline": "3c32549d5cea446b",
         "snapshot": null,
-        "outputMd": "65d935f1365f32ef",
+        "outputMd": "2d2eaf5aa04d95d3",
         "examples": null
       }
     },
@@ -1624,9 +1624,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "6340b100ea30b76c",
+        "outline": "fa41418ecb402511",
         "snapshot": null,
-        "outputMd": "bdb9722aa61c1222",
+        "outputMd": "20654c2d41045362",
         "examples": null
       }
     },
@@ -1713,9 +1713,9 @@
     "packages/core/skills/app-shell-patterns/references/api/router/use-navigate.md": "d018cb13a7ddc38b",
     "packages/core/skills/app-shell-patterns/references/api/router/use-params.md": "535f701e77dfc4e6",
     "packages/core/skills/app-shell-patterns/references/api/use-ai-chat.md": "f4a88f636000fd60",
-    "packages/core/skills/app-shell-patterns/references/api/use-app-shell.md": "00c1282fc969d629",
-    "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "363237c68db59ad3",
-    "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "65d935f1365f32ef",
+    "packages/core/skills/app-shell-patterns/references/api/use-app-shell.md": "75b35c2649032245",
+    "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "1a0a937f3a412c13",
+    "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "2d2eaf5aa04d95d3",
     "packages/core/skills/app-shell-patterns/references/api/use-auth.md": "a7d907ac79d24944",
     "packages/core/skills/app-shell-patterns/references/api/use-override-breadcrumb.md": "6ec55fc3dfd8c21d",
     "packages/core/skills/app-shell-patterns/references/api/use-page-meta.md": "f988bdc0fb180f0c",
@@ -1724,7 +1724,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-route-error.md": "068fa5e47296467b",
     "packages/core/skills/app-shell-patterns/references/api/use-theme.md": "c338022de386d5e4",
     "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "30c15545ab3c4954",
-    "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "bdb9722aa61c1222",
+    "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "20654c2d41045362",
     "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
     "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "850e620f5cc222fa",
     "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",

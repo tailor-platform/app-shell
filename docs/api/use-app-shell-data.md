@@ -96,6 +96,8 @@ Define your context type with module augmentation:
 
 ```typescript
 // types.d.ts
+type User = { name: string; email: string; role: string };
+
 declare module "@tailor-platform/app-shell" {
   interface AppShellRegister {
     contextData: {
@@ -134,11 +136,11 @@ const { contextData } = useAppShell();
 
 ## Comparison with Other Hooks
 
-| Hook                | Returns               | Use When            |
-| ------------------- | --------------------- | ------------------- |
-| `useAppShellData`   | Context data only     | Need custom context |
-| `useAppShellConfig` | Configuration only    | Need config data    |
-| `useAppShell`       | Both config + context | Need both           |
+| Hook                | Returns                                             | Use When            |
+| ------------------- | --------------------------------------------------- | ------------------- |
+| `useAppShellData`   | `{ contextData }`                                   | Need custom context |
+| `useAppShellConfig` | `{ title, icon, favicon, appInfo, configurations }` | Need config data    |
+| `useAppShell`       | Both, merged into one object                        | Need both           |
 
 ## Related
 

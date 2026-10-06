@@ -12,9 +12,9 @@ React hook to display toast notifications for user feedback. It returns the `toa
 ## Signature
 
 ```typescript
-const useToast: () => typeof toast; // `toast` is sonner's export
+const useToast: () => typeof toast; // `toast` is sonner's export; use `ReturnType<typeof useToast>` to name it
 
-// The returned function
+// The returned function (abbreviated; see sonner for the full signature)
 toast(message: React.ReactNode, options?: ExternalToast): string | number;
 toast.success(message, options?);
 toast.error(message, options?);

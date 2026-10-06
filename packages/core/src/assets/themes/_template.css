@@ -17,10 +17,12 @@
  *    `@tailor-platform/app-shell/styles` in the consuming app.
  *
  * DO NOT SET (inherited from `:root` in default.css):
- *   --ring, --sidebar-*, --primitive-* (colour scales), --status-*, --alert-*
+ *   --ring, --sidebar-*, --primitive-* (colour scales), --status-*, --alert-*,
+ *   --destructive, --destructive-foreground
  * The colour roles --{info|success|warning|danger|neutral}-{role} also inherit.
  * Override a role only to recolour the status components (Badge, Alert, ...)
- * for this palette; never set --status-* or --alert-*, they alias the roles.
+ * for this palette; never set --status-*, --alert-* or --destructive*, they alias the roles
+ * (--destructive is the danger solid; recolour it with --danger-solid).
  *
  * PREVIEW: `/showcase/colors` in the Vite example app.
  * ═══════════════════════════════════════════════════════════════════════════
@@ -57,7 +59,6 @@
   --sidebar-border: rgba(229, 229, 229, 1);
 
   /* ── 4. PALETTE — optional overrides (else inherited from :root) ──────── */
-  --destructive: rgba(220, 38, 38, 1);
   --radius: 0.625rem;
   --chart-1: /* brand-adjacent */;
   --chart-2: /* ... */;
@@ -101,7 +102,6 @@
   --sidebar-border: rgba(255, 255, 255, 0.1);
 
   /* ── 4. PALETTE (dark overrides) ─────────────────────────────────────── */
-  --destructive: rgba(248, 113, 113, 1);
   --chart-1: /* ... */;
   --chart-2: /* ... */;
   --chart-3: /* ... */;

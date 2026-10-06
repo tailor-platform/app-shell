@@ -13,10 +13,11 @@
  *   2. SHELL GRADIENT — optional; branded palettes only (bloom, cream).
  *   3. SYSTEM         — surfaces & chrome; copy default or tune for brand tint
  *                       (foreground, muted, popover, card, borders).
- *   4. PALETTE        — optional: radius, charts, shadows, destructive.
+ *   4. PALETTE        — optional: radius, charts, shadows.
  *
  * Inherited from default.css — do not duplicate in new palettes:
- *   --ring, --sidebar-*, --primitive-* (colour scales), --status-*, --alert-*.
+ *   --ring, --sidebar-*, --primitive-* (colour scales), --status-*, --alert-*,
+ *   --destructive, --destructive-foreground (aliases of the danger roles).
  *   The colour roles --{intent}-{role} inherit too; a palette overrides them
  *   only to recolour the status components.
  *

@@ -156,7 +156,7 @@ function UploadStep({
         />
       </button>
       {error && (
-        <div className="astw:flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-destructive/10 astw:px-3 astw:py-2 astw:text-sm astw:text-danger-text">
+        <div className="astw:flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-danger-surface astw:px-3 astw:py-2 astw:text-sm astw:text-danger-text">
           <AlertTriangleIcon className="astw:size-4 astw:shrink-0" />
           {error}
         </div>
@@ -235,7 +235,7 @@ function MappingStep({
                   key={col.key}
                   className={cn(
                     "astw:border-b astw:border-border astw:last:border-b-0 astw:transition-colors",
-                    !isMapped && col.required && "astw:bg-destructive/5",
+                    !isMapped && col.required && "astw:bg-danger-surface",
                   )}
                 >
                   {/* Status icon */}
@@ -416,7 +416,7 @@ function ReviewStep({
                       key={m.csvHeader}
                       className={cn(
                         "astw:px-1 astw:py-1",
-                        issue?.level === "error" && "astw:bg-destructive/10",
+                        issue?.level === "error" && "astw:bg-danger-surface",
                         issue?.level === "warning" && "astw:bg-warning-surface",
                       )}
                     >

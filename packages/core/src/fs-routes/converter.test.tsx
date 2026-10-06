@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { convertPagesToModules, validateExclusiveRouteConfig } from "./converter";
 import { createContentRoutes } from "@/routing/routes";
+import { processPathSegments } from "@/routing/path";
+import { defineI18nLabels } from "@/hooks/i18n";
 import type { PageEntry, PageComponent } from "./types";
 
 // ============================================
@@ -218,6 +220,28 @@ describe("convertPagesToModules", () => {
     const modules = convertPagesToModules(pages);
 
     expect(modules[0].resources[0].meta.breadcrumbTitle).toBe("All Orders");
+  });
+
+  it("resolves localized module and resource breadcrumbs from page metadata", () => {
+    const labels = defineI18nLabels({
+      en: { purchasing: "Purchasing", orders: "All Orders" },
+      ja: { purchasing: "購買", orders: "すべての注文" },
+    });
+    const pages = [
+      createMockPage("/purchasing", {
+        meta: { breadcrumbTitle: () => labels.t("purchasing") },
+      }),
+      createMockPage("/purchasing/orders", {
+        meta: { breadcrumbTitle: () => labels.t("orders") },
+      }),
+    ];
+    const modules = convertPagesToModules(pages);
+
+    expect(
+      processPathSegments("/purchasing/orders", undefined, modules, "ja").segments.map(
+        ({ title }) => title,
+      ),
+    ).toEqual(["購買", "すべての注文"]);
   });
 
   it("does not include breadcrumbTitle when not specified", () => {

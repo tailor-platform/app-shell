@@ -536,9 +536,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "7fa967f666ec9a42",
+        "outline": "c71a6cceb8a9e1fc",
         "snapshot": null,
-        "outputMd": "ce6b48d7ae55cea8",
+        "outputMd": "db93b37536c4b3b4",
         "examples": null
       }
     },
@@ -553,9 +553,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "b86f2162ee6f01cb",
+        "outline": "8154def679a608e5",
         "snapshot": null,
-        "outputMd": "d31b32b7336fa006",
+        "outputMd": "580fab6884ced40f",
         "examples": null
       }
     },
@@ -605,7 +605,7 @@
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
         "outline": "bda40376d6e3e008",
-        "snapshot": "d4fa33f2da19d5ee",
+        "snapshot": "b845d4c54453b0f0",
         "outputMd": "ec6a0ac098d1d87a",
         "examples": "934c52d4e8761404"
       }
@@ -655,9 +655,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "5f2301d504082a60",
+        "outline": "f48495a7d351569c",
         "snapshot": null,
-        "outputMd": "caa1ea6264d3b543",
+        "outputMd": "e323bbc273d4f0ec",
         "examples": null
       }
     },
@@ -1013,7 +1013,7 @@
       "hashes": {
         "typeSurface": "943616def28cafb0",
         "outline": "8f06df28129676c8",
-        "snapshot": "02dfd02003105939",
+        "snapshot": "6233cd9de511210f",
         "outputMd": "ceb4a05822538d20",
         "examples": "cff0508bb5520ae6"
       }
@@ -1148,9 +1148,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "a83f594603627967",
+        "outline": "c616660663e6e960",
         "snapshot": null,
-        "outputMd": "2f3ff3f095c2b1cc",
+        "outputMd": "6bd757e0e51a9a55",
         "examples": null
       }
     },
@@ -1166,7 +1166,7 @@
       "hashes": {
         "typeSurface": "429710973dfa912b",
         "outline": "721e8995f53f0e8f",
-        "snapshot": "f6fcbd73e127f2f4",
+        "snapshot": "0ceac9786fb4ce3c",
         "outputMd": "ae287e2bb5abc1c6",
         "examples": "1ce89cec30045466"
       }
@@ -1183,7 +1183,7 @@
       "hashes": {
         "typeSurface": "e760949efcbe4c38",
         "outline": "464d91acc48f7c9d",
-        "snapshot": "12c20fc6f44d1b4c",
+        "snapshot": "40d15c3f1003fdb0",
         "outputMd": "1f81ebd562c50371",
         "examples": "b0eebb8c5e2219dc"
       }
@@ -1651,10 +1651,10 @@
   "skill": {
     "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "71f5f42c0fa0698e",
     "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "551e04b1abbfa101",
-    "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "caa1ea6264d3b543",
+    "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "e323bbc273d4f0ec",
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "ba5107604e4f42e8",
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
-    "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "2f3ff3f095c2b1cc",
+    "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "6bd757e0e51a9a55",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "dc6b3afc049b4148",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "0133fdae405f467c",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
@@ -1703,8 +1703,8 @@
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",
     "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "f5a392adf633adfc",
-    "packages/core/skills/app-shell-patterns/references/api/define-module.md": "ce6b48d7ae55cea8",
-    "packages/core/skills/app-shell-patterns/references/api/define-resource.md": "d31b32b7336fa006",
+    "packages/core/skills/app-shell-patterns/references/api/define-module.md": "db93b37536c4b3b4",
+    "packages/core/skills/app-shell-patterns/references/api/define-resource.md": "580fab6884ced40f",
     "packages/core/skills/app-shell-patterns/references/api/guards/hidden.md": "dda25877f7e40b82",
     "packages/core/skills/app-shell-patterns/references/api/guards/overview.md": "bc694f0965c1d049",
     "packages/core/skills/app-shell-patterns/references/api/guards/pass.md": "3363ac1c6a7905f8",

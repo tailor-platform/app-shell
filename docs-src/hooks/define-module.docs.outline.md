@@ -70,8 +70,8 @@ defineModule({
 
 **meta.breadcrumbTitle**
 
-- **Type:** `string | ((segment: string) => string)`
-- **Description:** Custom breadcrumb segment title override
+- **Type:** `string | ((segment: string) => LocalizedString)`
+- **Description:** Custom breadcrumb segment title override. The callback receives the URL segment, not the locale. Return `labels.t(key)` from the callback for localization: `breadcrumbTitle: () => labels.t("dashboard")`. AppShell resolves the returned `LocalizedString` using the current locale. Do not pass `labels.t(key)` directly, since its locale argument would receive the URL segment instead. When omitted, the breadcrumb uses the localized `meta.title`.
 
 ### `guards`
 

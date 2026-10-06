@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Resource, Module } from "@/resource";
-import { buildTitleResolver } from "@/lib/i18n";
+import { buildLocaleResolver, buildTitleResolver } from "@/lib/i18n";
 
 /**
  * Parse a dynamic route segment and return its parameter name, or `null` for a static segment.
@@ -47,14 +47,18 @@ export function filterRoutes(
 
 type PathMapping = {
   title: string;
-  breadcrumbTitle?: string | ((segment: string) => string);
+  breadcrumbTitle?: Module["meta"]["breadcrumbTitle"];
   clickable: boolean;
 };
 
-const resolveBreadcrumbTitle = (mapping: PathMapping, segment: string): string => {
-  if (typeof mapping.breadcrumbTitle === "function") return mapping.breadcrumbTitle(segment);
-  if (typeof mapping.breadcrumbTitle === "string") return mapping.breadcrumbTitle;
-  return mapping.title;
+const resolveBreadcrumbTitle = (mapping: PathMapping, segment: string, locale: string): string => {
+  const title =
+    typeof mapping.breadcrumbTitle === "function"
+      ? mapping.breadcrumbTitle(segment)
+      : mapping.breadcrumbTitle;
+  return typeof title === "function"
+    ? buildLocaleResolver(locale)(title, mapping.title)
+    : (title ?? mapping.title);
 };
 
 /**
@@ -123,7 +127,7 @@ export function processPathSegments(
           {
             segment: "",
             path: "",
-            title: resolveBreadcrumbTitle(rootMapping, ""),
+            title: resolveBreadcrumbTitle(rootMapping, "", locale),
             clickable: rootMapping.clickable,
           },
         ],
@@ -149,7 +153,7 @@ export function processPathSegments(
     }
     let title: string;
     if (mapping) {
-      title = resolveBreadcrumbTitle(mapping, segment);
+      title = resolveBreadcrumbTitle(mapping, segment, locale);
     } else {
       title = decodeURIComponent(segment);
     }

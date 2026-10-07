@@ -240,8 +240,9 @@ type ResourceMeta = {
   icon?: ReactNode;
 
   /**
-   * Custom breadcrumb segment title. The callback receives the URL segment, not the locale.
-   * Return a LocalizedString (e.g. `() => labels.t("key")`) to resolve it using the current locale.
+   * Custom breadcrumb segment title. Pass `labels.t("key")` directly for localization.
+   * Other callbacks receive the URL segment and may return a LocalizedString
+   * (e.g. `(segment) => labels.t("order", { id: segment })`), resolved using the current locale.
    */
   breadcrumbTitle?: string | ((segment: string) => LocalizedString);
 };

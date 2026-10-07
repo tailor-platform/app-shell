@@ -536,9 +536,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "c71a6cceb8a9e1fc",
+        "outline": "cc7349b7e8c18f7b",
         "snapshot": null,
-        "outputMd": "db93b37536c4b3b4",
+        "outputMd": "f6cc2503630b651c",
         "examples": null
       }
     },
@@ -553,9 +553,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "8154def679a608e5",
+        "outline": "7fb31862d2ddb478",
         "snapshot": null,
-        "outputMd": "580fab6884ced40f",
+        "outputMd": "27e4d84b41cf40e0",
         "examples": null
       }
     },
@@ -655,9 +655,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "f48495a7d351569c",
+        "outline": "c3de8a342b4a7be3",
         "snapshot": null,
-        "outputMd": "e323bbc273d4f0ec",
+        "outputMd": "e189f95dbe4b0286",
         "examples": null
       }
     },
@@ -1148,9 +1148,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "c616660663e6e960",
+        "outline": "ebe12d013259f93c",
         "snapshot": null,
-        "outputMd": "6bd757e0e51a9a55",
+        "outputMd": "2403b3d6e44e79a6",
         "examples": null
       }
     },
@@ -1651,10 +1651,10 @@
   "skill": {
     "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "71f5f42c0fa0698e",
     "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "551e04b1abbfa101",
-    "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "e323bbc273d4f0ec",
+    "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "e189f95dbe4b0286",
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "ba5107604e4f42e8",
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
-    "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "6bd757e0e51a9a55",
+    "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "2403b3d6e44e79a6",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "dc6b3afc049b4148",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "0133fdae405f467c",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
@@ -1703,8 +1703,8 @@
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",
     "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "f5a392adf633adfc",
-    "packages/core/skills/app-shell-patterns/references/api/define-module.md": "db93b37536c4b3b4",
-    "packages/core/skills/app-shell-patterns/references/api/define-resource.md": "580fab6884ced40f",
+    "packages/core/skills/app-shell-patterns/references/api/define-module.md": "f6cc2503630b651c",
+    "packages/core/skills/app-shell-patterns/references/api/define-resource.md": "27e4d84b41cf40e0",
     "packages/core/skills/app-shell-patterns/references/api/guards/hidden.md": "dda25877f7e40b82",
     "packages/core/skills/app-shell-patterns/references/api/guards/overview.md": "bc694f0965c1d049",
     "packages/core/skills/app-shell-patterns/references/api/guards/pass.md": "3363ac1c6a7905f8",

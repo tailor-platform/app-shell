@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Resource, Module } from "@/resource";
-import { buildLocaleResolver, buildTitleResolver } from "@/lib/i18n";
+import { buildLocaleResolver, buildTitleResolver, LOCALIZED_LABEL } from "@/lib/i18n";
 
 /**
  * Parse a dynamic route segment and return its parameter name, or `null` for a static segment.
@@ -54,7 +54,7 @@ type PathMapping = {
 const resolveBreadcrumbTitle = (mapping: PathMapping, segment: string, locale: string): string => {
   const title =
     typeof mapping.breadcrumbTitle === "function"
-      ? mapping.breadcrumbTitle(segment)
+      ? mapping.breadcrumbTitle(LOCALIZED_LABEL in mapping.breadcrumbTitle ? locale : segment)
       : mapping.breadcrumbTitle;
   return typeof title === "function"
     ? buildLocaleResolver(locale)(title, mapping.title)

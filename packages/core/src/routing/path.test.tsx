@@ -387,12 +387,55 @@ describe.concurrent("processPathSegments", () => {
     ).toEqual(titles);
   });
 
+  it.each([
+    ["en", ["Home", "All Orders", "Order #42"]],
+    ["ja", ["ホーム", "すべての注文", "注文 #42"]],
+    ["fr", ["Home", "All Orders", "Order #42"]],
+  ])("resolves labels.t() directly throughout the hierarchy for %s", (locale, titles) => {
+    const labels = defineI18nLabels({
+      en: {
+        home: "Home",
+        orders: "All Orders",
+        order: ({ id }: { id: string }) => `Order #${id}`,
+      },
+      ja: {
+        home: "ホーム",
+        orders: "すべての注文",
+        order: ({ id }: { id: string }) => `注文 #${id}`,
+      },
+    });
+    const modules = [
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard", breadcrumbTitle: labels.t("home") },
+        resources: [
+          defineResource({
+            path: "orders",
+            meta: { title: "Orders", breadcrumbTitle: labels.t("orders") },
+            subResources: [
+              defineResource({
+                path: ":id",
+                meta: { title: "Detail", breadcrumbTitle: labels.t("order", { id: "42" }) },
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    expect(
+      processPathSegments("/dashboard/orders/42", undefined, modules, locale).segments.map(
+        ({ title }) => title,
+      ),
+    ).toEqual(titles);
+  });
+
   it("resolves localized root breadcrumbs using the current locale", () => {
     const labels = defineI18nLabels({ en: { home: "Home" }, ja: { home: "ホーム" } });
     const modules = [
       defineModule({
         path: "",
-        meta: { title: "Dashboard", breadcrumbTitle: () => labels.t("home") },
+        meta: { title: "Dashboard", breadcrumbTitle: labels.t("home") },
         resources: [],
       }),
     ];
@@ -401,7 +444,7 @@ describe.concurrent("processPathSegments", () => {
     expect(processPathSegments("/", undefined, modules, "ja").segments[0].title).toBe("ホーム");
   });
 
-  it.each(["", () => "", () => () => ""])(
+  it.each(["", () => "", () => () => "", defineI18nLabels({ en: { empty: "" } }).t("empty")])(
     "preserves intentionally empty breadcrumb titles (%s)",
     (breadcrumbTitle) => {
       const modules = [

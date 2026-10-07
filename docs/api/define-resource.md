@@ -66,7 +66,7 @@ defineResource({
 **meta.breadcrumbTitle**
 
 - **Type:** `string | ((segment: string) => LocalizedString)`
-- **Description:** Custom breadcrumb segment title. The callback receives the URL segment, not the locale. Return `labels.t(key)` from the callback for localization: `breadcrumbTitle: () => labels.t("orders")`, or `breadcrumbTitle: (segment) => labels.t("order", { id: segment })` for a dynamic label. AppShell resolves the returned `LocalizedString` using the current locale. Do not pass `labels.t(key)` directly. When omitted, the breadcrumb uses the localized `meta.title`.
+- **Description:** Custom breadcrumb segment title. Pass `labels.t(key)` directly for localization: `breadcrumbTitle: labels.t("orders")`. Other callbacks receive the URL segment and may return a `LocalizedString`, for example `breadcrumbTitle: (segment) => labels.t("order", { id: segment })` for a dynamic label. AppShell resolves it using the current locale. The existing `() => labels.t(key)` form remains supported; handwritten locale functions must be returned from an outer callback. When omitted, the breadcrumb uses the localized `meta.title`.
 
 ### `subResources`
 

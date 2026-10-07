@@ -229,10 +229,10 @@ describe("convertPagesToModules", () => {
     });
     const pages = [
       createMockPage("/purchasing", {
-        meta: { breadcrumbTitle: () => labels.t("purchasing") },
+        meta: { breadcrumbTitle: labels.t("purchasing") },
       }),
       createMockPage("/purchasing/orders", {
-        meta: { breadcrumbTitle: () => labels.t("orders") },
+        meta: { breadcrumbTitle: labels.t("orders") },
       }),
     ];
     const modules = convertPagesToModules(pages);

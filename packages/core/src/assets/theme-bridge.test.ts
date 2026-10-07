@@ -14,6 +14,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const bridge = readFileSync(join(here, "theme.bridge.css"), "utf8");
 const defaultTheme = readFileSync(join(here, "themes/default.css"), "utf8");
 
+/** Semantic colour roles: 5 intents x 8 roles, named `--{intent}-{role}`. */
+const SEMANTIC_PREFIX = "(?:info|success|warning|danger|neutral)";
+
 /** Token names defined in the default palette for a given prefix, e.g. `alert`. */
 function definedTokens(prefix: string): string[] {
   const matches = defaultTheme.matchAll(new RegExp(`^\\s*--(${prefix}-[a-z-]+):`, "gm"));
@@ -29,7 +32,11 @@ function bridgedTokens(prefix: string): Map<string, string> {
 }
 
 describe("theme bridge", () => {
-  describe.each(["alert", "status"])("--%s-* tokens", (prefix) => {
+  describe.each([
+    ["alert", "alert"],
+    ["status", "status"],
+    ["semantic colour role", SEMANTIC_PREFIX],
+  ])("--%s-* tokens", (_label, prefix) => {
     const defined = definedTokens(prefix);
     const bridged = bridgedTokens(prefix);
 
@@ -55,6 +62,11 @@ describe("theme bridge", () => {
     // would still satisfy the symmetry checks above if it were removed from
     // both files — fails loudly.
     expect(bridgedTokens("alert").size).toBe(20);
+  });
+
+  it("bridges all 40 semantic colour roles", () => {
+    // 5 intents x 8 roles, pinned for the same reason as the alert count.
+    expect(bridgedTokens(SEMANTIC_PREFIX).size).toBe(40);
   });
 
   describe("typography roles", () => {

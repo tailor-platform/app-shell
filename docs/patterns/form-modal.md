@@ -28,32 +28,36 @@ function ModalForm() {
           <Dialog.Title>Add address</Dialog.Title>
           <Dialog.Description>Add a shipping address to this order.</Dialog.Description>
         </Dialog.Header>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            const data = new FormData(event.currentTarget);
-            window.alert(`Saving ${data.get("label") ?? ""}`);
-          }}
+        {/*
+         * `onFormSubmit` fires only after validation passes and receives the
+         * registered field values — no `<form onSubmit>` + `new FormData(...)`.
+         */}
+        <Form<AddressDraft>
+          noValidate
+          onFormSubmit={(values) => window.alert(`Saving ${values.label}`)}
         >
           <div className="flex flex-col gap-4 py-4">
             <Field.Root name="label">
               <Field.Label>Label</Field.Label>
-              <Field.Control render={<Input />} />
+              <Field.Control required />
+              <Field.Error match="valueMissing">Label is required.</Field.Error>
             </Field.Root>
             <Field.Root name="street">
               <Field.Label>Street</Field.Label>
-              <Field.Control render={<Input />} />
+              <Field.Control required />
+              <Field.Error match="valueMissing">Street is required.</Field.Error>
             </Field.Root>
             <Field.Root name="city">
               <Field.Label>City</Field.Label>
-              <Field.Control render={<Input />} />
+              <Field.Control required />
+              <Field.Error match="valueMissing">City is required.</Field.Error>
             </Field.Root>
           </div>
           <Dialog.Footer>
-            <Dialog.Close render={<Button variant="ghost" />}>Cancel</Dialog.Close>
+            <Dialog.Close render={<Button type="button" variant="ghost" />}>Cancel</Dialog.Close>
             <Button type="submit">Save</Button>
           </Dialog.Footer>
-        </form>
+        </Form>
       </Dialog.Content>
     </Dialog.Root>
   );
@@ -86,27 +90,28 @@ function ModalFormRouted() {
           <Dialog.Header>
             <Dialog.Title>Create product</Dialog.Title>
           </Dialog.Header>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              const data = new FormData(event.currentTarget);
-              window.alert(`Saving ${data.get("name") ?? ""}`);
+          <Form<ProductDraft>
+            noValidate
+            onFormSubmit={(values) => {
+              window.alert(`Saving ${values.name}`);
               setCreateOpen(false);
             }}
           >
             <div className="flex flex-col gap-4 py-4">
               <Field.Root name="name">
                 <Field.Label>Name</Field.Label>
-                <Field.Control render={<Input />} />
+                <Field.Control required />
+                <Field.Error match="valueMissing">Name is required.</Field.Error>
               </Field.Root>
             </div>
             <Dialog.Footer>
-              <Button variant="ghost" onClick={() => setCreateOpen(false)}>
+              {/* Inside a `<Form>` an untyped button submits — Cancel must be `type="button"`. */}
+              <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit">Save</Button>
             </Dialog.Footer>
-          </form>
+          </Form>
         </Dialog.Content>
       </Dialog.Root>
     </Layout>
@@ -133,7 +138,8 @@ placeholder.
 - **`Form` + `Field` is the default stack.** They wrap Base UI and ship with AppShell — no extra
   dependency.
 - **Submit via `onFormSubmit(values)`.** It fires only after validation passes. Do not hand-roll
-  `<form onSubmit>` + `new FormData(...)` — that skips validation and server-error routing.
+  `<form onSubmit>` + `new FormData(...)` — that bypasses `Form`'s field validation and server-error
+  routing.
 - **`onFormSubmit` reads registered `Field.Root`s, not the DOM.** So every control — including
   `Select`, `Combobox`, and `Autocomplete` — just needs wrapping in a `Field.Root name="…"`. They
   need **no `name` of their own and no `useState`**. Mirroring field values into React state is the

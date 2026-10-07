@@ -37,9 +37,11 @@ export type AppShellPageProps = {
     icon?: ReactNode;
     /**
      * Custom breadcrumb segment title for this page.
-     * Can be a static string or a function that receives the URL segment.
+     * Can be a static string or a `labels.t("key")` translation function.
+     * Other callbacks receive the URL segment and may return a LocalizedString
+     * (e.g. `(segment) => labels.t("order", { id: segment })`), resolved using the current locale.
      */
-    breadcrumbTitle?: string | ((segment: string) => string);
+    breadcrumbTitle?: string | ((segment: string) => LocalizedString);
   };
 
   /**

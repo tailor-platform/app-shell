@@ -467,12 +467,12 @@ Write **plain Tailwind utilities** in your application code. Three rules cover e
 </div>
 ```
 
-When no prop exists and you genuinely have to override a value a component sets, add Tailwind's [importance modifier](https://tailwindcss.com/docs/styling-with-utility-classes#important-modifier) — a trailing `!`. It is the last resort, not the first: a plain utility silently loses (see below), and `!` is what the pattern catalogue uses for the one documented case, zeroing a card's padding so a table can sit flush inside it:
+When no prop exists and you genuinely have to override a value a component sets, add Tailwind's [importance modifier](https://tailwindcss.com/docs/styling-with-utility-classes#important-modifier) — a trailing `!`. It is the last resort, not the first: a plain utility silently loses (see below). Check for a prop before reaching for it. Sitting a table flush inside a card, for example, used to need `className="px-0!"`; it is now a prop:
 
 ```tsx
 <Card.Root>
   <Card.Header title="Line items" />
-  <Card.Content className="px-0!">
+  <Card.Content padding="none">
     <Table.Root>{/* … */}</Table.Root>
   </Card.Content>
 </Card.Root>
@@ -498,6 +498,8 @@ This is the reason rule 3 sends you to props rather than to a more specific clas
 // Element keeps both classes; padding stays at AppShell's 24px
 <Card.Content className="px-0" />
 ```
+
+(For this particular case, use `padding="none"`.)
 
 State variants make it worse rather than better: `Button`'s `ghost` variant sets a hover color, and a `:hover` rule outranks an unprefixed utility on **specificity**, not merely order — so a plain `text-destructive` on a ghost button is red only until the pointer reaches it. `variant="destructive"` is the supported way to express that; where no such prop exists, `!` wins in every state because importance beats specificity.
 

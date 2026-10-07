@@ -27,6 +27,7 @@ export type GeneratedRouteParams = {
   "/showcase/activity-card": {};
   "/showcase/ai-chat": {};
   "/showcase/alert-tokens": {};
+  "/showcase/card": {};
   "/showcase/colors": {};
   "/showcase/csv-importer": {};
   "/showcase/data-table": {};

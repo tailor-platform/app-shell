@@ -2,6 +2,9 @@ import { capitalCase } from "change-case";
 
 export type LocalizedString = string | ((locale: string) => string);
 
+// Identifies generated locale callbacks where other callback contracts are also accepted.
+export const LOCALIZED_LABEL = Symbol("localized-label");
+
 export const DEFAULT_LOCALE = "en";
 
 /**

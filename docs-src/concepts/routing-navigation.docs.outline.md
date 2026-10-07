@@ -207,6 +207,44 @@ defineResource({
 // Breadcrumb shows: "Orders > Order #12345"
 ```
 
+### Localized Breadcrumb Titles
+
+Pass `labels.t(key)` directly to `meta.breadcrumbTitle`, just like `meta.title`.
+AppShell recognizes these translation functions and resolves them using the current locale.
+For labels that depend on the URL segment, return a `LocalizedString` from a segment callback:
+
+```tsx
+import { defineI18nLabels, defineResource } from "@tailor-platform/app-shell";
+
+const labels = defineI18nLabels({
+  en: {
+    orders: "All Orders",
+    order: ({ id }: { id: string }) => `Order #${id}`,
+  },
+  ja: {
+    orders: "すべての注文",
+    order: ({ id }: { id: string }) => `注文 #${id}`,
+  },
+});
+
+const ordersResource = defineResource({
+  path: "orders",
+  meta: { breadcrumbTitle: labels.t("orders") },
+  subResources: [
+    defineResource({
+      path: ":id",
+      meta: { breadcrumbTitle: (segment) => labels.t("order", { id: segment }) },
+    }),
+  ],
+});
+```
+
+The same pattern works for `defineModule` and file-based `appShellPageProps.meta`.
+Other callbacks still receive the URL segment. The existing `() => labels.t(key)` form remains supported.
+Handwritten locale functions must be returned from an outer callback, for example `breadcrumbTitle: () => (locale) => locale === "ja" ? "注文" : "Orders"`.
+If navigation and breadcrumbs share a label, omit `breadcrumbTitle` and use `title: labels.t(key)` instead.
+Existing strings and `(segment) => string` callbacks remain supported; no `as string` cast is needed.
+
 ### Dynamic Breadcrumb Titles
 
 Use the `useOverrideBreadcrumb` hook to replace a breadcrumb segment with a data-driven value from within the rendered page component:

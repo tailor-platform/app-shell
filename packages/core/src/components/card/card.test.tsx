@@ -46,4 +46,42 @@ describe("Card", () => {
     );
     expect(screen.getByText("Card body")).toBeDefined();
   });
+
+  describe("Content padding", () => {
+    it("pads content by default", () => {
+      render(
+        <Card.Root>
+          <Card.Content>Body</Card.Content>
+        </Card.Root>,
+      );
+      const content = screen.getByText("Body");
+      expect(content.dataset.padding).toBe("default");
+      expect(content.className).toContain("astw:px-6");
+    });
+
+    it('renders edge-to-edge with padding="none"', () => {
+      render(
+        <Card.Root>
+          <Card.Content padding="none">Body</Card.Content>
+        </Card.Root>,
+      );
+      const content = screen.getByText("Body");
+      expect(content.dataset.padding).toBe("none");
+      expect(content.className).not.toMatch(/astw:(px|pb|first:pt)-6/);
+      // Corners are carried, not clipped: a consumer's overflow still applies.
+      expect(content.className).toContain("astw:last:rounded-b-[inherit]");
+      expect(content.className).not.toContain("overflow");
+    });
+
+    it("strips a nested DataTable's own border", () => {
+      render(
+        <Card.Root>
+          <Card.Content padding="none">Body</Card.Content>
+        </Card.Root>,
+      );
+      expect(screen.getByText("Body").className).toContain(
+        "astw:[&>[data-slot=data-table]]:border-0",
+      );
+    });
+  });
 });

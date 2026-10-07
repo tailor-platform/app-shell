@@ -241,10 +241,10 @@
       "symbols": ["Card"],
       "hashes": {
         "typeSurface": "6ce6f0fdf2450cec",
-        "outline": "794fbe3b6440047a",
-        "snapshot": "98e09e5019fa1368",
-        "outputMd": "29b147ccc0c5ab88",
-        "examples": "b7b2d28f20fe0a18"
+        "outline": "a8c217856c9c367a",
+        "snapshot": "31ad44b3faa1da06",
+        "outputMd": "675dc665e5082ff0",
+        "examples": "b20054836086ced0"
       }
     },
     "checkbox": {
@@ -621,9 +621,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "41d9abcae59b27b4",
+        "outline": "ead7d94daf36e8da",
         "snapshot": null,
-        "outputMd": "c3fb2588a0699c26",
+        "outputMd": "717ef4e7ae835aff",
         "examples": null
       }
     },
@@ -1284,9 +1284,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "c8a79ca086341d8c",
+        "outline": "a16d07a7eae92139",
         "snapshot": null,
-        "outputMd": "1277e06bb82432e6",
+        "outputMd": "9ee8eba5945a9db9",
         "examples": "d3cca347b055a503"
       }
     },
@@ -1656,7 +1656,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "4becc2090217bfd2",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "dc6b3afc049b4148",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "1277e06bb82432e6",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "9ee8eba5945a9db9",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
@@ -1668,7 +1668,7 @@
     "packages/core/skills/app-shell-patterns/references/components/avatar.md": "a874b74c176bcb47",
     "packages/core/skills/app-shell-patterns/references/components/badge.md": "0cb27fbce6f76e2e",
     "packages/core/skills/app-shell-patterns/references/components/button.md": "bce0e2fada1d1638",
-    "packages/core/skills/app-shell-patterns/references/components/card.md": "29b147ccc0c5ab88",
+    "packages/core/skills/app-shell-patterns/references/components/card.md": "675dc665e5082ff0",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
@@ -1734,7 +1734,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "09e99e5035da6e81",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "8062ea0df9403fbb",
-    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "c3fb2588a0699c26",
+    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
     "packages/core/skills/app-shell-patterns/SKILL.md": "814325f4ea06ffae"
   }

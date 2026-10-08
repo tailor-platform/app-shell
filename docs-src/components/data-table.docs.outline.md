@@ -699,18 +699,27 @@ The `filter` property on a column accepts the same base shape as `FilterConfig`,
 
 ### Filter Types and Operators
 
-| Type       | Input editor              | Supported operators                                                                                          |
-| ---------- | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `string`   | Text                      | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
-| `number`   | Number                    | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `datetime` | Datetime-local            | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `date`     | **Calendar / DatePicker** | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
-| `time`     | Time                      | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `enum`     | Dropdown                  | `eq`, `ne`, `in`, `nin`                                                                                      |
-| `boolean`  | Toggle                    | `eq`, `ne`                                                                                                   |
-| `uuid`     | Text                      | `eq`, `ne`, `in`, `nin`                                                                                      |
+| Type       | Input editor                | Supported operators                                                                                          |
+| ---------- | --------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `string`   | Text                        | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
+| `number`   | Number                      | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `decimal`  | Decimal text (string value) | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `datetime` | Datetime-local              | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `date`     | **Calendar / DatePicker**   | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
+| `time`     | Time                        | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `enum`     | Dropdown                    | `eq`, `ne`, `in`, `nin`                                                                                      |
+| `boolean`  | Toggle                      | `eq`, `ne`                                                                                                   |
+| `uuid`     | Text                        | `eq`, `ne`, `in`, `nin`                                                                                      |
 
-When the `between` operator is selected on a `number`, `datetime`, `date`, or `time` column, the value editor renders a range input with **min**/**max** (or **From**/**To** for dates) bounds.
+When the `between` operator is selected on a `number`, `decimal`, `datetime`, `date`, or `time` column, the value editor renders a range input with **min**/**max** (or **From**/**To** for dates) bounds.
+
+### Decimal Filters
+
+TailorDB `db.decimal()` fields are generated as metadata `type: "decimal"`. They support numeric sort and filter operators, but values remain **strings**, matching the GraphQL `Decimal` scalar without JavaScript number rounding. Scalar filters, `in`/`nin` arrays, and `between` bounds all use strings in `variables.query`.
+
+The editor accepts signed decimal and scientific notation (for example, `"9007199254740993.123456789"` or `"1.23e-10"`) and checks range ordering without rounding. Sorting is delegated to the backend. As with `number`, `in`/`nin` are available programmatically, not in the built-in editor.
+
+Regenerate metadata with the updated SDK plugin to replace older decimal fields marked as `"number"`. Decimal metadata does not select a numeric cell renderer; the default text rendering preserves the original value.
 
 ### Date Filters
 

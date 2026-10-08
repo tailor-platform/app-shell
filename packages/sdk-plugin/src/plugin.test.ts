@@ -187,6 +187,10 @@ describe("appShellPlugin", () => {
             name: "decimalField",
             config: { type: "decimal", required: false },
           },
+          decimalArrayField: {
+            name: "decimalArrayField",
+            config: { type: "decimal", required: false, array: true },
+          },
           dateField: {
             name: "dateField",
             config: { type: "date", required: false },
@@ -217,7 +221,13 @@ describe("appShellPlugin", () => {
 
     expect(fields.find((f: { name: string }) => f.name === "intField").type).toBe("number");
     expect(fields.find((f: { name: string }) => f.name === "floatField").type).toBe("number");
-    expect(fields.find((f: { name: string }) => f.name === "decimalField").type).toBe("number");
+    expect(fields.find((f: { name: string }) => f.name === "decimalField").type).toBe("decimal");
+    expect(fields.find((f: { name: string }) => f.name === "decimalArrayField")).toEqual({
+      name: "decimalArrayField",
+      type: "array",
+      arrayItemType: "decimal",
+      required: false,
+    });
     expect(fields.find((f: { name: string }) => f.name === "dateField").type).toBe("date");
     expect(fields.find((f: { name: string }) => f.name === "dtField").type).toBe("datetime");
 

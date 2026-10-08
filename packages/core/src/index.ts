@@ -207,6 +207,15 @@ export type { PositionProps } from "./lib/position";
 export { Sheet } from "./components/sheet";
 export { Tabs } from "./components/tabs";
 export { Toolbar, type ToolbarProps } from "./components/toolbar";
+export {
+  FilterRail,
+  useFilterRailCounts,
+  useFilterRailLayout,
+  useFilterRailCompact,
+  useSavedViews,
+  type FilterRailRootProps,
+  type FilterRailSection,
+} from "./components/filter-rail";
 export { Tooltip } from "./components/tooltip";
 export { Select, type SelectAsyncFetcher } from "./components/select";
 export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox";

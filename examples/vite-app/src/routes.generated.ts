@@ -35,6 +35,7 @@ export type GeneratedRouteParams = {
   "/showcase/date-picker": {};
   "/showcase/document-progress": {};
   "/showcase/dropdown": {};
+  "/showcase/filter-rail": {};
   "/showcase/forms": {};
   "/showcase/forms/zod-rhf": {};
   "/showcase/grid": {};

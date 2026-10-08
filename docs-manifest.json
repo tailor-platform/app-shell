@@ -661,6 +661,31 @@
         "examples": null
       }
     },
+    "filter-rail": {
+      "slug": "filter-rail",
+      "kind": "code-backed",
+      "outline": "docs-src/components/filter-rail.docs.outline.md",
+      "output": "docs/components/filter-rail.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/filter-rail/**"],
+      "claims": [],
+      "symbols": [
+        "FilterRail",
+        "FilterRailRootProps",
+        "FilterRailSection",
+        "useFilterRailCompact",
+        "useFilterRailCounts",
+        "useFilterRailLayout",
+        "useSavedViews"
+      ],
+      "hashes": {
+        "typeSurface": "ab5ce723db3dee73",
+        "outline": "8369adf1c11980ce",
+        "snapshot": "e113b988f35c6e46",
+        "outputMd": "139eaf4f874e8002",
+        "examples": null
+      }
+    },
     "form": {
       "slug": "form",
       "kind": "code-backed",
@@ -1680,6 +1705,7 @@
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "ec6a0ac098d1d87a",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
+    "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "139eaf4f874e8002",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "91d901b17aed7781",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
@@ -1736,6 +1762,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "8062ea0df9403fbb",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "814325f4ea06ffae"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "78416714e79e4594"
   }
 }

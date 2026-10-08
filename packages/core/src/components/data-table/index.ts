@@ -26,6 +26,7 @@ export type {
   DataTableAction,
   RowAction,
   SelectionAction,
+  SelectionActionHelpers,
   UseDataTableOptions,
   UseDataTableReturn,
 } from "./types";

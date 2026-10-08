@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
@@ -7,7 +7,7 @@ import { Spinner } from "@/components/spinner";
 import { Toolbar } from "@/components/toolbar";
 import { useDataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
-import type { SelectionAction } from "./types";
+import type { SelectionAction, SelectionActionHelpers } from "./types";
 
 /** Actions past this many collapse into the "More actions" menu. */
 const MAX_INLINE_ACTIONS = 3;
@@ -53,7 +53,13 @@ function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
  * count · actions · overflow menu · Clear.
  */
 export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
-  const { selectionActions = [], selectedRows = [], clearSelection } = useDataTableContext<TRow>();
+  const {
+    selectionActions = [],
+    selectedRows = [],
+    clearSelection,
+    pendingActionId = null,
+    runSelectionAction,
+  } = useDataTableContext<TRow>();
   const t = useDataTableT();
   const countText = useSelectionCountText();
   const rowRef = useRef<HTMLDivElement>(null);
@@ -73,10 +79,11 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
     };
   }, []);
 
-  // Id of the action whose promise is still pending. While set, every action
-  // is disabled, so a slow request can't be fired twice or overlapped by
-  // another action against the same selection.
-  const [pendingId, setPendingId] = useState<string | null>(null);
+  // The in-flight action is tracked by the table, not here, so the bar's
+  // disabled state survives it unmounting and remounting mid-request. While
+  // set, every action — and Clear — is disabled, so a slow request can't be
+  // fired twice or overlapped by another action against the same selection.
+  const pendingId = pendingActionId;
   const busy = pendingId !== null;
 
   const clear = () => clearSelection?.();
@@ -90,26 +97,19 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
 
   const run = ({ action, rows }: ResolvedAction<TRow>) => {
     if (busy || rows.length === 0) return;
-    const result = action.onClick(rows, { clearSelection: clear });
-    // Synchronous handlers (e.g. one that opens a confirm dialog) own the
-    // selection from here; only a returned promise is waited on.
-    if (!isPromiseLike(result)) return;
-    setPendingId(action.id);
-    result.then(
-      () => {
-        setPendingId(null);
-        // The rows it acted on may have changed, and copies remembered from
-        // other pages can't refresh — clear rather than keep stale rows around.
-        if (!action.keepSelection) clear();
+    // `run` lets a handler that only opens a confirm dialog hand the request
+    // back later, from the dialog's confirm button, and still get the pending
+    // state and clear-on-success.
+    const helpers: SelectionActionHelpers = {
+      clearSelection: clear,
+      run: (request) => {
+        runSelectionAction?.(action, request);
+        return request;
       },
-      (error: unknown) => {
-        // Keep the selection so the action can be retried. Report instead of
-        // rethrowing: a rethrow from this chain would surface as an unhandled
-        // rejection even when the app already handled the error itself.
-        setPendingId(null);
-        console.error(`[DataTable] Selection action "${action.id}" failed:`, error);
-      },
-    );
+    };
+    const result = action.onClick(rows, helpers);
+    // A synchronous handler that never calls `run` owns the selection.
+    if (isPromiseLike(result)) runSelectionAction?.(action, result);
   };
 
   return (
@@ -179,7 +179,13 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
           </Menu.Root>
         )}
         <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />
-        <Button size="sm" variant="ghost" aria-label={t("selectionClearLabel")} onClick={clear}>
+        <Button
+          size="sm"
+          variant="ghost"
+          aria-label={t("selectionClearLabel")}
+          disabled={busy}
+          onClick={clear}
+        >
           {t("selectionClear")}
         </Button>
       </Toolbar.Group>

@@ -6,6 +6,7 @@ import {
   useDataTable,
   type Column,
   type SelectionAction,
+  type SelectionActionHelpers,
 } from "@tailor-platform/app-shell";
 
 type Order = {
@@ -29,9 +30,12 @@ const columns: Column<Order>[] = [
   { label: "Total", render: (order) => `$${order.total.toLocaleString()}` },
 ];
 
-type PendingCancel = { orders: Order[]; clearSelection: () => void };
+type PendingCancel = { orders: Order[]; run: SelectionActionHelpers["run"] };
 
 // Stand-ins for real mutations.
+const cancelOrders = async (orders: Order[]) => {
+  window.alert(`Cancelling ${orders.length} order(s)`);
+};
 const confirmOrders = async (orders: Order[]) => {
   window.alert(`Confirming ${orders.length} order(s)`);
 };
@@ -70,9 +74,9 @@ export function InteractionMultiSelect() {
       label: "Cancel",
       variant: "destructive",
       canApply: (order) => order.status !== "Shipped",
-      // Destructive: confirm first (interaction/confirm). Opening the dialog is
-      // synchronous, so the selection is cleared on confirm instead.
-      onClick: (orders, { clearSelection }) => setPendingCancel({ orders, clearSelection }),
+      // Destructive: confirm first (interaction/confirm). Keep `run` and hand
+      // the request back from the dialog's confirm button.
+      onClick: (orders, { run }) => setPendingCancel({ orders, run }),
     },
   ];
 
@@ -107,8 +111,8 @@ export function InteractionMultiSelect() {
             <Button
               variant="destructive"
               onClick={() => {
-                window.alert(`Cancelling ${pendingCancel?.orders.length} order(s)`);
-                pendingCancel?.clearSelection();
+                // The bar shows its pending state and clears once this resolves.
+                if (pendingCancel) pendingCancel.run(cancelOrders(pendingCancel.orders));
                 setPendingCancel(null);
               }}
             >

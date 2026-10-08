@@ -14,6 +14,7 @@ import {
   type DataTableData,
   type PageInfo,
   type SelectionAction,
+  type SelectionActionHelpers,
 } from "@tailor-platform/app-shell";
 import { CheckSquare, Download, Pause, Play, Trash2 } from "lucide-react";
 
@@ -206,7 +207,7 @@ const columns = [
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
-type PendingDelete = { rows: Vendor[]; clearSelection: () => void };
+type PendingDelete = { rows: Vendor[]; run: SelectionActionHelpers["run"] };
 
 const DataTableSelectionPage = () => {
   const toast = useToast();
@@ -271,9 +272,9 @@ const DataTableSelectionPage = () => {
       variant: "destructive",
       canApply: (v) => v.status === "archived",
       // Destructive: confirm first (interaction/confirm pattern). Opening the
-      // dialog is synchronous, so the bar leaves the selection alone and the
-      // dialog clears it on confirm.
-      onClick: (rows, { clearSelection }) => setPendingDelete({ rows, clearSelection }),
+      // dialog returns nothing, so keep `run` and hand the request back on
+      // confirm — the bar then shows its pending state and clears on success.
+      onClick: (rows, { run }) => setPendingDelete({ rows, run }),
     },
   ];
 
@@ -286,12 +287,17 @@ const DataTableSelectionPage = () => {
     selectionActions,
   });
 
+  // 🧪 Dummy Data: a fake slow delete request.
+  const deleteVendors = async (rows: Vendor[]) => {
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    const ids = new Set(rows.map((row) => row.id));
+    setVendors((prev) => prev.filter((v) => !ids.has(v.id)));
+    toast.error(`Deleted ${rows.length} vendor(s)`);
+  };
+
   const confirmDelete = () => {
     if (!pendingDelete) return;
-    const ids = new Set(pendingDelete.rows.map((row) => row.id));
-    setVendors((prev) => prev.filter((v) => !ids.has(v.id)));
-    toast.error(`Deleted ${pendingDelete.rows.length} vendor(s)`);
-    pendingDelete.clearSelection();
+    pendingDelete.run(deleteVendors(pendingDelete.rows));
     setPendingDelete(null);
   };
 

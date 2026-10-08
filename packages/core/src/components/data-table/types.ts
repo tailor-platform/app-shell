@@ -539,6 +539,21 @@ export interface RowAction<TRow extends Record<string, unknown>> extends DataTab
   onClick: (row: TRow) => void;
 }
 
+/** The second argument to `SelectionAction.onClick`. */
+export interface SelectionActionHelpers {
+  /** Empty the selection across all pages. */
+  clearSelection: () => void;
+  /**
+   * Hand the bar a request it should track — for one that starts after
+   * `onClick` has returned, typically from a confirm dialog's confirm button.
+   * The bar then behaves as if `onClick` had returned it: actions (and Clear)
+   * are disabled while it is pending, and the selection clears once it resolves
+   * unless the action sets `keepSelection`. Returns the request, so it can be
+   * awaited too.
+   */
+  run: <T>(request: PromiseLike<T>) => PromiseLike<T>;
+}
+
 /**
  * A bulk action for the selected rows, shown in `DataTable.Footer` while a
  * selection is open. See `UseDataTableOptions.selectionActions`.
@@ -555,10 +570,15 @@ export interface SelectionAction<
    * selection is cleared — those rows may have changed, and rows remembered
    * from other pages would otherwise be stale — unless `keepSelection` is set.
    * A rejected promise leaves the selection as it was, so the action can be
-   * retried. Synchronous handlers (such as opening a confirm dialog) leave the
-   * selection alone: call `clearSelection` once the work is done.
+   * retried.
+   *
+   * **Confirming first?** An `onClick` that only opens a confirm dialog returns
+   * nothing, so the bar has nothing to wait on. Keep `helpers.run` and pass it
+   * the request when the user confirms — `run(deleteRows(rows))` — and the bar
+   * treats it exactly like a returned promise. Otherwise a synchronous handler
+   * leaves the selection alone; call `clearSelection` once the work is done.
    */
-  onClick: (rows: TRow[], helpers: { clearSelection: () => void }) => void | Promise<unknown>;
+  onClick: (rows: TRow[], helpers: SelectionActionHelpers) => void | Promise<unknown>;
   /**
    * Keep the selection after this action's promise resolves — for actions that
    * don't change the rows, such as an export.
@@ -658,6 +678,17 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   deselectAllRows?: () => void;
   /** Empties the selection across all pages. */
   clearSelection?: () => void;
+  /** Id of the selection action whose request is in flight, or `null`. */
+  pendingActionId?: string | null;
+  /**
+   * Tracks a selection action's request: disables the bar while it is pending
+   * and clears the selection once it resolves (unless `keepSelection`). This is
+   * what `SelectionActionHelpers.run` calls. Undefined when selection is off.
+   */
+  runSelectionAction?: (
+    action: { id: string; keepSelection?: boolean },
+    request: PromiseLike<unknown>,
+  ) => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;
 

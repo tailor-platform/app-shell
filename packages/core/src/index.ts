@@ -304,6 +304,7 @@ export {
   type DataTableAction,
   type RowAction,
   type SelectionAction,
+  type SelectionActionHelpers,
   type UseDataTableOptions,
   type UseDataTableReturn,
   type MetadataFieldOptions,

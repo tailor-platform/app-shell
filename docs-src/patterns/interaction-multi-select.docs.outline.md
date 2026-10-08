@@ -58,7 +58,7 @@ Pass `selectionActions` to `useDataTable`. The moment one row is selected, `Data
 - Give an action `canApply` when it fits only some rows: the bar shows the eligible count, disables the action at 0, and passes only those rows to `onClick`
 - Return the promise from `onClick` for async work: the bar disables its actions while it runs and clears the selection when it resolves; set `keepSelection: true` on actions that don't change rows (export)
 - At most 3 actions render inline, in array order; the 4th onward move to the More actions menu — order by frequency and put a destructive action last
-- Destructive bulk actions MUST open an `interaction/confirm` dialog from `onClick`; that synchronous `onClick` leaves the selection alone, so call the `clearSelection` helper on confirm
+- Destructive bulk actions MUST open an `interaction/confirm` dialog from `onClick`; keep the `run` helper and pass it the request from the dialog's confirm button (`run(deleteRows(rows))`) so the bar shows its pending state and clears on success
 - When an action also exists per row, define it once as a `DataTableAction` and spread it into both `rowActions` and `selectionActions`
 - Selection persists across pagination, filter, and sort changes — do NOT clear it on those
 

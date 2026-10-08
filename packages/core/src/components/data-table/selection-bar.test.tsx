@@ -434,5 +434,85 @@ describe("DataTable selection actions", () => {
 
       expect(onSelectionChange.mock.calls.filter(([ids]) => ids.length === 0)).toHaveLength(1);
     });
+
+    it("disables Clear while an action is pending", () => {
+      const pending = deferred();
+      const actions: SelectionAction<Vendor>[] = [
+        { id: "activate", label: "Activate", onClick: () => pending.promise },
+      ];
+      render(<Harness selectionActions={actions} />, { wrapper });
+
+      fireEvent.click(rowCheckbox(0));
+      fireEvent.click(within(getBar()).getByRole("button", { name: "Activate" }));
+
+      expect(within(getBar()).getByRole("button", { name: "Clear selection" })).toHaveProperty(
+        "disabled",
+        true,
+      );
+    });
+
+    it("keeps the pending state when the bar unmounts and remounts mid-request", async () => {
+      const pending = deferred();
+      const actions: SelectionAction<Vendor>[] = [
+        { id: "activate", label: "Activate", onClick: () => pending.promise },
+      ];
+      render(<Harness selectionActions={actions} />, { wrapper });
+
+      fireEvent.click(rowCheckbox(0));
+      fireEvent.click(within(getBar()).getByRole("button", { name: "Activate" }));
+      // Untick the only selected row — the bar unmounts — then tick it again.
+      fireEvent.click(rowCheckbox(0));
+      expect(queryBar()).toBeNull();
+      fireEvent.click(rowCheckbox(0));
+
+      expect(getBar().getAttribute("aria-busy")).toBe("true");
+      expect(within(getBar()).getByRole("button", { name: "Activate" })).toHaveProperty(
+        "disabled",
+        true,
+      );
+
+      await act(async () => {
+        pending.resolve();
+        await pending.promise;
+      });
+      expect(queryBar()).toBeNull();
+    });
+
+    it("tracks a request handed back through run, e.g. from a confirm dialog", async () => {
+      const onSelectionChange = vi.fn();
+      const pending = deferred();
+      let confirm: (() => void) | undefined;
+      const actions: SelectionAction<Vendor>[] = [
+        {
+          id: "delete",
+          label: "Delete",
+          // Opens a "dialog": nothing is returned, the request starts later.
+          onClick: (_rows, { run }) => {
+            confirm = () => void run(pending.promise);
+          },
+        },
+      ];
+      render(<Harness selectionActions={actions} onSelectionChange={onSelectionChange} />, {
+        wrapper,
+      });
+
+      fireEvent.click(rowCheckbox(0));
+      fireEvent.click(within(getBar()).getByRole("button", { name: "Delete" }));
+      expect(getBar().hasAttribute("aria-busy")).toBe(false);
+
+      act(() => confirm?.());
+      expect(getBar().getAttribute("aria-busy")).toBe("true");
+      expect(within(getBar()).getByRole("button", { name: "Clear selection" })).toHaveProperty(
+        "disabled",
+        true,
+      );
+
+      await act(async () => {
+        pending.resolve();
+        await pending.promise;
+      });
+      expect(queryBar()).toBeNull();
+      expect(onSelectionChange).toHaveBeenLastCalledWith([]);
+    });
   });
 });

@@ -87,6 +87,13 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   deselectAllRows?: () => void;
   /** Empties the selection across all pages. */
   clearSelection?: () => void;
+  /** Id of the selection action whose request is in flight, or `null`. */
+  pendingActionId?: string | null;
+  /** See `UseDataTableReturn.runSelectionAction`. */
+  runSelectionAction?: (
+    action: { id: string; keepSelection?: boolean },
+    request: PromiseLike<unknown>,
+  ) => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;
 

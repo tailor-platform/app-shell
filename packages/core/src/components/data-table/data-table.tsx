@@ -627,6 +627,8 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     selectAllRows: value.selectAllRows,
     deselectAllRows: value.deselectAllRows,
     clearSelection: value.clearSelection,
+    pendingActionId: value.pendingActionId,
+    runSelectionAction: value.runSelectionAction,
     isAllSelected: value.isAllSelected,
     isIndeterminate: value.isIndeterminate,
     expandedIds: value.expandedIds,

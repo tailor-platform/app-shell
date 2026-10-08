@@ -66,6 +66,7 @@ const AppInner = () => {
               <SidebarItem to="/showcase/forms" />
               <SidebarItem to="/showcase/forms/zod-rhf" />
               <SidebarItem to="/showcase/csv-importer" />
+              <SidebarItem to="/showcase/card" />
               <SidebarItem to="/showcase/metric-card" />
               <SidebarItem to="/showcase/activity-card" />
               <SidebarItem to="/showcase/layouts" />

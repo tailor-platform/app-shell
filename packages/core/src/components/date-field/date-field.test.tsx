@@ -33,6 +33,9 @@ function getCalendarCells() {
   return screen.getAllByRole("button", { hidden: true }).filter((c) => c.closest('[role="grid"]'));
 }
 
+/** Accessible name of the focused element — the roving-focus day cell once the popover opens. */
+const focusedLabel = () => document.activeElement?.getAttribute("aria-label") ?? "";
+
 function getEnabledCalendarCells() {
   return getCalendarCells().filter(
     (c) => !c.hasAttribute("data-disabled") && !c.hasAttribute("data-outside-month"),
@@ -868,6 +871,20 @@ describe("DatePicker", () => {
     });
   });
 
+  // The Positioner is a stacking context (transform), so the layer must sit on
+  // the portal container or the calendar renders behind a Dialog.
+  it("puts the popup layer on the portal container", async () => {
+    const user = userEvent.setup();
+    render(<DatePicker aria-label="Date" />);
+
+    await user.click(screen.getAllByRole("button")[0]);
+    const popup = await screen.findByRole("dialog");
+
+    const portal = popup.parentElement?.parentElement;
+    expect(portal?.style.position).toBe("relative");
+    expect(portal?.getAttribute("style")).toContain("z-index: var(--z-popup)");
+  });
+
   it("fires onChange when a calendar date cell is clicked", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -1100,6 +1117,66 @@ describe("DatePicker keyboard", () => {
     await waitFor(() => {
       expect(screen.getByRole("dialog")).toBeDefined();
     });
+  });
+
+  // Regression: the calendar's roving focus was seeded once at mount and never
+  // followed the field, so a typed date opened the popover on today's month.
+  it("opens the calendar on a date typed into an empty field (Alt+↓)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DatePicker aria-label="Date" onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("12202025");
+    await waitFor(() => expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-12-20"));
+
+    await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
+    await waitFor(() => {
+      expect(document.activeElement?.getAttribute("aria-label")).toMatch(/December 20, 2025/);
+    });
+
+    await user.keyboard("{ArrowRight}{Enter}");
+    await waitFor(() => expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-12-21"));
+  });
+
+  it("re-lands the calendar on the current value each time it opens", async () => {
+    const user = userEvent.setup();
+    function Controlled() {
+      const [value, setValue] = useState<CalendarDate | null>(new CalendarDate(2025, 6, 15));
+      return (
+        <>
+          <DatePicker aria-label="Date" value={value} onChange={setValue} />
+          <button type="button" onClick={() => setValue(new CalendarDate(2024, 2, 10))}>
+            set
+          </button>
+          <button type="button" onClick={() => setValue(null)}>
+            clear
+          </button>
+        </>
+      );
+    }
+    render(<Controlled />);
+    const trigger = () => screen.getByRole("button", { name: "Open calendar" });
+
+    // Page away, dismiss, change the value externally — reopening follows the value.
+    await user.click(trigger());
+    await waitFor(() => expect(focusedLabel()).toMatch(/June 15, 2025/));
+    await user.keyboard("{PageDown}{PageDown}{Escape}");
+    await user.click(screen.getByRole("button", { name: "set" }));
+    await user.click(trigger());
+    await waitFor(() => expect(focusedLabel()).toMatch(/February 10, 2024/));
+
+    // Cleared → falls back to today, not the last-viewed month.
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "clear" }));
+    await user.click(trigger());
+    const now = today(getLocalTimeZone()).toDate(getLocalTimeZone());
+    const todayLabel = now.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    await waitFor(() => expect(focusedLabel()).toContain(todayLabel));
   });
 
   it("does not blur when focus moves from the field into the popup", async () => {

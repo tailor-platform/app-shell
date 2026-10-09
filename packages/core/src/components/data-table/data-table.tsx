@@ -34,7 +34,7 @@ import type {
 } from "./types";
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
-import { getCellValue, renderTypedCell } from "./cell-renderers";
+import { getCellValue, createTypedCellRenderer } from "./cell-renderers";
 import { isTemporalFilterType, normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import { useCellContextMenu, type CellContextMenuState } from "./use-cell-context-menu";
 import {
@@ -1222,6 +1222,15 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   const { value: timeZone } = useTimeZone();
   const hasExpand = !!rowExpansion;
   const { ordered, keys, placements, selection, expand, actions } = pinLayout;
+  const cellRenderers = useMemo(
+    () =>
+      new Map(
+        ordered
+          .filter((col) => !col.render)
+          .map((col) => [col, createTypedCellRenderer(col, timeZone)]),
+      ),
+    [ordered, timeZone],
+  );
   const {
     contextMenu: cellContextMenu,
     contextMenuOpen: cellContextMenuOpen,
@@ -1315,7 +1324,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               })()}
             {ordered?.map((col) => {
               const key = keys.get(col) as string;
-              const content = col.render ? col.render(row) : renderTypedCell(row, col, timeZone);
+              const content = col.render ? col.render(row) : cellRenderers.get(col)?.(row);
 
               const { style: cellStyle, className: cellClassName } = pinCellProps(
                 placements.get(col),

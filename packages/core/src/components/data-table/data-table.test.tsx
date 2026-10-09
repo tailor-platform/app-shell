@@ -22,6 +22,7 @@ afterEach(() => {
   cleanup();
   vi.unstubAllEnvs();
   resetLocalTimeZone();
+  vi.restoreAllMocks();
 });
 
 type TestRow = { id: string; name: string; status: string };
@@ -176,6 +177,76 @@ describe("DataTable", () => {
     expect(screen.getByText("Bob")).toBeDefined();
     expect(screen.getByText("Active")).toBeDefined();
     expect(screen.getByText("Inactive")).toBeDefined();
+  });
+
+  it("reuses date formatters on row updates and refreshes them for column or timezone changes", () => {
+    const DateTimeFormat = Intl.DateTimeFormat;
+    const formatterSpy = vi
+      .spyOn(Intl, "DateTimeFormat")
+      .mockImplementation(function (locales, options) {
+        return new DateTimeFormat(locales, options);
+      });
+    type Row = { id: string; value: string };
+    const columns: Column<Row>[] = [
+      { id: "value", type: "date", typeOptions: { locale: "en-US" } },
+      {
+        id: "custom",
+        type: "date",
+        typeOptions: { locale: "not a locale" },
+        render: () => "Custom renderer",
+      },
+    ];
+    const rows = [
+      { id: "1", value: "2026-10-09" },
+      { id: "2", value: "2026-10-09T00:00:00Z" },
+    ];
+    function Harness({
+      rows: currentRows,
+      columns: currentColumns,
+      timeZone,
+    }: {
+      rows: Row[];
+      columns: Column<Row>[];
+      timeZone: string;
+    }) {
+      const table = useDataTable<Row>({ columns: currentColumns, data: { rows: currentRows } });
+      return (
+        <AppShellConfigContext.Provider
+          value={{ configurations: buildConfigurations({ modules: [], locale: "en", timeZone }) }}
+        >
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        </AppShellConfigContext.Provider>
+      );
+    }
+    const formatterCount = () =>
+      formatterSpy.mock.calls.filter(
+        ([, options]) => options?.month === "short" || options?.month === "long",
+      ).length;
+    const { rerender } = render(
+      <Harness rows={rows} columns={columns} timeZone="America/New_York" />,
+    );
+    expect(screen.getByText("Oct 8, 2026")).toBeDefined();
+    const initialCount = formatterCount();
+    expect(initialCount).toBeGreaterThan(0);
+
+    const nextRows = [...rows, { id: "3", value: "2026-10-10" }];
+    rerender(<Harness rows={nextRows} columns={columns} timeZone="America/New_York" />);
+    expect(screen.getByText("Oct 10, 2026")).toBeDefined();
+    expect(formatterCount()).toBe(initialCount);
+
+    rerender(<Harness rows={nextRows} columns={columns} timeZone="Asia/Tokyo" />);
+    expect(screen.queryByText("Oct 8, 2026")).toBeNull();
+    const zonedCount = formatterCount();
+    expect(zonedCount).toBeGreaterThan(initialCount);
+
+    const nextColumns: Column<Row>[] = [
+      { id: "value", type: "date", typeOptions: { locale: "de-DE", dateFormat: "long" } },
+    ];
+    rerender(<Harness rows={nextRows} columns={nextColumns} timeZone="Asia/Tokyo" />);
+    expect(screen.getAllByText("9. Oktober 2026")).toHaveLength(2);
+    expect(formatterCount()).toBeGreaterThan(zonedCount);
   });
 
   it("renders loading state", () => {

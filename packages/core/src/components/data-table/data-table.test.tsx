@@ -3,7 +3,9 @@ import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-libra
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { StrictMode, type ReactNode } from "react";
+import { resetLocalTimeZone } from "@internationalized/date";
 import { createAppShellWrapper } from "../../../tests/test-utils";
+import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import type { CollectionControl } from "@/types/collection";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
@@ -18,6 +20,9 @@ import type {
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllEnvs();
+  resetLocalTimeZone();
+  vi.restoreAllMocks();
 });
 
 type TestRow = { id: string; name: string; status: string };
@@ -34,27 +39,9 @@ const testData: DataTableData<TestRow> = {
   ],
 };
 
-function mockDate(local: {
-  year: number;
-  month: number;
-  day: number;
-  hours: number;
-  minutes: number;
-  seconds?: number;
-  iso: string;
-}) {
-  const value = new Date(local.iso);
-  Object.assign(value, {
-    getFullYear: () => local.year,
-    getMonth: () => local.month - 1,
-    getDate: () => local.day,
-    getHours: () => local.hours,
-    getMinutes: () => local.minutes,
-    getSeconds: () => local.seconds ?? 0,
-    getTime: () => 1,
-    toISOString: () => local.iso,
-  });
-  return value;
+function stubBrowserTimeZone() {
+  vi.stubEnv("TZ", "UTC");
+  resetLocalTimeZone();
 }
 
 function makeControl(overrides?: Partial<CollectionControl>): CollectionControl {
@@ -110,6 +97,17 @@ function TestDataTable(props: {
 }
 
 const wrapper = createAppShellWrapper("en");
+
+function createTimeZoneWrapper(timeZone: string) {
+  const configurations = buildConfigurations({ modules: [], locale: "en", timeZone });
+  return function TimeZoneWrapper({ children }: { children: ReactNode }) {
+    return (
+      <AppShellConfigContext.Provider value={{ configurations }}>
+        {children}
+      </AppShellConfigContext.Provider>
+    );
+  };
+}
 
 const headByText = (container: HTMLElement, text: string) =>
   Array.from(container.querySelectorAll<HTMLElement>('[data-slot="data-table-header"] th')).find(
@@ -179,6 +177,76 @@ describe("DataTable", () => {
     expect(screen.getByText("Bob")).toBeDefined();
     expect(screen.getByText("Active")).toBeDefined();
     expect(screen.getByText("Inactive")).toBeDefined();
+  });
+
+  it("reuses date formatters on row updates and refreshes them for column or timezone changes", () => {
+    const DateTimeFormat = Intl.DateTimeFormat;
+    const formatterSpy = vi
+      .spyOn(Intl, "DateTimeFormat")
+      .mockImplementation(function (locales, options) {
+        return new DateTimeFormat(locales, options);
+      });
+    type Row = { id: string; value: string };
+    const columns: Column<Row>[] = [
+      { id: "value", type: "date", typeOptions: { locale: "en-US" } },
+      {
+        id: "custom",
+        type: "date",
+        typeOptions: { locale: "not a locale" },
+        render: () => "Custom renderer",
+      },
+    ];
+    const rows = [
+      { id: "1", value: "2026-10-09" },
+      { id: "2", value: "2026-10-09T00:00:00Z" },
+    ];
+    function Harness({
+      rows: currentRows,
+      columns: currentColumns,
+      timeZone,
+    }: {
+      rows: Row[];
+      columns: Column<Row>[];
+      timeZone: string;
+    }) {
+      const table = useDataTable<Row>({ columns: currentColumns, data: { rows: currentRows } });
+      return (
+        <AppShellConfigContext.Provider
+          value={{ configurations: buildConfigurations({ modules: [], locale: "en", timeZone }) }}
+        >
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        </AppShellConfigContext.Provider>
+      );
+    }
+    const formatterCount = () =>
+      formatterSpy.mock.calls.filter(
+        ([, options]) => options?.month === "short" || options?.month === "long",
+      ).length;
+    const { rerender } = render(
+      <Harness rows={rows} columns={columns} timeZone="America/New_York" />,
+    );
+    expect(screen.getByText("Oct 8, 2026")).toBeDefined();
+    const initialCount = formatterCount();
+    expect(initialCount).toBeGreaterThan(0);
+
+    const nextRows = [...rows, { id: "3", value: "2026-10-10" }];
+    rerender(<Harness rows={nextRows} columns={columns} timeZone="America/New_York" />);
+    expect(screen.getByText("Oct 10, 2026")).toBeDefined();
+    expect(formatterCount()).toBe(initialCount);
+
+    rerender(<Harness rows={nextRows} columns={columns} timeZone="Asia/Tokyo" />);
+    expect(screen.queryByText("Oct 8, 2026")).toBeNull();
+    const zonedCount = formatterCount();
+    expect(zonedCount).toBeGreaterThan(initialCount);
+
+    const nextColumns: Column<Row>[] = [
+      { id: "value", type: "date", typeOptions: { locale: "de-DE", dateFormat: "long" } },
+    ];
+    rerender(<Harness rows={nextRows} columns={nextColumns} timeZone="Asia/Tokyo" />);
+    expect(screen.getAllByText("9. Oktober 2026")).toHaveLength(2);
+    expect(formatterCount()).toBeGreaterThan(zonedCount);
   });
 
   it("renders loading state", () => {
@@ -481,17 +549,98 @@ describe("DataTable", () => {
       expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice");
     });
 
-    it("normalizes local date filters from Date values", async () => {
+    it.each([
+      ["2026-10-09T01:00:00Z", "Oct 8, 2026, 6:00 PM", "2026-10-09T01:00:00.000Z"],
+      ["2026-10-09T10:00:00+09:00", "Oct 8, 2026, 6:00 PM", "2026-10-09T01:00:00.000Z"],
+      ["2026-10-09T00:00:00", "Oct 9, 2026, 12:00 AM", "2026-10-09T07:00:00.000Z"],
+      ["2026-10-09T00:00", "Oct 9, 2026, 12:00 AM", "2026-10-09T07:00:00.000Z"],
+      [new Date("2026-10-09T01:00:00Z"), "Oct 8, 2026, 6:00 PM", "2026-10-09T01:00:00.000Z"],
+      [Date.parse("2026-10-09T01:00:00Z"), "Oct 8, 2026, 6:00 PM", "2026-10-09T01:00:00.000Z"],
+    ])(
+      "uses the AppShell timezone for the cell and datetime filter from %s",
+      async (value, displayed, instant) => {
+        stubBrowserTimeZone();
+        const user = userEvent.setup();
+        const control = makeControl();
+        type Row = { id: string; createdAt: string | Date | number };
+
+        function Harness() {
+          const table = useDataTable<Row>({
+            columns: [
+              {
+                id: "createdAt",
+                label: "Created At",
+                type: "date",
+                accessor: (row) => row.createdAt,
+                typeOptions: { locale: "en-US", dateFormat: "datetime" },
+                filter: { type: "datetime", field: "createdAt", operators: ["eq"] },
+              },
+            ],
+            data: { rows: [{ id: "1", createdAt: value }] },
+            control,
+          });
+          return (
+            <DataTable.Root value={table}>
+              <DataTable.Table />
+            </DataTable.Root>
+          );
+        }
+
+        const { container } = render(<Harness />, {
+          wrapper: createTimeZoneWrapper("America/Los_Angeles"),
+        });
+        expect(cellByText(container, displayed)).toBeDefined();
+        openCellContextMenu(container, displayed);
+        hoverMenuItem("Add filter");
+        await user.click(await screen.findByRole("menuitem", { name: "is" }));
+        expect(control.addFilter).toHaveBeenCalledWith("createdAt", "eq", instant);
+      },
+    );
+
+    it.each(["America/Los_Angeles", "Asia/Tokyo"])(
+      "preserves date-only cells and filters in %s",
+      async (timeZone) => {
+        stubBrowserTimeZone();
+        const user = userEvent.setup();
+        const control = makeControl();
+        type Row = { id: string; placedOn: string };
+
+        function Harness() {
+          const table = useDataTable<Row>({
+            columns: [
+              {
+                id: "placedOn",
+                label: "Placed On",
+                type: "date",
+                accessor: (row) => row.placedOn,
+                typeOptions: { locale: "en-US" },
+                filter: { type: "date", field: "placedOn", operators: ["eq"] },
+              },
+            ],
+            data: { rows: [{ id: "1", placedOn: "2026-10-09" }] },
+            control,
+          });
+          return (
+            <DataTable.Root value={table}>
+              <DataTable.Table />
+            </DataTable.Root>
+          );
+        }
+
+        const { container } = render(<Harness />, { wrapper: createTimeZoneWrapper(timeZone) });
+        expect(cellByText(container, "Oct 9, 2026")).toBeDefined();
+        openCellContextMenu(container, "Oct 9, 2026");
+        hoverMenuItem("Add filter");
+        await user.click(await screen.findByRole("menuitem", { name: "exact date" }));
+        expect(control.addFilter).toHaveBeenCalledWith("placedOn", "eq", "2026-10-09");
+      },
+    );
+
+    it("normalizes date filters from Date values in the AppShell timezone", async () => {
+      stubBrowserTimeZone();
       const user = userEvent.setup();
       const control = makeControl();
-      const value = mockDate({
-        year: 2026,
-        month: 9,
-        day: 8,
-        hours: 0,
-        minutes: 0,
-        iso: "2026-09-07T15:00:00.000Z",
-      });
+      const value = new Date("2026-09-07T15:00:00.000Z");
       type Row = { id: string; label: string };
 
       function Harness() {
@@ -516,7 +665,7 @@ describe("DataTable", () => {
         );
       }
 
-      const { container } = render(<Harness />, { wrapper });
+      const { container } = render(<Harness />, { wrapper: createTimeZoneWrapper("Asia/Tokyo") });
 
       openCellContextMenu(container, "Sep 8, 2026");
       hoverMenuItem("Add filter");

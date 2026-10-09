@@ -227,6 +227,8 @@ Set it once for the whole app with `AppShell`'s `dateInputDateFormat`, or per fi
 | `isRequired`                     | `boolean`                                                     | Marks the control required                                                                                     |
 | `isInvalid`                      | `boolean`                                                     | Adds invalid styling / `aria-invalid` to the segmented UI                                                      |
 | `placeholderValue`               | `DateValue`                                                   | Seeds unset segments                                                                                           |
+| `granularity`                    | `"day" \| "hour" \| "minute" \| "second"`                     | Smallest editable unit; time granularities add time segments                                                   |
+| `hourCycle`                      | `12 \| 24`                                                    | Force 12- or 24-hour time; defaults to the locale                                                              |
 | `autoFocus`                      | `boolean`                                                     | Focus the first segment on mount                                                                               |
 | `locale`                         | `string`                                                      | BCP-47 locale override                                                                                         |
 | `dateFormat`                     | `"numeric" \| "regional"`                                     | Segment layout; defaults to the `AppShell` `dateInputDateFormat` (`"numeric"`; planned to become `"regional"`) |
@@ -253,7 +255,7 @@ See the calendar docs in-code: controlled/uncontrolled value, min/max, unavailab
 
 ### DateRangePickerProps
 
-The `DatePickerProps` surface (labeling, `isInvalid`, `min/maxValue`, `isDateUnavailable`, `granularity`, `firstDayOfWeek`, `timeZone`, `locale`, `dateFormat`, `showDayOfWeek`, `autoFocus`, `isDisabled/ReadOnly/Required`), with the range-specific differences:
+The `DatePickerProps` surface (labeling, `isInvalid`, `min/maxValue`, `isDateUnavailable`, `granularity`, `hourCycle`, `firstDayOfWeek`, `timeZone`, `locale`, `dateFormat`, `showDayOfWeek`, `autoFocus`, `isDisabled/ReadOnly/Required`), with the range-specific differences:
 
 | Prop                     | Type                             | Description                                                                     |
 | ------------------------ | -------------------------------- | ------------------------------------------------------------------------------- |

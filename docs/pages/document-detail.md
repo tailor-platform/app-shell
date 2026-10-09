@@ -183,7 +183,7 @@ time, and the record is unblocked only once every one is released.
 ### 4. Line items
 
 `Card.Root` → `Card.Header` (title, plus a one-line description where the
-columns need explaining) → `Card.Content className="px-0!"` → `Table.Root`.
+columns need explaining) → `Card.Content padding="none"` → `Table.Root`.
 
 Fetch the line items with the record, sorted explicitly so the order is stable
 across reloads, and render them as a plain `Table`. For the typical document —
@@ -773,7 +773,7 @@ export default function PurchaseOrderDetailPage({
       would have been a link field on the summary instead. */}
       <Card.Root>
         <Card.Header title="Source requisitions" />
-        <Card.Content className="px-0!">
+        <Card.Content padding="none">
           <Table.Root>
             <Table.Header>
               <Table.Row>
@@ -808,7 +808,7 @@ export default function PurchaseOrderDetailPage({
       enough to page. No container padding; the cells inset themselves. */}
       <Card.Root>
         <Card.Header title="Line items" />
-        <Card.Content className="px-0!">
+        <Card.Content padding="none">
           {order.lineItems.length === 0 ? (
             <p className="px-6 text-sm text-muted-foreground">No line items on this order.</p>
           ) : (
@@ -875,7 +875,7 @@ export default function PurchaseOrderDetailPage({
       relationship is possible, so the reader learns it exists. */}
       <Card.Root>
         <Card.Header title="Goods receipts" />
-        <Card.Content className="px-0!">
+        <Card.Content padding="none">
           {order.goodsReceipts.length === 0 ? (
             <p className="px-6 text-sm text-muted-foreground">
               No goods receipts linked to this order.
@@ -997,7 +997,7 @@ export default function PurchaseOrderDetailPage({
                   title="Journal entry"
                   description="Booked when this order was posted."
                 />
-                <Card.Content className="px-0!">
+                <Card.Content padding="none">
                   <Table.Root>
                     <Table.Header>
                       <Table.Row>
@@ -1096,7 +1096,7 @@ enforced across every detail screen once settled.
 ## Constraints
 
 - **Every main-column section sits in a `Card.Root`** — except `DescriptionCard`, which contains itself, and `Alert`, which is a banner. No bare `<div>` sections.
-- **A table in a card needs ONE geometry change, not two.** Zero the card's padding (`Card.Content className="px-0!"`, or drop `Card.Content`) and leave the table container alone. `Table.Head` and `Table.Cell` already inset their own first and last cells by 24px; padding on the table container stacks on top of that and pushes the first column 24px right of the card title.
+- **A table in a card goes in `Card.Content padding="none"`, and nothing else changes.** Don't drop `Card.Content` or zero its padding with a class instead: the prop also keeps row backgrounds inside the card's rounded corners and removes a nested `DataTable`'s own border. Leave the table container alone too. `Table.Head` and `Table.Cell` already inset their own first and last cells by 24px; padding on the table container stacks on top of that and pushes the first column 24px right of the card title.
 - **Bare `YYYY-MM-DD` dates must not use `type: "date"`.** `DescriptionCard` hands the value to `new Date(...)`, which reads a date-only string as UTC midnight and renders the previous day west of Greenwich. Pre-format those as text via `render`. Real timestamps keep `type: "date"`, with `emptyBehavior: "hide"` when nullable.
 - **`ActionPanel` is workflow-only.** No navigation, no "view related record" — those are links in the cards that hold them.
 - **Never rely on a query cap to bound the line-items table.** If the cap can be reached, page the lines.

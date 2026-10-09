@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CalendarDate, parseDate, isSameDay } from "@internationalized/date";
+import { CalendarDate, parseDate, parseZonedDateTime, isSameDay } from "@internationalized/date";
 import { renderRHFForm } from "../../../tests/rhf-test-utils";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { Field } from "../field";
@@ -491,6 +491,30 @@ describe("DateRangePicker popover", () => {
     const range = onChange.mock.calls[0][0];
     expect(isSameDay(range.start, d("2025-03-10"))).toBe(true);
     expect(isSameDay(range.end, d("2025-03-12"))).toBe(true);
+  });
+});
+
+describe("12-hour time display", () => {
+  it("shows PM ends as PM, not as 24-hour AM", () => {
+    const tz = "Asia/Tokyo";
+    render(
+      <DateRangePicker
+        aria-label="Shift"
+        granularity="minute"
+        hourCycle={12}
+        locale="en-US"
+        timeZone={tz}
+        defaultValue={{
+          start: parseZonedDateTime(`2026-10-12T13:00[${tz}]`),
+          end: parseZonedDateTime(`2026-10-12T18:30[${tz}]`),
+        }}
+      />,
+    );
+    const text = (field: Field, name: string) => seg(field, name).getAttribute("aria-valuetext");
+    expect(text("start date", "hour")).toBe("01");
+    expect(text("start date", "AM/PM")).toBe("PM");
+    expect(text("end date", "hour")).toBe("06");
+    expect(text("end date", "AM/PM")).toBe("PM");
   });
 });
 

@@ -57,6 +57,7 @@ interface DateControlProps<T extends DateValue> {
   isRequired?: boolean;
   isInvalid?: boolean;
   autoFocus?: boolean;
+  /** 12- or 24-hour time; defaults to the locale. */
   hourCycle?: HourCycle;
   placeholderValue?: DateValue;
   firstDayOfWeek?: FirstDayOfWeek;

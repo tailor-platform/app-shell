@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { Column, RowAction, RowExpansionOptions } from "./types";
+import type { Column, RowAction, RowExpansionOptions, SelectionAction } from "./types";
 import type { PageInfo, SortState } from "@/types/collection";
 
 /**
@@ -60,18 +60,40 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   // Row interaction
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
+  /** Bulk actions `DataTable.Footer` shows while rows are selected. */
+  selectionActions?: SelectionAction<TRow>[];
 
   // Row selection
-  // toggleRowSelection / selectAllRows / clearSelection are undefined when onSelectionChange is not provided
+  // toggleRowSelection / selectAllRows / deselectAllRows / clearSelection are undefined
+  // when selection is not enabled (neither onSelectionChange nor selectionActions given).
+  // New members are optional for the hand-constructible reason noted under Row expansion.
   selectedIds: string[];
+  /**
+   * The selected rows, in selection order. Rows on the current page are their
+   * latest version; rows selected on other pages are the version last loaded.
+   */
+  selectedRows?: TRow[];
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
   /**
-   * Selects all rows on the **current page** only. Cross-page selection is not supported.
-   * Undefined when `onSelectionChange` is not provided.
+   * Adds every row on the **current page** to the selection; rows selected on
+   * other pages are kept.
    */
   selectAllRows?: () => void;
+  /**
+   * Removes the **current page's** rows from the selection; rows selected on
+   * other pages stay selected.
+   */
+  deselectAllRows?: () => void;
+  /** Empties the selection across all pages. */
   clearSelection?: () => void;
+  /** Id of the selection action whose request is in flight, or `null`. */
+  pendingActionId?: string | null;
+  /** See `UseDataTableReturn.runSelectionAction`. */
+  runSelectionAction?: (
+    action: { id: string; keepSelection?: boolean },
+    request: PromiseLike<unknown>,
+  ) => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;
 

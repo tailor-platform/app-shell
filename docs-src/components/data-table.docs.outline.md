@@ -748,9 +748,11 @@ Applying or updating a datetime filter through `DataTable.Filters` passes these 
 
 A datetime `eq` filter matches one instant, not every record on a calendar day. To search a whole business day on a datetime field, use the start of that day as an inclusive lower bound and the start of the next day as an exclusive upper bound in the backend query. Calculate both boundaries in the business timezone; do not assume every day is exactly 24 hours.
 
-Timezone-less legacy datetime values can still be edited and are normalized when re-applied. URL restoration, saved filters, and programmatic `initialFilters`, `addFilter`, or `setFilters` are not automatically normalized by the collection hook. Supply RFC 3339 values with an explicit timezone for these paths; setting `AppShell.timeZone` does not retroactively convert them. If migrating legacy values, first establish which timezone they originally represented.
+When `tableMetadata` is supplied to `useCollectionVariables` or `useURLCollectionVariables`, datetime filters are normalized before the first query and before `addFilter` or `setFilters` updates the state. This also covers filters restored from URLs or saved views. Timezone-less legacy datetime strings are interpreted in the AppShell timezone; values with `Z` or an explicit offset retain their original instant. Single values, `in` / `nin` arrays, and both bounds of `between` filters are normalized. Invalid datetime values throw a `TypeError` rather than silently removing a search constraint; invalid updates leave the previous filter state unchanged. Datetime strings must use the ISO date-and-time form with `T`; date-only strings and browser-specific date formats are not accepted for datetime fields. If migrating legacy values, first establish which timezone they originally represented.
 
-The timezone setting controls the built-in datetime filter editors; it does not change the browser's default timezone. When formatting timestamps with `Intl.DateTimeFormat` in a custom cell renderer, pass the same timezone explicitly if the displayed date and time must agree with the filters.
+Without `tableMetadata`, the collection hook cannot distinguish datetime fields from ordinary strings and leaves filter values unchanged. Supply RFC 3339 datetime values with an explicit timezone in programmatic or persisted filters on this path. Setting a DataTable column's `filter.type` configures the UI but does not supply metadata to the collection hook.
+
+Built-in `type: "date"` cells display timestamps in the AppShell timezone, and the cell menu uses that same timezone when adding a temporal filter. Date-only `YYYY-MM-DD` cell values retain their calendar date instead of shifting to the previous or next day. The setting does not change the browser's default timezone: when using `Intl.DateTimeFormat` in a custom cell renderer, pass the same timezone explicitly if its output must agree with the filters.
 
 #### Calendar dates are not instants
 
@@ -862,13 +864,13 @@ const { variables, control } = useCollectionVariables({
 
 ### Options
 
-| Option                  | Type                                 | Description                                                                                                           |
-| ----------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `params.pageSize`       | `number`                             | Initial page size. Default: `20`.                                                                                     |
-| `params.initialFilters` | `Filter[]`                           | Filters applied on first render.                                                                                      |
-| `params.initialSort`    | `SortState[]`                        | Sort applied on first render.                                                                                         |
-| `tableMetadata`         | `TableMetadata`                      | Generated table metadata. Required for typed GraphQL documents (see [Typed query variables](#typed-query-variables)). |
-| `onParamsChange`        | `(params: CollectionParams) => void` | Called after each filter, sort, or page-size change with the current params.                                          |
+| Option                  | Type                                 | Description                                                                                                                                      |
+| ----------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `params.pageSize`       | `number`                             | Initial page size. Default: `20`.                                                                                                                |
+| `params.initialFilters` | `Filter[]`                           | Filters applied on first render.                                                                                                                 |
+| `params.initialSort`    | `SortState[]`                        | Sort applied on first render.                                                                                                                    |
+| `tableMetadata`         | `TableMetadata`                      | Generated table metadata. Enables typed variables and datetime normalization (see [Datetime filters](#datetime-filters-and-business-timezones)). |
+| `onParamsChange`        | `(params: CollectionParams) => void` | Called after each filter, sort, or page-size change with the current params.                                                                     |
 
 ### Return Value
 
@@ -922,7 +924,7 @@ The return value is identical to `useCollectionVariables` — `variables` and `c
 
 ### Options
 
-All options accepted by `useCollectionVariables` are accepted here too. `tableMetadata` is optional but recommended for typed variables and correct URL round-tripping of typed field values (numbers and booleans are preserved correctly).
+All options accepted by `useCollectionVariables` are accepted here too. `tableMetadata` is optional but recommended for typed variables and correct URL round-tripping of typed field values (numbers and booleans are preserved correctly, and datetime filters are normalized to RFC 3339 instants before querying).
 
 ### URL format
 

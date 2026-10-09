@@ -3,6 +3,7 @@ import type { PropsWithChildren } from "react";
 import { createElement } from "react";
 import { MemoryRouter } from "react-router";
 import { describe, it, expect, vi } from "vitest";
+import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import type { CollectionPersistedState, TableMetadataMap } from "@/types/collection";
 import {
   useURLCollectionVariables,
@@ -203,6 +204,37 @@ describe("withURLCollectionState", () => {
 });
 
 describe("useURLCollectionVariables", () => {
+  it.each([
+    ["gte", "2026-10-09T00:00:00", { gte: "2026-10-08T15:00:00.000Z" }],
+    ["in", '["2026-10-09T00:00:00"]', { in: ["2026-10-08T15:00:00.000Z"] }],
+    [
+      "between",
+      '{"min":"2026-10-09T00:00:00","max":"2026-10-10T00:00:00"}',
+      { between: { min: "2026-10-08T15:00:00.000Z", max: "2026-10-09T15:00:00.000Z" } },
+    ],
+  ] as const)(
+    "normalizes URL datetime %s filters before the first query",
+    (operator, value, expected) => {
+      const search = new URLSearchParams({ [`f.createdAt:${operator}`]: value });
+      const wrapper = ({ children }: PropsWithChildren) =>
+        createElement(
+          AppShellConfigContext.Provider,
+          {
+            value: {
+              configurations: buildConfigurations({ modules: [], timeZone: "Asia/Tokyo" }),
+            },
+          },
+          createElement(MemoryRouter, { initialEntries: [`/?${search}`] }, children),
+        );
+      const { result } = renderHook(
+        () => useURLCollectionVariables({ tableMetadata: tableMetadata.task }),
+        { wrapper },
+      );
+      expect(result.current.variables.query).toEqual({ createdAt: expected });
+      expect(result.current.control.filters[0].value).toEqual(Object.values(expected)[0]);
+    },
+  );
+
   it("seeds collection control state from the URL search params", () => {
     const { result } = renderHook(
       () =>

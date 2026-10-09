@@ -308,9 +308,9 @@ export function useURLCollectionVariables(
   const searchParamsBinding = useSearchParams();
   // `useCollectionVariables` is overloaded on whether `tableMetadata` is present;
   // the decorated options carry an optional `tableMetadata` that matches neither
-  // overload, so narrow to the no-metadata one for the call. `tableMetadata` is
-  // type-only (the implementation never reads it), so this is safe at runtime,
-  // and callers see the precise return type from this hook's overloads above.
+  // overload, so narrow to the no-metadata one for the call. The cast retains
+  // `tableMetadata` at runtime for datetime normalization, and callers see the
+  // precise return type from this hook's overloads above.
   return useCollectionVariables(
     applyURLCollectionState(options, searchParamsBinding) as UseCollectionOptions & {
       tableMetadata?: never;

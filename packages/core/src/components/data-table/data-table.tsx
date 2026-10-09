@@ -14,6 +14,7 @@ import {
 import { ContextMenu } from "@base-ui/react/context-menu";
 import { ChevronRight, Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTimeZone } from "@/contexts/appshell-context";
 import {
   CollectionControlProvider,
   useCollectionControlOptional,
@@ -34,7 +35,7 @@ import type {
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import { getCellValue, renderTypedCell } from "./cell-renderers";
-import { isTemporalFilterType, normalizeTemporalFilterValue } from "./filter-value-utils";
+import { isTemporalFilterType, normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import { useCellContextMenu, type CellContextMenuState } from "./use-cell-context-menu";
 import {
   DataTableToolbar,
@@ -159,10 +160,10 @@ function toClipboardText(value: unknown): string | undefined {
   return String(value);
 }
 
-function toFilterValue(value: unknown, config: DataTableFilterConfig): unknown {
+function toFilterValue(value: unknown, config: DataTableFilterConfig, timeZone: string): unknown {
   if (value == null || value === "") return undefined;
   if (isTemporalFilterType(config.type)) {
-    return normalizeTemporalFilterValue(config.type, value);
+    return normalizeTemporalFilterValue(config.type, value, timeZone);
   }
 
   switch (config.type) {
@@ -812,11 +813,12 @@ function DataTableCellContextMenu({
 }) {
   const t = useDataTableT();
   const control = useCollectionControlOptional();
+  const { value: timeZone } = useTimeZone();
   const filterConfig = context?.filterConfig;
   const copyText = context ? toClipboardText(context.value) : undefined;
   const headerAndValueText = copyText ? `${context?.headerLabel} ${copyText}` : undefined;
   const filterValue =
-    filterConfig && context ? toFilterValue(context.value, filterConfig) : undefined;
+    filterConfig && context ? toFilterValue(context.value, filterConfig, timeZone) : undefined;
   const filterOperators =
     control && filterConfig && filterValue !== undefined
       ? getVisibleFilterOperators(filterConfig).filter(supportsCellFilterOperator)
@@ -1217,6 +1219,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
 }: DataTableRowsProps<TRow>) {
   const t = useDataTableT();
   const baseId = useId();
+  const { value: timeZone } = useTimeZone();
   const hasExpand = !!rowExpansion;
   const { ordered, keys, placements, selection, expand, actions } = pinLayout;
   const {
@@ -1312,7 +1315,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               })()}
             {ordered?.map((col) => {
               const key = keys.get(col) as string;
-              const content = col.render ? col.render(row) : renderTypedCell(row, col);
+              const content = col.render ? col.render(row) : renderTypedCell(row, col, timeZone);
 
               const { style: cellStyle, className: cellClassName } = pinCellProps(
                 placements.get(col),

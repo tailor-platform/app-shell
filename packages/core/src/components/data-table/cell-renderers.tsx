@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
+import { parseDate } from "@internationalized/date";
 import { Link } from "react-router";
 import { BadgeList, toValueArray } from "@/components/badge-list";
+import { normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type {
   BadgeCellOptions,
   Column,
@@ -49,16 +51,6 @@ export function getCellValue<TRow extends Record<string, unknown>>(
 
 function isEmpty(value: unknown): boolean {
   return value == null || value === "";
-}
-
-function toDate(value: unknown): Date | null {
-  if (value == null) return null;
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-  if (typeof value === "string" || typeof value === "number") {
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  return null;
 }
 
 function renderText(value: unknown): ReactNode {
@@ -122,13 +114,32 @@ function renderMoney<TRow extends Record<string, unknown>>(
   return <span className="astw:tabular-nums">{formatted}</span>;
 }
 
-function renderDate(value: unknown, options: DateCellOptions | undefined): ReactNode {
+function renderDate(
+  value: unknown,
+  options: DateCellOptions | undefined,
+  timeZone: string,
+): ReactNode {
   if (isEmpty(value)) return PLACEHOLDER;
-  const date = toDate(value);
-  if (!date) return PLACEHOLDER;
+  const dateOnly = typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.trim());
+  let date: Date;
+  if (dateOnly) {
+    // Calendar dates have no instant, even when a timezone skips an entire day.
+    try {
+      date = parseDate(value.trim()).toDate("UTC");
+    } catch {
+      return PLACEHOLDER;
+    }
+  } else {
+    const normalized = normalizeTemporalFilterValue("datetime", value, timeZone);
+    if (!normalized) return PLACEHOLDER;
+    date = new Date(normalized);
+  }
   const format = options?.dateFormat ?? "short";
   const formatOptions = resolveDateFormatOptions(format);
-  return new Intl.DateTimeFormat(options?.locale, formatOptions).format(date);
+  return new Intl.DateTimeFormat(options?.locale, {
+    ...formatOptions,
+    timeZone: dateOnly ? "UTC" : timeZone,
+  }).format(date);
 }
 
 function renderBadge(value: unknown, options: BadgeCellOptions | undefined): ReactNode {
@@ -163,6 +174,7 @@ function renderLink<TRow extends Record<string, unknown>>(
 export function renderTypedCell<TRow extends Record<string, unknown>>(
   row: TRow,
   col: Column<TRow>,
+  timeZone: string,
 ): ReactNode {
   const value = getCellValue(row, col);
   switch (col.type) {
@@ -171,7 +183,7 @@ export function renderTypedCell<TRow extends Record<string, unknown>>(
     case "money":
       return renderMoney(value, row, col.typeOptions);
     case "date":
-      return renderDate(value, col.typeOptions);
+      return renderDate(value, col.typeOptions, timeZone);
     case "badge":
       return renderBadge(value, col.typeOptions);
     case "link":

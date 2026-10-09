@@ -45,6 +45,12 @@ import {
 } from "./toolbar";
 import { DataTableColumnSettings } from "./column-settings";
 import { DataTablePagination } from "./pagination";
+import {
+  DataTableSelectionAnnouncer,
+  DataTableSelectionBar,
+  hasSelectionActions,
+  isSelectionBarOpen,
+} from "./selection-bar";
 export type { DataTablePaginationProps } from "./pagination";
 
 // Fallback row count when no pageSize is configured (static / uncontrolled tables)
@@ -614,11 +620,16 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     hasNextPage: value.hasNextPage,
     onClickRow: value.onClickRow,
     rowActions: value.rowActions,
+    selectionActions: value.selectionActions,
     selectedIds: value.selectedIds,
+    selectedRows: value.selectedRows,
     isRowSelected: value.isRowSelected,
     toggleRowSelection: value.toggleRowSelection,
     selectAllRows: value.selectAllRows,
+    deselectAllRows: value.deselectAllRows,
     clearSelection: value.clearSelection,
+    pendingActionId: value.pendingActionId,
+    runSelectionAction: value.runSelectionAction,
     isAllSelected: value.isAllSelected,
     isIndeterminate: value.isIndeterminate,
     expandedIds: value.expandedIds,
@@ -638,11 +649,15 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
         {/* flex-col + min-h-0 (no flex-1): natural height when content fits,
             but able to shrink when the parent chain constrains height (e.g.
             <Layout fill>). When shrunk, the Table region scrolls internally
-            while the Toolbar and Footer (shrink-0) stay visible. */}
+            while the Toolbar and Footer (shrink-0) stay visible.
+            overflow-clip, not overflow-hidden: both clip children to the
+            rounded frame, but `hidden` also makes this a scroll container,
+            which would pin the sticky selection-actions footer to the table
+            instead of letting it ride the page's scroll container. */}
         <div
           data-slot="data-table"
           className={cn(
-            "astw:flex astw:flex-col astw:min-h-0 astw:overflow-hidden astw:border astw:border-border astw:rounded-md astw:bg-card",
+            "astw:flex astw:flex-col astw:min-h-0 astw:overflow-clip astw:border astw:border-border astw:rounded-md astw:bg-card",
             // A generic Toolbar becomes the table's top edge: preserve its top
             // corners, but retain only the divider beneath it.
             "astw:[&>[data-slot=toolbar]]:rounded-b-none astw:[&>[data-slot=toolbar]]:border-x-0 astw:[&>[data-slot=toolbar]]:border-t-0",
@@ -911,6 +926,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     setPin,
     toggleRowSelection,
     selectAllRows,
+    deselectAllRows,
     clearSelection,
     isAllSelected,
     isIndeterminate,
@@ -964,7 +980,9 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                     if (checked) {
                       selectAllRows?.();
                     } else {
-                      clearSelection?.();
+                      // Page-scoped, so rows selected on other pages survive.
+                      // Hand-built contexts that predate it fall back to clearing.
+                      (deselectAllRows ?? clearSelection)?.();
                     }
                   }}
                   aria-label={t("selectAll")}
@@ -1709,7 +1727,11 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
         />
         <Menu.Content>
           {actions.map((action) => {
-            const disabled = action.isDisabled?.(row) ?? false;
+            // `canApply` is the shared, positive form; the deprecated
+            // `isDisabled` still counts, so either one can switch it off.
+            const disabled =
+              (action.canApply ? !action.canApply(row) : false) ||
+              (action.isDisabled?.(row) ?? false);
             return (
               <Menu.Item
                 key={action.id}
@@ -1869,16 +1891,54 @@ DataTableTable.displayName = "DataTable.Table";
 // =============================================================================
 
 /** Use `DataTable.Footer` instead of calling this directly. */
-function DataTableFooter({ children, className }: { children: ReactNode; className?: string }) {
+function DataTableFooter({ children, className }: { children?: ReactNode; className?: string }) {
+  const ctx = useContext(DataTableContext);
+  const offersBulkActions = hasSelectionActions(ctx);
+  const selecting = isSelectionBarOpen(ctx);
+
   return (
     <div
       data-slot="data-table-footer"
+      data-selecting={selecting ? "" : undefined}
       className={cn(
         "astw:flex astw:shrink-0 astw:items-center astw:border-t astw:border-border astw:px-4 astw:py-2",
+        offersBulkActions && "astw:transition-colors astw:motion-reduce:transition-none",
+        selecting && [
+          "astw:flex-wrap astw:gap-x-3 astw:gap-y-2",
+          "astw:bg-accent astw:text-accent-foreground",
+          "astw:rounded-b-[calc(var(--radius-md)-1px)]",
+          // Sticky while the bar is up: on a page-scrolling table it rides the
+          // bottom of the viewport until the table's own end scrolls into view.
+          // A no-op in <Layout fill>, where the footer is already pinned.
+          "astw:sticky astw:bottom-0 astw:z-20",
+          // The bar's surface, captured for the wrapper below: a token can't be
+          // re-pointed in terms of itself on a single element.
+          "astw:[--data-table-selection-surface:var(--accent)]",
+        ],
         className,
       )}
     >
-      {children}
+      {offersBulkActions ? (
+        // `contents` keeps the wrapper out of layout. It re-points the hover and
+        // secondary-text tokens for everything on the tinted bar — the bar's own
+        // buttons and the consumer's Pagination alike — which would otherwise
+        // hover to the bar's colour and lose contrast on it.
+        <div
+          className={cn(
+            "astw:contents",
+            selecting && [
+              "astw:[--accent:color-mix(in_srgb,var(--accent-foreground)_8%,var(--data-table-selection-surface))]",
+              "astw:[--muted-foreground:color-mix(in_srgb,var(--accent-foreground)_70%,var(--data-table-selection-surface))]",
+            ],
+          )}
+        >
+          {selecting && <DataTableSelectionBar />}
+          {children}
+          <DataTableSelectionAnnouncer open={selecting} />
+        </div>
+      ) : (
+        children
+      )}
     </div>
   );
 }
@@ -1917,6 +1977,11 @@ export const DataTable = {
   /**
    * Footer container for pagination and other footer content.
    * Place inside `DataTable.Root`, after `DataTable.Table`.
+   *
+   * When `useDataTable()` is given `selectionActions`, the footer becomes the
+   * bulk-action bar while rows are selected — the selection count, the
+   * actions, and a Clear button — with its own children (usually
+   * `DataTable.Pagination`) kept alongside.
    */
   Footer: DataTableFooter,
   /**

@@ -11,7 +11,7 @@
  * utilities).
  */
 const controlBaseClasses = [
-  "astw:border-input astw:flex astw:w-full astw:min-w-0 astw:rounded-md astw:border astw:bg-transparent astw:px-3 astw:text-base astw:shadow-xs astw:outline-none astw:md:text-sm",
+  "astw:border-input astw:flex astw:w-full astw:min-w-0 astw:rounded-md astw:border astw:bg-transparent astw:px-3 astw:text-base astw:outline-none astw:md:text-sm",
   "astw:dark:bg-input/30 astw:transition-[color,box-shadow]",
   "astw:selection:bg-primary astw:selection:text-primary-foreground",
   "astw:placeholder:text-muted-foreground",

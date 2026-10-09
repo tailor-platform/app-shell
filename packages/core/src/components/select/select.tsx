@@ -59,7 +59,7 @@ function SelectTrigger({
       ref={mergeRefs(ref, forwardedRef)}
       data-slot="select-trigger"
       className={cn(
-        "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:text-foreground astw:flex astw:h-9 astw:w-full astw:items-center astw:justify-between astw:gap-2 astw:rounded-md astw:border astw:px-3 astw:py-2 astw:text-sm astw:shadow-xs astw:outline-none astw:transition-colors",
+        "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:text-foreground astw:flex astw:h-9 astw:w-full astw:items-center astw:justify-between astw:gap-2 astw:rounded-md astw:border astw:px-3 astw:py-2 astw:text-sm astw:outline-none astw:transition-colors",
         "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
         "astw:disabled:cursor-not-allowed astw:disabled:opacity-50",
         "astw:placeholder:text-muted-foreground",

@@ -1222,6 +1222,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   const { value: timeZone } = useTimeZone();
   const hasExpand = !!rowExpansion;
   const { ordered, keys, placements, selection, expand, actions } = pinLayout;
+  // Intl formatter construction is costly; avoid repeating it for every cell render.
   const cellRenderers = useMemo(
     () =>
       new Map(

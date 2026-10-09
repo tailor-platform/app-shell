@@ -751,18 +751,64 @@ The `filter` property on a column accepts the same base shape as `FilterConfig`,
 
 ### Filter Types and Operators
 
-| Type       | Input editor              | Supported operators                                                                                          |
-| ---------- | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `string`   | Text                      | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
-| `number`   | Number                    | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `datetime` | Datetime-local            | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `date`     | **Calendar / DatePicker** | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
-| `time`     | Time                      | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `enum`     | Dropdown                  | `eq`, `ne`, `in`, `nin`                                                                                      |
-| `boolean`  | Toggle                    | `eq`, `ne`                                                                                                   |
-| `uuid`     | Text                      | `eq`, `ne`, `in`, `nin`                                                                                      |
+| Type       | Input editor                 | Supported operators                                                                                          |
+| ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `string`   | Text                         | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
+| `number`   | Number                       | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `datetime` | Calendar / DatePicker + Time | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `date`     | **Calendar / DatePicker**    | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
+| `time`     | Time                         | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `enum`     | Dropdown                     | `eq`, `ne`, `in`, `nin`                                                                                      |
+| `boolean`  | Toggle                       | `eq`, `ne`                                                                                                   |
+| `uuid`     | Text                         | `eq`, `ne`, `in`, `nin`                                                                                      |
 
 When the `between` operator is selected on a `number`, `datetime`, `date`, or `time` column, the value editor renders a range input with **min**/**max** (or **From**/**To** for dates) bounds.
+
+### Datetime Filters and Business Timezones
+
+> **Important:** Set [`AppShell.timeZone`](./app-shell.md#timezone) explicitly when datetime filters must follow a shared business timezone. Without it, the filter editors use each user's local timezone. Users in different timezones can enter the same date and time but search against different instants, causing expected records to be missed. Setting `locale` alone does **not** set the timezone.
+
+`locale` and `timeZone` are independent:
+
+| Setting    | Controls                                                                             | Example        |
+| ---------- | ------------------------------------------------------------------------------------ | -------------- |
+| `locale`   | UI language and locale-specific date/time formatting                                 | `"ja-JP"`      |
+| `timeZone` | The timezone used to interpret the date and time selected in datetime filter editors | `"Asia/Tokyo"` |
+
+For example, a Japanese-language application can use a US business timezone. Choose the timezone that defines the business's date boundaries, not one inferred from the UI language or the user's location:
+
+```tsx
+import { AppShell } from "@tailor-platform/app-shell";
+
+<AppShell modules={modules} locale="ja-JP" timeZone="America/New_York">
+  {/* Existing application content */}
+</AppShell>;
+```
+
+Use an IANA timezone such as `"Asia/Tokyo"` or `"America/New_York"`, rather than a fixed UTC offset, so daylight-saving changes are accounted for. If per-user local-time filtering is intentional, leave `timeZone` unset; otherwise, configure the shared business timezone even when every user has the same `locale`.
+
+#### Local input, RFC 3339 output
+
+The datetime editor shows the date and time in the configured timezone, but sends an **instant** — a specific point in time — as an RFC 3339 UTC string. For example, the same input `2026-10-09 00:00` produces:
+
+| Timezone used by the editor | Serialized filter value    |
+| --------------------------- | -------------------------- |
+| `Asia/Tokyo`                | `2026-10-08T15:00:00.000Z` |
+| `America/New_York`          | `2026-10-09T04:00:00.000Z` |
+
+Applying or updating a datetime filter through `DataTable.Filters` passes these strings to `CollectionControl.addFilter`, so consumers reading `control.filters` receive UTC instants rather than timezone-less local datetime strings. A `between` filter serializes both `min` and `max` as instants. Existing RFC 3339 values are displayed in the editor's timezone without changing the instant they represent. `date` and `time` filters retain their `YYYY-MM-DD` and `HH:mm` formats.
+
+A datetime `eq` filter matches one instant, not every record on a calendar day. To search a whole business day on a datetime field, use the start of that day as an inclusive lower bound and the start of the next day as an exclusive upper bound in the backend query. Calculate both boundaries in the business timezone; do not assume every day is exactly 24 hours.
+
+Timezone-less legacy datetime values can still be edited and are normalized when re-applied. URL restoration, saved filters, and programmatic `initialFilters`, `addFilter`, or `setFilters` are not automatically normalized by the collection hook. Supply RFC 3339 values with an explicit timezone for these paths; setting `AppShell.timeZone` does not retroactively convert them. If migrating legacy values, first establish which timezone they originally represented.
+
+The timezone setting controls the built-in datetime filter editors; it does not change the browser's default timezone. When formatting timestamps with `Intl.DateTimeFormat` in a custom cell renderer, pass the same timezone explicitly if the displayed date and time must agree with the filters.
+
+#### Calendar dates are not instants
+
+Use the `date` field/filter type for values whose meaning is a calendar date, such as a purchase-order date or an accounting date. `2026-10-09` should remain that date regardless of where the user is located. Use `datetime` for events that occurred at a particular instant, such as a record's creation time.
+
+If an existing backend stores document dates as datetime instants, a shared business timezone can make filter boundaries consistent, but it does not fix that data model. Changing only the column's filter type to `date` does not migrate the stored values or change the backend's query contract. Align the backend field type, data, and filters when moving to date-only semantics.
 
 ### Date Filters
 
@@ -775,7 +821,7 @@ When the `between` operator is selected on a `number`, `datetime`, `date`, or `t
 | `lte`     | _before_     | on or before (inclusive)   |
 | `between` | _between_    | inclusive min–max range    |
 
-`gt` / `lt` / `ne` are intentionally dropped — the inclusive _after_ / _before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set and native inputs.)
+`gt` / `lt` / `ne` are intentionally dropped — the inclusive _after_ / _before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set. Datetime editors pair a calendar/date picker with a time input; `time` uses a native time input.)
 
 ### String Filter Case Sensitivity
 

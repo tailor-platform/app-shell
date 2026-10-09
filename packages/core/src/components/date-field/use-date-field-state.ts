@@ -173,7 +173,11 @@ function completeCalendarDate(f: Fields): CalendarDate | null {
   return new CalendarDate(f.year, f.month, f.day);
 }
 
-function fieldsFromValue(v: DateValue | null | undefined): Fields {
+/**
+ * Split a value into segment fields. In 12-hour mode the hour is stored as
+ * 1–12 plus `dayPeriod`, the inverse of the conversion in `composeValue`.
+ */
+function fieldsFromValue(v: DateValue | null | undefined, is12: boolean): Fields {
   if (!v) return {};
   const f: Fields = {};
   if ("year" in v) {
@@ -182,14 +186,27 @@ function fieldsFromValue(v: DateValue | null | undefined): Fields {
     f.day = v.day;
   }
   if ("hour" in v) {
-    f.hour = v.hour;
+    f.hour = is12 ? v.hour % 12 || 12 : v.hour;
     f.minute = v.minute;
     f.second = v.second;
+    if (is12) f.dayPeriod = v.hour >= 12 ? 1 : 0;
   }
   return f;
 }
 
-function use12HourCycle(locale: string, hourCycle?: HourCycle): boolean {
+/**
+ * Re-encode the hour of (possibly partial) fields for a new hour cycle. An
+ * unset `dayPeriod` reads as AM, matching `composeValue`, so the composed
+ * value is unchanged.
+ */
+function convertHourCycle(f: Fields, is12: boolean): Fields {
+  const { dayPeriod, ...rest } = f;
+  if (f.hour == null) return rest;
+  if (is12) return { ...rest, hour: f.hour % 12 || 12, dayPeriod: f.hour >= 12 ? 1 : 0 };
+  return { ...rest, hour: (f.hour % 12) + (dayPeriod === 1 ? 12 : 0) };
+}
+
+function resolveIs12HourCycle(locale: string, hourCycle?: HourCycle): boolean {
   if (hourCycle === 12) return true;
   if (hourCycle === 24) return false;
   // Derive from the locale's resolved hour cycle.
@@ -272,7 +289,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
 
   const isControlled = controlledValue !== undefined;
   const hasTime = granularity !== "day";
-  const is12 = use12HourCycle(locale, hourCycle);
+  const is12 = useMemo(() => resolveIs12HourCycle(locale, hourCycle), [locale, hourCycle]);
 
   // The editable segment order, before locale reordering.
   const editableTypes = useMemo<EditableSegmentType[]>(() => {
@@ -286,8 +303,17 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   // segments) survive the round-trip through `onChange`. A `controlled` value
   // that changes *externally* is synced back in via the effect below.
   const [internalFields, setInternalFields] = useState<Fields>(() =>
-    fieldsFromValue(controlledValue ?? defaultValue),
+    fieldsFromValue(controlledValue ?? defaultValue, is12),
   );
+
+  // `fields` stores the hour in the current cycle's encoding. When the cycle
+  // flips (`hourCycle` or `locale` changed), re-encode during render so no
+  // commit ever reads the old encoding the new way.
+  const [fieldsIs12, setFieldsIs12] = useState(is12);
+  if (fieldsIs12 !== is12) {
+    setFieldsIs12(is12);
+    setInternalFields((f) => convertHourCycle(f, is12));
+  }
   const fields = internalFields;
 
   const lastEmitted = useRef<DateValue | null>(controlledValue ?? defaultValue ?? null);
@@ -303,7 +329,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
 
   // Anchor as a plain field record — used to seed increments and to populate
   // unfilled segments for display formatting.
-  const anchorFields = useMemo<Fields>(() => fieldsFromValue(anchor), [anchor]);
+  const anchorFields = useMemo<Fields>(() => fieldsFromValue(anchor, is12), [anchor, is12]);
 
   // ── Limits ──────────────────────────────────────────────────────────────────
   const getLimits = useCallback(
@@ -424,12 +450,12 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     const same =
       (cv == null && le == null) || (cv != null && le != null && cv.compare(le as never) === 0);
     if (!same) {
-      const nextFields = fieldsFromValue(cv);
+      const nextFields = fieldsFromValue(cv, is12);
       lastEmitted.current = cv;
       setInternalFields(nextFields);
       onStateChange?.(buildStateChange(nextFields, "external"));
     }
-  }, [buildStateChange, controlledValue, isControlled, onStateChange]);
+  }, [buildStateChange, controlledValue, isControlled, is12, onStateChange]);
 
   // ── Mutations ───────────────────────────────────────────────────────────────
   const cycle = useCallback(
@@ -440,11 +466,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       let next: number;
       if (current == null) {
         // Start from the anchor's value for that field, or the min.
-        if (type === "dayPeriod") {
-          next = (anchorFields.hour ?? 0) >= 12 ? 1 : 0;
-        } else {
-          next = anchorFields[type] ?? min;
-        }
+        next = anchorFields[type] ?? min;
       } else {
         const span = max - min + 1;
         next = ((current - min + delta + span * 1000) % span) + min;

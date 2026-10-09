@@ -146,15 +146,9 @@ html
   background-color: transparent;
 }
 
-html [data-slot="button"][class*="astw:bg-background"][class*="astw:border"],
 html [data-slot="data-table-filter-chip"] {
   background-color: transparent;
   transition:
     background-color 0.12s ease,
     color 0.12s ease;
-}
-
-html [data-slot="button"][class*="astw:bg-background"][class*="astw:border"]:hover:not(:disabled) {
-  background-color: var(--accent);
-  color: var(--accent-foreground);
 }

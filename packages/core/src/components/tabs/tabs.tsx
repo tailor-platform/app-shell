@@ -9,14 +9,14 @@ type TabsSize = "xs" | "sm" | "default" | "lg";
 
 const LIST_VARIANT_CLASSES: Record<TabsVariant, string> = {
   line: "astw:h-9 astw:gap-2",
-  capsule: "astw:gap-0.5 astw:rounded-md astw:bg-background astw:dark:bg-input/30 astw:p-1",
+  capsule: "astw:gap-0.5 astw:rounded-md astw:bg-black/5 astw:dark:bg-input/30 astw:p-1",
   default: "astw:text-muted-foreground astw:h-9 astw:gap-1",
 };
 
 const TAB_VARIANT_CLASSES: Record<TabsVariant, string> = {
   line: "astw:px-3 astw:py-1.5 astw:-mb-px astw:border-b-2 astw:border-transparent astw:data-active:border-primary astw:data-active:text-foreground",
   capsule:
-    "astw:rounded-md astw:px-3 astw:has-[>svg:only-child]:px-0 astw:[&_svg:not([class*='size-'])]:size-4 astw:data-active:bg-primary/10 astw:data-active:text-primary astw:data-active:shadow-sm",
+    "astw:rounded-md astw:px-3 astw:has-[>svg:only-child]:px-0 astw:[&_svg:not([class*='size-'])]:size-4 astw:data-active:bg-card astw:dark:data-active:bg-input/60 astw:data-active:text-primary astw:data-active:shadow-sm",
   default:
     "astw:rounded-md astw:px-3 astw:py-1 astw:data-active:bg-primary/10 astw:data-active:text-primary",
 };

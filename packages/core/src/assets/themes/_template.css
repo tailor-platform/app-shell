@@ -18,11 +18,13 @@
  *
  * DO NOT SET (inherited from `:root` in default.css):
  *   --ring, --sidebar-*, --primitive-* (colour scales), --status-*, --alert-*,
- *   --destructive, --destructive-foreground
+ *   --destructive, --destructive-foreground, --app-shell-type-*
  * The colour roles --{info|success|warning|danger|neutral}-{role} also inherit.
  * Override a role only to recolour the status components (Badge, Alert, ...)
  * for this palette; never set --status-*, --alert-* or --destructive*, they alias the roles
  * (--destructive is the danger solid; recolour it with --danger-solid).
+ * Typography roles (--app-shell-type-*) inherit too: do not copy the defaults,
+ * override only the variables whose values differ.
  *
  * PREVIEW: `/showcase/colors` in the Vite example app.
  * ═══════════════════════════════════════════════════════════════════════════

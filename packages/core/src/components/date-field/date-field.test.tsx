@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import {
   CalendarDate,
   parseDate,
+  parseZonedDateTime,
   today,
   getLocalTimeZone,
   startOfWeek,
@@ -1358,5 +1359,158 @@ describe("RHF integration", () => {
       expect(onSubmit).toHaveBeenCalledTimes(1);
       expect(onSubmit.mock.calls[0][0].deliveryDate).not.toBeNull();
     });
+  });
+});
+
+describe("12-hour time display", () => {
+  const TZ = "Asia/Tokyo";
+  const zoned = (iso: string) => parseZonedDateTime(`${iso}[${TZ}]`);
+  const segText = (name: string) =>
+    screen.getByRole("spinbutton", { name }).getAttribute("aria-valuetext");
+
+  it("shows a PM value as 06 PM, not 18 AM", () => {
+    render(
+      <DatePicker
+        aria-label="Deadline"
+        granularity="minute"
+        hourCycle={12}
+        locale="en-US"
+        timeZone={TZ}
+        defaultValue={zoned("2026-10-12T18:00")}
+      />,
+    );
+    expect(segText("hour")).toBe("06");
+    expect(segText("AM/PM")).toBe("PM");
+  });
+
+  it.each([
+    ["2026-10-12T00:30", "12", "AM"],
+    ["2026-10-12T12:30", "12", "PM"],
+  ])("shows %s as %s %s", (iso, hour, period) => {
+    render(
+      <DatePicker
+        aria-label="Deadline"
+        granularity="minute"
+        hourCycle={12}
+        locale="en-US"
+        timeZone={TZ}
+        defaultValue={zoned(iso)}
+      />,
+    );
+    expect(segText("hour")).toBe(hour);
+    expect(segText("AM/PM")).toBe(period);
+  });
+
+  it.each(["2026-10-12T18:00", "2026-10-12T00:00", "2026-10-12T12:00"])(
+    "keeps the hour of %s when the minute is edited",
+    async (iso) => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <DatePicker
+          aria-label="Deadline"
+          granularity="minute"
+          hourCycle={12}
+          locale="en-US"
+          timeZone={TZ}
+          defaultValue={zoned(iso)}
+          onChange={onChange}
+        />,
+      );
+      await user.click(screen.getByRole("spinbutton", { name: "minute" }));
+      await user.keyboard("{ArrowUp}");
+      expect(onChange.mock.lastCall?.[0]?.toString()).toBe(
+        zoned(iso).add({ minutes: 1 }).toString(),
+      );
+    },
+  );
+
+  it("shows an externally updated PM value correctly", () => {
+    const { rerender } = render(
+      <DatePicker
+        aria-label="Deadline"
+        granularity="minute"
+        hourCycle={12}
+        locale="en-US"
+        timeZone={TZ}
+        value={zoned("2026-10-12T09:00")}
+      />,
+    );
+    expect(segText("AM/PM")).toBe("AM");
+    rerender(
+      <DatePicker
+        aria-label="Deadline"
+        granularity="minute"
+        hourCycle={12}
+        locale="en-US"
+        timeZone={TZ}
+        value={zoned("2026-10-12T21:15")}
+      />,
+    );
+    expect(segText("hour")).toBe("09");
+    expect(segText("AM/PM")).toBe("PM");
+  });
+
+  describe("when hourCycle changes on a mounted field", () => {
+    const props = (onChange = vi.fn()) => ({
+      "aria-label": "Deadline",
+      granularity: "minute" as const,
+      locale: "en-US",
+      timeZone: TZ,
+      defaultValue: zoned("2026-10-12T18:00"),
+      onChange,
+    });
+
+    it("re-encodes 12 → 24 and keeps the value", async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      const { rerender } = render(<DatePicker {...props(onChange)} hourCycle={12} />);
+      rerender(<DatePicker {...props(onChange)} hourCycle={24} />);
+      expect(segText("hour")).toBe("18");
+      expect(screen.queryByRole("spinbutton", { name: "AM/PM" })).toBeNull();
+      expect(onChange).not.toHaveBeenCalled();
+      await user.click(screen.getByRole("spinbutton", { name: "minute" }));
+      await user.keyboard("{ArrowUp}");
+      expect(onChange.mock.lastCall?.[0]?.toString()).toBe(zoned("2026-10-12T18:01").toString());
+    });
+
+    it("re-encodes 24 → 12 and keeps the value", async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      const { rerender } = render(<DatePicker {...props(onChange)} hourCycle={24} />);
+      rerender(<DatePicker {...props(onChange)} hourCycle={12} />);
+      expect(segText("hour")).toBe("06");
+      expect(segText("AM/PM")).toBe("PM");
+      expect(onChange).not.toHaveBeenCalled();
+      await user.click(screen.getByRole("spinbutton", { name: "minute" }));
+      await user.keyboard("{ArrowUp}");
+      expect(onChange.mock.lastCall?.[0]?.toString()).toBe(zoned("2026-10-12T18:01").toString());
+    });
+
+    it("re-encodes a half-typed hour", async () => {
+      const user = userEvent.setup();
+      const base = { "aria-label": "Deadline", granularity: "minute" as const, locale: "en-US" };
+      const { rerender } = render(<DateField {...base} hourCycle={24} />);
+      await user.click(screen.getByRole("spinbutton", { name: "hour" }));
+      await user.keyboard("21");
+      rerender(<DateField {...base} hourCycle={12} />);
+      expect(segText("hour")).toBe("09");
+      expect(segText("AM/PM")).toBe("PM");
+    });
+  });
+
+  it("leaves 24-hour display unchanged", () => {
+    render(
+      <DatePicker
+        aria-label="Deadline"
+        granularity="minute"
+        hourCycle={24}
+        locale="en-US"
+        timeZone={TZ}
+        defaultValue={zoned("2026-10-12T18:00")}
+      />,
+    );
+    expect(segText("hour")).toBe("18");
+    expect(screen.queryByRole("spinbutton", { name: "AM/PM" })).toBeNull();
   });
 });

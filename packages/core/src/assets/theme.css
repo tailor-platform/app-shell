@@ -17,9 +17,12 @@
  *
  * Inherited from default.css — do not duplicate in new palettes:
  *   --ring, --sidebar-*, --primitive-* (colour scales), --status-*, --alert-*,
- *   --destructive, --destructive-foreground (aliases of the danger roles).
+ *   --destructive, --destructive-foreground (aliases of the danger roles),
+ *   --app-shell-type-* (typography roles).
  *   The colour roles --{intent}-{role} inherit too; a palette overrides them
- *   only to recolour the status components.
+ *   only to recolour the status components. Typography roles are inherited
+ *   the same way: do not copy the defaults, override only the variables
+ *   whose values differ.
  *
  * Light/dark mode is controlled separately via `.dark` on <html>.
  * Palette selection is by CSS import; there is no runtime palette prop.

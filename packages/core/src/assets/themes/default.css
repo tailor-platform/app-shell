@@ -41,8 +41,8 @@
   --sidebar-border: rgba(229, 229, 229, 1);
 
   /* ── 5. PALETTE ───────────────────────────────────────────────────────── */
-  --destructive: rgba(220, 38, 38, 1);
-  --destructive-foreground: rgba(254, 242, 242, 1);
+  --destructive: var(--danger-solid);
+  --destructive-foreground: var(--danger-contrast);
   --radius: 0.625rem;
   --chart-1: rgba(234, 88, 12, 1);
   --chart-2: rgba(13, 148, 136, 1);
@@ -88,8 +88,8 @@
   --sidebar-border: rgba(255, 255, 255, 0.1);
 
   /* ── 5. PALETTE (dark) ────────────────────────────────────────────────── */
-  --destructive: rgba(248, 113, 113, 1);
-  --destructive-foreground: rgba(254, 242, 242, 1);
+  --destructive: var(--danger-solid);
+  --destructive-foreground: var(--danger-contrast);
   --chart-1: rgba(29, 78, 216, 1);
   --chart-2: rgba(16, 185, 129, 1);
   --chart-3: rgba(245, 158, 11, 1);

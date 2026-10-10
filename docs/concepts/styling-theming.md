@@ -169,7 +169,9 @@ Surfaces are named by **role**, not by depth — there is no numbered `surface-1
 | `--primary` / `--primary-foreground`         | primary buttons, emphasis        | `bg-primary` / `text-primary-foreground`     |
 | `--secondary` / `--secondary-foreground`     | secondary buttons, neutral chips | `bg-secondary` / `text-secondary-foreground` |
 | `--accent` / `--accent-foreground`           | hover and selected nav states    | `bg-accent` / `text-accent-foreground`       |
-| `--destructive` / `--destructive-foreground` | destructive actions, errors      | `bg-destructive` / `text-destructive`        |
+| `--destructive` / `--destructive-foreground` | alias of danger solid / contrast | `bg-destructive` / `text-destructive`        |
+
+`--destructive` and `--destructive-foreground` are aliases of the danger `solid` and `contrast` roles ([semantic color roles](#semantic-color-roles)), so `bg-destructive` is the danger solid fill in both modes and `Button variant="destructive"` reads the danger roles directly. `text-destructive` still works and resolves to the solid. For text, prefer `text-danger-text`, which meets 4.5:1 on `--card` and `--background`; the solid is `#dc2626` in dark mode, 3.71:1 on the dark card. To recolour destructive actions, override `--danger-solid` (and the other danger roles), not `--destructive`.
 
 There are no `-hover` or `-active` brand tokens. Express interaction states with Tailwind variants and opacity — `hover:bg-primary/90`, `active:bg-primary/80` — which is what AppShell's own components do.
 
@@ -212,7 +214,7 @@ In the default palette, `text` on `surface` and `contrast` on `solid` and `solid
 
 Most `surface` and `border` values are translucent tints, so an opacity modifier compounds rather than replaces — `bg-info-surface/50` halves the tint's alpha instead of setting it to 50%. Some light-mode values are opaque instead of translucent: the `warning` surface, surface-hover and border, the `info` border and the `danger` surface-hover. They do not blend with a tinted parent. All dark-mode values are translucent.
 
-`Badge`, `Alert`, `CsvImporter` and `MetricCard` read these roles directly, not `--status-*` or `--alert-*`. To recolour them, override the roles. `Badge` `error` and `subtle-error`, and `Alert` `error`, follow `--danger-*`. They no longer follow `--destructive`, which still drives `Button` and `text-destructive`.
+`Badge`, `Alert`, `CsvImporter` and `MetricCard` read these roles directly, not `--status-*` or `--alert-*`. To recolour them, override the roles. `Badge` `error` and `subtle-error`, and `Alert` `error`, follow `--danger-*`. `Button variant="destructive"`, invalid input borders and error text follow `--danger-*` too, and `--destructive` is an alias of `--danger-solid`.
 
 #### Sidebar & charts
 
@@ -769,7 +771,7 @@ These are visual-composition rules every screen must follow, regardless of patte
 
 | Intent                             | Pick                                                                                                    |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Destructive action (delete, void)  | `Button variant="destructive"`; `bg-destructive` on custom surfaces; confirm in a dialog at `shadow-lg` |
+| Destructive action (delete, void)  | `Button variant="destructive"`; `bg-danger-solid` on custom surface; confirm in a dialog at `shadow-lg` |
 | Non-blocking caution               | `Badge variant="warning"`, or `bg-warning-surface text-warning-text`                                    |
 | Confirmation / completed state     | `Badge variant="success"`, or `bg-success-surface text-success-text`                                    |
 | Informational callout              | `Badge variant="info"`, or `Alert variant="info"`                                                       |

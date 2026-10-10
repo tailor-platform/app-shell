@@ -65,7 +65,7 @@
       "hashes": {
         "typeSurface": "7cb8a34c1c36eb02",
         "outline": "797e012e34847b80",
-        "snapshot": "791be2c6087af41c",
+        "snapshot": "5b69cb9a28bbcc2e",
         "outputMd": "824d1aa36bb7f194",
         "examples": null
       }
@@ -225,7 +225,7 @@
       "hashes": {
         "typeSurface": "16df9927f8394548",
         "outline": "200f12eb4bec959a",
-        "snapshot": "d607a315ffce3abc",
+        "snapshot": "985de4f9c817a3cf",
         "outputMd": "bce0e2fada1d1638",
         "examples": "1ee01b1e27764cd2"
       }
@@ -259,7 +259,7 @@
       "hashes": {
         "typeSurface": "3886bf7012f24283",
         "outline": "916645fe8e5baf10",
-        "snapshot": "5df639bf40a2bdd7",
+        "snapshot": "2d057b30b9401e12",
         "outputMd": "14f7ba23f441df38",
         "examples": "e8f09fba5acb116f"
       }
@@ -676,7 +676,7 @@
       "hashes": {
         "typeSurface": "7b374d45d53d4535",
         "outline": "79c9b0f08ca38027",
-        "snapshot": "4287a03df2854f9a",
+        "snapshot": "d22d9caf48bb1b3b",
         "outputMd": "91d901b17aed7781",
         "examples": null
       }
@@ -897,7 +897,7 @@
       "hashes": {
         "typeSurface": "7c5b64c579f508ee",
         "outline": "9b273bc9e509f1fe",
-        "snapshot": "7e0ed658f518fd9a",
+        "snapshot": "4742086e97cfbdee",
         "outputMd": "a3a6c9679af99d37",
         "examples": "fc036f7af21b9dd4"
       }
@@ -1049,9 +1049,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "45dcfe4383a87ea9",
+        "outline": "8f4b40e6eb2e5381",
         "snapshot": null,
-        "outputMd": "2fa0b6a249d8bd4f",
+        "outputMd": "80b53c137713bde8",
         "examples": null
       }
     },
@@ -1287,9 +1287,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "e63d837190e71ff1",
+        "outline": "ef379deb65bcba3e",
         "snapshot": null,
-        "outputMd": "112b43c697d30369",
+        "outputMd": "74855a46c0284abc",
         "examples": "4d19f4f688e0f0ac"
       }
     },
@@ -1339,7 +1339,7 @@
       "hashes": {
         "typeSurface": "3d9225f7356a29b2",
         "outline": "40952524e46c333e",
-        "snapshot": "40f4b39567ab051b",
+        "snapshot": "e775f88bb9fc2565",
         "outputMd": "c940bc01cd573334",
         "examples": "0712ee03ad6ce259"
       }
@@ -1390,7 +1390,7 @@
       "hashes": {
         "typeSurface": "2d88f0306efcaa77",
         "outline": "1257a84ccd91d5c3",
-        "snapshot": "3b402cab18147ef9",
+        "snapshot": "c85c431dcd58bc43",
         "outputMd": "91d70b140c7bb747",
         "examples": null
       }
@@ -1659,7 +1659,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "dc6b3afc049b4148",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "112b43c697d30369",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "74855a46c0284abc",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
@@ -1738,7 +1738,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
-    "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
+    "packages/core/skills/app-shell-patterns/references/migrations.md": "d5ca48664fedae18",
     "packages/core/skills/app-shell-patterns/SKILL.md": "12527965a47cf42f"
   }
 }

@@ -88,6 +88,8 @@ function contrast(a: Rgba, b: Rgba): number {
 }
 
 const MIN_TEXT = 4.5;
+/** WCAG 1.4.11 non-text contrast, for the invalid-input border. */
+const MIN_NON_TEXT = 3;
 /** Known and accepted: subtle hover text is below AA for some roles. A floor, not a pass. */
 const MIN_HOVER_TEXT = 4.2;
 const modes: Mode[] = ["light", "dark"];
@@ -149,6 +151,20 @@ describe.each(modes)("semantic colour contrast (%s)", (mode) => {
       expect(
         pair(`--alert-${variant}-foreground-muted`, `--alert-${variant}-background`, page),
       ).toBeGreaterThanOrEqual(MIN_TEXT);
+    });
+  });
+
+  describe("destructive aliases", () => {
+    it.each([
+      ["--destructive", "--danger-solid"],
+      ["--destructive-foreground", "--danger-contrast"],
+    ])("%s resolves to %s", (alias, role) => {
+      expect(vars.get(alias)).toBe(`var(${role})`);
+      expect(color(alias)).toEqual(color(role));
+    });
+
+    it.each(pages)("danger solid meets 3:1 against %s (invalid-input border)", (page) => {
+      expect(contrast(color("--danger-solid"), color(page))).toBeGreaterThanOrEqual(MIN_NON_TEXT);
     });
   });
 });

@@ -1,5 +1,83 @@
 # @tailor-platform/app-shell
 
+## 1.17.0
+
+### Minor Changes
+
+- 31e0524: Add semantic colour roles (`--{info|success|warning|danger|neutral}-{surface|surface-hover|border|solid|solid-hover|text|contrast|indicator}`), available as Tailwind colours. `--status-*` and `--alert-*` now alias these roles, and Badge reads them, so `text` on `surface` and `contrast` on `solid` are at least 4.5:1 in the default palette, in light and dark mode.
+  
+  ```tsx
+  <span className="rounded-md bg-success-surface px-2 py-0.5 text-success-text">Paid</span>
+  ```
+  
+  A gray scale (`--primitive-gray-{50..950}`, Tailwind neutral) is also added; the default palette's text and line tokens read it, with no value change.
+  
+  Visible changes in the default palette:
+  
+  - `--status-*` and `--alert-*` are deprecated and will be removed in the next major. `bg-status-*` and `bg-alert-*` keep working; new code uses the roles.
+  - `bg-status-*` and `bg-alert-*` change values. `--status-default` now follows `--muted-foreground` (it was a fixed `#737373`), so it is theme-dependent and translucent in the `cream` and `bloom` palettes.
+  - `--status-*` are fill colours; do not use them as text (below 4.5:1 in dark mode). Use `text-{intent}-text` instead (for example `text-status-completed` becomes `text-success-text`).
+  - Badge, Alert, CsvImporter and MetricCard read the semantic roles. To recolour them, override `--{intent}-*`; overriding `--status-*` or `--alert-*` no longer changes these components.
+  - Badge `error` and `subtle-error`, and Alert `error`, follow `--danger-*` instead of `--destructive`. Button and `text-destructive` still follow `--destructive`.
+  - The warning Badge text is dark instead of white. Alert description text now has the same colour as the Alert title.
+- ce4bcf9: Add `padding="none"` to `Card.Content` for edge-to-edge content such as a `Table`, `DataTable` or divided list.
+  
+  ```tsx
+  <Card.Root>
+    <Card.Header title="Line items" />
+    <Card.Content padding="none">
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    </Card.Content>
+  </Card.Root>
+  ```
+  
+  Cells keep their own 24px inset, so the first column lines up with the card title. Row backgrounds stay inside the card's rounded corners, and a nested `DataTable` drops its own border. This replaces the `className="px-0!"` workaround.
+- 94f6a5a: Add bulk actions to `DataTable`. Pass `selectionActions` to `useDataTable` and, while rows are selected, `DataTable.Footer` becomes a bulk-action bar: the selection count, your actions, and a Clear button, with pagination kept alongside. Give an action `canApply` to scope it to the selected rows it can act on — the bar shows that count, disables the action at zero, and hands only those rows to `onClick`. Return the promise from `onClick` and the bar waits for it: actions are disabled with a spinner meanwhile, and the selection clears once it resolves (set `keepSelection` for actions such as an export). An action that confirms first can hand its later request back through the `run` helper — `run(deleteRows(rows))` from the dialog's confirm button — and get the same handling. Clear is disabled while a request is pending.
+  
+  ```tsx
+  const table = useDataTable({
+    columns,
+    data,
+    control,
+    selectionActions: [
+      {
+        id: "activate",
+        label: "Activate",
+        canApply: (vendor) => vendor.status === "inactive",
+        onClick: (vendors) => activate(vendors),
+      },
+    ],
+  });
+  ```
+  
+  `RowAction` and `SelectionAction` now share a base type, `DataTableAction` (`id`, `label`, `icon`, `variant`, `canApply`), so one definition can be spread into both `rowActions` and `selectionActions`. `RowAction` gains `canApply`; its `isDisabled`, which reads the other way round, is deprecated but still honoured.
+  
+  Selection now also remembers the rows it holds across pages (`selectedRows`), and a non-empty `selectionActions` enables selection on its own. The first three actions render as buttons and the rest collapse into a "More actions" menu. On a page-scrolling table the bar sticks to the bottom of the viewport until the table's end scrolls into view.
+  
+  **Behavior change:** the header checkbox is now page-scoped in both directions. Checking it adds the current page's rows to the selection instead of replacing it, and unchecking it removes only the current page's rows instead of clearing every page. `clearSelection` still empties everything (and is now a no-op when nothing is selected), and the new `deselectAllRows` is the page-scoped counterpart of `selectAllRows`.
+  
+  The `interaction/multi-select` pattern in the bundled `app-shell-patterns` skill is rewritten around `selectionActions`, replacing the floating bar on a hand-built table.
+- 403eebe: Add typography role tokens. A role sets font size, line height, font weight, and letter spacing together. Ten `text-*` utilities are available after you import `@tailor-platform/app-shell/styles`: `text-heading-lg`, `text-heading-md`, `text-heading-sm`, `text-body-md`, `text-body-sm`, `text-label-md`, `text-label-sm`, `text-code-sm`, `text-body-md-relaxed`, and `text-body-sm-relaxed`.
+  
+  ```tsx
+  <h2 className="text-heading-md">Purchase orders</h2>
+  <p className="text-body-md text-muted-foreground">Orders sent to suppliers this month.</p>
+  ```
+  
+  Each role reads four CSS variables named `--app-shell-type-<role>-<size|line-height|weight|letter-spacing>`, which you can override on `:root`. AppShell's `cn()` now keeps a role together with a text color class, for example in `className="text-label-md text-muted-foreground"` passed to an AppShell component. If your app has its own `tailwind-merge` setup, see the Typography section of the styling guide.
+
+### Patch Changes
+
+- 529b3ac: Fix the `form/modal` pattern in the docs and the bundled `app-shell-patterns` skill. Both examples built the dialog body on a native `<form onSubmit>` with `new FormData(event.currentTarget)`, which skips `Form` validation and server-error routing and contradicts the pattern's own rules. They now use `Form` with `onFormSubmit(values)`, plain `<Field.Control />`, and a `type="button"` Cancel. Refs tailor-inc/platform-planning#2000.
+- 4c366d1: Fix 12-hour time display in `DateField`, `DatePicker` and `DateRangePicker`. With `granularity` set to `hour`, `minute` or `second` and a 12-hour cycle (`hourCycle={12}`, or a 12-hour locale such as `en-US`), afternoon values showed as e.g. "18:00 AM", and editing any segment saved them 12 hours early (06:xx). PM values now show as "06:00 PM", midnight and noon as 12 AM / 12 PM, and edits keep the correct hour. Changing `hourCycle` (or a locale change that flips the default cycle) on a mounted field now re-encodes the time segments instead of misreading them. Refs tailor-inc/platform-planning#2039.
+- 430fd6a: `DatePicker` and `DateRangePicker` now open their calendar on the current field value. Previously a date typed into the segments (or set from outside while closed) was ignored, so the popover opened on today's month — or on whatever month was last viewed — and arrow-key + Enter selected relative to that. The calendar now focuses the selected/typed date on every open (the range start, else a typed end), falling back to today when empty.
+- 5481215: Fix the hook documentation and the bundled `app-shell-patterns` skill where the examples did not match the real return types. Both `useAppShell()` and `useAppShellData()` expose a `contextData` property (not `context`, and not the data object itself); `useAppShell()` also returns the configuration. `useAppShellConfig()` returns `{ title, icon, favicon, appInfo, configurations }` with `modules` under `configurations`, and `useToast()` returns the sonner `toast` function (`toast("Saved")`, `toast.success(...)`) rather than `{ toast }` with a `{ title, description, variant }` object. Copying the old examples produced TS2339 and TS2353 errors.
+- 8e58b98: Fix localized breadcrumb overrides by recognizing translation functions created by `labels.t()` and resolving callback-returned `LocalizedString` values using the current AppShell locale. This applies to modules, resources, and file-based page metadata while preserving existing URL-segment callbacks.
+  
+  Use `breadcrumbTitle: labels.t("orders")` directly, or `breadcrumbTitle: (segment) => labels.t("order", { id: segment })` for dynamic labels, without `as string`. The existing `() => labels.t(key)` form remains supported.
+
 ## 1.16.0
 
 ### Minor Changes

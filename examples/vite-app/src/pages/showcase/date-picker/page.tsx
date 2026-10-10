@@ -438,6 +438,38 @@ watch("period")?.start.toString(); // "2025-06-10"
             </div>
           </section>
 
+          {/* ── Date format + day of the week ──────────────────────────────── */}
+          <section className="flex flex-col gap-4">
+            <h2 className="text-base font-semibold border-b pb-2">Date format + day of the week</h2>
+            <p className="text-sm text-muted-foreground">
+              <code className="bg-muted px-1 py-0.5 rounded">dateFormat="regional"</code> uses the
+              locale's written form where it keeps the month numeric (ja / zh / ko); other locales
+              stay numeric. Set it app-wide with{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">
+                {"<AppShell dateInputDateFormat>"}
+              </code>{" "}
+              or per field. <code className="bg-muted px-1 py-0.5 rounded">showDayOfWeek</code>{" "}
+              appends the locale's short day of the week.
+            </p>
+            <div className="flex flex-wrap gap-6 items-start">
+              <DemoField id="date-picker-ja-regional" label="ja-JP regional + day of the week">
+                <DatePicker locale="ja-JP" dateFormat="regional" showDayOfWeek />
+              </DemoField>
+              <DemoField id="date-picker-ko-regional" label="ko-KR regional">
+                <DatePicker locale="ko-KR" dateFormat="regional" />
+              </DemoField>
+              <DemoField
+                id="date-picker-en-regional"
+                label="en-US regional (stays numeric) + day of the week"
+              >
+                <DatePicker locale="en-US" dateFormat="regional" showDayOfWeek />
+              </DemoField>
+              <DemoField id="date-picker-ja-range" label="ja-JP range, regional + day of the week">
+                <DateRangePicker locale="ja-JP" dateFormat="regional" showDayOfWeek />
+              </DemoField>
+            </div>
+          </section>
+
           {/* ── Calendar ───────────────────────────────────────────── */}
           <section className="flex flex-col gap-4">
             <h2 className="text-base font-semibold border-b pb-2">Calendar (standalone)</h2>

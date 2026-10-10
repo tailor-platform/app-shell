@@ -59,6 +59,18 @@ export type RouteParams = AppShellRegister extends { routeParams: infer T }
   ? T
   : Record<string, Record<string, string>>;
 
+/**
+ * How date inputs lay out their segments.
+ *
+ * - `"numeric"` — the locale's numeric short form (`2025/12/19`, `12/19/2025`,
+ *   `19.12.2025`). The current default and historic behaviour; planned to give
+ *   way to `"regional"` as the default in a future major release.
+ * - `"regional"` — the locale's written business form where it keeps the month
+ *   numeric (`2025年12月19日` for ja / zh, `2025년 12월 19일` for ko); every other
+ *   locale, whose written form spells the month as a word, stays numeric.
+ */
+export type DateInputDateFormat = "numeric" | "regional";
+
 export type RootConfiguration = {
   modules: Modules;
   settingsResources: Resource[];
@@ -69,6 +81,8 @@ export type RootConfiguration = {
   resolvedLocale?: string;
   /** IANA timezone (e.g. "America/Los_Angeles"). Used by date/time components. */
   timeZone?: string;
+  /** Default segment layout for date inputs. Falls back to `"numeric"`. */
+  dateInputDateFormat?: DateInputDateFormat;
 };
 
 export type AppInfoEntry = {
@@ -90,6 +104,7 @@ export type ConfigurationOptions = {
   errorBoundary?: ErrorBoundaryComponent;
   locale?: string;
   timeZone?: string;
+  dateInputDateFormat?: DateInputDateFormat;
 };
 
 /**
@@ -107,6 +122,7 @@ export const buildConfigurations = (options: ConfigurationOptions): RootConfigur
   locale: options.locale ? toLanguageSubtag(options.locale) : detectBrowserLocale(),
   resolvedLocale: options.locale ?? detectBrowserFullLocale(),
   timeZone: options.timeZone,
+  dateInputDateFormat: options.dateInputDateFormat,
 });
 
 /**
@@ -213,4 +229,13 @@ export const useTimeZone = (): TimeZone => {
   const { configurations } = useContext(AppShellConfigContext);
   const timeZone = configurations.timeZone ?? getLocalTimeZone();
   return { value: timeZone, today: () => today(timeZone), now: () => now(timeZone) };
+};
+
+/**
+ * Returns the configured default date-input format (`"numeric"` when unset or
+ * outside an AppShell).
+ */
+export const useDateInputDateFormat = (): DateInputDateFormat => {
+  const { configurations } = useContext(AppShellConfigContext);
+  return configurations.dateInputDateFormat ?? "numeric";
 };

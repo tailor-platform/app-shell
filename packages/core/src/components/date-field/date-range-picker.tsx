@@ -12,7 +12,12 @@ import {
 import { toCalendarDate, today, type DateValue } from "@internationalized/date";
 import { cn } from "@/lib/utils";
 import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
-import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
+import {
+  useDateInputDateFormat,
+  useResolvedLocale,
+  useTimeZone,
+  type DateInputDateFormat,
+} from "@/contexts/appshell-context";
 import {
   useDateFieldState,
   type DateFieldInvalidReason,
@@ -88,6 +93,14 @@ export type DateRangePickerProps<T extends DateValue = DateValue> = {
   locale?: string;
   /** IANA timezone; defaults to the AppShell `timeZone`. */
   timeZone?: string;
+  /**
+   * Segment layout for both ends; defaults to the AppShell `dateInputDateFormat`
+   * (itself `"numeric"`, planned to become `"regional"` in a future major
+   * release). See `DatePicker`.
+   */
+  dateFormat?: DateInputDateFormat;
+  /** Show the locale's short day of the week next to each date. */
+  showDayOfWeek?: boolean;
 };
 
 /** One-end snapshot the combined funnel reads to synthesize the range state. */
@@ -129,6 +142,8 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
     isInvalid,
     autoFocus,
     firstDayOfWeek,
+    dateFormat,
+    showDayOfWeek,
     name,
     startName,
     endName,
@@ -143,6 +158,7 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
   const shellTz = useTimeZone();
   const resolvedLocale = localeProp ?? shellLocale;
   const resolvedTz = timeZoneProp ?? shellTz.value;
+  const appShellDateFormat = useDateInputDateFormat();
   const resolvedDisabled = fieldRoot.disabled || !!isDisabled;
   const resolvedReadOnly = !!isReadOnly;
   const t = useDateFieldT();
@@ -220,6 +236,8 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
     minValue,
     maxValue,
     isDateUnavailable,
+    dateFormat: dateFormat ?? appShellDateFormat,
+    showDayOfWeek,
     isReadOnly: resolvedReadOnly,
   };
   const startField = useDateFieldState({

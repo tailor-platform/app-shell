@@ -119,6 +119,7 @@ export function DateRangeInputGroup({
         setDayPeriod={start.setDayPeriod}
         clearSegment={start.clearSegment}
         applyShortcut={start.applyShortcut}
+        settleEntry={start.settleEntry}
         autoFocus={autoFocus}
         segmentLabel={segmentLabel(t("startDate"))}
         onNavigateOut={(edge) => {
@@ -144,6 +145,7 @@ export function DateRangeInputGroup({
         setDayPeriod={end.setDayPeriod}
         clearSegment={end.clearSegment}
         applyShortcut={end.applyShortcut}
+        settleEntry={end.settleEntry}
         segmentLabel={segmentLabel(t("endDate"))}
         onNavigateOut={(edge) => {
           if (edge === "prev") startHandle.current?.focusLast();

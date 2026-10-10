@@ -517,3 +517,27 @@ describe("12-hour time display", () => {
     expect(text("end date", "AM/PM")).toBe("PM");
   });
 });
+
+describe("DateRangePicker dateFormat / showDayOfWeek", () => {
+  const range = { start: new CalendarDate(2025, 12, 19), end: new CalendarDate(2025, 12, 22) };
+
+  it("applies the format and day of the week to both ends", () => {
+    render(
+      <DateRangePicker
+        aria-label="Period"
+        locale="ja-JP"
+        dateFormat="regional"
+        showDayOfWeek
+        defaultValue={range}
+      />,
+    );
+    expect(screen.getByRole("group").textContent).toBe("2025年12月19日(金)–2025年12月22日(月)");
+  });
+
+  it("takes the AppShell dateInputDateFormat by default", () => {
+    render(<DateRangePicker aria-label="Period" defaultValue={range} />, {
+      wrapper: createAppShellWrapper("ja-JP", { dateInputDateFormat: "regional" }),
+    });
+    expect(screen.getByRole("group").textContent).toBe("2025年12月19日–2025年12月22日");
+  });
+});

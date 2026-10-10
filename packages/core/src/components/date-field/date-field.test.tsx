@@ -4,6 +4,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   CalendarDate,
+  CalendarDateTime,
   parseDate,
   parseZonedDateTime,
   today,
@@ -832,6 +833,152 @@ describe("DateField keyboard shortcuts", () => {
     await user.keyboard("2025");
 
     await lastEmit(onChange, "2025-01-15");
+  });
+});
+
+// ─── Date format + day of the week ────────────────────────────────────────────────────
+
+const groupText = () => screen.getByRole("group").textContent;
+const dayOfWeek = () => document.querySelector('[data-slot="date-segment"][data-type="dayOfWeek"]');
+
+describe("dateFormat / showDayOfWeek", () => {
+  const value = new CalendarDate(2025, 12, 19); // a Friday
+
+  it("keeps the numeric form by default, even for ja-JP", () => {
+    render(<DateField aria-label="Date" locale="ja-JP" defaultValue={value} />);
+    expect(groupText()).toBe("2025/12/19");
+  });
+
+  it('"regional" uses the written form for ja-JP and zh-CN', () => {
+    render(
+      <DateField aria-label="Date" locale="ja-JP" dateFormat="regional" defaultValue={value} />,
+    );
+    expect(groupText()).toBe("2025年12月19日");
+    cleanup();
+    render(
+      <DateField aria-label="Date" locale="zh-CN" dateFormat="regional" defaultValue={value} />,
+    );
+    expect(groupText()).toBe("2025年12月19日");
+  });
+
+  it('"regional" splits the unit fused onto ko-KR numbers into a literal', () => {
+    render(
+      <DateField aria-label="Date" locale="ko-KR" dateFormat="regional" defaultValue={value} />,
+    );
+    expect(groupText()).toBe("2025년 12월 19일");
+    expect(screen.getByRole("spinbutton", { name: "month" }).textContent).toBe("12");
+  });
+
+  it('"regional" stays numeric where the written form spells the month (en-US, de-DE)', () => {
+    render(
+      <DateField aria-label="Date" locale="en-US" dateFormat="regional" defaultValue={value} />,
+    );
+    expect(groupText()).toBe("12/19/2025");
+    cleanup();
+    render(
+      <DateField aria-label="Date" locale="de-DE" dateFormat="regional" defaultValue={value} />,
+    );
+    expect(groupText()).toBe("19.12.2025");
+  });
+
+  it("takes the AppShell dateInputDateFormat by default, and the prop overrides it", () => {
+    const wrapper = createAppShellWrapper("ja-JP", { dateInputDateFormat: "regional" });
+    render(<DatePicker aria-label="Date" defaultValue={value} />, { wrapper });
+    expect(groupText()).toBe("2025年12月19日");
+    cleanup();
+    render(<DatePicker aria-label="Date" dateFormat="numeric" defaultValue={value} />, { wrapper });
+    expect(groupText()).toBe("2025/12/19");
+  });
+
+  it("shows the day of the week where the locale puts it", () => {
+    render(
+      <DateField
+        aria-label="Date"
+        locale="ja-JP"
+        dateFormat="regional"
+        showDayOfWeek
+        defaultValue={value}
+      />,
+    );
+    expect(groupText()).toBe("2025年12月19日(金)");
+    cleanup();
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek defaultValue={value} />);
+    expect(groupText()).toBe("Fri, 12/19/2025");
+  });
+
+  it("shows a placeholder day of the week until the date is complete", () => {
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek />);
+    expect(dayOfWeek()?.textContent).toBe("––");
+    expect(dayOfWeek()?.hasAttribute("data-placeholder")).toBe(true);
+  });
+
+  it("holds the pre-entry day of the week while a date segment is mid-entry, so '25' never flashes the 2nd", async () => {
+    const user = userEvent.setup();
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek defaultValue={value} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("2");
+    // Still Friday (the pre-entry 19th), muted — never Tuesday (the 2nd).
+    expect(dayOfWeek()?.textContent).toBe("Fri");
+    expect(dayOfWeek()?.hasAttribute("data-placeholder")).toBe(true);
+    await user.keyboard("5");
+    expect(dayOfWeek()?.textContent).toBe("Thu"); // 25 Dec 2025
+    expect(dayOfWeek()?.hasAttribute("data-placeholder")).toBe(false);
+  });
+
+  it("never holds the day of the week while editing a time segment", async () => {
+    const user = userEvent.setup();
+    render(
+      <DateField
+        aria-label="Date"
+        locale="en-GB"
+        granularity="minute"
+        showDayOfWeek
+        defaultValue={new CalendarDateTime(2025, 12, 19, 10, 30)}
+      />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "hour" }));
+    await user.keyboard("1");
+    expect(dayOfWeek()?.textContent).toBe("Fri");
+    expect(dayOfWeek()?.hasAttribute("data-placeholder")).toBe(false);
+  });
+
+  it("announces the day of the week with the date segments' values", async () => {
+    const user = userEvent.setup();
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek defaultValue={value} />);
+    const day = screen.getByRole("spinbutton", { name: "day" });
+    expect(day.getAttribute("aria-valuetext")).toBe("19, Friday");
+    expect(dayOfWeek()?.getAttribute("aria-hidden")).toBe("true");
+
+    await user.click(day);
+    await user.keyboard("{ArrowUp}");
+    expect(day.getAttribute("aria-valuetext")).toBe("20, Saturday");
+  });
+
+  it("settles a single-digit entry when the segment loses focus", async () => {
+    const user = userEvent.setup();
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek defaultValue={value} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("2");
+    await user.tab();
+    expect(dayOfWeek()?.textContent).toBe("Tue"); // 2 Dec 2025
+  });
+
+  it("updates the day of the week immediately on arrow-key stepping", async () => {
+    const user = userEvent.setup();
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek defaultValue={value} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("{ArrowUp}");
+    expect(dayOfWeek()?.textContent).toBe("Sat");
+  });
+
+  it("keeps the day of the week out of the tab order", () => {
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek defaultValue={value} />);
+    expect(dayOfWeek()?.hasAttribute("tabindex")).toBe(false);
+    expect(screen.getAllByRole("spinbutton")).toHaveLength(3);
   });
 });
 

@@ -11,7 +11,12 @@ import {
 import { toCalendarDate, today, type DateValue } from "@internationalized/date";
 import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
 import { cn } from "@/lib/utils";
-import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
+import {
+  useDateInputDateFormat,
+  useResolvedLocale,
+  useTimeZone,
+  type DateInputDateFormat,
+} from "@/contexts/appshell-context";
 import {
   useDateFieldState,
   type DateFieldStateChange,
@@ -67,6 +72,18 @@ interface DateControlProps<T extends DateValue> {
   "aria-describedby"?: string;
   /** BCP-47 locale override; defaults to the AppShell formatting locale. */
   locale?: string;
+  /**
+   * Segment layout; defaults to the AppShell `dateInputDateFormat` (itself
+   * `"numeric"`). `"regional"` uses the locale's written business form where it
+   * keeps the month numeric (e.g. `2025年12月19日` for ja); other locales stay
+   * numeric.
+   *
+   * The default is planned to change to `"regional"` in a future major release.
+   * Set `"numeric"` explicitly to keep the numeric layout across that upgrade.
+   */
+  dateFormat?: DateInputDateFormat;
+  /** Show the locale's short day of the week next to the date (e.g. `(金)`, `Fri,`). */
+  showDayOfWeek?: boolean;
 }
 
 export type DateFieldProps<T extends DateValue = DateValue> = DateControlProps<T>;
@@ -103,6 +120,8 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
     placeholderValue,
     autoFocus,
     firstDayOfWeek,
+    dateFormat,
+    showDayOfWeek,
     name,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledby,
@@ -113,6 +132,7 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
   const fieldRoot = useFieldRootContext();
   const { locale: shellLocale } = useResolvedLocale();
   const resolvedLocale = localeProp ?? shellLocale;
+  const appShellDateFormat = useDateInputDateFormat();
   const resolvedDisabled = fieldRoot.disabled || !!isDisabled;
   const resolvedReadOnly = !!isReadOnly;
   const groupRef = useRef<HTMLDivElement>(null);
@@ -132,6 +152,8 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
     maxValue,
     isDateUnavailable,
     firstDayOfWeek,
+    dateFormat: dateFormat ?? appShellDateFormat,
+    showDayOfWeek,
     isReadOnly: resolvedReadOnly,
   });
 
@@ -181,6 +203,7 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
         setDayPeriod={state.setDayPeriod}
         clearSegment={state.clearSegment}
         applyShortcut={state.applyShortcut}
+        settleEntry={state.settleEntry}
         commitOnBlur={state.commitOnBlur}
         expandShortYear={state.expandShortYear}
         isDisabled={bindings.isDisabled}
@@ -229,6 +252,8 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     placeholderValue,
     autoFocus,
     firstDayOfWeek,
+    dateFormat,
+    showDayOfWeek,
     name,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledby,
@@ -240,6 +265,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
   const { locale: shellLocale } = useResolvedLocale();
   const shellTz = useTimeZone();
   const resolvedLocale = localeProp ?? shellLocale;
+  const appShellDateFormat = useDateInputDateFormat();
   const resolvedTz = timeZoneProp ?? shellTz.value;
   const resolvedDisabled = fieldRoot.disabled || !!isDisabled;
   const resolvedReadOnly = !!isReadOnly;
@@ -269,6 +295,8 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     maxValue,
     isDateUnavailable,
     firstDayOfWeek,
+    dateFormat: dateFormat ?? appShellDateFormat,
+    showDayOfWeek,
     isReadOnly: resolvedReadOnly,
   });
 
@@ -384,6 +412,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
             setDayPeriod={fieldState.setDayPeriod}
             clearSegment={fieldState.clearSegment}
             applyShortcut={fieldState.applyShortcut}
+            settleEntry={fieldState.settleEntry}
             commitOnBlur={fieldState.commitOnBlur}
             expandShortYear={fieldState.expandShortYear}
             onOpenCalendar={() => handleOpenChange(true)}

@@ -13,6 +13,7 @@ import {
   type DateValue,
 } from "@internationalized/date";
 import { resolveDateShortcut, type DateShortcut, type FirstDayOfWeek } from "@/lib/date-shortcuts";
+import type { DateInputDateFormat } from "@/contexts/appshell-context";
 
 /**
  * Hand-rolled segmented-date-field state.
@@ -61,7 +62,8 @@ const SEGMENT_MAX_DIGITS: Record<EditableSegmentType, number> = {
 type Fields = Partial<Record<EditableSegmentType, number>>;
 
 export interface Segment {
-  type: EditableSegmentType | "literal";
+  /** `dayOfWeek` is read-only, derived from the composed date. */
+  type: EditableSegmentType | "literal" | "dayOfWeek";
   /** Display text (locale-formatted value, or placeholder when empty). */
   text: string;
   isEditable: boolean;
@@ -69,6 +71,8 @@ export interface Segment {
   value?: number;
   minValue?: number;
   maxValue?: number;
+  /** Day-of-week only: the full day name for assistive tech, once settled. */
+  label?: string;
 }
 
 /**
@@ -131,6 +135,10 @@ export interface DateFieldStateOptions {
   isDateUnavailable?: (date: DateValue) => boolean;
   /** Week-start for the `w`/`k` shortcuts; defaults to the locale convention. */
   firstDayOfWeek?: FirstDayOfWeek;
+  /** Segment layout; see {@link DateInputDateFormat}. Defaults to `"numeric"`. */
+  dateFormat?: DateInputDateFormat;
+  /** Append the locale's short day of the week as a read-only segment. */
+  showDayOfWeek?: boolean;
   isDisabled?: boolean;
   isReadOnly?: boolean;
 }
@@ -144,6 +152,29 @@ const PLACEHOLDERS: Record<EditableSegmentType, string> = {
   second: "––",
   dayPeriod: "AM",
 };
+const DAY_OF_WEEK_PLACEHOLDER = "––";
+
+const NUMERIC_PART = /^(\d+)(\D*)$/;
+
+/**
+ * The locale's written ("long") date parts, or `null` when that form spells the
+ * month as a word (en "December", de "Dezember") and so can't back numeric
+ * segments. A unit fused onto a number (ko "12월") is split off into a literal.
+ */
+function regionalParts(formatter: DateFormatter, date: Date): Intl.DateTimeFormatPart[] | null {
+  const out: Intl.DateTimeFormatPart[] = [];
+  for (const part of formatter.formatToParts(date)) {
+    if (part.type !== "year" && part.type !== "month" && part.type !== "day") {
+      out.push(part);
+      continue;
+    }
+    const match = NUMERIC_PART.exec(part.value);
+    if (!match) return null;
+    out.push({ type: part.type, value: match[1] });
+    if (match[2]) out.push({ type: "literal", value: match[2] });
+  }
+  return out;
+}
 
 /**
  * Snap an impossible day down to the entered month's real length — but only once
@@ -284,6 +315,8 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     maxValue,
     isDateUnavailable,
     firstDayOfWeek,
+    dateFormat = "numeric",
+    showDayOfWeek = false,
     isReadOnly,
   } = options;
 
@@ -315,6 +348,15 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     setInternalFields((f) => convertHourCycle(f, is12));
   }
   const fields = internalFields;
+
+  // The date segment mid-way through typed entry (a first digit that may still
+  // take a second), plus the fields from before that entry began. Until it
+  // settles, the day of the week keeps showing the pre-entry date's (muted), so typing
+  // "25" never flashes the 2nd's day of the week and the field doesn't reflow.
+  const [pendingEntry, setPendingEntry] = useState<{
+    type: EditableSegmentType;
+    fallback: Fields;
+  } | null>(null);
 
   const lastEmitted = useRef<DateValue | null>(controlledValue ?? defaultValue ?? null);
 
@@ -417,6 +459,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       const f = intent === "edit" ? clampCompleteDay(next) : next;
       const change = buildStateChange(f, intent === "clear" ? "clear" : "edit");
       setInternalFields(f);
+      setPendingEntry(null);
       onStateChange?.(change);
 
       // While editing, only emit a *complete & valid* value — never `null` for a
@@ -453,6 +496,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       const nextFields = fieldsFromValue(cv, is12);
       lastEmitted.current = cv;
       setInternalFields(nextFields);
+      setPendingEntry(null);
       onStateChange?.(buildStateChange(nextFields, "external"));
     }
   }, [buildStateChange, controlledValue, isControlled, is12, onStateChange]);
@@ -495,10 +539,19 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       // "02" advances, while "2" still waits for a possible second digit).
       const advance = next * 10 > max || digitCount >= SEGMENT_MAX_DIGITS[type];
       commit({ ...fields, [type]: next });
+      // Time segments never affect the day of the week, so only date entry can pend.
+      if (!advance && DATE_SEGMENTS.includes(type)) {
+        setPendingEntry((prev) => (prev?.type === type ? prev : { type, fallback: fields }));
+      } else {
+        setPendingEntry(null);
+      }
       return { advance };
     },
     [fields, getLimits, commit, isReadOnly],
   );
+
+  /** Typed entry in the focused segment is over (it lost focus). */
+  const settleEntry = useCallback(() => setPendingEntry(null), []);
 
   const setDayPeriod = useCallback(
     (pm: boolean) => {
@@ -620,14 +673,11 @@ export function useDateFieldState(options: DateFieldStateOptions) {
 
   // ── Display segments (locale-ordered) ────────────────────────────────────────
   // The Intl objects + the locale's part order/separators only depend on
-  // locale / granularity / hour-cycle / timezone (via the anchor) — never on
-  // `fields`. Build them once here so a keystroke (which only changes `fields`)
-  // doesn't spin up a fresh DateFormatter + two NumberFormats + formatToParts.
+  // locale / granularity / hour-cycle / format / day of the week / timezone (via the
+  // anchor) — never on `fields`. Build them once here so a keystroke (which only
+  // changes `fields`) doesn't spin up a fresh DateFormatter + formatToParts.
   const segmentFormat = useMemo(() => {
-    const formatter = new DateFormatter(locale, {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
+    const shared: Intl.DateTimeFormatOptions = {
       ...(hasTime
         ? {
             hour: "2-digit",
@@ -636,8 +686,32 @@ export function useDateFieldState(options: DateFieldStateOptions) {
             hour12: is12,
           }
         : {}),
+      ...(showDayOfWeek ? { weekday: "short" } : {}),
       ...(timeZone ? { timeZone } : {}),
-    });
+    };
+    // Format the (always-valid) anchor to get the locale's segment ORDER and the
+    // literal separators. Each editable segment's *text* is then formatted from
+    // its own value, so an in-progress out-of-range value can never build an
+    // invalid date.
+    const probe = anchor.toDate(timeZone ?? "UTC");
+    const parts =
+      (dateFormat === "regional"
+        ? regionalParts(
+            new DateFormatter(locale, {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+              ...shared,
+            }),
+            probe,
+          )
+        : null) ??
+      new DateFormatter(locale, {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        ...shared,
+      }).formatToParts(probe);
     const pad2 = new Intl.NumberFormat(locale, { minimumIntegerDigits: 2, useGrouping: false });
     const yearFmt = new Intl.NumberFormat(locale, { useGrouping: false });
     const formatSegment = (type: EditableSegmentType, value: number): string => {
@@ -645,17 +719,29 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       if (type === "year") return yearFmt.format(value);
       return pad2.format(value);
     };
-    // Format the (always-valid) anchor to get the locale's segment ORDER and the
-    // literal separators. Each editable segment's *text* is then formatted from
-    // its own value, so an in-progress out-of-range value can never build an
-    // invalid date.
-    const parts = formatter.formatToParts(anchor.toDate(timeZone ?? "UTC"));
-    return { parts, formatSegment };
-  }, [locale, hasTime, granularity, is12, timeZone, anchor]);
+    // Pinned to UTC on both sides so the day of the week is the calendar date's, never
+    // shifted by the host timezone.
+    const dayOfWeekFmt = new DateFormatter(locale, { weekday: "short", timeZone: "UTC" });
+    const dayOfWeekLongFmt = new DateFormatter(locale, { weekday: "long", timeZone: "UTC" });
+    const formatDayOfWeek = (value: DateValue, long = false): string =>
+      (long ? dayOfWeekLongFmt : dayOfWeekFmt).format(toCalendarDate(value as never).toDate("UTC"));
+    return { parts, formatSegment, formatDayOfWeek };
+  }, [locale, hasTime, granularity, is12, timeZone, anchor, dateFormat, showDayOfWeek]);
 
   const segments = useMemo<Segment[]>(() => {
     return segmentFormat.parts.map<Segment>((part) => {
       const rawType = part.type;
+      if (rawType === "weekday") {
+        const settled = pendingEntry == null ? composeValue(fields) : null;
+        const shown = settled ?? (pendingEntry ? composeValue(pendingEntry.fallback) : null);
+        return {
+          type: "dayOfWeek",
+          text: shown ? segmentFormat.formatDayOfWeek(shown) : DAY_OF_WEEK_PLACEHOLDER,
+          isEditable: false,
+          isPlaceholder: settled == null,
+          label: settled ? segmentFormat.formatDayOfWeek(settled, true) : undefined,
+        };
+      }
       if (!editableTypes.includes(rawType as EditableSegmentType)) {
         return { type: "literal", text: part.value, isEditable: false, isPlaceholder: false };
       }
@@ -673,7 +759,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
         maxValue: max,
       };
     });
-  }, [segmentFormat, fields, editableTypes, getLimits]);
+  }, [segmentFormat, fields, editableTypes, getLimits, pendingEntry, composeValue]);
 
   const currentChange = buildStateChange(fields, "edit");
 
@@ -690,5 +776,6 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     applyShortcut,
     expandShortYear,
     commitOnBlur,
+    settleEntry,
   };
 }

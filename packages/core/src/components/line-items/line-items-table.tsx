@@ -135,6 +135,29 @@ export function LineItemsTable<T extends LineItemsRowData>({
   const { lines, fields, mode, ordering, selectionEnabled, selectedIds, sortState } = lineItems;
 
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
+  const hasTotals = Boolean(totalsRenderer || totalsRow);
+
+  // Whether lines are hidden above the sticky header or beneath the sticky
+  // totals row. While they are, that edge casts a shadow over the scrolling
+  // lines; at the start or end of the list it sits flush.
+  const [moreAbove, setMoreAbove] = React.useState(false);
+  const [moreBelow, setMoreBelow] = React.useState(false);
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      setMoreAbove(el.scrollTop > 0);
+      setMoreBelow(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+    };
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener("scroll", check);
+      observer.disconnect();
+    };
+  }, [lines.length]);
   const [widths, setWidths] = React.useState<ColumnWidths>({});
   const [hoveredColumnId, setHoveredColumnId] = React.useState<string | null>(null);
 
@@ -641,7 +664,16 @@ export function LineItemsTable<T extends LineItemsRowData>({
             {layout.needsSpacer ? <col key={SPACER_COLUMN_ID} /> : null}
           </colgroup>
 
-          <thead className="astw:sticky astw:top-0 astw:z-10">
+          <thead
+            className={cn(
+              "astw:sticky astw:top-0 astw:z-10",
+              "astw:transition-[filter] astw:duration-150 astw:motion-reduce:transition-none",
+              moreAbove && [
+                "astw:drop-shadow-[0_6px_8px_rgb(0_0_0/0.12)]",
+                "astw:dark:drop-shadow-[0_6px_10px_rgb(0_0_0/0.55)]",
+              ],
+            )}
+          >
             <tr>
               {showSelection ? (
                 <th
@@ -785,6 +817,9 @@ export function LineItemsTable<T extends LineItemsRowData>({
                       rowSelected && "astw:bg-muted",
                       isDragging && "astw:opacity-50",
                       isLifted && "astw:ring-1 astw:ring-ring astw:ring-inset",
+                      // The totals row draws its own top rule; without this the
+                      // last line's bottom border doubles it once scrolled to the end.
+                      hasTotals && rowIndex === lines.length - 1 && "astw:[&>td]:border-b-0",
                     )}
                     onDragOver={
                       canReorder
@@ -997,7 +1032,15 @@ export function LineItemsTable<T extends LineItemsRowData>({
           {totalsRenderer || totalsRow ? (
             <tfoot
               data-slot="line-items-totals"
-              className="astw:sticky astw:bottom-0 astw:z-10 astw:bg-card astw:font-medium"
+              // The top rule separates totals from the lines scrolling beneath them.
+              className={cn(
+                "astw:sticky astw:bottom-0 astw:z-10 astw:bg-card astw:font-medium astw:[&_td]:border-t",
+                "astw:transition-[filter] astw:duration-150 astw:motion-reduce:transition-none",
+                moreBelow && [
+                  "astw:drop-shadow-[0_-6px_8px_rgb(0_0_0/0.12)]",
+                  "astw:dark:drop-shadow-[0_-6px_10px_rgb(0_0_0/0.55)]",
+                ],
+              )}
             >
               {totalsRow ? (
                 totalsRow(lines)

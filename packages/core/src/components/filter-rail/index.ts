@@ -1,6 +1,6 @@
 import { ClearAll, Header, Root, Sections } from "./filter-rail";
 import { RailSheet, Trigger } from "./responsive";
-import { SavedViews } from "./saved-views";
+import { SaveView, SavedViews } from "./saved-views";
 import { Settings } from "./settings";
 
 /**
@@ -20,6 +20,7 @@ import { Settings } from "./settings";
  *   </FilterRail.Header>
  *   <FilterRail.SavedViews {...views} />
  *   <FilterRail.Sections />
+ *   <FilterRail.SaveView {...views} />
  * </FilterRail.Root>
  * ```
  */
@@ -30,6 +31,7 @@ export const FilterRail = {
   Sections,
   Settings,
   SavedViews,
+  SaveView,
   Trigger,
   Sheet: RailSheet,
 };

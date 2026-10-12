@@ -11,41 +11,22 @@ import type { SavedViewBinding } from "./types";
 type SavedViewsProps = SavedViewBinding & { className?: string };
 
 /**
- * A saved-view picker plus a Save button that appears only when saving would
- * achieve something (`dirty`).
+ * The saved-view picker: apply or delete a view. Pair it with
+ * `FilterRail.SaveView` (the pinned Save footer), passing both the same binding.
  *
  * Takes its binding as props and reads nothing from the rail, so it also works
  * outside `FilterRail.Root` — in a page header, for instance. `useSavedViews`
  * returns a ready binding for a `DataTable`.
  */
-function SavedViews({
-  items,
-  activeId,
-  dirty,
-  onSave,
-  onApply,
-  onDelete,
-  describe,
-  className,
-}: SavedViewsProps) {
+function SavedViews({ items, activeId, onApply, onDelete, describe, className }: SavedViewsProps) {
   const t = useFilterRailT();
-  const [naming, setNaming] = useState(false);
-  const [draftName, setDraftName] = useState("");
   const active = items.find((item) => item.id === activeId) ?? null;
-
-  const commitName = () => {
-    const name = draftName.trim();
-    if (!name) return;
-    onSave(name);
-    setNaming(false);
-    setDraftName("");
-  };
 
   return (
     <div
       data-slot="filter-rail-saved-views"
       className={cn(
-        "astw:flex astw:shrink-0 astw:items-center astw:gap-2 astw:border-b astw:border-border astw:px-3 astw:py-2",
+        "astw:flex astw:shrink-0 astw:items-center astw:border-b astw:border-border astw:px-3 astw:py-2",
         className,
       )}
     >
@@ -115,18 +96,51 @@ function SavedViews({
           )}
         </Menu.Content>
       </Menu.Root>
+    </div>
+  );
+}
+SavedViews.displayName = "FilterRail.SavedViews";
 
+type SaveViewProps = SavedViewBinding & { className?: string };
+
+/**
+ * A footer pinned to the bottom of the rail with a "Save this view" button,
+ * shown only when saving would achieve something (`dirty`). Place it after
+ * `FilterRail.Sections`: the sections scroll and this stays put.
+ */
+function SaveView({ dirty, onSave, className }: SaveViewProps) {
+  const t = useFilterRailT();
+  const [naming, setNaming] = useState(false);
+  const [draftName, setDraftName] = useState("");
+
+  const commitName = () => {
+    const name = draftName.trim();
+    if (!name) return;
+    onSave(name);
+    setNaming(false);
+    setDraftName("");
+  };
+
+  return (
+    <>
       {dirty && (
-        <Button
-          variant="outline"
-          size="xs"
-          onClick={() => {
-            setDraftName("");
-            setNaming(true);
-          }}
+        <div
+          data-slot="filter-rail-save-view"
+          className={cn("astw:shrink-0 astw:border-t astw:border-border astw:p-2", className)}
         >
-          {t("saveView")}
-        </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="astw:w-full"
+            onClick={() => {
+              setDraftName("");
+              setNaming(true);
+            }}
+          >
+            <Bookmark className="astw:size-3.5" aria-hidden />
+            {t("saveViewTitle")}
+          </Button>
+        </div>
       )}
 
       <Dialog.Root open={naming} onOpenChange={setNaming}>
@@ -156,10 +170,10 @@ function SavedViews({
           </Dialog.Footer>
         </Dialog.Content>
       </Dialog.Root>
-    </div>
+    </>
   );
 }
-SavedViews.displayName = "FilterRail.SavedViews";
+SaveView.displayName = "FilterRail.SaveView";
 
-export { SavedViews };
-export type { SavedViewsProps };
+export { SavedViews, SaveView };
+export type { SavedViewsProps, SaveViewProps };

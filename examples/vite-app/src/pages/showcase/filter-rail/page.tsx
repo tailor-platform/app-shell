@@ -440,6 +440,7 @@ const FullVariant = ({ header }: { header: ReactNode }) => {
       </FilterRail.Header>
       <FilterRail.SavedViews {...views} />
       <FilterRail.Sections />
+      <FilterRail.SaveView {...views} />
     </FilterRail.Root>
   );
 

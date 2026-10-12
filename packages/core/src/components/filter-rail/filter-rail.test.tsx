@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import type { CollectionControl, Filter } from "@/types/collection";
 import { ClearAll, Header, Root, Sections } from "./filter-rail";
 import { Trigger } from "./responsive";
-import { SavedViews } from "./saved-views";
+import { SaveView, SavedViews } from "./saved-views";
 import { Settings } from "./settings";
 import type {
   FacetCounts,
@@ -854,11 +854,27 @@ describe("FilterRail", () => {
       ...overrides,
     });
 
-    it("renders the Saved views trigger and hides Save while clean", () => {
-      const { container } = render(<SavedViews {...binding()} />);
+    it("renders the Saved views trigger with no Save button of its own", () => {
+      const { container } = render(<SavedViews {...binding({ dirty: true })} />);
       expect(container.innerHTML).toMatchSnapshot();
       expect(screen.getByRole("button", { name: /Saved views/ })).toBeTruthy();
-      expect(screen.queryByRole("button", { name: "Save view" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Save this view" })).toBeNull();
+    });
+
+    it("SaveView renders nothing while clean", () => {
+      render(<SaveView {...binding()} />);
+      expect(screen.queryByRole("button", { name: "Save this view" })).toBeNull();
+    });
+
+    it("SaveView is a footer after the sections inside the rail", () => {
+      const { container } = render(
+        <Harness sections={[categorySection]}>
+          <Sections />
+          <SaveView {...binding({ dirty: true })} />
+        </Harness>,
+      );
+      const rail = container.querySelector('[data-slot="filter-rail"]')!;
+      expect(rail.lastElementChild?.getAttribute("data-slot")).toBe("filter-rail-save-view");
     });
 
     it("shows the active view's name on the trigger", () => {
@@ -866,11 +882,11 @@ describe("FilterRail", () => {
       expect(screen.getByRole("button", { name: /Wide view/ })).toBeTruthy();
     });
 
-    it("dirty shows Save view, and the dialog saves via onSave(name)", async () => {
+    it("dirty SaveView shows its button, and the dialog saves via onSave(name)", async () => {
       const user = userEvent.setup();
       const props = binding({ dirty: true });
-      render(<SavedViews {...props} />);
-      await user.click(screen.getByRole("button", { name: "Save view" }));
+      render(<SaveView {...props} />);
+      await user.click(screen.getByRole("button", { name: "Save this view" }));
       const input = await screen.findByRole("textbox", { name: "Save this view" });
       const dialog = screen.getByRole("dialog");
       const save = within(dialog).getByRole("button", { name: "Save" }) as HTMLButtonElement;
@@ -883,8 +899,8 @@ describe("FilterRail", () => {
     it("Enter in the name input saves", async () => {
       const user = userEvent.setup();
       const props = binding({ dirty: true });
-      render(<SavedViews {...props} />);
-      await user.click(screen.getByRole("button", { name: "Save view" }));
+      render(<SaveView {...props} />);
+      await user.click(screen.getByRole("button", { name: "Save this view" }));
       const input = await screen.findByRole("textbox", { name: "Save this view" });
       await user.type(input, "Quick{Enter}");
       expect(props.onSave).toHaveBeenCalledWith("Quick");

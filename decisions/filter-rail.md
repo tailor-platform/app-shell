@@ -13,7 +13,7 @@ A demo on `demo/filter-rail` proved out an always-visible rail with counts. This
 
 ### Config sections + optional parts
 
-Sections are a config array (`sections`, like `DataTable` `columns` or `DescriptionCard` `fields`); assembly is a compound namespace (`FilterRail.Root / Header / ClearAll / Settings / SavedViews / Sections / Trigger / Sheet`).
+Sections are a config array (`sections`, like `DataTable` `columns` or `DescriptionCard` `fields`); assembly is a compound namespace (`FilterRail.Root / Header / ClearAll / Settings / SavedViews / Sections / SaveView / Trigger / Sheet`).
 
 - The rail must know every section to offer Clear all, reorder/hide settings and the "hiding clears its filter" rule. Pure JSX sections would need a registration protocol for that.
 - A single component with a prop per feature cannot place pieces elsewhere (saved views in a page header) and grows a flag per feature. Parts are included or left out.

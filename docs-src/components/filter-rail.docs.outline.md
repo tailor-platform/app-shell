@@ -42,7 +42,8 @@ What the rail shows is **config**: `sections`, one entry per axis, in screen ord
 | `FilterRail.Header`     | A title row with a slot for actions.                                    |
 | `FilterRail.ClearAll`   | Clears the rail's own filters only. Hidden while none are active.       |
 | `FilterRail.Settings`   | Show / hide, reorder and sort sections. Needs `layout` on `Root`.       |
-| `FilterRail.SavedViews` | A saved-view picker and Save button. Also works outside `Root`.         |
+| `FilterRail.SavedViews` | A saved-view picker. Also works outside `Root`.                         |
+| `FilterRail.SaveView`   | A pinned footer with "Save this view", shown when saving would help.    |
 | `FilterRail.Sections`   | The sections, in the user's layout. Scrolls while the header stays put. |
 | `FilterRail.Trigger`    | A toolbar button carrying the active count, for narrow screens.         |
 | `FilterRail.Sheet`      | A left sheet to hold the rail on narrow screens.                        |
@@ -55,6 +56,7 @@ What the rail shows is **config**: `sections`, one entry per axis, in screen ord
   </FilterRail.Header>
   <FilterRail.SavedViews {...views} />
   <FilterRail.Sections />
+  <FilterRail.SaveView {...views} />
 </FilterRail.Root>
 ```
 
@@ -111,13 +113,17 @@ For a server-side collection, return the same shape from an aggregation query: `
 
 ## Saved views
 
-`useSavedViews(table, { storageKey })` saves a `DataTable` **view** — filters plus sort, page size and column order, visibility and pinning — and returns the binding `FilterRail.SavedViews` renders. Pass `storage: { load, save }` to keep views in a backend store instead of localStorage.
+`useSavedViews(table, { storageKey })` saves a `DataTable` **view** — filters plus sort, page size and column order, visibility and pinning — and returns the binding both `FilterRail.SavedViews` (the picker) and `FilterRail.SaveView` (the pinned Save footer) render. Put the footer after `FilterRail.Sections` so it stays at the bottom while the sections scroll. Pass `storage: { load, save }` to keep views in a backend store instead of localStorage.
 
 ```tsx
 const table = useDataTable({ columns, data, control });
 const views = useSavedViews(table, { storageKey: "products" });
 
-<FilterRail.SavedViews {...views} />;
+<FilterRail.Root control={control} sections={sections}>
+  <FilterRail.SavedViews {...views} />
+  <FilterRail.Sections />
+  <FilterRail.SaveView {...views} />
+</FilterRail.Root>;
 ```
 
 ## Beside a DataTable

@@ -4,7 +4,7 @@
 
 Add `FilterRail`, an always-visible faceted filter rail that sits beside a `DataTable` and writes the same `CollectionControl`.
 
-Sections are config — any mix of `checkbox`, `radio`, `boolean`, `text`, `numberRange`, `date`, `dateRange` and `custom` — and every other feature is an optional part: `Header`, `ClearAll`, `Settings` (reorder / hide / sort), `SavedViews`, and `Trigger` + `Sheet` for narrow screens.
+Sections are config — any mix of `checkbox`, `radio`, `boolean`, `text`, `numberRange`, `date`, `dateRange` and `custom` — and every other feature is an optional part: `Header`, `ClearAll`, `Settings` (reorder / hide / sort), `SavedViews` + `SaveView` (picker and pinned Save footer), and `Trigger` + `Sheet` for narrow screens.
 
 ```tsx
 <FilterRail.Root control={control} sections={sections} counts={counts} layout={layout}>
@@ -14,6 +14,7 @@ Sections are config — any mix of `checkbox`, `radio`, `boolean`, `text`, `numb
   </FilterRail.Header>
   <FilterRail.SavedViews {...views} />
   <FilterRail.Sections />
+  <FilterRail.SaveView {...views} />
 </FilterRail.Root>
 ```
 

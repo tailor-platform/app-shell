@@ -427,6 +427,27 @@ Review whether component styling remains self-contained and consistent:
 <div className="component" />
 ```
 
+### Typography roles
+
+Text that a component renders takes its size, line height, weight, and letter spacing from a typography role, not from a raw size + weight combination. The roles are listed in the Typography section of `docs/concepts/styling-theming.md`.
+
+- Use the role utility (`astw:text-heading-md`, `astw:text-label-md`, ...) on the component's own element, or render `Text` when the element itself is the text.
+- Do not write new raw combinations such as `astw:text-lg astw:font-semibold` or `astw:text-sm astw:font-medium`. Existing ones are being moved to roles.
+- Combine a role only with the four modifiers: `astw:leading-none` (single-line text), `astw:tabular-nums`, `astw:font-medium` or `astw:font-semibold`, and `astw:uppercase`. Do not add other `leading-*`, `tracking-*`, or `text-[Npx]` values. 12px is the minimum size.
+- A role carries no color. Set the color with a token such as `astw:text-muted-foreground`.
+- A heading's level comes from the document structure, not from its size. Do not hard-wire `<h3>` to a size; let the consumer choose the level where the component can sit at different depths.
+
+```tsx
+// Good
+<div data-slot="card-title" className="astw:text-heading-md astw:leading-none">{title}</div>
+<Text variant="body-sm" className="astw:text-muted-foreground">{updatedAt}</Text>
+```
+
+```tsx
+// Bad: a raw size + weight combination, and a size tied to a heading level
+<h3 className="astw:text-lg astw:font-semibold astw:leading-7">{title}</h3>
+```
+
 ### Container queries
 
 Prefer Tailwind container-query utilities with arbitrary values.

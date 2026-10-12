@@ -92,8 +92,13 @@ function pinClasses(
 ): string | undefined {
   if (!placement) return undefined;
   return cn(
-    "astw:z-[1]",
-    opts?.selected ? "astw:bg-muted" : "astw:bg-card",
+    "astw:z-[1] astw:transition-colors",
+    opts?.selected
+      ? "astw:bg-muted"
+      : // Opaque, so scrolled cells never show through; on a hovered body row
+        // it takes the row's hover tint (muted at 50% over the card), which the
+        // see-through cells get from the row itself.
+        "astw:bg-card astw:group-hover/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--card))]",
     placement.isBoundary &&
       (placement.side === "left"
         ? "astw:shadow-[inset_-1px_0_0_0_var(--border)]"
@@ -863,7 +868,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                     aria-rowindex={rowIndex + 2}
                     style={{ height: rowHeight }}
                     className={cn(
-                      "astw:transition-colors astw:hover:bg-muted/50",
+                      "astw:group/row astw:transition-colors astw:hover:bg-muted/50",
                       rowSelected && "astw:bg-muted",
                       isDragging && "astw:opacity-50",
                       isLifted && "astw:ring-1 astw:ring-ring astw:ring-inset",

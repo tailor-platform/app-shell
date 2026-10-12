@@ -10,6 +10,7 @@ import { TreePickerRow } from "./TreePickerRow";
 import { flattenVisible, leafIds } from "./tree-utils";
 import type { TreePickerNode, TreePickerProps } from "./types";
 import { useTreePickerT } from "./i18n";
+import { useAnimatedHeight } from "./use-animated-height";
 import { useTreeFocus } from "./use-tree-focus";
 import { useTreeSelection } from "./use-tree-selection";
 
@@ -120,6 +121,12 @@ function TreePicker<T>({
   } = useTreeSelection({ open, items, matchesSearch });
 
   const count = selectedNodes.length;
+  // Held in state, not refs, so the height animation attaches once the
+  // dialog's portal has actually mounted the list.
+  const [listEl, setListEl] = React.useState<HTMLDivElement | null>(null);
+  const [rowsEl, setRowsEl] = React.useState<HTMLDivElement | null>(null);
+  useAnimatedHeight(listEl, rowsEl);
+
   const hasBranches = items.some((node) => (node.children?.length ?? 0) > 0);
 
   const commit = React.useCallback(() => {
@@ -211,25 +218,29 @@ function TreePicker<T>({
             aria-multiselectable="true"
             aria-labelledby={titleId}
             data-slot="tree-picker-list"
+            ref={setListEl}
             className="astw:flex-1 astw:overflow-y-auto"
           >
-            {kept.map((node) => (
-              <TreePickerRow
-                key={node.id}
-                node={node}
-                depth={0}
-                hasBranches={hasBranches}
-                isExpanded={isExpanded}
-                onToggleExpand={toggleExpand}
-                selectedLeaves={selectedLeaves}
-                onToggleNode={toggleNode}
-                renderRow={renderRow}
-                renderMetric={renderMetric}
-                activeRowId={activeRowId}
-                registerRow={registerRow}
-                onRowFocus={onRowFocus}
-              />
-            ))}
+            {/* Measured to ease the list's height as rows expand or collapse. */}
+            <div ref={setRowsEl} role="none">
+              {kept.map((node) => (
+                <TreePickerRow
+                  key={node.id}
+                  node={node}
+                  depth={0}
+                  hasBranches={hasBranches}
+                  isExpanded={isExpanded}
+                  onToggleExpand={toggleExpand}
+                  selectedLeaves={selectedLeaves}
+                  onToggleNode={toggleNode}
+                  renderRow={renderRow}
+                  renderMetric={renderMetric}
+                  activeRowId={activeRowId}
+                  registerRow={registerRow}
+                  onRowFocus={onRowFocus}
+                />
+              ))}
+            </div>
           </div>
         )}
 

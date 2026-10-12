@@ -94,7 +94,9 @@ function TreePickerRow<T>({
         className={cn(
           "astw:border-border/60 astw:flex astw:cursor-pointer astw:items-center astw:gap-3 astw:border-b astw:px-4 astw:py-2.5 astw:text-sm astw:select-none astw:hover:bg-muted/50",
           "astw:focus-visible:ring-ring/50 astw:focus-visible:ring-2 astw:focus-visible:outline-none astw:focus-visible:ring-inset",
-          depth > 0 && "astw:bg-muted/30",
+          // Revealed children ease in while the dialog grows to fit them.
+          depth > 0 &&
+            "astw:bg-muted/30 astw:animate-in astw:fade-in-0 astw:slide-in-from-top-1 astw:duration-200 astw:motion-reduce:animate-none",
         )}
       >
         {/* Indentation as real spacers — keeps every style in a Tailwind class.

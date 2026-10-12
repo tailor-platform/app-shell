@@ -4,6 +4,7 @@ import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/checkbox";
 
+import { useBulkItemPickerT } from "./i18n";
 import { isLeaf, leafIds } from "./tree-utils";
 import type { BulkItemPickerNode, BulkItemPickerProps } from "./types";
 
@@ -45,6 +46,7 @@ function BulkItemPickerRow<T>({
   registerRow,
   onRowFocus,
 }: BulkItemPickerRowProps<T>) {
+  const t = useBulkItemPickerT();
   const leaf = isLeaf(node);
   const expanded = !leaf && isExpanded(node.id);
 
@@ -84,8 +86,11 @@ function BulkItemPickerRow<T>({
           <span key={level} className="astw:w-3 astw:shrink-0" aria-hidden />
         ))}
 
+        {/* Mouse affordances only: the treeitem row already exposes checked and
+            expanded state and handles the keys, so hiding these keeps the row's
+            accessible name to its own content instead of "Select Expand …". */}
         <Checkbox
-          aria-label="Select"
+          aria-hidden
           checked={checked}
           indeterminate={indeterminate}
           // The `treeitem` row owns the tab stop (roving tabindex); the box is
@@ -100,7 +105,8 @@ function BulkItemPickerRow<T>({
           <button
             type="button"
             tabIndex={-1}
-            aria-label={expanded ? "Collapse" : "Expand"}
+            aria-hidden
+            title={expanded ? t("collapse") : t("expand")}
             onClick={() => onToggleExpand(node.id)}
             className="astw:text-muted-foreground astw:hover:bg-muted astw:flex astw:size-5 astw:shrink-0 astw:items-center astw:justify-center astw:rounded"
           >

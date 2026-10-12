@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { CollectionControl, Filter, PageInfo, SortState } from "@/types/collection";
-import { useSelectionActionRunner } from "@/components/selection-actions/use-selection-action-runner";
+import { useSelectionActionRunner } from "@/components/internals/selection-actions/use-selection-action-runner";
 import { usePageCounter } from "./use-page-counter";
 import { usePersistentColumnState, type PersistedColumnState } from "./use-persistent-column-state";
 import type { Column, UseDataTableOptions, UseDataTableReturn } from "./types";

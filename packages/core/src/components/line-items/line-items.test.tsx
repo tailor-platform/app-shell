@@ -211,12 +211,21 @@ describe("LineItems", () => {
     expect(cell("1", "total").textContent).toBe("10.00");
   });
 
-  it("reports its row and column counts to assistive tech", () => {
-    render(<Harness />);
+  it("reports a row count that includes the header and totals rows", () => {
+    render(<Harness totals />);
     const table = screen.getByRole("table");
-    expect(table.getAttribute("aria-rowcount")).toBe("3");
-    // 5 schema columns, no utility columns in this configuration.
-    expect(table.getAttribute("aria-colcount")).toBe("5");
+    // 3 lines + header + totals.
+    expect(table.getAttribute("aria-rowcount")).toBe("5");
+    const rows = screen.getAllByRole("row");
+    expect(rows[0]?.getAttribute("aria-rowindex")).toBe("1");
+    expect(rows[1]?.getAttribute("aria-rowindex")).toBe("2");
+    expect(rows.at(-1)?.getAttribute("aria-rowindex")).toBe("5");
+  });
+
+  it("names every cell editor by its column and line", () => {
+    render(<Harness />);
+    expect(screen.getByRole("textbox", { name: "Note, line 2" })).toBeDefined();
+    expect(screen.getByRole("combobox", { name: "UoM, line 3" })).toBeDefined();
   });
 
   it("renders an empty state with no lines", () => {
@@ -524,6 +533,18 @@ describe("LineItems", () => {
   });
 
   describe("fill handle", () => {
+    it("fills down from the keyboard with Cmd/Ctrl+D", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(<Harness onReady={(x) => (api = x)} />);
+
+      await user.click(editorIn("1", "quantity"));
+      await user.keyboard("{Alt>}{Shift>}{ArrowDown}{ArrowDown}{/Shift}{/Alt}");
+      await user.keyboard("{Control>}d{/Control}");
+
+      expect(api?.allLines.map((l) => l.quantity)).toEqual([2, 2, 2]);
+    });
+
     it("appears on the active cell of a fillable column", async () => {
       const user = userEvent.setup();
       render(<Harness />);
@@ -917,6 +938,64 @@ describe("LineItems", () => {
   });
 
   describe("parts", () => {
+    describe("DirtyBar warnOnNav", () => {
+      function GuardHarness({
+        onReady,
+      }: {
+        onReady?: (a: ReturnType<typeof useLineItems<Line>>) => void;
+      }) {
+        const lineItems = useLineItems<Line>({ fields, data: seed });
+        onReady?.(lineItems);
+        return (
+          <>
+            <a href="/elsewhere">Elsewhere</a>
+            <LineItems.Root value={lineItems}>
+              <a href="/inside">Inside</a>
+              <LineItems.Table virtualized={false} />
+              <LineItems.FloatingDock>
+                <LineItems.DirtyBar warnOnNav onSave={() => {}} />
+              </LineItems.FloatingDock>
+            </LineItems.Root>
+          </>
+        );
+      }
+
+      async function renderDirty() {
+        let api: ReturnType<typeof useLineItems<Line>> | undefined;
+        render(<GuardHarness onReady={(a) => (api = a)} />);
+        act(() => api?.updateField("1", "quantity", 9));
+        return api;
+      }
+
+      const click = (name: string, init: MouseEventInit = {}) => {
+        const link = screen.getByRole("link", { name });
+        const event = new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          button: 0,
+          ...init,
+        });
+        link.dispatchEvent(event);
+        return event.defaultPrevented;
+      };
+
+      it("blocks a link outside the document and hands focus to the bar", async () => {
+        await renderDirty();
+        expect(click("Elsewhere")).toBe(true);
+        expect(document.activeElement?.textContent).toBe("Discard");
+      });
+
+      it("leaves links inside the document alone", async () => {
+        await renderDirty();
+        expect(click("Inside")).toBe(false);
+      });
+
+      it("lets a modified click through, since it opens a new tab", async () => {
+        await renderDirty();
+        expect(click("Elsewhere", { metaKey: true })).toBe(false);
+      });
+    });
+
     it("filters rows from the search box", async () => {
       const user = userEvent.setup();
       render(<Harness />);

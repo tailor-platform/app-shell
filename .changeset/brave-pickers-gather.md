@@ -22,3 +22,5 @@ import { BulkItemPicker } from "@tailor-platform/app-shell";
 ```
 
 It is decoupled from `LineItems` and works for any multi-select-from-tree flow. Pair it with `useLineItems().addLines()` to insert every pick in a single render.
+
+Built-in labels are localized (English and Japanese) through the app locale; any label prop overrides them.

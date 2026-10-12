@@ -23,7 +23,9 @@ export function LineItemsSkeletonRow({
       {Array.from({ length: columnCount }, (_, col) => (
         <td key={col} className="astw:px-2">
           <span
-            className={cn("astw:block astw:h-3 astw:animate-pulse astw:rounded astw:bg-muted")}
+            className={cn(
+              "astw:block astw:h-3 astw:animate-pulse astw:rounded astw:bg-muted astw:motion-reduce:animate-none",
+            )}
             style={{ width: `${45 + ((rowIndex * 13 + col * 17) % 40)}%` }}
           />
         </td>

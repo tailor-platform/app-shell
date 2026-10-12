@@ -93,6 +93,8 @@ export type LineItemsCustomEditorContext<T extends LineItemsRowData> = {
   row: T;
   mode: LineItemsMode;
   field: LineItemsField<T>;
+  /** Accessible name for the editor — column and line. Put it on your input. */
+  ariaLabel: string;
 };
 
 /**
@@ -107,7 +109,7 @@ export type LineItemsFieldType<T extends LineItemsRowData = LineItemsRowData> =
       options: ReadonlyArray<LineItemsSelectOption>;
       placeholder?: string;
     }
-  | { kind: "boolean"; trueLabel?: string; falseLabel?: string }
+  | { kind: "boolean" }
   | { kind: "date"; min?: string; max?: string }
   | {
       kind: "custom";

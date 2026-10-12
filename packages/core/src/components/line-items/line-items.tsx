@@ -16,6 +16,7 @@ import {
   LineItemsSearchToggle,
   LineItemsTotalsRow,
 } from "./line-items-parts";
+import { useLineItemsT } from "./i18n";
 import { LineItemsTable } from "./line-items-table";
 import type { LineItemsRowData, UseLineItemsReturn } from "./types";
 
@@ -29,14 +30,9 @@ export type LineItemsRootProps<T extends LineItemsRowData> = {
   className?: string;
 };
 
-/**
- * Fades the backdrop in and lifts the card, so entering fullscreen reads as the
- * panel rising rather than the page snapping. Closing is deliberately instant.
- */
-const FULLSCREEN_KEYFRAMES = `
-@keyframes line-items-fs-backdrop{from{opacity:0}to{opacity:1}}
-@keyframes line-items-fs-card{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-`;
+/** Elements Tab can land on, for keeping focus inside the fullscreen overlay. */
+const FOCUSABLE =
+  'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
 /**
  * Provides the line-items document to the parts beneath it. Root holds no row
@@ -104,16 +100,46 @@ function LineItemsRoot<T extends LineItemsRowData>({
     [fullscreen, registerTotals, setFullscreen, totalsRenderer, value],
   );
 
+  const t = useLineItemsT();
+
+  // The page behind a modal overlay must not scroll under it.
   React.useEffect(() => {
     if (!fullscreen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      e.stopPropagation();
-      setFullscreen(false);
+    const { body } = document;
+    const previous = body.style.overflow;
+    body.style.overflow = "hidden";
+    return () => {
+      body.style.overflow = previous;
     };
-    globalThis.addEventListener("keydown", onKeyDown);
-    return () => globalThis.removeEventListener("keydown", onKeyDown);
-  }, [fullscreen, setFullscreen]);
+  }, [fullscreen]);
+
+  /**
+   * Escape closes, unless something inside already handled it (a cell editor
+   * abandoning its edit, a combobox closing its popup). Tab wraps within the
+   * overlay so focus can't wander to the page hidden behind it.
+   */
+  const onOverlayKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Escape") {
+      if (e.defaultPrevented) return;
+      e.preventDefault();
+      setFullscreen(false);
+      return;
+    }
+    if (e.key !== "Tab") return;
+    const focusable = Array.from(e.currentTarget.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+      (el) => el.offsetParent !== null || el === document.activeElement,
+    );
+    const first = focusable[0];
+    const last = focusable.at(-1);
+    if (!first || !last) return;
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
 
   const body = (
     <div
@@ -136,32 +162,52 @@ function LineItemsRoot<T extends LineItemsRowData>({
     </div>
   );
 
+  // The same elements render in both states — `contents` wrappers while
+  // inline — so toggling fullscreen never remounts the document: focus stays on
+  // the toggle and half-typed cells keep their drafts.
   return (
     <LineItemsContextProvider value={ctx as LineItemsContextValue}>
-      {fullscreen ? (
-        <>
-          <style>{FULLSCREEN_KEYFRAMES}</style>
-          <div
-            data-slot="line-items-fullscreen"
-            // Only a press on the dimmed padding itself closes — never one that
-            // bubbled up from the card.
-            onPointerDown={(e) => {
-              if (e.target === e.currentTarget) setFullscreen(false);
-            }}
-            className="astw:fixed astw:inset-0 astw:z-50 astw:flex astw:flex-col astw:bg-black/80 astw:p-6 astw:backdrop-blur-sm"
-            style={{ animation: "line-items-fs-backdrop 220ms ease-out" }}
-          >
-            <div
-              className="astw:flex astw:min-h-0 astw:flex-1 astw:flex-col"
-              style={{ animation: "line-items-fs-card 280ms cubic-bezier(0.16,1,0.3,1)" }}
-            >
-              {body}
-            </div>
-          </div>
-        </>
-      ) : (
-        body
-      )}
+      {/* oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- the role is computed: "dialog" whenever the handlers are attached */}
+      <div
+        data-slot="line-items-fullscreen"
+        data-state={fullscreen ? "open" : "closed"}
+        // Inline the wrapper is `display: contents` and carries no semantics.
+        role={fullscreen ? "dialog" : "presentation"}
+        aria-modal={fullscreen || undefined}
+        aria-label={fullscreen ? t("fullscreenLabel") : undefined}
+        onKeyDown={fullscreen ? onOverlayKeyDown : undefined}
+        // Only a press on the dimmed padding itself closes — never one that
+        // bubbled up from the card.
+        onPointerDown={
+          fullscreen
+            ? (e) => {
+                if (e.target === e.currentTarget) setFullscreen(false);
+              }
+            : undefined
+        }
+        className={cn(
+          fullscreen
+            ? [
+                "astw:fixed astw:inset-0 astw:z-50 astw:flex astw:flex-col astw:bg-black/80 astw:p-6 astw:backdrop-blur-sm",
+                "astw:animate-in astw:fade-in-0 astw:duration-200 astw:motion-reduce:animate-none",
+              ]
+            : "astw:contents",
+        )}
+      >
+        <div
+          className={cn(
+            fullscreen
+              ? [
+                  // The panel rises as the backdrop fades in; closing is instant.
+                  "astw:flex astw:min-h-0 astw:flex-1 astw:flex-col",
+                  "astw:animate-in astw:fade-in-0 astw:slide-in-from-bottom-6 astw:duration-300 astw:ease-out astw:motion-reduce:animate-none",
+                ]
+              : "astw:contents",
+          )}
+        >
+          {body}
+        </div>
+      </div>
     </LineItemsContextProvider>
   );
 }

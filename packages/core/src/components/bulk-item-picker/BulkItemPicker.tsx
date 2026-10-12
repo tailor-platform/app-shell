@@ -4,10 +4,12 @@ import { SearchIcon } from "lucide-react";
 import { Button } from "@/components/button";
 import { Dialog } from "@/components/dialog";
 import { Input } from "@/components/input";
+import { cn } from "@/lib/utils";
 
 import { BulkItemPickerRow } from "./BulkItemPickerRow";
 import { flattenVisible, leafIds } from "./tree-utils";
 import type { BulkItemPickerNode, BulkItemPickerProps } from "./types";
+import { useBulkItemPickerT } from "./i18n";
 import { useTreeFocus } from "./use-tree-focus";
 import { useTreeSelection } from "./use-tree-selection";
 
@@ -88,20 +90,22 @@ import { useTreeSelection } from "./use-tree-selection";
 function BulkItemPicker<T>({
   open,
   onOpenChange,
-  title = "Select items",
+  title,
   items,
   renderRow,
   renderMetric,
-  rowLabel = "Item",
+  rowLabel,
   metricLabel,
   matchesSearch,
   filterSlot,
   onCommit,
   ctaLabel,
-  emptyText = "No matching items.",
-  searchPlaceholder = "Search",
+  emptyText,
+  searchPlaceholder,
+  className,
 }: BulkItemPickerProps<T>) {
   const titleId = React.useId();
+  const t = useBulkItemPickerT();
 
   const {
     query,
@@ -144,21 +148,24 @@ function BulkItemPicker<T>({
     commit,
   });
 
-  const defaultCta = count > 0 ? `Add ${count} item${count === 1 ? "" : "s"}` : "Add items";
+  const defaultCta = count > 0 ? t("addCount", { count }) : t("addItems");
   const cta = ctaLabel ? ctaLabel(count) : defaultCta;
 
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Content
         data-slot="bulk-item-picker"
-        className="astw:flex astw:max-h-[80vh] astw:w-full astw:max-w-2xl astw:flex-col astw:gap-0 astw:overflow-hidden astw:p-0 astw:sm:max-w-2xl"
+        className={cn(
+          "astw:flex astw:max-h-[80vh] astw:w-full astw:max-w-2xl astw:flex-col astw:gap-0 astw:overflow-hidden astw:p-0 astw:sm:max-w-2xl",
+          className,
+        )}
         onKeyDown={handleKeyDown}
       >
         <Dialog.Header
           data-slot="bulk-item-picker-header"
           className="astw:px-6 astw:pt-6 astw:pr-12"
         >
-          <Dialog.Title id={titleId}>{title}</Dialog.Title>
+          <Dialog.Title id={titleId}>{title ?? t("title")}</Dialog.Title>
         </Dialog.Header>
 
         <div
@@ -170,8 +177,8 @@ function BulkItemPicker<T>({
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder={searchPlaceholder}
-              aria-label="Search"
+              placeholder={searchPlaceholder ?? t("searchPlaceholder")}
+              aria-label={t("searchLabel")}
               // `dark:bg-transparent` is not redundant: Input ships `dark:bg-input/30`,
               // which tailwind-merge will not dedupe against a bare `bg-transparent`,
               // so in dark mode it paints a second fill over the wrapper's own.
@@ -189,7 +196,7 @@ function BulkItemPicker<T>({
           {/* Mirrors the row's checkbox + caret so the labels line up. */}
           <span className="astw:size-4 astw:shrink-0" />
           <span className="astw:size-5 astw:shrink-0" />
-          <div className="astw:min-w-0 astw:flex-1">{rowLabel}</div>
+          <div className="astw:min-w-0 astw:flex-1">{rowLabel ?? t("rowLabel")}</div>
           {metricLabel ? <div className="astw:shrink-0 astw:text-right">{metricLabel}</div> : null}
         </div>
 
@@ -198,7 +205,7 @@ function BulkItemPicker<T>({
             data-slot="bulk-item-picker-empty"
             className="astw:text-muted-foreground astw:px-6 astw:py-8 astw:text-center astw:text-sm"
           >
-            {emptyText}
+            {emptyText ?? t("emptyText")}
           </div>
         ) : (
           <div
@@ -232,7 +239,7 @@ function BulkItemPicker<T>({
           className="astw:border-border astw:border-t astw:px-6 astw:py-4"
         >
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("cancel")}
           </Button>
           <Button onClick={commit} disabled={count === 0}>
             {cta}

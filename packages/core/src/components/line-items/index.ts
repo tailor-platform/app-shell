@@ -7,18 +7,7 @@ export {
   type UseLineItemsGroupReturn,
 } from "./use-line-items-group";
 export { createLineItemHelper } from "./field";
-export { lineItemsFloatingBarStyles } from "./line-items-parts";
 export type { LineItemsTableProps } from "./line-items-table";
-export type {
-  LineItemsAddRowProps,
-  LineItemsDirtyBarProps,
-  LineItemsFloatingDockProps,
-  LineItemsFullscreenToggleProps,
-  LineItemsSaveActionsProps,
-  LineItemsSearchProps,
-  LineItemsSearchToggleProps,
-  LineItemsTotalsRowProps,
-} from "./line-items-parts";
 export type {
   LineItemsChangeSet,
   LineItemsColumnAlign,

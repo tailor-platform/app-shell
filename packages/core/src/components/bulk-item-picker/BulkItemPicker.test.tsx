@@ -72,7 +72,8 @@ const rowFor = (label: string): HTMLElement => screen.getByText(label).closest("
 const checkboxFor = (label: string): HTMLElement =>
   rowFor(label).querySelector("[role=checkbox]") as HTMLElement;
 
-const expandButton = () => screen.getByRole("button", { name: /expand/i });
+// Mouse-only (hidden from assistive tech, which uses the row), so found by its tooltip.
+const expandButton = () => screen.getByTitle(/expand/i);
 
 describe("BulkItemPicker", () => {
   // ==========================================================================
@@ -115,7 +116,7 @@ describe("BulkItemPicker", () => {
     it("empty state", async () => {
       const user = userEvent.setup();
       const { baseElement } = render(<Harness />);
-      await user.type(screen.getByLabelText("Search"), "zzz");
+      await user.type(screen.getByLabelText("Search items"), "zzz");
       await waitFor(() => expect(screen.getByText(/no matching items/i)).toBeDefined());
       expect(baseElement.innerHTML).toMatchSnapshot();
     });
@@ -230,15 +231,15 @@ describe("BulkItemPicker", () => {
 
     await user.click(expandButton());
     await user.click(checkboxFor("UK 8 / Black / Women"));
-    await user.type(screen.getByLabelText("Search"), "UK");
+    await user.type(screen.getByLabelText("Search items"), "UK");
 
     await user.click(screen.getByRole("button", { name: /^cancel$/i }));
-    await waitFor(() => expect(screen.queryByLabelText("Search")).toBeNull());
+    await waitFor(() => expect(screen.queryByLabelText("Search items")).toBeNull());
 
     await user.click(screen.getByRole("button", { name: "Reopen" }));
     await waitFor(() => expect(screen.getByText("Nike Vomero 18")).toBeDefined());
 
-    expect((screen.getByLabelText("Search") as HTMLInputElement).value).toBe("");
+    expect((screen.getByLabelText("Search items") as HTMLInputElement).value).toBe("");
     expect((screen.getByRole("button", { name: /add items/i }) as HTMLButtonElement).disabled).toBe(
       true,
     );
@@ -256,7 +257,7 @@ describe("BulkItemPicker", () => {
 
     expect(screen.queryByText("UK 9 / Black / Men")).toBeNull();
 
-    await user.type(screen.getByLabelText("Search"), "UK 9");
+    await user.type(screen.getByLabelText("Search items"), "UK 9");
 
     expect(screen.getByText("Adidas Ultraboost 22")).toBeDefined();
     expect(screen.getByText("UK 9 / Black / Men")).toBeDefined();
@@ -273,7 +274,7 @@ describe("BulkItemPicker", () => {
     await user.click(expandButton());
     expect(screen.getByText("UK 9 / Black / Men")).toBeDefined();
 
-    const search = screen.getByLabelText("Search");
+    const search = screen.getByLabelText("Search items");
     await user.type(search, "Hoka");
     expect(screen.queryByText("UK 9 / Black / Men")).toBeNull();
 
@@ -285,7 +286,7 @@ describe("BulkItemPicker", () => {
     const user = userEvent.setup();
     render(<Harness />);
 
-    await user.type(screen.getByLabelText("Search"), "zzz no match");
+    await user.type(screen.getByLabelText("Search items"), "zzz no match");
     expect(screen.getByText(/no matching items/i)).toBeDefined();
     expect(screen.queryByRole("tree")).toBeNull();
   });
@@ -460,7 +461,7 @@ describe("BulkItemPicker", () => {
     await waitFor(() => expect(screen.getAllByRole("treeitem")).toHaveLength(3));
     await user.click(checkboxFor("Nike Vomero 18"));
 
-    await user.click(screen.getByLabelText("Search"));
+    await user.click(screen.getByLabelText("Search items"));
     await user.keyboard("{Enter}");
     expect(onCommit).not.toHaveBeenCalled();
 

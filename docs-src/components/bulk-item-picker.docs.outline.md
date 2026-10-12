@@ -66,9 +66,12 @@ const CATALOG: BulkItemPickerNode<CatalogItem>[] = [
 | `metricLabel`       | `ReactNode`                                   | –                      | Header above the metric column.                                                |
 | `matchesSearch`     | `(node, query) => boolean`                    | substring on `data`    | Search predicate. **Override whenever `data` is an object.**                   |
 | `filterSlot`        | `ReactNode`                                   | –                      | Slot beside the search input, e.g. a category filter.                          |
-| `ctaLabel`          | `(count: number) => string`                   | `"Add N items"`        | Primary button label.                                                          |
+| `ctaLabel`          | `(count: number) => ReactNode`                | `"Add N items"`        | Primary button label.                                                          |
 | `emptyText`         | `ReactNode`                                   | `"No matching items."` | Shown when the filtered tree is empty.                                         |
 | `searchPlaceholder` | `string`                                      | `"Search"`             | Search input placeholder.                                                      |
+| `className`         | `string`                                      | –                      | Merged onto the dialog panel.                                                  |
+
+The default labels are localized (English and Japanese) through the app's locale, like DataTable's; passing a label prop overrides it.
 
 ### BulkItemPickerNode
 

@@ -53,7 +53,7 @@ import {
 import {
   selectionBarSurfaceClasses,
   selectionBarTokenClasses,
-} from "@/components/selection-actions/selection-actions-bar";
+} from "@/components/internals/selection-actions/selection-actions-bar";
 export type { DataTablePaginationProps } from "./pagination";
 
 // Fallback row count when no pageSize is configured (static / uncontrolled tables)

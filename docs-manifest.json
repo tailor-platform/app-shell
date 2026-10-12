@@ -224,9 +224,9 @@
       "symbols": ["BulkItemPicker", "BulkItemPickerNode", "BulkItemPickerProps"],
       "hashes": {
         "typeSurface": "b824752584c0ec62",
-        "outline": "283588ffb3179619",
-        "snapshot": "70112a170b43395a",
-        "outputMd": "2aded34a5e216c7a",
+        "outline": "b3eead0f408aed50",
+        "snapshot": "965ae95bd6c680ab",
+        "outputMd": "03c21c60c42532f3",
         "examples": null
       }
     },
@@ -1015,6 +1015,7 @@
       "symbols": [
         "LineItems",
         "LineItemsChangeSet",
+        "LineItemsColumnAlign",
         "LineItemsCustomEditorContext",
         "LineItemsField",
         "LineItemsFieldCommit",
@@ -1027,22 +1028,23 @@
         "LineItemsOrderingMode",
         "LineItemsRootProps",
         "LineItemsRowData",
+        "LineItemsRowPatch",
         "LineItemsSelectOption",
+        "LineItemsSortDirection",
         "LineItemsSortState",
         "LineItemsTableProps",
         "UseLineItemsGroupReturn",
         "UseLineItemsOptions",
         "UseLineItemsReturn",
         "createLineItemHelper",
-        "lineItemsFloatingBarStyles",
         "useLineItems",
         "useLineItemsGroup"
       ],
       "hashes": {
-        "typeSurface": "e6973641bac22653",
-        "outline": "97ad95749353ab77",
-        "snapshot": "6dd9727eb9751735",
-        "outputMd": "1cc7e19dcdb5b6ad",
+        "typeSurface": "522225b33c75fdde",
+        "outline": "421442e06ba4b729",
+        "snapshot": "db62a9b65c84aab5",
+        "outputMd": "3640571104eacdd3",
         "examples": null
       }
     },
@@ -1729,7 +1731,7 @@
     "packages/core/skills/app-shell-patterns/references/components/autocomplete.md": "bd6ae01bf39d1ad6",
     "packages/core/skills/app-shell-patterns/references/components/avatar.md": "a874b74c176bcb47",
     "packages/core/skills/app-shell-patterns/references/components/badge.md": "0cb27fbce6f76e2e",
-    "packages/core/skills/app-shell-patterns/references/components/bulk-item-picker.md": "2aded34a5e216c7a",
+    "packages/core/skills/app-shell-patterns/references/components/bulk-item-picker.md": "03c21c60c42532f3",
     "packages/core/skills/app-shell-patterns/references/components/button.md": "bce0e2fada1d1638",
     "packages/core/skills/app-shell-patterns/references/components/card.md": "675dc665e5082ff0",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
@@ -1748,7 +1750,7 @@
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "66696139a46fabb0",
-    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "1cc7e19dcdb5b6ad",
+    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "3640571104eacdd3",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "ae287e2bb5abc1c6",

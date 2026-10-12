@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useSelectionActionRunner } from "@/components/selection-actions/use-selection-action-runner";
+import { useSelectionActionRunner } from "@/components/internals/selection-actions/use-selection-action-runner";
 import { fieldCommitScope, fieldsToColumnDefs } from "./field";
 import {
   buildChangeSet,

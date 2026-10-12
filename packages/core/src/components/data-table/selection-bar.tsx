@@ -1,7 +1,7 @@
 import {
   SelectionActionsAnnouncer,
   SelectionActionsBar,
-} from "@/components/selection-actions/selection-actions-bar";
+} from "@/components/internals/selection-actions/selection-actions-bar";
 import { useDataTableContext, type DataTableContextValue } from "./data-table-context";
 
 /**

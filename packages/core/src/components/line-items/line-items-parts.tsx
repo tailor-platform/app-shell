@@ -3,6 +3,7 @@ import { Maximize2, Minimize2, Search as SearchIcon } from "lucide-react";
 
 import { Button } from "@/components/button";
 import { cn } from "@/lib/utils";
+import { useLineItemsT } from "./i18n";
 import { useLineItemsContext, type LineItemsTotalsRenderer } from "./line-items-context";
 import type { LineItemsChangeSet, LineItemsRowData } from "./types";
 
@@ -19,12 +20,9 @@ const searchInputClasses =
   "astw:border-input astw:h-9 astw:w-full astw:rounded-md astw:border astw:bg-transparent astw:text-sm astw:shadow-xs astw:outline-none astw:placeholder:text-muted-foreground astw:focus-visible:border-ring astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50";
 
 /** Always-visible search box bound to the filter. */
-function LineItemsSearch({
-  placeholder = "Search lines",
-  showIcon = true,
-  className,
-}: LineItemsSearchProps) {
+function LineItemsSearch({ placeholder, showIcon = true, className }: LineItemsSearchProps) {
   const { lineItems } = useLineItemsContext("Search");
+  const t = useLineItemsT();
   return (
     <div
       data-slot="line-items-search"
@@ -38,8 +36,8 @@ function LineItemsSearch({
       ) : null}
       <input
         type="search"
-        aria-label={placeholder}
-        placeholder={placeholder}
+        aria-label={placeholder ?? t("searchLabel")}
+        placeholder={placeholder ?? t("searchPlaceholder")}
         value={lineItems.filter}
         onChange={(e) => lineItems.setFilter(e.target.value)}
         className={cn(searchInputClasses, showIcon ? "astw:pr-2 astw:pl-8" : "astw:px-2")}
@@ -61,12 +59,14 @@ export type LineItemsSearchToggleProps = {
  * when empty. Fits a card header where the full-width `Search` box does not.
  */
 function LineItemsSearchToggle({
-  placeholder = "Search lines",
+  placeholder: placeholderProp,
   expandedWidth = 240,
   variant = "outline",
   className,
 }: LineItemsSearchToggleProps) {
   const { lineItems } = useLineItemsContext("SearchToggle");
+  const t = useLineItemsT();
+  const placeholder = placeholderProp ?? t("searchPlaceholder");
   const [expanded, setExpanded] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -112,6 +112,8 @@ function LineItemsSearchToggle({
         }}
         onKeyDown={(e) => {
           if (e.key === "Escape") {
+            // Handled here, so it doesn't also close a fullscreen overlay.
+            e.preventDefault();
             lineItems.setFilter("");
             setExpanded(false);
           }
@@ -164,6 +166,7 @@ function LineItemsFullscreenToggle({
   className,
 }: LineItemsFullscreenToggleProps) {
   const { fullscreen, setFullscreen } = useLineItemsContext("FullscreenToggle");
+  const t = useLineItemsT();
   const Icon = fullscreen ? Minimize2 : Maximize2;
 
   return (
@@ -172,7 +175,7 @@ function LineItemsFullscreenToggle({
       variant={variant}
       size="icon"
       aria-pressed={fullscreen}
-      aria-label={fullscreen ? "Exit fullscreen" : "Expand to fullscreen"}
+      aria-label={fullscreen ? t("exitFullscreen") : t("enterFullscreen")}
       data-slot="line-items-fullscreen-toggle"
       className={className}
       onClick={() => setFullscreen(!fullscreen)}
@@ -198,12 +201,13 @@ export type LineItemsSaveActionsProps = {
 function LineItemsSaveActions({
   onSave,
   onDiscard,
-  saveLabel = "Save changes",
-  discardLabel = "Discard",
+  saveLabel,
+  discardLabel,
   saving = false,
   className,
 }: LineItemsSaveActionsProps) {
   const { lineItems } = useLineItemsContext("SaveActions");
+  const t = useLineItemsT();
   if (lineItems.mode === "view") return null;
 
   return (
@@ -218,7 +222,7 @@ function LineItemsSaveActions({
         disabled={!lineItems.isDirty || saving}
         onClick={() => (onDiscard ? onDiscard() : lineItems.revert())}
       >
-        {discardLabel}
+        {discardLabel ?? t("discard")}
       </Button>
       <Button
         type="button"
@@ -226,7 +230,7 @@ function LineItemsSaveActions({
         disabled={!lineItems.isDirty || saving}
         onClick={() => onSave(lineItems.getChangeSet())}
       >
-        {saveLabel}
+        {saveLabel ?? t("saveChanges")}
       </Button>
     </div>
   );
@@ -267,38 +271,6 @@ LineItemsTotalsRow.displayName = "LineItems.TotalsRow";
 
 /* ------------------------------------------------------------ Floating dock */
 
-/**
- * Inline styles so consumer buttons dropped into the dark pills match their
- * chrome without needing the package's own utility classes.
- */
-export const lineItemsFloatingBarStyles = {
-  primaryButton: {
-    background: "var(--background)",
-    color: "var(--foreground)",
-    borderRadius: "0.375rem",
-    padding: "0.25rem 0.625rem",
-    fontSize: "0.75rem",
-    fontWeight: 500,
-  },
-  secondaryButton: {
-    background: "transparent",
-    color: "var(--background)",
-    borderRadius: "0.375rem",
-    padding: "0.25rem 0.625rem",
-    fontSize: "0.75rem",
-    fontWeight: 500,
-  },
-  divider: { width: 1, height: "1rem", background: "currentColor", opacity: 0.3 },
-  label: { fontSize: "0.75rem", opacity: 0.8 },
-} as const;
-
-const JIGGLE_KEYFRAMES = `
-@keyframes line-items-floating-jiggle{
-0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}
-45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-3px)}
-100%{transform:translateX(0)}}
-`;
-
 export type LineItemsFloatingDockProps = {
   children?: React.ReactNode;
   className?: string;
@@ -307,18 +279,15 @@ export type LineItemsFloatingDockProps = {
 /** Fixed bottom-center of the viewport, above page chrome. */
 function LineItemsFloatingDock({ children, className }: LineItemsFloatingDockProps) {
   return (
-    <>
-      <style>{JIGGLE_KEYFRAMES}</style>
-      <div
-        data-slot="line-items-floating-dock"
-        className={cn(
-          "astw:pointer-events-none astw:fixed astw:bottom-6 astw:left-1/2 astw:z-[60] astw:flex astw:-translate-x-1/2 astw:flex-col astw:items-center astw:gap-2",
-          className,
-        )}
-      >
-        {children}
-      </div>
-    </>
+    <div
+      data-slot="line-items-floating-dock"
+      className={cn(
+        "astw:pointer-events-none astw:fixed astw:bottom-6 astw:left-1/2 astw:z-[60] astw:flex astw:-translate-x-1/2 astw:flex-col astw:items-center astw:gap-2",
+        className,
+      )}
+    >
+      {children}
+    </div>
   );
 }
 LineItemsFloatingDock.displayName = "LineItems.FloatingDock";
@@ -326,9 +295,19 @@ LineItemsFloatingDock.displayName = "LineItems.FloatingDock";
 const pillClasses =
   "astw:pointer-events-auto astw:flex astw:items-center astw:gap-3 astw:rounded-lg astw:bg-foreground astw:px-3 astw:py-2 astw:text-xs astw:text-background astw:shadow-lg";
 
-const jiggleStyle = {
-  animation: "line-items-floating-jiggle 0.5s cubic-bezier(0.36,0.07,0.19,0.97)",
-};
+const pillButtonClasses =
+  "astw:rounded-md astw:px-2.5 astw:py-1 astw:text-xs astw:font-medium astw:outline-none astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50";
+
+/** A short side-to-side shake, played with the Web Animations API. */
+const SHAKE_KEYFRAMES: Keyframe[] = [
+  { transform: "translateX(0)" },
+  { transform: "translateX(-8px)", offset: 0.15 },
+  { transform: "translateX(8px)", offset: 0.3 },
+  { transform: "translateX(-6px)", offset: 0.45 },
+  { transform: "translateX(6px)", offset: 0.6 },
+  { transform: "translateX(-3px)", offset: 0.75 },
+  { transform: "translateX(0)" },
+];
 
 export type LineItemsDirtyBarProps = {
   onSave?: (changeSet: LineItemsChangeSet) => void;
@@ -338,7 +317,10 @@ export type LineItemsDirtyBarProps = {
   discardLabel?: React.ReactNode;
   /**
    * Intercepts in-app link clicks and browser unload while the document is
-   * dirty, shaking the bar instead of letting the edits be lost.
+   * dirty, shaking the bar instead of letting the edits be lost. Links inside
+   * this document (and the card hosting it) are left alone. Navigation started
+   * from code, such as `navigate()` or the browser's back button, is not
+   * intercepted.
    */
   warnOnNav?: boolean;
   children?: (pendingCount: number) => React.ReactNode;
@@ -350,29 +332,56 @@ function LineItemsDirtyBar({
   onSave,
   onDiscard,
   label,
-  saveLabel = "Save",
-  discardLabel = "Discard",
+  saveLabel,
+  discardLabel,
   warnOnNav = false,
   children,
   className,
 }: LineItemsDirtyBarProps) {
   const { lineItems } = useLineItemsContext("DirtyBar");
-  const [jiggleNonce, setJiggleNonce] = React.useState(0);
+  const t = useLineItemsT();
+  const barRef = React.useRef<HTMLDivElement | null>(null);
+  const [blockedNotice, setBlockedNotice] = React.useState("");
   const isDirty = lineItems.isDirty;
+
+  const blockedText = t("unsavedNavBlocked");
+  const blockedTextRef = React.useRef(blockedText);
+  blockedTextRef.current = blockedText;
 
   React.useEffect(() => {
     if (!warnOnNav || !isDirty) return;
 
-    const jiggle = () => setJiggleNonce((n) => n + 1);
+    const reduceMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    /** Shakes the bar, announces why, and hands it focus so it can be resolved. */
+    const signalBlocked = () => {
+      const bar = barRef.current;
+      if (!bar) return;
+      if (!reduceMotion) {
+        bar.animate(SHAKE_KEYFRAMES, {
+          duration: 500,
+          easing: "cubic-bezier(0.36, 0.07, 0.19, 0.97)",
+        });
+      }
+      // Toggle through "" so repeating the same notice is announced again.
+      setBlockedNotice("");
+      requestAnimationFrame(() => setBlockedNotice(blockedTextRef.current));
+      bar.querySelector<HTMLElement>("button")?.focus();
+    };
 
     const onClick = (event: MouseEvent) => {
       if (event.defaultPrevented) return;
+      // Opening in a new tab or window doesn't leave the page.
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+        return;
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      // The dock's own controls, and anything inside the hosting card, are how
-      // the user resolves the dirty state — never block those.
+      // The dock's own controls, and anything inside this document or the card
+      // hosting it, are how the user resolves the dirty state — never block those.
       if (target.closest("[data-slot=line-items-floating-dock]")) return;
-      if (target.closest("[data-slot=card]")) return;
+      const root = barRef.current?.closest<HTMLElement>("[data-slot=line-items]");
+      const host = root?.closest<HTMLElement>("[data-slot=card]") ?? root;
+      if (host?.contains(target)) return;
       const anchor = target.closest("a[href]") as HTMLAnchorElement | null;
       if (!anchor) return;
       const href = anchor.getAttribute("href");
@@ -380,13 +389,12 @@ function LineItemsDirtyBar({
       if (anchor.target && anchor.target !== "_self") return;
       event.preventDefault();
       event.stopPropagation();
-      jiggle();
+      signalBlocked();
     };
 
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
       event.returnValue = "";
-      jiggle();
     };
 
     document.addEventListener("click", onClick, true);
@@ -402,34 +410,33 @@ function LineItemsDirtyBar({
   const pending = lineItems.getChangeSet().lineChanges.length;
 
   return (
-    <div
-      key={jiggleNonce}
-      data-slot="line-items-dirty-bar"
-      className={cn(pillClasses, className)}
-      style={jiggleNonce > 0 ? jiggleStyle : undefined}
-    >
-      <span style={lineItemsFloatingBarStyles.label}>
-        {label ? label(pending) : `${pending} unsaved ${pending === 1 ? "change" : "changes"}`}
+    <div ref={barRef} data-slot="line-items-dirty-bar" className={cn(pillClasses, className)}>
+      {/* <output> is a status region: the count is announced as it appears and changes. */}
+      <output className="astw:opacity-80">
+        {label ? label(pending) : t("unsavedChanges", { count: pending })}
+      </output>
+      <span className="astw:sr-only" aria-live="assertive">
+        {blockedNotice}
       </span>
       {children ? (
         children(pending)
       ) : (
         <>
-          <span aria-hidden="true" style={lineItemsFloatingBarStyles.divider} />
+          <span aria-hidden="true" className="astw:h-4 astw:w-px astw:bg-current astw:opacity-30" />
           <button
             type="button"
-            style={lineItemsFloatingBarStyles.secondaryButton}
+            className={cn(pillButtonClasses, "astw:bg-transparent astw:text-background")}
             onClick={() => (onDiscard ? onDiscard() : lineItems.revert())}
           >
-            {discardLabel}
+            {discardLabel ?? t("discard")}
           </button>
           {onSave ? (
             <button
               type="button"
-              style={lineItemsFloatingBarStyles.primaryButton}
+              className={cn(pillButtonClasses, "astw:bg-background astw:text-foreground")}
               onClick={() => onSave(lineItems.getChangeSet())}
             >
-              {saveLabel}
+              {saveLabel ?? t("save")}
             </button>
           ) : null}
         </>

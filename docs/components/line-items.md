@@ -83,16 +83,17 @@ Every row needs a stable `lineRef` — the server id for a persisted line. Rows 
 
 ## useLineItems(options)
 
-| Option             | Type                   | Default  | Description                                                                                                                           |
-| ------------------ | ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `fields`           | `LineItemsField<T>[]`  | required | Column schema. Build with `createLineItemHelper<T>().field({…})`.                                                                     |
-| `data`             | `readonly T[]`         | `[]`     | Uncontrolled seed rows, also the dirty-tracking baseline.                                                                             |
-| `lines`            | `readonly T[]`         | –        | Controlled rows. When set, `data` is ignored.                                                                                         |
-| `onLinesChange`    | `(next: T[]) => void`  | –        | Called once per mutation with the new rows.                                                                                           |
-| `mode`             | `"view" \| "edit"`     | `"edit"` | `"view"` renders every cell read-only.                                                                                                |
-| `ordering`         | `"sort" \| "manual"`   | `"sort"` | `"manual"` enables drag reordering and emits `reorder` ops.                                                                           |
-| `selection`        | `boolean`              | `false`  | Adds the row selection checkbox column.                                                                                               |
-| `selectionActions` | `SelectionAction<T>[]` | –        | Bulk actions shown at the table's foot while lines are selected. Also enables selection. See [Selection actions](#selection-actions). |
+| Option             | Type                                          | Default  | Description                                                                                                                                                       |
+| ------------------ | --------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fields`           | `LineItemsField<T>[]`                         | required | Column schema. Build with `createLineItemHelper<T>().field({…})`.                                                                                                 |
+| `data`             | `readonly T[]`                                | `[]`     | Uncontrolled seed rows, also the dirty-tracking baseline. Read once on mount; to load a different document, remount (e.g. with a `key`).                          |
+| `lines`            | `readonly T[]`                                | –        | Controlled rows. When set, `data` is ignored.                                                                                                                     |
+| `onLinesChange`    | `(next: T[]) => void`                         | –        | Called once per mutation with the new rows.                                                                                                                       |
+| `mode`             | `"view" \| "edit" \| "amend"`                 | `"edit"` | `"view"` renders every cell read-only. `"amend"` keeps only fields whose `editable` lists it open — for a confirmed document where a few fields may still change. |
+| `ordering`         | `"sort" \| "manual"`                          | `"sort"` | `"manual"` enables drag reordering and emits `reorder` ops.                                                                                                       |
+| `selection`        | `boolean`                                     | `false`  | Adds the row selection checkbox column.                                                                                                                           |
+| `selectionActions` | `SelectionAction<T>[]`                        | –        | Bulk actions shown at the table's foot while lines are selected. Also enables selection. See [Selection actions](#selection-actions).                             |
+| `onMetadataCommit` | `(event: LineItemsMetadataCommit<T>) => void` | –        | Receives edits to `commit: "metadata"` fields, which bypass the change-set.                                                                                       |
 
 ### Return value
 
@@ -177,23 +178,29 @@ const lineItems = useLineItems<POLine>({
 { kind: "text" }
 { kind: "number", decimals?: number }
 { kind: "select", options: { value, label, description? }[], placeholder?: string }
-{ kind: "boolean", trueLabel?: string, falseLabel?: string }
+{ kind: "boolean" }
 { kind: "date", min?: string, max?: string }
 { kind: "custom", renderEditor: (ctx) => ReactNode, normalize?, equals? }
 ```
+
+A `custom` editor receives `ariaLabel` (the column and line, e.g. "Qty, line 2") in its context — put it on your input so screen readers can name the cell, as the built-in editors do.
 
 Numeric fields normalize strings to numbers, round by `decimals`, and compare with a small epsilon, so `"1"` and `"1.00"` are not a change. Strings are trimmed. A field's own `normalize` and `equals` win over both.
 
 ## LineItems.Table Props
 
-| Prop            | Type                        | Default              | Description                                                                        |
-| --------------- | --------------------------- | -------------------- | ---------------------------------------------------------------------------------- |
-| `rowHeight`     | `number`                    | `36`                 | Uniform row height, which the virtualizer's math depends on.                       |
-| `maxBodyHeight` | `number \| string`          | `"min(70vh, 600px)"` | Height the grid scrolls within. Ignored in fullscreen, where it fills the overlay. |
-| `virtualized`   | `boolean`                   | `true`               | Set `false` to mount every row.                                                    |
-| `rowActions`    | `(row: T) => ReactNode`     | –                    | Trailing pinned column of per-row controls.                                        |
-| `totalsRow`     | `(lines: T[]) => ReactNode` | –                    | Sticky `<tfoot>` row, column-aligned with the grid.                                |
-| `emptyState`    | `ReactNode`                 | –                    | Shown when the document has no lines.                                              |
+| Prop                                    | Type                        | Default              | Description                                                                        |
+| --------------------------------------- | --------------------------- | -------------------- | ---------------------------------------------------------------------------------- |
+| `rowHeight`                             | `number`                    | `36`                 | Uniform row height, which the virtualizer's math depends on.                       |
+| `maxBodyHeight`                         | `number \| string`          | `"min(70vh, 600px)"` | Height the grid scrolls within. Ignored in fullscreen, where it fills the overlay. |
+| `virtualized`                           | `boolean`                   | `true`               | Set `false` to mount every row.                                                    |
+| `rowActions`                            | `(row: T) => ReactNode`     | –                    | Trailing pinned column of per-row controls.                                        |
+| `totalsRow`                             | `(lines: T[]) => ReactNode` | –                    | Sticky `<tfoot>` row, column-aligned with the grid.                                |
+| `rowActionsWidth`                       | `number`                    | `56`                 | Width of the trailing row-actions column.                                          |
+| `emptyMessage`                          | `ReactNode`                 | `"No lines yet."`    | Shown when the document has no lines.                                              |
+| `loading`                               | `boolean`                   | `false`              | Swaps the body for skeleton rows while an initial fetch is in flight.              |
+| `skeletonRowCount`                      | `number`                    | `12`                 | How many skeleton rows `loading` shows.                                            |
+| `className` / `tableContainerClassName` | `string`                    | –                    | Merged onto the bordered wrapper / the scroll container.                           |
 
 `LineItems.Table` cannot infer `T` from `Root`, so annotate the callback parameters (`rowActions={(row: POLine) => …}`) or pass the type argument explicitly (`<LineItems.Table<POLine> … />`).
 
@@ -253,15 +260,16 @@ Each member keeps its own selection, search and dirty tracking. The group only a
 
 Only editable columns take part in the grid's selection.
 
-| Interaction                    | Result                                                                                  |
-| ------------------------------ | --------------------------------------------------------------------------------------- |
-| Click a cell                   | Selects it and opens its editor with the value selected                                 |
-| Shift-click, or click and drag | Selects the rectangle between the anchor and that cell                                  |
-| Arrow keys                     | Moves the active cell; hold Shift to extend the selection                               |
-| Enter / Tab                    | Commits and moves down / right (Shift reverses)                                         |
-| Escape                         | Abandons the edit, keeping the previous value                                           |
-| Copy                           | Writes the selected rectangle as TSV                                                    |
-| Paste                          | Writes a TSV block from the active cell; a single value broadcasts across the selection |
+| Interaction                    | Result                                                                                                                 |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Click a cell                   | Selects it and opens its editor with the value selected                                                                |
+| Shift-click, or click and drag | Selects the rectangle between the anchor and that cell                                                                 |
+| Arrow keys                     | Moves the active cell; hold Shift to extend the selection                                                              |
+| Enter / Tab                    | Commits and moves down / right across editable cells (Shift reverses). Tab past the last editable cell leaves the grid |
+| Cmd/Ctrl+D                     | Fills down: copies the top selected cell of each column into the selected cells below                                  |
+| Escape                         | Abandons the edit, keeping the previous value                                                                          |
+| Copy                           | Writes the selected rectangle as TSV                                                                                   |
+| Paste                          | Writes a TSV block from the active cell; a single value broadcasts across the selection                                |
 
 Edits commit on blur or Enter, never per keystroke.
 

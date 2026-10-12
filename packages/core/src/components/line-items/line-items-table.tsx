@@ -7,7 +7,7 @@ import {
   SelectionActionsBar,
   selectionBarSurfaceClasses,
   selectionBarTokenClasses,
-} from "@/components/selection-actions/selection-actions-bar";
+} from "@/components/internals/selection-actions/selection-actions-bar";
 import { cn } from "@/lib/utils";
 import {
   ACTIONS_COLUMN_ID,
@@ -28,6 +28,7 @@ import {
   fieldIsEditableInMode,
   fieldsToColumnDefs,
 } from "./field";
+import { useLineItemsT } from "./i18n";
 import { normalizeField } from "./internals";
 import { LineItemsCell, type ArrowKey, type CellNavigation } from "./line-items-cell";
 import { useLineItemsContext } from "./line-items-context";
@@ -102,13 +103,12 @@ function pinClasses(
 }
 
 /** Thin scrollbars, so a dense grid is not framed by chunky OS gutters. */
-const SCROLLBAR_STYLES = `
-[data-slot="line-items-table-scroll"]{scrollbar-width:thin;scrollbar-color:rgba(128,128,128,0.4) transparent}
-[data-slot="line-items-table-scroll"]::-webkit-scrollbar{width:8px;height:8px}
-[data-slot="line-items-table-scroll"]::-webkit-scrollbar-track,
-[data-slot="line-items-table-scroll"]::-webkit-scrollbar-corner{background:transparent}
-[data-slot="line-items-table-scroll"]::-webkit-scrollbar-thumb{background:rgba(128,128,128,0.4);border-radius:4px}
-`;
+const scrollbarClasses = [
+  "astw:[scrollbar-width:thin] astw:[scrollbar-color:rgb(128_128_128/0.4)_transparent]",
+  // Safari before 18.2 ignores the standard properties above.
+  "astw:[&::-webkit-scrollbar]:size-2 astw:[&::-webkit-scrollbar-track]:bg-transparent astw:[&::-webkit-scrollbar-corner]:bg-transparent",
+  "astw:[&::-webkit-scrollbar-thumb]:rounded astw:[&::-webkit-scrollbar-thumb]:bg-[rgb(128_128_128/0.4)]",
+];
 
 /**
  * The editable grid.
@@ -132,6 +132,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
   tableContainerClassName,
 }: LineItemsTableProps<T>) {
   const { lineItems, fullscreen, totalsRenderer } = useLineItemsContext<T>("Table");
+  const t = useLineItemsT();
   const { lines, fields, mode, ordering, selectionEnabled, selectedIds, sortState } = lineItems;
 
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
@@ -507,8 +508,61 @@ export function LineItemsTable<T extends LineItemsRowData>({
     ],
   );
 
+  /**
+   * Fill down (Cmd/Ctrl+D, as in spreadsheets): the keyboard equivalent of
+   * dragging the fill handle. In each selected column, the top selected cell's
+   * value is copied into the selected cells below it. Returns whether anything
+   * was filled, so an unhandled press keeps the browser's own shortcut.
+   */
+  const fillDown = React.useCallback((): boolean => {
+    if (grid.selected.size < 2) return false;
+    const patches = new Map<string, Record<string, unknown>>();
+    for (const columnId of gridColumnIds) {
+      const field = fieldById.get(columnId);
+      if (!field || !fieldAllowsFill(field, mode)) continue;
+      let source: unknown;
+      let haveSource = false;
+      for (const lineRef of orderedLineRefs) {
+        if (!grid.selected.has(coordKey(lineRef, columnId))) continue;
+        const row = lineByRef.get(lineRef);
+        if (!row) continue;
+        if (!haveSource) {
+          source = (row as Record<string, unknown>)[columnId];
+          haveSource = true;
+          continue;
+        }
+        const patch = patches.get(lineRef) ?? {};
+        patch[columnId] = normalizeField(columnDefs, columnId, source, row);
+        patches.set(lineRef, patch);
+      }
+    }
+    if (patches.size === 0) return false;
+    lineItems.updateLines(
+      [...patches].map(([lineRef, patch]) => ({ lineRef, patch: patch as Partial<T> })),
+    );
+    return true;
+  }, [
+    columnDefs,
+    fieldById,
+    grid.selected,
+    gridColumnIds,
+    lineByRef,
+    lineItems,
+    mode,
+    orderedLineRefs,
+  ]);
+
   const handleGridKeyDown = React.useCallback(
     (event: React.KeyboardEvent) => {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === "d"
+      ) {
+        if (fillDown()) event.preventDefault();
+        return;
+      }
       if (event.altKey || event.ctrlKey || event.metaKey) return;
       const target = event.target as HTMLElement;
       // An open editor owns its own keys; it forwards navigation explicitly.
@@ -523,7 +577,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
       }
       if (key === "Escape") grid.clearSelection();
     },
-    [grid, moveActive],
+    [fillDown, grid, moveActive],
   );
 
   /* ---- Row reordering --------------------------------------------------- */
@@ -531,6 +585,8 @@ export function LineItemsTable<T extends LineItemsRowData>({
   const [dragRef, setDragRef] = React.useState<string | null>(null);
   const [dropBefore, setDropBefore] = React.useState<string | null>(null);
   const [liftedRef, setLiftedRef] = React.useState<string | null>(null);
+  /** Announces keyboard reorders, which have no other non-visual feedback. */
+  const [reorderNotice, setReorderNotice] = React.useState("");
 
   const moveLine = React.useCallback(
     (lineRef: string, beforeLineRef: string | null) => {
@@ -553,14 +609,16 @@ export function LineItemsTable<T extends LineItemsRowData>({
       if (index < 0 || target < 0 || target >= orderedLineRefs.length) return;
       const others = orderedLineRefs.filter((id) => id !== lineRef);
       lineItems.reorderLine(lineRef, target === 0 ? null : (others[target - 1] ?? null));
+      setReorderNotice(t("lineMoved", { line: index + 1, position: target + 1 }));
     },
-    [lineItems, orderedLineRefs],
+    [lineItems, orderedLineRefs, t],
   );
 
   const utilityColumnCount = (showSelection ? 1 : 0) + (canReorder ? 1 : 0) + (rowActions ? 1 : 0);
   const columnCount = layout.columns.length + utilityColumnCount;
-  const allVisibleSelected =
-    lines.length > 0 && lines.every((l) => selectedIds.includes(l.lineRef));
+  // A Set, so per-row checks stay O(1) on long documents.
+  const selectedRefSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
+  const allVisibleSelected = lines.length > 0 && lines.every((l) => selectedRefSet.has(l.lineRef));
 
   /**
    * A hover-expanded column takes its extra width from the flex column, which is
@@ -591,14 +649,18 @@ export function LineItemsTable<T extends LineItemsRowData>({
 
     const from = Number.parseFloat(el.style.width) || to;
     if (from === to) return;
+    if (globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      el.style.width = `${to}px`;
+      return;
+    }
 
     const started = performance.now();
     const duration = 180;
     const step = (now: number) => {
-      const t = Math.min(1, (now - started) / duration);
-      const eased = 1 - (1 - t) ** 3;
+      const progress = Math.min(1, (now - started) / duration);
+      const eased = 1 - (1 - progress) ** 3;
       el.style.width = `${from + (to - from) * eased}px`;
-      tweenFrame.current = t < 1 ? requestAnimationFrame(step) : null;
+      tweenFrame.current = progress < 1 ? requestAnimationFrame(step) : null;
     };
     tweenFrame.current = requestAnimationFrame(step);
   }, []);
@@ -634,12 +696,12 @@ export function LineItemsTable<T extends LineItemsRowData>({
         className,
       )}
     >
-      <style>{SCROLLBAR_STYLES}</style>
       <div
         ref={scrollRef}
         data-slot="line-items-table-scroll"
         className={cn(
           "astw:relative astw:w-full astw:overflow-auto",
+          scrollbarClasses,
           fullscreen && "astw:min-h-0 astw:flex-1",
           tableContainerClassName,
         )}
@@ -651,8 +713,9 @@ export function LineItemsTable<T extends LineItemsRowData>({
           // with an editor in every editable cell the native tab order already
           // walks the grid. Claiming grid semantics we do not implement would
           // mislead a screen reader.
-          aria-rowcount={lines.length}
-          aria-colcount={columnCount}
+          // Header and totals rows count too; every column is always rendered,
+          // so no aria-colcount is needed.
+          aria-rowcount={lines.length + 1 + (hasTotals ? 1 : 0)}
           className={cn("astw:w-full astw:border-separate astw:border-spacing-0")}
           style={{ tableLayout: "fixed", minWidth: layout.minTableWidth }}
           onKeyDown={handleGridKeyDown}
@@ -689,7 +752,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
               ],
             )}
           >
-            <tr>
+            <tr aria-rowindex={1}>
               {showSelection ? (
                 <th
                   ref={(el) => void headRefs.current.set(SELECTION_COLUMN_ID, el)}
@@ -699,7 +762,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                 >
                   <span className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
                     <Checkbox
-                      aria-label="Select all lines"
+                      aria-label={t("selectAllLines")}
                       checked={allVisibleSelected}
                       indeterminate={selectedIds.length > 0 && !allVisibleSelected}
                       onCheckedChange={() =>
@@ -797,7 +860,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                   colSpan={columnCount + (layout.needsSpacer ? 1 : 0)}
                   className="astw:px-6 astw:py-10 astw:text-center astw:text-sm astw:text-muted-foreground"
                 >
-                  {emptyMessage ?? "No lines yet."}
+                  {emptyMessage ?? t("emptyMessage")}
                 </td>
               </tr>
             ) : null}
@@ -811,7 +874,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                 const rowIndex = virtualWindow.startIndex + i;
                 const isDragging = dragRef === row.lineRef;
                 const isLifted = liftedRef === row.lineRef;
-                const rowSelected = selectedIds.includes(row.lineRef);
+                const rowSelected = selectedRefSet.has(row.lineRef);
                 // Drawn per cell rather than on the row, so it crosses the
                 // opaque pinned columns too. Listed last in each `cn` so it
                 // wins over a cell's selection ring while a drag is in flight.
@@ -825,7 +888,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                     key={row.lineRef}
                     data-slot="line-items-row"
                     data-state={rowSelected ? "selected" : undefined}
-                    aria-rowindex={rowIndex + 1}
+                    aria-rowindex={rowIndex + 2}
                     style={{ height: rowHeight }}
                     className={cn(
                       "astw:transition-colors astw:hover:bg-muted/50",
@@ -868,7 +931,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                       >
                         <span className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
                           <Checkbox
-                            aria-label={`Select line ${rowIndex + 1}`}
+                            aria-label={t("selectLine", { line: rowIndex + 1 })}
                             checked={rowSelected}
                             onCheckedChange={() => lineItems.toggleSelect(row.lineRef)}
                           />
@@ -890,7 +953,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                           <button
                             type="button"
                             draggable
-                            aria-label={`Drag to reorder line ${rowIndex + 1}`}
+                            aria-label={t("reorderLine", { line: rowIndex + 1 })}
                             aria-pressed={isLifted}
                             className="astw:flex astw:size-6 astw:cursor-grab astw:items-center astw:justify-center astw:rounded astw:text-muted-foreground astw:hover:text-foreground astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50 astw:focus-visible:outline-none"
                             onDragStart={(e) => {
@@ -1002,6 +1065,10 @@ export function LineItemsTable<T extends LineItemsRowData>({
                             mode={mode}
                             align={c.align}
                             editable={editable}
+                            ariaLabel={t("cellLabel", {
+                              column: typeof c.field.label === "string" ? c.field.label : c.id,
+                              line: rowIndex + 1,
+                            })}
                             showFillGrip={isActive && fieldAllowsFill(c.field, mode)}
                             onCommit={(value) => commitCell(coord, value)}
                             onFocusCell={() => grid.setActive(coord)}
@@ -1060,7 +1127,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
               {totalsRow ? (
                 totalsRow(lines)
               ) : (
-                <tr style={{ height: rowHeight }}>
+                <tr aria-rowindex={lines.length + 2} style={{ height: rowHeight }}>
                   {showSelection ? (
                     <td
                       className={cn(bodyCellClasses, "astw:px-0", pinClasses(layout.selection))}
@@ -1102,6 +1169,12 @@ export function LineItemsTable<T extends LineItemsRowData>({
           ) : null}
         </table>
       </div>
+
+      {canReorder ? (
+        <span className="astw:sr-only" aria-live="polite">
+          {reorderNotice}
+        </span>
+      ) : null}
 
       {/* Bulk actions: the same bar as DataTable.Footer, at the grid's foot. */}
       {offersBulkActions ? (

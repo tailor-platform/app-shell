@@ -56,9 +56,11 @@ export interface BulkItemPickerProps<T> {
   /** Receives the selected **leaf** nodes in DFS tree order. */
   onCommit(selected: BulkItemPickerNode<T>[]): void;
   /** Primary CTA label. Default: `"Add N items"`, or `"Add items"` when nothing is selected. */
-  ctaLabel?(count: number): string;
+  ctaLabel?(count: number): React.ReactNode;
   /** Shown when the (filtered) tree is empty. Default: `"No matching items."`. */
   emptyText?: React.ReactNode;
   /** Search input placeholder. Default: `"Search"`. */
   searchPlaceholder?: string;
+  /** Merged onto the dialog panel. */
+  className?: string;
 }

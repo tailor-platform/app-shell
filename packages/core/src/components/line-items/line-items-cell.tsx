@@ -11,6 +11,7 @@ import {
   ComboboxTrigger,
 } from "@/components/combobox/combobox";
 import { cn } from "@/lib/utils";
+import { useLineItemsT } from "./i18n";
 import type {
   LineItemsField,
   LineItemsMode,
@@ -60,6 +61,8 @@ export type LineItemsCellProps<T extends LineItemsRowData> = {
   mode: LineItemsMode;
   align: "left" | "center" | "right";
   editable: boolean;
+  /** Accessible name for the editor — column and line, e.g. "Qty, line 2". */
+  ariaLabel: string;
   /** Renders the fill handle — the active cell of a fillable column only. */
   showFillGrip: boolean;
   onCommit: (value: unknown) => void;
@@ -104,14 +107,16 @@ function FillGrip({ onPointerDown }: { onPointerDown: (e: React.PointerEvent) =>
 function SelectCell<T extends LineItemsRowData>({
   field,
   value,
+  ariaLabel,
   onCommit,
   onFocusCell,
   onNavigate,
   onArrowFromEditor,
 }: Pick<
   LineItemsCellProps<T>,
-  "field" | "onCommit" | "onFocusCell" | "onNavigate" | "onArrowFromEditor"
+  "field" | "onCommit" | "onFocusCell" | "onNavigate" | "onArrowFromEditor" | "ariaLabel"
 > & { value: unknown }) {
+  const t = useLineItemsT();
   const type = field.type;
   const current = toEditorValue(value);
 
@@ -138,6 +143,7 @@ function SelectCell<T extends LineItemsRowData>({
       <ComboboxInputGroup className="astw:min-h-0 astw:flex-1 astw:items-stretch astw:border-0 astw:bg-transparent astw:dark:bg-transparent astw:shadow-none astw:ring-0 astw:focus-within:ring-0 astw:focus-within:[box-shadow:none]">
         <ComboboxInput
           data-slot="line-items-cell-editor"
+          aria-label={ariaLabel}
           placeholder={type.placeholder}
           className={editorClasses}
           onFocus={(e) => {
@@ -166,7 +172,7 @@ function SelectCell<T extends LineItemsRowData>({
         <ComboboxTrigger className="astw:relative astw:inset-y-auto astw:right-0 astw:shrink-0 astw:self-stretch astw:px-1" />
       </ComboboxInputGroup>
       <ComboboxContent>
-        <ComboboxEmpty>No matches.</ComboboxEmpty>
+        <ComboboxEmpty>{t("noMatches")}</ComboboxEmpty>
         <ComboboxList>
           {(item: LineItemsSelectOption) => (
             <ComboboxItem key={item.value} value={item} className="astw:items-start astw:py-2">
@@ -203,6 +209,7 @@ function LineItemsCellInner<T extends LineItemsRowData>({
   mode,
   align,
   editable,
+  ariaLabel,
   showFillGrip,
   onCommit,
   onFocusCell,
@@ -277,6 +284,7 @@ function LineItemsCellInner<T extends LineItemsRowData>({
             row,
             mode,
             field,
+            ariaLabel,
           })}
         </div>
         {grip}
@@ -291,6 +299,7 @@ function LineItemsCellInner<T extends LineItemsRowData>({
           <SelectCell
             field={field}
             value={rawValue}
+            ariaLabel={ariaLabel}
             onCommit={onCommit}
             onFocusCell={onFocusCell}
             onNavigate={onNavigate}
@@ -306,7 +315,7 @@ function LineItemsCellInner<T extends LineItemsRowData>({
     return (
       <>
         <label
-          aria-label={String(field.label)}
+          aria-label={ariaLabel}
           className="astw:flex astw:h-full astw:w-full astw:cursor-pointer astw:items-center astw:justify-center"
         >
           <input
@@ -347,6 +356,7 @@ function LineItemsCellInner<T extends LineItemsRowData>({
         ref={inputRef}
         type={inputTypes[kind] ?? "text"}
         data-slot="line-items-cell-editor"
+        aria-label={ariaLabel}
         value={draft}
         min={field.type?.kind === "date" ? field.type.min : undefined}
         max={field.type?.kind === "date" ? field.type.max : undefined}

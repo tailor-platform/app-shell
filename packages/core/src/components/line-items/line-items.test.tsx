@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import * as React from "react";
 
 import type { SelectionAction } from "@/components/data-table/types";
 import { createLineItemHelper } from "./field";
@@ -342,6 +343,114 @@ describe("LineItems", () => {
       await user.type(editor, "7{Tab}");
 
       expect(api?.allLines[0]?.quantity).toBe(7);
+    });
+
+    it("Tab skips read-only columns, wrapping to the next line's first editable cell", async () => {
+      const user = userEvent.setup();
+      render(<Harness />);
+
+      // Note is the last editable column; Total after it is computed and read-only.
+      await user.click(editorIn("1", "note"));
+      await user.keyboard("{Tab}");
+
+      expect(document.activeElement).toBe(editorIn("2", "sku"));
+    });
+
+    it("Tab past the last editable cell lets focus leave the grid", async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          <Harness />
+          <button type="button">After the grid</button>
+        </>,
+      );
+
+      await user.click(editorIn("3", "note"));
+      await user.keyboard("{Tab}");
+
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "After the grid" }));
+    });
+
+    it("keeps a paste into the focused cell when it later blurs", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(
+        <Harness
+          onReady={(a) => {
+            api = a;
+          }}
+        />,
+      );
+
+      const editor = editorIn("1", "quantity");
+      await user.click(editor);
+      fireEvent.paste(editor, { clipboardData: { getData: () => "12" } });
+      expect(editorIn("1", "quantity").value).toBe("12");
+
+      await user.click(editorIn("2", "note"));
+      expect(api?.allLines[0]?.quantity).toBe(12);
+    });
+
+    it("commits once when Enter both commits and moves focus", async () => {
+      const user = userEvent.setup();
+      const onLinesChange = vi.fn();
+      function Controlled() {
+        const [lines, setLines] = React.useState(seed);
+        const lineItems = useLineItems<Line>({
+          fields,
+          lines,
+          onLinesChange: (next) => {
+            onLinesChange(next);
+            setLines(next);
+          },
+        });
+        return (
+          <LineItems.Root value={lineItems}>
+            <LineItems.Table virtualized={false} />
+          </LineItems.Root>
+        );
+      }
+      render(<Controlled />);
+
+      const editor = editorIn("1", "quantity");
+      await user.clear(editor);
+      await user.type(editor, "42{Enter}");
+
+      expect(onLinesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it("commits typing still in flight when its row unmounts", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(
+        <Harness
+          onReady={(a) => {
+            api = a;
+          }}
+        />,
+      );
+
+      const editor = editorIn("1", "note");
+      await user.click(editor);
+      await user.type(editor, "half-typed");
+      // Filtering line 1 out unmounts it without a blur, as scrolling it out of
+      // the virtual window does.
+      act(() => api?.setFilter("BANANA"));
+
+      expect(api?.allLines[0]?.note).toBe("half-typed");
+    });
+
+    it("commits typing still in flight when the cell turns read-only", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      const { rerender } = render(<Harness onReady={(a) => (api = a)} />);
+
+      const editor = editorIn("1", "note");
+      await user.click(editor);
+      await user.type(editor, "half-typed");
+      rerender(<Harness mode="view" onReady={(a) => (api = a)} />);
+
+      expect(api?.allLines[0]?.note).toBe("half-typed");
     });
 
     it("abandons the edit on Escape", async () => {

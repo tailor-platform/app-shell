@@ -1,4 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
+import * as React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { createLineItemHelper } from "./field";
@@ -397,6 +398,33 @@ describe("useLineItems", () => {
   });
 
   describe("controlled mode", () => {
+    /** The usual `lines` + `onLinesChange` loop, with the parent echoing every change. */
+    function renderRoundTrip() {
+      return renderHook(() => {
+        const [lines, setLines] = React.useState<Line[]>(seed);
+        return useLineItems<Line>({ fields, lines, onLinesChange: setLines });
+      });
+    }
+
+    it("keeps an added line in the change-set after the parent echoes it back", () => {
+      const { result } = renderRoundTrip();
+      act(() => void result.current.addLine({ sku: "NEW-01", quantity: 1, total: 0 }));
+
+      expect(result.current.allLines).toHaveLength(3);
+      expect(result.current.isDirty).toBe(true);
+      expect(result.current.getChangeSet().lineChanges.map((c) => c.action)).toEqual(["add"]);
+    });
+
+    it("keeps a removed line in the change-set after the parent echoes it back", () => {
+      const { result } = renderRoundTrip();
+      act(() => result.current.removeLine("2"));
+
+      expect(result.current.isDirty).toBe(true);
+      expect(result.current.getChangeSet().lineChanges).toEqual([
+        { action: "remove", lineId: "2" },
+      ]);
+    });
+
     it("notifies the parent once per mutation", () => {
       const onLinesChange = vi.fn();
       const { result } = renderHook(() =>

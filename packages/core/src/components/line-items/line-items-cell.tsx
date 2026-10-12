@@ -11,7 +11,6 @@ import {
   ComboboxTrigger,
 } from "@/components/combobox/combobox";
 import { cn } from "@/lib/utils";
-import { fieldCommitScope } from "./field";
 import type {
   LineItemsField,
   LineItemsMode,
@@ -66,7 +65,12 @@ export type LineItemsCellProps<T extends LineItemsRowData> = {
   onCommit: (value: unknown) => void;
   /** Syncs the grid's active coordinate when an editor takes focus by any route. */
   onFocusCell: () => void;
-  onNavigate: (to: CellNavigation) => void;
+  /**
+   * Moves the active cell. Returns `false` when there is nowhere to go (Tab
+   * past the grid's last editable cell), so the browser's own Tab can take
+   * focus out of the grid instead of trapping it.
+   */
+  onNavigate: (to: CellNavigation) => boolean;
   /** Alt+Arrow moves the active cell without leaving the editor. */
   onArrowFromEditor: (key: ArrowKey, shift: boolean) => void;
   onFillGripPointerDown: (event: React.PointerEvent) => void;
@@ -153,9 +157,9 @@ function SelectCell<T extends LineItemsRowData>({
               return;
             }
             if (e.key === "Tab") {
+              if (!onNavigate(e.shiftKey ? "shift-tab" : "tab")) return;
               e.preventDefault();
               e.stopPropagation();
-              onNavigate(e.shiftKey ? "shift-tab" : "tab");
             }
           }}
         />
@@ -210,20 +214,37 @@ function LineItemsCellInner<T extends LineItemsRowData>({
   const [draft, setDraft] = React.useState(() => toEditorValue(rawValue));
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
-  // Reseed when the committed value changes underneath the editor (paste, fill,
-  // revert), but never while the user is typing into it.
+  // Whether the user has typed since the draft last matched the stored value.
+  // Until they do, the editor mirrors the store — so a paste, fill or revert
+  // into the focused cell shows at once — and there is nothing to commit, so a
+  // blur can't write a stale draft back over it, and Enter/Tab followed by the
+  // blur they cause commits once, not twice.
+  const typedRef = React.useRef(false);
+
   React.useEffect(() => {
-    if (document.activeElement === inputRef.current) return;
+    if (typedRef.current) return;
     setDraft(toEditorValue(rawValue));
   }, [rawValue]);
 
   const commit = React.useCallback(
     (next: string) => {
+      if (!typedRef.current) return;
+      typedRef.current = false;
       if (next === toEditorValue(rawValue)) return;
       onCommit(next);
     },
     [onCommit, rawValue],
   );
+
+  // A virtualized row scrolled out of the window unmounts without a blur, so
+  // commit any typing still in flight rather than drop it.
+  const latest = React.useRef({ draft, commit });
+  latest.current = { draft, commit };
+  React.useEffect(() => () => latest.current.commit(latest.current.draft), []);
+  // Same when the cell stops being editable (a mode switch) while holding typing.
+  React.useEffect(() => {
+    if (!editable) latest.current.commit(latest.current.draft);
+  }, [editable]);
 
   const grip = showFillGrip ? <FillGrip onPointerDown={onFillGripPointerDown} /> : null;
 
@@ -306,8 +327,7 @@ function LineItemsCellInner<T extends LineItemsRowData>({
                 return;
               }
               if (e.key === "Tab") {
-                e.preventDefault();
-                onNavigate(e.shiftKey ? "shift-tab" : "tab");
+                if (onNavigate(e.shiftKey ? "shift-tab" : "tab")) e.preventDefault();
               }
             }}
             className="astw:size-4 astw:accent-primary"
@@ -330,7 +350,10 @@ function LineItemsCellInner<T extends LineItemsRowData>({
         value={draft}
         min={field.type?.kind === "date" ? field.type.min : undefined}
         max={field.type?.kind === "date" ? field.type.max : undefined}
-        onChange={(e) => setDraft(e.target.value)}
+        onChange={(e) => {
+          typedRef.current = true;
+          setDraft(e.target.value);
+        }}
         onFocus={(e) => {
           onFocusCell();
           try {
@@ -353,18 +376,15 @@ function LineItemsCellInner<T extends LineItemsRowData>({
             return;
           }
           if (e.key === "Tab") {
-            e.preventDefault();
             commit(draft);
-            onNavigate(e.shiftKey ? "shift-tab" : "tab");
+            if (onNavigate(e.shiftKey ? "shift-tab" : "tab")) e.preventDefault();
             return;
           }
           if (e.key === "Escape") {
             e.preventDefault();
             e.stopPropagation();
+            typedRef.current = false;
             setDraft(toEditorValue(rawValue));
-            // Re-commit the stored value so a document-scoped field settles back
-            // to exactly what the baseline holds.
-            if (fieldCommitScope(field) === "document") onCommit(rawValue);
           }
         }}
         className={cn(

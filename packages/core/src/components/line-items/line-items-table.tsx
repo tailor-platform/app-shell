@@ -266,14 +266,19 @@ export function LineItemsTable<T extends LineItemsRowData>({
     [orderedLineRefs, rowHeight],
   );
 
-  /** Moves DOM focus to a cell's editor, so navigation lands in the next input. */
-  const focusCellEditor = React.useCallback((coord: GridCoord) => {
+  /**
+   * Moves DOM focus to a cell's editor, so navigation lands in the next input.
+   * A row just scrolled into view mounts a frame or two later, so retry briefly.
+   */
+  const focusCellEditor = React.useCallback((coord: GridCoord, attempts = 3) => {
     const container = scrollRef.current;
     if (!container) return;
     const cell = container.querySelector<HTMLElement>(
       `[data-line-ref="${CSS.escape(coord.lineRef)}"][data-column-id="${CSS.escape(coord.columnId)}"]`,
     );
-    cell?.querySelector<HTMLElement>("[data-slot=line-items-cell-editor]")?.focus();
+    const editor = cell?.querySelector<HTMLElement>("[data-slot=line-items-cell-editor]");
+    if (editor) editor.focus();
+    else if (attempts > 0) requestAnimationFrame(() => focusCellEditor(coord, attempts - 1));
   }, []);
 
   const moveActive = React.useCallback(
@@ -286,46 +291,56 @@ export function LineItemsTable<T extends LineItemsRowData>({
     [focusCellEditor, grid, scrollActiveIntoView],
   );
 
+  /** Columns with an editor in the current mode — the only ones Tab can land on. */
+  const editableColumnIds = React.useMemo(
+    () => layout.columns.filter((c) => fieldIsEditableInMode(c.field, mode)).map((c) => c.id),
+    [layout.columns, mode],
+  );
+
   /**
-   * Enter and Tab wrap at the row edges, so tabbing straight through a document
-   * never dead-ends: Tab past the last column lands on the next row's first
-   * column, and Shift+Tab past the first wraps back up to the previous row's last.
+   * Enter moves within the column. Tab steps across editable cells only — a
+   * read-only cell has no editor to land on — and wraps at the row edges, so
+   * tabbing straight through a document never dead-ends. Past the grid's last
+   * editable cell (or before its first, with Shift) it returns `false` and the
+   * browser's own Tab takes focus out of the grid.
    */
   const navigateFromEdit = React.useCallback(
-    (to: CellNavigation, from: GridCoord) => {
+    (to: CellNavigation, from: GridCoord): boolean => {
       const rowIndex = orderedLineRefs.indexOf(from.lineRef);
-      const colIndex = gridColumnIds.indexOf(from.columnId);
-      if (rowIndex < 0 || colIndex < 0) return;
+      if (rowIndex < 0) return false;
 
       let nextRow = rowIndex;
-      let nextCol = colIndex;
+      let columnId: string | undefined = from.columnId;
 
       if (to === "enter-down") nextRow = Math.min(orderedLineRefs.length - 1, rowIndex + 1);
       else if (to === "enter-up") nextRow = Math.max(0, rowIndex - 1);
-      else if (to === "tab") {
-        if (colIndex === gridColumnIds.length - 1) {
-          if (rowIndex === orderedLineRefs.length - 1) return;
-          nextRow = rowIndex + 1;
-          nextCol = 0;
-        } else nextCol = colIndex + 1;
-      } else if (to === "shift-tab") {
-        if (colIndex === 0) {
-          if (rowIndex === 0) return;
+      else {
+        const cols = editableColumnIds;
+        const colIndex = cols.indexOf(from.columnId);
+        if (colIndex < 0 || cols.length === 0) return false;
+        if (to === "tab") {
+          if (colIndex === cols.length - 1) {
+            if (rowIndex === orderedLineRefs.length - 1) return false;
+            nextRow = rowIndex + 1;
+            columnId = cols[0];
+          } else columnId = cols[colIndex + 1];
+        } else if (colIndex === 0) {
+          if (rowIndex === 0) return false;
           nextRow = rowIndex - 1;
-          nextCol = gridColumnIds.length - 1;
-        } else nextCol = colIndex - 1;
+          columnId = cols[cols.length - 1];
+        } else columnId = cols[colIndex - 1];
       }
 
       const lineRef = orderedLineRefs[nextRow];
-      const columnId = gridColumnIds[nextCol];
-      if (!lineRef || !columnId) return;
+      if (!lineRef || !columnId) return false;
 
       const coord = { lineRef, columnId };
       grid.setActive(coord);
       scrollActiveIntoView(coord);
       focusCellEditor(coord);
+      return true;
     },
-    [focusCellEditor, gridColumnIds, grid, orderedLineRefs, scrollActiveIntoView],
+    [editableColumnIds, focusCellEditor, grid, orderedLineRefs, scrollActiveIntoView],
   );
 
   /* ---- Fill gesture ----------------------------------------------------- */

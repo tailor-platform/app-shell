@@ -82,6 +82,8 @@ export function useLineItems<T extends LineItemsRowData>(
     const key = serializeRefs(controlledLines ?? []);
     if (seededRefs.current === key) return;
     seededRefs.current = key;
+    // A re-seed is not a local edit, so it must not echo back to the parent.
+    pendingNotify.current = false;
     const next = packLines(sanitizeRows(controlledLines ?? []));
     setRows(next);
     setDirty({
@@ -335,6 +337,10 @@ export function useLineItems<T extends LineItemsRowData>(
   React.useEffect(() => {
     if (!pendingNotify.current) return;
     pendingNotify.current = false;
+    // The parent will echo these rows back through `lines`; record them as
+    // already seeded so the echo is not mistaken for new data, which would
+    // reset the baseline and drop the edit from the change-set.
+    seededRefs.current = serializeRefs(allLines);
     onLinesChangeRef.current?.(allLines);
   }, [allLines]);
 

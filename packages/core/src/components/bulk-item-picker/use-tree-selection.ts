@@ -1,0 +1,116 @@
+import * as React from "react";
+
+import { allLeaves, defaultMatcher, filterTree, leafIds } from "./tree-utils";
+import type { BulkItemPickerNode } from "./types";
+
+/**
+ * @internal
+ * Owns everything about *what is shown and what is ticked*: the search query,
+ * the filtered forest, the auto-expand derivation, the leaf-only selection set,
+ * and the user's manual expand/collapse set. All of it resets when the dialog
+ * closes so each open starts clean.
+ */
+
+type UseTreeSelectionOptions<T> = {
+  open: boolean;
+  items: ReadonlyArray<BulkItemPickerNode<T>>;
+  matchesSearch?: (node: BulkItemPickerNode<T>, query: string) => boolean;
+};
+
+type UseTreeSelectionResult<T> = {
+  query: string;
+  setQuery(query: string): void;
+  /** The forest to render — `items` when the query is empty, filtered otherwise. */
+  kept: BulkItemPickerNode<T>[];
+  /** `autoExpand.has(id) || userExpanded.has(id)` — manual state survives clearing the query. */
+  isExpanded(id: string): boolean;
+  toggleExpand(id: string): void;
+  setExpanded(id: string, next: boolean): void;
+  /** Leaf ids only — parents are never stored, their state is always derived. */
+  selectedLeaves: ReadonlySet<string>;
+  /** Adds/removes every descendant leaf of `node` in a single set update. */
+  toggleNode(node: BulkItemPickerNode<T>, next: boolean): void;
+  /** Selected leaf nodes in DFS tree order. */
+  selectedNodes: BulkItemPickerNode<T>[];
+};
+
+export function useTreeSelection<T>({
+  open,
+  items,
+  matchesSearch,
+}: UseTreeSelectionOptions<T>): UseTreeSelectionResult<T> {
+  const [query, setQuery] = React.useState("");
+  const [selectedLeaves, setSelectedLeaves] = React.useState<Set<string>>(() => new Set());
+  const [userExpanded, setUserExpanded] = React.useState<Set<string>>(() => new Set());
+
+  // Reset on close so the next open starts empty.
+  React.useEffect(() => {
+    if (open) return;
+    setQuery("");
+    setSelectedLeaves(new Set());
+    setUserExpanded(new Set());
+  }, [open]);
+
+  const matcher = matchesSearch ?? defaultMatcher;
+
+  const { kept, autoExpand } = React.useMemo(() => {
+    const trimmed = query.trim();
+    if (trimmed === "") return { kept: [...items], autoExpand: new Set<string>() };
+    return filterTree(items, (node) => matcher(node, trimmed));
+  }, [items, query, matcher]);
+
+  const isExpanded = React.useCallback(
+    (id: string) => autoExpand.has(id) || userExpanded.has(id),
+    [autoExpand, userExpanded],
+  );
+
+  const setExpanded = React.useCallback((id: string, next: boolean) => {
+    setUserExpanded((prev) => {
+      if (next === prev.has(id)) return prev;
+      const updated = new Set(prev);
+      if (next) updated.add(id);
+      else updated.delete(id);
+      return updated;
+    });
+  }, []);
+
+  const toggleExpand = React.useCallback((id: string) => {
+    setUserExpanded((prev) => {
+      const updated = new Set(prev);
+      if (updated.has(id)) updated.delete(id);
+      else updated.add(id);
+      return updated;
+    });
+  }, []);
+
+  const toggleNode = React.useCallback((node: BulkItemPickerNode<T>, next: boolean) => {
+    setSelectedLeaves((prev) => {
+      const updated = new Set(prev);
+      for (const id of leafIds(node)) {
+        if (next) updated.add(id);
+        else updated.delete(id);
+      }
+      return updated;
+    });
+  }, []);
+
+  // Ordered against the FULL tree, not the filtered one, so the commit order is
+  // stable regardless of the query that was active when the user ticked a row.
+  const leavesInTreeOrder = React.useMemo(() => allLeaves(items), [items]);
+  const selectedNodes = React.useMemo(
+    () => leavesInTreeOrder.filter((node) => selectedLeaves.has(node.id)),
+    [leavesInTreeOrder, selectedLeaves],
+  );
+
+  return {
+    query,
+    setQuery,
+    kept,
+    isExpanded,
+    toggleExpand,
+    setExpanded,
+    selectedLeaves,
+    toggleNode,
+    selectedNodes,
+  };
+}

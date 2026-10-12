@@ -163,7 +163,34 @@ export { useOverrideBreadcrumb } from "./hooks/use-override-breadcrumb";
 export { Alert, alertVariants, type AlertProps } from "./components/alert";
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export type { BadgeVariant, BadgeOptions } from "./components/badge-list";
+export {
+  BulkItemPicker,
+  type BulkItemPickerProps,
+  type BulkItemPickerNode,
+} from "./components/bulk-item-picker";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
+export {
+  LineItems,
+  useLineItems,
+  createLineItemHelper,
+  lineItemsFloatingBarStyles,
+  type LineItemsChangeSet,
+  type LineItemsCustomEditorContext,
+  type LineItemsField,
+  type LineItemsFieldType,
+  type LineItemsLineChange,
+  type LineItemsMode,
+  type LineItemsOrderingMode,
+  type LineItemsRootProps,
+  type LineItemsRowData,
+  type LineItemsSelectOption,
+  type LineItemsTableProps,
+  type LineItemsFieldCommit,
+  type LineItemsMetadataCommit,
+  type LineItemsSortState,
+  type UseLineItemsOptions,
+  type UseLineItemsReturn,
+} from "./components/line-items";
 export {
   ActivityCard,
   type ActivityCardProps,

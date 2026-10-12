@@ -213,6 +213,23 @@
         "examples": "edd9868442daa0b0"
       }
     },
+    "bulk-item-picker": {
+      "slug": "bulk-item-picker",
+      "kind": "code-backed",
+      "outline": "docs-src/components/bulk-item-picker.docs.outline.md",
+      "output": "docs/components/bulk-item-picker.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/bulk-item-picker/**"],
+      "claims": [],
+      "symbols": ["BulkItemPicker", "BulkItemPickerNode", "BulkItemPickerProps"],
+      "hashes": {
+        "typeSurface": "b824752584c0ec62",
+        "outline": "283588ffb3179619",
+        "snapshot": "70112a170b43395a",
+        "outputMd": "2aded34a5e216c7a",
+        "examples": null
+      }
+    },
     "button": {
       "slug": "button",
       "kind": "code-backed",
@@ -987,6 +1004,44 @@
         "examples": "2a4aa694c4d48324"
       }
     },
+    "line-items": {
+      "slug": "line-items",
+      "kind": "code-backed",
+      "outline": "docs-src/components/line-items.docs.outline.md",
+      "output": "docs/components/line-items.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/line-items/**"],
+      "claims": [],
+      "symbols": [
+        "LineItems",
+        "LineItemsChangeSet",
+        "LineItemsCustomEditorContext",
+        "LineItemsField",
+        "LineItemsFieldCommit",
+        "LineItemsFieldType",
+        "LineItemsLineChange",
+        "LineItemsMetadataCommit",
+        "LineItemsMode",
+        "LineItemsOrderingMode",
+        "LineItemsRootProps",
+        "LineItemsRowData",
+        "LineItemsSelectOption",
+        "LineItemsSortState",
+        "LineItemsTableProps",
+        "UseLineItemsOptions",
+        "UseLineItemsReturn",
+        "createLineItemHelper",
+        "lineItemsFloatingBarStyles",
+        "useLineItems"
+      ],
+      "hashes": {
+        "typeSurface": "d9ec449a4cf030d8",
+        "outline": "041b094ffbf70772",
+        "snapshot": "7bda9a2537aa6263",
+        "outputMd": "6516099e63d212b2",
+        "examples": null
+      }
+    },
     "list-dense-scan": {
       "slug": "list-dense-scan",
       "kind": "prose",
@@ -1670,6 +1725,7 @@
     "packages/core/skills/app-shell-patterns/references/components/autocomplete.md": "bd6ae01bf39d1ad6",
     "packages/core/skills/app-shell-patterns/references/components/avatar.md": "a874b74c176bcb47",
     "packages/core/skills/app-shell-patterns/references/components/badge.md": "0cb27fbce6f76e2e",
+    "packages/core/skills/app-shell-patterns/references/components/bulk-item-picker.md": "2aded34a5e216c7a",
     "packages/core/skills/app-shell-patterns/references/components/button.md": "bce0e2fada1d1638",
     "packages/core/skills/app-shell-patterns/references/components/card.md": "675dc665e5082ff0",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
@@ -1688,6 +1744,7 @@
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "66696139a46fabb0",
+    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "6516099e63d212b2",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "ae287e2bb5abc1c6",
@@ -1739,6 +1796,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "12527965a47cf42f"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "5c7889c92f0b5592"
   }
 }

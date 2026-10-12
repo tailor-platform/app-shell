@@ -167,11 +167,23 @@ describe("TreePicker", () => {
     expect(checkboxFor("UK 9 / Black / Men").getAttribute("aria-checked")).toBe("true");
   });
 
-  it("toggles every child when a parent row is clicked", async () => {
+  it("opens and closes a group when its row is clicked, without checking it", async () => {
     const user = userEvent.setup();
     render(<Harness onCommit={vi.fn()} />);
 
     await user.click(screen.getByText("Adidas Ultraboost 22"));
+    expect(rowFor("Adidas Ultraboost 22").getAttribute("aria-expanded")).toBe("true");
+    expect(rowFor("Adidas Ultraboost 22").getAttribute("aria-checked")).toBe("false");
+
+    await user.click(screen.getByText("Adidas Ultraboost 22"));
+    expect(rowFor("Adidas Ultraboost 22").getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("still selects a whole group from its checkbox", async () => {
+    const user = userEvent.setup();
+    render(<Harness onCommit={vi.fn()} />);
+
+    await user.click(checkboxFor("Adidas Ultraboost 22"));
     expect(rowFor("Adidas Ultraboost 22").getAttribute("aria-checked")).toBe("true");
   });
 

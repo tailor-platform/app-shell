@@ -1026,7 +1026,7 @@
       "hashes": {
         "typeSurface": "9b0ebade2dea3590",
         "outline": "3466700847223f01",
-        "snapshot": "645c07bda536995e",
+        "snapshot": "436f2228f7fedbca",
         "outputMd": "d4d3e896580a1127",
         "examples": null
       }
@@ -1467,9 +1467,9 @@
       "symbols": ["TreePicker", "TreePickerNode", "TreePickerProps"],
       "hashes": {
         "typeSurface": "d58cf3e3b3559ef4",
-        "outline": "67fd166df725e0c8",
-        "snapshot": "2bff4378fee430b1",
-        "outputMd": "f80412b3e053f360",
+        "outline": "07295bbf45c3a15e",
+        "snapshot": "4255a571e84cf5f5",
+        "outputMd": "d64bc4b947551532",
         "examples": null
       }
     },
@@ -1764,7 +1764,7 @@
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
-    "packages/core/skills/app-shell-patterns/references/components/tree-picker.md": "f80412b3e053f360",
+    "packages/core/skills/app-shell-patterns/references/components/tree-picker.md": "d64bc4b947551532",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",

@@ -80,13 +80,15 @@ function TreePickerRow<T>({
         aria-checked={indeterminate ? "mixed" : checked}
         tabIndex={activeRowId === node.id ? 0 : -1}
         onFocus={() => onRowFocus(node.id)}
-        // The whole row is the hit target, like its checkbox. Clicks on the
-        // checkbox and caret are theirs already, and anything interactive the
-        // consumer renders in the row keeps its own behaviour.
+        // The whole row is a hit target: a group row opens or closes (its
+        // checkbox still selects everything inside), an item row ticks. Clicks
+        // on the checkbox and caret are theirs already, and anything
+        // interactive the consumer renders in the row keeps its own behaviour.
         onClick={(event) => {
           const target = event.target as HTMLElement;
           if (target.closest("button, a, input, label, [data-slot=checkbox]")) return;
-          onToggleNode(node, !checked);
+          if (leaf) onToggleNode(node, !checked);
+          else onToggleExpand(node.id);
         }}
         data-slot="tree-picker-row"
         data-node-id={node.id}

@@ -93,6 +93,8 @@ The default `matchesSearch` stringifies `node.data`, which only works for primit
 
 **State resets on close.** Query, selection, and expansion are cleared when the dialog closes, so reopening starts fresh.
 
+**Mouse.** Clicking a group row opens or closes it; its checkbox selects everything inside. Clicking an item row ticks or unticks it.
+
 **Keyboard.** The tree is a `role="tree"` with roving focus: Arrow Up/Down move between visible rows, Arrow Right expands a collapsed parent or steps into it, Arrow Left collapses or steps out to the parent, Space toggles the focused row, and Enter commits — except while typing in the search box.
 
 ## Loading an async catalog

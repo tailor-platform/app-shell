@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/checkbox";
@@ -132,11 +132,13 @@ function TreePickerRow<T>({
             onClick={() => onToggleExpand(node.id)}
             className="astw:text-muted-foreground astw:hover:bg-muted astw:flex astw:size-5 astw:shrink-0 astw:items-center astw:justify-center astw:rounded"
           >
-            {expanded ? (
-              <ChevronDownIcon className="astw:size-4" />
-            ) : (
-              <ChevronRightIcon className="astw:size-4" />
-            )}
+            {/* One chevron that turns, so opening and closing read as motion. */}
+            <ChevronRightIcon
+              className={cn(
+                "astw:size-4 astw:transition-transform astw:duration-200 astw:ease-out astw:motion-reduce:transition-none",
+                expanded && "astw:rotate-90",
+              )}
+            />
           </button>
         )}
 

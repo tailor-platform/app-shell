@@ -31,6 +31,11 @@ type TreePickerRowProps<T> = {
   activeRowId: string | null;
   registerRow(id: string, element: HTMLElement | null): void;
   onRowFocus(id: string): void;
+  /**
+   * Whether any top-level node has children. A top-level leaf then keeps the
+   * caret's space so its label lines up with its expandable siblings.
+   */
+  hasBranches: boolean;
 };
 
 function TreePickerRow<T>({
@@ -38,6 +43,7 @@ function TreePickerRow<T>({
   depth,
   isExpanded,
   onToggleExpand,
+  hasBranches,
   selectedLeaves,
   onToggleNode,
   renderRow,
@@ -59,6 +65,7 @@ function TreePickerRow<T>({
     ? selectedLeaves.has(node.id)
     : descendantLeaves.length > 0 && checkedCount === descendantLeaves.length;
   const indeterminate = !leaf && checkedCount > 0 && !checked;
+  const keepsCaretSpace = depth === 0 && hasBranches;
 
   return (
     <React.Fragment>
@@ -81,9 +88,11 @@ function TreePickerRow<T>({
           depth > 0 && "astw:bg-muted/30",
         )}
       >
-        {/* Indentation as real spacers — keeps every style in a Tailwind class. */}
+        {/* Indentation as real spacers — keeps every style in a Tailwind class.
+            Each step is one caret wide, so a child's checkbox sits under its
+            parent's caret and the labels line up. */}
         {Array.from({ length: depth }, (_, level) => (
-          <span key={level} className="astw:w-3 astw:shrink-0" aria-hidden />
+          <span key={level} className="astw:w-5 astw:shrink-0" aria-hidden />
         ))}
 
         {/* Mouse affordances only: the treeitem row already exposes checked and
@@ -100,7 +109,9 @@ function TreePickerRow<T>({
         />
 
         {leaf ? (
-          <span className="astw:size-5 astw:shrink-0" aria-hidden />
+          // Nested leaves need no caret space (the indent already aligns them),
+          // so the label sits right beside the checkbox.
+          keepsCaretSpace && <span className="astw:size-5 astw:shrink-0" aria-hidden />
         ) : (
           <button
             type="button"
@@ -135,6 +146,7 @@ function TreePickerRow<T>({
               key={child.id}
               node={child}
               depth={depth + 1}
+              hasBranches={hasBranches}
               isExpanded={isExpanded}
               onToggleExpand={onToggleExpand}
               selectedLeaves={selectedLeaves}

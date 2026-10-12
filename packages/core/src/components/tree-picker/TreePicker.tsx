@@ -120,6 +120,7 @@ function TreePicker<T>({
   } = useTreeSelection({ open, items, matchesSearch });
 
   const count = selectedNodes.length;
+  const hasBranches = items.some((node) => (node.children?.length ?? 0) > 0);
 
   const commit = React.useCallback(() => {
     if (selectedNodes.length === 0) return;
@@ -217,6 +218,7 @@ function TreePicker<T>({
                 key={node.id}
                 node={node}
                 depth={0}
+                hasBranches={hasBranches}
                 isExpanded={isExpanded}
                 onToggleExpand={toggleExpand}
                 selectedLeaves={selectedLeaves}

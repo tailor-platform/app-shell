@@ -18,6 +18,7 @@ import HomePage from "./pages/page";
 type Res = ReturnType<typeof defineResource>;
 
 const CATEGORY_LABEL: Record<string, string> = {
+  guides: "Guides",
   concepts: "Concepts",
   components: "Components",
   patterns: "Patterns",
@@ -25,7 +26,7 @@ const CATEGORY_LABEL: Record<string, string> = {
   api: "API",
 };
 // Sidebar order; any category not listed falls to the end alphabetically.
-const CATEGORY_ORDER = ["concepts", "components", "patterns", "pages", "api"];
+const CATEGORY_ORDER = ["guides", "concepts", "components", "patterns", "pages", "api"];
 
 function titleOf(u: DocUnit): string {
   return u.title ?? u.slug;

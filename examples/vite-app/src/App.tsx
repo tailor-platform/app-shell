@@ -66,6 +66,7 @@ const AppInner = () => {
               <SidebarItem to="/showcase/forms" />
               <SidebarItem to="/showcase/forms/zod-rhf" />
               <SidebarItem to="/showcase/csv-importer" />
+              <SidebarItem to="/showcase/card" />
               <SidebarItem to="/showcase/metric-card" />
               <SidebarItem to="/showcase/activity-card" />
               <SidebarItem to="/showcase/layouts" />
@@ -77,6 +78,7 @@ const AppInner = () => {
               <SidebarItem to="/showcase/toolbar" />
               <SidebarItem to="/showcase/data-table" />
               <SidebarItem to="/showcase/data-table-lab" />
+              <SidebarItem to="/showcase/data-table-selection" />
               <SidebarItem to="/showcase/alert-tokens" />
               <SidebarItem to="/showcase/spinner" />
             </SidebarGroup>

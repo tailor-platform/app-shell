@@ -143,11 +143,17 @@ type AppShellPageProps = {
   meta?: {
     title?: LocalizedString;
     icon?: ReactNode;
-    breadcrumbTitle?: string | ((segment: string) => string);
+    breadcrumbTitle?: string | ((segment: string) => LocalizedString);
   };
   guards?: Guard[];
 };
 ```
+
+For a localized breadcrumb, use `meta: { breadcrumbTitle: labels.t("orders") }`, just like `meta.title`.
+AppShell recognizes translation functions created by `labels.t()` and resolves them with the current locale.
+For a dynamic label, use `breadcrumbTitle: (segment) => labels.t("order", { id: segment })`.
+Other callbacks receive the URL segment; AppShell resolves any returned `LocalizedString` with the current locale.
+The existing `() => labels.t("orders")` form remains supported. Wrap handwritten locale functions in an outer callback rather than passing them directly.
 
 ## Path Conventions
 

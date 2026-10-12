@@ -39,6 +39,11 @@ export interface DocUnit {
   slug: string;
   kind: string;
   category: string;
+  /** Repo-relative generated markdown, e.g. `docs/api/guards/hidden.md`. Relative
+   * links inside a doc are written against this, not against the route. */
+  output: string;
+  /** Browser route, e.g. `/api/guards/hidden`. */
+  route: string;
   title: string | null;
   markdown: string;
   source: string | null;
@@ -46,6 +51,14 @@ export interface DocUnit {
 }
 
 const key = (repoRel: string): string => `../../${repoRel}`;
+
+/** Nav category from a unit's output path. Outputs nested under the docs root
+ * take their directory (`docs/api/...` → `api`); the root guides sit directly
+ * in `docs/` and are grouped under `guides`. */
+function categoryOf(output: string): string {
+  const segments = output.split("/");
+  return segments.length > 2 ? segments[1] : "guides";
+}
 
 /** Pull the `title:` out of the generated frontmatter — shown in the page
  * header (the body's own H1 is stripped by cleanMarkdown to avoid duplication). */
@@ -88,7 +101,9 @@ export const units: DocUnit[] = Object.values(manifest.units).map((entry) => {
   return {
     slug: entry.slug,
     kind: entry.kind,
-    category: entry.output.split("/")[1] ?? "misc",
+    output: entry.output,
+    route: `/${categoryOf(entry.output)}/${entry.slug}`,
+    category: categoryOf(entry.output),
     title: frontmatterTitle(raw),
     markdown: cleanMarkdown(raw),
     source: entry.examples ? (exampleSource[key(entry.examples)] ?? null) : null,

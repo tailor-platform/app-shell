@@ -29,8 +29,8 @@ function reconcileColumnOrder(order: string[], columnKeys: string[]): string[] {
   return result;
 }
 
-function createIdSetStore(initialIds: Iterable<string> = []) {
-  let snapshot = new Set(initialIds);
+function createStore<T>(initial: T) {
+  let snapshot = initial;
   const listeners = new Set<() => void>();
 
   return {
@@ -39,11 +39,21 @@ function createIdSetStore(initialIds: Iterable<string> = []) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    set: (next: Set<string>) => {
+    set: (next: T) => {
       snapshot = next;
       listeners.forEach((listener) => listener());
     },
   };
+}
+
+function createIdSetStore() {
+  return createStore(new Set<string>());
+}
+
+function createSelectionStore<TRow>(initialIds: Iterable<string> = []) {
+  return createStore(
+    new Map<string, TRow | undefined>(Array.from(initialIds, (id) => [id, undefined])),
+  );
 }
 
 /**
@@ -93,6 +103,7 @@ export function useDataTable<
     rowActions,
     onSelectionChange,
     rowSelection,
+    selectionActions,
     rowExpansion,
     sort: sortOption,
   } = options;
@@ -304,69 +315,162 @@ export function useDataTable<
     return id != null ? String(id) : null;
   }, []);
 
-  const [uncontrolledSelectionStore] = useState(() =>
-    createIdSetStore(rowSelection?.defaultSelectedIds),
+  // Bulk actions need rows to act on, so offering them turns selection on even
+  // without a selection listener.
+  const selectionEnabled =
+    rowSelection !== undefined ||
+    onSelectionChange !== undefined ||
+    (selectionActions?.length ?? 0) > 0;
+
+  // Selected ids in selection order, each mapped to the row as last seen
+  // (`undefined` for a default id whose row hasn't loaded). The row is kept so
+  // rows selected on other pages can still be counted and handed to
+  // `selectionActions`; `selectedRows` below prefers the current page's copy.
+  // When `rowSelection` is controlled the ids come from props, and the store
+  // only remembers rows.
+  const [selectionStore] = useState(() =>
+    createSelectionStore<TRow>(rowSelection?.defaultSelectedIds),
   );
-  const uncontrolledSelectedIds = useSyncExternalStore(
-    uncontrolledSelectionStore.subscribe,
-    uncontrolledSelectionStore.getSnapshot,
-    uncontrolledSelectionStore.getSnapshot,
+  const storedSelection = useSyncExternalStore(
+    selectionStore.subscribe,
+    selectionStore.getSnapshot,
+    selectionStore.getSnapshot,
   );
   const controlledSelectedIds = rowSelection?.selectedIds;
-  const isSelectionControlled = controlledSelectedIds !== undefined;
-  const selectedRowIds = useMemo(
-    () => (isSelectionControlled ? new Set(controlledSelectedIds) : uncontrolledSelectedIds),
-    [controlledSelectedIds, isSelectionControlled, uncontrolledSelectedIds],
+  const selection = useMemo(
+    () =>
+      controlledSelectedIds
+        ? new Map(controlledSelectedIds.map((id) => [id, storedSelection.get(id)]))
+        : storedSelection,
+    [controlledSelectedIds, storedSelection],
   );
   const selectionOnChange = rowSelection?.onChange ?? onSelectionChange;
-  const selectionEnabled = rowSelection !== undefined || onSelectionChange !== undefined;
-
-  const updateSelection = useCallback(
-    (next: Set<string>) => {
-      if (!isSelectionControlled) uncontrolledSelectionStore.set(next);
-      selectionOnChange?.([...next]);
-    },
-    [isSelectionControlled, selectionOnChange, uncontrolledSelectionStore],
-  );
 
   const isRowSelected = useCallback(
     (row: TRow) => {
       const id = getRowId(row);
-      return id !== null && selectedRowIds.has(id);
+      return id !== null && selection.has(id);
     },
-    [getRowId, selectedRowIds],
+    [getRowId, selection],
   );
 
-  const toggleRowSelection = useCallback(
-    (row: TRow) => {
+  // The base for the next change. Uncontrolled, it reads the store rather than
+  // `selection`: the store updates synchronously, so two dispatches in the same
+  // commit both land instead of the second overwriting the first.
+  const currentSelection = () => {
+    const stored = selectionStore.getSnapshot();
+    return controlledSelectedIds
+      ? new Map(controlledSelectedIds.map((id) => [id, stored.get(id)]))
+      : new Map(stored);
+  };
+
+  // Computed outside a state updater: updaters must be pure, and StrictMode
+  // double-invokes them, so dispatching from inside fired `onSelectionChange`
+  // twice per toggle in dev. Every writer goes through here.
+  const commitSelection = (next: Map<string, TRow | undefined>) => {
+    selectionStore.set(next);
+    selectionOnChange?.([...next.keys()]);
+  };
+
+  const toggleRowSelection = selectionEnabled
+    ? (row: TRow) => {
+        const id = getRowId(row);
+        if (id === null) return;
+        const next = currentSelection();
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.set(id, row);
+        }
+        commitSelection(next);
+      }
+    : undefined;
+
+  // Page-scoped on purpose: rows selected on other pages are left alone, so the
+  // header checkbox never silently drops part of a cross-page selection.
+  const selectAllRows = selectionEnabled
+    ? () => {
+        const next = currentSelection();
+        for (const row of rows) {
+          const id = getRowId(row);
+          if (id !== null) next.set(id, row);
+        }
+        commitSelection(next);
+      }
+    : undefined;
+
+  const deselectAllRows = selectionEnabled
+    ? () => {
+        const next = currentSelection();
+        for (const row of rows) {
+          const id = getRowId(row);
+          if (id !== null) next.delete(id);
+        }
+        commitSelection(next);
+      }
+    : undefined;
+
+  // A no-op on an empty selection: a selection action may clear inside its
+  // `onClick` and then be cleared again by the bar once its promise resolves,
+  // and that second call must not fire another `onSelectionChange([])`.
+  const clearSelection = selectionEnabled
+    ? () => {
+        if (currentSelection().size === 0) return;
+        commitSelection(new Map());
+      }
+    : undefined;
+
+  // Id of the selection action whose request is in flight. It lives here rather
+  // than in the footer bar so it survives the bar unmounting and remounting
+  // (the selection emptying and refilling mid-request), and so a request handed
+  // back later — from a confirm dialog, via `run` — is tracked the same way.
+  // The ref is written alongside the state so a second call in the same commit
+  // sees the first.
+  const [pendingActionId, setPendingActionId] = useState<string | null>(null);
+  const pendingActionIdRef = useRef<string | null>(null);
+
+  const runSelectionAction = selectionEnabled
+    ? (action: { id: string; keepSelection?: boolean }, request: PromiseLike<unknown>) => {
+        // One request at a time: the bar disables its actions while one runs,
+        // so a second call here only comes from app code racing itself.
+        if (pendingActionIdRef.current !== null) return;
+        pendingActionIdRef.current = action.id;
+        setPendingActionId(action.id);
+        const settle = () => {
+          pendingActionIdRef.current = null;
+          setPendingActionId(null);
+        };
+        request.then(
+          () => {
+            settle();
+            // The rows it acted on may have changed, and copies remembered from
+            // other pages can't refresh — clear rather than keep stale rows.
+            if (!action.keepSelection) clearSelection?.();
+          },
+          (reason: unknown) => {
+            // Keep the selection so the action can be retried. Report rather
+            // than rethrow: a rethrow from this chain would surface as an
+            // unhandled rejection even when the app already handled the error.
+            settle();
+            console.error(`[DataTable] Selection action "${action.id}" failed:`, reason);
+          },
+        );
+      }
+    : undefined;
+
+  const selectedIds = useMemo(() => [...selection.keys()], [selection]);
+
+  const selectedRows = useMemo(() => {
+    const onPage = new Map<string, TRow>();
+    for (const row of rows) {
       const id = getRowId(row);
-      if (id === null) return;
-      const next = new Set(
-        isSelectionControlled ? controlledSelectedIds : uncontrolledSelectionStore.getSnapshot(),
-      );
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      updateSelection(next);
-    },
-    [
-      controlledSelectedIds,
-      getRowId,
-      isSelectionControlled,
-      uncontrolledSelectionStore,
-      updateSelection,
-    ],
-  );
-
-  const selectAllRows = useCallback(() => {
-    const next = new Set(rows.map(getRowId).filter((id): id is string => id !== null));
-    updateSelection(next);
-  }, [getRowId, rows, updateSelection]);
-
-  const clearSelection = useCallback(() => {
-    updateSelection(new Set());
-  }, [updateSelection]);
-
-  const selectedIds = useMemo(() => [...selectedRowIds], [selectedRowIds]);
+      if (id !== null && selection.has(id)) onPage.set(id, row);
+    }
+    return [...selection].flatMap(([id, lastSeen]) => {
+      const row = onPage.get(id) ?? lastSeen;
+      return row ? [row] : [];
+    });
+  }, [selection, rows, getRowId]);
 
   const selectableCount = rows.filter((r) => getRowId(r) !== null).length;
   const isAllSelected =
@@ -374,9 +478,9 @@ export function useDataTable<
     rows.every((r) => {
       const id = getRowId(r);
       // Rows without id are not selectable — skip them in the check
-      return id === null || selectedRowIds.has(id);
+      return id === null || selection.has(id);
     });
-  const isIndeterminate = selectedRowIds.size > 0 && !isAllSelected;
+  const isIndeterminate = selection.size > 0 && !isAllSelected;
 
   // ---------------------------------------------------------------------------
   // Row expansion
@@ -479,11 +583,16 @@ export function useDataTable<
     control: control as CollectionControl | undefined,
     onClickRow,
     rowActions,
+    selectionActions,
     selectedIds,
+    selectedRows,
     isRowSelected,
-    toggleRowSelection: selectionEnabled ? toggleRowSelection : undefined,
-    selectAllRows: selectionEnabled ? selectAllRows : undefined,
-    clearSelection: selectionEnabled ? clearSelection : undefined,
+    toggleRowSelection,
+    selectAllRows,
+    deselectAllRows,
+    clearSelection,
+    pendingActionId,
+    runSelectionAction,
     isAllSelected,
     isIndeterminate,
     expandedIds: expandedIdsList,

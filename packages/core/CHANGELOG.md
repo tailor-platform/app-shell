@@ -1,5 +1,50 @@
 # @tailor-platform/app-shell
 
+## 1.16.0
+
+### Minor Changes
+
+- 820ddb3: Add a full-width `Toolbar` with composable rows, grouped controls, separators, and optional edge-to-edge row layout.
+  
+  ```tsx
+  <Toolbar.Root>
+    <Toolbar.Row justify="between" aria-label="List actions">
+      <Toolbar.Group>
+        <DataTable.Filters />
+      </Toolbar.Group>
+      <Toolbar.Group>
+        <DataTable.ColumnSettings />
+      </Toolbar.Group>
+    </Toolbar.Row>
+  </Toolbar.Root>
+  ```
+  
+  AppShell Buttons, inputs, selects, comboboxes, and tabs automatically participate in toolbar keyboard navigation.
+- 7abf5a0: Update `@tailor-platform/auth-public-client` to `^0.7.0` and preserve the current path, query string, and hash across authentication redirects.
+  
+  `useAuth().login()` accepts an optional same-origin `returnTo` destination.
+
+### Patch Changes
+
+- 486607c: The 1.15.0 release notes were amended. Its `@base-ui/react` update from 1.6.0 to 1.8.0 changed two behaviours that can break consumer tests:
+  
+  - `Select` no longer renders its options into the DOM until it is opened. Open it before asserting option text.
+  - Opening a `Dialog` or `AlertDialog` applies a scroll lock that can move a button under a Playwright click. Press dialog buttons with `locator.press("Enter")` instead of `click()`.
+  
+  See the [1.15.0 migration entry](https://github.com/tailor-platform/app-shell/blob/main/docs/migrations.md#1150-base-ui-180-breaks-closed-select-and-dialog-click-tests).
+- afe5479: Fix the `DatePicker`, `DateField` and `DateRangePicker` calendar rendering behind a `Dialog` when opened inside one.
+- 48f9f90: Rebuild the `form/composer` pattern on `Form` + `Field`. It was the only `form/*` pattern with neither — a bare `Card` of controls with an `onClick` submit — which left it inconsistent with its four siblings and short of three things a composer actually needs.
+  
+  The body now sits in a `Field.Root` with a `sr-only` `Field.Label` (a real label instead of `aria-label`, so error and description wiring stays available), Send is `type="submit"` so validation gates it, and server rejections — moderation, rate limit, thread closed — route through `Form`'s `errors` prop into `Field.Error` rather than a toast, landing next to the text the user still has.
+  
+  The body stays **controlled**: it is read during render to gate Send and to swap the placeholder, which a submit-time handler cannot do. The pattern doc now says so explicitly, because this is the one `form/*` pattern where field state is load-bearing rather than redundant — elsewhere `onFormSubmit` reads registered `Field.Root`s and mirroring values into state is the anti-pattern.
+  
+  Also fixes a data-loss path in the reference implementation: it cleared the body unconditionally, losing the user's text when a submit failed. It now clears only on success.
+- bad3569: Updated [sonner](https://www.npmjs.com/package/sonner) (^2.0.7 -> ^2.0.8)
+- bc52460: Updated [@internationalized/date](https://www.npmjs.com/package/@internationalized/date) (3.12.2 -> 3.12.4)
+- c3e4b52: Fix `Combobox.Async` to search a pasted or programmatically filled value on its first open.
+- 4e49591: Fix `SidebarItem` title overrides accepting localized strings. Pass a value from `defineI18nLabels` directly to `title` and it resolves with the active AppShell locale.
+
 ## 1.15.0
 
 ### Minor Changes

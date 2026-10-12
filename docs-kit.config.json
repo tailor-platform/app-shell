@@ -1,22 +1,48 @@
 {
   "$comment": "Config for @tailor-platform/app-shell-docs-kit. See decisions/documentation-management-overhaul.md.",
   "inputs": {
-    "outlines": { "roots": ["docs-src"] },
+    "outlines": {
+      "roots": ["docs-src"]
+    },
     "api": {
       "tsconfig": "packages/core/tsconfig.json",
       "entrypoint": "packages/core/src/index.ts"
     },
-    "snapshots": { "dir": "packages/core/__snapshots__" }
+    "snapshots": {
+      "dir": "packages/core/__snapshots__"
+    }
   },
   "outputs": {
     "documents": {
       "mappings": [
-        { "match": "docs-src/components/**", "dir": "docs/components" },
-        { "match": "docs-src/hooks/**", "dir": "docs/api" },
-        { "match": "docs-src/concepts/**", "dir": "docs/concepts" },
-        { "match": "docs-src/patterns/**", "dir": "docs/patterns" },
-        { "match": "docs-src/pages/**", "dir": "docs/pages" },
-        { "match": "docs-src/references/**", "dir": "docs/references" }
+        {
+          "match": "docs-src/components/**",
+          "dir": "docs/components"
+        },
+        {
+          "match": "docs-src/hooks/**",
+          "dir": "docs/api"
+        },
+        {
+          "match": "docs-src/concepts/**",
+          "dir": "docs/concepts"
+        },
+        {
+          "match": "docs-src/patterns/**",
+          "dir": "docs/patterns"
+        },
+        {
+          "match": "docs-src/pages/**",
+          "dir": "docs/pages"
+        },
+        {
+          "match": "docs-src/references/**",
+          "dir": "docs/references"
+        },
+        {
+          "match": "docs-src/guides/**",
+          "dir": "docs"
+        }
       ]
     },
     "manifest": "docs-manifest.json",
@@ -28,6 +54,9 @@
     }
   },
   "policy": {
-    "coverage": { "enforce": false, "exclusions": [] }
+    "coverage": {
+      "enforce": false,
+      "exclusions": []
+    }
   }
 }

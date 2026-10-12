@@ -11,22 +11,22 @@ const badgeVariants = cva(
         default:
           "astw:border-transparent astw:bg-primary astw:text-primary-foreground astw:hover:bg-primary/80",
         success:
-          "astw:border-transparent astw:bg-status-completed astw:text-white astw:hover:bg-status-completed/90",
+          "astw:border-transparent astw:bg-success-solid astw:text-success-contrast astw:hover:bg-success-solid-hover",
         warning:
-          "astw:border-transparent astw:bg-status-attention astw:text-white astw:hover:bg-status-attention/90",
+          "astw:border-transparent astw:bg-warning-solid astw:text-warning-contrast astw:hover:bg-warning-solid-hover",
         error:
-          "astw:border-transparent astw:bg-destructive astw:text-destructive-foreground astw:hover:bg-destructive/80",
+          "astw:border-transparent astw:bg-danger-solid astw:text-danger-contrast astw:hover:bg-danger-solid-hover",
         neutral:
           "astw:border-transparent astw:bg-secondary astw:text-secondary-foreground astw:hover:bg-secondary/80",
-        info: "astw:border-transparent astw:bg-status-neutral astw:text-white astw:hover:bg-status-neutral/90",
+        info: "astw:border-transparent astw:bg-info-solid astw:text-info-contrast astw:hover:bg-info-solid-hover",
         "subtle-success":
-          "astw:border-transparent astw:bg-status-completed/10 astw:text-status-completed astw:hover:bg-status-completed/20",
+          "astw:border-transparent astw:bg-success-surface astw:text-success-text astw:hover:bg-success-surface-hover",
         "subtle-warning":
-          "astw:border-transparent astw:bg-status-attention/10 astw:text-status-attention astw:hover:bg-status-attention/20",
+          "astw:border-transparent astw:bg-warning-surface astw:text-warning-text astw:hover:bg-warning-surface-hover",
         "subtle-error":
-          "astw:border-transparent astw:bg-destructive/10 astw:text-destructive astw:hover:bg-destructive/20",
+          "astw:border-transparent astw:bg-danger-surface astw:text-danger-text astw:hover:bg-danger-surface-hover",
         "subtle-info":
-          "astw:border-transparent astw:bg-status-neutral/10 astw:text-status-neutral astw:hover:bg-status-neutral/20",
+          "astw:border-transparent astw:bg-info-surface astw:text-info-text astw:hover:bg-info-surface-hover",
         // Outline variants with status dots - matches Figma design
         "outline-success":
           "astw:gap-0.5 astw:pl-1.5 astw:pr-2 astw:border-border astw:bg-card astw:text-foreground",
@@ -48,11 +48,11 @@ const badgeVariants = cva(
 
 // Status dot colors for outline variants
 const statusDotColors: Record<string, string> = {
-  "outline-success": "astw:bg-status-completed",
-  "outline-warning": "astw:bg-status-attention",
-  "outline-error": "astw:bg-status-danger",
-  "outline-info": "astw:bg-status-neutral",
-  "outline-neutral": "astw:bg-status-default",
+  "outline-success": "astw:bg-success-indicator",
+  "outline-warning": "astw:bg-warning-indicator",
+  "outline-error": "astw:bg-danger-indicator",
+  "outline-info": "astw:bg-info-indicator",
+  "outline-neutral": "astw:bg-neutral-indicator",
 };
 
 function StatusDot({ variant }: { variant: string }) {

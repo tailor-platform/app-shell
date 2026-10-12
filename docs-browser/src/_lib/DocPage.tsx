@@ -7,16 +7,23 @@ import { Layout, Link, Table, Tabs } from "@tailor-platform/app-shell";
 
 import { units } from "../docs";
 
-/** Rewrite a relative `*.md` doc link to its docs-browser route, resolved
- * against the current unit's route (`/<category>/<slug>`). Returns null for
- * external links, in-page anchors, and non-`.md` targets — left untouched — so
- * the raw `.md` files stay browsable on GitHub while the app routes correctly. */
-function mdHrefToRoute(href: string, category: string, slug: string): string | null {
+/** Rewrite a relative `*.md` doc link to its docs-browser route. Links are
+ * authored against the generated tree (`docs/…`), which is not the route shape
+ * — `docs/api/guards/hidden.md` is served at `/api/guards/hidden`, and the root
+ * guides are served under `/guides/`. So resolve in doc-space against the
+ * current unit's output path, then look the target up. Returns null for
+ * external links, in-page anchors, non-`.md` targets, and docs that aren't
+ * units — left untouched, so the raw `.md` stays browsable on GitHub. */
+const routeByOutput = new Map(units.map((u) => [u.output, u.route]));
+
+function mdHrefToRoute(href: string, output: string): string | null {
   if (/^(https?:|mailto:|#)/.test(href)) return null;
   const [path, hash] = href.split("#");
   if (!/\.md$/.test(path)) return null;
-  const resolved = new URL(path, `http://x/${category}/${slug}`).pathname.replace(/\.md$/, "");
-  return hash ? `${resolved}#${hash}` : resolved;
+  const target = new URL(path, `http://x/${output}`).pathname.replace(/^\//, "");
+  const route = routeByOutput.get(target);
+  if (!route) return null;
+  return hash ? `${route}#${hash}` : route;
 }
 
 function pascalCase(key: string): string {
@@ -223,7 +230,7 @@ export function DocPage({ slug }: { slug: string }) {
     // Cross-doc links target the source `.md` files; rewrite to browser routes
     // at render time (external links + in-page anchors pass through unchanged).
     a: ({ node, href, ...props }: ComponentProps<"a"> & { node?: unknown }) => {
-      const to = href ? mdHrefToRoute(href, unit.category, unit.slug) : null;
+      const to = href ? mdHrefToRoute(href, unit.output) : null;
       return to ? <Link to={to} {...props} /> : <a href={href} {...props} />;
     },
   } as Components;

@@ -17,8 +17,8 @@ Tailor Platform AppShell - A React-based framework for building ERP applications
 ## Documentation
 
 Everything under [`docs/`](./docs/) is **generated** by the `docs-kit` pipeline and must **never be
-hand-edited** — the pre-commit hook warns and `pnpm docs:check` in CI blocks on any hand edit or
-drift. See [decisions/documentation-management-overhaul.md](./decisions/documentation-management-overhaul.md)
+hand-edited** — the pre-commit hook warns and `pnpm docs:check` in CI blocks on any hand edit,
+drift, or file created under `docs/` with no source. See [decisions/documentation-management-overhaul.md](./decisions/documentation-management-overhaul.md)
 and the [`resync-docs`](./.agents/skills/resync-docs/SKILL.md) skill.
 
 To change or add a doc, edit the authored **source** under `docs-src/`, then run `pnpm docs:sync`:
@@ -34,9 +34,10 @@ units also declare a `sources:` glob binding them to the exports they document, 
 reconciles that against `index.ts` both ways. Frontmatter is a closed schema: an unrecognised key is
 an error, not a silent no-op.
 
-The only hand-authored files under `docs/` are the four root guides — `introduction.md`,
-`quickstart.md`, `design-philosophy.md`, `migrations.md` — which have no `docs-src/` source and are
-edited in place (`migrations.md` is also copied into the generated skill).
+There are **no exceptions**: every file under `docs/` comes from an outline. The root guides
+(`introduction`, `quickstart`, `design-philosophy`, `migrations`) are `kind: prose` units in
+`docs-src/guides/` that happen to output to the `docs/` root. Creating a file under `docs/` that no
+outline produces is a blocking `docs:check` failure.
 
 ## Key Architecture Points (LLM Orientation)
 

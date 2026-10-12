@@ -51,7 +51,7 @@ const SpinnerPage = () => {
             <div className="text-destructive">
               <Spinner aria-label="Loading destructive" />
             </div>
-            <div className="text-status-completed">
+            <div className="text-success-text">
               <Spinner aria-label="Loading success" />
             </div>
           </div>

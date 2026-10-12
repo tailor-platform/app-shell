@@ -11,7 +11,7 @@ Styling is done with **Tailwind CSS v4** against `@tailor-platform/app-shell`'s 
 
 **The tokens are the rails.** Consistency across customers, apps, and AI runs comes from the token system, not from rules written in prose. A hand-typed `#fff` or `padding: 13px` is not a "small deviation" — it is the mechanism by which consistency dies.
 
-**Every token in this document is verified against the shipped CSS.** If a token is not listed here, assume it does not exist. Inventing a plausible-sounding token (`bg-surface-1`, `text-fg-muted`, `--space-4`) is the worst failure mode available: Tailwind emits **no CSS at all** for an unknown utility, so the class is silently dropped and the element renders unstyled — no error, no warning, nothing in the console. When unsure, read `node_modules/@tailor-platform/app-shell/dist/themes/default.css`; it is the ground truth.
+**Every token in this document is verified against the shipped CSS.** If a token is not listed here, assume it does not exist. The colour scales (`--primitive-*`) are internal: they are not bridged to Tailwind and are not listed. Inventing a plausible-sounding token (`bg-surface-1`, `text-fg-muted`, `--space-4`) is the worst failure mode available: Tailwind emits **no CSS at all** for an unknown utility, so the class is silently dropped and the element renders unstyled — no error, no warning, nothing in the console. When unsure, read `node_modules/@tailor-platform/app-shell/dist/themes/default.css`; it is the ground truth.
 
 ## Setup
 
@@ -86,14 +86,14 @@ Only import one palette at a time.
 
 Theme tokens live in `packages/core/src/assets/themes/`. Copy `_template.css` to start a new palette — it lists exactly which sections to fill in for light and dark mode.
 
-| Section               | Required?             | What to set                                                                    |
-| --------------------- | --------------------- | ------------------------------------------------------------------------------ |
-| **1. Brand**          | Yes                   | `primary`, `secondary`, `accent` (+ foregrounds) — both modes                  |
-| **2. Shell gradient** | Branded palettes only | `--shell-gradient-base`, `--shell-gradient-tint`                               |
-| **3. System**         | Tune or copy default  | Surfaces: background, card, popover, muted, borders                            |
-| **4. Palette**        | Optional              | Radius, chart colors, shadows                                                  |
-| **5. Semantic**       | Do not duplicate      | Status and alert tokens inherit from `default.css`                             |
-| **6. Structural**     | Branded palettes      | Copy the structural override block from `bloom.css` or `cream.css` when needed |
+| Section               | Required?             | What to set                                                                                                                                            |
+| --------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **1. Brand**          | Yes                   | `primary`, `secondary`, `accent` (+ foregrounds) — both modes                                                                                          |
+| **2. Shell gradient** | Branded palettes only | `--shell-gradient-base`, `--shell-gradient-tint`                                                                                                       |
+| **3. System**         | Tune or copy default  | Surfaces: background, card, popover, muted, borders                                                                                                    |
+| **4. Palette**        | Optional              | Radius, chart colors, shadows                                                                                                                          |
+| **5. Semantic**       | Inherit               | Colour scales, status and alert tokens inherit from `default.css`. Override a colour role (`--{intent}-{role}`) only to recolour the status components |
+| **6. Structural**     | Branded palettes      | Copy the structural override block from `bloom.css` or `cream.css` when needed                                                                         |
 
 A palette is selected by CSS import, not by an AppShell prop. Import exactly one theme file after `@tailor-platform/app-shell/styles`; if you import none, the default palette from `styles` is used.
 
@@ -175,17 +175,44 @@ There are no `-hover` or `-active` brand tokens. Express interaction states with
 
 #### Status
 
-Five status colors, used for badge fills and status dots:
+**Deprecated.** These five tokens and their utilities remain for existing code and will be removed in the next major. New code uses the [semantic color roles](#semantic-color-roles) below. In the default palette they are aliases of those roles, so status colors and Alert colors agree:
 
-| Token                | Use                      | Tailwind              |
-| -------------------- | ------------------------ | --------------------- |
-| `--status-default`   | none / not applicable    | `bg-status-default`   |
-| `--status-neutral`   | informational            | `bg-status-neutral`   |
-| `--status-completed` | success, completed       | `bg-status-completed` |
-| `--status-attention` | warning, needs attention | `bg-status-attention` |
-| `--status-danger`    | error, blocked           | `bg-status-danger`    |
+| Token                | Use                                                  | Tailwind              | Use instead            |
+| -------------------- | ---------------------------------------------------- | --------------------- | ---------------------- |
+| `--status-default`   | none / not applicable (follows `--muted-foreground`) | `bg-status-default`   | `bg-neutral-indicator` |
+| `--status-neutral`   | informational                                        | `bg-status-neutral`   | `bg-info-solid`        |
+| `--status-completed` | success, completed                                   | `bg-status-completed` | `bg-success-solid`     |
+| `--status-attention` | warning, needs attention                             | `bg-status-attention` | `bg-warning-solid`     |
+| `--status-danger`    | error, blocked                                       | `bg-status-danger`    | `bg-danger-solid`      |
 
-Prefer `Badge` with a semantic variant (`success`, `warning`, `error`, `info`, `neutral`) over applying these directly — the variants already pair fill and foreground correctly. Reach for the raw token only on custom surfaces.
+Prefer `Badge` with a semantic variant (`success`, `warning`, `error`, `info`, `neutral`) over applying a fill directly — the variants already pair fill and foreground correctly.
+
+These are fill and indicator colors. `--status-default` follows `--muted-foreground`, so it is theme-dependent and translucent in `cream` and `bloom`; the four hue tokens are opaque in every palette. Do not use them as text color: `--status-completed`, `--status-danger` and `--status-neutral` are below 4.5:1 on a dark card, and `--status-attention` is below 3:1 on a light one. For text, use `text-{intent}-text`.
+
+#### Semantic color roles
+
+Each intent has eight roles. The intents are `info`, `success`, `warning`, `danger` and `neutral`. The hue intents read internal color scales; `neutral` reads the system tokens. Every role is a token named `--{intent}-{role}` and a Tailwind color named `{intent}-{role}`:
+
+| Role            | Tailwind                | Use for                             |
+| --------------- | ----------------------- | ----------------------------------- |
+| `surface`       | `bg-info-surface`       | Soft background                     |
+| `surface-hover` | `bg-info-surface-hover` | Hover state of a soft background    |
+| `border`        | `border-info-border`    | Border on a soft background         |
+| `solid`         | `bg-info-solid`         | Filled background                   |
+| `solid-hover`   | `bg-info-solid-hover`   | Hover state of a filled background  |
+| `text`          | `text-info-text`        | Text and icons on a soft background |
+| `contrast`      | `text-info-contrast`    | Text on a filled background         |
+| `indicator`     | `bg-info-indicator`     | Dots and small marks                |
+
+```tsx
+<span className="rounded-md bg-success-surface px-2 py-0.5 text-success-text">Paid</span>
+```
+
+In the default palette, `text` on `surface` and `contrast` on `solid` and `solid-hover` are at least 4.5:1 for the four hue intents, in light and dark mode, on `--card` and `--background`. A unit test checks this from the shipped CSS. `text` on `surface-hover` is held at 4.2:1 by the same test; it is below 4.5:1 for `danger` and `success` in light mode. The test does not cover the `cream` and `bloom` palettes or the `neutral` intent.
+
+Most `surface` and `border` values are translucent tints, so an opacity modifier compounds rather than replaces — `bg-info-surface/50` halves the tint's alpha instead of setting it to 50%. Some light-mode values are opaque instead of translucent: the `warning` surface, surface-hover and border, the `info` border and the `danger` surface-hover. They do not blend with a tinted parent. All dark-mode values are translucent.
+
+`Badge`, `Alert`, `CsvImporter` and `MetricCard` read these roles directly, not `--status-*` or `--alert-*`. To recolour them, override the roles. `Badge` `error` and `subtle-error`, and `Alert` `error`, follow `--danger-*`. They no longer follow `--destructive`, which still drives `Button` and `text-destructive`.
 
 #### Sidebar & charts
 
@@ -195,24 +222,17 @@ Prefer `Badge` with a semantic variant (`success`, `warning`, `error`, `info`, `
 
 #### Alerts
 
-`--alert-{neutral,success,warning,error,info}-{background,foreground,foreground-muted,border}` — five variants × four slots, each bridged into Tailwind:
+**Deprecated.** `--alert-{neutral,success,warning,error,info}-{background,foreground,foreground-muted,border}` and the matching utilities (`bg-alert-info-background`, `text-alert-info-foreground`, ...) remain for existing code and will be removed in the next major. In the default palette they are aliases of the semantic color roles: `background` is `surface`, `border` is `border`, `foreground` is `text`, and `foreground-muted` follows `foreground`; `error` reads the `danger` intent. The `Alert` component reads the roles, so overriding `--alert-*` changes these utilities but not `Alert`.
 
-| Slot               | Tailwind                           | Use for                    |
-| ------------------ | ---------------------------------- | -------------------------- |
-| `background`       | `bg-alert-info-background`         | Callout fill               |
-| `foreground`       | `text-alert-info-foreground`       | Primary text and icons     |
-| `foreground-muted` | `text-alert-info-foreground-muted` | Secondary/description text |
-| `border`           | `border-alert-info-border`         | Callout border             |
-
-Prefer the `Alert` component — it already pairs the four slots per variant and supplies the icon. Reach for the utilities directly only on custom surfaces `Alert` doesn't cover, such as a status-highlighted table row or an inline note:
+For new custom surfaces, use the roles instead of the alert slots:
 
 ```tsx
-<div className="rounded-lg border bg-alert-warning-background text-alert-warning-foreground border-alert-warning-border">
+<div className="rounded-lg border bg-warning-surface text-warning-text border-warning-border">
   …
 </div>
 ```
 
-The `background` and `border` slots are already semi-transparent tints (~10% and ~20%), so an opacity modifier compounds rather than replaces — `bg-alert-info-background/50` lands near 5% alpha, not 50%.
+Across all colour tokens:
 
 ```tsx
 // Good — semantic token pairs, and a variant where one exists
@@ -243,28 +263,202 @@ Hand-typing `padding: 13px` is a smell. Round to the nearest scale step; if noth
 
 ### Typography
 
-**AppShell defines no typography scale tokens.** There is no `text-h1`, `text-body`, or `text-caption`. The only typography token is `--font-sans` (Inter Variable for Latin, Noto Sans JP Variable for Japanese) → `font-sans`, which the base layer already applies to `body`. Both are variable fonts, so every weight token is real in both scripts. Override the whole stack by setting `--app-shell-font-sans` on `:root`.
+AppShell defines **composite typography role tokens**. A role sets font size, line height, font weight, and letter spacing together, so one utility such as `text-heading-md` replaces a set like `text-lg font-semibold`. The font family is a separate token, `--font-sans` (Inter Variable for Latin, Noto Sans JP Variable for Japanese) → `font-sans`, which the base layer already applies to `body`. Both are variable fonts, so every weight token is real in both scripts. Override the whole stack by setting `--app-shell-font-sans` on `:root`.
 
-Compose roles from stock Tailwind utilities. These pairings are what AppShell's own components use — match them so your screens sit consistently alongside the primitives:
+There are 8 core roles and 2 relaxed body variants:
 
-| Role                              | Utilities                                 |
-| --------------------------------- | ----------------------------------------- |
-| Page title (`Layout.Header`)      | `text-2xl font-bold tracking-tight`       |
-| Section heading                   | `text-lg font-semibold`                   |
-| Card title                        | `text-lg font-semibold leading-none`      |
-| Body copy                         | `text-sm`                                 |
-| Secondary copy, descriptions      | `text-sm text-muted-foreground`           |
-| Caption, timestamp, metadata      | `text-xs text-muted-foreground`           |
-| Numeric value in a table or field | `text-sm font-medium tabular-nums`        |
-| ID, code, keyboard hint           | `font-mono text-xs text-muted-foreground` |
+| Role              | Utility                | Size / line height | Weight | Use                                             |
+| ----------------- | ---------------------- | ------------------ | ------ | ----------------------------------------------- |
+| `heading-lg`      | `text-heading-lg`      | 24px / 32px        | 700    | Page title (`Layout.Header`)                    |
+| `heading-md`      | `text-heading-md`      | 18px / 28px        | 600    | Section heading, card title                     |
+| `heading-sm`      | `text-heading-sm`      | 14px / 20px        | 600    | Sub-section heading                             |
+| `body-md`         | `text-body-md`         | 14px / 20px        | 400    | Body copy, descriptions                         |
+| `body-sm`         | `text-body-sm`         | 12px / 16px        | 400    | Caption, timestamp, metadata                    |
+| `label-md`        | `text-label-md`        | 14px / 20px        | 500    | Field label, short UI text, figures in a table  |
+| `label-sm`        | `text-label-sm`        | 12px / 16px        | 500    | Small label, badge text                         |
+| `code-sm`         | `text-code-sm`         | 12px / 18px        | 400    | ID and code. Use with `font-mono`               |
+| `body-md-relaxed` | `text-body-md-relaxed` | 14px / 24px        | 400    | Long text, such as a chat message or a document |
+| `body-sm-relaxed` | `text-body-sm-relaxed` | 12px / 20px        | 400    | Long text at the small size                     |
+
+`heading-lg` also sets letter spacing to `-0.025em`. All other roles set `0em`.
+
+Pair a role with a color token from the Color section above. These pairings are the recommended combinations:
+
+| Use                               | Utilities                                      |
+| --------------------------------- | ---------------------------------------------- |
+| Page title (`Layout.Header`)      | `text-heading-lg`                              |
+| Section heading                   | `text-heading-md`                              |
+| Card title (`div` or `span`)      | `text-heading-md leading-none`                 |
+| Body copy                         | `text-body-md`                                 |
+| Secondary copy, descriptions      | `text-body-md text-muted-foreground`           |
+| Caption, timestamp, metadata      | `text-body-sm text-muted-foreground`           |
+| Numeric value in a table or field | `text-label-md tabular-nums`                   |
+| ID, code                          | `font-mono text-code-sm text-muted-foreground` |
+
+<example-preview name="typography-roles"></example-preview>
 
 ```tsx
-<h2 className="text-lg font-semibold">Section</h2>
-<p className="text-sm text-muted-foreground">Description copy</p>
-<span className="text-xs text-muted-foreground">Updated 2h ago</span>
+function TypographyRoles() {
+  const rows = [
+    {
+      role: "heading-lg",
+      className: "text-heading-lg",
+      en: "Purchase orders",
+      ja: "発注管理",
+    },
+    {
+      role: "heading-md",
+      className: "text-heading-md",
+      en: "Purchase orders by supplier",
+      ja: "仕入先別の発注一覧",
+    },
+    {
+      role: "heading-sm",
+      className: "text-heading-sm",
+      en: "Delivery address",
+      ja: "納品先",
+    },
+    {
+      role: "body-md",
+      className: "text-body-md",
+      en: "The order was sent to the supplier on 12 March.",
+      ja: "発注書は3月12日に仕入先へ送付されました。",
+    },
+    {
+      role: "body-sm",
+      className: "text-body-sm text-muted-foreground",
+      en: "Updated 2 hours ago",
+      ja: "2時間前に更新",
+    },
+    {
+      role: "label-md",
+      className: "text-label-md",
+      en: "Order quantity",
+      ja: "発注数量",
+    },
+    {
+      role: "label-sm",
+      className: "text-label-sm",
+      en: "Draft",
+      ja: "下書き",
+    },
+    {
+      role: "code-sm",
+      className: "font-mono text-code-sm",
+      en: "PO-2026-000184",
+      ja: "PO-2026-000184",
+    },
+    {
+      role: "body-md-relaxed",
+      className: "text-body-md-relaxed",
+      compareWith: { role: "body-md", className: "text-body-md" },
+      en: "Please confirm the delivery date with the supplier before you approve this order. If the supplier cannot deliver by the requested date, change the date or choose another supplier. Approved orders are sent to the supplier by email.",
+      ja: "この発注を承認する前に、納期を仕入先に確認してください。希望日までに納品できない場合は、納期を変更するか、別の仕入先を選んでください。承認した発注は、メールで仕入先に送られます。",
+    },
+    {
+      role: "body-sm-relaxed",
+      className: "text-body-sm-relaxed text-muted-foreground",
+      compareWith: { role: "body-sm", className: "text-body-sm text-muted-foreground" },
+      en: "Changes to a confirmed order are recorded in the order history. Each record shows who made the change, when it was made, and the values before and after the change.",
+      ja: "確定済みの発注への変更は、発注履歴に記録されます。記録には、変更した人、変更した日時、変更前と変更後の値が含まれます。",
+    },
+  ];
+
+  return (
+    <div className="flex flex-col gap-4">
+      {rows.map(({ role, className, compareWith, en, ja }) => (
+        <div key={role} className="grid grid-cols-[9rem_1fr] items-baseline gap-4">
+          <span className="font-mono text-code-sm text-muted-foreground">{role}</span>
+          {compareWith ? (
+            // A relaxed role changes only line height, so show the same text in the base role first.
+            <div className="flex flex-col gap-4">
+              {[compareWith, { role, className }].map((variant) => (
+                <div key={variant.role} className="flex flex-col gap-1">
+                  <span className="font-mono text-code-sm text-muted-foreground">
+                    {variant.role}
+                  </span>
+                  <p className={variant.className}>{en}</p>
+                  <p className={variant.className}>{ja}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <p className={className}>{en}</p>
+              <p className={className}>{ja}</p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 ```
 
+```tsx
+<h2 className="text-heading-md">Section</h2>
+<p className="text-body-md text-muted-foreground">Description copy</p>
+<span className="text-body-sm text-muted-foreground">Updated 2h ago</span>
+```
+
+On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's line height and letter spacing, including `leading-none`; see "Change a role" below. AppShell's own components still use the stock utilities (`text-sm`, `font-medium`, and so on) today. They will move to the roles in later changes, so the two sets can appear side by side for now.
+
+**Rules**
+
+- **A role carries no color.** Set the color with a token such as `text-muted-foreground`.
+- **A role does not choose the HTML element.** Pick `h2`, `p`, or `span` from the document structure, not from the size.
+- **A role sets weight and letter spacing on its own element.** It does not inherit them from a parent. Put an emphasis or tracking class on the element that has the role, not on its parent.
+- **Four modifiers may be combined with a role.** All are stock Tailwind utilities:
+  - Compact line height: `leading-none`. Use it only for single-line text, such as a card title. Write it after the role when you merge with `cn()`.
+  - Tabular figures: `tabular-nums`.
+  - Emphasis on inline text: `font-medium` or `font-semibold`.
+  - Uppercase: `uppercase`.
+- **Do not combine a role with other `leading-*`, `tracking-*`, or `text-[Npx]` values.** If none of the roles fits, use the nearest role.
+- **12px is the minimum size.** Do not use smaller text.
+- **`code-sm` needs `font-mono`.** The role sets size, line height, weight, and letter spacing, but a role cannot set the font family.
+- **Use the relaxed variants for long text only.** For labels, table cells, and other short text, use the regular roles.
+
 Always use `tabular-nums` for numbers that stack in a column — without it, digits jitter between rows.
+
+**Change a role.** Each role is four CSS variables named `--app-shell-type-<role>-<size|line-height|weight|letter-spacing>`. Override them on `:root` to change a role for the whole app. Typography has no dark variant, so one override applies to light and dark mode.
+
+```css
+:root {
+  --app-shell-type-heading-lg-size: 1.75rem;
+  --app-shell-type-heading-lg-line-height: calc(36 / 28);
+}
+```
+
+The `cream` and `bloom` palettes set `line-height` and `letter-spacing` on `h1` to `h6`. These rules are outside any `@layer`, so they win over a role utility, and over any `leading-*` or `tracking-*` class, on those elements. Under these palettes, an `h1` to `h6` element takes its line height (1.2) and letter spacing (`-0.03em`) from the palette. This includes `leading-none`: `<h3 className="text-heading-md leading-none">` has a line height of 1.2, while a `div` with the same classes has 1.0. Font size and weight still come from the role. The `default` palette has no such rule.
+
+**`tailwind-merge`.** AppShell's `cn()` keeps a role together with a text color class, for example when you pass `className="text-label-md text-muted-foreground"` to an AppShell component. It cannot replace a size that a component sets itself, because component classes carry the internal `astw:` prefix (see "Why a plain utility can't override an AppShell default" below). If your app has its own `cn()` built on `tailwind-merge`, register the role names. Without this, `twMerge("text-label-md text-muted-foreground")` removes the role and keeps only the color.
+
+```ts
+import { extendTailwindMerge } from "tailwind-merge";
+
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        {
+          text: [
+            "heading-lg",
+            "heading-md",
+            "heading-sm",
+            "body-md",
+            "body-sm",
+            "body-md-relaxed",
+            "body-sm-relaxed",
+            "label-md",
+            "label-sm",
+            "code-sm",
+          ],
+        },
+      ],
+    },
+  },
+});
+```
 
 ### Radius
 
@@ -332,12 +526,12 @@ Never invent a z value — `z-index: 9999` is always wrong. Popups and overlays 
 
 **AppShell exports no `Icon` component and defines no `--icon-*` tokens.** Icons come from [`lucide-react`](https://lucide.dev), which AppShell already depends on. Size them with Tailwind, pairing icon size to the adjacent text:
 
-| Text size          | Icon class |
-| ------------------ | ---------- |
-| `text-xs`          | `size-3`   |
-| `text-sm`          | `size-4`   |
-| `text-lg`          | `size-5`   |
-| `text-2xl` (title) | `size-6`   |
+| Text size                                                           | Icon class |
+| ------------------------------------------------------------------- | ---------- |
+| 12px: `text-xs`, `text-body-sm`, `text-label-sm`, `text-code-sm`    | `size-3`   |
+| 14px: `text-sm`, `text-body-md`, `text-label-md`, `text-heading-sm` | `size-4`   |
+| 18px: `text-lg`, `text-heading-md`                                  | `size-5`   |
+| 24px (title): `text-2xl`, `text-heading-lg`                         | `size-6`   |
 
 ```tsx
 import { Check } from "lucide-react";
@@ -462,12 +656,12 @@ Write **plain Tailwind utilities** in your application code. Three rules cover e
 </div>
 ```
 
-When no prop exists and you genuinely have to override a value a component sets, add Tailwind's [importance modifier](https://tailwindcss.com/docs/styling-with-utility-classes#important-modifier) — a trailing `!`. It is the last resort, not the first: a plain utility silently loses (see below), and `!` is what the pattern catalogue uses for the one documented case, zeroing a card's padding so a table can sit flush inside it:
+When no prop exists and you genuinely have to override a value a component sets, add Tailwind's [importance modifier](https://tailwindcss.com/docs/styling-with-utility-classes#important-modifier) — a trailing `!`. It is the last resort, not the first: a plain utility silently loses (see below). Check for a prop before reaching for it. Sitting a table flush inside a card, for example, used to need `className="px-0!"`; it is now a prop:
 
 ```tsx
 <Card.Root>
   <Card.Header title="Line items" />
-  <Card.Content className="px-0!">
+  <Card.Content padding="none">
     <Table.Root>{/* … */}</Table.Root>
   </Card.Content>
 </Card.Root>
@@ -494,6 +688,8 @@ This is the reason rule 3 sends you to props rather than to a more specific clas
 <Card.Content className="px-0" />
 ```
 
+(For this particular case, use `padding="none"`.)
+
 State variants make it worse rather than better: `Button`'s `ghost` variant sets a hover color, and a `:hover` rule outranks an unprefixed utility on **specificity**, not merely order — so a plain `text-destructive` on a ghost button is red only until the pointer reaches it. `variant="destructive"` is the supported way to express that; where no such prop exists, `!` wins in every state because importance beats specificity.
 
 ### Styling by state (data attributes)
@@ -503,7 +699,7 @@ AppShell's UI components support data-attribute-based styling, following the [Ba
 ```css
 /* Style a component based on its state */
 .SwitchThumb[data-checked] {
-  background-color: var(--status-completed);
+  background-color: var(--success-solid);
 }
 
 .MenuItem[data-highlighted] {
@@ -574,9 +770,10 @@ These are visual-composition rules every screen must follow, regardless of patte
 | Intent                             | Pick                                                                                                    |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Destructive action (delete, void)  | `Button variant="destructive"`; `bg-destructive` on custom surfaces; confirm in a dialog at `shadow-lg` |
-| Non-blocking caution               | `Badge variant="warning"`, or `bg-status-attention`                                                     |
-| Confirmation / completed state     | `Badge variant="success"`, or `bg-status-completed`                                                     |
-| Neutral callout                    | `Badge variant="info"`, or the `Alert` component                                                        |
+| Non-blocking caution               | `Badge variant="warning"`, or `bg-warning-surface text-warning-text`                                    |
+| Confirmation / completed state     | `Badge variant="success"`, or `bg-success-surface text-success-text`                                    |
+| Informational callout              | `Badge variant="info"`, or `Alert variant="info"`                                                       |
+| Neutral callout                    | `Badge variant="neutral"`, or `Alert variant="neutral"`                                                 |
 | Persistent panel (sidebar, header) | `shadow-sm`                                                                                             |
 | Hovered / sticky surface           | `shadow-md`                                                                                             |
 | Popover / menu / tooltip           | `bg-popover`, `shadow-md`, `duration-150`                                                               |
@@ -584,5 +781,5 @@ These are visual-composition rules every screen must follow, regardless of patte
 | Hover / focus transition           | `duration-150 ease-out`                                                                                 |
 | State change (toggle, select)      | `duration-200 ease-in-out`                                                                              |
 | Two-column detail at <1024         | right column collapses below main — do not override                                                     |
-| Inline ID, code, table number      | `font-mono text-xs` (identifiers) / `tabular-nums` (figures)                                            |
-| Timestamp, label, subtle metadata  | `text-xs text-muted-foreground`                                                                         |
+| Inline ID, code, table number      | `font-mono text-code-sm` (identifiers) / `text-label-md tabular-nums` (figures)                         |
+| Timestamp, label, subtle metadata  | `text-body-sm text-muted-foreground`                                                                    |

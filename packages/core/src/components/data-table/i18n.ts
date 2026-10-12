@@ -45,6 +45,20 @@ export const dataTableLabels = defineI18nLabels({
     selectAll: "Select all rows",
     selectRow: "Select row",
 
+    // Selection actions bar (DataTable.Footer while rows are selected). The
+    // Clear button's accessible name extends its visible text, so it is still
+    // unambiguous when read outside the bar.
+    selectionActionsLabel: "Bulk actions",
+    // Shorter than Pagination's "N of M row(s) selected": the bar shares the
+    // footer line with the pagination controls.
+    selectionCount: (props: { selected: number; total: number | null }) =>
+      props.total === null
+        ? `${props.selected} selected`
+        : `${props.selected} of ${props.total} selected`,
+    selectionMoreActions: "More actions",
+    selectionClear: "Clear",
+    selectionClearLabel: "Clear selection",
+
     // Row expansion. `label` is a bare record identity from
     // `rowExpansion.getLabel` (e.g. "INV-1001"); each locale owns the word
     // order, and the unnamed fallback, so the accessible name reads naturally.
@@ -155,6 +169,15 @@ export const dataTableLabels = defineI18nLabels({
 
     selectAll: "全行を選択",
     selectRow: "行を選択",
+
+    selectionActionsLabel: "一括操作",
+    selectionCount: (props: { selected: number; total: number | null }) =>
+      props.total === null
+        ? `${props.selected} 行を選択中`
+        : `${props.total} 行中 ${props.selected} 行を選択中`,
+    selectionMoreActions: "その他の操作",
+    selectionClear: "解除",
+    selectionClearLabel: "選択を解除",
 
     // Row expansion
     expandColumnHeader: "展開",

@@ -994,14 +994,24 @@ export function LineItemsTable<T extends LineItemsRowData>({
                 totalsRow(lines)
               ) : (
                 <tr style={{ height: rowHeight }}>
-                  {showSelection ? <td className={cn(bodyCellClasses, "astw:px-0")} /> : null}
-                  {canReorder ? <td className={cn(bodyCellClasses, "astw:px-0")} /> : null}
+                  {showSelection ? (
+                    <td
+                      className={cn(bodyCellClasses, "astw:px-0", pinClasses(layout.selection))}
+                      style={pinStyle(layout.selection)}
+                    />
+                  ) : null}
+                  {canReorder ? (
+                    <td
+                      className={cn(bodyCellClasses, "astw:px-0", pinClasses(layout.grip))}
+                      style={pinStyle(layout.grip)}
+                    />
+                  ) : null}
                   {layout.columns.map((c) => (
                     <td
                       key={c.id}
                       className={cn(
                         bodyCellClasses,
-                        "astw:px-2",
+                        "astw:px-2 astw:bg-card",
                         alignClasses[c.align],
                         pinClasses(c.placement),
                       )}
@@ -1010,8 +1020,15 @@ export function LineItemsTable<T extends LineItemsRowData>({
                       {totalsRenderer?.(lines as LineItemsRowData[])[c.id] ?? null}
                     </td>
                   ))}
-                  {rowActions ? <td className={cn(bodyCellClasses, "astw:px-0")} /> : null}
-                  {layout.needsSpacer ? <td className={bodyCellClasses} /> : null}
+                  {rowActions ? (
+                    <td
+                      className={cn(bodyCellClasses, "astw:px-0", pinClasses(layout.actions))}
+                      style={pinStyle(layout.actions)}
+                    />
+                  ) : null}
+                  {layout.needsSpacer ? (
+                    <td className={cn(bodyCellClasses, "astw:bg-card")} />
+                  ) : null}
                 </tr>
               )}
             </tfoot>

@@ -151,8 +151,6 @@ const fields = [
       placeholder: "Pick a product",
     },
     width: 200,
-    // Hover the column to read the full SKU + product without truncation.
-    hoverExpandWidth: 320,
     pin: "left",
     search: (l, q) => l.sku.toLowerCase().includes(q.toLowerCase()),
     sort: { comparator: (a, b) => a.sku.localeCompare(b.sku) },
@@ -296,7 +294,7 @@ const LineItemsDemoPage = () => {
                 lineItems.isDirty ? "Unsaved changes" : "All saved"
               }`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-end gap-2">
                 <LineItems.SearchToggle placeholder="Search SKU or product" />
                 <Button variant="outline" size="sm" onClick={() => alert("Import from CSV")}>
                   <Upload className="size-4" />
@@ -356,7 +354,7 @@ const LineItemsDemoPage = () => {
                     if (item) addFromCatalog(item);
                   }}
                 />
-                <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+                <Button variant="outline" onClick={() => setPickerOpen(true)}>
                   Bulk add
                 </Button>
               </LineItems.AddRow>

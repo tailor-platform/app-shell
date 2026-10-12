@@ -93,7 +93,7 @@ const JournalSide = ({
         title={title}
         description={`${value.allLines.length} lines · ${money(sum(value.allLines))}`}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2">
           <Button variant="outline" size="sm" onClick={() => value.addLine(emptyLine)}>
             Add line
           </Button>

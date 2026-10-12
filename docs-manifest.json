@@ -1040,9 +1040,9 @@
       ],
       "hashes": {
         "typeSurface": "e6973641bac22653",
-        "outline": "6310af3fbd8c0623",
+        "outline": "453207186e31f44c",
         "snapshot": "71ed6fb64efd94e1",
-        "outputMd": "3d7bedf76b4443d6",
+        "outputMd": "073e757cdcfc4f02",
         "examples": null
       }
     },
@@ -1748,7 +1748,7 @@
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "66696139a46fabb0",
-    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "3d7bedf76b4443d6",
+    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "073e757cdcfc4f02",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "ae287e2bb5abc1c6",

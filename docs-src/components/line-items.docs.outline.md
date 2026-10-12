@@ -188,14 +188,14 @@ Numeric fields normalize strings to numbers, round by `decimals`, and compare wi
 
 ## LineItems.Table Props
 
-| Prop          | Type                        | Default | Description                                                  |
-| ------------- | --------------------------- | ------- | ------------------------------------------------------------ |
-| `rowHeight`   | `number`                    | `36`    | Uniform row height, which the virtualizer's math depends on. |
-| `maxHeight`   | `number \| string`          | `480`   | Scroll viewport height.                                      |
-| `virtualized` | `boolean`                   | `true`  | Set `false` to mount every row.                              |
-| `rowActions`  | `(row: T) => ReactNode`     | –       | Trailing pinned column of per-row controls.                  |
-| `totalsRow`   | `(lines: T[]) => ReactNode` | –       | Sticky `<tfoot>` row, column-aligned with the grid.          |
-| `emptyState`  | `ReactNode`                 | –       | Shown when the document has no lines.                        |
+| Prop            | Type                        | Default              | Description                                                                        |
+| --------------- | --------------------------- | -------------------- | ---------------------------------------------------------------------------------- |
+| `rowHeight`     | `number`                    | `36`                 | Uniform row height, which the virtualizer's math depends on.                       |
+| `maxBodyHeight` | `number \| string`          | `"min(70vh, 720px)"` | Height the grid scrolls within. Ignored in fullscreen, where it fills the overlay. |
+| `virtualized`   | `boolean`                   | `true`               | Set `false` to mount every row.                                                    |
+| `rowActions`    | `(row: T) => ReactNode`     | –                    | Trailing pinned column of per-row controls.                                        |
+| `totalsRow`     | `(lines: T[]) => ReactNode` | –                    | Sticky `<tfoot>` row, column-aligned with the grid.                                |
+| `emptyState`    | `ReactNode`                 | –                    | Shown when the document has no lines.                                              |
 
 `LineItems.Table` cannot infer `T` from `Root`, so annotate the callback parameters (`rowActions={(row: POLine) => …}`) or pass the type argument explicitly (`<LineItems.Table<POLine> … />`).
 

@@ -120,7 +120,7 @@ const SCROLLBAR_STYLES = `
  */
 export function LineItemsTable<T extends LineItemsRowData>({
   rowHeight = 36,
-  maxBodyHeight = "min(70vh, 720px)",
+  maxBodyHeight = "min(70vh, 600px)",
   virtualized = true,
   rowActions,
   rowActionsWidth = ACTIONS_COLUMN_WIDTH,

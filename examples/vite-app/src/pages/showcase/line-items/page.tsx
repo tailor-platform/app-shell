@@ -230,7 +230,61 @@ const fields = [
 
 const MODES: LineItemsMode[] = ["edit", "view", "amend"];
 
+// 🧪 Dummy Data: Replace with real data later — a long PO for checking scroll,
+// virtualization and pinned columns at volume.
+const LARGE_LINE_COUNT = 1000;
+const NOTES = [
+  "",
+  "",
+  "",
+  "Short shipped",
+  "Backordered until next week",
+  "Damaged carton on arrival",
+];
+
+function generateLines(count: number): PurchaseOrderLine[] {
+  return Array.from({ length: count }, (_, i) => {
+    const item = CATALOG[i % CATALOG.length]!;
+    const quantity = 1 + ((i * 37) % 240);
+    const day = 1 + (i % 28);
+    return {
+      lineRef: `pol-${2000 + i}`,
+      sku: item.sku,
+      description: item.name,
+      uom: UOM_OPTIONS[i % UOM_OPTIONS.length]!.value,
+      quantity,
+      unitPrice: item.price,
+      receivedQty: i % 5 === 0 ? Math.floor(quantity * 0.75) : quantity,
+      expected: `2026-06-${String(day).padStart(2, "0")}`,
+      note: NOTES[i % NOTES.length]!,
+    };
+  });
+}
+
+const LARGE_LINES = generateLines(LARGE_LINE_COUNT);
+
 const LineItemsDemoPage = () => {
+  const [large, setLarge] = useState(false);
+  // Uncontrolled `data` only seeds the hook, so swapping datasets remounts it.
+  return (
+    <PurchaseOrderDemo
+      key={large ? "large" : "small"}
+      initialLines={large ? LARGE_LINES : INITIAL_LINES}
+      large={large}
+      onToggleLarge={() => setLarge((v) => !v)}
+    />
+  );
+};
+
+const PurchaseOrderDemo = ({
+  initialLines,
+  large,
+  onToggleLarge,
+}: {
+  initialLines: PurchaseOrderLine[];
+  large: boolean;
+  onToggleLarge: () => void;
+}) => {
   const [mode, setMode] = useState<LineItemsMode>("edit");
   const [ordering, setOrdering] = useState<"sort" | "manual">("manual");
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -239,7 +293,7 @@ const LineItemsDemoPage = () => {
 
   const lineItems = useLineItems<PurchaseOrderLine>({
     fields,
-    data: INITIAL_LINES,
+    data: initialLines,
     mode,
     ordering,
     selection: true,
@@ -282,6 +336,9 @@ const LineItemsDemoPage = () => {
             onClick={() => setOrdering(ordering === "manual" ? "sort" : "manual")}
           >
             {ordering === "manual" ? "Manual order" : "Sorted"}
+          </Button>
+          <Button variant={large ? "default" : "outline"} size="sm" onClick={onToggleLarge}>
+            {large ? `${LARGE_LINE_COUNT.toLocaleString()} lines` : "Load 1,000 lines"}
           </Button>
         </div>
 

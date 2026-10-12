@@ -35,6 +35,8 @@ const editorClasses = cn(
   // `dark:bg-input/30`, and tailwind-merge only dedupes within one variant, so a
   // bare `bg-transparent` leaves the dark fill painted over the cell.
   "astw:h-full astw:min-h-0 astw:w-full astw:min-w-0 astw:flex-1 astw:border-0 astw:bg-transparent astw:dark:bg-transparent astw:px-2 astw:text-sm astw:leading-none astw:text-foreground",
+  // Clipped values end in an ellipsis until focused, then scroll as usual.
+  "astw:text-ellipsis",
   "astw:rounded-none astw:shadow-none astw:outline-none astw:ring-0",
   "astw:focus:outline-none astw:focus:shadow-none astw:focus:ring-0 astw:focus:border-transparent",
   "astw:focus-visible:outline-none astw:focus-visible:shadow-none astw:focus-visible:ring-0 astw:focus-visible:border-transparent",
@@ -236,7 +238,7 @@ function LineItemsCellInner<T extends LineItemsRowData>({
             alignClasses[align],
           )}
         >
-          {field.render(row)}
+          <span className="astw:min-w-0 astw:truncate">{field.render(row)}</span>
         </span>
         {grip}
       </>

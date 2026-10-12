@@ -61,10 +61,10 @@ export type LineItemsTableProps<T extends LineItemsRowData> = {
 };
 
 const headCellClasses =
-  "astw:h-10 astw:bg-card astw:px-2 astw:text-left astw:align-middle astw:text-xs astw:font-medium astw:text-muted-foreground astw:whitespace-nowrap astw:border-b astw:border-border";
+  "astw:h-10 astw:bg-card astw:px-2 astw:text-left astw:align-middle astw:text-xs astw:font-medium astw:text-muted-foreground astw:whitespace-nowrap astw:overflow-hidden astw:text-ellipsis astw:border-b astw:border-r astw:border-border";
 
 const bodyCellClasses =
-  "astw:relative astw:h-9 astw:p-0 astw:align-middle astw:text-sm astw:whitespace-nowrap astw:overflow-hidden astw:border-b astw:border-r astw:border-border";
+  "astw:relative astw:h-9 astw:p-0 astw:align-middle astw:text-sm astw:whitespace-nowrap astw:overflow-hidden astw:text-ellipsis astw:border-b astw:border-r astw:border-border";
 
 const alignClasses = {
   left: "astw:text-left",
@@ -688,9 +688,9 @@ export function LineItemsTable<T extends LineItemsRowData>({
                       <button
                         type="button"
                         onClick={() => lineItems.toggleSort(c.id)}
-                        className="astw:inline-flex astw:cursor-pointer astw:items-center astw:gap-1 astw:font-medium astw:outline-none astw:hover:text-foreground astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50"
+                        className="astw:inline-flex astw:max-w-full astw:cursor-pointer astw:items-center astw:gap-1 astw:font-medium astw:outline-none astw:hover:text-foreground astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50"
                       >
-                        {c.field.label}
+                        <span className="astw:min-w-0 astw:truncate">{c.field.label}</span>
                         <SortIcon
                           className={cn("astw:size-3.5", !sorted && "astw:opacity-40")}
                           aria-hidden="true"

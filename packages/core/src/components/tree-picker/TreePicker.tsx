@@ -48,9 +48,9 @@ import { useTreeSelection } from "./use-tree-selection";
  * typing in the search box).
  *
  * @example
- * ### Bulk-adding document lines
- * The picker stays decoupled from any line-items model — the consumer's own
- * glue maps the picked leaves into whatever their document needs:
+ * ### Bulk-adding catalog items
+ * The picker knows nothing about what the picks are for — the consumer's own
+ * glue maps the picked leaves into whatever their screen needs:
  * ```tsx
  * type Variant = { name: string; sku: string; unitPrice: number; available: number };
  *
@@ -66,7 +66,7 @@ import { useTreeSelection } from "./use-tree-selection";
  *   matchesSearch={({ node, query }) =>
  *     node.data.name.toLowerCase().includes(query.toLowerCase())
  *   }
- *   onCommit={(picks) => lineItems.addLines(picks.map(toLine))}
+ *   onCommit={(picks) => addToOrder(picks.map((node) => node.data))}
  * />
  * ```
  *

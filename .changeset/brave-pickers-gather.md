@@ -17,10 +17,10 @@ import { TreePicker } from "@tailor-platform/app-shell";
   renderRow={({ node }) => node.data.name}
   renderMetric={({ node }) => (node.children ? null : `$${node.data.price.toFixed(2)}`)}
   matchesSearch={({ node, query }) => node.data.name.toLowerCase().includes(query.toLowerCase())}
-  onCommit={(picked) => lineItems.addLines(picked.map((n) => ({ sku: n.data.sku, quantity: 1 })))}
+  onCommit={(picked) => addToOrder(picked.map((n) => n.data))}
 />;
 ```
 
-It is decoupled from `LineItems` and works for any multi-select-from-tree flow. Pair it with `useLineItems().addLines()` to insert every pick in a single render.
+It is generic and standalone: `data` is opaque to the picker, and `onCommit` hands back the picked leaves for the app to use however it needs.
 
 Built-in labels are localized (English and Japanese) through the app locale; any label prop overrides them.

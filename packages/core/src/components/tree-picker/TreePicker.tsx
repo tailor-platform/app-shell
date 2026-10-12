@@ -88,7 +88,10 @@ import { useTreeSelection } from "./use-tree-selection";
  * />
  * ```
  */
-function TreePicker<T>({
+// Exported inline: a separate `export { TreePicker }` makes the declaration
+// bundler emit the displayName namespace twice (exported and local), which
+// breaks consumers compiling with skipLibCheck: false.
+export function TreePicker<T>({
   open,
   onOpenChange,
   title,
@@ -260,5 +263,3 @@ function TreePicker<T>({
   );
 }
 TreePicker.displayName = "TreePicker";
-
-export { TreePicker };

@@ -298,37 +298,42 @@ const PurchaseOrderDemo = ({
     ordering,
     // 🔽 Bulk actions: the same footer bar DataTable shows while rows are selected.
     // Block-bodied handlers keep TypeScript from inferring `lineItems` from itself.
-    selectionActions: [
-      {
-        id: "receive",
-        label: "Mark received",
-        icon: <PackageCheck className="size-4" />,
-        // Only lines still short count — the button reads "Mark received (n)".
-        canApply: (line) => line.receivedQty < line.quantity,
-        onClick: (rows) => {
-          lineItems.updateLines(
-            rows.map((line) => ({ lineRef: line.lineRef, patch: { receivedQty: line.quantity } })),
-          );
+    selection: {
+      actions: [
+        {
+          id: "receive",
+          label: "Mark received",
+          icon: <PackageCheck className="size-4" />,
+          // Only lines still short count — the button reads "Mark received (n)".
+          canApply: (line) => line.receivedQty < line.quantity,
+          onClick: (rows) => {
+            lineItems.updateLines(
+              rows.map((line) => ({
+                lineRef: line.lineRef,
+                patch: { receivedQty: line.quantity },
+              })),
+            );
+          },
         },
-      },
-      {
-        id: "duplicate",
-        label: "Duplicate",
-        icon: <Copy className="size-4" />,
-        onClick: (rows) => {
-          lineItems.addLines(rows.map(({ lineRef: _lineRef, ...line }) => line));
+        {
+          id: "duplicate",
+          label: "Duplicate",
+          icon: <Copy className="size-4" />,
+          onClick: (rows) => {
+            lineItems.addLines(rows.map(({ lineRef: _lineRef, ...line }) => line));
+          },
         },
-      },
-      {
-        id: "remove",
-        label: "Remove",
-        icon: <Trash2 className="size-4" />,
-        variant: "destructive",
-        onClick: (rows) => {
-          lineItems.removeLines(rows.map((line) => line.lineRef));
+        {
+          id: "remove",
+          label: "Remove",
+          icon: <Trash2 className="size-4" />,
+          variant: "destructive",
+          onClick: (rows) => {
+            lineItems.removeLines(rows.map((line) => line.lineRef));
+          },
         },
-      },
-    ],
+      ],
+    },
     onMetadataCommit: (event) =>
       setMetadataLog((log) =>
         [`${event.lineRef}: note → ${JSON.stringify(event.patch.note)}`, ...log].slice(0, 5),
@@ -499,7 +504,7 @@ const PurchaseOrderDemo = ({
           items={CATALOG_TREE}
           rowLabel="Product name"
           metricLabel="Unit price"
-          renderRow={(node) => (
+          renderRow={({ node }) => (
             <span className="flex flex-col">
               <span className="text-sm">{node.data.name}</span>
               {node.children ? null : (
@@ -507,9 +512,9 @@ const PurchaseOrderDemo = ({
               )}
             </span>
           )}
-          renderMetric={(node) => (node.children ? null : money(node.data.price))}
-          matchesSearch={(node, q) =>
-            `${node.data.sku} ${node.data.name}`.toLowerCase().includes(q.toLowerCase())
+          renderMetric={({ node }) => (node.children ? null : money(node.data.price))}
+          matchesSearch={({ node, query }) =>
+            `${node.data.sku} ${node.data.name}`.toLowerCase().includes(query.toLowerCase())
           }
           ctaLabel={(n) => (n === 0 ? "Add items" : `Add ${n} item${n === 1 ? "" : "s"}`)}
           onCommit={(picked) => {

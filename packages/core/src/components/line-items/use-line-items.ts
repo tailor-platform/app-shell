@@ -42,7 +42,7 @@ type DirtyState<T extends LineItemsRowData> = {
  * Pair with `<LineItems.Root value={lineItems}>` to render, or drive the
  * mutations directly from your own controls.
  */
-/** Stable default, so an omitted `selectionActions` never changes identity. */
+/** Stable default, so a table without bulk actions never changes identity. */
 const EMPTY_ACTIONS: never[] = [];
 
 export function useLineItems<T extends LineItemsRowData>(
@@ -56,10 +56,11 @@ export function useLineItems<T extends LineItemsRowData>(
     mode: modeProp = "edit",
     ordering = "sort",
     selection: selectionOption = false,
-    selectionActions = EMPTY_ACTIONS,
     onMetadataCommit,
   } = options;
-  const selection = selectionOption || selectionActions.length > 0;
+  const selection = selectionOption !== false;
+  const selectionActions =
+    typeof selectionOption === "object" ? selectionOption.actions : EMPTY_ACTIONS;
 
   const controlled = controlledLines !== undefined;
   const seed = controlled ? controlledLines : defaultLines;

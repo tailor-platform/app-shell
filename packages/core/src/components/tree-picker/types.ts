@@ -37,9 +37,9 @@ export interface TreePickerProps<T> {
    * expand/collapse caret, the indentation, and the metric column — this only
    * needs to return the label/body for the node.
    */
-  renderRow(node: TreePickerNode<T>, depth: number): React.ReactNode;
+  renderRow(row: { node: TreePickerNode<T>; depth: number }): React.ReactNode;
   /** Optional right-aligned metric column (e.g. "Total available"). */
-  renderMetric?(node: TreePickerNode<T>, depth: number): React.ReactNode;
+  renderMetric?(row: { node: TreePickerNode<T>; depth: number }): React.ReactNode;
   /** Header label above the `renderRow` column. Default: `"Item"`. */
   rowLabel?: React.ReactNode;
   /** Header label above the `renderMetric` column. Omitted when absent. */
@@ -50,7 +50,7 @@ export interface TreePickerProps<T> {
    * **override it whenever `data` is an object**, otherwise every node
    * stringifies to `"[object Object]"` and the query matches nothing.
    */
-  matchesSearch?(node: TreePickerNode<T>, query: string): boolean;
+  matchesSearch?(search: { node: TreePickerNode<T>; query: string }): boolean;
   /** Slot rendered to the right of the search input (e.g. a category filter button). */
   filterSlot?: React.ReactNode;
   /** Receives the selected **leaf** nodes in DFS tree order. */

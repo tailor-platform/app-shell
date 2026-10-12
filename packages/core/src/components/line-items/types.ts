@@ -193,26 +193,41 @@ export type LineItemsField<T extends LineItemsRowData> = {
   flex?: boolean;
 };
 
-export type UseLineItemsOptions<T extends LineItemsRowData> = {
+/**
+ * Who owns the rows. Uncontrolled: the hook, seeded once from `defaultLines`
+ * (`onLinesChange` may still observe edits). Controlled: the parent, through
+ * `lines` + `onLinesChange` — required together, since `lines` without a
+ * handler would silently drop every edit.
+ */
+type LineItemsRowSource<T extends LineItemsRowData> =
+  | {
+      /** Uncontrolled seed rows, also used as the dirty-tracking baseline. Read once on mount. */
+      defaultLines?: readonly T[];
+      lines?: never;
+      /** Observes each mutation with the new rows. */
+      onLinesChange?: (next: T[]) => void;
+    }
+  | {
+      /** Controlled rows. */
+      lines: readonly T[];
+      /** Called once per mutation with the new rows; feed them back into `lines`. */
+      onLinesChange: (next: T[]) => void;
+      defaultLines?: never;
+    };
+
+export type UseLineItemsOptions<T extends LineItemsRowData> = LineItemsRowSource<T> & {
   /** Column schema. Build with `createLineItemHelper<T>().field({ … })`. */
   fields: LineItemsField<T>[];
-  /** Uncontrolled seed rows, also used as the dirty-tracking baseline. */
-  defaultLines?: readonly T[];
-  /** Controlled rows. When set, `defaultLines` is ignored. */
-  lines?: readonly T[];
-  onLinesChange?: (next: T[]) => void;
   /** Defaults to `"edit"`. */
   mode?: LineItemsMode;
   /** Defaults to `"sort"`. Pass `"manual"` to enable drag-reordering. */
   ordering?: LineItemsOrderingMode;
-  /** Enables the row selection checkbox column. */
-  selection?: boolean;
   /**
-   * Bulk actions shown at the foot of `LineItems.Table` while lines are
-   * selected — the same bar, and the same `SelectionAction` shape, as
-   * DataTable. A non-empty array also enables selection.
+   * `true` adds the row-selection checkbox column. `{ actions }` also shows a
+   * bulk-action bar at the foot of `LineItems.Table` while lines are selected —
+   * the same bar, and the same `SelectionAction` shape, as DataTable.
    */
-  selectionActions?: SelectionAction<T>[];
+  selection?: boolean | { actions: SelectionAction<T>[] };
   /** Receives edits to `commit: "metadata"` fields, which bypass the change-set. */
   onMetadataCommit?: (event: LineItemsMetadataCommit<T>) => void;
 };

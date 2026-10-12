@@ -61,9 +61,9 @@ import { useTreeSelection } from "./use-tree-selection";
  *   rowLabel="Product name"
  *   metricLabel="Total available"
  *   items={catalog}
- *   renderRow={(node) => <span className="astw:font-medium">{node.data.name}</span>}
- *   renderMetric={(node) => node.data.available}
- *   matchesSearch={(node, query) =>
+ *   renderRow={({ node }) => <span className="astw:font-medium">{node.data.name}</span>}
+ *   renderMetric={({ node }) => node.data.available}
+ *   matchesSearch={({ node, query }) =>
  *     node.data.name.toLowerCase().includes(query.toLowerCase())
  *   }
  *   onCommit={(picks) => lineItems.addLines(picks.map(toLine))}
@@ -83,7 +83,7 @@ import { useTreeSelection } from "./use-tree-selection";
  *   onOpenChange={setOpen}
  *   items={data ?? []}
  *   emptyText={isLoading ? "Loading…" : "No matching items."}
- *   renderRow={(node) => node.data.name}
+ *   renderRow={({ node }) => node.data.name}
  *   onCommit={handleCommit}
  * />
  * ```

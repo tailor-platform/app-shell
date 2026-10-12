@@ -54,9 +54,11 @@ function Harness({
         items={items}
         rowLabel="Product Name"
         metricLabel={withMetric ? "Total available" : undefined}
-        renderRow={(node) => <span>{node.data.name}</span>}
-        renderMetric={withMetric ? (node) => <span>{node.data.available}</span> : undefined}
-        matchesSearch={(node, q) => node.data.name.toLowerCase().includes(q.toLowerCase())}
+        renderRow={({ node }) => <span>{node.data.name}</span>}
+        renderMetric={withMetric ? ({ node }) => <span>{node.data.available}</span> : undefined}
+        matchesSearch={({ node, query }) =>
+          node.data.name.toLowerCase().includes(query.toLowerCase())
+        }
         onCommit={onCommit}
         ctaLabel={ctaLabel}
         filterSlot={filterSlot}

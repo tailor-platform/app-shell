@@ -145,12 +145,12 @@ function TreePickerRow<T>({
         )}
 
         <div className="astw:flex astw:min-w-0 astw:flex-1 astw:items-center">
-          {renderRow(node, depth)}
+          {renderRow({ node, depth })}
         </div>
 
         {renderMetric ? (
           <div className="astw:text-muted-foreground astw:shrink-0 astw:tabular-nums">
-            {renderMetric(node, depth)}
+            {renderMetric({ node, depth })}
           </div>
         ) : null}
       </div>

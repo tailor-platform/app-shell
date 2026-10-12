@@ -1,6 +1,8 @@
 import * as React from "react";
 import { Maximize2, Minimize2, Search as SearchIcon } from "lucide-react";
 
+import { useBeforeUnload, useBlocker } from "react-router";
+
 import { Button } from "@/components/button";
 import { cn } from "@/lib/utils";
 import { useLineItemsT } from "./i18n";
@@ -313,6 +315,39 @@ const SHAKE_KEYFRAMES: Keyframe[] = [
   { transform: "translateX(0)" },
 ];
 
+/**
+ * Holds the user on the page while the document has unsaved edits. Mounted by
+ * DirtyBar only while dirty and `warnOnNav` is set, so a table without the
+ * guard never needs a router. React Router's blocker covers every in-app
+ * navigation — links, `navigate()`, back/forward — and needs the data router
+ * AppShell provides; the browser's own prompt covers closing or reloading.
+ */
+function LineItemsNavGuard({ onBlocked }: { onBlocked: () => void }) {
+  // Only leaving the page counts: a search-param update on the same route is
+  // not navigation away from the document.
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) => currentLocation.pathname !== nextLocation.pathname,
+  );
+  const onBlockedRef = React.useRef(onBlocked);
+  onBlockedRef.current = onBlocked;
+
+  React.useEffect(() => {
+    if (blocker.state !== "blocked") return;
+    // Stay put: the user resolves it with Save or Discard, then leaves.
+    blocker.reset();
+    onBlockedRef.current();
+  }, [blocker]);
+
+  useBeforeUnload(
+    React.useCallback((event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    }, []),
+  );
+
+  return null;
+}
+
 export type LineItemsDirtyBarProps = {
   onSave?: (changeSet: LineItemsChangeSet) => void;
   onDiscard?: () => void;
@@ -320,11 +355,11 @@ export type LineItemsDirtyBarProps = {
   saveLabel?: React.ReactNode;
   discardLabel?: React.ReactNode;
   /**
-   * Intercepts in-app link clicks and browser unload while the document is
-   * dirty, shaking the bar instead of letting the edits be lost. Links inside
-   * this document (and the card hosting it) are left alone. Navigation started
-   * from code, such as `navigate()` or the browser's back button, is not
-   * intercepted.
+   * While the document is dirty, keeps the user on the page: any in-app
+   * navigation to another route (links, `navigate()`, back/forward) is held and
+   * the bar shakes and takes focus instead; closing or reloading the tab shows
+   * the browser's prompt. Uses React Router's `useBlocker`, so it needs
+   * AppShell's router.
    */
   warnOnNav?: boolean;
   children?: (pendingCount: number) => React.ReactNode;
@@ -352,64 +387,23 @@ function LineItemsDirtyBar({
   const blockedTextRef = React.useRef(blockedText);
   blockedTextRef.current = blockedText;
 
-  React.useEffect(() => {
-    if (!warnOnNav || !isDirty) return;
-
-    const reduceMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-
-    /** Shakes the bar, announces why, and hands it focus so it can be resolved. */
-    const signalBlocked = () => {
-      const bar = barRef.current;
-      if (!bar) return;
-      if (!reduceMotion) {
-        bar.animate(SHAKE_KEYFRAMES, {
-          duration: 500,
-          easing: "cubic-bezier(0.36, 0.07, 0.19, 0.97)",
-        });
-      }
-      // Toggle through "" so repeating the same notice is announced again.
-      setBlockedNotice("");
-      requestAnimationFrame(() => setBlockedNotice(blockedTextRef.current));
-      // Save, never Discard: a reflexive second Enter must not throw the edits
-      // away. Without a Save button, the bar itself takes focus.
-      (bar.querySelector<HTMLElement>("[data-action=save]") ?? bar).focus();
-    };
-
-    const onClick = (event: MouseEvent) => {
-      if (event.defaultPrevented) return;
-      // Opening in a new tab or window doesn't leave the page.
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
-        return;
-      const target = event.target as HTMLElement | null;
-      if (!target) return;
-      // The dock's own controls, and anything inside this document or the card
-      // hosting it, are how the user resolves the dirty state — never block those.
-      if (target.closest("[data-slot=line-items-floating-dock]")) return;
-      const root = barRef.current?.closest<HTMLElement>("[data-slot=line-items]");
-      const host = root?.closest<HTMLElement>("[data-slot=card]") ?? root;
-      if (host?.contains(target)) return;
-      const anchor = target.closest("a[href]") as HTMLAnchorElement | null;
-      if (!anchor) return;
-      const href = anchor.getAttribute("href");
-      if (!href || href === "#") return;
-      if (anchor.target && anchor.target !== "_self") return;
-      event.preventDefault();
-      event.stopPropagation();
-      signalBlocked();
-    };
-
-    const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    };
-
-    document.addEventListener("click", onClick, true);
-    globalThis.addEventListener("beforeunload", onBeforeUnload);
-    return () => {
-      document.removeEventListener("click", onClick, true);
-      globalThis.removeEventListener("beforeunload", onBeforeUnload);
-    };
-  }, [isDirty, warnOnNav]);
+  /** Shakes the bar, announces why, and hands it focus so it can be resolved. */
+  const signalBlocked = React.useCallback(() => {
+    const bar = barRef.current;
+    if (!bar) return;
+    if (!globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      bar.animate(SHAKE_KEYFRAMES, {
+        duration: 500,
+        easing: "cubic-bezier(0.36, 0.07, 0.19, 0.97)",
+      });
+    }
+    // Toggle through "" so repeating the same notice is announced again.
+    setBlockedNotice("");
+    requestAnimationFrame(() => setBlockedNotice(blockedTextRef.current));
+    // Save, never Discard: a reflexive second Enter must not throw the edits
+    // away. Without a Save button, the bar itself takes focus.
+    (bar.querySelector<HTMLElement>("[data-action=save]") ?? bar).focus();
+  }, []);
 
   if (!isDirty) return null;
 
@@ -429,6 +423,7 @@ function LineItemsDirtyBar({
       <span className="astw:sr-only" aria-live="assertive">
         {blockedNotice}
       </span>
+      {warnOnNav ? <LineItemsNavGuard onBlocked={signalBlocked} /> : null}
       {children ? (
         children(pending)
       ) : (

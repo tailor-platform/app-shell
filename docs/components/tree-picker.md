@@ -38,12 +38,12 @@ const CATALOG: TreePickerNode<CatalogItem>[] = [
   onOpenChange={setOpen}
   title="Add items from catalog"
   items={CATALOG}
-  renderRow={(node) => node.data.name}
-  renderMetric={(node) => (node.children ? null : `$${node.data.price.toFixed(2)}`)}
+  renderRow={({ node }) => node.data.name}
+  renderMetric={({ node }) => (node.children ? null : `$${node.data.price.toFixed(2)}`)}
   rowLabel="Product"
   metricLabel="Unit price"
-  matchesSearch={(node, q) =>
-    `${node.data.sku} ${node.data.name}`.toLowerCase().includes(q.toLowerCase())
+  matchesSearch={({ node, query }) =>
+    `${node.data.sku} ${node.data.name}`.toLowerCase().includes(query.toLowerCase())
   }
   onCommit={(picked) => addToOrder(picked.map((n) => n.data))}
 />;
@@ -56,13 +56,13 @@ const CATALOG: TreePickerNode<CatalogItem>[] = [
 | `open`              | `boolean`                                 | required               | Controls dialog visibility.                                                    |
 | `onOpenChange`      | `(open: boolean) => void`                 | required               | Fires on every user-driven open or close, including after a commit.            |
 | `items`             | `ReadonlyArray<TreePickerNode<T>>`        | required               | The catalog tree. Selection is leaf-only.                                      |
-| `renderRow`         | `(node, depth) => ReactNode`              | required               | The row's own content. The library draws the checkbox, caret, and indentation. |
+| `renderRow`         | `({ node, depth }) => ReactNode`          | required               | The row's own content. The library draws the checkbox, caret, and indentation. |
 | `onCommit`          | `(selected: TreePickerNode<T>[]) => void` | required               | Receives the selected leaf nodes in tree order.                                |
 | `title`             | `ReactNode`                               | `"Select items"`       | Dialog title. Also labels the tree for assistive tech.                         |
-| `renderMetric`      | `(node, depth) => ReactNode`              | –                      | Optional right-aligned metric column.                                          |
+| `renderMetric`      | `({ node, depth }) => ReactNode`          | –                      | Optional right-aligned metric column.                                          |
 | `rowLabel`          | `ReactNode`                               | `"Item"`               | Header above the `renderRow` column.                                           |
 | `metricLabel`       | `ReactNode`                               | –                      | Header above the metric column.                                                |
-| `matchesSearch`     | `(node, query) => boolean`                | substring on `data`    | Search predicate. **Override whenever `data` is an object.**                   |
+| `matchesSearch`     | `({ node, query }) => boolean`            | substring on `data`    | Search predicate. **Override whenever `data` is an object.**                   |
 | `filterSlot`        | `ReactNode`                               | –                      | Slot beside the search input, e.g. a category filter.                          |
 | `ctaLabel`          | `(count: number) => ReactNode`            | `"Add N items"`        | Primary button label.                                                          |
 | `emptyText`         | `ReactNode`                               | `"No matching items."` | Shown when the filtered tree is empty.                                         |
@@ -109,7 +109,7 @@ const { data, isLoading } = useCatalogQuery();
   onOpenChange={setOpen}
   items={data ?? []}
   emptyText={isLoading ? "Loading catalog…" : "No matching items."}
-  renderRow={(node) => node.data.name}
+  renderRow={({ node }) => node.data.name}
   onCommit={handleCommit}
 />;
 ```
@@ -125,7 +125,7 @@ const lineItems = useLineItems<POLine>({ fields, defaultLines: lines });
   open={open}
   onOpenChange={setOpen}
   items={CATALOG}
-  renderRow={(node) => node.data.name}
+  renderRow={({ node }) => node.data.name}
   onCommit={(picked) =>
     lineItems.addLines(
       picked.map((node) => ({

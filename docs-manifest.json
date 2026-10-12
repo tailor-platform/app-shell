@@ -1024,10 +1024,10 @@
         "useLineItemsGroup"
       ],
       "hashes": {
-        "typeSurface": "9b0ebade2dea3590",
-        "outline": "3466700847223f01",
-        "snapshot": "436f2228f7fedbca",
-        "outputMd": "d4d3e896580a1127",
+        "typeSurface": "5490757b7147eb0e",
+        "outline": "02bd4817ec79d1df",
+        "snapshot": "0fe7d573725826ba",
+        "outputMd": "a3f0e85fa5875c54",
         "examples": null
       }
     },
@@ -1467,9 +1467,9 @@
       "symbols": ["TreePicker", "TreePickerNode", "TreePickerProps"],
       "hashes": {
         "typeSurface": "d58cf3e3b3559ef4",
-        "outline": "07295bbf45c3a15e",
+        "outline": "d7367171b068e96a",
         "snapshot": "4255a571e84cf5f5",
-        "outputMd": "d64bc4b947551532",
+        "outputMd": "d56641431b2fac6f",
         "examples": null
       }
     },
@@ -1749,7 +1749,7 @@
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "66696139a46fabb0",
-    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "d4d3e896580a1127",
+    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "a3f0e85fa5875c54",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "ae287e2bb5abc1c6",
@@ -1764,7 +1764,7 @@
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
-    "packages/core/skills/app-shell-patterns/references/components/tree-picker.md": "d64bc4b947551532",
+    "packages/core/skills/app-shell-patterns/references/components/tree-picker.md": "d56641431b2fac6f",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",

@@ -14,7 +14,7 @@ import type { TreePickerNode } from "./types";
 type UseTreeSelectionOptions<T> = {
   open: boolean;
   items: ReadonlyArray<TreePickerNode<T>>;
-  matchesSearch?: (node: TreePickerNode<T>, query: string) => boolean;
+  matchesSearch?: (search: { node: TreePickerNode<T>; query: string }) => boolean;
 };
 
 type UseTreeSelectionResult<T> = {
@@ -51,13 +51,13 @@ export function useTreeSelection<T>({
     setUserExpanded(new Set());
   }, [open]);
 
-  const matcher = matchesSearch ?? defaultMatcher;
-
   const { kept, autoExpand } = React.useMemo(() => {
     const trimmed = query.trim();
     if (trimmed === "") return { kept: [...items], autoExpand: new Set<string>() };
-    return filterTree(items, (node) => matcher(node, trimmed));
-  }, [items, query, matcher]);
+    return filterTree(items, (node) =>
+      matchesSearch ? matchesSearch({ node, query: trimmed }) : defaultMatcher(node, trimmed),
+    );
+  }, [items, query, matchesSearch]);
 
   const isExpanded = React.useCallback(
     (id: string) => autoExpand.has(id) || userExpanded.has(id),

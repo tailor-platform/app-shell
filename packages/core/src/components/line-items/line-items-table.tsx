@@ -111,14 +111,6 @@ function colWidthStyle(c: { flex?: boolean; width?: number }): React.CSSProperti
   return c.flex ? undefined : { width: c.width };
 }
 
-/** Thin scrollbars, so a dense grid is not framed by chunky OS gutters. */
-const scrollbarClasses = [
-  "astw:[scrollbar-width:thin] astw:[scrollbar-color:rgb(128_128_128/0.4)_transparent]",
-  // Safari before 18.2 ignores the standard properties above.
-  "astw:[&::-webkit-scrollbar]:size-2 astw:[&::-webkit-scrollbar-track]:bg-transparent astw:[&::-webkit-scrollbar-corner]:bg-transparent",
-  "astw:[&::-webkit-scrollbar-thumb]:rounded astw:[&::-webkit-scrollbar-thumb]:bg-[rgb(128_128_128/0.4)]",
-];
-
 /**
  * The editable grid.
  *
@@ -689,7 +681,6 @@ export function LineItemsTable<T extends LineItemsRowData>({
         data-slot="line-items-table-scroll"
         className={cn(
           "astw:relative astw:w-full astw:overflow-auto",
-          scrollbarClasses,
           fullscreen && "astw:min-h-0 astw:flex-1",
           tableContainerClassName,
         )}

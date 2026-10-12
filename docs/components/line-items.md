@@ -71,29 +71,28 @@ Every row needs a stable `lineRef` — the server id for a persisted line. Rows 
 
 ## Parts
 
-| Part                     | Description                                                                                                                                                                        |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `LineItems.Root`         | Provides the document to the parts beneath it. Holds no row data of its own.                                                                                                       |
-| `LineItems.Table`        | The editable grid: virtualized rows, pinned columns, cell editors, drag reorder.                                                                                                   |
-| `LineItems.Search`       | Search box bound to the filter. Only fields with a `search` function participate.                                                                                                  |
-| `LineItems.AddRow`       | Appends a line. Renders nothing in view mode.                                                                                                                                      |
-| `LineItems.SaveActions`  | Save and discard buttons, both disabled while the document is clean. **The default save surface** — place it in the card, next to the table.                                       |
-| `LineItems.FloatingDock` | Sticky container for `DirtyBar`.                                                                                                                                                   |
-| `LineItems.DirtyBar`     | Floating alternative to `SaveActions` for very long pages where the card's buttons scroll out of view. Appears only while there are uncommitted changes; `warnOnNav` guards links. |
+| Part                     | Description                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LineItems.Root`         | Provides the document to the parts beneath it. Holds no row data of its own.                                                                                                                                                                                                                                                                                                                                              |
+| `LineItems.Table`        | The editable grid: virtualized rows, pinned columns, cell editors, drag reorder.                                                                                                                                                                                                                                                                                                                                          |
+| `LineItems.Search`       | Search box bound to the filter. Only fields with a `search` function participate.                                                                                                                                                                                                                                                                                                                                         |
+| `LineItems.AddRow`       | Appends a line. Renders nothing in view mode.                                                                                                                                                                                                                                                                                                                                                                             |
+| `LineItems.SaveActions`  | Save and discard buttons, both disabled while the document is clean. **The default save surface** — place it in the card, next to the table.                                                                                                                                                                                                                                                                              |
+| `LineItems.FloatingDock` | Sticky container for `DirtyBar`.                                                                                                                                                                                                                                                                                                                                                                                          |
+| `LineItems.DirtyBar`     | Floating alternative to `SaveActions` for very long pages where the card's buttons scroll out of view. Appears only while there are uncommitted changes; `warnOnNav` keeps the user on the page while dirty — any in-app navigation to another route (links, `navigate()`, back/forward) is held via React Router's `useBlocker`, so it needs AppShell's router; closing or reloading the tab shows the browser's prompt. |
 
 ## useLineItems(options)
 
-| Option             | Type                                          | Default  | Description                                                                                                                                                       |
-| ------------------ | --------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fields`           | `LineItemsField<T>[]`                         | required | Column schema. Build with `createLineItemHelper<T>().field({…})`.                                                                                                 |
-| `defaultLines`     | `readonly T[]`                                | `[]`     | Uncontrolled seed rows, also the dirty-tracking baseline. Read once on mount; to load a different document, remount (e.g. with a `key`).                          |
-| `lines`            | `readonly T[]`                                | –        | Controlled rows. When set, `defaultLines` is ignored.                                                                                                             |
-| `onLinesChange`    | `(next: T[]) => void`                         | –        | Called once per mutation with the new rows.                                                                                                                       |
-| `mode`             | `"view" \| "edit" \| "amend"`                 | `"edit"` | `"view"` renders every cell read-only. `"amend"` keeps only fields whose `editable` lists it open — for a confirmed document where a few fields may still change. |
-| `ordering`         | `"sort" \| "manual"`                          | `"sort"` | `"manual"` enables drag reordering and emits `reorder` ops.                                                                                                       |
-| `selection`        | `boolean`                                     | `false`  | Adds the row selection checkbox column.                                                                                                                           |
-| `selectionActions` | `SelectionAction<T>[]`                        | –        | Bulk actions shown at the table's foot while lines are selected. Also enables selection. See [Selection actions](#selection-actions).                             |
-| `onMetadataCommit` | `(event: LineItemsMetadataCommit<T>) => void` | –        | Receives edits to `commit: "metadata"` fields, which bypass the change-set.                                                                                       |
+| Option             | Type                                           | Default  | Description                                                                                                                                                       |
+| ------------------ | ---------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fields`           | `LineItemsField<T>[]`                          | required | Column schema. Build with `createLineItemHelper<T>().field({…})`.                                                                                                 |
+| `defaultLines`     | `readonly T[]`                                 | `[]`     | Uncontrolled seed rows, also the dirty-tracking baseline. Read once on mount; to load a different document, remount (e.g. with a `key`).                          |
+| `lines`            | `readonly T[]`                                 | –        | Controlled rows. Requires `onLinesChange`; can't be combined with `defaultLines`.                                                                                 |
+| `onLinesChange`    | `(next: T[]) => void`                          | –        | Called once per mutation with the new rows. Required with `lines`; optional with `defaultLines`, to observe edits.                                                |
+| `mode`             | `"view" \| "edit" \| "amend"`                  | `"edit"` | `"view"` renders every cell read-only. `"amend"` keeps only fields whose `editable` lists it open — for a confirmed document where a few fields may still change. |
+| `ordering`         | `"sort" \| "manual"`                           | `"sort"` | `"manual"` enables drag reordering and emits `reorder` ops.                                                                                                       |
+| `selection`        | `boolean \| { actions: SelectionAction<T>[] }` | `false`  | `true` adds the row-selection checkbox column. `{ actions }` also shows the bulk-action bar — see [Selection actions](#selection-actions).                        |
+| `onMetadataCommit` | `(event: LineItemsMetadataCommit<T>) => void`  | –        | Receives edits to `commit: "metadata"` fields, which bypass the change-set.                                                                                       |
 
 ### Return value
 
@@ -119,32 +118,34 @@ Every row needs a stable `lineRef` — the server id for a persisted line. Rows 
 
 ## Selection actions
 
-Pass `selectionActions` to `useLineItems` and, while at least one line is selected, `LineItems.Table` shows a bulk-action bar at its foot: the selection count, your actions, and **Clear**. It is the same bar, and the same [`SelectionAction`](./data-table.md#selectionaction) shape, as DataTable's [selection actions](./data-table.md#selection-actions), so selection reads the same across both. Providing the option also enables selection, so `selection: true` is optional.
+Pass `selection: { actions }` to `useLineItems` and, while at least one line is selected, `LineItems.Table` shows a bulk-action bar at its foot: the selection count, your actions, and **Clear**. It is the same bar, and the same [`SelectionAction`](./data-table.md#selectionaction) shape, as DataTable's [selection actions](./data-table.md#selection-actions), so selection reads the same across both.
 
 ```tsx
 const lineItems = useLineItems<POLine>({
   fields,
   defaultLines: lines,
-  selectionActions: [
-    {
-      id: "receive",
-      label: "Mark received",
-      canApply: (line) => line.receivedQty < line.quantity,
-      onClick: (rows) => {
-        lineItems.updateLines(
-          rows.map((l) => ({ lineRef: l.lineRef, patch: { receivedQty: l.quantity } })),
-        );
+  selection: {
+    actions: [
+      {
+        id: "receive",
+        label: "Mark received",
+        canApply: (line) => line.receivedQty < line.quantity,
+        onClick: (rows) => {
+          lineItems.updateLines(
+            rows.map((l) => ({ lineRef: l.lineRef, patch: { receivedQty: l.quantity } })),
+          );
+        },
       },
-    },
-    {
-      id: "remove",
-      label: "Remove",
-      variant: "destructive",
-      onClick: (rows) => {
-        lineItems.removeLines(rows.map((l) => l.lineRef));
+      {
+        id: "remove",
+        label: "Remove",
+        variant: "destructive",
+        onClick: (rows) => {
+          lineItems.removeLines(rows.map((l) => l.lineRef));
+        },
       },
-    },
-  ],
+    ],
+  },
 });
 ```
 

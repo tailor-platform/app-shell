@@ -40,7 +40,11 @@ const seed: Line[] = [
   { lineRef: "2", sku: "BANANA-02", quantity: 5, total: 25 },
 ];
 
-function setup(options?: Partial<UseLineItemsOptions<Line>>) {
+function setup(
+  options?: Pick<UseLineItemsOptions<Line>, "selection" | "mode" | "ordering"> & {
+    defaultLines?: readonly Line[];
+  },
+) {
   return renderHook(() =>
     useLineItems<Line>({ fields, defaultLines: seed, selection: true, ...options }),
   );
@@ -400,6 +404,12 @@ describe("useLineItems", () => {
   });
 
   describe("controlled mode", () => {
+    it("requires onLinesChange alongside lines at the type level", () => {
+      // @ts-expect-error — `lines` without `onLinesChange` would silently drop every edit.
+      const options: UseLineItemsOptions<Line> = { fields, lines: seed };
+      expect(options.fields).toBe(fields);
+    });
+
     /** The usual `lines` + `onLinesChange` loop, with the parent echoing every change. */
     function renderRoundTrip() {
       return renderHook(() => {
@@ -445,7 +455,8 @@ describe("useLineItems", () => {
 
     it("re-seeds when the set of lineRefs changes", () => {
       const { result, rerender } = renderHook(
-        ({ lines }: { lines: Line[] }) => useLineItems<Line>({ fields, lines }),
+        ({ lines }: { lines: Line[] }) =>
+          useLineItems<Line>({ fields, lines, onLinesChange: () => {} }),
         { initialProps: { lines: seed } },
       );
 
@@ -457,7 +468,8 @@ describe("useLineItems", () => {
 
     it("keeps local edits when the parent re-renders with the same lineRefs", () => {
       const { result, rerender } = renderHook(
-        ({ lines }: { lines: Line[] }) => useLineItems<Line>({ fields, lines }),
+        ({ lines }: { lines: Line[] }) =>
+          useLineItems<Line>({ fields, lines, onLinesChange: () => {} }),
         { initialProps: { lines: seed } },
       );
 

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createMemoryRouter, Link, RouterProvider } from "react-router";
 import * as React from "react";
 
 import type { SelectionAction } from "@/components/data-table/types";
@@ -107,8 +108,7 @@ function Harness({
     defaultLines: seed,
     mode,
     ordering,
-    selection,
-    selectionActions,
+    selection: selectionActions ? { actions: selectionActions } : selection,
   });
   onReady?.(lineItems);
 
@@ -710,7 +710,7 @@ describe("LineItems", () => {
       onClick: () => {},
     };
 
-    it("shows no bulk-action bar without selectionActions", async () => {
+    it("shows no bulk-action bar for selection: true", async () => {
       const user = userEvent.setup();
       render(<Harness selection />);
 
@@ -1014,7 +1014,7 @@ describe("LineItems", () => {
     });
 
     describe("DirtyBar warnOnNav", () => {
-      function GuardHarness({
+      function GuardPage({
         onReady,
       }: {
         onReady?: (a: ReturnType<typeof useLineItems<Line>>) => void;
@@ -1022,52 +1022,63 @@ describe("LineItems", () => {
         const lineItems = useLineItems<Line>({ fields, defaultLines: seed });
         onReady?.(lineItems);
         return (
-          <>
-            <a href="/elsewhere">Elsewhere</a>
-            <LineItems.Root value={lineItems}>
-              <a href="/inside">Inside</a>
-              <LineItems.Table virtualized={false} />
-              <LineItems.FloatingDock>
-                <LineItems.DirtyBar warnOnNav onSave={() => {}} />
-              </LineItems.FloatingDock>
-            </LineItems.Root>
-          </>
+          <LineItems.Root value={lineItems}>
+            <Link to="/elsewhere">Elsewhere</Link>
+            <Link to="/?tab=2">Same page</Link>
+            <LineItems.Table virtualized={false} />
+            <LineItems.FloatingDock>
+              <LineItems.DirtyBar warnOnNav onSave={() => {}} />
+            </LineItems.FloatingDock>
+          </LineItems.Root>
         );
       }
 
-      async function renderDirty() {
+      function renderInRouter() {
         let api: ReturnType<typeof useLineItems<Line>> | undefined;
-        render(<GuardHarness onReady={(a) => (api = a)} />);
-        act(() => api?.updateField("1", "quantity", 9));
-        return api;
+        const router = createMemoryRouter(
+          [
+            { path: "/", element: <GuardPage onReady={(a) => (api = a)} /> },
+            { path: "/elsewhere", element: <p>Elsewhere page</p> },
+          ],
+          { initialEntries: ["/"] },
+        );
+        render(<RouterProvider router={router} />);
+        return { router, api: () => api };
       }
 
-      const click = (name: string, init: MouseEventInit = {}) => {
-        const link = screen.getByRole("link", { name });
-        const event = new MouseEvent("click", {
-          bubbles: true,
-          cancelable: true,
-          button: 0,
-          ...init,
-        });
-        link.dispatchEvent(event);
-        return event.defaultPrevented;
-      };
+      it("holds the user on the page and hands focus to Save while dirty", async () => {
+        const user = userEvent.setup();
+        const { router, api } = renderInRouter();
+        act(() => api()?.updateField("1", "quantity", 9));
 
-      it("blocks a link outside the document and hands focus to the bar", async () => {
-        await renderDirty();
-        expect(click("Elsewhere")).toBe(true);
+        await user.click(screen.getByRole("link", { name: "Elsewhere" }));
+        expect(router.state.location.pathname).toBe("/");
         expect(document.activeElement?.textContent).toBe("Save");
       });
 
-      it("leaves links inside the document alone", async () => {
-        await renderDirty();
-        expect(click("Inside")).toBe(false);
+      it("also holds programmatic navigation", async () => {
+        const { router, api } = renderInRouter();
+        act(() => api()?.updateField("1", "quantity", 9));
+
+        await act(() => router.navigate("/elsewhere"));
+        expect(router.state.location.pathname).toBe("/");
       });
 
-      it("lets a modified click through, since it opens a new tab", async () => {
-        await renderDirty();
-        expect(click("Elsewhere", { metaKey: true })).toBe(false);
+      it("lets a same-page search-param change through", async () => {
+        const user = userEvent.setup();
+        const { router, api } = renderInRouter();
+        act(() => api()?.updateField("1", "quantity", 9));
+
+        await user.click(screen.getByRole("link", { name: "Same page" }));
+        expect(router.state.location.search).toBe("?tab=2");
+      });
+
+      it("lets navigation through once the document is clean", async () => {
+        const user = userEvent.setup();
+        const { router } = renderInRouter();
+
+        await user.click(screen.getByRole("link", { name: "Elsewhere" }));
+        expect(router.state.location.pathname).toBe("/elsewhere");
       });
     });
 

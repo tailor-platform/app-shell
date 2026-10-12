@@ -669,8 +669,8 @@ export function LineItemsTable<T extends LineItemsRowData>({
               "astw:sticky astw:top-0 astw:z-10",
               "astw:transition-[filter] astw:duration-150 astw:motion-reduce:transition-none",
               moreAbove && [
-                "astw:drop-shadow-[0_6px_8px_rgb(0_0_0/0.12)]",
-                "astw:dark:drop-shadow-[0_6px_10px_rgb(0_0_0/0.55)]",
+                "astw:drop-shadow-[0_2px_3px_rgb(0_0_0/0.1)]",
+                "astw:dark:drop-shadow-[0_2px_4px_rgb(0_0_0/0.4)]",
               ],
             )}
           >
@@ -1037,8 +1037,8 @@ export function LineItemsTable<T extends LineItemsRowData>({
                 "astw:sticky astw:bottom-0 astw:z-10 astw:bg-card astw:font-medium astw:[&_td]:border-t",
                 "astw:transition-[filter] astw:duration-150 astw:motion-reduce:transition-none",
                 moreBelow && [
-                  "astw:drop-shadow-[0_-6px_8px_rgb(0_0_0/0.12)]",
-                  "astw:dark:drop-shadow-[0_-6px_10px_rgb(0_0_0/0.55)]",
+                  "astw:drop-shadow-[0_-2px_3px_rgb(0_0_0/0.1)]",
+                  "astw:dark:drop-shadow-[0_-2px_4px_rgb(0_0_0/0.4)]",
                 ],
               )}
             >

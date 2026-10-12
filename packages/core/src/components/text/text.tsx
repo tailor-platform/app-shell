@@ -67,7 +67,7 @@ type TextProps = React.HTMLAttributes<HTMLElement> &
  * ```
  */
 function Text({ className, variant, render, children, ref, ...props }: TextProps) {
-  // cva returns no class for an explicit `null`, so resolve the default here.
+  // cva returns no class for an explicit `null`, so fall back to the default role here too.
   const role = variant ?? "body-md";
   return useRender({
     defaultTagName: defaultTagNames[role],
@@ -82,4 +82,4 @@ function Text({ className, variant, render, children, ref, ...props }: TextProps
   });
 }
 
-export { Text, textVariants, type TextProps };
+export { Text, type TextProps };

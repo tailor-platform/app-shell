@@ -31,6 +31,8 @@ All standard HTML attributes are also accepted. Put an attribute that belongs to
 </Text>
 ```
 
+Some lint rules report this example; see [Lint](#lint).
+
 ## Roles
 
 `variant` takes one of the ten roles. Each role renders a default element when you do not pass `render`:
@@ -62,20 +64,22 @@ All three heading roles render `h2` by default. The heading level comes from the
 </Text>
 ```
 
-If your app enables the `jsx-a11y/heading-has-content` lint rule, it reports `render={<h3 />}` as an empty heading, because it does not see that `Text` passes its children to that element. Disable the rule for that line. ESLint and oxlint both read this comment:
-
-```tsx
-// eslint-disable-next-line jsx-a11y/heading-has-content -- Text renders the children
-<Text variant="heading-md" render={<h3 />}>
-  Line items
-</Text>
-```
-
 To use a heading role for text that is not a heading, render a `div` or a `span`:
 
 ```tsx
 <Text variant="heading-md" render={<div />}>
   1,240 orders
+</Text>
+```
+
+## Lint
+
+Some `jsx-a11y` rules check that an element has text inside it, for example `heading-has-content` for `<h3 />` and `label-has-associated-control` for `<label />`. These rules report the element in `render` as empty, because they do not see that `Text` passes its children to that element. If your app enables them, disable the rule on that line. ESLint and oxlint both read this comment:
+
+```tsx
+// eslint-disable-next-line jsx-a11y/heading-has-content -- Text renders the children
+<Text variant="heading-md" render={<h3 />}>
+  Line items
 </Text>
 ```
 
@@ -89,7 +93,7 @@ Set the color with a color token in `className`. Four modifiers may also be comb
 <Text variant="body-md" className="text-muted-foreground">
   Orders sent this month.
 </Text>
-<Text variant="heading-md" render={<div />} className="leading-none">
+<Text variant="heading-md" render={<h3 />} className="leading-none">
   Card title
 </Text>
 <Text variant="label-md" className="tabular-nums">

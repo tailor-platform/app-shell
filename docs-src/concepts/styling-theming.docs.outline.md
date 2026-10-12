@@ -271,7 +271,7 @@ Pair a role with a color token from the Color section above. These pairings are 
 | --------------------------------- | ---------------------------------------------- |
 | Page title (`Layout.Header`)      | `text-heading-lg`                              |
 | Section heading                   | `text-heading-md`                              |
-| Card title (`div` or `span`)      | `text-heading-md leading-none`                 |
+| Card title                        | `text-heading-md leading-none`                 |
 | Body copy                         | `text-body-md`                                 |
 | Secondary copy, descriptions      | `text-body-md text-muted-foreground`           |
 | Caption, timestamp, metadata      | `text-body-sm text-muted-foreground`           |

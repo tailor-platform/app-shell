@@ -37,9 +37,6 @@ export function ColorAndModifiers() {
       <Text variant="body-md" className="text-muted-foreground">
         Orders sent this month.
       </Text>
-      <Text variant="heading-md" render={<div />} className="leading-none">
-        Card title
-      </Text>
       <Text variant="label-md" className="tabular-nums">
         1,240.00
       </Text>

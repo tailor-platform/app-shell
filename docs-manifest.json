@@ -1412,6 +1412,23 @@
         "examples": "87b93974e65d3a07"
       }
     },
+    "tree-picker": {
+      "slug": "tree-picker",
+      "kind": "code-backed",
+      "outline": "docs-src/components/tree-picker.docs.outline.md",
+      "output": "docs/components/tree-picker.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/tree-picker/**"],
+      "claims": [],
+      "symbols": ["TreePicker", "TreePickerNode", "TreePickerProps"],
+      "hashes": {
+        "typeSurface": "d58cf3e3b3559ef4",
+        "outline": "422bea1a7c11a58d",
+        "snapshot": "4255a571e84cf5f5",
+        "outputMd": "010084030ccb6fb5",
+        "examples": null
+      }
+    },
     "use-ai-chat": {
       "slug": "use-ai-chat",
       "kind": "prose",
@@ -1702,6 +1719,7 @@
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
+    "packages/core/skills/app-shell-patterns/references/components/tree-picker.md": "010084030ccb6fb5",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",
@@ -1739,6 +1757,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "12527965a47cf42f"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "6c3d4fa76045d35b"
   }
 }

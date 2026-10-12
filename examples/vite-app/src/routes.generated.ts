@@ -45,6 +45,7 @@ export type GeneratedRouteParams = {
   "/showcase/spinner": {};
   "/showcase/timeline": {};
   "/showcase/toolbar": {};
+  "/showcase/tree-picker": {};
 };
 
 /**

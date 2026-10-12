@@ -17,6 +17,7 @@ import {
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { SidebarItem } from "./sidebar-item";
 import { SidebarGroup } from "./sidebar-group";
+import { SidebarSection } from "./sidebar-section";
 import { SidebarSeparator } from "./sidebar-separator";
 import { defineModule, defineResource } from "@/resource";
 import { Home, Package } from "lucide-react";
@@ -293,6 +294,70 @@ describe("SidebarGroup", () => {
   });
 });
 
+describe("SidebarSection", () => {
+  it("labels a flat list of items with a non-interactive heading", () => {
+    renderWithProviders(
+      <SidebarSection title="Services">
+        <SidebarItem to="/dashboard" />
+        <SidebarItem to="/products" />
+      </SidebarSection>,
+    );
+
+    const menu = getSidebarMenu();
+    const section = menu.getByRole("list", { name: "Services" });
+    expect(within(section).getAllByRole("link")).toHaveLength(2);
+    // The heading is neither a link nor a toggle button.
+    expect(menu.queryByRole("link", { name: "Services" })).toBeNull();
+    expect(menu.queryByRole("button")).toBeNull();
+  });
+
+  it("renders items at the top level rather than as a nested submenu", () => {
+    renderWithProviders(
+      <SidebarSection title="Services">
+        <SidebarItem to="/dashboard" />
+      </SidebarSection>,
+    );
+
+    const menu = screen.getByTestId("sidebar-menu");
+    expect(menu.querySelector('[data-sidebar="menu-sub"]')).toBeNull();
+    expect(menu.querySelector('[data-sidebar="menu-sub-button"]')).toBeNull();
+    expect(menu.querySelector('[data-sidebar="menu-button"]')).not.toBeNull();
+  });
+
+  it("supports localized title function", () => {
+    renderWithProviders(
+      <SidebarSection title={localizedTitle}>
+        <SidebarItem to="/dashboard" />
+      </SidebarSection>,
+      undefined,
+      "ja",
+    );
+
+    expect(getSidebarMenu().getByRole("list", { name: "製品" })).toBeDefined();
+  });
+
+  it("composes with SidebarSeparator", () => {
+    renderWithProviders(
+      <>
+        <SidebarItem to="/dashboard" />
+        <SidebarSeparator />
+        <SidebarSection title="Services">
+          <SidebarItem to="/products" />
+        </SidebarSection>
+        <SidebarSeparator />
+        <SidebarSection title="Logs">
+          <SidebarItem to="/products/all" />
+        </SidebarSection>
+      </>,
+    );
+
+    const menu = screen.getByTestId("sidebar-menu");
+    expect(menu.querySelectorAll('[data-sidebar="separator"]')).toHaveLength(2);
+    expect(getSidebarMenu().getByRole("list", { name: "Services" })).toBeDefined();
+    expect(getSidebarMenu().getByRole("list", { name: "Logs" })).toBeDefined();
+  });
+});
+
 describe("SidebarSeparator", () => {
   it("renders separator element", () => {
     renderWithProviders(
@@ -307,6 +372,16 @@ describe("SidebarSeparator", () => {
     const separator = menu.querySelector('[data-sidebar="separator"]');
     expect(separator).toBeDefined();
     expect(separator).not.toBeNull();
+  });
+
+  it("adds extra space above and below the line to mark a new section", () => {
+    renderWithProviders(<SidebarSeparator />);
+
+    const separator = screen
+      .getByTestId("sidebar-menu")
+      .querySelector('[data-sidebar="separator"]');
+    expect(separator?.className).toContain("astw:mt-1");
+    expect(separator?.className).toContain("astw:mb-2");
   });
 });
 

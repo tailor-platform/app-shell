@@ -8,14 +8,12 @@ import {
 } from "./line-items-context";
 import {
   LineItemsAddRow,
-  LineItemsBulkActions,
   LineItemsDirtyBar,
   LineItemsFloatingDock,
   LineItemsFullscreenToggle,
   LineItemsSaveActions,
   LineItemsSearch,
   LineItemsSearchToggle,
-  LineItemsSelectionBar,
   LineItemsTotalsRow,
 } from "./line-items-parts";
 import { LineItemsTable } from "./line-items-table";
@@ -64,7 +62,6 @@ const FULLSCREEN_KEYFRAMES = `
  *     </Card.Content>
  *   </Card.Root>
  *   <LineItems.FloatingDock>
- *     <LineItems.SelectionBar />
  *     <LineItems.DirtyBar warnOnNav onSave={submit} />
  *   </LineItems.FloatingDock>
  * </LineItems.Root>
@@ -175,12 +172,10 @@ export const LineItems = {
   Table: LineItemsTable,
   Search: LineItemsSearch,
   SearchToggle: LineItemsSearchToggle,
-  BulkActions: LineItemsBulkActions,
   AddRow: LineItemsAddRow,
   FullscreenToggle: LineItemsFullscreenToggle,
   SaveActions: LineItemsSaveActions,
   TotalsRow: LineItemsTotalsRow,
   FloatingDock: LineItemsFloatingDock,
   DirtyBar: LineItemsDirtyBar,
-  SelectionBar: LineItemsSelectionBar,
 };

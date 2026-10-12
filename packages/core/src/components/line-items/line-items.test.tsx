@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import type { SelectionAction } from "@/components/data-table/types";
 import { createLineItemHelper } from "./field";
 import { LineItems } from "./line-items";
 import type {
@@ -85,6 +86,7 @@ type HarnessProps = {
   totals?: boolean;
   addRow?: boolean;
   onSave?: (cs: LineItemsChangeSet) => void;
+  selectionActions?: SelectionAction<Line>[];
   onReady?: (api: ReturnType<typeof useLineItems<Line>>) => void;
 };
 
@@ -97,9 +99,17 @@ function Harness({
   totals = false,
   addRow = false,
   onSave,
+  selectionActions,
   onReady,
 }: HarnessProps) {
-  const lineItems = useLineItems<Line>({ fields, data: seed, mode, ordering, selection });
+  const lineItems = useLineItems<Line>({
+    fields,
+    data: seed,
+    mode,
+    ordering,
+    selection,
+    selectionActions,
+  });
   onReady?.(lineItems);
 
   return (
@@ -135,7 +145,6 @@ function Harness({
         </LineItems.AddRow>
       ) : null}
       <LineItems.FloatingDock>
-        <LineItems.SelectionBar />
         <LineItems.DirtyBar />
       </LineItems.FloatingDock>
       {onSave ? <LineItems.SaveActions onSave={onSave} /> : null}
@@ -514,20 +523,114 @@ describe("LineItems", () => {
   });
 
   describe("selection", () => {
-    it("selects a row and surfaces the selection bar", async () => {
+    const remove: SelectionAction<Line> = {
+      id: "remove",
+      label: "Remove",
+      variant: "destructive",
+      onClick: () => {},
+    };
+
+    it("shows no bulk-action bar without selectionActions", async () => {
       const user = userEvent.setup();
       render(<Harness selection />);
 
       await user.click(screen.getByRole("checkbox", { name: "Select line 2" }));
-      expect(screen.getByText("1 selected")).toBeDefined();
+      expect(screen.queryByRole("toolbar", { name: "Bulk actions" })).toBeNull();
     });
 
-    it("select-all toggles every row", async () => {
+    it("opens the bulk-action bar with a count once a line is selected", async () => {
       const user = userEvent.setup();
-      render(<Harness selection />);
+      render(<Harness selectionActions={[remove]} />);
+      expect(screen.queryByRole("toolbar", { name: "Bulk actions" })).toBeNull();
+
+      await user.click(screen.getByRole("checkbox", { name: "Select line 2" }));
+      const bar = screen.getByRole("toolbar", { name: "Bulk actions" });
+      expect(within(bar).getByText("1 of 3 selected")).toBeDefined();
+    });
+
+    it("select-all selects every line", async () => {
+      const user = userEvent.setup();
+      render(<Harness selectionActions={[remove]} />);
 
       await user.click(screen.getByRole("checkbox", { name: "Select all lines" }));
-      expect(screen.getByText("3 selected")).toBeDefined();
+      const bar = screen.getByRole("toolbar", { name: "Bulk actions" });
+      expect(within(bar).getByText("3 of 3 selected")).toBeDefined();
+    });
+
+    it("counts and passes only the lines canApply accepts", async () => {
+      const user = userEvent.setup();
+      const onClick = vi.fn();
+      render(
+        <Harness
+          selectionActions={[
+            { id: "bump", label: "Bump", canApply: (l) => (l.quantity ?? 0) > 1, onClick },
+          ]}
+        />,
+      );
+
+      await user.click(screen.getByRole("checkbox", { name: "Select all lines" }));
+      await user.click(screen.getByRole("button", { name: /Bump/ }));
+
+      expect(screen.getByRole("button", { name: /Bump/ }).textContent).toContain("(2)");
+      expect(onClick.mock.calls[0]?.[0].map((l: Line) => l.lineRef)).toEqual(["1", "2"]);
+    });
+
+    it("lets an action remove the selected lines in one update", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(
+        <Harness
+          selectionActions={[
+            { ...remove, onClick: (rows) => api?.removeLines(rows.map((r) => r.lineRef)) },
+          ]}
+          onReady={(a) => {
+            api = a;
+          }}
+        />,
+      );
+
+      await user.click(screen.getByRole("checkbox", { name: "Select line 1" }));
+      await user.click(screen.getByRole("checkbox", { name: "Select line 3" }));
+      await user.click(screen.getByRole("button", { name: "Remove" }));
+
+      expect(api?.allLines.map((l) => l.lineRef)).toEqual(["2"]);
+      expect(api?.getChangeSet().lineChanges).toEqual([
+        { action: "remove", lineId: "1" },
+        { action: "remove", lineId: "3" },
+      ]);
+    });
+
+    it("Clear empties the selection and hands focus to the header checkbox", async () => {
+      const user = userEvent.setup();
+      render(<Harness selectionActions={[remove]} />);
+
+      await user.click(screen.getByRole("checkbox", { name: "Select line 2" }));
+      await user.click(screen.getByRole("button", { name: "Clear selection" }));
+
+      expect(screen.queryByRole("toolbar", { name: "Bulk actions" })).toBeNull();
+      expect(document.activeElement).toBe(
+        screen.getByRole("checkbox", { name: "Select all lines" }),
+      );
+    });
+
+    it("clears the selection once a returned promise resolves", async () => {
+      const user = userEvent.setup();
+      let resolve: (() => void) | undefined;
+      const request = new Promise<void>((r) => {
+        resolve = r;
+      });
+      render(
+        <Harness selectionActions={[{ id: "sync", label: "Sync", onClick: () => request }]} />,
+      );
+
+      await user.click(screen.getByRole("checkbox", { name: "Select line 2" }));
+      await user.click(screen.getByRole("button", { name: "Sync" }));
+      expect(screen.getByRole("toolbar", { name: "Bulk actions" }).getAttribute("aria-busy")).toBe(
+        "true",
+      );
+
+      await act(async () => resolve?.());
+      expect(screen.queryByRole("toolbar", { name: "Bulk actions" })).toBeNull();
     });
 
     it("hides the selection column in view mode", () => {

@@ -11,16 +11,12 @@ export { lineItemsFloatingBarStyles } from "./line-items-parts";
 export type { LineItemsTableProps } from "./line-items-table";
 export type {
   LineItemsAddRowProps,
-  LineItemsBulkActionsProps,
-  LineItemsBulkActionsRenderArgs,
   LineItemsDirtyBarProps,
   LineItemsFloatingDockProps,
   LineItemsFullscreenToggleProps,
   LineItemsSaveActionsProps,
   LineItemsSearchProps,
   LineItemsSearchToggleProps,
-  LineItemsSelectionBarProps,
-  LineItemsSelectionBarRenderArgs,
   LineItemsTotalsRowProps,
 } from "./line-items-parts";
 export type {

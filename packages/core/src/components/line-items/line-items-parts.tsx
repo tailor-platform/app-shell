@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Maximize2, Minimize2, Search as SearchIcon, X } from "lucide-react";
+import { Maximize2, Minimize2, Search as SearchIcon } from "lucide-react";
 
 import { Button } from "@/components/button";
 import { cn } from "@/lib/utils";
@@ -122,45 +122,6 @@ function LineItemsSearchToggle({
   );
 }
 LineItemsSearchToggle.displayName = "LineItems.SearchToggle";
-
-/* ------------------------------------------------------------ Bulk actions */
-
-export type LineItemsBulkActionsRenderArgs = {
-  selectedIds: string[];
-  bulkUpdate: (patch: Record<string, unknown>) => void;
-  bulkRemove: () => void;
-  clear: () => void;
-};
-
-export type LineItemsBulkActionsProps = {
-  children: (args: LineItemsBulkActionsRenderArgs) => React.ReactNode;
-  className?: string;
-};
-
-/** Inline toolbar for the current selection. Renders nothing when none. */
-function LineItemsBulkActions({ children, className }: LineItemsBulkActionsProps) {
-  const { lineItems } = useLineItemsContext("BulkActions");
-  if (lineItems.selectedIds.length === 0) return null;
-
-  return (
-    <div
-      data-slot="line-items-bulk-actions"
-      className={cn(
-        "astw:flex astw:items-center astw:gap-2 astw:rounded-md astw:border astw:border-border astw:px-3 astw:py-2 astw:text-sm",
-        className,
-      )}
-    >
-      <span className="astw:text-muted-foreground">{lineItems.selectedIds.length} selected</span>
-      {children({
-        selectedIds: lineItems.selectedIds,
-        bulkUpdate: lineItems.bulkUpdate as (patch: Record<string, unknown>) => void,
-        bulkRemove: lineItems.bulkRemove,
-        clear: lineItems.clearSelection,
-      })}
-    </div>
-  );
-}
-LineItemsBulkActions.displayName = "LineItems.BulkActions";
 
 /* ----------------------------------------------------------------- Add row */
 
@@ -478,57 +439,13 @@ function LineItemsDirtyBar({
 }
 LineItemsDirtyBar.displayName = "LineItems.DirtyBar";
 
-export type LineItemsSelectionBarRenderArgs = LineItemsBulkActionsRenderArgs;
-
-export type LineItemsSelectionBarProps = {
-  label?: (count: number, total: number) => React.ReactNode;
-  children?: (args: LineItemsSelectionBarRenderArgs) => React.ReactNode;
-  className?: string;
-};
-
-/**
- * Appears while rows are selected. Layout mirrors DataTable's selection footer
- * (count, then actions, then Clear) so the two components read the same way.
- */
-function LineItemsSelectionBar({ label, children, className }: LineItemsSelectionBarProps) {
-  const { lineItems } = useLineItemsContext("SelectionBar");
-  const count = lineItems.selectedIds.length;
-  if (count === 0) return null;
-
-  return (
-    <div data-slot="line-items-selection-bar" className={cn(pillClasses, className)}>
-      <span style={lineItemsFloatingBarStyles.label}>
-        {label ? label(count, lineItems.allLines.length) : `${count} selected`}
-      </span>
-      <span aria-hidden="true" style={lineItemsFloatingBarStyles.divider} />
-      {children?.({
-        selectedIds: lineItems.selectedIds,
-        bulkUpdate: lineItems.bulkUpdate as (patch: Record<string, unknown>) => void,
-        bulkRemove: lineItems.bulkRemove,
-        clear: lineItems.clearSelection,
-      })}
-      <button
-        type="button"
-        style={lineItemsFloatingBarStyles.secondaryButton}
-        onClick={lineItems.clearSelection}
-      >
-        <X className="astw:mr-1 astw:inline astw:size-3" aria-hidden="true" />
-        Clear
-      </button>
-    </div>
-  );
-}
-LineItemsSelectionBar.displayName = "LineItems.SelectionBar";
-
 export {
   LineItemsAddRow,
-  LineItemsBulkActions,
   LineItemsDirtyBar,
   LineItemsFloatingDock,
   LineItemsFullscreenToggle,
   LineItemsSaveActions,
   LineItemsSearch,
   LineItemsSearchToggle,
-  LineItemsSelectionBar,
   LineItemsTotalsRow,
 };

@@ -12,7 +12,7 @@ import {
   type LineItemsChangeSet,
   type LineItemsMode,
 } from "@tailor-platform/app-shell";
-import { ExternalLink, Upload, X } from "lucide-react";
+import { Copy, ExternalLink, PackageCheck, Trash2, Upload, X } from "lucide-react";
 import { useState } from "react";
 
 // 🧪 Dummy Data: Replace with real data later
@@ -296,7 +296,39 @@ const PurchaseOrderDemo = ({
     data: initialLines,
     mode,
     ordering,
-    selection: true,
+    // 🔽 Bulk actions: the same footer bar DataTable shows while rows are selected.
+    // Block-bodied handlers keep TypeScript from inferring `lineItems` from itself.
+    selectionActions: [
+      {
+        id: "receive",
+        label: "Mark received",
+        icon: <PackageCheck className="size-4" />,
+        // Only lines still short count — the button reads "Mark received (n)".
+        canApply: (line) => line.receivedQty < line.quantity,
+        onClick: (rows) => {
+          lineItems.updateLines(
+            rows.map((line) => ({ lineRef: line.lineRef, patch: { receivedQty: line.quantity } })),
+          );
+        },
+      },
+      {
+        id: "duplicate",
+        label: "Duplicate",
+        icon: <Copy className="size-4" />,
+        onClick: (rows) => {
+          lineItems.addLines(rows.map(({ lineRef: _lineRef, ...line }) => line));
+        },
+      },
+      {
+        id: "remove",
+        label: "Remove",
+        icon: <Trash2 className="size-4" />,
+        variant: "destructive",
+        onClick: (rows) => {
+          lineItems.removeLines(rows.map((line) => line.lineRef));
+        },
+      },
+    ],
     onMetadataCommit: (event) =>
       setMetadataLog((log) =>
         [`${event.lineRef}: note → ${JSON.stringify(event.patch.note)}`, ...log].slice(0, 5),
@@ -419,13 +451,6 @@ const PurchaseOrderDemo = ({
           </Card.Root>
 
           <LineItems.FloatingDock>
-            <LineItems.SelectionBar>
-              {({ selectedIds, bulkRemove }) => (
-                <button type="button" onClick={bulkRemove}>
-                  {`Remove ${selectedIds.length}`}
-                </button>
-              )}
-            </LineItems.SelectionBar>
             <LineItems.DirtyBar warnOnNav onSave={(cs) => setLastSaved(cs)} />
           </LineItems.FloatingDock>
         </LineItems.Root>

@@ -1,5 +1,5 @@
 import * as React from "react";
-
+import { useSelectionActionRunner } from "@/components/selection-actions/use-selection-action-runner";
 import { fieldCommitScope, fieldsToColumnDefs } from "./field";
 import {
   buildChangeSet,
@@ -42,6 +42,9 @@ type DirtyState<T extends LineItemsRowData> = {
  * Pair with `<LineItems.Root value={lineItems}>` to render, or drive the
  * mutations directly from your own controls.
  */
+/** Stable default, so an omitted `selectionActions` never changes identity. */
+const EMPTY_ACTIONS: never[] = [];
+
 export function useLineItems<T extends LineItemsRowData>(
   options: UseLineItemsOptions<T>,
 ): UseLineItemsReturn<T> {
@@ -52,9 +55,11 @@ export function useLineItems<T extends LineItemsRowData>(
     onLinesChange,
     mode: modeProp = "edit",
     ordering = "sort",
-    selection = false,
+    selection: selectionOption = false,
+    selectionActions = EMPTY_ACTIONS,
     onMetadataCommit,
   } = options;
+  const selection = selectionOption || selectionActions.length > 0;
 
   const controlled = controlledLines !== undefined;
   const seed = controlled ? controlledLines : data;
@@ -410,6 +415,17 @@ export function useLineItems<T extends LineItemsRowData>(
     removeLines(selectedIds);
   }, [removeLines, selectedIds]);
 
+  const selectedRows = React.useMemo(
+    () => selectedIds.map((id) => rows.byRef[id] as T),
+    [rows, selectedIds],
+  );
+
+  const { pendingActionId, runSelectionAction } = useSelectionActionRunner({
+    enabled: selection,
+    clearSelection,
+    owner: "LineItems",
+  });
+
   const setMode = React.useCallback((m: LineItemsMode) => setModeState(m), []);
   const setFilter = React.useCallback((q: string) => setFilterState(q), []);
 
@@ -423,6 +439,10 @@ export function useLineItems<T extends LineItemsRowData>(
     filter,
     selectionEnabled: selection,
     selectedIds,
+    selectedRows,
+    selectionActions,
+    pendingActionId,
+    runSelectionAction,
     sortState: ordering === "sort" ? sortState : null,
 
     setMode,
@@ -431,6 +451,7 @@ export function useLineItems<T extends LineItemsRowData>(
     addLine,
     addLines,
     removeLine,
+    removeLines,
     updateField,
     updateLines,
     reorderLine,

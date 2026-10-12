@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { CollectionControl, Filter, PageInfo, SortState } from "@/types/collection";
+import { useSelectionActionRunner } from "@/components/selection-actions/use-selection-action-runner";
 import { usePageCounter } from "./use-page-counter";
 import { usePersistentColumnState, type PersistedColumnState } from "./use-persistent-column-state";
 import type { Column, UseDataTableOptions, UseDataTableReturn } from "./types";
@@ -368,42 +369,11 @@ export function useDataTable<
       }
     : undefined;
 
-  // Id of the selection action whose request is in flight. It lives here rather
-  // than in the footer bar so it survives the bar unmounting and remounting
-  // (the selection emptying and refilling mid-request), and so a request handed
-  // back later — from a confirm dialog, via `run` — is tracked the same way.
-  const [pendingActionId, setPendingActionId] = useState<string | null>(null);
-  const pendingActionIdRef = useRef(pendingActionId);
-  pendingActionIdRef.current = pendingActionId;
-
-  const runSelectionAction = selectionEnabled
-    ? (action: { id: string; keepSelection?: boolean }, request: PromiseLike<unknown>) => {
-        // One request at a time: the bar disables its actions while one runs,
-        // so a second call here only comes from app code racing itself.
-        if (pendingActionIdRef.current !== null) return;
-        pendingActionIdRef.current = action.id;
-        setPendingActionId(action.id);
-        const settle = () => {
-          pendingActionIdRef.current = null;
-          setPendingActionId(null);
-        };
-        request.then(
-          () => {
-            settle();
-            // The rows it acted on may have changed, and copies remembered from
-            // other pages can't refresh — clear rather than keep stale rows.
-            if (!action.keepSelection) clearSelection?.();
-          },
-          (reason: unknown) => {
-            // Keep the selection so the action can be retried. Report rather
-            // than rethrow: a rethrow from this chain would surface as an
-            // unhandled rejection even when the app already handled the error.
-            settle();
-            console.error(`[DataTable] Selection action "${action.id}" failed:`, reason);
-          },
-        );
-      }
-    : undefined;
+  const { pendingActionId, runSelectionAction } = useSelectionActionRunner({
+    enabled: selectionEnabled,
+    clearSelection,
+    owner: "DataTable",
+  });
 
   const selectedIds = useMemo(() => [...selection.keys()], [selection]);
 

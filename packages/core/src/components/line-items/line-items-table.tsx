@@ -2,6 +2,12 @@ import * as React from "react";
 import { ChevronDown, ChevronsUpDown, ChevronUp, GripVertical } from "lucide-react";
 
 import { Checkbox } from "@/components/checkbox";
+import {
+  SelectionActionsAnnouncer,
+  SelectionActionsBar,
+  selectionBarSurfaceClasses,
+  selectionBarTokenClasses,
+} from "@/components/selection-actions/selection-actions-bar";
 import { cn } from "@/lib/utils";
 import {
   ACTIONS_COLUMN_ID,
@@ -578,6 +584,9 @@ export function LineItemsTable<T extends LineItemsRowData>({
     tweenColumnWidth(c.id, c.width ?? c.field.hoverExpandWidth);
   };
 
+  const offersBulkActions = lineItems.selectionEnabled && lineItems.selectionActions.length > 0;
+  const selectionBarOpen = offersBulkActions && lineItems.selectedIds.length > 0;
+
   return (
     <div
       data-slot="line-items-table"
@@ -1035,6 +1044,42 @@ export function LineItemsTable<T extends LineItemsRowData>({
           ) : null}
         </table>
       </div>
+
+      {/* Bulk actions: the same bar as DataTable.Footer, at the grid's foot. */}
+      {offersBulkActions ? (
+        <>
+          {selectionBarOpen ? (
+            <div
+              data-slot="line-items-selection-bar"
+              className={cn(
+                "astw:flex astw:shrink-0 astw:items-center astw:border-t astw:border-border astw:px-4 astw:py-2",
+                selectionBarSurfaceClasses,
+              )}
+            >
+              <div className={cn("astw:contents", selectionBarTokenClasses)}>
+                <SelectionActionsBar
+                  actions={lineItems.selectionActions}
+                  selectedRows={lineItems.selectedRows}
+                  total={lineItems.allLines.length}
+                  clearSelection={lineItems.clearSelection}
+                  pendingActionId={lineItems.pendingActionId}
+                  runSelectionAction={lineItems.runSelectionAction}
+                  returnFocusTo={(bar) =>
+                    bar
+                      .closest<HTMLElement>('[data-slot="line-items-table"]')
+                      ?.querySelector<HTMLElement>("thead [data-slot=checkbox]")
+                  }
+                />
+              </div>
+            </div>
+          ) : null}
+          <SelectionActionsAnnouncer
+            open={selectionBarOpen}
+            selected={lineItems.selectedIds.length}
+            total={lineItems.allLines.length}
+          />
+        </>
+      ) : null}
     </div>
   );
 }

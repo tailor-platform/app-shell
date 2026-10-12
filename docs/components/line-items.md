@@ -78,43 +78,79 @@ Every row needs a stable `lineRef` — the server id for a persisted line. Rows 
 | `LineItems.Search`       | Search box bound to the filter. Only fields with a `search` function participate. |
 | `LineItems.AddRow`       | Appends a line. Renders nothing in view mode.                                     |
 | `LineItems.SaveActions`  | Save and discard buttons, both disabled while the document is clean.              |
-| `LineItems.FloatingDock` | Sticky container for the bars below.                                              |
+| `LineItems.FloatingDock` | Sticky container for `DirtyBar`.                                                  |
 | `LineItems.DirtyBar`     | Appears while there are uncommitted changes. Renders nothing when clean.          |
-| `LineItems.SelectionBar` | Appears while rows are selected. Mirrors DataTable's selection-footer layout.     |
 
 ## useLineItems(options)
 
-| Option          | Type                  | Default  | Description                                                       |
-| --------------- | --------------------- | -------- | ----------------------------------------------------------------- |
-| `fields`        | `LineItemsField<T>[]` | required | Column schema. Build with `createLineItemHelper<T>().field({…})`. |
-| `data`          | `readonly T[]`        | `[]`     | Uncontrolled seed rows, also the dirty-tracking baseline.         |
-| `lines`         | `readonly T[]`        | –        | Controlled rows. When set, `data` is ignored.                     |
-| `onLinesChange` | `(next: T[]) => void` | –        | Called once per mutation with the new rows.                       |
-| `mode`          | `"view" \| "edit"`    | `"edit"` | `"view"` renders every cell read-only.                            |
-| `ordering`      | `"sort" \| "manual"`  | `"sort"` | `"manual"` enables drag reordering and emits `reorder` ops.       |
-| `selection`     | `boolean`             | `false`  | Adds the row selection checkbox column.                           |
+| Option             | Type                   | Default  | Description                                                                                                                           |
+| ------------------ | ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `fields`           | `LineItemsField<T>[]`  | required | Column schema. Build with `createLineItemHelper<T>().field({…})`.                                                                     |
+| `data`             | `readonly T[]`         | `[]`     | Uncontrolled seed rows, also the dirty-tracking baseline.                                                                             |
+| `lines`            | `readonly T[]`         | –        | Controlled rows. When set, `data` is ignored.                                                                                         |
+| `onLinesChange`    | `(next: T[]) => void`  | –        | Called once per mutation with the new rows.                                                                                           |
+| `mode`             | `"view" \| "edit"`     | `"edit"` | `"view"` renders every cell read-only.                                                                                                |
+| `ordering`         | `"sort" \| "manual"`   | `"sort"` | `"manual"` enables drag reordering and emits `reorder` ops.                                                                           |
+| `selection`        | `boolean`              | `false`  | Adds the row selection checkbox column.                                                                                               |
+| `selectionActions` | `SelectionAction<T>[]` | –        | Bulk actions shown at the table's foot while lines are selected. Also enables selection. See [Selection actions](#selection-actions). |
 
 ### Return value
 
-| Member                               | Description                                                                    |
-| ------------------------------------ | ------------------------------------------------------------------------------ |
-| `lines` / `allLines`                 | Rows with the search filter applied, and the full document order.              |
-| `isDirty`                            | Whether current state diverges from the baseline.                              |
-| `selectedIds`                        | `lineRef`s of the selected rows.                                               |
-| `sortState`                          | Active sort, or `null` in document order. Always `null` under manual ordering. |
-| `toggleSort(columnId)`               | Cycles a column ascending, descending, then unsorted.                          |
-| `addLine(data, opts?)`               | Inserts one line, returning its new `lineRef`.                                 |
-| `addLines(items, opts?)`             | Inserts many in one render. Use this for bulk pickers.                         |
-| `removeLine(lineRef)`                | Deletes a line.                                                                |
-| `updateField(lineRef, key, value)`   | Typed single-cell update.                                                      |
-| `updateLines(patches)`               | Batched updates — one render for a whole paste or fill.                        |
-| `reorderLine(lineRef, afterLineRef)` | Moves a line. Manual ordering only; pass `null` to move to the head.           |
-| `bulkUpdate(patch)` / `bulkRemove()` | Apply to every selected row.                                                   |
-| `reset()`                            | Snaps the baseline forward. Call after a successful save.                      |
-| `revert()`                           | Discards every uncommitted change back to the baseline.                        |
-| `getChangeSet()`                     | What changed, ready to submit.                                                 |
+| Member                                          | Description                                                                    |
+| ----------------------------------------------- | ------------------------------------------------------------------------------ |
+| `lines` / `allLines`                            | Rows with the search filter applied, and the full document order.              |
+| `isDirty`                                       | Whether current state diverges from the baseline.                              |
+| `selectedIds` / `selectedRows`                  | The selected lines, as `lineRef`s and as rows, in document order.              |
+| `sortState`                                     | Active sort, or `null` in document order. Always `null` under manual ordering. |
+| `toggleSort(columnId)`                          | Cycles a column ascending, descending, then unsorted.                          |
+| `addLine(data, opts?)`                          | Inserts one line, returning its new `lineRef`.                                 |
+| `addLines(items, opts?)`                        | Inserts many in one render. Use this for bulk pickers.                         |
+| `removeLine(lineRef)` / `removeLines(lineRefs)` | Deletes one line, or several in one update — for a bulk action's rows.         |
+| `updateField(lineRef, key, value)`              | Typed single-cell update.                                                      |
+| `updateLines(patches)`                          | Batched updates — one render for a whole paste or fill.                        |
+| `reorderLine(lineRef, afterLineRef)`            | Moves a line. Manual ordering only; pass `null` to move to the head.           |
+| `bulkUpdate(patch)` / `bulkRemove()`            | Apply to every selected row.                                                   |
+| `reset()`                                       | Snaps the baseline forward. Call after a successful save.                      |
+| `revert()`                                      | Discards every uncommitted change back to the baseline.                        |
+| `getChangeSet()`                                | What changed, ready to submit.                                                 |
 
 `addLine` and `addLines` take `{ afterLineRef }`: omit it to append, pass `null` to prepend, or pass a `lineRef` to insert directly after that line.
+
+## Selection actions
+
+Pass `selectionActions` to `useLineItems` and, while at least one line is selected, `LineItems.Table` shows a bulk-action bar at its foot: the selection count, your actions, and **Clear**. It is the same bar, and the same [`SelectionAction`](./data-table.md#selectionaction) shape, as DataTable's [selection actions](./data-table.md#selection-actions), so selection reads the same across both. Providing the option also enables selection, so `selection: true` is optional.
+
+```tsx
+const lineItems = useLineItems<POLine>({
+  fields,
+  data: lines,
+  selectionActions: [
+    {
+      id: "receive",
+      label: "Mark received",
+      canApply: (line) => line.receivedQty < line.quantity,
+      onClick: (rows) => {
+        lineItems.updateLines(
+          rows.map((l) => ({ lineRef: l.lineRef, patch: { receivedQty: l.quantity } })),
+        );
+      },
+    },
+    {
+      id: "remove",
+      label: "Remove",
+      variant: "destructive",
+      onClick: (rows) => {
+        lineItems.removeLines(rows.map((l) => l.lineRef));
+      },
+    },
+  ],
+});
+```
+
+- **`canApply` scopes an action.** The button shows how many selected lines qualify — `Mark received (2)` — is disabled when none do, and `onClick` receives only those lines.
+- **Give handlers a block body** when they call the hook's own return value, as above. An expression body makes TypeScript infer `lineItems` from itself and fail with "implicitly has type any".
+- **Edits stay local.** Actions that change lines with `updateLines`, `addLines` or `removeLines` land in the change-set like any other edit, so Save and Discard cover them. A synchronous handler leaves the selection alone; a returned promise gets DataTable's pending state and clears the selection once it resolves, unless the action sets `keepSelection`.
+- Up to three actions show inline; the rest collapse into a **More actions** menu. The bar is a `role="toolbar"` named "Bulk actions", its count is announced politely, and when it closes with focus inside, focus returns to the header checkbox.
 
 ## Field schema
 

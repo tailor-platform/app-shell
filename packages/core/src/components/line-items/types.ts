@@ -1,3 +1,4 @@
+import type { SelectionAction } from "@/components/data-table/types";
 import type { ReactNode } from "react";
 
 /**
@@ -211,6 +212,12 @@ export type UseLineItemsOptions<T extends LineItemsRowData> = {
   ordering?: LineItemsOrderingMode;
   /** Enables the row selection checkbox column. */
   selection?: boolean;
+  /**
+   * Bulk actions shown at the foot of `LineItems.Table` while lines are
+   * selected — the same bar, and the same `SelectionAction` shape, as
+   * DataTable. A non-empty array also enables selection.
+   */
+  selectionActions?: SelectionAction<T>[];
   /** Receives edits to `commit: "metadata"` fields, which bypass the change-set. */
   onMetadataCommit?: (event: LineItemsMetadataCommit<T>) => void;
 };
@@ -228,6 +235,19 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
   filter: string;
   selectionEnabled: boolean;
   selectedIds: string[];
+  /** The selected lines, in document order. */
+  selectedRows: T[];
+  selectionActions: SelectionAction<T>[];
+  /** Id of the selection action whose request is in flight, or `null`. */
+  pendingActionId: string | null;
+  /**
+   * Tracks a selection action's request: the bar disables its actions while it
+   * is pending and clears the selection once it resolves, unless the action
+   * sets `keepSelection`. The bar calls this for you.
+   */
+  runSelectionAction:
+    | ((action: { id: string; keepSelection?: boolean }, request: PromiseLike<unknown>) => void)
+    | undefined;
   /** Active sort, or `null` when in document order. Always `null` under manual ordering. */
   sortState: LineItemsSortState | null;
 
@@ -247,6 +267,8 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
     opts?: { afterLineRef?: string | null },
   ) => string[];
   removeLine: (lineRef: string) => void;
+  /** Removes several lines in one update — for a bulk action's `rows`. */
+  removeLines: (lineRefs: readonly string[]) => void;
   updateField: <K extends keyof T>(lineRef: string, key: K, value: T[K]) => void;
   /** Batched updates — one render for a whole paste or fill-drag. */
   updateLines: (patches: { lineRef: string; patch: Partial<T> }[]) => void;

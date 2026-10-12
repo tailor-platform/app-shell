@@ -47,4 +47,4 @@ function Lines({ lines }: { lines: POLine[] }) {
 
 For documents with more than one list of lines (journal debits and credits, work-order components and operations), `useLineItemsGroup({ debits, credits })` puts several `useLineItems` collections under one save boundary: a shared `isDirty`, one keyed `getChangeSet()`, and group-wide `reset()` / `revert()`.
 
-Includes view and edit modes, inline cell editors that commit on blur or Enter, range selection with TSV copy/paste, pinned columns, a sticky totals row, row selection with bulk actions, row virtualization for long documents, and drag reordering with a keyboard fallback on the grip handle.
+Includes view and edit modes, inline cell editors that commit on blur or Enter, range selection with TSV copy/paste, pinned columns, a sticky totals row, row selection with `selectionActions` (the same bulk-action bar as DataTable, at the table's foot), row virtualization for long documents, and drag reordering with a keyboard fallback on the grip handle.

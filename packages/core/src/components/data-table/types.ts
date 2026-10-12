@@ -436,16 +436,29 @@ export type UseDataTableOptions<
   rowActions?: RowAction<TRow>[];
   /**
    * Called with the current array of selected row IDs whenever the selection
-   * changes. Providing this prop enables the checkbox selection column.
-   * Selection is ID-based (`row.id`) and persists across page changes.
+   * changes. Providing this prop — or a non-empty `selectionActions` — enables
+   * the checkbox selection column. Selection is ID-based (`row.id`) and persists
+   * across page changes.
    *
    * **Requirement:** Each row must have a string or number `id` field.
    * Rows without `id` are excluded from selection.
    *
-   * **Note:** `selectAllRows` (triggered by the header checkbox) selects only
-   * the rows on the **current page**, not all pages.
+   * **Note:** The header checkbox acts on the **current page**: checking it adds
+   * the page's rows to the selection and unchecking it removes them. Rows
+   * selected on other pages are kept.
    */
   onSelectionChange?: (ids: string[]) => void;
+  /**
+   * Bulk actions for the selected rows. While at least one row is selected,
+   * `DataTable.Footer` turns into an action bar: the selection count, these
+   * actions, and a Clear button, with the pagination controls kept alongside.
+   * The bar is omitted when this array is empty or not provided.
+   *
+   * Providing a non-empty array also enables row selection, so
+   * `onSelectionChange` is optional. The first three actions render as buttons;
+   * the rest collapse into a "More actions" menu.
+   */
+  selectionActions?: SelectionAction<TRow>[];
   /**
    * Expandable detail rows. Providing this enables the whole feature: a chevron
    * column is added at the left edge (auto-pinned left, after the selection
@@ -477,15 +490,100 @@ export type UseDataTableOptions<
 // =============================================================================
 
 /**
- * A single row action definition for the actions column.
+ * What `RowAction` and `SelectionAction` share: how an action looks, and which
+ * rows it can act on. Define an action once and spread it into both arrays —
+ * only `onClick` differs, since one row and many rows need different handling.
+ *
+ * @example
+ * ```tsx
+ * const activate: DataTableAction<Vendor> = {
+ *   id: "activate",
+ *   label: "Activate",
+ *   canApply: (vendor) => vendor.status === "inactive",
+ * };
+ *
+ * useDataTable({
+ *   rowActions: [{ ...activate, onClick: (vendor) => activateOne(vendor) }],
+ *   selectionActions: [{ ...activate, onClick: (vendors) => activateMany(vendors) }],
+ * });
+ * ```
  */
-export interface RowAction<TRow extends Record<string, unknown>> {
+export interface DataTableAction<TRow extends Record<string, unknown>> {
   id: string;
   label: string;
   icon?: ReactNode;
   variant?: "default" | "destructive";
+  /**
+   * Whether the action can act on `row`. Omit it for actions that apply to
+   * every row. A row action is disabled for rows where it returns `false`; a
+   * selection action shows how many selected rows it returns `true` for
+   * ("Activate (6)"), is disabled when there are none, and passes only those
+   * rows to `onClick`.
+   */
+  canApply?: (row: TRow) => boolean;
+}
+
+/**
+ * A single row action definition for the actions column.
+ */
+export interface RowAction<TRow extends Record<string, unknown>> extends DataTableAction<TRow> {
+  /**
+   * Return `true` to disable the action for a given row.
+   *
+   * @deprecated Use `canApply`, which reads the other way round:
+   * `isDisabled: (row) => x` is `canApply: (row) => !x`. It is shared with
+   * `SelectionAction`, so one definition serves both. If both are set, the
+   * action is disabled when either one says so.
+   */
   isDisabled?: (row: TRow) => boolean;
   onClick: (row: TRow) => void;
+}
+
+/** The second argument to `SelectionAction.onClick`. */
+export interface SelectionActionHelpers {
+  /** Empty the selection across all pages. */
+  clearSelection: () => void;
+  /**
+   * Hand the bar a request it should track — for one that starts after
+   * `onClick` has returned, typically from a confirm dialog's confirm button.
+   * The bar then behaves as if `onClick` had returned it: actions (and Clear)
+   * are disabled while it is pending, and the selection clears once it resolves
+   * unless the action sets `keepSelection`. Returns the request, so it can be
+   * awaited too.
+   */
+  run: <T>(request: PromiseLike<T>) => PromiseLike<T>;
+}
+
+/**
+ * A bulk action for the selected rows, shown in `DataTable.Footer` while a
+ * selection is open. See `UseDataTableOptions.selectionActions`.
+ */
+export interface SelectionAction<
+  TRow extends Record<string, unknown>,
+> extends DataTableAction<TRow> {
+  /**
+   * Called with the selected rows the action can act on (see `canApply`),
+   * including rows selected on other pages, as they were last loaded.
+   *
+   * **Return the promise** for asynchronous work. While it is pending, the bar
+   * disables its actions and shows a spinner on this one; once it resolves, the
+   * selection is cleared — those rows may have changed, and rows remembered
+   * from other pages would otherwise be stale — unless `keepSelection` is set.
+   * A rejected promise leaves the selection as it was, so the action can be
+   * retried.
+   *
+   * **Confirming first?** An `onClick` that only opens a confirm dialog returns
+   * nothing, so the bar has nothing to wait on. Keep `helpers.run` and pass it
+   * the request when the user confirms — `run(deleteRows(rows))` — and the bar
+   * treats it exactly like a returned promise. Otherwise a synchronous handler
+   * leaves the selection alone; call `clearSelection` once the work is done.
+   */
+  onClick: (rows: TRow[], helpers: SelectionActionHelpers) => void | Promise<unknown>;
+  /**
+   * Keep the selection after this action's promise resolves — for actions that
+   * don't change the rows, such as an export.
+   */
+  keepSelection?: boolean;
 }
 
 /**
@@ -563,13 +661,34 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   // Row interaction (passthrough for DataTable.Provider)
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
+  selectionActions?: SelectionAction<TRow>[];
 
   // Row selection
   selectedIds: string[];
+  /**
+   * The selected rows, in selection order. Rows on the current page are their
+   * latest version; rows selected on other pages are the version last loaded.
+   */
+  selectedRows: TRow[];
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
+  /** Adds every row on the current page to the selection. */
   selectAllRows?: () => void;
+  /** Removes the current page's rows from the selection; other pages' rows stay selected. */
+  deselectAllRows?: () => void;
+  /** Empties the selection across all pages. */
   clearSelection?: () => void;
+  /** Id of the selection action whose request is in flight, or `null`. */
+  pendingActionId?: string | null;
+  /**
+   * Tracks a selection action's request: disables the bar while it is pending
+   * and clears the selection once it resolves (unless `keepSelection`). This is
+   * what `SelectionActionHelpers.run` calls. Undefined when selection is off.
+   */
+  runSelectionAction?: (
+    action: { id: string; keepSelection?: boolean },
+    request: PromiseLike<unknown>,
+  ) => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;
 

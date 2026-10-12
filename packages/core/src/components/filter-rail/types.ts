@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { CollectionControl, Filter, SelectOption, SortState } from "@/types/collection";
+import type { CollectionControl, Filter, SelectOption } from "@/types/collection";
 
 // ─── Options ─────────────────────────────────────────────────────────────────
 
@@ -87,7 +87,11 @@ export type CheckboxSection<TField extends string = string> = FieldSectionBase<T
   truncate?: number | false;
   /** Option values held at the top, in this order. */
   pinned?: readonly string[];
-  /** Above this many options, show a search box. Default 12, `false` never. */
+  /**
+   * Above this many options, show a search box. Defaults to `truncate` (so any
+   * list long enough to need "Show more" is searchable), or 12 when nothing is
+   * truncated. `false` never shows it.
+   */
   searchThreshold?: number | false;
 };
 
@@ -210,51 +214,10 @@ export type RailLayoutBinding = {
   onReset?: () => void;
 };
 
-// ─── Saved views ─────────────────────────────────────────────────────────────
-
-/** Filters plus the table's presentation — everything that makes a view. */
-export type ViewState = {
-  filters: Filter[];
-  sort: SortState[];
-  pageSize: number;
-  /** Column ids, in display order. */
-  columnOrder: string[];
-  /** Column ids the user has hidden. */
-  hidden: string[];
-  /** Column id → the edge it is frozen to. */
-  pinned: Record<string, "left" | "right" | "none">;
-};
-
-export type SavedView = {
-  id: string;
-  name: string;
-  createdAt: string;
-  state: ViewState;
-};
-
-/** What `FilterRail.SavedViews` renders. `useSavedViews` returns one. */
-export type SavedViewBinding = {
-  items: readonly SavedView[];
-  /** The view the current state matches, or `null`. */
-  activeId: string | null;
-  /** Whether saving now would achieve something — drives the Save button. */
-  dirty: boolean;
-  onSave: (name: string) => void;
-  onApply: (view: SavedView) => void;
-  onDelete: (view: SavedView) => void;
-  /** One-line summary under each name — "3 filters · 2 hidden · 25/page". */
-  describe?: (view: SavedView) => string;
-};
-
-/** Where saved views live. Default: localStorage. Swap for a backend store. */
-export type SavedViewStorage = {
-  load: () => SavedView[];
-  save: (views: SavedView[]) => void;
-};
-
 // ─── Parts ───────────────────────────────────────────────────────────────────
 
-export type FilterRailRootProps<TField extends string = string> = {
+/** Everything the rail filters with. Given to `Provider`, or to `Root` directly. */
+export type FilterRailConfig<TField extends string = string> = {
   /**
    * The same `control` passed to `useDataTable`. A prop rather than context:
    * the rail sits in a different `Layout.Column`, outside `DataTable.Root`.
@@ -273,10 +236,26 @@ export type FilterRailRootProps<TField extends string = string> = {
   zeroBehavior?: "disable" | "show";
   /** 32px rows (default) or 40px. */
   density?: "compact" | "comfortable";
-  /** Accessible name of the rail landmark. Default "Filters". */
-  "aria-label"?: string;
   /** Fires after the rail applies a change. */
   onFilterChange?: (next: Filter<TField>[], changed: readonly TField[]) => void;
+};
+
+export type FilterRailProviderProps<TField extends string = string> = FilterRailConfig<TField> & {
+  children: ReactNode;
+};
+
+type RootOwnProps = {
+  /** Accessible name of the rail landmark. Default "Filters". */
+  "aria-label"?: string;
   className?: string;
   children: ReactNode;
 };
+
+type NoConfig = { [K in keyof FilterRailConfig]?: never };
+
+/**
+ * Standalone, `Root` takes the config itself. Inside `FilterRail.Provider` —
+ * needed only when a `FilterRail.Trigger` sits outside the rail — it takes none.
+ */
+export type FilterRailRootProps<TField extends string = string> = RootOwnProps &
+  (FilterRailConfig<TField> | NoConfig);

@@ -4,7 +4,7 @@
 // expressible — a two-ended range commits a single `between` with
 // `{ min, max }`, which also survives the URL round-trip unchanged.
 
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { parseDate, type DateValue } from "@internationalized/date";
 import { cn } from "@/lib/utils";
 import type { Filter } from "@/types/collection";
@@ -140,19 +140,29 @@ export const NumberRangeControl = ({ section }: { section: NumberRangeSection })
   const { control, commit } = useFilterRailContext("Sections");
   const bounds = readBounds(filterFor(control.filters, section.field));
 
-  // Local drafts: commit on blur / Enter, not per keystroke.
+  // Local drafts: commit on blur / Enter, not per keystroke. Re-synced during
+  // render when the applied filter changes (Clear all, a shared URL).
   const [from, setFrom] = useState(show(bounds.min));
   const [to, setTo] = useState(show(bounds.max));
-
-  useEffect(() => {
+  const boundsKey = `${bounds.min}|${bounds.max}`;
+  const [synced, setSynced] = useState(boundsKey);
+  if (synced !== boundsKey) {
+    setSynced(boundsKey);
     setFrom(show(bounds.min));
     setTo(show(bounds.max));
-  }, [bounds.min, bounds.max]);
+  }
 
   const apply = () => {
-    const lo = from.trim() === "" ? undefined : Number(from);
-    const hi = to.trim() === "" ? undefined : Number(to);
-    if (lo === bounds.min && hi === bounds.max) return;
+    let lo = num(from.trim());
+    let hi = num(to.trim());
+    // Ends typed the wrong way round mean the same range, not an empty one.
+    if (lo !== undefined && hi !== undefined && lo > hi) [lo, hi] = [hi, lo];
+    if (lo === bounds.min && hi === bounds.max) {
+      // Nothing to commit, but show the normalised ends.
+      setFrom(show(lo));
+      setTo(show(hi));
+      return;
+    }
     commit(section.field, rangeFilter(section.field, lo, hi));
   };
 

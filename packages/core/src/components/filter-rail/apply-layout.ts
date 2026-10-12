@@ -18,6 +18,19 @@ export const railFields = <TField extends string>(
   sections: readonly FilterRailSection<TField>[],
 ): Set<TField> => new Set(sections.flatMap((section) => sectionFields(section)));
 
+/**
+ * An option's count, read safely. Counts may come from a backend as plain JSON,
+ * so an option value such as "constructor" must not resolve to an inherited
+ * property. `undefined` map ⇒ unknown; a known map without the key ⇒ 0.
+ */
+export const countOf = (
+  map: Readonly<Record<string, number>> | undefined,
+  value: string,
+): number | undefined => {
+  if (!map) return undefined;
+  return Object.hasOwn(map, value) ? map[value] : 0;
+};
+
 /** Sections whose options can be counted — checkbox and radio. */
 export const hasOptions = <TField extends string>(
   section: FilterRailSection<TField>,

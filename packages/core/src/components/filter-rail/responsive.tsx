@@ -1,63 +1,53 @@
-// The rail's small-screen form: a left sheet behind a toolbar button.
+// The rail's narrow-screen form: a left sheet behind a "Filters" button.
 //
 // "Always visible" cannot hold below `lg` — the left column would either eat
-// the table or push every row off the fold. The compromise is paid for by the
-// active count on the trigger, so "is anything filtering?" is still answered
-// without opening anything.
+// the table or push every row off the fold. Like the Sidebar, the rail detects
+// this itself: apps write no breakpoint code. The active count on the button
+// keeps "is anything filtering?" answered without opening anything.
+//
+// The button is `FilterRail.Trigger`, placed wherever the app wants (inside
+// `FilterRail.Provider`). If the app places none, `FilterRail.Root` renders a
+// fallback button in its own spot, so the filters are never unreachable.
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useLayoutEffect, useSyncExternalStore, type ReactNode } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { CollectionControl } from "@/types/collection";
 import { Button } from "../button";
-import { Sheet } from "../sheet";
-import { railFields } from "./apply-layout";
+import { useFilterRailContext } from "./filter-rail-context";
 import { useFilterRailT } from "./i18n";
-import type { FilterRailSection } from "./types";
 
+/** Below Tailwind's `lg`, where `Layout` stops placing columns side by side. */
 const COMPACT_QUERY = "(max-width: 1023.98px)";
 
-/**
- * True below the `lg` breakpoint, where `Layout.Column area="left"` stops
- * sitting beside the main column. A media query, not CSS: rendering the rail
- * twice and hiding one copy would duplicate every input in the a11y tree.
- */
-export function useFilterRailCompact(query: string = COMPACT_QUERY): boolean {
-  const [compact, setCompact] = useState(
-    () => typeof window !== "undefined" && window.matchMedia?.(query).matches === true,
-  );
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const list = window.matchMedia(query);
-    const onChange = (event: MediaQueryListEvent) => setCompact(event.matches);
-    setCompact(list.matches);
-    list.addEventListener("change", onChange);
-    return () => list.removeEventListener("change", onChange);
-  }, [query]);
-  return compact;
-}
+const subscribe = (onChange: () => void) => {
+  if (typeof window === "undefined" || !window.matchMedia) return () => {};
+  const list = window.matchMedia(COMPACT_QUERY);
+  list.addEventListener("change", onChange);
+  return () => list.removeEventListener("change", onChange);
+};
 
-type TriggerProps<TField extends string = string> = {
-  /** The same control and sections given to `FilterRail.Root`, for the active count. */
-  control: CollectionControl<TField>;
-  sections: readonly FilterRailSection<TField>[];
-  onClick: () => void;
-  /** Default "Filters". */
+const getSnapshot = () =>
+  typeof window !== "undefined" && window.matchMedia?.(COMPACT_QUERY).matches === true;
+
+/**
+ * Internal. A media query rather than CSS: rendering the rail twice and hiding
+ * one copy would duplicate every input in the accessibility tree. The server
+ * snapshot is "wide", so server and first client render agree.
+ */
+export const useIsCompact = (): boolean =>
+  useSyncExternalStore(subscribe, getSnapshot, () => false);
+
+// ─── Button ──────────────────────────────────────────────────────────────────
+
+type TriggerButtonProps = {
   children?: ReactNode;
   className?: string;
 };
 
-/** A toolbar button carrying the number of active rail filters. */
-function Trigger<TField extends string = string>({
-  control,
-  sections,
-  onClick,
-  children,
-  className,
-}: TriggerProps<TField>) {
+/** The visual button, shared by `FilterRail.Trigger` and Root's fallback. */
+export function TriggerButton({ children, className }: TriggerButtonProps) {
   const t = useFilterRailT();
-  const owned = useMemo(() => railFields(sections), [sections]);
-  const count = control.filters.filter((filter) => owned.has(filter.field)).length;
+  const { activeCount, setSheetOpen } = useFilterRailContext("Trigger");
   const label = children ?? t("title");
   const text = typeof label === "string" ? label : t("title");
   return (
@@ -65,54 +55,40 @@ function Trigger<TField extends string = string>({
       data-slot="filter-rail-trigger"
       variant="outline"
       size="sm"
-      onClick={onClick}
-      aria-label={count > 0 ? t("activeCount", { label: text, count }) : text}
+      onClick={() => setSheetOpen(true)}
+      aria-label={activeCount > 0 ? t("activeCount", { label: text, count: activeCount }) : text}
       className={cn("astw:self-start", className)}
     >
       <SlidersHorizontal className="astw:size-3.5" aria-hidden />
       {label}
-      {count > 0 && (
+      {activeCount > 0 && (
         <span
           aria-hidden
           className="astw:ml-0.5 astw:rounded-full astw:bg-primary astw:px-1.5 astw:text-xs astw:font-medium astw:text-primary-foreground astw:tabular-nums"
         >
-          {count}
+          {activeCount}
         </span>
       )}
     </Button>
   );
 }
+
+type TriggerProps = TriggerButtonProps;
+
+/**
+ * Opens the rail on narrow screens, carrying the active filter count. Place it
+ * anywhere inside `FilterRail.Provider` — a table toolbar, a page header. It
+ * renders nothing on wide screens, where the rail is already visible, and while
+ * it is mounted `FilterRail.Root` skips its own fallback button.
+ */
+function Trigger({ children, className }: TriggerProps) {
+  const { compact, registerTrigger } = useFilterRailContext("Trigger");
+  // Layout effect, so the fallback button never paints for a frame first.
+  useLayoutEffect(() => registerTrigger(), [registerTrigger]);
+  if (!compact) return null;
+  return <TriggerButton className={className}>{children}</TriggerButton>;
+}
 Trigger.displayName = "FilterRail.Trigger";
 
-type SheetProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  /** Accessible title. Default "Filters". */
-  title?: string;
-  /** Usually a `FilterRail.Root`. */
-  children: ReactNode;
-};
-
-/** A left sheet — the edge the rail occupies on a wide screen. */
-function RailSheet({ open, onOpenChange, title, children }: SheetProps) {
-  const t = useFilterRailT();
-  return (
-    <Sheet.Root side="left" open={open} onOpenChange={onOpenChange}>
-      <Sheet.Content
-        size="sm"
-        data-slot="filter-rail-sheet"
-        className="astw:flex astw:flex-col astw:gap-0 astw:p-0 astw:[&>[data-slot=filter-rail]]:flex-1 astw:[&>[data-slot=filter-rail]]:rounded-none astw:[&>[data-slot=filter-rail]]:border-0"
-      >
-        <Sheet.Header className="astw:sr-only">
-          <Sheet.Title>{title ?? t("title")}</Sheet.Title>
-          <Sheet.Description>{t("sheetDescription")}</Sheet.Description>
-        </Sheet.Header>
-        {children}
-      </Sheet.Content>
-    </Sheet.Root>
-  );
-}
-RailSheet.displayName = "FilterRail.Sheet";
-
-export { Trigger, RailSheet };
-export type { TriggerProps, SheetProps };
+export { Trigger };
+export type { TriggerProps };

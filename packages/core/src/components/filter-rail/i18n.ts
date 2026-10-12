@@ -43,23 +43,6 @@ export const filterRailLabels = defineI18nLabels({
     sortBaselineCount: "By count",
     resetLayout: "Reset to default",
 
-    // Saved views
-    savedViews: "Saved views",
-    noSavedViews: "No saved views yet",
-    deleteView: (props: { name: string }) => `Delete ${props.name}`,
-    saveView: "Save view",
-    saveViewTitle: "Save this view",
-    saveViewDescription: "Filters, sort, and the column layout will be saved under this name.",
-    saveViewPlaceholder: "e.g. Low stock, wide view",
-    cancel: "Cancel",
-    save: "Save",
-    viewFilters: (props: { count: number }) =>
-      `${props.count} filter${props.count === 1 ? "" : "s"}`,
-    viewSorted: "sorted",
-    viewHidden: (props: { count: number }) => `${props.count} hidden`,
-    viewPinned: (props: { count: number }) => `${props.count} pinned`,
-    viewPageSize: (props: { count: number }) => `${props.count}/page`,
-
     // Compact layout
     activeCount: (props: { label: string; count: number }) =>
       `${props.label}, ${props.count} active`,
@@ -104,21 +87,6 @@ export const filterRailLabels = defineI18nLabels({
     sortLabel: "名前順",
     sortBaselineCount: "件数順",
     resetLayout: "既定に戻す",
-
-    savedViews: "保存したビュー",
-    noSavedViews: "保存したビューはまだありません",
-    deleteView: (props: { name: string }) => `${props.name}を削除`,
-    saveView: "ビューを保存",
-    saveViewTitle: "このビューを保存",
-    saveViewDescription: "フィルター、並べ替え、列レイアウトがこの名前で保存されます。",
-    saveViewPlaceholder: "例: 在庫僅少、ワイド表示",
-    cancel: "キャンセル",
-    save: "保存",
-    viewFilters: (props: { count: number }) => `フィルター${props.count}件`,
-    viewSorted: "並べ替え済み",
-    viewHidden: (props: { count: number }) => `非表示${props.count}列`,
-    viewPinned: (props: { count: number }) => `固定${props.count}列`,
-    viewPageSize: (props: { count: number }) => `${props.count}件/ページ`,
 
     activeCount: (props: { label: string; count: number }) =>
       `${props.label}、${props.count}件適用中`,

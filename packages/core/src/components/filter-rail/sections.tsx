@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Filter } from "@/types/collection";
+import { countOf } from "./apply-layout";
 import { useFilterRailContext, sectionName } from "./filter-rail-context";
 import { useFilterRailT } from "./i18n";
 import {
@@ -38,7 +39,7 @@ export const sortOptions = (
   const mode = sort ?? "given";
   if (typeof mode === "function") {
     return list.toSorted((a, b) =>
-      mode(a, b, { a: live?.[a.value] ?? 0, b: live?.[b.value] ?? 0 }),
+      mode(a, b, { a: countOf(live, a.value) ?? 0, b: countOf(live, b.value) ?? 0 }),
     );
   }
   if (mode === "label") return list.toSorted((a, b) => a.label.localeCompare(b.label));
@@ -46,7 +47,8 @@ export const sortOptions = (
     const source = mode === "baselineCount" ? baseline : live;
     return list.toSorted(
       (a, b) =>
-        (source?.[b.value] ?? 0) - (source?.[a.value] ?? 0) || a.label.localeCompare(b.label),
+        (countOf(source, b.value) ?? 0) - (countOf(source, a.value) ?? 0) ||
+        a.label.localeCompare(b.label),
     );
   }
   return list;
@@ -59,25 +61,33 @@ export const TextControl = ({ section }: { section: TextSection }) => {
   const applied = filterFor(control.filters, section.field);
   const appliedValue = typeof applied?.value === "string" ? applied.value : "";
   const [draft, setDraft] = useState(appliedValue);
+  // The value this input last committed, to tell its own echo from a change
+  // made elsewhere (Clear all, a shared URL, the back button).
+  const [ownCommit, setOwnCommit] = useState<string | null>(null);
+  const [synced, setSynced] = useState(appliedValue);
+  if (synced !== appliedValue) {
+    setSynced(appliedValue);
+    // Our own echo keeps the draft, so keys typed since the commit survive.
+    if (appliedValue !== ownCommit) setDraft(appliedValue);
+  }
 
-  // Follow changes made elsewhere — Clear all, a shared URL, the back button.
-  useEffect(() => setDraft(appliedValue), [appliedValue]);
+  // Debounced in the handler: every commit resets pagination.
+  const timer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  // Debounced: every commit resets pagination.
-  useEffect(() => {
-    const trimmed = draft.trim();
-    if (trimmed === appliedValue) return;
-    const timer = window.setTimeout(() => {
-      const min = section.minLength ?? 1;
+  const onChange = (next: string) => {
+    setDraft(next);
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => {
+      const trimmed = next.trim();
+      const value = trimmed.length >= (section.minLength ?? 1) ? trimmed : "";
+      setOwnCommit(value);
       commit(
         section.field,
-        trimmed.length >= min
-          ? { field: section.field, operator: section.operator, value: trimmed }
-          : null,
+        value ? { field: section.field, operator: section.operator, value } : null,
       );
     }, section.debounceMs ?? 250);
-    return () => window.clearTimeout(timer);
-  }, [draft, appliedValue, section, commit]);
+  };
 
   return (
     <input
@@ -85,7 +95,7 @@ export const TextControl = ({ section }: { section: TextSection }) => {
       value={draft}
       placeholder={section.placeholder}
       aria-label={sectionName(section)}
-      onChange={(event) => setDraft(event.target.value)}
+      onChange={(event) => onChange(event.target.value)}
       className={cn(inputClass, rowHeightClass(density))}
     />
   );
@@ -118,7 +128,7 @@ export const RadioControl = ({ section }: { section: RadioSection }) => {
           key={option.value}
           name={section.id}
           label={option.label}
-          count={live ? (live[option.value] ?? 0) : undefined}
+          count={countOf(live, option.value)}
           checked={current === option.value}
           rowHeight={rowHeight}
           onSelect={() =>
@@ -147,8 +157,13 @@ export const CheckboxControl = ({ section }: { section: CheckboxSection }) => {
 
   const operator = section.operator ?? "in";
   const limit = section.truncate === false ? Number.POSITIVE_INFINITY : (section.truncate ?? 8);
+  // Search appears as soon as the list is long enough to be truncated, so a
+  // user can always reach a value without "Show more" and scrolling.
+  const defaultThreshold = Number.isFinite(limit) ? limit : 12;
   const threshold =
-    section.searchThreshold === false ? Number.POSITIVE_INFINITY : (section.searchThreshold ?? 12);
+    section.searchThreshold === false
+      ? Number.POSITIVE_INFINITY
+      : (section.searchThreshold ?? defaultThreshold);
 
   const ordered = useMemo(() => {
     const sorted = sortOptions(section.options, section.sort, live, baseline);
@@ -209,7 +224,7 @@ export const CheckboxControl = ({ section }: { section: CheckboxSection }) => {
       {visible.map((option) => {
         // Once a section's map exists, a missing option has zero matches, not
         // an unknown count.
-        const count = live ? (live[option.value] ?? 0) : undefined;
+        const count = countOf(live, option.value);
         const isSelected = selected.has(option.value);
         // A selected option is never disabled — it is the only way to unselect it.
         const zero = count === 0 && !isSelected && zeroBehavior === "disable";

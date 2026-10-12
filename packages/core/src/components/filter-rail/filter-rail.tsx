@@ -1,16 +1,25 @@
-import { useCallback, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { CollectionControl, Filter } from "@/types/collection";
-import { applyRailLayout, findRailProblems, railFields, sectionFields } from "./apply-layout";
+import { Sheet } from "../sheet";
+import {
+  applyRailLayout,
+  countOf,
+  findRailProblems,
+  railFields,
+  sectionFields,
+} from "./apply-layout";
 import { DateControl, DateRangeControl, NumberRangeControl } from "./controls";
 import {
   FilterRailContext,
   sectionName,
   useFilterRailContext,
+  useOptionalFilterRailContext,
   type FilterRailContextValue,
 } from "./filter-rail-context";
 import { useFilterRailT } from "./i18n";
 import { ClearLink, RailSection } from "./internals";
+import { TriggerButton, useIsCompact } from "./responsive";
 import {
   BooleanControl,
   CheckboxControl,
@@ -19,24 +28,30 @@ import {
   RadioControl,
   TextControl,
 } from "./sections";
-import type { FilterRailRootProps, FilterRailSection } from "./types";
+import type {
+  FilterRailConfig,
+  FilterRailProviderProps,
+  FilterRailRootProps,
+  FilterRailSection,
+} from "./types";
 
-// ─── Root ────────────────────────────────────────────────────────────────────
+// ─── Provider ────────────────────────────────────────────────────────────────
 
-function Root<TField extends string = string>({
+/**
+ * Holds the rail's state for every part beneath it. Only needed when a
+ * `FilterRail.Trigger` sits outside `FilterRail.Root` (in a table toolbar, say);
+ * otherwise give `Root` the config directly.
+ */
+function Provider<TField extends string = string>({
   control,
   sections,
   counts,
   layout,
   zeroBehavior = "disable",
   density = "compact",
-  "aria-label": ariaLabel,
   onFilterChange,
-  className,
   children,
-}: FilterRailRootProps<TField>) {
-  const t = useFilterRailT();
-
+}: FilterRailProviderProps<TField>) {
   // Widen once at the boundary — every internal is string-keyed by nature.
   const anyControl = control as unknown as CollectionControl;
   const anySections = sections as readonly FilterRailSection[];
@@ -97,6 +112,15 @@ function Root<TField extends string = string>({
   // does not own.
   const clearAll = useCallback(() => clearFields([...owned]), [clearFields, owned]);
 
+  // Narrow-screen form. `triggers` counts mounted `FilterRail.Trigger`s.
+  const compact = useIsCompact();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [triggers, setTriggers] = useState(0);
+  const registerTrigger = useCallback(() => {
+    setTriggers((count) => count + 1);
+    return () => setTriggers((count) => count - 1);
+  }, []);
+
   const value = useMemo<FilterRailContextValue>(
     () => ({
       control: anyControl,
@@ -117,6 +141,11 @@ function Root<TField extends string = string>({
       commit,
       clearFields,
       clearAll,
+      compact,
+      sheetOpen: compact && sheetOpen,
+      setSheetOpen,
+      hasTrigger: triggers > 0,
+      registerTrigger,
     }),
     [
       anyControl,
@@ -130,25 +159,85 @@ function Root<TField extends string = string>({
       commit,
       clearFields,
       clearAll,
+      compact,
+      sheetOpen,
+      triggers,
+      registerTrigger,
     ],
   );
 
-  return (
-    <FilterRailContext.Provider value={value}>
-      <aside
-        data-slot="filter-rail"
-        aria-label={ariaLabel ?? t("title")}
-        className={cn(
-          // `overflow-hidden` on the shell and the scroll on Sections, so the
-          // header (and Clear all) never scrolls away.
-          "astw:flex astw:min-h-0 astw:flex-col astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:bg-card astw:text-card-foreground",
-          className,
-        )}
-      >
-        {children}
-      </aside>
-    </FilterRailContext.Provider>
+  return <FilterRailContext.Provider value={value}>{children}</FilterRailContext.Provider>;
+}
+Provider.displayName = "FilterRail.Provider";
+
+// ─── Root ────────────────────────────────────────────────────────────────────
+
+/** The rail itself: inline on wide screens, a left sheet behind a button below `lg`. */
+function RailShell({
+  "aria-label": ariaLabel,
+  className,
+  children,
+}: Pick<FilterRailRootProps, "aria-label" | "className" | "children">) {
+  const t = useFilterRailT();
+  const { compact, sheetOpen, setSheetOpen, hasTrigger } = useFilterRailContext("Root");
+  const rail = (
+    <aside
+      data-slot="filter-rail"
+      aria-label={ariaLabel ?? t("title")}
+      className={cn(
+        // `overflow-hidden` on the shell and the scroll on Sections, so the
+        // header (and Clear all) never scrolls away.
+        "astw:flex astw:min-h-0 astw:flex-col astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:bg-card astw:text-card-foreground",
+        compact && "astw:flex-1 astw:rounded-none astw:border-0",
+        className,
+      )}
+    >
+      {children}
+    </aside>
   );
+
+  if (!compact) return rail;
+  return (
+    <>
+      {/* Fallback, so the filters are reachable when the app placed no Trigger. */}
+      {!hasTrigger && <TriggerButton />}
+      <Sheet.Root side="left" open={sheetOpen} onOpenChange={setSheetOpen}>
+        <Sheet.Content
+          size="sm"
+          data-slot="filter-rail-sheet"
+          className="astw:flex astw:flex-col astw:gap-0 astw:p-0"
+        >
+          <Sheet.Header className="astw:sr-only">
+            <Sheet.Title>{ariaLabel ?? t("title")}</Sheet.Title>
+            <Sheet.Description>{t("sheetDescription")}</Sheet.Description>
+          </Sheet.Header>
+          {rail}
+        </Sheet.Content>
+      </Sheet.Root>
+    </>
+  );
+}
+
+/**
+ * The rail. Give it the config directly, or render it inside
+ * `FilterRail.Provider` with no config when a `FilterRail.Trigger` lives
+ * elsewhere on the page.
+ */
+function Root<TField extends string = string>(props: FilterRailRootProps<TField>) {
+  const provided = useOptionalFilterRailContext();
+  const { "aria-label": ariaLabel, className, children, ...config } = props;
+  const shell = (
+    <RailShell aria-label={ariaLabel} className={className}>
+      {children}
+    </RailShell>
+  );
+  if (provided) return shell;
+  if (!config.control || !config.sections) {
+    throw new Error(
+      "<FilterRail.Root> needs `control` and `sections`, or must be inside <FilterRail.Provider>.",
+    );
+  }
+  return <Provider {...(config as FilterRailConfig<TField>)}>{shell}</Provider>;
 }
 Root.displayName = "FilterRail.Root";
 
@@ -238,8 +327,8 @@ const Recovery = () => {
     const without = counts?.withoutSection;
     if (!without || counts?.total !== 0 || activeCount === 0) return [];
     return sections
-      .filter((section) => filteredSections.has(section.id) && (without[section.id] ?? 0) > 0)
-      .map((section) => ({ section, rows: without[section.id]! }))
+      .map((section) => ({ section, rows: countOf(without, section.id) ?? 0 }))
+      .filter(({ section, rows }) => filteredSections.has(section.id) && rows > 0)
       .toSorted((a, b) => b.rows - a.rows)
       .slice(0, 2);
   }, [counts, activeCount, sections, filteredSections]);
@@ -307,5 +396,5 @@ function Sections({ className }: SectionsProps) {
 }
 Sections.displayName = "FilterRail.Sections";
 
-export { Root, Header, ClearAll, Sections };
+export { Provider, Root, Header, ClearAll, Sections };
 export type { HeaderProps, ClearAllProps, SectionsProps };

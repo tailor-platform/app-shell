@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { EMPTY_RAIL_LAYOUT } from "./apply-layout";
 import { readStorage, removeStorage, stringArray, writeStorage } from "./storage";
 import type { RailLayout, RailLayoutBinding, UserOptionSort } from "./types";
@@ -10,7 +10,8 @@ const SORTS = new Set<UserOptionSort>(["given", "label", "baselineCount"]);
 const parseLayout = (raw: unknown): RailLayout => {
   if (!raw || typeof raw !== "object") return EMPTY_RAIL_LAYOUT;
   const value = raw as Record<string, unknown>;
-  const sort: Record<string, UserOptionSort> = {};
+  // Null prototype: ids come from storage, so "__proto__" must stay a plain key.
+  const sort = Object.create(null) as Record<string, UserOptionSort>;
   if (value.sort && typeof value.sort === "object") {
     for (const [id, mode] of Object.entries(value.sort)) {
       if (SORTS.has(mode as UserOptionSort)) sort[id] = mode as UserOptionSort;
@@ -33,10 +34,13 @@ export function useFilterRailLayout(storageKey: string): RailLayoutBinding {
     readStorage(key, parseLayout, EMPTY_RAIL_LAYOUT),
   );
 
-  // Re-hydrate when the key changes (a different screen reusing the component).
-  useEffect(() => {
+  // Re-hydrate during render when the key changes (a different screen reusing
+  // the component), so the old layout never paints under the new key.
+  const [loadedKey, setLoadedKey] = useState(key);
+  if (loadedKey !== key) {
+    setLoadedKey(key);
     setValue(readStorage(key, parseLayout, EMPTY_RAIL_LAYOUT));
-  }, [key]);
+  }
 
   // Written in the setter, not an effect, so mount never clobbers storage.
   const onChange = useCallback(

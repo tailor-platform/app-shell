@@ -8,10 +8,8 @@ import {
   createColumnHelper,
   useCollectionVariables,
   useDataTable,
-  useFilterRailCompact,
   useFilterRailCounts,
   useFilterRailLayout,
-  useSavedViews,
   useURLCollectionVariables,
   type AppShellPageProps,
   type CollectionControl,
@@ -30,9 +28,11 @@ import { allProducts, type Product } from "../../../mock-products";
 // table share one `CollectionControl`, so there is no second filter engine.
 //
 // Three variants prove the parts are optional:
-//   Full        — every section type, counts, settings, saved views, sheet below lg
-//   Checkboxes  — Root + Sections only
-//   Radios      — radio + boolean + a custom section, no counts, no saved views
+//   Full        — every section type, counts, settings; below lg the Filters
+//                 button sits in the table toolbar (Provider + Trigger)
+//   Checkboxes  — Root + Sections only, plus a long Tags list with value search;
+//                 below lg the rail falls back to its own Filters button
+//   Radios      — radio + boolean + a custom section, no counts
 
 // ─── Rows ───────────────────────────────────────────────────────────────────────
 
@@ -94,6 +94,8 @@ function matches(value: unknown, op: string, operand: unknown): boolean {
       return compare(value, min) >= 0 && compare(value, max) <= 0;
     }
     case "in":
+      // A list-valued cell (tags) matches when any of its members does.
+      if (Array.isArray(value)) return value.some((member) => matches(member, "in", operand));
       return Array.isArray(operand) && operand.map(String).includes(String(value));
     case "nin":
       return Array.isArray(operand) && !operand.map(String).includes(String(value));
@@ -299,6 +301,18 @@ const CHECKBOX_SECTIONS: FilterRailSection[] = [
     truncate: false,
   },
   {
+    // A long, list-valued field: more options than fit, so the section shows a
+    // search box to find a value without scrolling.
+    id: "tags",
+    label: "Tags",
+    control: "checkbox",
+    field: "tags",
+    options: [...new Set(ROWS.flatMap((row) => row.tags))]
+      .sort()
+      .map((value) => ({ value, label: value })),
+    sort: "baselineCount",
+  },
+  {
     id: "priceBand",
     label: "Price band",
     control: "checkbox",
@@ -413,10 +427,6 @@ const FullVariant = ({ header }: { header: ReactNode }) => {
   const { variables, control } = useURLCollectionVariables({ params: { pageSize: 25 } });
   const counts = useFilterRailCounts(ROWS, FULL_SECTIONS, control.filters, { baseline: true });
   const layout = useFilterRailLayout("showcase:products");
-  const compact = useFilterRailCompact();
-  const [sheetOpen, setSheetOpen] = useState(false);
-
-  // Saved views need the table, which lives in the main column.
   const data = useMemo(() => queryRows(variables), [variables]);
   const table = useDataTable<Row>({
     columns: COLUMNS,
@@ -424,53 +434,36 @@ const FullVariant = ({ header }: { header: ReactNode }) => {
     control,
     tableId: "filter-rail:full",
   });
-  const views = useSavedViews(table, { storageKey: "showcase:products" });
 
-  const rail = (
-    <FilterRail.Root
-      control={control}
-      sections={FULL_SECTIONS}
-      counts={counts}
-      layout={layout}
-      className={compact ? undefined : "max-h-full"}
-    >
-      <FilterRail.Header>
-        <FilterRail.ClearAll />
-        <FilterRail.Settings />
-      </FilterRail.Header>
-      <FilterRail.SavedViews {...views} />
-      <FilterRail.Sections />
-      <FilterRail.SaveView {...views} />
-    </FilterRail.Root>
-  );
-
+  // Provider, because the Trigger lives in the table toolbar rather than in the
+  // rail. Below lg the rail turns into a sheet and the Trigger opens it; on wide
+  // screens the Trigger renders nothing.
   return (
-    <Layout fill>
-      {header}
-      {!compact && <Layout.Column area="left">{rail}</Layout.Column>}
-      <Layout.Column area="main">
-        <DataTable.Root value={table} className="overflow-hidden">
-          <DataTable.Toolbar columnSettings>
-            {compact && (
-              <FilterRail.Trigger
-                control={control}
-                sections={FULL_SECTIONS}
-                onClick={() => setSheetOpen(true)}
-              />
-            )}
-          </DataTable.Toolbar>
-          <DataTable.Table />
-          <DataTable.Footer>
-            <DataTable.Pagination pageSizeOptions={[25, 50, 100]} />
-          </DataTable.Footer>
-        </DataTable.Root>
-      </Layout.Column>
-      {compact && (
-        <FilterRail.Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-          {rail}
-        </FilterRail.Sheet>
-      )}
-    </Layout>
+    <FilterRail.Provider control={control} sections={FULL_SECTIONS} counts={counts} layout={layout}>
+      <Layout fill>
+        {header}
+        <Layout.Column area="left">
+          <FilterRail.Root className="max-h-full">
+            <FilterRail.Header>
+              <FilterRail.ClearAll />
+              <FilterRail.Settings />
+            </FilterRail.Header>
+            <FilterRail.Sections />
+          </FilterRail.Root>
+        </Layout.Column>
+        <Layout.Column area="main">
+          <DataTable.Root value={table} className="overflow-hidden">
+            <DataTable.Toolbar columnSettings>
+              <FilterRail.Trigger />
+            </DataTable.Toolbar>
+            <DataTable.Table />
+            <DataTable.Footer>
+              <DataTable.Pagination pageSizeOptions={[25, 50, 100]} />
+            </DataTable.Footer>
+          </DataTable.Root>
+        </Layout.Column>
+      </Layout>
+    </FilterRail.Provider>
   );
 };
 
@@ -478,7 +471,9 @@ const FullVariant = ({ header }: { header: ReactNode }) => {
 
 const CheckboxVariant = ({ header }: { header: ReactNode }) => {
   const { variables, control } = useCollectionVariables({ params: { pageSize: 25 } });
-  const counts = useFilterRailCounts(ROWS, CHECKBOX_SECTIONS, control.filters);
+  const counts = useFilterRailCounts(ROWS, CHECKBOX_SECTIONS, control.filters, {
+    baseline: true,
+  });
   return (
     <Layout fill>
       {header}

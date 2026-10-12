@@ -4,7 +4,7 @@
 
 Add `FilterRail`, an always-visible faceted filter rail that sits beside a `DataTable` and writes the same `CollectionControl`.
 
-Sections are config — any mix of `checkbox`, `radio`, `boolean`, `text`, `numberRange`, `date`, `dateRange` and `custom` — and every other feature is an optional part: `Header`, `ClearAll`, `Settings` (reorder / hide / sort), `SavedViews` + `SaveView` (picker and pinned Save footer), and `Trigger` + `Sheet` for narrow screens.
+Sections are config — any mix of `checkbox`, `radio`, `boolean`, `text`, `numberRange`, `date`, `dateRange` and `custom` — and every other feature is an optional part: `Header`, `ClearAll` and `Settings` (show / hide, reorder, sort). Below `lg` the rail turns itself into a left sheet behind a "Filters" button, like the Sidebar; wrap the page in `FilterRail.Provider` to place that button (`FilterRail.Trigger`) anywhere.
 
 ```tsx
 <FilterRail.Root control={control} sections={sections} counts={counts} layout={layout}>
@@ -12,10 +12,8 @@ Sections are config — any mix of `checkbox`, `radio`, `boolean`, `text`, `numb
     <FilterRail.ClearAll />
     <FilterRail.Settings />
   </FilterRail.Header>
-  <FilterRail.SavedViews {...views} />
   <FilterRail.Sections />
-  <FilterRail.SaveView {...views} />
 </FilterRail.Root>
 ```
 
-Companion hooks: `useFilterRailCounts` (in-memory facet counts), `useFilterRailLayout` (persisted section layout), `useSavedViews` (named DataTable views — filters, sort, page size and column layout) and `useFilterRailCompact`.
+Companion hooks: `useFilterRailCounts` (in-memory facet counts) and `useFilterRailLayout` (persisted section layout).

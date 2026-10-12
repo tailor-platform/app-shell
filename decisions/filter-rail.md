@@ -13,10 +13,10 @@ A demo on `demo/filter-rail` proved out an always-visible rail with counts. This
 
 ### Config sections + optional parts
 
-Sections are a config array (`sections`, like `DataTable` `columns` or `DescriptionCard` `fields`); assembly is a compound namespace (`FilterRail.Root / Header / ClearAll / Settings / SavedViews / Sections / SaveView / Trigger / Sheet`).
+Sections are a config array (`sections`, like `DataTable` `columns` or `DescriptionCard` `fields`); assembly is a compound namespace (`FilterRail.Provider / Root / Header / ClearAll / Settings / Sections / Trigger`).
 
 - The rail must know every section to offer Clear all, reorder/hide settings and the "hiding clears its filter" rule. Pure JSX sections would need a registration protocol for that.
-- A single component with a prop per feature cannot place pieces elsewhere (saved views in a page header) and grows a flag per feature. Parts are included or left out.
+- A single component with a prop per feature cannot place pieces elsewhere (the narrow-screen button in a table toolbar) and grows a flag per feature. Parts are included or left out.
 - A `custom` section type covers anything the built-in controls do not, and declares the `fields` it owns so it still takes part in Clear all.
 
 ### Not `DataTable.FilterRail`
@@ -29,7 +29,19 @@ Checkbox = `in`/`nin`, radio = `eq`/`ne`, boolean = `eq`, ranges = `between` (a 
 
 ### Counts and storage belong to the consumer
 
-The rail never sees rows. `counts` is a prop; `useFilterRailCounts` covers the in-memory case, a backend returns the same shape from an aggregation. Layout and saved-view storage are bindings with localStorage defaults (`useFilterRailLayout`, `useSavedViews`) and a seam for a backend store — team-shared views and a default view for everyone are product decisions, not component ones.
+The rail never sees rows. `counts` is a prop; `useFilterRailCounts` covers the in-memory case, a backend returns the same shape from an aggregation. Layout storage is a binding with a localStorage default (`useFilterRailLayout`) and a seam for a backend store — a team-shared layout is a product decision, not a component one.
+
+### Narrow screens: the Sidebar pattern
+
+Below `lg` the rail turns itself into a left sheet behind a "Filters" button, as the Sidebar does on mobile. The breakpoint check stays internal — AppShell exports no breakpoint hooks (`useIsMobile` / `useIsTablet` are private too), so apps write no breakpoint code.
+
+The app still owns where the button goes: `FilterRail.Trigger`, inside `FilterRail.Provider`, can sit anywhere (a table toolbar, a page header). If none is mounted, `Root` renders a fallback button in its own spot, so the filters are never unreachable on a screen whose author never tested narrow widths.
+
+`Root` takes the config directly in the common case; `Provider` is only needed when the Trigger lives outside the rail. Inside a Provider, `Root` takes no config (enforced by its prop types).
+
+### Saved views are a separate change
+
+Named views (filters plus sort, page size and column layout) were prototyped here and moved to a follow-up. A view is mostly `DataTable` state, its storage needs an async design for team-shared views, and keeping it out lets this review focus on the rail.
 
 ### No hidden state
 
@@ -41,6 +53,6 @@ app-shell has no radio control. The rail uses a native radio in a `<fieldset>` i
 
 ## Consequences
 
-- New public surface: `FilterRail`, `FilterRailRootProps`, `FilterRailSection`, `useFilterRailCounts`, `useFilterRailLayout`, `useSavedViews`, `useFilterRailCompact`.
+- New public surface: `FilterRail`, `FilterRailRootProps`, `FilterRailSection`, `useFilterRailCounts`, `useFilterRailLayout`.
 - A field should belong to one surface: do not render `DataTable.Filters` for fields the rail owns.
 - Known limit: the URL serializer stringifies scalars, so a backend must coerce `"true"`/numeric strings as it would any input (the rail itself reads `"true"` back correctly).

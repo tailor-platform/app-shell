@@ -25,6 +25,16 @@ export type FilterRailContextValue = {
   /** Remove the filters on these fields in one `setFilters`. */
   clearFields: (fields: readonly string[]) => void;
   clearAll: () => void;
+
+  // Narrow-screen form
+  /** Below `lg`: the rail lives in a sheet behind a button. */
+  compact: boolean;
+  sheetOpen: boolean;
+  setSheetOpen: (open: boolean) => void;
+  /** Whether a `FilterRail.Trigger` is mounted, so Root skips its fallback button. */
+  hasTrigger: boolean;
+  /** Called by `FilterRail.Trigger` on mount; returns the unregister function. */
+  registerTrigger: () => () => void;
 };
 
 export const FilterRailContext = createContext<FilterRailContextValue | null>(null);
@@ -32,10 +42,15 @@ export const FilterRailContext = createContext<FilterRailContextValue | null>(nu
 export function useFilterRailContext(part: string): FilterRailContextValue {
   const context = useContext(FilterRailContext);
   if (!context) {
-    throw new Error(`<FilterRail.${part}> must be rendered inside <FilterRail.Root>.`);
+    throw new Error(
+      `<FilterRail.${part}> must be rendered inside <FilterRail.Root> or <FilterRail.Provider>.`,
+    );
   }
   return context;
 }
+
+/** For Root, which provides the context itself when no Provider is above it. */
+export const useOptionalFilterRailContext = () => useContext(FilterRailContext);
 
 /** A plain-text name for a section, for aria-labels and messages. */
 export const sectionName = (section: FilterRailSection): string =>

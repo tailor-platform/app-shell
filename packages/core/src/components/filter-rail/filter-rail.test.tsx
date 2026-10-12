@@ -3,17 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { CollectionControl, Filter } from "@/types/collection";
-import { ClearAll, Header, Root, Sections } from "./filter-rail";
+import { ClearAll, Header, Provider, Root, Sections } from "./filter-rail";
 import { Trigger } from "./responsive";
-import { SaveView, SavedViews } from "./saved-views";
 import { Settings } from "./settings";
-import type {
-  FacetCounts,
-  FilterRailRootProps,
-  FilterRailSection,
-  RailLayout,
-  SavedView,
-} from "./types";
+import type { FacetCounts, FilterRailConfig, FilterRailSection, RailLayout } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -47,7 +40,9 @@ const makeControl = (
   resetCount: 0,
 });
 
-type HarnessProps = Omit<FilterRailRootProps, "control" | "children" | "layout"> & {
+type HarnessProps = Omit<FilterRailConfig, "control" | "layout"> & {
+  "aria-label"?: string;
+  className?: string;
   initial?: Filter[];
   initialLayout?: RailLayout;
   onLayoutChange?: (next: RailLayout) => void;
@@ -164,14 +159,6 @@ const priceSection: FilterRailSection = {
 const categoryCounts: FacetCounts = {
   live: { category: { apparel: 1380, shoes: 0, bags: 12 } },
 };
-
-// 🧪 Dummy Data: saved views
-const view = (id: string, name: string): SavedView => ({
-  id,
-  name,
-  createdAt: "2026-09-30T00:00:00.000Z",
-  state: { filters: [], sort: [], pageSize: 20, columnOrder: [], hidden: [], pinned: {} },
-});
 
 // ─── Snapshots ───────────────────────────────────────────────────────────────
 
@@ -712,10 +699,10 @@ describe("FilterRail", () => {
     it("throws a helpful error when a part renders outside Root", () => {
       vi.spyOn(console, "error").mockImplementation(() => {});
       expect(() => render(<Sections />)).toThrow(
-        "<FilterRail.Sections> must be rendered inside <FilterRail.Root>.",
+        "<FilterRail.Sections> must be rendered inside <FilterRail.Root> or <FilterRail.Provider>.",
       );
       expect(() => render(<ClearAll />)).toThrow(
-        "<FilterRail.ClearAll> must be rendered inside <FilterRail.Root>.",
+        "<FilterRail.ClearAll> must be rendered inside <FilterRail.Root> or <FilterRail.Provider>.",
       );
       expect(() => render(<Header />)).toThrow("<FilterRail.Header>");
       expect(() => render(<Settings />)).toThrow("<FilterRail.Settings>");
@@ -841,129 +828,175 @@ describe("FilterRail", () => {
     });
   });
 
-  // ─── SavedViews ────────────────────────────────────────────────────────────
+  // ─── Narrow screens ────────────────────────────────────────────────────────
 
-  describe("SavedViews", () => {
-    const binding = (overrides: Partial<Parameters<typeof SavedViews>[0]> = {}) => ({
-      items: [view("v1", "Low stock"), view("v2", "Wide view")],
-      activeId: null,
-      dirty: false,
-      onSave: vi.fn(),
-      onApply: vi.fn(),
-      onDelete: vi.fn(),
-      ...overrides,
-    });
-
-    it("renders the Saved views trigger with no Save button of its own", () => {
-      const { container } = render(<SavedViews {...binding({ dirty: true })} />);
-      expect(container.innerHTML).toMatchSnapshot();
-      expect(screen.getByRole("button", { name: /Saved views/ })).toBeTruthy();
-      expect(screen.queryByRole("button", { name: "Save this view" })).toBeNull();
-    });
-
-    it("SaveView renders nothing while clean", () => {
-      render(<SaveView {...binding()} />);
-      expect(screen.queryByRole("button", { name: "Save this view" })).toBeNull();
-    });
-
-    it("SaveView is a footer after the sections inside the rail", () => {
-      const { container } = render(
-        <Harness sections={[categorySection]}>
-          <Sections />
-          <SaveView {...binding({ dirty: true })} />
-        </Harness>,
+  describe("narrow screens", () => {
+    /** Pretend the viewport is below `lg`. jsdom has no matchMedia of its own. */
+    const narrow = () => {
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn(() => ({
+          matches: true,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        })),
       );
-      const rail = container.querySelector('[data-slot="filter-rail"]')!;
-      expect(rail.lastElementChild?.getAttribute("data-slot")).toBe("filter-rail-save-view");
+    };
+    afterEach(() => vi.unstubAllGlobals());
+
+    const active: Filter[] = [
+      { field: "category", operator: "in", value: ["apparel"] },
+      { field: "status", operator: "eq", value: "active" },
+      { field: "warehouse", operator: "eq", value: "tokyo" },
+    ];
+
+    it("renders the rail inline and no button on wide screens", () => {
+      render(<Harness sections={[categorySection]} />);
+      expect(screen.getByRole("complementary", { name: "Filters" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: /^Filters/ })).toBeNull();
     });
 
-    it("shows the active view's name on the trigger", () => {
-      render(<SavedViews {...binding({ activeId: "v2" })} />);
-      expect(screen.getByRole("button", { name: /Wide view/ })).toBeTruthy();
-    });
-
-    it("dirty SaveView shows its button, and the dialog saves via onSave(name)", async () => {
+    it("collapses into a fallback button with the active count when no Trigger is placed", async () => {
+      narrow();
       const user = userEvent.setup();
-      const props = binding({ dirty: true });
-      render(<SaveView {...props} />);
-      await user.click(screen.getByRole("button", { name: "Save this view" }));
-      const input = await screen.findByRole("textbox", { name: "Save this view" });
-      const dialog = screen.getByRole("dialog");
-      const save = within(dialog).getByRole("button", { name: "Save" }) as HTMLButtonElement;
-      expect(save.disabled).toBe(true);
-      await user.type(input, "  My view  ");
-      await user.click(save);
-      expect(props.onSave).toHaveBeenCalledWith("My view");
+      render(<Harness sections={[categorySection, statusSection]} initial={active} />);
+      expect(screen.queryByRole("complementary")).toBeNull();
+      // Two of the three filters are the rail's own; "warehouse" is not counted.
+      const button = screen.getByRole("button", { name: "Filters, 2 active" });
+      await user.click(button);
+      const dialog = await screen.findByRole("dialog");
+      expect(within(dialog).getByRole("complementary", { name: "Filters" })).toBeTruthy();
     });
 
-    it("Enter in the name input saves", async () => {
+    function PlacedTrigger() {
+      const [filters, setFilters] = useState<Filter[]>(active);
+      const control = useMemo(() => makeControl(filters, setFilters), [filters]);
+      return (
+        <Provider control={control} sections={[categorySection, statusSection]}>
+          <div data-testid="toolbar">
+            <Trigger />
+          </div>
+          <Root>
+            <Sections />
+          </Root>
+        </Provider>
+      );
+    }
+
+    it("uses a Trigger placed elsewhere and skips the fallback", async () => {
+      narrow();
       const user = userEvent.setup();
-      const props = binding({ dirty: true });
-      render(<SaveView {...props} />);
-      await user.click(screen.getByRole("button", { name: "Save this view" }));
-      const input = await screen.findByRole("textbox", { name: "Save this view" });
-      await user.type(input, "Quick{Enter}");
-      expect(props.onSave).toHaveBeenCalledWith("Quick");
+      render(<PlacedTrigger />);
+      const buttons = screen.getAllByRole("button", { name: "Filters, 2 active" });
+      expect(buttons).toHaveLength(1);
+      expect(within(screen.getByTestId("toolbar")).getByRole("button")).toBe(buttons[0]);
+      await user.click(buttons[0]!);
+      expect(await screen.findByRole("dialog")).toBeTruthy();
     });
 
-    it("clicking an item calls onApply", async () => {
-      const user = userEvent.setup();
-      const props = binding();
-      render(<SavedViews {...props} />);
-      await user.click(screen.getByRole("button", { name: /Saved views/ }));
-      const item = await screen.findByRole("menuitem", { name: /Wide view/ });
-      await user.click(item);
-      expect(props.onApply).toHaveBeenCalledWith(props.items[1]);
-      expect(props.onDelete).not.toHaveBeenCalled();
+    it("renders the Trigger as nothing on wide screens", () => {
+      render(<PlacedTrigger />);
+      expect(within(screen.getByTestId("toolbar")).queryByRole("button")).toBeNull();
+      expect(screen.getByRole("complementary", { name: "Filters" })).toBeTruthy();
     });
 
-    it("delete calls onDelete and not onApply", async () => {
-      const user = userEvent.setup();
-      const props = binding();
-      render(<SavedViews {...props} />);
-      await user.click(screen.getByRole("button", { name: /Saved views/ }));
-      const remove = await screen.findByRole("button", { name: "Delete Low stock" });
-      await user.click(remove);
-      expect(props.onDelete).toHaveBeenCalledWith(props.items[0]);
-      expect(props.onApply).not.toHaveBeenCalled();
+    it("throws a helpful error for a Trigger outside a Provider", () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      expect(() => render(<Trigger />)).toThrow(
+        /inside <FilterRail.Root> or <FilterRail.Provider>/,
+      );
     });
 
-    it("shows an empty state", async () => {
-      const user = userEvent.setup();
-      render(<SavedViews {...binding({ items: [] })} />);
-      await user.click(screen.getByRole("button", { name: /Saved views/ }));
-      expect(await screen.findByText("No saved views yet")).toBeTruthy();
+    it("throws a helpful error for a Root with no config and no Provider", () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      expect(() =>
+        render(
+          <Root>
+            <Sections />
+          </Root>,
+        ),
+      ).toThrow(/needs `control` and `sections`/);
     });
   });
 
-  // ─── Trigger ───────────────────────────────────────────────────────────────
+  // ─── Review fixes ──────────────────────────────────────────────────────────
 
-  describe("Trigger", () => {
-    it("shows the active rail filter count", async () => {
-      const user = userEvent.setup();
-      const onClick = vi.fn();
-      const control = makeControl(
-        [
-          { field: "category", operator: "in", value: ["apparel"] },
-          { field: "status", operator: "eq", value: "active" },
-          { field: "warehouse", operator: "eq", value: "tokyo" },
+  describe("hardening", () => {
+    it("counts an option named like an Object.prototype member as 0, not a function", () => {
+      const section: FilterRailSection = {
+        id: "kind",
+        label: "Kind",
+        control: "checkbox",
+        field: "kind",
+        options: [
+          { value: "constructor", label: "Constructor" },
+          { value: "toString", label: "To string" },
         ],
-        vi.fn(),
-      );
-      const { container } = render(
-        <Trigger control={control} sections={[categorySection, statusSection]} onClick={onClick} />,
-      );
-      expect(container.innerHTML).toMatchSnapshot();
-      const button = screen.getByRole("button", { name: "Filters, 2 active" });
-      expect(button.textContent).toContain("2");
-      await user.click(button);
-      expect(onClick).toHaveBeenCalledTimes(1);
+      };
+      // Plain JSON, as a backend would return it.
+      render(<Harness sections={[section]} counts={{ live: { kind: {} } }} />);
+      expect(
+        screen.getByRole("checkbox", { name: "Constructor", description: "0 items" }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("checkbox", { name: "To string", description: "0 items" }),
+      ).toBeTruthy();
     });
 
-    it("has a plain label without active filters", () => {
-      const control = makeControl([], vi.fn());
-      render(<Trigger control={control} sections={[categorySection]} onClick={vi.fn()} />);
-      expect(screen.getByRole("button", { name: "Filters" })).toBeTruthy();
+    it("keeps keys typed after its own debounced commit", () => {
+      vi.useFakeTimers();
+      render(<Harness sections={[searchSection]} />);
+      const input = screen.getByRole("searchbox", { name: "Search" }) as HTMLInputElement;
+      fireEvent.change(input, { target: { value: "boot" } });
+      act(() => vi.advanceTimersByTime(300));
+      expect(currentFilters()).toEqual([{ field: "name", operator: "contains", value: "boot" }]);
+      fireEvent.change(input, { target: { value: "boots" } });
+      expect(input.value).toBe("boots");
+    });
+
+    it("resets the text draft when the filter is cleared elsewhere", () => {
+      vi.useFakeTimers();
+      render(
+        <Harness
+          sections={[searchSection]}
+          initial={[{ field: "name", operator: "contains", value: "boot" }]}
+        >
+          <ClearAll />
+          <Sections />
+        </Harness>,
+      );
+      const input = screen.getByRole("searchbox", { name: "Search" }) as HTMLInputElement;
+      expect(input.value).toBe("boot");
+      fireEvent.click(screen.getByRole("button", { name: "Clear all" }));
+      expect(input.value).toBe("");
+    });
+
+    it("swaps a number range typed the wrong way round", () => {
+      render(<Harness sections={[priceSection]} />);
+      const min = screen.getByRole("spinbutton", { name: "Minimum Price" }) as HTMLInputElement;
+      const max = screen.getByRole("spinbutton", { name: "Maximum Price" }) as HTMLInputElement;
+      fireEvent.change(min, { target: { value: "500" } });
+      fireEvent.change(max, { target: { value: "10" } });
+      fireEvent.blur(max);
+      expect(currentFilters()).toEqual([
+        { field: "price", operator: "between", value: { min: 10, max: 500 } },
+      ]);
+      expect(min.value).toBe("10");
+      expect(max.value).toBe("500");
+    });
+
+    it("offers value search as soon as a list is long enough to truncate", () => {
+      const section: FilterRailSection = {
+        id: "color",
+        label: "Color",
+        control: "checkbox",
+        field: "color",
+        options: ["Black", "White", "Navy", "Olive", "Sand", "Grey", "Red", "Blue", "Green"].map(
+          (value) => ({ value, label: value }),
+        ),
+      };
+      render(<Harness sections={[section]} />);
+      expect(screen.getByRole("searchbox", { name: "Filter Color options" })).toBeTruthy();
     });
   });
 });

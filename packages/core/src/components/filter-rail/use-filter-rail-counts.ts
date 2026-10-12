@@ -4,6 +4,8 @@ import { hasOptions, sectionFields } from "./apply-layout";
 import { matchesOperator } from "./operators";
 import type { FacetCounts, FilterRailSection } from "./types";
 
+const dict = <T>(): Record<string, T> => Object.create(null) as Record<string, T>;
+
 export type UseFilterRailCountsOptions<TRow> = {
   /** Filters the rail does not own (a scope, a search box), ANDed into every count. */
   base?: readonly Filter[];
@@ -46,12 +48,15 @@ export function computeFacetCounts<TRow>(
     return filters.filter((filter) => fields.has(filter.field));
   });
 
-  const live: Record<string, Record<string, number>> = {};
-  const baseline: Record<string, Record<string, number>> = {};
-  const withoutSection: Record<string, number> = {};
+  // Null-prototype maps: keys come from row data, so a value such as
+  // "__proto__" or "constructor" must stay an ordinary key, never a path to
+  // Object.prototype.
+  const live = dict<Record<string, number>>();
+  const baseline = dict<Record<string, number>>();
+  const withoutSection = dict<number>();
   for (const section of sections) {
-    live[section.id] = {};
-    if (wantBaseline) baseline[section.id] = {};
+    live[section.id] = dict<number>();
+    if (wantBaseline) baseline[section.id] = dict<number>();
     withoutSection[section.id] = 0;
   }
 

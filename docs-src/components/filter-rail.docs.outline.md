@@ -2,7 +2,7 @@
 kind: code-backed
 group: filter-rail
 title: FilterRail
-description: An always-visible faceted filter rail with counts, user layout settings and saved views, driven by the same CollectionControl as DataTable
+description: An always-visible faceted filter rail with counts and user layout settings, driven by the same CollectionControl as DataTable
 sources:
   - packages/core/src/components/filter-rail/**
 ---
@@ -36,17 +36,15 @@ const sections: FilterRailSection[] = [
 
 What the rail shows is **config**: `sections`, one entry per axis, in screen order. How the rail is assembled is **parts**: leave a part out and that feature is not rendered.
 
-| Part                    | Renders                                                                 |
-| ----------------------- | ----------------------------------------------------------------------- |
-| `FilterRail.Root`       | The rail landmark. Takes `control`, `sections`, `counts`, `layout`.     |
-| `FilterRail.Header`     | A title row with a slot for actions.                                    |
-| `FilterRail.ClearAll`   | Clears the rail's own filters only. Hidden while none are active.       |
-| `FilterRail.Settings`   | Show / hide, reorder and sort sections. Needs `layout` on `Root`.       |
-| `FilterRail.SavedViews` | A saved-view picker. Also works outside `Root`.                         |
-| `FilterRail.SaveView`   | A pinned footer with "Save this view", shown when saving would help.    |
-| `FilterRail.Sections`   | The sections, in the user's layout. Scrolls while the header stays put. |
-| `FilterRail.Trigger`    | A toolbar button carrying the active count, for narrow screens.         |
-| `FilterRail.Sheet`      | A left sheet to hold the rail on narrow screens.                        |
+| Part                  | Renders                                                                       |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `FilterRail.Root`     | The rail. Takes `control`, `sections`, `counts`, `layout`.                    |
+| `FilterRail.Header`   | A title row with a slot for actions.                                          |
+| `FilterRail.ClearAll` | Clears the rail's own filters only. Hidden while none are active.             |
+| `FilterRail.Settings` | Show / hide, reorder and sort sections. Needs `layout`.                       |
+| `FilterRail.Sections` | The sections, in the user's layout. Scrolls while the header stays put.       |
+| `FilterRail.Provider` | Holds the config when a `Trigger` sits outside the rail (see Narrow screens). |
+| `FilterRail.Trigger`  | The narrow-screen "Filters" button, placed anywhere inside `Provider`.        |
 
 ```tsx
 <FilterRail.Root control={control} sections={sections} counts={counts} layout={layout}>
@@ -54,9 +52,7 @@ What the rail shows is **config**: `sections`, one entry per axis, in screen ord
     <FilterRail.ClearAll />
     <FilterRail.Settings />
   </FilterRail.Header>
-  <FilterRail.SavedViews {...views} />
   <FilterRail.Sections />
-  <FilterRail.SaveView {...views} />
 </FilterRail.Root>
 ```
 
@@ -64,16 +60,18 @@ What the rail shows is **config**: `sections`, one entry per axis, in screen ord
 
 Every section has an `id`, a `label` and an optional `hint`. The operator is fixed per section — the user picks values, never operators.
 
-| `control`     | Commits                                | Notes                                                       |
-| ------------- | -------------------------------------- | ----------------------------------------------------------- |
-| `checkbox`    | `in` (or `nin`) with the ticked values | `sort`, `truncate` (default 8), `pinned`, `searchThreshold` |
-| `radio`       | `eq` (or `ne`) with one value          | An "Any" row removes the filter; `anyLabel: null` hides it  |
-| `boolean`     | `eq` with `true` / `false`             | Three states: Any, `trueLabel`, `falseLabel`                |
-| `text`        | `contains`, `hasPrefix` or `eq`        | Debounced (`debounceMs`, default 250)                       |
-| `numberRange` | `between` `{ min, max }`               | Commits on blur / Enter; an empty end uses `min` / `max`    |
-| `date`        | `eq`, `gte` or `lte` a `YYYY-MM-DD`    | Uses `DatePicker`                                           |
-| `dateRange`   | `between` `{ min, max }`               | Uses `DateRangePicker`; optional `presets`                  |
-| `custom`      | Whatever `render` writes               | Declares the `fields` it owns so Clear all includes them    |
+| `control`     | Commits                                    | Notes                                                       |
+| ------------- | ------------------------------------------ | ----------------------------------------------------------- |
+| `checkbox`    | `in` (or `nin`) with the ticked values     | `sort`, `truncate` (default 8), `pinned`, `searchThreshold` |
+| `radio`       | `eq` (or `ne`) with one value              | An "Any" row removes the filter; `anyLabel: null` hides it  |
+| `boolean`     | `eq` with `true` / `false`                 | Three states: Any, `trueLabel`, `falseLabel`                |
+| `text`        | `contains`, `hasPrefix` or `eq`            | Debounced (`debounceMs`, default 250)                       |
+| `numberRange` | `between` `{ min, max }`, or `gte` / `lte` | Commits on blur / Enter; one end alone is half-open         |
+| `date`        | `eq`, `gte` or `lte` a `YYYY-MM-DD`        | Uses `DatePicker`                                           |
+| `dateRange`   | `between` `{ min, max }`                   | Uses `DateRangePicker`; optional `presets`                  |
+| `custom`      | Whatever `render` writes                   | Declares the `fields` it owns so Clear all includes them    |
+
+A checkbox list long enough to be truncated also gets a search box, so a value can be found without scrolling (`searchThreshold` overrides when it appears).
 
 A field holds one filter, so two sections must not share a field; the rail warns in the console when they do.
 
@@ -105,58 +103,38 @@ Pass `counts` to show a number beside each option and disable options that would
 const counts = useFilterRailCounts(rows, sections, control.filters, { baseline: true });
 ```
 
-For a server-side collection, return the same shape from an aggregation query: `{ live: { [sectionId]: { [value]: count } }, baseline?, total?, withoutSection? }`. With `total` and `withoutSection`, an empty result shows which section to clear to get rows back.
+For a server-side collection, return the same shape from an aggregation query: `{ live: { [sectionId]: { [value]: count } }, baseline?, total?, withoutSection? }`. With `total` and `withoutSection`, an empty result shows which section to clear to get rows back. Counts are optional: without them the rail still works, it just shows no numbers.
 
 ## User layout
 
 `useFilterRailLayout(storageKey)` persists the user's section order, hidden sections and option sort to localStorage. Pass it as `layout` and add `FilterRail.Settings`. Hiding a section that carries a filter also clears that filter. To share a layout across a team, pass your own `{ value, onChange, onReset }` binding instead.
 
-## Saved views
-
-`useSavedViews(table, { storageKey })` saves a `DataTable` **view** — filters plus sort, page size and column order, visibility and pinning — and returns the binding both `FilterRail.SavedViews` (the picker) and `FilterRail.SaveView` (the pinned Save footer) render. Put the footer after `FilterRail.Sections` so it stays at the bottom while the sections scroll. Pass `storage: { load, save }` to keep views in a backend store instead of localStorage.
-
-```tsx
-const table = useDataTable({ columns, data, control });
-const views = useSavedViews(table, { storageKey: "products" });
-
-<FilterRail.Root control={control} sections={sections}>
-  <FilterRail.SavedViews {...views} />
-  <FilterRail.Sections />
-  <FilterRail.SaveView {...views} />
-</FilterRail.Root>;
-```
-
 ## Beside a DataTable
 
 The rail sits in its own `Layout.Column`, outside `DataTable.Root`, which is why `control` is a prop. Do not also render `DataTable.Filters` for the same fields — one fact in two places can drift.
 
-Below the `lg` breakpoint there is no room for a side column. `useFilterRailCompact()` reports that, and the same rail moves into `FilterRail.Sheet` behind a `FilterRail.Trigger`.
+## Narrow screens
+
+Below the `lg` breakpoint there is no room for a side column, so the rail turns itself into a left sheet behind a **Filters** button carrying the active count — the same way the Sidebar handles small screens. Apps write no breakpoint code.
+
+By default the button appears where the rail would have been. To put it somewhere else — a table toolbar, a page header — wrap the page in `FilterRail.Provider`, move the config there, and place `FilterRail.Trigger` wherever you want it. The Trigger renders nothing on wide screens, and while one is mounted the rail skips its own button.
 
 ```tsx
-const compact = useFilterRailCompact();
-const [open, setOpen] = useState(false);
-const rail = (
-  <FilterRail.Root control={control} sections={sections}>
-    <FilterRail.Sections />
-  </FilterRail.Root>
-);
-
-<Layout fill>
-  {!compact && <Layout.Column area="left">{rail}</Layout.Column>}
-  <Layout.Column area="main">
-    <DataTable.Root value={table}>
-      <DataTable.Toolbar>
-        {compact && (
-          <FilterRail.Trigger control={control} sections={sections} onClick={() => setOpen(true)} />
-        )}
-      </DataTable.Toolbar>
-      <DataTable.Table />
-    </DataTable.Root>
-  </Layout.Column>
-  {compact && (
-    <FilterRail.Sheet open={open} onOpenChange={setOpen}>
-      {rail}
-    </FilterRail.Sheet>
-  )}
-</Layout>;
+<FilterRail.Provider control={control} sections={sections} counts={counts}>
+  <Layout fill>
+    <Layout.Column area="left">
+      <FilterRail.Root>
+        <FilterRail.Sections />
+      </FilterRail.Root>
+    </Layout.Column>
+    <Layout.Column area="main">
+      <DataTable.Root value={table}>
+        <DataTable.Toolbar>
+          <FilterRail.Trigger />
+        </DataTable.Toolbar>
+        <DataTable.Table />
+      </DataTable.Root>
+    </Layout.Column>
+  </Layout>
+</FilterRail.Provider>
 ```

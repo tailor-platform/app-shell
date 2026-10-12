@@ -1,6 +1,5 @@
-import { ClearAll, Header, Root, Sections } from "./filter-rail";
-import { RailSheet, Trigger } from "./responsive";
-import { SaveView, SavedViews } from "./saved-views";
+import { ClearAll, Header, Provider, Root, Sections } from "./filter-rail";
+import { Trigger } from "./responsive";
 import { Settings } from "./settings";
 
 /**
@@ -9,7 +8,8 @@ import { Settings } from "./settings";
  * works; every other feature is an optional part you include or leave out.
  *
  * It writes the same `CollectionControl` a `DataTable` reads, so it can sit in
- * a separate `Layout.Column` beside the table.
+ * a separate `Layout.Column` beside the table. Below `lg` it turns itself into
+ * a left sheet behind a "Filters" button, like the Sidebar does.
  *
  * @example
  * ```tsx
@@ -18,26 +18,20 @@ import { Settings } from "./settings";
  *     <FilterRail.ClearAll />
  *     <FilterRail.Settings />
  *   </FilterRail.Header>
- *   <FilterRail.SavedViews {...views} />
  *   <FilterRail.Sections />
- *   <FilterRail.SaveView {...views} />
  * </FilterRail.Root>
  * ```
  */
 export const FilterRail = {
+  Provider,
   Root,
   Header,
   ClearAll,
   Sections,
   Settings,
-  SavedViews,
-  SaveView,
   Trigger,
-  Sheet: RailSheet,
 };
 
 export type { FilterRailRootProps, FilterRailSection } from "./types";
 export { useFilterRailCounts } from "./use-filter-rail-counts";
 export { useFilterRailLayout } from "./use-filter-rail-layout";
-export { useSavedViews } from "./use-saved-views";
-export { useFilterRailCompact } from "./responsive";

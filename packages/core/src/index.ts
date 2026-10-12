@@ -211,8 +211,6 @@ export {
   FilterRail,
   useFilterRailCounts,
   useFilterRailLayout,
-  useFilterRailCompact,
-  useSavedViews,
   type FilterRailRootProps,
   type FilterRailSection,
 } from "./components/filter-rail";

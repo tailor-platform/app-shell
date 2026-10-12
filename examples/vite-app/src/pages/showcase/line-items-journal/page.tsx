@@ -102,7 +102,7 @@ const JournalSide = ({
       <Card.Content>
         <LineItems.Table
           rowActionsWidth={40}
-          rowActions={(row: JournalLine) => (
+          renderRowActions={(row: JournalLine) => (
             <Button
               variant="ghost"
               size="icon"
@@ -127,8 +127,8 @@ const LineItemsJournalDemoPage = () => {
     credits: UseLineItemsReturn<JournalLine>;
   }> | null>(null);
 
-  const debits = useLineItems<JournalLine>({ fields, data: INITIAL_DEBITS });
-  const credits = useLineItems<JournalLine>({ fields, data: INITIAL_CREDITS });
+  const debits = useLineItems<JournalLine>({ fields, defaultLines: INITIAL_DEBITS });
+  const credits = useLineItems<JournalLine>({ fields, defaultLines: INITIAL_CREDITS });
   const group = useLineItemsGroup({ debits, credits });
 
   const difference = sum(debits.allLines) - sum(credits.allLines);

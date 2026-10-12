@@ -119,7 +119,7 @@ const { data, isLoading } = useCatalogQuery();
 `onCommit` hands back leaf nodes; map them into rows and pass them to `addLines`, which inserts them in a single render and produces one `add` op per line.
 
 ```tsx
-const lineItems = useLineItems<POLine>({ fields, data: lines });
+const lineItems = useLineItems<POLine>({ fields, defaultLines: lines });
 
 <BulkItemPicker
   open={open}

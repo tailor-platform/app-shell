@@ -2,6 +2,11 @@ import * as React from "react";
 
 import { computeVirtualWindow, sameVirtualWindow, type VirtualWindow } from "./virtual-window";
 
+// Measure before paint so the first frame shows rows, not an empty body. Falls
+// back to useEffect on the server, where layout effects warn.
+const useIsomorphicLayoutEffect =
+  typeof document !== "undefined" ? React.useLayoutEffect : React.useEffect;
+
 export type UseRowVirtualizerOptions = {
   rowCount: number;
   rowHeight: number;
@@ -46,7 +51,7 @@ export function useRowVirtualizer(
     );
   }, [containerRef, overscan, rowCount, rowHeight]);
 
-  React.useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!enabled) return;
     const el = containerRef.current;
     if (!el) return;

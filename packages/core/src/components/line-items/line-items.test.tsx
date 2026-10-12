@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import * as React from "react";
 
@@ -38,7 +38,6 @@ const fields: LineItemsField<Line>[] = [
     editable: ["edit"],
     type: { kind: "text" },
     width: 140,
-    hoverExpandWidth: 240,
     pin: "left",
     search: (l, q) => l.sku.toLowerCase().includes(q.toLowerCase()),
   }),
@@ -83,7 +82,7 @@ type HarnessProps = {
   ordering?: LineItemsOrderingMode;
   selection?: boolean;
   virtualized?: boolean;
-  rowActions?: boolean;
+  renderRowActions?: boolean;
   totals?: boolean;
   addRow?: boolean;
   onSave?: (cs: LineItemsChangeSet) => void;
@@ -96,7 +95,7 @@ function Harness({
   ordering = "sort",
   selection = false,
   virtualized = false,
-  rowActions = false,
+  renderRowActions = false,
   totals = false,
   addRow = false,
   onSave,
@@ -105,7 +104,7 @@ function Harness({
 }: HarnessProps) {
   const lineItems = useLineItems<Line>({
     fields,
-    data: seed,
+    defaultLines: seed,
     mode,
     ordering,
     selection,
@@ -120,8 +119,8 @@ function Harness({
       <LineItems.FullscreenToggle />
       <LineItems.Table
         virtualized={virtualized}
-        rowActions={
-          rowActions
+        renderRowActions={
+          renderRowActions
             ? (row: Line) => (
                 <button type="button" onClick={() => lineItems.removeLine(row.lineRef)}>
                   {`Remove ${row.sku}`}
@@ -172,10 +171,6 @@ function editorIn(lineRef: string, columnId: string): HTMLInputElement {
 
 const allEditors = () => document.querySelectorAll("[data-slot=line-items-cell-editor]");
 
-/** Reads a `<col>`'s width, which is where hover-expand shows up. */
-const colWidth = (index: number) =>
-  (document.querySelector("colgroup")?.children[index] as HTMLElement | undefined)?.style.width;
-
 afterEach(() => {
   cleanup();
 });
@@ -188,7 +183,7 @@ describe("LineItems", () => {
     });
 
     it("edit mode with selection and row actions", () => {
-      const { container } = render(<Harness selection rowActions />);
+      const { container } = render(<Harness selection renderRowActions />);
       expect(container.innerHTML).toMatchSnapshot();
     });
 
@@ -230,7 +225,7 @@ describe("LineItems", () => {
 
   it("renders an empty state with no lines", () => {
     function Empty() {
-      const lineItems = useLineItems<Line>({ fields, data: [] });
+      const lineItems = useLineItems<Line>({ fields, defaultLines: [] });
       return (
         <LineItems.Root value={lineItems}>
           <LineItems.Table virtualized={false} emptyMessage="Nothing here" />
@@ -243,7 +238,7 @@ describe("LineItems", () => {
 
   it("renders skeleton rows while loading", () => {
     function Loading() {
-      const lineItems = useLineItems<Line>({ fields, data: seed });
+      const lineItems = useLineItems<Line>({ fields, defaultLines: seed });
       return (
         <LineItems.Root value={lineItems}>
           <LineItems.Table loading skeletonRowCount={4} />
@@ -626,32 +621,6 @@ describe("LineItems", () => {
     });
   });
 
-  describe("hover-expand", () => {
-    it("widens a column while the pointer is over it, then restores it", async () => {
-      const user = userEvent.setup();
-      render(<Harness />);
-
-      const header = screen.getByRole("columnheader", { name: "SKU" });
-      expect(colWidth(0)).toBe("140px");
-
-      await user.hover(header);
-      // The width is tweened frame by frame, so it must not snap to the target.
-      expect(colWidth(0)).not.toBe("240px");
-      await waitFor(() => expect(colWidth(0)).toBe("240px"));
-
-      await user.unhover(header);
-      await waitFor(() => expect(colWidth(0)).toBe("140px"));
-    });
-
-    it("leaves columns without hoverExpandWidth at their declared width", async () => {
-      const user = userEvent.setup();
-      render(<Harness />);
-
-      await user.hover(screen.getByRole("columnheader", { name: "UoM" }));
-      expect(colWidth(1)).toBe("110px");
-    });
-  });
-
   describe("selection", () => {
     const remove: SelectionAction<Line> = {
       id: "remove",
@@ -787,7 +756,7 @@ describe("LineItems", () => {
     });
 
     it("draws the drop indicator across every column, pinned ones included", () => {
-      render(<Harness ordering="manual" selection rowActions />);
+      render(<Harness ordering="manual" selection renderRowActions />);
 
       // Simulate the row being dragged over by setting the state the drop
       // handler sets, then assert every cell in that row carries the line.
@@ -944,7 +913,7 @@ describe("LineItems", () => {
       }: {
         onReady?: (a: ReturnType<typeof useLineItems<Line>>) => void;
       }) {
-        const lineItems = useLineItems<Line>({ fields, data: seed });
+        const lineItems = useLineItems<Line>({ fields, defaultLines: seed });
         onReady?.(lineItems);
         return (
           <>
@@ -1086,7 +1055,7 @@ describe("LineItems", () => {
 
     it("runs a row action", async () => {
       const user = userEvent.setup();
-      render(<Harness rowActions />);
+      render(<Harness renderRowActions />);
 
       await user.click(screen.getByRole("button", { name: "Remove BANANA-02" }));
       expect(document.querySelectorAll("[data-slot=line-items-row]")).toHaveLength(2);
@@ -1105,7 +1074,7 @@ describe("LineItems", () => {
       }));
 
       function Big() {
-        const lineItems = useLineItems<Line>({ fields, data: many });
+        const lineItems = useLineItems<Line>({ fields, defaultLines: many });
         return (
           <LineItems.Root value={lineItems}>
             <LineItems.Table virtualized rowHeight={36} maxBodyHeight={360} />

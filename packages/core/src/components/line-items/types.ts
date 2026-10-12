@@ -178,13 +178,6 @@ export type LineItemsField<T extends LineItemsRowData> = {
   /** Resting column width in pixels. Auto-sized when omitted. */
   width?: number;
   /**
-   * Widens the column to this pixel width while the pointer is anywhere in it,
-   * with a short transition. For dense columns whose content is normally
-   * truncated. A `flex` column is frozen at its current width during the
-   * expansion so the table grows instead of the flex column collapsing.
-   */
-  hoverExpandWidth?: number;
-  /**
    * Freeze the column to the left or right edge so it stays visible during
    * horizontal scroll. Stacked pinned columns have their sticky offsets
    * measured from the rendered layout, so `width` is not required — though
@@ -204,8 +197,8 @@ export type UseLineItemsOptions<T extends LineItemsRowData> = {
   /** Column schema. Build with `createLineItemHelper<T>().field({ … })`. */
   fields: LineItemsField<T>[];
   /** Uncontrolled seed rows, also used as the dirty-tracking baseline. */
-  data?: readonly T[];
-  /** Controlled rows. When set, `data` is ignored. */
+  defaultLines?: readonly T[];
+  /** Controlled rows. When set, `defaultLines` is ignored. */
   lines?: readonly T[];
   onLinesChange?: (next: T[]) => void;
   /** Defaults to `"edit"`. */

@@ -38,8 +38,8 @@ export type UseLineItemsGroupReturn<G extends LineItemsGroupMembers> = {
  *
  * @example
  * ```tsx
- * const debits = useLineItems<JournalLine>({ fields, data: entry.debits });
- * const credits = useLineItems<JournalLine>({ fields, data: entry.credits });
+ * const debits = useLineItems<JournalLine>({ fields, defaultLines: entry.debits });
+ * const credits = useLineItems<JournalLine>({ fields, defaultLines: entry.credits });
  * const group = useLineItemsGroup({ debits, credits });
  *
  * const onSave = async () => {

@@ -51,14 +51,8 @@ export type LineItemsTableProps<T extends LineItemsRowData> = {
   /** Set `false` to mount every row (short documents, print, tests). */
   virtualized?: boolean;
   /** Trailing pinned column of per-row controls. */
-  rowActions?: (row: T) => React.ReactNode;
+  renderRowActions?: (row: T) => React.ReactNode;
   rowActionsWidth?: number;
-  /**
-   * Sticky footer row, rendered in a `<tfoot>` of the same table so its cells
-   * stay aligned with the columns above. Prefer `<LineItems.TotalsRow>`, which
-   * handles column alignment and pinning for you.
-   */
-  totalsRow?: (lines: T[]) => React.ReactNode;
   emptyMessage?: React.ReactNode;
   /** Swaps the body for skeleton rows while an initial fetch is in flight. */
   loading?: boolean;
@@ -102,6 +96,11 @@ function pinClasses(
   );
 }
 
+/** A flex column takes whatever width is left, so it gets no fixed width. */
+function colWidthStyle(c: { flex?: boolean; width?: number }): React.CSSProperties | undefined {
+  return c.flex ? undefined : { width: c.width };
+}
+
 /** Thin scrollbars, so a dense grid is not framed by chunky OS gutters. */
 const scrollbarClasses = [
   "astw:[scrollbar-width:thin] astw:[scrollbar-color:rgb(128_128_128/0.4)_transparent]",
@@ -122,9 +121,8 @@ export function LineItemsTable<T extends LineItemsRowData>({
   rowHeight = 36,
   maxBodyHeight = "min(70vh, 600px)",
   virtualized = true,
-  rowActions,
+  renderRowActions,
   rowActionsWidth = ACTIONS_COLUMN_WIDTH,
-  totalsRow,
   emptyMessage,
   loading = false,
   skeletonRowCount = 12,
@@ -136,7 +134,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
   const { lines, fields, mode, ordering, selectionEnabled, selectedIds, sortState } = lineItems;
 
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
-  const hasTotals = Boolean(totalsRenderer || totalsRow);
+  const hasTotals = Boolean(totalsRenderer);
 
   // Whether lines are hidden above the sticky header or beneath the sticky
   // totals row. While they are, that edge casts a shadow over the scrolling
@@ -160,7 +158,6 @@ export function LineItemsTable<T extends LineItemsRowData>({
     };
   }, [lines.length]);
   const [widths, setWidths] = React.useState<ColumnWidths>({});
-  const [hoveredColumnId, setHoveredColumnId] = React.useState<string | null>(null);
 
   const canReorder = ordering === "manual" && mode === "edit";
   const showSelection = selectionEnabled && mode !== "view";
@@ -171,10 +168,10 @@ export function LineItemsTable<T extends LineItemsRowData>({
         widths,
         hasGrip: canReorder,
         hasSelection: showSelection,
-        hasActions: Boolean(rowActions),
+        hasActions: Boolean(renderRowActions),
         actionsWidth: rowActionsWidth,
       }),
-    [canReorder, fields, rowActions, rowActionsWidth, showSelection, widths],
+    [canReorder, fields, renderRowActions, rowActionsWidth, showSelection, widths],
   );
 
   const columnDefs = React.useMemo(() => fieldsToColumnDefs(fields), [fields]);
@@ -199,11 +196,9 @@ export function LineItemsTable<T extends LineItemsRowData>({
 
   /**
    * Measures rendered header widths so pinned columns stack without every one
-   * declaring a `width`. Skipped while a column is hover-expanded, so the
-   * expansion does not get baked into the measured layout.
+   * declaring a `width`.
    */
   React.useEffect(() => {
-    if (hoveredColumnId) return;
     const measured: ColumnWidths = {};
     let changed = false;
     for (const [id, el] of headRefs.current) {
@@ -214,7 +209,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
       if (widths[id] !== w) changed = true;
     }
     if (changed) setWidths((prev) => ({ ...prev, ...measured }));
-  }, [hoveredColumnId, layout.columns, lines.length, widths]);
+  }, [layout.columns, lines.length, widths]);
 
   const lineByRef = React.useMemo(() => {
     const map = new Map<string, T>();
@@ -408,11 +403,20 @@ export function LineItemsTable<T extends LineItemsRowData>({
       if (patches.length > 0) lineItems.updateLines(patches);
     };
 
+    // A cancelled pointer (a touch turned into a scroll, a lost window) drops
+    // the fill without writing anything.
+    const onCancel = () => {
+      setFillSource(null);
+      setFillHoverLineRef(null);
+    };
+
     globalThis.addEventListener("pointermove", onMove);
     globalThis.addEventListener("pointerup", onUp);
+    globalThis.addEventListener("pointercancel", onCancel);
     return () => {
       globalThis.removeEventListener("pointermove", onMove);
       globalThis.removeEventListener("pointerup", onUp);
+      globalThis.removeEventListener("pointercancel", onCancel);
     };
   }, [
     columnDefs,
@@ -614,75 +618,12 @@ export function LineItemsTable<T extends LineItemsRowData>({
     [lineItems, orderedLineRefs, t],
   );
 
-  const utilityColumnCount = (showSelection ? 1 : 0) + (canReorder ? 1 : 0) + (rowActions ? 1 : 0);
+  const utilityColumnCount =
+    (showSelection ? 1 : 0) + (canReorder ? 1 : 0) + (renderRowActions ? 1 : 0);
   const columnCount = layout.columns.length + utilityColumnCount;
   // A Set, so per-row checks stay O(1) on long documents.
   const selectedRefSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
   const allVisibleSelected = lines.length > 0 && lines.every((l) => selectedRefSet.has(l.lineRef));
-
-  /**
-   * A hover-expanded column takes its extra width from the flex column, which is
-   * frozen at its own measured width for the duration so the table grows
-   * sideways and scrolls, instead of the flex column collapsing.
-   */
-  const flexColumnId = layout.columns.find((c) => c.flex)?.id;
-  const flexFrozenWidth = hoveredColumnId && flexColumnId ? widths[flexColumnId] : undefined;
-
-  const colWidthStyle = (c: (typeof layout.columns)[number]): React.CSSProperties | undefined => {
-    if (c.flex) return flexFrozenWidth ? { width: flexFrozenWidth } : undefined;
-    return { width: c.width };
-  };
-
-  /**
-   * Hover-expanding columns have their width animated imperatively rather than
-   * rendered: a `<col>` ignores CSS transitions, so the width is tweened frame
-   * by frame. React never writes their width, or a re-render mid-tween would
-   * snap the column to its resting size.
-   */
-  const colRefs = React.useRef(new Map<string, HTMLTableColElement | null>());
-  const tweenFrame = React.useRef<number | null>(null);
-
-  const tweenColumnWidth = React.useCallback((columnId: string, to: number) => {
-    const el = colRefs.current.get(columnId);
-    if (!el) return;
-    if (tweenFrame.current !== null) cancelAnimationFrame(tweenFrame.current);
-
-    const from = Number.parseFloat(el.style.width) || to;
-    if (from === to) return;
-    if (globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      el.style.width = `${to}px`;
-      return;
-    }
-
-    const started = performance.now();
-    const duration = 180;
-    const step = (now: number) => {
-      const progress = Math.min(1, (now - started) / duration);
-      const eased = 1 - (1 - progress) ** 3;
-      el.style.width = `${from + (to - from) * eased}px`;
-      tweenFrame.current = progress < 1 ? requestAnimationFrame(step) : null;
-    };
-    tweenFrame.current = requestAnimationFrame(step);
-  }, []);
-
-  React.useEffect(
-    () => () => {
-      if (tweenFrame.current !== null) cancelAnimationFrame(tweenFrame.current);
-    },
-    [],
-  );
-
-  const enterColumn = (c: (typeof layout.columns)[number]) => {
-    if (!c.field.hoverExpandWidth) return;
-    setHoveredColumnId(c.id);
-    tweenColumnWidth(c.id, c.field.hoverExpandWidth);
-  };
-
-  const leaveColumn = (c: (typeof layout.columns)[number]) => {
-    if (!c.field.hoverExpandWidth) return;
-    setHoveredColumnId(null);
-    tweenColumnWidth(c.id, c.width ?? c.field.hoverExpandWidth);
-  };
 
   const offersBulkActions = lineItems.selectionEnabled && lineItems.selectionActions.length > 0;
   const selectionBarOpen = offersBulkActions && lineItems.selectedIds.length > 0;
@@ -726,19 +667,9 @@ export function LineItemsTable<T extends LineItemsRowData>({
             {showSelection ? <col style={{ width: SELECTION_COLUMN_WIDTH }} /> : null}
             {canReorder ? <col style={{ width: GRIP_COLUMN_WIDTH }} /> : null}
             {layout.columns.map((c) => (
-              <col
-                key={c.id}
-                ref={(el) => {
-                  colRefs.current.set(c.id, el);
-                  // Seed the resting width once; the tween owns it from here.
-                  if (el && c.field.hoverExpandWidth && !el.style.width) {
-                    el.style.width = `${c.width ?? 0}px`;
-                  }
-                }}
-                style={c.field.hoverExpandWidth ? undefined : colWidthStyle(c)}
-              />
+              <col key={c.id} style={colWidthStyle(c)} />
             ))}
-            {rowActions ? <col style={{ width: rowActionsWidth }} /> : null}
+            {renderRowActions ? <col style={{ width: rowActionsWidth }} /> : null}
             {layout.needsSpacer ? <col key={SPACER_COLUMN_ID} /> : null}
           </colgroup>
 
@@ -798,8 +729,6 @@ export function LineItemsTable<T extends LineItemsRowData>({
                     ref={(el) => void headRefs.current.set(c.id, el)}
                     scope="col"
                     aria-sort={sortable ? sortedState : undefined}
-                    onPointerEnter={c.field.hoverExpandWidth ? () => enterColumn(c) : undefined}
-                    onPointerLeave={c.field.hoverExpandWidth ? () => leaveColumn(c) : undefined}
                     className={cn(headCellClasses, alignClasses[c.align], pinClasses(c.placement))}
                     style={pinStyle(c.placement)}
                   >
@@ -822,7 +751,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                 );
               })}
 
-              {rowActions ? (
+              {renderRowActions ? (
                 <th
                   ref={(el) => void headRefs.current.set(ACTIONS_COLUMN_ID, el)}
                   scope="col"
@@ -1029,16 +958,12 @@ export function LineItemsTable<T extends LineItemsRowData>({
                           )}
                           style={pinStyle(c.placement)}
                           onPointerEnter={() => {
-                            if (c.field.hoverExpandWidth) enterColumn(c);
                             // A fill in progress tracks the row under the pointer.
                             // The window-level handler covers fast drags that
                             // outrun per-cell events; this covers the rest.
                             if (fillSource) setFillHoverLineRef(row.lineRef);
                             else grid.extendSelection(coord);
                           }}
-                          onPointerLeave={
-                            c.field.hoverExpandWidth ? () => leaveColumn(c) : undefined
-                          }
                           onPointerDown={(e) => {
                             if (e.button !== 0) return;
                             const target = e.target as HTMLElement;
@@ -1085,7 +1010,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                       );
                     })}
 
-                    {rowActions ? (
+                    {renderRowActions ? (
                       <td
                         className={cn(
                           bodyCellClasses,
@@ -1096,7 +1021,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                         style={pinStyle(layout.actions)}
                       >
                         <span className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
-                          {rowActions(row)}
+                          {renderRowActions(row)}
                         </span>
                       </td>
                     ) : null}
@@ -1111,7 +1036,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
             ) : null}
           </tbody>
 
-          {totalsRenderer || totalsRow ? (
+          {totalsRenderer ? (
             <tfoot
               data-slot="line-items-totals"
               // The top rule separates totals from the lines scrolling beneath them.
@@ -1124,47 +1049,41 @@ export function LineItemsTable<T extends LineItemsRowData>({
                 ],
               )}
             >
-              {totalsRow ? (
-                totalsRow(lines)
-              ) : (
-                <tr aria-rowindex={lines.length + 2} style={{ height: rowHeight }}>
-                  {showSelection ? (
-                    <td
-                      className={cn(bodyCellClasses, "astw:px-0", pinClasses(layout.selection))}
-                      style={pinStyle(layout.selection)}
-                    />
-                  ) : null}
-                  {canReorder ? (
-                    <td
-                      className={cn(bodyCellClasses, "astw:px-0", pinClasses(layout.grip))}
-                      style={pinStyle(layout.grip)}
-                    />
-                  ) : null}
-                  {layout.columns.map((c) => (
-                    <td
-                      key={c.id}
-                      className={cn(
-                        bodyCellClasses,
-                        "astw:px-2 astw:bg-card",
-                        alignClasses[c.align],
-                        pinClasses(c.placement),
-                      )}
-                      style={pinStyle(c.placement)}
-                    >
-                      {totalsRenderer?.(lines as LineItemsRowData[])[c.id] ?? null}
-                    </td>
-                  ))}
-                  {rowActions ? (
-                    <td
-                      className={cn(bodyCellClasses, "astw:px-0", pinClasses(layout.actions))}
-                      style={pinStyle(layout.actions)}
-                    />
-                  ) : null}
-                  {layout.needsSpacer ? (
-                    <td className={cn(bodyCellClasses, "astw:bg-card")} />
-                  ) : null}
-                </tr>
-              )}
+              <tr aria-rowindex={lines.length + 2} style={{ height: rowHeight }}>
+                {showSelection ? (
+                  <td
+                    className={cn(bodyCellClasses, "astw:px-0", pinClasses(layout.selection))}
+                    style={pinStyle(layout.selection)}
+                  />
+                ) : null}
+                {canReorder ? (
+                  <td
+                    className={cn(bodyCellClasses, "astw:px-0", pinClasses(layout.grip))}
+                    style={pinStyle(layout.grip)}
+                  />
+                ) : null}
+                {layout.columns.map((c) => (
+                  <td
+                    key={c.id}
+                    className={cn(
+                      bodyCellClasses,
+                      "astw:px-2 astw:bg-card",
+                      alignClasses[c.align],
+                      pinClasses(c.placement),
+                    )}
+                    style={pinStyle(c.placement)}
+                  >
+                    {totalsRenderer?.(lines as LineItemsRowData[])[c.id] ?? null}
+                  </td>
+                ))}
+                {renderRowActions ? (
+                  <td
+                    className={cn(bodyCellClasses, "astw:px-0", pinClasses(layout.actions))}
+                    style={pinStyle(layout.actions)}
+                  />
+                ) : null}
+                {layout.needsSpacer ? <td className={cn(bodyCellClasses, "astw:bg-card")} /> : null}
+              </tr>
             </tfoot>
           ) : null}
         </table>

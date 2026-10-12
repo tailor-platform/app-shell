@@ -57,7 +57,7 @@ const fields = [
 ];
 
 function PurchaseOrderLines({ lines }: { lines: POLine[] }) {
-  const lineItems = useLineItems<POLine>({ fields, data: lines, selection: true });
+  const lineItems = useLineItems<POLine>({ fields, defaultLines: lines, selection: true });
 
   return (
     <LineItems.Root value={lineItems}>
@@ -73,23 +73,23 @@ Every row needs a stable `lineRef` — the server id for a persisted line. Rows 
 
 ## Parts
 
-| Part                     | Description                                                                       |
-| ------------------------ | --------------------------------------------------------------------------------- |
-| `LineItems.Root`         | Provides the document to the parts beneath it. Holds no row data of its own.      |
-| `LineItems.Table`        | The editable grid: virtualized rows, pinned columns, cell editors, drag reorder.  |
-| `LineItems.Search`       | Search box bound to the filter. Only fields with a `search` function participate. |
-| `LineItems.AddRow`       | Appends a line. Renders nothing in view mode.                                     |
-| `LineItems.SaveActions`  | Save and discard buttons, both disabled while the document is clean.              |
-| `LineItems.FloatingDock` | Sticky container for `DirtyBar`.                                                  |
-| `LineItems.DirtyBar`     | Appears while there are uncommitted changes. Renders nothing when clean.          |
+| Part                     | Description                                                                                                                                                                        |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LineItems.Root`         | Provides the document to the parts beneath it. Holds no row data of its own.                                                                                                       |
+| `LineItems.Table`        | The editable grid: virtualized rows, pinned columns, cell editors, drag reorder.                                                                                                   |
+| `LineItems.Search`       | Search box bound to the filter. Only fields with a `search` function participate.                                                                                                  |
+| `LineItems.AddRow`       | Appends a line. Renders nothing in view mode.                                                                                                                                      |
+| `LineItems.SaveActions`  | Save and discard buttons, both disabled while the document is clean. **The default save surface** — place it in the card, next to the table.                                       |
+| `LineItems.FloatingDock` | Sticky container for `DirtyBar`.                                                                                                                                                   |
+| `LineItems.DirtyBar`     | Floating alternative to `SaveActions` for very long pages where the card's buttons scroll out of view. Appears only while there are uncommitted changes; `warnOnNav` guards links. |
 
 ## useLineItems(options)
 
 | Option             | Type                                          | Default  | Description                                                                                                                                                       |
 | ------------------ | --------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `fields`           | `LineItemsField<T>[]`                         | required | Column schema. Build with `createLineItemHelper<T>().field({…})`.                                                                                                 |
-| `data`             | `readonly T[]`                                | `[]`     | Uncontrolled seed rows, also the dirty-tracking baseline. Read once on mount; to load a different document, remount (e.g. with a `key`).                          |
-| `lines`            | `readonly T[]`                                | –        | Controlled rows. When set, `data` is ignored.                                                                                                                     |
+| `defaultLines`     | `readonly T[]`                                | `[]`     | Uncontrolled seed rows, also the dirty-tracking baseline. Read once on mount; to load a different document, remount (e.g. with a `key`).                          |
+| `lines`            | `readonly T[]`                                | –        | Controlled rows. When set, `defaultLines` is ignored.                                                                                                             |
 | `onLinesChange`    | `(next: T[]) => void`                         | –        | Called once per mutation with the new rows.                                                                                                                       |
 | `mode`             | `"view" \| "edit" \| "amend"`                 | `"edit"` | `"view"` renders every cell read-only. `"amend"` keeps only fields whose `editable` lists it open — for a confirmed document where a few fields may still change. |
 | `ordering`         | `"sort" \| "manual"`                          | `"sort"` | `"manual"` enables drag reordering and emits `reorder` ops.                                                                                                       |
@@ -126,7 +126,7 @@ Pass `selectionActions` to `useLineItems` and, while at least one line is select
 ```tsx
 const lineItems = useLineItems<POLine>({
   fields,
-  data: lines,
+  defaultLines: lines,
   selectionActions: [
     {
       id: "receive",
@@ -191,20 +191,19 @@ Numeric fields normalize strings to numbers, round by `decimals`, and compare wi
 
 ## LineItems.Table Props
 
-| Prop                                    | Type                        | Default              | Description                                                                        |
-| --------------------------------------- | --------------------------- | -------------------- | ---------------------------------------------------------------------------------- |
-| `rowHeight`                             | `number`                    | `36`                 | Uniform row height, which the virtualizer's math depends on.                       |
-| `maxBodyHeight`                         | `number \| string`          | `"min(70vh, 600px)"` | Height the grid scrolls within. Ignored in fullscreen, where it fills the overlay. |
-| `virtualized`                           | `boolean`                   | `true`               | Set `false` to mount every row.                                                    |
-| `rowActions`                            | `(row: T) => ReactNode`     | –                    | Trailing pinned column of per-row controls.                                        |
-| `totalsRow`                             | `(lines: T[]) => ReactNode` | –                    | Sticky `<tfoot>` row, column-aligned with the grid.                                |
-| `rowActionsWidth`                       | `number`                    | `56`                 | Width of the trailing row-actions column.                                          |
-| `emptyMessage`                          | `ReactNode`                 | `"No lines yet."`    | Shown when the document has no lines.                                              |
-| `loading`                               | `boolean`                   | `false`              | Swaps the body for skeleton rows while an initial fetch is in flight.              |
-| `skeletonRowCount`                      | `number`                    | `12`                 | How many skeleton rows `loading` shows.                                            |
-| `className` / `tableContainerClassName` | `string`                    | –                    | Merged onto the bordered wrapper / the scroll container.                           |
+| Prop                                    | Type                    | Default              | Description                                                                        |
+| --------------------------------------- | ----------------------- | -------------------- | ---------------------------------------------------------------------------------- |
+| `rowHeight`                             | `number`                | `36`                 | Uniform row height, which the virtualizer's math depends on.                       |
+| `maxBodyHeight`                         | `number \| string`      | `"min(70vh, 600px)"` | Height the grid scrolls within. Ignored in fullscreen, where it fills the overlay. |
+| `virtualized`                           | `boolean`               | `true`               | Set `false` to mount every row.                                                    |
+| `renderRowActions`                      | `(row: T) => ReactNode` | –                    | Trailing pinned column of per-row controls.                                        |
+| `rowActionsWidth`                       | `number`                | `56`                 | Width of the trailing row-actions column.                                          |
+| `emptyMessage`                          | `ReactNode`             | `"No lines yet."`    | Shown when the document has no lines.                                              |
+| `loading`                               | `boolean`               | `false`              | Swaps the body for skeleton rows while an initial fetch is in flight.              |
+| `skeletonRowCount`                      | `number`                | `12`                 | How many skeleton rows `loading` shows.                                            |
+| `className` / `tableContainerClassName` | `string`                | –                    | Merged onto the bordered wrapper / the scroll container.                           |
 
-`LineItems.Table` cannot infer `T` from `Root`, so annotate the callback parameters (`rowActions={(row: POLine) => …}`) or pass the type argument explicitly (`<LineItems.Table<POLine> … />`).
+`LineItems.Table` cannot infer `T` from `Root`, so annotate the callback parameters (`renderRowActions={(row: POLine) => …}`) or pass the type argument explicitly (`<LineItems.Table<POLine> … />`).
 
 ## Change-set
 
@@ -236,8 +235,8 @@ Some documents own more than one list of lines — a Journal Entry with debits a
 ```tsx
 import { useLineItems, useLineItemsGroup } from "@tailor-platform/app-shell";
 
-const debits = useLineItems<JournalLine>({ fields, data: entry.debits });
-const credits = useLineItems<JournalLine>({ fields, data: entry.credits });
+const debits = useLineItems<JournalLine>({ fields, defaultLines: entry.debits });
+const credits = useLineItems<JournalLine>({ fields, defaultLines: entry.credits });
 const group = useLineItemsGroup({ debits, credits });
 
 const onSave = async () => {

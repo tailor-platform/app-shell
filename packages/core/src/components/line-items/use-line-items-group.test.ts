@@ -31,11 +31,11 @@ function setup() {
   return renderHook(() => {
     const debits = useLineItems<JournalLine>({
       fields,
-      data: [{ lineRef: "d1", account: "Cash", amount: 100 }],
+      defaultLines: [{ lineRef: "d1", account: "Cash", amount: 100 }],
     });
     const credits = useLineItems<JournalLine>({
       fields,
-      data: [{ lineRef: "c1", account: "Receivables", amount: 100 }],
+      defaultLines: [{ lineRef: "c1", account: "Receivables", amount: 100 }],
     });
     return { debits, credits, group: useLineItemsGroup({ debits, credits }) };
   });
@@ -70,7 +70,7 @@ describe("useLineItemsGroup", () => {
     const { result } = renderHook(() => {
       const isEmpty = useLineItems<JournalLine>({
         fields,
-        data: [{ lineRef: "x1", account: "Cash", amount: 1 }],
+        defaultLines: [{ lineRef: "x1", account: "Cash", amount: 1 }],
       });
       return { isEmpty, group: useLineItemsGroup({ isEmpty }) };
     });

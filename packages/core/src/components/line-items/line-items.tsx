@@ -39,7 +39,7 @@ const FOCUSABLE =
  * data of its own — `useLineItems()` owns all of it.
  *
  * @example
- * const lineItems = useLineItems({ fields, data: lines });
+ * const lineItems = useLineItems({ fields, defaultLines: lines });
  *
  * <LineItems.Root value={lineItems}>
  *   <Card.Root>
@@ -50,7 +50,7 @@ const FOCUSABLE =
  *       </>
  *     } />
  *     <Card.Content>
- *       <LineItems.Table rowActions={(row: POLine) => <RemoveButton lineRef={row.lineRef} />} />
+ *       <LineItems.Table renderRowActions={(row: POLine) => <RemoveButton lineRef={row.lineRef} />} />
  *       <LineItems.TotalsRow>{(lines) => ({ total: sum(lines) })}</LineItems.TotalsRow>
  *       <LineItems.AddRow>
  *         <CatalogCombobox onPick={(item) => lineItems.addLine(item)} />

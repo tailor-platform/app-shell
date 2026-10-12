@@ -293,7 +293,7 @@ const PurchaseOrderDemo = ({
 
   const lineItems = useLineItems<PurchaseOrderLine>({
     fields,
-    data: initialLines,
+    defaultLines: initialLines,
     mode,
     ordering,
     // 🔽 Bulk actions: the same footer bar DataTable shows while rows are selected.
@@ -400,7 +400,7 @@ const PurchaseOrderDemo = ({
               <LineItems.Table
                 rowHeight={36}
                 rowActionsWidth={72}
-                rowActions={(row: PurchaseOrderLine) => (
+                renderRowActions={(row: PurchaseOrderLine) => (
                   <>
                     <Button
                       variant="ghost"
@@ -431,28 +431,33 @@ const PurchaseOrderDemo = ({
                 })}
               </LineItems.TotalsRow>
 
-              {/* 🔽 Add a line from the bottom of the table */}
-              <LineItems.AddRow className="mt-2">
-                <Combobox
-                  items={CATALOG}
-                  placeholder="+   Add product — type to search…"
-                  aria-label="Add product"
-                  className="max-w-md flex-1"
-                  mapItem={(item) => ({ label: `${item.sku} ${item.name}`, key: item.sku })}
-                  onValueChange={(item) => {
-                    if (item) addFromCatalog(item);
+              {/* 🔽 Add a line from the bottom of the table; save sits beside it, in the card */}
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <LineItems.AddRow className="flex-1">
+                  <Combobox
+                    items={CATALOG}
+                    placeholder="+   Add product — type to search…"
+                    aria-label="Add product"
+                    className="max-w-md flex-1"
+                    mapItem={(item) => ({ label: `${item.sku} ${item.name}`, key: item.sku })}
+                    onValueChange={(item) => {
+                      if (item) addFromCatalog(item);
+                    }}
+                  />
+                  <Button variant="outline" onClick={() => setPickerOpen(true)}>
+                    Bulk add
+                  </Button>
+                </LineItems.AddRow>
+                <LineItems.SaveActions
+                  onSave={(cs) => {
+                    setLastSaved(cs);
+                    // A real save would submit first; the baseline moves forward on success.
+                    lineItems.reset();
                   }}
                 />
-                <Button variant="outline" onClick={() => setPickerOpen(true)}>
-                  Bulk add
-                </Button>
-              </LineItems.AddRow>
+              </div>
             </Card.Content>
           </Card.Root>
-
-          <LineItems.FloatingDock>
-            <LineItems.DirtyBar warnOnNav onSave={(cs) => setLastSaved(cs)} />
-          </LineItems.FloatingDock>
         </LineItems.Root>
 
         {/* 🔽 Change-set inspector — what a real submit would send */}

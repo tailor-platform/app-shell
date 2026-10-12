@@ -30,7 +30,7 @@ const fields = [
 function Lines({ lines }: { lines: POLine[] }) {
   const lineItems = useLineItems<POLine>({
     fields,
-    data: lines,
+    defaultLines: lines,
     ordering: "manual",
     selection: true,
   });

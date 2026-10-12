@@ -50,7 +50,7 @@ export function useLineItems<T extends LineItemsRowData>(
 ): UseLineItemsReturn<T> {
   const {
     fields,
-    data,
+    defaultLines,
     lines: controlledLines,
     onLinesChange,
     mode: modeProp = "edit",
@@ -62,7 +62,7 @@ export function useLineItems<T extends LineItemsRowData>(
   const selection = selectionOption || selectionActions.length > 0;
 
   const controlled = controlledLines !== undefined;
-  const seed = controlled ? controlledLines : data;
+  const seed = controlled ? controlledLines : defaultLines;
 
   const [rows, setRows] = React.useState<RowState<T>>(() => packLines(sanitizeRows(seed ?? [])));
   const [dirty, setDirty] = React.useState<DirtyState<T>>(() => ({

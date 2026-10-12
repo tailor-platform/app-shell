@@ -41,7 +41,9 @@ const seed: Line[] = [
 ];
 
 function setup(options?: Partial<UseLineItemsOptions<Line>>) {
-  return renderHook(() => useLineItems<Line>({ fields, data: seed, selection: true, ...options }));
+  return renderHook(() =>
+    useLineItems<Line>({ fields, defaultLines: seed, selection: true, ...options }),
+  );
 }
 
 describe("useLineItems", () => {
@@ -54,7 +56,7 @@ describe("useLineItems", () => {
 
   it("generates a lineRef for rows that arrive without one", () => {
     const { result } = setup({
-      data: [{ sku: "NO-REF", quantity: 1, total: 0 } as unknown as Line],
+      defaultLines: [{ sku: "NO-REF", quantity: 1, total: 0 } as unknown as Line],
     });
     expect(result.current.allLines[0]?.lineRef).toBeTruthy();
   });
@@ -472,7 +474,8 @@ describe("useLineItems", () => {
   describe("mode", () => {
     it("defaults to edit and follows the prop", () => {
       const { result, rerender } = renderHook(
-        ({ mode }: { mode: LineItemsMode }) => useLineItems<Line>({ fields, data: seed, mode }),
+        ({ mode }: { mode: LineItemsMode }) =>
+          useLineItems<Line>({ fields, defaultLines: seed, mode }),
         { initialProps: { mode: "edit" as LineItemsMode } },
       );
       expect(result.current.mode).toBe("edit");

@@ -184,6 +184,35 @@ Numeric fields normalize strings to numbers, round by `decimals`, and compare wi
 />
 ```
 
+## Multiple collections: useLineItemsGroup
+
+Some documents own more than one list of lines — a Journal Entry with debits and credits, a Work Order with components and operations. Give each list its own `useLineItems` and `LineItems.Root`, then put them under one save boundary with `useLineItemsGroup`. Members can have different row types.
+
+```tsx
+import { useLineItems, useLineItemsGroup } from "@tailor-platform/app-shell";
+
+const debits = useLineItems<JournalLine>({ fields, data: entry.debits });
+const credits = useLineItems<JournalLine>({ fields, data: entry.credits });
+const group = useLineItemsGroup({ debits, credits });
+
+const onSave = async () => {
+  const { isEmpty, changeSets } = group.getChangeSet();
+  if (isEmpty) return;
+  await saveJournalEntry(entry.id, changeSets.debits.lineChanges, changeSets.credits.lineChanges);
+  group.reset();
+};
+```
+
+| Return         | Description                                                                         |
+| -------------- | ----------------------------------------------------------------------------------- |
+| `members`      | The hooks passed in, for forwarding into each `LineItems.Root`                      |
+| `isDirty`      | True when any member has uncommitted changes                                        |
+| `getChangeSet` | Returns `{ isEmpty, changeSets }`; `changeSets` is keyed by the names you passed in |
+| `reset`        | Snaps every member's baseline forward — call after a successful save                |
+| `revert`       | Discards every member's changes — call on Discard                                   |
+
+Each member keeps its own selection, search and dirty tracking. The group only adds the shared `isDirty` and the single Save / Discard.
+
 ## Spreadsheet behavior
 
 Only editable columns take part in the grid's selection.

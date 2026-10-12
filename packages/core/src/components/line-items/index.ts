@@ -1,5 +1,11 @@
 export { LineItems, type LineItemsRootProps } from "./line-items";
 export { useLineItems } from "./use-line-items";
+export {
+  useLineItemsGroup,
+  type LineItemsGroupChangeSet,
+  type LineItemsGroupMembers,
+  type UseLineItemsGroupReturn,
+} from "./use-line-items-group";
 export { createLineItemHelper } from "./field";
 export { lineItemsFloatingBarStyles } from "./line-items-parts";
 export type { LineItemsTableProps } from "./line-items-table";

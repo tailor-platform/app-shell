@@ -1019,6 +1019,8 @@
         "LineItemsField",
         "LineItemsFieldCommit",
         "LineItemsFieldType",
+        "LineItemsGroupChangeSet",
+        "LineItemsGroupMembers",
         "LineItemsLineChange",
         "LineItemsMetadataCommit",
         "LineItemsMode",
@@ -1028,17 +1030,19 @@
         "LineItemsSelectOption",
         "LineItemsSortState",
         "LineItemsTableProps",
+        "UseLineItemsGroupReturn",
         "UseLineItemsOptions",
         "UseLineItemsReturn",
         "createLineItemHelper",
         "lineItemsFloatingBarStyles",
-        "useLineItems"
+        "useLineItems",
+        "useLineItemsGroup"
       ],
       "hashes": {
-        "typeSurface": "d9ec449a4cf030d8",
-        "outline": "041b094ffbf70772",
+        "typeSurface": "631d6823569171c0",
+        "outline": "48c04756f0bab926",
         "snapshot": "7bda9a2537aa6263",
-        "outputMd": "6516099e63d212b2",
+        "outputMd": "10befa3561ca3531",
         "examples": null
       }
     },
@@ -1744,7 +1748,7 @@
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "66696139a46fabb0",
-    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "6516099e63d212b2",
+    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "10befa3561ca3531",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "ae287e2bb5abc1c6",

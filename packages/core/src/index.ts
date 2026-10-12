@@ -172,6 +172,10 @@ export { DescriptionCard, type DescriptionCardProps } from "./components/descrip
 export {
   LineItems,
   useLineItems,
+  useLineItemsGroup,
+  type LineItemsGroupChangeSet,
+  type LineItemsGroupMembers,
+  type UseLineItemsGroupReturn,
   createLineItemHelper,
   lineItemsFloatingBarStyles,
   type LineItemsChangeSet,

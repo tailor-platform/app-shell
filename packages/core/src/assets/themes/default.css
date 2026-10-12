@@ -24,6 +24,7 @@
   --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-ring: var(--ring);
+  --backdrop: var(--primitive-black-a7);
 
   /* ── 4. SYSTEM ────────────────────────────────────────────────────────── */
   --background: var(--primitive-gray-50);

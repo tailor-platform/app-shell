@@ -102,10 +102,12 @@ export function fieldToColumnDef<T extends LineItemsRowData>(
 
   if (field.type?.kind === "number") {
     const decimals = field.type.decimals;
-    def.normalize = (value: unknown): unknown => {
+    def.normalize = (value: unknown, row: T): unknown => {
       if (value === "" || value === null || value === undefined) return null;
-      const n = typeof value === "number" ? value : Number(String(value).trim());
-      if (Number.isNaN(n)) return value;
+      const n = typeof value === "number" ? value : parseLooseNumber(String(value));
+      // Unreadable input (a pasted word, "N/A") keeps the cell's current value
+      // rather than storing text in a numeric field.
+      if (n === null || Number.isNaN(n)) return (row as Record<string, unknown>)[field.key];
       if (typeof decimals === "number") {
         const factor = 10 ** decimals;
         return Math.round(n * factor) / factor;
@@ -119,6 +121,20 @@ export function fieldToColumnDef<T extends LineItemsRowData>(
       const bn = Number(b);
       if (Number.isNaN(an) || Number.isNaN(bn)) return Object.is(a, b);
       return Math.abs(an - bn) < 1e-9;
+    };
+  }
+
+  if (field.type?.kind === "date") {
+    const { min, max } = field.type;
+    def.normalize = (value: unknown, row: T): unknown => {
+      if (value === "" || value === null || value === undefined) return null;
+      const iso = parseLooseDate(String(value));
+      // An unreadable or out-of-range date keeps the current value: the
+      // editor's min/max only constrain its picker, not a paste or fill.
+      if (!iso || (min && iso < min) || (max && iso > max)) {
+        return (row as Record<string, unknown>)[field.key];
+      }
+      return iso;
     };
   }
 
@@ -147,4 +163,40 @@ export function defaultAlignForField<T extends LineItemsRowData>(
   if (field.type?.kind === "number") return "right";
   if (field.type?.kind === "boolean") return "center";
   return "left";
+}
+
+/**
+ * Reads a number the way people paste them from spreadsheets: thousands
+ * separators ("1,234"), a decimal comma ("1,5"), currency symbols, and
+ * full-width digits. Returns `null` when nothing numeric is left.
+ */
+export function parseLooseNumber(input: string): number | null {
+  let s = input
+    .trim()
+    // Full-width digits and signs (common in Japanese input) to ASCII.
+    .replace(/[０-９．，－]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
+    .replace(/[\s\u00a0\u202f_$€£¥￥]/g, "");
+  if (s === "") return null;
+  const lastComma = s.lastIndexOf(",");
+  const lastDot = s.lastIndexOf(".");
+  if (lastComma !== -1 && lastDot !== -1) {
+    // Both present: whichever comes last is the decimal separator.
+    s = lastComma > lastDot ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  } else if (lastComma !== -1) {
+    // Comma only: grouped thousands ("1,234,567") or a decimal comma ("1,5").
+    s = /^-?\d{1,3}(,\d{3})+$/.test(s) ? s.replace(/,/g, "") : s.replace(",", ".");
+  }
+  if (!/^-?(\d+\.?\d*|\.\d+)$/.test(s)) return null;
+  return Number(s);
+}
+
+/** Accepts YYYY-MM-DD, YYYY/MM/DD or YYYY.MM.DD; returns ISO YYYY-MM-DD or `null`. */
+export function parseLooseDate(input: string): string | null {
+  const m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(input.trim());
+  if (!m) return null;
+  const [, y, mo, d] = m;
+  const iso = `${y}-${mo!.padStart(2, "0")}-${d!.padStart(2, "0")}`;
+  const date = new Date(`${iso}T00:00:00Z`);
+  // Rejects impossible dates such as 2026-02-31, which Date would roll over.
+  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== iso ? null : iso;
 }

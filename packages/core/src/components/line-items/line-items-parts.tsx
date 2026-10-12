@@ -276,13 +276,17 @@ export type LineItemsFloatingDockProps = {
   className?: string;
 };
 
-/** Fixed bottom-center of the viewport, above page chrome. */
+/**
+ * Fixed bottom-center of the viewport: above page content, but one step below
+ * the overlay and popup layer, so a confirm dialog or dropdown opened from the
+ * page is never covered by the bar.
+ */
 function LineItemsFloatingDock({ children, className }: LineItemsFloatingDockProps) {
   return (
     <div
       data-slot="line-items-floating-dock"
       className={cn(
-        "astw:pointer-events-none astw:fixed astw:bottom-6 astw:left-1/2 astw:z-[60] astw:flex astw:-translate-x-1/2 astw:flex-col astw:items-center astw:gap-2",
+        "astw:pointer-events-none astw:fixed astw:bottom-6 astw:left-1/2 astw:z-[calc(var(--z-overlay)-1)] astw:flex astw:-translate-x-1/2 astw:flex-col astw:items-center astw:gap-2",
         className,
       )}
     >
@@ -366,7 +370,9 @@ function LineItemsDirtyBar({
       // Toggle through "" so repeating the same notice is announced again.
       setBlockedNotice("");
       requestAnimationFrame(() => setBlockedNotice(blockedTextRef.current));
-      bar.querySelector<HTMLElement>("button")?.focus();
+      // Save, never Discard: a reflexive second Enter must not throw the edits
+      // away. Without a Save button, the bar itself takes focus.
+      (bar.querySelector<HTMLElement>("[data-action=save]") ?? bar).focus();
     };
 
     const onClick = (event: MouseEvent) => {
@@ -410,7 +416,12 @@ function LineItemsDirtyBar({
   const pending = lineItems.getChangeSet().lineChanges.length;
 
   return (
-    <div ref={barRef} data-slot="line-items-dirty-bar" className={cn(pillClasses, className)}>
+    <div
+      ref={barRef}
+      data-slot="line-items-dirty-bar"
+      tabIndex={-1}
+      className={cn(pillClasses, "astw:outline-none", className)}
+    >
       {/* <output> is a status region: the count is announced as it appears and changes. */}
       <output className="astw:opacity-80">
         {label ? label(pending) : t("unsavedChanges", { count: pending })}
@@ -433,6 +444,7 @@ function LineItemsDirtyBar({
           {onSave ? (
             <button
               type="button"
+              data-action="save"
               className={cn(pillButtonClasses, "astw:bg-background astw:text-foreground")}
               onClick={() => onSave(lineItems.getChangeSet())}
             >

@@ -188,7 +188,7 @@ function LineItemsRoot<T extends LineItemsRowData>({
         className={cn(
           fullscreen
             ? [
-                "astw:fixed astw:inset-0 astw:z-50 astw:flex astw:flex-col astw:bg-black/80 astw:p-6 astw:backdrop-blur-sm",
+                "astw:fixed astw:inset-0 astw:z-(--z-overlay) astw:flex astw:flex-col astw:bg-black/80 astw:p-6 astw:backdrop-blur-sm",
                 "astw:animate-in astw:fade-in-0 astw:duration-200 astw:motion-reduce:animate-none",
               ]
             : "astw:contents",

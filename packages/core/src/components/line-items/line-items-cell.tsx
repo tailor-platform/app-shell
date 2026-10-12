@@ -65,18 +65,33 @@ export type LineItemsCellProps<T extends LineItemsRowData> = {
   ariaLabel: string;
   /** Renders the fill handle — the active cell of a fillable column only. */
   showFillGrip: boolean;
-  onCommit: (value: unknown) => void;
+  /** Shared by every cell; stable for the grid's lifetime, so cells can memoize. */
+  handlers: LineItemsCellHandlers;
+};
+
+const useIsomorphicLayoutEffect =
+  typeof document !== "undefined" ? React.useLayoutEffect : React.useEffect;
+
+type CellCoord = { lineRef: string; columnId: string };
+
+/**
+ * The grid's cell callbacks, as one stable object that always calls the grid's
+ * latest logic. Each cell binds them to its own coordinate, so a cell only
+ * re-renders when its own row, field or state changes — not on every keypress.
+ */
+export type LineItemsCellHandlers = {
+  commit: (coord: CellCoord, value: unknown) => void;
   /** Syncs the grid's active coordinate when an editor takes focus by any route. */
-  onFocusCell: () => void;
+  focus: (coord: CellCoord) => void;
   /**
    * Moves the active cell. Returns `false` when there is nowhere to go (Tab
    * past the grid's last editable cell), so the browser's own Tab can take
    * focus out of the grid instead of trapping it.
    */
-  onNavigate: (to: CellNavigation) => boolean;
+  navigate: (coord: CellCoord, to: CellNavigation) => boolean;
   /** Alt+Arrow moves the active cell without leaving the editor. */
-  onArrowFromEditor: (key: ArrowKey, shift: boolean) => void;
-  onFillGripPointerDown: (event: React.PointerEvent) => void;
+  arrow: (key: ArrowKey, shift: boolean) => void;
+  fillGripDown: (coord: CellCoord, event: React.PointerEvent) => void;
 };
 
 function toEditorValue(value: unknown): string {
@@ -112,10 +127,13 @@ function SelectCell<T extends LineItemsRowData>({
   onFocusCell,
   onNavigate,
   onArrowFromEditor,
-}: Pick<
-  LineItemsCellProps<T>,
-  "field" | "onCommit" | "onFocusCell" | "onNavigate" | "onArrowFromEditor" | "ariaLabel"
-> & { value: unknown }) {
+}: Pick<LineItemsCellProps<T>, "field" | "ariaLabel"> & {
+  value: unknown;
+  onCommit: (value: unknown) => void;
+  onFocusCell: () => void;
+  onNavigate: (to: CellNavigation) => boolean;
+  onArrowFromEditor: (key: ArrowKey, shift: boolean) => void;
+}) {
   const t = useLineItemsT();
   const type = field.type;
   const current = toEditorValue(value);
@@ -166,6 +184,16 @@ function SelectCell<T extends LineItemsRowData>({
               if (!onNavigate(e.shiftKey ? "shift-tab" : "tab")) return;
               e.preventDefault();
               e.stopPropagation();
+              return;
+            }
+            // With the popup closed, Base UI clears the selection on Escape. In a
+            // grid Escape means "cancel", never "erase the cell", so skip that
+            // handler and treat it like the other editors do. An open popup
+            // still closes on Escape as usual.
+            if (e.key === "Escape" && e.currentTarget.getAttribute("aria-expanded") !== "true") {
+              (e as unknown as { preventBaseUIHandler?: () => void }).preventBaseUIHandler?.();
+              e.preventDefault();
+              e.stopPropagation();
             }
           }}
         />
@@ -211,12 +239,27 @@ function LineItemsCellInner<T extends LineItemsRowData>({
   editable,
   ariaLabel,
   showFillGrip,
-  onCommit,
-  onFocusCell,
-  onNavigate,
-  onArrowFromEditor,
-  onFillGripPointerDown,
+  handlers,
 }: LineItemsCellProps<T>) {
+  const lineRef = row.lineRef;
+  const columnId = field.key;
+  const onCommit = React.useCallback(
+    (value: unknown) => handlers.commit({ lineRef, columnId }, value),
+    [handlers, lineRef, columnId],
+  );
+  const onFocusCell = React.useCallback(
+    () => handlers.focus({ lineRef, columnId }),
+    [handlers, lineRef, columnId],
+  );
+  const onNavigate = React.useCallback(
+    (to: CellNavigation) => handlers.navigate({ lineRef, columnId }, to),
+    [handlers, lineRef, columnId],
+  );
+  const onArrowFromEditor = handlers.arrow;
+  const onFillGripPointerDown = React.useCallback(
+    (event: React.PointerEvent) => handlers.fillGripDown({ lineRef, columnId }, event),
+    [handlers, lineRef, columnId],
+  );
   const rawValue = (row as Record<string, unknown>)[field.key];
   const [draft, setDraft] = React.useState(() => toEditorValue(rawValue));
   const inputRef = React.useRef<HTMLInputElement | null>(null);
@@ -228,8 +271,11 @@ function LineItemsCellInner<T extends LineItemsRowData>({
   // blur they cause commits once, not twice.
   const typedRef = React.useRef(false);
 
-  React.useEffect(() => {
-    if (typedRef.current) return;
+  // The stored value only changes underneath a cell from outside it — a paste,
+  // fill or revert — and that write wins over any half-typed draft. A layout
+  // effect, so the corrected value is painted in the same frame as the commit.
+  useIsomorphicLayoutEffect(() => {
+    typedRef.current = false;
     setDraft(toEditorValue(rawValue));
   }, [rawValue]);
 
@@ -237,8 +283,12 @@ function LineItemsCellInner<T extends LineItemsRowData>({
     (next: string) => {
       if (!typedRef.current) return;
       typedRef.current = false;
-      if (next === toEditorValue(rawValue)) return;
-      onCommit(next);
+      if (next !== toEditorValue(rawValue)) onCommit(next);
+      // Show what is stored, not what was typed: an edit that normalizes back
+      // to the same value ("1.501" at two decimals) leaves the store unchanged,
+      // so the effect above would never correct the display. A real change
+      // re-renders with the new value and the effect settles it.
+      setDraft(toEditorValue(rawValue));
     },
     [onCommit, rawValue],
   );

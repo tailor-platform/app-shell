@@ -30,7 +30,12 @@ import {
 } from "./field";
 import { useLineItemsT } from "./i18n";
 import { normalizeField } from "./internals";
-import { LineItemsCell, type ArrowKey, type CellNavigation } from "./line-items-cell";
+import {
+  LineItemsCell,
+  type ArrowKey,
+  type CellNavigation,
+  type LineItemsCellHandlers,
+} from "./line-items-cell";
 import { useLineItemsContext } from "./line-items-context";
 import { LineItemsSkeletonRow } from "./line-items-skeleton-row";
 import {
@@ -156,7 +161,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
       el.removeEventListener("scroll", check);
       observer.disconnect();
     };
-  }, [lines.length]);
+  }, [lines.length, loading, fullscreen]);
   const [widths, setWidths] = React.useState<ColumnWidths>({});
 
   const canReorder = ordering === "manual" && mode === "edit";
@@ -235,14 +240,16 @@ export function LineItemsTable<T extends LineItemsRowData>({
 
   const commitCell = React.useCallback(
     (coord: GridCoord, value: unknown) => {
-      const row = lineByRef.get(coord.lineRef);
+      // Looked up across the whole document, not just the visible lines: a
+      // cell filtered out mid-edit still commits its typing as it unmounts.
+      const row = lineItems.allLines.find((l) => l.lineRef === coord.lineRef);
       if (!row) return;
       const normalized = normalizeField(columnDefs, coord.columnId, value, row);
       lineItems.updateLines([
         { lineRef: coord.lineRef, patch: { [coord.columnId]: normalized } as Partial<T> },
       ]);
     },
-    [columnDefs, lineByRef, lineItems],
+    [columnDefs, lineItems],
   );
 
   /** Keeps the active cell in view without stealing focus or animating. */
@@ -252,11 +259,15 @@ export function LineItemsTable<T extends LineItemsRowData>({
       if (!container) return;
       const index = orderedLineRefs.indexOf(coord.lineRef);
       if (index < 0) return;
-      const top = index * rowHeight;
+      // The sticky header and totals row overlay the scroll area, so the row
+      // must clear them, not just the container's edges.
+      const headerHeight = container.querySelector("thead")?.offsetHeight ?? 0;
+      const footerHeight = container.querySelector("tfoot")?.offsetHeight ?? 0;
+      const top = headerHeight + index * rowHeight;
       const bottom = top + rowHeight;
-      if (top < container.scrollTop) container.scrollTop = top;
-      else if (bottom > container.scrollTop + container.clientHeight) {
-        container.scrollTop = bottom - container.clientHeight;
+      if (top - headerHeight < container.scrollTop) container.scrollTop = top - headerHeight;
+      else if (bottom > container.scrollTop + container.clientHeight - footerHeight) {
+        container.scrollTop = bottom - container.clientHeight + footerHeight;
       }
     },
     [orderedLineRefs, rowHeight],
@@ -272,7 +283,13 @@ export function LineItemsTable<T extends LineItemsRowData>({
     const cell = container.querySelector<HTMLElement>(
       `[data-line-ref="${CSS.escape(coord.lineRef)}"][data-column-id="${CSS.escape(coord.columnId)}"]`,
     );
-    const editor = cell?.querySelector<HTMLElement>("[data-slot=line-items-cell-editor]");
+    // Built-in editors are tagged; a custom editor is whatever it renders, so
+    // fall back to the cell's first focusable element.
+    const editor =
+      cell?.querySelector<HTMLElement>("[data-slot=line-items-cell-editor]") ??
+      cell?.querySelector<HTMLElement>(
+        'input:not([disabled]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),[tabindex]:not([tabindex="-1"])',
+      );
     if (editor) editor.focus();
     else if (attempts > 0) requestAnimationFrame(() => focusCellEditor(coord, attempts - 1));
   }, []);
@@ -625,6 +642,31 @@ export function LineItemsTable<T extends LineItemsRowData>({
   const selectedRefSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
   const allVisibleSelected = lines.length > 0 && lines.every((l) => selectedRefSet.has(l.lineRef));
 
+  // One stable handlers object for every cell, reading the latest grid logic
+  // through a ref, so memoized cells skip re-rendering on unrelated changes.
+  const latestCellLogic = React.useRef({
+    commitCell,
+    setActive: grid.setActive,
+    navigateFromEdit,
+    moveActive,
+  });
+  latestCellLogic.current = { commitCell, setActive: grid.setActive, navigateFromEdit, moveActive };
+  const cellHandlers = React.useMemo<LineItemsCellHandlers>(
+    () => ({
+      commit: (coord, value) => latestCellLogic.current.commitCell(coord, value),
+      focus: (coord) => latestCellLogic.current.setActive(coord),
+      navigate: (coord, to) => latestCellLogic.current.navigateFromEdit(to, coord),
+      arrow: (key, shift) => latestCellLogic.current.moveActive(key, shift),
+      fillGripDown: (coord, event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setFillSource(coord);
+        setFillHoverLineRef(coord.lineRef);
+      },
+    }),
+    [],
+  );
+
   const offersBulkActions = lineItems.selectionEnabled && lineItems.selectionActions.length > 0;
   const selectionBarOpen = offersBulkActions && lineItems.selectedIds.length > 0;
 
@@ -713,7 +755,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                   className={cn(headCellClasses, "astw:px-0", pinClasses(layout.grip))}
                   style={pinStyle(layout.grip)}
                 >
-                  <span className="astw:sr-only">Reorder</span>
+                  <span className="astw:sr-only">{t("reorderColumn")}</span>
                 </th>
               ) : null}
 
@@ -758,7 +800,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                   className={cn(headCellClasses, "astw:px-0", pinClasses(layout.actions))}
                   style={pinStyle(layout.actions)}
                 >
-                  <span className="astw:sr-only">Actions</span>
+                  <span className="astw:sr-only">{t("actionsColumn")}</span>
                 </th>
               ) : null}
 
@@ -817,6 +859,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                     key={row.lineRef}
                     data-slot="line-items-row"
                     data-state={rowSelected ? "selected" : undefined}
+                    data-drop-before={dropBefore === row.lineRef || undefined}
                     aria-rowindex={rowIndex + 2}
                     style={{ height: rowHeight }}
                     className={cn(
@@ -937,6 +980,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                           data-slot="line-items-grid-cell"
                           data-line-ref={row.lineRef}
                           data-column-id={c.id}
+                          data-locked={amendLocked || undefined}
                           className={cn(
                             bodyCellClasses,
                             alignClasses[c.align],
@@ -995,16 +1039,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                               line: rowIndex + 1,
                             })}
                             showFillGrip={isActive && fieldAllowsFill(c.field, mode)}
-                            onCommit={(value) => commitCell(coord, value)}
-                            onFocusCell={() => grid.setActive(coord)}
-                            onNavigate={(to) => navigateFromEdit(to, coord)}
-                            onArrowFromEditor={(key, shift) => moveActive(key, shift)}
-                            onFillGripPointerDown={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setFillSource(coord);
-                              setFillHoverLineRef(row.lineRef);
-                            }}
+                            handlers={cellHandlers}
                           />
                         </td>
                       );

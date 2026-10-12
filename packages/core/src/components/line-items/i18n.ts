@@ -29,6 +29,9 @@ export const lineItemsLabels = defineI18nLabels({
     // Table
     emptyMessage: "No lines yet.",
     selectAllLines: "Select all lines",
+    // Screen-reader names for the utility column headers.
+    reorderColumn: "Reorder",
+    actionsColumn: "Actions",
     selectLine: (props: { line: number }) => `Select line ${props.line}`,
     reorderLine: (props: { line: number }) => `Drag to reorder line ${props.line}`,
     lineMoved: (props: { line: number; position: number }) =>
@@ -56,6 +59,8 @@ export const lineItemsLabels = defineI18nLabels({
 
     emptyMessage: "明細はまだありません。",
     selectAllLines: "すべての明細を選択",
+    reorderColumn: "並べ替え",
+    actionsColumn: "操作",
     selectLine: (props: { line: number }) => `${props.line} 行目を選択`,
     reorderLine: (props: { line: number }) => `${props.line} 行目をドラッグして並べ替え`,
     lineMoved: (props: { line: number; position: number }) =>

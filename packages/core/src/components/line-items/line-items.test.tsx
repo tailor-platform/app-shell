@@ -375,6 +375,87 @@ describe("LineItems", () => {
       expect(document.activeElement).toBe(screen.getByRole("button", { name: "After the grid" }));
     });
 
+    it("lets a paste win over typing already in the cell", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(<Harness onReady={(x) => (api = x)} />);
+
+      const editor = editorIn("1", "sku");
+      await user.click(editor);
+      await user.keyboard("TYPED");
+      fireEvent.paste(editor, { clipboardData: { getData: () => "PASTED" } });
+      expect(editorIn("1", "sku").value).toBe("PASTED");
+
+      await user.click(editorIn("2", "note"));
+      expect(api?.allLines[0]?.sku).toBe("PASTED");
+    });
+
+    it('reads a pasted "1,234" in a number column as a number', async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(<Harness onReady={(x) => (api = x)} />);
+
+      await user.click(editorIn("1", "quantity"));
+      fireEvent.paste(editorIn("1", "quantity"), { clipboardData: { getData: () => "1,234" } });
+      expect(api?.allLines[0]?.quantity).toBe(1234);
+
+      fireEvent.paste(editorIn("1", "quantity"), { clipboardData: { getData: () => "N/A" } });
+      expect(api?.allLines[0]?.quantity).toBe(1234);
+    });
+
+    it("Escape in a closed select cell cancels rather than clearing the value", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(<Harness onReady={(x) => (api = x)} />);
+
+      const select = screen.getByRole("combobox", { name: "UoM, line 1" });
+      select.focus();
+      await user.keyboard("{Escape}{Escape}");
+
+      expect(api?.allLines[0]?.uom).toBe("EA");
+      expect(api?.isDirty).toBe(false);
+    });
+
+    it("Tab moves into a custom editor's own input", async () => {
+      const user = userEvent.setup();
+      const f2 = createLineItemHelper<Line>();
+      const customFields: LineItemsField<Line>[] = [
+        f2.field({
+          key: "sku",
+          label: "SKU",
+          render: (l) => l.sku,
+          editable: ["edit"],
+          type: { kind: "text" },
+        }),
+        f2.field({
+          key: "note",
+          label: "Note",
+          render: (l) => l.note,
+          editable: ["edit"],
+          type: {
+            kind: "custom",
+            renderEditor: (ctx) => (
+              <input aria-label={ctx.ariaLabel} defaultValue={String(ctx.value ?? "")} />
+            ),
+          },
+        }),
+      ];
+      function CustomHarness() {
+        const lineItems = useLineItems<Line>({ fields: customFields, defaultLines: seed });
+        return (
+          <LineItems.Root value={lineItems}>
+            <LineItems.Table virtualized={false} />
+          </LineItems.Root>
+        );
+      }
+      render(<CustomHarness />);
+
+      await user.click(editorIn("1", "sku"));
+      await user.keyboard("{Tab}");
+
+      expect(document.activeElement).toBe(screen.getByRole("textbox", { name: "Note, line 1" }));
+    });
+
     it("keeps a paste into the focused cell when it later blurs", async () => {
       const user = userEvent.setup();
       let api: ReturnType<typeof useLineItems<Line>> | undefined;
@@ -504,8 +585,8 @@ describe("LineItems", () => {
 
     it("tints the cells the lock closed", () => {
       render(<Harness mode="amend" />);
-      expect(cell("1", "sku").className).toContain("bg-muted/40");
-      expect(cell("1", "note").className).not.toContain("bg-muted/40");
+      expect(cell("1", "sku").hasAttribute("data-locked")).toBe(true);
+      expect(cell("1", "note").hasAttribute("data-locked")).toBe(false);
     });
 
     it("still commits edits to the fields left open", async () => {
@@ -755,33 +836,29 @@ describe("LineItems", () => {
       expect(screen.queryByRole("button", { name: /drag to reorder/i })).toBeNull();
     });
 
-    it("draws the drop indicator across every column, pinned ones included", () => {
+    it("marks the row being dragged over as the drop target", () => {
       render(<Harness ordering="manual" selection renderRowActions />);
 
       // Simulate the row being dragged over by setting the state the drop
-      // handler sets, then assert every cell in that row carries the line.
+      // handler sets, then assert the row is marked as the drop target.
       const row = document.querySelectorAll("[data-slot=line-items-row]")[1] as HTMLElement;
       const grip = screen.getByRole("button", { name: "Drag to reorder line 1" });
 
       fireEvent.dragStart(grip);
       fireEvent.dragOver(row);
 
-      const cells = Array.from(row.querySelectorAll("td"));
-      expect(cells.length).toBeGreaterThan(3);
-      for (const td of cells) {
-        expect(td.className).toContain("shadow-[inset_0_2px_0_0_var(--color-primary)]");
-      }
+      expect(row.hasAttribute("data-drop-before")).toBe(true);
     });
 
-    it("repaints the row background on pinned cells so a selected row tints under them", async () => {
+    it("marks a selected row so every cell, pinned ones included, tints with it", async () => {
       const user = userEvent.setup();
       render(<Harness ordering="manual" selection />);
 
-      const skuCell = cell("1", "sku"); // pinned left
-      expect(skuCell.className).toContain("bg-card");
+      const row = () => cell("1", "sku").closest("tr")!;
+      expect(row().getAttribute("data-state")).toBeNull();
 
       await user.click(screen.getByRole("checkbox", { name: "Select line 1" }));
-      expect(cell("1", "sku").className).toContain("bg-muted");
+      expect(row().getAttribute("data-state")).toBe("selected");
     });
 
     it("moves a line down with the keyboard and reports a reorder op", async () => {
@@ -907,6 +984,35 @@ describe("LineItems", () => {
   });
 
   describe("parts", () => {
+    describe("fullscreen", () => {
+      it("opens as a labelled modal dialog, locks page scroll, and closes on Escape", async () => {
+        const user = userEvent.setup();
+        render(<Harness />);
+
+        await user.click(screen.getByRole("button", { name: "Expand to fullscreen" }));
+        const dialog = screen.getByRole("dialog", { name: "Line items" });
+        expect(dialog.getAttribute("aria-modal")).toBe("true");
+        expect(document.body.style.overflow).toBe("hidden");
+
+        await user.keyboard("{Escape}");
+        expect(screen.queryByRole("dialog")).toBeNull();
+        expect(document.body.style.overflow).toBe("");
+      });
+
+      it("keeps a half-typed cell when toggled, since the grid is not remounted", async () => {
+        const user = userEvent.setup();
+        render(<Harness />);
+
+        const editor = editorIn("1", "note");
+        await user.click(editor);
+        await user.keyboard("draft");
+        fireEvent.click(screen.getByRole("button", { name: "Expand to fullscreen" }));
+
+        expect(editorIn("1", "note")).toBe(editor);
+        expect(editor.value).toBe("draft");
+      });
+    });
+
     describe("DirtyBar warnOnNav", () => {
       function GuardHarness({
         onReady,
@@ -951,7 +1057,7 @@ describe("LineItems", () => {
       it("blocks a link outside the document and hands focus to the bar", async () => {
         await renderDirty();
         expect(click("Elsewhere")).toBe(true);
-        expect(document.activeElement?.textContent).toBe("Discard");
+        expect(document.activeElement?.textContent).toBe("Save");
       });
 
       it("leaves links inside the document alone", async () => {

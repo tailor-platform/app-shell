@@ -2,14 +2,14 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add `BulkItemPicker` — a tree-select dialog for picking many items from a hierarchical catalog and committing them in one batch.
+Add `TreePicker` — a tree-select dialog for picking many items from a hierarchical catalog and committing them in one batch.
 
 Selection is leaf-only: a parent checkbox is derived from its descendants (checked, or indeterminate when partial), and ticking it selects every leaf beneath. Searching keeps any node that matches or has a matching descendant, and auto-expands the ancestors of matches. The tree is keyboard-navigable (`role="tree"` with roving focus, arrow keys to move and expand, Space to toggle, Enter to commit).
 
 ```tsx
-import { BulkItemPicker } from "@tailor-platform/app-shell";
+import { TreePicker } from "@tailor-platform/app-shell";
 
-<BulkItemPicker<CatalogItem>
+<TreePicker<CatalogItem>
   open={open}
   onOpenChange={setOpen}
   title="Add items from catalog"

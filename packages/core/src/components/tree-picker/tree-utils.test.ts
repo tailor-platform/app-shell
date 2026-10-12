@@ -8,14 +8,14 @@ import {
   isLeaf,
   leafIds,
 } from "./tree-utils";
-import type { BulkItemPickerNode } from "./types";
+import type { TreePickerNode } from "./types";
 
 type Item = { name: string };
 
-const node = (id: string, name: string, children?: BulkItemPickerNode<Item>[]) =>
-  ({ id, data: { name }, ...(children ? { children } : {}) }) as BulkItemPickerNode<Item>;
+const node = (id: string, name: string, children?: TreePickerNode<Item>[]) =>
+  ({ id, data: { name }, ...(children ? { children } : {}) }) as TreePickerNode<Item>;
 
-const TREE: BulkItemPickerNode<Item>[] = [
+const TREE: TreePickerNode<Item>[] = [
   node("p1", "Nike Vomero 18"),
   node("p2", "Adidas Ultraboost 22", [
     node("p2-a", "UK 8 / Black / Women"),
@@ -25,7 +25,7 @@ const TREE: BulkItemPickerNode<Item>[] = [
   node("p3", "Hoka Bondi 8"),
 ];
 
-const byName = (n: BulkItemPickerNode<Item>, q: string) =>
+const byName = (n: TreePickerNode<Item>, q: string) =>
   n.data.name.toLowerCase().includes(q.toLowerCase());
 
 describe("tree-utils", () => {

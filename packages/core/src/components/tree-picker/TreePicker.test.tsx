@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { BulkItemPicker } from "./BulkItemPicker";
-import type { BulkItemPickerNode } from "./types";
+import { TreePicker } from "./TreePicker";
+import type { TreePickerNode } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -12,7 +12,7 @@ afterEach(() => {
 
 type Item = { name: string; available: number };
 
-const TREE: BulkItemPickerNode<Item>[] = [
+const TREE: TreePickerNode<Item>[] = [
   { id: "p1", data: { name: "Nike Vomero 18", available: 3 } },
   {
     id: "p2",
@@ -28,11 +28,11 @@ const TREE: BulkItemPickerNode<Item>[] = [
 
 type HarnessProps = {
   initialOpen?: boolean;
-  onCommit?: (items: BulkItemPickerNode<Item>[]) => void;
+  onCommit?: (items: TreePickerNode<Item>[]) => void;
   ctaLabel?: (count: number) => string;
   filterSlot?: React.ReactNode;
   withMetric?: boolean;
-  items?: BulkItemPickerNode<Item>[];
+  items?: TreePickerNode<Item>[];
 };
 
 function Harness({
@@ -47,7 +47,7 @@ function Harness({
   return (
     <>
       <button onClick={() => setOpen(true)}>Reopen</button>
-      <BulkItemPicker<Item>
+      <TreePicker<Item>
         open={open}
         onOpenChange={setOpen}
         title="Bulk picker"
@@ -75,7 +75,7 @@ const checkboxFor = (label: string): HTMLElement =>
 // Mouse-only (hidden from assistive tech, which uses the row), so found by its tooltip.
 const expandButton = () => screen.getByTitle(/expand/i);
 
-describe("BulkItemPicker", () => {
+describe("TreePicker", () => {
   // ==========================================================================
   // Snapshots
   // ==========================================================================
@@ -141,7 +141,7 @@ describe("BulkItemPicker", () => {
     await user.click(cta);
 
     expect(onCommit).toHaveBeenCalledTimes(1);
-    const selected = onCommit.mock.calls[0]![0] as BulkItemPickerNode<Item>[];
+    const selected = onCommit.mock.calls[0]![0] as TreePickerNode<Item>[];
     expect(selected.map((n) => n.id)).toEqual(["p2-uk8w", "p2-uk10m", "p3"]);
     await waitFor(() => expect(screen.queryByText("Nike Vomero 18")).toBeNull());
   });
@@ -160,7 +160,7 @@ describe("BulkItemPicker", () => {
     expect(rowFor("Adidas Ultraboost 22").getAttribute("aria-checked")).toBe("true");
 
     await user.click(screen.getByRole("button", { name: /add 3 items/i }));
-    const selected = onCommit.mock.calls[0]![0] as BulkItemPickerNode<Item>[];
+    const selected = onCommit.mock.calls[0]![0] as TreePickerNode<Item>[];
     expect(selected.map((n) => n.id)).toEqual(["p2-uk8w", "p2-uk9m", "p2-uk10m"]);
   });
 
@@ -198,7 +198,7 @@ describe("BulkItemPicker", () => {
     await user.click(checkboxFor("Adidas Ultraboost 22"));
     await user.click(screen.getByRole("button", { name: /add 3 items/i }));
 
-    const selected = onCommit.mock.calls[0]![0] as BulkItemPickerNode<Item>[];
+    const selected = onCommit.mock.calls[0]![0] as TreePickerNode<Item>[];
     expect(selected.some((n) => n.id === "p2")).toBe(false);
     expect(selected.every((n) => n.children === undefined)).toBe(true);
   });
@@ -468,9 +468,7 @@ describe("BulkItemPicker", () => {
     rowFor("Nike Vomero 18").focus();
     await user.keyboard("{Enter}");
     expect(onCommit).toHaveBeenCalledTimes(1);
-    expect((onCommit.mock.calls[0]![0] as BulkItemPickerNode<Item>[]).map((n) => n.id)).toEqual([
-      "p1",
-    ]);
+    expect((onCommit.mock.calls[0]![0] as TreePickerNode<Item>[]).map((n) => n.id)).toEqual(["p1"]);
   });
 
   it("does not commit on Enter when nothing is selected", async () => {

@@ -285,4 +285,4 @@ Set `ordering: "manual"` to get a grip handle on each row. Reordering uses nativ
 ## Related
 
 - [DataTable](./data-table.md) — read-oriented collection table with sorting, filtering, and pagination
-- [BulkItemPicker](./bulk-item-picker.md) — tree-select dialog that pairs with `addLines`
+- [TreePicker](./tree-picker.md) — tree-select dialog that pairs with `addLines`

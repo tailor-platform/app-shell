@@ -1,5 +1,5 @@
 import {
-  BulkItemPicker,
+  TreePicker,
   Button,
   Card,
   Combobox,
@@ -8,7 +8,7 @@ import {
   LineItems,
   useLineItems,
   type AppShellPageProps,
-  type BulkItemPickerNode,
+  type TreePickerNode,
   type LineItemsChangeSet,
   type LineItemsMode,
 } from "@tailor-platform/app-shell";
@@ -50,7 +50,7 @@ const CATALOG: CatalogItem[] = [
   { sku: "DT-TOTE-NAT-OS", name: "Canvas Tote, Natural", price: 22 },
 ];
 
-const CATALOG_TREE: BulkItemPickerNode<CatalogItem>[] = [
+const CATALOG_TREE: TreePickerNode<CatalogItem>[] = [
   {
     id: "cat-tees",
     data: { sku: "TEES", name: "T-Shirts", price: 0 },
@@ -492,7 +492,7 @@ const PurchaseOrderDemo = ({
           </Card.Root>
         ) : null}
 
-        <BulkItemPicker<CatalogItem>
+        <TreePicker<CatalogItem>
           open={pickerOpen}
           onOpenChange={setPickerOpen}
           title="Bulk line item picker"

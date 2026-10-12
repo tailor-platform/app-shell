@@ -6,10 +6,10 @@ import { Dialog } from "@/components/dialog";
 import { Input } from "@/components/input";
 import { cn } from "@/lib/utils";
 
-import { BulkItemPickerRow } from "./BulkItemPickerRow";
+import { TreePickerRow } from "./TreePickerRow";
 import { flattenVisible, leafIds } from "./tree-utils";
-import type { BulkItemPickerNode, BulkItemPickerProps } from "./types";
-import { useBulkItemPickerT } from "./i18n";
+import type { TreePickerNode, TreePickerProps } from "./types";
+import { useTreePickerT } from "./i18n";
 import { useTreeFocus } from "./use-tree-focus";
 import { useTreeSelection } from "./use-tree-selection";
 
@@ -53,7 +53,7 @@ import { useTreeSelection } from "./use-tree-selection";
  * ```tsx
  * type Variant = { name: string; sku: string; unitPrice: number; available: number };
  *
- * <BulkItemPicker<Variant>
+ * <TreePicker<Variant>
  *   open={open}
  *   onOpenChange={setOpen}
  *   title="Add items"
@@ -77,7 +77,7 @@ import { useTreeSelection } from "./use-tree-selection";
  * ```tsx
  * const { data, isLoading } = useCatalog();
  *
- * <BulkItemPicker
+ * <TreePicker
  *   open={open}
  *   onOpenChange={setOpen}
  *   items={data ?? []}
@@ -87,7 +87,7 @@ import { useTreeSelection } from "./use-tree-selection";
  * />
  * ```
  */
-function BulkItemPicker<T>({
+function TreePicker<T>({
   open,
   onOpenChange,
   title,
@@ -103,9 +103,9 @@ function BulkItemPicker<T>({
   emptyText,
   searchPlaceholder,
   className,
-}: BulkItemPickerProps<T>) {
+}: TreePickerProps<T>) {
   const titleId = React.useId();
-  const t = useBulkItemPickerT();
+  const t = useTreePickerT();
 
   const {
     query,
@@ -128,7 +128,7 @@ function BulkItemPicker<T>({
   }, [selectedNodes, onCommit, onOpenChange]);
 
   const isChecked = React.useCallback(
-    (node: BulkItemPickerNode<T>) => {
+    (node: TreePickerNode<T>) => {
       const ids = leafIds(node);
       return ids.length > 0 && ids.every((id) => selectedLeaves.has(id));
     },
@@ -154,22 +154,19 @@ function BulkItemPicker<T>({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Content
-        data-slot="bulk-item-picker"
+        data-slot="tree-picker"
         className={cn(
           "astw:flex astw:max-h-[80vh] astw:w-full astw:max-w-2xl astw:flex-col astw:gap-0 astw:overflow-hidden astw:p-0 astw:sm:max-w-2xl",
           className,
         )}
         onKeyDown={handleKeyDown}
       >
-        <Dialog.Header
-          data-slot="bulk-item-picker-header"
-          className="astw:px-6 astw:pt-6 astw:pr-12"
-        >
+        <Dialog.Header data-slot="tree-picker-header" className="astw:px-6 astw:pt-6 astw:pr-12">
           <Dialog.Title id={titleId}>{title ?? t("title")}</Dialog.Title>
         </Dialog.Header>
 
         <div
-          data-slot="bulk-item-picker-search"
+          data-slot="tree-picker-search"
           className="astw:flex astw:items-center astw:gap-2 astw:px-6 astw:pt-4 astw:pb-3"
         >
           <div className="astw:bg-muted/40 astw:flex astw:flex-1 astw:items-center astw:gap-2 astw:rounded-md astw:px-3">
@@ -189,7 +186,7 @@ function BulkItemPicker<T>({
         </div>
 
         <div
-          data-slot="bulk-item-picker-column-header"
+          data-slot="tree-picker-column-header"
           aria-hidden
           className="astw:bg-muted/40 astw:text-muted-foreground astw:border-border astw:flex astw:items-center astw:gap-3 astw:border-y astw:px-4 astw:py-2 astw:text-xs astw:font-medium astw:tracking-wide astw:uppercase"
         >
@@ -202,7 +199,7 @@ function BulkItemPicker<T>({
 
         {visibleRows.length === 0 ? (
           <div
-            data-slot="bulk-item-picker-empty"
+            data-slot="tree-picker-empty"
             className="astw:text-muted-foreground astw:px-6 astw:py-8 astw:text-center astw:text-sm"
           >
             {emptyText ?? t("emptyText")}
@@ -212,11 +209,11 @@ function BulkItemPicker<T>({
             role="tree"
             aria-multiselectable="true"
             aria-labelledby={titleId}
-            data-slot="bulk-item-picker-list"
+            data-slot="tree-picker-list"
             className="astw:flex-1 astw:overflow-y-auto"
           >
             {kept.map((node) => (
-              <BulkItemPickerRow
+              <TreePickerRow
                 key={node.id}
                 node={node}
                 depth={0}
@@ -235,7 +232,7 @@ function BulkItemPicker<T>({
         )}
 
         <Dialog.Footer
-          data-slot="bulk-item-picker-footer"
+          data-slot="tree-picker-footer"
           className="astw:border-border astw:border-t astw:px-6 astw:py-4"
         >
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -249,6 +246,6 @@ function BulkItemPicker<T>({
     </Dialog.Root>
   );
 }
-BulkItemPicker.displayName = "BulkItemPicker";
+TreePicker.displayName = "TreePicker";
 
-export { BulkItemPicker };
+export { TreePicker };

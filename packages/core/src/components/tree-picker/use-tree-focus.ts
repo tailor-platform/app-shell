@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import type { VisibleRow } from "./tree-utils";
-import type { BulkItemPickerNode } from "./types";
+import type { TreePickerNode } from "./types";
 
 /**
  * @internal
@@ -23,8 +23,8 @@ type UseTreeFocusOptions<T> = {
   open: boolean;
   rows: ReadonlyArray<VisibleRow<T>>;
   setExpanded(id: string, next: boolean): void;
-  toggleNode(node: BulkItemPickerNode<T>, next: boolean): void;
-  isChecked(node: BulkItemPickerNode<T>): boolean;
+  toggleNode(node: TreePickerNode<T>, next: boolean): void;
+  isChecked(node: TreePickerNode<T>): boolean;
   commit(): void;
 };
 

@@ -4,9 +4,9 @@ import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/checkbox";
 
-import { useBulkItemPickerT } from "./i18n";
+import { useTreePickerT } from "./i18n";
 import { isLeaf, leafIds } from "./tree-utils";
-import type { BulkItemPickerNode, BulkItemPickerProps } from "./types";
+import type { TreePickerNode, TreePickerProps } from "./types";
 
 /**
  * @internal
@@ -19,21 +19,21 @@ import type { BulkItemPickerNode, BulkItemPickerProps } from "./types";
  * leaf-only selection set; nothing about a parent is ever stored.
  */
 
-type BulkItemPickerRowProps<T> = {
-  node: BulkItemPickerNode<T>;
+type TreePickerRowProps<T> = {
+  node: TreePickerNode<T>;
   depth: number;
   isExpanded(id: string): boolean;
   onToggleExpand(id: string): void;
   selectedLeaves: ReadonlySet<string>;
-  onToggleNode(node: BulkItemPickerNode<T>, next: boolean): void;
-  renderRow: BulkItemPickerProps<T>["renderRow"];
-  renderMetric: BulkItemPickerProps<T>["renderMetric"];
+  onToggleNode(node: TreePickerNode<T>, next: boolean): void;
+  renderRow: TreePickerProps<T>["renderRow"];
+  renderMetric: TreePickerProps<T>["renderMetric"];
   activeRowId: string | null;
   registerRow(id: string, element: HTMLElement | null): void;
   onRowFocus(id: string): void;
 };
 
-function BulkItemPickerRow<T>({
+function TreePickerRow<T>({
   node,
   depth,
   isExpanded,
@@ -45,8 +45,8 @@ function BulkItemPickerRow<T>({
   activeRowId,
   registerRow,
   onRowFocus,
-}: BulkItemPickerRowProps<T>) {
-  const t = useBulkItemPickerT();
+}: TreePickerRowProps<T>) {
+  const t = useTreePickerT();
   const leaf = isLeaf(node);
   const expanded = !leaf && isExpanded(node.id);
 
@@ -72,7 +72,7 @@ function BulkItemPickerRow<T>({
         aria-checked={indeterminate ? "mixed" : checked}
         tabIndex={activeRowId === node.id ? 0 : -1}
         onFocus={() => onRowFocus(node.id)}
-        data-slot="bulk-item-picker-row"
+        data-slot="tree-picker-row"
         data-node-id={node.id}
         data-depth={depth}
         className={cn(
@@ -131,7 +131,7 @@ function BulkItemPickerRow<T>({
 
       {expanded
         ? (node.children ?? []).map((child) => (
-            <BulkItemPickerRow
+            <TreePickerRow
               key={child.id}
               node={child}
               depth={depth + 1}
@@ -150,6 +150,6 @@ function BulkItemPickerRow<T>({
     </React.Fragment>
   );
 }
-BulkItemPickerRow.displayName = "BulkItemPicker.Row";
+TreePickerRow.displayName = "TreePicker.Row";
 
-export { BulkItemPickerRow };
+export { TreePickerRow };

@@ -1,2 +1,2 @@
-export { BulkItemPicker } from "./BulkItemPicker";
-export type { BulkItemPickerNode, BulkItemPickerProps } from "./types";
+export { TreePicker } from "./TreePicker";
+export type { TreePickerNode, TreePickerProps } from "./types";

@@ -4,7 +4,7 @@
 import "@/contexts/appshell-context";
 import { defineI18nLabels } from "@/hooks/i18n";
 
-export const bulkItemPickerLabels = defineI18nLabels({
+export const treePickerLabels = defineI18nLabels({
   en: {
     title: "Select items",
     rowLabel: "Item",
@@ -32,4 +32,4 @@ export const bulkItemPickerLabels = defineI18nLabels({
   },
 });
 
-export const useBulkItemPickerT = bulkItemPickerLabels.useT;
+export const useTreePickerT = treePickerLabels.useT;

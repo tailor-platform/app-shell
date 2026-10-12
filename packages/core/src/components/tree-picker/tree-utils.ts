@@ -1,4 +1,4 @@
-import type { BulkItemPickerNode } from "./types";
+import type { TreePickerNode } from "./types";
 
 /**
  * @internal
@@ -7,7 +7,7 @@ import type { BulkItemPickerNode } from "./types";
  */
 
 /** A node is a leaf when it has no children — leaves are the selectable units. */
-export function isLeaf<T>(node: BulkItemPickerNode<T>): boolean {
+export function isLeaf<T>(node: TreePickerNode<T>): boolean {
   return !node.children || node.children.length === 0;
 }
 
@@ -15,7 +15,7 @@ export function isLeaf<T>(node: BulkItemPickerNode<T>): boolean {
  * Collect the ids of every leaf in the subtree rooted at `node`, in DFS order.
  * A leaf node yields its own id.
  */
-export function leafIds<T>(node: BulkItemPickerNode<T>, into: string[] = []): string[] {
+export function leafIds<T>(node: TreePickerNode<T>, into: string[] = []): string[] {
   if (isLeaf(node)) {
     into.push(node.id);
     return into;
@@ -26,9 +26,9 @@ export function leafIds<T>(node: BulkItemPickerNode<T>, into: string[] = []): st
 
 /** Collect every leaf node in the forest, in DFS order. */
 export function allLeaves<T>(
-  nodes: ReadonlyArray<BulkItemPickerNode<T>>,
-  into: BulkItemPickerNode<T>[] = [],
-): BulkItemPickerNode<T>[] {
+  nodes: ReadonlyArray<TreePickerNode<T>>,
+  into: TreePickerNode<T>[] = [],
+): TreePickerNode<T>[] {
   for (const node of nodes) {
     if (isLeaf(node)) into.push(node);
     else allLeaves(node.children ?? [], into);
@@ -49,13 +49,13 @@ export function allLeaves<T>(
  * matching rows are reachable without manual expansion.
  */
 export function filterTree<T>(
-  nodes: ReadonlyArray<BulkItemPickerNode<T>>,
-  matches: (node: BulkItemPickerNode<T>) => boolean,
-): { kept: BulkItemPickerNode<T>[]; autoExpand: Set<string> } {
+  nodes: ReadonlyArray<TreePickerNode<T>>,
+  matches: (node: TreePickerNode<T>) => boolean,
+): { kept: TreePickerNode<T>[]; autoExpand: Set<string> } {
   const autoExpand = new Set<string>();
 
-  const walk = (list: ReadonlyArray<BulkItemPickerNode<T>>): BulkItemPickerNode<T>[] => {
-    const out: BulkItemPickerNode<T>[] = [];
+  const walk = (list: ReadonlyArray<TreePickerNode<T>>): TreePickerNode<T>[] => {
+    const out: TreePickerNode<T>[] = [];
     for (const node of list) {
       if (isLeaf(node)) {
         if (matches(node)) out.push(node);
@@ -80,7 +80,7 @@ export function filterTree<T>(
  * `String(node.data)`. Only meaningful for primitive payloads — consumers with
  * object payloads must supply their own `matchesSearch`.
  */
-export function defaultMatcher<T>(node: BulkItemPickerNode<T>, query: string): boolean {
+export function defaultMatcher<T>(node: TreePickerNode<T>, query: string): boolean {
   return String(node.data ?? "")
     .toLowerCase()
     .includes(query.toLowerCase());
@@ -88,7 +88,7 @@ export function defaultMatcher<T>(node: BulkItemPickerNode<T>, query: string): b
 
 /** One row as it appears on screen, flattened for roving-tabindex keyboard nav. */
 export type VisibleRow<T> = {
-  node: BulkItemPickerNode<T>;
+  node: TreePickerNode<T>;
   depth: number;
   /** `null` for top-level rows. */
   parentId: string | null;
@@ -101,7 +101,7 @@ export type VisibleRow<T> = {
  * parent's children are not visible and therefore not included.
  */
 export function flattenVisible<T>(
-  nodes: ReadonlyArray<BulkItemPickerNode<T>>,
+  nodes: ReadonlyArray<TreePickerNode<T>>,
   isExpanded: (id: string) => boolean,
   depth = 0,
   parentId: string | null = null,

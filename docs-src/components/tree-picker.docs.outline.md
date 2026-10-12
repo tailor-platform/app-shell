@@ -1,22 +1,22 @@
 ---
 kind: code-backed
-group: bulk-item-picker
-title: BulkItemPicker
+group: tree-picker
+title: TreePicker
 description: Tree-select dialog for picking many items from a hierarchical catalog and committing them in one batch
 sources:
-  - packages/core/src/components/bulk-item-picker/**
+  - packages/core/src/components/tree-picker/**
 ---
 
-# BulkItemPicker
+# TreePicker
 
-`BulkItemPicker` is a dialog for picking many items out of a hierarchical catalog — products with variants, nested categories — and handing them back in one batch. Ticking a parent selects every leaf beneath it, and searching auto-expands to the matches.
+`TreePicker` is a dialog for picking many items out of a hierarchical catalog — products with variants, nested categories — and handing them back in one batch. Ticking a parent selects every leaf beneath it, and searching auto-expands to the matches.
 
 It is generic and standalone: it knows nothing about line items, or about what your nodes contain. `data` is opaque, handed back only to your render and search callbacks.
 
 ## Import
 
 ```tsx
-import { BulkItemPicker } from "@tailor-platform/app-shell";
+import { TreePicker } from "@tailor-platform/app-shell";
 ```
 
 ## Basic Usage
@@ -24,7 +24,7 @@ import { BulkItemPicker } from "@tailor-platform/app-shell";
 ```tsx
 type CatalogItem = { sku: string; name: string; price: number };
 
-const CATALOG: BulkItemPickerNode<CatalogItem>[] = [
+const CATALOG: TreePickerNode<CatalogItem>[] = [
   {
     id: "tees",
     data: { sku: "TEES", name: "T-Shirts", price: 0 },
@@ -35,7 +35,7 @@ const CATALOG: BulkItemPickerNode<CatalogItem>[] = [
   },
 ];
 
-<BulkItemPicker<CatalogItem>
+<TreePicker<CatalogItem>
   open={open}
   onOpenChange={setOpen}
   title="Add items from catalog"
@@ -53,33 +53,33 @@ const CATALOG: BulkItemPickerNode<CatalogItem>[] = [
 
 ## Props
 
-| Prop                | Type                                          | Default                | Description                                                                    |
-| ------------------- | --------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------ |
-| `open`              | `boolean`                                     | required               | Controls dialog visibility.                                                    |
-| `onOpenChange`      | `(open: boolean) => void`                     | required               | Fires on every user-driven open or close, including after a commit.            |
-| `items`             | `ReadonlyArray<BulkItemPickerNode<T>>`        | required               | The catalog tree. Selection is leaf-only.                                      |
-| `renderRow`         | `(node, depth) => ReactNode`                  | required               | The row's own content. The library draws the checkbox, caret, and indentation. |
-| `onCommit`          | `(selected: BulkItemPickerNode<T>[]) => void` | required               | Receives the selected leaf nodes in tree order.                                |
-| `title`             | `ReactNode`                                   | `"Select items"`       | Dialog title. Also labels the tree for assistive tech.                         |
-| `renderMetric`      | `(node, depth) => ReactNode`                  | –                      | Optional right-aligned metric column.                                          |
-| `rowLabel`          | `ReactNode`                                   | `"Item"`               | Header above the `renderRow` column.                                           |
-| `metricLabel`       | `ReactNode`                                   | –                      | Header above the metric column.                                                |
-| `matchesSearch`     | `(node, query) => boolean`                    | substring on `data`    | Search predicate. **Override whenever `data` is an object.**                   |
-| `filterSlot`        | `ReactNode`                                   | –                      | Slot beside the search input, e.g. a category filter.                          |
-| `ctaLabel`          | `(count: number) => ReactNode`                | `"Add N items"`        | Primary button label.                                                          |
-| `emptyText`         | `ReactNode`                                   | `"No matching items."` | Shown when the filtered tree is empty.                                         |
-| `searchPlaceholder` | `string`                                      | `"Search"`             | Search input placeholder.                                                      |
-| `className`         | `string`                                      | –                      | Merged onto the dialog panel.                                                  |
+| Prop                | Type                                      | Default                | Description                                                                    |
+| ------------------- | ----------------------------------------- | ---------------------- | ------------------------------------------------------------------------------ |
+| `open`              | `boolean`                                 | required               | Controls dialog visibility.                                                    |
+| `onOpenChange`      | `(open: boolean) => void`                 | required               | Fires on every user-driven open or close, including after a commit.            |
+| `items`             | `ReadonlyArray<TreePickerNode<T>>`        | required               | The catalog tree. Selection is leaf-only.                                      |
+| `renderRow`         | `(node, depth) => ReactNode`              | required               | The row's own content. The library draws the checkbox, caret, and indentation. |
+| `onCommit`          | `(selected: TreePickerNode<T>[]) => void` | required               | Receives the selected leaf nodes in tree order.                                |
+| `title`             | `ReactNode`                               | `"Select items"`       | Dialog title. Also labels the tree for assistive tech.                         |
+| `renderMetric`      | `(node, depth) => ReactNode`              | –                      | Optional right-aligned metric column.                                          |
+| `rowLabel`          | `ReactNode`                               | `"Item"`               | Header above the `renderRow` column.                                           |
+| `metricLabel`       | `ReactNode`                               | –                      | Header above the metric column.                                                |
+| `matchesSearch`     | `(node, query) => boolean`                | substring on `data`    | Search predicate. **Override whenever `data` is an object.**                   |
+| `filterSlot`        | `ReactNode`                               | –                      | Slot beside the search input, e.g. a category filter.                          |
+| `ctaLabel`          | `(count: number) => ReactNode`            | `"Add N items"`        | Primary button label.                                                          |
+| `emptyText`         | `ReactNode`                               | `"No matching items."` | Shown when the filtered tree is empty.                                         |
+| `searchPlaceholder` | `string`                                  | `"Search"`             | Search input placeholder.                                                      |
+| `className`         | `string`                                  | –                      | Merged onto the dialog panel.                                                  |
 
 The default labels are localized (English and Japanese) through the app's locale, like DataTable's; passing a label prop overrides it.
 
-### BulkItemPickerNode
+### TreePickerNode
 
 ```tsx
-type BulkItemPickerNode<T> = {
+type TreePickerNode<T> = {
   id: string;
   data: T;
-  children?: BulkItemPickerNode<T>[];
+  children?: TreePickerNode<T>[];
 };
 ```
 
@@ -104,7 +104,7 @@ There is deliberately no async variant: auto-expanding to matches needs the whol
 ```tsx
 const { data, isLoading } = useCatalogQuery();
 
-<BulkItemPicker
+<TreePicker
   open={open}
   onOpenChange={setOpen}
   items={data ?? []}
@@ -121,7 +121,7 @@ const { data, isLoading } = useCatalogQuery();
 ```tsx
 const lineItems = useLineItems<POLine>({ fields, defaultLines: lines });
 
-<BulkItemPicker
+<TreePicker
   open={open}
   onOpenChange={setOpen}
   items={CATALOG}

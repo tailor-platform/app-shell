@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { allLeaves, defaultMatcher, filterTree, leafIds } from "./tree-utils";
-import type { BulkItemPickerNode } from "./types";
+import type { TreePickerNode } from "./types";
 
 /**
  * @internal
@@ -13,15 +13,15 @@ import type { BulkItemPickerNode } from "./types";
 
 type UseTreeSelectionOptions<T> = {
   open: boolean;
-  items: ReadonlyArray<BulkItemPickerNode<T>>;
-  matchesSearch?: (node: BulkItemPickerNode<T>, query: string) => boolean;
+  items: ReadonlyArray<TreePickerNode<T>>;
+  matchesSearch?: (node: TreePickerNode<T>, query: string) => boolean;
 };
 
 type UseTreeSelectionResult<T> = {
   query: string;
   setQuery(query: string): void;
   /** The forest to render — `items` when the query is empty, filtered otherwise. */
-  kept: BulkItemPickerNode<T>[];
+  kept: TreePickerNode<T>[];
   /** `autoExpand.has(id) || userExpanded.has(id)` — manual state survives clearing the query. */
   isExpanded(id: string): boolean;
   toggleExpand(id: string): void;
@@ -29,9 +29,9 @@ type UseTreeSelectionResult<T> = {
   /** Leaf ids only — parents are never stored, their state is always derived. */
   selectedLeaves: ReadonlySet<string>;
   /** Adds/removes every descendant leaf of `node` in a single set update. */
-  toggleNode(node: BulkItemPickerNode<T>, next: boolean): void;
+  toggleNode(node: TreePickerNode<T>, next: boolean): void;
   /** Selected leaf nodes in DFS tree order. */
-  selectedNodes: BulkItemPickerNode<T>[];
+  selectedNodes: TreePickerNode<T>[];
 };
 
 export function useTreeSelection<T>({
@@ -83,7 +83,7 @@ export function useTreeSelection<T>({
     });
   }, []);
 
-  const toggleNode = React.useCallback((node: BulkItemPickerNode<T>, next: boolean) => {
+  const toggleNode = React.useCallback((node: TreePickerNode<T>, next: boolean) => {
     setSelectedLeaves((prev) => {
       const updated = new Set(prev);
       for (const id of leafIds(node)) {

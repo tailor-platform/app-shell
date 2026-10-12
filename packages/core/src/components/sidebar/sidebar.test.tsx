@@ -168,7 +168,23 @@ describe("SidebarItem", () => {
 
     const menu = getSidebarMenu();
     const link = menu.getByRole("link");
-    expect(link.className).toContain("astw:bg-sidebar-accent");
+    expect(link.getAttribute("data-active")).toBe("true");
+  });
+
+  it("applies the theme's selected background and text tokens when active, without hover", () => {
+    renderWithProviders(<SidebarItem to="/dashboard/overview" />, "/dashboard/overview");
+
+    const link = getSidebarMenu().getByRole("link");
+    expect(link.getAttribute("data-active")).toBe("true");
+    expect(link.className).toContain("astw:data-[active=true]:bg-sidebar-accent");
+    expect(link.className).toContain("astw:data-[active=true]:text-sidebar-accent-foreground");
+  });
+
+  it("is not active when path does not match", () => {
+    renderWithProviders(<SidebarItem to="/dashboard" activeMatch="exact" />, "/dashboard/overview");
+
+    const link = getSidebarMenu().getByRole("link");
+    expect(link.getAttribute("data-active")).toBe("false");
   });
 
   it("falls back to URL-based title for unknown paths", () => {
@@ -224,6 +240,24 @@ describe("SidebarGroup", () => {
     const links = menu.getAllByRole("link");
     const headerLink = links.find((l) => l.getAttribute("href") === "/products");
     expect(headerLink).toBeDefined();
+  });
+
+  it("marks the clickable group header active via data-active", () => {
+    renderWithProviders(
+      <SidebarGroup title="Products" to="/products">
+        <SidebarItem to="/products/all" />
+      </SidebarGroup>,
+      "/products",
+    );
+
+    const links = getSidebarMenu().getAllByRole("link");
+    const headerLink = links.find((l) => l.getAttribute("href") === "/products")!;
+    const childLink = links.find((l) => l.getAttribute("href") === "/products/all")!;
+    expect(headerLink.getAttribute("data-active")).toBe("true");
+    expect(headerLink.className).toContain(
+      "astw:data-[active=true]:text-sidebar-accent-foreground",
+    );
+    expect(childLink.getAttribute("data-active")).toBe("false");
   });
 
   it("supports localized title function", () => {

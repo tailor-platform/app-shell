@@ -159,6 +159,8 @@ describe("default palette neutral tokens", () => {
   // change that alters one of these colours fails here.
   const expected: Record<Mode, Record<string, string>> = {
     light: {
+      "--foreground": "#0a0a0a",
+      "--muted-foreground": "#737373",
       "--primary": "#171717",
       "--primary-foreground": "#fafafa",
       "--secondary": "#f5f5f5",
@@ -178,6 +180,8 @@ describe("default palette neutral tokens", () => {
       "--backdrop": "rgba(0, 0, 0, 0.5)",
     },
     dark: {
+      "--foreground": "#fafafa",
+      "--muted-foreground": "#a3a3a3",
       "--primary": "#e5e5e5",
       "--primary-foreground": "#171717",
       "--secondary": "#262626",

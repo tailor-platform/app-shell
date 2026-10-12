@@ -146,6 +146,35 @@ describe("TreePicker", () => {
     await waitFor(() => expect(screen.queryByText("Nike Vomero 18")).toBeNull());
   });
 
+  it("toggles a row when it is clicked anywhere, not just on its checkbox", async () => {
+    const user = userEvent.setup();
+    render(<Harness onCommit={vi.fn()} />);
+
+    await user.click(expandButton());
+    await user.click(screen.getByText("UK 9 / Black / Men"));
+    expect(checkboxFor("UK 9 / Black / Men").getAttribute("aria-checked")).toBe("true");
+
+    await user.click(screen.getByText("UK 9 / Black / Men"));
+    expect(checkboxFor("UK 9 / Black / Men").getAttribute("aria-checked")).toBe("false");
+  });
+
+  it("toggles once when the checkbox itself is clicked", async () => {
+    const user = userEvent.setup();
+    render(<Harness onCommit={vi.fn()} />);
+
+    await user.click(expandButton());
+    await user.click(checkboxFor("UK 9 / Black / Men"));
+    expect(checkboxFor("UK 9 / Black / Men").getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("toggles every child when a parent row is clicked", async () => {
+    const user = userEvent.setup();
+    render(<Harness onCommit={vi.fn()} />);
+
+    await user.click(screen.getByText("Adidas Ultraboost 22"));
+    expect(rowFor("Adidas Ultraboost 22").getAttribute("aria-checked")).toBe("true");
+  });
+
   it("parent toggle selects every descendant leaf", async () => {
     const user = userEvent.setup();
     const onCommit = vi.fn();

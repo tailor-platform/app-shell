@@ -69,6 +69,7 @@ function TreePickerRow<T>({
 
   return (
     <React.Fragment>
+      {/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events -- Space toggles the focused row via the tree's keydown handler (useTreeFocus) */}
       <div
         ref={(element) => {
           registerRow(node.id, element);
@@ -79,11 +80,19 @@ function TreePickerRow<T>({
         aria-checked={indeterminate ? "mixed" : checked}
         tabIndex={activeRowId === node.id ? 0 : -1}
         onFocus={() => onRowFocus(node.id)}
+        // The whole row is the hit target, like its checkbox. Clicks on the
+        // checkbox and caret are theirs already, and anything interactive the
+        // consumer renders in the row keeps its own behaviour.
+        onClick={(event) => {
+          const target = event.target as HTMLElement;
+          if (target.closest("button, a, input, label, [data-slot=checkbox]")) return;
+          onToggleNode(node, !checked);
+        }}
         data-slot="tree-picker-row"
         data-node-id={node.id}
         data-depth={depth}
         className={cn(
-          "astw:border-border/60 astw:flex astw:items-center astw:gap-3 astw:border-b astw:px-4 astw:py-2.5 astw:text-sm",
+          "astw:border-border/60 astw:flex astw:cursor-pointer astw:items-center astw:gap-3 astw:border-b astw:px-4 astw:py-2.5 astw:text-sm astw:select-none astw:hover:bg-muted/50",
           "astw:focus-visible:ring-ring/50 astw:focus-visible:ring-2 astw:focus-visible:outline-none astw:focus-visible:ring-inset",
           depth > 0 && "astw:bg-muted/30",
         )}

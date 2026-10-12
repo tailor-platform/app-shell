@@ -1049,9 +1049,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "45dcfe4383a87ea9",
+        "outline": "36cdcfab060a0d1c",
         "snapshot": null,
-        "outputMd": "2fa0b6a249d8bd4f",
+        "outputMd": "86fe04e370ecdff5",
         "examples": null
       }
     },
@@ -1287,9 +1287,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "7369a064bd4d422b",
+        "outline": "18061fd0dd60d63d",
         "snapshot": null,
-        "outputMd": "fcfff0b2584c2e74",
+        "outputMd": "bce2991c993061b6",
         "examples": "4d19f4f688e0f0ac"
       }
     },
@@ -1659,7 +1659,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "dc6b3afc049b4148",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "fcfff0b2584c2e74",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "bce2991c993061b6",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
@@ -1738,7 +1738,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
-    "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
+    "packages/core/skills/app-shell-patterns/references/migrations.md": "1918f794d1bd4e99",
     "packages/core/skills/app-shell-patterns/SKILL.md": "12527965a47cf42f"
   }
 }

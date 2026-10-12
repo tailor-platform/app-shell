@@ -148,7 +148,7 @@ Surfaces are named by **role**, not by depth — there is no numbered `surface-1
 
 `--backdrop` is the dim layer behind `Dialog` and `Sheet` (black at 50% in both modes). Use `bg-backdrop` for your own modal layers instead of `bg-black/50`. Palettes inherit it; override it on `:root` to change every backdrop at once.
 
-In the default palette these tokens read the internal gray scale, white, and white alpha steps, so their values match the gray used by text and lines. The other palettes set their own values.
+In the default palette, the surface, text and line tokens in this table read the internal gray scale, a white step, and white alpha steps (dark-mode lines), so their values match the gray used across the palette. `--backdrop` reads a black alpha step, and `--ring` is mixed from `--primary`. The other palettes set their own values.
 
 #### Brand & action
 

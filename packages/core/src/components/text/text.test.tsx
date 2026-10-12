@@ -39,7 +39,7 @@ describe("Text", () => {
 
     it("with render prop", () => {
       const { container } = render(
-        // oxlint-disable-next-line jsx-a11y/heading-has-content -- Text passes the children to the rendered h3
+        // eslint-disable-next-line jsx-a11y/heading-has-content -- Text passes the children to the rendered h3
         <Text variant="heading-md" render={<h3 />}>
           Line items
         </Text>,
@@ -79,9 +79,16 @@ describe("Text", () => {
     expect(element?.className).toContain("astw:text-body-md");
   });
 
+  it("treats a null variant as the default role", () => {
+    const { container } = render(<Text variant={null}>x</Text>);
+    const element = container.firstElementChild;
+    expect(element?.tagName).toBe("P");
+    expect(element?.className).toContain("astw:text-body-md");
+  });
+
   it("changes the element but keeps the role with the render prop", () => {
     render(
-      // oxlint-disable-next-line jsx-a11y/heading-has-content -- Text passes the children to the rendered h4
+      // eslint-disable-next-line jsx-a11y/heading-has-content -- Text passes the children to the rendered h4
       <Text variant="heading-sm" render={<h4 />}>
         Shipping
       </Text>,

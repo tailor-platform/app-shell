@@ -1,7 +1,7 @@
 # Decision: typography role tokens
 
-> Status: **Decided for the first change — add 10 typography role tokens as CSS variables with Tailwind `text-*` utilities. No component uses them yet.**
-> Scope: role names and values, how they reach Tailwind, and the rules for combining them. This does not cover applying roles to AppShell components, a `Text` component, or sizes below 12px.
+> Status: **Decided for the first two changes — add 10 typography role tokens as CSS variables with Tailwind `text-*` utilities, then a `Text` component on top of them. AppShell's own components do not use the roles yet.**
+> Scope: role names and values, how they reach Tailwind, the rules for combining them, and the `Text` component (see "Second change" at the end). This does not cover applying roles to AppShell components or sizes below 12px.
 
 ## Context
 

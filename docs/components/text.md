@@ -48,7 +48,13 @@ _Generated from the type surface — first-party props only._
 - `TextProps` — type
 - `textVariants` — const
 
-All standard HTML attributes are also accepted.
+All standard HTML attributes are also accepted. Put an attribute that belongs to one element, such as `htmlFor` on a `label`, on the `render` element:
+
+```tsx
+<Text variant="label-md" render={<label htmlFor="quantity" />}>
+  Quantity
+</Text>
+```
 
 ## Roles
 
@@ -105,10 +111,10 @@ All three heading roles render `h2` by default. The heading level comes from the
 </Text>
 ```
 
-If your app enables the `jsx-a11y/heading-has-content` lint rule, it reports `render={<h3 />}` as an empty heading, because it does not see that `Text` passes its children to that element. Disable the rule for that line:
+If your app enables the `jsx-a11y/heading-has-content` lint rule, it reports `render={<h3 />}` as an empty heading, because it does not see that `Text` passes its children to that element. Disable the rule for that line. ESLint and oxlint both read this comment:
 
 ```tsx
-// oxlint-disable-next-line jsx-a11y/heading-has-content -- Text renders the children
+// eslint-disable-next-line jsx-a11y/heading-has-content -- Text renders the children
 <Text variant="heading-md" render={<h3 />}>
   Line items
 </Text>
@@ -140,9 +146,6 @@ function ColorAndModifiers() {
       </Text>
       <Text variant="label-md" className="tabular-nums">
         1,240.00
-      </Text>
-      <Text variant="label-sm" className="uppercase text-muted-foreground">
-        Status
       </Text>
     </div>
   );
@@ -189,5 +192,7 @@ The `cream` and `bloom` palettes set the line height and letter spacing of `h1` 
 
 ## Related Components
 
-- [Card](./card.md) - Card titles use the `heading-md` role
-- [Layout](./layout.md) - The page title uses the `heading-lg` role
+- [Card](./card.md) - The table above lists `heading-md` for card titles
+- [Layout](./layout.md) - The table above lists `heading-lg` for the page title
+
+AppShell's own components, including these two, still use the stock utilities. They will move to the roles in a later change.

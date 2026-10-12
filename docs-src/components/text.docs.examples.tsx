@@ -43,9 +43,6 @@ export function ColorAndModifiers() {
       <Text variant="label-md" className="tabular-nums">
         1,240.00
       </Text>
-      <Text variant="label-sm" className="uppercase text-muted-foreground">
-        Status
-      </Text>
     </div>
   );
 }

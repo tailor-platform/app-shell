@@ -435,16 +435,16 @@ Text that a component renders takes its size, line height, weight, and letter sp
 - Do not write new raw combinations such as `astw:text-lg astw:font-semibold` or `astw:text-sm astw:font-medium`. Existing ones are being moved to roles.
 - Combine a role only with the four modifiers: `astw:leading-none` (single-line text), `astw:tabular-nums`, `astw:font-medium` or `astw:font-semibold`, and `astw:uppercase`. Do not add other `leading-*`, `tracking-*`, or `text-[Npx]` values. 12px is the minimum size.
 - A role carries no color. Set the color with a token such as `astw:text-muted-foreground`.
-- A heading's level comes from the document structure, not from its size. Do not hard-wire `<h3>` to a size; let the consumer choose the level where the component can sit at different depths.
+- A heading's level comes from the document structure, not from its size. Keep a title that is a heading in a heading element, and pick the role for its look. Do not change the element to get a different size, and do not turn a heading into a `div` to get a different line height. Under the `cream` and `bloom` palettes, `h1` to `h6` ignore `leading-none`; see the Typography section.
 
 ```tsx
 // Good
-<div data-slot="card-title" className="astw:text-heading-md astw:leading-none">{title}</div>
+<h3 data-slot="card-title" className="astw:text-heading-md astw:leading-none">{title}</h3>
 <Text variant="body-sm" className="astw:text-muted-foreground">{updatedAt}</Text>
 ```
 
 ```tsx
-// Bad: a raw size + weight combination, and a size tied to a heading level
+// Bad: a raw size + weight combination and a line height outside the roles
 <h3 className="astw:text-lg astw:font-semibold astw:leading-7">{title}</h3>
 ```
 

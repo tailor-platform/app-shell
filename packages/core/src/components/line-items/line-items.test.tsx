@@ -298,6 +298,25 @@ describe("LineItems", () => {
       expect(api?.allLines[0]?.quantity).toBe(42);
     });
 
+    it("commits on Enter in the last row, where focus has nowhere to move", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(
+        <Harness
+          onReady={(a) => {
+            api = a;
+          }}
+        />,
+      );
+
+      const editor = editorIn("3", "quantity");
+      await user.clear(editor);
+      await user.type(editor, "42{Enter}");
+
+      expect(api?.allLines[2]?.quantity).toBe(42);
+      expect(document.activeElement).toBe(editor);
+    });
+
     it("commits on Tab", async () => {
       const user = userEvent.setup();
       let api: ReturnType<typeof useLineItems<Line>> | undefined;

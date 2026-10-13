@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   isTemporalFilterType,
   isTemporalFilterValueValid,
+  localDateTimeParts,
   normalizeTemporalFilterValue,
-} from "./filter-value-utils";
+} from "@/lib/temporal-filter-values";
 
 function mockDate(local: {
   year: number;
@@ -39,24 +40,26 @@ describe("filter-value-utils", () => {
   it("validates canonical temporal values", () => {
     expect(isTemporalFilterValueValid("date", "2026-09-08")).toBe(true);
     expect(isTemporalFilterValueValid("datetime", "2026-09-08T09:30:45")).toBe(true);
+    expect(isTemporalFilterValueValid("datetime", "2026-99-08T09:30:45")).toBe(false);
+    expect(isTemporalFilterValueValid("datetime", "2026-02-30T09:30:45Z")).toBe(false);
+    expect(isTemporalFilterValueValid("datetime", "2026-01-01T24:00:00Z")).toBe(false);
     expect(isTemporalFilterValueValid("time", "09:30")).toBe(true);
     expect(isTemporalFilterValueValid("time", "09:30:00")).toBe(false);
   });
 
-  it("normalizes date values from local date parts instead of UTC ISO slicing", () => {
-    const value = mockDate({
-      year: 2026,
-      month: 9,
-      day: 8,
-      hours: 0,
-      minutes: 0,
-      iso: "2026-09-07T15:00:00.000Z",
-    });
-
-    expect(normalizeTemporalFilterValue("date", value)).toBe("2026-09-08");
+  it("extracts date and time values in the configured timezone", () => {
+    const value = new Date("2026-09-07T15:00:00.000Z");
+    expect(normalizeTemporalFilterValue("date", value, "Asia/Tokyo")).toBe("2026-09-08");
+    expect(normalizeTemporalFilterValue("time", value, "Asia/Tokyo")).toBe("00:00");
+    expect(normalizeTemporalFilterValue("date", value, "America/Los_Angeles")).toBe("2026-09-07");
+    expect(normalizeTemporalFilterValue("time", value, "America/Los_Angeles")).toBe("08:00");
+    expect(normalizeTemporalFilterValue("date", "2026-09-08T00:00", "Asia/Tokyo")).toBe(
+      "2026-09-08",
+    );
+    expect(normalizeTemporalFilterValue("time", "2026-09-08T00:00", "Asia/Tokyo")).toBe("00:00");
   });
 
-  it("normalizes datetime values from local date/time parts", () => {
+  it("normalizes datetime values to RFC 3339 instants", () => {
     const value = mockDate({
       year: 2026,
       month: 9,
@@ -67,7 +70,34 @@ describe("filter-value-utils", () => {
       iso: "2026-09-08T00:30:45.000Z",
     });
 
-    expect(normalizeTemporalFilterValue("datetime", value)).toBe("2026-09-08T09:30:45");
+    expect(normalizeTemporalFilterValue("datetime", value)).toBe("2026-09-08T00:30:45.000Z");
+  });
+
+  it("converts legacy local datetime strings to RFC 3339 in the configured timezone", () => {
+    const value = "2026-09-08T09:30:45";
+    expect(normalizeTemporalFilterValue("datetime", value, "America/Los_Angeles")).toBe(
+      "2026-09-08T16:30:45.000Z",
+    );
+  });
+
+  it("interprets minute-only datetime strings in the configured timezone", () => {
+    expect(isTemporalFilterValueValid("datetime", "2026-10-09T00:00", "America/Los_Angeles")).toBe(
+      true,
+    );
+    expect(
+      normalizeTemporalFilterValue("datetime", "2026-10-09T00:00", "America/Los_Angeles"),
+    ).toBe("2026-10-09T07:00:00.000Z");
+    expect(localDateTimeParts("2026-10-09T00:00", "America/Los_Angeles")).toEqual({
+      date: "2026-10-09",
+      time: "00:00",
+    });
+  });
+
+  it("derives picker values in the configured timezone from an RFC 3339 datetime", () => {
+    expect(localDateTimeParts("2026-09-08T16:30:45.000Z", "America/Los_Angeles")).toEqual({
+      date: "2026-09-08",
+      time: "09:30",
+    });
   });
 
   it("normalizes time strings with seconds to the editable HH:mm format", () => {

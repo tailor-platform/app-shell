@@ -1202,9 +1202,9 @@
       "symbols": ["SidebarGroup", "SidebarGroupProps"],
       "hashes": {
         "typeSurface": "cc25e488e6896569",
-        "outline": "97f5f584d13b992e",
+        "outline": "64b920bc077a356a",
         "snapshot": null,
-        "outputMd": "7288fdf8bb5c19b9",
+        "outputMd": "41e86f601191f13b",
         "examples": null
       }
     },
@@ -1253,9 +1253,26 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "91f0fa065f3a3192",
+        "outline": "7e12558d80191549",
         "snapshot": null,
-        "outputMd": "dc6b3afc049b4148",
+        "outputMd": "e342ef02dc2b9b86",
+        "examples": null
+      }
+    },
+    "sidebar-section": {
+      "slug": "sidebar-section",
+      "kind": "code-backed",
+      "outline": "docs-src/components/sidebar-section.docs.outline.md",
+      "output": "docs/components/sidebar-section.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/sidebar/sidebar-section.tsx"],
+      "claims": [],
+      "symbols": ["SidebarSection", "SidebarSectionProps"],
+      "hashes": {
+        "typeSurface": "ce68c5cffbff714e",
+        "outline": "3037879cbe56ff52",
+        "snapshot": null,
+        "outputMd": "8ab89452180de4e1",
         "examples": null
       }
     },
@@ -1658,7 +1675,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "ba5107604e4f42e8",
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
-    "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "dc6b3afc049b4148",
+    "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "e342ef02dc2b9b86",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "112b43c697d30369",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
@@ -1692,9 +1709,10 @@
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "ae287e2bb5abc1c6",
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "1f81ebd562c50371",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "7288fdf8bb5c19b9",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "41e86f601191f13b",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "e50b2d649289d772",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "8ab89452180de4e1",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "30bb32e57fc78bd9",
@@ -1739,6 +1757,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "12527965a47cf42f"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "526decbfd2db6555"
   }
 }

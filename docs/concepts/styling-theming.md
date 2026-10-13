@@ -263,28 +263,202 @@ Hand-typing `padding: 13px` is a smell. Round to the nearest scale step; if noth
 
 ### Typography
 
-**AppShell defines no typography scale tokens.** There is no `text-h1`, `text-body`, or `text-caption`. The only typography token is `--font-sans` (Inter Variable for Latin, Noto Sans JP Variable for Japanese) → `font-sans`, which the base layer already applies to `body`. Both are variable fonts, so every weight token is real in both scripts. Override the whole stack by setting `--app-shell-font-sans` on `:root`.
+AppShell defines **composite typography role tokens**. A role sets font size, line height, font weight, and letter spacing together, so one utility such as `text-heading-md` replaces a set like `text-lg font-semibold`. The font family is a separate token, `--font-sans` (Inter Variable for Latin, Noto Sans JP Variable for Japanese) → `font-sans`, which the base layer already applies to `body`. Both are variable fonts, so every weight token is real in both scripts. Override the whole stack by setting `--app-shell-font-sans` on `:root`.
 
-Compose roles from stock Tailwind utilities. These pairings are what AppShell's own components use — match them so your screens sit consistently alongside the primitives:
+There are 8 core roles and 2 relaxed body variants:
 
-| Role                              | Utilities                                 |
-| --------------------------------- | ----------------------------------------- |
-| Page title (`Layout.Header`)      | `text-2xl font-bold tracking-tight`       |
-| Section heading                   | `text-lg font-semibold`                   |
-| Card title                        | `text-lg font-semibold leading-none`      |
-| Body copy                         | `text-sm`                                 |
-| Secondary copy, descriptions      | `text-sm text-muted-foreground`           |
-| Caption, timestamp, metadata      | `text-xs text-muted-foreground`           |
-| Numeric value in a table or field | `text-sm font-medium tabular-nums`        |
-| ID, code, keyboard hint           | `font-mono text-xs text-muted-foreground` |
+| Role              | Utility                | Size / line height | Weight | Use                                             |
+| ----------------- | ---------------------- | ------------------ | ------ | ----------------------------------------------- |
+| `heading-lg`      | `text-heading-lg`      | 24px / 32px        | 700    | Page title (`Layout.Header`)                    |
+| `heading-md`      | `text-heading-md`      | 18px / 28px        | 600    | Section heading, card title                     |
+| `heading-sm`      | `text-heading-sm`      | 14px / 20px        | 600    | Sub-section heading                             |
+| `body-md`         | `text-body-md`         | 14px / 20px        | 400    | Body copy, descriptions                         |
+| `body-sm`         | `text-body-sm`         | 12px / 16px        | 400    | Caption, timestamp, metadata                    |
+| `label-md`        | `text-label-md`        | 14px / 20px        | 500    | Field label, short UI text, figures in a table  |
+| `label-sm`        | `text-label-sm`        | 12px / 16px        | 500    | Small label, badge text                         |
+| `code-sm`         | `text-code-sm`         | 12px / 18px        | 400    | ID and code. Use with `font-mono`               |
+| `body-md-relaxed` | `text-body-md-relaxed` | 14px / 24px        | 400    | Long text, such as a chat message or a document |
+| `body-sm-relaxed` | `text-body-sm-relaxed` | 12px / 20px        | 400    | Long text at the small size                     |
+
+`heading-lg` also sets letter spacing to `-0.025em`. All other roles set `0em`.
+
+Pair a role with a color token from the Color section above. These pairings are the recommended combinations:
+
+| Use                               | Utilities                                      |
+| --------------------------------- | ---------------------------------------------- |
+| Page title (`Layout.Header`)      | `text-heading-lg`                              |
+| Section heading                   | `text-heading-md`                              |
+| Card title (`div` or `span`)      | `text-heading-md leading-none`                 |
+| Body copy                         | `text-body-md`                                 |
+| Secondary copy, descriptions      | `text-body-md text-muted-foreground`           |
+| Caption, timestamp, metadata      | `text-body-sm text-muted-foreground`           |
+| Numeric value in a table or field | `text-label-md tabular-nums`                   |
+| ID, code                          | `font-mono text-code-sm text-muted-foreground` |
+
+<example-preview name="typography-roles"></example-preview>
 
 ```tsx
-<h2 className="text-lg font-semibold">Section</h2>
-<p className="text-sm text-muted-foreground">Description copy</p>
-<span className="text-xs text-muted-foreground">Updated 2h ago</span>
+function TypographyRoles() {
+  const rows = [
+    {
+      role: "heading-lg",
+      className: "text-heading-lg",
+      en: "Purchase orders",
+      ja: "発注管理",
+    },
+    {
+      role: "heading-md",
+      className: "text-heading-md",
+      en: "Purchase orders by supplier",
+      ja: "仕入先別の発注一覧",
+    },
+    {
+      role: "heading-sm",
+      className: "text-heading-sm",
+      en: "Delivery address",
+      ja: "納品先",
+    },
+    {
+      role: "body-md",
+      className: "text-body-md",
+      en: "The order was sent to the supplier on 12 March.",
+      ja: "発注書は3月12日に仕入先へ送付されました。",
+    },
+    {
+      role: "body-sm",
+      className: "text-body-sm text-muted-foreground",
+      en: "Updated 2 hours ago",
+      ja: "2時間前に更新",
+    },
+    {
+      role: "label-md",
+      className: "text-label-md",
+      en: "Order quantity",
+      ja: "発注数量",
+    },
+    {
+      role: "label-sm",
+      className: "text-label-sm",
+      en: "Draft",
+      ja: "下書き",
+    },
+    {
+      role: "code-sm",
+      className: "font-mono text-code-sm",
+      en: "PO-2026-000184",
+      ja: "PO-2026-000184",
+    },
+    {
+      role: "body-md-relaxed",
+      className: "text-body-md-relaxed",
+      compareWith: { role: "body-md", className: "text-body-md" },
+      en: "Please confirm the delivery date with the supplier before you approve this order. If the supplier cannot deliver by the requested date, change the date or choose another supplier. Approved orders are sent to the supplier by email.",
+      ja: "この発注を承認する前に、納期を仕入先に確認してください。希望日までに納品できない場合は、納期を変更するか、別の仕入先を選んでください。承認した発注は、メールで仕入先に送られます。",
+    },
+    {
+      role: "body-sm-relaxed",
+      className: "text-body-sm-relaxed text-muted-foreground",
+      compareWith: { role: "body-sm", className: "text-body-sm text-muted-foreground" },
+      en: "Changes to a confirmed order are recorded in the order history. Each record shows who made the change, when it was made, and the values before and after the change.",
+      ja: "確定済みの発注への変更は、発注履歴に記録されます。記録には、変更した人、変更した日時、変更前と変更後の値が含まれます。",
+    },
+  ];
+
+  return (
+    <div className="flex flex-col gap-4">
+      {rows.map(({ role, className, compareWith, en, ja }) => (
+        <div key={role} className="grid grid-cols-[9rem_1fr] items-baseline gap-4">
+          <span className="font-mono text-code-sm text-muted-foreground">{role}</span>
+          {compareWith ? (
+            // A relaxed role changes only line height, so show the same text in the base role first.
+            <div className="flex flex-col gap-4">
+              {[compareWith, { role, className }].map((variant) => (
+                <div key={variant.role} className="flex flex-col gap-1">
+                  <span className="font-mono text-code-sm text-muted-foreground">
+                    {variant.role}
+                  </span>
+                  <p className={variant.className}>{en}</p>
+                  <p className={variant.className}>{ja}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              <p className={className}>{en}</p>
+              <p className={className}>{ja}</p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 ```
 
+```tsx
+<h2 className="text-heading-md">Section</h2>
+<p className="text-body-md text-muted-foreground">Description copy</p>
+<span className="text-body-sm text-muted-foreground">Updated 2h ago</span>
+```
+
+On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's line height and letter spacing, including `leading-none`; see "Change a role" below. AppShell's own components still use the stock utilities (`text-sm`, `font-medium`, and so on) today. They will move to the roles in later changes, so the two sets can appear side by side for now.
+
+**Rules**
+
+- **A role carries no color.** Set the color with a token such as `text-muted-foreground`.
+- **A role does not choose the HTML element.** Pick `h2`, `p`, or `span` from the document structure, not from the size.
+- **A role sets weight and letter spacing on its own element.** It does not inherit them from a parent. Put an emphasis or tracking class on the element that has the role, not on its parent.
+- **Four modifiers may be combined with a role.** All are stock Tailwind utilities:
+  - Compact line height: `leading-none`. Use it only for single-line text, such as a card title. Write it after the role when you merge with `cn()`.
+  - Tabular figures: `tabular-nums`.
+  - Emphasis on inline text: `font-medium` or `font-semibold`.
+  - Uppercase: `uppercase`.
+- **Do not combine a role with other `leading-*`, `tracking-*`, or `text-[Npx]` values.** If none of the roles fits, use the nearest role.
+- **12px is the minimum size.** Do not use smaller text.
+- **`code-sm` needs `font-mono`.** The role sets size, line height, weight, and letter spacing, but a role cannot set the font family.
+- **Use the relaxed variants for long text only.** For labels, table cells, and other short text, use the regular roles.
+
 Always use `tabular-nums` for numbers that stack in a column — without it, digits jitter between rows.
+
+**Change a role.** Each role is four CSS variables named `--app-shell-type-<role>-<size|line-height|weight|letter-spacing>`. Override them on `:root` to change a role for the whole app. Typography has no dark variant, so one override applies to light and dark mode.
+
+```css
+:root {
+  --app-shell-type-heading-lg-size: 1.75rem;
+  --app-shell-type-heading-lg-line-height: calc(36 / 28);
+}
+```
+
+The `cream` and `bloom` palettes set `line-height` and `letter-spacing` on `h1` to `h6`. These rules are outside any `@layer`, so they win over a role utility, and over any `leading-*` or `tracking-*` class, on those elements. Under these palettes, an `h1` to `h6` element takes its line height (1.2) and letter spacing (`-0.03em`) from the palette. This includes `leading-none`: `<h3 className="text-heading-md leading-none">` has a line height of 1.2, while a `div` with the same classes has 1.0. Font size and weight still come from the role. The `default` palette has no such rule.
+
+**`tailwind-merge`.** AppShell's `cn()` keeps a role together with a text color class, for example when you pass `className="text-label-md text-muted-foreground"` to an AppShell component. It cannot replace a size that a component sets itself, because component classes carry the internal `astw:` prefix (see "Why a plain utility can't override an AppShell default" below). If your app has its own `cn()` built on `tailwind-merge`, register the role names. Without this, `twMerge("text-label-md text-muted-foreground")` removes the role and keeps only the color.
+
+```ts
+import { extendTailwindMerge } from "tailwind-merge";
+
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [
+        {
+          text: [
+            "heading-lg",
+            "heading-md",
+            "heading-sm",
+            "body-md",
+            "body-sm",
+            "body-md-relaxed",
+            "body-sm-relaxed",
+            "label-md",
+            "label-sm",
+            "code-sm",
+          ],
+        },
+      ],
+    },
+  },
+});
+```
 
 ### Radius
 
@@ -352,12 +526,12 @@ Never invent a z value — `z-index: 9999` is always wrong. Popups and overlays 
 
 **AppShell exports no `Icon` component and defines no `--icon-*` tokens.** Icons come from [`lucide-react`](https://lucide.dev), which AppShell already depends on. Size them with Tailwind, pairing icon size to the adjacent text:
 
-| Text size          | Icon class |
-| ------------------ | ---------- |
-| `text-xs`          | `size-3`   |
-| `text-sm`          | `size-4`   |
-| `text-lg`          | `size-5`   |
-| `text-2xl` (title) | `size-6`   |
+| Text size                                                           | Icon class |
+| ------------------------------------------------------------------- | ---------- |
+| 12px: `text-xs`, `text-body-sm`, `text-label-sm`, `text-code-sm`    | `size-3`   |
+| 14px: `text-sm`, `text-body-md`, `text-label-md`, `text-heading-sm` | `size-4`   |
+| 18px: `text-lg`, `text-heading-md`                                  | `size-5`   |
+| 24px (title): `text-2xl`, `text-heading-lg`                         | `size-6`   |
 
 ```tsx
 import { Check } from "lucide-react";
@@ -607,5 +781,5 @@ These are visual-composition rules every screen must follow, regardless of patte
 | Hover / focus transition           | `duration-150 ease-out`                                                                                 |
 | State change (toggle, select)      | `duration-200 ease-in-out`                                                                              |
 | Two-column detail at <1024         | right column collapses below main — do not override                                                     |
-| Inline ID, code, table number      | `font-mono text-xs` (identifiers) / `tabular-nums` (figures)                                            |
-| Timestamp, label, subtle metadata  | `text-xs text-muted-foreground`                                                                         |
+| Inline ID, code, table number      | `font-mono text-code-sm` (identifiers) / `text-label-md tabular-nums` (figures)                         |
+| Timestamp, label, subtle metadata  | `text-body-sm text-muted-foreground`                                                                    |

@@ -2,6 +2,7 @@
 export { SidebarMenuItem, SidebarMenuButton } from "./primitives";
 export { SidebarItem, type SidebarItemProps, type SidebarItemRenderProps } from "./sidebar-item";
 export { SidebarGroup, type SidebarGroupProps } from "./sidebar-group";
+export { SidebarSection, type SidebarSectionProps } from "./sidebar-section";
 export { SidebarSeparator } from "./sidebar-separator";
 export { DefaultSidebar, type DefaultSidebarProps } from "./default-sidebar";
 export { DefaultHeader, type DefaultHeaderProps } from "./default-header";

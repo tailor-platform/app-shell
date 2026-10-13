@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "../checkbox";
 import { Fieldset } from "../fieldset";
@@ -73,30 +73,16 @@ export const ClearLink = ({
   </button>
 );
 
-const Count = ({ value }: { value: string }) => (
-  <span
-    aria-hidden
-    className="astw:ml-auto astw:shrink-0 astw:text-xs astw:text-muted-foreground astw:tabular-nums"
-  >
-    {value}
-  </span>
-);
-
 // ─── Option rows ─────────────────────────────────────────────────────────────
 
 /**
- * One checkbox option with its count.
- *
- * The label is the accessible name and the count its description ("Knitwear",
- * "1,380 items"). An `aria-label` would lose to the `aria-labelledby` the
- * label wrapper sets, and would repeat the name. Zero-count options use `aria-disabled`
- * rather than `disabled`, so they stay in the tab order and a keyboard user can
- * still learn the category is empty.
+ * One checkbox option. Disabled options use `aria-disabled` rather than
+ * `disabled`, so they stay in the tab order and a keyboard user can still
+ * reach them and hear why (the `title`).
  */
 export const OptionRow = ({
   label,
   icon,
-  count,
   checked,
   disabled,
   title,
@@ -105,16 +91,12 @@ export const OptionRow = ({
 }: {
   label: string;
   icon?: ReactNode;
-  count?: number;
   checked: boolean;
   disabled?: boolean;
   title?: string;
   rowHeight: string;
   onToggle: () => void;
 }) => {
-  const t = useFilterRailT();
-  const countId = useId();
-  const formatted = count === undefined ? undefined : count.toLocaleString();
   return (
     <div
       data-slot="filter-rail-option"
@@ -131,26 +113,18 @@ export const OptionRow = ({
       <Checkbox
         checked={checked}
         aria-disabled={disabled || undefined}
-        aria-describedby={formatted !== undefined ? countId : undefined}
         onCheckedChange={() => {
           if (!disabled) onToggle();
         }}
-        // Stretch the label so the count can push to the row's right edge.
+        // Stretch the label so the whole row is clickable.
         className="astw:min-w-0 astw:flex-1"
         label={
           <span className="astw:flex astw:min-w-0 astw:flex-1 astw:items-center astw:gap-2 astw:text-sm">
             {icon}
             <span className="astw:truncate">{label}</span>
-            {formatted !== undefined && <Count value={formatted} />}
           </span>
         }
       />
-      {/* Outside the <label>, so it describes the checkbox without joining its name. */}
-      {formatted !== undefined && (
-        <span id={countId} className="astw:sr-only">
-          {t("itemCount", { count: formatted })}
-        </span>
-      )}
     </div>
   );
 };
@@ -162,20 +136,16 @@ export const OptionRow = ({
 export const RadioRow = ({
   name,
   label,
-  count,
   checked,
   rowHeight,
   onSelect,
 }: {
   name: string;
   label: string;
-  count?: number;
   checked: boolean;
   rowHeight: string;
   onSelect: () => void;
 }) => {
-  const t = useFilterRailT();
-  const formatted = count === undefined ? undefined : count.toLocaleString();
   return (
     <label
       data-slot="filter-rail-radio"
@@ -191,11 +161,9 @@ export const RadioRow = ({
         name={name}
         checked={checked}
         onChange={onSelect}
-        aria-label={formatted ? t("optionWithCount", { label, count: formatted }) : label}
         className="astw:size-3.5 astw:shrink-0 astw:accent-primary"
       />
       <span className="astw:truncate">{label}</span>
-      {formatted !== undefined && <Count value={formatted} />}
     </label>
   );
 };

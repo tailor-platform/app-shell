@@ -672,18 +672,12 @@
       "examples": null,
       "sources": ["packages/core/src/components/filter-rail/**"],
       "claims": [],
-      "symbols": [
-        "FilterRail",
-        "FilterRailRootProps",
-        "FilterRailSection",
-        "useFilterRailCounts",
-        "useFilterRailLayout"
-      ],
+      "symbols": ["FilterRail", "FilterRailRootProps", "FilterRailSection", "useFilterRailLayout"],
       "hashes": {
-        "typeSurface": "f00196ddf9879362",
-        "outline": "15562a48f49aabae",
-        "snapshot": "5c1ae1fe48b89541",
-        "outputMd": "14b9a7a6c16fd50e",
+        "typeSurface": "f80feb4bebee066f",
+        "outline": "d2114b5403a2cdf2",
+        "snapshot": "21267134f12858cf",
+        "outputMd": "5b6feade4643dde3",
         "examples": null
       }
     },
@@ -1706,7 +1700,7 @@
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "ec6a0ac098d1d87a",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
-    "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "14b9a7a6c16fd50e",
+    "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "5b6feade4643dde3",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "91d901b17aed7781",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
@@ -1763,6 +1757,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "c2baedb10d639332"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "e58a65d6e5ad4efb"
   }
 }

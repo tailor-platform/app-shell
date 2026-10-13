@@ -26,21 +26,15 @@ export type FacetOption = SelectOption & {
  * How a checkbox section's options are ordered.
  *
  * `"given"` (default) keeps the authored order — a curated vocabulary
- * (XS · S · M · L) must never be reordered. `"baselineCount"` is "most common
- * first", stable across clicks. `"liveCount"` reorders rows whenever another
- * section changes; offered, but rarely what you want.
+ * (XS · S · M · L) must never be reordered. `"label"` sorts A–Z. A comparator
+ * gives any other fixed order.
  */
-export type OptionSort =
-  | "given"
-  | "label"
-  | "baselineCount"
-  | "liveCount"
-  | ((a: FacetOption, b: FacetOption, counts: { a: number; b: number }) => number);
+export type OptionSort = "given" | "label" | ((a: FacetOption, b: FacetOption) => number);
 
 // ─── Sections ────────────────────────────────────────────────────────────────
 
 type SectionBase = {
-  /** Stable and unique within the rail. Keys counts, layout and a11y ids. */
+  /** Stable and unique within the rail. Keys the layout and a11y ids. */
   id: string;
   /** The section heading — the word the business uses, not the field name. */
   label: ReactNode;
@@ -167,31 +161,10 @@ export type FilterRailSection<TField extends string = string> =
   | BooleanSection<TField>
   | CustomSection<TField>;
 
-// ─── Counts ──────────────────────────────────────────────────────────────────
-
-/**
- * Supplied by the consumer — the rail never sees rows. Compute in memory with
- * `useFilterRailCounts`, or return the same shape from a backend aggregation.
- */
-export type FacetCounts = {
-  /**
-   * `live[sectionId][optionValue]`: rows matching every **other** section's
-   * filter plus this option. `undefined` for a section means unknown — no
-   * numbers, nothing disabled.
-   */
-  live: Record<string, Record<string, number> | undefined>;
-  /** The same with no rail filters applied. Drives `sort: "baselineCount"`. */
-  baseline?: Record<string, Record<string, number> | undefined>;
-  /** Rows matching the full current filter set. */
-  total?: number;
-  /** Rows if section `id` alone were cleared. Drives the empty-result hint. */
-  withoutSection?: Record<string, number>;
-};
-
 // ─── Layout (user preferences) ───────────────────────────────────────────────
 
 /** The option sorts a user may pick in `FilterRail.Settings`. */
-export type UserOptionSort = "given" | "label" | "baselineCount";
+export type UserOptionSort = "given" | "label";
 
 /**
  * The user's override of the authored section order, visibility and option
@@ -225,15 +198,8 @@ export type FilterRailConfig<TField extends string = string> = {
   control: CollectionControl<TField>;
   /** Top to bottom. Any mix of section types. */
   sections: readonly FilterRailSection<TField>[];
-  /** Absent ⇒ no numbers, nothing disabled. */
-  counts?: FacetCounts;
   /** User layout (order / hidden / sort). Required for `FilterRail.Settings`. */
   layout?: RailLayoutBinding;
-  /**
-   * What to do with an option whose live count is zero. Default `"disable"`.
-   * A selected option is never disabled.
-   */
-  zeroBehavior?: "disable" | "show";
   /** 32px rows (default) or 40px. */
   density?: "compact" | "comfortable";
   /** Fires after the rail applies a change. */

@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 import type { CollectionControl, Filter } from "@/types/collection";
-import type { FacetCounts, FilterRailSection, RailLayoutBinding } from "./types";
+import type { FilterRailSection, RailLayoutBinding } from "./types";
 
 /**
  * Everything the parts share. String-keyed on purpose: `TField` is narrowed at
@@ -10,9 +10,7 @@ export type FilterRailContextValue = {
   control: CollectionControl;
   /** The authored sections, including ones the user has hidden. */
   sections: readonly FilterRailSection[];
-  counts: FacetCounts | undefined;
   layout: RailLayoutBinding | undefined;
-  zeroBehavior: "disable" | "show";
   density: "compact" | "comfortable";
   /** Fields the rail owns. */
   owned: ReadonlySet<string>;

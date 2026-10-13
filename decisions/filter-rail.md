@@ -5,9 +5,9 @@
 
 ## Context
 
-`DataTable.Filters` hides filterable fields behind an "Add filter" panel. That suits the long tail of ad-hoc filters, but ERP list screens usually have a handful of axes people use constantly (category, status, availability), and for those a dropdown costs a click to learn what is even filterable and gives no hint of how many rows a choice returns.
+`DataTable.Filters` hides filterable fields behind an "Add filter" panel. That suits the long tail of ad-hoc filters, but ERP list screens usually have a handful of axes people use constantly (category, status, availability), and for those a dropdown costs a click just to learn what is filterable.
 
-A demo on `demo/filter-rail` proved out an always-visible rail with counts. This decision covers promoting it into the package.
+A demo on `demo/filter-rail` proved out an always-visible rail. This decision covers promoting it into the package.
 
 ## Decision
 
@@ -27,9 +27,17 @@ The rail lives in a different `Layout.Column`, so it can never be a descendant o
 
 Checkbox = `in`/`nin`, radio = `eq`/`ne`, boolean = `eq`, ranges = `between` (a field holds one filter, so `gte` + `lte` is not expressible). The operator is fixed per section; users pick values, not operators.
 
-### Counts and storage belong to the consumer
+### No result counts (for now)
 
-The rail never sees rows. `counts` is a prop; `useFilterRailCounts` covers the in-memory case, a backend returns the same shape from an aggregation. Layout storage is a binding with a localStorage default (`useFilterRailLayout`) and a seam for a backend store — a team-shared layout is a product decision, not a component one.
+The prototype showed how many rows each option would return. That needs one aggregate query per filtered section (each excluding its own filter), plus distinct values for every listed field. There is no proven way to get either cheaply from TailorDB yet, so counts are **removed from this change** (agreed with the team, 2026-10-13). A spike will establish whether TailorDB can serve distinct values and grouped counts, or whether CDC-maintained cache tables are needed; the prototype code is kept on `feat/filter-rail-counts` for it. Counts can return later as an additive, optional prop.
+
+### Listed options are for small, fixed sets
+
+Checkbox and radio sections take a static `options` array and list every value. They are for small, fixed sets (status, category). A field whose values keep growing (product names, customers, suppliers) must use a search instead — a `text` section, or a `custom` section rendering a searchable picker. The docs carry a "Choosing a control" table, and in development the rail warns when a listed section has more than 50 options. Loading options asynchronously into a checkbox section is a possible follow-up, not part of this change.
+
+### Storage belongs to the consumer
+
+The rail never sees rows. Layout storage is a binding with a localStorage default (`useFilterRailLayout`) and a seam for a backend store — a team-shared layout is a product decision, not a component one.
 
 ### Narrow screens: the Sidebar pattern
 
@@ -45,7 +53,7 @@ Named views (filters plus sort, page size and column layout) were prototyped her
 
 ### No hidden state
 
-Sections do not collapse; a selected option is never truncated, disabled or searched away; hiding a section clears its filter; zero-count options are disabled rather than hidden (there is no `"hide"` — removing rows reshuffles the list on every click and loses the "this has nothing" answer).
+Sections do not collapse; a selected option is never truncated, disabled or searched away; hiding a section clears its filter.
 
 ### Radio stays private
 
@@ -53,6 +61,7 @@ app-shell has no radio control. The rail uses a native radio in a `<fieldset>` i
 
 ## Consequences
 
-- New public surface: `FilterRail`, `FilterRailRootProps`, `FilterRailSection`, `useFilterRailCounts`, `useFilterRailLayout`.
+- New public surface: `FilterRail`, `FilterRailRootProps`, `FilterRailSection`, `useFilterRailLayout`.
+- Follow-ups: result counts (spike first), saved views, and possibly async option loading.
 - A field should belong to one surface: do not render `DataTable.Filters` for fields the rail owns.
 - Known limit: the URL serializer stringifies scalars, so a backend must coerce `"true"`/numeric strings as it would any input (the rail itself reads `"true"` back correctly).

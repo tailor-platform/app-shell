@@ -4,7 +4,7 @@ import { readStorage, removeStorage, stringArray, writeStorage } from "./storage
 import type { RailLayout, RailLayoutBinding, UserOptionSort } from "./types";
 
 const STORAGE_PREFIX = "as:filter-rail-layout:v1:";
-const SORTS = new Set<UserOptionSort>(["given", "label", "baselineCount"]);
+const SORTS = new Set<UserOptionSort>(["given", "label"]);
 
 /** Read defensively — a rail that throws on load is worse than one that forgets. */
 const parseLayout = (raw: unknown): RailLayout => {

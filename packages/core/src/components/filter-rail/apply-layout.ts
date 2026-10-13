@@ -19,19 +19,12 @@ export const railFields = <TField extends string>(
 ): Set<TField> => new Set(sections.flatMap((section) => sectionFields(section)));
 
 /**
- * An option's count, read safely. Counts may come from a backend as plain JSON,
- * so an option value such as "constructor" must not resolve to an inherited
- * property. `undefined` map ⇒ unknown; a known map without the key ⇒ 0.
+ * Above this many options, a checkbox or radio section is the wrong control:
+ * the field's values are open-ended, not a small fixed set.
  */
-export const countOf = (
-  map: Readonly<Record<string, number>> | undefined,
-  value: string,
-): number | undefined => {
-  if (!map) return undefined;
-  return Object.hasOwn(map, value) ? map[value] : 0;
-};
+export const MAX_LISTED_OPTIONS = 50;
 
-/** Sections whose options can be counted — checkbox and radio. */
+/** Sections that list their options — checkbox and radio. */
 export const hasOptions = <TField extends string>(
   section: FilterRailSection<TField>,
 ): section is CheckboxSection<TField> | RadioSection<TField> =>
@@ -90,6 +83,17 @@ export const findRailProblems = (sections: readonly FilterRailSection[]): string
         );
       }
       fieldOwner.set(field, section.id);
+    }
+    // Checkbox and radio lists are for small, fixed sets (status, category).
+    // A field whose values keep growing (product names, customers) belongs in
+    // a search, not an ever-longer list.
+    if (hasOptions(section) && section.options.length > MAX_LISTED_OPTIONS) {
+      problems.push(
+        `FilterRail: section "${section.id}" lists ${section.options.length} options. ` +
+          "Checkbox and radio sections are for small, fixed sets of values. For a field whose " +
+          'values keep growing (names, customers, suppliers), use a `control: "text"` section ' +
+          "or a searchable custom section instead.",
+      );
     }
   }
   return problems;

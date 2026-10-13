@@ -2,14 +2,14 @@
 kind: code-backed
 group: filter-rail
 title: FilterRail
-description: An always-visible faceted filter rail with counts and user layout settings, driven by the same CollectionControl as DataTable
+description: An always-visible faceted filter rail with user layout settings, driven by the same CollectionControl as DataTable
 sources:
   - packages/core/src/components/filter-rail/**
 ---
 
 # FilterRail
 
-`FilterRail` shows every filterable axis beside the results instead of hiding it behind a filter dropdown. Each section displays its options, and optionally how many rows each option would return, before the user clicks.
+`FilterRail` shows every filterable axis beside the results instead of hiding it behind a filter dropdown. Each section shows its options up front, so users see what they can filter by without opening anything.
 
 It writes the same `CollectionControl` a `DataTable` reads, so there is no second filter engine: a checkbox section **is** the `in` operator, a radio section is `eq`, a range is `between`.
 
@@ -38,7 +38,7 @@ What the rail shows is **config**: `sections`, one entry per axis, in screen ord
 
 | Part                  | Renders                                                                       |
 | --------------------- | ----------------------------------------------------------------------------- |
-| `FilterRail.Root`     | The rail. Takes `control`, `sections`, `counts`, `layout`.                    |
+| `FilterRail.Root`     | The rail. Takes `control`, `sections`, `layout`.                              |
 | `FilterRail.Header`   | A title row with a slot for actions.                                          |
 | `FilterRail.ClearAll` | Clears the rail's own filters only. Hidden while none are active.             |
 | `FilterRail.Settings` | Show / hide, reorder and sort sections. Needs `layout`.                       |
@@ -47,7 +47,7 @@ What the rail shows is **config**: `sections`, one entry per axis, in screen ord
 | `FilterRail.Trigger`  | The narrow-screen "Filters" button, placed anywhere inside `Provider`.        |
 
 ```tsx
-<FilterRail.Root control={control} sections={sections} counts={counts} layout={layout}>
+<FilterRail.Root control={control} sections={sections} layout={layout}>
   <FilterRail.Header>
     <FilterRail.ClearAll />
     <FilterRail.Settings />
@@ -95,15 +95,21 @@ const stockLevel: FilterRailSection = {
 
 The rail never hides state: a selected option is never truncated away, never disabled and never hidden by a section's search box, and sections do not collapse.
 
-## Counts
+## Choosing a control
 
-Pass `counts` to show a number beside each option and disable options that would return nothing (`zeroBehavior="show"` keeps them enabled). The rail never sees rows, so counts come from you. For rows held in memory, `useFilterRailCounts` does standard faceting: each section's count excludes its own filter, so ticking one box never zeroes its neighbours.
+Checkbox and radio sections list every option, so they are only for **small, fixed sets** whose values you know up front — status, category, size, a handful of warehouses. Their `options` are a static array; the rail does not fetch them.
 
-```tsx
-const counts = useFilterRailCounts(rows, sections, control.filters, { baseline: true });
-```
+Do **not** use a checkbox or radio list for a field whose values **keep growing** — product names, SKUs, customers, suppliers, order numbers. The list gets longer with every new record, takes over the rail, and becomes a scroll hunt. Give those fields a search instead:
 
-For a server-side collection, return the same shape from an aggregation query: `{ live: { [sectionId]: { [value]: count } }, baseline?, total?, withoutSection? }`. With `total` and `withoutSection`, an empty result shows which section to clear to get rows back. Counts are optional: without them the rail still works, it just shows no numbers.
+| The field's values are…                          | Use                                                                         |
+| ------------------------------------------------ | --------------------------------------------------------------------------- |
+| A small fixed set (≈ up to 20), pick any         | `checkbox`                                                                  |
+| A small fixed set, pick one                      | `radio` (or `boolean` for yes / no)                                         |
+| Open-ended and growing (names, codes, customers) | `text` — a search that commits `contains`, `hasPrefix` or `eq`              |
+| Open-ended, but users must pick exact records    | a `custom` section rendering a searchable picker (e.g. an async `Combobox`) |
+| Numbers or dates                                 | `numberRange`, `date`, `dateRange`                                          |
+
+In development the rail warns in the console when a checkbox or radio section lists more than 50 options, as a nudge towards a search.
 
 ## User layout
 
@@ -120,7 +126,7 @@ Below the `lg` breakpoint there is no room for a side column, so the rail turns 
 By default the button appears where the rail would have been. To put it somewhere else — a table toolbar, a page header — wrap the page in `FilterRail.Provider`, move the config there, and place `FilterRail.Trigger` wherever you want it. The Trigger renders nothing on wide screens, and while one is mounted the rail skips its own button.
 
 ```tsx
-<FilterRail.Provider control={control} sections={sections} counts={counts}>
+<FilterRail.Provider control={control} sections={sections}>
   <Layout fill>
     <Layout.Column area="left">
       <FilterRail.Root>

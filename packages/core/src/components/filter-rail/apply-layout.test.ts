@@ -73,7 +73,7 @@ describe("applyRailLayout", () => {
     const result = applyRailLayout(sections, {
       order: [],
       hidden: [],
-      sort: { category: "label", status: "label", search: "baselineCount" },
+      sort: { category: "label", status: "label", search: "label" },
     });
     const category = result.find((section) => section.id === "category");
     const status = result.find((section) => section.id === "status");

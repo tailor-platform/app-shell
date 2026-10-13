@@ -13,7 +13,7 @@ import { Settings } from "./settings";
  *
  * @example
  * ```tsx
- * <FilterRail.Root control={control} sections={sections} counts={counts} layout={layout}>
+ * <FilterRail.Root control={control} sections={sections} layout={layout}>
  *   <FilterRail.Header>
  *     <FilterRail.ClearAll />
  *     <FilterRail.Settings />
@@ -33,5 +33,4 @@ export const FilterRail = {
 };
 
 export type { FilterRailRootProps, FilterRailSection } from "./types";
-export { useFilterRailCounts } from "./use-filter-rail-counts";
 export { useFilterRailLayout } from "./use-filter-rail-layout";

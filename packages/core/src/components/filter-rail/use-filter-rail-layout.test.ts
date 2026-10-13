@@ -31,7 +31,7 @@ describe("useFilterRailLayout", () => {
 
   it("writes on change", () => {
     const { result } = renderHook(() => useFilterRailLayout("products"));
-    const next: RailLayout = { order: ["b", "a"], hidden: ["c"], sort: { a: "baselineCount" } };
+    const next: RailLayout = { order: ["b", "a"], hidden: ["c"], sort: { a: "label" } };
     act(() => result.current.onChange(next));
     expect(result.current.value).toEqual(next);
     expect(JSON.parse(window.localStorage.getItem(KEY)!)).toEqual(next);

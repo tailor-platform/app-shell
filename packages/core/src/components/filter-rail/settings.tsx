@@ -15,7 +15,7 @@ const POPUP_CLASS = cn(
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
 
-const USER_SORTS: readonly UserOptionSort[] = ["given", "label", "baselineCount"];
+const USER_SORTS: readonly UserOptionSort[] = ["given", "label"];
 
 type SettingsProps = { className?: string };
 
@@ -36,7 +36,6 @@ function Settings({ className }: SettingsProps) {
   const sortLabel: Record<UserOptionSort, string> = {
     given: t("sortGiven"),
     label: t("sortLabel"),
-    baselineCount: t("sortBaselineCount"),
   };
   const sortItems = USER_SORTS.map((value) => ({ value, label: sortLabel[value] }));
 

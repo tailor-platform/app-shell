@@ -6,7 +6,7 @@ import type { CollectionControl, Filter } from "@/types/collection";
 import { ClearAll, Header, Provider, Root, Sections } from "./filter-rail";
 import { Trigger } from "./responsive";
 import { Settings } from "./settings";
-import type { FacetCounts, FilterRailConfig, FilterRailSection, RailLayout } from "./types";
+import type { FilterRailConfig, FilterRailSection, RailLayout } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -156,18 +156,12 @@ const priceSection: FilterRailSection = {
   unit: "$",
 };
 
-const categoryCounts: FacetCounts = {
-  live: { category: { apparel: 1380, shoes: 0, bags: 12 } },
-};
-
 // ─── Snapshots ───────────────────────────────────────────────────────────────
 
 describe("FilterRail", () => {
   describe("snapshots", () => {
-    it("checkbox section with counts", () => {
-      const { container } = render(
-        <Harness sections={[categorySection]} counts={categoryCounts} />,
-      );
+    it("checkbox section", () => {
+      const { container } = render(<Harness sections={[categorySection]} />);
       expect(container.innerHTML).toMatchSnapshot();
     });
 
@@ -295,27 +289,30 @@ describe("FilterRail", () => {
       expect(screen.getByRole("button", { name: "Show 3 more" })).toBeTruthy();
     });
 
-    it("marks a zero-count option aria-disabled and ignores clicks on it", async () => {
+    const withDisabled: FilterRailSection = {
+      ...categorySection,
+      options: [
+        { value: "apparel", label: "Apparel" },
+        { value: "shoes", label: "Shoes", disabledReason: "Discontinued" },
+      ],
+    } as FilterRailSection;
+
+    it("marks an option with a disabledReason aria-disabled and ignores clicks on it", async () => {
       const user = userEvent.setup();
-      render(<Harness sections={[categorySection]} counts={categoryCounts} />);
+      render(<Harness sections={[withDisabled]} />);
       const shoes = option("Shoes");
-      // The label is the name, announced once; the count is the description.
-      expect(screen.getByRole("checkbox", { name: "Shoes", description: "0 items" })).toBe(shoes);
-      expect(screen.getByRole("checkbox", { name: "Apparel", description: "1,380 items" })).toBe(
-        option("Apparel"),
-      );
+      expect(screen.getByRole("checkbox", { name: "Shoes" })).toBe(shoes);
       expect(shoes.getAttribute("aria-disabled")).toBe("true");
       await user.click(shoes);
       expect(currentFilters()).toEqual([]);
       expect(option("Apparel").getAttribute("aria-disabled")).toBeNull();
     });
 
-    it("keeps a selected zero-count option enabled so it can be unselected", async () => {
+    it("keeps a selected disabled option enabled so it can be unselected", async () => {
       const user = userEvent.setup();
       render(
         <Harness
-          sections={[categorySection]}
-          counts={categoryCounts}
+          sections={[withDisabled]}
           initial={[{ field: "category", operator: "in", value: ["shoes"] }]}
         />,
       );
@@ -325,13 +322,22 @@ describe("FilterRail", () => {
       expect(currentFilters()).toEqual([]);
     });
 
-    it('keeps zero-count options enabled with zeroBehavior "show"', async () => {
-      const user = userEvent.setup();
-      render(<Harness sections={[categorySection]} counts={categoryCounts} zeroBehavior="show" />);
-      const shoes = option("Shoes");
-      expect(shoes.getAttribute("aria-disabled")).toBeNull();
-      await user.click(shoes);
-      expect(currentFilters()).toEqual([{ field: "category", operator: "in", value: ["shoes"] }]);
+    it("warns when a list is too long for checkboxes (values that keep growing)", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const huge: FilterRailSection = {
+        id: "product",
+        label: "Product",
+        control: "checkbox",
+        field: "product",
+        options: Array.from({ length: 51 }, (_, index) => ({
+          value: `p${index}`,
+          label: `Product ${index}`,
+        })),
+      };
+      render(<Harness sections={[huge]} />);
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('section "product" lists 51 options'),
+      );
     });
   });
 
@@ -659,40 +665,6 @@ describe("FilterRail", () => {
     });
   });
 
-  // ─── Recovery ──────────────────────────────────────────────────────────────
-
-  describe("empty-result recovery", () => {
-    it("suggests clearing a section when total is 0", async () => {
-      const user = userEvent.setup();
-      render(
-        <Harness
-          sections={[categorySection, statusSection]}
-          counts={{ live: {}, total: 0, withoutSection: { category: 42, status: 0 } }}
-          initial={[
-            { field: "category", operator: "in", value: ["apparel"] },
-            { field: "status", operator: "eq", value: "archived" },
-          ]}
-        />,
-      );
-      const status = screen.getByRole("status");
-      expect(status.textContent).toContain("Nothing matches these filters.");
-      expect(within(status).queryByRole("button", { name: /Status/ })).toBeNull();
-      await user.click(within(status).getByRole("button", { name: "Clear Category to see 42" }));
-      expect(currentFilters()).toEqual([{ field: "status", operator: "eq", value: "archived" }]);
-    });
-
-    it("renders nothing when rows remain", () => {
-      render(
-        <Harness
-          sections={[categorySection]}
-          counts={{ live: {}, total: 3, withoutSection: { category: 42 } }}
-          initial={[{ field: "category", operator: "in", value: ["apparel"] }]}
-        />,
-      );
-      expect(screen.queryByRole("status")).toBeNull();
-    });
-  });
-
   // ─── Guards ────────────────────────────────────────────────────────────────
 
   describe("guards", () => {
@@ -922,27 +894,6 @@ describe("FilterRail", () => {
   // ─── Review fixes ──────────────────────────────────────────────────────────
 
   describe("hardening", () => {
-    it("counts an option named like an Object.prototype member as 0, not a function", () => {
-      const section: FilterRailSection = {
-        id: "kind",
-        label: "Kind",
-        control: "checkbox",
-        field: "kind",
-        options: [
-          { value: "constructor", label: "Constructor" },
-          { value: "toString", label: "To string" },
-        ],
-      };
-      // Plain JSON, as a backend would return it.
-      render(<Harness sections={[section]} counts={{ live: { kind: {} } }} />);
-      expect(
-        screen.getByRole("checkbox", { name: "Constructor", description: "0 items" }),
-      ).toBeTruthy();
-      expect(
-        screen.getByRole("checkbox", { name: "To string", description: "0 items" }),
-      ).toBeTruthy();
-    });
-
     it("keeps keys typed after its own debounced commit", () => {
       vi.useFakeTimers();
       render(<Harness sections={[searchSection]} />);

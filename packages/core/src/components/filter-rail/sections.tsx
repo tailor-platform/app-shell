@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Filter } from "@/types/collection";
-import { countOf } from "./apply-layout";
 import { useFilterRailContext, sectionName } from "./filter-rail-context";
 import { useFilterRailT } from "./i18n";
 import {
@@ -32,26 +31,11 @@ const text = (value: unknown, fallback: string) =>
 export const sortOptions = (
   options: readonly FacetOption[],
   sort: CheckboxSection["sort"],
-  live: Record<string, number> | undefined,
-  baseline: Record<string, number> | undefined,
 ): FacetOption[] => {
-  const list = [...options];
   const mode = sort ?? "given";
-  if (typeof mode === "function") {
-    return list.toSorted((a, b) =>
-      mode(a, b, { a: countOf(live, a.value) ?? 0, b: countOf(live, b.value) ?? 0 }),
-    );
-  }
-  if (mode === "label") return list.toSorted((a, b) => a.label.localeCompare(b.label));
-  if (mode === "baselineCount" || mode === "liveCount") {
-    const source = mode === "baselineCount" ? baseline : live;
-    return list.toSorted(
-      (a, b) =>
-        (countOf(source, b.value) ?? 0) - (countOf(source, a.value) ?? 0) ||
-        a.label.localeCompare(b.label),
-    );
-  }
-  return list;
+  if (typeof mode === "function") return options.toSorted(mode);
+  if (mode === "label") return options.toSorted((a, b) => a.label.localeCompare(b.label));
+  return [...options];
 };
 
 // ─── Text ────────────────────────────────────────────────────────────────────
@@ -105,8 +89,7 @@ export const TextControl = ({ section }: { section: TextSection }) => {
 
 export const RadioControl = ({ section }: { section: RadioSection }) => {
   const t = useFilterRailT();
-  const { control, commit, counts, density } = useFilterRailContext("Sections");
-  const live = counts?.live[section.id];
+  const { control, commit, density } = useFilterRailContext("Sections");
   const applied = filterFor(control.filters, section.field);
   const current = typeof applied?.value === "string" ? applied.value : null;
   const operator = section.operator ?? "eq";
@@ -128,7 +111,6 @@ export const RadioControl = ({ section }: { section: RadioSection }) => {
           key={option.value}
           name={section.id}
           label={option.label}
-          count={countOf(live, option.value)}
           checked={current === option.value}
           rowHeight={rowHeight}
           onSelect={() =>
@@ -144,9 +126,7 @@ export const RadioControl = ({ section }: { section: RadioSection }) => {
 
 export const CheckboxControl = ({ section }: { section: CheckboxSection }) => {
   const t = useFilterRailT();
-  const { control, commit, counts, zeroBehavior, density } = useFilterRailContext("Sections");
-  const live = counts?.live[section.id];
-  const baseline = counts?.baseline?.[section.id];
+  const { control, commit, density } = useFilterRailContext("Sections");
   const applied = filterFor(control.filters, section.field);
   const selected = useMemo(
     () => new Set(Array.isArray(applied?.value) ? (applied.value as unknown[]).map(String) : []),
@@ -166,7 +146,7 @@ export const CheckboxControl = ({ section }: { section: CheckboxSection }) => {
       : (section.searchThreshold ?? defaultThreshold);
 
   const ordered = useMemo(() => {
-    const sorted = sortOptions(section.options, section.sort, live, baseline);
+    const sorted = sortOptions(section.options, section.sort);
     if (!section.pinned?.length) return sorted;
     const rank = new Map(section.pinned.map((value, index) => [value, index]));
     return [
@@ -175,7 +155,7 @@ export const CheckboxControl = ({ section }: { section: CheckboxSection }) => {
         .toSorted((a, b) => rank.get(a.value)! - rank.get(b.value)!),
       ...sorted.filter((option) => !rank.has(option.value)),
     ];
-  }, [section.options, section.sort, section.pinned, live, baseline]);
+  }, [section.options, section.sort, section.pinned]);
 
   // A selected option hidden by the search query would be an active filter
   // nowhere on screen — keep it, first.
@@ -222,20 +202,15 @@ export const CheckboxControl = ({ section }: { section: CheckboxSection }) => {
         />
       )}
       {visible.map((option) => {
-        // Once a section's map exists, a missing option has zero matches, not
-        // an unknown count.
-        const count = countOf(live, option.value);
         const isSelected = selected.has(option.value);
-        // A selected option is never disabled — it is the only way to unselect it.
-        const zero = count === 0 && !isSelected && zeroBehavior === "disable";
         return (
           <OptionRow
             key={option.value}
             label={option.label}
             icon={option.icon}
-            count={count}
             checked={isSelected}
-            disabled={zero || (Boolean(option.disabledReason) && !isSelected)}
+            // A selected option is never disabled — it is the only way to unselect it.
+            disabled={Boolean(option.disabledReason) && !isSelected}
             title={option.disabledReason ?? option.note}
             rowHeight={rowHeight}
             onToggle={() => toggleOption(option.value)}

@@ -209,7 +209,6 @@ export { Tabs } from "./components/tabs";
 export { Toolbar, type ToolbarProps } from "./components/toolbar";
 export {
   FilterRail,
-  useFilterRailCounts,
   useFilterRailLayout,
   type FilterRailRootProps,
   type FilterRailSection,

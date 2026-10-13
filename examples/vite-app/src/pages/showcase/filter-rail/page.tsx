@@ -8,7 +8,6 @@ import {
   createColumnHelper,
   useCollectionVariables,
   useDataTable,
-  useFilterRailCounts,
   useFilterRailLayout,
   useURLCollectionVariables,
   type AppShellPageProps,
@@ -28,11 +27,11 @@ import { allProducts, type Product } from "../../../mock-products";
 // table share one `CollectionControl`, so there is no second filter engine.
 //
 // Three variants prove the parts are optional:
-//   Full        — every section type, counts, settings; below lg the Filters
+//   Full        — every section type and settings; below lg the Filters
 //                 button sits in the table toolbar (Provider + Trigger)
 //   Checkboxes  — Root + Sections only, plus a long Tags list with value search;
 //                 below lg the rail falls back to its own Filters button
-//   Radios      — radio + boolean + a custom section, no counts
+//   Radios      — radio + boolean + a custom section
 
 // ─── Rows ───────────────────────────────────────────────────────────────────────
 
@@ -242,8 +241,6 @@ const FULL_SECTIONS: FilterRailSection[] = [
     control: "checkbox",
     field: "category",
     options: distinct((row) => row.category),
-    // Biggest first, on the baseline count so the order never moves under the cursor.
-    sort: "baselineCount",
     truncate: 6,
   },
   {
@@ -310,7 +307,6 @@ const CHECKBOX_SECTIONS: FilterRailSection[] = [
     options: [...new Set(ROWS.flatMap((row) => row.tags))]
       .sort()
       .map((value) => ({ value, label: value })),
-    sort: "baselineCount",
   },
   {
     id: "priceBand",
@@ -332,7 +328,7 @@ const CHECKBOX_SECTIONS: FilterRailSection[] = [
   },
 ];
 
-/** Radios, boolean and a custom section. No counts. */
+/** Radios, boolean and a custom section. */
 const RADIO_SECTIONS: FilterRailSection[] = [
   {
     id: "status",
@@ -425,7 +421,6 @@ const ProductsTable = ({
 
 const FullVariant = ({ header }: { header: ReactNode }) => {
   const { variables, control } = useURLCollectionVariables({ params: { pageSize: 25 } });
-  const counts = useFilterRailCounts(ROWS, FULL_SECTIONS, control.filters, { baseline: true });
   const layout = useFilterRailLayout("showcase:products");
   const data = useMemo(() => queryRows(variables), [variables]);
   const table = useDataTable<Row>({
@@ -439,7 +434,7 @@ const FullVariant = ({ header }: { header: ReactNode }) => {
   // rail. Below lg the rail turns into a sheet and the Trigger opens it; on wide
   // screens the Trigger renders nothing.
   return (
-    <FilterRail.Provider control={control} sections={FULL_SECTIONS} counts={counts} layout={layout}>
+    <FilterRail.Provider control={control} sections={FULL_SECTIONS} layout={layout}>
       <Layout fill>
         {header}
         <Layout.Column area="left">
@@ -471,19 +466,11 @@ const FullVariant = ({ header }: { header: ReactNode }) => {
 
 const CheckboxVariant = ({ header }: { header: ReactNode }) => {
   const { variables, control } = useCollectionVariables({ params: { pageSize: 25 } });
-  const counts = useFilterRailCounts(ROWS, CHECKBOX_SECTIONS, control.filters, {
-    baseline: true,
-  });
   return (
     <Layout fill>
       {header}
       <Layout.Column area="left">
-        <FilterRail.Root
-          control={control}
-          sections={CHECKBOX_SECTIONS}
-          counts={counts}
-          className="max-h-full"
-        >
+        <FilterRail.Root control={control} sections={CHECKBOX_SECTIONS} className="max-h-full">
           <FilterRail.Sections />
         </FilterRail.Root>
       </Layout.Column>

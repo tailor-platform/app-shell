@@ -2,17 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { cn } from "@/lib/utils";
 import type { CollectionControl, Filter } from "@/types/collection";
 import { Sheet } from "../sheet";
-import {
-  applyRailLayout,
-  countOf,
-  findRailProblems,
-  railFields,
-  sectionFields,
-} from "./apply-layout";
+import { applyRailLayout, findRailProblems, railFields, sectionFields } from "./apply-layout";
 import { DateControl, DateRangeControl, NumberRangeControl } from "./controls";
 import {
   FilterRailContext,
-  sectionName,
   useFilterRailContext,
   useOptionalFilterRailContext,
   type FilterRailContextValue,
@@ -45,9 +38,7 @@ import type {
 function Provider<TField extends string = string>({
   control,
   sections,
-  counts,
   layout,
-  zeroBehavior = "disable",
   density = "compact",
   onFilterChange,
   children,
@@ -125,9 +116,7 @@ function Provider<TField extends string = string>({
     () => ({
       control: anyControl,
       sections: anySections,
-      counts,
       layout,
-      zeroBehavior,
       density,
       owned,
       activeCount: filters.filter((filter) => owned.has(filter.field)).length,
@@ -150,9 +139,7 @@ function Provider<TField extends string = string>({
     [
       anyControl,
       anySections,
-      counts,
       layout,
-      zeroBehavior,
       density,
       owned,
       filters,
@@ -315,49 +302,6 @@ const SectionBody = ({ section }: { section: FilterRailSection }) => {
   }
 };
 
-/**
- * The way out of an empty result: name the one or two sections whose clearing
- * would bring rows back. Needs `counts.total` and `counts.withoutSection`.
- */
-const Recovery = () => {
-  const t = useFilterRailT();
-  const { counts, activeCount, sections, filteredSections, clearFields } =
-    useFilterRailContext("Sections");
-  const suggestions = useMemo(() => {
-    const without = counts?.withoutSection;
-    if (!without || counts?.total !== 0 || activeCount === 0) return [];
-    return sections
-      .map((section) => ({ section, rows: countOf(without, section.id) ?? 0 }))
-      .filter(({ section, rows }) => filteredSections.has(section.id) && rows > 0)
-      .toSorted((a, b) => b.rows - a.rows)
-      .slice(0, 2);
-  }, [counts, activeCount, sections, filteredSections]);
-
-  if (suggestions.length === 0) return null;
-  return (
-    <output
-      data-slot="filter-rail-recovery"
-      className="astw:block astw:border-b astw:border-border astw:bg-muted astw:px-3 astw:py-2.5"
-    >
-      <p className="astw:text-xs astw:font-medium">{t("nothingMatches")}</p>
-      <div className="astw:mt-1.5 astw:flex astw:flex-col astw:items-start astw:gap-1">
-        {suggestions.map(({ section, rows }) => (
-          <ClearLink
-            key={section.id}
-            onClick={() => clearFields(sectionFields(section))}
-            className="astw:font-medium astw:text-foreground astw:underline"
-          >
-            {t("clearToSee", {
-              section: sectionName(section),
-              count: rows.toLocaleString(),
-            })}
-          </ClearLink>
-        ))}
-      </div>
-    </output>
-  );
-};
-
 type SectionsProps = { className?: string };
 
 /** Every section, in the user's layout. Scrolls; the header stays put. */
@@ -373,7 +317,6 @@ function Sections({ className }: SectionsProps) {
       className={cn("astw:min-h-0 astw:flex-1 astw:overflow-y-auto", className)}
       onSubmit={(event) => event.preventDefault()}
     >
-      <Recovery />
       {visible.map((section) => (
         <RailSection
           key={section.id}

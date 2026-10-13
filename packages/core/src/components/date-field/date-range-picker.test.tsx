@@ -517,3 +517,13 @@ describe("12-hour time display", () => {
     expect(text("end date", "AM/PM")).toBe("PM");
   });
 });
+
+describe("DateRangePicker showDayOfWeek", () => {
+  it("shows the day of the week for both ends", () => {
+    const range = { start: new CalendarDate(2025, 12, 19), end: new CalendarDate(2025, 12, 22) };
+    render(
+      <DateRangePicker aria-label="Period" locale="ja-JP" showDayOfWeek defaultValue={range} />,
+    );
+    expect(screen.getByRole("group").textContent).toBe("2025/12/19(金)–2025/12/22(月)");
+  });
+});

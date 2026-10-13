@@ -127,13 +127,9 @@ export const SidebarItem = (props: SidebarItemProps) => {
         <SidebarMenuButton
           render={
             // oxlint-disable-next-line jsx-a11y/anchor-has-content -- content is provided by SidebarMenuButton's children
-            <a
-              href={to}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
-            />
+            <a href={to} target="_blank" rel="noopener noreferrer" />
           }
+          isActive={isActive}
           tooltip={title}
         >
           {render ? (
@@ -152,15 +148,7 @@ export const SidebarItem = (props: SidebarItemProps) => {
   // Internal link
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton
-        render={
-          <Link
-            to={to}
-            className={isActive ? "astw:bg-sidebar-accent astw:font-medium" : undefined}
-          />
-        }
-        tooltip={title}
-      >
+      <SidebarMenuButton render={<Link to={to} />} isActive={isActive} tooltip={title}>
         {render ? (
           render(renderProps)
         ) : (

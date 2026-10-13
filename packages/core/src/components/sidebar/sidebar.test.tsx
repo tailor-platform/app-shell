@@ -17,6 +17,7 @@ import {
 import { AppShellConfigContext, type RootConfiguration } from "@/contexts/appshell-context";
 import { SidebarItem } from "./sidebar-item";
 import { SidebarGroup } from "./sidebar-group";
+import { SidebarSection } from "./sidebar-section";
 import { SidebarSeparator } from "./sidebar-separator";
 import { defineModule, defineResource } from "@/resource";
 import { Home, Package } from "lucide-react";
@@ -28,6 +29,21 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
+
+const mockMobileViewport = () => {
+  vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
+    matches: query.includes("max-width"),
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+
+  vi.stubGlobal("innerWidth", 375);
+};
 
 /**
  * Force a desktop viewport (not the env's default tablet width) so groups render
@@ -168,7 +184,23 @@ describe("SidebarItem", () => {
 
     const menu = getSidebarMenu();
     const link = menu.getByRole("link");
-    expect(link.className).toContain("astw:bg-sidebar-accent");
+    expect(link.getAttribute("data-active")).toBe("true");
+  });
+
+  it("applies the theme's selected background and text tokens when active, without hover", () => {
+    renderWithProviders(<SidebarItem to="/dashboard/overview" />, "/dashboard/overview");
+
+    const link = getSidebarMenu().getByRole("link");
+    expect(link.getAttribute("data-active")).toBe("true");
+    expect(link.className).toContain("astw:data-[active=true]:bg-sidebar-accent");
+    expect(link.className).toContain("astw:data-[active=true]:text-sidebar-accent-foreground");
+  });
+
+  it("is not active when path does not match", () => {
+    renderWithProviders(<SidebarItem to="/dashboard" activeMatch="exact" />, "/dashboard/overview");
+
+    const link = getSidebarMenu().getByRole("link");
+    expect(link.getAttribute("data-active")).toBe("false");
   });
 
   it("falls back to URL-based title for unknown paths", () => {
@@ -224,6 +256,24 @@ describe("SidebarGroup", () => {
     const links = menu.getAllByRole("link");
     const headerLink = links.find((l) => l.getAttribute("href") === "/products");
     expect(headerLink).toBeDefined();
+  });
+
+  it("marks the clickable group header active via data-active", () => {
+    renderWithProviders(
+      <SidebarGroup title="Products" to="/products">
+        <SidebarItem to="/products/all" />
+      </SidebarGroup>,
+      "/products",
+    );
+
+    const links = getSidebarMenu().getAllByRole("link");
+    const headerLink = links.find((l) => l.getAttribute("href") === "/products")!;
+    const childLink = links.find((l) => l.getAttribute("href") === "/products/all")!;
+    expect(headerLink.getAttribute("data-active")).toBe("true");
+    expect(headerLink.className).toContain(
+      "astw:data-[active=true]:text-sidebar-accent-foreground",
+    );
+    expect(childLink.getAttribute("data-active")).toBe("false");
   });
 
   it("supports localized title function", () => {
@@ -293,6 +343,70 @@ describe("SidebarGroup", () => {
   });
 });
 
+describe("SidebarSection", () => {
+  it("labels a flat list of items with a non-interactive heading", () => {
+    renderWithProviders(
+      <SidebarSection title="Services">
+        <SidebarItem to="/dashboard" />
+        <SidebarItem to="/products" />
+      </SidebarSection>,
+    );
+
+    const menu = getSidebarMenu();
+    const section = menu.getByRole("list", { name: "Services" });
+    expect(within(section).getAllByRole("link")).toHaveLength(2);
+    // The heading is neither a link nor a toggle button.
+    expect(menu.queryByRole("link", { name: "Services" })).toBeNull();
+    expect(menu.queryByRole("button")).toBeNull();
+  });
+
+  it("renders items at the top level rather than as a nested submenu", () => {
+    renderWithProviders(
+      <SidebarSection title="Services">
+        <SidebarItem to="/dashboard" />
+      </SidebarSection>,
+    );
+
+    const menu = screen.getByTestId("sidebar-menu");
+    expect(menu.querySelector('[data-sidebar="menu-sub"]')).toBeNull();
+    expect(menu.querySelector('[data-sidebar="menu-sub-button"]')).toBeNull();
+    expect(menu.querySelector('[data-sidebar="menu-button"]')).not.toBeNull();
+  });
+
+  it("supports localized title function", () => {
+    renderWithProviders(
+      <SidebarSection title={localizedTitle}>
+        <SidebarItem to="/dashboard" />
+      </SidebarSection>,
+      undefined,
+      "ja",
+    );
+
+    expect(getSidebarMenu().getByRole("list", { name: "製品" })).toBeDefined();
+  });
+
+  it("composes with SidebarSeparator", () => {
+    renderWithProviders(
+      <>
+        <SidebarItem to="/dashboard" />
+        <SidebarSeparator />
+        <SidebarSection title="Services">
+          <SidebarItem to="/products" />
+        </SidebarSection>
+        <SidebarSeparator />
+        <SidebarSection title="Logs">
+          <SidebarItem to="/products/all" />
+        </SidebarSection>
+      </>,
+    );
+
+    const menu = screen.getByTestId("sidebar-menu");
+    expect(menu.querySelectorAll('[data-sidebar="separator"]')).toHaveLength(2);
+    expect(getSidebarMenu().getByRole("list", { name: "Services" })).toBeDefined();
+    expect(getSidebarMenu().getByRole("list", { name: "Logs" })).toBeDefined();
+  });
+});
+
 describe("SidebarSeparator", () => {
   it("renders separator element", () => {
     renderWithProviders(
@@ -308,27 +422,22 @@ describe("SidebarSeparator", () => {
     expect(separator).toBeDefined();
     expect(separator).not.toBeNull();
   });
+
+  it("adds extra space above and below the line to mark a new section", () => {
+    renderWithProviders(<SidebarSeparator />);
+
+    const separator = screen
+      .getByTestId("sidebar-menu")
+      .querySelector('[data-sidebar="separator"]');
+    expect(separator?.className).toContain("astw:mt-1");
+    expect(separator?.className).toContain("astw:mb-2");
+  });
 });
 
 describe("Mobile sidebar", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
-
-  const mockMobileViewport = () => {
-    vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
-      matches: query.includes("max-width"),
-      media: query,
-      onchange: null,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    }));
-
-    vi.stubGlobal("innerWidth", 375);
-  };
 
   const renderMobileSidebar = (sidebarContent: React.ReactNode, initialPath = "/") => {
     mockMobileViewport();

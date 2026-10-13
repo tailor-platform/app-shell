@@ -19,6 +19,7 @@ import { Popover } from "@base-ui/react/popover";
 import { getLocalTimeZone, parseDate, today, type CalendarDate } from "@internationalized/date";
 import { CalendarDays, ChevronDown, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTimeZone } from "@/contexts/appshell-context";
 import { BadgeList } from "@/components/badge-list";
 import { Button } from "@/components/button";
 import { Calendar } from "@/components/calendar";
@@ -182,6 +183,7 @@ function useCellCommit<TRow extends Record<string, unknown>>(
   col: EditableColumn<TRow>,
   store: CellEditStore,
 ) {
+  const { value: timeZone } = useTimeZone();
   const [pending, setPending] = useState<PendingCommit<TRow> | null>(null);
   const commitIdRef = useRef(0);
   const inFlight = pending && (!pending.settled || pending.row === row) ? pending : null;
@@ -209,9 +211,10 @@ function useCellCommit<TRow extends Record<string, unknown>>(
   };
 
   let display: ReactNode;
-  if (inFlight) display = renderTypedValue(row, col, inFlight.value, { linkAsText: true });
+  if (inFlight)
+    display = renderTypedValue(row, col, inFlight.value, { linkAsText: true, timeZone });
   else if (col.render) display = col.render(row);
-  else display = renderTypedValue(row, col, current, { linkAsText: true });
+  else display = renderTypedValue(row, col, current, { linkAsText: true, timeZone });
 
   return { current, display, save };
 }
@@ -996,6 +999,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
   cellProps,
 }: DataTableEditableCellProps<TRow, DateColumn<TRow>>) {
   const t = useDataTableT();
+  const { value: timeZone } = useTimeZone();
   const errorId = useId();
   const cellId = cellEditId(rowKey, colKey);
   const withTime = col.typeOptions?.dateFormat === "datetime";
@@ -1018,7 +1022,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
   const [draftTime, setDraftTime] = useState("");
   const shown = rejected ? rejected.value : current;
   const cellDisplay = rejected
-    ? renderTypedValue(row, col, rejected.value, { linkAsText: true })
+    ? renderTypedValue(row, col, rejected.value, { linkAsText: true, timeZone })
     : display;
   const message = rejected?.message;
   // The trigger has no text of its own (the date is the cell's display, hidden

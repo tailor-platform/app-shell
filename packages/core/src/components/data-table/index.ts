@@ -27,8 +27,11 @@ export type {
   MoneyCellOptions,
   NumberCellEditOptions,
   NumberCellOptions,
+  DataTableAction,
   RowAction,
   TextCellEditOptions,
+  SelectionAction,
+  SelectionActionHelpers,
   UseDataTableOptions,
   UseDataTableReturn,
 } from "./types";

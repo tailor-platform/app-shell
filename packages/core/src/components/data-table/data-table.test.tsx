@@ -1,9 +1,19 @@
 import { afterEach, describe, it, expect, expectTypeOf, vi } from "vitest";
-import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render,
+  renderHook,
+  screen,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { StrictMode, type ReactNode } from "react";
+import { resetLocalTimeZone } from "@internationalized/date";
 import { createAppShellWrapper } from "../../../tests/test-utils";
+import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import type { CollectionControl } from "@/types/collection";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
@@ -18,6 +28,9 @@ import type {
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllEnvs();
+  resetLocalTimeZone();
+  vi.restoreAllMocks();
 });
 
 type TestRow = { id: string; name: string; status: string };
@@ -34,27 +47,9 @@ const testData: DataTableData<TestRow> = {
   ],
 };
 
-function mockDate(local: {
-  year: number;
-  month: number;
-  day: number;
-  hours: number;
-  minutes: number;
-  seconds?: number;
-  iso: string;
-}) {
-  const value = new Date(local.iso);
-  Object.assign(value, {
-    getFullYear: () => local.year,
-    getMonth: () => local.month - 1,
-    getDate: () => local.day,
-    getHours: () => local.hours,
-    getMinutes: () => local.minutes,
-    getSeconds: () => local.seconds ?? 0,
-    getTime: () => 1,
-    toISOString: () => local.iso,
-  });
-  return value;
+function stubBrowserTimeZone() {
+  vi.stubEnv("TZ", "UTC");
+  resetLocalTimeZone();
 }
 
 function makeControl(overrides?: Partial<CollectionControl>): CollectionControl {
@@ -109,7 +104,44 @@ function TestDataTable(props: {
   );
 }
 
+function SortableHeaderHarness({ control }: { control: CollectionControl }) {
+  const table = useDataTable<TestRow>({
+    columns: [
+      {
+        label: "Name",
+        sort: { field: "name", type: "string" },
+        header: (ctx) =>
+          ctx.sortable ? (
+            <button type="button" onClick={ctx.activateSort}>
+              {ctx.label} {ctx.sortDirection}
+            </button>
+          ) : null,
+        render: (row) => row.name,
+      },
+    ],
+    data: testData,
+    control,
+  });
+
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
 const wrapper = createAppShellWrapper("en");
+
+function createTimeZoneWrapper(timeZone: string) {
+  const configurations = buildConfigurations({ modules: [], locale: "en", timeZone });
+  return function TimeZoneWrapper({ children }: { children: ReactNode }) {
+    return (
+      <AppShellConfigContext.Provider value={{ configurations }}>
+        {children}
+      </AppShellConfigContext.Provider>
+    );
+  };
+}
 
 const headByText = (container: HTMLElement, text: string) =>
   Array.from(container.querySelectorAll<HTMLElement>('[data-slot="data-table-header"] th')).find(
@@ -169,6 +201,13 @@ const strictWrapper = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// Opens the kebab menu of the row at `index` and returns its "Activate" item.
+async function activateItemFor(index: number) {
+  const user = userEvent.setup();
+  await user.click(screen.getAllByRole("button", { name: "Row actions" })[index]);
+  return screen.findByRole("menuitem", { name: "Activate" });
+}
+
 describe("DataTable", () => {
   it("renders a basic data table with headers and rows", () => {
     render(<TestDataTable />, { wrapper });
@@ -179,6 +218,110 @@ describe("DataTable", () => {
     expect(screen.getByText("Bob")).toBeDefined();
     expect(screen.getByText("Active")).toBeDefined();
     expect(screen.getByText("Inactive")).toBeDefined();
+  });
+
+  it("renders editable and read-only dates in the same AppShell timezone", () => {
+    stubBrowserTimeZone();
+    type Row = { id: string; value: string };
+    function Harness() {
+      const table = useDataTable<Row>({
+        columns: [
+          {
+            id: "value",
+            label: "Date",
+            type: "date",
+            typeOptions: { locale: "en-US" },
+            edit: { canEdit: (row) => row.id === "1", onCommit: vi.fn() },
+          },
+        ],
+        data: {
+          rows: [
+            { id: "1", value: "2026-10-09T00:00:00Z" },
+            { id: "2", value: "2026-10-09T00:00:00Z" },
+            { id: "3", value: "2026-10-09" },
+          ],
+        },
+      });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Table />
+        </DataTable.Root>
+      );
+    }
+    render(<Harness />, { wrapper: createTimeZoneWrapper("America/New_York") });
+    expect(screen.getAllByText("Oct 8, 2026")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Date, Oct 8, 2026" })).toBeDefined();
+    expect(screen.getByText("Oct 9, 2026")).toBeDefined();
+  });
+
+  it("reuses date formatters on row updates and refreshes them for column or timezone changes", () => {
+    const DateTimeFormat = Intl.DateTimeFormat;
+    const formatterSpy = vi
+      .spyOn(Intl, "DateTimeFormat")
+      .mockImplementation(function (locales, options) {
+        return new DateTimeFormat(locales, options);
+      });
+    type Row = { id: string; value: string };
+    const columns: Column<Row>[] = [
+      { id: "value", type: "date", typeOptions: { locale: "en-US" } },
+      {
+        id: "custom",
+        type: "date",
+        typeOptions: { locale: "not a locale" },
+        render: () => "Custom renderer",
+      },
+    ];
+    const rows = [
+      { id: "1", value: "2026-10-09" },
+      { id: "2", value: "2026-10-09T00:00:00Z" },
+    ];
+    function Harness({
+      rows: currentRows,
+      columns: currentColumns,
+      timeZone,
+    }: {
+      rows: Row[];
+      columns: Column<Row>[];
+      timeZone: string;
+    }) {
+      const table = useDataTable<Row>({ columns: currentColumns, data: { rows: currentRows } });
+      return (
+        <AppShellConfigContext.Provider
+          value={{ configurations: buildConfigurations({ modules: [], locale: "en", timeZone }) }}
+        >
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        </AppShellConfigContext.Provider>
+      );
+    }
+    const formatterCount = () =>
+      formatterSpy.mock.calls.filter(
+        ([, options]) => options?.month === "short" || options?.month === "long",
+      ).length;
+    const { rerender } = render(
+      <Harness rows={rows} columns={columns} timeZone="America/New_York" />,
+    );
+    expect(screen.getByText("Oct 8, 2026")).toBeDefined();
+    const initialCount = formatterCount();
+    expect(initialCount).toBeGreaterThan(0);
+
+    const nextRows = [...rows, { id: "3", value: "2026-10-10" }];
+    rerender(<Harness rows={nextRows} columns={columns} timeZone="America/New_York" />);
+    expect(screen.getByText("Oct 10, 2026")).toBeDefined();
+    expect(formatterCount()).toBe(initialCount);
+
+    rerender(<Harness rows={nextRows} columns={columns} timeZone="Asia/Tokyo" />);
+    expect(screen.queryByText("Oct 8, 2026")).toBeNull();
+    const zonedCount = formatterCount();
+    expect(zonedCount).toBeGreaterThan(initialCount);
+
+    const nextColumns: Column<Row>[] = [
+      { id: "value", type: "date", typeOptions: { locale: "de-DE", dateFormat: "long" } },
+    ];
+    rerender(<Harness rows={nextRows} columns={nextColumns} timeZone="Asia/Tokyo" />);
+    expect(screen.getAllByText("9. Oktober 2026")).toHaveLength(2);
+    expect(formatterCount()).toBeGreaterThan(zonedCount);
   });
 
   it("renders loading state", () => {
@@ -481,17 +624,98 @@ describe("DataTable", () => {
       expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice");
     });
 
-    it("normalizes local date filters from Date values", async () => {
+    it.each([
+      ["2026-10-09T01:00:00Z", "Oct 8, 2026, 6:00 PM", "2026-10-09T01:00:00.000Z"],
+      ["2026-10-09T10:00:00+09:00", "Oct 8, 2026, 6:00 PM", "2026-10-09T01:00:00.000Z"],
+      ["2026-10-09T00:00:00", "Oct 9, 2026, 12:00 AM", "2026-10-09T07:00:00.000Z"],
+      ["2026-10-09T00:00", "Oct 9, 2026, 12:00 AM", "2026-10-09T07:00:00.000Z"],
+      [new Date("2026-10-09T01:00:00Z"), "Oct 8, 2026, 6:00 PM", "2026-10-09T01:00:00.000Z"],
+      [Date.parse("2026-10-09T01:00:00Z"), "Oct 8, 2026, 6:00 PM", "2026-10-09T01:00:00.000Z"],
+    ])(
+      "uses the AppShell timezone for the cell and datetime filter from %s",
+      async (value, displayed, instant) => {
+        stubBrowserTimeZone();
+        const user = userEvent.setup();
+        const control = makeControl();
+        type Row = { id: string; createdAt: string | Date | number };
+
+        function Harness() {
+          const table = useDataTable<Row>({
+            columns: [
+              {
+                id: "createdAt",
+                label: "Created At",
+                type: "date",
+                accessor: (row) => row.createdAt,
+                typeOptions: { locale: "en-US", dateFormat: "datetime" },
+                filter: { type: "datetime", field: "createdAt", operators: ["eq"] },
+              },
+            ],
+            data: { rows: [{ id: "1", createdAt: value }] },
+            control,
+          });
+          return (
+            <DataTable.Root value={table}>
+              <DataTable.Table />
+            </DataTable.Root>
+          );
+        }
+
+        const { container } = render(<Harness />, {
+          wrapper: createTimeZoneWrapper("America/Los_Angeles"),
+        });
+        expect(cellByText(container, displayed)).toBeDefined();
+        openCellContextMenu(container, displayed);
+        hoverMenuItem("Add filter");
+        await user.click(await screen.findByRole("menuitem", { name: "is" }));
+        expect(control.addFilter).toHaveBeenCalledWith("createdAt", "eq", instant);
+      },
+    );
+
+    it.each(["America/Los_Angeles", "Asia/Tokyo"])(
+      "preserves date-only cells and filters in %s",
+      async (timeZone) => {
+        stubBrowserTimeZone();
+        const user = userEvent.setup();
+        const control = makeControl();
+        type Row = { id: string; placedOn: string };
+
+        function Harness() {
+          const table = useDataTable<Row>({
+            columns: [
+              {
+                id: "placedOn",
+                label: "Placed On",
+                type: "date",
+                accessor: (row) => row.placedOn,
+                typeOptions: { locale: "en-US" },
+                filter: { type: "date", field: "placedOn", operators: ["eq"] },
+              },
+            ],
+            data: { rows: [{ id: "1", placedOn: "2026-10-09" }] },
+            control,
+          });
+          return (
+            <DataTable.Root value={table}>
+              <DataTable.Table />
+            </DataTable.Root>
+          );
+        }
+
+        const { container } = render(<Harness />, { wrapper: createTimeZoneWrapper(timeZone) });
+        expect(cellByText(container, "Oct 9, 2026")).toBeDefined();
+        openCellContextMenu(container, "Oct 9, 2026");
+        hoverMenuItem("Add filter");
+        await user.click(await screen.findByRole("menuitem", { name: "exact date" }));
+        expect(control.addFilter).toHaveBeenCalledWith("placedOn", "eq", "2026-10-09");
+      },
+    );
+
+    it("normalizes date filters from Date values in the AppShell timezone", async () => {
+      stubBrowserTimeZone();
       const user = userEvent.setup();
       const control = makeControl();
-      const value = mockDate({
-        year: 2026,
-        month: 9,
-        day: 8,
-        hours: 0,
-        minutes: 0,
-        iso: "2026-09-07T15:00:00.000Z",
-      });
+      const value = new Date("2026-09-07T15:00:00.000Z");
       type Row = { id: string; label: string };
 
       function Harness() {
@@ -516,7 +740,7 @@ describe("DataTable", () => {
         );
       }
 
-      const { container } = render(<Harness />, { wrapper });
+      const { container } = render(<Harness />, { wrapper: createTimeZoneWrapper("Asia/Tokyo") });
 
       openCellContextMenu(container, "Sep 8, 2026");
       hoverMenuItem("Add filter");
@@ -687,33 +911,7 @@ describe("DataTable", () => {
         sortStates: [{ field: "name", direction: "Asc" }],
       });
 
-      function Harness() {
-        const table = useDataTable<TestRow>({
-          columns: [
-            {
-              label: "Name",
-              sort: { field: "name", type: "string" },
-              header: (ctx) =>
-                ctx.sortable ? (
-                  <button type="button" onClick={ctx.activateSort}>
-                    {ctx.label} {ctx.sortDirection}
-                  </button>
-                ) : null,
-              render: (row) => row.name,
-            },
-          ],
-          data: testData,
-          control,
-        });
-
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-
-      render(<Harness />, { wrapper });
+      render(<SortableHeaderHarness control={control} />, { wrapper });
 
       fireEvent.click(screen.getByRole("button", { name: "Name Asc" }));
 
@@ -1754,59 +1952,43 @@ describe("DataTable", () => {
       // Every built-in affordance fires exactly one toggle per commit, so this
       // is only reachable through the public API.
       const onSelectionChange = vi.fn();
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           onSelectionChange,
-        });
-        api = table;
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-      render(<Harness />, { wrapper });
+        }),
+      );
 
       act(() => {
-        api.toggleRowSelection?.(testData.rows[0]);
-        api.toggleRowSelection?.(testData.rows[1]);
+        result.current.toggleRowSelection?.(testData.rows[0]);
+        result.current.toggleRowSelection?.(testData.rows[1]);
       });
 
-      expect(api.selectedIds).toEqual(["1", "2"]);
+      expect(result.current.selectedIds).toEqual(["1", "2"]);
       expect(onSelectionChange).toHaveBeenLastCalledWith(["1", "2"]);
     });
 
     it("applies clearSelection before a toggle in the same commit", () => {
       const onSelectionChange = vi.fn();
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           onSelectionChange,
-        });
-        api = table;
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-      render(<Harness />, { wrapper });
+        }),
+      );
 
-      act(() => api.selectAllRows?.());
-      expect(api.selectedIds).toEqual(["1", "2"]);
+      act(() => result.current.selectAllRows?.());
+      expect(result.current.selectedIds).toEqual(["1", "2"]);
 
       // "replace the selection with just this row"
       act(() => {
-        api.clearSelection?.();
-        api.toggleRowSelection?.(testData.rows[1]);
+        result.current.clearSelection?.();
+        result.current.toggleRowSelection?.(testData.rows[1]);
       });
 
-      expect(api.selectedIds).toEqual(["2"]);
+      expect(result.current.selectedIds).toEqual(["2"]);
       expect(onSelectionChange).toHaveBeenLastCalledWith(["2"]);
     });
 
@@ -1826,6 +2008,110 @@ describe("DataTable", () => {
       expect(
         container.querySelectorAll('[data-slot="data-table-row"][data-state="selected"]'),
       ).toHaveLength(1);
+    });
+
+    it("the header checkbox adds and removes only the current page's rows", () => {
+      const onSelectionChange = vi.fn();
+      const pageB: DataTableData<TestRow> = {
+        rows: [
+          { id: "3", name: "Carol", status: "Active" },
+          { id: "4", name: "Dave", status: "Inactive" },
+        ],
+      };
+      const { rerender } = render(<TestDataTable onSelectionChange={onSelectionChange} />, {
+        wrapper,
+      });
+
+      // Pick Alice on the first page, then move to the second.
+      fireEvent.click(screen.getAllByRole("checkbox")[1]);
+      rerender(<TestDataTable data={pageB} onSelectionChange={onSelectionChange} />);
+
+      // Checking the header adds this page without dropping Alice…
+      fireEvent.click(screen.getByLabelText("Select all rows"));
+      expect(onSelectionChange).toHaveBeenLastCalledWith(["1", "3", "4"]);
+
+      // …and unchecking it removes only this page's rows.
+      fireEvent.click(screen.getByLabelText("Select all rows"));
+      expect(onSelectionChange).toHaveBeenLastCalledWith(["1"]);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Row actions
+  // -------------------------------------------------------------------------
+  describe("row actions", () => {
+    function TestRowActions({ rowActions }: { rowActions: RowAction<TestRow>[] }) {
+      const table = useDataTable<TestRow>({ columns: testColumns, data: testData, rowActions });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Table />
+        </DataTable.Root>
+      );
+    }
+
+    it("disables an action for rows where canApply returns false", async () => {
+      const onClick = vi.fn();
+      render(
+        <TestRowActions
+          rowActions={[
+            { id: "activate", label: "Activate", canApply: (r) => r.status !== "Active", onClick },
+          ]}
+        />,
+        { wrapper },
+      );
+
+      // Alice is Active → disabled; Bob is Inactive → enabled.
+      expect((await activateItemFor(0)).getAttribute("aria-disabled")).toBe("true");
+      cleanup();
+      render(
+        <TestRowActions
+          rowActions={[
+            { id: "activate", label: "Activate", canApply: (r) => r.status !== "Active", onClick },
+          ]}
+        />,
+        { wrapper },
+      );
+      const bobItem = await activateItemFor(1);
+      expect(bobItem.getAttribute("aria-disabled")).not.toBe("true");
+      fireEvent.click(bobItem);
+      expect(onClick).toHaveBeenCalledWith(testData.rows[1]);
+    });
+
+    it("still honours the deprecated isDisabled", async () => {
+      render(
+        <TestRowActions
+          rowActions={[
+            {
+              id: "activate",
+              label: "Activate",
+              isDisabled: (r) => r.status === "Active",
+              onClick: vi.fn(),
+            },
+          ]}
+        />,
+        { wrapper },
+      );
+
+      expect((await activateItemFor(0)).getAttribute("aria-disabled")).toBe("true");
+    });
+
+    it("shares one action definition with selectionActions", () => {
+      // Type-level check that the shared base spreads into both arrays.
+      const activate = {
+        id: "activate",
+        label: "Activate",
+        canApply: (r: TestRow) => r.status !== "Active",
+      };
+      const options: UseDataTableOptions<TestRow> = {
+        columns: testColumns,
+        data: testData,
+        rowActions: [{ ...activate, onClick: (row) => void row }],
+        selectionActions: [{ ...activate, onClick: (rows) => void rows }],
+      };
+      expectTypeOf(options.rowActions![0].canApply).toEqualTypeOf<
+        ((row: TestRow) => boolean) | undefined
+      >();
+      expect(options.selectionActions).toHaveLength(1);
     });
   });
 
@@ -2475,59 +2761,43 @@ describe("DataTable", () => {
 
     it("composes several expansion toggles dispatched in one commit", () => {
       const onChange = vi.fn();
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           rowExpansion: { render: detail, onChange },
-        });
-        api = table;
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-      render(<Harness />, { wrapper });
+        }),
+      );
 
       act(() => {
-        api.toggleRowExpansion?.(testData.rows[0]);
-        api.toggleRowExpansion?.(testData.rows[1]);
+        result.current.toggleRowExpansion?.(testData.rows[0]);
+        result.current.toggleRowExpansion?.(testData.rows[1]);
       });
 
-      expect(api.expandedIds).toEqual(["1", "2"]);
+      expect(result.current.expandedIds).toEqual(["1", "2"]);
       expect(onChange).toHaveBeenLastCalledWith(["1", "2"]);
     });
 
     it("applies collapseAllRows before a toggle in the same commit", () => {
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           rowExpansion: { render: detail },
-        });
-        api = table;
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-      render(<Harness />, { wrapper });
+        }),
+      );
 
       act(() => {
-        api.toggleRowExpansion?.(testData.rows[0]);
-        api.toggleRowExpansion?.(testData.rows[1]);
+        result.current.toggleRowExpansion?.(testData.rows[0]);
+        result.current.toggleRowExpansion?.(testData.rows[1]);
       });
 
       act(() => {
-        api.collapseAllRows?.();
-        api.toggleRowExpansion?.(testData.rows[1]);
+        result.current.collapseAllRows?.();
+        result.current.toggleRowExpansion?.(testData.rows[1]);
       });
 
-      expect(api.expandedIds).toEqual(["2"]);
+      expect(result.current.expandedIds).toEqual(["2"]);
     });
 
     it("keeps toggleRowExpansion stable across an expansion", () => {

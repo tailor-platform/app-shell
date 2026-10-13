@@ -364,10 +364,10 @@ function ReviewStep({
         <span>Total: {rawRows.length} rows</span>
         {errorCount > 0 && <span className="astw:text-destructive">Errors: {errorCount}</span>}
         {warningCount > 0 && (
-          <span className="astw:text-status-attention">Warnings: {warningCount}</span>
+          <span className="astw:text-warning-text">Warnings: {warningCount}</span>
         )}
         {validated && errorCount === 0 && !validating && (
-          <span className="astw:inline-flex astw:items-center astw:gap-1 astw:text-status-completed">
+          <span className="astw:inline-flex astw:items-center astw:gap-1 astw:text-success-text">
             <CheckCircle2Icon className="astw:size-3" />
             {t("reviewNoErrors")}
           </span>
@@ -417,7 +417,7 @@ function ReviewStep({
                       className={cn(
                         "astw:px-1 astw:py-1",
                         issue?.level === "error" && "astw:bg-destructive/10",
-                        issue?.level === "warning" && "astw:bg-status-attention/10",
+                        issue?.level === "warning" && "astw:bg-warning-surface",
                       )}
                     >
                       <div className="astw:flex astw:flex-col astw:gap-0.5">
@@ -426,7 +426,7 @@ function ReviewStep({
                           className={cn(
                             "astw:w-full astw:rounded astw:border astw:px-2 astw:py-1 astw:text-sm astw:bg-transparent",
                             issue?.level === "error" && "astw:border-destructive",
-                            issue?.level === "warning" && "astw:border-status-attention",
+                            issue?.level === "warning" && "astw:border-warning-solid",
                             !issue && "astw:border-transparent",
                           )}
                           value={displayValue}
@@ -438,7 +438,7 @@ function ReviewStep({
                               "astw:text-xs astw:px-2",
                               issue.level === "error"
                                 ? "astw:text-destructive"
-                                : "astw:text-status-attention",
+                                : "astw:text-warning-text",
                             )}
                           >
                             {issue.message}

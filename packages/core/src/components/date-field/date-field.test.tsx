@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import {
   CalendarDate,
   parseDate,
+  parseZonedDateTime,
   today,
   getLocalTimeZone,
   startOfWeek,
@@ -33,10 +34,36 @@ function getCalendarCells() {
   return screen.getAllByRole("button", { hidden: true }).filter((c) => c.closest('[role="grid"]'));
 }
 
+/** Accessible name of the focused element — the roving-focus day cell once the popover opens. */
+const focusedLabel = () => document.activeElement?.getAttribute("aria-label") ?? "";
+
 function getEnabledCalendarCells() {
   return getCalendarCells().filter(
     (c) => !c.hasAttribute("data-disabled") && !c.hasAttribute("data-outside-month"),
   );
+}
+
+function ControlledField({ onChange }: { onChange: (v: unknown) => void }) {
+  const [v, setV] = useState<CalendarDate | null>(null);
+  return (
+    <>
+      <DateField
+        aria-label="Date"
+        value={v}
+        onChange={(nv) => {
+          setV(nv as CalendarDate | null);
+          onChange(nv);
+        }}
+      />
+      <button type="button">elsewhere</button>
+    </>
+  );
+}
+
+async function lastEmit(onChange: ReturnType<typeof vi.fn>, expected: string) {
+  await waitFor(() => {
+    expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe(expected);
+  });
 }
 
 // ─── Snapshots ──────────────────────────────────────────────────────────────
@@ -293,23 +320,6 @@ describe("DateField", () => {
   // A controlled field round-trips every emit through the parent's `value`, so
   // these guard the clamp against external-sync interference (the uncontrolled
   // cases above don't exercise that path).
-  function ControlledField({ onChange }: { onChange: (v: unknown) => void }) {
-    const [v, setV] = useState<CalendarDate | null>(null);
-    return (
-      <>
-        <DateField
-          aria-label="Date"
-          value={v}
-          onChange={(nv) => {
-            setV(nv as CalendarDate | null);
-            onChange(nv);
-          }}
-        />
-        <button type="button">elsewhere</button>
-      </>
-    );
-  }
-
   it("clamps an impossible day on blur even when controlled (29/02/2026)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -489,12 +499,6 @@ describe("DateField", () => {
 // derive from that same basis. Locale here is "en" (weeks start Sunday).
 
 describe("DateField keyboard shortcuts", () => {
-  async function lastEmit(onChange: ReturnType<typeof vi.fn>, expected: string) {
-    await waitFor(() => {
-      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe(expected);
-    });
-  }
-
   it("'t' jumps to today (case-insensitive)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -1094,6 +1098,23 @@ describe("DatePicker", () => {
 
 // ─── Keyboard: popover focus ─────────────────────────────────────────────────
 
+function ReopenControlledDatePicker() {
+  const [value, setValue] = useState<CalendarDate | null>(new CalendarDate(2025, 6, 15));
+  return (
+    <>
+      <DatePicker aria-label="Date" value={value} onChange={setValue} />
+      <button type="button" onClick={() => setValue(new CalendarDate(2024, 2, 10))}>
+        set
+      </button>
+      <button type="button" onClick={() => setValue(null)}>
+        clear
+      </button>
+    </>
+  );
+}
+
+const calendarTrigger = () => screen.getByRole("button", { name: "Open calendar" });
+
 describe("DatePicker keyboard", () => {
   it("moves focus into the calendar grid when the popover opens", async () => {
     const user = userEvent.setup();
@@ -1114,6 +1135,52 @@ describe("DatePicker keyboard", () => {
     await waitFor(() => {
       expect(screen.getByRole("dialog")).toBeDefined();
     });
+  });
+
+  // Regression: the calendar's roving focus was seeded once at mount and never
+  // followed the field, so a typed date opened the popover on today's month.
+  it("opens the calendar on a date typed into an empty field (Alt+↓)", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<DatePicker aria-label="Date" onChange={onChange} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "month" }));
+    await user.keyboard("12202025");
+    await waitFor(() => expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-12-20"));
+
+    await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
+    await waitFor(() => {
+      expect(document.activeElement?.getAttribute("aria-label")).toMatch(/December 20, 2025/);
+    });
+
+    await user.keyboard("{ArrowRight}{Enter}");
+    await waitFor(() => expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe("2025-12-21"));
+  });
+
+  it("re-lands the calendar on the current value each time it opens", async () => {
+    const user = userEvent.setup();
+    render(<ReopenControlledDatePicker />);
+    const trigger = calendarTrigger;
+
+    // Page away, dismiss, change the value externally — reopening follows the value.
+    await user.click(trigger());
+    await waitFor(() => expect(focusedLabel()).toMatch(/June 15, 2025/));
+    await user.keyboard("{PageDown}{PageDown}{Escape}");
+    await user.click(screen.getByRole("button", { name: "set" }));
+    await user.click(trigger());
+    await waitFor(() => expect(focusedLabel()).toMatch(/February 10, 2024/));
+
+    // Cleared → falls back to today, not the last-viewed month.
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "clear" }));
+    await user.click(trigger());
+    const now = today(getLocalTimeZone()).toDate(getLocalTimeZone());
+    const todayLabel = now.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    await waitFor(() => expect(focusedLabel()).toContain(todayLabel));
   });
 
   it("does not blur when focus moves from the field into the popup", async () => {
@@ -1295,5 +1362,159 @@ describe("RHF integration", () => {
       expect(onSubmit).toHaveBeenCalledTimes(1);
       expect(onSubmit.mock.calls[0][0].deliveryDate).not.toBeNull();
     });
+  });
+});
+
+const segText = (name: string) =>
+  screen.getByRole("spinbutton", { name }).getAttribute("aria-valuetext");
+
+describe("12-hour time display", () => {
+  const TZ = "Asia/Tokyo";
+  const zoned = (iso: string) => parseZonedDateTime(`${iso}[${TZ}]`);
+
+  it("shows a PM value as 06 PM, not 18 AM", () => {
+    render(
+      <DatePicker
+        aria-label="Deadline"
+        granularity="minute"
+        hourCycle={12}
+        locale="en-US"
+        timeZone={TZ}
+        defaultValue={zoned("2026-10-12T18:00")}
+      />,
+    );
+    expect(segText("hour")).toBe("06");
+    expect(segText("AM/PM")).toBe("PM");
+  });
+
+  it.each([
+    ["2026-10-12T00:30", "12", "AM"],
+    ["2026-10-12T12:30", "12", "PM"],
+  ])("shows %s as %s %s", (iso, hour, period) => {
+    render(
+      <DatePicker
+        aria-label="Deadline"
+        granularity="minute"
+        hourCycle={12}
+        locale="en-US"
+        timeZone={TZ}
+        defaultValue={zoned(iso)}
+      />,
+    );
+    expect(segText("hour")).toBe(hour);
+    expect(segText("AM/PM")).toBe(period);
+  });
+
+  it.each(["2026-10-12T18:00", "2026-10-12T00:00", "2026-10-12T12:00"])(
+    "keeps the hour of %s when the minute is edited",
+    async (iso) => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      render(
+        <DatePicker
+          aria-label="Deadline"
+          granularity="minute"
+          hourCycle={12}
+          locale="en-US"
+          timeZone={TZ}
+          defaultValue={zoned(iso)}
+          onChange={onChange}
+        />,
+      );
+      await user.click(screen.getByRole("spinbutton", { name: "minute" }));
+      await user.keyboard("{ArrowUp}");
+      expect(onChange.mock.lastCall?.[0]?.toString()).toBe(
+        zoned(iso).add({ minutes: 1 }).toString(),
+      );
+    },
+  );
+
+  it("shows an externally updated PM value correctly", () => {
+    const { rerender } = render(
+      <DatePicker
+        aria-label="Deadline"
+        granularity="minute"
+        hourCycle={12}
+        locale="en-US"
+        timeZone={TZ}
+        value={zoned("2026-10-12T09:00")}
+      />,
+    );
+    expect(segText("AM/PM")).toBe("AM");
+    rerender(
+      <DatePicker
+        aria-label="Deadline"
+        granularity="minute"
+        hourCycle={12}
+        locale="en-US"
+        timeZone={TZ}
+        value={zoned("2026-10-12T21:15")}
+      />,
+    );
+    expect(segText("hour")).toBe("09");
+    expect(segText("AM/PM")).toBe("PM");
+  });
+
+  describe("when hourCycle changes on a mounted field", () => {
+    const props = (onChange = vi.fn()) => ({
+      "aria-label": "Deadline",
+      granularity: "minute" as const,
+      locale: "en-US",
+      timeZone: TZ,
+      defaultValue: zoned("2026-10-12T18:00"),
+      onChange,
+    });
+
+    it("re-encodes 12 → 24 and keeps the value", async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      const { rerender } = render(<DatePicker {...props(onChange)} hourCycle={12} />);
+      rerender(<DatePicker {...props(onChange)} hourCycle={24} />);
+      expect(segText("hour")).toBe("18");
+      expect(screen.queryByRole("spinbutton", { name: "AM/PM" })).toBeNull();
+      expect(onChange).not.toHaveBeenCalled();
+      await user.click(screen.getByRole("spinbutton", { name: "minute" }));
+      await user.keyboard("{ArrowUp}");
+      expect(onChange.mock.lastCall?.[0]?.toString()).toBe(zoned("2026-10-12T18:01").toString());
+    });
+
+    it("re-encodes 24 → 12 and keeps the value", async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn();
+      const { rerender } = render(<DatePicker {...props(onChange)} hourCycle={24} />);
+      rerender(<DatePicker {...props(onChange)} hourCycle={12} />);
+      expect(segText("hour")).toBe("06");
+      expect(segText("AM/PM")).toBe("PM");
+      expect(onChange).not.toHaveBeenCalled();
+      await user.click(screen.getByRole("spinbutton", { name: "minute" }));
+      await user.keyboard("{ArrowUp}");
+      expect(onChange.mock.lastCall?.[0]?.toString()).toBe(zoned("2026-10-12T18:01").toString());
+    });
+
+    it("re-encodes a half-typed hour", async () => {
+      const user = userEvent.setup();
+      const base = { "aria-label": "Deadline", granularity: "minute" as const, locale: "en-US" };
+      const { rerender } = render(<DateField {...base} hourCycle={24} />);
+      await user.click(screen.getByRole("spinbutton", { name: "hour" }));
+      await user.keyboard("21");
+      rerender(<DateField {...base} hourCycle={12} />);
+      expect(segText("hour")).toBe("09");
+      expect(segText("AM/PM")).toBe("PM");
+    });
+  });
+
+  it("leaves 24-hour display unchanged", () => {
+    render(
+      <DatePicker
+        aria-label="Deadline"
+        granularity="minute"
+        hourCycle={24}
+        locale="en-US"
+        timeZone={TZ}
+        defaultValue={zoned("2026-10-12T18:00")}
+      />,
+    );
+    expect(segText("hour")).toBe("18");
+    expect(screen.queryByRole("spinbutton", { name: "AM/PM" })).toBeNull();
   });
 });

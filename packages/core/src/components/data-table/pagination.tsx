@@ -1,8 +1,10 @@
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Select } from "@/components/select";
 import { useDataTableContext } from "./data-table-context";
 import { useDataTableT } from "./i18n";
+import { isSelectionBarOpen } from "./selection-bar";
 
 export interface DataTablePaginationProps {
   /**
@@ -14,6 +16,7 @@ export interface DataTablePaginationProps {
 
 /** Use `DataTable.Pagination` instead of calling this directly. */
 export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProps = {}) {
+  const ctx = useDataTableContext();
   const {
     pageInfo,
     total,
@@ -29,13 +32,16 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
     setPageSize,
     selectedIds,
     toggleRowSelection,
-  } = useDataTableContext();
+  } = ctx;
   const t = useDataTableT();
 
   const selectionEnabled = toggleRowSelection !== undefined;
   const selectedCount = selectedIds.length;
+  // While the footer shows the bulk-action bar, the bar owns the count.
+  const barOpen = isSelectionBarOpen(ctx);
 
   const rowInfoText = (() => {
+    if (barOpen) return null;
     if (selectionEnabled && selectedCount > 0 && total !== null) {
       return t("paginationSelectedOfTotal", { selected: selectedCount, total });
     }
@@ -49,7 +55,14 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
   })();
 
   return (
-    <div className="astw:flex astw:w-full astw:items-center astw:justify-between astw:gap-2">
+    // Beside the bar, flex-1 instead of w-full lets both share one line and
+    // wraps the controls onto a line of their own only when they don't fit.
+    <div
+      className={cn(
+        "astw:flex astw:items-center astw:justify-between astw:gap-2",
+        barOpen ? "astw:flex-1" : "astw:w-full",
+      )}
+    >
       {rowInfoText && <div className="astw:text-sm astw:text-muted-foreground">{rowInfoText}</div>}
       <div className="astw:flex astw:items-center astw:justify-end astw:gap-2 astw:ml-auto">
         {pageSizeOptions && pageSizeOptions.length > 0 && (

@@ -381,6 +381,11 @@ The title styling is controlled by AppShell's theme. `SidebarGroup` takes no `cl
 - You want to organize a large navigation menu
 - Users need to focus on specific sections
 
+**Use [SidebarSection](./sidebar-section.md) when:**
+
+- You only need a heading above items that should always stay visible
+- The items should keep top-level styling instead of an indented submenu
+
 **Use SidebarItem directly when:**
 
 - You have standalone top-level navigation
@@ -453,6 +458,7 @@ Without `to`, only the chevron is clickable (for expand/collapse).
 ## Related Components
 
 - [SidebarItem](./sidebar-item.md) - Individual navigation items
+- [SidebarSection](./sidebar-section.md) - Static headings for flat items
 - [DefaultSidebar](./sidebar-layout.md) - Container for groups
 - [WithGuard](./with-guard.md) - Conditional rendering
 

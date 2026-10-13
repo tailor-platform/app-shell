@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
+import { parseDate } from "@internationalized/date";
 import { Link } from "react-router";
 import { BadgeList, toValueArray } from "@/components/badge-list";
 import type { SelectOption } from "@/types/collection";
-import { currencyFractionDigits, optionLabel, toLocalDate } from "./cell-edit";
+import { currencyFractionDigits, optionLabel } from "./cell-edit";
+import { normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type {
   BadgeCellOptions,
   Column,
@@ -170,13 +172,41 @@ export function formatColumnNumber<TRow extends Record<string, unknown>>(
   return String(value);
 }
 
-function renderDate(value: unknown, options: DateCellOptions | undefined): ReactNode {
-  if (isEmpty(value)) return PLACEHOLDER;
-  const date = toLocalDate(value);
-  if (!date) return PLACEHOLDER;
-  const format = options?.dateFormat ?? "short";
-  const formatOptions = resolveDateFormatOptions(format);
-  return new Intl.DateTimeFormat(options?.locale, formatOptions).format(date);
+function createDateRenderer(
+  options: DateCellOptions | undefined,
+  timeZone: string,
+): (value: unknown) => ReactNode {
+  const formatOptions = resolveDateFormatOptions(options?.dateFormat ?? "short");
+  let dateOnlyFormatter: Intl.DateTimeFormat | undefined;
+  let datetimeFormatter: Intl.DateTimeFormat | undefined;
+
+  return (value) => {
+    if (isEmpty(value)) return PLACEHOLDER;
+    const dateOnly = typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.trim());
+    let date: Date;
+    if (dateOnly) {
+      // Calendar dates have no instant, even when a timezone skips an entire day.
+      try {
+        date = parseDate(value.trim()).toDate("UTC");
+      } catch {
+        return PLACEHOLDER;
+      }
+    } else {
+      const normalized = normalizeTemporalFilterValue("datetime", value, timeZone);
+      if (!normalized) return PLACEHOLDER;
+      date = new Date(normalized);
+    }
+    const formatter = dateOnly
+      ? (dateOnlyFormatter ??= new Intl.DateTimeFormat(options?.locale, {
+          ...formatOptions,
+          timeZone: "UTC",
+        }))
+      : (datetimeFormatter ??= new Intl.DateTimeFormat(options?.locale, {
+          ...formatOptions,
+          timeZone,
+        }));
+    return formatter.format(date);
+  };
 }
 
 function renderBadge(
@@ -215,16 +245,20 @@ function renderLink<TRow extends Record<string, unknown>>(
 }
 
 /**
- * Render a cell using the column's built-in `type`. Callers should prefer
- * `col.render` when it is defined.
+ * Create a column renderer that reuses date formatters across rows.
+ * Callers should prefer `col.render` when it is defined.
  *
  * @internal
  */
-export function renderTypedCell<TRow extends Record<string, unknown>>(
-  row: TRow,
+export function createTypedCellRenderer<TRow extends Record<string, unknown>>(
   col: Column<TRow>,
-): ReactNode {
-  return renderTypedValue(row, col, getCellValue(row, col));
+  timeZone: string,
+): (row: TRow) => ReactNode {
+  if (col.type === "date") {
+    const renderDate = createDateRenderer(col.typeOptions, timeZone);
+    return (row) => renderDate(getCellValue(row, col));
+  }
+  return (row) => renderTypedValue(row, col, getCellValue(row, col));
 }
 
 /**
@@ -239,7 +273,7 @@ export function renderTypedValue<TRow extends Record<string, unknown>>(
   row: TRow,
   col: Column<TRow>,
   value: unknown,
-  options?: { linkAsText?: boolean },
+  options?: { linkAsText?: boolean; timeZone?: string },
 ): ReactNode {
   switch (col.type) {
     case "number":
@@ -247,7 +281,10 @@ export function renderTypedValue<TRow extends Record<string, unknown>>(
     case "money":
       return renderMoney(value, row, col.typeOptions, col.edit?.maxDecimals);
     case "date":
-      return renderDate(value, col.typeOptions);
+      return createDateRenderer(
+        col.typeOptions,
+        options?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+      )(value);
     case "badge":
       return renderBadge(value, col.typeOptions, col.edit?.options);
     case "link": {

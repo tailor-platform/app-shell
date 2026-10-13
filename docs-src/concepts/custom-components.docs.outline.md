@@ -44,7 +44,7 @@ export function StepIndicator({ steps, current }: Props) {
             flex items-center gap-2 rounded-md px-3 py-2
             bg-muted text-sm text-muted-foreground
             data-[active]:bg-primary data-[active]:text-primary-foreground
-            data-[completed]:text-status-completed
+            data-[completed]:text-success-text
           "
         >
           {i < current && <Check className="size-4" />}

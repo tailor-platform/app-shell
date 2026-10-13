@@ -50,11 +50,34 @@ function Header({ className, title, description, children, ...props }: HeaderPro
 }
 Header.displayName = "Card.Header";
 
-function Content({ className, ...props }: React.ComponentProps<"div">) {
+type ContentProps = React.ComponentProps<"div"> & {
+  /**
+   * `"none"` renders the content edge-to-edge, for a `Table`, `DataTable` or
+   * divided list that should meet the card's border.
+   * @default "default"
+   */
+  padding?: "default" | "none";
+};
+
+// Flush content carries the card's corner radius (no overflow of its own, so a
+// consumer's `overflow-y-auto` still works) and hands it to a direct table
+// child, whose own overflow clipping keeps row backgrounds inside the corners.
+// A nested DataTable drops its border so it does not draw a box in the box.
+const flushClassName = cn(
+  "astw:first:rounded-t-[inherit] astw:last:rounded-b-[inherit]",
+  "astw:[&>[data-slot=table-container]]:rounded-[inherit]",
+  "astw:[&>[data-slot=data-table]]:rounded-[inherit] astw:[&>[data-slot=data-table]]:border-0",
+);
+
+function Content({ className, padding = "default", ...props }: ContentProps) {
   return (
     <div
       data-slot="card-content"
-      className={cn("astw:px-6 astw:pb-6 astw:first:pt-6", className)}
+      data-padding={padding}
+      className={cn(
+        padding === "none" ? flushClassName : "astw:px-6 astw:pb-6 astw:first:pt-6",
+        className,
+      )}
       {...props}
     />
   );

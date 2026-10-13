@@ -187,7 +187,7 @@ type CommonPageResource = {
   meta: {
     title: LocalizedString;
     icon?: ReactNode;
-    breadcrumbTitle?: string | ((segment: string) => string);
+    breadcrumbTitle?: string | ((segment: string) => LocalizedString);
   };
 };
 
@@ -240,9 +240,11 @@ type ResourceMeta = {
   icon?: ReactNode;
 
   /**
-   * Custom breadcrumb segment title for this page. Can be a string or a function.
+   * Custom breadcrumb segment title. Pass `labels.t("key")` directly for localization.
+   * Other callbacks receive the URL segment and may return a LocalizedString
+   * (e.g. `(segment) => labels.t("order", { id: segment })`), resolved using the current locale.
    */
-  breadcrumbTitle?: string | ((segment: string) => string);
+  breadcrumbTitle?: string | ((segment: string) => LocalizedString);
 };
 
 type CommonProps = {

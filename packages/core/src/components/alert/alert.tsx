@@ -14,16 +14,16 @@ const alertVariants = cva(
   "astw:relative astw:w-full astw:rounded-lg astw:border astw:px-4 astw:py-3 astw:text-sm astw:grid astw:grid-cols-[calc(var(--spacing)*4.5)_1fr_auto] astw:gap-x-3 astw:gap-y-0.5 astw:items-start astw:[&>svg]:size-[17.5px] astw:[&>svg]:self-center astw:[&>svg]:shrink-0 astw:[&>svg]:text-current",
   {
     variants: {
+      /** Visual style and automatic icon */
       variant: {
+        // Each variant reads the semantic colour roles of its intent. The
+        // description inherits the title colour; only neutral mutes it.
         neutral:
-          "astw:bg-alert-neutral-background astw:text-alert-neutral-foreground astw:border-alert-neutral-border astw:*:data-[slot=alert-description]:text-alert-neutral-foreground-muted",
-        success:
-          "astw:bg-alert-success-background astw:text-alert-success-foreground astw:border-alert-success-border astw:*:data-[slot=alert-description]:text-alert-success-foreground-muted",
-        warning:
-          "astw:bg-alert-warning-background astw:text-alert-warning-foreground astw:border-alert-warning-border astw:*:data-[slot=alert-description]:text-alert-warning-foreground-muted",
-        error:
-          "astw:bg-alert-error-background astw:text-alert-error-foreground astw:border-alert-error-border astw:*:data-[slot=alert-description]:text-alert-error-foreground-muted",
-        info: "astw:bg-alert-info-background astw:text-alert-info-foreground astw:border-alert-info-border astw:*:data-[slot=alert-description]:text-alert-info-foreground-muted",
+          "astw:bg-neutral-surface astw:text-neutral-text astw:border-neutral-border astw:*:data-[slot=alert-description]:text-muted-foreground",
+        success: "astw:bg-success-surface astw:text-success-text astw:border-success-border",
+        warning: "astw:bg-warning-surface astw:text-warning-text astw:border-warning-border",
+        error: "astw:bg-danger-surface astw:text-danger-text astw:border-danger-border",
+        info: "astw:bg-info-surface astw:text-info-text astw:border-info-border",
       },
     },
     defaultVariants: {
@@ -45,8 +45,11 @@ const variantIcons: Record<
 
 type RootProps = React.ComponentProps<"div"> &
   VariantProps<typeof alertVariants> & {
+    /** Action element rendered below the description */
     action?: React.ReactNode;
+    /** Shows a dismiss button; hides the alert when clicked */
     dismissible?: boolean;
+    /** Callback invoked when the dismiss button is clicked */
     onDismiss?: () => void;
   };
 

@@ -9,6 +9,7 @@ import {
   Form,
   Field,
   Button,
+  Dialog,
   useTimeZone,
   parseDate,
   type CalendarDate,
@@ -369,6 +370,33 @@ watch("period")?.start.toString(); // "2025-06-10"
                 {"formState.errors"} instead.
               </li>
             </ul>
+          </section>
+
+          {/* ── In a Dialog ─────────────────────────────────────────── */}
+          <section className="flex flex-col gap-4">
+            <h2 className="text-base font-semibold border-b pb-2">In a Dialog</h2>
+            <p className="text-sm text-muted-foreground">
+              The calendar popover must layer above the dialog it's opened from.
+            </p>
+            <Dialog.Root>
+              <Dialog.Trigger render={<Button variant="outline" className="self-start" />}>
+                Open dialog
+              </Dialog.Trigger>
+              <Dialog.Content>
+                <Dialog.Header>
+                  <Dialog.Title>Schedule shipment</Dialog.Title>
+                  <Dialog.Description>Pick a ship date and a delivery window.</Dialog.Description>
+                </Dialog.Header>
+                <div className="flex flex-col gap-4">
+                  <DemoField id="dialog-date-picker" label="Ship date">
+                    <DatePicker />
+                  </DemoField>
+                  <DemoField id="dialog-date-range-picker" label="Delivery window">
+                    <DateRangePicker />
+                  </DemoField>
+                </div>
+              </Dialog.Content>
+            </Dialog.Root>
           </section>
 
           {/* ── DatePicker week start ───────────────────────────────── */}

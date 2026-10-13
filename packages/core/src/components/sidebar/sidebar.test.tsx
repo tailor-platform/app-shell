@@ -90,11 +90,15 @@ const testConfig: RootConfiguration = {
 /**
  * Wrapper to render sidebar components with all required providers.
  */
-const renderWithProviders = (ui: React.ReactNode, initialPath = "/dashboard/overview") => {
+const renderWithProviders = (
+  ui: React.ReactNode,
+  initialPath = "/dashboard/overview",
+  locale = "en",
+) => {
   stubDesktopViewport();
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
-      <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
+      <AppShellConfigContext.Provider value={{ configurations: { ...testConfig, locale } }}>
         <SidebarProvider>
           <SidebarMenu data-testid="sidebar-menu">{ui}</SidebarMenu>
         </SidebarProvider>
@@ -116,6 +120,18 @@ describe("SidebarItem", () => {
 
     const menu = getSidebarMenu();
     expect(menu.getByRole("link", { name: /dashboard/i })).toBeDefined();
+  });
+
+  it("resolves localized title overrides", () => {
+    renderWithProviders(<SidebarItem to="/dashboard" title={localizedTitle} />, undefined, "ja");
+
+    expect(getSidebarMenu().getByRole("link", { name: "製品" })).toBeDefined();
+  });
+
+  it("preserves empty string title overrides", () => {
+    renderWithProviders(<SidebarItem to="/dashboard" title="" />);
+
+    expect(getSidebarMenu().getByRole("link").textContent).toBe("");
   });
 
   it("renders with custom render function", () => {

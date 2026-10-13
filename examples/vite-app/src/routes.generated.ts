@@ -27,10 +27,12 @@ export type GeneratedRouteParams = {
   "/showcase/activity-card": {};
   "/showcase/ai-chat": {};
   "/showcase/alert-tokens": {};
+  "/showcase/card": {};
   "/showcase/colors": {};
   "/showcase/csv-features": {};
   "/showcase/data-table": {};
   "/showcase/data-table-lab": {};
+  "/showcase/data-table-selection": {};
   "/showcase/date-picker": {};
   "/showcase/document-progress": {};
   "/showcase/dropdown": {};
@@ -42,6 +44,7 @@ export type GeneratedRouteParams = {
   "/showcase/primitives": {};
   "/showcase/spinner": {};
   "/showcase/timeline": {};
+  "/showcase/toolbar": {};
 };
 
 /**

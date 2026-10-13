@@ -451,7 +451,9 @@ export function DatePopover({
   return (
     <Popover.Root open={open} onOpenChange={onOpenChange}>
       {field}
-      <Popover.Portal>
+      {/* The Positioner's transform makes it a stacking context, so a z-index
+          on the Popup alone can't lift it above a Dialog. Same pattern as Select/Menu. */}
+      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
         <Popover.Positioner anchor={anchor} sideOffset={4} side="bottom" align="start">
           {/* APG date-picker dialog pattern — the popup is a labelled dialog. */}
           <Popover.Popup

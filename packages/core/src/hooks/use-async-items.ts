@@ -227,6 +227,7 @@ export function useAsyncItems<T>({
     (open: boolean) => {
       if (open && !hasFetchedOnOpenRef.current) {
         hasFetchedOnOpenRef.current = true;
+        if (debounceTimerRef.current) return;
         doFetch(null, false);
       }
     },

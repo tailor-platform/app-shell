@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { filterRoutes, hasDynamicSegment, parseDynamicSegment, processPathSegments } from "./path";
 import { defineModule, defineResource } from "@/resource";
+import { defineI18nLabels } from "@/hooks/i18n";
 
 /**
  * Shared mock modules for path-related tests.
@@ -339,6 +340,126 @@ describe.concurrent("processPathSegments", () => {
     expect(result.segments[0].title).toBe("Dashboard");
     expect(result.segments[1].title).toBe("All Orders");
   });
+
+  it.each([
+    ["en", ["Home", "All Orders", "Order #42"]],
+    ["ja", ["ホーム", "すべての注文", "注文 #42"]],
+    ["fr", ["Home", "All Orders", "Order #42"]],
+  ])("resolves localized breadcrumbs throughout the hierarchy for %s", (locale, titles) => {
+    const labels = defineI18nLabels({
+      en: {
+        home: "Home",
+        orders: "All Orders",
+        order: ({ id }: { id: string }) => `Order #${id}`,
+      },
+      ja: {
+        home: "ホーム",
+        orders: "すべての注文",
+        order: ({ id }: { id: string }) => `注文 #${id}`,
+      },
+    });
+    const modules = [
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard", breadcrumbTitle: () => labels.t("home") },
+        resources: [
+          defineResource({
+            path: "orders",
+            meta: { title: "Orders", breadcrumbTitle: () => labels.t("orders") },
+            subResources: [
+              defineResource({
+                path: ":id",
+                meta: {
+                  title: "Detail",
+                  breadcrumbTitle: (segment) => labels.t("order", { id: segment }),
+                },
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    expect(
+      processPathSegments("/dashboard/orders/42", undefined, modules, locale).segments.map(
+        ({ title }) => title,
+      ),
+    ).toEqual(titles);
+  });
+
+  it.each([
+    ["en", ["Home", "All Orders", "Order #42"]],
+    ["ja", ["ホーム", "すべての注文", "注文 #42"]],
+    ["fr", ["Home", "All Orders", "Order #42"]],
+  ])("resolves labels.t() directly throughout the hierarchy for %s", (locale, titles) => {
+    const labels = defineI18nLabels({
+      en: {
+        home: "Home",
+        orders: "All Orders",
+        order: ({ id }: { id: string }) => `Order #${id}`,
+      },
+      ja: {
+        home: "ホーム",
+        orders: "すべての注文",
+        order: ({ id }: { id: string }) => `注文 #${id}`,
+      },
+    });
+    const modules = [
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard", breadcrumbTitle: labels.t("home") },
+        resources: [
+          defineResource({
+            path: "orders",
+            meta: { title: "Orders", breadcrumbTitle: labels.t("orders") },
+            subResources: [
+              defineResource({
+                path: ":id",
+                meta: { title: "Detail", breadcrumbTitle: labels.t("order", { id: "42" }) },
+              }),
+            ],
+          }),
+        ],
+      }),
+    ];
+
+    expect(
+      processPathSegments("/dashboard/orders/42", undefined, modules, locale).segments.map(
+        ({ title }) => title,
+      ),
+    ).toEqual(titles);
+  });
+
+  it("resolves localized root breadcrumbs using the current locale", () => {
+    const labels = defineI18nLabels({ en: { home: "Home" }, ja: { home: "ホーム" } });
+    const modules = [
+      defineModule({
+        path: "",
+        meta: { title: "Dashboard", breadcrumbTitle: labels.t("home") },
+        resources: [],
+      }),
+    ];
+
+    expect(processPathSegments("/", undefined, modules, "en").segments[0].title).toBe("Home");
+    expect(processPathSegments("/", undefined, modules, "ja").segments[0].title).toBe("ホーム");
+  });
+
+  it.each(["", () => "", () => () => "", defineI18nLabels({ en: { empty: "" } }).t("empty")])(
+    "preserves intentionally empty breadcrumb titles (%s)",
+    (breadcrumbTitle) => {
+      const modules = [
+        defineModule({
+          path: "dashboard",
+          meta: { title: "Dashboard", breadcrumbTitle },
+          resources: [],
+        }),
+      ];
+
+      expect(processPathSegments("/dashboard", undefined, modules, "en").segments[0].title).toBe(
+        "",
+      );
+    },
+  );
 
   it("should use breadcrumbTitle function with dynamic segment", () => {
     const modulesWithBreadcrumb = [

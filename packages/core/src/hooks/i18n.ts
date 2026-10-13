@@ -1,5 +1,5 @@
 import { useAppShellConfig } from "@/contexts/appshell-context";
-import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
+import { buildLocaleResolver, LOCALIZED_LABEL, type LocalizedString } from "@/lib/i18n";
 
 export const DEFAULT_LOCALE = "en";
 
@@ -156,7 +156,7 @@ export const defineI18nLabels = <
 
     /**
      * A function to get the translater for a specific label key.
-     * This is expected to be used in `meta.title` in module/resource definitions.
+     * Use directly in `meta.title` or `meta.breadcrumbTitle` in module/resource definitions.
      *
      * Note: When using dynamic labels with props in meta.title, the props are
      * bound at definition time (when calling labels.t), not at render time.
@@ -176,14 +176,16 @@ export const defineI18nLabels = <
      * });
      * ```
      */
-    t:
-      <K extends T>(key: K, ...args: TFunctionArgs<K>): LocalizedString =>
-      (locale: string) => {
-        const label = resolveLabel(locale)(key);
-        if (typeof label === "function") {
-          return label(args[0]);
-        }
-        return label;
-      },
+    t: <K extends T>(key: K, ...args: TFunctionArgs<K>): LocalizedString =>
+      Object.assign(
+        (locale: string): string => {
+          const label = resolveLabel(locale)(key);
+          if (typeof label === "function") {
+            return label(args[0]);
+          }
+          return label;
+        },
+        { [LOCALIZED_LABEL]: true },
+      ),
   };
 };

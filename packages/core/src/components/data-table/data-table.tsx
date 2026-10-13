@@ -14,6 +14,7 @@ import {
 import { ContextMenu } from "@base-ui/react/context-menu";
 import { ChevronRight, Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTimeZone } from "@/contexts/appshell-context";
 import {
   CollectionControlProvider,
   useCollectionControlOptional,
@@ -33,8 +34,8 @@ import type {
 } from "./types";
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
-import { getCellValue, renderTypedCell } from "./cell-renderers";
-import { isTemporalFilterType, normalizeTemporalFilterValue } from "./filter-value-utils";
+import { getCellValue, createTypedCellRenderer } from "./cell-renderers";
+import { isTemporalFilterType, normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import { useCellContextMenu, type CellContextMenuState } from "./use-cell-context-menu";
 import {
   DataTableToolbar,
@@ -42,8 +43,15 @@ import {
   getOperatorLabel,
   getVisibleFilterOperators,
 } from "./toolbar";
+import { DataTableColumnSettings } from "./column-settings";
 import { DataTablePagination } from "./pagination";
 import { DataTableCSVExporter } from "./csv-exporter";
+import {
+  DataTableSelectionAnnouncer,
+  DataTableSelectionBar,
+  hasSelectionActions,
+  isSelectionBarOpen,
+} from "./selection-bar";
 export type { DataTablePaginationProps } from "./pagination";
 
 // Fallback row count when no pageSize is configured (static / uncontrolled tables)
@@ -159,10 +167,10 @@ function toClipboardText(value: unknown): string | undefined {
   return String(value);
 }
 
-function toFilterValue(value: unknown, config: DataTableFilterConfig): unknown {
+function toFilterValue(value: unknown, config: DataTableFilterConfig, timeZone: string): unknown {
   if (value == null || value === "") return undefined;
   if (isTemporalFilterType(config.type)) {
-    return normalizeTemporalFilterValue(config.type, value);
+    return normalizeTemporalFilterValue(config.type, value, timeZone);
   }
 
   switch (config.type) {
@@ -613,11 +621,16 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     hasNextPage: value.hasNextPage,
     onClickRow: value.onClickRow,
     rowActions: value.rowActions,
+    selectionActions: value.selectionActions,
     selectedIds: value.selectedIds,
+    selectedRows: value.selectedRows,
     isRowSelected: value.isRowSelected,
     toggleRowSelection: value.toggleRowSelection,
     selectAllRows: value.selectAllRows,
+    deselectAllRows: value.deselectAllRows,
     clearSelection: value.clearSelection,
+    pendingActionId: value.pendingActionId,
+    runSelectionAction: value.runSelectionAction,
     isAllSelected: value.isAllSelected,
     isIndeterminate: value.isIndeterminate,
     expandedIds: value.expandedIds,
@@ -637,11 +650,18 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
         {/* flex-col + min-h-0 (no flex-1): natural height when content fits,
             but able to shrink when the parent chain constrains height (e.g.
             <Layout fill>). When shrunk, the Table region scrolls internally
-            while the Toolbar and Footer (shrink-0) stay visible. */}
+            while the Toolbar and Footer (shrink-0) stay visible.
+            overflow-clip, not overflow-hidden: both clip children to the
+            rounded frame, but `hidden` also makes this a scroll container,
+            which would pin the sticky selection-actions footer to the table
+            instead of letting it ride the page's scroll container. */}
         <div
           data-slot="data-table"
           className={cn(
-            "astw:flex astw:flex-col astw:min-h-0 astw:border astw:border-border astw:rounded-md astw:bg-card",
+            "astw:flex astw:flex-col astw:min-h-0 astw:overflow-clip astw:border astw:border-border astw:rounded-md astw:bg-card",
+            // A generic Toolbar becomes the table's top edge: preserve its top
+            // corners, but retain only the divider beneath it.
+            "astw:[&>[data-slot=toolbar]]:rounded-b-none astw:[&>[data-slot=toolbar]]:border-x-0 astw:[&>[data-slot=toolbar]]:border-t-0",
             className,
           )}
         >
@@ -809,11 +829,12 @@ function DataTableCellContextMenu({
 }) {
   const t = useDataTableT();
   const control = useCollectionControlOptional();
+  const { value: timeZone } = useTimeZone();
   const filterConfig = context?.filterConfig;
   const copyText = context ? toClipboardText(context.value) : undefined;
   const headerAndValueText = copyText ? `${context?.headerLabel} ${copyText}` : undefined;
   const filterValue =
-    filterConfig && context ? toFilterValue(context.value, filterConfig) : undefined;
+    filterConfig && context ? toFilterValue(context.value, filterConfig, timeZone) : undefined;
   const filterOperators =
     control && filterConfig && filterValue !== undefined
       ? getVisibleFilterOperators(filterConfig).filter(supportsCellFilterOperator)
@@ -906,6 +927,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     setPin,
     toggleRowSelection,
     selectAllRows,
+    deselectAllRows,
     clearSelection,
     isAllSelected,
     isIndeterminate,
@@ -959,7 +981,9 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                     if (checked) {
                       selectAllRows?.();
                     } else {
-                      clearSelection?.();
+                      // Page-scoped, so rows selected on other pages survive.
+                      // Hand-built contexts that predate it fall back to clearing.
+                      (deselectAllRows ?? clearSelection)?.();
                     }
                   }}
                   aria-label={t("selectAll")}
@@ -1214,8 +1238,19 @@ function DataTableRows<TRow extends Record<string, unknown>>({
 }: DataTableRowsProps<TRow>) {
   const t = useDataTableT();
   const baseId = useId();
+  const { value: timeZone } = useTimeZone();
   const hasExpand = !!rowExpansion;
   const { ordered, keys, placements, selection, expand, actions } = pinLayout;
+  // Intl formatter construction is costly; avoid repeating it for every cell render.
+  const cellRenderers = useMemo(
+    () =>
+      new Map(
+        ordered
+          .filter((col) => !col.render)
+          .map((col) => [col, createTypedCellRenderer(col, timeZone)]),
+      ),
+    [ordered, timeZone],
+  );
   const {
     contextMenu: cellContextMenu,
     contextMenuOpen: cellContextMenuOpen,
@@ -1309,7 +1344,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               })()}
             {ordered?.map((col) => {
               const key = keys.get(col) as string;
-              const content = col.render ? col.render(row) : renderTypedCell(row, col);
+              const content = col.render ? col.render(row) : cellRenderers.get(col)?.(row);
 
               const { style: cellStyle, className: cellClassName } = pinCellProps(
                 placements.get(col),
@@ -1693,7 +1728,11 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
         />
         <Menu.Content>
           {actions.map((action) => {
-            const disabled = action.isDisabled?.(row) ?? false;
+            // `canApply` is the shared, positive form; the deprecated
+            // `isDisabled` still counts, so either one can switch it off.
+            const disabled =
+              (action.canApply ? !action.canApply(row) : false) ||
+              (action.isDisabled?.(row) ?? false);
             return (
               <Menu.Item
                 key={action.id}
@@ -1853,16 +1892,54 @@ DataTableTable.displayName = "DataTable.Table";
 // =============================================================================
 
 /** Use `DataTable.Footer` instead of calling this directly. */
-function DataTableFooter({ children, className }: { children: ReactNode; className?: string }) {
+function DataTableFooter({ children, className }: { children?: ReactNode; className?: string }) {
+  const ctx = useContext(DataTableContext);
+  const offersBulkActions = hasSelectionActions(ctx);
+  const selecting = isSelectionBarOpen(ctx);
+
   return (
     <div
       data-slot="data-table-footer"
+      data-selecting={selecting ? "" : undefined}
       className={cn(
         "astw:flex astw:shrink-0 astw:items-center astw:border-t astw:border-border astw:px-4 astw:py-2",
+        offersBulkActions && "astw:transition-colors astw:motion-reduce:transition-none",
+        selecting && [
+          "astw:flex-wrap astw:gap-x-3 astw:gap-y-2",
+          "astw:bg-accent astw:text-accent-foreground",
+          "astw:rounded-b-[calc(var(--radius-md)-1px)]",
+          // Sticky while the bar is up: on a page-scrolling table it rides the
+          // bottom of the viewport until the table's own end scrolls into view.
+          // A no-op in <Layout fill>, where the footer is already pinned.
+          "astw:sticky astw:bottom-0 astw:z-20",
+          // The bar's surface, captured for the wrapper below: a token can't be
+          // re-pointed in terms of itself on a single element.
+          "astw:[--data-table-selection-surface:var(--accent)]",
+        ],
         className,
       )}
     >
-      {children}
+      {offersBulkActions ? (
+        // `contents` keeps the wrapper out of layout. It re-points the hover and
+        // secondary-text tokens for everything on the tinted bar — the bar's own
+        // buttons and the consumer's Pagination alike — which would otherwise
+        // hover to the bar's colour and lose contrast on it.
+        <div
+          className={cn(
+            "astw:contents",
+            selecting && [
+              "astw:[--accent:color-mix(in_srgb,var(--accent-foreground)_8%,var(--data-table-selection-surface))]",
+              "astw:[--muted-foreground:color-mix(in_srgb,var(--accent-foreground)_70%,var(--data-table-selection-surface))]",
+            ],
+          )}
+        >
+          {selecting && <DataTableSelectionBar />}
+          {children}
+          <DataTableSelectionAnnouncer open={selecting} />
+        </div>
+      ) : (
+        children
+      )}
     </div>
   );
 }
@@ -1891,6 +1968,8 @@ export const DataTable = {
    * `useCollectionVariables()`, otherwise this component throws at render time.
    */
   Filters: DataTableFilters,
+  /** Built-in column visibility, ordering, and pinning controls. */
+  ColumnSettings: DataTableColumnSettings,
   /**
    * Renders `<table>` with built-in `Headers` and `Body`.
    * Place inside `DataTable.Root`.
@@ -1899,6 +1978,11 @@ export const DataTable = {
   /**
    * Footer container for pagination and other footer content.
    * Place inside `DataTable.Root`, after `DataTable.Table`.
+   *
+   * When `useDataTable()` is given `selectionActions`, the footer becomes the
+   * bulk-action bar while rows are selected — the selection count, the
+   * actions, and a Clear button — with its own children (usually
+   * `DataTable.Pagination`) kept alongside.
    */
   Footer: DataTableFooter,
   /**

@@ -1,0 +1,150 @@
+---
+kind: prose
+group: use-app-shell-data
+title: useAppShellData
+description: Hook to access custom context data passed to AppShell
+---
+
+# useAppShellData
+
+React hook to access only the custom context data. This is a lighter alternative to `useAppShell` when you only need the contextData.
+
+## Signature
+
+```typescript
+const useAppShellData: () => {
+  contextData: ContextData;
+};
+```
+
+## Return Value
+
+| Property      | Type          | Description                                                               |
+| ------------- | ------------- | ------------------------------------------------------------------------- |
+| `contextData` | `ContextData` | Custom context data passed to AppShell (type-safe via `AppShellRegister`) |
+
+## Usage
+
+### Basic Access
+
+```typescript
+import { useAppShellData } from "@tailor-platform/app-shell";
+
+function UserProfile() {
+  const { contextData } = useAppShellData();
+
+  return (
+    <div>
+      <p>Welcome, {contextData.currentUser?.name}</p>
+      <p>Role: {contextData.currentUser?.role}</p>
+    </div>
+  );
+}
+```
+
+### Display User Info
+
+```typescript
+function UserInfo() {
+  const { contextData } = useAppShellData();
+
+  if (!contextData.currentUser) {
+    return <div>Not logged in</div>;
+  }
+
+  return (
+    <div>
+      <h2>{contextData.currentUser.name}</h2>
+      <p>{contextData.currentUser.email}</p>
+    </div>
+  );
+}
+```
+
+### Check Permissions
+
+```typescript
+function AdminPanel() {
+  const { contextData } = useAppShellData();
+  const canManageUsers = contextData.permissions.includes("users:manage");
+
+  if (!canManageUsers) {
+    return <AccessDenied />;
+  }
+
+  return <UserManagement />;
+}
+```
+
+### Feature Flags
+
+```typescript
+function BetaFeature() {
+  const { contextData } = useAppShellData();
+
+  if (!contextData.featureFlags?.newEditor) {
+    return <LegacyEditor />;
+  }
+
+  return <NewEditor />;
+}
+```
+
+## Type Safety
+
+Define your context type with module augmentation:
+
+```typescript
+// types.d.ts
+type User = { name: string; email: string; role: string };
+
+declare module "@tailor-platform/app-shell" {
+  interface AppShellRegister {
+    contextData: {
+      currentUser: User | null;
+      permissions: string[];
+      tenantId: string;
+      featureFlags: {
+        newEditor: boolean;
+        betaDashboard: boolean;
+      };
+    };
+  }
+}
+```
+
+Now `useAppShellData()` returns fully typed data:
+
+```typescript
+const { contextData } = useAppShellData();
+contextData.currentUser; // Type: User | null
+contextData.permissions; // Type: string[]
+contextData.featureFlags; // Type: { newEditor: boolean, betaDashboard: boolean }
+```
+
+## When to Use
+
+Use `useAppShellData` when you only need context data:
+
+```typescript
+// ✅ Good - subscribes to context data only
+const { contextData } = useAppShellData();
+
+// ❌ Overkill - useAppShell also subscribes to configuration changes
+const { contextData } = useAppShell();
+```
+
+## Comparison with Other Hooks
+
+| Hook                | Returns                                             | Use When            |
+| ------------------- | --------------------------------------------------- | ------------------- |
+| `useAppShellData`   | `{ contextData }`                                   | Need custom context |
+| `useAppShellConfig` | `{ title, icon, favicon, appInfo, configurations }` | Need config data    |
+| `useAppShell`       | Both, merged into one object                        | Need both           |
+
+## Related
+
+- [useAppShell](./use-app-shell.md) - Full context access
+- [useAppShellConfig](./use-app-shell-config.md) - Configuration only
+- [AppShell Component](../components/app-shell.md) - Root component
+- [Guards Overview](./guards/overview.md) - Using context in guards

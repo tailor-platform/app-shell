@@ -4,11 +4,7 @@
   "timezone": "Asia/Tokyo",
   "schedule": ["before 9am on monday"],
   "labels": ["dependencies"],
-  "ignorePaths": [
-    "**/node_modules/**",
-    "**/bower_components/**",
-    ".github/workflows/code-review.lock.yml"
-  ],
+  "ignorePaths": ["**/node_modules/**", "**/bower_components/**", ".github/workflows/*.lock.yml"],
   "vulnerabilityAlerts": {
     "enabled": true,
     "labels": ["security"]

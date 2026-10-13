@@ -7,6 +7,7 @@ import {
 } from "@/contexts/appshell-context";
 import { defineModule, defineResource, type Module } from "@/resource";
 import { defineI18nLabels } from "./i18n";
+import { buildLocaleResolver } from "@/lib/i18n";
 import { Outlet } from "react-router";
 import { RouterContainer } from "@/routing/router";
 import type { ReactNode } from "react";
@@ -240,6 +241,16 @@ describe("defineI18nLabels", () => {
   });
 
   describe("labels.t() function", () => {
+    it("keeps strings and both generated and handwritten locale callbacks compatible", () => {
+      const resolve = buildLocaleResolver("ja");
+
+      expect(resolve("Literal", "Fallback")).toBe("Literal");
+      expect(resolve(labels.t("hello"), "Fallback")).toBe("こんにちは");
+      expect(resolve((locale) => (locale === "ja" ? "こんにちは" : "Hello"), "Fallback")).toBe(
+        "こんにちは",
+      );
+    });
+
     it("returns a function that resolves to English for 'en' locale", () => {
       const titleFn = labels.t("moduleTitle");
       expect(typeof titleFn).toBe("function");

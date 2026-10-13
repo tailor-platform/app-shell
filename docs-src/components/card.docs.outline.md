@@ -27,7 +27,7 @@ import { Card } from "@tailor-platform/app-shell";
 | -------------- | ---------------------------------------------------------------- |
 | `Card.Root`    | Outer container. Renders a `<div>` with surface styling applied. |
 | `Card.Header`  | Top section with an optional title and description.              |
-| `Card.Content` | Body section with consistent horizontal and bottom padding.      |
+| `Card.Content` | Body section with consistent padding, or edge-to-edge.           |
 
 ## Card.Root Props
 
@@ -51,10 +51,52 @@ import { Card } from "@tailor-platform/app-shell";
 
 `Card.Content` accepts all standard HTML `<div>` props.
 
-| Prop        | Type              | Default | Description            |
-| ----------- | ----------------- | ------- | ---------------------- |
-| `className` | `string`          | -       | Additional CSS classes |
-| `children`  | `React.ReactNode` | -       | Card body content      |
+| Prop        | Type                    | Default     | Description                                                                                    |
+| ----------- | ----------------------- | ----------- | ---------------------------------------------------------------------------------------------- |
+| `padding`   | `"default"` \| `"none"` | `"default"` | `"none"` renders the content edge-to-edge — see [Edge-to-edge content](#edge-to-edge-content). |
+| `className` | `string`                | -           | Additional CSS classes                                                                         |
+| `children`  | `React.ReactNode`       | -           | Card body content                                                                              |
+
+## Edge-to-edge content
+
+Use `padding="none"` when a `Table`, `DataTable` or divided list should meet the card's border instead of floating inside it:
+
+<!-- example: edge-to-edge-table -->
+
+Don't add padding back on the table. `Table.Head` and `Table.Cell` already inset their first and last cells by 24px, which lines the first column up with the card title.
+
+Edge-to-edge content also:
+
+- **Keeps row backgrounds inside the card's rounded corners.** A direct `Table` or `DataTable` child clips its row hover and pinned-cell backgrounds to the card's corners.
+- **Removes a nested `DataTable`'s own border**, so it doesn't draw a box inside the card. Its toolbar and footer stay as they are:
+
+```tsx
+<Card.Root>
+  <Card.Header title="Line items" />
+  <Card.Content padding="none">
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+      <DataTable.Footer>
+        <DataTable.Pagination />
+      </DataTable.Footer>
+    </DataTable.Root>
+  </Card.Content>
+</Card.Root>
+```
+
+For a scrollable list, put the overflow on `Card.Content`. Rows supply their own `px-6`, and dividers run to the card edges:
+
+```tsx
+<Card.Content padding="none" className="max-h-60 overflow-y-auto">
+  <ul className="divide-y divide-border border-t border-border">
+    {items.map((item) => (
+      <li key={item.id} className="px-6 py-3">
+        {item.name}
+      </li>
+    ))}
+  </ul>
+</Card.Content>
+```
 
 ## Examples
 
@@ -85,8 +127,8 @@ import { Card } from "@tailor-platform/app-shell";
       View all
     </Button>
   </Card.Header>
-  <Card.Content>
-    <Table>{/* ... */}</Table>
+  <Card.Content padding="none">
+    <Table.Root>{/* ... */}</Table.Root>
   </Card.Content>
 </Card.Root>
 ```

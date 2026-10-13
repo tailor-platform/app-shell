@@ -14,9 +14,21 @@ The metadata is generated at SDK generate time from your TailorDB table definiti
 
 ## Installation
 
+Requires `@tailor-platform/app-shell` `^1.16.1` as a peer dependency.
+
 ```sh
 pnpm add -D @tailor-platform/sdk-plugin-app-shell
 ```
+
+The plugin and the AppShell consuming its generated metadata must be managed in the same project's dependency graph. Compatibility is not guaranteed when generated metadata is copied or distributed to another project.
+
+### Upgrading from 0.2.x
+
+Version 0.3.0 generates `type: "decimal"` metadata instead of `type: "number"` for decimal fields, including decimal array items. AppShell 1.16.0 and earlier do not support this metadata.
+
+1. Upgrade `@tailor-platform/app-shell` to a version satisfying `^1.16.1` before upgrading the plugin.
+2. Upgrade `@tailor-platform/sdk-plugin-app-shell` to 0.3.0 or later and run `tailor generate` to regenerate metadata.
+3. Update hand-written decimal filter values from numbers to strings to preserve precision.
 
 ## Setup
 

@@ -43,6 +43,29 @@ function getEnabledCalendarCells() {
   );
 }
 
+function ControlledField({ onChange }: { onChange: (v: unknown) => void }) {
+  const [v, setV] = useState<CalendarDate | null>(null);
+  return (
+    <>
+      <DateField
+        aria-label="Date"
+        value={v}
+        onChange={(nv) => {
+          setV(nv as CalendarDate | null);
+          onChange(nv);
+        }}
+      />
+      <button type="button">elsewhere</button>
+    </>
+  );
+}
+
+async function lastEmit(onChange: ReturnType<typeof vi.fn>, expected: string) {
+  await waitFor(() => {
+    expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe(expected);
+  });
+}
+
 // ─── Snapshots ──────────────────────────────────────────────────────────────
 // Visual-structure snapshots per the add-component convention. Inputs are
 // pinned (fixed `defaultValue`, no live "today" in view) so output is stable.
@@ -297,23 +320,6 @@ describe("DateField", () => {
   // A controlled field round-trips every emit through the parent's `value`, so
   // these guard the clamp against external-sync interference (the uncontrolled
   // cases above don't exercise that path).
-  function ControlledField({ onChange }: { onChange: (v: unknown) => void }) {
-    const [v, setV] = useState<CalendarDate | null>(null);
-    return (
-      <>
-        <DateField
-          aria-label="Date"
-          value={v}
-          onChange={(nv) => {
-            setV(nv as CalendarDate | null);
-            onChange(nv);
-          }}
-        />
-        <button type="button">elsewhere</button>
-      </>
-    );
-  }
-
   it("clamps an impossible day on blur even when controlled (29/02/2026)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -493,12 +499,6 @@ describe("DateField", () => {
 // derive from that same basis. Locale here is "en" (weeks start Sunday).
 
 describe("DateField keyboard shortcuts", () => {
-  async function lastEmit(onChange: ReturnType<typeof vi.fn>, expected: string) {
-    await waitFor(() => {
-      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe(expected);
-    });
-  }
-
   it("'t' jumps to today (case-insensitive)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -1098,6 +1098,23 @@ describe("DatePicker", () => {
 
 // ─── Keyboard: popover focus ─────────────────────────────────────────────────
 
+function ReopenControlledDatePicker() {
+  const [value, setValue] = useState<CalendarDate | null>(new CalendarDate(2025, 6, 15));
+  return (
+    <>
+      <DatePicker aria-label="Date" value={value} onChange={setValue} />
+      <button type="button" onClick={() => setValue(new CalendarDate(2024, 2, 10))}>
+        set
+      </button>
+      <button type="button" onClick={() => setValue(null)}>
+        clear
+      </button>
+    </>
+  );
+}
+
+const calendarTrigger = () => screen.getByRole("button", { name: "Open calendar" });
+
 describe("DatePicker keyboard", () => {
   it("moves focus into the calendar grid when the popover opens", async () => {
     const user = userEvent.setup();
@@ -1142,22 +1159,8 @@ describe("DatePicker keyboard", () => {
 
   it("re-lands the calendar on the current value each time it opens", async () => {
     const user = userEvent.setup();
-    function Controlled() {
-      const [value, setValue] = useState<CalendarDate | null>(new CalendarDate(2025, 6, 15));
-      return (
-        <>
-          <DatePicker aria-label="Date" value={value} onChange={setValue} />
-          <button type="button" onClick={() => setValue(new CalendarDate(2024, 2, 10))}>
-            set
-          </button>
-          <button type="button" onClick={() => setValue(null)}>
-            clear
-          </button>
-        </>
-      );
-    }
-    render(<Controlled />);
-    const trigger = () => screen.getByRole("button", { name: "Open calendar" });
+    render(<ReopenControlledDatePicker />);
+    const trigger = calendarTrigger;
 
     // Page away, dismiss, change the value externally — reopening follows the value.
     await user.click(trigger());
@@ -1362,11 +1365,12 @@ describe("RHF integration", () => {
   });
 });
 
+const segText = (name: string) =>
+  screen.getByRole("spinbutton", { name }).getAttribute("aria-valuetext");
+
 describe("12-hour time display", () => {
   const TZ = "Asia/Tokyo";
   const zoned = (iso: string) => parseZonedDateTime(`${iso}[${TZ}]`);
-  const segText = (name: string) =>
-    screen.getByRole("spinbutton", { name }).getAttribute("aria-valuetext");
 
   it("shows a PM value as 06 PM, not 18 AM", () => {
     render(

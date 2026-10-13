@@ -88,6 +88,8 @@ export type DateRangePickerProps<T extends DateValue = DateValue> = {
   locale?: string;
   /** IANA timezone; defaults to the AppShell `timeZone`. */
   timeZone?: string;
+  /** Show the locale's short day of the week next to each date. */
+  showDayOfWeek?: boolean;
 };
 
 /** One-end snapshot the combined funnel reads to synthesize the range state. */
@@ -129,6 +131,7 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
     isInvalid,
     autoFocus,
     firstDayOfWeek,
+    showDayOfWeek,
     name,
     startName,
     endName,
@@ -220,6 +223,7 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
     minValue,
     maxValue,
     isDateUnavailable,
+    showDayOfWeek,
     isReadOnly: resolvedReadOnly,
   };
   const startField = useDateFieldState({

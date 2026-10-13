@@ -47,17 +47,19 @@ export interface DateFieldRowHandle {
 
 interface DateFieldRowProps {
   segments: Segment[];
-  cycle: (type: Exclude<Segment["type"], "literal">, delta: number) => void;
+  cycle: (type: EditableSegmentType, delta: number) => void;
   setDigit: (
-    type: Exclude<Segment["type"], "literal">,
+    type: EditableSegmentType,
     digit: number,
     replace?: boolean,
     digitCount?: number,
   ) => { advance: boolean };
   setDayPeriod: (pm: boolean) => void;
-  clearSegment: (type: Exclude<Segment["type"], "literal">) => void;
+  clearSegment: (type: EditableSegmentType) => void;
   /** Apply a whole-date keyboard shortcut (today, month/year/week jumps, ±day). */
   applyShortcut: (cmd: DateShortcut) => void;
+  /** A segment lost focus, ending its typed entry (lets the day of the week settle). */
+  settleEntry?: () => void;
   /** Open the calendar popover (Alt+↓). Omitted for the popover-less `DateField`. */
   onOpenCalendar?: () => void;
   isDisabled?: boolean;
@@ -95,6 +97,7 @@ export function DateFieldRow({
   setDayPeriod,
   clearSegment,
   applyShortcut,
+  settleEntry,
   onOpenCalendar,
   isDisabled,
   isReadOnly,
@@ -129,6 +132,16 @@ export function DateFieldRow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The settled day's full name, announced with each date segment's value
+  // so screen-reader users hear it as they edit (the visible span is hidden).
+  const dayOfWeekLabel = segments.find((s) => s.type === "dayOfWeek")?.label;
+
+  const segmentValueText = (segment: Segment): string => {
+    if (segment.isPlaceholder) return t("empty");
+    const isDate = segment.type === "year" || segment.type === "month" || segment.type === "day";
+    return isDate && dayOfWeekLabel ? `${segment.text}, ${dayOfWeekLabel}` : segment.text;
+  };
+
   // Index editable segments for left/right focus movement.
   const editableIndexById = useMemo(() => {
     const map = new Map<number, number>();
@@ -157,7 +170,7 @@ export function DateFieldRow({
     segment: Segment,
     editableIndex: number,
   ) => {
-    if (segment.type === "literal") return;
+    if (segment.type === "literal" || segment.type === "dayOfWeek") return;
     const type = segment.type;
 
     // Alt+↓ opens the calendar popover (APG date-picker pattern + QBO). No-op on
@@ -262,6 +275,22 @@ export function DateFieldRow({
             </span>
           );
         }
+        if (segment.type === "dayOfWeek") {
+          // Derived from the composed date, so read-only. Hidden from assistive
+          // tech: the date segments' `aria-valuetext` carries it instead.
+          return (
+            <span
+              key={idx}
+              aria-hidden="true"
+              data-slot="date-segment"
+              data-type="dayOfWeek"
+              data-placeholder={segment.isPlaceholder || undefined}
+              className="astw:select-none astw:px-px astw:data-[placeholder]:text-muted-foreground"
+            >
+              {segment.text}
+            </span>
+          );
+        }
         const editableIndex = editableIndexById.get(idx)!;
         return (
           // Editable date segment: the APG spinbutton pattern. A <div role="spinbutton">
@@ -288,10 +317,11 @@ export function DateFieldRow({
             aria-valuemin={segment.minValue}
             aria-valuemax={segment.maxValue}
             aria-valuenow={segment.value}
-            aria-valuetext={segment.isPlaceholder ? t("empty") : segment.text}
+            aria-valuetext={segmentValueText(segment)}
             onFocus={() => {
               typedCountRef.current = 0;
             }}
+            onBlur={settleEntry}
             onKeyDown={(e) => handleKeyDown(e, segment, editableIndex)}
             className={cn(
               "astw:rounded astw:px-0.5 astw:tabular-nums astw:caret-transparent astw:outline-none",

@@ -182,6 +182,38 @@ const labels = defineI18nLabels({
 
 ---
 
+### SidebarSection
+
+A static heading for a run of flat navigation items. Unlike `SidebarGroup`, a section is neither collapsible nor navigable, and its items keep top-level styling. In the icon rail the heading is hidden.
+
+#### Props
+
+| Prop       | Type              | Required | Description                       |
+| ---------- | ----------------- | -------- | --------------------------------- |
+| `title`    | `LocalizedString` | Yes      | Section heading (supports i18n)   |
+| `children` | `ReactNode`       | Yes      | Child items (usually SidebarItem) |
+
+#### Example
+
+```tsx
+<DefaultSidebar>
+  <SidebarItem to="/overview" />
+  <SidebarSeparator />
+  <SidebarSection title="Services">
+    <SidebarItem to="/ai-gateways" />
+    <SidebarItem to="/applications" />
+  </SidebarSection>
+  <SidebarSeparator />
+  <SidebarSection title="Logs">
+    <SidebarItem to="/activity-logs" />
+  </SidebarSection>
+</DefaultSidebar>
+```
+
+Use `SidebarGroup` when users should be able to collapse the items or when they belong under a parent page; use `SidebarSection` when you only need a label above items that stay visible.
+
+---
+
 ### SidebarSeparator
 
 A visual divider between sidebar sections.

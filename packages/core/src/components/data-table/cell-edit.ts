@@ -7,7 +7,14 @@
  * @internal
  */
 
-import { CalendarDate } from "@internationalized/date";
+import {
+  CalendarDate,
+  CalendarDateTime,
+  getLocalTimeZone,
+  parseDate,
+  toZoned,
+} from "@internationalized/date";
+import { localDateTimeParts, normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type { SelectOption } from "@/types/collection";
 import type { BadgeCellOptions, DataTableFilterConfig } from "./types";
 
@@ -224,22 +231,33 @@ export function toLocalDate(raw: unknown): Date | null {
 }
 
 /** A raw date cell value as the calendar day it shows. */
-export function toCalendarDate(raw: unknown): CalendarDate | null {
-  const date = toLocalDate(raw);
-  return date ? new CalendarDate(date.getFullYear(), date.getMonth() + 1, date.getDate()) : null;
+export function toCalendarDate(raw: unknown, timeZone = getLocalTimeZone()): CalendarDate | null {
+  const date = normalizeTemporalFilterValue("date", raw, timeZone);
+  if (!date) return null;
+  try {
+    return parseDate(date);
+  } catch {
+    return null;
+  }
 }
 
-/** The local time of a raw date cell value as `"HH:mm"`; `""` when there is none. */
-export function toTimeText(raw: unknown): string {
-  const date = toLocalDate(raw);
-  if (!date) return "";
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+/** The zoned time of a raw date cell value as `"HH:mm"`; `""` when there is none. */
+export function toTimeText(raw: unknown, timeZone = getLocalTimeZone()): string {
+  if (isIsoDate(raw)) return toCalendarDate(raw, timeZone) ? "00:00" : "";
+  const datetime = normalizeTemporalFilterValue("datetime", raw, timeZone);
+  return datetime ? localDateTimeParts(datetime, timeZone).time : "";
 }
 
-/** A calendar day plus a local `"HH:mm"` as an ISO 8601 timestamp. */
-export function toIsoDateTime(day: CalendarDate, time: string): string {
+/** A calendar day plus a zoned `"HH:mm"` as an ISO 8601 timestamp. */
+export function toIsoDateTime(
+  day: CalendarDate,
+  time: string,
+  timeZone = getLocalTimeZone(),
+): string {
   const [hours = 0, minutes = 0] = time ? time.split(":").map(Number) : [];
-  return new Date(day.year, day.month - 1, day.day, hours, minutes).toISOString();
+  return toZoned(new CalendarDateTime(day.year, day.month, day.day, hours, minutes), timeZone)
+    .toDate()
+    .toISOString();
 }
 
 /**
@@ -247,16 +265,29 @@ export function toIsoDateTime(day: CalendarDate, time: string): string {
  * column, the same minute for a date-time one — so `"2026-10-02"` equals a
  * `Date` for that day, and string formatting differences don't count.
  */
-export function sameDate(a: unknown, b: unknown, withTime: boolean): boolean {
-  const left = toLocalDate(a);
-  const right = toLocalDate(b);
+export function sameDate(
+  a: unknown,
+  b: unknown,
+  withTime: boolean,
+  timeZone = getLocalTimeZone(),
+): boolean {
+  if (!withTime) {
+    const left = toCalendarDate(a, timeZone);
+    const right = toCalendarDate(b, timeZone);
+    return left && right ? left.compare(right) === 0 : left === right;
+  }
+  const asInstant = (raw: unknown) => {
+    const normalized = normalizeTemporalFilterValue(
+      "datetime",
+      isIsoDate(raw) ? `${raw}T00:00` : raw,
+      timeZone,
+    );
+    return normalized ? new Date(normalized) : null;
+  };
+  const left = asInstant(a);
+  const right = asInstant(b);
   if (!left || !right) return left === right;
-  if (withTime) return Math.floor(left.getTime() / 60_000) === Math.floor(right.getTime() / 60_000);
-  return (
-    left.getFullYear() === right.getFullYear() &&
-    left.getMonth() === right.getMonth() &&
-    left.getDate() === right.getDate()
-  );
+  return Math.floor(left.getTime() / 60_000) === Math.floor(right.getTime() / 60_000);
 }
 
 /** Whether a value `onCommit` returned is a promise-like the cell should wait on. */

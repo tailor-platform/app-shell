@@ -245,6 +245,22 @@ describe("dates", () => {
     expect(toIsoDateTime(day, "")).toBe(new Date(2026, 9, 20).toISOString());
   });
 
+  it("initializes and commits date-times in the configured timezone", () => {
+    const zone = "America/New_York";
+    const value = "2026-10-09T00:00:00Z";
+    expect(toCalendarDate(value, zone)?.toString()).toBe("2026-10-08");
+    expect(toTimeText(value, zone)).toBe("20:00");
+    expect(toCalendarDate("2026-10-09", zone)?.toString()).toBe("2026-10-09");
+    expect(toIsoDateTime(toCalendarDate("2026-10-08")!, "20:00", zone)).toBe(
+      "2026-10-09T00:00:00.000Z",
+    );
+    expect(sameDate(value, "2026-10-08", false, zone)).toBe(true);
+    expect(sameDate("2026-10-08T20:00", value, true, zone)).toBe(true);
+    expect(toIsoDateTime(toCalendarDate("2026-12-08")!, "20:00", zone)).toBe(
+      "2026-12-09T01:00:00.000Z",
+    );
+  });
+
   it("compares by day for dates and by minute for date-times", () => {
     expect(sameDate("2026-10-02", new Date(2026, 9, 2, 18), false)).toBe(true);
     expect(sameDate("2026-10-02", "2026-10-03", false)).toBe(false);

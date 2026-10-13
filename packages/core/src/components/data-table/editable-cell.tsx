@@ -16,7 +16,7 @@ import {
 } from "react";
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { Popover } from "@base-ui/react/popover";
-import { getLocalTimeZone, parseDate, today, type CalendarDate } from "@internationalized/date";
+import { parseDate, today, type CalendarDate } from "@internationalized/date";
 import { CalendarDays, ChevronDown, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTimeZone } from "@/contexts/appshell-context";
@@ -976,8 +976,12 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
 
 // Where an empty calendar opens: today, or — when today can't be picked — the
 // nearest day that can, so a bounded date never opens on a fully disabled month.
-function nearestPickableDay(min: CalendarDate | undefined, max: CalendarDate | undefined) {
-  const now = today(getLocalTimeZone());
+function nearestPickableDay(
+  min: CalendarDate | undefined,
+  max: CalendarDate | undefined,
+  timeZone: string,
+) {
+  const now = today(timeZone);
   if (min && now.compare(min) < 0) return min;
   if (max && now.compare(max) > 0) return max;
   return undefined;
@@ -1009,7 +1013,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
     row,
     col,
     save,
-    (next) => sameDate(next, current, withTime),
+    (next) => sameDate(next, current, withTime, timeZone),
     store,
     cellId,
   );
@@ -1030,14 +1034,14 @@ function DateEditCell<TRow extends Record<string, unknown>>({
   const accessibleName = typeof cellDisplay === "string" ? `${label}, ${cellDisplay}` : label;
   const min = isIsoDate(col.edit?.min) ? parseDate(col.edit.min) : undefined;
   const max = isIsoDate(col.edit?.max) ? parseDate(col.edit.max) : undefined;
-  const pickedDay = withTime ? draftDay : toCalendarDate(shown);
+  const pickedDay = withTime ? draftDay : toCalendarDate(shown, timeZone);
 
   const handleOpenChange = (next: boolean, details?: { reason?: string }) => {
     if (next) {
-      setDraftDay(toCalendarDate(shown));
-      setDraftTime(toTimeText(shown));
+      setDraftDay(toCalendarDate(shown, timeZone));
+      setDraftTime(toTimeText(shown, timeZone));
     } else if (withTime && draftDay && details?.reason !== "escape-key") {
-      commit(toIsoDateTime(draftDay, draftTime));
+      commit(toIsoDateTime(draftDay, draftTime, timeZone));
     }
     setOpen(next);
   };
@@ -1109,7 +1113,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
               <Calendar
                 aria-label={label}
                 value={pickedDay}
-                defaultFocusedValue={pickedDay ?? nearestPickableDay(min, max)}
+                defaultFocusedValue={pickedDay ?? nearestPickableDay(min, max, timeZone)}
                 onChange={handlePick}
                 minValue={min}
                 maxValue={max}

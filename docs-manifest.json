@@ -341,10 +341,10 @@
       "sources": ["packages/core/src/components/csv-exporter/**"],
       "claims": [],
       "symbols": [
-        "CsvCursorConnection",
         "CsvCursorFetcher",
         "CsvExportCell",
         "CsvExportColumn",
+        "CsvExportPage",
         "CsvExportPhase",
         "CsvExporter",
         "CsvExporterProps",
@@ -353,10 +353,10 @@
         "useCsvExporter"
       ],
       "hashes": {
-        "typeSurface": "60dbd72ac4ace359",
-        "outline": "042dd8520918d281",
+        "typeSurface": "b5d2153372721fdd",
+        "outline": "98eebfc8c7ecd93e",
         "snapshot": null,
-        "outputMd": "1d0086dceb942fec",
+        "outputMd": "4c92d382e56b51ef",
         "examples": null
       }
     },
@@ -476,9 +476,9 @@
       ],
       "hashes": {
         "typeSurface": "53eef62bcaae1c1c",
-        "outline": "fddc86fd56a26359",
+        "outline": "b6c43130ae349330",
         "snapshot": null,
-        "outputMd": "0e9991ffc02884d4",
+        "outputMd": "923c971fe2b5fef2",
         "examples": null
       }
     },
@@ -1538,10 +1538,10 @@
       ],
       "claims": [],
       "symbols": [
-        "CsvCursorConnection",
         "CsvCursorFetcher",
         "CsvExportCell",
         "CsvExportColumn",
+        "CsvExportPage",
         "CsvExportPhase",
         "CsvExporterProps",
         "CsvExporterState",
@@ -1549,10 +1549,10 @@
         "useCsvExporter"
       ],
       "hashes": {
-        "typeSurface": "e23f78efb13d44e1",
-        "outline": "5ea3b4ace553ed0b",
+        "typeSurface": "0aa0163146f1c3d9",
+        "outline": "79cafab994941e8a",
         "snapshot": null,
-        "outputMd": "5f10cd5db2dd199a",
+        "outputMd": "0da85a472e432125",
         "examples": null
       }
     },
@@ -1734,9 +1734,9 @@
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
-    "packages/core/skills/app-shell-patterns/references/components/csv-exporter.md": "1d0086dceb942fec",
+    "packages/core/skills/app-shell-patterns/references/components/csv-exporter.md": "4c92d382e56b51ef",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "0e9991ffc02884d4",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "923c971fe2b5fef2",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "f39002ad79625dc4",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
@@ -1780,7 +1780,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "1a0a937f3a412c13",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "2d2eaf5aa04d95d3",
     "packages/core/skills/app-shell-patterns/references/api/use-auth.md": "a7d907ac79d24944",
-    "packages/core/skills/app-shell-patterns/references/api/use-csv-exporter.md": "5f10cd5db2dd199a",
+    "packages/core/skills/app-shell-patterns/references/api/use-csv-exporter.md": "0da85a472e432125",
     "packages/core/skills/app-shell-patterns/references/api/use-override-breadcrumb.md": "6ec55fc3dfd8c21d",
     "packages/core/skills/app-shell-patterns/references/api/use-page-meta.md": "f988bdc0fb180f0c",
     "packages/core/skills/app-shell-patterns/references/api/use-register-command-palette-actions.md": "7144ae3dc68aa65b",

@@ -109,7 +109,7 @@ const CsvFeaturesDemoPage = () => {
       const rows = PRODUCTS.slice(start, start + first);
       const end = start + rows.length;
       return {
-        edges: rows.map((node) => ({ node })),
+        rows,
         pageInfo: {
           hasNextPage: end < PRODUCTS.length,
           endCursor: rows.length > 0 ? String(end - 1) : null,

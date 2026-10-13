@@ -524,7 +524,7 @@ const DataTableLabPage = () => {
     defaultFilename: "invoices.csv",
     columns: baseColumns,
     fetcher: async () => ({
-      edges: rows.map((node) => ({ node })),
+      rows,
       pageInfo: { hasNextPage: false, endCursor: null },
       total: rows.length,
     }),

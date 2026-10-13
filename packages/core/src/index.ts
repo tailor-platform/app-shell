@@ -259,7 +259,7 @@ export {
 export {
   CsvExporter,
   useCsvExporter,
-  type CsvCursorConnection,
+  type CsvExportPage,
   type CsvCursorFetcher,
   type CsvExportCell,
   type CsvExportColumn,

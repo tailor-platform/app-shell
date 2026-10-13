@@ -7,7 +7,7 @@ description: Filename dialog and progress UI for client-side cursor-paginated CS
 
 # CsvExporter
 
-`CsvExporter` is the standalone UI for [`useCsvExporter`](../api/use-csv-exporter.md). It provides a trigger button, editable filename dialog, fetch progress, and cancellation without requiring a DataTable.
+`CsvExporter` is the standalone UI for [`useCsvExporter`](../api/use-csv-exporter.md). It provides an editable filename dialog, fetch progress, and cancellation without requiring a DataTable. It does not render a trigger button; use the hook's `open()` action to open it from your own button or action.
 
 ## Import
 
@@ -41,11 +41,11 @@ const { open, props } = useCsvExporter({
 | `onOpenChange` | `(open: boolean) => void` | Called when the dialog opens or closes.                |
 | `exporter`     | `CsvExporterState`        | Export state and actions returned by `useCsvExporter`. |
 
-The filename input is validated through AppShell `Form` and `Field`. While fetching, the dialog shows fetched rows and a determinate progress bar when the connection returns `total`. The user can cancel the request, or dismiss and reopen the dialog while the export continues.
+The filename input is validated through AppShell `Form` and `Field`. While fetching, the dialog shows fetched rows and a determinate progress bar when the fetcher returns `total`. The user can cancel the request, or dismiss and reopen the dialog while the export continues.
 
 ## DataTable
 
-For an export coupled to a table, use [`DataTable.CSVExporter`](./data-table.md#datatablecsvexporter) with the same props:
+For an export coupled to a table, use [`DataTable.CSVExporter`](./data-table.md#datatablecsvexporter) with the same props. This variant includes its own trigger button:
 
 ```tsx
 <DataTable.CSVExporter {...props} />

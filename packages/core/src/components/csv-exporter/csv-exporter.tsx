@@ -109,7 +109,7 @@ export function CsvExporterView<TRow extends Record<string, unknown>>({
 }
 
 /**
- * Standard CSV export button, filename dialog, and progress UI.
+ * CSV filename dialog and progress UI, opened by a caller-provided trigger.
  *
  * @example
  * ```tsx

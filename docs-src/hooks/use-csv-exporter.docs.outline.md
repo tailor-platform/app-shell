@@ -10,7 +10,7 @@ sources:
 
 # useCsvExporter
 
-`useCsvExporter` fetches every page from a Relay-style cursor connection, creates a UTF-8 CSV, and returns an exporter value for [`DataTable.CSVExporter`](../components/data-table.md#datatablecsvexporter). It is client-agnostic: the calling application implements the `fetcher` with its own data client.
+`useCsvExporter` fetches every cursor-paginated page of rows, creates a UTF-8 CSV, and returns an exporter value for [`DataTable.CSVExporter`](../components/data-table.md#datatablecsvexporter). It is client-agnostic: the calling application implements the `fetcher` with its own data client.
 
 ## Import
 
@@ -18,7 +18,7 @@ sources:
 import {
   CsvExporter,
   useCsvExporter,
-  type CsvCursorConnection,
+  type CsvExportPage,
   type CsvExportColumn,
 } from "@tailor-platform/app-shell";
 ```
@@ -42,14 +42,20 @@ const { props } = useCsvExporter({
       .toPromise();
 
     if (result.error) throw result.error;
-    return result.data?.products;
+    const connection = result.data?.products;
+    if (!connection) return connection;
+    return {
+      rows: connection.edges.map(({ node }) => node),
+      pageInfo: connection.pageInfo,
+      total: connection.total,
+    };
   },
 });
 
 <DataTable.CSVExporter {...props} />;
 ```
 
-The fetcher receives the cursor parameters for one page. The hook follows `pageInfo.endCursor` until `hasNextPage` is false, then serializes and downloads every fetched row. It passes an `AbortSignal`; pass it to the client request when the client supports cancellation.
+The fetcher receives the cursor parameters for one page and returns a `CsvExportPage<TRow>` shaped as `{ rows, pageInfo, total? }`, using the same row representation as DataTable. `pageInfo` must include `hasNextPage` and `endCursor`; `total` is optional. For a GraphQL connection, extract the nodes into `rows` in the fetcher, as shown above. The hook follows `pageInfo.endCursor` until `hasNextPage` is false, then serializes and downloads every fetched row. It passes an `AbortSignal`; pass it to the client request when the client supports cancellation.
 
 Include `total` in the connection query to show a determinate progress bar:
 

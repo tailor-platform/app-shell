@@ -5,7 +5,7 @@ import type { Column } from "@/components/data-table/types";
 import { useToast } from "@/hooks/use-toast";
 import { useCsvExporterT } from "./i18n";
 import type {
-  CsvCursorConnection,
+  CsvExportPage,
   CsvExportCell,
   CsvExportColumn,
   CsvExporterState,
@@ -79,7 +79,7 @@ function downloadCsv(csv: string, filename: string) {
 /**
  * Fetch every cursor page, serialize its rows as CSV, and expose progress and
  * cancellation actions. The data client stays outside this hook: `fetcher`
- * only needs to return a Relay-style cursor connection.
+ * only needs to return a cursor page with `rows` and `pageInfo`.
  *
  * @example
  * ```tsx
@@ -87,8 +87,7 @@ function downloadCsv(csv: string, filename: string) {
  *   defaultFilename: "products.csv",
  *   columns,
  *   fetcher: async ({ first, after, signal }) => {
- *     const result = await client.listProducts({ first, after, signal });
- *     return result.connection;
+ *     return client.listProducts({ first, after, signal });
  *   },
  * });
  *
@@ -162,20 +161,20 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
         let total: number | null = null;
 
         for (;;) {
-          const connection = await fetcher({
+          const page = await fetcher({
             first: pageSize,
             after,
             signal: abortController.signal,
           });
           if (abortController.signal.aborted) throw new DOMException("Aborted", "AbortError");
-          if (!connection) break;
+          if (!page) break;
 
-          rows.push(...connection.edges.map(({ node }) => node));
-          total ??= connection.total ?? null;
+          rows.push(...page.rows);
+          total ??= page.total ?? null;
           setProgress({ completed: rows.length, total });
 
-          if (!connection.pageInfo.hasNextPage) break;
-          const next = connection.pageInfo.endCursor;
+          if (!page.pageInfo.hasNextPage) break;
+          const next = page.pageInfo.endCursor;
           if (next == null || seenCursors.has(next)) {
             throw new Error("CSV export pagination did not advance");
           }
@@ -239,4 +238,4 @@ export function useCsvExporter<TRow extends Record<string, unknown>>({
   return { open, props };
 }
 
-export type { CsvCursorConnection };
+export type { CsvExportPage };

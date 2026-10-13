@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { createColumnHelper } from "@/components/data-table/field-helpers";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { useCsvExporter } from "./use-csv-exporter";
-import type { CsvCursorConnection, CsvCursorFetcher, UseCsvExporterOptions } from "./types";
+import type { CsvExportPage, CsvCursorFetcher, UseCsvExporterOptions } from "./types";
 
 const wrapper = createAppShellWrapper("en");
 
@@ -63,14 +63,14 @@ describe("useCsvExporter", () => {
       column({ render: () => <button>View</button> }),
     ];
     const fetcher = vi
-      .fn()
+      .fn<CsvCursorFetcher<Row>>()
       .mockResolvedValueOnce({
-        edges: [{ node: { id: "1", name: "Alice", formula: "=SUM(A1:A2)" } }],
+        rows: [{ id: "1", name: "Alice", formula: "=SUM(A1:A2)" }],
         pageInfo: { hasNextPage: true, endCursor: "cursor-1" },
         total: 2,
       })
       .mockResolvedValueOnce({
-        edges: [{ node: { id: "2", name: "Bob", formula: "safe" } }],
+        rows: [{ id: "2", name: "Bob", formula: "safe" }],
         pageInfo: { hasNextPage: false, endCursor: "cursor-2" },
         total: 2,
       });
@@ -174,12 +174,12 @@ describe("useCsvExporter", () => {
   it.each(["resolves", "rejects"])(
     "aborts an in-flight export when unmounted even if the fetch later %s",
     async (outcome) => {
-      let resolveFetch!: (connection: CsvCursorConnection<ExportTypeTestRow>) => void;
+      let resolveFetch!: (page: CsvExportPage<ExportTypeTestRow>) => void;
       let rejectFetch!: (error: Error) => void;
       let signal!: AbortSignal;
       const fetcher = vi.fn(({ signal: nextSignal }: { signal: AbortSignal }) => {
         signal = nextSignal;
-        return new Promise<CsvCursorConnection<ExportTypeTestRow>>((resolve, reject) => {
+        return new Promise<CsvExportPage<ExportTypeTestRow>>((resolve, reject) => {
           resolveFetch = resolve;
           rejectFetch = reject;
         });
@@ -206,7 +206,7 @@ describe("useCsvExporter", () => {
       expect(signal.aborted).toBe(true);
       if (outcome === "resolves") {
         resolveFetch({
-          edges: [{ node: { name: "Alice" } }],
+          rows: [{ name: "Alice" }],
           pageInfo: { hasNextPage: false, endCursor: null },
         });
       } else {

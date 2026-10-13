@@ -22,9 +22,9 @@ export interface CsvExportColumn<TRow> {
   value: (row: TRow) => CsvExportCell;
 }
 
-/** A Relay-style cursor page returned by a CSV export data source. */
-export interface CsvCursorConnection<TRow> {
-  edges: readonly { node: TRow }[];
+/** A cursor page of rows returned by a CSV export data source. */
+export interface CsvExportPage<TRow> {
+  rows: readonly TRow[];
   pageInfo: {
     hasNextPage: boolean;
     endCursor: string | null;
@@ -43,7 +43,7 @@ export type CsvCursorFetcher<TRow> = (pagination: {
   first: number;
   after: string | null;
   signal: AbortSignal;
-}) => Promise<CsvCursorConnection<TRow> | null | undefined>;
+}) => Promise<CsvExportPage<TRow> | null | undefined>;
 
 type CsvExportableDataTableColumn<TRow extends Record<string, unknown>> =
   | (Column<TRow> & { label?: undefined })

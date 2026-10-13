@@ -2,7 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add `useCsvExporter` and the standalone `CsvExporter` dialog for client-side, cursor-paginated CSV downloads with filename editing, progress, cancellation, UTF-8 BOM, and spreadsheet formula escaping. It is data-client and DataTable independent, so it can be opened from any button or collection UI.
+Add `useCsvExporter` and the standalone `CsvExporter` dialog for client-side, cursor-paginated CSV downloads with filename editing, progress, cancellation, UTF-8 BOM, and spreadsheet formula escaping. It is data-client and DataTable independent, so it can be opened from any button or collection UI. Fetchers return `CsvExportPage` values shaped as `{ rows, pageInfo, total? }`, using the same row representation as DataTable.
 
 ```tsx
 const { open, props } = useCsvExporter({ defaultFilename: "products.csv", columns, fetcher });

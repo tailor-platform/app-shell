@@ -140,7 +140,7 @@ function matchesQuery(row: Invoice, query: CollectionVariables["query"]): boolea
   );
 }
 
-async function queryInvoices(variables: CollectionVariables): Promise<DataTableData<Invoice>> {
+async function queryInvoices(variables: CollectionVariables) {
   // 1. filter
   let rows = ALL_INVOICES.filter((r) => matchesQuery(r, variables.query));
 
@@ -346,21 +346,12 @@ function InvoiceTable({
     defaultFilename: "invoices.csv",
     columns,
     pageSize: 10,
-    fetcher: async ({ first, after }) => {
-      const page = await queryInvoices({
+    fetcher: ({ first, after }) =>
+      queryInvoices({
         query: variables.query,
         order: variables.order,
         pagination: { first, after },
-      });
-      return {
-        edges: page.rows.map((node) => ({ node })),
-        pageInfo: page.pageInfo ?? {
-          hasNextPage: false,
-          endCursor: null,
-        },
-        total: page.total ?? null,
-      };
-    },
+      }),
   });
 
   return (

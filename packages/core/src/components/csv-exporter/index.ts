@@ -1,7 +1,7 @@
 export { CsvExporter } from "./csv-exporter";
 export { useCsvExporter } from "./use-csv-exporter";
 export type {
-  CsvCursorConnection,
+  CsvExportPage,
   CsvCursorFetcher,
   CsvExportCell,
   CsvExportColumn,

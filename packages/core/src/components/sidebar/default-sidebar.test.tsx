@@ -9,6 +9,7 @@ import { DefaultSidebar } from "./default-sidebar";
 import { SidebarLayout } from "./sidebar-layout";
 import { SidebarItem } from "./sidebar-item";
 import { SidebarGroup } from "./sidebar-group";
+import { SidebarSection } from "./sidebar-section";
 import { SidebarSeparator } from "./sidebar-separator";
 import { defineModule, defineResource } from "@/resource";
 import { AppShell } from "@/components/appshell";
@@ -329,6 +330,30 @@ describe("DefaultSidebar opt-in props", () => {
 
     // The toggle opens the overlay drawer.
     expect(document.querySelector('[data-slot="sidebar-overlay"]')).not.toBeNull();
+  });
+
+  it("keeps section items as plain rail icons and collapses the heading", () => {
+    renderWithProps(
+      {
+        iconRail: true,
+        hideHeader: true,
+        children: (
+          <SidebarSection title="Services">
+            <SidebarItem to="/dashboard" />
+            <SidebarItem to="/products" />
+          </SidebarSection>
+        ),
+      },
+      { defaultOpen: false },
+    );
+
+    // Unlike a group, a section has no flyout trigger: its items stay in the rail.
+    expect(screen.queryByRole("button", { name: "Services" })).toBeNull();
+    expect(screen.getByRole("link", { name: /dashboard/i })).toBeDefined();
+    expect(screen.getByRole("link", { name: /products/i })).toBeDefined();
+    // The heading collapses away at icon width.
+    const heading = document.querySelector('[data-slot="sidebar-section-title"]');
+    expect(heading?.className).toContain("astw:group-data-[collapsible=icon]:opacity-0");
   });
 
   it("reveals a group's children in a hover flyout in the icon rail", async () => {

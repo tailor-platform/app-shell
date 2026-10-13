@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTimeZone } from "@/contexts/appshell-context";
+import {
+  isTemporalFilterValueValid,
+  normalizeTemporalFilterValue,
+} from "@/lib/temporal-filter-values";
 import type {
   CollectionControl,
   CollectionVariables,
@@ -51,6 +56,36 @@ function toCaseInsensitiveRegex(operator: FilterOperator, value: string): string
   }
 }
 
+function normalizeCollectionFilter(
+  filter: Filter,
+  tableMetadata: TableMetadata | undefined,
+  timeZone: string,
+): Filter {
+  if (tableMetadata?.fields.find((field) => field.name === filter.field)?.type !== "datetime") {
+    return filter;
+  }
+
+  const normalize = (value: unknown): string => {
+    const normalized =
+      typeof value === "string" && !isTemporalFilterValueValid("datetime", value, timeZone)
+        ? undefined
+        : normalizeTemporalFilterValue("datetime", value, timeZone);
+    if (normalized === undefined) {
+      throw new TypeError(`Invalid datetime filter for field "${filter.field}".`);
+    }
+    return normalized;
+  };
+
+  let value: unknown;
+  if (filter.operator === "between") {
+    const range = filter.value as { min?: unknown; max?: unknown } | null | undefined;
+    value = { min: normalize(range?.min), max: normalize(range?.max) };
+  } else {
+    value = Array.isArray(filter.value) ? filter.value.map(normalize) : normalize(filter.value);
+  }
+  return { ...filter, value };
+}
+
 // -----------------------------------------------------------------------------
 // Overload signatures
 // -----------------------------------------------------------------------------
@@ -58,6 +93,8 @@ function toCaseInsensitiveRegex(operator: FilterOperator, value: string): string
 /**
  * Hook for managing collection query parameters (filters, sort, pagination)
  * with metadata-based field name typing and automatic `fieldType` detection.
+ * Datetime filters are normalized to RFC 3339 using the AppShell timezone
+ * before initialization or updates. Invalid datetime values throw a TypeError.
  *
  * Returns `variables` with `query`, `order`, and `pagination` sub-properties
  * that can be mapped to GraphQL query variables.
@@ -119,7 +156,8 @@ export function useCollectionVariables(
 export function useCollectionVariables(
   options: UseCollectionOptions & { tableMetadata?: TableMetadata },
 ): unknown {
-  const { params = {}, onParamsChange } = options;
+  const { params = {}, onParamsChange, tableMetadata } = options;
+  const { value: timeZone } = useTimeZone();
   const initialFilters = params.initialFilters ?? [];
   const initialSort = params.initialSort ?? [];
   const initialPageSize = params.pageSize ?? 20;
@@ -127,7 +165,9 @@ export function useCollectionVariables(
   // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
-  const [filters, setFiltersState] = useState<Filter[]>(initialFilters);
+  const [filters, setFiltersState] = useState<Filter[]>(() =>
+    initialFilters.map((filter) => normalizeCollectionFilter(filter, tableMetadata, timeZone)),
+  );
   const [sortStates, setSortStates] = useState<SortState[]>(initialSort);
 
   const {
@@ -156,14 +196,13 @@ export function useCollectionVariables(
       value: unknown,
       filterOptions?: { caseSensitive?: boolean },
     ) => {
+      const newFilter = normalizeCollectionFilter(
+        { field, operator, value, caseSensitive: filterOptions?.caseSensitive },
+        tableMetadata,
+        timeZone,
+      );
       setFiltersState((prev) => {
         const existing = prev.findIndex((f) => f.field === field);
-        const newFilter: Filter = {
-          field,
-          operator,
-          value,
-          caseSensitive: filterOptions?.caseSensitive,
-        };
         if (existing >= 0) {
           const updated = [...prev];
           updated[existing] = newFilter;
@@ -173,15 +212,17 @@ export function useCollectionVariables(
       });
       resetPage();
     },
-    [resetPage],
+    [resetPage, tableMetadata, timeZone],
   );
 
   const setFilters = useCallback(
     (newFilters: Filter[]) => {
-      setFiltersState(newFilters);
+      setFiltersState(
+        newFilters.map((filter) => normalizeCollectionFilter(filter, tableMetadata, timeZone)),
+      );
       resetPage();
     },
-    [resetPage],
+    [resetPage, tableMetadata, timeZone],
   );
 
   const removeFilter = useCallback(

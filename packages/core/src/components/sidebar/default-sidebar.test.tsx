@@ -449,7 +449,9 @@ describe("DefaultSidebar auto-generation", () => {
       return link;
     });
 
-    expect(overviewLink.className).toContain("astw:bg-sidebar-accent");
+    // Active styling (background, weight and --sidebar-accent-foreground text)
+    // is keyed on data-active, so the item must carry it — not just a class.
+    expect(overviewLink.getAttribute("data-active")).toBe("true");
   });
 
   it("excludes componentless resources from sidebar links", async () => {

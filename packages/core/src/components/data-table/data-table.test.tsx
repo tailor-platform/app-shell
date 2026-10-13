@@ -1,5 +1,13 @@
 import { afterEach, describe, it, expect, expectTypeOf, vi } from "vitest";
-import { act, cleanup, render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render,
+  renderHook,
+  screen,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { StrictMode, type ReactNode } from "react";
@@ -96,6 +104,32 @@ function TestDataTable(props: {
   );
 }
 
+function SortableHeaderHarness({ control }: { control: CollectionControl }) {
+  const table = useDataTable<TestRow>({
+    columns: [
+      {
+        label: "Name",
+        sort: { field: "name", type: "string" },
+        header: (ctx) =>
+          ctx.sortable ? (
+            <button type="button" onClick={ctx.activateSort}>
+              {ctx.label} {ctx.sortDirection}
+            </button>
+          ) : null,
+        render: (row) => row.name,
+      },
+    ],
+    data: testData,
+    control,
+  });
+
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
 const wrapper = createAppShellWrapper("en");
 
 function createTimeZoneWrapper(timeZone: string) {
@@ -166,6 +200,13 @@ const strictWrapper = ({ children }: { children: ReactNode }) => {
     </StrictMode>
   );
 };
+
+// Opens the kebab menu of the row at `index` and returns its "Activate" item.
+async function activateItemFor(index: number) {
+  const user = userEvent.setup();
+  await user.click(screen.getAllByRole("button", { name: "Row actions" })[index]);
+  return screen.findByRole("menuitem", { name: "Activate" });
+}
 
 describe("DataTable", () => {
   it("renders a basic data table with headers and rows", () => {
@@ -836,33 +877,7 @@ describe("DataTable", () => {
         sortStates: [{ field: "name", direction: "Asc" }],
       });
 
-      function Harness() {
-        const table = useDataTable<TestRow>({
-          columns: [
-            {
-              label: "Name",
-              sort: { field: "name", type: "string" },
-              header: (ctx) =>
-                ctx.sortable ? (
-                  <button type="button" onClick={ctx.activateSort}>
-                    {ctx.label} {ctx.sortDirection}
-                  </button>
-                ) : null,
-              render: (row) => row.name,
-            },
-          ],
-          data: testData,
-          control,
-        });
-
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-
-      render(<Harness />, { wrapper });
+      render(<SortableHeaderHarness control={control} />, { wrapper });
 
       fireEvent.click(screen.getByRole("button", { name: "Name Asc" }));
 
@@ -1903,59 +1918,43 @@ describe("DataTable", () => {
       // Every built-in affordance fires exactly one toggle per commit, so this
       // is only reachable through the public API.
       const onSelectionChange = vi.fn();
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           onSelectionChange,
-        });
-        api = table;
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-      render(<Harness />, { wrapper });
+        }),
+      );
 
       act(() => {
-        api.toggleRowSelection?.(testData.rows[0]);
-        api.toggleRowSelection?.(testData.rows[1]);
+        result.current.toggleRowSelection?.(testData.rows[0]);
+        result.current.toggleRowSelection?.(testData.rows[1]);
       });
 
-      expect(api.selectedIds).toEqual(["1", "2"]);
+      expect(result.current.selectedIds).toEqual(["1", "2"]);
       expect(onSelectionChange).toHaveBeenLastCalledWith(["1", "2"]);
     });
 
     it("applies clearSelection before a toggle in the same commit", () => {
       const onSelectionChange = vi.fn();
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           onSelectionChange,
-        });
-        api = table;
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-      render(<Harness />, { wrapper });
+        }),
+      );
 
-      act(() => api.selectAllRows?.());
-      expect(api.selectedIds).toEqual(["1", "2"]);
+      act(() => result.current.selectAllRows?.());
+      expect(result.current.selectedIds).toEqual(["1", "2"]);
 
       // "replace the selection with just this row"
       act(() => {
-        api.clearSelection?.();
-        api.toggleRowSelection?.(testData.rows[1]);
+        result.current.clearSelection?.();
+        result.current.toggleRowSelection?.(testData.rows[1]);
       });
 
-      expect(api.selectedIds).toEqual(["2"]);
+      expect(result.current.selectedIds).toEqual(["2"]);
       expect(onSelectionChange).toHaveBeenLastCalledWith(["2"]);
     });
 
@@ -2014,13 +2013,6 @@ describe("DataTable", () => {
           <DataTable.Table />
         </DataTable.Root>
       );
-    }
-
-    // Opens the kebab menu of the row at `index` and returns its "Activate" item.
-    async function activateItemFor(index: number) {
-      const user = userEvent.setup();
-      await user.click(screen.getAllByRole("button", { name: "Row actions" })[index]);
-      return screen.findByRole("menuitem", { name: "Activate" });
     }
 
     it("disables an action for rows where canApply returns false", async () => {
@@ -2735,59 +2727,43 @@ describe("DataTable", () => {
 
     it("composes several expansion toggles dispatched in one commit", () => {
       const onChange = vi.fn();
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           rowExpansion: { render: detail, onChange },
-        });
-        api = table;
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-      render(<Harness />, { wrapper });
+        }),
+      );
 
       act(() => {
-        api.toggleRowExpansion?.(testData.rows[0]);
-        api.toggleRowExpansion?.(testData.rows[1]);
+        result.current.toggleRowExpansion?.(testData.rows[0]);
+        result.current.toggleRowExpansion?.(testData.rows[1]);
       });
 
-      expect(api.expandedIds).toEqual(["1", "2"]);
+      expect(result.current.expandedIds).toEqual(["1", "2"]);
       expect(onChange).toHaveBeenLastCalledWith(["1", "2"]);
     });
 
     it("applies collapseAllRows before a toggle in the same commit", () => {
-      let api!: UseDataTableReturn<TestRow>;
-      function Harness() {
-        const table = useDataTable<TestRow>({
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
           columns: testColumns,
           data: testData,
           rowExpansion: { render: detail },
-        });
-        api = table;
-        return (
-          <DataTable.Root value={table}>
-            <DataTable.Table />
-          </DataTable.Root>
-        );
-      }
-      render(<Harness />, { wrapper });
+        }),
+      );
 
       act(() => {
-        api.toggleRowExpansion?.(testData.rows[0]);
-        api.toggleRowExpansion?.(testData.rows[1]);
+        result.current.toggleRowExpansion?.(testData.rows[0]);
+        result.current.toggleRowExpansion?.(testData.rows[1]);
       });
 
       act(() => {
-        api.collapseAllRows?.();
-        api.toggleRowExpansion?.(testData.rows[1]);
+        result.current.collapseAllRows?.();
+        result.current.toggleRowExpansion?.(testData.rows[1]);
       });
 
-      expect(api.expandedIds).toEqual(["2"]);
+      expect(result.current.expandedIds).toEqual(["2"]);
     });
 
     it("keeps toggleRowExpansion stable across an expansion", () => {

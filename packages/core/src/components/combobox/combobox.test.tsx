@@ -9,6 +9,13 @@ afterEach(() => {
 
 const fruits = ["Apple", "Banana", "Cherry", "Date", "Elderberry"];
 
+/** Advance timers and flush microtasks. */
+async function advanceAndFlush(ms: number) {
+  await act(async () => {
+    vi.advanceTimersByTime(ms);
+  });
+}
+
 function SimpleCombobox(props: {
   onValueChange?: (value: string | null, event: unknown) => void;
   defaultValue?: string;
@@ -1340,13 +1347,6 @@ describe("useAsync", () => {
   afterEach(() => {
     vi.useRealTimers();
   });
-
-  /** Advance timers and flush microtasks. */
-  async function advanceAndFlush(ms: number) {
-    await act(async () => {
-      vi.advanceTimersByTime(ms);
-    });
-  }
 
   it("returns correct shape", () => {
     const fetcher = vi.fn(async () => []);

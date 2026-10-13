@@ -14,8 +14,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: IzumiSy/deps2changesets@e6224362658fa941bf2f1bc34f2a41591eb875be # main
+      - uses: IzumiSy/deps2changesets@1e89736c02d7e4ca62a0ae8e5324ebc62b22d6e2 # main

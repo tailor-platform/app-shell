@@ -181,6 +181,14 @@ Locale and timezone come from AppShell automatically. Override per field with `l
 <DatePicker aria-label="Date" locale="ja-JP" />
 ```
 
+### Day of the week
+
+`showDayOfWeek` adds the locale's short day of the week where the locale places it — `2025/12/19(金)` for ja-JP, `Fri, 12/19/2025` for en-US. It is read-only and derived from the entered date: it shows a placeholder until the date is complete, and while a date segment is mid-entry it keeps the previous day of the week (muted), so typing `25` into the day never flashes the 2nd's. Screen readers hear the full day name with each date segment's value.
+
+```tsx
+<DatePicker aria-label="Closing date" showDayOfWeek />
+```
+
 ## Keyboard
 
 - **Segments:** `↑`/`↓` increment/decrement, digits type-to-fill (auto-advance), `←`/`→` move between segments, `Backspace` clears, `/` commits the current segment and advances.
@@ -207,6 +215,7 @@ Locale and timezone come from AppShell automatically. Override per field with `l
 | `hourCycle`                      | `12 \| 24`                                                    | Force 12- or 24-hour time; defaults to the locale            |
 | `autoFocus`                      | `boolean`                                                     | Focus the first segment on mount                             |
 | `locale`                         | `string`                                                      | BCP-47 locale override                                       |
+| `showDayOfWeek`                  | `boolean`                                                     | Show the locale's short day of the week next to the date     |
 | `name`                           | `string`                                                      | Emits a form value through the proxy input                   |
 | `id`                             | `string`                                                      | Proxy input id (use with external `<label htmlFor>`).        |
 | `firstDayOfWeek`                 | `"sun" \| "mon" \| "tue" \| "wed" \| "thu" \| "fri" \| "sat"` | Override the locale week start used by `w` / `k` shortcuts   |
@@ -229,7 +238,7 @@ See the calendar docs in-code: controlled/uncontrolled value, min/max, unavailab
 
 ### DateRangePickerProps
 
-The `DatePickerProps` surface (labeling, `isInvalid`, `min/maxValue`, `isDateUnavailable`, `granularity`, `hourCycle`, `firstDayOfWeek`, `timeZone`, `locale`, `autoFocus`, `isDisabled/ReadOnly/Required`), with the range-specific differences:
+The `DatePickerProps` surface (labeling, `isInvalid`, `min/maxValue`, `isDateUnavailable`, `granularity`, `hourCycle`, `firstDayOfWeek`, `timeZone`, `locale`, `showDayOfWeek`, `autoFocus`, `isDisabled/ReadOnly/Required`), with the range-specific differences:
 
 | Prop                     | Type                             | Description                                                                     |
 | ------------------------ | -------------------------------- | ------------------------------------------------------------------------------- |

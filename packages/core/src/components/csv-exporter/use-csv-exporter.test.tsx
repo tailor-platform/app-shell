@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
+import { toast } from "sonner";
 import { createColumnHelper } from "@/components/data-table/field-helpers";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { useCsvExporter } from "./use-csv-exporter";
-import type { CsvCursorFetcher, UseCsvExporterOptions } from "./types";
+import type { CsvCursorConnection, CsvCursorFetcher, UseCsvExporterOptions } from "./types";
 
 const wrapper = createAppShellWrapper("en");
 
@@ -114,6 +115,8 @@ describe("useCsvExporter", () => {
   it("rejects an empty DataTable column override before fetching", async () => {
     const { column } = createColumnHelper<ExportTypeTestRow>();
     const fetcher = vi.fn();
+    const errorToast = vi.spyOn(toast, "error").mockReturnValue("toast");
+    const download = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     const { result } = renderHook(
       () =>
         useCsvExporter({
@@ -133,6 +136,8 @@ describe("useCsvExporter", () => {
     expect(result.current.props.exporter.error?.message).toBe(
       "Select at least one column to export",
     );
+    expect(errorToast).toHaveBeenCalledExactlyOnceWith("Select at least one column to export");
+    expect(download).not.toHaveBeenCalled();
   });
 
   it("cancels an in-flight fetch", async () => {
@@ -166,44 +171,54 @@ describe("useCsvExporter", () => {
     });
   });
 
-  it("aborts an in-flight export when unmounted", async () => {
-    let resolveFetch!: (connection: {
-      edges: { node: { name: string } }[];
-      pageInfo: { hasNextPage: boolean; endCursor: string | null };
-    }) => void;
-    let signal!: AbortSignal;
-    const fetcher = vi.fn(({ signal: nextSignal }: { signal: AbortSignal }) => {
-      signal = nextSignal;
-      return new Promise<{
-        edges: { node: { name: string } }[];
-        pageInfo: { hasNextPage: boolean; endCursor: string | null };
-      }>((resolve) => {
-        resolveFetch = resolve;
+  it.each(["resolves", "rejects"])(
+    "aborts an in-flight export when unmounted even if the fetch later %s",
+    async (outcome) => {
+      let resolveFetch!: (connection: CsvCursorConnection<ExportTypeTestRow>) => void;
+      let rejectFetch!: (error: Error) => void;
+      let signal!: AbortSignal;
+      const fetcher = vi.fn(({ signal: nextSignal }: { signal: AbortSignal }) => {
+        signal = nextSignal;
+        return new Promise<CsvCursorConnection<ExportTypeTestRow>>((resolve, reject) => {
+          resolveFetch = resolve;
+          rejectFetch = reject;
+        });
       });
-    });
-    const download = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
-    const { result, unmount } = renderHook(
-      () =>
-        useCsvExporter({
-          defaultFilename: "products.csv",
-          columns: [{ header: "Name", value: (row: { name: string }) => row.name }],
-          fetcher,
-        }),
-      { wrapper },
-    );
+      const errorToast = vi.spyOn(toast, "error").mockReturnValue("toast");
+      const infoToast = vi.spyOn(toast, "info").mockReturnValue("toast");
+      const successToast = vi.spyOn(toast, "success").mockReturnValue("toast");
+      const download = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+      const { result, unmount } = renderHook(
+        () =>
+          useCsvExporter({
+            defaultFilename: "products.csv",
+            columns: [{ header: "Name", value: (row: { name: string }) => row.name }],
+            fetcher,
+          }),
+        { wrapper },
+      );
 
-    let exportPromise!: Promise<boolean>;
-    act(() => {
-      exportPromise = result.current.props.exporter.exportCsv();
-    });
-    unmount();
-    resolveFetch({
-      edges: [{ node: { name: "Alice" } }],
-      pageInfo: { hasNextPage: false, endCursor: null },
-    });
+      let exportPromise!: Promise<boolean>;
+      act(() => {
+        exportPromise = result.current.props.exporter.exportCsv();
+      });
+      unmount();
+      expect(signal.aborted).toBe(true);
+      if (outcome === "resolves") {
+        resolveFetch({
+          edges: [{ node: { name: "Alice" } }],
+          pageInfo: { hasNextPage: false, endCursor: null },
+        });
+      } else {
+        rejectFetch(new Error("Fetch failed after unmount"));
+      }
 
-    await expect(exportPromise).resolves.toBe(false);
-    expect(signal.aborted).toBe(true);
-    expect(download).not.toHaveBeenCalled();
-  });
+      await expect(exportPromise).resolves.toBe(false);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(download).not.toHaveBeenCalled();
+      expect(errorToast).not.toHaveBeenCalled();
+      expect(infoToast).not.toHaveBeenCalled();
+      expect(successToast).not.toHaveBeenCalled();
+    },
+  );
 });

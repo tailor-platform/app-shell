@@ -446,10 +446,10 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "fe43108015be4a00",
-        "outline": "dc0b82256114191b",
+        "typeSurface": "79fb32871548dd96",
+        "outline": "871bd92ee8a9669f",
         "snapshot": null,
-        "outputMd": "3e8474e4d1437c91",
+        "outputMd": "01ed9bb2d78beef4",
         "examples": null
       }
     },
@@ -998,9 +998,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "68653902d2c9f861",
+        "outline": "87e010d622577e6e",
         "snapshot": null,
-        "outputMd": "916baa3cd2b9cbf1",
+        "outputMd": "e87e4247bcc61a99",
         "examples": "c0a2bd60e8a04474"
       }
     },
@@ -1169,7 +1169,7 @@
       "hashes": {
         "typeSurface": "429710973dfa912b",
         "outline": "721e8995f53f0e8f",
-        "snapshot": "0ceac9786fb4ce3c",
+        "snapshot": "ad715a55f78adebd",
         "outputMd": "ae287e2bb5abc1c6",
         "examples": "1ce89cec30045466"
       }
@@ -1693,7 +1693,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "3e8474e4d1437c91",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "01ed9bb2d78beef4",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "f39002ad79625dc4",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
@@ -1754,9 +1754,9 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "770b33ada6b9317f",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
-    "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
+    "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "e87e4247bcc61a99",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "526decbfd2db6555"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "597d6501b54e4256"
   }
 }

@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { parseDate } from "@internationalized/date";
 import { Link } from "react-router";
 import { BadgeList, toValueArray } from "@/components/badge-list";
+import type { SelectOption } from "@/types/collection";
+import { currencyFractionDigits, optionLabel } from "./cell-edit";
 import { normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type {
   BadgeCellOptions,
@@ -68,50 +70,106 @@ function renderText(value: unknown): ReactNode {
   }
 }
 
-function renderNumber(value: unknown, options: NumberCellOptions | undefined): ReactNode {
+// `editMaxDecimals` is the column's `edit.maxDecimals`: an editable column
+// displays as many decimals as its editor accepts, so a typed 2.5 never reads
+// back as "3". The cap never drops below `minDecimals`, which Intl rejects
+// with a RangeError.
+function formatNumber(
+  num: number,
+  options: NumberCellOptions | undefined,
+  editMaxDecimals: number | undefined,
+): string {
+  const min = options?.minDecimals ?? 0;
+  return new Intl.NumberFormat(options?.locale, {
+    minimumFractionDigits: min,
+    maximumFractionDigits: Math.max(min, options?.maxDecimals ?? min, editMaxDecimals ?? 0),
+  }).format(num);
+}
+
+function renderNumber(
+  value: unknown,
+  options: NumberCellOptions | undefined,
+  editMaxDecimals: number | undefined,
+): ReactNode {
   if (isEmpty(value)) return PLACEHOLDER;
   const num = Number(value);
   if (Number.isNaN(num)) return PLACEHOLDER;
-  const min = options?.minDecimals ?? 0;
-  const formatted = new Intl.NumberFormat(options?.locale, {
-    minimumFractionDigits: min,
-    maximumFractionDigits: options?.maxDecimals ?? min,
-  }).format(num);
-  return <span className="astw:tabular-nums">{formatted}</span>;
+  return <span className="astw:tabular-nums">{formatNumber(num, options, editMaxDecimals)}</span>;
+}
+
+/**
+ * The ISO 4217 code a `money` column uses for a row. Default: `"USD"`.
+ *
+ * @internal
+ */
+export function resolveMoneyCurrency<TRow extends Record<string, unknown>>(
+  options: MoneyCellOptions<TRow> | undefined,
+  row: TRow,
+): string {
+  return (
+    (typeof options?.currency === "function" ? options.currency(row) : options?.currency) || "USD"
+  );
+}
+
+function formatMoney<TRow extends Record<string, unknown>>(
+  num: number,
+  row: TRow,
+  options: MoneyCellOptions<TRow> | undefined,
+  editMaxDecimals: number | undefined,
+): string {
+  const currency = resolveMoneyCurrency(options, row);
+
+  // `maxDecimals` raises the cap above the currency default while keeping the
+  // minimum at the currency default (e.g. 2 for USD). Lets a JPY column stay
+  // at 0 decimals while a USD price-detail column shows up to 4. An editable
+  // column's `edit.maxDecimals` raises it the same way, but never lowers it.
+  const formatOptions: Intl.NumberFormatOptions = {
+    style: "currency",
+    currency,
+  };
+  const editCap = editMaxDecimals ?? 0;
+  if (options?.maxDecimals != null || editCap > currencyFractionDigits(currency)) {
+    formatOptions.maximumFractionDigits = Math.max(options?.maxDecimals ?? 0, editCap);
+  }
+  try {
+    return new Intl.NumberFormat(options?.locale, formatOptions).format(num);
+  } catch {
+    // Fall back to USD if the currency code is invalid — Intl throws on bad ISO codes.
+    return new Intl.NumberFormat(options?.locale, {
+      style: "currency",
+      currency: "USD",
+    }).format(num);
+  }
 }
 
 function renderMoney<TRow extends Record<string, unknown>>(
   value: unknown,
   row: TRow,
   options: MoneyCellOptions<TRow> | undefined,
+  editMaxDecimals: number | undefined,
 ): ReactNode {
   if (isEmpty(value)) return PLACEHOLDER;
   const num = Number(value);
   if (Number.isNaN(num)) return PLACEHOLDER;
-  const currency =
-    (typeof options?.currency === "function" ? options.currency(row) : options?.currency) || "USD";
+  return (
+    <span className="astw:tabular-nums">{formatMoney(num, row, options, editMaxDecimals)}</span>
+  );
+}
 
-  // `maxDecimals` raises the cap above the currency default while keeping the
-  // minimum at the currency default (e.g. 2 for USD). Lets a JPY column stay
-  // at 0 decimals while a USD price-detail column shows up to 4.
-  const formatOptions: Intl.NumberFormatOptions = {
-    style: "currency",
-    currency,
-  };
-  if (options?.maxDecimals != null) {
-    formatOptions.maximumFractionDigits = options.maxDecimals;
-  }
-  let formatted: string;
-  try {
-    formatted = new Intl.NumberFormat(options?.locale, formatOptions).format(num);
-  } catch {
-    // Fall back to USD if the currency code is invalid — Intl throws on bad ISO codes.
-    formatted = new Intl.NumberFormat(options?.locale, {
-      style: "currency",
-      currency: "USD",
-    }).format(num);
-  }
-  return <span className="astw:tabular-nums">{formatted}</span>;
+/**
+ * Formats a bare number the way a `number` / `money` column displays it. Used
+ * for the bounds in inline-editing messages ("Must be $1,000.00 or less").
+ *
+ * @internal
+ */
+export function formatColumnNumber<TRow extends Record<string, unknown>>(
+  row: TRow,
+  col: Column<TRow>,
+  value: number,
+): string {
+  if (col.type === "money") return formatMoney(value, row, col.typeOptions, col.edit?.maxDecimals);
+  if (col.type === "number") return formatNumber(value, col.typeOptions, col.edit?.maxDecimals);
+  return String(value);
 }
 
 function createDateRenderer(
@@ -151,11 +209,23 @@ function createDateRenderer(
   };
 }
 
-function renderBadge(value: unknown, options: BadgeCellOptions | undefined): ReactNode {
+function renderBadge(
+  value: unknown,
+  options: BadgeCellOptions | undefined,
+  choices: readonly SelectOption[] | undefined,
+): ReactNode {
   const items = toValueArray(value);
   const nonEmpty = items.filter((v) => v != null && v !== "");
   if (nonEmpty.length === 0) return PLACEHOLDER;
-  return <BadgeList value={value} options={options} maxVisible={options?.maxVisible} />;
+  return (
+    <BadgeList
+      value={value}
+      options={options}
+      maxVisible={options?.maxVisible}
+      // An editable column's choices label its badges, like its dropdown does.
+      resolveLabel={choices ? (v) => String(optionLabel(choices, v)) : undefined}
+    />
+  );
 }
 
 function renderLink<TRow extends Record<string, unknown>>(
@@ -188,20 +258,43 @@ export function createTypedCellRenderer<TRow extends Record<string, unknown>>(
     const renderDate = createDateRenderer(col.typeOptions, timeZone);
     return (row) => renderDate(getCellValue(row, col));
   }
-  return (row) => {
-    const value = getCellValue(row, col);
-    switch (col.type) {
-      case "number":
-        return renderNumber(value, col.typeOptions);
-      case "money":
-        return renderMoney(value, row, col.typeOptions);
-      case "badge":
-        return renderBadge(value, col.typeOptions);
-      case "link":
-        return renderLink(value, row, col.typeOptions);
-      case "text":
-      default:
-        return renderText(value);
+  return (row) => renderTypedValue(row, col, getCellValue(row, col));
+}
+
+/**
+ * Render `value` with the column's built-in `type` renderer. Editable cells use
+ * it to show a save that is still in flight before the new value reaches
+ * `data`, and pass `linkAsText` because a `link` cell that can be edited is an
+ * input, not a link.
+ *
+ * @internal
+ */
+export function renderTypedValue<TRow extends Record<string, unknown>>(
+  row: TRow,
+  col: Column<TRow>,
+  value: unknown,
+  options?: { linkAsText?: boolean; timeZone?: string },
+): ReactNode {
+  switch (col.type) {
+    case "number":
+      return renderNumber(value, col.typeOptions, col.edit?.maxDecimals);
+    case "money":
+      return renderMoney(value, row, col.typeOptions, col.edit?.maxDecimals);
+    case "date":
+      return createDateRenderer(
+        col.typeOptions,
+        options?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+      )(value);
+    case "badge":
+      return renderBadge(value, col.typeOptions, col.edit?.options);
+    case "link": {
+      // A column with dropdown choices stores an option's value and shows its label.
+      const label = optionLabel(col.edit?.options, value);
+      return options?.linkAsText ? renderText(label) : renderLink(label, row, col.typeOptions);
     }
-  };
+    case "text":
+      return renderText(optionLabel(col.edit?.options, value));
+    default:
+      return renderText(value);
+  }
 }

@@ -49,7 +49,6 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
-    "@tailor-platform/app-shell": "^1.16.1",
     "@tailor-platform/sdk": "^1.0.0 || ^2.0.0"
   }
 }

@@ -472,6 +472,8 @@ export type UseDataTableOptions<
    * **Note:** The header checkbox acts on the **current page**: checking it adds
    * the page's rows to the selection and unchecking it removes them. Rows
    * selected on other pages are kept.
+   *
+   * @deprecated Use `rowSelection.onChange` instead.
    */
   onSelectionChange?: (ids: string[]) => void;
   /**

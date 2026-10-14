@@ -253,16 +253,8 @@ const AutoSidebarItems = (props: {
               {item.url ? (
                 <>
                   <SidebarMenuButton
-                    render={
-                      <Link
-                        to={item.url as string}
-                        className={
-                          isActivePath(item.url, props.currentPath)
-                            ? "astw:bg-sidebar-accent astw:font-medium"
-                            : undefined
-                        }
-                      />
-                    }
+                    render={<Link to={item.url as string} />}
+                    isActive={isActivePath(item.url, props.currentPath)}
                     tooltip={item.title}
                   >
                     {item.icon}
@@ -309,16 +301,8 @@ const AutoSidebarItems = (props: {
                       .map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton
-                            render={
-                              <Link
-                                to={subItem.url!}
-                                className={
-                                  isActivePath(subItem.url, props.currentPath)
-                                    ? "astw:bg-sidebar-accent astw:font-medium"
-                                    : undefined
-                                }
-                              />
-                            }
+                            render={<Link to={subItem.url!} />}
+                            isActive={isActivePath(subItem.url, props.currentPath)}
                           >
                             <span>{subItem.title}</span>
                           </SidebarMenuSubButton>

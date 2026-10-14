@@ -77,8 +77,8 @@ export type CsvExportPhase =
 /**
  * Configuration for `useCsvExporter`.
  *
- * Pass DataTable columns to make `DataTable.CSVExporter` honor the user's
- * visible-column layout, or pass `CsvExportColumn[]` for a fixed report schema.
+ * Supply explicit CSV columns or DataTable column definitions as a configured
+ * schema. Use `useDataTableCsvExporter` for the table's current visible layout.
  */
 export interface UseCsvExporterOptions<TRow extends Record<string, unknown>> {
   /** Initial filename displayed in the export dialog. The .csv suffix is added when omitted. */
@@ -94,9 +94,8 @@ export interface UseCsvExporterOptions<TRow extends Record<string, unknown>> {
 /**
  * State and actions returned inside `useCsvExporter`'s `props` value.
  *
- * `CsvExporter` and `DataTable.CSVExporter` receive this value through their
- * `exporter` prop. Call `exportCsv()` from a
- * custom button when no DataTable is involved.
+ * Standalone `CsvExporter` receives this value through its `exporter` prop.
+ * Call `exportCsv()` from a custom button to export using the configured schema.
  *
  * @example
  * ```tsx
@@ -123,8 +122,8 @@ export interface CsvExporterState<TRow extends Record<string, unknown> = Record<
  * Props for `CsvExporter`, managed by `useCsvExporter`.
  *
  * Spread the hook's `props` return value directly onto the component.
- * `DataTable.CSVExporter` accepts the same props and additionally reconciles
- * DataTable's visible-column layout.
+ * `DataTable.CSVExporter` requires dedicated props from `useDataTableCsvExporter`
+ * instead, so its schema always comes from the table.
  */
 export interface CsvExporterProps<TRow extends Record<string, unknown> = Record<string, unknown>> {
   open: boolean;

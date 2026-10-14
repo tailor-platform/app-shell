@@ -6,7 +6,7 @@ import {
   Tabs,
   Toolbar,
   useDataTable,
-  useCsvExporter,
+  useDataTableCsvExporter,
   useCollectionVariables,
   createColumnHelper,
   type CollectionControl,
@@ -342,9 +342,8 @@ function InvoiceTable({
   }, [variables, variablesKey]);
 
   const table = useDataTable({ columns, data, loading, control });
-  const { props: exporter } = useCsvExporter({
+  const { props: exporter } = useDataTableCsvExporter({
     defaultFilename: "invoices.csv",
-    columns,
     pageSize: 10,
     fetcher: ({ first, after }) =>
       queryInvoices({

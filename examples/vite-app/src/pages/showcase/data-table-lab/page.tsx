@@ -5,7 +5,7 @@ import {
   DataTable,
   Toolbar,
   useDataTable,
-  useCsvExporter,
+  useDataTableCsvExporter,
   useCollectionVariables,
   createColumnHelper,
   type AppShellPageProps,
@@ -520,9 +520,8 @@ const DataTableLabPage = () => {
     rowActions,
   });
 
-  const { props: exporter } = useCsvExporter({
+  const { props: exporter } = useDataTableCsvExporter({
     defaultFilename: "invoices.csv",
-    columns: baseColumns,
     fetcher: async () => ({
       rows,
       pageInfo: { hasNextPage: false, endCursor: null },

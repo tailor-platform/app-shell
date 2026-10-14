@@ -305,6 +305,7 @@ export {
 export {
   DataTable,
   useDataTable,
+  useDataTableCsvExporter,
   useDataTableContext,
   createColumnHelper,
   type DataTablePaginationProps,
@@ -322,6 +323,7 @@ export {
   type MetadataFieldOptions,
   type DataTableContextValue,
   type DataTableCSVExporterProps,
+  type UseDataTableCsvExporterOptions,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
 export { useURLCollectionVariables, withURLCollectionState } from "./lib/collection-url-state";

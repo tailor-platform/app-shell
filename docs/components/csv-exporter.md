@@ -45,10 +45,17 @@ The filename input is validated through AppShell `Form` and `Field`. While fetch
 
 ## DataTable
 
-For an export coupled to a table, use [`DataTable.CSVExporter`](./data-table.md#datatablecsvexporter) with the same props. This variant includes its own trigger button:
+For an export coupled to a table, use [`useDataTableCsvExporter`](../api/use-data-table-csv-exporter.md) with [`DataTable.CSVExporter`](./data-table.md#datatablecsvexporter). The dedicated hook takes no `columns` option and can be called outside `DataTable.Root`:
 
 ```tsx
-<DataTable.CSVExporter {...props} />
+const { props: tableExporter } = useDataTableCsvExporter({
+  defaultFilename: "products.csv",
+  fetcher,
+});
+
+<DataTable.Root value={table}>
+  <DataTable.CSVExporter {...tableExporter} />
+</DataTable.Root>;
 ```
 
-When the hook is configured with DataTable columns, this variant exports only visible columns in their current user-defined order.
+This variant includes its own trigger button and always exports the enclosing table's visible columns in their current order at download start. It accepts only the dedicated hook's branded exporter props, not the result of `useCsvExporter`. Use standalone `CsvExporter` for a fixed schema or custom report columns.

@@ -354,9 +354,9 @@
       ],
       "hashes": {
         "typeSurface": "b5d2153372721fdd",
-        "outline": "98eebfc8c7ecd93e",
+        "outline": "1b4bdf78e1a3c576",
         "snapshot": null,
-        "outputMd": "4c92d382e56b51ef",
+        "outputMd": "216f1bb6310cc04a",
         "examples": null
       }
     },
@@ -462,6 +462,7 @@
         "TableOrderableFieldName",
         "UseCollectionOptions",
         "UseCollectionReturn",
+        "UseDataTableCsvExporterOptions",
         "UseDataTableOptions",
         "UseDataTableReturn",
         "createColumnHelper",
@@ -471,14 +472,15 @@
         "useCollectionVariables",
         "useDataTable",
         "useDataTableContext",
+        "useDataTableCsvExporter",
         "useURLCollectionVariables",
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "53eef62bcaae1c1c",
-        "outline": "b6c43130ae349330",
+        "typeSurface": "d2ca1e5ef49d8b50",
+        "outline": "47835514a6f2ac6f",
         "snapshot": null,
-        "outputMd": "923c971fe2b5fef2",
+        "outputMd": "d484ede845344e23",
         "examples": null
       }
     },
@@ -1550,9 +1552,30 @@
       ],
       "hashes": {
         "typeSurface": "0aa0163146f1c3d9",
-        "outline": "79cafab994941e8a",
+        "outline": "e8496bb30fac3fd1",
         "snapshot": null,
-        "outputMd": "0da85a472e432125",
+        "outputMd": "b6fc07903fdca468",
+        "examples": null
+      }
+    },
+    "use-data-table-csv-exporter": {
+      "slug": "use-data-table-csv-exporter",
+      "kind": "code-backed",
+      "outline": "docs-src/hooks/use-data-table-csv-exporter.docs.outline.md",
+      "output": "docs/api/use-data-table-csv-exporter.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/data-table/use-data-table-csv-exporter.ts"],
+      "claims": [],
+      "symbols": [
+        "DataTableCSVExporterProps",
+        "UseDataTableCsvExporterOptions",
+        "useDataTableCsvExporter"
+      ],
+      "hashes": {
+        "typeSurface": "ae941a345a689328",
+        "outline": "065d8c99523aade8",
+        "snapshot": null,
+        "outputMd": "843f40c6595c82c8",
         "examples": null
       }
     },
@@ -1734,9 +1757,9 @@
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
-    "packages/core/skills/app-shell-patterns/references/components/csv-exporter.md": "4c92d382e56b51ef",
+    "packages/core/skills/app-shell-patterns/references/components/csv-exporter.md": "216f1bb6310cc04a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "923c971fe2b5fef2",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "d484ede845344e23",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "f39002ad79625dc4",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
@@ -1780,7 +1803,8 @@
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "1a0a937f3a412c13",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "2d2eaf5aa04d95d3",
     "packages/core/skills/app-shell-patterns/references/api/use-auth.md": "a7d907ac79d24944",
-    "packages/core/skills/app-shell-patterns/references/api/use-csv-exporter.md": "0da85a472e432125",
+    "packages/core/skills/app-shell-patterns/references/api/use-csv-exporter.md": "b6fc07903fdca468",
+    "packages/core/skills/app-shell-patterns/references/api/use-data-table-csv-exporter.md": "843f40c6595c82c8",
     "packages/core/skills/app-shell-patterns/references/api/use-override-breadcrumb.md": "6ec55fc3dfd8c21d",
     "packages/core/skills/app-shell-patterns/references/api/use-page-meta.md": "f988bdc0fb180f0c",
     "packages/core/skills/app-shell-patterns/references/api/use-register-command-palette-actions.md": "7144ae3dc68aa65b",
@@ -1800,6 +1824,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "23a0b42c86722799"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "40754796f5d7fb31"
   }
 }

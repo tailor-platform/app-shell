@@ -1,0 +1,76 @@
+---
+kind: code-backed
+group: use-data-table-csv-exporter
+title: useDataTableCsvExporter
+description: Prepare a CSV export whose columns come from the enclosing DataTable at download start
+sources:
+  - packages/core/src/components/data-table/use-data-table-csv-exporter.ts
+---
+
+# useDataTableCsvExporter
+
+`useDataTableCsvExporter` prepares the filename, progress, cancellation, and fetch lifecycle for [`DataTable.CSVExporter`](../components/data-table.md#datatablecsvexporter). It takes no column configuration and does not read DataTable context itself, so it can be called in the same parent component that creates the table, outside `DataTable.Root`.
+
+The hook and standalone [`useCsvExporter`](./use-csv-exporter.md) share the internal CSV processing. The difference is column ownership: `DataTable.CSVExporter` supplies the enclosing table's visible columns and order when a download starts.
+
+## Import
+
+```tsx
+import {
+  DataTable,
+  useDataTable,
+  useDataTableCsvExporter,
+  type DataTableCSVExporterProps,
+  type UseDataTableCsvExporterOptions,
+} from "@tailor-platform/app-shell";
+```
+
+## Usage
+
+```tsx
+const table = useDataTable({ columns, data, control });
+const { props } = useDataTableCsvExporter({
+  defaultFilename: "products.csv",
+  fetcher,
+});
+
+<DataTable.Root value={table}>
+  <DataTable.CSVExporter {...props} />
+  <DataTable.Table />
+</DataTable.Root>;
+```
+
+There is no duplicate `columns` argument. The component includes its own trigger button; the hook's `open()` action can also open the dialog from a caller-provided action.
+
+## Options
+
+| Option            | Type                     | Description                                                                                         |
+| ----------------- | ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `defaultFilename` | `string`                 | Initial filename displayed in the dialog. Required; `.csv` is added when omitted from the filename. |
+| `fetcher`         | `CsvCursorFetcher<TRow>` | Fetches one cursor-paginated page of rows. Required.                                                |
+| `pageSize`        | `number`                 | Rows requested per page. Defaults to `1000`.                                                        |
+
+`columns` is not accepted, including through a spread options object. The fetcher receives `{ first, after, signal }` and returns `{ rows, pageInfo, total? }`, just as for `useCsvExporter`. See its [fetcher example](./use-csv-exporter.md#usage) for adapting a GraphQL connection to rows and propagating cancellation when the data client supports it.
+
+Query execution and filter/sort normalization remain application-owned. Use the same query and normalized conditions for table loading and CSV fetching; neither this hook nor `DataTable.CSVExporter` automatically discovers or executes the table's query.
+
+## Column and lifecycle contract
+
+- The component derives the schema from the enclosing table's current visible columns and their order at download start, not when the dialog first opens.
+- A labelled column needs an `accessor` or `id` to provide its raw value. Values come from `accessor(row)` first, then `row[id]`; rendered JSX is not serialized. Columns without a `label`, such as action columns, are excluded.
+- Dates become ISO strings and primitive arrays are joined with `, `, using the same serialization as the standalone exporter.
+- If no exportable columns remain, the export reports an error before fetching or downloading.
+- Visibility and ordering changes during a running export affect the next export only; the in-flight schema stays fixed.
+- The component supplies columns when executing the export. The hook alone does not start a download without that table schema.
+- Cancellation and owner-unmount cleanup use the same shared implementation as `useCsvExporter`.
+
+## Return value
+
+| Property | Type                              | Description                                                                 |
+| -------- | --------------------------------- | --------------------------------------------------------------------------- |
+| `open()` | `() => void`                      | Opens the exporter dialog.                                                  |
+| `props`  | `DataTableCSVExporterProps<TRow>` | Spread onto `<DataTable.CSVExporter {...props} />` inside `DataTable.Root`. |
+
+The `exporter` inside `props` carries a private type brand. `DataTable.CSVExporter` rejects standalone `useCsvExporter` props and rejects replacing the dedicated `exporter` with a standalone one. The brand is an API misuse guard, not a runtime security boundary against deliberate type assertions.
+
+For fixed report schemas or custom headers and value formatting, use `useCsvExporter` with standalone `CsvExporter` instead.

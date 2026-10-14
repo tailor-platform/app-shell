@@ -2,19 +2,18 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/button";
 import { CsvExporterView } from "@/components/csv-exporter/csv-exporter";
 import { useCsvExporterT } from "@/components/csv-exporter/i18n";
-import type { CsvExporterProps } from "@/components/csv-exporter";
+import type { DataTableCSVExporterProps } from "./use-data-table-csv-exporter";
 import { useDataTableContext } from "./data-table-context";
 
 /**
  * CSV exporter integrated with the enclosing DataTable.
  *
- * Its UI and lifecycle are identical to `CsvExporter`; the only addition is
- * that the table's current visible columns and order become the CSV schema when
- * `useCsvExporter` was configured with DataTable columns.
+ * Accepts only props from `useDataTableCsvExporter`. The table's current visible
+ * columns and order become the CSV schema when the download starts.
  *
  * @example
  * ```tsx
- * const { props } = useCsvExporter({ defaultFilename: "products.csv", columns, fetcher });
+ * const { props } = useDataTableCsvExporter({ defaultFilename: "products.csv", fetcher });
  *
  * <DataTable.Root value={table}>
  *   <DataTable.CSVExporter {...props} />
@@ -22,7 +21,7 @@ import { useDataTableContext } from "./data-table-context";
  * ```
  */
 export function DataTableCSVExporter<TRow extends Record<string, unknown>>(
-  props: CsvExporterProps<TRow>,
+  props: DataTableCSVExporterProps<TRow>,
 ) {
   const { visibleColumns } = useDataTableContext<TRow>();
   const t = useCsvExporterT();
@@ -35,10 +34,16 @@ export function DataTableCSVExporter<TRow extends Record<string, unknown>>(
           {t("csvExporter")}
         </Button>
       </div>
-      <CsvExporterView {...props} columnOverride={visibleColumns} />
+      <CsvExporterView
+        {...props}
+        exporter={{
+          ...props.exporter,
+          exportCsv: (filename = props.exporter.defaultFilename) =>
+            props.exporter.exportCsv(filename, visibleColumns),
+        }}
+      />
     </>
   );
 }
 
-export type DataTableCSVExporterProps<TRow extends Record<string, unknown>> =
-  CsvExporterProps<TRow>;
+export type { DataTableCSVExporterProps } from "./use-data-table-csv-exporter";

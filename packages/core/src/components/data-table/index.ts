@@ -3,6 +3,10 @@ export { DataTable, type DataTablePaginationProps, type DataTableRootProps } fro
 export { type DataTableCSVExporterProps } from "./csv-exporter";
 
 export { useDataTable } from "./use-data-table";
+export {
+  useDataTableCsvExporter,
+  type UseDataTableCsvExporterOptions,
+} from "./use-data-table-csv-exporter";
 export { useDataTableContext, type DataTableContextValue } from "./data-table-context";
 
 // Field helpers

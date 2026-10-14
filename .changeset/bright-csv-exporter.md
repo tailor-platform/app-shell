@@ -11,8 +11,15 @@ const { open, props } = useCsvExporter({ defaultFilename: "products.csv", column
 <CsvExporter {...props} />;
 ```
 
-Add `DataTable.CSVExporter`, which accepts the same props and, when the hook receives DataTable columns, exports the user's current visible columns in their selected order.
+Add `useDataTableCsvExporter` and `DataTable.CSVExporter` for table-integrated exports. The dedicated hook takes no column configuration and can be called outside `DataTable.Root`; the component accepts only its branded exporter props and supplies the enclosing table's visible columns in their current order when a download starts. Changing the table layout does not change an export already in progress, and hiding all exportable columns fails before fetching.
 
 ```tsx
-<DataTable.CSVExporter {...props} />
+const { props: tableExporter } = useDataTableCsvExporter({
+  defaultFilename: "products.csv",
+  fetcher,
+});
+
+<DataTable.Root value={table}>
+  <DataTable.CSVExporter {...tableExporter} />
+</DataTable.Root>;
 ```

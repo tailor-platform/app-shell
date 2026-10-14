@@ -6,20 +6,14 @@ import { Field } from "@/components/field";
 import { Form } from "@/components/form";
 import { Spinner } from "@/components/spinner";
 import { useCsvExporterT } from "@/components/csv-exporter/i18n";
-import type { Column } from "@/components/data-table/types";
 import type { CsvExporterProps } from "./types";
 
-type CsvExporterViewProps<TRow extends Record<string, unknown>> = CsvExporterProps<TRow> & {
-  columnOverride?: readonly Column<TRow>[];
-};
-
-/** @internal Shared CSV export UI. DataTable supplies its visible columns here. */
+/** @internal Shared filename dialog and progress UI. */
 export function CsvExporterView<TRow extends Record<string, unknown>>({
   open,
   onOpenChange,
   exporter,
-  columnOverride,
-}: CsvExporterViewProps<TRow>) {
+}: CsvExporterProps<TRow>) {
   const t = useCsvExporterT();
   const formId = useId();
   const [filename, setFilename] = useState(exporter.defaultFilename);
@@ -33,7 +27,7 @@ export function CsvExporterView<TRow extends Record<string, unknown>>({
   };
 
   const startExport = async ({ filename: exportFilename }: { filename: string }) => {
-    if (await exporter.exportCsv(exportFilename, columnOverride)) onOpenChange(false);
+    if (await exporter.exportCsv(exportFilename)) onOpenChange(false);
   };
 
   return (
@@ -123,8 +117,8 @@ export function CsvExporterView<TRow extends Record<string, unknown>>({
  * <CsvExporter {...props} />;
  * ```
  *
- * Use `DataTable.CSVExporter` instead when the export should reconcile the
- * current DataTable column layout.
+ * Use `useDataTableCsvExporter` with `DataTable.CSVExporter` when the export
+ * should follow the current DataTable column layout.
  */
 export function CsvExporter<TRow extends Record<string, unknown>>(props: CsvExporterProps<TRow>) {
   return <CsvExporterView {...props} />;

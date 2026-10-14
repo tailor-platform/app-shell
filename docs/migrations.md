@@ -32,7 +32,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 **Applies to:** apps that show `Button variant="destructive"` in dark mode, apps that use `text-destructive`, `border-destructive` or `bg-destructive` on their own elements, and apps whose theme overrides `--destructive` or `--destructive-foreground`.
 
-1.18.0 makes `--destructive` and `--destructive-foreground` aliases of `--danger-solid` and `--danger-contrast`. The names, `Button variant="destructive"` and `text-destructive` keep working and are not deprecated. Nothing errors. Three things change silently:
+1.18.0 makes `--destructive` and `--destructive-foreground` aliases of `--danger-solid` and `--danger-contrast`. The names, `Button variant="destructive"` and `text-destructive` keep working. Nothing errors. `--destructive`, `--destructive-foreground` and their utilities are deprecated and will be removed in the next major; `Button variant="destructive"` will be renamed to `danger` then. Three things change silently:
 
 - **Dark-mode `Button variant="destructive"` is a full `#dc2626` fill.** It was `#f87171` at 60% opacity. The text is `--danger-contrast` (white) and the hover fill is `--danger-solid-hover` instead of 90% opacity. Light mode keeps `#dc2626`.
 - **`text-destructive` resolves to the solid.** In dark mode it changes from `#f87171` to `#dc2626`, which is 3.71:1 on the dark card, below 4.5:1 for text. Components shipped with AppShell now use `text-danger-text` for error text, and invalid borders and focus rings read `--danger-solid`. In dark mode the invalid border changes from `#f87171` to `#dc2626`.
@@ -42,7 +42,7 @@ How to detect it: search the app for `destructive` in class names and in theme C
 
 What to change:
 
-- For text, replace `text-destructive` with `text-danger-text`. `text-destructive` still works; use it only where the solid colour is intended.
+- For text, replace `text-destructive` with `text-danger-text`. For fills, replace `bg-destructive` with `bg-danger-solid`, and `text-destructive-foreground` with `text-danger-contrast`.
 - For tints and borders, use `bg-danger-surface` and `border-danger-border` instead of `bg-destructive/10` and `border-destructive/30`.
 - In a theme that recolours destructive actions, set `--danger-solid` (and `--danger-solid-hover`, `--danger-text`, `--danger-contrast` as needed) instead of `--destructive`. Remove `--destructive` and `--destructive-foreground` from the theme.
 

@@ -147,14 +147,16 @@ Surfaces are named by **role**, not by depth — there is no numbered `surface-1
 
 #### Brand & action
 
-| Token                                        | Use                              | Tailwind                                     |
-| -------------------------------------------- | -------------------------------- | -------------------------------------------- |
-| `--primary` / `--primary-foreground`         | primary buttons, emphasis        | `bg-primary` / `text-primary-foreground`     |
-| `--secondary` / `--secondary-foreground`     | secondary buttons, neutral chips | `bg-secondary` / `text-secondary-foreground` |
-| `--accent` / `--accent-foreground`           | hover and selected nav states    | `bg-accent` / `text-accent-foreground`       |
-| `--destructive` / `--destructive-foreground` | alias of danger solid / contrast | `bg-destructive` / `text-destructive`        |
+| Token                                        | Use                                         | Tailwind                                     |
+| -------------------------------------------- | ------------------------------------------- | -------------------------------------------- |
+| `--primary` / `--primary-foreground`         | primary buttons, emphasis                   | `bg-primary` / `text-primary-foreground`     |
+| `--secondary` / `--secondary-foreground`     | secondary buttons, neutral chips            | `bg-secondary` / `text-secondary-foreground` |
+| `--accent` / `--accent-foreground`           | hover and selected nav states               | `bg-accent` / `text-accent-foreground`       |
+| `--destructive` / `--destructive-foreground` | deprecated alias of danger solid / contrast | `bg-destructive` / `text-destructive`        |
 
-`--destructive` and `--destructive-foreground` are aliases of the danger `solid` and `contrast` roles ([semantic color roles](#semantic-color-roles)), so `bg-destructive` is the danger solid fill in both modes and `Button variant="destructive"` reads the danger roles directly. `text-destructive` still works and resolves to the solid. For text, prefer `text-danger-text`, which meets 4.5:1 on `--card` and `--background`; the solid is `#dc2626` in dark mode, 3.71:1 on the dark card. To recolour destructive actions, override `--danger-solid` (and the other danger roles), not `--destructive`.
+**Deprecated.** `--destructive`, `--destructive-foreground` and their utilities remain for existing code and will be removed in the next major. New code uses the danger roles: `bg-danger-solid`, `text-danger-contrast`, and `text-danger-text` for text. `Button variant="destructive"` is not deprecated yet; the next major renames it to `danger`.
+
+`--destructive` and `--destructive-foreground` are aliases of the danger `solid` and `contrast` roles ([semantic color roles](#semantic-color-roles)), so `bg-destructive` is the danger solid fill in both modes and `Button variant="destructive"` reads the danger roles directly. `text-destructive` still works and resolves to the solid. For text, use `text-danger-text`, which meets 4.5:1 on `--card` and `--background`; the solid is `#dc2626` in dark mode, 3.71:1 on the dark card. To recolour destructive actions, override `--danger-solid` (and the other danger roles), not `--destructive`.
 
 There are no `-hover` or `-active` brand tokens. Express interaction states with Tailwind variants and opacity — `hover:bg-primary/90`, `active:bg-primary/80` — which is what AppShell's own components do.
 

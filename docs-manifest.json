@@ -1049,9 +1049,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "16c1723900750d80",
+        "outline": "7d63cce8e5d0428b",
         "snapshot": null,
-        "outputMd": "f095aa7055b83481",
+        "outputMd": "6fefe6caff23f403",
         "examples": null
       }
     },
@@ -1756,7 +1756,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
-    "packages/core/skills/app-shell-patterns/references/migrations.md": "afad0935852bec9f",
+    "packages/core/skills/app-shell-patterns/references/migrations.md": "188801b60d8e5a76",
     "packages/core/skills/app-shell-patterns/SKILL.md": "526decbfd2db6555"
   }
 }

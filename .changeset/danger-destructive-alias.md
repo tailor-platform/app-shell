@@ -4,7 +4,7 @@
 
 `--destructive` and `--destructive-foreground` are now aliases of `--danger-solid` and `--danger-contrast`, and the shipped components read the danger roles instead of `destructive` utilities. The names, `Button variant="destructive"` and `text-destructive` keep working.
 
-`--destructive`, `--destructive-foreground` and their utilities (`bg-destructive`, `text-destructive`, `border-destructive`, `text-destructive-foreground`) are deprecated and will be removed in the next major. They keep working in 1.x; new code uses the danger roles (`bg-danger-solid`, `text-danger-text`, `border-danger-border`, `text-danger-contrast`). `Button variant="destructive"` has no replacement yet, so it is not deprecated in this release; the next major renames it to `danger`.
+`--destructive`, `--destructive-foreground` and their utilities (`bg-destructive`, `text-destructive`, `border-destructive`, `text-destructive-foreground`) are deprecated and will be removed in the next major. They keep working in 1.x; new code uses the danger roles: `bg-danger-solid` for fills, `text-danger-text` for text, `text-danger-contrast` for text on the solid, and `border-danger-solid` for invalid-state borders (`border-danger-border` is for decorative borders only; it is 1.67:1 on the card). `Button variant="destructive"` has no replacement yet, so it is not deprecated in this release; the next major renames it to `danger`.
 
 Visible changes in the default palette:
 

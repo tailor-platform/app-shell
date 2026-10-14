@@ -114,7 +114,32 @@ const { data, isLoading } = useCatalogQuery();
 />;
 ```
 
+## Pairing with LineItems
+
+`onCommit` hands back leaf nodes; map them into rows and pass them to `addLines`, which inserts them in a single render and produces one `add` op per line.
+
+```tsx
+const lineItems = useLineItems<POLine>({ fields, defaultLines: lines });
+
+<TreePicker
+  open={open}
+  onOpenChange={setOpen}
+  items={CATALOG}
+  renderRow={({ node }) => node.data.name}
+  onCommit={(picked) =>
+    lineItems.addLines(
+      picked.map((node) => ({
+        sku: node.data.sku,
+        quantity: 1,
+        unitPrice: node.data.price,
+      })),
+    )
+  }
+/>;
+```
+
 ## Related
 
+- [LineItems](./line-items.md) — the editable document grid this commonly feeds
 - [Combobox](./combobox.md) — inline single or multi select for flat option lists
 - [Dialog](./dialog.md) — the modal shell this composes

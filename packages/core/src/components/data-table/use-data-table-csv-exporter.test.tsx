@@ -11,7 +11,7 @@ import type {
   CsvExportPage,
   UseCsvExporterOptions,
 } from "@/components/csv-exporter";
-import type { DataTableCSVExporterProps } from "@/index";
+import type { CollectionVariables, DataTableCSVExporterProps } from "@/index";
 
 const wrapper = createAppShellWrapper("en");
 type Row = { name: string };
@@ -20,6 +20,7 @@ const fetcher: CsvCursorFetcher<Row> = async () => null;
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("useDataTableCsvExporter", () => {
@@ -86,6 +87,103 @@ describe("useDataTableCsvExporter", () => {
     expect(invalid).toBeDefined();
     expect(substituted).toBeDefined();
     expect(startWithoutColumns).toBeTypeOf("function");
+  });
+
+  it("keeps the starting filter and sort across pages and uses updated criteria on the next export", async () => {
+    type Criteria = Pick<CollectionVariables, "query" | "order">;
+    type Request = Parameters<CsvCursorFetcher<Row>>[0] & Criteria;
+    const initialCriteria: Criteria = {
+      query: { name: { hasPrefix: "A" } },
+      order: [{ field: "name", direction: "Asc" }],
+    };
+    const updatedCriteria: Criteria = {
+      query: { name: { hasPrefix: "B" } },
+      order: [{ field: "name", direction: "Desc" }],
+    };
+    let resolveFirstPage!: (page: CsvExportPage<Row>) => void;
+    const fetchPage = vi
+      .fn<(request: Request) => Promise<CsvExportPage<Row>>>()
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirstPage = resolve;
+          }),
+      )
+      .mockResolvedValueOnce({
+        rows: [{ name: "Ann" }],
+        pageInfo: { hasNextPage: false, endCursor: "cursor-2" },
+        total: 2,
+      })
+      .mockResolvedValueOnce({
+        rows: [{ name: "Bob" }],
+        pageInfo: { hasNextPage: false, endCursor: "cursor-b" },
+        total: 1,
+      });
+    const downloaded: Blob[] = [];
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn((blob: Blob) => {
+        downloaded.push(blob);
+        return "blob:csv";
+      }),
+      revokeObjectURL: vi.fn(),
+    });
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    vi.spyOn(toast, "success").mockReturnValue("toast");
+    const tableColumns = [{ id: "name", label: "Name", render: (row: Row) => row.name }];
+    const { result, rerender } = renderHook(
+      ({ criteria }: { criteria: Criteria }) =>
+        useDataTableCsvExporter({
+          defaultFilename: "products.csv",
+          fetcher: (pagination) => fetchPage({ ...pagination, ...criteria }),
+        }),
+      { wrapper, initialProps: { criteria: initialCriteria } },
+    );
+    let exportPromise!: Promise<boolean>;
+    act(() => {
+      exportPromise = result.current.props.exporter.exportCsv("products.csv", tableColumns);
+    });
+    expect(fetchPage).toHaveBeenNthCalledWith(1, {
+      ...initialCriteria,
+      first: 1000,
+      after: null,
+      signal: expect.any(AbortSignal),
+    });
+    const firstSignal = fetchPage.mock.calls[0]![0].signal;
+
+    rerender({ criteria: updatedCriteria });
+    expect(fetchPage).toHaveBeenCalledTimes(1);
+    expect(firstSignal.aborted).toBe(false);
+    await act(async () => {
+      resolveFirstPage({
+        rows: [{ name: "Alice" }],
+        pageInfo: { hasNextPage: true, endCursor: "cursor-1" },
+        total: 2,
+      });
+      await expect(exportPromise).resolves.toBe(true);
+    });
+
+    expect(fetchPage).toHaveBeenNthCalledWith(2, {
+      ...initialCriteria,
+      first: 1000,
+      after: "cursor-1",
+      signal: firstSignal,
+    });
+    expect(await downloaded[0]!.text()).toBe("\uFEFFName\r\nAlice\r\nAnn");
+
+    await act(async () => {
+      await expect(
+        result.current.props.exporter.exportCsv("products.csv", tableColumns),
+      ).resolves.toBe(true);
+    });
+    expect(fetchPage).toHaveBeenCalledTimes(3);
+    expect(fetchPage).toHaveBeenNthCalledWith(3, {
+      ...updatedCriteria,
+      first: 1000,
+      after: null,
+      signal: expect.any(AbortSignal),
+    });
+    expect(fetchPage.mock.calls[2]![0].signal).not.toBe(firstSignal);
+    expect(await downloaded[1]!.text()).toBe("\uFEFFName\r\nBob");
   });
 
   it("cancels an in-flight table export", async () => {

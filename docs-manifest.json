@@ -1573,9 +1573,9 @@
       ],
       "hashes": {
         "typeSurface": "ae941a345a689328",
-        "outline": "065d8c99523aade8",
+        "outline": "c582da24e5f09fad",
         "snapshot": null,
-        "outputMd": "843f40c6595c82c8",
+        "outputMd": "df7e58ddf9cc4cc2",
         "examples": null
       }
     },
@@ -1804,7 +1804,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "2d2eaf5aa04d95d3",
     "packages/core/skills/app-shell-patterns/references/api/use-auth.md": "a7d907ac79d24944",
     "packages/core/skills/app-shell-patterns/references/api/use-csv-exporter.md": "b6fc07903fdca468",
-    "packages/core/skills/app-shell-patterns/references/api/use-data-table-csv-exporter.md": "843f40c6595c82c8",
+    "packages/core/skills/app-shell-patterns/references/api/use-data-table-csv-exporter.md": "df7e58ddf9cc4cc2",
     "packages/core/skills/app-shell-patterns/references/api/use-override-breadcrumb.md": "6ec55fc3dfd8c21d",
     "packages/core/skills/app-shell-patterns/references/api/use-page-meta.md": "f988bdc0fb180f0c",
     "packages/core/skills/app-shell-patterns/references/api/use-register-command-palette-actions.md": "7144ae3dc68aa65b",

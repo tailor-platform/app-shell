@@ -18,6 +18,7 @@ import {
   DataTable,
   useDataTable,
   useDataTableCsvExporter,
+  useURLCollectionVariables,
   type DataTableCSVExporterProps,
   type UseDataTableCsvExporterOptions,
 } from "@tailor-platform/app-shell";
@@ -51,6 +52,67 @@ There is no duplicate `columns` argument. The component includes its own trigger
 `columns` is not accepted, including through a spread options object. The fetcher receives `{ first, after, signal }` and returns `{ rows, pageInfo, total? }`, just as for `useCsvExporter`. See its [fetcher example](./use-csv-exporter.md#usage) for adapting a GraphQL connection to rows and propagating cancellation when the data client supports it.
 
 Query execution and filter/sort normalization remain application-owned. Use the same query and normalized conditions for table loading and CSV fetching; neither this hook nor `DataTable.CSVExporter` automatically discovers or executes the table's query.
+
+## Sharing queries and request criteria
+
+With a React client such as urql, keep `useQuery` for table loading and execute the same query document imperatively for CSV. Build the normalized filter/sort criteria once per render and reuse the same connection-to-rows adapter for both paths.
+
+In this application-side example, `ProductsQuery` is the existing table query. It selects the fields used by `columns`, `total`, and the full table `pageInfo` (`hasNextPage`, `hasPreviousPage`, `startCursor`, and `endCursor`). `normalizeCollectionQuery` and `tableMetadata` belong to the application; they are not new CSV exporter APIs.
+
+```tsx
+import { useClient, useQuery } from "urql";
+import type { ResultOf } from "@/graphql";
+import { normalizeCollectionQuery } from "@/lib/normalize-collection-query";
+
+const client = useClient();
+const { variables, control } = useURLCollectionVariables({
+  tableMetadata: tableMetadata.product,
+  params: { pageSize: 25 },
+});
+const criteria = {
+  query: normalizeCollectionQuery(variables.query, tableMetadata.product),
+  order: variables.order,
+};
+const toProductsPage = (connection: NonNullable<ResultOf<typeof ProductsQuery>["products"]>) => ({
+  rows: connection.edges.map(({ node }) => node),
+  pageInfo: connection.pageInfo,
+  total: connection.total,
+});
+
+const [{ data, fetching, error }] = useQuery({
+  query: ProductsQuery,
+  variables: { ...variables.pagination, ...criteria },
+});
+const table = useDataTable({
+  columns,
+  control,
+  data: data?.products ? toProductsPage(data.products) : undefined,
+  loading: fetching,
+  error: error ?? null,
+});
+const { props } = useDataTableCsvExporter({
+  defaultFilename: "products.csv",
+  fetcher: async ({ first, after }) => {
+    const result = await client
+      .query(ProductsQuery, { ...criteria, first, after }, { requestPolicy: "network-only" })
+      .toPromise();
+    if (result.error) throw result.error;
+    const connection = result.data?.products;
+    return connection ? toProductsPage(connection) : connection;
+  },
+});
+
+<DataTable.Root value={table}>
+  <DataTable.CSVExporter {...props} />
+  <DataTable.Table />
+</DataTable.Root>;
+```
+
+The table and CSV use the same query, normalized criteria, and row projection. Only pagination and request policy differ: the table loads its displayed page, while the exporter starts with `after: null` and follows every page. Do not copy the table's current cursor or backward-pagination arguments into the CSV request. This example focuses on condition sharing; for transport-level cancellation, adapt the fetcher's `signal` to the data client's cancellation mechanism when supported.
+
+An export keeps using the fetcher from the render that started it. With immutable `criteria` captured by that fetcher, changing filters or sort creates a new fetcher for the next export without changing later pages of the running export. Do not mutate captured query/order objects or read changing criteria from a latest-value ref inside the fetcher: the hook does not deep-clone arbitrary external state. Fixed request criteria also do not imply a server-side snapshot of the records.
+
+This wiring remains application-owned. The exporter cannot verify that an arbitrary fetcher uses the same query or conditions as the table; sharing them as above prevents accidental duplication rather than adding an automatic consistency guarantee.
 
 ## Column and lifecycle contract
 

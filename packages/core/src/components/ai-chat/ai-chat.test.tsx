@@ -12,6 +12,7 @@ afterEach(() => {
 
 const textbox = () => screen.getByRole("textbox", { name: "Message" }) as HTMLTextAreaElement;
 const sendButton = () => screen.getByRole("button", { name: "Send" }) as HTMLButtonElement;
+type AIChatStatus = "ready" | "submitted" | "streaming" | "error";
 
 // A tree whose transcript changes per render, with one child the root rejects.
 const strayChildTree = (token: string) => (
@@ -20,6 +21,24 @@ const strayChildTree = (token: string) => (
     <span>stray</span>
   </AIChat>
 );
+
+const WrappedComposer = () => <AIChat.Composer onSubmit={vi.fn()} />;
+
+function renderComposer(
+  composerProps: Partial<Parameters<typeof AIChat.Composer>[0]> = {},
+  status?: AIChatStatus,
+) {
+  const onSubmit = vi.fn();
+  const view = render(
+    <AIChat status={status}>
+      <AIChat.Conversation>
+        <div />
+      </AIChat.Conversation>
+      <AIChat.Composer onSubmit={onSubmit} {...composerProps} />
+    </AIChat>,
+  );
+  return { ...view, onSubmit };
+}
 
 describe("AIChat", () => {
   describe("snapshots", () => {
@@ -156,7 +175,6 @@ describe("AIChat", () => {
 
     it("names the direct-child requirement so a wrapped region is diagnosable", () => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-      const WrappedComposer = () => <AIChat.Composer onSubmit={vi.fn()} />;
       render(
         <AIChat>
           <AIChat.Conversation>
@@ -218,22 +236,6 @@ describe("AIChat", () => {
   });
 
   describe("composer", () => {
-    function renderComposer(
-      composerProps: Partial<Parameters<typeof AIChat.Composer>[0]> = {},
-      status?: "ready" | "submitted" | "streaming" | "error",
-    ) {
-      const onSubmit = vi.fn();
-      const view = render(
-        <AIChat status={status}>
-          <AIChat.Conversation>
-            <div />
-          </AIChat.Conversation>
-          <AIChat.Composer onSubmit={onSubmit} {...composerProps} />
-        </AIChat>,
-      );
-      return { ...view, onSubmit };
-    }
-
     it("submits the trimmed message on Enter and clears the draft", async () => {
       const user = userEvent.setup();
       const { onSubmit } = renderComposer();

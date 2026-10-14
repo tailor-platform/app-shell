@@ -751,18 +751,66 @@ The `filter` property on a column accepts the same base shape as `FilterConfig`,
 
 ### Filter Types and Operators
 
-| Type       | Input editor              | Supported operators                                                                                          |
-| ---------- | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `string`   | Text                      | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
-| `number`   | Number                    | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `datetime` | Datetime-local            | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `date`     | **Calendar / DatePicker** | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
-| `time`     | Time                      | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `enum`     | Dropdown                  | `eq`, `ne`, `in`, `nin`                                                                                      |
-| `boolean`  | Toggle                    | `eq`, `ne`                                                                                                   |
-| `uuid`     | Text                      | `eq`, `ne`, `in`, `nin`                                                                                      |
+| Type       | Input editor                 | Supported operators                                                                                          |
+| ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `string`   | Text                         | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
+| `number`   | Number                       | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `datetime` | Calendar / DatePicker + Time | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `date`     | **Calendar / DatePicker**    | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
+| `time`     | Time                         | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `enum`     | Dropdown                     | `eq`, `ne`, `in`, `nin`                                                                                      |
+| `boolean`  | Toggle                       | `eq`, `ne`                                                                                                   |
+| `uuid`     | Text                         | `eq`, `ne`, `in`, `nin`                                                                                      |
 
 When the `between` operator is selected on a `number`, `datetime`, `date`, or `time` column, the value editor renders a range input with **min**/**max** (or **From**/**To** for dates) bounds.
+
+### Datetime Filters and Business Timezones
+
+> **Important:** Set [`AppShell.timeZone`](./app-shell.md#timezone) explicitly when datetime filters must follow a shared business timezone. Without it, the filter editors use each user's local timezone. Users in different timezones can enter the same date and time but search against different instants, causing expected records to be missed. Setting `locale` alone does **not** set the timezone.
+
+`locale` and `timeZone` are independent:
+
+| Setting    | Controls                                                                             | Example        |
+| ---------- | ------------------------------------------------------------------------------------ | -------------- |
+| `locale`   | UI language and locale-specific date/time formatting                                 | `"ja-JP"`      |
+| `timeZone` | The timezone used to interpret the date and time selected in datetime filter editors | `"Asia/Tokyo"` |
+
+For example, a Japanese-language application can use a US business timezone. Choose the timezone that defines the business's date boundaries, not one inferred from the UI language or the user's location:
+
+```tsx
+import { AppShell } from "@tailor-platform/app-shell";
+
+<AppShell modules={modules} locale="ja-JP" timeZone="America/New_York">
+  {/* Existing application content */}
+</AppShell>;
+```
+
+Use an IANA timezone such as `"Asia/Tokyo"` or `"America/New_York"`, rather than a fixed UTC offset, so daylight-saving changes are accounted for. If per-user local-time filtering is intentional, leave `timeZone` unset; otherwise, configure the shared business timezone even when every user has the same `locale`.
+
+#### Local input, RFC 3339 output
+
+The datetime editor shows the date and time in the configured timezone, but sends an **instant** — a specific point in time — as an RFC 3339 UTC string. For example, the same input `2026-10-09 00:00` produces:
+
+| Timezone used by the editor | Serialized filter value    |
+| --------------------------- | -------------------------- |
+| `Asia/Tokyo`                | `2026-10-08T15:00:00.000Z` |
+| `America/New_York`          | `2026-10-09T04:00:00.000Z` |
+
+Applying or updating a datetime filter through `DataTable.Filters` passes these strings to `CollectionControl.addFilter`, so consumers reading `control.filters` receive UTC instants rather than timezone-less local datetime strings. A `between` filter serializes both `min` and `max` as instants. Existing RFC 3339 values are displayed in the editor's timezone without changing the instant they represent. `date` and `time` filters retain their `YYYY-MM-DD` and `HH:mm` formats.
+
+A datetime `eq` filter matches one instant, not every record on a calendar day. To search a whole business day on a datetime field, use the start of that day as an inclusive lower bound and the start of the next day as an exclusive upper bound in the backend query. Calculate both boundaries in the business timezone; do not assume every day is exactly 24 hours.
+
+When `tableMetadata` is supplied to `useCollectionVariables` or `useURLCollectionVariables`, datetime filters are normalized before the first query and before `addFilter` or `setFilters` updates the state. This also covers filters restored from URLs or saved views. Timezone-less legacy datetime strings are interpreted in the AppShell timezone; values with `Z` or an explicit offset retain their original instant. Single values, `in` / `nin` arrays, and both bounds of `between` filters are normalized. Invalid datetime values throw a `TypeError` rather than silently removing a search constraint; invalid updates leave the previous filter state unchanged. Datetime strings must use the ISO date-and-time form with `T`; date-only strings and browser-specific date formats are not accepted for datetime fields. If migrating legacy values, first establish which timezone they originally represented.
+
+Without `tableMetadata`, the collection hook cannot distinguish datetime fields from ordinary strings and leaves filter values unchanged. Supply RFC 3339 datetime values with an explicit timezone in programmatic or persisted filters on this path. Setting a DataTable column's `filter.type` configures the UI but does not supply metadata to the collection hook.
+
+Built-in `type: "date"` cells display timestamps in the AppShell timezone, and the cell menu uses that same timezone when adding a temporal filter. Date-only `YYYY-MM-DD` cell values retain their calendar date instead of shifting to the previous or next day. The setting does not change the browser's default timezone: when using `Intl.DateTimeFormat` in a custom cell renderer, pass the same timezone explicitly if its output must agree with the filters.
+
+#### Calendar dates are not instants
+
+Use the `date` field/filter type for values whose meaning is a calendar date, such as a purchase-order date or an accounting date. `2026-10-09` should remain that date regardless of where the user is located. Use `datetime` for events that occurred at a particular instant, such as a record's creation time.
+
+If an existing backend stores document dates as datetime instants, a shared business timezone can make filter boundaries consistent, but it does not fix that data model. Changing only the column's filter type to `date` does not migrate the stored values or change the backend's query contract. Align the backend field type, data, and filters when moving to date-only semantics.
 
 ### Date Filters
 
@@ -775,7 +823,7 @@ When the `between` operator is selected on a `number`, `datetime`, `date`, or `t
 | `lte`     | _before_     | on or before (inclusive)   |
 | `between` | _between_    | inclusive min–max range    |
 
-`gt` / `lt` / `ne` are intentionally dropped — the inclusive _after_ / _before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set and native inputs.)
+`gt` / `lt` / `ne` are intentionally dropped — the inclusive _after_ / _before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set. Datetime editors pair a calendar/date picker with a time input; `time` uses a native time input.)
 
 ### String Filter Case Sensitivity
 
@@ -904,13 +952,13 @@ const { variables, control } = useCollectionVariables({
 
 ### Options
 
-| Option                  | Type                                 | Description                                                                                                           |
-| ----------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `params.pageSize`       | `number`                             | Initial page size. Default: `20`.                                                                                     |
-| `params.initialFilters` | `Filter[]`                           | Filters applied on first render.                                                                                      |
-| `params.initialSort`    | `SortState[]`                        | Sort applied on first render.                                                                                         |
-| `tableMetadata`         | `TableMetadata`                      | Generated table metadata. Required for typed GraphQL documents (see [Typed query variables](#typed-query-variables)). |
-| `onParamsChange`        | `(params: CollectionParams) => void` | Called after each filter, sort, or page-size change with the current params.                                          |
+| Option                  | Type                                 | Description                                                                                                                                      |
+| ----------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `params.pageSize`       | `number`                             | Initial page size. Default: `20`.                                                                                                                |
+| `params.initialFilters` | `Filter[]`                           | Filters applied on first render.                                                                                                                 |
+| `params.initialSort`    | `SortState[]`                        | Sort applied on first render.                                                                                                                    |
+| `tableMetadata`         | `TableMetadata`                      | Generated table metadata. Enables typed variables and datetime normalization (see [Datetime filters](#datetime-filters-and-business-timezones)). |
+| `onParamsChange`        | `(params: CollectionParams) => void` | Called after each filter, sort, or page-size change with the current params.                                                                     |
 
 ### Return Value
 
@@ -964,7 +1012,7 @@ The return value is identical to `useCollectionVariables` — `variables` and `c
 
 ### Options
 
-All options accepted by `useCollectionVariables` are accepted here too. `tableMetadata` is optional but recommended for typed variables and correct URL round-tripping of typed field values (numbers and booleans are preserved correctly).
+All options accepted by `useCollectionVariables` are accepted here too. `tableMetadata` is optional but recommended for typed variables and correct URL round-tripping of typed field values (numbers and booleans are preserved correctly, and datetime filters are normalized to RFC 3339 instants before querying).
 
 ### URL format
 

@@ -420,12 +420,12 @@ On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's 
 
 Always use `tabular-nums` for numbers that stack in a column — without it, digits jitter between rows.
 
-**Change a role.** Each role is four CSS variables named `--app-shell-type-<role>-<size|line-height|weight|letter-spacing>`. Override them on `:root` to change a role for the whole app. Typography has no dark variant, so one override applies to light and dark mode.
+**Change a role.** Each role is four CSS variables named `--type-<role>-<size|line-height|weight|letter-spacing>`. Override them on `:root` to change a role for the whole app. Typography has no dark variant, so one override applies to light and dark mode.
 
 ```css
 :root {
-  --app-shell-type-heading-lg-size: 1.75rem;
-  --app-shell-type-heading-lg-line-height: calc(36 / 28);
+  --type-heading-lg-size: 1.75rem;
+  --type-heading-lg-line-height: calc(36 / 28);
 }
 ```
 

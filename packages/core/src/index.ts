@@ -25,9 +25,11 @@ export { SidebarMenuItem, SidebarMenuButton } from "./components/sidebar";
 export {
   SidebarItem,
   SidebarGroup,
+  SidebarSection,
   SidebarSeparator,
   type SidebarItemProps,
   type SidebarGroupProps,
+  type SidebarSectionProps,
   type SidebarLayoutProps,
   type DefaultSidebarProps,
   type DefaultHeaderProps,

@@ -127,6 +127,7 @@ type NonEmptyReadonlyArray<T> = readonly [T, ...T[]];
 type DataTableUiFilterOperatorByType = {
   string: DataTableStringFilterOperator;
   number: DataTableNumericTemporalFilterOperator;
+  decimal: DataTableNumericTemporalFilterOperator;
   datetime: DataTableNumericTemporalFilterOperator;
   date: DataTableDateFilterOperator;
   time: DataTableNumericTemporalFilterOperator;
@@ -144,6 +145,9 @@ export type DataTableFilterConfig =
       operators?: NonEmptyReadonlyArray<DataTableStringFilterOperator>;
     })
   | (Extract<FilterConfig, { type: "number" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "decimal" }> & {
       operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
     })
   | (Extract<FilterConfig, { type: "datetime" }> & {

@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
+import { parseDate } from "@internationalized/date";
 import { Link } from "react-router";
 import { BadgeList, toValueArray } from "@/components/badge-list";
+import { normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type {
   BadgeCellOptions,
   Column,
@@ -49,16 +51,6 @@ export function getCellValue<TRow extends Record<string, unknown>>(
 
 function isEmpty(value: unknown): boolean {
   return value == null || value === "";
-}
-
-function toDate(value: unknown): Date | null {
-  if (value == null) return null;
-  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
-  if (typeof value === "string" || typeof value === "number") {
-    const d = new Date(value);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
-  return null;
 }
 
 function renderText(value: unknown): ReactNode {
@@ -122,13 +114,41 @@ function renderMoney<TRow extends Record<string, unknown>>(
   return <span className="astw:tabular-nums">{formatted}</span>;
 }
 
-function renderDate(value: unknown, options: DateCellOptions | undefined): ReactNode {
-  if (isEmpty(value)) return PLACEHOLDER;
-  const date = toDate(value);
-  if (!date) return PLACEHOLDER;
-  const format = options?.dateFormat ?? "short";
-  const formatOptions = resolveDateFormatOptions(format);
-  return new Intl.DateTimeFormat(options?.locale, formatOptions).format(date);
+function createDateRenderer(
+  options: DateCellOptions | undefined,
+  timeZone: string,
+): (value: unknown) => ReactNode {
+  const formatOptions = resolveDateFormatOptions(options?.dateFormat ?? "short");
+  let dateOnlyFormatter: Intl.DateTimeFormat | undefined;
+  let datetimeFormatter: Intl.DateTimeFormat | undefined;
+
+  return (value) => {
+    if (isEmpty(value)) return PLACEHOLDER;
+    const dateOnly = typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.trim());
+    let date: Date;
+    if (dateOnly) {
+      // Calendar dates have no instant, even when a timezone skips an entire day.
+      try {
+        date = parseDate(value.trim()).toDate("UTC");
+      } catch {
+        return PLACEHOLDER;
+      }
+    } else {
+      const normalized = normalizeTemporalFilterValue("datetime", value, timeZone);
+      if (!normalized) return PLACEHOLDER;
+      date = new Date(normalized);
+    }
+    const formatter = dateOnly
+      ? (dateOnlyFormatter ??= new Intl.DateTimeFormat(options?.locale, {
+          ...formatOptions,
+          timeZone: "UTC",
+        }))
+      : (datetimeFormatter ??= new Intl.DateTimeFormat(options?.locale, {
+          ...formatOptions,
+          timeZone,
+        }));
+    return formatter.format(date);
+  };
 }
 
 function renderBadge(value: unknown, options: BadgeCellOptions | undefined): ReactNode {
@@ -155,29 +175,33 @@ function renderLink<TRow extends Record<string, unknown>>(
 }
 
 /**
- * Render a cell using the column's built-in `type`. Callers should prefer
- * `col.render` when it is defined.
+ * Create a column renderer that reuses date formatters across rows.
+ * Callers should prefer `col.render` when it is defined.
  *
  * @internal
  */
-export function renderTypedCell<TRow extends Record<string, unknown>>(
-  row: TRow,
+export function createTypedCellRenderer<TRow extends Record<string, unknown>>(
   col: Column<TRow>,
-): ReactNode {
-  const value = getCellValue(row, col);
-  switch (col.type) {
-    case "number":
-      return renderNumber(value, col.typeOptions);
-    case "money":
-      return renderMoney(value, row, col.typeOptions);
-    case "date":
-      return renderDate(value, col.typeOptions);
-    case "badge":
-      return renderBadge(value, col.typeOptions);
-    case "link":
-      return renderLink(value, row, col.typeOptions);
-    case "text":
-    default:
-      return renderText(value);
+  timeZone: string,
+): (row: TRow) => ReactNode {
+  if (col.type === "date") {
+    const renderDate = createDateRenderer(col.typeOptions, timeZone);
+    return (row) => renderDate(getCellValue(row, col));
   }
+  return (row) => {
+    const value = getCellValue(row, col);
+    switch (col.type) {
+      case "number":
+        return renderNumber(value, col.typeOptions);
+      case "money":
+        return renderMoney(value, row, col.typeOptions);
+      case "badge":
+        return renderBadge(value, col.typeOptions);
+      case "link":
+        return renderLink(value, row, col.typeOptions);
+      case "text":
+      default:
+        return renderText(value);
+    }
+  };
 }

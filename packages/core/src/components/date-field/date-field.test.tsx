@@ -4,6 +4,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   CalendarDate,
+  CalendarDateTime,
   parseDate,
   parseZonedDateTime,
   today,
@@ -41,6 +42,29 @@ function getEnabledCalendarCells() {
   return getCalendarCells().filter(
     (c) => !c.hasAttribute("data-disabled") && !c.hasAttribute("data-outside-month"),
   );
+}
+
+function ControlledField({ onChange }: { onChange: (v: unknown) => void }) {
+  const [v, setV] = useState<CalendarDate | null>(null);
+  return (
+    <>
+      <DateField
+        aria-label="Date"
+        value={v}
+        onChange={(nv) => {
+          setV(nv as CalendarDate | null);
+          onChange(nv);
+        }}
+      />
+      <button type="button">elsewhere</button>
+    </>
+  );
+}
+
+async function lastEmit(onChange: ReturnType<typeof vi.fn>, expected: string) {
+  await waitFor(() => {
+    expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe(expected);
+  });
 }
 
 // ─── Snapshots ──────────────────────────────────────────────────────────────
@@ -297,23 +321,6 @@ describe("DateField", () => {
   // A controlled field round-trips every emit through the parent's `value`, so
   // these guard the clamp against external-sync interference (the uncontrolled
   // cases above don't exercise that path).
-  function ControlledField({ onChange }: { onChange: (v: unknown) => void }) {
-    const [v, setV] = useState<CalendarDate | null>(null);
-    return (
-      <>
-        <DateField
-          aria-label="Date"
-          value={v}
-          onChange={(nv) => {
-            setV(nv as CalendarDate | null);
-            onChange(nv);
-          }}
-        />
-        <button type="button">elsewhere</button>
-      </>
-    );
-  }
-
   it("clamps an impossible day on blur even when controlled (29/02/2026)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -493,12 +500,6 @@ describe("DateField", () => {
 // derive from that same basis. Locale here is "en" (weeks start Sunday).
 
 describe("DateField keyboard shortcuts", () => {
-  async function lastEmit(onChange: ReturnType<typeof vi.fn>, expected: string) {
-    await waitFor(() => {
-      expect(onChange.mock.calls.at(-1)?.[0]?.toString()).toBe(expected);
-    });
-  }
-
   it("'t' jumps to today (case-insensitive)", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -835,6 +836,98 @@ describe("DateField keyboard shortcuts", () => {
   });
 });
 
+// ─── Date format + day of the week ────────────────────────────────────────────────────
+
+const groupText = () => screen.getByRole("group").textContent;
+const dayOfWeek = () => document.querySelector('[data-slot="date-segment"][data-type="dayOfWeek"]');
+
+describe("showDayOfWeek", () => {
+  const value = new CalendarDate(2025, 12, 19); // a Friday
+
+  it("shows the day of the week where the locale puts it", () => {
+    render(<DateField aria-label="Date" locale="ja-JP" showDayOfWeek defaultValue={value} />);
+    expect(groupText()).toBe("2025/12/19(金)");
+    cleanup();
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek defaultValue={value} />);
+    expect(groupText()).toBe("Fri, 12/19/2025");
+  });
+
+  it("shows a placeholder day of the week until the date is complete", () => {
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek />);
+    expect(dayOfWeek()?.textContent).toBe("––");
+    expect(dayOfWeek()?.hasAttribute("data-placeholder")).toBe(true);
+  });
+
+  it("holds the pre-entry day of the week while a date segment is mid-entry, so '25' never flashes the 2nd", async () => {
+    const user = userEvent.setup();
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek defaultValue={value} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("2");
+    // Still Friday (the pre-entry 19th), muted — never Tuesday (the 2nd).
+    expect(dayOfWeek()?.textContent).toBe("Fri");
+    expect(dayOfWeek()?.hasAttribute("data-placeholder")).toBe(true);
+    await user.keyboard("5");
+    expect(dayOfWeek()?.textContent).toBe("Thu"); // 25 Dec 2025
+    expect(dayOfWeek()?.hasAttribute("data-placeholder")).toBe(false);
+  });
+
+  it("never holds the day of the week while editing a time segment", async () => {
+    const user = userEvent.setup();
+    render(
+      <DateField
+        aria-label="Date"
+        locale="en-GB"
+        granularity="minute"
+        showDayOfWeek
+        defaultValue={new CalendarDateTime(2025, 12, 19, 10, 30)}
+      />,
+    );
+
+    await user.click(screen.getByRole("spinbutton", { name: "hour" }));
+    await user.keyboard("1");
+    expect(dayOfWeek()?.textContent).toBe("Fri");
+    expect(dayOfWeek()?.hasAttribute("data-placeholder")).toBe(false);
+  });
+
+  it("announces the day of the week with the date segments' values", async () => {
+    const user = userEvent.setup();
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek defaultValue={value} />);
+    const day = screen.getByRole("spinbutton", { name: "day" });
+    expect(day.getAttribute("aria-valuetext")).toBe("19, Friday");
+    expect(dayOfWeek()?.getAttribute("aria-hidden")).toBe("true");
+
+    await user.click(day);
+    await user.keyboard("{ArrowUp}");
+    expect(day.getAttribute("aria-valuetext")).toBe("20, Saturday");
+  });
+
+  it("settles a single-digit entry when the segment loses focus", async () => {
+    const user = userEvent.setup();
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek defaultValue={value} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("2");
+    await user.tab();
+    expect(dayOfWeek()?.textContent).toBe("Tue"); // 2 Dec 2025
+  });
+
+  it("updates the day of the week immediately on arrow-key stepping", async () => {
+    const user = userEvent.setup();
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek defaultValue={value} />);
+
+    await user.click(screen.getByRole("spinbutton", { name: "day" }));
+    await user.keyboard("{ArrowUp}");
+    expect(dayOfWeek()?.textContent).toBe("Sat");
+  });
+
+  it("keeps the day of the week out of the tab order", () => {
+    render(<DateField aria-label="Date" locale="en-US" showDayOfWeek defaultValue={value} />);
+    expect(dayOfWeek()?.hasAttribute("tabindex")).toBe(false);
+    expect(screen.getAllByRole("spinbutton")).toHaveLength(3);
+  });
+});
+
 // ─── DatePicker ───────────────────────────────────────────────────────────────
 
 describe("DatePicker", () => {
@@ -1098,6 +1191,23 @@ describe("DatePicker", () => {
 
 // ─── Keyboard: popover focus ─────────────────────────────────────────────────
 
+function ReopenControlledDatePicker() {
+  const [value, setValue] = useState<CalendarDate | null>(new CalendarDate(2025, 6, 15));
+  return (
+    <>
+      <DatePicker aria-label="Date" value={value} onChange={setValue} />
+      <button type="button" onClick={() => setValue(new CalendarDate(2024, 2, 10))}>
+        set
+      </button>
+      <button type="button" onClick={() => setValue(null)}>
+        clear
+      </button>
+    </>
+  );
+}
+
+const calendarTrigger = () => screen.getByRole("button", { name: "Open calendar" });
+
 describe("DatePicker keyboard", () => {
   it("moves focus into the calendar grid when the popover opens", async () => {
     const user = userEvent.setup();
@@ -1142,22 +1252,8 @@ describe("DatePicker keyboard", () => {
 
   it("re-lands the calendar on the current value each time it opens", async () => {
     const user = userEvent.setup();
-    function Controlled() {
-      const [value, setValue] = useState<CalendarDate | null>(new CalendarDate(2025, 6, 15));
-      return (
-        <>
-          <DatePicker aria-label="Date" value={value} onChange={setValue} />
-          <button type="button" onClick={() => setValue(new CalendarDate(2024, 2, 10))}>
-            set
-          </button>
-          <button type="button" onClick={() => setValue(null)}>
-            clear
-          </button>
-        </>
-      );
-    }
-    render(<Controlled />);
-    const trigger = () => screen.getByRole("button", { name: "Open calendar" });
+    render(<ReopenControlledDatePicker />);
+    const trigger = calendarTrigger;
 
     // Page away, dismiss, change the value externally — reopening follows the value.
     await user.click(trigger());
@@ -1362,11 +1458,12 @@ describe("RHF integration", () => {
   });
 });
 
+const segText = (name: string) =>
+  screen.getByRole("spinbutton", { name }).getAttribute("aria-valuetext");
+
 describe("12-hour time display", () => {
   const TZ = "Asia/Tokyo";
   const zoned = (iso: string) => parseZonedDateTime(`${iso}[${TZ}]`);
-  const segText = (name: string) =>
-    screen.getByRole("spinbutton", { name }).getAttribute("aria-valuetext");
 
   it("shows a PM value as 06 PM, not 18 AM", () => {
     render(

@@ -152,3 +152,60 @@ describe.each(modes)("semantic colour contrast (%s)", (mode) => {
     });
   });
 });
+
+describe("default palette neutral tokens", () => {
+  // Pinned when the BRAND and SYSTEM tokens moved from literals onto the gray,
+  // white and alpha scales. That move was meant to keep every value, so a step
+  // change that alters one of these colours fails here.
+  const expected: Record<Mode, Record<string, string>> = {
+    light: {
+      "--foreground": "#0a0a0a",
+      "--muted-foreground": "#737373",
+      "--primary": "#171717",
+      "--primary-foreground": "#fafafa",
+      "--secondary": "#f5f5f5",
+      "--secondary-foreground": "#171717",
+      "--accent-foreground": "#0a0a0a",
+      "--background": "#fafafa",
+      "--card": "#ffffff",
+      "--card-foreground": "#0a0a0a",
+      "--popover": "#ffffff",
+      "--popover-foreground": "#0a0a0a",
+      "--muted": "#f5f5f5",
+      "--border": "#e5e5e5",
+      "--input": "#e5e5e5",
+      "--sidebar": "#fafafa",
+      "--sidebar-foreground": "#0a0a0a",
+      "--sidebar-border": "#e5e5e5",
+      "--backdrop": "rgba(0, 0, 0, 0.5)",
+    },
+    dark: {
+      "--foreground": "#fafafa",
+      "--muted-foreground": "#a3a3a3",
+      "--primary": "#e5e5e5",
+      "--primary-foreground": "#171717",
+      "--secondary": "#262626",
+      "--secondary-foreground": "#fafafa",
+      "--accent-foreground": "#fafafa",
+      "--background": "#0a0a0a",
+      "--card": "#171717",
+      "--card-foreground": "#fafafa",
+      "--popover": "#262626",
+      "--popover-foreground": "#fafafa",
+      "--muted": "#262626",
+      "--border": "rgba(255, 255, 255, 0.1)",
+      "--input": "rgba(255, 255, 255, 0.15)",
+      "--sidebar": "#0a0a0a",
+      "--sidebar-foreground": "#fafafa",
+      "--sidebar-border": "rgba(255, 255, 255, 0.1)",
+      "--backdrop": "rgba(0, 0, 0, 0.5)",
+    },
+  };
+
+  describe.each(["light", "dark"] as const)("%s mode", (mode) => {
+    const vars = variablesFor(mode);
+    it.each(Object.entries(expected[mode]))("%s resolves to %s", (token, value) => {
+      expect(parseColor(`var(${token})`, vars)).toEqual(parseColor(value, vars));
+    });
+  });
+});

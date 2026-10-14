@@ -159,8 +159,13 @@ Colors follow shadcn-style semantic naming: a surface token and its matching `-f
 | `--border`                           | hairlines, dividers           | `border-border`                          |
 | `--input`                            | form control borders          | `border-input`                           |
 | `--ring`                             | focus rings                   | `ring-ring` / `outline-ring`             |
+| `--backdrop`                         | dim layer behind a modal      | `bg-backdrop`                            |
 
 Surfaces are named by **role**, not by depth — there is no numbered `surface-1/2/3` ladder, and no third tier of body text below `muted-foreground`. Stack depth with `background` → `card` → `muted` plus a border or shadow, and reach for `popover` when the surface actually floats.
+
+`--backdrop` is the dim layer behind `Dialog` and `Sheet` (black at 50% in both modes). Use `bg-backdrop` for your own modal layers instead of `bg-black/50`. Palettes inherit it; override it on `:root` to change every backdrop at once.
+
+In the default palette, the surface, text and line tokens in this table read the internal gray scale, a white step, and white alpha steps (dark-mode lines), so their values match the gray used across the palette. `--backdrop` reads a black alpha step, and `--ring` is mixed from `--primary`. The other palettes set their own values.
 
 #### Brand & action
 

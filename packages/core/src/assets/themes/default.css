@@ -8,12 +8,12 @@
   color-scheme: light;
 
   /* ── 1. BRAND ─────────────────────────────────────────────────────────── */
-  --primary: rgba(23, 23, 23, 1);
-  --primary-foreground: rgba(250, 250, 250, 1);
-  --secondary: rgba(245, 245, 245, 1);
-  --secondary-foreground: rgba(23, 23, 23, 1);
+  --primary: var(--primitive-gray-900);
+  --primary-foreground: var(--primitive-gray-50);
+  --secondary: var(--primitive-gray-100);
+  --secondary-foreground: var(--primitive-gray-900);
   --accent: rgb(237, 237, 237);
-  --accent-foreground: rgba(10, 10, 10, 1);
+  --accent-foreground: var(--primitive-gray-950);
 
   /* ── 2. SHELL GRADIENT — not used (flat palette) ──────────────────────── */
 
@@ -24,21 +24,22 @@
   --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-ring: var(--ring);
+  --backdrop: var(--primitive-black-a7);
 
   /* ── 4. SYSTEM ────────────────────────────────────────────────────────── */
-  --background: rgba(250, 250, 250, 1);
+  --background: var(--primitive-gray-50);
   --foreground: var(--primitive-gray-950);
-  --card: rgba(255, 255, 255, 1);
-  --card-foreground: rgba(10, 10, 10, 1);
-  --popover: rgba(255, 255, 255, 1);
-  --popover-foreground: rgba(10, 10, 10, 1);
-  --muted: rgba(245, 245, 245, 1);
+  --card: var(--primitive-white);
+  --card-foreground: var(--primitive-gray-950);
+  --popover: var(--primitive-white);
+  --popover-foreground: var(--primitive-gray-950);
+  --muted: var(--primitive-gray-100);
   --muted-foreground: var(--primitive-gray-500);
   --border: var(--primitive-gray-200);
   --input: var(--primitive-gray-200);
-  --sidebar: rgba(250, 250, 250, 1);
-  --sidebar-foreground: rgba(10, 10, 10, 1);
-  --sidebar-border: rgba(229, 229, 229, 1);
+  --sidebar: var(--primitive-gray-50);
+  --sidebar-foreground: var(--primitive-gray-950);
+  --sidebar-border: var(--primitive-gray-200);
 
   /* ── 5. PALETTE ───────────────────────────────────────────────────────── */
   --destructive: rgba(220, 38, 38, 1);
@@ -65,27 +66,27 @@
   color-scheme: dark;
 
   /* ── 1. BRAND (dark) ──────────────────────────────────────────────────── */
-  --primary: rgba(229, 229, 229, 1);
-  --primary-foreground: rgba(23, 23, 23, 1);
-  --secondary: rgba(38, 38, 38, 1);
-  --secondary-foreground: rgba(250, 250, 250, 1);
+  --primary: var(--primitive-gray-200);
+  --primary-foreground: var(--primitive-gray-900);
+  --secondary: var(--primitive-gray-800);
+  --secondary-foreground: var(--primitive-gray-50);
   --accent: rgb(48, 48, 48);
-  --accent-foreground: rgba(250, 250, 250, 1);
+  --accent-foreground: var(--primitive-gray-50);
 
   /* ── 4. SYSTEM (dark) ─────────────────────────────────────────────────── */
-  --background: rgba(10, 10, 10, 1);
+  --background: var(--primitive-gray-950);
   --foreground: var(--primitive-gray-50);
-  --card: rgba(23, 23, 23, 1);
-  --card-foreground: rgba(250, 250, 250, 1);
-  --popover: rgba(38, 38, 38, 1);
-  --popover-foreground: rgba(250, 250, 250, 1);
-  --muted: rgba(38, 38, 38, 1);
+  --card: var(--primitive-gray-900);
+  --card-foreground: var(--primitive-gray-50);
+  --popover: var(--primitive-gray-800);
+  --popover-foreground: var(--primitive-gray-50);
+  --muted: var(--primitive-gray-800);
   --muted-foreground: var(--primitive-gray-400);
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.15);
-  --sidebar: rgba(10, 10, 10, 1);
-  --sidebar-foreground: rgba(250, 250, 250, 1);
-  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --border: var(--primitive-white-a2);
+  --input: var(--primitive-white-a3);
+  --sidebar: var(--primitive-gray-950);
+  --sidebar-foreground: var(--primitive-gray-50);
+  --sidebar-border: var(--primitive-white-a2);
 
   /* ── 5. PALETTE (dark) ────────────────────────────────────────────────── */
   --destructive: rgba(248, 113, 113, 1);
@@ -112,8 +113,11 @@
  * resolve to opaque hex.
  *
  * Gray is the Tailwind `neutral` family (the values this palette already used)
- * and is the same in both modes, so it is declared once; the SYSTEM text and
- * line tokens (4) read it. Surfaces stay literal: they are theme inputs.
+ * and is the same in both modes, so it is declared once. White and the white /
+ * black alpha scales are declared with it. The BRAND (1) and SYSTEM (4) tokens
+ * of this palette read these scales. Other palettes still set their own
+ * literal values; the scales are not a theme input yet. `--accent` and the
+ * shadows have no step and stay literal.
  */
 :root {
   /* gray — both modes */
@@ -128,6 +132,33 @@
   --primitive-gray-800: #262626;
   --primitive-gray-900: #171717;
   --primitive-gray-950: #0a0a0a;
+
+  /* white, and white / black alpha — both modes (Radix whiteA / blackA) */
+  --primitive-white: #ffffff;
+  --primitive-white-a1: rgba(255, 255, 255, 0.05);
+  --primitive-white-a2: rgba(255, 255, 255, 0.1);
+  --primitive-white-a3: rgba(255, 255, 255, 0.15);
+  --primitive-white-a4: rgba(255, 255, 255, 0.2);
+  --primitive-white-a5: rgba(255, 255, 255, 0.3);
+  --primitive-white-a6: rgba(255, 255, 255, 0.4);
+  --primitive-white-a7: rgba(255, 255, 255, 0.5);
+  --primitive-white-a8: rgba(255, 255, 255, 0.6);
+  --primitive-white-a9: rgba(255, 255, 255, 0.7);
+  --primitive-white-a10: rgba(255, 255, 255, 0.8);
+  --primitive-white-a11: rgba(255, 255, 255, 0.9);
+  --primitive-white-a12: rgba(255, 255, 255, 0.95);
+  --primitive-black-a1: rgba(0, 0, 0, 0.05);
+  --primitive-black-a2: rgba(0, 0, 0, 0.1);
+  --primitive-black-a3: rgba(0, 0, 0, 0.15);
+  --primitive-black-a4: rgba(0, 0, 0, 0.2);
+  --primitive-black-a5: rgba(0, 0, 0, 0.3);
+  --primitive-black-a6: rgba(0, 0, 0, 0.4);
+  --primitive-black-a7: rgba(0, 0, 0, 0.5);
+  --primitive-black-a8: rgba(0, 0, 0, 0.6);
+  --primitive-black-a9: rgba(0, 0, 0, 0.7);
+  --primitive-black-a10: rgba(0, 0, 0, 0.8);
+  --primitive-black-a11: rgba(0, 0, 0, 0.9);
+  --primitive-black-a12: rgba(0, 0, 0, 0.95);
 
   /* hues — light */
   --primitive-blue-1: #f7f8f9;

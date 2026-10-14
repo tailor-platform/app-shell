@@ -711,7 +711,7 @@ export function CsvImporter<T extends CsvSchema>({
   return (
     <Drawer.Root open={open} onOpenChange={handleOpenChange} swipeDirection="down">
       <Drawer.Portal>
-        <Drawer.Backdrop className="astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50" />
+        <Drawer.Backdrop className="astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-50 astw:bg-backdrop" />
         <Drawer.Viewport
           data-slot="csv-importer-viewport"
           className="astw:fixed astw:inset-0 astw:z-50 astw:flex astw:items-end astw:justify-stretch"

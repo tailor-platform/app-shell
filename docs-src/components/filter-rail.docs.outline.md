@@ -1,0 +1,140 @@
+---
+kind: code-backed
+group: filter-rail
+title: FilterRail
+description: An always-visible faceted filter rail with counts and user layout settings, driven by the same CollectionControl as DataTable
+sources:
+  - packages/core/src/components/filter-rail/**
+---
+
+# FilterRail
+
+`FilterRail` shows every filterable axis beside the results instead of hiding it behind a filter dropdown. Each section displays its options, and optionally how many rows each option would return, before the user clicks.
+
+It writes the same `CollectionControl` a `DataTable` reads, so there is no second filter engine: a checkbox section **is** the `in` operator, a radio section is `eq`, a range is `between`.
+
+```tsx
+import { FilterRail, type FilterRailSection } from "@tailor-platform/app-shell";
+
+const sections: FilterRailSection[] = [
+  {
+    id: "category",
+    label: "Category",
+    control: "checkbox",
+    field: "category",
+    options: categories,
+  },
+  { id: "status", label: "Status", control: "radio", field: "status", options: statuses },
+];
+
+<FilterRail.Root control={control} sections={sections}>
+  <FilterRail.Sections />
+</FilterRail.Root>;
+```
+
+## Sections and parts
+
+What the rail shows is **config**: `sections`, one entry per axis, in screen order. How the rail is assembled is **parts**: leave a part out and that feature is not rendered.
+
+| Part                  | Renders                                                                       |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `FilterRail.Root`     | The rail. Takes `control`, `sections`, `counts`, `layout`.                    |
+| `FilterRail.Header`   | A title row with a slot for actions.                                          |
+| `FilterRail.ClearAll` | Clears the rail's own filters only. Hidden while none are active.             |
+| `FilterRail.Settings` | Show / hide, reorder and sort sections. Needs `layout`.                       |
+| `FilterRail.Sections` | The sections, in the user's layout. Scrolls while the header stays put.       |
+| `FilterRail.Provider` | Holds the config when a `Trigger` sits outside the rail (see Narrow screens). |
+| `FilterRail.Trigger`  | The narrow-screen "Filters" button, placed anywhere inside `Provider`.        |
+
+```tsx
+<FilterRail.Root control={control} sections={sections} counts={counts} layout={layout}>
+  <FilterRail.Header>
+    <FilterRail.ClearAll />
+    <FilterRail.Settings />
+  </FilterRail.Header>
+  <FilterRail.Sections />
+</FilterRail.Root>
+```
+
+### Section types
+
+Every section has an `id`, a `label` and an optional `hint`. The operator is fixed per section — the user picks values, never operators.
+
+| `control`     | Commits                                    | Notes                                                       |
+| ------------- | ------------------------------------------ | ----------------------------------------------------------- |
+| `checkbox`    | `in` (or `nin`) with the ticked values     | `sort`, `truncate` (default 8), `pinned`, `searchThreshold` |
+| `radio`       | `eq` (or `ne`) with one value              | An "Any" row removes the filter; `anyLabel: null` hides it  |
+| `boolean`     | `eq` with `true` / `false`                 | Three states: Any, `trueLabel`, `falseLabel`                |
+| `text`        | `contains`, `hasPrefix` or `eq`            | Debounced (`debounceMs`, default 250)                       |
+| `numberRange` | `between` `{ min, max }`, or `gte` / `lte` | Commits on blur / Enter; one end alone is half-open         |
+| `date`        | `eq`, `gte` or `lte` a `YYYY-MM-DD`        | Uses `DatePicker`                                           |
+| `dateRange`   | `between` `{ min, max }`                   | Uses `DateRangePicker`; optional `presets`                  |
+| `custom`      | Whatever `render` writes                   | Declares the `fields` it owns so Clear all includes them    |
+
+A checkbox list long enough to be truncated also gets a search box, so a value can be found without scrolling (`searchThreshold` overrides when it appears).
+
+A field holds one filter, so two sections must not share a field; the rail warns in the console when they do.
+
+```tsx
+const stockLevel: FilterRailSection = {
+  id: "stockLevel",
+  label: "Stock level",
+  control: "custom",
+  fields: ["stock"],
+  render: ({ getFilter, setFilter }) => (
+    <Button
+      variant="outline"
+      size="xs"
+      onClick={() => setFilter("stock", { operator: "between", value: { min: 1, max: 20 } })}
+    >
+      Low stock
+    </Button>
+  ),
+};
+```
+
+The rail never hides state: a selected option is never truncated away, never disabled and never hidden by a section's search box, and sections do not collapse.
+
+## Counts
+
+Pass `counts` to show a number beside each option and disable options that would return nothing (`zeroBehavior="show"` keeps them enabled). The rail never sees rows, so counts come from you. For rows held in memory, `useFilterRailCounts` does standard faceting: each section's count excludes its own filter, so ticking one box never zeroes its neighbours.
+
+```tsx
+const counts = useFilterRailCounts(rows, sections, control.filters, { baseline: true });
+```
+
+For a server-side collection, return the same shape from an aggregation query: `{ live: { [sectionId]: { [value]: count } }, baseline?, total?, withoutSection? }`. With `total` and `withoutSection`, an empty result shows which section to clear to get rows back. Counts are optional: without them the rail still works, it just shows no numbers.
+
+## User layout
+
+`useFilterRailLayout(storageKey)` persists the user's section order, hidden sections and option sort to localStorage. Pass it as `layout` and add `FilterRail.Settings`. Hiding a section that carries a filter also clears that filter. To share a layout across a team, pass your own `{ value, onChange, onReset }` binding instead.
+
+## Beside a DataTable
+
+The rail sits in its own `Layout.Column`, outside `DataTable.Root`, which is why `control` is a prop. Do not also render `DataTable.Filters` for the same fields — one fact in two places can drift.
+
+## Narrow screens
+
+Below the `lg` breakpoint there is no room for a side column, so the rail turns itself into a left sheet behind a **Filters** button carrying the active count — the same way the Sidebar handles small screens. Apps write no breakpoint code.
+
+By default the button appears where the rail would have been. To put it somewhere else — a table toolbar, a page header — wrap the page in `FilterRail.Provider`, move the config there, and place `FilterRail.Trigger` wherever you want it. The Trigger renders nothing on wide screens, and while one is mounted the rail skips its own button.
+
+```tsx
+<FilterRail.Provider control={control} sections={sections} counts={counts}>
+  <Layout fill>
+    <Layout.Column area="left">
+      <FilterRail.Root>
+        <FilterRail.Sections />
+      </FilterRail.Root>
+    </Layout.Column>
+    <Layout.Column area="main">
+      <DataTable.Root value={table}>
+        <DataTable.Toolbar>
+          <FilterRail.Trigger />
+        </DataTable.Toolbar>
+        <DataTable.Table />
+      </DataTable.Root>
+    </Layout.Column>
+  </Layout>
+</FilterRail.Provider>
+```

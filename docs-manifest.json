@@ -1304,9 +1304,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "e63d837190e71ff1",
+        "outline": "8ad61f58de459be2",
         "snapshot": null,
-        "outputMd": "112b43c697d30369",
+        "outputMd": "c40075c1f34fb315",
         "examples": "4d19f4f688e0f0ac"
       }
     },
@@ -1342,6 +1342,23 @@
         "snapshot": "925b704a05df1333",
         "outputMd": "30bb32e57fc78bd9",
         "examples": "b07f258088e81cac"
+      }
+    },
+    "text": {
+      "slug": "text",
+      "kind": "code-backed",
+      "outline": "docs-src/components/text.docs.outline.md",
+      "output": "docs/components/text.md",
+      "examples": "docs-src/components/text.docs.examples.tsx",
+      "sources": ["packages/core/src/components/text/**"],
+      "claims": [],
+      "symbols": ["Text", "TextProps"],
+      "hashes": {
+        "typeSurface": "ed54a16ca677dbe3",
+        "outline": "b354c6be5f81ce2a",
+        "snapshot": "f5d9429ab497863a",
+        "outputMd": "6436f68b6b404f0b",
+        "examples": "4a832708dc79474b"
       }
     },
     "textarea": {
@@ -1676,7 +1693,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "e342ef02dc2b9b86",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "112b43c697d30369",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "c40075c1f34fb315",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
@@ -1716,6 +1733,7 @@
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "30bb32e57fc78bd9",
+    "packages/core/skills/app-shell-patterns/references/components/text.md": "6436f68b6b404f0b",
     "packages/core/skills/app-shell-patterns/references/components/textarea.md": "c940bc01cd573334",
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
@@ -1757,6 +1775,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "526decbfd2db6555"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "f9d8e8f67c1b895e"
   }
 }

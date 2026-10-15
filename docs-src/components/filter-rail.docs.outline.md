@@ -140,7 +140,7 @@ In development the rail warns in the console when a checkbox or radio section li
 
 Users can save the filters selected in the rail under a name and apply them again later. `useSavedFilters(storageKey)` keeps them, personally, in the browser; pass the result to two parts:
 
-- `FilterRail.SavedFilters` — a picker: choose a saved filter to apply it. **Manage saved filters…** opens a dialog to delete them.
+- `FilterRail.SavedFilters` — a picker. **No filter** (first) clears the rail; choosing a saved filter applies it. Each saved filter has a delete icon (or press Delete on it), which asks for confirmation first.
 - `FilterRail.SaveFilter` — a footer pinned to the bottom of the rail with **Save filters**. It appears only when filters are applied and they are not already saved. Place it after `FilterRail.Sections`.
 
 ```tsx

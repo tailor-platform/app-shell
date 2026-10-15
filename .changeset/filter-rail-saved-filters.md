@@ -14,4 +14,4 @@ const saved = useSavedFilters("products");
 </FilterRail.Root>;
 ```
 
-`FilterRail.SavedFilters` is a picker (with a dialog to delete), and `FilterRail.SaveFilter` is a pinned "Save filters" footer that appears only when there is something new to save. `useSavedFilters` keeps them in localStorage by default; pass `storage: { load, save }` (either may be async) to keep them elsewhere. A saved filter holds only the rail's own filters.
+`FilterRail.SavedFilters` is a picker ("No filter" first, then the saved filters, each deletable after a confirmation), and `FilterRail.SaveFilter` is a pinned "Save filters" footer that appears only when there is something new to save. `useSavedFilters` keeps them in localStorage by default; pass `storage: { load, save }` (either may be async) to keep them elsewhere. A saved filter holds only the rail's own filters.

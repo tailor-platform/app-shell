@@ -55,7 +55,7 @@ The follow-up ships **saved filters** (2026-10-15): a named set of the rail's ow
 
 - **Filters only.** Applying one replaces the rail's filters and leaves others alone, like Clear all. Sort and columns stay out; they can be added later without breaking anything.
 - **Storage is the app's.** `useSavedFilters` defaults to localStorage and takes an adapter whose `load` / `save` may be async, so a backend store (following a user across devices) plugs in without changes here. Team-shared and default-for-everyone filters need a backend and permissions design, so they are not part of this change.
-- **Delete lives in a "Manage" dialog** with real buttons, not inside menu items.
+- **Deleting asks first.** Each saved filter in the picker has a delete icon (or Delete key on the item) that opens a confirmation, following the app-shell Confirm pattern. "No filter" is the picker's first option.
 
 ### No hidden state
 

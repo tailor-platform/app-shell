@@ -39,9 +39,12 @@ export const filterRailLabels = defineI18nLabels({
     savedFilters: "Saved filters",
     savedFiltersLoading: "Loading…",
     noSavedFilters: "No saved filters yet",
-    manageSavedFilters: "Manage saved filters…",
-    manageDescription: "Delete saved filters you no longer need.",
+    noFilter: "No filter",
     deleteSaved: (props: { name: string }) => `Delete ${props.name}`,
+    deleteSavedTitle: (props: { name: string }) => `Delete saved filter "${props.name}"?`,
+    deleteSavedDescription:
+      "It will be removed from your saved filters. The filters applied now are not changed.",
+    delete: "Delete",
     savedFiltersError: "Couldn't load or save your saved filters.",
     saveFilter: "Save filters",
     saveFilterDescription: "Saves the filters selected here under a name.",
@@ -51,7 +54,6 @@ export const filterRailLabels = defineI18nLabels({
     cancel: "Cancel",
     save: "Save",
     replace: "Replace",
-    close: "Close",
 
     // Compact layout
     activeCount: (props: { label: string; count: number }) =>
@@ -94,9 +96,13 @@ export const filterRailLabels = defineI18nLabels({
     savedFilters: "保存したフィルター",
     savedFiltersLoading: "読み込み中…",
     noSavedFilters: "保存したフィルターはまだありません",
-    manageSavedFilters: "保存したフィルターを管理…",
-    manageDescription: "不要になった保存済みフィルターを削除します。",
+    noFilter: "フィルターなし",
     deleteSaved: (props: { name: string }) => `${props.name}を削除`,
+    deleteSavedTitle: (props: { name: string }) =>
+      `保存したフィルター「${props.name}」を削除しますか？`,
+    deleteSavedDescription:
+      "保存したフィルターから削除されます。現在適用中のフィルターは変わりません。",
+    delete: "削除",
     savedFiltersError: "保存したフィルターを読み込めない、または保存できませんでした。",
     saveFilter: "フィルターを保存",
     saveFilterDescription: "ここで選択しているフィルターに名前を付けて保存します。",
@@ -106,7 +112,6 @@ export const filterRailLabels = defineI18nLabels({
     cancel: "キャンセル",
     save: "保存",
     replace: "置き換える",
-    close: "閉じる",
 
     activeCount: (props: { label: string; count: number }) =>
       `${props.label}、${props.count}件適用中`,

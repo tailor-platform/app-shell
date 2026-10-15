@@ -8,7 +8,7 @@ import { Input } from "../input";
 import { Menu } from "../menu";
 import { useFilterRailContext } from "./filter-rail-context";
 import { useFilterRailT } from "./i18n";
-import type { SavedFiltersBinding } from "./types";
+import type { SavedFilter, SavedFiltersBinding } from "./types";
 
 /** Field / operator order and `in`-list order must not make equal sets look different. */
 const normalise = (filters: readonly Filter[]): string =>
@@ -37,15 +37,26 @@ const useActive = (items: SavedFiltersBinding["items"], part: string) => {
 type SavedFiltersProps = SavedFiltersBinding & { className?: string };
 
 /**
- * A menu of saved filters: pick one to apply it. "Manage saved filters…" opens
- * a dialog to delete them. Pair with `FilterRail.SaveFilter`, passing both the
- * same `useSavedFilters` result.
+ * A menu of saved filters. "No filter" (first) clears the rail; picking a saved
+ * filter applies it. Each saved filter has a delete icon (or press Delete on
+ * it), which asks for confirmation. Pair with `FilterRail.SaveFilter`, passing
+ * both the same `useSavedFilters` result.
  */
 function SavedFilters({ items, loading, error, remove, className }: SavedFiltersProps) {
   const t = useFilterRailT();
-  const { applyRailFilters } = useFilterRailContext("SavedFilters");
+  const { railFilters, applyRailFilters } = useFilterRailContext("SavedFilters");
   const active = useActive(items, "SavedFilters");
-  const [managing, setManaging] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<SavedFilter | null>(null);
+  const noFilter = railFilters.length === 0;
+
+  // The active saved filter's name, else the plain "Saved filters" label.
+  const label = active ? active.name : t("savedFilters");
+
+  const askToDelete = (item: SavedFilter) => {
+    setMenuOpen(false);
+    setPendingDelete(item);
+  };
 
   return (
     <div
@@ -55,15 +66,12 @@ function SavedFilters({ items, loading, error, remove, className }: SavedFilters
         className,
       )}
     >
-      <Menu.Root>
+      <Menu.Root open={menuOpen} onOpenChange={setMenuOpen}>
         <Menu.Trigger
           render={
             <Button variant="outline" size="xs" className="astw:w-full astw:justify-start">
               <Bookmark className="astw:size-3.5 astw:shrink-0" aria-hidden />
-              <span className="astw:truncate">{active ? active.name : t("savedFilters")}</span>
-              {!active && items.length > 0 && (
-                <span className="astw:shrink-0 astw:text-muted-foreground">({items.length})</span>
-              )}
+              <span className="astw:truncate">{label}</span>
               <ChevronDown
                 className="astw:ml-auto astw:size-3.5 astw:shrink-0 astw:opacity-60"
                 aria-hidden
@@ -72,25 +80,64 @@ function SavedFilters({ items, loading, error, remove, className }: SavedFilters
           }
         />
         <Menu.Content className="astw:min-w-(--anchor-width)">
+          {/* First option: back to no rail filters at all. */}
+          <Menu.Item onClick={() => applyRailFilters([])}>
+            <span className="astw:flex astw:w-full astw:items-center astw:gap-2">
+              <span className="astw:w-3.5 astw:shrink-0">
+                {noFilter && <Check className="astw:size-3.5" aria-hidden />}
+              </span>
+              <span className="astw:truncate">{t("noFilter")}</span>
+            </span>
+          </Menu.Item>
+          <Menu.Separator />
           {loading && <Menu.Item disabled>{t("savedFiltersLoading")}</Menu.Item>}
           {!loading && items.length === 0 && <Menu.Item disabled>{t("noSavedFilters")}</Menu.Item>}
           {!loading && items.length > 0 && (
-            <>
-              <Menu.Group>
-                {items.map((item) => (
-                  <Menu.Item key={item.id} onClick={() => applyRailFilters(item.filters)}>
-                    <span className="astw:flex astw:w-full astw:items-center astw:gap-2">
-                      <span className="astw:w-3.5 astw:shrink-0">
-                        {item.id === active?.id && <Check className="astw:size-3.5" aria-hidden />}
-                      </span>
-                      <span className="astw:truncate">{item.name}</span>
+            <Menu.Group>
+              {items.map((item) => (
+                <Menu.Item
+                  key={item.id}
+                  onClick={() => applyRailFilters(item.filters)}
+                  // Keyboard path to delete: Delete / Backspace on the item.
+                  onKeyDown={(event) => {
+                    if (event.key === "Delete" || event.key === "Backspace") {
+                      event.preventDefault();
+                      askToDelete(item);
+                    }
+                  }}
+                  className="astw:group/saved-item"
+                >
+                  <span className="astw:flex astw:w-full astw:items-center astw:gap-2">
+                    <span className="astw:w-3.5 astw:shrink-0">
+                      {item.id === active?.id && <Check className="astw:size-3.5" aria-hidden />}
                     </span>
-                  </Menu.Item>
-                ))}
-              </Menu.Group>
-              <Menu.Separator />
-              <Menu.Item onClick={() => setManaging(true)}>{t("manageSavedFilters")}</Menu.Item>
-            </>
+                    <span className="astw:min-w-0 astw:flex-1 astw:truncate">{item.name}</span>
+                    <span
+                      // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role -- a <button> cannot nest inside the menu item
+                      role="button"
+                      tabIndex={-1}
+                      aria-label={t("deleteSaved", { name: item.name })}
+                      title={t("deleteSaved", { name: item.name })}
+                      className="astw:shrink-0 astw:rounded astw:p-0.5 astw:text-muted-foreground astw:opacity-0 astw:transition-opacity astw:group-hover/saved-item:opacity-100 astw:group-data-highlighted/saved-item:opacity-100 astw:hover:text-destructive"
+                      onClick={(event) => {
+                        // Delete, not apply.
+                        event.stopPropagation();
+                        askToDelete(item);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          askToDelete(item);
+                        }
+                      }}
+                    >
+                      <Trash2 className="astw:size-3.5" aria-hidden />
+                    </span>
+                  </span>
+                </Menu.Item>
+              ))}
+            </Menu.Group>
           )}
         </Menu.Content>
       </Menu.Root>
@@ -101,39 +148,31 @@ function SavedFilters({ items, loading, error, remove, className }: SavedFilters
         </p>
       )}
 
-      {/* Delete lives here, as real buttons, not inside the menu items. */}
-      <Dialog.Root open={managing} onOpenChange={setManaging}>
-        <Dialog.Content className="astw:sm:max-w-md">
+      {/* The app-shell Confirm pattern: a question naming the object, the
+          consequence, an outline Cancel and a destructive confirm. */}
+      <Dialog.Root
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+      >
+        <Dialog.Content className="astw:sm:max-w-sm">
           <Dialog.Header>
-            <Dialog.Title>{t("savedFilters")}</Dialog.Title>
-            <Dialog.Description>{t("manageDescription")}</Dialog.Description>
+            <Dialog.Title>
+              {t("deleteSavedTitle", { name: pendingDelete?.name ?? "" })}
+            </Dialog.Title>
+            <Dialog.Description>{t("deleteSavedDescription")}</Dialog.Description>
           </Dialog.Header>
-          {items.length === 0 ? (
-            <p className="astw:text-sm astw:text-muted-foreground">{t("noSavedFilters")}</p>
-          ) : (
-            <ul className="astw:m-0 astw:flex astw:list-none astw:flex-col astw:gap-1 astw:p-0">
-              {items.map((item) => (
-                <li
-                  key={item.id}
-                  className="astw:flex astw:items-center astw:justify-between astw:gap-2 astw:rounded-md astw:px-2 astw:py-1 astw:hover:bg-accent"
-                >
-                  <span className="astw:truncate astw:text-sm">{item.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    aria-label={t("deleteSaved", { name: item.name })}
-                    className="astw:text-muted-foreground astw:hover:text-destructive"
-                    onClick={() => remove(item.id)}
-                  >
-                    <Trash2 className="astw:size-3.5" aria-hidden />
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
           <Dialog.Footer>
-            <Button variant="outline" onClick={() => setManaging(false)}>
-              {t("close")}
+            <Dialog.Close render={<Button variant="outline" />}>{t("cancel")}</Dialog.Close>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (pendingDelete) remove(pendingDelete.id);
+                setPendingDelete(null);
+              }}
+            >
+              {t("delete")}
             </Button>
           </Dialog.Footer>
         </Dialog.Content>

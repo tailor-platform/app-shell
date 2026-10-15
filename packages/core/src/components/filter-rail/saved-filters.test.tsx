@@ -134,15 +134,50 @@ describe("FilterRail.SavedFilters", () => {
     expect(screen.getByRole("alert").textContent).toContain("Couldn't load or save");
   });
 
-  it("deletes from the Manage dialog with a real button", async () => {
+  it('offers "No filter" first, which clears only the rail\'s filters', async () => {
+    const user = userEvent.setup();
+    render(<Harness saved={binding()} initial={[pageSearch, ...lowStock.filters]} />);
+    await user.click(screen.getByRole("button", { name: /Active electronics/ }));
+    const items = await screen.findAllByRole("menuitem");
+    expect(items[0]!.textContent).toBe("No filter");
+    await user.click(items[0]!);
+    expect(currentFilters()).toEqual([pageSearch]);
+    expect(screen.getByRole("button", { name: /Saved filters/ })).toBeTruthy();
+  });
+
+  it('labels the trigger "Saved filters" when the rail has none applied', () => {
+    render(<Harness saved={binding()} initial={[pageSearch]} />);
+    expect(screen.getByRole("button", { name: /Saved filters/ })).toBeTruthy();
+  });
+
+  it("asks for confirmation before deleting, and deletes only on confirm", async () => {
     const user = userEvent.setup();
     const saved = binding();
     render(<Harness saved={saved} />);
     await user.click(screen.getByRole("button", { name: /Saved filters/ }));
-    await user.click(await screen.findByRole("menuitem", { name: "Manage saved filters…" }));
-    const dialog = await screen.findByRole("dialog");
-    await user.click(within(dialog).getByRole("button", { name: "Delete Active electronics" }));
+    await user.click(await screen.findByRole("button", { name: "Delete Active electronics" }));
+    // Clicking the icon deletes, it does not apply.
+    expect(currentFilters()).toEqual([]);
+    let dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText('Delete saved filter "Active electronics"?')).toBeTruthy();
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(saved.remove).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: /Saved filters/ }));
+    await user.click(await screen.findByRole("button", { name: "Delete Active electronics" }));
+    dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Delete" }));
     expect(saved.remove).toHaveBeenCalledWith("low");
+  });
+
+  it("opens the same confirmation from the keyboard with Delete on an item", async () => {
+    const user = userEvent.setup();
+    render(<Harness saved={binding()} />);
+    await user.click(screen.getByRole("button", { name: /Saved filters/ }));
+    const item = await screen.findByRole("menuitem", { name: /Active electronics/ });
+    item.focus();
+    await user.keyboard("{Delete}");
+    expect(await screen.findByText('Delete saved filter "Active electronics"?')).toBeTruthy();
   });
 });
 

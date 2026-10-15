@@ -105,7 +105,9 @@ describe("useSavedFilters", () => {
     const { result } = renderHook(() => useSavedFilters("products", { storage }));
     expect(result.current.loading).toBe(true);
     await waitFor(() => expect(load).toHaveBeenCalled());
-    await act(async () => resolve([{ id: "a", name: "A", filters: electronics, createdAt: "x" }]));
+    await act(async () =>
+      resolve?.([{ id: "a", name: "A", filters: electronics, createdAt: "x" }]),
+    );
     expect(result.current.loading).toBe(false);
     expect(result.current.items[0]!.name).toBe("A");
   });

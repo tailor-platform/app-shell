@@ -30,6 +30,7 @@ import {
   type DataTablePaginationProps,
   type DataTableAction,
   type RowAction,
+  type RowSelectionOptions,
   type SelectionAction,
   type UseDataTableOptions,
   type UseDataTableReturn,
@@ -228,7 +229,7 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 | Rows selected and `total` is not provided | `Y row(s) selected`      |
 | No selection enabled and no `total`       | _(nothing displayed)_    |
 
-Row selection is enabled by providing `onSelectionChange` or `selectionActions` to `useDataTable`. The `total` value comes from `DataTableData.total`. While the footer shows the bulk-action bar (see [Selection actions](#selection-actions)), the bar owns the selection count and this text is omitted.
+Row selection is enabled by providing `rowSelection`, `onSelectionChange`, or a non-empty `selectionActions` array to `useDataTable`. The `total` value comes from `DataTableData.total`. While the footer shows the bulk-action bar (see [Selection actions](#selection-actions)), the bar owns the selection count and this text is omitted.
 
 When pagination changes page or page size, `DataTable.Table` resets its own scroll container to the top automatically. That applies whether navigation comes from the built-in `DataTable.Pagination` or from custom controls using the same table context.
 
@@ -376,9 +377,45 @@ The trigger is a native `<button>`, so Enter/Space activation and the focus ring
 
 **Known limitation — row count.** Detail rows are real `<tr>` elements, so a screen reader counts them: ten records with two expanded announces as twelve rows. Fixing this needs `aria-rowcount` plus explicit `aria-rowindex` on every row (with detail rows sharing their parent's index) and correct interaction with pagination; `role="presentation"` on the detail row would fix the count but remove the panel from screen-reader table navigation. Neither is implemented.
 
+## Row selection
+
+Pass `rowSelection` to `useDataTable` to enable the checkbox column. Rows must have a string or number `id`; selected ids are their string-normalized values, and rows without an id are excluded. An empty configuration (`rowSelection: {}`) enables uncontrolled selection without a notification callback.
+
+### Controlled selection
+
+Provide `selectedIds` and `onChange` together to own the selection. The `RowSelectionOptions` type requires `onChange` in controlled mode and rejects combining `selectedIds` with `defaultSelectedIds`.
+
+```tsx
+const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+const table = useDataTable<Order>({
+  columns,
+  data,
+  rowSelection: { selectedIds, onChange: setSelectedIds },
+});
+```
+
+Commands such as `toggleRowSelection(row)` request a new array through `onChange`; the rendered selection changes only when the owner updates `selectedIds`. Each command derives from the current committed value, so multiple commands before the owner commits share the same base. Compute batched changes yourself and set `selectedIds` directly instead of issuing repeated commands.
+
+### Uncontrolled selection
+
+Omit `selectedIds` to let the table own selection state. `defaultSelectedIds` initializes it only when the hook mounts; later changes to that default do not reset selection. `onChange` is optional.
+
+```tsx
+const table = useDataTable<Order>({
+  columns,
+  data,
+  rowSelection: { defaultSelectedIds: ["INV-1001"] },
+});
+```
+
+Keep the controlled/uncontrolled mode stable while mounted. Callbacks notify user-driven selection changes, not mounting or external `selectedIds` updates. `onSelectionChange` is deprecated but remains supported for compatibility. Replace `onSelectionChange: handleSelectionChange` with `rowSelection: { onChange: handleSelectionChange }` to keep uncontrolled notification behavior. `rowSelection.onChange` takes precedence when both callbacks are supplied, and `onSelectionChange` is used when the new configuration has no callback.
+
+Selection spans pages. The header checkbox adds or removes only the current page's rows, preserving ids selected on other pages; `clearSelection()` clears every page. `selectedRows` contains current-page rows in their latest version and off-page rows as last loaded. Selected ids whose rows have never been loaded are omitted from `selectedRows` until seen, so the selection count can exceed the number of available row objects. Bulk actions operate only on those available rows.
+
 ## Selection actions
 
-Pass `selectionActions` to `useDataTable` and, while at least one row is selected, `DataTable.Footer` becomes a bulk-action bar: the selection count, your actions, and a **Clear** button, with the footer's own children (usually `DataTable.Pagination`) kept alongside. Providing the option also enables row selection, so `onSelectionChange` is optional. There is nothing new to compose in JSX — just keep `DataTable.Footer` in the tree.
+Pass `selectionActions` to `useDataTable` and, while at least one row is selected, `DataTable.Footer` becomes a bulk-action bar: the selection count, your actions, and a **Clear** button, with the footer's own children (usually `DataTable.Pagination`) kept alongside. A non-empty array also enables row selection, so `rowSelection` and `onSelectionChange` are optional. There is nothing new to compose in JSX — just keep `DataTable.Footer` in the tree.
 
 ```tsx
 const table = useDataTable<Vendor>({
@@ -450,7 +487,8 @@ const table = useDataTable({
 | `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                               |
 | `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.            |
 | `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                         |
-| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this (or `selectionActions`) enables the checkbox column. Rows must have a string or number `id`.                             |
+| `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection). |
+| `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                 |
 | `selectionActions`  | `SelectionAction<TRow>[]`          | Bulk actions shown in `DataTable.Footer` while rows are selected. A non-empty array also enables selection. See [Selection actions](#selection-actions).                        |
 | `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows). |
 | `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                       |
@@ -1063,7 +1101,7 @@ function MyCustomPagination() {
 }
 ```
 
-The selection is here too — `selectedIds`, `selectedRows` (each selected row as last loaded, across pages), `selectAllRows` / `deselectAllRows` for the current page, and `clearSelection` — for the rare case the built-in [selection actions](#selection-actions) bar doesn't fit.
+The selection is here too — `selectedIds`, `selectedRows` (each loaded selected row as last seen, across pages; unseen ids are omitted), `selectAllRows` / `deselectAllRows` for the current page, and `clearSelection` — for the rare case the built-in [selection actions](#selection-actions) bar doesn't fit.
 
 ## SDK Plugin (`@tailor-platform/sdk-plugin-app-shell`)
 

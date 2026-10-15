@@ -421,6 +421,7 @@
         "PageInfo",
         "PaginationVariables",
         "RowAction",
+        "RowSelectionOptions",
         "SelectOption",
         "SelectionAction",
         "SelectionActionHelpers",
@@ -446,10 +447,10 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "d2910e2d95012c6c",
-        "outline": "5fc3f188a0f9fb8d",
+        "typeSurface": "d8d9fe5ef1459ad6",
+        "outline": "30e9c33a9fddd652",
         "snapshot": null,
-        "outputMd": "7a44214b5f1fdc6b",
+        "outputMd": "a0ec09ea656fcc7a",
         "examples": null
       }
     },
@@ -1693,7 +1694,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "7a44214b5f1fdc6b",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "a0ec09ea656fcc7a",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "bc69f14829004f9d",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",

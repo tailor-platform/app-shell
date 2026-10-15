@@ -401,6 +401,25 @@ export type RowExpansionOptions<TRow extends Record<string, unknown>> = {
     }
 );
 
+/** Controlled or uncontrolled row-selection configuration. Keep the mode stable while mounted. */
+export type RowSelectionOptions =
+  | {
+      /**
+       * Controlled selected ids. Update this array from `onChange`.
+       * Commands issued before the owner commits each derive from this value.
+       */
+      selectedIds: string[];
+      onChange: (ids: string[]) => void;
+      defaultSelectedIds?: never;
+    }
+  | {
+      selectedIds?: never;
+      /** Initial selected ids in uncontrolled mode; subsequent changes are ignored. */
+      defaultSelectedIds?: string[];
+      /** Notification of user-driven selection changes, including under StrictMode. */
+      onChange?: (ids: string[]) => void;
+    };
+
 /**
  * Options for `useDataTable` hook.
  */
@@ -439,10 +458,17 @@ export type UseDataTableOptions<
    */
   rowActions?: RowAction<TRow>[];
   /**
+   * Controlled or uncontrolled row selection. Providing this option enables
+   * checkboxes. Uses string-normalized `row.id`; rows without an id are excluded.
+   * The header checkbox adds/removes only the current page, preserving other ids.
+   */
+  rowSelection?: RowSelectionOptions;
+  /**
    * Called with the current array of selected row IDs whenever the selection
    * changes. Providing this prop — or a non-empty `selectionActions` — enables
    * the checkbox selection column. Selection is ID-based (`row.id`) and persists
-   * across page changes.
+   * across page changes. Remains supported; `rowSelection.onChange` takes
+   * precedence when both callbacks are supplied.
    *
    * **Requirement:** Each row must have a string or number `id` field.
    * Rows without `id` are excluded from selection.
@@ -450,6 +476,8 @@ export type UseDataTableOptions<
    * **Note:** The header checkbox acts on the **current page**: checking it adds
    * the page's rows to the selection and unchecking it removes them. Rows
    * selected on other pages are kept.
+   *
+   * @deprecated Use `rowSelection.onChange` instead.
    */
   onSelectionChange?: (ids: string[]) => void;
   /**
@@ -672,6 +700,7 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   /**
    * The selected rows, in selection order. Rows on the current page are their
    * latest version; rows selected on other pages are the version last loaded.
+   * Selected ids whose rows have not been loaded are omitted until they are seen.
    */
   selectedRows: TRow[];
   isRowSelected: (row: TRow) => boolean;

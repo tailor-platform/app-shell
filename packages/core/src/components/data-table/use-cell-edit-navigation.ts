@@ -1,10 +1,10 @@
 import { useState } from "react";
 
-export type CellEditDirection = "up" | "down" | "next" | "prev";
+export type CellEditDirection = "next" | "prev";
 
 /**
  * Tracks the editable cells a DataTable page has rendered, so a cell can hand
- * focus to its neighbour on Enter / Tab without querying the DOM.
+ * focus to its neighbour on Tab / Shift+Tab without querying the DOM.
  *
  * Editors register their focusable element through a callback ref;
  * `DataTableRows` publishes the current row and column order on every render.
@@ -39,15 +39,6 @@ export function createCellEditNavigation(): CellEditNavigation {
     const row = rowKeys.indexOf(from.rowKey);
     const col = colKeys.indexOf(from.colKey);
     if (row === -1 || col === -1) return undefined;
-
-    if (direction === "up" || direction === "down") {
-      const step = direction === "down" ? 1 : -1;
-      for (let r = row + step; r >= 0 && r < rowKeys.length; r += step) {
-        const cell = at(rowKeys[r], from.colKey);
-        if (cell) return cell;
-      }
-      return undefined;
-    }
 
     // Row-major order, left to right then top to bottom.
     const step = direction === "next" ? 1 : -1;

@@ -1280,7 +1280,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
     const rowId = (row as Record<string, unknown>)["id"];
     return rowId != null ? `id:${String(rowId)}` : `idx:${rowIndex}`;
   });
-  // Enter / Tab move between editable cells in the order they render.
+  // Tab / Shift+Tab move between editable cells in the order they render.
   navigation.setOrder(rowKeys, ordered?.map((col) => keys.get(col) as string) ?? []);
   // In a table people edit, every data cell says what a click does: editors
   // show a text or pointer cursor, and the rest show "not allowed". Skipped when

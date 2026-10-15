@@ -24,20 +24,6 @@ function setup() {
 }
 
 describe("createCellEditNavigation", () => {
-  it("moves down and up the same column, skipping rows without an editor", () => {
-    const { navigation, cells } = setup();
-    expect(navigation.move({ rowKey: "r1", colKey: "a" }, "down")).toBe(true);
-    expect(cells.r3a.focus).toHaveBeenCalled();
-    expect(navigation.move({ rowKey: "r3", colKey: "a" }, "up")).toBe(true);
-    expect(cells.r1a.focus).toHaveBeenCalled();
-  });
-
-  it("returns false at the edge of a column", () => {
-    const { navigation } = setup();
-    expect(navigation.move({ rowKey: "r3", colKey: "a" }, "down")).toBe(false);
-    expect(navigation.move({ rowKey: "r1", colKey: "c" }, "up")).toBe(false);
-  });
-
   it("moves next and prev in row-major order, skipping read-only cells", () => {
     const { navigation, cells } = setup();
     navigation.move({ rowKey: "r1", colKey: "a" }, "next");
@@ -58,17 +44,17 @@ describe("createCellEditNavigation", () => {
     const { navigation, cells } = setup();
     const unregister = navigation.register("r2", "a", cell());
     unregister();
-    navigation.move({ rowKey: "r1", colKey: "a" }, "down");
-    expect(cells.r3a.focus).toHaveBeenCalled();
+    navigation.move({ rowKey: "r1", colKey: "c" }, "next");
+    expect(cells.r2c.focus).toHaveBeenCalled();
   });
 
   it("skips a cell that left the page without unregistering", () => {
     const { navigation, cells } = setup();
     const detached = cell(false);
     navigation.register("r2", "a", detached);
-    navigation.move({ rowKey: "r1", colKey: "a" }, "down");
+    navigation.move({ rowKey: "r1", colKey: "c" }, "next");
     expect(detached.focus).not.toHaveBeenCalled();
-    expect(cells.r3a.focus).toHaveBeenCalled();
+    expect(cells.r2c.focus).toHaveBeenCalled();
   });
 
   it("keeps a newer registration when a stale cleanup runs late", () => {
@@ -80,7 +66,7 @@ describe("createCellEditNavigation", () => {
     const staleCleanup = navigation.register("r2", "a", first);
     navigation.register("r2", "a", second);
     staleCleanup();
-    expect(navigation.move({ rowKey: "r1", colKey: "a" }, "down")).toBe(true);
+    expect(navigation.move({ rowKey: "r1", colKey: "a" }, "next")).toBe(true);
     expect(second.focus).toHaveBeenCalled();
     expect(first.focus).not.toHaveBeenCalled();
   });

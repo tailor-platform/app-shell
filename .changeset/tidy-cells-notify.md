@@ -2,7 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add typed inline editors to `DataTable` columns with `edit.canEdit`, `edit.options`, and `edit.onValueChange`. Editors notify parsed values on Enter, Tab, blur, or selection; the consumer owns validation, data updates, persistence, and rollback.
+Add typed inline editors to `DataTable` columns with `edit.canEdit`, `edit.options`, and `edit.onValueChange`. Editors notify parsed values on Enter, Tab, blur, or selection. Enter confirms without moving focus; Tab moves between editable cells. The consumer owns validation, data updates, persistence, and rollback.
 
 ```tsx
 column({

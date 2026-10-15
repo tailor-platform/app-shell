@@ -435,10 +435,10 @@ Rows need a string or number `id`; rows without one remain read-only and produce
 
 ### Confirmation and keyboard behavior
 
-- **Enter / Shift+Enter:** confirm and move down / up in the same column.
+- **Enter / Shift+Enter:** confirm without moving focus to another cell.
 - **Tab / Shift+Tab:** confirm and move to the next / previous editable cell, skipping read-only cells. At the ends, focus leaves the table normally.
 - **Esc:** discard the current input draft, or close an open picker without selecting.
-- **Dropdowns:** type to filter choices. Enter selects the highlighted choice and moves down; Tab selects the highlighted match and moves on. An exactly typed label is selected on blur; unmatched search text is discarded without changing the value.
+- **Dropdowns:** type to filter choices. Enter selects the highlighted choice and keeps focus in the same cell; Tab selects the highlighted match and moves on. An exactly typed label is selected on blur; unmatched search text is discarded without changing the value.
 - **Dates:** selecting a day notifies immediately. Date-time input notifies when its calendar closes with Done or an outside click; Esc abandons that draft. Clear notifies `null`.
 - **Blur:** confirms a changed direct-input value. Enter during IME composition confirms the composition, not the cell.
 
@@ -446,7 +446,7 @@ Numeric input is parsed before notification: full-width digits, valid thousands 
 
 ### Data ownership and limits
 
-The consumer's `data` is the source of truth. Update it synchronously to adopt a change, optionally after your own validation or normalization. If you reject the value by leaving `data` unchanged, the cell returns to that value and keyboard movement continues: the table does not retain a business-invalid draft, add a cell error, or hold focus for you.
+The consumer's `data` is the source of truth. Update it synchronously to adopt a change, optionally after your own validation or normalization. If you reject the value by leaving `data` unchanged, the cell returns to that value and Tab navigation remains available: the table does not retain a business-invalid draft, add a cell error, or block Tab navigation for you.
 
 There are no `edit.min`, `max`, `maxDecimals`, `required`, `validate`, or `schema` options. Dropdowns and calendars are not constrained by business rules. Required-field handling, error feedback, saving, optimistic updates, rollback, and save indicators belong to the screen. Callback return values are not awaited; handle rejected saves in your own code rather than returning a Promise for DataTable to track. There is no built-in unsaved-changes or leave-page guard.
 

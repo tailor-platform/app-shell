@@ -467,7 +467,7 @@ export function InlineEditingDemo() {
       <p className="text-sm text-muted-foreground">
         <strong>Consumer-owned rules and saving.</strong> Editors notify on Enter, Tab, blur, or a
         pick. This screen accepts or rejects the value: rejected business values return to the
-        existing data, without keeping focus or adding cell errors. Saving has no built-in
+        existing data, without adding cell errors or blocking Tab navigation. Saving has no built-in
         indicator, rollback, or leave-page prompt.
       </p>
       {feedback && (

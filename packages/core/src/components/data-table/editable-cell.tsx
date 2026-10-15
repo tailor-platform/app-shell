@@ -153,7 +153,7 @@ function useCellValue<TRow extends Record<string, unknown>>(row: TRow, col: Edit
 }
 
 /**
- * Registers the cell's focusable element with the table's Enter / Tab
+ * Registers the cell's focusable element with the table's Tab
  * navigation. Unregisters on every detach instead of returning a ref cleanup:
  * `Input` and `Combobox.Input` merge refs with a plain callback that calls ours
  * with `null` and drops any cleanup we return.
@@ -346,7 +346,7 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
     switch (event.key) {
       case "Enter":
         event.preventDefault();
-        if (commitDraft()) navigation.move(from, event.shiftKey ? "up" : "down");
+        commitDraft();
         return;
       case "Tab":
         if (!commitDraft()) {
@@ -427,7 +427,7 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
               aria-invalid={message !== undefined ? true : undefined}
               aria-describedby={message !== undefined ? errorId : undefined}
               inputMode={numeric ? "text" : undefined}
-              enterKeyHint="next"
+              enterKeyHint="done"
               autoComplete="off"
               spellCheck={numeric ? false : undefined}
               className={cn(
@@ -569,7 +569,6 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
         event.preventDefault();
         setOpen(false);
         setQuery(null);
-        navigation.move(from, event.shiftKey ? "up" : "down");
         return;
       case "Tab": {
         // Typing a few letters and pressing Tab takes the highlighted match.
@@ -639,12 +638,6 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
           if (details.reason !== "item-press") return;
           pick(item);
           setOpen(false);
-          // Enter picks and moves down the column, like every other cell.
-          const { event } = details;
-          if (event instanceof KeyboardEvent && event.key === "Enter") {
-            const direction = event.shiftKey ? "up" : "down";
-            requestAnimationFrame(() => navigation.move(from, direction));
-          }
         }}
         inputValue={query ?? selected?.label ?? ""}
         onInputValueChange={(next, details) => {
@@ -681,7 +674,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
           ref={register}
           aria-label={label}
           autoComplete="off"
-          enterKeyHint="next"
+          enterKeyHint="done"
           className={cn(
             INPUT_CLASS_NAME,
             // A dropdown at rest: a pointer. Once in it, a caret to search.

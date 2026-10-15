@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Link, MemoryRouter, createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
@@ -226,7 +226,7 @@ describe("DataTable inline editing", () => {
   });
 
   describe("keyboard", () => {
-    it("notifies once on Enter and moves down to the next editable row", async () => {
+    it("notifies once on Enter without moving focus or notifying again on Tab", async () => {
       const onValueChange = vi.fn();
       const user = renderTable(
         <StrictMode>
@@ -241,16 +241,25 @@ describe("DataTable inline editing", () => {
       await retype(user, first, "20{Enter}");
       expect(onValueChange).toHaveBeenCalledTimes(1);
       expect(onValueChange).toHaveBeenCalledWith("1", 20);
-      expect(document.activeElement).toBe(third);
+      expect(document.activeElement).toBe(first);
       expect((first as HTMLInputElement).value).toBe("20");
+      expect(first.getAttribute("enterkeyhint")).toBe("done");
+      await user.keyboard("{Enter}");
+      await user.tab();
+      expect(document.activeElement).toBe(third);
+      expect(onValueChange).toHaveBeenCalledTimes(1);
     });
 
-    it("moves up on Shift+Enter", async () => {
-      const user = renderTable(<Harness columns={(update) => [receivedColumn(vi.fn(), update)]} />);
+    it("confirms on Shift+Enter without moving focus", async () => {
+      const onValueChange = vi.fn();
+      const user = renderTable(
+        <Harness columns={(update) => [receivedColumn(onValueChange, update)]} />,
+      );
       const inputs = screen.getAllByRole("textbox", { name: "Received" });
-      await user.click(inputs[2]);
+      await retype(user, inputs[2], "11");
       await user.keyboard("{Shift>}{Enter}{/Shift}");
-      expect(document.activeElement).toBe(inputs[1]);
+      expect(onValueChange).toHaveBeenCalledExactlyOnceWith("3", 11);
+      expect(document.activeElement).toBe(inputs[2]);
     });
 
     it("moves to the next editable cell on Tab, skipping read-only columns", async () => {
@@ -313,6 +322,7 @@ describe("DataTable inline editing", () => {
       fireEvent.compositionEnd(input);
       fireEvent.keyDown(input, { key: "Enter" });
       expect(onValueChange).toHaveBeenCalledWith("1", 15);
+      expect(document.activeElement).toBe(input);
     });
   });
 
@@ -541,7 +551,7 @@ describe("DataTable inline editing", () => {
         />,
       );
       const [first, second] = screen.getAllByRole("textbox", { name: "Received" });
-      await retype(user, first, "99{Enter}");
+      await retype(user, first, "99{Tab}");
       expect(onValueChange).toHaveBeenCalledTimes(1);
       expect(onValueChange).toHaveBeenCalledWith("1", 99);
       expect((first as HTMLInputElement).value).toBe("12");
@@ -593,6 +603,8 @@ describe("DataTable inline editing", () => {
       await retype(user, first, "20{Enter}");
       expect(onValueChange).toHaveBeenCalledTimes(1);
       expect((first as HTMLInputElement).value).toBe("12");
+      expect(document.activeElement).toBe(first);
+      await user.tab();
       expect(document.activeElement).toBe(second);
       await act(async () => finish());
       expect((first as HTMLInputElement).value).toBe("12");
@@ -808,27 +820,7 @@ describe("DataTable inline editing", () => {
       expect(trigger.getAttribute("aria-invalid")).toBeNull();
     });
 
-    it("filters choices and picks the highlighted one with Enter", async () => {
-      const onValueChange = vi.fn();
-      const user = renderTable(
-        <Harness
-          rows={rowsWith("acme")}
-          columns={(update) => [supplierColumn(onValueChange, update)]}
-        />,
-      );
-      const [first, second] = screen.getAllByRole("combobox", { name: "Supplier" });
-      await user.click(first);
-      await user.clear(first);
-      await user.keyboard("glo");
-      expect((await screen.findAllByRole("option")).map((option) => option.textContent)).toEqual([
-        "Globex",
-      ]);
-      await user.keyboard("{Enter}");
-      expect(onValueChange).toHaveBeenCalledWith("1", "globex");
-      await waitFor(() => expect(document.activeElement).toBe(second));
-    });
-
-    it("takes the highlighted match on Tab after typing", async () => {
+    it("filters choices and picks with Enter without moving focus", async () => {
       const onValueChange = vi.fn();
       const user = renderTable(
         <Harness
@@ -840,10 +832,53 @@ describe("DataTable inline editing", () => {
       await user.click(first);
       await user.clear(first);
       await user.keyboard("glo");
+      expect((await screen.findAllByRole("option")).map((option) => option.textContent)).toEqual([
+        "Globex",
+      ]);
+      await user.keyboard("{Enter}");
+      expect(onValueChange).toHaveBeenCalledExactlyOnceWith("1", "globex");
+      await act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+      expect(first.getAttribute("aria-expanded")).toBe("false");
+      expect((first as HTMLInputElement).value).toBe("Globex");
+      expect(first.getAttribute("enterkeyhint")).toBe("done");
+      expect(document.activeElement).toBe(first);
+    });
+
+    it.each(["{Enter}", "{Shift>}{Enter}{/Shift}"])(
+      "keeps focus on %s when the dropdown is closed",
+      async (key) => {
+        const onValueChange = vi.fn();
+        const user = renderTable(
+          <Harness
+            rows={rowsWith("acme")}
+            columns={(update) => [supplierColumn(onValueChange, update)]}
+          />,
+        );
+        const [first] = screen.getAllByRole("combobox", { name: "Supplier" });
+        await user.click(first);
+        await user.keyboard(`{Escape}${key}`);
+        expect(document.activeElement).toBe(first);
+        expect(onValueChange).not.toHaveBeenCalled();
+      },
+    );
+
+    it("takes the highlighted match on Tab after typing", async () => {
+      const onValueChange = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onValueChange, update)]}
+        />,
+      );
+      const [first, second] = screen.getAllByRole("combobox", { name: "Supplier" });
+      await user.click(first);
+      await user.clear(first);
+      await user.keyboard("glo");
       await screen.findByRole("option", { name: "Globex" });
       await user.keyboard("{Tab}");
       expect(onValueChange).toHaveBeenCalledTimes(1);
       expect(onValueChange).toHaveBeenCalledWith("1", "globex");
+      expect(document.activeElement).toBe(second);
     });
 
     it("picks a fully typed label when the user leaves the cell", async () => {
@@ -1161,7 +1196,7 @@ describe("DataTable inline editing", () => {
     });
   });
 
-  it("drops an unticked row's editor from Enter navigation", async () => {
+  it("drops an unticked row's editor from Tab navigation", async () => {
     const user = renderTable(
       <Harness
         columns={(update) => [
@@ -1175,7 +1210,7 @@ describe("DataTable inline editing", () => {
     await user.click(boxes[1]);
     const [first, third] = screen.getAllByRole("textbox", { name: "Received" });
     act(() => first.focus());
-    await user.keyboard("{Enter}");
+    await user.tab();
     expect(document.activeElement).toBe(third);
   });
 

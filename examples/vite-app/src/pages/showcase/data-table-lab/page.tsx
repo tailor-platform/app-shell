@@ -555,11 +555,12 @@ const DataTableLabPage = () => {
             <>
               A goods receipt using <code>onValueChange</code> — scroll right for every editor.
               Editable columns have a pen after their title; hover a cell to see its editor icon,
-              then click anywhere in it. Enter moves down, Tab moves to the next editable cell, and
-              Esc undoes a draft. <strong>The screen owns validation and saving:</strong> a rejected
-              business value returns to the current data with a message outside the table; it does
-              not keep focus or create a cell error. Tick a row to edit <strong>Received</strong>{" "}
-              (whole numbers from 0 to ordered), try 150 in <strong>Discount %</strong> (0–100, one
+              then click anywhere in it. Enter confirms without moving focus, Tab moves to the next
+              editable cell, and Esc undoes a draft.{" "}
+              <strong>The screen owns validation and saving:</strong> a rejected business value
+              returns to the current data with a message outside the table; it does not block Tab
+              navigation or create a cell error. Tick a row to edit <strong>Received</strong> (whole
+              numbers from 0 to ordered), try 150 in <strong>Discount %</strong> (0–100, one
               decimal), or more than 500 in <strong>Weight (kg)</strong> (three decimals).{" "}
               <strong>Unit price</strong> updates locally before saving; values above 10,000 fail
               after a delay and are rolled back by this screen. Supplier and Status reject "None";

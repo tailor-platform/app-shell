@@ -9,6 +9,7 @@ import {
   useCollectionVariables,
   useDataTable,
   useFilterRailLayout,
+  useSavedFilters,
   useURLCollectionVariables,
   type AppShellPageProps,
   type CollectionControl,
@@ -27,7 +28,7 @@ import { allProducts, type Product } from "../../../mock-products";
 // table share one `CollectionControl`, so there is no second filter engine.
 //
 // Three variants prove the parts are optional:
-//   Full        — every section type and settings; below lg the Filters
+//   Full        — every section type, settings and saved filters; below lg the Filters
 //                 button sits in the table toolbar (Provider + Trigger)
 //   Checkboxes  — Root + Sections only, plus a long Tags list with value search;
 //                 below lg the rail falls back to its own Filters button
@@ -425,6 +426,8 @@ const ProductsTable = ({
 const FullVariant = ({ header }: { header: ReactNode }) => {
   const { variables, control } = useURLCollectionVariables({ params: { pageSize: 25 } });
   const layout = useFilterRailLayout("showcase:products");
+  // Personal saved filters, kept in this browser.
+  const saved = useSavedFilters("showcase:products");
   const data = useMemo(() => queryRows(variables), [variables]);
   const table = useDataTable<Row>({
     columns: COLUMNS,
@@ -446,7 +449,9 @@ const FullVariant = ({ header }: { header: ReactNode }) => {
               <FilterRail.ClearAll />
               <FilterRail.Settings />
             </FilterRail.Header>
+            <FilterRail.SavedFilters {...saved} />
             <FilterRail.Sections />
+            <FilterRail.SaveFilter {...saved} />
           </FilterRail.Root>
         </Layout.Column>
         <Layout.Column area="main">

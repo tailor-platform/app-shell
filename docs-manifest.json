@@ -673,12 +673,18 @@
       "examples": null,
       "sources": ["packages/core/src/components/filter-rail/**"],
       "claims": [],
-      "symbols": ["FilterRail", "FilterRailRootProps", "FilterRailSection", "useFilterRailLayout"],
+      "symbols": [
+        "FilterRail",
+        "FilterRailRootProps",
+        "FilterRailSection",
+        "useFilterRailLayout",
+        "useSavedFilters"
+      ],
       "hashes": {
-        "typeSurface": "b795ce4e10be0653",
-        "outline": "d9e8930edd2a191c",
-        "snapshot": "992979791f3ca1dc",
-        "outputMd": "c6a48c4d8e8b0078",
+        "typeSurface": "9ed05f504bfb43dc",
+        "outline": "54684c975afdadb1",
+        "snapshot": "403ee22f2996724f",
+        "outputMd": "3c8f7d897fa6f9ba",
         "examples": null
       }
     },
@@ -1718,7 +1724,7 @@
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "ec6a0ac098d1d87a",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
-    "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "c6a48c4d8e8b0078",
+    "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "3c8f7d897fa6f9ba",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "91d901b17aed7781",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",

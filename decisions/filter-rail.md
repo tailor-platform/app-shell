@@ -47,9 +47,15 @@ The app still owns where the button goes: `FilterRail.Trigger`, inside `FilterRa
 
 `Root` takes the config directly in the common case; `Provider` is only needed when the Trigger lives outside the rail. Inside a Provider, `Root` takes no config (enforced by its prop types).
 
-### Saved views are a separate change
+### Saved filters, not saved views
 
-Named views (filters plus sort, page size and column layout) were prototyped here and moved to a follow-up. A view is mostly `DataTable` state, its storage needs an async design for team-shared views, and keeping it out lets this review focus on the rail.
+Named views (filters plus sort, page size and column layout) were prototyped with the first version and held back from it. A view is mostly `DataTable` state, and its storage needed an async design.
+
+The follow-up ships **saved filters** (2026-10-15): a named set of the rail's own filters, personal by default.
+
+- **Filters only.** Applying one replaces the rail's filters and leaves others alone, like Clear all. Sort and columns stay out; they can be added later without breaking anything.
+- **Storage is the app's.** `useSavedFilters` defaults to localStorage and takes an adapter whose `load` / `save` may be async, so a backend store (following a user across devices) plugs in without changes here. Team-shared and default-for-everyone filters need a backend and permissions design, so they are not part of this change.
+- **Delete lives in a "Manage" dialog** with real buttons, not inside menu items.
 
 ### No hidden state
 

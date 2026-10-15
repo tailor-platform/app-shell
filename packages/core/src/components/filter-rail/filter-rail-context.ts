@@ -23,6 +23,10 @@ export type FilterRailContextValue = {
   /** Remove the filters on these fields in one `setFilters`. */
   clearFields: (fields: readonly string[]) => void;
   clearAll: () => void;
+  /** The current filters on fields the rail owns. */
+  railFilters: readonly Filter[];
+  /** Replace the rail's filters with `next`; filters it does not own are kept. */
+  applyRailFilters: (next: readonly Filter[]) => void;
   /** Whether a section is expanded — the user's toggle, else `!defaultCollapsed`. */
   isSectionOpen: (section: FilterRailSection) => boolean;
   setSectionOpen: (id: string, open: boolean) => void;

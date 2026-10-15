@@ -950,4 +950,68 @@ describe("FilterRail", () => {
       expect(screen.getByRole("searchbox", { name: "Filter Color options" })).toBeTruthy();
     });
   });
+
+  // ─── Collapsing sections ───────────────────────────────────────────────────
+
+  describe("collapsing sections", () => {
+    const toggle = (name: string) => screen.getByRole("button", { name });
+
+    it("expands by default and collapses from the title", async () => {
+      const user = userEvent.setup();
+      render(<Harness sections={[categorySection]} />);
+      const button = toggle("Category");
+      expect(button.getAttribute("aria-expanded")).toBe("true");
+      expect(screen.getByRole("checkbox", { name: "Apparel" })).toBeTruthy();
+      await user.click(button);
+      expect(button.getAttribute("aria-expanded")).toBe("false");
+      expect(screen.queryByRole("checkbox", { name: "Apparel" })).toBeNull();
+      await user.click(button);
+      expect(screen.getByRole("checkbox", { name: "Apparel" })).toBeTruthy();
+    });
+
+    it("starts collapsed with defaultCollapsed", () => {
+      render(<Harness sections={[{ ...categorySection, defaultCollapsed: true }]} />);
+      expect(toggle("Category").getAttribute("aria-expanded")).toBe("false");
+      expect(screen.queryByRole("checkbox", { name: "Apparel" })).toBeNull();
+    });
+
+    it("shows the selected count and keeps Clear while collapsed, so no filter is hidden", async () => {
+      const user = userEvent.setup();
+      render(
+        <Harness
+          sections={[categorySection]}
+          initial={[{ field: "category", operator: "in", value: ["apparel", "bags"] }]}
+        />,
+      );
+      // Expanded: the selection is visible in the list, so no badge.
+      expect(document.querySelector('[data-slot="filter-rail-section-badge"]')).toBeNull();
+      await user.click(toggle("Category"));
+      const badge = document.querySelector('[data-slot="filter-rail-section-badge"]')!;
+      expect(badge.textContent).toContain("2");
+      expect(within(badge as HTMLElement).getByText("2 selected")).toBeTruthy();
+      await user.click(screen.getByRole("button", { name: "Clear" }));
+      expect(currentFilters()).toEqual([]);
+      expect(document.querySelector('[data-slot="filter-rail-section-badge"]')).toBeNull();
+    });
+
+    it("keeps a section's search text across collapse and expand", async () => {
+      const user = userEvent.setup();
+      const color: FilterRailSection = {
+        id: "color",
+        label: "Color",
+        control: "checkbox",
+        field: "color",
+        options: ["Black", "White", "Navy", "Olive", "Sand", "Grey", "Red", "Blue", "Green"].map(
+          (value) => ({ value, label: value }),
+        ),
+      };
+      render(<Harness sections={[color]} />);
+      await user.type(screen.getByRole("searchbox", { name: "Filter Color options" }), "bl");
+      await user.click(toggle("Color"));
+      await user.click(toggle("Color"));
+      expect(
+        (screen.getByRole("searchbox", { name: "Filter Color options" }) as HTMLInputElement).value,
+      ).toBe("bl");
+    });
+  });
 });

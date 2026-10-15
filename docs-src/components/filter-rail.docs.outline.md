@@ -106,7 +106,15 @@ const stockLevel: FilterRailSection = {
 };
 ```
 
-The rail never hides state: a selected option is never truncated away, never disabled and never hidden by a section's search box, and sections do not collapse.
+The rail never hides state: a selected option is never truncated away, never disabled and never hidden by a section's search box.
+
+### Collapsing sections
+
+Each section collapses and expands from the chevron by its title. Sections start expanded; set `defaultCollapsed: true` to start one collapsed (for a rarely used axis). While a section is collapsed, its header still shows how many values are selected and keeps its **Clear**, so a collapsed section never hides an applied filter. The open / closed state is kept while the page is open, including across the narrow-screen sheet opening and closing.
+
+```tsx
+{ id: "warehouse", label: "Warehouse", control: "checkbox", field: "warehouse", options, defaultCollapsed: true }
+```
 
 ## Choosing a control
 

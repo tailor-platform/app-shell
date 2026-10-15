@@ -103,6 +103,18 @@ function Provider<TField extends string = string, TSectionField extends TField =
   // does not own.
   const clearAll = useCallback(() => clearFields([...owned]), [clearFields, owned]);
 
+  // Expanded / collapsed per section. Only the user's toggles are stored, so a
+  // section without one follows its authored `defaultCollapsed`. Held here, not
+  // in the section, so it survives the narrow-screen sheet closing.
+  const [openOverrides, setOpenOverrides] = useState<ReadonlyMap<string, boolean>>(() => new Map());
+  const isSectionOpen = useCallback(
+    (section: FilterRailSection) => openOverrides.get(section.id) ?? !section.defaultCollapsed,
+    [openOverrides],
+  );
+  const setSectionOpen = useCallback((id: string, open: boolean) => {
+    setOpenOverrides((previous) => new Map(previous).set(id, open));
+  }, []);
+
   // Narrow-screen form. `triggers` counts mounted `FilterRail.Trigger`s.
   const compact = useIsCompact();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -130,6 +142,8 @@ function Provider<TField extends string = string, TSectionField extends TField =
       commit,
       clearFields,
       clearAll,
+      isSectionOpen,
+      setSectionOpen,
       compact,
       sheetOpen: compact && sheetOpen,
       setSheetOpen,
@@ -146,6 +160,8 @@ function Provider<TField extends string = string, TSectionField extends TField =
       commit,
       clearFields,
       clearAll,
+      isSectionOpen,
+      setSectionOpen,
       compact,
       sheetOpen,
       triggers,
@@ -309,8 +325,24 @@ type SectionsProps = { className?: string };
 /** Every section, in the user's layout. Scrolls; the header stays put. */
 function Sections({ className }: SectionsProps) {
   const t = useFilterRailT();
-  const { sections, layout, filteredSections, clearFields } = useFilterRailContext("Sections");
+  const {
+    control,
+    sections,
+    layout,
+    filteredSections,
+    clearFields,
+    isSectionOpen,
+    setSectionOpen,
+  } = useFilterRailContext("Sections");
   const visible = useMemo(() => applyRailLayout(sections, layout?.value), [sections, layout]);
+
+  /** Values selected in a section: each ticked checkbox counts, any other filter counts once. */
+  const selectedCount = (section: FilterRailSection) =>
+    sectionFields(section).reduce((total, field) => {
+      const filter = filterFor(control.filters, field);
+      if (!filter) return total;
+      return total + (Array.isArray(filter.value) ? filter.value.length : 1);
+    }, 0);
 
   return (
     // A form so Enter inside a text input does not submit an enclosing form.
@@ -325,6 +357,9 @@ function Sections({ className }: SectionsProps) {
           id={section.id}
           label={section.label}
           hint={section.hint}
+          open={isSectionOpen(section)}
+          onOpenChange={(open) => setSectionOpen(section.id, open)}
+          activeCount={selectedCount(section)}
           action={
             filteredSections.has(section.id) && section.clearable !== false ? (
               <ClearLink onClick={() => clearFields(sectionFields(section))}>

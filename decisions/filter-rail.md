@@ -53,7 +53,7 @@ Named views (filters plus sort, page size and column layout) were prototyped her
 
 ### No hidden state
 
-Sections do not collapse; a selected option is never truncated, disabled or searched away; hiding a section clears its filter.
+A selected option is never truncated, disabled or searched away; hiding a section clears its filter. Sections can collapse (from a chevron by the title, or `defaultCollapsed`), but collapsing hides options, never state: a collapsed section's header shows how many values are selected and keeps its Clear.
 
 ### Radio stays private
 

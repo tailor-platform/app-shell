@@ -23,6 +23,9 @@ export type FilterRailContextValue = {
   /** Remove the filters on these fields in one `setFilters`. */
   clearFields: (fields: readonly string[]) => void;
   clearAll: () => void;
+  /** Whether a section is expanded — the user's toggle, else `!defaultCollapsed`. */
+  isSectionOpen: (section: FilterRailSection) => boolean;
+  setSectionOpen: (id: string, open: boolean) => void;
 
   // Narrow-screen form
   /** Below `lg`: the rail lives in a sheet behind a button. */

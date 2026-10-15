@@ -40,6 +40,12 @@ type SectionBase = {
   label: ReactNode;
   /** One muted line under the heading. */
   hint?: ReactNode;
+  /**
+   * Start collapsed. Users expand or collapse any section from the chevron by
+   * its title; while collapsed, the header still shows how many values are
+   * selected. Default `false`.
+   */
+  defaultCollapsed?: boolean;
 };
 
 type FieldSectionBase<TField extends string> = SectionBase & {

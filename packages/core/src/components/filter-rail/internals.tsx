@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from "react";
+import { Collapsible } from "@base-ui/react/collapsible";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "../checkbox";
 import { Fieldset } from "../fieldset";
@@ -16,14 +18,18 @@ export const inputClass =
 /**
  * A labelled group, rendered as a real `<fieldset>` / `<legend>`.
  *
- * Deliberately not collapsible: truncation hides options, but collapsing would
- * hide *state* — an active filter in a panel you forgot you closed.
+ * Collapsible from its title, with a chevron (the same `Collapsible` pattern as
+ * `SidebarGroup`). Collapsing hides options but never state: while collapsed,
+ * the header still shows how many values are selected, and Clear stays reachable.
  */
 export const RailSection = ({
   id,
   label,
   hint,
   action,
+  open,
+  onOpenChange,
+  activeCount,
   children,
 }: {
   id: string;
@@ -31,25 +37,62 @@ export const RailSection = ({
   hint?: ReactNode;
   /** Right-aligned in the header — the per-section Clear. */
   action?: ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** Selected values in this section — shown in the header while collapsed. */
+  activeCount: number;
   children: ReactNode;
-}) => (
-  <div
-    data-slot="filter-rail-section"
-    data-section={id}
-    className="astw:border-b astw:border-border astw:px-3 astw:py-3 astw:last:border-b-0"
-  >
-    <Fieldset.Root className="astw:m-0 astw:min-w-0 astw:border-0 astw:p-0">
-      <div className="astw:mb-1.5 astw:flex astw:items-center astw:justify-between astw:gap-2">
-        <Fieldset.Legend className="astw:text-xs astw:font-semibold astw:tracking-wide astw:text-foreground astw:uppercase">
-          {label}
-        </Fieldset.Legend>
-        {action}
-      </div>
-      {hint && <p className="astw:mb-1.5 astw:text-xs astw:text-muted-foreground">{hint}</p>}
-      {children}
-    </Fieldset.Root>
-  </div>
-);
+}) => {
+  const t = useFilterRailT();
+  return (
+    <Collapsible.Root
+      open={open}
+      onOpenChange={onOpenChange}
+      data-slot="filter-rail-section"
+      data-section={id}
+      className="astw:border-b astw:border-border astw:px-3 astw:py-3 astw:last:border-b-0"
+    >
+      <Fieldset.Root className="astw:m-0 astw:min-w-0 astw:border-0 astw:p-0">
+        <div
+          className={cn(
+            "astw:flex astw:items-center astw:justify-between astw:gap-2",
+            open && "astw:mb-1.5",
+          )}
+        >
+          <Fieldset.Legend className="astw:min-w-0 astw:text-xs astw:font-semibold astw:tracking-wide astw:text-foreground astw:uppercase">
+            {/* The title is the toggle, so the whole label is a click target. */}
+            <Collapsible.Trigger className="astw:group/section-toggle astw:flex astw:min-w-0 astw:cursor-pointer astw:items-center astw:gap-1 astw:rounded astw:uppercase astw:outline-none astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50">
+              <ChevronRight
+                aria-hidden
+                className="astw:size-3.5 astw:shrink-0 astw:text-muted-foreground astw:transition-transform astw:group-data-panel-open/section-toggle:rotate-90"
+              />
+              <span className="astw:truncate">{label}</span>
+            </Collapsible.Trigger>
+          </Fieldset.Legend>
+          <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-2">
+            {/* Collapsing hides options, never state: an active filter still
+                shows here, so a collapsed section can't hide what's applied. */}
+            {!open && activeCount > 0 && (
+              <span
+                data-slot="filter-rail-section-badge"
+                className="astw:rounded-full astw:bg-primary astw:px-1.5 astw:text-xs astw:font-medium astw:text-primary-foreground astw:tabular-nums"
+              >
+                <span aria-hidden>{activeCount}</span>
+                <span className="astw:sr-only">{t("sectionActive", { count: activeCount })}</span>
+              </span>
+            )}
+            {action}
+          </div>
+        </div>
+        {/* keepMounted: drafts and the option search survive collapsing. */}
+        <Collapsible.Panel keepMounted>
+          {hint && <p className="astw:mb-1.5 astw:text-xs astw:text-muted-foreground">{hint}</p>}
+          {children}
+        </Collapsible.Panel>
+      </Fieldset.Root>
+    </Collapsible.Root>
+  );
+};
 
 /** Clear / Clear all. A text link, not a button — it is an undo. */
 export const ClearLink = ({

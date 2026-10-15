@@ -6,6 +6,7 @@ import {
   Tabs,
   Toolbar,
   useDataTable,
+  useDataTableCsvExporter,
   useCollectionVariables,
   createColumnHelper,
   type CollectionControl,
@@ -139,7 +140,7 @@ function matchesQuery(row: Invoice, query: CollectionVariables["query"]): boolea
   );
 }
 
-async function queryInvoices(variables: CollectionVariables): Promise<DataTableData<Invoice>> {
+async function queryInvoices(variables: CollectionVariables) {
   // 1. filter
   let rows = ALL_INVOICES.filter((r) => matchesQuery(r, variables.query));
 
@@ -208,26 +209,30 @@ const statusVariant = (status: InvoiceStatus) =>
         : ("neutral" as const);
 
 const columns = [
-  column({ label: "Invoice", render: (row) => row.id }),
+  column({ id: "id", label: "Invoice", render: (row) => row.id }),
   // uuid → text input, eq only.
   column({
+    id: "externalId",
     label: "Ref",
     render: (row) => <span className="font-mono text-xs">{row.externalId.slice(0, 8)}…</span>,
     filter: { field: "externalId", type: "uuid" },
   }),
   column({
+    id: "customer",
     label: "Customer",
     render: (row) => row.customer,
     sort: { field: "customer", type: "string" },
     filter: { field: "customer", type: "string" },
   }),
   column({
+    id: "amount",
     label: "Amount",
     render: (row) => moneyFormatter.format(row.amount),
     sort: { field: "amount", type: "number" },
     filter: { field: "amount", type: "number" },
   }),
   column({
+    id: "status",
     label: "Status",
     render: (row) => <Badge variant={statusVariant(row.status)}>{row.status}</Badge>,
     filter: {
@@ -238,6 +243,7 @@ const columns = [
   }),
   // boolean → is / is not, True/False picker.
   column({
+    id: "recurring",
     label: "Recurring",
     render: (row) => (
       <Badge variant={row.recurring ? "info" : "outline-neutral"}>
@@ -247,6 +253,7 @@ const columns = [
     filter: { field: "recurring", type: "boolean" },
   }),
   column({
+    id: "dueDate",
     label: "Due date",
     render: (row) => dateFormatter.format(new Date(`${row.dueDate}T00:00:00`)),
     sort: { field: "dueDate", type: "date" },
@@ -256,6 +263,7 @@ const columns = [
   }),
   // datetime → full numeric operator set; value is a strict ISO datetime string.
   column({
+    id: "createdAt",
     label: "Created",
     render: (row) => dateTimeFormatter.format(new Date(row.createdAt)),
     sort: { field: "createdAt", type: "date" },
@@ -263,6 +271,7 @@ const columns = [
   }),
   // time → native time input, "HH:mm".
   column({
+    id: "reminderAt",
     label: "Reminder",
     render: (row) => row.reminderAt,
     filter: { field: "reminderAt", type: "time" },
@@ -303,7 +312,11 @@ function StatusTabs({ control }: { control: CollectionControl }) {
 
 // Reusable invoice table (own control + data). `toolbar` gets the collection
 // control so each example can arrange the preset tabs + Add filter differently.
-function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => ReactNode }) {
+function InvoiceTable({
+  toolbar,
+}: {
+  toolbar: (control: CollectionControl, csvExporter: ReactNode) => ReactNode;
+}) {
   const { variables, control } = useCollectionVariables({
     params: {
       pageSize: 10,
@@ -329,10 +342,20 @@ function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => Re
   }, [variables, variablesKey]);
 
   const table = useDataTable({ columns, data, loading, control });
+  const { props: exporter } = useDataTableCsvExporter({
+    defaultFilename: "invoices.csv",
+    pageSize: 10,
+    fetcher: ({ first, after }) =>
+      queryInvoices({
+        query: variables.query,
+        order: variables.order,
+        pagination: { first, after },
+      }),
+  });
 
   return (
     <DataTable.Root value={table}>
-      {toolbar(control)}
+      {toolbar(control, <DataTable.CSVExporter {...exporter} />)}
       <DataTable.Table />
       <DataTable.Footer>
         <DataTable.Pagination pageSizeOptions={[10, 20, 50]} />
@@ -361,7 +384,7 @@ const DataTablePage = () => {
         <section className="mb-8">
           <h3 className="mb-2 text-sm font-semibold">With preset tabs</h3>
           <InvoiceTable
-            toolbar={(control) => (
+            toolbar={(control, csvExporter) => (
               <Toolbar.Root>
                 <Toolbar.Row justify="between" aria-label="Invoice table controls">
                   <Toolbar.Group>
@@ -369,6 +392,7 @@ const DataTablePage = () => {
                     <StatusTabs control={control} />
                   </Toolbar.Group>
                   <Toolbar.Group>
+                    {csvExporter}
                     <DataTable.ColumnSettings />
                   </Toolbar.Group>
                 </Toolbar.Row>
@@ -386,12 +410,13 @@ const DataTablePage = () => {
         <section className="mb-8">
           <h3 className="mb-2 text-sm font-semibold">Without tabs</h3>
           <InvoiceTable
-            toolbar={() => (
+            toolbar={(_control, csvExporter) => (
               <Toolbar.Root>
-                <Toolbar.Row aria-label="Invoice table controls">
+                <Toolbar.Row justify="between" aria-label="Invoice table controls">
                   <Toolbar.Group>
                     <DataTable.Filters slot="add" addIconOnly />
                   </Toolbar.Group>
+                  <Toolbar.Group>{csvExporter}</Toolbar.Group>
                 </Toolbar.Row>
                 <Toolbar.Row aria-label="Active invoice filters">
                   <Toolbar.Group>

@@ -46,6 +46,7 @@ import {
 } from "./toolbar";
 import { DataTableColumnSettings } from "./column-settings";
 import { DataTablePagination } from "./pagination";
+import { DataTableCSVExporter } from "./csv-exporter";
 import {
   DataTableSelectionAnnouncer,
   DataTableSelectionBar,
@@ -2000,4 +2001,16 @@ export const DataTable = {
    * `totalPages` is non-null (i.e. the backend returns a `total` count).
    */
   Pagination: DataTablePagination,
+  /**
+   * Standard CSV export button, filename dialog, and progress UI.
+   *
+   * Place inside `DataTable.Root`, usually in `DataTable.Toolbar`, and spread
+   * the `props` value returned from `useCsvExporter()`.
+   *
+   * @example
+   * ```tsx
+   * <DataTable.CSVExporter {...props} />
+   * ```
+   */
+  CSVExporter: DataTableCSVExporter,
 } as const;

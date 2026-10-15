@@ -22,6 +22,7 @@ import {
   DataTable,
   useDataTable,
   useDataTableContext,
+  useDataTableCsvExporter,
   useCollectionVariables,
   createColumnHelper,
   type Column,
@@ -161,6 +162,7 @@ function JournalsPage() {
 | `DataTable.Filters`        | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                                   |
 | `DataTable.Footer`         | Footer container for pagination and other footer content. Optional. Becomes the bulk-action bar while rows are selected — see [Selection actions](#selection-actions). |
 | `DataTable.Pagination`     | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`.           |
+| `DataTable.CSVExporter`    | CSV download button and filename/progress dialog. Pass the dedicated props from [`useDataTableCsvExporter`](../api/use-data-table-csv-exporter.md).                    |
 
 ### `DataTable.Root` Props
 
@@ -211,6 +213,37 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
     </Toolbar.Group>
   </Toolbar.Row>
 </Toolbar.Root>
+```
+
+### `DataTable.CSVExporter` Props
+
+| Prop           | Type                                          | Description                                                                                   |
+| -------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `open`         | `boolean`                                     | Whether the exporter dialog is open.                                                          |
+| `onOpenChange` | `(open: boolean) => void`                     | Called when the dialog opens or closes.                                                       |
+| `exporter`     | `DataTableCSVExporterProps<TRow>["exporter"]` | Branded export state from [`useDataTableCsvExporter`](../api/use-data-table-csv-exporter.md). |
+
+`DataTable.CSVExporter` opens a dialog where the user can change the filename before downloading. During the export it shows the fetched row count and a percentage when the fetcher returns `total`; it also provides a cancel action. It accepts only props from `useDataTableCsvExporter`, whose `columns` option is intentionally unavailable. The hook can be called outside `DataTable.Root`; the component reads the enclosing table's visible columns and their order when the download starts. Hiding all exportable columns fails before fetching. Changes to visibility or order after an export starts apply to the next export, not the in-flight CSV. For a fixed schema or custom report columns, use standalone [`CsvExporter`](./csv-exporter.md) with `useCsvExporter` instead.
+
+Compose the toolbar layout normally inside `DataTable.Root` when the exporter should sit immediately before the built-in Columns control:
+
+```tsx
+const { props } = useDataTableCsvExporter({
+  defaultFilename: "products.csv",
+  fetcher,
+});
+
+<Toolbar.Root>
+  <Toolbar.Row justify="between" aria-label="Table controls">
+    <Toolbar.Group>
+      <DataTable.Filters />
+    </Toolbar.Group>
+    <Toolbar.Group>
+      <DataTable.CSVExporter {...props} />
+      <DataTable.ColumnSettings />
+    </Toolbar.Group>
+  </Toolbar.Row>
+</Toolbar.Root>;
 ```
 
 ### `DataTable.Pagination` Props

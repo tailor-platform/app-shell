@@ -1,0 +1,138 @@
+---
+kind: code-backed
+group: use-data-table-csv-exporter
+title: useDataTableCsvExporter
+description: Prepare a CSV export whose columns come from the enclosing DataTable at download start
+sources:
+  - packages/core/src/components/data-table/use-data-table-csv-exporter.ts
+---
+
+# useDataTableCsvExporter
+
+`useDataTableCsvExporter` prepares the filename, progress, cancellation, and fetch lifecycle for [`DataTable.CSVExporter`](../components/data-table.md#datatablecsvexporter). It takes no column configuration and does not read DataTable context itself, so it can be called in the same parent component that creates the table, outside `DataTable.Root`.
+
+The hook and standalone [`useCsvExporter`](./use-csv-exporter.md) share the internal CSV processing. The difference is column ownership: `DataTable.CSVExporter` supplies the enclosing table's visible columns and order when a download starts.
+
+## Import
+
+```tsx
+import {
+  DataTable,
+  useDataTable,
+  useDataTableCsvExporter,
+  useURLCollectionVariables,
+  type DataTableCSVExporterProps,
+  type UseDataTableCsvExporterOptions,
+} from "@tailor-platform/app-shell";
+```
+
+## Usage
+
+```tsx
+const table = useDataTable({ columns, data, control });
+const { props } = useDataTableCsvExporter({
+  defaultFilename: "products.csv",
+  fetcher,
+});
+
+<DataTable.Root value={table}>
+  <DataTable.CSVExporter {...props} />
+  <DataTable.Table />
+</DataTable.Root>;
+```
+
+There is no duplicate `columns` argument. The component includes its own trigger button; the hook's `open()` action can also open the dialog from a caller-provided action.
+
+## Options
+
+| Option            | Type                     | Description                                                                                         |
+| ----------------- | ------------------------ | --------------------------------------------------------------------------------------------------- |
+| `defaultFilename` | `string`                 | Initial filename displayed in the dialog. Required; `.csv` is added when omitted from the filename. |
+| `fetcher`         | `CsvCursorFetcher<TRow>` | Fetches one cursor-paginated page of rows. Required.                                                |
+| `pageSize`        | `number`                 | Rows requested per page. Defaults to `1000`.                                                        |
+
+`columns` is not accepted, including through a spread options object. The fetcher receives `{ first, after, signal }` and returns `{ rows, pageInfo, total? }`, just as for `useCsvExporter`. See its [fetcher example](./use-csv-exporter.md#usage) for adapting a GraphQL connection to rows and propagating cancellation when the data client supports it.
+
+Query execution and filter/sort normalization remain application-owned. Use the same query and normalized conditions for table loading and CSV fetching; neither this hook nor `DataTable.CSVExporter` automatically discovers or executes the table's query.
+
+## Sharing queries and request criteria
+
+With a React client such as urql, keep `useQuery` for table loading and execute the same query document imperatively for CSV. Build the normalized filter/sort criteria once per render and reuse the same connection-to-rows adapter for both paths.
+
+In this application-side example, `ProductsQuery` is the existing table query. It selects the fields used by `columns`, `total`, and the full table `pageInfo` (`hasNextPage`, `hasPreviousPage`, `startCursor`, and `endCursor`). `normalizeCollectionQuery` and `tableMetadata` belong to the application; they are not new CSV exporter APIs.
+
+```tsx
+import { useClient, useQuery } from "urql";
+import type { ResultOf } from "@/graphql";
+import { normalizeCollectionQuery } from "@/lib/normalize-collection-query";
+
+const client = useClient();
+const { variables, control } = useURLCollectionVariables({
+  tableMetadata: tableMetadata.product,
+  params: { pageSize: 25 },
+});
+const criteria = {
+  query: normalizeCollectionQuery(variables.query, tableMetadata.product),
+  order: variables.order,
+};
+const toProductsPage = (connection: NonNullable<ResultOf<typeof ProductsQuery>["products"]>) => ({
+  rows: connection.edges.map(({ node }) => node),
+  pageInfo: connection.pageInfo,
+  total: connection.total,
+});
+
+const [{ data, fetching, error }] = useQuery({
+  query: ProductsQuery,
+  variables: { ...variables.pagination, ...criteria },
+});
+const table = useDataTable({
+  columns,
+  control,
+  data: data?.products ? toProductsPage(data.products) : undefined,
+  loading: fetching,
+  error: error ?? null,
+});
+const { props } = useDataTableCsvExporter({
+  defaultFilename: "products.csv",
+  fetcher: async ({ first, after }) => {
+    const result = await client
+      .query(ProductsQuery, { ...criteria, first, after }, { requestPolicy: "network-only" })
+      .toPromise();
+    if (result.error) throw result.error;
+    const connection = result.data?.products;
+    return connection ? toProductsPage(connection) : connection;
+  },
+});
+
+<DataTable.Root value={table}>
+  <DataTable.CSVExporter {...props} />
+  <DataTable.Table />
+</DataTable.Root>;
+```
+
+The table and CSV use the same query, normalized criteria, and row projection. Only pagination and request policy differ: the table loads its displayed page, while the exporter starts with `after: null` and follows every page. Do not copy the table's current cursor or backward-pagination arguments into the CSV request. This example focuses on condition sharing; for transport-level cancellation, adapt the fetcher's `signal` to the data client's cancellation mechanism when supported.
+
+An export keeps using the fetcher from the render that started it. With immutable `criteria` captured by that fetcher, changing filters or sort creates a new fetcher for the next export without changing later pages of the running export. Do not mutate captured query/order objects or read changing criteria from a latest-value ref inside the fetcher: the hook does not deep-clone arbitrary external state. Fixed request criteria also do not imply a server-side snapshot of the records.
+
+This wiring remains application-owned. The exporter cannot verify that an arbitrary fetcher uses the same query or conditions as the table; sharing them as above prevents accidental duplication rather than adding an automatic consistency guarantee.
+
+## Column and lifecycle contract
+
+- The component derives the schema from the enclosing table's current visible columns and their order at download start, not when the dialog first opens.
+- A labelled column needs an `accessor` or `id` to provide its raw value. Values come from `accessor(row)` first, then `row[id]`; rendered JSX is not serialized. Columns without a `label`, such as action columns, are excluded.
+- Dates become ISO strings and primitive arrays are joined with `, `, using the same serialization as the standalone exporter.
+- If no exportable columns remain, the export reports an error before fetching or downloading.
+- Visibility and ordering changes during a running export affect the next export only; the in-flight schema stays fixed.
+- The component supplies columns when executing the export. The hook alone does not start a download without that table schema.
+- Cancellation and owner-unmount cleanup use the same shared implementation as `useCsvExporter`.
+
+## Return value
+
+| Property | Type                              | Description                                                                 |
+| -------- | --------------------------------- | --------------------------------------------------------------------------- |
+| `open()` | `() => void`                      | Opens the exporter dialog.                                                  |
+| `props`  | `DataTableCSVExporterProps<TRow>` | Spread onto `<DataTable.CSVExporter {...props} />` inside `DataTable.Root`. |
+
+The `exporter` inside `props` carries a private type brand. `DataTable.CSVExporter` rejects standalone `useCsvExporter` props and rejects replacing the dedicated `exporter` with a standalone one. The brand is an API misuse guard, not a runtime security boundary against deliberate type assertions.
+
+For fixed report schemas or custom headers and value formatting, use `useCsvExporter` with standalone `CsvExporter` instead.

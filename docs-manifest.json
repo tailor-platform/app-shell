@@ -332,6 +332,34 @@
         "examples": null
       }
     },
+    "csv-exporter": {
+      "slug": "csv-exporter",
+      "kind": "code-backed",
+      "outline": "docs-src/components/csv-exporter.docs.outline.md",
+      "output": "docs/components/csv-exporter.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/csv-exporter/**"],
+      "claims": [],
+      "symbols": [
+        "CsvCursorFetcher",
+        "CsvExportCell",
+        "CsvExportColumn",
+        "CsvExportPage",
+        "CsvExportPhase",
+        "CsvExporter",
+        "CsvExporterProps",
+        "CsvExporterState",
+        "UseCsvExporterOptions",
+        "useCsvExporter"
+      ],
+      "hashes": {
+        "typeSurface": "b5d2153372721fdd",
+        "outline": "1b4bdf78e1a3c576",
+        "snapshot": null,
+        "outputMd": "216f1bb6310cc04a",
+        "examples": null
+      }
+    },
     "csv-importer": {
       "slug": "csv-importer",
       "kind": "code-backed",
@@ -404,6 +432,7 @@
         "Column",
         "DataTable",
         "DataTableAction",
+        "DataTableCSVExporterProps",
         "DataTableContextValue",
         "DataTableData",
         "DataTableFilterConfig",
@@ -433,6 +462,7 @@
         "TableOrderableFieldName",
         "UseCollectionOptions",
         "UseCollectionReturn",
+        "UseDataTableCsvExporterOptions",
         "UseDataTableOptions",
         "UseDataTableReturn",
         "createColumnHelper",
@@ -442,14 +472,15 @@
         "useCollectionVariables",
         "useDataTable",
         "useDataTableContext",
+        "useDataTableCsvExporter",
         "useURLCollectionVariables",
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "d2910e2d95012c6c",
-        "outline": "5fc3f188a0f9fb8d",
+        "typeSurface": "5661e39bd9f8e6fc",
+        "outline": "ced1f8dd3c0835be",
         "snapshot": null,
-        "outputMd": "7a44214b5f1fdc6b",
+        "outputMd": "e9d635c725336316",
         "examples": null
       }
     },
@@ -1514,6 +1545,57 @@
         "examples": null
       }
     },
+    "use-csv-exporter": {
+      "slug": "use-csv-exporter",
+      "kind": "code-backed",
+      "outline": "docs-src/hooks/use-csv-exporter.docs.outline.md",
+      "output": "docs/api/use-csv-exporter.md",
+      "examples": null,
+      "sources": [
+        "packages/core/src/components/csv-exporter/use-csv-exporter.ts",
+        "packages/core/src/components/csv-exporter/types.ts"
+      ],
+      "claims": [],
+      "symbols": [
+        "CsvCursorFetcher",
+        "CsvExportCell",
+        "CsvExportColumn",
+        "CsvExportPage",
+        "CsvExportPhase",
+        "CsvExporterProps",
+        "CsvExporterState",
+        "UseCsvExporterOptions",
+        "useCsvExporter"
+      ],
+      "hashes": {
+        "typeSurface": "0aa0163146f1c3d9",
+        "outline": "e8496bb30fac3fd1",
+        "snapshot": null,
+        "outputMd": "b6fc07903fdca468",
+        "examples": null
+      }
+    },
+    "use-data-table-csv-exporter": {
+      "slug": "use-data-table-csv-exporter",
+      "kind": "code-backed",
+      "outline": "docs-src/hooks/use-data-table-csv-exporter.docs.outline.md",
+      "output": "docs/api/use-data-table-csv-exporter.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/data-table/use-data-table-csv-exporter.ts"],
+      "claims": [],
+      "symbols": [
+        "DataTableCSVExporterProps",
+        "UseDataTableCsvExporterOptions",
+        "useDataTableCsvExporter"
+      ],
+      "hashes": {
+        "typeSurface": "ae941a345a689328",
+        "outline": "c582da24e5f09fad",
+        "snapshot": null,
+        "outputMd": "df7e58ddf9cc4cc2",
+        "examples": null
+      }
+    },
     "use-override-breadcrumb": {
       "slug": "use-override-breadcrumb",
       "kind": "prose",
@@ -1692,8 +1774,9 @@
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
+    "packages/core/skills/app-shell-patterns/references/components/csv-exporter.md": "216f1bb6310cc04a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "7a44214b5f1fdc6b",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "e9d635c725336316",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "bc69f14829004f9d",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
@@ -1738,6 +1821,8 @@
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "1a0a937f3a412c13",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "2d2eaf5aa04d95d3",
     "packages/core/skills/app-shell-patterns/references/api/use-auth.md": "a7d907ac79d24944",
+    "packages/core/skills/app-shell-patterns/references/api/use-csv-exporter.md": "b6fc07903fdca468",
+    "packages/core/skills/app-shell-patterns/references/api/use-data-table-csv-exporter.md": "df7e58ddf9cc4cc2",
     "packages/core/skills/app-shell-patterns/references/api/use-override-breadcrumb.md": "6ec55fc3dfd8c21d",
     "packages/core/skills/app-shell-patterns/references/api/use-page-meta.md": "f988bdc0fb180f0c",
     "packages/core/skills/app-shell-patterns/references/api/use-register-command-palette-actions.md": "7144ae3dc68aa65b",
@@ -1757,6 +1842,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "526decbfd2db6555"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "208232be7e1385b3"
   }
 }

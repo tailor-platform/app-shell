@@ -29,7 +29,7 @@ export type GeneratedRouteParams = {
   "/showcase/alert-tokens": {};
   "/showcase/card": {};
   "/showcase/colors": {};
-  "/showcase/csv-importer": {};
+  "/showcase/csv-features": {};
   "/showcase/data-table": {};
   "/showcase/data-table-lab": {};
   "/showcase/data-table-selection": {};

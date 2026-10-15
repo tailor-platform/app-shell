@@ -5,6 +5,7 @@ import {
   DataTable,
   Toolbar,
   useDataTable,
+  useDataTableCsvExporter,
   useCollectionVariables,
   createColumnHelper,
   type AppShellPageProps,
@@ -519,6 +520,15 @@ const DataTableLabPage = () => {
     rowActions,
   });
 
+  const { props: exporter } = useDataTableCsvExporter({
+    defaultFilename: "invoices.csv",
+    fetcher: async () => ({
+      rows,
+      pageInfo: { hasNextPage: false, endCursor: null },
+      total: rows.length,
+    }),
+  });
+
   // Expandable rows next to everything they have to survive: selection, a
   // left-pinned column, row actions and horizontal scroll. `getLabel`
   // returns the bare record identity — the accessible names ("Expand row
@@ -567,6 +577,7 @@ const DataTableLabPage = () => {
                   <DataTable.Filters />
                 </Toolbar.Group>
                 <Toolbar.Group>
+                  <DataTable.CSVExporter {...exporter} />
                   <DataTable.ColumnSettings />
                 </Toolbar.Group>
               </Toolbar.Row>

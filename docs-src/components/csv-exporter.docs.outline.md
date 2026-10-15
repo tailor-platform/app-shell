@@ -1,0 +1,63 @@
+---
+kind: code-backed
+group: csv-exporter
+title: CsvExporter
+description: Filename dialog and progress UI for client-side cursor-paginated CSV downloads
+sources:
+  - packages/core/src/components/csv-exporter/**
+---
+
+# CsvExporter
+
+`CsvExporter` is the standalone UI for [`useCsvExporter`](../api/use-csv-exporter.md). It provides an editable filename dialog, fetch progress, and cancellation without requiring a DataTable. It does not render a trigger button; use the hook's `open()` action to open it from your own button or action.
+
+## Import
+
+```tsx
+import { CsvExporter, useCsvExporter } from "@tailor-platform/app-shell";
+```
+
+## Usage
+
+```tsx
+const { open, props } = useCsvExporter({
+  defaultFilename: "products.csv",
+  columns: [
+    { header: "Product code", value: (product) => product.code },
+    { header: "Name", value: (product) => product.name },
+  ],
+  fetcher,
+});
+
+<Button onClick={open}>Download products</Button>
+<CsvExporter {...props} />;
+```
+
+`useCsvExporter` owns the state. Its `open()` function opens the dialog, while `props` contains the controlled `open`, `onOpenChange`, and `exporter` values consumed by this component.
+
+## Props
+
+| Prop           | Type                      | Description                                            |
+| -------------- | ------------------------- | ------------------------------------------------------ |
+| `open`         | `boolean`                 | Whether the exporter dialog is open.                   |
+| `onOpenChange` | `(open: boolean) => void` | Called when the dialog opens or closes.                |
+| `exporter`     | `CsvExporterState`        | Export state and actions returned by `useCsvExporter`. |
+
+The filename input is validated through AppShell `Form` and `Field`. While fetching, the dialog shows fetched rows and a determinate progress bar when the fetcher returns `total`. The user can cancel the request, or dismiss and reopen the dialog while the export continues.
+
+## DataTable
+
+For an export coupled to a table, use [`useDataTableCsvExporter`](../api/use-data-table-csv-exporter.md) with [`DataTable.CSVExporter`](./data-table.md#datatablecsvexporter). The dedicated hook takes no `columns` option and can be called outside `DataTable.Root`:
+
+```tsx
+const { props: tableExporter } = useDataTableCsvExporter({
+  defaultFilename: "products.csv",
+  fetcher,
+});
+
+<DataTable.Root value={table}>
+  <DataTable.CSVExporter {...tableExporter} />
+</DataTable.Root>;
+```
+
+This variant includes its own trigger button and always exports the enclosing table's visible columns in their current order at download start. It accepts only the dedicated hook's branded exporter props, not the result of `useCsvExporter`. Use standalone `CsvExporter` for a fixed schema or custom report columns.

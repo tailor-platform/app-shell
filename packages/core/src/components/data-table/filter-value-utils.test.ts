@@ -5,6 +5,7 @@ import {
   localDateTimeParts,
   normalizeTemporalFilterValue,
 } from "@/lib/temporal-filter-values";
+import { isDecimalFilterValueValid, isDecimalRangeOrdered } from "./filter-value-utils";
 
 function mockDate(local: {
   year: number;
@@ -28,6 +29,51 @@ function mockDate(local: {
   });
   return value;
 }
+
+describe("decimal filters", () => {
+  it.each(["0", "-0", "+001.20", ".5", "1.", "-9007199254740993.123456789", "1.23e-400"])(
+    "accepts decimal %s without converting it to Number",
+    (value) => expect(isDecimalFilterValueValid(value)).toBe(true),
+  );
+
+  it.each(["", " ", "NaN", "Infinity", "0x10", "1,23", "1e", "1.2.3", "--1"])(
+    "rejects invalid decimal %s",
+    (value) => expect(isDecimalFilterValueValid(value)).toBe(false),
+  );
+
+  it.each([
+    ["9007199254740992", "9007199254740993"],
+    ["0.12345678901234567890", "0.12345678901234567891"],
+    ["-9007199254740993.1", "-9007199254740993.0"],
+    ["-0.001", "0"],
+    ["0", "0.001"],
+    ["-0", "+0"],
+    ["-1.2", "-1.20"],
+    ["001.20", "1.2"],
+    [".5", "0.5"],
+    ["1.", "1"],
+    ["123e-2", "1.2300"],
+    ["1e-400", "2e-400"],
+    ["9e99999999999999999999", "1e100000000000000000000"],
+  ])("compares %s ≤ %s exactly", (min, max) => {
+    expect(isDecimalRangeOrdered(min, max)).toBe(true);
+    if (min === "9007199254740992" || min.startsWith("0.123") || min === "1e-400") {
+      expect(isDecimalRangeOrdered(max, min)).toBe(false);
+    }
+  });
+
+  it.each([
+    ["10", "2"],
+    ["-2", "-10"],
+    ["0", "-0.001"],
+    ["0.001", "-0"],
+    ["1e400", "9e399"],
+    ["invalid", "1"],
+    ["1", "invalid"],
+  ])("rejects unordered or invalid range %s … %s", (min, max) => {
+    expect(isDecimalRangeOrdered(min, max)).toBe(false);
+  });
+});
 
 describe("filter-value-utils", () => {
   it("detects temporal filter types", () => {

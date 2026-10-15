@@ -35,6 +35,7 @@ import type {
 import { DataTableContext, type DataTableContextValue } from "./data-table-context";
 import { useDataTableT } from "./i18n";
 import { getCellValue, createTypedCellRenderer } from "./cell-renderers";
+import { isDecimalFilterValueValid } from "./filter-value-utils";
 import { isTemporalFilterType, normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import { useCellContextMenu, type CellContextMenuState } from "./use-cell-context-menu";
 import {
@@ -176,6 +177,10 @@ function toFilterValue(value: unknown, config: DataTableFilterConfig, timeZone: 
     case "number": {
       const parsed = typeof value === "number" ? value : Number(value);
       return Number.isNaN(parsed) ? undefined : parsed;
+    }
+    case "decimal": {
+      const decimal = String(value).trim();
+      return isDecimalFilterValueValid(decimal) ? decimal : undefined;
     }
     case "boolean": {
       if (typeof value === "boolean") return value;

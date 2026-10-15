@@ -153,20 +153,22 @@ function CreateOrderButton() {
 
 ### `additionalTypenames`
 
-When a mutation creates/updates/deletes an entity that another query already has cached, urql won't know to refetch unless you pass `additionalTypenames`. Use it on **both** the query and the mutation when they share a typename:
+When a mutation creates/updates/deletes an entity that another query already has cached, urql won't know to refetch unless you pass `additionalTypenames`. Use it on **both** the query and the mutation when they share a typename.
 
-Define static query context at module scope, outside the component, so its reference stays stable between renders. Creating a fresh context object on each render can cause query re-execution loops.
+Define the query's static `context` at module scope, outside the component, so its reference stays stable between renders. `useQuery` lists `context` as a hook dependency, so a fresh object on each render re-creates the query subscription and can cause query re-execution loops. The mutation's second argument is passed per call and is not a hook dependency, so it can stay inline.
 
 ```tsx
 const ordersQueryContext = { additionalTypenames: ["Order"] };
 
 function useOrders() {
+  // Query side — declares it cares about the Order typename
   const [{ data }] = useQuery({
     query: OrdersQuery,
     variables: { first: 25 },
     context: ordersQueryContext,
   });
 
+  // Mutation side — declares it produces Order writes
   const [, executeCreateOrder] = useMutation(CreateOrderMutation);
   const createOrder = (input: CreateOrderInput) =>
     executeCreateOrder({ input }, { additionalTypenames: ["Order"] });

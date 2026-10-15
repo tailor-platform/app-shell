@@ -165,6 +165,7 @@ export { useOverrideBreadcrumb } from "./hooks/use-override-breadcrumb";
 export { Alert, alertVariants, type AlertProps } from "./components/alert";
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export type { BadgeVariant, BadgeOptions } from "./components/badge-list";
+export { TreePicker, type TreePickerProps, type TreePickerNode } from "./components/tree-picker";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export {
   ActivityCard,

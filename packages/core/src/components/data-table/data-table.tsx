@@ -12,7 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import { ContextMenu } from "@base-ui/react/context-menu";
-import { ChevronRight, Ellipsis, Pencil } from "lucide-react";
+import { ChevronRight, Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTimeZone } from "@/contexts/appshell-context";
 import {
@@ -39,7 +39,12 @@ import { isDecimalFilterValueValid } from "./filter-value-utils";
 import { isTemporalFilterType, normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import { useCellContextMenu, type CellContextMenuState } from "./use-cell-context-menu";
 import { useCellEditNavigation } from "./use-cell-edit-navigation";
-import { DataTableEditableCell, ICON_SPACE_CLASS_NAME, isEditableColumn } from "./editable-cell";
+import {
+  DataTableEditableCell,
+  hasEditorIcon,
+  ICON_SPACE_CLASS_NAME,
+  isEditableColumn,
+} from "./editable-cell";
 import {
   DataTableToolbar,
   DataTableFilters,
@@ -1034,18 +1039,9 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
             : { label, sortable: false };
 
           const align = resolveAlign(col);
-          // An editable column says so at rest: a pen after its title.
-          const title = isEditableColumn(col) ? (
-            <span className="astw:inline-flex astw:items-center astw:gap-1.5">
-              {label}
-              <Pencil aria-hidden="true" className="astw:size-3 astw:shrink-0 astw:opacity-50" />
-            </span>
-          ) : (
-            label
-          );
           const content = col.header
             ? col.header(headerContext)
-            : renderDefaultHeader(title, headerContext, align, {
+            : renderDefaultHeader(label, headerContext, align, {
                 bleedLeft: !hasSelection && !hasExpand && index === 0,
                 bleedRight: !hasRowActions && index === ordered.length - 1,
               });
@@ -1404,9 +1400,9 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                 "body",
               );
               // Truncate via an inner element so the cell's overflow stays visible.
-              // A read-only cell of an editable column keeps the icon's space
-              // like its editable neighbours, so the column's width never shifts.
-              const iconSpace = editableColumn;
+              // A read-only cell of a dropdown / date column keeps the icon's
+              // space like its editable neighbours, so the column's width never shifts.
+              const iconSpace = editableColumn && hasEditorIcon(col);
               const cellBody =
                 col.truncate || iconSpace ? (
                   <span

@@ -16,7 +16,7 @@ import {
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { Popover } from "@base-ui/react/popover";
 import type { CalendarDate } from "@internationalized/date";
-import { CalendarDays, ChevronDown, Pencil } from "lucide-react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTimeZone } from "@/contexts/appshell-context";
 import { BadgeList } from "@/components/badge-list";
@@ -86,11 +86,25 @@ export function isEditableColumn<TRow extends Record<string, unknown>>(
 }
 
 /**
- * Room for the icon every editable cell shows at its right edge (a pen, a
- * chevron or a calendar; 14px plus a gap), so a value ends — or truncates —
- * before it instead of running underneath. Read-only cells of the same column
- * keep it too, so the column's width doesn't change as rows become editable or
- * not.
+ * Whether the column's editor shows an icon (a dropdown's chevron or a date's
+ * calendar). Typed-into cells show none: the cell's tint already says it's
+ * editable, and a pen in every cell reads as noise.
+ *
+ * @internal
+ */
+export function hasEditorIcon<TRow extends Record<string, unknown>>(col: Column<TRow>): boolean {
+  return (
+    col.type === "date" ||
+    col.type === "badge" ||
+    ((col.type === "text" || col.type === "link") && !!col.edit?.options)
+  );
+}
+
+/**
+ * Room for the icon a dropdown or date cell shows at its right edge (a chevron
+ * or a calendar; 14px plus a gap), so a value ends — or truncates — before it
+ * instead of running underneath. Read-only cells of the same column keep it
+ * too, so the column's width doesn't change as rows become editable or not.
  *
  * @internal
  */
@@ -114,13 +128,28 @@ const CELL_FOCUS_CLASS_NAME = cn(
 const CELL_ERROR_CLASS_NAME =
   "astw:ring-2 astw:ring-inset astw:ring-destructive astw:focus:ring-destructive astw:focus-visible:ring-destructive";
 
+// An editable cell says so at rest with a subtle tint instead of an icon. It's
+// a background *image* layered over whatever colour the cell already has (the
+// row's hover / selected fade, a pinned cell's opaque card), so it never
+// replaces them and stays a step darker than its read-only neighbours. The
+// cell being edited drops it: an untinted cell with a ring reads as "active".
+// (Written out in full: Tailwind only generates classes it finds as literals.)
+const EDITABLE_CELL_CLASS_NAME = cn(
+  "astw:[background-image:linear-gradient(color-mix(in_srgb,var(--foreground)_4%,transparent),color-mix(in_srgb,var(--foreground)_4%,transparent))]",
+  "astw:hover:[background-image:linear-gradient(color-mix(in_srgb,var(--foreground)_7%,transparent),color-mix(in_srgb,var(--foreground)_7%,transparent))]",
+  "astw:focus-within:[background-image:none]",
+);
+
 // Text, number and dropdown cells are typed into: the whole cell shows a text
-// cursor, and the text stops before the cell's icon.
+// cursor.
 const INPUT_CLASS_NAME = cn(
   OVERLAY_CLASS_NAME,
   CELL_FOCUS_CLASS_NAME,
-  "astw:text-sm astw:cursor-text astw:pr-7 astw:[td:last-child>&]:pr-11",
+  "astw:text-sm astw:cursor-text",
 );
+
+// A dropdown's text stops before its chevron.
+const ICON_INPUT_CLASS_NAME = "astw:pr-7 astw:[td:last-child>&]:pr-11";
 
 // Date cells: a transparent button over the cell's own display, with a pointer.
 const TRIGGER_CLASS_NAME = cn(
@@ -131,7 +160,7 @@ const TRIGGER_CLASS_NAME = cn(
 );
 
 // The icon that says how a cell is edited: shown while the cell is hovered or
-// being edited (the column header's pen says it's editable at rest).
+// being edited (the cell's tint says it's editable at rest).
 // Decoration only: a click anywhere in the cell goes to the editor underneath.
 const CELL_ICON_CLASS_NAME = cn(
   "astw:pointer-events-none astw:absolute astw:inset-y-0 astw:right-2 astw:flex astw:items-center astw:[td:last-child>&]:right-6",
@@ -186,8 +215,8 @@ function EditableCellFrame({
   truncate?: boolean;
   /** Typed-into cells hide the display while the input shows the text. */
   hideDisplay?: "focused" | "forced-colors";
-  /** Shown on hover or focus; the column header marks editability at rest. */
-  icon: ReactNode;
+  /** Shown on hover or focus; the cell's tint marks editability at rest. */
+  icon?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -196,7 +225,7 @@ function EditableCellFrame({
       data-editable=""
       // The editor is positioned against the cell. A pinned cell is already
       // positioned (sticky), which its inline style keeps.
-      className={cn(cellProps.className, "astw:relative astw:group/cell")}
+      className={cn(cellProps.className, "astw:relative astw:group/cell", EDITABLE_CELL_CLASS_NAME)}
       // Editing a cell must never fire `onClickRow`.
       onClick={(event) => event.stopPropagation()}
     >
@@ -204,7 +233,7 @@ function EditableCellFrame({
         aria-hidden="true"
         className={cn(
           "astw:block",
-          ICON_SPACE_CLASS_NAME,
+          icon !== undefined && ICON_SPACE_CLASS_NAME,
           truncate && "astw:truncate",
           // Transparent input text is forced visible in forced-colors mode;
           // hide the display instead so the two don't overlap.
@@ -215,9 +244,11 @@ function EditableCellFrame({
         {display}
       </span>
       {children}
-      <span aria-hidden="true" className={CELL_ICON_CLASS_NAME}>
-        {icon}
-      </span>
+      {icon !== undefined && (
+        <span aria-hidden="true" className={CELL_ICON_CLASS_NAME}>
+          {icon}
+        </span>
+      )}
     </Table.Cell>
   );
 }
@@ -409,7 +440,6 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
       display={display}
       truncate={col.truncate}
       hideDisplay={focused ? "focused" : "forced-colors"}
-      icon={<Pencil />}
     >
       {message !== undefined && (
         <span id={errorId} className="astw:sr-only">
@@ -677,6 +707,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
           enterKeyHint="done"
           className={cn(
             INPUT_CLASS_NAME,
+            ICON_INPUT_CLASS_NAME,
             // A dropdown at rest: a pointer. Once in it, a caret to search.
             !focused && "astw:text-transparent astw:cursor-pointer",
             align === "right" && "astw:text-right",

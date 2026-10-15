@@ -160,19 +160,19 @@ Define static query context at module scope, outside the component, so its refer
 ```tsx
 const ordersQueryContext = { additionalTypenames: ["Order"] };
 
-// Query side — declares it cares about the Order typename
-const [{ data }] = useQuery({
-  query: OrdersQuery,
-  variables: { first: 25 },
-  context: ordersQueryContext,
-});
+function useOrders() {
+  const [{ data }] = useQuery({
+    query: OrdersQuery,
+    variables: { first: 25 },
+    context: ordersQueryContext,
+  });
 
-// Mutation side — declares it produces Order writes
-const [, createOrder] = useMutation(CreateOrderMutation);
-await createOrder(
-  { input },
-  { additionalTypenames: ["Order"] }, // triggers refetch of any query subscribed to 'Order'
-);
+  const [, executeCreateOrder] = useMutation(CreateOrderMutation);
+  const createOrder = (input: CreateOrderInput) =>
+    executeCreateOrder({ input }, { additionalTypenames: ["Order"] });
+
+  return { data, createOrder };
+}
 ```
 
 Skip `additionalTypenames` only when the mutation's return type already includes the affected entity _and_ every cached query for it touched the same `id` — urql will then refresh by id. When in doubt, add it.

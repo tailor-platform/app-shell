@@ -794,9 +794,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "8090e0affd415d64",
+        "outline": "be72e9ca07204197",
         "snapshot": null,
-        "outputMd": "8e9894423c0a7646",
+        "outputMd": "e7836a0c90ba6582",
         "examples": null
       }
     },
@@ -1672,7 +1672,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "71f5f42c0fa0698e",
     "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "18b8fc747d52455a",
     "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "e189f95dbe4b0286",
-    "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "8e9894423c0a7646",
+    "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "e7836a0c90ba6582",
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "e342ef02dc2b9b86",

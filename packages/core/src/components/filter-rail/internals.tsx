@@ -53,18 +53,13 @@ export const RailSection = ({
       className="astw:border-b astw:border-border astw:px-3 astw:py-3 astw:last:border-b-0"
     >
       <Fieldset.Root className="astw:m-0 astw:min-w-0 astw:border-0 astw:p-0">
-        <div
-          className={cn(
-            "astw:flex astw:items-center astw:justify-between astw:gap-2",
-            open && "astw:mb-1.5",
-          )}
-        >
+        <div className="astw:flex astw:items-center astw:justify-between astw:gap-2">
           <Fieldset.Legend className="astw:min-w-0 astw:text-xs astw:font-semibold astw:tracking-wide astw:text-foreground astw:uppercase">
             {/* The title is the toggle, so the whole label is a click target. */}
             <Collapsible.Trigger className="astw:group/section-toggle astw:flex astw:min-w-0 astw:cursor-pointer astw:items-center astw:gap-1 astw:rounded astw:uppercase astw:outline-none astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50">
               <ChevronRight
                 aria-hidden
-                className="astw:size-3.5 astw:shrink-0 astw:text-muted-foreground astw:transition-transform astw:group-data-panel-open/section-toggle:rotate-90"
+                className="astw:size-3.5 astw:shrink-0 astw:text-muted-foreground astw:transition-transform astw:duration-200 astw:ease-out astw:group-data-panel-open/section-toggle:rotate-90 astw:motion-reduce:transition-none"
               />
               <span className="astw:truncate">{label}</span>
             </Collapsible.Trigger>
@@ -75,7 +70,7 @@ export const RailSection = ({
             {!open && activeCount > 0 && (
               <span
                 data-slot="filter-rail-section-badge"
-                className="astw:rounded-full astw:bg-primary astw:px-1.5 astw:text-xs astw:font-medium astw:text-primary-foreground astw:tabular-nums"
+                className="astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:duration-200 astw:motion-reduce:animate-none astw:rounded-full astw:bg-primary astw:px-1.5 astw:text-xs astw:font-medium astw:text-primary-foreground astw:tabular-nums"
               >
                 <span aria-hidden>{activeCount}</span>
                 <span className="astw:sr-only">{t("sectionActive", { count: activeCount })}</span>
@@ -84,10 +79,25 @@ export const RailSection = ({
             {action}
           </div>
         </div>
-        {/* keepMounted: drafts and the option search survive collapsing. */}
-        <Collapsible.Panel keepMounted>
-          {hint && <p className="astw:mb-1.5 astw:text-xs astw:text-muted-foreground">{hint}</p>}
-          {children}
+        {/* keepMounted: drafts and the option search survive collapsing.
+            Height animates between 0 and Base UI's measured
+            `--collapsible-panel-height` in CSS only; reduced motion skips it. */}
+        <Collapsible.Panel
+          keepMounted
+          className={cn(
+            "astw:h-(--collapsible-panel-height) astw:overflow-hidden",
+            "astw:transition-[height,opacity] astw:duration-200 astw:ease-out",
+            "astw:data-starting-style:h-0 astw:data-starting-style:opacity-0",
+            "astw:data-ending-style:h-0 astw:data-ending-style:opacity-0",
+            "astw:motion-reduce:transition-none",
+          )}
+        >
+          {/* The gap under the title lives inside the panel, so it animates
+              with the height instead of snapping. */}
+          <div className="astw:pt-1.5">
+            {hint && <p className="astw:mb-1.5 astw:text-xs astw:text-muted-foreground">{hint}</p>}
+            {children}
+          </div>
         </Collapsible.Panel>
       </Fieldset.Root>
     </Collapsible.Root>

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { mergeRefs, useToolbarItem } from "../toolbar/toolbar";
 
 const buttonVariants = cva(
-  "astw:inline-flex astw:cursor-pointer astw:items-center astw:justify-center astw:gap-2 astw:whitespace-nowrap astw:rounded-md astw:text-sm astw:font-medium astw:transition-all astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:[&_svg]:pointer-events-none astw:[&_svg:not([class*='size-'])]:size-4 astw:shrink-0 astw:[&_svg]:shrink-0 astw:outline-none astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px] astw:aria-invalid:ring-destructive/20 astw:dark:aria-invalid:ring-destructive/40 astw:aria-invalid:border-destructive",
+  "astw:inline-flex astw:cursor-pointer astw:items-center astw:justify-center astw:gap-2 astw:whitespace-nowrap astw:rounded-md astw:text-sm astw:font-medium astw:transition-all astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:[&_svg]:pointer-events-none astw:[&_svg:not([class*='size-'])]:size-4 astw:shrink-0 astw:[&_svg]:shrink-0 astw:outline-none astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px] astw:aria-invalid:ring-danger-solid/20 astw:dark:aria-invalid:ring-danger-solid/40 astw:aria-invalid:border-danger-solid",
   {
     variants: {
       /** Visual style variant */
@@ -14,7 +14,7 @@ const buttonVariants = cva(
         default:
           "astw:bg-primary astw:text-primary-foreground astw:shadow-xs astw:hover:bg-primary/90",
         destructive:
-          "astw:bg-destructive astw:text-white astw:shadow-xs astw:hover:bg-destructive/90 astw:focus-visible:ring-destructive/20 astw:dark:focus-visible:ring-destructive/40 astw:dark:bg-destructive/60",
+          "astw:bg-danger-solid astw:text-danger-contrast astw:shadow-xs astw:hover:bg-danger-solid-hover astw:focus-visible:ring-danger-solid/20 astw:dark:focus-visible:ring-danger-solid/40",
         outline:
           "astw:border astw:border-border astw:bg-background astw:shadow-xs astw:hover:bg-accent astw:hover:text-accent-foreground astw:dark:bg-input/30 astw:dark:border-input astw:dark:hover:bg-input/50",
         secondary:

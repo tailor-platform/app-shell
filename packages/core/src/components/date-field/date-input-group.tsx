@@ -35,7 +35,7 @@ export const groupClasses = cn(
   // Overrides inputBaseClasses' `min-w-0`; wider locales (e.g. ja-JP) still grow.
   "astw:flex astw:h-9 astw:min-w-[142px] astw:items-center astw:gap-0 astw:py-0",
   "astw:focus-within:border-ring astw:focus-within:ring-[3px] astw:focus-within:ring-ring/50",
-  "astw:data-[invalid]:border-destructive astw:data-[invalid]:ring-destructive/20",
+  "astw:data-[invalid]:border-danger-solid astw:data-[invalid]:ring-danger-solid/20",
   "astw:data-[disabled]:cursor-not-allowed astw:data-[disabled]:opacity-50",
 );
 

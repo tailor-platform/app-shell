@@ -22,6 +22,33 @@ describe("FilterRail types", () => {
     </FilterRail.Root>;
   });
 
+  it("checks sections against the row's fields even with an untyped control", () => {
+    type Row = { category: string; status: string; price: number };
+    type RowField = keyof Row & string;
+    const untyped = control as unknown as CollectionControl;
+    const sections: FilterRailSection<RowField>[] = [
+      { id: "category", label: "Category", control: "checkbox", field: "category", options: [] },
+      // @ts-expect-error — "warehouse" is not a field of Row
+      { id: "warehouse", label: "Warehouse", control: "checkbox", field: "warehouse", options: [] },
+    ];
+    <FilterRail.Root control={untyped} sections={sections}>
+      <FilterRail.Sections />
+    </FilterRail.Root>;
+    <FilterRail.Provider control={untyped} sections={sections}>
+      <FilterRail.Root>
+        <FilterRail.Sections />
+      </FilterRail.Root>
+    </FilterRail.Provider>;
+  });
+
+  it("rejects sections whose field a typed control does not have", () => {
+    const sections: FilterRailSection<"category" | "warehouse">[] = [];
+    // @ts-expect-error — "warehouse" is not a field of the control
+    <FilterRail.Root control={control} sections={sections}>
+      <FilterRail.Sections />
+    </FilterRail.Root>;
+  });
+
   it("rejects a misspelled field", () => {
     const sections: FilterRailSection<Field>[] = [
       // @ts-expect-error — "categroy" is not a field of the control

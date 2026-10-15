@@ -73,6 +73,19 @@ A checkbox list long enough to be truncated also gets a search box, so a value c
 
 A field holds one filter, so two sections must not share a field; the rail warns in the console when they do.
 
+#### Typing fields
+
+Give `FilterRailSection` the row's keys so a `field` that is not on the table is a type error, the same way `createColumnHelper<Row>()` types columns. This works with a typed control or a plain one:
+
+```tsx
+const sections: FilterRailSection<keyof Product & string>[] = [
+  { id: "category", label: "Category", control: "checkbox", field: "category", options },
+  // field: "categroy" → type error
+];
+```
+
+With a typed control (from `useCollectionVariables({ tableMetadata })`), a section whose field the control does not have is also rejected.
+
 ```tsx
 const stockLevel: FilterRailSection = {
   id: "stockLevel",

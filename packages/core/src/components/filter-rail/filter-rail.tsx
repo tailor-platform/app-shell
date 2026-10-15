@@ -35,14 +35,14 @@ import type {
  * `FilterRail.Trigger` sits outside `FilterRail.Root` (in a table toolbar, say);
  * otherwise give `Root` the config directly.
  */
-function Provider<TField extends string = string>({
+function Provider<TField extends string = string, TSectionField extends TField = TField>({
   control,
   sections,
   layout,
   density = "compact",
   onFilterChange,
   children,
-}: FilterRailProviderProps<TField>) {
+}: FilterRailProviderProps<TField, TSectionField>) {
   // Widen once at the boundary — every internal is string-keyed by nature.
   const anyControl = control as unknown as CollectionControl;
   const anySections = sections as readonly FilterRailSection[];
@@ -73,7 +73,7 @@ function Provider<TField extends string = string>({
     (fields: readonly string[], next: Filter[]) => {
       latest.current = next;
       anyControl.setFilters(next);
-      onChangeRef.current?.(next as Filter<TField>[], fields as readonly TField[]);
+      onChangeRef.current?.(next as Filter<TField>[], fields as readonly TSectionField[]);
     },
     [anyControl],
   );
@@ -210,7 +210,9 @@ function RailShell({
  * `FilterRail.Provider` with no config when a `FilterRail.Trigger` lives
  * elsewhere on the page.
  */
-function Root<TField extends string = string>(props: FilterRailRootProps<TField>) {
+function Root<TField extends string = string, TSectionField extends TField = TField>(
+  props: FilterRailRootProps<TField, TSectionField>,
+) {
   const provided = useOptionalFilterRailContext();
   const { "aria-label": ariaLabel, className, children, ...config } = props;
   const shell = (
@@ -224,7 +226,7 @@ function Root<TField extends string = string>(props: FilterRailRootProps<TField>
       "<FilterRail.Root> needs `control` and `sections`, or must be inside <FilterRail.Provider>.",
     );
   }
-  return <Provider {...(config as FilterRailConfig<TField>)}>{shell}</Provider>;
+  return <Provider {...(config as FilterRailConfig<TField, TSectionField>)}>{shell}</Provider>;
 }
 Root.displayName = "FilterRail.Root";
 

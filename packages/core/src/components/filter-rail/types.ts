@@ -190,23 +190,39 @@ export type RailLayoutBinding = {
 // ─── Parts ───────────────────────────────────────────────────────────────────
 
 /** Everything the rail filters with. Given to `Provider`, or to `Root` directly. */
-export type FilterRailConfig<TField extends string = string> = {
+/**
+ * `TField` is the control's field type; `TSectionField` the sections' — it must
+ * fit inside `TField`, and defaults to it. With an untyped control
+ * (`CollectionControl<string>`), type the sections with the row's keys to catch
+ * a `field` that is not on the table:
+ *
+ * ```ts
+ * const sections: FilterRailSection<keyof Row & string>[] = [...];
+ * ```
+ */
+export type FilterRailConfig<
+  TField extends string = string,
+  TSectionField extends TField = TField,
+> = {
   /**
    * The same `control` passed to `useDataTable`. A prop rather than context:
    * the rail sits in a different `Layout.Column`, outside `DataTable.Root`.
    */
   control: CollectionControl<TField>;
   /** Top to bottom. Any mix of section types. */
-  sections: readonly FilterRailSection<TField>[];
+  sections: readonly FilterRailSection<TSectionField>[];
   /** User layout (order / hidden / sort). Required for `FilterRail.Settings`. */
   layout?: RailLayoutBinding;
   /** 32px rows (default) or 40px. */
   density?: "compact" | "comfortable";
   /** Fires after the rail applies a change. */
-  onFilterChange?: (next: Filter<TField>[], changed: readonly TField[]) => void;
+  onFilterChange?: (next: Filter<TField>[], changed: readonly TSectionField[]) => void;
 };
 
-export type FilterRailProviderProps<TField extends string = string> = FilterRailConfig<TField> & {
+export type FilterRailProviderProps<
+  TField extends string = string,
+  TSectionField extends TField = TField,
+> = FilterRailConfig<TField, TSectionField> & {
   children: ReactNode;
 };
 
@@ -223,5 +239,7 @@ type NoConfig = { [K in keyof FilterRailConfig]?: never };
  * Standalone, `Root` takes the config itself. Inside `FilterRail.Provider` —
  * needed only when a `FilterRail.Trigger` sits outside the rail — it takes none.
  */
-export type FilterRailRootProps<TField extends string = string> = RootOwnProps &
-  (FilterRailConfig<TField> | NoConfig);
+export type FilterRailRootProps<
+  TField extends string = string,
+  TSectionField extends TField = TField,
+> = RootOwnProps & (FilterRailConfig<TField, TSectionField> | NoConfig);

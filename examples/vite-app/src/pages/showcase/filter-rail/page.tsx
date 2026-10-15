@@ -218,8 +218,11 @@ const COLUMNS = [
 
 // ─── Sections ───────────────────────────────────────────────────────────────────
 
+/** The row's field names. Typing sections with it catches a `field` that is not on the table. */
+type RowField = Extract<keyof Row, string>;
+
 /** Full: one of every built-in section type. Array order is screen order. */
-const FULL_SECTIONS: FilterRailSection[] = [
+const FULL_SECTIONS: FilterRailSection<RowField>[] = [
   {
     id: "name",
     label: "Product name",
@@ -288,7 +291,7 @@ const FULL_SECTIONS: FilterRailSection[] = [
 ];
 
 /** Checkboxes only. */
-const CHECKBOX_SECTIONS: FilterRailSection[] = [
+const CHECKBOX_SECTIONS: FilterRailSection<RowField>[] = [
   {
     id: "category",
     label: "Category",
@@ -329,7 +332,7 @@ const CHECKBOX_SECTIONS: FilterRailSection[] = [
 ];
 
 /** Radios, boolean and a custom section. */
-const RADIO_SECTIONS: FilterRailSection[] = [
+const RADIO_SECTIONS: FilterRailSection<RowField>[] = [
   {
     id: "status",
     label: "Status",

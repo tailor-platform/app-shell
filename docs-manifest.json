@@ -447,10 +447,10 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "d8d9fe5ef1459ad6",
-        "outline": "30e9c33a9fddd652",
+        "typeSurface": "8bbc49ca19cd8c60",
+        "outline": "b2c322f04cd947c6",
         "snapshot": null,
-        "outputMd": "a0ec09ea656fcc7a",
+        "outputMd": "ef3bb4650a84bdc9",
         "examples": null
       }
     },
@@ -999,9 +999,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "68653902d2c9f861",
+        "outline": "5908dc7b8fefae9f",
         "snapshot": null,
-        "outputMd": "916baa3cd2b9cbf1",
+        "outputMd": "a9dbe8b77e70de2b",
         "examples": "c0a2bd60e8a04474"
       }
     },
@@ -1694,7 +1694,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "a0ec09ea656fcc7a",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "ef3bb4650a84bdc9",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "bc69f14829004f9d",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
@@ -1755,7 +1755,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "770b33ada6b9317f",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
-    "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "916baa3cd2b9cbf1",
+    "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "a9dbe8b77e70de2b",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "013c3fef2303b096",
     "packages/core/skills/app-shell-patterns/SKILL.md": "526decbfd2db6555"

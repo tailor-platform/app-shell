@@ -6,6 +6,7 @@ import type {
   FilterConfig,
   OperatorForFilterType,
   PageInfo,
+  SelectOption,
   SortConfig,
   SortState,
 } from "@/types/collection";
@@ -83,6 +84,86 @@ export interface LinkCellOptions<TRow extends Record<string, unknown>> {
    */
   href: (row: TRow) => string | null | undefined;
 }
+
+// =============================================================================
+// Inline editing
+// =============================================================================
+
+/** Row state passed to `edit.canEdit` alongside the row. */
+export interface CellEditState {
+  /** Whether the row is selected. Always `false` when row selection is off. */
+  selected: boolean;
+}
+
+interface CellEditBase<TRow extends Record<string, unknown>, TValue> {
+  /**
+   * Decides, per row, whether the cell can be edited. Receives the row and
+   * whether it is selected, so "editable once selected" is
+   * `(_, { selected }) => selected`. Default: every row with an `id`.
+   */
+  canEdit?: (row: TRow, state: CellEditState) => boolean;
+  /**
+   * Notifies a changed, parsed value when the user leaves the cell, presses
+   * Enter / Tab, or picks a choice — not on every keystroke. Empty cells
+   * notify `null`. Update `data` to adopt the change; validation, persistence,
+   * and rollback belong to the consumer. The return value is ignored.
+   */
+  onValueChange: (row: TRow, value: TValue | null) => void;
+}
+
+/**
+ * `edit` config for `type: "text"` and `type: "link"` columns. Without
+ * `options` the cell is typed into: the value is the text as typed, and an
+ * emptied cell commits `null`. A `link` column shows its label as plain text
+ * while the cell can be edited.
+ */
+export interface TextCellEditOptions<TRow extends Record<string, unknown>> extends CellEditBase<
+  TRow,
+  string
+> {
+  /**
+   * Turns the cell into a dropdown of these choices (a supplier, a warehouse,
+   * a unit of measure). The column's value is an option's `value`, and every
+   * cell in the column — editable or not — shows the matching `label`.
+   * Picking a choice notifies its value; a "None" choice notifies `null`.
+   */
+  options?: readonly SelectOption[];
+}
+
+/**
+ * `edit` config for `type: "badge"` columns: a dropdown whose choices render as
+ * the same badges the cell shows. Picking one notifies its `value`; a "None"
+ * choice notifies `null`. Single-value columns only.
+ */
+export interface BadgeCellEditOptions<TRow extends Record<string, unknown>> extends CellEditBase<
+  TRow,
+  string
+> {
+  /**
+   * The choices. Default: the entries of `typeOptions.badgeLabelMap`, else the
+   * column's enum `filter` options. A badge column with neither can't be
+   * edited.
+   */
+  options?: readonly SelectOption[];
+}
+
+/**
+ * `edit` config for `type: "date"` columns: a calendar that opens from the
+ * cell. Picking a day commits `"YYYY-MM-DD"`. With `dateFormat: "datetime"`
+ * the calendar comes with a time field and notifies an ISO 8601 timestamp
+ * (`Date#toISOString()`) when it closes. "Clear" notifies `null`.
+ */
+export type DateCellEditOptions<TRow extends Record<string, unknown>> = CellEditBase<TRow, string>;
+
+/**
+ * `edit` config for `type: "number"` and `type: "money"` columns. Notifies a
+ * parsed number or `null`; unparsable drafts are not emitted. Display precision
+ * in `typeOptions` does not constrain input. Business rules belong to the consumer.
+ */
+export type NumberCellEditOptions<TRow extends Record<string, unknown>> = CellEditBase<
+  TRow,
+  number
+>;
 
 /**
  * Header render context for non-sortable columns.
@@ -290,40 +371,50 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
  * and `undefined` are always allowed: every built-in renderer maps them to the
  * `—` placeholder.
  *
+ * `edit` makes the cells editable in place and also narrows per branch, so
+ * `onValueChange` receives the value type the column holds. Every typed column
+ * supports it; untyped (`render`-only) columns don't.
+ *
  * Prefer `Column<TRow>` in most cases; this is exported so consumers can
  * compose more specific column types.
  */
 export type ColumnTypeBranch<TRow extends Record<string, unknown>> =
-  | { type?: undefined; typeOptions?: never; accessor?: (row: TRow) => unknown }
+  | { type?: undefined; typeOptions?: never; accessor?: (row: TRow) => unknown; edit?: never }
   | {
       type: "text";
       typeOptions?: never;
       accessor?: (row: TRow) => string | number | boolean | bigint | null | undefined;
+      edit?: TextCellEditOptions<TRow>;
     }
   | {
       type: "number";
       typeOptions?: NumberCellOptions;
       accessor?: (row: TRow) => number | null | undefined;
+      edit?: NumberCellEditOptions<TRow>;
     }
   | {
       type: "money";
       typeOptions?: MoneyCellOptions<TRow>;
       accessor?: (row: TRow) => number | null | undefined;
+      edit?: NumberCellEditOptions<TRow>;
     }
   | {
       type: "date";
       typeOptions?: DateCellOptions;
       accessor?: (row: TRow) => Date | string | number | null | undefined;
+      edit?: DateCellEditOptions<TRow>;
     }
   | {
       type: "badge";
       typeOptions?: BadgeCellOptions;
       accessor?: (row: TRow) => string | string[] | number | boolean | null | undefined;
+      edit?: BadgeCellEditOptions<TRow>;
     }
   | {
       type: "link";
       typeOptions: LinkCellOptions<TRow>;
       accessor?: (row: TRow) => string | number | boolean | null | undefined;
+      edit?: TextCellEditOptions<TRow>;
     };
 
 /**

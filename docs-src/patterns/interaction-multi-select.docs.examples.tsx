@@ -99,8 +99,7 @@ export function InteractionMultiSelect() {
   const table = useDataTable({
     columns,
     data: { rows: mockOrders, total: mockOrders.length },
-    rowSelection: { selectedIds, onChange: setSelectedIds },
-    selectionActions,
+    rowSelection: { selectedIds, onChange: setSelectedIds, actions: selectionActions },
   });
 
   return (

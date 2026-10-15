@@ -14,7 +14,7 @@ const MAX_INLINE_ACTIONS = 3;
 
 /**
  * Whether the table offers bulk actions at all: selection is on and the hook
- * was given at least one `selectionActions` entry.
+ * was given at least one `rowSelection.actions` entry.
  */
 export function hasSelectionActions<TRow extends Record<string, unknown>>(
   ctx: DataTableContextValue<TRow> | null,

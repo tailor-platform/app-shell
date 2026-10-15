@@ -15,7 +15,7 @@ description: Bulk operations on selected DataTable rows, from a bar that takes o
 
 ## Layout
 
-Pass `selectionActions` to `useDataTable`. The moment one row is selected, `DataTable.Footer` becomes the bulk-action bar: a tinted strip with the selection count, the actions, and Clear, with pagination kept on the right. It turns back into the normal footer when the selection empties. In `<Layout fill>` the footer is already pinned; on a page that scrolls, the bar sticks to the bottom of the viewport until the end of the table is reached.
+Pass `rowSelection.actions` to `useDataTable`. The moment one row is selected, `DataTable.Footer` becomes the bulk-action bar: a tinted strip with the selection count, the actions, and Clear, with pagination kept on the right. It turns back into the normal footer when the selection empties. In `<Layout fill>` the footer is already pinned; on a page that scrolls, the bar sticks to the bottom of the viewport until the end of the table is reached.
 
 ```
 +--------------------------------------------------------------------+
@@ -86,8 +86,7 @@ function InteractionMultiSelect() {
   const table = useDataTable({
     columns,
     data: { rows: mockOrders, total: mockOrders.length },
-    rowSelection: { selectedIds, onChange: setSelectedIds },
-    selectionActions,
+    rowSelection: { selectedIds, onChange: setSelectedIds, actions: selectionActions },
   });
 
   return (
@@ -148,7 +147,7 @@ function InteractionMultiSelect() {
 
 ## Constraints
 
-- Declare bulk actions with the non-generic `SelectionAction[]` on `useDataTable` — do NOT hand-build the bar, a floating panel, or checkboxes; the footer renders the selection count, actions, overflow menu, and Clear
+- Declare bulk actions as the non-generic `SelectionAction[]` in `useDataTable`'s `rowSelection.actions` — do NOT hand-build the bar, a floating panel, or checkboxes; the footer renders the selection count, actions, overflow menu, and Clear. Providing `rowSelection` enables checkboxes even when `actions` is omitted or empty; the bar requires non-empty actions and selected ids
 - Keep `DataTable.Footer` in the tree — it is where the bar renders
 - `onClick` receives a click-time copy of all selected ids (`string[]`), including unloaded ids. `selectedRows` is only a partial cache, not the operation payload
 - The consumer owns eligibility checks, required fetching, confirmation UI, and execution; backend validation remains authoritative. Selection actions have no row-based `canApply`, automatic eligible count, or eligibility-based disabled state

@@ -1,6 +1,6 @@
 # Decision: DataTable bulk actions live in the footer, built into the component
 
-> Status: **Decided — built into DataTable as `selectionActions` (Option A below). Implemented by PR #496.**
+> Status: **Decided — built into DataTable as `rowSelection.actions` (originally `selectionActions`, Option A below). Implemented by PR #496.**
 > Scope: where multi-select bulk actions render, and the `useDataTable` API that declares them. Ticket: tailor-inc/platform-planning#1738.
 
 ## Operation contract update after #604
@@ -9,6 +9,10 @@ The footer placement and interaction design below remain unchanged. The original
 row-based bulk-operation contract is superseded by the
 [follow-up proposal on #604](https://github.com/tailor-platform/app-shell/pull/604#issuecomment-6160412655):
 
+- Bulk actions are configured as `rowSelection.actions`, alongside selection
+  state and `onChange`, rather than the former top-level `selectionActions`.
+  Providing `rowSelection` enables checkboxes even with omitted or empty actions;
+  the bar requires non-empty actions and a non-empty selection.
 - `SelectionAction.onClick` receives a click-time copy of every selected ID,
   including IDs whose rows have never loaded.
 - Selection actions have no `canApply`, automatic eligible counts, or

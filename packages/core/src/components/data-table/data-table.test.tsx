@@ -2086,7 +2086,7 @@ describe("DataTable", () => {
       expect((await activateItemFor(0)).getAttribute("aria-disabled")).toBe("true");
     });
 
-    it("shares presentation with selectionActions while keeping the row predicate separate", () => {
+    it("shares presentation with rowSelection.actions while keeping the row predicate separate", () => {
       const activate = { id: "activate", label: "Activate" };
       const options: UseDataTableOptions<TestRow> = {
         columns: testColumns,
@@ -2094,13 +2094,15 @@ describe("DataTable", () => {
         rowActions: [
           { ...activate, canApply: (row) => row.status !== "Active", onClick: (row) => void row },
         ],
-        selectionActions: [{ ...activate, onClick: (ids) => void ids }],
+        rowSelection: { actions: [{ ...activate, onClick: (ids) => void ids }] },
       };
       expectTypeOf(options.rowActions![0].canApply).toEqualTypeOf<
         ((row: TestRow) => boolean) | undefined
       >();
-      expectTypeOf(options.selectionActions![0].onClick).parameter(0).toEqualTypeOf<string[]>();
-      expect(options.selectionActions).toHaveLength(1);
+      expectTypeOf(options.rowSelection!.actions![0].onClick)
+        .parameter(0)
+        .toEqualTypeOf<string[]>();
+      expect(options.rowSelection!.actions).toHaveLength(1);
     });
   });
 

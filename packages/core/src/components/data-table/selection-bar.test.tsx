@@ -64,8 +64,10 @@ function Harness({
     data,
     control: makeControl(),
     onSelectionChange,
-    rowSelection,
-    selectionActions,
+    rowSelection:
+      selectionActions === undefined
+        ? rowSelection
+        : { ...rowSelection, actions: selectionActions },
   });
   return (
     <DataTable.Root value={table}>
@@ -245,6 +247,18 @@ describe("DataTable selection actions", () => {
     fireEvent.click(rowCheckbox(0));
     expect(actionButton()).toBeDefined();
   });
+
+  it.each([{}, { actions: [] }])(
+    "enables selection without a bulk-action bar for rowSelection %j",
+    (rowSelection) => {
+      const { container } = render(<Harness rowSelection={rowSelection} />, { wrapper });
+      fireEvent.click(rowCheckbox(0));
+      expect(rowCheckbox(0).getAttribute("aria-checked")).toBe("true");
+      expect(queryBar()).toBeNull();
+      expect(footerOf(container).hasAttribute("data-selecting")).toBe(false);
+      expect(screen.getByText("1 of 3 row(s) selected")).toBeDefined();
+    },
+  );
 
   it("leaves the footer unchanged when no selectionActions are given", () => {
     const { container } = render(<Harness onSelectionChange={vi.fn()} />, { wrapper });

@@ -229,7 +229,7 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 | Rows selected and `total` is not provided | `Y row(s) selected`      |
 | No selection enabled and no `total`       | _(nothing displayed)_    |
 
-Row selection is enabled by providing `rowSelection`, `onSelectionChange`, or a non-empty `selectionActions` array to `useDataTable`. The `total` value comes from `DataTableData.total`. While the footer shows the bulk-action bar (see [Selection actions](#selection-actions)), the bar owns the selection count and this text is omitted.
+Row selection is enabled by providing `rowSelection` or `onSelectionChange` to `useDataTable`. The `total` value comes from `DataTableData.total`. While the footer shows the bulk-action bar (see [Selection actions](#selection-actions)), the bar owns the selection count and this text is omitted.
 
 When pagination changes page or page size, `DataTable.Table` resets its own scroll container to the top automatically. That applies whether navigation comes from the built-in `DataTable.Pagination` or from custom controls using the same table context.
 
@@ -379,7 +379,16 @@ The trigger is a native `<button>`, so Enter/Space activation and the focus ring
 
 ## Row selection
 
-Pass `rowSelection` to `useDataTable` to enable the checkbox column. Rows must have a string or number `id`; selected ids are their string-normalized values, and rows without an id are excluded. An empty configuration (`rowSelection: {}`) enables uncontrolled selection without a notification callback.
+Pass `rowSelection` to `useDataTable` to enable the checkbox column. Rows must have a string or number `id`; selected ids are their string-normalized values, and rows without an id are excluded. An empty configuration (`rowSelection: {}`) enables uncontrolled selection without a notification callback. Bulk actions belong in `rowSelection.actions`; `rowSelection: { actions: [] }` still enables checkboxes, but does not show the bulk-action bar.
+
+### `RowSelectionOptions`
+
+| Property             | Type                      | Description                                                                                                    |
+| -------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `selectedIds`        | `string[]`                | Controlled selected ids. Requires `onChange` and cannot be combined with `defaultSelectedIds`.                 |
+| `defaultSelectedIds` | `string[]`                | Initial selected ids in uncontrolled mode. Later changes are ignored.                                          |
+| `onChange`           | `(ids: string[]) => void` | Notifies user-driven selection changes; required in controlled mode and optional in uncontrolled mode.         |
+| `actions`            | `SelectionAction[]`       | Optional bulk actions shown in `DataTable.Footer` while ids are selected. Omitted or empty arrays show no bar. |
 
 ### Controlled selection
 
@@ -415,7 +424,7 @@ Selection spans pages. The header checkbox adds or removes only the current page
 
 ## Selection actions
 
-Pass `selectionActions` to `useDataTable` and, while at least one row is selected, `DataTable.Footer` becomes a bulk-action bar: the selection count, your actions, and a **Clear** button, with the footer's own children (usually `DataTable.Pagination`) kept alongside. A non-empty array also enables row selection, so `rowSelection` and `onSelectionChange` are optional. There is nothing new to compose in JSX — just keep `DataTable.Footer` in the tree.
+Pass `rowSelection.actions` to `useDataTable` and, while at least one id is selected, `DataTable.Footer` becomes a bulk-action bar: the selection count, your actions, and a **Clear** button, with the footer's own children (usually `DataTable.Pagination`) kept alongside. `rowSelection: { actions }` enables uncontrolled selection without an `onChange` callback. Omitted or empty `actions` show no bar, while the `rowSelection` object still enables checkboxes. There is nothing new to compose in JSX — just keep `DataTable.Footer` in the tree.
 
 ```tsx
 const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -425,15 +434,18 @@ const table = useDataTable<Vendor>({
   columns,
   data,
   control,
-  rowSelection: { selectedIds, onChange: setSelectedIds },
-  selectionActions: [
-    {
-      id: "delete",
-      label: "Delete",
-      variant: "destructive",
-      onClick: (ids) => setDeleteTargetIds([...ids]),
-    },
-  ],
+  rowSelection: {
+    selectedIds,
+    onChange: setSelectedIds,
+    actions: [
+      {
+        id: "delete",
+        label: "Delete",
+        variant: "destructive",
+        onClick: (ids) => setDeleteTargetIds([...ids]),
+      },
+    ],
+  },
 });
 
 return (
@@ -490,21 +502,20 @@ const table = useDataTable({
 
 ### Options
 
-| Option              | Type                               | Description                                                                                                                                                                     |
-| ------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                   |
-| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                   |
-| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                        |
-| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                           |
-| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                |
-| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                               |
-| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.            |
-| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                         |
-| `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection). |
-| `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                 |
-| `selectionActions`  | `SelectionAction[]`                | Bulk actions shown in `DataTable.Footer` while rows are selected. A non-empty array also enables selection. See [Selection actions](#selection-actions).                        |
-| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows). |
-| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                       |
+| Option              | Type                               | Description                                                                                                                                                                                              |
+| ------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                                            |
+| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                                            |
+| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                                                 |
+| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                                                    |
+| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                                         |
+| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                                                        |
+| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.                                     |
+| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                                                  |
+| `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`, with optional `actions`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection). |
+| `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                                          |
+| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows).                          |
+| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                                                |
 
 ### `DataTableData`
 
@@ -954,7 +965,9 @@ useDataTable<Order>({
       onClick: (order) => archiveOrders([order.id]),
     },
   ],
-  selectionActions: [{ ...archive, onClick: (ids) => archiveOrders(ids) }],
+  rowSelection: {
+    actions: [{ ...archive, onClick: (ids) => archiveOrders(ids) }],
+  },
 });
 ```
 

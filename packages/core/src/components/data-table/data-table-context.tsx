@@ -65,7 +65,7 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
 
   // Row selection
   // toggleRowSelection / selectAllRows / deselectAllRows / clearSelection are undefined
-  // when selection is not enabled (no rowSelection, onSelectionChange, or selectionActions).
+  // when selection is not enabled (no rowSelection or onSelectionChange).
   // New members are optional for the hand-constructible reason noted under Row expansion.
   selectedIds: string[];
   /**

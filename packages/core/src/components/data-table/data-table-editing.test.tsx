@@ -1297,8 +1297,8 @@ describe("DataTable inline editing", () => {
     });
   });
 
-  describe("icons", () => {
-    it("marks every editable cell with an icon for its editor", () => {
+  describe("affordance", () => {
+    it("shows an icon only for dropdown and date editors", () => {
       renderTable(
         <Harness
           rows={LINES.map((line) => ({ ...line, expected: "2026-10-01" }))}
@@ -1322,20 +1322,19 @@ describe("DataTable inline editing", () => {
       );
       const cells = screen.getAllByRole("row")[1].querySelectorAll("td");
       expect(cells[0].querySelector("svg")).toBeNull();
-      expect(cells[1].querySelector(".lucide-pencil")).not.toBeNull();
+      expect(cells[1].querySelector("svg")).toBeNull();
       expect(cells[2].querySelector(".lucide-chevron-down")).not.toBeNull();
       expect(cells[3].querySelector(".lucide-calendar-days")).not.toBeNull();
     });
 
-    it("puts a pen after the title of every editable column", () => {
+    it("leaves editable column headers unmarked", () => {
       renderTable(<Harness columns={(update) => [skuColumn, receivedColumn(vi.fn(), update)]} />);
-      const [sku, received] = screen.getAllByRole("columnheader");
-      expect(sku.querySelector(".lucide-pencil")).toBeNull();
-      expect(received.querySelector(".lucide-pencil")).not.toBeNull();
+      const [, received] = screen.getAllByRole("columnheader");
+      expect(received.querySelector("svg")).toBeNull();
       expect(received.textContent).toBe("Received");
     });
 
-    it("shows no icon on rows that can't be edited", () => {
+    it("marks only the rows that can be edited", () => {
       renderTable(
         <Harness
           columns={(update) => [
@@ -1344,8 +1343,8 @@ describe("DataTable inline editing", () => {
         />,
       );
       const [first, second] = screen.getAllByRole("row").slice(1);
-      expect(first.querySelector(".lucide-pencil")).not.toBeNull();
-      expect(second.querySelector(".lucide-pencil")).toBeNull();
+      expect(first.querySelector("td[data-editable]")).not.toBeNull();
+      expect(second.querySelector("td[data-editable]")).toBeNull();
     });
   });
 

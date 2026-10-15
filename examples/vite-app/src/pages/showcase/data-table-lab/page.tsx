@@ -554,8 +554,8 @@ const DataTableLabPage = () => {
           description={
             <>
               A goods receipt using <code>onValueChange</code> — scroll right for every editor.
-              Editable columns have a pen after their title; hover a cell to see its editor icon,
-              then click anywhere in it. Enter confirms without moving focus, Tab moves to the next
+              Editable cells are tinted; hover a dropdown or date cell to see its editor icon, then
+              click anywhere in a cell. Enter confirms without moving focus, Tab moves to the next
               editable cell, and Esc undoes a draft.{" "}
               <strong>The screen owns validation and saving:</strong> a rejected business value
               returns to the current data with a message outside the table; it does not block Tab

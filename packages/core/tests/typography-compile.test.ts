@@ -55,19 +55,15 @@ describe("typography role utilities", () => {
       const css = await compile(header, [`${prefix}text-label-md`, `${prefix}text-heading-lg`]);
 
       const label = declarationsOf(css, `.${escaped}text-label-md`);
-      expect(label.get("font-size")).toBe("var(--app-shell-type-label-md-size)");
-      expect(label.get("line-height")).toBe(
-        "var(--tw-leading, var(--app-shell-type-label-md-line-height))",
-      );
-      expect(label.get("font-weight")).toBe(
-        "var(--tw-font-weight, var(--app-shell-type-label-md-weight))",
-      );
+      expect(label.get("font-size")).toBe("var(--type-label-md-size)");
+      expect(label.get("line-height")).toBe("var(--tw-leading, var(--type-label-md-line-height))");
+      expect(label.get("font-weight")).toBe("var(--tw-font-weight, var(--type-label-md-weight))");
       expect(label.get("letter-spacing")).toBe(
-        "var(--tw-tracking, var(--app-shell-type-label-md-letter-spacing))",
+        "var(--tw-tracking, var(--type-label-md-letter-spacing))",
       );
 
       const heading = declarationsOf(css, `.${escaped}text-heading-lg`);
-      expect(heading.get("font-size")).toBe("var(--app-shell-type-heading-lg-size)");
+      expect(heading.get("font-size")).toBe("var(--type-heading-lg-size)");
     },
   );
 
@@ -83,9 +79,7 @@ describe("typography role utilities", () => {
 
   it("emits every role defined in the default palette", async () => {
     const roles = [
-      ...new Set(
-        [...defaultTheme.matchAll(/^\s*--app-shell-type-([a-z-]+)-size:/gm)].map((m) => m[1]),
-      ),
+      ...new Set([...defaultTheme.matchAll(/^\s*--type-([a-z-]+)-size:/gm)].map((m) => m[1])),
     ];
     const css = await compile(
       '@import "tailwindcss" source(none);',
@@ -93,15 +87,15 @@ describe("typography role utilities", () => {
     );
     for (const role of roles) {
       const decls = declarationsOf(css, `.text-${role}`);
-      expect(decls.get("font-size"), role).toBe(`var(--app-shell-type-${role}-size)`);
+      expect(decls.get("font-size"), role).toBe(`var(--type-${role}-size)`);
       expect(decls.get("line-height"), role).toBe(
-        `var(--tw-leading, var(--app-shell-type-${role}-line-height))`,
+        `var(--tw-leading, var(--type-${role}-line-height))`,
       );
       expect(decls.get("letter-spacing"), role).toBe(
-        `var(--tw-tracking, var(--app-shell-type-${role}-letter-spacing))`,
+        `var(--tw-tracking, var(--type-${role}-letter-spacing))`,
       );
       expect(decls.get("font-weight"), role).toBe(
-        `var(--tw-font-weight, var(--app-shell-type-${role}-weight))`,
+        `var(--tw-font-weight, var(--type-${role}-weight))`,
       );
       expect(decls.size, role).toBe(4);
     }

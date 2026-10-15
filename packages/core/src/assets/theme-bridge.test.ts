@@ -71,19 +71,20 @@ describe("theme bridge", () => {
 
   describe("typography roles", () => {
     const slots = ["size", "line-height", "weight", "letter-spacing"] as const;
-    /** `--app-shell-type-<role>-<slot>` variables in the default palette, grouped by role. */
+    /** `--type-<role>-<slot>` variables in the default palette, grouped by role. */
     const defined = new Map<string, Map<string, string>>();
     for (const m of defaultTheme.matchAll(
-      /^\s*--app-shell-type-([a-z-]+)-(size|line-height|weight|letter-spacing):\s*([^;]+);/gm,
+      /^\s*--type-([a-z-]+)-(size|line-height|weight|letter-spacing):\s*([^;]+);/gm,
     )) {
       const role = m[1];
       defined.set(role, (defined.get(role) ?? new Map()).set(m[2], m[3].trim()));
     }
-    /** Bridge entries `--text-<role>[--<suffix>]: var(--app-shell-type-...)`, keyed by property name. */
+    /** Bridge entries `--text-<role>[--<suffix>]: var(--type-...)`, keyed by property name. */
     const bridgedText = new Map(
-      [...bridge.matchAll(/^\s*(--text-[a-z-]+):\s*var\((--app-shell-type-[a-z-]+)\);/gm)].map(
-        (m) => [m[1], m[2]],
-      ),
+      [...bridge.matchAll(/^\s*(--text-[a-z-]+):\s*var\((--type-[a-z-]+)\);/gm)].map((m) => [
+        m[1],
+        m[2],
+      ]),
     );
 
     it("pins the role count at 10", () => {
@@ -107,7 +108,7 @@ describe("theme bridge", () => {
       const expected = new Map<string, string>();
       for (const role of defined.keys()) {
         for (const slot of slots) {
-          expected.set(`--text-${role}${suffix[slot]}`, `--app-shell-type-${role}-${slot}`);
+          expected.set(`--text-${role}${suffix[slot]}`, `--type-${role}-${slot}`);
         }
       }
       expect(bridgedText).toEqual(expected);

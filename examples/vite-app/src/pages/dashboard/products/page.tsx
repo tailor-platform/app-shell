@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   DataTable,
   Layout,
@@ -10,7 +11,7 @@ import {
   type SelectionAction,
 } from "@tailor-platform/app-shell";
 import { Package } from "lucide-react";
-import { type Product, useProductsQuery } from "../../../mock-products";
+import { allProducts, type Product, useProductsQuery } from "../../../mock-products";
 
 const productMetadata = {
   name: "product",
@@ -72,14 +73,11 @@ const columns = [
   }),
 ];
 
-// Defined once, used by both the row menu and the bulk-action bar — only
-// `onClick` differs. `canApply` disables the row action for active products
-// and scopes the bulk action to the selected rows it can delete.
-const deleteProduct: DataTableAction<Product> = {
+// Share presentation only; each operation owns its eligibility checks.
+const deleteProduct: DataTableAction = {
   id: "delete",
   label: "Delete",
   variant: "destructive",
-  canApply: (row) => row.status !== "Active",
 };
 
 const rowActions: RowAction<Product>[] = [
@@ -88,30 +86,42 @@ const rowActions: RowAction<Product>[] = [
     label: "Edit",
     onClick: (row) => alert(`Edit: ${row.name}`),
   },
-  { ...deleteProduct, onClick: (row) => alert(`Delete: ${row.name}`) },
+  {
+    ...deleteProduct,
+    canApply: (row) => row.status !== "Active",
+    onClick: (row) => alert(`Delete: ${row.name}`),
+  },
 ];
 
 const names = (rows: Product[]) => rows.map((row) => row.name).join(", ");
 
-// Bulk actions in the footer while rows are selected. `canApply` scopes each
-// action to the selected rows it can act on and shows that count.
-const selectionActions: SelectionAction<Product>[] = [
+// 🧪 Dummy Data: resolve IDs against the complete mock backend, not the current page.
+const selectedProducts = (ids: string[]) => allProducts.filter((row) => ids.includes(row.id));
+
+// Alert-only previews leave selection unchanged; a real mutation should report
+// completed IDs and remove only those IDs from the current selection.
+const selectionActions: SelectionAction[] = [
   {
     id: "publish",
     label: "Publish",
-    canApply: (row) => row.status === "Draft",
-    onClick: (rows) => alert(`Publish: ${names(rows)}`),
+    onClick: (ids) =>
+      alert(`Publish: ${names(selectedProducts(ids).filter((row) => row.status === "Draft"))}`),
   },
   {
     id: "archive",
     label: "Archive",
-    canApply: (row) => row.status !== "Archived",
-    onClick: (rows) => alert(`Archive: ${names(rows)}`),
+    onClick: (ids) =>
+      alert(`Archive: ${names(selectedProducts(ids).filter((row) => row.status !== "Archived"))}`),
   },
-  { ...deleteProduct, onClick: (rows) => alert(`Delete: ${names(rows)}`) },
+  {
+    ...deleteProduct,
+    onClick: (ids) =>
+      alert(`Delete: ${names(selectedProducts(ids).filter((row) => row.status !== "Active"))}`),
+  },
 ];
 
 const ProductsPage = () => {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   // Single composed hook: filter/sort/pagination state is persisted to the URL
   // (bookmarkable, back-button friendly) and the URL seeds the initial state
   // synchronously, so the first fetch already reflects the URL. Check the
@@ -136,6 +146,7 @@ const ProductsPage = () => {
     control,
     rowActions,
     onClickRow: (row) => alert(`Clicked: ${row.name}`),
+    rowSelection: { selectedIds, onChange: setSelectedIds },
     selectionActions,
   });
 

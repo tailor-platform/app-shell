@@ -3,6 +3,23 @@
 > Status: **Decided — built into DataTable as `selectionActions` (Option A below). Implemented by PR #496.**
 > Scope: where multi-select bulk actions render, and the `useDataTable` API that declares them. Ticket: tailor-inc/platform-planning#1738.
 
+## Operation contract update after #604
+
+The footer placement and interaction design below remain unchanged. The original
+row-based bulk-operation contract is superseded by the
+[follow-up proposal on #604](https://github.com/tailor-platform/app-shell/pull/604#issuecomment-6160412655):
+
+- `SelectionAction.onClick` receives a click-time copy of every selected ID,
+  including IDs whose rows have never loaded.
+- Selection actions have no `canApply`, automatic eligible counts, or
+  `keepSelection`. Row actions retain their row-based `canApply` predicate.
+- Neither returned promises nor `helpers.run` clear selection. They only track
+  pending work; consumers own eligibility, confirmation, execution, and selection
+  updates based on actual results. `clearSelection` remains an explicit command.
+- `selectedRows` remains a partial cache, not a complete operation target.
+
+The original rationale is preserved below as historical context.
+
 ## Context
 
 Multi-select already worked: `onSelectionChange` added the checkbox column, and the footer read "N of M row(s) selected". AppShell had no settled answer for **where the bulk actions go** once rows are selected. The `interaction/multi-select` pattern prescribed a floating bottom bar built on raw `Table.Root` with native checkboxes, which predated DataTable's own selection.

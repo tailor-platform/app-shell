@@ -1,24 +1,20 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import type { CollectionControl } from "@/types/collection";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import type { Column, DataTableData, SelectionAction } from "./types";
+import type { Column, DataTableData, RowSelectionOptions, SelectionAction } from "./types";
 
-afterEach(() => {
-  cleanup();
-});
+afterEach(() => cleanup());
 
-type Vendor = { id: string; name: string; status: "active" | "inactive" | "archived" };
-
+type Vendor = { id: string; name: string };
 const vendors: Vendor[] = [
-  { id: "1", name: "Acme", status: "active" },
-  { id: "2", name: "Globex", status: "inactive" },
-  { id: "3", name: "Initech", status: "archived" },
+  { id: "1", name: "Acme" },
+  { id: "2", name: "Globex" },
+  { id: "3", name: "Initech" },
 ];
-
 const columns: Column<Vendor>[] = [{ label: "Name", render: (row) => row.name }];
 
 function makeControl(): CollectionControl {
@@ -44,7 +40,7 @@ function makeControl(): CollectionControl {
   };
 }
 
-const archive = (onClick = vi.fn()): SelectionAction<Vendor> => ({
+const archive = (onClick: SelectionAction["onClick"] = vi.fn()): SelectionAction => ({
   id: "archive",
   label: "Archive",
   onClick,
@@ -53,19 +49,22 @@ const archive = (onClick = vi.fn()): SelectionAction<Vendor> => ({
 function Harness({
   selectionActions,
   onSelectionChange,
+  rowSelection,
   data = { rows: vendors, total: 3 },
   footer = "pagination",
 }: {
-  selectionActions?: SelectionAction<Vendor>[];
+  selectionActions?: SelectionAction[];
   onSelectionChange?: (ids: string[]) => void;
+  rowSelection?: RowSelectionOptions;
   data?: DataTableData<Vendor>;
   footer?: "pagination" | "empty";
 }) {
-  const table = useDataTable<Vendor>({
+  const table = useDataTable({
     columns,
     data,
     control: makeControl(),
     onSelectionChange,
+    rowSelection,
     selectionActions,
   });
   return (
@@ -83,10 +82,10 @@ function Harness({
 }
 
 const wrapper = createAppShellWrapper("en");
-
 const rowCheckbox = (index: number) => screen.getAllByLabelText("Select row")[index];
 const queryBar = () => screen.queryByRole("toolbar", { name: "Bulk actions" });
 const getBar = () => screen.getByRole("toolbar", { name: "Bulk actions" });
+const actionButton = () => within(getBar()).getByRole("button", { name: "Archive" });
 const footerOf = (container: HTMLElement) =>
   container.querySelector<HTMLElement>('[data-slot="data-table-footer"]')!;
 
@@ -102,149 +101,118 @@ function deferred() {
 }
 
 describe("DataTable selection actions", () => {
-  it("shows no bar until a row is selected", () => {
+  it("turns the footer into the bar, owning the count, only while selected", () => {
     const { container } = render(<Harness selectionActions={[archive()]} />, { wrapper });
-
     expect(queryBar()).toBeNull();
     expect(footerOf(container).hasAttribute("data-selecting")).toBe(false);
     expect(screen.getByText("3 row(s)")).toBeDefined();
-  });
-
-  it("turns the footer into the bar, owning the count, once a row is selected", () => {
-    const { container } = render(<Harness selectionActions={[archive()]} />, { wrapper });
-
     fireEvent.click(rowCheckbox(0));
-
-    const bar = getBar();
-    expect(within(bar).getByText("1 of 3 selected")).toBeDefined();
-    expect(within(bar).getByRole("button", { name: "Archive" })).toBeDefined();
-    expect(within(bar).getByRole("button", { name: "Clear selection" })).toBeDefined();
-    const footer = footerOf(container);
-    expect(footer.hasAttribute("data-selecting")).toBe(true);
-    // Sticky, so a page-scrolling table keeps the bar on screen.
-    expect(footer.className).toContain("astw:sticky");
-    // Pagination hides its own count while the bar shows it.
+    expect(within(getBar()).getByText("1 of 3 selected")).toBeDefined();
+    expect(actionButton()).toHaveProperty("disabled", false);
+    expect(within(getBar()).getByRole("button", { name: "Clear selection" })).toBeDefined();
+    expect(footerOf(container).hasAttribute("data-selecting")).toBe(true);
+    expect(footerOf(container).className).toContain("astw:sticky");
     expect(screen.queryByText("3 row(s)")).toBeNull();
     expect(screen.getByLabelText("Next page")).toBeDefined();
+    fireEvent.click(rowCheckbox(0));
+    expect(queryBar()).toBeNull();
   });
 
   it("falls back to the bare count when the backend returns no total", () => {
     render(<Harness selectionActions={[archive()]} data={{ rows: vendors }} />, { wrapper });
-
     fireEvent.click(rowCheckbox(0));
-
     expect(within(getBar()).getByText("1 selected")).toBeDefined();
   });
 
-  it("counts the rows each narrowed action applies to and disables it at zero", () => {
-    const actions: SelectionAction<Vendor>[] = [
-      {
-        id: "activate",
-        label: "Activate",
-        canApply: (v) => v.status === "inactive",
-        onClick: vi.fn(),
-      },
-      {
-        id: "deactivate",
-        label: "Deactivate",
-        canApply: (v) => v.status === "active",
-        onClick: vi.fn(),
-      },
-      archive(),
-    ];
-    render(<Harness selectionActions={actions} />, { wrapper });
+  it.each(["controlled", "uncontrolled"] as const)(
+    "passes all preselected IDs regardless of loaded rows in %s mode",
+    (mode) => {
+      const onClick = vi.fn();
+      const ids = ["unseen", "2", "also-unseen"];
+      const rowSelection =
+        mode === "controlled"
+          ? { selectedIds: ids, onChange: vi.fn() }
+          : { defaultSelectedIds: ids };
+      const { rerender } = render(
+        <Harness selectionActions={[archive(onClick)]} rowSelection={rowSelection} />,
+        { wrapper },
+      );
+      expect(actionButton()).toHaveProperty("disabled", false);
+      fireEvent.click(actionButton());
+      expect(onClick).toHaveBeenLastCalledWith(ids, expect.any(Object));
+      rerender(
+        <Harness
+          selectionActions={[archive(onClick)]}
+          rowSelection={rowSelection}
+          data={{ rows: [] }}
+        />,
+      );
+      expect(actionButton()).toHaveProperty("disabled", false);
+      fireEvent.click(actionButton());
+      expect(onClick).toHaveBeenLastCalledWith(ids, expect.any(Object));
+      expect(within(getBar()).getByText("3 selected")).toBeDefined();
+    },
+  );
 
-    fireEvent.click(rowCheckbox(0)); // Acme — active
-    fireEvent.click(rowCheckbox(2)); // Initech — archived
-
-    const bar = getBar();
-    expect(within(bar).getByRole("button", { name: "Activate (0)" })).toHaveProperty(
-      "disabled",
-      true,
-    );
-    expect(within(bar).getByRole("button", { name: "Deactivate (1)" })).toHaveProperty(
-      "disabled",
-      false,
-    );
-    // No `canApply`: applies to every selected row, so no count is shown.
-    expect(within(bar).getByRole("button", { name: "Archive" })).toHaveProperty("disabled", false);
-  });
-
-  it("hands onClick only the eligible rows, plus a clearSelection helper", () => {
-    const onSelectionChange = vi.fn();
-    const onClick = vi.fn((_rows: Vendor[], { clearSelection }: { clearSelection: () => void }) =>
-      clearSelection(),
-    );
-    const actions: SelectionAction<Vendor>[] = [
-      { id: "deactivate", label: "Deactivate", canApply: (v) => v.status === "active", onClick },
-    ];
-    render(<Harness selectionActions={actions} onSelectionChange={onSelectionChange} />, {
-      wrapper,
-    });
-
-    fireEvent.click(rowCheckbox(0)); // Acme — active
-    fireEvent.click(rowCheckbox(1)); // Globex — inactive
-    fireEvent.click(within(getBar()).getByRole("button", { name: "Deactivate (1)" }));
-
-    expect(onClick).toHaveBeenCalledTimes(1);
-    expect(onClick.mock.calls[0][0]).toEqual([vendors[0]]);
-    expect(onSelectionChange).toHaveBeenLastCalledWith([]);
-    expect(queryBar()).toBeNull();
-  });
-
-  it("includes rows selected on other pages", () => {
+  it("includes IDs selected on other pages", () => {
     const onClick = vi.fn();
     const { rerender } = render(<Harness selectionActions={[archive(onClick)]} />, { wrapper });
-
-    fireEvent.click(rowCheckbox(0)); // Acme, on the first page
-    const nextPage = { rows: [{ id: "4", name: "Hooli", status: "active" as const }], total: 4 };
-    rerender(<Harness selectionActions={[archive(onClick)]} data={nextPage} />);
-    fireEvent.click(rowCheckbox(0)); // Hooli, on the second
-
+    fireEvent.click(rowCheckbox(0));
+    rerender(
+      <Harness
+        selectionActions={[archive(onClick)]}
+        data={{ rows: [{ id: "4", name: "Hooli" }], total: 4 }}
+      />,
+    );
+    fireEvent.click(rowCheckbox(0));
     expect(within(getBar()).getByText("2 of 4 selected")).toBeDefined();
-    fireEvent.click(within(getBar()).getByRole("button", { name: "Archive" }));
-    expect(onClick.mock.calls[0][0]).toEqual([vendors[0], nextPage.rows[0]]);
+    fireEvent.click(actionButton());
+    expect(onClick).toHaveBeenCalledExactlyOnceWith(["1", "4"], expect.any(Object));
   });
 
-  it("moves actions past the third into a More actions menu", async () => {
+  it("gives each click a snapshot isolated from later selection and handler mutation", () => {
+    const onClick = vi.fn((ids: string[]) => {
+      ids.pop();
+    });
+    render(<Harness selectionActions={[archive(onClick)]} />, { wrapper });
+    fireEvent.click(rowCheckbox(0));
+    fireEvent.click(rowCheckbox(1));
+    fireEvent.click(actionButton());
+    expect(within(getBar()).getByText("2 of 3 selected")).toBeDefined();
+    fireEvent.click(rowCheckbox(2));
+    expect(onClick.mock.calls[0][0]).toEqual(["1"]);
+    fireEvent.click(actionButton());
+    expect(onClick.mock.calls[1][0]).toEqual(["1", "2"]);
+    expect(onClick.mock.calls[0][0]).not.toBe(onClick.mock.calls[1][0]);
+  });
+
+  it("moves actions past the third into a More actions menu with the complete ID payload", async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
-    const actions: SelectionAction<Vendor>[] = [
+    const actions: SelectionAction[] = [
       { id: "a", label: "Activate", onClick: vi.fn() },
       { id: "b", label: "Deactivate", onClick: vi.fn() },
       { id: "c", label: "Export", onClick: vi.fn() },
-      {
-        id: "delete",
-        label: "Delete",
-        variant: "destructive",
-        canApply: (v) => v.status === "archived",
-        onClick: onDelete,
-      },
+      { id: "delete", label: "Delete", variant: "destructive", onClick: onDelete },
     ];
-    render(<Harness selectionActions={actions} />, { wrapper });
-
-    await user.click(rowCheckbox(2)); // Initech — archived
-
-    const bar = getBar();
-    expect(within(bar).queryByRole("button", { name: /Delete/ })).toBeNull();
-    await user.click(within(bar).getByRole("button", { name: "More actions" }));
-    const item = await screen.findByRole("menuitem", { name: "Delete (1)" });
-    await user.click(item);
-
-    expect(onDelete).toHaveBeenCalledTimes(1);
-    expect(onDelete.mock.calls[0][0]).toEqual([vendors[2]]);
+    render(
+      <Harness selectionActions={actions} rowSelection={{ defaultSelectedIds: ["unseen", "3"] }} />,
+      { wrapper },
+    );
+    expect(within(getBar()).queryByRole("button", { name: "Delete" })).toBeNull();
+    await user.click(within(getBar()).getByRole("button", { name: "More actions" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Delete" }));
+    expect(onDelete).toHaveBeenCalledExactlyOnceWith(["unseen", "3"], expect.any(Object));
   });
 
-  it("Clear empties the selection and hands focus back to the header checkbox", async () => {
+  it("Clear empties selection and hands focus back to the header checkbox", async () => {
     const user = userEvent.setup();
     const onSelectionChange = vi.fn();
     render(<Harness selectionActions={[archive()]} onSelectionChange={onSelectionChange} />, {
       wrapper,
     });
-
     await user.click(rowCheckbox(0));
     await user.click(within(getBar()).getByRole("button", { name: "Clear selection" }));
-
     expect(onSelectionChange).toHaveBeenLastCalledWith([]);
     expect(queryBar()).toBeNull();
     expect(document.activeElement).toBe(screen.getByLabelText("Select all rows"));
@@ -252,26 +220,21 @@ describe("DataTable selection actions", () => {
 
   it("supports arrow-key navigation between the bar's controls", async () => {
     const user = userEvent.setup();
-    const actions: SelectionAction<Vendor>[] = [
-      { id: "a", label: "Activate", onClick: vi.fn() },
-      { id: "b", label: "Deactivate", onClick: vi.fn() },
-    ];
-    render(<Harness selectionActions={actions} />, { wrapper });
-
-    await user.click(rowCheckbox(0));
-    within(getBar()).getByRole("button", { name: "Activate" }).focus();
-    await user.keyboard("{ArrowRight}");
-
-    expect(document.activeElement).toBe(
-      within(getBar()).getByRole("button", { name: "Deactivate" }),
+    render(
+      <Harness
+        selectionActions={[archive(), { id: "export", label: "Export", onClick: vi.fn() }]}
+      />,
+      { wrapper },
     );
+    await user.click(rowCheckbox(0));
+    actionButton().focus();
+    await user.keyboard("{ArrowRight}");
+    expect(document.activeElement).toBe(within(getBar()).getByRole("button", { name: "Export" }));
   });
 
   it("announces the count politely from the first selection on", () => {
     const { container } = render(<Harness selectionActions={[archive()]} />, { wrapper });
     const liveRegion = () => container.querySelector('[aria-live="polite"]');
-
-    // Mounted before anything is selected, so the first tick is announced.
     expect(liveRegion()?.textContent).toBe("");
     fireEvent.click(rowCheckbox(0));
     expect(liveRegion()?.textContent).toBe("1 of 3 selected");
@@ -279,240 +242,165 @@ describe("DataTable selection actions", () => {
 
   it("renders the bar in a footer without children", () => {
     render(<Harness selectionActions={[archive()]} footer="empty" />, { wrapper });
-
     fireEvent.click(rowCheckbox(0));
-
-    expect(within(getBar()).getByRole("button", { name: "Archive" })).toBeDefined();
+    expect(actionButton()).toBeDefined();
   });
 
-  it("leaves the footer as it was when no selectionActions are given", () => {
+  it("leaves the footer unchanged when no selectionActions are given", () => {
     const { container } = render(<Harness onSelectionChange={vi.fn()} />, { wrapper });
-
     fireEvent.click(rowCheckbox(0));
-
     expect(queryBar()).toBeNull();
     expect(footerOf(container).hasAttribute("data-selecting")).toBe(false);
     expect(screen.getByText("1 of 3 row(s) selected")).toBeDefined();
     expect(container.querySelector('[aria-live="polite"]')).toBeNull();
   });
 
-  it("closes the bar when the last selected row is deselected", async () => {
-    render(<Harness selectionActions={[archive()]} />, { wrapper });
-
-    fireEvent.click(rowCheckbox(0));
-    expect(queryBar()).not.toBeNull();
-    fireEvent.click(rowCheckbox(0));
-
-    await waitFor(() => expect(queryBar()).toBeNull());
-  });
-
-  // ---------------------------------------------------------------------------
-  // Actions that return a promise
-  // ---------------------------------------------------------------------------
   describe("async actions", () => {
-    it("disables every action and shows a spinner while the promise is pending", () => {
+    it("disables all actions, overflow and Clear with a spinner while pending, without clearing on success", async () => {
       const pending = deferred();
-      const actions: SelectionAction<Vendor>[] = [
-        { id: "activate", label: "Activate", onClick: () => pending.promise },
-        { id: "export", label: "Export", onClick: vi.fn() },
-      ];
-      render(<Harness selectionActions={actions} />, { wrapper });
-
-      fireEvent.click(rowCheckbox(0));
-      const activate = within(getBar()).getByRole("button", { name: "Activate" });
-      fireEvent.click(activate);
-
-      expect(getBar().getAttribute("aria-busy")).toBe("true");
-      expect(activate).toHaveProperty("disabled", true);
-      expect(activate.querySelector('[data-slot="spinner"]')).not.toBeNull();
-      expect(within(getBar()).getByRole("button", { name: "Export" })).toHaveProperty(
-        "disabled",
-        true,
-      );
-    });
-
-    it("clears the selection once the promise resolves", async () => {
+      const onClick = vi.fn(() => pending.promise);
       const onSelectionChange = vi.fn();
-      const pending = deferred();
-      const actions: SelectionAction<Vendor>[] = [
-        { id: "activate", label: "Activate", onClick: () => pending.promise },
-      ];
-      render(<Harness selectionActions={actions} onSelectionChange={onSelectionChange} />, {
-        wrapper,
-      });
-
+      render(
+        <Harness
+          selectionActions={[
+            archive(onClick),
+            ...["Export", "Activate", "Delete"].map((label) => ({
+              id: label,
+              label,
+              onClick: vi.fn(),
+            })),
+          ]}
+          onSelectionChange={onSelectionChange}
+        />,
+        { wrapper },
+      );
       fireEvent.click(rowCheckbox(0));
-      fireEvent.click(within(getBar()).getByRole("button", { name: "Activate" }));
-      expect(queryBar()).not.toBeNull();
-
+      fireEvent.click(actionButton());
+      expect(getBar().getAttribute("aria-busy")).toBe("true");
+      expect(actionButton().querySelector('[data-slot="spinner"]')).not.toBeNull();
+      for (const button of within(getBar()).getAllByRole("button"))
+        expect(button).toHaveProperty("disabled", true);
+      fireEvent.click(actionButton());
+      expect(onClick).toHaveBeenCalledTimes(1);
+      fireEvent.click(rowCheckbox(1));
+      expect(onClick.mock.calls[0]).toEqual([["1"], expect.any(Object)]);
+      onSelectionChange.mockClear();
       await act(async () => {
         pending.resolve();
         await pending.promise;
       });
-
-      expect(queryBar()).toBeNull();
-      expect(onSelectionChange).toHaveBeenLastCalledWith([]);
-    });
-
-    it("keeps the selection after the promise when keepSelection is set", async () => {
-      const exportRows = vi.fn(() => Promise.resolve());
-      const actions: SelectionAction<Vendor>[] = [
-        { id: "export", label: "Export", keepSelection: true, onClick: exportRows },
-      ];
-      render(<Harness selectionActions={actions} />, { wrapper });
-
-      fireEvent.click(rowCheckbox(0));
-      await act(async () => {
-        fireEvent.click(within(getBar()).getByRole("button", { name: "Export" }));
-      });
-
-      expect(exportRows).toHaveBeenCalledTimes(1);
-      expect(within(getBar()).getByRole("button", { name: "Export" })).toHaveProperty(
-        "disabled",
-        false,
-      );
+      expect(within(getBar()).getByText("2 of 3 selected")).toBeDefined();
+      expect(actionButton()).toHaveProperty("disabled", false);
       expect(getBar().hasAttribute("aria-busy")).toBe(false);
+      expect(onSelectionChange).not.toHaveBeenCalled();
     });
 
-    it("keeps the selection and re-enables the actions when the promise rejects", async () => {
+    it("keeps selection and re-enables actions on rejection", async () => {
       const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
       const pending = deferred();
-      const actions: SelectionAction<Vendor>[] = [
-        { id: "activate", label: "Activate", onClick: () => pending.promise },
-      ];
-      render(<Harness selectionActions={actions} />, { wrapper });
-
+      const onSelectionChange = vi.fn();
+      render(
+        <Harness
+          selectionActions={[archive(() => pending.promise)]}
+          onSelectionChange={onSelectionChange}
+        />,
+        { wrapper },
+      );
       fireEvent.click(rowCheckbox(0));
-      fireEvent.click(within(getBar()).getByRole("button", { name: "Activate" }));
+      fireEvent.click(actionButton());
+      onSelectionChange.mockClear();
       await act(async () => {
         pending.reject(new Error("network down"));
         await pending.promise.catch(() => {});
       });
-
-      expect(within(getBar()).getByRole("button", { name: "Activate" })).toHaveProperty(
-        "disabled",
-        false,
-      );
+      expect(actionButton()).toHaveProperty("disabled", false);
+      expect(within(getBar()).getByText("1 of 3 selected")).toBeDefined();
+      expect(onSelectionChange).not.toHaveBeenCalled();
       expect(consoleError).toHaveBeenCalledWith(
-        '[DataTable] Selection action "activate" failed:',
+        '[DataTable] Selection action "archive" failed:',
         expect.any(Error),
       );
       consoleError.mockRestore();
     });
 
-    it("leaves the selection alone when onClick returns nothing", () => {
-      // e.g. an onClick that only opens a confirm dialog
-      const actions: SelectionAction<Vendor>[] = [
-        { id: "delete", label: "Delete", onClick: vi.fn() },
-      ];
-      render(<Harness selectionActions={actions} />, { wrapper });
-
+    it("leaves selection alone when onClick returns nothing", () => {
+      render(<Harness selectionActions={[archive()]} />, { wrapper });
       fireEvent.click(rowCheckbox(0));
-      fireEvent.click(within(getBar()).getByRole("button", { name: "Delete" }));
-
+      fireEvent.click(actionButton());
       expect(queryBar()).not.toBeNull();
       expect(getBar().hasAttribute("aria-busy")).toBe(false);
     });
 
-    it("fires a single onSelectionChange([]) when the action also clears itself", async () => {
+    it("allows an action to explicitly clear selection exactly once", async () => {
       const onSelectionChange = vi.fn();
-      const actions: SelectionAction<Vendor>[] = [
-        {
-          id: "activate",
-          label: "Activate",
-          onClick: async (_rows, { clearSelection }) => clearSelection(),
-        },
-      ];
-      render(<Harness selectionActions={actions} onSelectionChange={onSelectionChange} />, {
-        wrapper,
-      });
-
+      render(
+        <Harness
+          selectionActions={[
+            archive(async (ids, { clearSelection }) => {
+              expect(ids).toEqual(["1"]);
+              clearSelection();
+            }),
+          ]}
+          onSelectionChange={onSelectionChange}
+        />,
+        { wrapper },
+      );
       fireEvent.click(rowCheckbox(0));
       await act(async () => {
-        fireEvent.click(within(getBar()).getByRole("button", { name: "Activate" }));
+        fireEvent.click(actionButton());
       });
-
+      expect(queryBar()).toBeNull();
       expect(onSelectionChange.mock.calls.filter(([ids]) => ids.length === 0)).toHaveLength(1);
     });
 
-    it("disables Clear while an action is pending", () => {
+    it("keeps pending state when the bar unmounts and remounts mid-request", async () => {
       const pending = deferred();
-      const actions: SelectionAction<Vendor>[] = [
-        { id: "activate", label: "Activate", onClick: () => pending.promise },
-      ];
-      render(<Harness selectionActions={actions} />, { wrapper });
-
+      render(<Harness selectionActions={[archive(() => pending.promise)]} />, { wrapper });
       fireEvent.click(rowCheckbox(0));
-      fireEvent.click(within(getBar()).getByRole("button", { name: "Activate" }));
-
-      expect(within(getBar()).getByRole("button", { name: "Clear selection" })).toHaveProperty(
-        "disabled",
-        true,
-      );
-    });
-
-    it("keeps the pending state when the bar unmounts and remounts mid-request", async () => {
-      const pending = deferred();
-      const actions: SelectionAction<Vendor>[] = [
-        { id: "activate", label: "Activate", onClick: () => pending.promise },
-      ];
-      render(<Harness selectionActions={actions} />, { wrapper });
-
-      fireEvent.click(rowCheckbox(0));
-      fireEvent.click(within(getBar()).getByRole("button", { name: "Activate" }));
-      // Untick the only selected row — the bar unmounts — then tick it again.
+      fireEvent.click(actionButton());
       fireEvent.click(rowCheckbox(0));
       expect(queryBar()).toBeNull();
       fireEvent.click(rowCheckbox(0));
-
       expect(getBar().getAttribute("aria-busy")).toBe("true");
-      expect(within(getBar()).getByRole("button", { name: "Activate" })).toHaveProperty(
-        "disabled",
-        true,
-      );
-
+      expect(actionButton()).toHaveProperty("disabled", true);
       await act(async () => {
         pending.resolve();
         await pending.promise;
       });
-      expect(queryBar()).toBeNull();
+      expect(actionButton()).toHaveProperty("disabled", false);
+      expect(within(getBar()).getByText("1 of 3 selected")).toBeDefined();
     });
 
-    it("tracks a request handed back through run, e.g. from a confirm dialog", async () => {
-      const onSelectionChange = vi.fn();
+    it("tracks a request handed back later through run without changing selection", async () => {
       const pending = deferred();
+      const onSelectionChange = vi.fn();
       let confirm: (() => void) | undefined;
-      const actions: SelectionAction<Vendor>[] = [
-        {
-          id: "delete",
-          label: "Delete",
-          // Opens a "dialog": nothing is returned, the request starts later.
-          onClick: (_rows, { run }) => {
-            confirm = () => void run(pending.promise);
-          },
-        },
-      ];
-      render(<Harness selectionActions={actions} onSelectionChange={onSelectionChange} />, {
-        wrapper,
-      });
-
+      render(
+        <Harness
+          selectionActions={[
+            archive((_ids, { run }) => {
+              confirm = () => void run(pending.promise);
+            }),
+          ]}
+          onSelectionChange={onSelectionChange}
+        />,
+        { wrapper },
+      );
       fireEvent.click(rowCheckbox(0));
-      fireEvent.click(within(getBar()).getByRole("button", { name: "Delete" }));
+      fireEvent.click(actionButton());
       expect(getBar().hasAttribute("aria-busy")).toBe(false);
-
       act(() => confirm?.());
       expect(getBar().getAttribute("aria-busy")).toBe("true");
       expect(within(getBar()).getByRole("button", { name: "Clear selection" })).toHaveProperty(
         "disabled",
         true,
       );
-
       await act(async () => {
         pending.resolve();
         await pending.promise;
       });
-      expect(queryBar()).toBeNull();
-      expect(onSelectionChange).toHaveBeenLastCalledWith([]);
+      expect(actionButton()).toHaveProperty("disabled", false);
+      expect(onSelectionChange).toHaveBeenCalledExactlyOnceWith(["1"]);
     });
   });
 });

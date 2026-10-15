@@ -29,7 +29,7 @@ Pass `selectionActions` to `useDataTable`. The moment one row is selected, `Data
 |   [ ] | row   | row   | row   | row                                |
 |   [x] | row   | row   | row   | row                                |
 |   DataTable.Footer, while rows are selected:                       |
-|   3 of 240 selected | [Confirm (2)] [Export] [⋯] | Clear   ‹ 1/10 › |
+|   3 of 240 selected | [Confirm] [Export] [⋯] | Clear       ‹ 1/10 › |
 +--------------------------------------------------------------------+
 ```
 
@@ -39,45 +39,54 @@ Pass `selectionActions` to `useDataTable`. The moment one row is selected, `Data
 
 ```tsx
 function InteractionMultiSelect() {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pendingCancel, setPendingCancel] = useState<PendingCancel | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
-  const selectionActions: SelectionAction<Order>[] = [
+  const removeCompletedIds = (ids: string[]) => {
+    const completed = new Set(ids);
+    setSelectedIds((current) => current.filter((id) => !completed.has(id)));
+  };
+
+  const selectionActions: SelectionAction[] = [
     {
       id: "confirm",
       label: "Confirm",
-      // Only open orders can be confirmed: the bar shows "Confirm (n)".
-      canApply: (order) => order.status === "Open",
-      // Return the promise: the bar disables its actions while it runs, then
-      // clears the selection.
-      onClick: (orders) => confirmOrders(orders),
+      // The operation returns actual successes; never clear ineligible or newer selections.
+      onClick: async (ids) => removeCompletedIds(await confirmOrders(ids)),
     },
     {
       id: "export",
       label: "Export",
-      // Exporting doesn't change the rows, so keep them selected.
-      keepSelection: true,
-      onClick: (orders) => exportOrders(orders),
+      onClick: (ids) => exportOrders(ids),
     },
     {
       id: "assign",
       label: "Assign owner",
-      onClick: async (orders) => window.alert(`Assigning ${orders.length} order(s)`),
+      onClick: async (ids) => window.alert(`Assigning ${ids.length} order(s)`),
     },
     {
       // 4th action: lands in the More actions menu.
       id: "cancel",
       label: "Cancel",
       variant: "destructive",
-      canApply: (order) => order.status !== "Shipped",
-      // Destructive: confirm first (interaction/confirm). Keep `run` and hand
-      // the request back from the dialog's confirm button.
-      onClick: (orders, { run }) => setPendingCancel({ orders, run }),
+      onClick: (ids, { run }) => {
+        setCancelError(null);
+        setPendingCancel({ ids: [...ids], run });
+      },
     },
   ];
+
+  // In a real app, fetch eligibility for these snapshot ids before showing this explanation.
+  const cancellableCount = mockOrders.filter(
+    (order) => pendingCancel?.ids.includes(order.id) && order.status !== "Shipped",
+  ).length;
 
   const table = useDataTable({
     columns,
     data: { rows: mockOrders, total: mockOrders.length },
+    rowSelection: { selectedIds, onChange: setSelectedIds },
     selectionActions,
   });
 
@@ -93,25 +102,41 @@ function InteractionMultiSelect() {
       <Dialog.Root
         open={pendingCancel !== null}
         onOpenChange={(open) => {
-          if (!open) setPendingCancel(null);
+          if (!open && !cancelling) setPendingCancel(null);
         }}
       >
         <Dialog.Content>
           <Dialog.Header>
-            <Dialog.Title>Cancel {pendingCancel?.orders.length} order(s)?</Dialog.Title>
-            <Dialog.Description>Cancelled orders can&apos;t be reopened.</Dialog.Description>
+            <Dialog.Title>Cancel selected orders?</Dialog.Title>
+            <Dialog.Description>
+              {cancellableCount} of {pendingCancel?.ids.length ?? 0} selected orders can be
+              cancelled; shipped orders are excluded. Cancelled orders can&apos;t be reopened.
+            </Dialog.Description>
           </Dialog.Header>
+          {cancelError && <p role="alert">{cancelError}</p>}
           <Dialog.Footer>
-            <Dialog.Close render={<Button variant="outline" />}>Keep orders</Dialog.Close>
+            <Dialog.Close render={<Button variant="outline" disabled={cancelling} />}>
+              Keep orders
+            </Dialog.Close>
             <Button
               variant="destructive"
-              onClick={() => {
-                // The bar shows its pending state and clears once this resolves.
-                if (pendingCancel) pendingCancel.run(cancelOrders(pendingCancel.orders));
-                setPendingCancel(null);
+              disabled={cancelling || cancellableCount === 0}
+              onClick={async () => {
+                if (!pendingCancel || cancelling) return;
+                setCancelling(true);
+                setCancelError(null);
+                try {
+                  const cancelledIds = await pendingCancel.run(cancelOrders(pendingCancel.ids));
+                  removeCompletedIds(cancelledIds);
+                  setPendingCancel(null);
+                } catch {
+                  setCancelError("Cancellation failed. Please try again.");
+                } finally {
+                  setCancelling(false);
+                }
               }}
             >
-              Cancel orders
+              {cancelling ? "Cancelling…" : "Cancel orders"}
             </Button>
           </Dialog.Footer>
         </Dialog.Content>
@@ -123,13 +148,15 @@ function InteractionMultiSelect() {
 
 ## Constraints
 
-- Declare bulk actions with `selectionActions` on `useDataTable` — do NOT hand-build the bar, a floating panel, or checkbox state; the footer renders the count, actions, overflow menu, and Clear
+- Declare bulk actions with the non-generic `SelectionAction[]` on `useDataTable` — do NOT hand-build the bar, a floating panel, or checkboxes; the footer renders the selection count, actions, overflow menu, and Clear
 - Keep `DataTable.Footer` in the tree — it is where the bar renders
-- Give an action `canApply` when it fits only some rows: the bar shows the eligible count, disables the action at 0, and passes only those rows to `onClick`
-- Return the promise from `onClick` for async work: the bar disables its actions while it runs and clears the selection when it resolves; set `keepSelection: true` on actions that don't change rows (export)
+- `onClick` receives a click-time copy of all selected ids (`string[]`), including unloaded ids. `selectedRows` is only a partial cache, not the operation payload
+- The consumer owns eligibility checks, required fetching, confirmation UI, and execution; backend validation remains authoritative. Selection actions have no row-based `canApply`, automatic eligible count, or eligibility-based disabled state
+- Return the promise from `onClick` for async work: the bar disables its actions and shows a spinner while it runs. Success and rejection both leave selection unchanged; there is no `keepSelection` option. Rejections are logged; show errors in the consumer UI
+- Use controlled `rowSelection: { selectedIds, onChange }` to remove only ids actually changed, with a functional update against the current selection. Preserve ineligible ids and ids selected after the operation started; cancellation or failure does not clear selection
 - At most 3 actions render inline, in array order; the 4th onward move to the More actions menu — order by frequency and put a destructive action last
-- Destructive bulk actions MUST open an `interaction/confirm` dialog from `onClick`; keep the `run` helper and pass it the request from the dialog's confirm button (`run(deleteRows(rows))`) so the bar shows its pending state and clears on success
-- When an action also exists per row, define it once as a `DataTableAction` and spread it into both `rowActions` and `selectionActions`
+- Destructive bulk actions MUST open an `interaction/confirm` dialog from `onClick`. Optionally keep the `run` helper and pass it the later request (`await run(deleteRows(ids))`) for pending tracking only. `clearSelection` explicitly clears every page when that is intentional
+- Share only presentation fields (`id`, `label`, `icon`, `variant`) as a non-generic `DataTableAction`. `RowAction<TRow>` retains `canApply` for its concrete row; bulk eligibility belongs in the ID-based consumer workflow
 - Selection persists across pagination, filter, and sort changes — do NOT clear it on those
 
 ## Anti-patterns
@@ -137,7 +164,8 @@ function InteractionMultiSelect() {
 - Hand-rolled selection (`useState<Set>`, raw `<input type="checkbox">`, `Table.Root`) when the list is a DataTable
 - A floating or fixed-position action bar over the table instead of the footer bar
 - Placing bulk-action buttons in the page header or the table toolbar
-- Counting eligible rows per action by hand instead of `canApply`
-- Fire-and-forget async `onClick` that doesn't return its promise — users can fire it twice, and the selection goes stale
+- Treating loaded `selectedRows` as the full selection or deriving bulk eligibility from the table's partial cache
+- Clearing the whole selection after partial success, or overwriting it with the click-time snapshot and losing newer selections
+- Fire-and-forget async `onClick` that doesn't return its promise or use `run` — users can fire it twice
 - Firing destructive bulk actions without an interaction/confirm step
 - Per-row `Menu` actions as a substitute for bulk actions when selection > 0

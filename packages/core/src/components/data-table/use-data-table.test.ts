@@ -708,14 +708,14 @@ describe("useDataTable", () => {
   });
 
   // -------------------------------------------------------------------------
-  // selectionActions
+  // rowSelection.actions
   // -------------------------------------------------------------------------
-  describe("selectionActions", () => {
+  describe("rowSelection.actions", () => {
     const actions = [{ id: "archive", label: "Archive", onClick: vi.fn() }];
 
-    it("a non-empty array enables selection without onSelectionChange", () => {
+    it("enables selection without onChange", () => {
       const { result } = renderHook(() =>
-        useDataTable({ columns, data: testData, selectionActions: actions }),
+        useDataTable({ columns, data: testData, rowSelection: { actions } }),
       );
 
       expect(result.current.toggleRowSelection).toBeDefined();
@@ -724,17 +724,19 @@ describe("useDataTable", () => {
       expect(result.current.selectedRows).toEqual([testData.rows[1]]);
     });
 
-    it("an empty array does not enable selection", () => {
+    it("an empty array still enables selection", () => {
       const { result } = renderHook(() =>
-        useDataTable({ columns, data: testData, selectionActions: [] }),
+        useDataTable({ columns, data: testData, rowSelection: { actions: [] } }),
       );
 
-      expect(result.current.toggleRowSelection).toBeUndefined();
+      expect(result.current.toggleRowSelection).toBeDefined();
+      act(() => result.current.toggleRowSelection!(testData.rows[0]));
+      expect(result.current.selectedIds).toEqual(["1"]);
     });
 
     it("is passed through for DataTable.Root", () => {
       const { result } = renderHook(() =>
-        useDataTable({ columns, data: testData, selectionActions: actions }),
+        useDataTable({ columns, data: testData, rowSelection: { actions } }),
       );
 
       expect(result.current.selectionActions).toBe(actions);

@@ -13,7 +13,7 @@ import type { RowSelectionOptions, SelectionAction } from "@/index";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import type { Column, DataTableData } from "./types";
+import type { Column, DataTableData, UseDataTableOptions } from "./types";
 
 type Row = { id: string; name: string };
 const columns: Column<Row>[] = [{ label: "Name", render: (row) => row.name }];
@@ -57,8 +57,11 @@ function ControlledTable({
   const table = useDataTable({
     columns,
     data,
-    rowSelection: { selectedIds, onChange },
-    selectionActions: [{ id: "archive", label: "Archive", onClick: onBulk }],
+    rowSelection: {
+      selectedIds,
+      onChange,
+      actions: [{ id: "archive", label: "Archive", onClick: onBulk }],
+    },
   });
   return (
     <DataTable.Root value={table}>
@@ -343,6 +346,31 @@ describe("rowSelection", () => {
     expectTypeOf<SelectionAction["onClick"]>().parameter(0).toEqualTypeOf<string[]>();
     expectTypeOf<"canApply">().not.toMatchTypeOf<keyof SelectionAction>();
     expectTypeOf<"keepSelection">().not.toMatchTypeOf<keyof SelectionAction>();
+  });
+
+  it("groups actions with selection without weakening its ownership contract", () => {
+    expectTypeOf<"selectionActions">().not.toMatchTypeOf<keyof UseDataTableOptions<Row>>();
+    expectTypeOf<RowSelectionOptions["actions"]>().toEqualTypeOf<SelectionAction[] | undefined>();
+    expectTypeOf<{ actions: SelectionAction[] }>().toMatchTypeOf<RowSelectionOptions>();
+    expectTypeOf<{
+      actions: SelectionAction[];
+      defaultSelectedIds: string[];
+    }>().toMatchTypeOf<RowSelectionOptions>();
+    expectTypeOf<{
+      actions: SelectionAction[];
+      selectedIds: string[];
+      onChange: (ids: string[]) => void;
+    }>().toMatchTypeOf<RowSelectionOptions>();
+    expectTypeOf<{
+      actions: SelectionAction[];
+      selectedIds: string[];
+    }>().not.toMatchTypeOf<RowSelectionOptions>();
+    expectTypeOf<{
+      actions: SelectionAction[];
+      selectedIds: string[];
+      defaultSelectedIds: string[];
+      onChange: (ids: string[]) => void;
+    }>().not.toMatchTypeOf<RowSelectionOptions>();
   });
 
   it("requires an owner callback for controlled ids and rejects mixing controlled/default ids", () => {

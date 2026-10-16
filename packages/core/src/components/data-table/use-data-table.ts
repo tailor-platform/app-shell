@@ -94,7 +94,6 @@ export function useDataTable<
     rowActions,
     onSelectionChange,
     rowSelection,
-    selectionActions,
     rowExpansion,
     sort: sortOption,
   } = options;
@@ -305,8 +304,8 @@ export function useDataTable<
     return id != null ? String(id) : null;
   }, []);
 
-  const selectionEnabled =
-    rowSelection !== undefined || !!onSelectionChange || (selectionActions?.length ?? 0) > 0;
+  const selectionActions = rowSelection?.actions;
+  const selectionEnabled = rowSelection !== undefined || !!onSelectionChange;
   const controlledSelectedIds = rowSelection?.selectedIds;
   const selectionOnChange = rowSelection?.onChange ?? onSelectionChange;
   const [uncontrolledSelection, setSelection] = useState<Map<string, TRow | undefined>>(

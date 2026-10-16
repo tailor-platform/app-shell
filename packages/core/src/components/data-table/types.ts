@@ -402,7 +402,16 @@ export type RowExpansionOptions<TRow extends Record<string, unknown>> = {
 );
 
 /** Controlled or uncontrolled row-selection configuration. Keep the mode stable while mounted. */
-export type RowSelectionOptions =
+export type RowSelectionOptions = {
+  /**
+   * Bulk actions for the selected IDs, shown in `DataTable.Footer` while at
+   * least one row is selected. The bar includes the selection count, these
+   * actions, and Clear, with pagination kept alongside. The first three actions
+   * render as buttons; the rest collapse into a "More actions" menu.
+   * Omit or pass an empty array to enable selection without an action bar.
+   */
+  actions?: SelectionAction[];
+} & (
   | {
       /**
        * Controlled selected ids. Update this array from `onChange`.
@@ -418,7 +427,8 @@ export type RowSelectionOptions =
       defaultSelectedIds?: string[];
       /** Notification of user-driven selection changes, including under StrictMode. */
       onChange?: (ids: string[]) => void;
-    };
+    }
+);
 
 /**
  * Options for `useDataTable` hook.
@@ -465,8 +475,8 @@ export type UseDataTableOptions<
   rowSelection?: RowSelectionOptions;
   /**
    * Called with the current array of selected row IDs whenever the selection
-   * changes. Providing this prop — or a non-empty `selectionActions` — enables
-   * the checkbox selection column. Selection is ID-based (`row.id`) and persists
+   * changes. Providing this prop or `rowSelection` enables the checkbox
+   * selection column. Selection is ID-based (`row.id`) and persists
    * across page changes. Remains supported; `rowSelection.onChange` takes
    * precedence when both callbacks are supplied.
    *
@@ -480,17 +490,6 @@ export type UseDataTableOptions<
    * @deprecated Use `rowSelection.onChange` instead.
    */
   onSelectionChange?: (ids: string[]) => void;
-  /**
-   * Bulk actions for the selected rows. While at least one row is selected,
-   * `DataTable.Footer` turns into an action bar: the selection count, these
-   * actions, and a Clear button, with the pagination controls kept alongside.
-   * The bar is omitted when this array is empty or not provided.
-   *
-   * Providing a non-empty array also enables row selection, so
-   * `onSelectionChange` is optional. The first three actions render as buttons;
-   * the rest collapse into a "More actions" menu.
-   */
-  selectionActions?: SelectionAction[];
   /**
    * Expandable detail rows. Providing this enables the whole feature: a chevron
    * column is added at the left edge (auto-pinned left, after the selection
@@ -562,7 +561,7 @@ export interface SelectionActionHelpers {
 
 /**
  * An ID-based bulk action shown in `DataTable.Footer` while a selection is open.
- * See `UseDataTableOptions.selectionActions`.
+ * Configure through `UseDataTableOptions.rowSelection.actions`.
  */
 export interface SelectionAction extends DataTableAction {
   /**

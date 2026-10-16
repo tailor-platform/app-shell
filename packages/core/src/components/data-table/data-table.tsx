@@ -1983,7 +1983,7 @@ export const DataTable = {
    * Footer container for pagination and other footer content.
    * Place inside `DataTable.Root`, after `DataTable.Table`.
    *
-   * When `useDataTable()` is given `selectionActions`, the footer becomes the
+   * When `useDataTable()` is given `rowSelection.actions`, the footer becomes the
    * bulk-action bar while rows are selected — the selection count, the
    * actions, and a Clear button — with its own children (usually
    * `DataTable.Pagination`) kept alongside.

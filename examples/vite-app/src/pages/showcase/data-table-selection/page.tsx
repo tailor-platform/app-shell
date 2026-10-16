@@ -288,8 +288,7 @@ const DataTableSelectionPage = () => {
     data,
     loading: false,
     control,
-    rowSelection: { selectedIds, onChange: setSelectedIds },
-    selectionActions,
+    rowSelection: { selectedIds, onChange: setSelectedIds, actions: selectionActions },
   });
 
   const deletableVendors = pendingDelete

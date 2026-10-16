@@ -146,8 +146,7 @@ const ProductsPage = () => {
     control,
     rowActions,
     onClickRow: (row) => alert(`Clicked: ${row.name}`),
-    rowSelection: { selectedIds, onChange: setSelectedIds },
-    selectionActions,
+    rowSelection: { selectedIds, onChange: setSelectedIds, actions: selectionActions },
   });
 
   return (

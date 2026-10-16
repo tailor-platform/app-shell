@@ -240,7 +240,7 @@ const DataTableSelectionPage = () => {
 
   // The bar receives every selected ID. Consumers decide eligibility and remove
   // only completed IDs; returned promises track pending state without clearing.
-  const selectionActions: SelectionAction[] = [
+  const actions: SelectionAction[] = [
     {
       id: "activate",
       label: "Activate",
@@ -288,7 +288,7 @@ const DataTableSelectionPage = () => {
     data,
     loading: false,
     control,
-    rowSelection: { selectedIds, onChange: setSelectedIds, actions: selectionActions },
+    rowSelection: { selectedIds, onChange: setSelectedIds, actions },
   });
 
   const deletableVendors = pendingDelete

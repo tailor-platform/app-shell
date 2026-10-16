@@ -652,9 +652,10 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   // Row interaction (passthrough for DataTable.Provider)
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
-  selectionActions?: SelectionAction[];
 
   // Row selection
+  /** Selection config (passthrough for `DataTable.Root`). */
+  rowSelection?: RowSelectionOptions;
   selectedIds: string[];
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;

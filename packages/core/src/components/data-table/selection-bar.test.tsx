@@ -47,13 +47,11 @@ const archive = (onClick: SelectionAction["onClick"] = vi.fn()): SelectionAction
 });
 
 function Harness({
-  selectionActions,
   onSelectionChange,
   rowSelection,
   data = { rows: vendors, total: 3 },
   footer = "pagination",
 }: {
-  selectionActions?: SelectionAction[];
   onSelectionChange?: (ids: string[]) => void;
   rowSelection?: RowSelectionOptions;
   data?: DataTableData<Vendor>;
@@ -64,10 +62,7 @@ function Harness({
     data,
     control: makeControl(),
     onSelectionChange,
-    rowSelection:
-      selectionActions === undefined
-        ? rowSelection
-        : { ...rowSelection, actions: selectionActions },
+    rowSelection,
   });
   return (
     <DataTable.Root value={table}>
@@ -104,7 +99,7 @@ function deferred() {
 
 describe("DataTable selection actions", () => {
   it("turns the footer into the bar, owning the count, only while selected", () => {
-    const { container } = render(<Harness selectionActions={[archive()]} />, { wrapper });
+    const { container } = render(<Harness rowSelection={{ actions: [archive()] }} />, { wrapper });
     expect(queryBar()).toBeNull();
     expect(footerOf(container).hasAttribute("data-selecting")).toBe(false);
     expect(screen.getByText("3 row(s)")).toBeDefined();
@@ -121,7 +116,9 @@ describe("DataTable selection actions", () => {
   });
 
   it("falls back to the bare count when the backend returns no total", () => {
-    render(<Harness selectionActions={[archive()]} data={{ rows: vendors }} />, { wrapper });
+    render(<Harness rowSelection={{ actions: [archive()] }} data={{ rows: vendors }} />, {
+      wrapper,
+    });
     fireEvent.click(rowCheckbox(0));
     expect(within(getBar()).getByText("1 selected")).toBeDefined();
   });
@@ -136,7 +133,7 @@ describe("DataTable selection actions", () => {
           ? { selectedIds: ids, onChange: vi.fn() }
           : { defaultSelectedIds: ids };
       const { rerender } = render(
-        <Harness selectionActions={[archive(onClick)]} rowSelection={rowSelection} />,
+        <Harness rowSelection={{ ...rowSelection, actions: [archive(onClick)] }} />,
         { wrapper },
       );
       expect(actionButton()).toHaveProperty("disabled", false);
@@ -144,8 +141,7 @@ describe("DataTable selection actions", () => {
       expect(onClick).toHaveBeenLastCalledWith(ids, expect.any(Object));
       rerender(
         <Harness
-          selectionActions={[archive(onClick)]}
-          rowSelection={rowSelection}
+          rowSelection={{ ...rowSelection, actions: [archive(onClick)] }}
           data={{ rows: [] }}
         />,
       );
@@ -158,11 +154,13 @@ describe("DataTable selection actions", () => {
 
   it("includes IDs selected on other pages", () => {
     const onClick = vi.fn();
-    const { rerender } = render(<Harness selectionActions={[archive(onClick)]} />, { wrapper });
+    const { rerender } = render(<Harness rowSelection={{ actions: [archive(onClick)] }} />, {
+      wrapper,
+    });
     fireEvent.click(rowCheckbox(0));
     rerender(
       <Harness
-        selectionActions={[archive(onClick)]}
+        rowSelection={{ actions: [archive(onClick)] }}
         data={{ rows: [{ id: "4", name: "Hooli" }], total: 4 }}
       />,
     );
@@ -176,7 +174,7 @@ describe("DataTable selection actions", () => {
     const onClick = vi.fn((ids: string[]) => {
       ids.pop();
     });
-    render(<Harness selectionActions={[archive(onClick)]} />, { wrapper });
+    render(<Harness rowSelection={{ actions: [archive(onClick)] }} />, { wrapper });
     fireEvent.click(rowCheckbox(0));
     fireEvent.click(rowCheckbox(1));
     fireEvent.click(actionButton());
@@ -197,10 +195,9 @@ describe("DataTable selection actions", () => {
       { id: "c", label: "Export", onClick: vi.fn() },
       { id: "delete", label: "Delete", variant: "destructive", onClick: onDelete },
     ];
-    render(
-      <Harness selectionActions={actions} rowSelection={{ defaultSelectedIds: ["unseen", "3"] }} />,
-      { wrapper },
-    );
+    render(<Harness rowSelection={{ actions, defaultSelectedIds: ["unseen", "3"] }} />, {
+      wrapper,
+    });
     expect(within(getBar()).queryByRole("button", { name: "Delete" })).toBeNull();
     await user.click(within(getBar()).getByRole("button", { name: "More actions" }));
     await user.click(await screen.findByRole("menuitem", { name: "Delete" }));
@@ -210,9 +207,12 @@ describe("DataTable selection actions", () => {
   it("Clear empties selection and hands focus back to the header checkbox", async () => {
     const user = userEvent.setup();
     const onSelectionChange = vi.fn();
-    render(<Harness selectionActions={[archive()]} onSelectionChange={onSelectionChange} />, {
-      wrapper,
-    });
+    render(
+      <Harness rowSelection={{ actions: [archive()] }} onSelectionChange={onSelectionChange} />,
+      {
+        wrapper,
+      },
+    );
     await user.click(rowCheckbox(0));
     await user.click(within(getBar()).getByRole("button", { name: "Clear selection" }));
     expect(onSelectionChange).toHaveBeenLastCalledWith([]);
@@ -224,7 +224,7 @@ describe("DataTable selection actions", () => {
     const user = userEvent.setup();
     render(
       <Harness
-        selectionActions={[archive(), { id: "export", label: "Export", onClick: vi.fn() }]}
+        rowSelection={{ actions: [archive(), { id: "export", label: "Export", onClick: vi.fn() }] }}
       />,
       { wrapper },
     );
@@ -235,7 +235,7 @@ describe("DataTable selection actions", () => {
   });
 
   it("announces the count politely from the first selection on", () => {
-    const { container } = render(<Harness selectionActions={[archive()]} />, { wrapper });
+    const { container } = render(<Harness rowSelection={{ actions: [archive()] }} />, { wrapper });
     const liveRegion = () => container.querySelector('[aria-live="polite"]');
     expect(liveRegion()?.textContent).toBe("");
     fireEvent.click(rowCheckbox(0));
@@ -243,7 +243,7 @@ describe("DataTable selection actions", () => {
   });
 
   it("renders the bar in a footer without children", () => {
-    render(<Harness selectionActions={[archive()]} footer="empty" />, { wrapper });
+    render(<Harness rowSelection={{ actions: [archive()] }} footer="empty" />, { wrapper });
     fireEvent.click(rowCheckbox(0));
     expect(actionButton()).toBeDefined();
   });
@@ -260,7 +260,7 @@ describe("DataTable selection actions", () => {
     },
   );
 
-  it("leaves the footer unchanged when no selectionActions are given", () => {
+  it("leaves the footer unchanged when no bulk actions are given", () => {
     const { container } = render(<Harness onSelectionChange={vi.fn()} />, { wrapper });
     fireEvent.click(rowCheckbox(0));
     expect(queryBar()).toBeNull();
@@ -276,14 +276,16 @@ describe("DataTable selection actions", () => {
       const onSelectionChange = vi.fn();
       render(
         <Harness
-          selectionActions={[
-            archive(onClick),
-            ...["Export", "Activate", "Delete"].map((label) => ({
-              id: label,
-              label,
-              onClick: vi.fn(),
-            })),
-          ]}
+          rowSelection={{
+            actions: [
+              archive(onClick),
+              ...["Export", "Activate", "Delete"].map((label) => ({
+                id: label,
+                label,
+                onClick: vi.fn(),
+              })),
+            ],
+          }}
           onSelectionChange={onSelectionChange}
         />,
         { wrapper },
@@ -315,7 +317,7 @@ describe("DataTable selection actions", () => {
       const onSelectionChange = vi.fn();
       render(
         <Harness
-          selectionActions={[archive(() => pending.promise)]}
+          rowSelection={{ actions: [archive(() => pending.promise)] }}
           onSelectionChange={onSelectionChange}
         />,
         { wrapper },
@@ -338,7 +340,7 @@ describe("DataTable selection actions", () => {
     });
 
     it("leaves selection alone when onClick returns nothing", () => {
-      render(<Harness selectionActions={[archive()]} />, { wrapper });
+      render(<Harness rowSelection={{ actions: [archive()] }} />, { wrapper });
       fireEvent.click(rowCheckbox(0));
       fireEvent.click(actionButton());
       expect(queryBar()).not.toBeNull();
@@ -349,12 +351,14 @@ describe("DataTable selection actions", () => {
       const onSelectionChange = vi.fn();
       render(
         <Harness
-          selectionActions={[
-            archive(async (ids, { clearSelection }) => {
-              expect(ids).toEqual(["1"]);
-              clearSelection();
-            }),
-          ]}
+          rowSelection={{
+            actions: [
+              archive(async (ids, { clearSelection }) => {
+                expect(ids).toEqual(["1"]);
+                clearSelection();
+              }),
+            ],
+          }}
           onSelectionChange={onSelectionChange}
         />,
         { wrapper },
@@ -369,7 +373,7 @@ describe("DataTable selection actions", () => {
 
     it("keeps pending state when the bar unmounts and remounts mid-request", async () => {
       const pending = deferred();
-      render(<Harness selectionActions={[archive(() => pending.promise)]} />, { wrapper });
+      render(<Harness rowSelection={{ actions: [archive(() => pending.promise)] }} />, { wrapper });
       fireEvent.click(rowCheckbox(0));
       fireEvent.click(actionButton());
       fireEvent.click(rowCheckbox(0));
@@ -391,11 +395,13 @@ describe("DataTable selection actions", () => {
       let confirm: (() => void) | undefined;
       render(
         <Harness
-          selectionActions={[
-            archive((_ids, { run }) => {
-              confirm = () => void run(pending.promise);
-            }),
-          ]}
+          rowSelection={{
+            actions: [
+              archive((_ids, { run }) => {
+                confirm = () => void run(pending.promise);
+              }),
+            ],
+          }}
           onSelectionChange={onSelectionChange}
         />,
         { wrapper },

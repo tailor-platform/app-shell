@@ -489,7 +489,7 @@ The bar is a `role="toolbar"` named "Bulk actions", so Arrow, Home, and End move
 
 ## `useDataTable`
 
-Creates the table state object to pass to `DataTable.Root`.
+Creates the table state object to pass to `DataTable.Root`. The hook return value and `useDataTableContext()` both expose the original selection configuration as `rowSelection`, including `rowSelection.actions`. Read the current selection from `selectedIds` and update it through the selection commands.
 
 ```tsx
 const table = useDataTable({

@@ -702,12 +702,20 @@ describe("useDataTable", () => {
       expect(result.current.selectedIds).toEqual(["1"]);
     });
 
-    it("is passed through for DataTable.Root", () => {
-      const { result } = renderHook(() =>
-        useDataTable({ columns, data: testData, rowSelection: { actions } }),
+    it("passes the latest grouped configuration through for DataTable.Root", () => {
+      const rowSelection = { actions, defaultSelectedIds: ["1"] };
+      const { result, rerender } = renderHook(
+        ({ selection }) => useDataTable({ columns, data: testData, rowSelection: selection }),
+        { initialProps: { selection: rowSelection } },
       );
 
-      expect(result.current.selectionActions).toBe(actions);
+      expect(result.current.rowSelection).toBe(rowSelection);
+      expect(result.current.rowSelection?.actions).toBe(actions);
+      const nextActions = [{ id: "export", label: "Export", onClick: vi.fn() }];
+      const nextSelection = { ...rowSelection, actions: nextActions };
+      rerender({ selection: nextSelection });
+      expect(result.current.rowSelection).toBe(nextSelection);
+      expect(result.current.rowSelection?.actions).toBe(nextActions);
     });
   });
 

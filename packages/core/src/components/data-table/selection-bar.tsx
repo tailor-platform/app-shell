@@ -16,17 +16,17 @@ const MAX_INLINE_ACTIONS = 3;
  * Whether the table offers bulk actions at all: selection is on and the hook
  * was given at least one `rowSelection.actions` entry.
  */
-export function hasSelectionActions<TRow extends Record<string, unknown>>(
+export function hasBulkActions<TRow extends Record<string, unknown>>(
   ctx: DataTableContextValue<TRow> | null,
 ): boolean {
-  return !!ctx?.toggleRowSelection && (ctx.selectionActions?.length ?? 0) > 0;
+  return !!ctx?.toggleRowSelection && (ctx.rowSelection?.actions?.length ?? 0) > 0;
 }
 
 /** Whether `DataTable.Footer` is currently showing the bulk-action bar. */
 export function isSelectionBarOpen<TRow extends Record<string, unknown>>(
   ctx: DataTableContextValue<TRow> | null,
 ): boolean {
-  return hasSelectionActions(ctx) && (ctx?.selectedIds.length ?? 0) > 0;
+  return hasBulkActions(ctx) && (ctx?.selectedIds.length ?? 0) > 0;
 }
 
 /** "3 of 240 selected", or "3 selected" when the backend returns no total. */
@@ -46,7 +46,7 @@ function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
  */
 export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
   const {
-    selectionActions = [],
+    rowSelection,
     selectedIds,
     clearSelection,
     pendingActionId = null,
@@ -79,8 +79,9 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
   const busy = pendingId !== null;
 
   const clear = () => clearSelection?.();
-  const inline = selectionActions.slice(0, MAX_INLINE_ACTIONS);
-  const overflow = selectionActions.slice(MAX_INLINE_ACTIONS);
+  const actions = rowSelection?.actions ?? [];
+  const inline = actions.slice(0, MAX_INLINE_ACTIONS);
+  const overflow = actions.slice(MAX_INLINE_ACTIONS);
 
   const run = (action: SelectionAction) => {
     if (busy || selectedIds.length === 0) return;
@@ -103,7 +104,7 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
     // and only wraps its own buttons once it is wider than the whole footer.
     <Toolbar.Row
       ref={rowRef}
-      aria-label={t("selectionActionsLabel")}
+      aria-label={t("bulkActionsLabel")}
       aria-busy={busy || undefined}
       className="astw:max-w-full astw:shrink-0"
     >

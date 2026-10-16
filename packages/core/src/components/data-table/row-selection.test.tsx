@@ -356,7 +356,15 @@ describe("rowSelection", () => {
   });
 
   it("groups actions with selection without weakening its ownership contract", () => {
-    expectTypeOf<"selectionActions">().not.toMatchTypeOf<keyof UseDataTableOptions<Row>>();
+    expectTypeOf<UseDataTableOptions<Row>["rowSelection"]>().toEqualTypeOf<
+      RowSelectionOptions | undefined
+    >();
+    expectTypeOf<NonNullable<UseDataTableReturn<Row>["rowSelection"]>["actions"]>().toEqualTypeOf<
+      SelectionAction[] | undefined
+    >();
+    expectTypeOf<
+      NonNullable<DataTableContextValue<Row>["rowSelection"]>["actions"]
+    >().toEqualTypeOf<SelectionAction[] | undefined>();
     expectTypeOf<RowSelectionOptions["actions"]>().toEqualTypeOf<SelectionAction[] | undefined>();
     expectTypeOf<{ actions: SelectionAction[] }>().toMatchTypeOf<RowSelectionOptions>();
     expectTypeOf<{

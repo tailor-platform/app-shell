@@ -49,7 +49,7 @@ import { DataTablePagination } from "./pagination";
 import {
   DataTableSelectionAnnouncer,
   DataTableSelectionBar,
-  hasSelectionActions,
+  hasBulkActions,
   isSelectionBarOpen,
 } from "./selection-bar";
 export type { DataTablePaginationProps } from "./pagination";
@@ -625,7 +625,7 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     hasNextPage: value.hasNextPage,
     onClickRow: value.onClickRow,
     rowActions: value.rowActions,
-    selectionActions: value.selectionActions,
+    rowSelection: value.rowSelection,
     selectedIds: value.selectedIds,
     isRowSelected: value.isRowSelected,
     toggleRowSelection: value.toggleRowSelection,
@@ -1897,7 +1897,7 @@ DataTableTable.displayName = "DataTable.Table";
 /** Use `DataTable.Footer` instead of calling this directly. */
 function DataTableFooter({ children, className }: { children?: ReactNode; className?: string }) {
   const ctx = useContext(DataTableContext);
-  const offersBulkActions = hasSelectionActions(ctx);
+  const offersBulkActions = hasBulkActions(ctx);
   const selecting = isSelectionBarOpen(ctx);
 
   return (

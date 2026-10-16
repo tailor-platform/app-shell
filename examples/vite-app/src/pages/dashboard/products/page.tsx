@@ -100,7 +100,7 @@ const selectedProducts = (ids: string[]) => allProducts.filter((row) => ids.incl
 
 // Alert-only previews leave selection unchanged; a real mutation should report
 // completed IDs and remove only those IDs from the current selection.
-const selectionActions: SelectionAction[] = [
+const actions: SelectionAction[] = [
   {
     id: "publish",
     label: "Publish",
@@ -146,7 +146,7 @@ const ProductsPage = () => {
     control,
     rowActions,
     onClickRow: (row) => alert(`Clicked: ${row.name}`),
-    rowSelection: { selectedIds, onChange: setSelectedIds, actions: selectionActions },
+    rowSelection: { selectedIds, onChange: setSelectedIds, actions },
   });
 
   return (

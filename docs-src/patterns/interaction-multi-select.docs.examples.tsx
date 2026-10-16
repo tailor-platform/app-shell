@@ -62,7 +62,7 @@ export function InteractionMultiSelect() {
     setSelectedIds((current) => current.filter((id) => !completed.has(id)));
   };
 
-  const selectionActions: SelectionAction[] = [
+  const actions: SelectionAction[] = [
     {
       id: "confirm",
       label: "Confirm",
@@ -99,7 +99,7 @@ export function InteractionMultiSelect() {
   const table = useDataTable({
     columns,
     data: { rows: mockOrders, total: mockOrders.length },
-    rowSelection: { selectedIds, onChange: setSelectedIds, actions: selectionActions },
+    rowSelection: { selectedIds, onChange: setSelectedIds, actions },
   });
 
   return (

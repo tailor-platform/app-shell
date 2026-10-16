@@ -35,4 +35,4 @@ Selection stores IDs only, without a row-object cache; consumers fetch records r
 
 **Behavior change:** the header checkbox is now page-scoped in both directions. Checking it adds the current page's rows to the selection instead of replacing it, and unchecking it removes only the current page's rows instead of clearing every page. `clearSelection` still empties everything (and is now a no-op when nothing is selected), and the new `deselectAllRows` is the page-scoped counterpart of `selectAllRows`.
 
-The `interaction/multi-select` pattern in the bundled `app-shell-patterns` skill is rewritten around `rowSelection.actions`, replacing the floating bar on a hand-built table.
+The `interaction/multi-select` pattern in the bundled `app-shell-patterns` skill is rewritten around `rowSelection.actions`, replacing the floating bar on a hand-built table. The hook return value and table context also expose the original configuration as `rowSelection`, keeping actions under `rowSelection.actions` throughout.

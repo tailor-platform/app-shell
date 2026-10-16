@@ -286,7 +286,6 @@ export function useDataTable<
     return id != null ? String(id) : null;
   }, []);
 
-  const selectionActions = rowSelection?.actions;
   const selectionEnabled = rowSelection !== undefined || !!onSelectionChange;
   const controlledSelectedIds = rowSelection?.selectedIds;
   const selectionOnChange = rowSelection?.onChange ?? onSelectionChange;
@@ -529,7 +528,7 @@ export function useDataTable<
     control: control as CollectionControl | undefined,
     onClickRow,
     rowActions,
-    selectionActions,
+    rowSelection,
     selectedIds,
     isRowSelected,
     toggleRowSelection,

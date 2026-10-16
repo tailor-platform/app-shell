@@ -20,9 +20,13 @@ row-based bulk-operation contract is superseded by the
 - Neither returned promises nor `helpers.run` clear selection. They only track
   pending work; consumers own eligibility, confirmation, execution, and selection
   updates based on actual results. `clearSelection` remains an explicit command.
-- `selectedRows` remains a partial cache, not a complete operation target.
+- Selection stores IDs only. Remove the unreleased `selectedRows` return/context
+  member and the row-history cache that existed only to support it. Consumers
+  fetch any records required by their ID-based workflow.
 
-The original rationale is preserved below as historical context.
+The original rationale is preserved below as historical context, including the
+superseded row cache and row-based action APIs; it does not describe the current
+operation contract.
 
 ## Context
 

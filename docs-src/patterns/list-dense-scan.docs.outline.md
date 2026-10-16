@@ -29,7 +29,7 @@ do:
 dont:
   - Side-by-side match/reconcile views comparing two grids
   - A tiny/static list where DataTable would be heavyweight — use Table.Root manually
-  - Inline editable cells — use pattern/detail or pattern/form/modal instead
+  - Cross-field validation or document-style editing that needs a coordinated form — use pattern/detail or pattern/form/modal instead
 ---
 
 # pattern/list/dense-scan
@@ -65,6 +65,7 @@ Omit `fill` on pages that should flow and scroll naturally (forms, dashboards, a
 - **Tabs only above `DataTable`** — best when workflows are organized as obvious buckets
 - **Tabs + chips** — when buckets are primary and finer filters help
 - **Bulk actions** — `selectionActions` on `useDataTable` turns `DataTable.Footer` into a bulk-action bar while rows are selected; see `interaction/multi-select`
+- **Targeted inline entry** — opt a typed column into `edit` for quantities, text, choices, or dates. DataTable supplies the editor and confirmation flow; the page owns validation, local row updates, persistence, and error feedback through `onValueChange`. Use `canEdit(row, { selected })` for per-row control; see [DataTable inline editing](../components/data-table.md#inline-editing).
 - **`Table` primitives** — small static lists without collection hooks
 
 ## Constraints
@@ -75,7 +76,7 @@ Omit `fill` on pages that should flow and scroll naturally (forms, dashboards, a
 - Handle every state: `DataTable` renders the loading skeleton and error row; always provide a **labelled empty state** (what the list is + how to add the first record) rather than a bare empty table
 - Status Badge colors must use design system tokens (variant prop): the **primary** status column uses **filled** semantic variants; **secondary** status columns (delivery, billing) use **`outline-*`** (see `design-system.md` → Composition & emphasis rules)
 - Bulk actions go in the footer bar from `selectionActions`, which appears only while ≥1 row is selected — never a separate toolbar or floating bar
-- Whole row is clickable via `onClickRow`; wrap the primary identifier cell in `<Link>` for keyboard/SR access. No per-row "View" / "Open" buttons
+- Whole row is clickable via `onClickRow`; wrap the primary identifier cell in `<Link>` for keyboard/SR access. No per-row "View" / "Open" buttons. Editable cells stop row-click navigation so users can enter a value without opening detail.
 - Per-row `Menu` (overflow `…`) is reserved for non-navigation actions (Archive, Duplicate, Delete)
 - Wide lists (many columns / horizontal scroll): pin the column users scan by to the **left** — the record's identifier (invoice / order **reference**) or its **name** (customer, product) — so it stays anchored while the rest scrolls; optionally pin a single high-signal **status** or **total** to the **right**. Keep the pinned set small (≈1 left, at most 1 right) — over-pinning eats the scroll area. Let users override via `<DataTable.Toolbar columnSettings>` (show/hide + reorder + re-pin) with a stable `tableId` so each user's layout persists
 
@@ -86,5 +87,5 @@ Omit `fill` on pages that should flow and scroll naturally (forms, dashboards, a
 - Tabs that mutate only local UI state while pagination/filters assume the full server set
 - Using `<table>` directly instead of `<DataTable>` for live collections
 - Client-side filtering on 1000+ records without server-side support
-- Inline editable cells — use `pattern/detail/*` or `pattern/form/modal` instead
+- Treating inline entry as a full form or save framework: cross-field rules, business-error draft retention, and save/rollback orchestration belong to the page or a dedicated form; use `pattern/detail/*` or `pattern/form/modal` when that is the primary workflow
 - Per-row "View" / "Open" buttons duplicating the row-click navigation

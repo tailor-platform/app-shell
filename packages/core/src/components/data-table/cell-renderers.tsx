@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { parseDate } from "@internationalized/date";
 import { Link } from "react-router";
 import { BadgeList, toValueArray } from "@/components/badge-list";
+import type { SelectOption } from "@/types/collection";
+import { optionLabel } from "./cell-edit";
 import { normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type {
   BadgeCellOptions,
@@ -151,11 +153,23 @@ function createDateRenderer(
   };
 }
 
-function renderBadge(value: unknown, options: BadgeCellOptions | undefined): ReactNode {
+function renderBadge(
+  value: unknown,
+  options: BadgeCellOptions | undefined,
+  choices: readonly SelectOption[] | undefined,
+): ReactNode {
   const items = toValueArray(value);
   const nonEmpty = items.filter((v) => v != null && v !== "");
   if (nonEmpty.length === 0) return PLACEHOLDER;
-  return <BadgeList value={value} options={options} maxVisible={options?.maxVisible} />;
+  return (
+    <BadgeList
+      value={value}
+      options={options}
+      maxVisible={options?.maxVisible}
+      // An editable column's choices label its badges, like its dropdown does.
+      resolveLabel={choices ? (v) => String(optionLabel(choices, v)) : undefined}
+    />
+  );
 }
 
 function renderLink<TRow extends Record<string, unknown>>(
@@ -188,20 +202,42 @@ export function createTypedCellRenderer<TRow extends Record<string, unknown>>(
     const renderDate = createDateRenderer(col.typeOptions, timeZone);
     return (row) => renderDate(getCellValue(row, col));
   }
-  return (row) => {
-    const value = getCellValue(row, col);
-    switch (col.type) {
-      case "number":
-        return renderNumber(value, col.typeOptions);
-      case "money":
-        return renderMoney(value, row, col.typeOptions);
-      case "badge":
-        return renderBadge(value, col.typeOptions);
-      case "link":
-        return renderLink(value, row, col.typeOptions);
-      case "text":
-      default:
-        return renderText(value);
+  return (row) => renderTypedValue(row, col, getCellValue(row, col));
+}
+
+/**
+ * Render the consumer's current value with the column's built-in renderer.
+ * Editable cells pass `linkAsText` because an editable link is an input,
+ * not a navigation target.
+ *
+ * @internal
+ */
+export function renderTypedValue<TRow extends Record<string, unknown>>(
+  row: TRow,
+  col: Column<TRow>,
+  value: unknown,
+  options?: { linkAsText?: boolean; timeZone?: string },
+): ReactNode {
+  switch (col.type) {
+    case "number":
+      return renderNumber(value, col.typeOptions);
+    case "money":
+      return renderMoney(value, row, col.typeOptions);
+    case "date":
+      return createDateRenderer(
+        col.typeOptions,
+        options?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+      )(value);
+    case "badge":
+      return renderBadge(value, col.typeOptions, col.edit?.options);
+    case "link": {
+      // A column with dropdown choices stores an option's value and shows its label.
+      const label = optionLabel(col.edit?.options, value);
+      return options?.linkAsText ? renderText(label) : renderLink(label, row, col.typeOptions);
     }
-  };
+    case "text":
+      return renderText(optionLabel(col.edit?.options, value));
+    default:
+      return renderText(value);
+  }
 }

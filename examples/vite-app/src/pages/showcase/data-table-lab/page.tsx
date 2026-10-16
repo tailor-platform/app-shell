@@ -11,6 +11,7 @@ import {
 } from "@tailor-platform/app-shell";
 import { FlaskConical } from "lucide-react";
 import { useMemo } from "react";
+import { InlineEditingDemo } from "./inline-editing-demo";
 
 // ─── Dummy data ──────────────────────────────────────────────────────────────
 // 🧪 Dummy Data: Replace with a real GraphQL-backed source later.
@@ -547,6 +548,31 @@ const DataTableLabPage = () => {
           left / Scrollable / Fixed right zones; scroll horizontally to see pinned columns stay put.
           Layout persists per table via <code>tableId</code>.
         </div>
+
+        <Section
+          title="Inline editing"
+          description={
+            <>
+              A goods receipt using <code>onValueChange</code> — scroll right for every editor.
+              Editable cells are tinted; hover a dropdown or date cell to see its editor icon, then
+              click anywhere in a cell. Enter confirms without moving focus, Tab moves to the next
+              editable cell, and Esc undoes a draft.{" "}
+              <strong>The screen owns validation and saving:</strong> a rejected business value
+              returns to the current data with a message outside the table; it does not block Tab
+              navigation or create a cell error. Tick a row to edit <strong>Received</strong> (whole
+              numbers from 0 to ordered), try 150 in <strong>Discount %</strong> (0–100, one
+              decimal), or more than 500 in <strong>Weight (kg)</strong> (three decimals).{" "}
+              <strong>Unit price</strong> updates locally before saving; values above 10,000 fail
+              after a delay and are rolled back by this screen. Supplier and Status reject "None";
+              Lot no. rejects empty text. Warehouse, QC, and Note can be cleared. Dates use an
+              unconstrained calendar: Expected rejects days before September 2026, Best before
+              accepts October 2026–December 2027, and Received at adds a time field. There is no
+              built-in unsaved-changes prompt when leaving.
+            </>
+          }
+        >
+          <InlineEditingDemo />
+        </Section>
 
         <Section
           title="Toolbar — filters + column settings"

@@ -1,5 +1,6 @@
 import { ClearAll, Header, Provider, Root, Sections } from "./filter-rail";
 import { Trigger } from "./responsive";
+import { SaveFilter, SavedFilters } from "./saved-filters";
 import { Settings } from "./settings";
 
 /**
@@ -29,8 +30,11 @@ export const FilterRail = {
   ClearAll,
   Sections,
   Settings,
+  SavedFilters,
+  SaveFilter,
   Trigger,
 };
 
 export type { FilterRailRootProps, FilterRailSection } from "./types";
 export { useFilterRailLayout } from "./use-filter-rail-layout";
+export { useSavedFilters } from "./use-saved-filters";

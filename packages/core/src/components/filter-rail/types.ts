@@ -193,6 +193,38 @@ export type RailLayoutBinding = {
   onReset?: () => void;
 };
 
+// ─── Saved filters ───────────────────────────────────────────────────────────
+
+/** A named set of the rail's filters. */
+export type SavedFilter = {
+  id: string;
+  name: string;
+  /** Only the rail's own filters — other filters on the page are untouched. */
+  filters: Filter[];
+  createdAt: string;
+};
+
+/**
+ * Where saved filters live. Either method may be async, so a backend store
+ * plugs in as easily as localStorage (the default).
+ */
+export type SavedFilterStorage = {
+  load: () => SavedFilter[] | Promise<SavedFilter[]>;
+  save: (items: SavedFilter[]) => void | Promise<void>;
+};
+
+/** What `useSavedFilters` returns, and what `SavedFilters` / `SaveFilter` render. */
+export type SavedFiltersBinding = {
+  items: readonly SavedFilter[];
+  /** True while an async `load` is in flight. */
+  loading: boolean;
+  /** The last load / save failure, or `null`. */
+  error: Error | null;
+  /** Save `filters` under `name`. An existing name is replaced. */
+  save: (name: string, filters: Filter[]) => void;
+  remove: (id: string) => void;
+};
+
 // ─── Parts ───────────────────────────────────────────────────────────────────
 
 /** Everything the rail filters with. Given to `Provider`, or to `Root` directly. */

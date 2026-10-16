@@ -9,7 +9,12 @@ import {
 } from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import type { RowSelectionOptions, SelectionAction } from "@/index";
+import type {
+  DataTableContextValue,
+  RowSelectionOptions,
+  SelectionAction,
+  UseDataTableReturn,
+} from "@/index";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
@@ -132,11 +137,11 @@ describe("rowSelection", () => {
     expect(result.current.isRowSelected(pageA.rows[0])).toBe(false);
     rerender({ selectedIds: ["2"], data: pageA });
     expect(result.current.selectedIds).toEqual(["2"]);
-    expect(result.current.selectedRows).toEqual([pageA.rows[1]]);
+    expect(result.current.isRowSelected(pageA.rows[1])).toBe(true);
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps controlled proposals page-scoped and retains history when clear is rejected", () => {
+  it("keeps controlled proposals page-scoped and preserves selection when clear is rejected", () => {
     const { result, rerender, onChange } = renderControlled(["1", "3"]);
     rerender({ selectedIds: ["1", "3"], data: pageB });
     act(() => result.current.deselectAllRows!());
@@ -144,12 +149,11 @@ describe("rowSelection", () => {
     expect(result.current.selectedIds).toEqual(["1", "3"]);
     act(() => result.current.clearSelection!());
     expect(onChange).toHaveBeenLastCalledWith([]);
-    expect(result.current.selectedRows).toEqual([pageA.rows[0], pageB.rows[0]]);
+    expect(result.current.selectedIds).toEqual(["1", "3"]);
     rerender({ selectedIds: ["1"], data: pageB });
     act(() => result.current.selectAllRows!());
     expect(onChange).toHaveBeenLastCalledWith(["1", "3"]);
     expect(result.current.selectedIds).toEqual(["1"]);
-    expect(result.current.selectedRows).toEqual([pageA.rows[0]]);
   });
 
   it("derives repeated controlled commands from the owner's committed ids", () => {
@@ -163,10 +167,10 @@ describe("rowSelection", () => {
   });
 
   it.each(["controlled", "uncontrolled"] as const)(
-    "remembers loaded preselected rows in %s mode",
+    "keeps ordered unique selected IDs independently of loaded rows in %s mode",
     (mode) => {
       const onChange = vi.fn();
-      const ids = ["1", "unseen"];
+      const ids = ["1", "unseen", "1"];
       const { result, rerender } = renderHook(
         ({ data }: { data: DataTableData<Row> | undefined }) =>
           useDataTable({
@@ -179,43 +183,39 @@ describe("rowSelection", () => {
           }),
         { initialProps: { data: undefined as DataTableData<Row> | undefined } },
       );
-      expect(result.current.selectedIds).toEqual(ids);
-      expect(result.current.selectedRows).toEqual([]);
+      expect(result.current.selectedIds).toEqual(["1", "unseen"]);
       rerender({ data: pageA });
-      expect(result.current.selectedRows).toEqual([pageA.rows[0]]);
+      expect(result.current.isRowSelected(pageA.rows[0])).toBe(true);
       const updated = { id: "1", name: "Alice updated" };
       rerender({ data: { rows: [updated] } });
+      expect(result.current.isRowSelected(updated)).toBe(true);
       rerender({ data: pageB });
-      expect(result.current.selectedRows).toEqual([updated]);
+      expect(result.current.selectedIds).toEqual(["1", "unseen"]);
+      expect(result.current.isRowSelected(pageB.rows[0])).toBe(false);
       expect(onChange).not.toHaveBeenCalled();
     },
   );
 
-  it("keeps refetched uncontrolled rows when selection changes on another page", () => {
+  it("retained clearSelection uses the latest committed selection and owner callback", () => {
+    const first = vi.fn();
+    const latest = vi.fn();
     const { result, rerender } = renderHook(
-      ({ data }) => useDataTable({ columns, data, rowSelection: {} }),
-      { initialProps: { data: pageA } },
+      ({ ids, onChange }) =>
+        useDataTable({ columns, data: pageA, rowSelection: { selectedIds: ids, onChange } }),
+      { initialProps: { ids: ["1"], onChange: first } },
     );
-    act(() => result.current.toggleRowSelection!(pageA.rows[0]));
-    const updated = { id: "1", name: "Alice updated" };
-    rerender({ data: { rows: [updated] } });
-    rerender({ data: pageB });
-    expect(result.current.selectedRows).toEqual([updated]);
-    act(() => result.current.selectAllRows!());
-    expect(result.current.selectedRows).toEqual([updated, pageB.rows[0]]);
-    act(() => result.current.deselectAllRows!());
-    expect(result.current.selectedRows).toEqual([updated]);
+    const clear = result.current.clearSelection!;
+    rerender({ ids: ["2"], onChange: latest });
+    act(() => clear());
+    expect(first).not.toHaveBeenCalled();
+    expect(latest).toHaveBeenCalledExactlyOnceWith([]);
+    expect(result.current.selectedIds).toEqual(["2"]);
+    rerender({ ids: [], onChange: latest });
+    act(() => clear());
+    expect(latest).toHaveBeenCalledTimes(1);
   });
 
-  it("remembers external preselection without any table interaction", () => {
-    const { result, rerender, onChange } = renderControlled([]);
-    rerender({ selectedIds: ["2"], data: pageA });
-    rerender({ selectedIds: ["2"], data: pageB });
-    expect(result.current.selectedRows).toEqual([pageA.rows[1]]);
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
-  it("remembers a toggled row when its owner selects it and changes page in the same commit", () => {
+  it("keeps a toggled ID when its owner selects it and changes page in the same commit", () => {
     const { result } = renderHook(() => {
       const [state, setState] = useState({ selectedIds: [] as string[], data: pageA });
       return useDataTable({
@@ -229,7 +229,7 @@ describe("rowSelection", () => {
     });
     act(() => result.current.toggleRowSelection!(pageA.rows[0]));
     expect(result.current.rows).toEqual(pageB.rows);
-    expect(result.current.selectedRows).toEqual([pageA.rows[0]]);
+    expect(result.current.selectedIds).toEqual(["1"]);
   });
 
   it("handles fresh inline selected ids and rows without a render loop", () => {
@@ -242,7 +242,7 @@ describe("rowSelection", () => {
       }),
     );
     rerender();
-    expect(result.current.selectedRows).toEqual([pageA.rows[0]]);
+    expect(result.current.selectedIds).toEqual(["1"]);
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -340,6 +340,13 @@ describe("rowSelection", () => {
     expect(
       within(screen.getByRole("toolbar", { name: "Bulk actions" })).getByText("2 selected"),
     ).toBeDefined();
+  });
+
+  it("does not expose a selected-row cache through the hook or context", () => {
+    expectTypeOf<"selectedRows">().not.toMatchTypeOf<keyof UseDataTableReturn<Row>>();
+    expectTypeOf<"selectedRows">().not.toMatchTypeOf<keyof DataTableContextValue<Row>>();
+    const { result } = renderHook(() => useDataTable({ columns, data: pageA, rowSelection: {} }));
+    expect(result.current).not.toHaveProperty("selectedRows");
   });
 
   it("keeps row predicates and automatic selection cleanup out of the selection action API", () => {

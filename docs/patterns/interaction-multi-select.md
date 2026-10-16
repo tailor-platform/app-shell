@@ -149,7 +149,7 @@ function InteractionMultiSelect() {
 
 - Declare bulk actions as the non-generic `SelectionAction[]` in `useDataTable`'s `rowSelection.actions` — do NOT hand-build the bar, a floating panel, or checkboxes; the footer renders the selection count, actions, overflow menu, and Clear. Providing `rowSelection` enables checkboxes even when `actions` is omitted or empty; the bar requires non-empty actions and selected ids
 - Keep `DataTable.Footer` in the tree — it is where the bar renders
-- `onClick` receives a click-time copy of all selected ids (`string[]`), including unloaded ids. `selectedRows` is only a partial cache, not the operation payload
+- Selection stores IDs only, not row objects. `onClick` receives a click-time copy of all selected ids (`string[]`), including unloaded ids; fetch any records required for the operation in the consumer's ID-based workflow
 - The consumer owns eligibility checks, required fetching, confirmation UI, and execution; backend validation remains authoritative. Selection actions have no row-based `canApply`, automatic eligible count, or eligibility-based disabled state
 - Return the promise from `onClick` for async work: the bar disables its actions and shows a spinner while it runs. Success and rejection both leave selection unchanged; there is no `keepSelection` option. Rejections are logged; show errors in the consumer UI
 - Use controlled `rowSelection: { selectedIds, onChange }` to remove only ids actually changed, with a functional update against the current selection. Preserve ineligible ids and ids selected after the operation started; cancellation or failure does not clear selection
@@ -163,7 +163,7 @@ function InteractionMultiSelect() {
 - Hand-rolled selection (`useState<Set>`, raw `<input type="checkbox">`, `Table.Root`) when the list is a DataTable
 - A floating or fixed-position action bar over the table instead of the footer bar
 - Placing bulk-action buttons in the page header or the table toolbar
-- Treating loaded `selectedRows` as the full selection or deriving bulk eligibility from the table's partial cache
+- Treating the currently loaded rows as the full selection or deriving bulk eligibility from incomplete row data
 - Clearing the whole selection after partial success, or overwriting it with the click-time snapshot and losing newer selections
 - Fire-and-forget async `onClick` that doesn't return its promise or use `run` — users can fire it twice
 - Firing destructive bulk actions without an interaction/confirm step

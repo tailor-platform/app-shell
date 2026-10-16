@@ -414,7 +414,7 @@ const table = useDataTable<Order>({
 
 Keep the controlled/uncontrolled mode stable while mounted. Callbacks notify user-driven selection changes, not mounting or external `selectedIds` updates. `onSelectionChange` is deprecated but remains supported for compatibility. Replace `onSelectionChange: handleSelectionChange` with `rowSelection: { onChange: handleSelectionChange }` to keep uncontrolled notification behavior. `rowSelection.onChange` takes precedence when both callbacks are supplied, and `onSelectionChange` is used when the new configuration has no callback.
 
-Selection spans pages. The header checkbox adds or removes only the current page's rows, preserving ids selected on other pages; `clearSelection()` clears every page. `selectedRows` is a partial cache: it contains current-page rows in their latest version and off-page rows as last loaded. Selected ids whose rows have never been loaded are omitted until seen, so the selection count can exceed the number of available row objects. This cache is not the operation target: bulk actions receive all selected ids, including ids whose rows have not been loaded.
+Selection spans pages. The header checkbox adds or removes only the current page's rows, preserving ids selected on other pages; `clearSelection()` clears every page. Selection stores IDs only, not row objects. Both `selectedIds` and bulk-action payloads include all selected ids, including ids whose rows have not been loaded. Fetch any records required for eligibility checks or execution in the consumer's ID-based workflow.
 
 ## Selection actions
 
@@ -468,7 +468,7 @@ return (
 
 `DeleteVendorsDialog` is a consumer-owned component, not an AppShell component. It can fetch the target records, explain eligibility (for example, “Three of five selected vendors can be deleted; two are in use”), confirm, and execute. Backend validation remains authoritative; `onDeleted` reports only ids actually deleted. Removing those ids from the **current** selection preserves ineligible records and records selected after the dialog opened. Cancellation or failure leaves selection unchanged.
 
-- **`onClick` receives a click-time snapshot of all selected ids.** The array is a copy, in selection order, including ids whose rows have not been loaded. Page visits and `selectedRows` cache availability do not change the target. Selection actions have no row-based `canApply`, automatic eligible count, or eligibility-based disabled state; the consumer owns eligibility checks, required fetching, confirmation UI, and execution. Row actions can still use `canApply` for their concrete row.
+- **`onClick` receives a click-time snapshot of all selected ids.** The array is a copy, in selection order, including ids whose rows have not been loaded. Page visits and loaded-row availability do not change the target. Selection actions have no row-based `canApply`, automatic eligible count, or eligibility-based disabled state; the consumer owns eligibility checks, required fetching, confirmation UI, and execution. Row actions can still use `canApply` for their concrete row.
 - **Return the promise from `onClick`.** While it is pending, the bar disables every action and shows a spinner on the running one, so a slow request can't be fired twice. Neither success nor rejection changes selection; there is no `keepSelection` option. A rejection is logged as `[DataTable] Selection action "…" failed`; showing it to the user is up to your handler.
 - **Confirm dialogs can hand a later request back with `run`.** An `onClick` that only opens a dialog returns nothing. Keep the `run` helper and call it from the dialog's confirm button — `await run(deleteVendors(ids))` — to track that request in the bar. This only tracks pending state; it does not clear selection. Clear is disabled while a request is pending, and pending state survives the bar closing and reopening. Use controlled `rowSelection` to remove only successful ids, or call the explicit `clearSelection` helper if clearing every page is intentional.
 - **Selection spans pages.** The header checkbox adds or removes only the current page; **Clear** empties everything.
@@ -1125,7 +1125,7 @@ function MyCustomPagination() {
 }
 ```
 
-The selection is here too — `selectedIds`, `selectedRows` (each loaded selected row as last seen, across pages; unseen ids are omitted), `selectAllRows` / `deselectAllRows` for the current page, and `clearSelection` — for the rare case the built-in [selection actions](#selection-actions) bar doesn't fit.
+The selection is here too — `selectedIds`, `selectAllRows` / `deselectAllRows` for the current page, and `clearSelection` — for the rare case the built-in [selection actions](#selection-actions) bar doesn't fit. Selection exposes IDs only; consumers fetch any row objects they need.
 
 ## SDK Plugin (`@tailor-platform/sdk-plugin-app-shell`)
 

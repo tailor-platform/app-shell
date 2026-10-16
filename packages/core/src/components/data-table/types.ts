@@ -656,12 +656,6 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
 
   // Row selection
   selectedIds: string[];
-  /**
-   * The selected rows, in selection order. Rows on the current page are their
-   * latest version; rows selected on other pages are the version last loaded.
-   * Selected ids whose rows have not been loaded are omitted until they are seen.
-   */
-  selectedRows: TRow[];
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
   /** Adds every row on the current page to the selection. */

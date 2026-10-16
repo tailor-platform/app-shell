@@ -673,37 +673,6 @@ describe("useDataTable", () => {
       act(() => result.current.clearSelection!());
 
       expect(result.current.selectedIds).toEqual([]);
-      expect(result.current.selectedRows).toEqual([]);
-    });
-
-    it("selectedRows keeps rows selected on other pages, as last seen", () => {
-      const { result, rerender } = renderPaged();
-
-      act(() => result.current.toggleRowSelection!(testData.rows[0]));
-      rerender({ data: pageB });
-      act(() => result.current.toggleRowSelection!(pageB.rows[0]));
-
-      expect(result.current.selectedRows).toEqual([testData.rows[0], pageB.rows[0]]);
-    });
-
-    it("selectedRows prefers the current page's copy of a selected row", () => {
-      const { result, rerender } = renderPaged();
-
-      act(() => result.current.toggleRowSelection!(testData.rows[0]));
-      // Same row id, refetched with new values — e.g. after a bulk update.
-      const refetched = { id: "1", name: "Alice", value: 99 };
-      rerender({ data: { rows: [refetched, testData.rows[1]] } });
-
-      expect(result.current.selectedRows).toEqual([refetched]);
-    });
-
-    it("selectedRows drops a row once it is deselected", () => {
-      const { result } = renderPaged();
-
-      act(() => result.current.toggleRowSelection!(testData.rows[0]));
-      act(() => result.current.toggleRowSelection!(testData.rows[0]));
-
-      expect(result.current.selectedRows).toEqual([]);
     });
   });
 
@@ -721,7 +690,6 @@ describe("useDataTable", () => {
       expect(result.current.toggleRowSelection).toBeDefined();
       act(() => result.current.toggleRowSelection!(testData.rows[1]));
       expect(result.current.selectedIds).toEqual(["2"]);
-      expect(result.current.selectedRows).toEqual([testData.rows[1]]);
     });
 
     it("an empty array still enables selection", () => {

@@ -36,14 +36,6 @@ function useSelectionCountText(): string {
   return t("selectionCount", { selected: selectedIds.length, total });
 }
 
-type ResolvedAction<TRow extends Record<string, unknown>> = {
-  action: SelectionAction<TRow>;
-  /** The selected rows this action can act on — what `onClick` receives. */
-  rows: TRow[];
-  /** Shown as "(n)" only when the action narrows the selection. */
-  count: number | null;
-};
-
 function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
   return typeof (value as PromiseLike<unknown> | null | undefined)?.then === "function";
 }
@@ -55,7 +47,7 @@ function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
 export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
   const {
     selectionActions = [],
-    selectedRows = [],
+    selectedIds,
     clearSelection,
     pendingActionId = null,
     runSelectionAction,
@@ -87,19 +79,13 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
   const busy = pendingId !== null;
 
   const clear = () => clearSelection?.();
-  const resolved: ResolvedAction<TRow>[] = selectionActions.map((action) => {
-    const { canApply } = action;
-    const rows = canApply ? selectedRows.filter((row) => canApply(row)) : selectedRows;
-    return { action, rows, count: canApply ? rows.length : null };
-  });
-  const inline = resolved.slice(0, MAX_INLINE_ACTIONS);
-  const overflow = resolved.slice(MAX_INLINE_ACTIONS);
+  const inline = selectionActions.slice(0, MAX_INLINE_ACTIONS);
+  const overflow = selectionActions.slice(MAX_INLINE_ACTIONS);
 
-  const run = ({ action, rows }: ResolvedAction<TRow>) => {
-    if (busy || rows.length === 0) return;
+  const run = (action: SelectionAction) => {
+    if (busy || selectedIds.length === 0) return;
     // `run` lets a handler that only opens a confirm dialog hand the request
-    // back later, from the dialog's confirm button, and still get the pending
-    // state and clear-on-success.
+    // back later, from the dialog's confirm button, and still get pending state.
     const helpers: SelectionActionHelpers = {
       clearSelection: clear,
       run: (request) => {
@@ -107,8 +93,7 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
         return request;
       },
     };
-    const result = action.onClick(rows, helpers);
-    // A synchronous handler that never calls `run` owns the selection.
+    const result = action.onClick([...selectedIds], helpers);
     if (isPromiseLike(result)) runSelectionAction?.(action, result);
   };
 
@@ -127,19 +112,17 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
           {countText}
         </span>
         <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />
-        {inline.map((resolvedAction) => {
-          const { action, rows, count } = resolvedAction;
+        {inline.map((action) => {
           return (
             <Button
               key={action.id}
               size="sm"
               variant={action.variant === "destructive" ? "destructive" : "outline"}
-              disabled={busy || rows.length === 0}
-              onClick={() => run(resolvedAction)}
+              disabled={busy}
+              onClick={() => run(action)}
             >
               {pendingId === action.id ? <Spinner /> : action.icon}
               {action.label}
-              {count !== null && <span className="astw:tabular-nums">({count})</span>}
             </Button>
           );
         })}
@@ -149,7 +132,7 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
               disabled={busy}
               render={
                 <Button variant="ghost" size="sm" aria-label={t("selectionMoreActions")}>
-                  {overflow.some(({ action }) => action.id === pendingId) ? (
+                  {overflow.some((action) => action.id === pendingId) ? (
                     <Spinner />
                   ) : (
                     <Ellipsis className="astw:size-4" />
@@ -160,18 +143,16 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
             {/* Opens upward: the bar sits at the bottom of the table, and often
                 at the bottom of the viewport while it is stuck there. */}
             <Menu.Content position={{ side: "top", align: "end" }}>
-              {overflow.map((resolvedAction) => {
-                const { action, rows, count } = resolvedAction;
+              {overflow.map((action) => {
                 return (
                   <Menu.Item
                     key={action.id}
-                    disabled={busy || rows.length === 0}
-                    onClick={() => run(resolvedAction)}
+                    disabled={busy}
+                    onClick={() => run(action)}
                     className={cn(action.variant === "destructive" && "astw:text-destructive")}
                   >
                     {action.icon}
                     {action.label}
-                    {count !== null && <span className="astw:tabular-nums">({count})</span>}
                   </Menu.Item>
                 );
               })}

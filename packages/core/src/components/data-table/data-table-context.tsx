@@ -61,11 +61,11 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
   /** Bulk actions `DataTable.Footer` shows while rows are selected. */
-  selectionActions?: SelectionAction<TRow>[];
+  selectionActions?: SelectionAction[];
 
   // Row selection
   // toggleRowSelection / selectAllRows / deselectAllRows / clearSelection are undefined
-  // when selection is not enabled (neither onSelectionChange nor selectionActions given).
+  // when selection is not enabled (no rowSelection, onSelectionChange, or selectionActions).
   // New members are optional for the hand-constructible reason noted under Row expansion.
   selectedIds: string[];
   /**
@@ -90,10 +90,7 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   /** Id of the selection action whose request is in flight, or `null`. */
   pendingActionId?: string | null;
   /** See `UseDataTableReturn.runSelectionAction`. */
-  runSelectionAction?: (
-    action: { id: string; keepSelection?: boolean },
-    request: PromiseLike<unknown>,
-  ) => void;
+  runSelectionAction?: (action: { id: string }, request: PromiseLike<unknown>) => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;
 

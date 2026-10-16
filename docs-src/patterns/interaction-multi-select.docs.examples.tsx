@@ -30,59 +30,76 @@ const columns: Column<Order>[] = [
   { label: "Total", render: (order) => `$${order.total.toLocaleString()}` },
 ];
 
-type PendingCancel = { orders: Order[]; run: SelectionActionHelpers["run"] };
+type PendingCancel = { ids: string[]; run: SelectionActionHelpers["run"] };
 
-// Stand-ins for real mutations.
-const cancelOrders = async (orders: Order[]) => {
-  window.alert(`Cancelling ${orders.length} order(s)`);
+// Stand-ins for backend operations over the complete dataset, not the table's row cache.
+const cancelOrders = async (ids: string[]) => {
+  const cancelledIds = mockOrders
+    .filter((order) => ids.includes(order.id) && order.status !== "Shipped")
+    .map((order) => order.id);
+  window.alert(`Cancelling ${cancelledIds.length} order(s)`);
+  return cancelledIds;
 };
-const confirmOrders = async (orders: Order[]) => {
-  window.alert(`Confirming ${orders.length} order(s)`);
+const confirmOrders = async (ids: string[]) => {
+  const confirmedIds = mockOrders
+    .filter((order) => ids.includes(order.id) && order.status === "Open")
+    .map((order) => order.id);
+  window.alert(`Confirming ${confirmedIds.length} order(s)`);
+  return confirmedIds;
 };
-const exportOrders = async (orders: Order[]) => {
-  window.alert(`Exporting ${orders.length} order(s)`);
+const exportOrders = async (ids: string[]) => {
+  window.alert(`Exporting ${ids.length} order(s)`);
 };
 
 export function InteractionMultiSelect() {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [pendingCancel, setPendingCancel] = useState<PendingCancel | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
-  const selectionActions: SelectionAction<Order>[] = [
+  const removeCompletedIds = (ids: string[]) => {
+    const completed = new Set(ids);
+    setSelectedIds((current) => current.filter((id) => !completed.has(id)));
+  };
+
+  const selectionActions: SelectionAction[] = [
     {
       id: "confirm",
       label: "Confirm",
-      // Only open orders can be confirmed: the bar shows "Confirm (n)".
-      canApply: (order) => order.status === "Open",
-      // Return the promise: the bar disables its actions while it runs, then
-      // clears the selection.
-      onClick: (orders) => confirmOrders(orders),
+      // The operation returns actual successes; never clear ineligible or newer selections.
+      onClick: async (ids) => removeCompletedIds(await confirmOrders(ids)),
     },
     {
       id: "export",
       label: "Export",
-      // Exporting doesn't change the rows, so keep them selected.
-      keepSelection: true,
-      onClick: (orders) => exportOrders(orders),
+      onClick: (ids) => exportOrders(ids),
     },
     {
       id: "assign",
       label: "Assign owner",
-      onClick: async (orders) => window.alert(`Assigning ${orders.length} order(s)`),
+      onClick: async (ids) => window.alert(`Assigning ${ids.length} order(s)`),
     },
     {
       // 4th action: lands in the More actions menu.
       id: "cancel",
       label: "Cancel",
       variant: "destructive",
-      canApply: (order) => order.status !== "Shipped",
-      // Destructive: confirm first (interaction/confirm). Keep `run` and hand
-      // the request back from the dialog's confirm button.
-      onClick: (orders, { run }) => setPendingCancel({ orders, run }),
+      onClick: (ids, { run }) => {
+        setCancelError(null);
+        setPendingCancel({ ids: [...ids], run });
+      },
     },
   ];
+
+  // In a real app, fetch eligibility for these snapshot ids before showing this explanation.
+  const cancellableCount = mockOrders.filter(
+    (order) => pendingCancel?.ids.includes(order.id) && order.status !== "Shipped",
+  ).length;
 
   const table = useDataTable({
     columns,
     data: { rows: mockOrders, total: mockOrders.length },
+    rowSelection: { selectedIds, onChange: setSelectedIds },
     selectionActions,
   });
 
@@ -98,25 +115,41 @@ export function InteractionMultiSelect() {
       <Dialog.Root
         open={pendingCancel !== null}
         onOpenChange={(open) => {
-          if (!open) setPendingCancel(null);
+          if (!open && !cancelling) setPendingCancel(null);
         }}
       >
         <Dialog.Content>
           <Dialog.Header>
-            <Dialog.Title>Cancel {pendingCancel?.orders.length} order(s)?</Dialog.Title>
-            <Dialog.Description>Cancelled orders can&apos;t be reopened.</Dialog.Description>
+            <Dialog.Title>Cancel selected orders?</Dialog.Title>
+            <Dialog.Description>
+              {cancellableCount} of {pendingCancel?.ids.length ?? 0} selected orders can be
+              cancelled; shipped orders are excluded. Cancelled orders can&apos;t be reopened.
+            </Dialog.Description>
           </Dialog.Header>
+          {cancelError && <p role="alert">{cancelError}</p>}
           <Dialog.Footer>
-            <Dialog.Close render={<Button variant="outline" />}>Keep orders</Dialog.Close>
+            <Dialog.Close render={<Button variant="outline" disabled={cancelling} />}>
+              Keep orders
+            </Dialog.Close>
             <Button
               variant="destructive"
-              onClick={() => {
-                // The bar shows its pending state and clears once this resolves.
-                if (pendingCancel) pendingCancel.run(cancelOrders(pendingCancel.orders));
-                setPendingCancel(null);
+              disabled={cancelling || cancellableCount === 0}
+              onClick={async () => {
+                if (!pendingCancel || cancelling) return;
+                setCancelling(true);
+                setCancelError(null);
+                try {
+                  const cancelledIds = await pendingCancel.run(cancelOrders(pendingCancel.ids));
+                  removeCompletedIds(cancelledIds);
+                  setPendingCancel(null);
+                } catch {
+                  setCancelError("Cancellation failed. Please try again.");
+                } finally {
+                  setCancelling(false);
+                }
               }}
             >
-              Cancel orders
+              {cancelling ? "Cancelling…" : "Cancel orders"}
             </Button>
           </Dialog.Footer>
         </Dialog.Content>

@@ -2086,22 +2086,20 @@ describe("DataTable", () => {
       expect((await activateItemFor(0)).getAttribute("aria-disabled")).toBe("true");
     });
 
-    it("shares one action definition with selectionActions", () => {
-      // Type-level check that the shared base spreads into both arrays.
-      const activate = {
-        id: "activate",
-        label: "Activate",
-        canApply: (r: TestRow) => r.status !== "Active",
-      };
+    it("shares presentation with selectionActions while keeping the row predicate separate", () => {
+      const activate = { id: "activate", label: "Activate" };
       const options: UseDataTableOptions<TestRow> = {
         columns: testColumns,
         data: testData,
-        rowActions: [{ ...activate, onClick: (row) => void row }],
-        selectionActions: [{ ...activate, onClick: (rows) => void rows }],
+        rowActions: [
+          { ...activate, canApply: (row) => row.status !== "Active", onClick: (row) => void row },
+        ],
+        selectionActions: [{ ...activate, onClick: (ids) => void ids }],
       };
       expectTypeOf(options.rowActions![0].canApply).toEqualTypeOf<
         ((row: TestRow) => boolean) | undefined
       >();
+      expectTypeOf(options.selectionActions![0].onClick).parameter(0).toEqualTypeOf<string[]>();
       expect(options.selectionActions).toHaveLength(1);
     });
   });

@@ -438,55 +438,49 @@
  * Palettes inherit these; override `--type-*` on `:root` to change
  * a role. See decisions/typography-roles.md.
  *
- * 1.17.0 shipped these as `--app-shell-type-*`. Each `--type-*` still reads
- * the old name first, so an override of an old name keeps working. The old
- * names are deprecated and will be removed in the next major.
+ * 1.17.0 shipped these as `--app-shell-type-*`. theme.bridge.css reads the
+ * old name first, so an override of an old name keeps working. The old names
+ * are deprecated and will be removed in the next major.
  */
 :root {
-  --type-heading-lg-size: var(--app-shell-type-heading-lg-size, 1.5rem);
-  --type-heading-lg-line-height: var(--app-shell-type-heading-lg-line-height, calc(32 / 24));
-  --type-heading-lg-weight: var(--app-shell-type-heading-lg-weight, 700);
-  --type-heading-lg-letter-spacing: var(--app-shell-type-heading-lg-letter-spacing, -0.025em);
-  --type-heading-md-size: var(--app-shell-type-heading-md-size, 1.125rem);
-  --type-heading-md-line-height: var(--app-shell-type-heading-md-line-height, calc(28 / 18));
-  --type-heading-md-weight: var(--app-shell-type-heading-md-weight, 600);
-  --type-heading-md-letter-spacing: var(--app-shell-type-heading-md-letter-spacing, 0em);
-  --type-heading-sm-size: var(--app-shell-type-heading-sm-size, 0.875rem);
-  --type-heading-sm-line-height: var(--app-shell-type-heading-sm-line-height, calc(20 / 14));
-  --type-heading-sm-weight: var(--app-shell-type-heading-sm-weight, 600);
-  --type-heading-sm-letter-spacing: var(--app-shell-type-heading-sm-letter-spacing, 0em);
-  --type-body-md-size: var(--app-shell-type-body-md-size, 0.875rem);
-  --type-body-md-line-height: var(--app-shell-type-body-md-line-height, calc(20 / 14));
-  --type-body-md-weight: var(--app-shell-type-body-md-weight, 400);
-  --type-body-md-letter-spacing: var(--app-shell-type-body-md-letter-spacing, 0em);
-  --type-body-sm-size: var(--app-shell-type-body-sm-size, 0.75rem);
-  --type-body-sm-line-height: var(--app-shell-type-body-sm-line-height, calc(16 / 12));
-  --type-body-sm-weight: var(--app-shell-type-body-sm-weight, 400);
-  --type-body-sm-letter-spacing: var(--app-shell-type-body-sm-letter-spacing, 0em);
-  --type-label-md-size: var(--app-shell-type-label-md-size, 0.875rem);
-  --type-label-md-line-height: var(--app-shell-type-label-md-line-height, calc(20 / 14));
-  --type-label-md-weight: var(--app-shell-type-label-md-weight, 500);
-  --type-label-md-letter-spacing: var(--app-shell-type-label-md-letter-spacing, 0em);
-  --type-label-sm-size: var(--app-shell-type-label-sm-size, 0.75rem);
-  --type-label-sm-line-height: var(--app-shell-type-label-sm-line-height, calc(16 / 12));
-  --type-label-sm-weight: var(--app-shell-type-label-sm-weight, 500);
-  --type-label-sm-letter-spacing: var(--app-shell-type-label-sm-letter-spacing, 0em);
-  --type-code-sm-size: var(--app-shell-type-code-sm-size, 0.75rem);
-  --type-code-sm-line-height: var(--app-shell-type-code-sm-line-height, calc(18 / 12));
-  --type-code-sm-weight: var(--app-shell-type-code-sm-weight, 400);
-  --type-code-sm-letter-spacing: var(--app-shell-type-code-sm-letter-spacing, 0em);
-  --type-body-md-relaxed-size: var(--app-shell-type-body-md-relaxed-size, 0.875rem);
-  --type-body-md-relaxed-line-height: var(
-    --app-shell-type-body-md-relaxed-line-height,
-    calc(24 / 14)
-  );
-  --type-body-md-relaxed-weight: var(--app-shell-type-body-md-relaxed-weight, 400);
-  --type-body-md-relaxed-letter-spacing: var(--app-shell-type-body-md-relaxed-letter-spacing, 0em);
-  --type-body-sm-relaxed-size: var(--app-shell-type-body-sm-relaxed-size, 0.75rem);
-  --type-body-sm-relaxed-line-height: var(
-    --app-shell-type-body-sm-relaxed-line-height,
-    calc(20 / 12)
-  );
-  --type-body-sm-relaxed-weight: var(--app-shell-type-body-sm-relaxed-weight, 400);
-  --type-body-sm-relaxed-letter-spacing: var(--app-shell-type-body-sm-relaxed-letter-spacing, 0em);
+  --type-heading-lg-size: 1.5rem;
+  --type-heading-lg-line-height: calc(32 / 24);
+  --type-heading-lg-weight: 700;
+  --type-heading-lg-letter-spacing: -0.025em;
+  --type-heading-md-size: 1.125rem;
+  --type-heading-md-line-height: calc(28 / 18);
+  --type-heading-md-weight: 600;
+  --type-heading-md-letter-spacing: 0em;
+  --type-heading-sm-size: 0.875rem;
+  --type-heading-sm-line-height: calc(20 / 14);
+  --type-heading-sm-weight: 600;
+  --type-heading-sm-letter-spacing: 0em;
+  --type-body-md-size: 0.875rem;
+  --type-body-md-line-height: calc(20 / 14);
+  --type-body-md-weight: 400;
+  --type-body-md-letter-spacing: 0em;
+  --type-body-sm-size: 0.75rem;
+  --type-body-sm-line-height: calc(16 / 12);
+  --type-body-sm-weight: 400;
+  --type-body-sm-letter-spacing: 0em;
+  --type-label-md-size: 0.875rem;
+  --type-label-md-line-height: calc(20 / 14);
+  --type-label-md-weight: 500;
+  --type-label-md-letter-spacing: 0em;
+  --type-label-sm-size: 0.75rem;
+  --type-label-sm-line-height: calc(16 / 12);
+  --type-label-sm-weight: 500;
+  --type-label-sm-letter-spacing: 0em;
+  --type-code-sm-size: 0.75rem;
+  --type-code-sm-line-height: calc(18 / 12);
+  --type-code-sm-weight: 400;
+  --type-code-sm-letter-spacing: 0em;
+  --type-body-md-relaxed-size: 0.875rem;
+  --type-body-md-relaxed-line-height: calc(24 / 14);
+  --type-body-md-relaxed-weight: 400;
+  --type-body-md-relaxed-letter-spacing: 0em;
+  --type-body-sm-relaxed-size: 0.75rem;
+  --type-body-sm-relaxed-line-height: calc(20 / 12);
+  --type-body-sm-relaxed-weight: 400;
+  --type-body-sm-relaxed-letter-spacing: 0em;
 }

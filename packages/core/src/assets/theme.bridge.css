@@ -44,47 +44,133 @@
    *
    * The `--text-*` namespace cannot set font-family. `text-code-sm` is used with
    * `font-mono`.
+   *
+   * Each entry reads the deprecated `--app-shell-type-*` name first: 1.17.0
+   * shipped the roles under that name. The fallback is resolved on the element
+   * that uses the utility, so an old-name override keeps working at any scope,
+   * not only on `:root`. Remove the old names in the next major.
    */
-  --text-heading-lg: var(--type-heading-lg-size);
-  --text-heading-lg--line-height: var(--type-heading-lg-line-height);
-  --text-heading-lg--font-weight: var(--type-heading-lg-weight);
-  --text-heading-lg--letter-spacing: var(--type-heading-lg-letter-spacing);
-  --text-heading-md: var(--type-heading-md-size);
-  --text-heading-md--line-height: var(--type-heading-md-line-height);
-  --text-heading-md--font-weight: var(--type-heading-md-weight);
-  --text-heading-md--letter-spacing: var(--type-heading-md-letter-spacing);
-  --text-heading-sm: var(--type-heading-sm-size);
-  --text-heading-sm--line-height: var(--type-heading-sm-line-height);
-  --text-heading-sm--font-weight: var(--type-heading-sm-weight);
-  --text-heading-sm--letter-spacing: var(--type-heading-sm-letter-spacing);
-  --text-body-md: var(--type-body-md-size);
-  --text-body-md--line-height: var(--type-body-md-line-height);
-  --text-body-md--font-weight: var(--type-body-md-weight);
-  --text-body-md--letter-spacing: var(--type-body-md-letter-spacing);
-  --text-body-sm: var(--type-body-sm-size);
-  --text-body-sm--line-height: var(--type-body-sm-line-height);
-  --text-body-sm--font-weight: var(--type-body-sm-weight);
-  --text-body-sm--letter-spacing: var(--type-body-sm-letter-spacing);
-  --text-label-md: var(--type-label-md-size);
-  --text-label-md--line-height: var(--type-label-md-line-height);
-  --text-label-md--font-weight: var(--type-label-md-weight);
-  --text-label-md--letter-spacing: var(--type-label-md-letter-spacing);
-  --text-label-sm: var(--type-label-sm-size);
-  --text-label-sm--line-height: var(--type-label-sm-line-height);
-  --text-label-sm--font-weight: var(--type-label-sm-weight);
-  --text-label-sm--letter-spacing: var(--type-label-sm-letter-spacing);
-  --text-code-sm: var(--type-code-sm-size);
-  --text-code-sm--line-height: var(--type-code-sm-line-height);
-  --text-code-sm--font-weight: var(--type-code-sm-weight);
-  --text-code-sm--letter-spacing: var(--type-code-sm-letter-spacing);
-  --text-body-md-relaxed: var(--type-body-md-relaxed-size);
-  --text-body-md-relaxed--line-height: var(--type-body-md-relaxed-line-height);
-  --text-body-md-relaxed--font-weight: var(--type-body-md-relaxed-weight);
-  --text-body-md-relaxed--letter-spacing: var(--type-body-md-relaxed-letter-spacing);
-  --text-body-sm-relaxed: var(--type-body-sm-relaxed-size);
-  --text-body-sm-relaxed--line-height: var(--type-body-sm-relaxed-line-height);
-  --text-body-sm-relaxed--font-weight: var(--type-body-sm-relaxed-weight);
-  --text-body-sm-relaxed--letter-spacing: var(--type-body-sm-relaxed-letter-spacing);
+  --text-heading-lg: var(--app-shell-type-heading-lg-size, var(--type-heading-lg-size));
+  --text-heading-lg--line-height: var(
+    --app-shell-type-heading-lg-line-height,
+    var(--type-heading-lg-line-height)
+  );
+  --text-heading-lg--font-weight: var(
+    --app-shell-type-heading-lg-weight,
+    var(--type-heading-lg-weight)
+  );
+  --text-heading-lg--letter-spacing: var(
+    --app-shell-type-heading-lg-letter-spacing,
+    var(--type-heading-lg-letter-spacing)
+  );
+  --text-heading-md: var(--app-shell-type-heading-md-size, var(--type-heading-md-size));
+  --text-heading-md--line-height: var(
+    --app-shell-type-heading-md-line-height,
+    var(--type-heading-md-line-height)
+  );
+  --text-heading-md--font-weight: var(
+    --app-shell-type-heading-md-weight,
+    var(--type-heading-md-weight)
+  );
+  --text-heading-md--letter-spacing: var(
+    --app-shell-type-heading-md-letter-spacing,
+    var(--type-heading-md-letter-spacing)
+  );
+  --text-heading-sm: var(--app-shell-type-heading-sm-size, var(--type-heading-sm-size));
+  --text-heading-sm--line-height: var(
+    --app-shell-type-heading-sm-line-height,
+    var(--type-heading-sm-line-height)
+  );
+  --text-heading-sm--font-weight: var(
+    --app-shell-type-heading-sm-weight,
+    var(--type-heading-sm-weight)
+  );
+  --text-heading-sm--letter-spacing: var(
+    --app-shell-type-heading-sm-letter-spacing,
+    var(--type-heading-sm-letter-spacing)
+  );
+  --text-body-md: var(--app-shell-type-body-md-size, var(--type-body-md-size));
+  --text-body-md--line-height: var(
+    --app-shell-type-body-md-line-height,
+    var(--type-body-md-line-height)
+  );
+  --text-body-md--font-weight: var(--app-shell-type-body-md-weight, var(--type-body-md-weight));
+  --text-body-md--letter-spacing: var(
+    --app-shell-type-body-md-letter-spacing,
+    var(--type-body-md-letter-spacing)
+  );
+  --text-body-sm: var(--app-shell-type-body-sm-size, var(--type-body-sm-size));
+  --text-body-sm--line-height: var(
+    --app-shell-type-body-sm-line-height,
+    var(--type-body-sm-line-height)
+  );
+  --text-body-sm--font-weight: var(--app-shell-type-body-sm-weight, var(--type-body-sm-weight));
+  --text-body-sm--letter-spacing: var(
+    --app-shell-type-body-sm-letter-spacing,
+    var(--type-body-sm-letter-spacing)
+  );
+  --text-label-md: var(--app-shell-type-label-md-size, var(--type-label-md-size));
+  --text-label-md--line-height: var(
+    --app-shell-type-label-md-line-height,
+    var(--type-label-md-line-height)
+  );
+  --text-label-md--font-weight: var(--app-shell-type-label-md-weight, var(--type-label-md-weight));
+  --text-label-md--letter-spacing: var(
+    --app-shell-type-label-md-letter-spacing,
+    var(--type-label-md-letter-spacing)
+  );
+  --text-label-sm: var(--app-shell-type-label-sm-size, var(--type-label-sm-size));
+  --text-label-sm--line-height: var(
+    --app-shell-type-label-sm-line-height,
+    var(--type-label-sm-line-height)
+  );
+  --text-label-sm--font-weight: var(--app-shell-type-label-sm-weight, var(--type-label-sm-weight));
+  --text-label-sm--letter-spacing: var(
+    --app-shell-type-label-sm-letter-spacing,
+    var(--type-label-sm-letter-spacing)
+  );
+  --text-code-sm: var(--app-shell-type-code-sm-size, var(--type-code-sm-size));
+  --text-code-sm--line-height: var(
+    --app-shell-type-code-sm-line-height,
+    var(--type-code-sm-line-height)
+  );
+  --text-code-sm--font-weight: var(--app-shell-type-code-sm-weight, var(--type-code-sm-weight));
+  --text-code-sm--letter-spacing: var(
+    --app-shell-type-code-sm-letter-spacing,
+    var(--type-code-sm-letter-spacing)
+  );
+  --text-body-md-relaxed: var(
+    --app-shell-type-body-md-relaxed-size,
+    var(--type-body-md-relaxed-size)
+  );
+  --text-body-md-relaxed--line-height: var(
+    --app-shell-type-body-md-relaxed-line-height,
+    var(--type-body-md-relaxed-line-height)
+  );
+  --text-body-md-relaxed--font-weight: var(
+    --app-shell-type-body-md-relaxed-weight,
+    var(--type-body-md-relaxed-weight)
+  );
+  --text-body-md-relaxed--letter-spacing: var(
+    --app-shell-type-body-md-relaxed-letter-spacing,
+    var(--type-body-md-relaxed-letter-spacing)
+  );
+  --text-body-sm-relaxed: var(
+    --app-shell-type-body-sm-relaxed-size,
+    var(--type-body-sm-relaxed-size)
+  );
+  --text-body-sm-relaxed--line-height: var(
+    --app-shell-type-body-sm-relaxed-line-height,
+    var(--type-body-sm-relaxed-line-height)
+  );
+  --text-body-sm-relaxed--font-weight: var(
+    --app-shell-type-body-sm-relaxed-weight,
+    var(--type-body-sm-relaxed-weight)
+  );
+  --text-body-sm-relaxed--letter-spacing: var(
+    --app-shell-type-body-sm-relaxed-letter-spacing,
+    var(--type-body-sm-relaxed-letter-spacing)
+  );
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);

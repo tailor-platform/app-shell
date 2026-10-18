@@ -25,6 +25,7 @@ export type {
   NumberCellOptions,
   DataTableAction,
   RowAction,
+  RowSelectionOptions,
   SelectionAction,
   SelectionActionHelpers,
   UseDataTableOptions,

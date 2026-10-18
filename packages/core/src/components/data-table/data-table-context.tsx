@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { Column, RowAction, RowExpansionOptions, SelectionAction } from "./types";
+import type { Column, RowAction, RowExpansionOptions, RowSelectionOptions } from "./types";
 import type { PageInfo, SortState } from "@/types/collection";
 
 /**
@@ -60,19 +60,14 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   // Row interaction
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
-  /** Bulk actions `DataTable.Footer` shows while rows are selected. */
-  selectionActions?: SelectionAction<TRow>[];
 
   // Row selection
   // toggleRowSelection / selectAllRows / deselectAllRows / clearSelection are undefined
-  // when selection is not enabled (neither onSelectionChange nor selectionActions given).
+  // when selection is not enabled (no rowSelection or onSelectionChange).
   // New members are optional for the hand-constructible reason noted under Row expansion.
+  /** Selection config, including bulk actions shown by `DataTable.Footer`. */
+  rowSelection?: RowSelectionOptions;
   selectedIds: string[];
-  /**
-   * The selected rows, in selection order. Rows on the current page are their
-   * latest version; rows selected on other pages are the version last loaded.
-   */
-  selectedRows?: TRow[];
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
   /**
@@ -90,10 +85,7 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   /** Id of the selection action whose request is in flight, or `null`. */
   pendingActionId?: string | null;
   /** See `UseDataTableReturn.runSelectionAction`. */
-  runSelectionAction?: (
-    action: { id: string; keepSelection?: boolean },
-    request: PromiseLike<unknown>,
-  ) => void;
+  runSelectionAction?: (action: { id: string }, request: PromiseLike<unknown>) => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;
 

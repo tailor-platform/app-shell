@@ -16,9 +16,8 @@ const buttonVariants = cva(
         destructive:
           "astw:bg-danger-solid astw:text-danger-contrast astw:shadow-xs astw:hover:bg-danger-solid-hover astw:focus-visible:ring-danger-solid/20 astw:dark:focus-visible:ring-danger-solid/40",
         outline:
-          "astw:border astw:border-border astw:bg-background astw:shadow-xs astw:hover:bg-accent astw:hover:text-accent-foreground astw:dark:bg-input/30 astw:dark:border-input astw:dark:hover:bg-input/50",
-        secondary:
-          "astw:bg-secondary astw:text-secondary-foreground astw:shadow-xs astw:hover:bg-secondary/80",
+          "astw:border astw:border-border astw:bg-transparent astw:hover:bg-accent astw:hover:text-accent-foreground astw:dark:bg-input/30 astw:dark:border-input astw:dark:hover:bg-input/50",
+        secondary: "astw:bg-secondary astw:text-secondary-foreground astw:hover:bg-secondary/80",
         ghost:
           "astw:hover:bg-accent astw:hover:text-accent-foreground astw:dark:hover:bg-accent/50",
         link: "astw:text-primary astw:underline-offset-4 astw:hover:underline",

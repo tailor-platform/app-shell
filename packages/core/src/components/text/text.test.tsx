@@ -12,8 +12,11 @@ afterEach(() => {
 type TextVariant = NonNullable<TextProps["variant"]>;
 
 const defaultTheme = readFileSync(join(__dirname, "../../assets/themes/default.css"), "utf8");
+// Matches the declared name before and after #606 renames `--app-shell-type-*` to `--type-*`.
 const themeRoles = [
-  ...new Set([...defaultTheme.matchAll(/^\s*--app-shell-type-([a-z-]+)-size:/gm)].map((m) => m[1])),
+  ...new Set(
+    [...defaultTheme.matchAll(/^\s*--(?:app-shell-)?type-([a-z-]+)-size:/gm)].map((m) => m[1]),
+  ),
 ];
 
 describe("Text", () => {

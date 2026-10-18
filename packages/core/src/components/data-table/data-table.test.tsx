@@ -590,6 +590,31 @@ describe("DataTable", () => {
       expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice");
     });
 
+    it("preserves decimal strings when filtering by a cell value", async () => {
+      const user = userEvent.setup();
+      const control = makeControl();
+      const amount = "9007199254740993.123456789";
+      function Harness() {
+        const table = useDataTable<{ amount: string }>({
+          columns: [
+            { id: "amount", label: "Amount", filter: { type: "decimal", field: "amount" } },
+          ],
+          data: { rows: [{ amount }] },
+          control,
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      openCellContextMenu(container, amount);
+      hoverMenuItem("Add filter");
+      await user.click(await screen.findByRole("menuitem", { name: "is" }));
+      expect(control.addFilter).toHaveBeenCalledWith("amount", "eq", amount);
+    });
+
     it.each([
       ["2026-10-09T01:00:00Z", "Oct 8, 2026, 6:00 PM", "2026-10-09T01:00:00.000Z"],
       ["2026-10-09T10:00:00+09:00", "Oct 8, 2026, 6:00 PM", "2026-10-09T01:00:00.000Z"],
@@ -2061,23 +2086,23 @@ describe("DataTable", () => {
       expect((await activateItemFor(0)).getAttribute("aria-disabled")).toBe("true");
     });
 
-    it("shares one action definition with selectionActions", () => {
-      // Type-level check that the shared base spreads into both arrays.
-      const activate = {
-        id: "activate",
-        label: "Activate",
-        canApply: (r: TestRow) => r.status !== "Active",
-      };
+    it("shares presentation with rowSelection.actions while keeping the row predicate separate", () => {
+      const activate = { id: "activate", label: "Activate" };
       const options: UseDataTableOptions<TestRow> = {
         columns: testColumns,
         data: testData,
-        rowActions: [{ ...activate, onClick: (row) => void row }],
-        selectionActions: [{ ...activate, onClick: (rows) => void rows }],
+        rowActions: [
+          { ...activate, canApply: (row) => row.status !== "Active", onClick: (row) => void row },
+        ],
+        rowSelection: { actions: [{ ...activate, onClick: (ids) => void ids }] },
       };
       expectTypeOf(options.rowActions![0].canApply).toEqualTypeOf<
         ((row: TestRow) => boolean) | undefined
       >();
-      expect(options.selectionActions).toHaveLength(1);
+      expectTypeOf(options.rowSelection!.actions![0].onClick)
+        .parameter(0)
+        .toEqualTypeOf<string[]>();
+      expect(options.rowSelection!.actions).toHaveLength(1);
     });
   });
 

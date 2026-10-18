@@ -33,12 +33,9 @@ const createMinimalModules = () => [
   }),
 ];
 
-/**
- * Stub window.innerWidth so useIsMobile() returns false (desktop mode).
- * This is needed because happy-dom defaults to innerWidth=0 which triggers mobile mode.
- */
+/** Use a width outside both mobile and tablet ranges for desktop assertions. */
 const stubDesktopViewport = () => {
-  vi.spyOn(window, "innerWidth", "get").mockReturnValue(1024);
+  vi.spyOn(window, "innerWidth", "get").mockReturnValue(1200);
   window.dispatchEvent(new Event("resize"));
 };
 
@@ -61,6 +58,17 @@ describe("SidebarLayout", () => {
         const sidebar = document.querySelector('[data-slot="sidebar"]')!;
         expect(sidebar).toBeDefined();
         expect(sidebar.getAttribute("data-state")).toBe("expanded");
+      });
+    });
+
+    it("renders the tablet icon rail at 1024px", async () => {
+      vi.spyOn(window, "innerWidth", "get").mockReturnValue(1024);
+      renderSidebarLayout();
+
+      await waitFor(() => {
+        const sidebar = document.querySelector('[data-slot="sidebar"]');
+        expect(sidebar?.getAttribute("data-state")).toBe("collapsed");
+        expect(sidebar?.getAttribute("data-collapsible")).toBe("icon");
       });
     });
 

@@ -101,7 +101,7 @@ Set the color with a color token in `className`. Four modifiers may also be comb
 </Text>
 ```
 
-Do not combine a role with other `leading-*`, `tracking-*`, or `text-*` size values. Pick a different `variant` instead.
+Do not combine a role with other `leading-*`, `tracking-*`, or `text-*` size values. Pick a different `variant` instead. A `text-*` size class such as `text-sm` has no effect on `Text`: AppShell's stylesheet loads after yours, so the role's size wins.
 
 ## Using Roles Without Text
 
@@ -121,7 +121,7 @@ import { type TextProps } from "@tailor-platform/app-shell";
 
 - A heading role renders a real heading (`h2`) by default, so screen readers list it with the other headings. Set the level with `render` so the levels follow the page structure.
 - Do not choose a heading level for its size. `Text` keeps the size and the level separate.
-- `body-*` roles render `p`. Inside another `p`, render a `span` instead, because a `p` cannot contain a `p`.
+- `body-*` roles render `p`. Inside another `p`, render a `span` instead (`<Text render={<span />}>`): the browser closes the outer `p` before the inner one, so React warns and server rendering fails to hydrate. Inside inline elements such as `button`, `label` or `span`, a `p` is invalid HTML too, so render a `span` there as well.
 
 ## Palettes
 

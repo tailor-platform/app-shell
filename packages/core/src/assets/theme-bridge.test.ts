@@ -71,14 +71,28 @@ describe("theme bridge", () => {
 
   describe("typography roles", () => {
     const slots = ["size", "line-height", "weight", "letter-spacing"] as const;
-    /** `--type-<role>-<slot>` variables in the default palette, grouped by role. */
+    /**
+     * `--type-<role>-<slot>` variables in the default palette, grouped by role.
+     * The value is the default inside the deprecated-name fallback.
+     */
     const defined = new Map<string, Map<string, string>>();
+    /** Variables whose value is not `var(--app-shell-type-<same role and slot>, <default>)`. */
+    const withoutOldName: string[] = [];
     for (const m of defaultTheme.matchAll(
       /^\s*--type-([a-z-]+)-(size|line-height|weight|letter-spacing):\s*([^;]+);/gm,
     )) {
-      const role = m[1];
-      defined.set(role, (defined.get(role) ?? new Map()).set(m[2], m[3].trim()));
+      const [, role, slot, raw] = m;
+      // The formatter may wrap a long var() over several lines.
+      const value = raw.replace(/\s+/g, " ").trim();
+      const fallback = value.match(/^var\(\s*--app-shell-type-([a-z-]+),\s*(.+?)\s*\)$/);
+      if (fallback?.[1] !== `${role}-${slot}`) withoutOldName.push(`--type-${role}-${slot}`);
+      defined.set(role, (defined.get(role) ?? new Map()).set(slot, fallback?.[2] ?? value));
     }
+
+    it("reads the deprecated --app-shell-type-* name first", () => {
+      // 1.17.0 shipped the roles under --app-shell-type-*; an app that overrides an old name must keep its value.
+      expect(withoutOldName).toEqual([]);
+    });
     /** Bridge entries `--text-<role>[--<suffix>]: var(--type-...)`, keyed by property name. */
     const bridgedText = new Map(
       [...bridge.matchAll(/^\s*(--text-[a-z-]+):\s*var\((--type-[a-z-]+)\);/gm)].map((m) => [

@@ -29,24 +29,6 @@ function reconcileColumnOrder(order: string[], columnKeys: string[]): string[] {
   return result;
 }
 
-function createSelectedRowHistory<TRow>() {
-  const remembered = new Map<string, TRow>();
-  return {
-    get: (id: string) => remembered.get(id),
-    remember: (id: string, row: TRow) => remembered.set(id, row),
-    commit: (ids: string[], rows: TRow[], getId: (row: TRow) => string | null) => {
-      const selected = new Set(ids);
-      for (const id of remembered.keys()) {
-        if (!selected.has(id)) remembered.delete(id);
-      }
-      for (const row of rows) {
-        const id = getId(row);
-        if (id !== null && selected.has(id)) remembered.set(id, row);
-      }
-    },
-  };
-}
-
 /**
  * Hook that integrates data management, column visibility, row operations, and
  * sort/pagination state for the `DataTable.*` compound component.
@@ -94,7 +76,6 @@ export function useDataTable<
     rowActions,
     onSelectionChange,
     rowSelection,
-    selectionActions,
     rowExpansion,
     sort: sortOption,
   } = options;
@@ -305,12 +286,11 @@ export function useDataTable<
     return id != null ? String(id) : null;
   }, []);
 
-  const selectionEnabled =
-    rowSelection !== undefined || !!onSelectionChange || (selectionActions?.length ?? 0) > 0;
+  const selectionEnabled = rowSelection !== undefined || !!onSelectionChange;
   const controlledSelectedIds = rowSelection?.selectedIds;
   const selectionOnChange = rowSelection?.onChange ?? onSelectionChange;
-  const [uncontrolledSelection, setSelection] = useState<Map<string, TRow | undefined>>(
-    () => new Map(rowSelection?.defaultSelectedIds?.map((id) => [id, undefined])),
+  const [uncontrolledSelection, setSelection] = useState<Set<string>>(
+    () => new Set(rowSelection?.defaultSelectedIds),
   );
   // Keep uncontrolled commands composable before React commits their state.
   const selectionRef = useRef(uncontrolledSelection);
@@ -319,12 +299,9 @@ export function useDataTable<
     selectedIds: controlledSelectedIds,
     onChange: selectionOnChange,
   });
-  const [rowHistory] = useState(createSelectedRowHistory<TRow>);
   const selection = useMemo(
     () =>
-      controlledSelectedIds !== undefined
-        ? new Map<string, TRow | undefined>(controlledSelectedIds.map((id) => [id, undefined]))
-        : uncontrolledSelection,
+      controlledSelectedIds !== undefined ? new Set(controlledSelectedIds) : uncontrolledSelection,
     [controlledSelectedIds, uncontrolledSelection],
   );
 
@@ -336,24 +313,20 @@ export function useDataTable<
     [selection, getRowId],
   );
 
-  // Async bulk-action completion must consult the current committed owner too.
   const currentSelection = () => {
     const ids = selectionOwnerRef.current.selectedIds;
-    return ids !== undefined
-      ? new Map(ids.map((id) => [id, rowHistory.get(id)]))
-      : new Map(selectionRef.current);
+    return new Set(ids ?? selectionRef.current);
   };
 
   // Notify outside the updater so StrictMode cannot invoke the callback twice.
-  const commitSelection = (next: Map<string, TRow | undefined>) => {
+  const commitSelection = (next: Set<string>) => {
     if (selectionOwnerRef.current.selectedIds === undefined) {
       selectionRef.current = next;
       setSelection(next);
     }
-    selectionOwnerRef.current.onChange?.([...next.keys()]);
+    selectionOwnerRef.current.onChange?.([...next]);
   };
 
-  // Remember new event rows before an owner can also change page in the same commit.
   const toggleRowSelection = selectionEnabled
     ? (row: TRow) => {
         const id = getRowId(row);
@@ -362,8 +335,7 @@ export function useDataTable<
         if (next.has(id)) {
           next.delete(id);
         } else {
-          next.set(id, row);
-          rowHistory.remember(id, row);
+          next.add(id);
         }
         commitSelection(next);
       }
@@ -376,10 +348,7 @@ export function useDataTable<
         const next = currentSelection();
         for (const row of rows) {
           const id = getRowId(row);
-          if (id !== null) {
-            next.set(id, row);
-            rowHistory.remember(id, row);
-          }
+          if (id !== null) next.add(id);
         }
         commitSelection(next);
       }
@@ -396,13 +365,11 @@ export function useDataTable<
       }
     : undefined;
 
-  // A no-op on an empty selection: a selection action may clear inside its
-  // `onClick` and then be cleared again by the bar once its promise resolves,
-  // and that second call must not fire another `onSelectionChange([])`.
+  // Clearing an empty selection must not fire another change notification.
   const clearSelection = selectionEnabled
     ? () => {
         if (currentSelection().size === 0) return;
-        commitSelection(new Map());
+        commitSelection(new Set());
       }
     : undefined;
 
@@ -415,7 +382,7 @@ export function useDataTable<
   pendingActionIdRef.current = pendingActionId;
 
   const runSelectionAction = selectionEnabled
-    ? (action: { id: string; keepSelection?: boolean }, request: PromiseLike<unknown>) => {
+    ? (action: { id: string }, request: PromiseLike<unknown>) => {
         // One request at a time: the bar disables its actions while one runs,
         // so a second call here only comes from app code racing itself.
         if (pendingActionIdRef.current !== null) return;
@@ -425,43 +392,22 @@ export function useDataTable<
           pendingActionIdRef.current = null;
           setPendingActionId(null);
         };
-        request.then(
-          () => {
-            settle();
-            // The rows it acted on may have changed, and copies remembered from
-            // other pages can't refresh — clear rather than keep stale rows.
-            if (!action.keepSelection) clearSelection?.();
-          },
-          (reason: unknown) => {
-            // Keep the selection so the action can be retried. Report rather
-            // than rethrow: a rethrow from this chain would surface as an
-            // unhandled rejection even when the app already handled the error.
-            settle();
-            console.error(`[DataTable] Selection action "${action.id}" failed:`, reason);
-          },
-        );
+        request.then(settle, (reason: unknown) => {
+          // Keep the selection so the action can be retried. Report rather
+          // than rethrow: a rethrow from this chain would surface as an
+          // unhandled rejection even when the app already handled the error.
+          settle();
+          console.error(`[DataTable] Selection action "${action.id}" failed:`, reason);
+        });
       }
     : undefined;
 
-  const selectedIds = useMemo(() => [...selection.keys()], [selection]);
+  const selectedIds = useMemo(() => [...selection], [selection]);
 
-  // Record committed row history without publishing mirrored state or extra renders.
+  // Retained selection helpers must consult the current committed owner.
   useLayoutEffect(() => {
     selectionOwnerRef.current = { selectedIds: controlledSelectedIds, onChange: selectionOnChange };
-    rowHistory.commit(selectedIds, rows, getRowId);
-  }, [controlledSelectedIds, selectionOnChange, selectedIds, rows, getRowId, rowHistory]);
-
-  const selectedRows = useMemo(() => {
-    const onPage = new Map<string, TRow>();
-    for (const row of rows) {
-      const id = getRowId(row);
-      if (id !== null && selection.has(id)) onPage.set(id, row);
-    }
-    return selectedIds.flatMap((id) => {
-      const row = onPage.get(id) ?? rowHistory.get(id);
-      return row === undefined ? [] : [row];
-    });
-  }, [selection, selectedIds, rows, getRowId, rowHistory]);
+  }, [controlledSelectedIds, selectionOnChange]);
 
   const selectableCount = rows.filter((r) => getRowId(r) !== null).length;
   const isAllSelected =
@@ -582,9 +528,8 @@ export function useDataTable<
     control: control as CollectionControl | undefined,
     onClickRow,
     rowActions,
-    selectionActions,
+    rowSelection,
     selectedIds,
-    selectedRows,
     isRowSelected,
     toggleRowSelection,
     selectAllRows,

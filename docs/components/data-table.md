@@ -223,7 +223,7 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 | Rows selected and `total` is not provided | `Y row(s) selected`      |
 | No selection enabled and no `total`       | _(nothing displayed)_    |
 
-Row selection is enabled by providing `rowSelection`, `onSelectionChange`, or a non-empty `selectionActions` array to `useDataTable`. The `total` value comes from `DataTableData.total`. While the footer shows the bulk-action bar (see [Selection actions](#selection-actions)), the bar owns the selection count and this text is omitted.
+Row selection is enabled by providing `rowSelection` or `onSelectionChange` to `useDataTable`. The `total` value comes from `DataTableData.total`. While the footer shows the bulk-action bar (see [Selection actions](#selection-actions)), the bar owns the selection count and this text is omitted.
 
 When pagination changes page or page size, `DataTable.Table` resets its own scroll container to the top automatically. That applies whether navigation comes from the built-in `DataTable.Pagination` or from custom controls using the same table context.
 
@@ -450,7 +450,16 @@ For a different editor or validation experience, leave `edit` unset and use the 
 
 ## Row selection
 
-Pass `rowSelection` to `useDataTable` to enable the checkbox column. Rows must have a string or number `id`; selected ids are their string-normalized values, and rows without an id are excluded. An empty configuration (`rowSelection: {}`) enables uncontrolled selection without a notification callback.
+Pass `rowSelection` to `useDataTable` to enable the checkbox column. Rows must have a string or number `id`; selected ids are their string-normalized values, and rows without an id are excluded. An empty configuration (`rowSelection: {}`) enables uncontrolled selection without a notification callback. Bulk actions belong in `rowSelection.actions`; `rowSelection: { actions: [] }` still enables checkboxes, but does not show the bulk-action bar.
+
+### `RowSelectionOptions`
+
+| Property             | Type                      | Description                                                                                                    |
+| -------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `selectedIds`        | `string[]`                | Controlled selected ids. Requires `onChange` and cannot be combined with `defaultSelectedIds`.                 |
+| `defaultSelectedIds` | `string[]`                | Initial selected ids in uncontrolled mode. Later changes are ignored.                                          |
+| `onChange`           | `(ids: string[]) => void` | Notifies user-driven selection changes; required in controlled mode and optional in uncontrolled mode.         |
+| `actions`            | `SelectionAction[]`       | Optional bulk actions shown in `DataTable.Footer` while ids are selected. Omitted or empty arrays show no bar. |
 
 ### Controlled selection
 
@@ -482,52 +491,68 @@ const table = useDataTable<Order>({
 
 Keep the controlled/uncontrolled mode stable while mounted. Callbacks notify user-driven selection changes, not mounting or external `selectedIds` updates. `onSelectionChange` is deprecated but remains supported for compatibility. Replace `onSelectionChange: handleSelectionChange` with `rowSelection: { onChange: handleSelectionChange }` to keep uncontrolled notification behavior. `rowSelection.onChange` takes precedence when both callbacks are supplied, and `onSelectionChange` is used when the new configuration has no callback.
 
-Selection spans pages. The header checkbox adds or removes only the current page's rows, preserving ids selected on other pages; `clearSelection()` clears every page. `selectedRows` contains current-page rows in their latest version and off-page rows as last loaded. Selected ids whose rows have never been loaded are omitted from `selectedRows` until seen, so the selection count can exceed the number of available row objects. Bulk actions operate only on those available rows.
+Selection spans pages. The header checkbox adds or removes only the current page's rows, preserving ids selected on other pages; `clearSelection()` clears every page. Selection stores IDs only, not row objects. Both `selectedIds` and bulk-action payloads include all selected ids, including ids whose rows have not been loaded. Fetch any records required for eligibility checks or execution in the consumer's ID-based workflow.
 
 ## Selection actions
 
-Pass `selectionActions` to `useDataTable` and, while at least one row is selected, `DataTable.Footer` becomes a bulk-action bar: the selection count, your actions, and a **Clear** button, with the footer's own children (usually `DataTable.Pagination`) kept alongside. A non-empty array also enables row selection, so `rowSelection` and `onSelectionChange` are optional. There is nothing new to compose in JSX — just keep `DataTable.Footer` in the tree.
+Pass `rowSelection.actions` to `useDataTable` and, while at least one id is selected, `DataTable.Footer` becomes a bulk-action bar: the selection count, your actions, and a **Clear** button, with the footer's own children (usually `DataTable.Pagination`) kept alongside. `rowSelection: { actions }` enables uncontrolled selection without an `onChange` callback. Omitted or empty `actions` show no bar, while the `rowSelection` object still enables checkboxes. There is nothing new to compose in JSX — just keep `DataTable.Footer` in the tree.
 
 ```tsx
+const [selectedIds, setSelectedIds] = useState<string[]>([]);
+const [deleteTargetIds, setDeleteTargetIds] = useState<string[] | null>(null);
+
 const table = useDataTable<Vendor>({
   columns,
   data,
   control,
-  selectionActions: [
-    {
-      id: "activate",
-      label: "Activate",
-      icon: <Play />,
-      canApply: (vendor) => vendor.status === "inactive",
-      // Returning the promise: the bar waits, then clears the selection.
-      onClick: (vendors) => activateVendors(vendors.map((vendor) => vendor.id)),
-    },
-    {
-      id: "export",
-      label: "Export",
-      icon: <Download />,
-      keepSelection: true, // exporting doesn't change the rows
-      onClick: (vendors) => exportCsv(vendors),
-    },
-  ],
+  rowSelection: {
+    selectedIds,
+    onChange: setSelectedIds,
+    actions: [
+      {
+        id: "delete",
+        label: "Delete",
+        variant: "destructive",
+        onClick: (ids) => setDeleteTargetIds([...ids]),
+      },
+    ],
+  },
 });
 
-<DataTable.Root value={table}>
-  <DataTable.Table />
-  <DataTable.Footer>
-    <DataTable.Pagination />
-  </DataTable.Footer>
-</DataTable.Root>;
+return (
+  <>
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+      <DataTable.Footer>
+        <DataTable.Pagination />
+      </DataTable.Footer>
+    </DataTable.Root>
+
+    {deleteTargetIds !== null && (
+      <DeleteVendorsDialog
+        ids={deleteTargetIds}
+        onCancel={() => setDeleteTargetIds(null)}
+        onDeleted={(deletedIds: string[]) => {
+          const deleted = new Set(deletedIds);
+          setSelectedIds((current) => current.filter((id) => !deleted.has(id)));
+          setDeleteTargetIds(null);
+        }}
+      />
+    )}
+  </>
+);
 ```
 
-- **`canApply` scopes an action to part of the selection.** The button shows how many selected rows qualify — `Activate (6)` — is disabled when none do, and `onClick` receives only those rows. Omit it for actions that apply to every selected row; no count is shown then.
-- **Return the promise from `onClick`.** While it is pending, the bar disables every action and shows a spinner on the running one, so a slow request can't be fired twice. When it resolves, the selection is cleared — the rows may have changed, and copies remembered from other pages can't refresh themselves. Set `keepSelection: true` for actions that don't change the rows, such as an export. If the promise rejects, the selection stays so the action can be retried, and the error is logged as `[DataTable] Selection action "…" failed`; showing it to the user is up to your `onClick`.
-- **Confirm dialogs hand the request back with `run`.** An `onClick` that only opens a confirm dialog returns nothing, so there is nothing to wait on yet. Keep the `run` helper and call it from the dialog's confirm button — `run(deleteRows(rows))` — and the bar shows the same pending state and clears on success. Clear is disabled while a request is pending, and the pending state is kept by the table, so it survives the bar closing and reopening. A synchronous handler that never calls `run` leaves the selection alone; call `clearSelection` when it should.
-- **Selection spans pages.** The table remembers each selected row as it was last loaded, so counts and `onClick` cover rows selected on other pages too. Rows on the current page are always their latest version. The header checkbox adds or removes only the current page; **Clear** empties everything.
+`DeleteVendorsDialog` is a consumer-owned component, not an AppShell component. It can fetch the target records, explain eligibility (for example, “Three of five selected vendors can be deleted; two are in use”), confirm, and execute. Backend validation remains authoritative; `onDeleted` reports only ids actually deleted. Removing those ids from the **current** selection preserves ineligible records and records selected after the dialog opened. Cancellation or failure leaves selection unchanged.
+
+- **`onClick` receives a click-time snapshot of all selected ids.** The array is a copy, in selection order, including ids whose rows have not been loaded. Page visits and loaded-row availability do not change the target. Selection actions have no row-based `canApply`, automatic eligible count, or eligibility-based disabled state; the consumer owns eligibility checks, required fetching, confirmation UI, and execution. Row actions can still use `canApply` for their concrete row.
+- **Return the promise from `onClick`.** While it is pending, the bar disables every action and shows a spinner on the running one, so a slow request can't be fired twice. Neither success nor rejection changes selection; there is no `keepSelection` option. A rejection is logged as `[DataTable] Selection action "…" failed`; showing it to the user is up to your handler.
+- **Confirm dialogs can hand a later request back with `run`.** An `onClick` that only opens a dialog returns nothing. Keep the `run` helper and call it from the dialog's confirm button — `await run(deleteVendors(ids))` — to track that request in the bar. This only tracks pending state; it does not clear selection. Clear is disabled while a request is pending, and pending state survives the bar closing and reopening. Use controlled `rowSelection` to remove only successful ids, or call the explicit `clearSelection` helper if clearing every page is intentional.
+- **Selection spans pages.** The header checkbox adds or removes only the current page; **Clear** empties everything.
 - **Three actions stay inline.** The fourth onward collapse into a **More actions** menu, in array order. Put the most frequent first; a destructive action placed last sits safely in the menu.
 - **Confirm destructive actions.** `variant: "destructive"` only styles the action. Open a confirm dialog from `onClick` before deleting — see the [confirm pattern](../patterns/interaction-confirm.md).
 - **The bar stays reachable.** In `<Layout fill>` the footer is already pinned. On a page that scrolls, the bar sticks to the bottom of the viewport while rows are selected and settles back into place at the end of the table. It sticks to the nearest scrolling container: inside a scrolling drawer or panel it rides that container instead, and inside a wrapper that clips its overflow (such as a card with `overflow: hidden`) it simply stays in the footer.
-- **Share definitions with `rowActions`.** `SelectionAction` and `RowAction` both extend [`DataTableAction`](#datatableaction), so an action defined once — label, icon, `canApply` — can be spread into both arrays with a different `onClick`.
+- **Share presentation with `rowActions`.** Both action types extend the non-generic [`DataTableAction`](#datatableaction) (`id`, `label`, `icon`, `variant`). Keep row predicates on `RowAction<TRow>` and bulk business rules in the consumer's ID-based handler.
 
 ### Accessibility
 
@@ -535,7 +560,7 @@ The bar is a `role="toolbar"` named "Bulk actions", so Arrow, Home, and End move
 
 ## `useDataTable`
 
-Creates the table state object to pass to `DataTable.Root`.
+Creates the table state object to pass to `DataTable.Root`. The hook return value and `useDataTableContext()` both expose the original selection configuration as `rowSelection`, including `rowSelection.actions`. Read the current selection from `selectedIds` and update it through the selection commands.
 
 ```tsx
 const table = useDataTable({
@@ -548,21 +573,20 @@ const table = useDataTable({
 
 ### Options
 
-| Option              | Type                               | Description                                                                                                                                                                     |
-| ------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                   |
-| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                   |
-| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                        |
-| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                           |
-| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                |
-| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                               |
-| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.            |
-| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                         |
-| `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection). |
-| `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                 |
-| `selectionActions`  | `SelectionAction<TRow>[]`          | Bulk actions shown in `DataTable.Footer` while rows are selected. A non-empty array also enables selection. See [Selection actions](#selection-actions).                        |
-| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows). |
-| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                       |
+| Option              | Type                               | Description                                                                                                                                                                                              |
+| ------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                                            |
+| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                                            |
+| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                                                 |
+| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                                                    |
+| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                                         |
+| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                                                        |
+| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.                                     |
+| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                                                  |
+| `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`, with optional `actions`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection). |
+| `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                                          |
+| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows).                          |
+| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                                                |
 
 ### `DataTableData`
 
@@ -967,7 +991,7 @@ When `caseSensitive` is omitted or `false`, the filter is case-insensitive. When
 
 ## `RowAction`
 
-A row action in the kebab-menu column. Extends [`DataTableAction`](#datatableaction) (`id`, `label`, `icon`, `variant`, `canApply`).
+A row action in the kebab-menu column. `RowAction<TRow>` extends the non-generic [`DataTableAction`](#datatableaction) (`id`, `label`, `icon`, `variant`) and adds row-based behavior.
 
 | Property     | Type                     | Description                                                                                                                     |
 | ------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -977,38 +1001,44 @@ A row action in the kebab-menu column. Extends [`DataTableAction`](#datatableact
 
 ## `SelectionAction`
 
-A bulk action for the rows currently selected. Extends [`DataTableAction`](#datatableaction). See [Selection actions](#selection-actions).
+A non-generic bulk action for selected ids. Extends [`DataTableAction`](#datatableaction). See [Selection actions](#selection-actions).
 
-| Property        | Type                                                                           | Description                                                                                                                                                                                                                                                            |
-| --------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `canApply`      | `(row: TRow) => boolean`                                                       | Scopes the action to the selected rows it can act on: shows their count, disables at zero, and passes only those rows to `onClick`.                                                                                                                                    |
-| `onClick`       | `(rows: TRow[], helpers: { clearSelection, run }) => void \| Promise<unknown>` | Called with the selected rows the action can act on, including rows selected on other pages. Return a promise — or pass a later one to `run`, e.g. from a confirm dialog — to get the pending state and clear-on-success; see [Selection actions](#selection-actions). |
-| `keepSelection` | `boolean`                                                                      | Keep the selection after the promise resolves — for actions that don't change the rows, such as an export.                                                                                                                                                             |
+| Property  | Type                                                                           | Description                                                                                                                                                                                                       |
+| --------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `onClick` | `(ids: string[], helpers: SelectionActionHelpers) => void \| Promise<unknown>` | Receives a copy of all selected ids at click time, including unloaded ids. Return a promise, or pass a later request to `helpers.run`, for pending-state tracking only. Selection is never cleared automatically. |
+
+`SelectionActionHelpers` provides `clearSelection(): void` to explicitly clear every page and `run<T>(request: PromiseLike<T>): PromiseLike<T>` to track a later request without changing selection. Eligibility, fetching, confirmation, execution, and result-based selection updates belong to the consumer.
 
 ## `DataTableAction`
 
-What `RowAction` and `SelectionAction` share. Define an action once and spread it into both arrays — only `onClick` differs.
+Non-generic presentation shared by `RowAction<TRow>` and `SelectionAction`. Share these fields, not eligibility rules: row actions can evaluate a concrete row, while selection actions operate on ids.
 
-| Property   | Type                         | Description                                                                                                                                      |
-| ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `id`       | `string`                     | Stable identifier for the action.                                                                                                                |
-| `label`    | `string`                     | Display label — the menu item for a row action, the button (or **More actions** item) for a selection action.                                    |
-| `icon`     | `ReactNode`                  | Optional icon shown beside the label.                                                                                                            |
-| `variant`  | `"default" \| "destructive"` | Visual style. A destructive action still needs its own confirmation step.                                                                        |
-| `canApply` | `(row: TRow) => boolean`     | Which rows the action can act on. A row action is disabled where it returns `false`; a selection action counts the rows where it returns `true`. |
+| Property  | Type                         | Description                                                                                                   |
+| --------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `id`      | `string`                     | Stable identifier for the action.                                                                             |
+| `label`   | `string`                     | Display label — the menu item for a row action, the button (or **More actions** item) for a selection action. |
+| `icon`    | `ReactNode`                  | Optional icon shown beside the label.                                                                         |
+| `variant` | `"default" \| "destructive"` | Visual style. A destructive action still needs its own confirmation step.                                     |
 
 ```tsx
-const archive: DataTableAction<Order> = {
+const archive: DataTableAction = {
   id: "archive",
   label: "Archive",
-  canApply: (order) => order.status !== "Archived",
 };
 
-useDataTable({
+useDataTable<Order>({
   columns,
   data,
-  rowActions: [{ ...archive, onClick: (order) => archiveOrders([order]) }],
-  selectionActions: [{ ...archive, onClick: (orders) => archiveOrders(orders) }],
+  rowActions: [
+    {
+      ...archive,
+      canApply: (order) => order.status !== "Archived",
+      onClick: (order) => archiveOrders([order.id]),
+    },
+  ],
+  rowSelection: {
+    actions: [{ ...archive, onClick: (ids) => archiveOrders(ids) }],
+  },
 });
 ```
 
@@ -1172,7 +1202,7 @@ function MyCustomPagination() {
 }
 ```
 
-The selection is here too — `selectedIds`, `selectedRows` (each loaded selected row as last seen, across pages; unseen ids are omitted), `selectAllRows` / `deselectAllRows` for the current page, and `clearSelection` — for the rare case the built-in [selection actions](#selection-actions) bar doesn't fit.
+The selection is here too — `selectedIds`, `selectAllRows` / `deselectAllRows` for the current page, and `clearSelection` — for the rare case the built-in [selection actions](#selection-actions) bar doesn't fit. Selection exposes IDs only; consumers fetch any row objects they need.
 
 ## SDK Plugin (`@tailor-platform/sdk-plugin-app-shell`)
 

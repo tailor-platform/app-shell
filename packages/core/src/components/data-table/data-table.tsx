@@ -56,7 +56,7 @@ import { DataTablePagination } from "./pagination";
 import {
   DataTableSelectionAnnouncer,
   DataTableSelectionBar,
-  hasSelectionActions,
+  hasBulkActions,
   isSelectionBarOpen,
 } from "./selection-bar";
 export type { DataTablePaginationProps } from "./pagination";
@@ -632,9 +632,8 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     hasNextPage: value.hasNextPage,
     onClickRow: value.onClickRow,
     rowActions: value.rowActions,
-    selectionActions: value.selectionActions,
+    rowSelection: value.rowSelection,
     selectedIds: value.selectedIds,
-    selectedRows: value.selectedRows,
     isRowSelected: value.isRowSelected,
     toggleRowSelection: value.toggleRowSelection,
     selectAllRows: value.selectAllRows,
@@ -1172,7 +1171,7 @@ function DataTableBody({ className }: { className?: string }) {
     return (
       <Table.Body {...tableBodyProps}>
         <DataTableStatusRow totalColSpan={totalColSpan} state="error">
-          <span className="astw:text-destructive">
+          <span className="astw:text-danger-text">
             {t("errorPrefix")} {error.message}
           </span>
         </DataTableStatusRow>
@@ -1797,7 +1796,7 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
         />
         <Menu.Content>
           {actions.map((action) => {
-            // `canApply` is the shared, positive form; the deprecated
+            // `canApply` is the positive form; the deprecated
             // `isDisabled` still counts, so either one can switch it off.
             const disabled =
               (action.canApply ? !action.canApply(row) : false) ||
@@ -1811,7 +1810,7 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
                     action.onClick(row);
                   }
                 }}
-                className={cn(action.variant === "destructive" && "astw:text-destructive")}
+                className={cn(action.variant === "destructive" && "astw:text-danger-text")}
               >
                 {action.icon}
                 {action.label}
@@ -1963,7 +1962,7 @@ DataTableTable.displayName = "DataTable.Table";
 /** Use `DataTable.Footer` instead of calling this directly. */
 function DataTableFooter({ children, className }: { children?: ReactNode; className?: string }) {
   const ctx = useContext(DataTableContext);
-  const offersBulkActions = hasSelectionActions(ctx);
+  const offersBulkActions = hasBulkActions(ctx);
   const selecting = isSelectionBarOpen(ctx);
 
   return (
@@ -2048,7 +2047,7 @@ export const DataTable = {
    * Footer container for pagination and other footer content.
    * Place inside `DataTable.Root`, after `DataTable.Table`.
    *
-   * When `useDataTable()` is given `selectionActions`, the footer becomes the
+   * When `useDataTable()` is given `rowSelection.actions`, the footer becomes the
    * bulk-action bar while rows are selected — the selection count, the
    * actions, and a Clear button — with its own children (usually
    * `DataTable.Pagination`) kept alongside.

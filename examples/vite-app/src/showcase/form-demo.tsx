@@ -467,10 +467,7 @@ const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(50, "Name must be 50 characters or less"),
   email: z.string().email("Please enter a valid email address"),
   age: z
-    .number({
-      required_error: "Age is required",
-      invalid_type_error: "Age is required",
-    })
+    .number({ error: "Age is required" })
     .min(18, "Must be at least 18")
     .max(120, "Must be 120 or less"),
   website: z.union([z.string().url("Please enter a valid URL"), z.literal("")]).optional(),

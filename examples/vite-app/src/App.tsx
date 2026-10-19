@@ -1,5 +1,6 @@
 import {
   AppShell,
+  AuthProvider,
   GlobalHeaderLayout,
   SidebarGroup,
   SidebarItem,
@@ -14,6 +15,7 @@ import { searchOrders, searchRecentOrders } from "./fake-search";
 import { labels } from "./i18n-labels";
 import { headerActions, PanelsBody } from "./panels-body";
 import { AssistantProvider } from "./assistant-context";
+import { authClient } from "./ai-chat-client";
 
 // Demonstrates multiple search sources in the command palette
 const searchSources: SearchSource[] = [
@@ -94,10 +96,14 @@ const AppInner = () => {
   );
 };
 
-const App = () => (
-  <AssistantProvider>
-    <AppInner />
-  </AssistantProvider>
-);
+const App = () => {
+  const content = (
+    <AssistantProvider>
+      <AppInner />
+    </AssistantProvider>
+  );
+
+  return authClient ? <AuthProvider client={authClient}>{content}</AuthProvider> : content;
+};
 
 export default App;

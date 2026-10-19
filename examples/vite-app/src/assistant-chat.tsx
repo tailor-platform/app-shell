@@ -1,19 +1,22 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronsRight, Copy, Eraser, RefreshCw, Sparkles } from "lucide-react";
 import {
   AIChat,
   Button,
   useAIChat,
   useAuth,
+  useNavigate,
   type AIGatewayClient,
   type AIChatHeaderProps,
 } from "@tailor-platform/app-shell";
 import { aiClient } from "./ai-chat-client";
-import { tools } from "./ai-chat-tools";
+import { createAIChatTools } from "./ai-chat-tools";
 
 type ChatProps = { header: AIChatHeaderProps; client: AIGatewayClient };
 
 const Chat = ({ header, client }: ChatProps) => {
+  const navigate = useNavigate();
+  const tools = useMemo(() => createAIChatTools(navigate), [navigate]);
   const { messages, toolCalls, status, error, sendMessage, stop } = useAIChat({
     client,
     model: "gpt-4o-mini",
@@ -37,10 +40,7 @@ const Chat = ({ header, client }: ChatProps) => {
             description="Connected to AI Gateway (gpt-4o-mini). No order data or knowledge base is attached."
           >
             <AIChat.Suggestions>
-              <AIChat.Suggestion
-                suggestion="Use the add tool to calculate 123 + 456."
-                onSelect={sendMessage}
-              />
+              <AIChat.Suggestion suggestion="注文一覧を開いて" onSelect={sendMessage} />
             </AIChat.Suggestions>
           </AIChat.EmptyState>
         ) : (

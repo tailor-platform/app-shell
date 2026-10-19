@@ -47,9 +47,12 @@ resets the conversation; it is not saved to storage.
 The [AI Chat showcase](http://localhost:3100/showcase/ai-chat) remains a scripted
 component demo. Only the global assistant panel connects to the gateway.
 
-The chat includes a local `add` tool that accepts two numbers (`a`, `b`) and
-returns `{ sum }`. Select “Use the add tool to calculate 123 + 456.” to try the
-model → browser-side tool → model round trip. Tool inputs are validated with Zod.
+The `navigateToPage` tool opens an allowlisted page with the existing router,
+without reloading the app or resetting the assistant. Try “注文一覧を開いて”.
+Destinations are limited to the dashboard (`/dashboard`), orders
+(`/dashboard/orders`), products (`/dashboard/products`), settings (`/settings`),
+and body-slot demo (`/dashboard/panels`). External URLs, arbitrary paths, and
+query parameters are rejected. The tool only navigates; it does not modify data.
 
 Removing these settings and restarting Vite disables the assistant. This does
 not require changes to the e2e backend.

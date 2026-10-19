@@ -1,10 +1,27 @@
-import { defineAIChatTool } from "@tailor-platform/app-shell";
+import { defineAIChatTool, type NavigateFunction } from "@tailor-platform/app-shell";
 import { z } from "zod/v4";
 
-export const tools = {
-  add: defineAIChatTool({
-    description: "Add two numbers and return their sum. Use this tool for addition requests.",
-    schema: z.object({ a: z.number(), b: z.number() }),
-    execute: ({ a, b }) => ({ sum: a + b }),
-  }),
-};
+export function createAIChatTools(navigate: NavigateFunction) {
+  return {
+    navigateToPage: defineAIChatTool({
+      description:
+        "Open an example page only when the user asks to navigate. " +
+        "/dashboard: dashboard; /dashboard/orders: orders; /dashboard/products: products; " +
+        "/settings: settings; /dashboard/panels: body slot demo. This does not modify data.",
+      schema: z.object({
+        path: z.enum([
+          "/dashboard",
+          "/dashboard/orders",
+          "/dashboard/products",
+          "/settings",
+          "/dashboard/panels",
+        ]),
+      }),
+      async execute({ path }, { signal }) {
+        signal.throwIfAborted();
+        await navigate(path);
+        return { path };
+      },
+    }),
+  };
+}

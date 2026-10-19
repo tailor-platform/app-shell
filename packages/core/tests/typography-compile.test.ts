@@ -88,6 +88,29 @@ describe("typography role utilities", () => {
     expect(declarationsOf(css, ".text-label-md").get("line-height")).toMatch(/^var\(--tw-leading,/);
   });
 
+  it("lets a consumer modifier override a role from AppShell's prefixed build", async () => {
+    // `<Text className="leading-none font-semibold">` puts AppShell's `astw:text-*` and the
+    // consumer's unprefixed modifier on one element. The prefixed sheet loads later and
+    // wins the cascade, so the modifier works only because both builds share the
+    // unprefixed `--tw-*` variables.
+    const library = await compile('@import "tailwindcss" prefix(astw) source(none);', [
+      "astw:text-heading-md",
+    ]);
+    const consumer = await compile('@import "tailwindcss" source(none);', [
+      "leading-none",
+      "font-semibold",
+      "tracking-wide",
+    ]);
+
+    const role = declarationsOf(library, ".astw\\:text-heading-md");
+    expect(role.get("line-height")).toMatch(/^var\(--tw-leading,/);
+    expect(role.get("font-weight")).toMatch(/^var\(--tw-font-weight,/);
+    expect(role.get("letter-spacing")).toMatch(/^var\(--tw-tracking,/);
+    expect(declarationsOf(consumer, ".leading-none").get("--tw-leading")).toBe("1");
+    expect(declarationsOf(consumer, ".font-semibold").has("--tw-font-weight")).toBe(true);
+    expect(declarationsOf(consumer, ".tracking-wide").has("--tw-tracking")).toBe(true);
+  });
+
   it("emits every role defined in the default palette", async () => {
     const roles = [
       ...new Set([...defaultTheme.matchAll(/^\s*--type-([a-z-]+)-size:/gm)].map((m) => m[1])),

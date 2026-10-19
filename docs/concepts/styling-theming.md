@@ -297,7 +297,7 @@ Pair a role with a color token from the Color section above. These pairings are 
 | --------------------------------- | ---------------------------------------------- |
 | Page title (`Layout.Header`)      | `text-heading-lg`                              |
 | Section heading                   | `text-heading-md`                              |
-| Card title (`div` or `span`)      | `text-heading-md leading-none`                 |
+| Card title                        | `text-heading-md leading-none`                 |
 | Body copy                         | `text-body-md`                                 |
 | Secondary copy, descriptions      | `text-body-md text-muted-foreground`           |
 | Caption, timestamp, metadata      | `text-body-sm text-muted-foreground`           |
@@ -410,17 +410,24 @@ function TypographyRoles() {
 <span className="text-body-sm text-muted-foreground">Updated 2h ago</span>
 ```
 
+The [`Text`](../components/text.md) component applies the same roles with a `variant` prop. It renders a default element for each role (`h2` for headings, `p` for body text, `span` for the others), and its `render` prop sets the element, such as the heading level:
+
+```tsx
+<Text variant="heading-md" render={<h3 />}>Line items</Text>
+<Text variant="body-md" className="text-muted-foreground">Description copy</Text>
+```
+
 On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's line height and letter spacing, including `leading-none`; see "Change a role" below. AppShell's own components still use the stock utilities (`text-sm`, `font-medium`, and so on) today. They will move to the roles in later changes, so the two sets can appear side by side for now.
 
 **Rules**
 
 - **A role carries no color.** Set the color with a token such as `text-muted-foreground`.
-- **A role does not choose the HTML element.** Pick `h2`, `p`, or `span` from the document structure, not from the size.
+- **A role does not choose the HTML element.** Pick `h2`, `p`, or `span` from the document structure, not from the size. With `Text`, set the element with `render`.
 - **A role sets weight and letter spacing on its own element.** It does not inherit them from a parent. Put an emphasis or tracking class on the element that has the role, not on its parent.
 - **Four modifiers may be combined with a role.** All are stock Tailwind utilities:
   - Compact line height: `leading-none`. Use it only for single-line text, such as a card title. Write it after the role when you merge with `cn()`.
   - Tabular figures: `tabular-nums`.
-  - Emphasis on inline text: `font-medium` or `font-semibold`.
+  - Emphasis on inline text: `font-semibold`. Do not use `font-medium`; on a label role it makes no change.
   - Uppercase: `uppercase`.
 - **Do not combine a role with other `leading-*`, `tracking-*`, or `text-[Npx]` values.** If none of the roles fits, use the nearest role.
 - **12px is the minimum size.** Do not use smaller text.

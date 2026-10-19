@@ -433,7 +433,7 @@ Text that a component renders takes its size, line height, weight, and letter sp
 
 - Use the role utility (`astw:text-heading-md`, `astw:text-label-md`, ...) on the component's own element, or render `Text` when the element itself is the text.
 - Do not write new raw combinations such as `astw:text-lg astw:font-semibold` or `astw:text-sm astw:font-medium`. Existing ones are being moved to roles.
-- Combine a role only with the four modifiers: `astw:leading-none` (single-line text), `astw:tabular-nums`, `astw:font-medium` or `astw:font-semibold`, and `astw:uppercase`. Do not add other `leading-*`, `tracking-*`, or `text-[Npx]` values. 12px is the minimum size.
+- Combine a role only with the four modifiers: `astw:leading-none` (single-line text), `astw:tabular-nums`, `astw:font-semibold` (emphasis on inline text), and `astw:uppercase`. Do not add other `leading-*`, `tracking-*`, or `text-[Npx]` values. 12px is the minimum size.
 - A role carries no color. Set the color with a token such as `astw:text-muted-foreground`.
 - A heading's level comes from the document structure, not from its size. Keep a title that is a heading in a heading element, and pick the role for its look. Do not change the element to get a different size, and do not turn a heading into a `div` to get a different line height. Under the `cream` and `bloom` palettes, `h1` to `h6` ignore `leading-none`; see the Typography section.
 

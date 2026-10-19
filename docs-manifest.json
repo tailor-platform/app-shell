@@ -1322,9 +1322,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "8ad61f58de459be2",
+        "outline": "ec58953d5d12a0ef",
         "snapshot": null,
-        "outputMd": "c40075c1f34fb315",
+        "outputMd": "12acc1ac6662a5b5",
         "examples": "4d19f4f688e0f0ac"
       }
     },
@@ -1373,9 +1373,9 @@
       "symbols": ["Text", "TextProps"],
       "hashes": {
         "typeSurface": "ed54a16ca677dbe3",
-        "outline": "42c27edcdbcbef4a",
+        "outline": "81e7ce4d7d73ba60",
         "snapshot": "9523fb625b27e734",
-        "outputMd": "64e3e031f28ce723",
+        "outputMd": "0e872fb19aff887a",
         "examples": "4a832708dc79474b"
       }
     },
@@ -1711,7 +1711,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "e342ef02dc2b9b86",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "c40075c1f34fb315",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "12acc1ac6662a5b5",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
@@ -1752,7 +1752,7 @@
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "30bb32e57fc78bd9",
-    "packages/core/skills/app-shell-patterns/references/components/text.md": "64e3e031f28ce723",
+    "packages/core/skills/app-shell-patterns/references/components/text.md": "0e872fb19aff887a",
     "packages/core/skills/app-shell-patterns/references/components/textarea.md": "c940bc01cd573334",
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",

@@ -133,7 +133,7 @@ Some `jsx-a11y` rules check that an element has text inside it, for example `hea
 
 ## Color and Modifiers
 
-Set the color with a color token in `className`. Four modifiers may also be combined with a role: `leading-none` for single-line text, `tabular-nums`, `font-medium` or `font-semibold` for emphasis, and `uppercase`.
+Set the color with a color token in `className`. Four modifiers may also be combined with a role: `leading-none` for single-line text, `tabular-nums`, `font-semibold` for emphasis, and `uppercase`.
 
 <example-preview name="color-and-modifiers"></example-preview>
 

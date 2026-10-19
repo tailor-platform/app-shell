@@ -418,7 +418,7 @@ On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's 
 - **Four modifiers may be combined with a role.** All are stock Tailwind utilities:
   - Compact line height: `leading-none`. Use it only for single-line text, such as a card title. Write it after the role when you merge with `cn()`.
   - Tabular figures: `tabular-nums`.
-  - Emphasis on inline text: `font-medium` or `font-semibold`.
+  - Emphasis on inline text: `font-semibold`. Do not use `font-medium`; on a label role it makes no change.
   - Uppercase: `uppercase`.
 - **Do not combine a role with other `leading-*`, `tracking-*`, or `text-[Npx]` values.** If none of the roles fits, use the nearest role.
 - **12px is the minimum size.** Do not use smaller text.

@@ -82,7 +82,7 @@ describe("typography role utilities", () => {
   });
 
   it("lets a consumer modifier override a role from AppShell's prefixed build", async () => {
-    // `<Text className="leading-none font-medium">` puts AppShell's `astw:text-*` and the
+    // `<Text className="leading-none font-semibold">` puts AppShell's `astw:text-*` and the
     // consumer's unprefixed modifier on one element. The prefixed sheet loads later and
     // wins the cascade, so the modifier works only because both builds share the
     // unprefixed `--tw-*` variables.
@@ -91,7 +91,7 @@ describe("typography role utilities", () => {
     ]);
     const consumer = await compile('@import "tailwindcss" source(none);', [
       "leading-none",
-      "font-medium",
+      "font-semibold",
       "tracking-wide",
     ]);
 
@@ -100,7 +100,7 @@ describe("typography role utilities", () => {
     expect(role.get("font-weight")).toMatch(/^var\(--tw-font-weight,/);
     expect(role.get("letter-spacing")).toMatch(/^var\(--tw-tracking,/);
     expect(declarationsOf(consumer, ".leading-none").get("--tw-leading")).toBe("1");
-    expect(declarationsOf(consumer, ".font-medium").has("--tw-font-weight")).toBe(true);
+    expect(declarationsOf(consumer, ".font-semibold").has("--tw-font-weight")).toBe(true);
     expect(declarationsOf(consumer, ".tracking-wide").has("--tw-tracking")).toBe(true);
   });
 

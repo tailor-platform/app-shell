@@ -1,4 +1,4 @@
-import type { AIGatewayChatMessage, AIGatewayToolCall } from "./client";
+import { isAbortError, type AIGatewayChatMessage, type AIGatewayToolCall } from "./client";
 import type { AIChatMessage } from "./use-ai-chat";
 import type { AIChatToolContext, AILocalTool } from "./tools";
 
@@ -59,6 +59,10 @@ async function resolveToolCall(input: {
     const rawArguments = parseToolArguments(input.toolCall.argumentsText);
     const result = await tool.schema["~standard"].validate(rawArguments);
 
+    if (input.context.signal.aborted) {
+      throw createAbortError();
+    }
+
     if (result.issues) {
       return {
         role: "tool",
@@ -74,6 +78,13 @@ async function resolveToolCall(input: {
       content: stringifyToolResult(output),
     };
   } catch (error) {
+    if (input.context.signal.aborted) {
+      throw createAbortError();
+    }
+    if (isAbortError(error)) {
+      throw error;
+    }
+
     return {
       role: "tool",
       toolCallId: input.toolCall.id,

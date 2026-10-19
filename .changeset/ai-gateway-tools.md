@@ -38,6 +38,8 @@ The `execute` function receives a second argument with:
 - `signal` — the `AbortSignal` for the in-flight chat request
 - `messages` — the public user/assistant message history at the time of execution
 
+Stopping a request while tool arguments are being validated prevents the tool from starting. Cancellation is propagated rather than returned to the model as a tool error.
+
 ## Provider tools
 
 Provider tools are not executed locally — they are passed through to the AI Gateway and handled upstream by the model provider.

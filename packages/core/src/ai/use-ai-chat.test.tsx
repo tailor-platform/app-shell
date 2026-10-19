@@ -612,50 +612,59 @@ describe("useAIChat", () => {
     ]);
   });
 
-  it("fails after too many tool rounds", async () => {
-    const loop = defineAIChatTool({
-      description: "Loop forever",
-      schema: z.object({
-        value: z.string(),
-      }),
-      async execute({ value }) {
-        return { value };
-      },
-    });
+  it.each([false, true])(
+    "allows a final answer after eight tool batches but rejects a ninth batch (requests ninth: %s)",
+    async (requestNinthBatch) => {
+      const execute = vi.fn(({ value }: { value: string }) => ({ value }));
+      const loop = defineAIChatTool({
+        schema: z.object({ value: z.string() }),
+        execute,
+      });
+      let callCount = 0;
+      const client = {
+        streamChatCompletion: vi.fn(async function* ({ messages }) {
+          callCount += 1;
+          if (callCount === 9) {
+            expect(messages.at(-1)).toEqual({
+              role: "tool",
+              toolCallId: "call-8",
+              content: '{"value":"again"}',
+            });
+            if (!requestNinthBatch) {
+              yield { type: "text-delta", text: "Finished" } as const;
+              yield { type: "done" } as const;
+              return;
+            }
+          }
+          yield {
+            type: "tool-call",
+            toolCallId: `call-${callCount}`,
+            toolName: "loop",
+            argumentsText: '{"value":"again"}',
+          } as const;
+          yield { type: "done", finishReason: "tool_calls" } as const;
+        }),
+      } satisfies AIGatewayClient;
+      const { result } = renderHook(() =>
+        useAIChat({ client, model: "gpt-5-mini", tools: { loop } }),
+      );
 
-    let callCount = 0;
-    const client = {
-      streamChatCompletion: vi.fn(async function* () {
-        callCount += 1;
-        yield {
-          type: "tool-call",
-          toolCallId: `call-${callCount}`,
-          toolName: "loop",
-          argumentsText: '{"value":"again"}',
-        } as const;
-        yield { type: "done", finishReason: "tool_calls" } as const;
-      }),
-    } satisfies AIGatewayClient;
+      await act(async () => {
+        await expect(result.current.sendMessage("Start looping")).resolves.toBe(!requestNinthBatch);
+      });
 
-    const { result } = renderHook(() =>
-      useAIChat({
-        client,
-        model: "gpt-5-mini",
-        tools: {
-          loop,
-        },
-      }),
-    );
-
-    await act(async () => {
-      await expect(result.current.sendMessage("Start looping")).resolves.toBe(false);
-    });
-
-    await waitFor(() => {
-      expect(result.current.status).toBe("error");
-      expect(result.current.error?.message).toContain("maximum number of tool rounds");
-    });
-  });
+      expect(client.streamChatCompletion).toHaveBeenCalledTimes(9);
+      expect(execute).toHaveBeenCalledTimes(8);
+      expect(result.current.toolCalls).toEqual([]);
+      if (requestNinthBatch) {
+        expect(result.current.status).toBe("error");
+        expect(result.current.error?.message).toContain("maximum number of tool rounds");
+      } else {
+        expect(result.current.status).toBe("ready");
+        expect(result.current.messages.at(-1)?.content).toBe("Finished");
+      }
+    },
+  );
 
   it("passes provider tools through and exposes sources", async () => {
     const client = {

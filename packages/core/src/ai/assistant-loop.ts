@@ -87,7 +87,7 @@ export async function* runAssistantLoop(input: {
   const { gatewayTools, localTools } = normalizeConfiguredTools(input.tools);
   const transcript = [...input.transcript];
 
-  for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
+  for (let round = 0; round <= MAX_TOOL_ROUNDS; round += 1) {
     const turn: AIChatAssistantTurnResult = yield* streamAssistantTurn({
       client: input.client,
       model: input.model,
@@ -105,6 +105,10 @@ export async function* runAssistantLoop(input: {
     if (turn.toolCalls.length === 0) {
       yield { type: "complete" };
       return;
+    }
+
+    if (round === MAX_TOOL_ROUNDS) {
+      break;
     }
 
     yield { type: "tool-resolution-start" };

@@ -94,4 +94,4 @@ function ChatPanel({ client }) {
 }
 ```
 
-The hook runs up to 8 tool rounds per user message. If the model keeps requesting tools beyond that limit, the request fails with an error.
+The hook runs up to 8 tool rounds per user message, then allows a final model response using the eighth round's results. If the model requests a ninth tool batch, the request fails before those tools execute.

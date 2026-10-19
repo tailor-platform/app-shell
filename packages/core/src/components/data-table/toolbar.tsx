@@ -11,10 +11,16 @@ import { DatePicker } from "@/components/date-field";
 import { Calendar } from "@/components/calendar";
 import { Tooltip } from "@/components/tooltip";
 import { parseDate, DateFormatter } from "@internationalized/date";
-import { useResolvedLocale } from "@/contexts/appshell-context";
+import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
 import { DataTableColumnSettings } from "./column-settings";
 import { useDataTableContext } from "./data-table-context";
-import { isTemporalFilterType, isTemporalFilterValueValid } from "./filter-value-utils";
+import {
+  isTemporalFilterType,
+  isTemporalFilterValueValid,
+  localDateTimeParts,
+  normalizeTemporalFilterValue,
+} from "@/lib/temporal-filter-values";
+import { isDecimalFilterValueValid, isDecimalRangeOrdered } from "./filter-value-utils";
 import { useDataTableT } from "./i18n";
 import type {
   CollectionControl,
@@ -72,6 +78,7 @@ const DEFAULT_OPERATOR: Record<FilterConfig["type"], FilterOperator> = {
   boolean: "eq",
   string: "contains",
   number: "eq",
+  decimal: "eq",
   datetime: "eq",
   date: "eq",
   time: "eq",
@@ -133,6 +140,7 @@ function getDefaultFilterOperators(type: FilterConfig["type"]): FilterOperator[]
     case "date":
       return [...DATE_OPERATORS];
     case "number":
+    case "decimal":
     case "datetime":
     case "time":
       return [...NUMERIC_TEMPORAL_OPERATORS];
@@ -152,6 +160,7 @@ function isUiOperatorAllowedForType(type: FilterConfig["type"], operator: Filter
     case "date":
       return (DATE_OPERATORS as readonly string[]).includes(operator);
     case "number":
+    case "decimal":
     case "datetime":
     case "time":
       return (NUMERIC_TEMPORAL_OPERATORS as readonly string[]).includes(operator);
@@ -569,9 +578,8 @@ function PanelDateInput({
 
 /**
  * Single-datetime editor for the panel: the inline `Calendar` up front with a
- * labelled time picker beneath it, bridging a local ISO `"YYYY-MM-DDTHH:mm:ss"`
- * string. (The chip and the "between" range keep the compact date-picker + time
- * box to stay short.)
+ * labelled time picker beneath it, bridging an RFC 3339 instant. (The chip and
+ * the "between" range keep the compact date-picker + time box to stay short.)
  */
 function PanelDateTimeInput({
   ariaLabel,
@@ -583,12 +591,19 @@ function PanelDateTimeInput({
   onChange: (value: string) => void;
 }) {
   const t = useDataTableT();
-  const match = value.match(/^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/);
-  const datePart = match?.[1] ?? "";
-  const timePart = match?.[2] ?? "";
-  const calValue = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? parseDate(datePart) : null;
+  const shellTz = useTimeZone();
+  const { date: datePart, time: timePart } = localDateTimeParts(value, shellTz.value);
+  const calValue = datePart ? parseDate(datePart) : null;
   const emit = (nextDate: string, nextTime: string) => {
-    onChange(nextDate ? `${nextDate}T${nextTime || "00:00"}:00` : "");
+    onChange(
+      nextDate
+        ? (normalizeTemporalFilterValue(
+            "datetime",
+            `${nextDate}T${nextTime || "00:00"}:00`,
+            shellTz.value,
+          ) ?? "")
+        : "",
+    );
   };
   return (
     <div className="astw:flex astw:flex-col astw:gap-3">
@@ -641,11 +656,12 @@ function PanelDateRangeInput({
 }) {
   const t = useDataTableT();
   const { locale } = useResolvedLocale();
+  const shellTz = useTimeZone();
   const [active, setActive] = useState<"from" | "to">("from");
 
   const fmt = (v: string) => {
     if (!v) return "—";
-    return withTime ? formatDateTimeValue(v, locale) : formatDateValue(v, locale);
+    return withTime ? formatDateTimeValue(v, locale, shellTz.value) : formatDateValue(v, locale);
   };
   const bounds = [
     { key: "from" as const, label: t("filterBetweenFrom"), value: min, onChange: onChangeMin },
@@ -659,6 +675,7 @@ function PanelDateRangeInput({
     t("filterBetweenFrom"),
     t("filterBetweenTo"),
     t,
+    shellTz.value,
   );
 
   return (
@@ -703,7 +720,7 @@ function PanelDateRangeInput({
         />
       )}
 
-      {error && <p className="astw:text-destructive astw:text-xs">{error}</p>}
+      {error && <p className="astw:text-danger-text astw:text-xs">{error}</p>}
     </div>
   );
 }
@@ -725,6 +742,7 @@ function PanelValueEditor({
   control: CollectionControl;
 }) {
   const t = useDataTableT();
+  const shellTz = useTimeZone();
   const config = column.filter;
   const field = config.field;
   const label = column.label ?? field;
@@ -761,20 +779,24 @@ function PanelValueEditor({
     }
     if (isBetween) {
       const draft: AddFilterDraftValue = [min, max];
-      if (!isAddFilterDraftValueValid(type, "between", draft)) return;
+      if (!isAddFilterDraftValueValid(type, "between", draft, shellTz.value)) return;
       if (!isRangeOrdered(type, min, max)) return;
-      control.addFilter(field, "between", toAddFilterSubmittedValue(type, "between", draft));
+      control.addFilter(
+        field,
+        "between",
+        toAddFilterSubmittedValue(type, "between", draft, shellTz.value),
+      );
       return;
     }
     if (text.trim() === "") {
       control.removeFilter(field);
       return;
     }
-    if (!isAddFilterDraftValueValid(type, operator, text)) return;
+    if (!isAddFilterDraftValueValid(type, operator, text, shellTz.value)) return;
     control.addFilter(
       field,
       operator,
-      toAddFilterSubmittedValue(type, operator, text),
+      toAddFilterSubmittedValue(type, operator, text, shellTz.value),
       // Preserve the existing filter's case-sensitivity (the panel has no toggle;
       // the chip's string editor owns it) instead of silently clearing it.
       type === "string" ? { caseSensitive: filter?.caseSensitive ?? false } : undefined,
@@ -865,7 +887,9 @@ function PanelValueEditor({
     );
   } else if (isBetween) {
     // Non-date range: two simple From/To (or Min/Max) text boxes.
-    const numeric = type === "number";
+    const numeric = type === "number" || type === "decimal";
+    const numericInputProps =
+      type === "decimal" ? { type: "text", inputMode: "decimal" as const } : { type: "number" };
     const labels: [string, string] = numeric
       ? [t("filterBetweenMin"), t("filterBetweenMax")]
       : [t("filterBetweenFrom"), t("filterBetweenTo")];
@@ -878,7 +902,7 @@ function PanelValueEditor({
           onChangeMax={setMax}
           onSubmit={apply}
           inputProps={
-            numeric ? { type: "number" } : getTemporalInputProps(type as "datetime" | "time")
+            numeric ? numericInputProps : getTemporalInputProps(type as "datetime" | "time")
           }
           error={betweenOrderError(type, min, max, labels[0], labels[1], t)}
         />
@@ -918,6 +942,7 @@ function PanelValueEditor({
       <div className="astw:p-2">
         <Input
           type={type === "number" ? "number" : "text"}
+          inputMode={type === "decimal" ? "decimal" : undefined}
           value={text}
           placeholder={t("filterValuePlaceholder", { field: label })}
           onChange={(e) => setText(e.target.value)}
@@ -990,7 +1015,7 @@ function BetweenInputGroup({
     "astw:flex astw:items-center astw:h-8 astw:rounded-md astw:border astw:shadow-xs astw:has-focus-visible:ring-[3px]";
   const rowOk =
     "astw:border-input astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50";
-  const rowError = "astw:border-destructive astw:has-focus-visible:ring-destructive/30";
+  const rowError = "astw:border-danger-solid astw:has-focus-visible:ring-danger-solid/30";
   const labelCell =
     "astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-muted astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14";
   const inputCell =
@@ -1026,7 +1051,7 @@ function BetweenInputGroup({
           className={inputCell}
         />
       </div>
-      {error && <p className="astw:text-destructive astw:text-xs">{error}</p>}
+      {error && <p className="astw:text-danger-text astw:text-xs">{error}</p>}
     </div>
   );
 }
@@ -1043,13 +1068,18 @@ function betweenOrderError(
   minLabel: string,
   maxLabel: string,
   t: ReturnType<typeof useDataTableT>,
+  timeZone?: string,
 ): string | undefined {
   if (min.trim() === "" || max.trim() === "") return undefined;
   let bothValid = true;
   if (type === "number") {
     bothValid = !Number.isNaN(Number(min)) && !Number.isNaN(Number(max));
+  } else if (type === "decimal") {
+    bothValid = isDecimalFilterValueValid(min) && isDecimalFilterValueValid(max);
   } else if (isTemporalFilterType(type)) {
-    bothValid = isTemporalFilterValueValid(type, min) && isTemporalFilterValueValid(type, max);
+    bothValid =
+      isTemporalFilterValueValid(type, min, timeZone) &&
+      isTemporalFilterValueValid(type, max, timeZone);
   }
   if (!bothValid) return undefined;
   if (isRangeOrdered(type, min, max)) return undefined;
@@ -1082,10 +1112,9 @@ function DateFilterPicker({
 
 /**
  * Datetime filter input: the app-shell date `DatePicker` (calendar) paired with a
- * native time box, bridging an ISO `"YYYY-MM-DDTHH:mm:ss"` string. Entering a full
- * datetime by hand is awkward, so the date and time are picked separately and
- * combined. This is a stopgap — it's replaced 1:1 once a dedicated DateTime picker
- * component lands.
+ * native time box, bridging an RFC 3339 instant. Entering a full datetime by hand
+ * is awkward, so the date and time are picked separately and combined. This is a
+ * stopgap — it's replaced 1:1 once a dedicated DateTime picker component lands.
  */
 function DateTimeFilterInput({
   ariaLabel,
@@ -1096,15 +1125,21 @@ function DateTimeFilterInput({
   value: string;
   onChange: (value: string) => void;
 }) {
-  // Split "YYYY-MM-DDTHH:mm[:ss][Z]" into its date and "HH:mm" parts.
-  const match = value.match(/^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}))?/);
-  const datePart = match?.[1] ?? "";
-  const timePart = match?.[2] ?? "";
-  const calValue = /^\d{4}-\d{2}-\d{2}$/.test(datePart) ? parseDate(datePart) : null;
+  const shellTz = useTimeZone();
+  const { date: datePart, time: timePart } = localDateTimeParts(value, shellTz.value);
+  const calValue = datePart ? parseDate(datePart) : null;
 
-  // Emit a combined value only once a date is chosen; time defaults to midnight.
+  // Emit an RFC 3339 instant only once a date is chosen; time defaults to midnight.
   const emit = (nextDate: string, nextTime: string) => {
-    onChange(nextDate ? `${nextDate}T${nextTime || "00:00"}:00` : "");
+    onChange(
+      nextDate
+        ? (normalizeTemporalFilterValue(
+            "datetime",
+            `${nextDate}T${nextTime || "00:00"}:00`,
+            shellTz.value,
+          ) ?? "")
+        : "",
+    );
   };
 
   return (
@@ -1141,6 +1176,7 @@ function FilterChip({
 }) {
   const t = useDataTableT();
   const { locale } = useResolvedLocale();
+  const shellTz = useTimeZone();
   const config = column.filter;
   const label = column.label ?? config.field;
 
@@ -1162,12 +1198,27 @@ function FilterChip({
         const n = Number(v);
         return Number.isFinite(n) ? n : 0;
       };
+      const toDateTime = (v: unknown) => normalizeTemporalFilterValue("datetime", v, shellTz.value);
+      const toDateTimeRange = (v: unknown) => {
+        const range = (v ?? {}) as { min?: unknown; max?: unknown };
+        const min = toDateTime(range.min);
+        const max = toDateTime(range.max);
+        return min && max ? { min, max } : null;
+      };
       const arity = (op: FilterOperator) => (op === "between" ? 2 : 1);
       if (arity(nextOp) === arity(filter.operator)) {
+        let value = filter.value;
+        if (config.type === "datetime") {
+          value =
+            filter.operator === "between"
+              ? toDateTimeRange(filter.value)
+              : toDateTime(filter.value);
+        }
+        if (config.type === "datetime" && value == null) return;
         control.addFilter(
           config.field,
           nextOp,
-          filter.value,
+          value,
           config.type === "string" && filter.caseSensitive ? { caseSensitive: true } : undefined,
         );
       } else if (nextOp === "between") {
@@ -1175,6 +1226,10 @@ function FilterChip({
         if (config.type === "number") {
           const n = toNum(v);
           control.addFilter(config.field, nextOp, { min: n, max: n });
+        } else if (config.type === "datetime") {
+          const s = toDateTime(v);
+          if (!s) return;
+          control.addFilter(config.field, nextOp, { min: s, max: s });
         } else {
           const s = v == null ? "" : String(v);
           control.addFilter(config.field, nextOp, { min: s, max: s });
@@ -1182,6 +1237,13 @@ function FilterChip({
       } else {
         const range = (filter.value ?? {}) as { min?: unknown; max?: unknown };
         const lower = range.min ?? range.max ?? "";
+        if (config.type === "datetime") {
+          const normalized = toDateTime(lower);
+          if (!normalized) return;
+          control.addFilter(config.field, nextOp, normalized);
+          setOpOpen(false);
+          return;
+        }
         control.addFilter(
           config.field,
           nextOp,
@@ -1190,12 +1252,20 @@ function FilterChip({
       }
       setOpOpen(false);
     },
-    [control, config.field, config.type, filter.operator, filter.value, filter.caseSensitive],
+    [
+      control,
+      config.field,
+      config.type,
+      filter.operator,
+      filter.value,
+      filter.caseSensitive,
+      shellTz.value,
+    ],
   );
 
   const operators = getVisibleFilterOperators(config, filter.operator);
   const operatorLabel = getOperatorLabel(filter.operator, t, config.type);
-  const valueLabel = formatFilterValue(filter, config, t, locale, label);
+  const valueLabel = formatFilterValue(filter, config, t, locale, shellTz.value, label);
 
   const segment =
     "astw:flex astw:items-center astw:h-6 astw:px-2 astw:text-xs astw:whitespace-nowrap astw:outline-hidden";
@@ -1424,6 +1494,7 @@ function FilterPopoverContent({
         <UuidFilterEditor config={config} filter={filter} control={control} onClose={onClose} />
       );
     case "number":
+    case "decimal":
       return (
         <NumericFilterEditor
           config={config}
@@ -1725,7 +1796,7 @@ function UuidFilterEditor({
 }
 
 // =============================================================================
-// Number filter — operator selector + number input
+// Numeric filter — operator selector + number/decimal input
 // =============================================================================
 
 function NumericFilterEditor({
@@ -1735,7 +1806,7 @@ function NumericFilterEditor({
   onClose,
   hideOperator = false,
 }: {
-  config: Extract<DataTableFilterConfig, { type: "number" }>;
+  config: Extract<DataTableFilterConfig, { type: "number" | "decimal" }>;
   filter: Filter;
   control: CollectionControl;
   onClose: () => void;
@@ -1772,12 +1843,11 @@ function NumericFilterEditor({
       if (minEmpty && maxEmpty) return true; // will removeFilter
       if (minEmpty || maxEmpty) return false; // both required
       return (
-        !Number.isNaN(Number(localValue)) &&
-        !Number.isNaN(Number(localValueMax)) &&
-        isRangeOrdered("number", localValue, localValueMax)
+        isAddFilterDraftValueValid(config.type, "between", [localValue, localValueMax]) &&
+        isRangeOrdered(config.type, localValue, localValueMax)
       );
     }
-    return localValue.trim() === "" || !Number.isNaN(Number(localValue));
+    return localValue.trim() === "" || isAddFilterDraftValueValid(config.type, localOp, localValue);
   })();
 
   const handleCommit = useCallback(() => {
@@ -1787,13 +1857,27 @@ function NumericFilterEditor({
       if (minEmpty && maxEmpty) {
         control.removeFilter(config.field);
       } else if (!minEmpty && !maxEmpty) {
-        const min = Number(localValue);
-        const max = Number(localValueMax);
-        if (!Number.isNaN(min) && !Number.isNaN(max) && min <= max) {
-          control.addFilter(config.field, localOp, { min, max });
+        const draft: AddFilterDraftValue = [localValue, localValueMax];
+        if (
+          isAddFilterDraftValueValid(config.type, localOp, draft) &&
+          isRangeOrdered(config.type, localValue, localValueMax)
+        ) {
+          control.addFilter(
+            config.field,
+            localOp,
+            toAddFilterSubmittedValue(config.type, localOp, draft),
+          );
         } else {
           return;
         }
+      } else {
+        return;
+      }
+    } else if (config.type === "decimal") {
+      if (localValue.trim() === "") {
+        control.removeFilter(config.field);
+      } else if (isDecimalFilterValueValid(localValue)) {
+        control.addFilter(config.field, localOp, localValue.trim());
       } else {
         return;
       }
@@ -1806,11 +1890,11 @@ function NumericFilterEditor({
       }
     }
     onClose();
-  }, [localValue, localValueMax, localOp, control, config.field, onClose]);
+  }, [localValue, localValueMax, localOp, control, config.field, config.type, onClose]);
 
   return (
     <div
-      data-slot="data-table-filter-number"
+      data-slot={`data-table-filter-${config.type}`}
       className="astw:flex astw:flex-col astw:gap-2 astw:p-2"
     >
       {!hideOperator && (
@@ -1831,9 +1915,11 @@ function NumericFilterEditor({
           onChangeMin={setLocalValue}
           onChangeMax={setLocalValueMax}
           onSubmit={handleCommit}
-          inputProps={{ type: "number" }}
+          inputProps={
+            config.type === "decimal" ? { type: "text", inputMode: "decimal" } : { type: "number" }
+          }
           error={betweenOrderError(
-            "number",
+            config.type,
             localValue,
             localValueMax,
             t("filterBetweenMin"),
@@ -1843,7 +1929,8 @@ function NumericFilterEditor({
         />
       ) : (
         <Input
-          type="number"
+          type={config.type === "decimal" ? "text" : "number"}
+          inputMode={config.type === "decimal" ? "decimal" : undefined}
           value={localValue}
           placeholder={t("filterValuePlaceholder", { field: config.field })}
           onChange={(e) => setLocalValue(e.target.value)}
@@ -1882,6 +1969,7 @@ function TemporalFilterEditor({
   hideOperator?: boolean;
 }) {
   const t = useDataTableT();
+  const shellTz = useTimeZone();
   const { items: operatorItems, initial: initialOp } = resolveTemporalOperator(
     getVisibleFilterOperators(config, filter.operator).filter(
       (operator): operator is NumericTemporalOperator =>
@@ -1912,12 +2000,14 @@ function TemporalFilterEditor({
       if (minEmpty && maxEmpty) return true; // will removeFilter
       if (minEmpty || maxEmpty) return false; // both required
       return (
-        isTemporalFilterValueValid(config.type, localValue) &&
-        isTemporalFilterValueValid(config.type, localValueMax) &&
+        isTemporalFilterValueValid(config.type, localValue, shellTz.value) &&
+        isTemporalFilterValueValid(config.type, localValueMax, shellTz.value) &&
         isRangeOrdered(config.type, localValue, localValueMax)
       );
     }
-    return localValue.trim() === "" || isTemporalFilterValueValid(config.type, localValue);
+    return (
+      localValue.trim() === "" || isTemporalFilterValueValid(config.type, localValue, shellTz.value)
+    );
   })();
 
   const handleCommit = useCallback(() => {
@@ -1927,10 +2017,18 @@ function TemporalFilterEditor({
       if (minEmpty && maxEmpty) {
         control.removeFilter(config.field);
       } else if (!minEmpty && !maxEmpty) {
-        const minValid = isTemporalFilterValueValid(config.type, localValue);
-        const maxValid = isTemporalFilterValueValid(config.type, localValueMax);
+        const minValid = isTemporalFilterValueValid(config.type, localValue, shellTz.value);
+        const maxValid = isTemporalFilterValueValid(config.type, localValueMax, shellTz.value);
         if (!minValid || !maxValid) return;
         if (!isRangeOrdered(config.type, localValue, localValueMax)) return;
+        if (config.type === "datetime") {
+          const min = normalizeTemporalFilterValue("datetime", localValue, shellTz.value);
+          const max = normalizeTemporalFilterValue("datetime", localValueMax, shellTz.value);
+          if (!min || !max) return;
+          control.addFilter(config.field, localOp, { min, max });
+          onClose();
+          return;
+        }
         control.addFilter(config.field, localOp, {
           min: localValue,
           max: localValueMax,
@@ -1941,14 +2039,30 @@ function TemporalFilterEditor({
     } else {
       if (localValue.trim() === "") {
         control.removeFilter(config.field);
-      } else if (isTemporalFilterValueValid(config.type, localValue)) {
+      } else if (isTemporalFilterValueValid(config.type, localValue, shellTz.value)) {
+        if (config.type === "datetime") {
+          const value = normalizeTemporalFilterValue("datetime", localValue, shellTz.value);
+          if (!value) return;
+          control.addFilter(config.field, localOp, value);
+          onClose();
+          return;
+        }
         control.addFilter(config.field, localOp, localValue);
       } else {
         return;
       }
     }
     onClose();
-  }, [localValue, localValueMax, localOp, control, config.field, config.type, onClose]);
+  }, [
+    localValue,
+    localValueMax,
+    localOp,
+    control,
+    config.field,
+    config.type,
+    onClose,
+    shellTz.value,
+  ]);
 
   const isDate = config.type === "date";
   const isDateTime = config.type === "datetime";
@@ -1980,7 +2094,7 @@ function TemporalFilterEditor({
             value={localValueMax}
             onChange={setLocalValueMax}
           />
-          {betweenError && <p className="astw:text-destructive astw:text-xs">{betweenError}</p>}
+          {betweenError && <p className="astw:text-danger-text astw:text-xs">{betweenError}</p>}
         </div>
       ) : (
         <BetweenInputGroup
@@ -2047,6 +2161,7 @@ function isAddFilterDraftValueValid(
   type: FilterConfig["type"],
   operator: FilterOperator,
   value: AddFilterDraftValue,
+  timeZone?: string,
 ): boolean {
   if (type === "enum") {
     return Array.isArray(value) && value.length > 0;
@@ -2064,8 +2179,14 @@ function isAddFilterDraftValueValid(
     if (type === "number") {
       return !Number.isNaN(Number(min)) && !Number.isNaN(Number(max));
     }
+    if (type === "decimal") {
+      return isDecimalFilterValueValid(min) && isDecimalFilterValueValid(max);
+    }
     if (isTemporalFilterType(type)) {
-      return isTemporalFilterValueValid(type, min) && isTemporalFilterValueValid(type, max);
+      return (
+        isTemporalFilterValueValid(type, min, timeZone) &&
+        isTemporalFilterValueValid(type, max, timeZone)
+      );
     }
     return true;
   }
@@ -2075,8 +2196,9 @@ function isAddFilterDraftValueValid(
     if (value.trim() === "") return false;
     return !Number.isNaN(Number(value));
   }
+  if (type === "decimal") return isDecimalFilterValueValid(value);
   if (isTemporalFilterType(type)) {
-    return isTemporalFilterValueValid(type, value);
+    return isTemporalFilterValueValid(type, value, timeZone);
   }
   return value.trim() !== "";
 }
@@ -2085,6 +2207,7 @@ function toAddFilterSubmittedValue(
   type: FilterConfig["type"],
   operator: FilterOperator,
   value: AddFilterDraftValue,
+  timeZone?: string,
 ): unknown {
   if (type === "enum") {
     return Array.isArray(value) ? (value as string[]) : [];
@@ -2110,25 +2233,39 @@ function toAddFilterSubmittedValue(
 
     if (trimmedMin === "" || trimmedMax === "") return undefined;
 
-    // temporal types
-    return { min: trimmedMin, max: trimmedMax };
+    if (type === "datetime") {
+      const normalizedMin = normalizeTemporalFilterValue("datetime", trimmedMin, timeZone);
+      const normalizedMax = normalizeTemporalFilterValue("datetime", trimmedMax, timeZone);
+      return normalizedMin && normalizedMax
+        ? { min: normalizedMin, max: normalizedMax }
+        : undefined;
+    }
+
+    return {
+      min: trimmedMin,
+      max: trimmedMax,
+    };
   }
 
   if (type === "number") {
     return Number(value);
   }
-  return String(value).trim();
+  const trimmed = String(value).trim();
+  return type === "datetime"
+    ? normalizeTemporalFilterValue("datetime", trimmed, timeZone)
+    : trimmed;
 }
 
 /**
  * Whether a "between" range's bounds are correctly ordered (min ≤ max). Numbers
- * compare numerically; temporal ISO strings compare lexicographically (which
- * matches chronological order for our `YYYY-MM-DD`, `HH:MM`, and RFC datetime
- * formats). `min === max` is allowed — a valid single-point inclusive range.
+ * compare numerically; dates and times lexicographically; and datetime instants
+ * chronologically. `min === max` is allowed — a valid single-point inclusive range.
  * Assumes both bounds are already individually valid and non-empty.
  */
 function isRangeOrdered(type: FilterConfig["type"], min: string, max: string): boolean {
   if (type === "number") return Number(min) <= Number(max);
+  if (type === "decimal") return isDecimalRangeOrdered(min, max);
+  if (type === "datetime") return new Date(min).getTime() <= new Date(max).getTime();
   if (isTemporalFilterType(type)) return min <= max;
   return true;
 }
@@ -2228,11 +2365,10 @@ function formatDateRange(minIso: string, maxIso: string, locale: string): string
     .join(" – ");
 }
 
-/** Format a local "YYYY-MM-DDTHH:mm[:ss]" as a locale medium date + short time. */
-function formatDateTimeValue(iso: string, locale: string): string {
-  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-  if (!m) return iso;
-  const [, y, mo, d, h, min] = m;
+/** Format an RFC 3339 datetime as a locale medium date + short time. */
+function formatDateTimeValue(iso: string, locale: string, timeZone: string): string {
+  const normalized = normalizeTemporalFilterValue("datetime", iso, timeZone);
+  if (!normalized) return iso;
   try {
     return new DateFormatter(locale, {
       year: "numeric",
@@ -2240,7 +2376,8 @@ function formatDateTimeValue(iso: string, locale: string): string {
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).format(new Date(Number(y), Number(mo) - 1, Number(d), Number(h), Number(min)));
+      timeZone,
+    }).format(new Date(normalized));
   } catch {
     return iso;
   }
@@ -2251,6 +2388,7 @@ function formatFilterValue(
   config: FilterConfig,
   t: ReturnType<typeof useDataTableT>,
   locale: string,
+  timeZone: string,
   /** Column label — used to summarize multi-select enums as "N labels". */
   label?: string,
 ): string {
@@ -2269,7 +2407,7 @@ function formatFilterValue(
     return filter.value === true ? t("filterBooleanTrue") : t("filterBooleanFalse");
   }
 
-  if (config.type === "number" && filter.operator === "between") {
+  if ((config.type === "number" || config.type === "decimal") && filter.operator === "between") {
     const range = filter.value as { min?: unknown; max?: unknown } | null;
     if (!range || typeof range !== "object") return "";
     const min = range.min != null ? String(range.min) : "";
@@ -2293,12 +2431,12 @@ function formatFilterValue(
     if (filter.operator === "between") {
       const range = filter.value as { min?: unknown; max?: unknown } | null;
       if (!range || typeof range !== "object") return "";
-      const min = range.min != null ? formatDateTimeValue(String(range.min), locale) : "";
-      const max = range.max != null ? formatDateTimeValue(String(range.max), locale) : "";
+      const min = range.min != null ? formatDateTimeValue(String(range.min), locale, timeZone) : "";
+      const max = range.max != null ? formatDateTimeValue(String(range.max), locale, timeZone) : "";
       return [min, max].filter(Boolean).join(" – ");
     }
     if (filter.value == null || filter.value === "") return "";
-    return formatDateTimeValue(String(filter.value), locale);
+    return formatDateTimeValue(String(filter.value), locale, timeZone);
   }
 
   if (isTemporalFilterType(config.type) && filter.operator === "between") {

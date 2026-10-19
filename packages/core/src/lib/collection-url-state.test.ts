@@ -3,6 +3,7 @@ import type { PropsWithChildren } from "react";
 import { createElement } from "react";
 import { MemoryRouter } from "react-router";
 import { describe, it, expect, vi } from "vitest";
+import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import type { CollectionPersistedState, TableMetadataMap } from "@/types/collection";
 import {
   useURLCollectionVariables,
@@ -22,6 +23,7 @@ const tableMetadata = {
       { name: "createdAt", type: "datetime", required: true },
       { name: "title", type: "string", required: true },
       { name: "price", type: "number", required: true },
+      { name: "decimalPrice", type: "decimal", required: true },
       { name: "archived", type: "boolean", required: false },
     ],
   },
@@ -104,6 +106,22 @@ describe("parseCollectionSearchParams", () => {
       { field: "price", operator: "gt", value: 130 },
     ]);
   });
+
+  it.each(["eq", "in", "nin", "between"] as const)(
+    "round-trips decimal %s values and sorting without losing precision",
+    (operator) => {
+      const min = "9007199254740993.123456789";
+      const max = "9007199254740994.123456789";
+      const value = { between: { min, max }, eq: min, in: [min, max], nin: [min, max] }[operator];
+      const state = {
+        filters: [{ field: "decimalPrice", operator, value }],
+        sortStates: [{ field: "decimalPrice", direction: "Asc" as const }],
+        pageSize: 20,
+      };
+      const written = writeCollectionSearchParams(new URLSearchParams(), state);
+      expect(parseCollectionSearchParams(tableMetadata.task, written)).toEqual(state);
+    },
+  );
 
   it("leaves numeric-looking values as strings when no metadata is provided", () => {
     const result = parseCollectionSearchParams(new URLSearchParams("f.price:gt=130"));
@@ -203,6 +221,37 @@ describe("withURLCollectionState", () => {
 });
 
 describe("useURLCollectionVariables", () => {
+  it.each([
+    ["gte", "2026-10-09T00:00:00", { gte: "2026-10-08T15:00:00.000Z" }],
+    ["in", '["2026-10-09T00:00:00"]', { in: ["2026-10-08T15:00:00.000Z"] }],
+    [
+      "between",
+      '{"min":"2026-10-09T00:00:00","max":"2026-10-10T00:00:00"}',
+      { between: { min: "2026-10-08T15:00:00.000Z", max: "2026-10-09T15:00:00.000Z" } },
+    ],
+  ] as const)(
+    "normalizes URL datetime %s filters before the first query",
+    (operator, value, expected) => {
+      const search = new URLSearchParams({ [`f.createdAt:${operator}`]: value });
+      const wrapper = ({ children }: PropsWithChildren) =>
+        createElement(
+          AppShellConfigContext.Provider,
+          {
+            value: {
+              configurations: buildConfigurations({ modules: [], timeZone: "Asia/Tokyo" }),
+            },
+          },
+          createElement(MemoryRouter, { initialEntries: [`/?${search}`] }, children),
+        );
+      const { result } = renderHook(
+        () => useURLCollectionVariables({ tableMetadata: tableMetadata.task }),
+        { wrapper },
+      );
+      expect(result.current.variables.query).toEqual({ createdAt: expected });
+      expect(result.current.control.filters[0].value).toEqual(Object.values(expected)[0]);
+    },
+  );
+
   it("seeds collection control state from the URL search params", () => {
     const { result } = renderHook(
       () =>

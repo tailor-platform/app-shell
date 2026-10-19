@@ -127,6 +127,7 @@ type NonEmptyReadonlyArray<T> = readonly [T, ...T[]];
 type DataTableUiFilterOperatorByType = {
   string: DataTableStringFilterOperator;
   number: DataTableNumericTemporalFilterOperator;
+  decimal: DataTableNumericTemporalFilterOperator;
   datetime: DataTableNumericTemporalFilterOperator;
   date: DataTableDateFilterOperator;
   time: DataTableNumericTemporalFilterOperator;
@@ -144,6 +145,9 @@ export type DataTableFilterConfig =
       operators?: NonEmptyReadonlyArray<DataTableStringFilterOperator>;
     })
   | (Extract<FilterConfig, { type: "number" }> & {
+      operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
+    })
+  | (Extract<FilterConfig, { type: "decimal" }> & {
       operators?: NonEmptyReadonlyArray<DataTableNumericTemporalFilterOperator>;
     })
   | (Extract<FilterConfig, { type: "datetime" }> & {
@@ -397,6 +401,35 @@ export type RowExpansionOptions<TRow extends Record<string, unknown>> = {
     }
 );
 
+/** Controlled or uncontrolled row-selection configuration. Keep the mode stable while mounted. */
+export type RowSelectionOptions = {
+  /**
+   * Bulk actions for the selected IDs, shown in `DataTable.Footer` while at
+   * least one row is selected. The bar includes the selection count, these
+   * actions, and Clear, with pagination kept alongside. The first three actions
+   * render as buttons; the rest collapse into a "More actions" menu.
+   * Omit or pass an empty array to enable selection without an action bar.
+   */
+  actions?: SelectionAction[];
+} & (
+  | {
+      /**
+       * Controlled selected ids. Update this array from `onChange`.
+       * Commands issued before the owner commits each derive from this value.
+       */
+      selectedIds: string[];
+      onChange: (ids: string[]) => void;
+      defaultSelectedIds?: never;
+    }
+  | {
+      selectedIds?: never;
+      /** Initial selected ids in uncontrolled mode; subsequent changes are ignored. */
+      defaultSelectedIds?: string[];
+      /** Notification of user-driven selection changes, including under StrictMode. */
+      onChange?: (ids: string[]) => void;
+    }
+);
+
 /**
  * Options for `useDataTable` hook.
  */
@@ -435,15 +468,26 @@ export type UseDataTableOptions<
    */
   rowActions?: RowAction<TRow>[];
   /**
+   * Controlled or uncontrolled row selection. Providing this option enables
+   * checkboxes. Uses string-normalized `row.id`; rows without an id are excluded.
+   * The header checkbox adds/removes only the current page, preserving other ids.
+   */
+  rowSelection?: RowSelectionOptions;
+  /**
    * Called with the current array of selected row IDs whenever the selection
-   * changes. Providing this prop enables the checkbox selection column.
-   * Selection is ID-based (`row.id`) and persists across page changes.
+   * changes. Providing this prop or `rowSelection` enables the checkbox
+   * selection column. Selection is ID-based (`row.id`) and persists
+   * across page changes. Remains supported; `rowSelection.onChange` takes
+   * precedence when both callbacks are supplied.
    *
    * **Requirement:** Each row must have a string or number `id` field.
    * Rows without `id` are excluded from selection.
    *
-   * **Note:** `selectAllRows` (triggered by the header checkbox) selects only
-   * the rows on the **current page**, not all pages.
+   * **Note:** The header checkbox acts on the **current page**: checking it adds
+   * the page's rows to the selection and unchecking it removes them. Rows
+   * selected on other pages are kept.
+   *
+   * @deprecated Use `rowSelection.onChange` instead.
    */
   onSelectionChange?: (ids: string[]) => void;
   /**
@@ -476,16 +520,61 @@ export type UseDataTableOptions<
 // Row Actions
 // =============================================================================
 
-/**
- * A single row action definition for the actions column.
- */
-export interface RowAction<TRow extends Record<string, unknown>> {
+/** Presentation shared by row actions and selection actions. */
+export interface DataTableAction {
   id: string;
   label: string;
   icon?: ReactNode;
   variant?: "default" | "destructive";
+}
+
+/**
+ * A single row action definition for the actions column.
+ */
+export interface RowAction<TRow extends Record<string, unknown>> extends DataTableAction {
+  /** Whether the action can act on this row. Return `false` to disable it. */
+  canApply?: (row: TRow) => boolean;
+  /**
+   * Return `true` to disable the action for a given row.
+   *
+   * @deprecated Use `canApply`, which reads the other way round:
+   * `isDisabled: (row) => x` is `canApply: (row) => !x`. If both are set, the
+   * action is disabled when either one says so.
+   */
   isDisabled?: (row: TRow) => boolean;
   onClick: (row: TRow) => void;
+}
+
+/** The second argument to `SelectionAction.onClick`. */
+export interface SelectionActionHelpers {
+  /** Empty the selection across all pages. */
+  clearSelection: () => void;
+  /**
+   * Hand the bar a request it should track — for one that starts after
+   * `onClick` has returned, typically from a confirm dialog's confirm button.
+   * The bar then behaves as if `onClick` had returned it: actions (and Clear)
+   * are disabled while it is pending. It never changes selection. Returns the
+   * request, so it can be awaited too.
+   */
+  run: <T>(request: PromiseLike<T>) => PromiseLike<T>;
+}
+
+/**
+ * An ID-based bulk action shown in `DataTable.Footer` while a selection is open.
+ * Configure through `UseDataTableOptions.rowSelection.actions`.
+ */
+export interface SelectionAction extends DataTableAction {
+  /**
+   * Called with a click-time copy of all selected IDs, including unloaded rows.
+   * Consumers own eligibility checks, fetching, confirmation, and execution.
+   * Selection is never automatically cleared: update controlled selection based
+   * on the actual result, preserving ineligible IDs and any new selections.
+   *
+   * Return a promise to disable the bar and show a spinner while it is pending.
+   * For work started later by a confirmation dialog, pass the request to
+   * `helpers.run` instead. Neither success nor failure changes selection.
+   */
+  onClick: (ids: string[], helpers: SelectionActionHelpers) => void | Promise<unknown>;
 }
 
 /**
@@ -565,11 +654,25 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   rowActions?: RowAction<TRow>[];
 
   // Row selection
+  /** Selection config (passthrough for `DataTable.Root`). */
+  rowSelection?: RowSelectionOptions;
   selectedIds: string[];
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
+  /** Adds every row on the current page to the selection. */
   selectAllRows?: () => void;
+  /** Removes the current page's rows from the selection; other pages' rows stay selected. */
+  deselectAllRows?: () => void;
+  /** Empties the selection across all pages. */
   clearSelection?: () => void;
+  /** Id of the selection action whose request is in flight, or `null`. */
+  pendingActionId?: string | null;
+  /**
+   * Tracks a selection action's request: disables the bar while it is pending
+   * without changing selection. This is what `SelectionActionHelpers.run` calls.
+   * Undefined when selection is off.
+   */
+  runSelectionAction?: (action: { id: string }, request: PromiseLike<unknown>) => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;
 

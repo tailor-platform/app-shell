@@ -70,8 +70,8 @@ defineModule({
 
 **meta.breadcrumbTitle**
 
-- **Type:** `string | ((segment: string) => string)`
-- **Description:** Custom breadcrumb segment title override
+- **Type:** `string | ((segment: string) => LocalizedString)`
+- **Description:** Custom breadcrumb segment title override. Pass `labels.t(key)` directly for localization: `breadcrumbTitle: labels.t("dashboard")`. Other callbacks receive the URL segment and may return a `LocalizedString`, resolved using the current locale. The existing `() => labels.t(key)` form remains supported; handwritten locale functions must be returned from an outer callback. When omitted, the breadcrumb uses the localized `meta.title`.
 
 ### `guards`
 

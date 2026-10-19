@@ -28,7 +28,10 @@ import {
   type DataTableData,
   type DataTableRootProps,
   type DataTablePaginationProps,
+  type DataTableAction,
   type RowAction,
+  type RowSelectionOptions,
+  type SelectionAction,
   type UseDataTableOptions,
   type UseDataTableReturn,
   type MetadataFieldOptions,
@@ -150,15 +153,15 @@ function JournalsPage() {
 
 `DataTable` is a namespace object. All sub-components read state from `DataTable.Root` via context.
 
-| Sub-component              | Description                                                                                                                                                  |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `DataTable.Root`           | Context provider. Wraps all other sub-components. Required.                                                                                                  |
-| `DataTable.Table`          | Renders the `<table>` with headers and body. Required.                                                                                                       |
-| `DataTable.Toolbar`        | DataTable-specific toolbar container. Optional; pass `columnSettings` for the built-in Columns control.                                                      |
-| `DataTable.ColumnSettings` | The placeable Columns control (show/hide + reorder + pin). Use it in a generic [`Toolbar`](./toolbar.md) for custom layouts.                                 |
-| `DataTable.Filters`        | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                         |
-| `DataTable.Footer`         | Footer container for pagination and other footer content. Optional.                                                                                          |
-| `DataTable.Pagination`     | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`. |
+| Sub-component              | Description                                                                                                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DataTable.Root`           | Context provider. Wraps all other sub-components. Required.                                                                                                            |
+| `DataTable.Table`          | Renders the `<table>` with headers and body. Required.                                                                                                                 |
+| `DataTable.Toolbar`        | DataTable-specific toolbar container. Optional; pass `columnSettings` for the built-in Columns control.                                                                |
+| `DataTable.ColumnSettings` | The placeable Columns control (show/hide + reorder + pin). Use it in a generic [`Toolbar`](./toolbar.md) for custom layouts.                                           |
+| `DataTable.Filters`        | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                                   |
+| `DataTable.Footer`         | Footer container for pagination and other footer content. Optional. Becomes the bulk-action bar while rows are selected — see [Selection actions](#selection-actions). |
+| `DataTable.Pagination`     | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`.           |
 
 ### `DataTable.Root` Props
 
@@ -226,7 +229,7 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 | Rows selected and `total` is not provided | `Y row(s) selected`      |
 | No selection enabled and no `total`       | _(nothing displayed)_    |
 
-Row selection is enabled by providing `onSelectionChange` to `useDataTable`. The `total` value comes from `DataTableData.total`.
+Row selection is enabled by providing `rowSelection` or `onSelectionChange` to `useDataTable`. The `total` value comes from `DataTableData.total`. While the footer shows the bulk-action bar (see [Selection actions](#selection-actions)), the bar owns the selection count and this text is omitted.
 
 When pagination changes page or page size, `DataTable.Table` resets its own scroll container to the top automatically. That applies whether navigation comes from the built-in `DataTable.Pagination` or from custom controls using the same table context.
 
@@ -374,9 +377,119 @@ The trigger is a native `<button>`, so Enter/Space activation and the focus ring
 
 **Known limitation — row count.** Detail rows are real `<tr>` elements, so a screen reader counts them: ten records with two expanded announces as twelve rows. Fixing this needs `aria-rowcount` plus explicit `aria-rowindex` on every row (with detail rows sharing their parent's index) and correct interaction with pagination; `role="presentation"` on the detail row would fix the count but remove the panel from screen-reader table navigation. Neither is implemented.
 
+## Row selection
+
+Pass `rowSelection` to `useDataTable` to enable the checkbox column. Rows must have a string or number `id`; selected ids are their string-normalized values, and rows without an id are excluded. An empty configuration (`rowSelection: {}`) enables uncontrolled selection without a notification callback. Bulk actions belong in `rowSelection.actions`; `rowSelection: { actions: [] }` still enables checkboxes, but does not show the bulk-action bar.
+
+### `RowSelectionOptions`
+
+| Property             | Type                      | Description                                                                                                    |
+| -------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `selectedIds`        | `string[]`                | Controlled selected ids. Requires `onChange` and cannot be combined with `defaultSelectedIds`.                 |
+| `defaultSelectedIds` | `string[]`                | Initial selected ids in uncontrolled mode. Later changes are ignored.                                          |
+| `onChange`           | `(ids: string[]) => void` | Notifies user-driven selection changes; required in controlled mode and optional in uncontrolled mode.         |
+| `actions`            | `SelectionAction[]`       | Optional bulk actions shown in `DataTable.Footer` while ids are selected. Omitted or empty arrays show no bar. |
+
+### Controlled selection
+
+Provide `selectedIds` and `onChange` together to own the selection. The `RowSelectionOptions` type requires `onChange` in controlled mode and rejects combining `selectedIds` with `defaultSelectedIds`.
+
+```tsx
+const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+const table = useDataTable<Order>({
+  columns,
+  data,
+  rowSelection: { selectedIds, onChange: setSelectedIds },
+});
+```
+
+Commands such as `toggleRowSelection(row)` request a new array through `onChange`; the rendered selection changes only when the owner updates `selectedIds`. Each command derives from the current committed value, so multiple commands before the owner commits share the same base. Compute batched changes yourself and set `selectedIds` directly instead of issuing repeated commands.
+
+### Uncontrolled selection
+
+Omit `selectedIds` to let the table own selection state. `defaultSelectedIds` initializes it only when the hook mounts; later changes to that default do not reset selection. `onChange` is optional.
+
+```tsx
+const table = useDataTable<Order>({
+  columns,
+  data,
+  rowSelection: { defaultSelectedIds: ["INV-1001"] },
+});
+```
+
+Keep the controlled/uncontrolled mode stable while mounted. Callbacks notify user-driven selection changes, not mounting or external `selectedIds` updates. `onSelectionChange` is deprecated but remains supported for compatibility. Replace `onSelectionChange: handleSelectionChange` with `rowSelection: { onChange: handleSelectionChange }` to keep uncontrolled notification behavior. `rowSelection.onChange` takes precedence when both callbacks are supplied, and `onSelectionChange` is used when the new configuration has no callback.
+
+Selection spans pages. The header checkbox adds or removes only the current page's rows, preserving ids selected on other pages; `clearSelection()` clears every page. Selection stores IDs only, not row objects. Both `selectedIds` and bulk-action payloads include all selected ids, including ids whose rows have not been loaded. Fetch any records required for eligibility checks or execution in the consumer's ID-based workflow.
+
+## Selection actions
+
+Pass `rowSelection.actions` to `useDataTable` and, while at least one id is selected, `DataTable.Footer` becomes a bulk-action bar: the selection count, your actions, and a **Clear** button, with the footer's own children (usually `DataTable.Pagination`) kept alongside. `rowSelection: { actions }` enables uncontrolled selection without an `onChange` callback. Omitted or empty `actions` show no bar, while the `rowSelection` object still enables checkboxes. There is nothing new to compose in JSX — just keep `DataTable.Footer` in the tree.
+
+```tsx
+const [selectedIds, setSelectedIds] = useState<string[]>([]);
+const [deleteTargetIds, setDeleteTargetIds] = useState<string[] | null>(null);
+
+const table = useDataTable<Vendor>({
+  columns,
+  data,
+  control,
+  rowSelection: {
+    selectedIds,
+    onChange: setSelectedIds,
+    actions: [
+      {
+        id: "delete",
+        label: "Delete",
+        variant: "destructive",
+        onClick: (ids) => setDeleteTargetIds([...ids]),
+      },
+    ],
+  },
+});
+
+return (
+  <>
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+      <DataTable.Footer>
+        <DataTable.Pagination />
+      </DataTable.Footer>
+    </DataTable.Root>
+
+    {deleteTargetIds !== null && (
+      <DeleteVendorsDialog
+        ids={deleteTargetIds}
+        onCancel={() => setDeleteTargetIds(null)}
+        onDeleted={(deletedIds: string[]) => {
+          const deleted = new Set(deletedIds);
+          setSelectedIds((current) => current.filter((id) => !deleted.has(id)));
+          setDeleteTargetIds(null);
+        }}
+      />
+    )}
+  </>
+);
+```
+
+`DeleteVendorsDialog` is a consumer-owned component, not an AppShell component. It can fetch the target records, explain eligibility (for example, “Three of five selected vendors can be deleted; two are in use”), confirm, and execute. Backend validation remains authoritative; `onDeleted` reports only ids actually deleted. Removing those ids from the **current** selection preserves ineligible records and records selected after the dialog opened. Cancellation or failure leaves selection unchanged.
+
+- **`onClick` receives a click-time snapshot of all selected ids.** The array is a copy, in selection order, including ids whose rows have not been loaded. Page visits and loaded-row availability do not change the target. Selection actions have no row-based `canApply`, automatic eligible count, or eligibility-based disabled state; the consumer owns eligibility checks, required fetching, confirmation UI, and execution. Row actions can still use `canApply` for their concrete row.
+- **Return the promise from `onClick`.** While it is pending, the bar disables every action and shows a spinner on the running one, so a slow request can't be fired twice. Neither success nor rejection changes selection; there is no `keepSelection` option. A rejection is logged as `[DataTable] Selection action "…" failed`; showing it to the user is up to your handler.
+- **Confirm dialogs can hand a later request back with `run`.** An `onClick` that only opens a dialog returns nothing. Keep the `run` helper and call it from the dialog's confirm button — `await run(deleteVendors(ids))` — to track that request in the bar. This only tracks pending state; it does not clear selection. Clear is disabled while a request is pending, and pending state survives the bar closing and reopening. Use controlled `rowSelection` to remove only successful ids, or call the explicit `clearSelection` helper if clearing every page is intentional.
+- **Selection spans pages.** The header checkbox adds or removes only the current page; **Clear** empties everything.
+- **Three actions stay inline.** The fourth onward collapse into a **More actions** menu, in array order. Put the most frequent first; a destructive action placed last sits safely in the menu.
+- **Confirm destructive actions.** `variant: "destructive"` only styles the action. Open a confirm dialog from `onClick` before deleting — see the [confirm pattern](../patterns/interaction-confirm.md).
+- **The bar stays reachable.** In `<Layout fill>` the footer is already pinned. On a page that scrolls, the bar sticks to the bottom of the viewport while rows are selected and settles back into place at the end of the table. It sticks to the nearest scrolling container: inside a scrolling drawer or panel it rides that container instead, and inside a wrapper that clips its overflow (such as a card with `overflow: hidden`) it simply stays in the footer.
+- **Share presentation with `rowActions`.** Both action types extend the non-generic [`DataTableAction`](#datatableaction) (`id`, `label`, `icon`, `variant`). Keep row predicates on `RowAction<TRow>` and bulk business rules in the consumer's ID-based handler.
+
+### Accessibility
+
+The bar is a `role="toolbar"` named "Bulk actions", so Arrow, Home, and End move between its controls (see [`Toolbar`](./toolbar.md)) while Tab still reaches each one. The selection count is announced through a polite live region from the first selection on. When the bar closes while focus is inside it — after **Clear**, or an action that clears — focus returns to the header checkbox instead of dropping to `<body>`.
+
 ## `useDataTable`
 
-Creates the table state object to pass to `DataTable.Root`.
+Creates the table state object to pass to `DataTable.Root`. The hook return value and `useDataTableContext()` both expose the original selection configuration as `rowSelection`, including `rowSelection.actions`. Read the current selection from `selectedIds` and update it through the selection commands.
 
 ```tsx
 const table = useDataTable({
@@ -389,19 +502,20 @@ const table = useDataTable({
 
 ### Options
 
-| Option              | Type                               | Description                                                                                                                                                                     |
-| ------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                   |
-| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                   |
-| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                        |
-| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                           |
-| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                |
-| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                               |
-| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.            |
-| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                         |
-| `onSelectionChange` | `(ids: string[]) => void`          | Called with selected row IDs on change. Providing this enables the checkbox column. Rows must have a string `id`.                                                               |
-| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows). |
-| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                       |
+| Option              | Type                               | Description                                                                                                                                                                                              |
+| ------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                                            |
+| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                                            |
+| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                                                 |
+| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                                                    |
+| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                                         |
+| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                                                        |
+| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.                                     |
+| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                                                  |
+| `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`, with optional `actions`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection). |
+| `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                                          |
+| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows).                          |
+| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                                                |
 
 ### `DataTableData`
 
@@ -699,18 +813,75 @@ The `filter` property on a column accepts the same base shape as `FilterConfig`,
 
 ### Filter Types and Operators
 
-| Type       | Input editor              | Supported operators                                                                                          |
-| ---------- | ------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `string`   | Text                      | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
-| `number`   | Number                    | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `datetime` | Datetime-local            | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `date`     | **Calendar / DatePicker** | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
-| `time`     | Time                      | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `enum`     | Dropdown                  | `eq`, `ne`, `in`, `nin`                                                                                      |
-| `boolean`  | Toggle                    | `eq`, `ne`                                                                                                   |
-| `uuid`     | Text                      | `eq`, `ne`, `in`, `nin`                                                                                      |
+| Type       | Input editor                 | Supported operators                                                                                          |
+| ---------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `string`   | Text                         | `eq`, `ne`, `contains`, `notContains`, `hasPrefix`, `hasSuffix`, `notHasPrefix`, `notHasSuffix`, `in`, `nin` |
+| `number`   | Number                       | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `decimal`  | Decimal text (string value)  | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `datetime` | Calendar / DatePicker + Time | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `date`     | **Calendar / DatePicker**    | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
+| `time`     | Time                         | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
+| `enum`     | Dropdown                     | `eq`, `ne`, `in`, `nin`                                                                                      |
+| `boolean`  | Toggle                       | `eq`, `ne`                                                                                                   |
+| `uuid`     | Text                         | `eq`, `ne`, `in`, `nin`                                                                                      |
 
-When the `between` operator is selected on a `number`, `datetime`, `date`, or `time` column, the value editor renders a range input with **min**/**max** (or **From**/**To** for dates) bounds.
+When the `between` operator is selected on a `number`, `decimal`, `datetime`, `date`, or `time` column, the value editor renders a range input with **min**/**max** (or **From**/**To** for dates) bounds.
+
+### Decimal Filters
+
+TailorDB `db.decimal()` fields are generated as metadata `type: "decimal"`. They support numeric sort and filter operators, but values remain **strings**, matching the GraphQL `Decimal` scalar without JavaScript number rounding. Scalar filters, `in`/`nin` arrays, and `between` bounds all use strings in `variables.query`.
+
+The editor accepts signed decimal and scientific notation (for example, `"9007199254740993.123456789"` or `"1.23e-10"`) and checks range ordering without rounding. Sorting is delegated to the backend. As with `number`, `in`/`nin` are available programmatically, not in the built-in editor.
+
+Regenerate metadata with the updated SDK plugin to replace older decimal fields marked as `"number"`. Decimal metadata does not select a numeric cell renderer; the default text rendering preserves the original value.
+
+### Datetime Filters and Business Timezones
+
+> **Important:** Set [`AppShell.timeZone`](./app-shell.md#timezone) explicitly when datetime filters must follow a shared business timezone. Without it, the filter editors use each user's local timezone. Users in different timezones can enter the same date and time but search against different instants, causing expected records to be missed. Setting `locale` alone does **not** set the timezone.
+
+`locale` and `timeZone` are independent:
+
+| Setting    | Controls                                                                             | Example        |
+| ---------- | ------------------------------------------------------------------------------------ | -------------- |
+| `locale`   | UI language and locale-specific date/time formatting                                 | `"ja-JP"`      |
+| `timeZone` | The timezone used to interpret the date and time selected in datetime filter editors | `"Asia/Tokyo"` |
+
+For example, a Japanese-language application can use a US business timezone. Choose the timezone that defines the business's date boundaries, not one inferred from the UI language or the user's location:
+
+```tsx
+import { AppShell } from "@tailor-platform/app-shell";
+
+<AppShell modules={modules} locale="ja-JP" timeZone="America/New_York">
+  {/* Existing application content */}
+</AppShell>;
+```
+
+Use an IANA timezone such as `"Asia/Tokyo"` or `"America/New_York"`, rather than a fixed UTC offset, so daylight-saving changes are accounted for. If per-user local-time filtering is intentional, leave `timeZone` unset; otherwise, configure the shared business timezone even when every user has the same `locale`.
+
+#### Local input, RFC 3339 output
+
+The datetime editor shows the date and time in the configured timezone, but sends an **instant** — a specific point in time — as an RFC 3339 UTC string. For example, the same input `2026-10-09 00:00` produces:
+
+| Timezone used by the editor | Serialized filter value    |
+| --------------------------- | -------------------------- |
+| `Asia/Tokyo`                | `2026-10-08T15:00:00.000Z` |
+| `America/New_York`          | `2026-10-09T04:00:00.000Z` |
+
+Applying or updating a datetime filter through `DataTable.Filters` passes these strings to `CollectionControl.addFilter`, so consumers reading `control.filters` receive UTC instants rather than timezone-less local datetime strings. A `between` filter serializes both `min` and `max` as instants. Existing RFC 3339 values are displayed in the editor's timezone without changing the instant they represent. `date` and `time` filters retain their `YYYY-MM-DD` and `HH:mm` formats.
+
+A datetime `eq` filter matches one instant, not every record on a calendar day. To search a whole business day on a datetime field, use the start of that day as an inclusive lower bound and the start of the next day as an exclusive upper bound in the backend query. Calculate both boundaries in the business timezone; do not assume every day is exactly 24 hours.
+
+When `tableMetadata` is supplied to `useCollectionVariables` or `useURLCollectionVariables`, datetime filters are normalized before the first query and before `addFilter` or `setFilters` updates the state. This also covers filters restored from URLs or saved views. Timezone-less legacy datetime strings are interpreted in the AppShell timezone; values with `Z` or an explicit offset retain their original instant. Single values, `in` / `nin` arrays, and both bounds of `between` filters are normalized. Invalid datetime values throw a `TypeError` rather than silently removing a search constraint; invalid updates leave the previous filter state unchanged. Datetime strings must use the ISO date-and-time form with `T`; date-only strings and browser-specific date formats are not accepted for datetime fields. If migrating legacy values, first establish which timezone they originally represented.
+
+Without `tableMetadata`, the collection hook cannot distinguish datetime fields from ordinary strings and leaves filter values unchanged. Supply RFC 3339 datetime values with an explicit timezone in programmatic or persisted filters on this path. Setting a DataTable column's `filter.type` configures the UI but does not supply metadata to the collection hook.
+
+Built-in `type: "date"` cells display timestamps in the AppShell timezone, and the cell menu uses that same timezone when adding a temporal filter. Date-only `YYYY-MM-DD` cell values retain their calendar date instead of shifting to the previous or next day. The setting does not change the browser's default timezone: when using `Intl.DateTimeFormat` in a custom cell renderer, pass the same timezone explicitly if its output must agree with the filters.
+
+#### Calendar dates are not instants
+
+Use the `date` field/filter type for values whose meaning is a calendar date, such as a purchase-order date or an accounting date. `2026-10-09` should remain that date regardless of where the user is located. Use `datetime` for events that occurred at a particular instant, such as a record's creation time.
+
+If an existing backend stores document dates as datetime instants, a shared business timezone can make filter boundaries consistent, but it does not fix that data model. Changing only the column's filter type to `date` does not migrate the stored values or change the backend's query contract. Align the backend field type, data, and filters when moving to date-only semantics.
 
 ### Date Filters
 
@@ -723,7 +894,7 @@ When the `between` operator is selected on a `number`, `datetime`, `date`, or `t
 | `lte`     | _before_     | on or before (inclusive)   |
 | `between` | _between_    | inclusive min–max range    |
 
-`gt` / `lt` / `ne` are intentionally dropped — the inclusive _after_ / _before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set and native inputs.)
+`gt` / `lt` / `ne` are intentionally dropped — the inclusive _after_ / _before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set. Datetime editors pair a calendar/date picker with a time input; `time` uses a native time input.)
 
 ### String Filter Case Sensitivity
 
@@ -749,14 +920,56 @@ When `caseSensitive` is omitted or `false`, the filter is case-insensitive. When
 
 ## `RowAction`
 
-| Property     | Type                         | Description                                          |
-| ------------ | ---------------------------- | ---------------------------------------------------- |
-| `id`         | `string`                     | Stable identifier for the action.                    |
-| `label`      | `string`                     | Display label in the kebab menu.                     |
-| `icon`       | `ReactNode`                  | Optional icon shown beside the label.                |
-| `variant`    | `"default" \| "destructive"` | Visual style of the menu item.                       |
-| `isDisabled` | `(row: TRow) => boolean`     | Return `true` to disable the action for a given row. |
-| `onClick`    | `(row: TRow) => void`        | Called when the action is clicked.                   |
+A row action in the kebab-menu column. `RowAction<TRow>` extends the non-generic [`DataTableAction`](#datatableaction) (`id`, `label`, `icon`, `variant`) and adds row-based behavior.
+
+| Property     | Type                     | Description                                                                                                                     |
+| ------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `canApply`   | `(row: TRow) => boolean` | Return `false` to disable the action for a given row.                                                                           |
+| `isDisabled` | `(row: TRow) => boolean` | **Deprecated** — use `canApply`, which reads the other way round. Still honoured: the action is disabled if either one says so. |
+| `onClick`    | `(row: TRow) => void`    | Called when the action is clicked.                                                                                              |
+
+## `SelectionAction`
+
+A non-generic bulk action for selected ids. Extends [`DataTableAction`](#datatableaction). See [Selection actions](#selection-actions).
+
+| Property  | Type                                                                           | Description                                                                                                                                                                                                       |
+| --------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `onClick` | `(ids: string[], helpers: SelectionActionHelpers) => void \| Promise<unknown>` | Receives a copy of all selected ids at click time, including unloaded ids. Return a promise, or pass a later request to `helpers.run`, for pending-state tracking only. Selection is never cleared automatically. |
+
+`SelectionActionHelpers` provides `clearSelection(): void` to explicitly clear every page and `run<T>(request: PromiseLike<T>): PromiseLike<T>` to track a later request without changing selection. Eligibility, fetching, confirmation, execution, and result-based selection updates belong to the consumer.
+
+## `DataTableAction`
+
+Non-generic presentation shared by `RowAction<TRow>` and `SelectionAction`. Share these fields, not eligibility rules: row actions can evaluate a concrete row, while selection actions operate on ids.
+
+| Property  | Type                         | Description                                                                                                   |
+| --------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `id`      | `string`                     | Stable identifier for the action.                                                                             |
+| `label`   | `string`                     | Display label — the menu item for a row action, the button (or **More actions** item) for a selection action. |
+| `icon`    | `ReactNode`                  | Optional icon shown beside the label.                                                                         |
+| `variant` | `"default" \| "destructive"` | Visual style. A destructive action still needs its own confirmation step.                                     |
+
+```tsx
+const archive: DataTableAction = {
+  id: "archive",
+  label: "Archive",
+};
+
+useDataTable<Order>({
+  columns,
+  data,
+  rowActions: [
+    {
+      ...archive,
+      canApply: (order) => order.status !== "Archived",
+      onClick: (order) => archiveOrders([order.id]),
+    },
+  ],
+  rowSelection: {
+    actions: [{ ...archive, onClick: (ids) => archiveOrders(ids) }],
+  },
+});
+```
 
 ## `createColumnHelper`
 
@@ -816,13 +1029,13 @@ const { variables, control } = useCollectionVariables({
 
 ### Options
 
-| Option                  | Type                                 | Description                                                                                                           |
-| ----------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `params.pageSize`       | `number`                             | Initial page size. Default: `20`.                                                                                     |
-| `params.initialFilters` | `Filter[]`                           | Filters applied on first render.                                                                                      |
-| `params.initialSort`    | `SortState[]`                        | Sort applied on first render.                                                                                         |
-| `tableMetadata`         | `TableMetadata`                      | Generated table metadata. Required for typed GraphQL documents (see [Typed query variables](#typed-query-variables)). |
-| `onParamsChange`        | `(params: CollectionParams) => void` | Called after each filter, sort, or page-size change with the current params.                                          |
+| Option                  | Type                                 | Description                                                                                                                                      |
+| ----------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `params.pageSize`       | `number`                             | Initial page size. Default: `20`.                                                                                                                |
+| `params.initialFilters` | `Filter[]`                           | Filters applied on first render.                                                                                                                 |
+| `params.initialSort`    | `SortState[]`                        | Sort applied on first render.                                                                                                                    |
+| `tableMetadata`         | `TableMetadata`                      | Generated table metadata. Enables typed variables and datetime normalization (see [Datetime filters](#datetime-filters-and-business-timezones)). |
+| `onParamsChange`        | `(params: CollectionParams) => void` | Called after each filter, sort, or page-size change with the current params.                                                                     |
 
 ### Return Value
 
@@ -876,7 +1089,7 @@ The return value is identical to `useCollectionVariables` — `variables` and `c
 
 ### Options
 
-All options accepted by `useCollectionVariables` are accepted here too. `tableMetadata` is optional but recommended for typed variables and correct URL round-tripping of typed field values (numbers and booleans are preserved correctly).
+All options accepted by `useCollectionVariables` are accepted here too. `tableMetadata` is optional but recommended for typed variables and correct URL round-tripping of typed field values (numbers and booleans are preserved correctly, and datetime filters are normalized to RFC 3339 instants before querying).
 
 ### URL format
 
@@ -917,6 +1130,8 @@ function MyCustomPagination() {
   // ...
 }
 ```
+
+The selection is here too — `selectedIds`, `selectAllRows` / `deselectAllRows` for the current page, and `clearSelection` — for the rare case the built-in [selection actions](#selection-actions) bar doesn't fit. Selection exposes IDs only; consumers fetch any row objects they need.
 
 ## SDK Plugin (`@tailor-platform/sdk-plugin-app-shell`)
 

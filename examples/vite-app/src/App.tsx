@@ -5,6 +5,8 @@ import {
   SidebarItem,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSection,
+  SidebarSeparator,
   type SearchSource,
 } from "@tailor-platform/app-shell";
 import { BellIcon, LayersIcon } from "lucide-react";
@@ -52,20 +54,23 @@ const AppInner = () => {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarItem to="/" />
-            <SidebarGroup title={labels.t("navMain")} icon={<LayersIcon />}>
+            <SidebarSeparator />
+            <SidebarSection title={labels.t("navMain")}>
               <SidebarItem to="/dashboard" activeMatch="exact" />
               <SidebarItem to="/dashboard/orders" />
               <SidebarItem to="/dashboard/products" />
               <SidebarItem to="/settings" />
               <SidebarItem to="/dashboard/panels" />
-            </SidebarGroup>
-            <SidebarGroup title="Showcase">
+            </SidebarSection>
+            <SidebarSeparator />
+            <SidebarGroup title="Showcase" icon={<LayersIcon />}>
               <SidebarItem to="/showcase/colors" />
               <SidebarItem to="/showcase/primitives" />
               <SidebarItem to="/showcase/dropdown" />
               <SidebarItem to="/showcase/forms" />
               <SidebarItem to="/showcase/forms/zod-rhf" />
               <SidebarItem to="/showcase/csv-importer" />
+              <SidebarItem to="/showcase/card" />
               <SidebarItem to="/showcase/metric-card" />
               <SidebarItem to="/showcase/activity-card" />
               <SidebarItem to="/showcase/layouts" />
@@ -77,6 +82,8 @@ const AppInner = () => {
               <SidebarItem to="/showcase/toolbar" />
               <SidebarItem to="/showcase/data-table" />
               <SidebarItem to="/showcase/data-table-lab" />
+              <SidebarItem to="/showcase/data-table-selection" />
+              <SidebarItem to="/showcase/filter-rail" />
               <SidebarItem to="/showcase/alert-tokens" />
               <SidebarItem to="/showcase/spinner" />
             </SidebarGroup>

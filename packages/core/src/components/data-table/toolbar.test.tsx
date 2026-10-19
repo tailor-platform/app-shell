@@ -1,7 +1,9 @@
+import type { ReactNode } from "react";
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createAppShellWrapper } from "../../../tests/test-utils";
+import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
 import type { CollectionControl } from "@/types/collection";
@@ -9,6 +11,7 @@ import type { Column } from "./types";
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllEnvs();
 });
 
 type TestRow = Record<string, unknown>;
@@ -63,6 +66,19 @@ function TestFilters({
 }
 
 const wrapper = createAppShellWrapper("en");
+const timeZoneWrapper = ({ children }: { children: ReactNode }) => (
+  <AppShellConfigContext.Provider
+    value={{
+      configurations: buildConfigurations({
+        modules: [],
+        locale: "en",
+        timeZone: "America/Los_Angeles",
+      }),
+    }}
+  >
+    {children}
+  </AppShellConfigContext.Provider>
+);
 
 // ---------------------------------------------------------------------------
 // Filter chip segment helpers
@@ -147,6 +163,12 @@ const numberColumn: Column<TestRow> = {
   label: "Count",
   render: (r) => String(r.count ?? ""),
   filter: { type: "number", field: "count" },
+};
+
+const decimalColumn: Column<TestRow> = {
+  id: "amount",
+  label: "Amount",
+  filter: { type: "decimal", field: "amount" },
 };
 
 const dateColumn: Column<TestRow> = {
@@ -484,6 +506,27 @@ describe("AddFilterPanel", () => {
     });
   });
 
+  it("normalizes a legacy local datetime when re-applying it from the panel", async () => {
+    const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
+    const control = makeControl({
+      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00" }],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(await screen.findByRole("button", { name: /^Update$/ }));
+
+    expect(control.addFilter).toHaveBeenCalledWith(
+      "publishedAt",
+      "eq",
+      "2025-01-01T18:30:00.000Z",
+      undefined,
+    );
+  });
+
   it("preserves an active operator even when the column now restricts the allowlist", async () => {
     const user = userEvent.setup();
     const control = makeControl({
@@ -584,6 +627,68 @@ describe("FilterChip", () => {
     await user.click(screen.getByRole("button", { name: "Remove filter" }));
 
     expect(control.removeFilter).toHaveBeenCalledWith("name");
+  });
+
+  it("normalizes legacy datetime values when switching between single-value operators", async () => {
+    const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
+    const control = makeControl({
+      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00" }],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: "is" }));
+    await user.click(await screen.findByRole("button", { name: "greater than" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith(
+      "publishedAt",
+      "gt",
+      "2025-01-01T18:30:00.000Z",
+      undefined,
+    );
+  });
+
+  it("normalizes legacy datetime values when switching from single-value to between", async () => {
+    const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
+    const control = makeControl({
+      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00" }],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: "is" }));
+    await user.click(await screen.findByRole("button", { name: "is between" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "between", {
+      min: "2025-01-01T18:30:00.000Z",
+      max: "2025-01-01T18:30:00.000Z",
+    });
+  });
+
+  it("normalizes legacy datetime values when switching from between to single-value", async () => {
+    const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
+    const control = makeControl({
+      filters: [
+        {
+          field: "publishedAt",
+          operator: "between",
+          value: { min: "2025-01-01T10:30:00", max: "2025-01-02T11:30:00" },
+        },
+      ],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: "is between" }));
+    await user.click(await screen.findByRole("button", { name: "less than" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "lt", "2025-01-01T18:30:00.000Z");
   });
 });
 
@@ -843,6 +948,138 @@ describe("NumericFilterEditor", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Decimal filters — numeric operators with precision-preserving string values
+// ---------------------------------------------------------------------------
+
+describe("Decimal filters", () => {
+  const preciseValue = "9007199254740993.123456789";
+  const preciseMax = "9007199254740993.123456790";
+
+  it.each(["panel", "chip"] as const)(
+    "%s submits scalar decimals as exact strings",
+    async (surface) => {
+      const user = userEvent.setup();
+      const control = makeControl({
+        filters: surface === "chip" ? [{ field: "amount", operator: "eq", value: "1" }] : [],
+      });
+      render(<TestFilters control={control} columns={[decimalColumn]} />, { wrapper });
+
+      if (surface === "panel") await user.click(screen.getByRole("button", { name: "Add filter" }));
+      else await openValueEditor(user);
+
+      const input = await screen.findByPlaceholderText("Enter amount");
+      expect(input.getAttribute("type")).toBe("text");
+      expect(input.getAttribute("inputmode")).toBe("decimal");
+      await user.clear(input);
+      await user.type(input, preciseValue);
+      await user.click(screen.getByRole("button", { name: "Apply" }));
+
+      if (surface === "panel") {
+        expect(control.addFilter).toHaveBeenCalledWith("amount", "eq", preciseValue, undefined);
+      } else {
+        expect(control.addFilter).toHaveBeenCalledWith("amount", "eq", preciseValue);
+      }
+    },
+  );
+
+  it.each(["panel", "chip"] as const)(
+    "%s submits precise ranges and rejects reversed bounds",
+    async (surface) => {
+      const user = userEvent.setup();
+      const control = makeControl({
+        filters:
+          surface === "chip"
+            ? [
+                {
+                  field: "amount",
+                  operator: "between",
+                  value: { min: preciseValue, max: preciseMax },
+                },
+              ]
+            : [],
+      });
+      render(<TestFilters control={control} columns={[decimalColumn]} />, { wrapper });
+
+      if (surface === "panel") {
+        await user.click(screen.getByRole("button", { name: "Add filter" }));
+        await user.click(await screen.findByRole("button", { name: "is between" }));
+      } else {
+        expect(screen.getByText(`${preciseValue} - ${preciseMax}`)).toBeDefined();
+        await openValueEditor(user);
+      }
+
+      const min = await screen.findByRole("textbox", { name: "Min" });
+      const max = screen.getByRole("textbox", { name: "Max" });
+      fireEvent.change(min, { target: { value: "9007199254740993" } });
+      fireEvent.change(max, { target: { value: "9007199254740992" } });
+      expect((screen.getByRole("button", { name: "Apply" }) as HTMLButtonElement).disabled).toBe(
+        true,
+      );
+      expect(screen.getByText(/must be greater than or equal to/i)).toBeDefined();
+      fireEvent.keyDown(max, { key: "Enter" });
+      expect(control.addFilter).not.toHaveBeenCalled();
+
+      fireEvent.change(min, { target: { value: preciseValue } });
+      fireEvent.change(max, { target: { value: preciseMax } });
+      await user.click(screen.getByRole("button", { name: "Apply" }));
+      expect(control.addFilter).toHaveBeenCalledWith("amount", "between", {
+        min: preciseValue,
+        max: preciseMax,
+      });
+    },
+  );
+
+  it("chip editing rejects invalid decimals without clearing the active filter", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "amount", operator: "eq", value: preciseValue }],
+    });
+    render(<TestFilters control={control} columns={[decimalColumn]} />, { wrapper });
+    await openValueEditor(user);
+
+    const input = await screen.findByRole("textbox");
+    fireEvent.change(input, { target: { value: "not-a-decimal" } });
+    expect((screen.getByRole("button", { name: "Apply" }) as HTMLButtonElement).disabled).toBe(
+      true,
+    );
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(control.addFilter).not.toHaveBeenCalled();
+    expect(control.removeFilter).not.toHaveBeenCalled();
+
+    fireEvent.change(input, { target: { value: "-1.23456789123456789e-100" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(control.addFilter).toHaveBeenCalledWith("amount", "eq", "-1.23456789123456789e-100");
+  });
+
+  it("operator transitions preserve decimal strings in both directions", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [{ field: "amount", operator: "eq", value: preciseValue }],
+    });
+    const { rerender } = render(<TestFilters control={control} columns={[decimalColumn]} />, {
+      wrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: "is" }));
+    await user.click(await screen.findByRole("button", { name: "is between" }));
+    expect(control.addFilter).toHaveBeenCalledWith("amount", "between", {
+      min: preciseValue,
+      max: preciseValue,
+    });
+
+    const rangeControl = makeControl({
+      filters: [
+        { field: "amount", operator: "between", value: { min: preciseValue, max: preciseMax } },
+      ],
+    });
+    rerender(<TestFilters control={rangeControl} columns={[decimalColumn]} />);
+    await user.click(screen.getByRole("button", { name: "is between" }));
+    await user.click(await screen.findByRole("button", { name: "is" }));
+    expect(rangeControl.addFilter).toHaveBeenCalledWith("amount", "eq", preciseValue);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // DateFilterEditor — Apply button
 // ---------------------------------------------------------------------------
 
@@ -977,30 +1214,33 @@ describe("DateFilterEditor", () => {
 // ---------------------------------------------------------------------------
 
 describe("TemporalFilterEditor", () => {
-  it("renders a date picker + time box for datetime (seeded, no raw ISO textbox)", async () => {
+  it("hydrates the date picker + time box from an RFC 3339 datetime", async () => {
     const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
+    const value = "2025-01-01T10:30:00Z";
     const control = makeControl({
-      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00Z" }],
+      filters: [{ field: "publishedAt", operator: "eq", value }],
     });
     render(<TestFilters control={control} columns={[datetimeColumn]} />, {
-      wrapper,
+      wrapper: timeZoneWrapper,
     });
 
     await openValueEditor(user);
 
     // Date part is a segmented picker (a group), time part a native time box
-    // seeded from the value — no free-text ISO field.
+    // seeded from the RFC 3339 instant in the configured AppShell timezone.
     expect(await screen.findByRole("group")).toBeDefined();
-    expect(screen.getByDisplayValue("10:30")).toBeDefined();
+    expect(screen.getByDisplayValue("02:30")).toBeDefined();
   });
 
-  it("combines the date + time box into an ISO datetime on Apply", async () => {
+  it("serializes the selected local datetime as an RFC 3339 instant on Apply", async () => {
     const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
     const control = makeControl({
-      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00Z" }],
+      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00" }],
     });
     render(<TestFilters control={control} columns={[datetimeColumn]} />, {
-      wrapper,
+      wrapper: timeZoneWrapper,
     });
 
     await openValueEditor(user);
@@ -1008,10 +1248,56 @@ describe("TemporalFilterEditor", () => {
     fireEvent.change(await screen.findByDisplayValue("10:30"), { target: { value: "08:45" } });
     await user.click(screen.getByRole("button", { name: "Apply" }));
 
-    // Date kept, time replaced, seconds defaulted → local ISO (no zone).
-    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "eq", "2025-01-01T08:45:00");
+    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "eq", "2025-01-01T16:45:00.000Z");
   });
 
+  it("serializes both datetime between bounds as RFC 3339 instants", async () => {
+    const user = userEvent.setup();
+    vi.stubEnv("TZ", "UTC");
+    const control = makeControl({
+      filters: [
+        {
+          field: "publishedAt",
+          operator: "between",
+          value: { min: "2025-01-01T10:30:00", max: "2025-01-02T11:30:00" },
+        },
+      ],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
+
+    await openValueEditor(user);
+
+    fireEvent.change(await screen.findByDisplayValue("10:30"), { target: { value: "08:45" } });
+    fireEvent.change(screen.getByDisplayValue("11:30"), { target: { value: "09:15" } });
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "between", {
+      min: "2025-01-01T16:45:00.000Z",
+      max: "2025-01-02T17:15:00.000Z",
+    });
+  });
+
+  it("formats datetime chip values in the configured AppShell timezone", () => {
+    vi.stubEnv("TZ", "UTC");
+    const expected = new Intl.DateTimeFormat("en", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "America/Los_Angeles",
+    }).format(new Date("2025-01-01T10:30:00Z"));
+    const control = makeControl({
+      filters: [{ field: "publishedAt", operator: "eq", value: "2025-01-01T10:30:00Z" }],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
+
+    expect(screen.getByText(expected)).toBeDefined();
+  });
   it("Apply button calls addFilter with an HH:MM time", async () => {
     const user = userEvent.setup();
     const control = makeControl({

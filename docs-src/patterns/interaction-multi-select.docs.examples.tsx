@@ -1,9 +1,18 @@
 import { useState } from "react";
-import { Button, Table, Menu } from "@tailor-platform/app-shell";
+import {
+  Button,
+  DataTable,
+  Dialog,
+  useDataTable,
+  type Column,
+  type SelectionAction,
+  type SelectionActionHelpers,
+} from "@tailor-platform/app-shell";
+
 type Order = {
   id: string;
   number: string;
-  status: string;
+  status: "Open" | "Confirmed" | "Shipped";
   total: number;
 };
 
@@ -15,101 +24,135 @@ const mockOrders: Order[] = [
   { id: "5", number: "ORD-005", status: "Open", total: 2100 },
 ];
 
+const columns: Column<Order>[] = [
+  { label: "Order #", render: (order) => order.number },
+  { label: "Status", render: (order) => order.status },
+  { label: "Total", render: (order) => `$${order.total.toLocaleString()}` },
+];
+
+type PendingCancel = { ids: string[]; run: SelectionActionHelpers["run"] };
+
+// Stand-ins for backend operations over the complete dataset, not the table's row cache.
+const cancelOrders = async (ids: string[]) => {
+  const cancelledIds = mockOrders
+    .filter((order) => ids.includes(order.id) && order.status !== "Shipped")
+    .map((order) => order.id);
+  window.alert(`Cancelling ${cancelledIds.length} order(s)`);
+  return cancelledIds;
+};
+const confirmOrders = async (ids: string[]) => {
+  const confirmedIds = mockOrders
+    .filter((order) => ids.includes(order.id) && order.status === "Open")
+    .map((order) => order.id);
+  window.alert(`Confirming ${confirmedIds.length} order(s)`);
+  return confirmedIds;
+};
+const exportOrders = async (ids: string[]) => {
+  window.alert(`Exporting ${ids.length} order(s)`);
+};
+
 export function InteractionMultiSelect() {
-  const orders = mockOrders;
-  const onArchive = (ids: string[]) => window.alert(`Archiving ${ids.length}`);
-  const onExport = (ids: string[]) => window.alert(`Exporting ${ids.length}`);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [pendingCancel, setPendingCancel] = useState<PendingCancel | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  const toggleRow = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const removeCompletedIds = (ids: string[]) => {
+    const completed = new Set(ids);
+    setSelectedIds((current) => current.filter((id) => !completed.has(id)));
   };
 
-  const toggleAll = () => {
-    if (selectedIds.size === orders.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(orders.map((o) => o.id)));
-    }
-  };
+  const actions: SelectionAction[] = [
+    {
+      id: "confirm",
+      label: "Confirm",
+      // The operation returns actual successes; never clear ineligible or newer selections.
+      onClick: async (ids) => removeCompletedIds(await confirmOrders(ids)),
+    },
+    {
+      id: "export",
+      label: "Export",
+      onClick: (ids) => exportOrders(ids),
+    },
+    {
+      id: "assign",
+      label: "Assign owner",
+      onClick: async (ids) => window.alert(`Assigning ${ids.length} order(s)`),
+    },
+    {
+      // 4th action: lands in the More actions menu.
+      id: "cancel",
+      label: "Cancel",
+      variant: "destructive",
+      onClick: (ids, { run }) => {
+        setCancelError(null);
+        setPendingCancel({ ids: [...ids], run });
+      },
+    },
+  ];
 
-  const clearSelection = () => setSelectedIds(new Set());
-  const selectedCount = selectedIds.size;
+  // In a real app, fetch eligibility for these snapshot ids before showing this explanation.
+  const cancellableCount = mockOrders.filter(
+    (order) => pendingCancel?.ids.includes(order.id) && order.status !== "Shipped",
+  ).length;
+
+  const table = useDataTable({
+    columns,
+    data: { rows: mockOrders, total: mockOrders.length },
+    rowSelection: { selectedIds, onChange: setSelectedIds, actions },
+  });
 
   return (
     <>
-      <Table.Root>
-        <Table.Header>
-          <Table.Row>
-            <Table.Head className="w-10">
-              <input
-                type="checkbox"
-                checked={selectedIds.size === orders.length && orders.length > 0}
-                onChange={toggleAll}
-                aria-label="Select all on page"
-              />
-            </Table.Head>
-            <Table.Head>Order #</Table.Head>
-            <Table.Head>Status</Table.Head>
-            <Table.Head>Total</Table.Head>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {orders.map((order) => (
-            <Table.Row key={order.id}>
-              <Table.Cell>
-                <input
-                  type="checkbox"
-                  checked={selectedIds.has(order.id)}
-                  onChange={() => toggleRow(order.id)}
-                  aria-label={`Select ${order.number}`}
-                />
-              </Table.Cell>
-              <Table.Cell>{order.number}</Table.Cell>
-              <Table.Cell>{order.status}</Table.Cell>
-              <Table.Cell>${order.total.toLocaleString()}</Table.Cell>
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table.Root>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+        <DataTable.Footer>
+          <DataTable.Pagination />
+        </DataTable.Footer>
+      </DataTable.Root>
 
-      {selectedCount > 0 && (
-        <div
-          role="toolbar"
-          aria-label="Bulk actions"
-          className="fixed bottom-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-md border bg-popover px-3 py-2 shadow-lg"
-        >
-          <span className="text-sm font-medium">{selectedCount} selected</span>
-          <Button size="sm" onClick={() => onArchive([...selectedIds])}>
-            Archive
-          </Button>
-          <Button size="sm" variant="outline" onClick={() => onExport([...selectedIds])}>
-            Export
-          </Button>
-          <Menu.Root>
-            <Menu.Trigger>
-              <Button size="sm" variant="outline" aria-label="More actions">
-                ⋯
-              </Button>
-            </Menu.Trigger>
-            <Menu.Content>
-              <Menu.Item>Assign owner</Menu.Item>
-              <Menu.Item>Tag</Menu.Item>
-              <Menu.Separator />
-              <Menu.Item>Delete</Menu.Item>
-            </Menu.Content>
-          </Menu.Root>
-          <Button size="sm" variant="ghost" onClick={clearSelection}>
-            Clear
-          </Button>
-        </div>
-      )}
+      <Dialog.Root
+        open={pendingCancel !== null}
+        onOpenChange={(open) => {
+          if (!open && !cancelling) setPendingCancel(null);
+        }}
+      >
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Cancel selected orders?</Dialog.Title>
+            <Dialog.Description>
+              {cancellableCount} of {pendingCancel?.ids.length ?? 0} selected orders can be
+              cancelled; shipped orders are excluded. Cancelled orders can&apos;t be reopened.
+            </Dialog.Description>
+          </Dialog.Header>
+          {cancelError && <p role="alert">{cancelError}</p>}
+          <Dialog.Footer>
+            <Dialog.Close render={<Button variant="outline" disabled={cancelling} />}>
+              Keep orders
+            </Dialog.Close>
+            <Button
+              variant="destructive"
+              disabled={cancelling || cancellableCount === 0}
+              onClick={async () => {
+                if (!pendingCancel || cancelling) return;
+                setCancelling(true);
+                setCancelError(null);
+                try {
+                  const cancelledIds = await pendingCancel.run(cancelOrders(pendingCancel.ids));
+                  removeCompletedIds(cancelledIds);
+                  setPendingCancel(null);
+                } catch {
+                  setCancelError("Cancellation failed. Please try again.");
+                } finally {
+                  setCancelling(false);
+                }
+              }}
+            >
+              {cancelling ? "Cancelling…" : "Cancel orders"}
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
     </>
   );
 }

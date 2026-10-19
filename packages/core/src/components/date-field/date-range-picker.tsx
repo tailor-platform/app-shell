@@ -9,7 +9,7 @@ import {
   type ReactElement,
   type Ref,
 } from "react";
-import { toCalendarDate, type DateValue } from "@internationalized/date";
+import { toCalendarDate, today, type DateValue } from "@internationalized/date";
 import { cn } from "@/lib/utils";
 import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
 import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
@@ -62,6 +62,7 @@ export type DateRangePickerProps<T extends DateValue = DateValue> = {
   isRequired?: boolean;
   isInvalid?: boolean;
   autoFocus?: boolean;
+  /** 12- or 24-hour time; defaults to the locale. */
   hourCycle?: HourCycle;
   placeholderValue?: DateValue;
   firstDayOfWeek?: FirstDayOfWeek;
@@ -87,6 +88,8 @@ export type DateRangePickerProps<T extends DateValue = DateValue> = {
   locale?: string;
   /** IANA timezone; defaults to the AppShell `timeZone`. */
   timeZone?: string;
+  /** Show the locale's short day of the week next to each date. */
+  showDayOfWeek?: boolean;
 };
 
 /** One-end snapshot the combined funnel reads to synthesize the range state. */
@@ -128,6 +131,7 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
     isInvalid,
     autoFocus,
     firstDayOfWeek,
+    showDayOfWeek,
     name,
     startName,
     endName,
@@ -219,6 +223,7 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
     minValue,
     maxValue,
     isDateUnavailable,
+    showDayOfWeek,
     isReadOnly: resolvedReadOnly,
   };
   const startField = useDateFieldState({
@@ -266,8 +271,13 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen);
     if (nextOpen) {
-      // Land the roving focus on the range start (react-aria's autofocus target).
-      if (startVal != null) calendarState.setFocusedDate(toCalendarDate(startVal as never));
+      // Land the roving focus on the range start (react-aria's autofocus target),
+      // else whichever end is typed, else today — never a stale month from a
+      // previous open.
+      const target = startVal ?? endVal;
+      calendarState.setFocusedDate(
+        target != null ? toCalendarDate(target as never) : today(resolvedTz),
+      );
     } else {
       // Dismissed mid-selection — drop the dangling anchor.
       calendarState.cancelSelection();

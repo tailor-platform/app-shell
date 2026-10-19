@@ -8,7 +8,7 @@ import {
   type ReactElement,
   type Ref,
 } from "react";
-import type { DateValue } from "@internationalized/date";
+import { toCalendarDate, today, type DateValue } from "@internationalized/date";
 import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
 import { cn } from "@/lib/utils";
 import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
@@ -52,6 +52,7 @@ interface DateControlProps<T extends DateValue> {
   isRequired?: boolean;
   isInvalid?: boolean;
   autoFocus?: boolean;
+  /** 12- or 24-hour time; defaults to the locale. */
   hourCycle?: HourCycle;
   placeholderValue?: DateValue;
   firstDayOfWeek?: FirstDayOfWeek;
@@ -66,6 +67,8 @@ interface DateControlProps<T extends DateValue> {
   "aria-describedby"?: string;
   /** BCP-47 locale override; defaults to the AppShell formatting locale. */
   locale?: string;
+  /** Show the locale's short day of the week next to the date (e.g. `(金)`, `Fri,`). */
+  showDayOfWeek?: boolean;
 }
 
 export type DateFieldProps<T extends DateValue = DateValue> = DateControlProps<T>;
@@ -102,6 +105,7 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
     placeholderValue,
     autoFocus,
     firstDayOfWeek,
+    showDayOfWeek,
     name,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledby,
@@ -131,6 +135,7 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
     maxValue,
     isDateUnavailable,
     firstDayOfWeek,
+    showDayOfWeek,
     isReadOnly: resolvedReadOnly,
   });
 
@@ -180,6 +185,7 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
         setDayPeriod={state.setDayPeriod}
         clearSegment={state.clearSegment}
         applyShortcut={state.applyShortcut}
+        settleEntry={state.settleEntry}
         commitOnBlur={state.commitOnBlur}
         expandShortYear={state.expandShortYear}
         isDisabled={bindings.isDisabled}
@@ -228,6 +234,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     placeholderValue,
     autoFocus,
     firstDayOfWeek,
+    showDayOfWeek,
     name,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledby,
@@ -268,6 +275,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     maxValue,
     isDateUnavailable,
     firstDayOfWeek,
+    showDayOfWeek,
     isReadOnly: resolvedReadOnly,
   });
 
@@ -286,6 +294,15 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
     locale: resolvedLocale,
     timeZone: resolvedTz,
   });
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    // The calendar's focus outlives the popover, so re-land it on the current
+    // (possibly typed) value each time it opens — today when empty (APG).
+    if (nextOpen) {
+      calState.setFocusedDate(val != null ? toCalendarDate(val as never) : today(resolvedTz));
+    }
+  };
 
   const localValidationMessage = useMemo(() => {
     const key = invalidMessageKey(fieldState.invalidReason);
@@ -360,7 +377,7 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
       />
       <DatePopover
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={handleOpenChange}
         ariaLabel={popoverAriaLabel}
         ariaLabelledby={bindings.labelledBy}
         popupRef={popupRef}
@@ -374,9 +391,10 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
             setDayPeriod={fieldState.setDayPeriod}
             clearSegment={fieldState.clearSegment}
             applyShortcut={fieldState.applyShortcut}
+            settleEntry={fieldState.settleEntry}
             commitOnBlur={fieldState.commitOnBlur}
             expandShortYear={fieldState.expandShortYear}
-            onOpenCalendar={() => setOpen(true)}
+            onOpenCalendar={() => handleOpenChange(true)}
             isDisabled={bindings.isDisabled}
             isReadOnly={bindings.isReadOnly}
             isInvalid={bindings.isInvalid}

@@ -58,7 +58,8 @@ placeholder.
 - **`Form` + `Field` is the default stack.** They wrap Base UI and ship with AppShell — no extra
   dependency.
 - **Submit via `onFormSubmit(values)`.** It fires only after validation passes. Do not hand-roll
-  `<form onSubmit>` + `new FormData(...)` — that skips validation and server-error routing.
+  `<form onSubmit>` + `new FormData(...)` — that bypasses `Form`'s field validation and server-error
+  routing.
 - **`onFormSubmit` reads registered `Field.Root`s, not the DOM.** So every control — including
   `Select`, `Combobox`, and `Autocomplete` — just needs wrapping in a `Field.Root name="…"`. They
   need **no `name` of their own and no `useState`**. Mirroring field values into React state is the

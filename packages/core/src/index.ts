@@ -25,9 +25,11 @@ export { SidebarMenuItem, SidebarMenuButton } from "./components/sidebar";
 export {
   SidebarItem,
   SidebarGroup,
+  SidebarSection,
   SidebarSeparator,
   type SidebarItemProps,
   type SidebarGroupProps,
+  type SidebarSectionProps,
   type SidebarLayoutProps,
   type DefaultSidebarProps,
   type DefaultHeaderProps,
@@ -205,6 +207,7 @@ export {
 export { Layout, type LayoutProps } from "./components/layout";
 export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
+export { Text, type TextProps } from "./components/text";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
 export { Spinner, type SpinnerProps } from "./components/spinner";
 export { Input, type InputProps } from "./components/input";
@@ -222,6 +225,12 @@ export type { PositionProps } from "./lib/position";
 export { Sheet } from "./components/sheet";
 export { Tabs } from "./components/tabs";
 export { Toolbar, type ToolbarProps } from "./components/toolbar";
+export {
+  FilterRail,
+  useFilterRailLayout,
+  type FilterRailRootProps,
+  type FilterRailSection,
+} from "./components/filter-rail";
 export { Tooltip } from "./components/tooltip";
 export { Select, type SelectAsyncFetcher } from "./components/select";
 export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox";
@@ -316,11 +325,15 @@ export {
   type DataTableData,
   type DataTableFilterConfig,
   type HeaderRenderContext,
+  type DataTableAction,
   type RowAction,
+  type SelectionAction,
+  type SelectionActionHelpers,
   type UseDataTableOptions,
   type UseDataTableReturn,
   type MetadataFieldOptions,
   type DataTableContextValue,
+  type RowSelectionOptions,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
 export { useURLCollectionVariables, withURLCollectionState } from "./lib/collection-url-state";

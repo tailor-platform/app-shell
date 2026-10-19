@@ -27,13 +27,16 @@ export type GeneratedRouteParams = {
   "/showcase/activity-card": {};
   "/showcase/ai-chat": {};
   "/showcase/alert-tokens": {};
+  "/showcase/card": {};
   "/showcase/colors": {};
   "/showcase/csv-importer": {};
   "/showcase/data-table": {};
   "/showcase/data-table-lab": {};
+  "/showcase/data-table-selection": {};
   "/showcase/date-picker": {};
   "/showcase/document-progress": {};
   "/showcase/dropdown": {};
+  "/showcase/filter-rail": {};
   "/showcase/forms": {};
   "/showcase/forms/zod-rhf": {};
   "/showcase/grid": {};

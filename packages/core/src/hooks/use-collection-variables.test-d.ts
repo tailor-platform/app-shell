@@ -33,6 +33,11 @@ type TestTable = {
       readonly required: false;
     },
     {
+      readonly name: "decimalAmount";
+      readonly type: "decimal";
+      readonly required: false;
+    },
+    {
       readonly name: "status";
       readonly type: "enum";
       readonly required: true;
@@ -80,6 +85,24 @@ describe("BuildQueryVariables", () => {
           between?: { min: number; max: number };
         };
       }>();
+    });
+
+    it("decimal fields use numeric operators with GraphQL string values", () => {
+      type DecimalInput = NonNullable<TestQuery["decimalAmount"]>;
+      expectTypeOf<DecimalInput>().toEqualTypeOf<{
+        eq?: string;
+        ne?: string;
+        gt?: string;
+        gte?: string;
+        lt?: string;
+        lte?: string;
+        between?: { min: string; max: string };
+        in?: string[];
+        nin?: string[];
+      }>();
+      expectTypeOf<TestTypedCollectionVariables["query"]>().toExtend<
+        { decimalAmount?: DecimalInput } | undefined
+      >();
     });
 
     it("enum fields produce literal union types from enumValues", () => {
@@ -140,6 +163,7 @@ describe("TableFieldName", () => {
       | "id"
       | "title"
       | "amount"
+      | "decimalAmount"
       | "status"
       | "isActive"
       | "createdAt"
@@ -164,6 +188,10 @@ describe("TableOrderableFieldName", () => {
 
   it("includes number fields", () => {
     expectTypeOf<"amount">().toExtend<TableOrderableFieldName<TestTable>>();
+  });
+
+  it("includes decimal fields", () => {
+    expectTypeOf<"decimalAmount">().toExtend<TableOrderableFieldName<TestTable>>();
   });
 
   it("includes enum fields", () => {

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   DataTable,
   Layout,
@@ -5,11 +6,12 @@ import {
   useURLCollectionVariables,
   createColumnHelper,
   type AppShellPageProps,
+  type DataTableAction,
   type RowAction,
+  type SelectionAction,
 } from "@tailor-platform/app-shell";
 import { Package } from "lucide-react";
-import { useState } from "react";
-import { type Product, useProductsQuery } from "../../../mock-products";
+import { allProducts, type Product, useProductsQuery } from "../../../mock-products";
 
 const productMetadata = {
   name: "product",
@@ -71,6 +73,13 @@ const columns = [
   }),
 ];
 
+// Share presentation only; each operation owns its eligibility checks.
+const deleteProduct: DataTableAction = {
+  id: "delete",
+  label: "Delete",
+  variant: "destructive",
+};
+
 const rowActions: RowAction<Product>[] = [
   {
     id: "edit",
@@ -78,15 +87,41 @@ const rowActions: RowAction<Product>[] = [
     onClick: (row) => alert(`Edit: ${row.name}`),
   },
   {
-    id: "delete",
-    label: "Delete",
-    variant: "destructive",
-    isDisabled: (row) => row.status === "Active",
+    ...deleteProduct,
+    canApply: (row) => row.status !== "Active",
     onClick: (row) => alert(`Delete: ${row.name}`),
   },
 ];
 
+const names = (rows: Product[]) => rows.map((row) => row.name).join(", ");
+
+// 🧪 Dummy Data: resolve IDs against the complete mock backend, not the current page.
+const selectedProducts = (ids: string[]) => allProducts.filter((row) => ids.includes(row.id));
+
+// Alert-only previews leave selection unchanged; a real mutation should report
+// completed IDs and remove only those IDs from the current selection.
+const actions: SelectionAction[] = [
+  {
+    id: "publish",
+    label: "Publish",
+    onClick: (ids) =>
+      alert(`Publish: ${names(selectedProducts(ids).filter((row) => row.status === "Draft"))}`),
+  },
+  {
+    id: "archive",
+    label: "Archive",
+    onClick: (ids) =>
+      alert(`Archive: ${names(selectedProducts(ids).filter((row) => row.status !== "Archived"))}`),
+  },
+  {
+    ...deleteProduct,
+    onClick: (ids) =>
+      alert(`Delete: ${names(selectedProducts(ids).filter((row) => row.status !== "Active"))}`),
+  },
+];
+
 const ProductsPage = () => {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   // Single composed hook: filter/sort/pagination state is persisted to the URL
   // (bookmarkable, back-button friendly) and the URL seeds the initial state
   // synchronously, so the first fetch already reflects the URL. Check the
@@ -97,7 +132,6 @@ const ProductsPage = () => {
   });
 
   const { data, loading } = useProductsQuery(variables);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const table = useDataTable({
     columns,
@@ -112,7 +146,7 @@ const ProductsPage = () => {
     control,
     rowActions,
     onClickRow: (row) => alert(`Clicked: ${row.name}`),
-    onSelectionChange: (ids) => setSelectedIds(ids),
+    rowSelection: { selectedIds, onChange: setSelectedIds, actions },
   });
 
   return (
@@ -137,9 +171,6 @@ const ProductsPage = () => {
             <DataTable.Pagination pageSizeOptions={[10, 25, 50, 100]} />
           </DataTable.Footer>
         </DataTable.Root>
-        {selectedIds.length > 0 && (
-          <p className="mt-3 text-sm text-muted-foreground">Selected: {selectedIds.join(", ")}</p>
-        )}
       </Layout.Column>
     </Layout>
   );

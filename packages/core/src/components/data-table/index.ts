@@ -23,7 +23,11 @@ export type {
   MetadataFieldOptions,
   MoneyCellOptions,
   NumberCellOptions,
+  DataTableAction,
   RowAction,
+  RowSelectionOptions,
+  SelectionAction,
+  SelectionActionHelpers,
   UseDataTableOptions,
   UseDataTableReturn,
 } from "./types";

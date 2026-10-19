@@ -61,7 +61,8 @@ const SEGMENT_MAX_DIGITS: Record<EditableSegmentType, number> = {
 type Fields = Partial<Record<EditableSegmentType, number>>;
 
 export interface Segment {
-  type: EditableSegmentType | "literal";
+  /** `dayOfWeek` is read-only, derived from the composed date. */
+  type: EditableSegmentType | "literal" | "dayOfWeek";
   /** Display text (locale-formatted value, or placeholder when empty). */
   text: string;
   isEditable: boolean;
@@ -69,6 +70,8 @@ export interface Segment {
   value?: number;
   minValue?: number;
   maxValue?: number;
+  /** Day-of-week only: the full day name for assistive tech, once settled. */
+  label?: string;
 }
 
 /**
@@ -131,6 +134,8 @@ export interface DateFieldStateOptions {
   isDateUnavailable?: (date: DateValue) => boolean;
   /** Week-start for the `w`/`k` shortcuts; defaults to the locale convention. */
   firstDayOfWeek?: FirstDayOfWeek;
+  /** Append the locale's short day of the week as a read-only segment. */
+  showDayOfWeek?: boolean;
   isDisabled?: boolean;
   isReadOnly?: boolean;
 }
@@ -144,6 +149,7 @@ const PLACEHOLDERS: Record<EditableSegmentType, string> = {
   second: "––",
   dayPeriod: "AM",
 };
+const DAY_OF_WEEK_PLACEHOLDER = "––";
 
 /**
  * Snap an impossible day down to the entered month's real length — but only once
@@ -173,7 +179,11 @@ function completeCalendarDate(f: Fields): CalendarDate | null {
   return new CalendarDate(f.year, f.month, f.day);
 }
 
-function fieldsFromValue(v: DateValue | null | undefined): Fields {
+/**
+ * Split a value into segment fields. In 12-hour mode the hour is stored as
+ * 1–12 plus `dayPeriod`, the inverse of the conversion in `composeValue`.
+ */
+function fieldsFromValue(v: DateValue | null | undefined, is12: boolean): Fields {
   if (!v) return {};
   const f: Fields = {};
   if ("year" in v) {
@@ -182,14 +192,27 @@ function fieldsFromValue(v: DateValue | null | undefined): Fields {
     f.day = v.day;
   }
   if ("hour" in v) {
-    f.hour = v.hour;
+    f.hour = is12 ? v.hour % 12 || 12 : v.hour;
     f.minute = v.minute;
     f.second = v.second;
+    if (is12) f.dayPeriod = v.hour >= 12 ? 1 : 0;
   }
   return f;
 }
 
-function use12HourCycle(locale: string, hourCycle?: HourCycle): boolean {
+/**
+ * Re-encode the hour of (possibly partial) fields for a new hour cycle. An
+ * unset `dayPeriod` reads as AM, matching `composeValue`, so the composed
+ * value is unchanged.
+ */
+function convertHourCycle(f: Fields, is12: boolean): Fields {
+  const { dayPeriod, ...rest } = f;
+  if (f.hour == null) return rest;
+  if (is12) return { ...rest, hour: f.hour % 12 || 12, dayPeriod: f.hour >= 12 ? 1 : 0 };
+  return { ...rest, hour: (f.hour % 12) + (dayPeriod === 1 ? 12 : 0) };
+}
+
+function resolveIs12HourCycle(locale: string, hourCycle?: HourCycle): boolean {
   if (hourCycle === 12) return true;
   if (hourCycle === 24) return false;
   // Derive from the locale's resolved hour cycle.
@@ -267,12 +290,13 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     maxValue,
     isDateUnavailable,
     firstDayOfWeek,
+    showDayOfWeek = false,
     isReadOnly,
   } = options;
 
   const isControlled = controlledValue !== undefined;
   const hasTime = granularity !== "day";
-  const is12 = use12HourCycle(locale, hourCycle);
+  const is12 = useMemo(() => resolveIs12HourCycle(locale, hourCycle), [locale, hourCycle]);
 
   // The editable segment order, before locale reordering.
   const editableTypes = useMemo<EditableSegmentType[]>(() => {
@@ -286,9 +310,27 @@ export function useDateFieldState(options: DateFieldStateOptions) {
   // segments) survive the round-trip through `onChange`. A `controlled` value
   // that changes *externally* is synced back in via the effect below.
   const [internalFields, setInternalFields] = useState<Fields>(() =>
-    fieldsFromValue(controlledValue ?? defaultValue),
+    fieldsFromValue(controlledValue ?? defaultValue, is12),
   );
+
+  // `fields` stores the hour in the current cycle's encoding. When the cycle
+  // flips (`hourCycle` or `locale` changed), re-encode during render so no
+  // commit ever reads the old encoding the new way.
+  const [fieldsIs12, setFieldsIs12] = useState(is12);
+  if (fieldsIs12 !== is12) {
+    setFieldsIs12(is12);
+    setInternalFields((f) => convertHourCycle(f, is12));
+  }
   const fields = internalFields;
+
+  // The date segment mid-way through typed entry (a first digit that may still
+  // take a second), plus the fields from before that entry began. Until it
+  // settles, the day of the week keeps showing the pre-entry date's (muted), so typing
+  // "25" never flashes the 2nd's day of the week and the field doesn't reflow.
+  const [pendingEntry, setPendingEntry] = useState<{
+    type: EditableSegmentType;
+    fallback: Fields;
+  } | null>(null);
 
   const lastEmitted = useRef<DateValue | null>(controlledValue ?? defaultValue ?? null);
 
@@ -303,7 +345,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
 
   // Anchor as a plain field record — used to seed increments and to populate
   // unfilled segments for display formatting.
-  const anchorFields = useMemo<Fields>(() => fieldsFromValue(anchor), [anchor]);
+  const anchorFields = useMemo<Fields>(() => fieldsFromValue(anchor, is12), [anchor, is12]);
 
   // ── Limits ──────────────────────────────────────────────────────────────────
   const getLimits = useCallback(
@@ -391,6 +433,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       const f = intent === "edit" ? clampCompleteDay(next) : next;
       const change = buildStateChange(f, intent === "clear" ? "clear" : "edit");
       setInternalFields(f);
+      setPendingEntry(null);
       onStateChange?.(change);
 
       // While editing, only emit a *complete & valid* value — never `null` for a
@@ -424,12 +467,13 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     const same =
       (cv == null && le == null) || (cv != null && le != null && cv.compare(le as never) === 0);
     if (!same) {
-      const nextFields = fieldsFromValue(cv);
+      const nextFields = fieldsFromValue(cv, is12);
       lastEmitted.current = cv;
       setInternalFields(nextFields);
+      setPendingEntry(null);
       onStateChange?.(buildStateChange(nextFields, "external"));
     }
-  }, [buildStateChange, controlledValue, isControlled, onStateChange]);
+  }, [buildStateChange, controlledValue, isControlled, is12, onStateChange]);
 
   // ── Mutations ───────────────────────────────────────────────────────────────
   const cycle = useCallback(
@@ -440,11 +484,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       let next: number;
       if (current == null) {
         // Start from the anchor's value for that field, or the min.
-        if (type === "dayPeriod") {
-          next = (anchorFields.hour ?? 0) >= 12 ? 1 : 0;
-        } else {
-          next = anchorFields[type] ?? min;
-        }
+        next = anchorFields[type] ?? min;
       } else {
         const span = max - min + 1;
         next = ((current - min + delta + span * 1000) % span) + min;
@@ -473,10 +513,19 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       // "02" advances, while "2" still waits for a possible second digit).
       const advance = next * 10 > max || digitCount >= SEGMENT_MAX_DIGITS[type];
       commit({ ...fields, [type]: next });
+      // Time segments never affect the day of the week, so only date entry can pend.
+      if (!advance && DATE_SEGMENTS.includes(type)) {
+        setPendingEntry((prev) => (prev?.type === type ? prev : { type, fallback: fields }));
+      } else {
+        setPendingEntry(null);
+      }
       return { advance };
     },
     [fields, getLimits, commit, isReadOnly],
   );
+
+  /** Typed entry in the focused segment is over (it lost focus). */
+  const settleEntry = useCallback(() => setPendingEntry(null), []);
 
   const setDayPeriod = useCallback(
     (pm: boolean) => {
@@ -598,14 +647,11 @@ export function useDateFieldState(options: DateFieldStateOptions) {
 
   // ── Display segments (locale-ordered) ────────────────────────────────────────
   // The Intl objects + the locale's part order/separators only depend on
-  // locale / granularity / hour-cycle / timezone (via the anchor) — never on
-  // `fields`. Build them once here so a keystroke (which only changes `fields`)
-  // doesn't spin up a fresh DateFormatter + two NumberFormats + formatToParts.
+  // locale / granularity / hour-cycle / day of the week / timezone (via the
+  // anchor) — never on `fields`. Build them once here so a keystroke (which only
+  // changes `fields`) doesn't spin up a fresh DateFormatter + formatToParts.
   const segmentFormat = useMemo(() => {
-    const formatter = new DateFormatter(locale, {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
+    const shared: Intl.DateTimeFormatOptions = {
       ...(hasTime
         ? {
             hour: "2-digit",
@@ -614,8 +660,19 @@ export function useDateFieldState(options: DateFieldStateOptions) {
             hour12: is12,
           }
         : {}),
+      ...(showDayOfWeek ? { weekday: "short" } : {}),
       ...(timeZone ? { timeZone } : {}),
-    });
+    };
+    // Format the (always-valid) anchor to get the locale's segment ORDER and the
+    // literal separators. Each editable segment's *text* is then formatted from
+    // its own value, so an in-progress out-of-range value can never build an
+    // invalid date.
+    const parts = new DateFormatter(locale, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      ...shared,
+    }).formatToParts(anchor.toDate(timeZone ?? "UTC"));
     const pad2 = new Intl.NumberFormat(locale, { minimumIntegerDigits: 2, useGrouping: false });
     const yearFmt = new Intl.NumberFormat(locale, { useGrouping: false });
     const formatSegment = (type: EditableSegmentType, value: number): string => {
@@ -623,17 +680,29 @@ export function useDateFieldState(options: DateFieldStateOptions) {
       if (type === "year") return yearFmt.format(value);
       return pad2.format(value);
     };
-    // Format the (always-valid) anchor to get the locale's segment ORDER and the
-    // literal separators. Each editable segment's *text* is then formatted from
-    // its own value, so an in-progress out-of-range value can never build an
-    // invalid date.
-    const parts = formatter.formatToParts(anchor.toDate(timeZone ?? "UTC"));
-    return { parts, formatSegment };
-  }, [locale, hasTime, granularity, is12, timeZone, anchor]);
+    // Pinned to UTC on both sides so the day of the week is the calendar date's, never
+    // shifted by the host timezone.
+    const dayOfWeekFmt = new DateFormatter(locale, { weekday: "short", timeZone: "UTC" });
+    const dayOfWeekLongFmt = new DateFormatter(locale, { weekday: "long", timeZone: "UTC" });
+    const formatDayOfWeek = (value: DateValue, long = false): string =>
+      (long ? dayOfWeekLongFmt : dayOfWeekFmt).format(toCalendarDate(value as never).toDate("UTC"));
+    return { parts, formatSegment, formatDayOfWeek };
+  }, [locale, hasTime, granularity, is12, timeZone, anchor, showDayOfWeek]);
 
   const segments = useMemo<Segment[]>(() => {
     return segmentFormat.parts.map<Segment>((part) => {
       const rawType = part.type;
+      if (rawType === "weekday") {
+        const settled = pendingEntry == null ? composeValue(fields) : null;
+        const shown = settled ?? (pendingEntry ? composeValue(pendingEntry.fallback) : null);
+        return {
+          type: "dayOfWeek",
+          text: shown ? segmentFormat.formatDayOfWeek(shown) : DAY_OF_WEEK_PLACEHOLDER,
+          isEditable: false,
+          isPlaceholder: settled == null,
+          label: settled ? segmentFormat.formatDayOfWeek(settled, true) : undefined,
+        };
+      }
       if (!editableTypes.includes(rawType as EditableSegmentType)) {
         return { type: "literal", text: part.value, isEditable: false, isPlaceholder: false };
       }
@@ -651,7 +720,7 @@ export function useDateFieldState(options: DateFieldStateOptions) {
         maxValue: max,
       };
     });
-  }, [segmentFormat, fields, editableTypes, getLimits]);
+  }, [segmentFormat, fields, editableTypes, getLimits, pendingEntry, composeValue]);
 
   const currentChange = buildStateChange(fields, "edit");
 
@@ -668,5 +737,6 @@ export function useDateFieldState(options: DateFieldStateOptions) {
     applyShortcut,
     expandShortYear,
     commitOnBlur,
+    settleEntry,
   };
 }

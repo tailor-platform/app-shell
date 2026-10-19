@@ -438,6 +438,26 @@ watch("period")?.start.toString(); // "2025-06-10"
             </div>
           </section>
 
+          {/* ── Day of the week ─────────────────────────────────────── */}
+          <section className="flex flex-col gap-4">
+            <h2 className="text-base font-semibold border-b pb-2">Day of the week</h2>
+            <p className="text-sm text-muted-foreground">
+              <code className="bg-muted px-1 py-0.5 rounded">showDayOfWeek</code> appends the
+              locale's short day of the week where the locale places it.
+            </p>
+            <div className="flex flex-wrap gap-6 items-start">
+              <DemoField id="date-picker-ja-dow" label="ja-JP">
+                <DatePicker locale="ja-JP" showDayOfWeek />
+              </DemoField>
+              <DemoField id="date-picker-en-dow" label="en-US">
+                <DatePicker locale="en-US" showDayOfWeek />
+              </DemoField>
+              <DemoField id="date-picker-ja-range-dow" label="ja-JP range">
+                <DateRangePicker locale="ja-JP" showDayOfWeek />
+              </DemoField>
+            </div>
+          </section>
+
           {/* ── Calendar ───────────────────────────────────────────── */}
           <section className="flex flex-col gap-4">
             <h2 className="text-base font-semibold border-b pb-2">Calendar (standalone)</h2>

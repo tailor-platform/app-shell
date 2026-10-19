@@ -120,3 +120,14 @@ The "Danger action" row of the target shape is done. `--destructive` and `--dest
 - `cream`, `bloom` and `_template.css` no longer set `--destructive` (their values equalled the default). `_template.css` lists it under DO NOT SET. A theme that recolours destructive actions overrides `--danger-solid`.
 - Visible changes in the default palette: light `text-destructive` goes from `#dc2626` to `#ce0c17` through `text-danger-text`, and dark from `#f87171` to `#ff9083`; the dark invalid border goes from `#f87171` to `#dc2626`; CsvImporter error cells use `bg-danger-surface`, matching the warning cells (`bg-warning-surface`).
 - Outside this repository: `cp-apps/apps/couturier/src/theme-tailor.css` still overrides `--destructive`, and the Theme Generator still emits `destructive` as a constant. Both stop reaching the shipped components until they move to `--danger-*`.
+
+## Update 2026-10-12: default surfaces, white and alpha scales
+
+The default palette's surfaces and brand tokens read scale steps. For the default palette, this supersedes "all surfaces stay literal" and "Gray has no alpha steps" under Hue scales, and the second item under "Out of scope".
+
+- New primitives, declared once with gray because they are the same in both modes: `--primitive-white` and `--primitive-{white,black}-a1` to `-a12`. The alpha values are Radix `whiteA` / `blackA` (0.05, 0.1, 0.15, 0.2, 0.3, then 0.1 steps to 0.9, and 0.95). They are not bridged, like the other primitives.
+- In `default.css`, every BRAND and SYSTEM colour with an exact step now reads it. Light: background, sidebar and primary foreground 50, secondary and muted 100, sidebar border 200, primary and secondary foreground 900, the other foregrounds 950, card and popover white. Dark: primary 200, secondary, popover and muted 800, card and primary foreground 900, background and sidebar 950, the other foregrounds 50, border and sidebar border white a2, input white a3. No values change: every token resolves to the same colour as before in light and dark mode.
+- White is its own step. The light page is gray 50 and cards are white; putting cards on gray 50 would remove the difference.
+- New role `--backdrop`, `var(--primitive-black-a7)` (50%) in both modes, bridged as `bg-backdrop`. `Dialog`, `Sheet` and the CsvImporter drawer use it instead of `bg-black/50`; the value is the same. The name follows the CSS `::backdrop` pseudo-element and the Base UI `Backdrop` part. It is not `overlay`, because `--z-overlay` already names the modal layer, which holds both the backdrop and the popup.
+- `--accent`, the shadows and the chart colours stay literal. They have no matching step. `--destructive` reads `--danger-solid` (see Update 2026-10-06).
+- `cream`, `bloom` and `_template.css` keep their own literal values. The header comments now list `--backdrop` among the inherited tokens.

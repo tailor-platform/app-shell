@@ -205,7 +205,7 @@ body {
 
 Toggle dark mode and confirm a real surface changes: inspect a `Card` and watch its computed `background-color` go from `rgb(255, 255, 255)` to `rgb(23, 23, 23)` on the default palette.
 
-Reading the token directly also works — `getComputedStyle(document.documentElement).getPropertyValue("--card")` returns the winning declaration, so a stale copy shows up as its own value. Just compare against the authored notation: AppShell writes `rgba(23, 23, 23, 1)`, not `#171717`, and the computed value preserves that form.
+Reading the token directly also works — `getComputedStyle(document.documentElement).getPropertyValue("--card")` returns the winning declaration, so a stale copy shows up as its own value. Compare against the value the default palette resolves to: in dark mode `--card` returns `#171717`, the gray step it reads. (1.17.0 and earlier return `rgba(23, 23, 23, 1)`.) A copy in your own CSS shows up in the notation you wrote.
 
 ## 1.5.0: `loader` removed from file-based page definitions
 

@@ -156,4 +156,11 @@ describe("theme bridge", () => {
       }
     });
   });
+
+  it("defines --backdrop in the default palette and bridges it as bg-backdrop", () => {
+    // Dialog, Sheet and the CsvImporter drawer use `bg-backdrop`; without both
+    // lines the backdrop compiles to an undefined variable and turns transparent.
+    expect(defaultTheme).toMatch(/^\s*--backdrop:\s*var\(--primitive-black-a7\);/m);
+    expect(bridge).toMatch(/^\s*--color-backdrop:\s*var\(--backdrop\);/m);
+  });
 });

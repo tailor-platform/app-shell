@@ -1322,9 +1322,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "08ea14945176cd57",
+        "outline": "3d954fbe6c0db30e",
         "snapshot": null,
-        "outputMd": "01cfefbafc469e58",
+        "outputMd": "eefb47e1f52f10e1",
         "examples": "4d19f4f688e0f0ac"
       }
     },
@@ -1694,7 +1694,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "e342ef02dc2b9b86",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "01cfefbafc469e58",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "eefb47e1f52f10e1",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",

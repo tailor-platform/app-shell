@@ -150,7 +150,7 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
                     key={action.id}
                     disabled={busy}
                     onClick={() => run(action)}
-                    className={cn(action.variant === "destructive" && "astw:text-destructive")}
+                    className={cn(action.variant === "destructive" && "astw:text-danger-text")}
                   >
                     {action.icon}
                     {action.label}

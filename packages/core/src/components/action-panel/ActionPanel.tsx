@@ -20,7 +20,7 @@ const actionRowInteractiveClasses =
   "astw:hover:bg-accent astw:hover:text-accent-foreground astw:outline-none astw:focus-visible:ring-2 astw:focus-visible:ring-ring astw:focus-visible:ring-offset-2";
 
 const actionRowDestructiveClasses =
-  "astw:text-destructive astw:hover:bg-destructive/10 astw:hover:text-destructive";
+  "astw:text-danger-text astw:hover:bg-danger-surface astw:hover:text-danger-text";
 
 const actionRowDisabledClasses = "astw:pointer-events-none astw:opacity-50";
 

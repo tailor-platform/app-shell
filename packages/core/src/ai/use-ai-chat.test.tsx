@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod/v4";
 import { useAIChat } from "./use-ai-chat";
-import type { AIGatewayClient, AIChatCompletionEvent } from "./client";
+import type { AIGatewayChatRequest, AIGatewayClient, AIChatCompletionEvent } from "./client";
 import { aiProviderTool, defineAIChatTool } from "./tools";
 
 function createAbortError(): Error {
@@ -265,6 +265,93 @@ describe("useAIChat", () => {
     });
   });
 
+  it.each(["stop", "error"] as const)(
+    "includes retained text and earlier tool history in the next request after %s",
+    async (interruption) => {
+      let releaseReply!: () => void;
+      const replyGate = new Promise<void>((resolve) => {
+        releaseReply = resolve;
+      });
+      const earlierToolCall = { id: "earlier-call", name: "lookup", argumentsText: "{}" };
+      const earlierHistory = [
+        { role: "user", content: "Earlier" },
+        { role: "assistant", toolCalls: [earlierToolCall] },
+        { role: "tool", toolCallId: "earlier-call", content: "found" },
+        { role: "assistant", content: "Earlier answer" },
+      ];
+      const client = {
+        streamChatCompletion: vi.fn(async function* ({ messages }) {
+          const lastMessage = messages.at(-1);
+          if (lastMessage?.content === "Earlier") {
+            yield {
+              type: "tool-call",
+              toolCallId: earlierToolCall.id,
+              toolName: earlierToolCall.name,
+              argumentsText: "{}",
+            } as const;
+          } else if (lastMessage?.role === "tool") {
+            yield { type: "text-delta", text: "Earlier answer" } as const;
+          } else if (lastMessage?.content === "First") {
+            yield { type: "text-delta", text: "Partial" } as const;
+            await replyGate;
+            if (interruption === "error") throw new Error("reply failed");
+            yield { type: "text-delta", text: " stale" } as const;
+          } else {
+            expect(messages).toEqual([
+              ...earlierHistory,
+              { role: "user", content: "First" },
+              { role: "assistant", content: "Partial" },
+              { role: "user", content: "Continue" },
+            ]);
+            yield { type: "text-delta", text: "Fresh" } as const;
+          }
+          yield { type: "done" } as const;
+        }),
+      } satisfies AIGatewayClient;
+      const lookup = defineAIChatTool({ schema: z.object({}), execute: () => "found" });
+      const { result } = renderHook(() =>
+        useAIChat({ client, model: "gpt-5-mini", tools: { lookup } }),
+      );
+      await act(async () => {
+        await expect(result.current.sendMessage("Earlier")).resolves.toBe(true);
+      });
+
+      let interruptedSend!: Promise<boolean>;
+      await act(async () => {
+        interruptedSend = result.current.sendMessage("First");
+      });
+      expect(result.current.messages.at(-1)?.content).toBe("Partial");
+
+      let nextSend!: Promise<boolean>;
+      if (interruption === "stop") {
+        act(() => {
+          result.current.stop();
+          nextSend = result.current.sendMessage("Continue");
+        });
+      } else {
+        await act(async () => {
+          releaseReply();
+          await expect(interruptedSend).resolves.toBe(false);
+        });
+        act(() => {
+          nextSend = result.current.sendMessage("Continue");
+        });
+      }
+      await act(async () => {
+        await expect(nextSend).resolves.toBe(true);
+      });
+      if (interruption === "stop") {
+        await act(async () => {
+          releaseReply();
+          await expect(interruptedSend).resolves.toBe(false);
+        });
+      }
+      expect(result.current.status).toBe("ready");
+      expect(result.current.messages.at(-1)?.content).toBe("Fresh");
+      expect(result.current.error).toBeUndefined();
+    },
+  );
+
   it("executes local tools and continues the conversation", async () => {
     const lookupCustomer = defineAIChatTool({
       description: "Look up a customer",
@@ -463,6 +550,84 @@ describe("useAIChat", () => {
     ]);
   });
 
+  it.each([false, true])(
+    "drops the unfinished tool batch on stop (has text: %s)",
+    async (hasText) => {
+      let releaseTool!: () => void;
+      const toolGate = new Promise<void>((resolve) => {
+        releaseTool = resolve;
+      });
+      const executePending = vi.fn(async () => {
+        await toolGate;
+        return "late result";
+      });
+      const completedCall = { id: "completed", name: "lookup", argumentsText: "{}" };
+      const lookup = defineAIChatTool({ schema: z.object({}), execute: () => "found" });
+      const pending = defineAIChatTool({ schema: z.object({}), execute: executePending });
+      const client = {
+        streamChatCompletion: vi.fn(async function* ({ messages }) {
+          const lastMessage = messages.at(-1);
+          if (lastMessage?.content === "First") {
+            yield { type: "text-delta", text: "Checking" } as const;
+            yield {
+              type: "tool-call",
+              toolCallId: completedCall.id,
+              toolName: completedCall.name,
+              argumentsText: "{}",
+            } as const;
+          } else if (lastMessage?.role === "tool") {
+            if (hasText) yield { type: "text-delta", text: "Checking again" } as const;
+            yield {
+              type: "tool-call",
+              toolCallId: "pending",
+              toolName: "pending",
+              argumentsText: "{}",
+            } as const;
+          } else {
+            expect(messages).toEqual([
+              { role: "user", content: "First" },
+              { role: "assistant", content: "Checking", toolCalls: [completedCall] },
+              { role: "tool", toolCallId: "completed", content: "found" },
+              ...(hasText ? [{ role: "assistant", content: "Checking again" }] : []),
+              { role: "user", content: "Continue" },
+            ]);
+            yield { type: "text-delta", text: "Fresh" } as const;
+          }
+          yield { type: "done" } as const;
+        }),
+      } satisfies AIGatewayClient;
+      const { result } = renderHook(() =>
+        useAIChat({ client, model: "gpt-5-mini", tools: { lookup, pending } }),
+      );
+      let interruptedSend!: Promise<boolean>;
+      await act(async () => {
+        interruptedSend = result.current.sendMessage("First");
+      });
+      expect(executePending).toHaveBeenCalledOnce();
+
+      let nextSend!: Promise<boolean>;
+      act(() => {
+        result.current.stop();
+        nextSend = result.current.sendMessage("Continue");
+      });
+      await act(async () => {
+        await expect(nextSend).resolves.toBe(true);
+        releaseTool();
+        await expect(interruptedSend).resolves.toBe(false);
+      });
+      expect(result.current.messages.map(({ content }) => content)).toEqual([
+        "First",
+        "Checking",
+        ...(hasText ? ["Checking again"] : []),
+        "Continue",
+        "Fresh",
+      ]);
+      expect(result.current.toolCalls).toEqual([]);
+      expect(result.current.status).toBe("ready");
+      expect(client.streamChatCompletion).toHaveBeenCalledTimes(3);
+    },
+  );
+
   it("clears calls on stop and ignores late events while the next flow is active", async () => {
     let releaseStoppedRequest!: () => void;
     const stoppedRequestGate = new Promise<void>((resolve) => {
@@ -474,17 +639,29 @@ describe("useAIChat", () => {
     });
     const lookup = defineAIChatTool({ schema: z.object({}), execute: () => "found" });
     const client = {
-      streamChatCompletion: vi.fn(async function* ({ messages }) {
+      streamChatCompletion: vi.fn(async function* ({ messages }: AIGatewayChatRequest) {
         const lastMessage = messages.at(-1);
         if (lastMessage?.role === "user") {
-          expect(messages).toEqual([{ role: "user", content: lastMessage.content }]);
+          expect(messages).toEqual(
+            lastMessage.content === "First"
+              ? [{ role: "user", content: "First" }]
+              : [
+                  { role: "user", content: "First" },
+                  {
+                    role: "assistant",
+                    toolCalls: [{ id: "observed", name: "lookup", argumentsText: "{}" }],
+                  },
+                  { role: "tool", toolCallId: "observed", content: "found" },
+                  { role: "user", content: "Second" },
+                ],
+          );
           yield {
             type: "tool-call",
             toolCallId: lastMessage.content === "First" ? "observed" : "fresh",
             toolName: "lookup",
             argumentsText: "{}",
           } as const;
-        } else if (messages[0]?.content === "First") {
+        } else if (messages.findLast((message) => message.role === "user")?.content === "First") {
           await stoppedRequestGate;
           yield {
             type: "tool-call",
@@ -547,7 +724,7 @@ describe("useAIChat", () => {
     expect(client.streamChatCompletion).toHaveBeenCalledTimes(4);
   });
 
-  it("clears calls after execution and reply errors without adding tool history", async () => {
+  it("clears active calls but retains completed tool history after a reply error", async () => {
     let releaseFailure!: () => void;
     const failureGate = new Promise<void>((resolve) => {
       releaseFailure = resolve;
@@ -562,6 +739,15 @@ describe("useAIChat", () => {
     const client = {
       streamChatCompletion: vi.fn(async function* ({ messages }) {
         if (messages.at(-1)?.content === "Retry") {
+          expect(messages).toEqual([
+            { role: "user", content: "Try the tool" },
+            {
+              role: "assistant",
+              toolCalls: [{ id: "failed-call", name: "failingTool", argumentsText: "{}" }],
+            },
+            { role: "tool", toolCallId: "failed-call", content: '{"error":"tool failed"}' },
+            { role: "user", content: "Retry" },
+          ]);
           yield { type: "text-delta", text: "Recovered" } as const;
         } else if (messages.at(-1)?.role === "tool") {
           expect(messages.at(-1)?.content).toBe('{"error":"tool failed"}');

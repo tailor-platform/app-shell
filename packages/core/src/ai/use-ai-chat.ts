@@ -29,8 +29,8 @@ interface ActiveHandle {
 /**
  * Encapsulates per-request mutable state: transcript staging + streaming turn buffer.
  *
- * Transcript is "staged" here and only committed to the persistent ref on success,
- * so failed/aborted requests don't pollute conversation history.
+ * Success commits the full transcript; interruption preserves completed tool
+ * exchanges and visible text without retaining unanswered tool calls.
  */
 class ChatRequestContext {
   transcript: AIGatewayChatMessage[];
@@ -65,6 +65,24 @@ class ChatRequestContext {
 
   commitToolResults(messages: Extract<AIGatewayChatMessage, { role: "tool" }>[]): void {
     this.transcript.push(...messages);
+  }
+
+  snapshotInterruptedTranscript(): AIGatewayChatMessage[] {
+    const transcript = [...this.transcript];
+    const last = transcript.at(-1);
+
+    // Tool results arrive as a complete batch, so only the tail can be unanswered.
+    if (last?.role === "assistant" && last.toolCalls?.length) {
+      transcript.pop();
+      if (last.content) {
+        transcript.push({ role: "assistant", content: last.content });
+      }
+    }
+    if (this.turnContent) {
+      transcript.push({ role: "assistant", content: this.turnContent });
+    }
+
+    return transcript;
   }
 }
 
@@ -106,6 +124,7 @@ export function useAIChat(config: {
     const active = activeRef.current;
     if (!active) return;
 
+    transcriptRef.current = active.ctx.snapshotInterruptedTranscript();
     activeRef.current = null;
     active.controller.abort();
     setToolCalls([]);
@@ -167,6 +186,7 @@ export function useAIChat(config: {
         return true;
       } catch (caughtError) {
         if (activeRef.current !== handle) return false;
+        transcriptRef.current = ctx.snapshotInterruptedTranscript();
         activeRef.current = null;
         setToolCalls([]);
 

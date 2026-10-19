@@ -6,6 +6,8 @@ Add tool support to `useAIChat()` and the AI Gateway transport layer. Streamed f
 
 You can now register **local tools** and **provider tools** via the `tools` option on `useAIChat()`. Tool-call and tool-result protocol messages stay internal to the hook — the public `messages` array remains user/assistant text only.
 
+Stopped or failed requests retain user messages, partial assistant text, and completed tool exchanges in subsequent request history. Unanswered tool calls are excluded. Stopping does not undo tool side effects or guarantee safe retries of tools that were already running.
+
 ## Local tools
 
 Define tools that run inside AppShell using `defineAIChatTool`. The model decides when to call them, AppShell validates arguments with the schema, executes the handler, and feeds results back into the next model turn automatically.

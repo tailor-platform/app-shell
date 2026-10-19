@@ -2,7 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add tool support to `useAIChat()` and the AI Gateway transport layer.
+Add tool support to `useAIChat()` and the AI Gateway transport layer. Streamed function names and arguments are assembled across chunks independently for each tool call.
 
 You can now register **local tools** and **provider tools** via the `tools` option on `useAIChat()`. Tool-call and tool-result protocol messages stay internal to the hook — the public `messages` array remains user/assistant text only.
 

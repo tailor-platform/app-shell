@@ -240,6 +240,44 @@ describe("createAIGatewayClient", () => {
     });
   });
 
+  it("accumulates split function names independently by tool-call index", async () => {
+    const authClient = createMockAuthClient(
+      new Response(
+        createSSEStream([
+          'data: {"choices":[{"delta":{"tool_calls":[{"index":1,"id":"call_2","type":"function","function":{"name":"lookup","arguments":"{\\"orderId\\":\\""}}]}}]}\n\n',
+          'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"lookup","arguments":"{\\"customerId\\":\\""}}]}}]}\n\n',
+          'data: {"choices":[{"delta":{"tool_calls":[{"index":1,"function":{"name":"Order","arguments":"order-1\\"}"}},{"index":0,"function":{"name":"Customer","arguments":"cust-1\\"}"}}]}}]}\n\n',
+          'data: {"choices":[{"finish_reason":"tool_calls"}]}\n\n',
+          "data: [DONE]\n\n",
+        ]),
+        {
+          status: 200,
+          headers: { "Content-Type": "text/event-stream" },
+        },
+      ),
+    );
+    const client = createAIGatewayClient({
+      gatewayUri: "https://gateway.example.com",
+      authClient,
+    });
+
+    await expect(collectEvents(client, createRequest())).resolves.toEqual([
+      {
+        type: "tool-call",
+        toolCallId: "call_1",
+        toolName: "lookupCustomer",
+        argumentsText: '{"customerId":"cust-1"}',
+      },
+      {
+        type: "tool-call",
+        toolCallId: "call_2",
+        toolName: "lookupOrder",
+        argumentsText: '{"orderId":"order-1"}',
+      },
+      { type: "done", finishReason: "tool_calls" },
+    ]);
+  });
+
   it("emits sources from json responses", async () => {
     const authClient = createMockAuthClient(
       new Response(

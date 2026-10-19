@@ -297,7 +297,7 @@ function collectStreamingToolCalls(
     }
 
     if (toolCallDelta.function?.name) {
-      existing.name = toolCallDelta.function.name;
+      existing.name = `${existing.name ?? ""}${toolCallDelta.function.name}`;
     }
 
     if (toolCallDelta.function?.arguments) {

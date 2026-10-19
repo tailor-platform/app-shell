@@ -18,6 +18,8 @@ export interface AIChatMessage {
 
 export type AIChatStatus = "ready" | "submitted" | "streaming" | "error";
 
+type ActiveToolCall = { id: string; name: string };
+
 /** Active request handle stored in the ref for staleness checks + cancellation. */
 interface ActiveHandle {
   readonly controller: AbortController;
@@ -69,8 +71,8 @@ class ChatRequestContext {
 /**
  * React hook for AI Gateway chat with optional local and provider tools.
  *
- * Public state stays user/assistant text-first while tool-call and tool-result
- * protocol messages remain internal to the hook.
+ * Messages stay text-first. Requested tool names are exposed only for the
+ * active request; tool-call and tool-result protocol messages remain internal.
  */
 export function useAIChat(config: {
   client: AIGatewayClient;
@@ -78,6 +80,8 @@ export function useAIChat(config: {
   tools?: Record<string, AIChatConfiguredTool>;
 }): {
   messages: AIChatMessage[];
+  /** Requested tools in the active flow; cleared on completion, stop, or error. */
+  toolCalls: ActiveToolCall[];
   status: AIChatStatus;
   error?: Error;
   /**
@@ -88,6 +92,7 @@ export function useAIChat(config: {
   stop: () => void;
 } {
   const [messages, setMessages] = useState<AIChatMessage[]>([]);
+  const [toolCalls, setToolCalls] = useState<ActiveToolCall[]>([]);
   const [status, setStatus] = useState<AIChatStatus>("ready");
   const [error, setError] = useState<Error | undefined>(undefined);
   const transcriptRef = useRef<AIGatewayChatMessage[]>([]);
@@ -103,6 +108,7 @@ export function useAIChat(config: {
 
     activeRef.current = null;
     active.controller.abort();
+    setToolCalls([]);
     setStatus("ready");
   }, []);
 
@@ -127,6 +133,7 @@ export function useAIChat(config: {
       };
 
       updateMessages((previous) => [...previous, userMessage]);
+      setToolCalls([]);
       setError(undefined);
       setStatus("submitted");
 
@@ -147,7 +154,7 @@ export function useAIChat(config: {
           signal: controller.signal,
         })) {
           if (activeRef.current !== handle) break;
-          applyEvent(event, ctx, updateMessages, setStatus);
+          applyEvent(event, ctx, updateMessages, setStatus, setToolCalls);
         }
 
         if (activeRef.current !== handle) return false;
@@ -155,11 +162,13 @@ export function useAIChat(config: {
         // Commit staged transcript to persistent history
         transcriptRef.current = ctx.transcript;
         activeRef.current = null;
+        setToolCalls([]);
         setStatus("ready");
         return true;
       } catch (caughtError) {
         if (activeRef.current !== handle) return false;
         activeRef.current = null;
+        setToolCalls([]);
 
         if (isAbortError(caughtError)) {
           setStatus("ready");
@@ -174,7 +183,7 @@ export function useAIChat(config: {
     [config.client, config.model, config.tools, updateMessages],
   );
 
-  return { messages, status, error, sendMessage, stop };
+  return { messages, toolCalls, status, error, sendMessage, stop };
 }
 
 /** Single dispatch point: loop events → React state updates + context mutations. */
@@ -183,6 +192,7 @@ function applyEvent(
   ctx: ChatRequestContext,
   updateMessages: (updater: (previous: AIChatMessage[]) => AIChatMessage[]) => void,
   setStatus: (status: AIChatStatus) => void,
+  setToolCalls: (updater: (previous: ActiveToolCall[]) => ActiveToolCall[]) => void,
 ): void {
   switch (event.type) {
     case "text-delta": {
@@ -210,6 +220,10 @@ function applyEvent(
     }
 
     case "turn-end": {
+      if (event.turn.toolCalls.length > 0) {
+        const calls = event.turn.toolCalls.map(({ id, name }) => ({ id, name }));
+        setToolCalls((previous) => [...previous, ...calls]);
+      }
       ctx.commitTurn(event.turn);
       break;
     }

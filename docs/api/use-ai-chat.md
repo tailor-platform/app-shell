@@ -18,6 +18,7 @@ const useAIChat: (config: {
   tools?: Record<string, AIChatConfiguredTool>;
 }) => {
   messages: AIChatMessage[];
+  toolCalls: { id: string; name: string }[];
   status: "ready" | "submitted" | "streaming" | "error";
   error?: Error;
   sendMessage: (message: string) => Promise<boolean>;
@@ -44,10 +45,17 @@ interface AIChatSource {
 }
 ```
 
+### `toolCalls`
+
+- **Type:** `{ id: string; name: string }[]`
+- **Description:** Tool calls requested by the model in the active flow, including earlier tool rounds of the current request. This transient list is cleared when the response finishes, is stopped, or fails; it is never added to `messages` or conversation history.
+
+Calls become available before local tool execution. They record requested tool names, not successful execution. Arguments and results remain internal, and provider-managed tool usage is not reported through this field.
+
 ### `status`
 
 - **Type:** `"ready" | "submitted" | "streaming" | "error"`
-- **Description:** Current request state
+- **Description:** Current request state. `submitted` covers waiting for the first text, local tool execution, and waiting for the model's next reply after a tool result. `streaming` begins when text arrives. `AIChat.Conversation` automatically shows a waiting indicator while `submitted`.
 
 ### `error`
 
@@ -105,7 +113,7 @@ const lookupCustomer = defineAIChatTool({
 });
 
 export function ChatScreen() {
-  const { messages, sendMessage, status, stop, error } = useAIChat({
+  const { messages, toolCalls, sendMessage, status, stop, error } = useAIChat({
     client: aiClient,
     model: "gpt-5-mini",
     tools: {
@@ -120,6 +128,9 @@ export function ChatScreen() {
         <div key={message.id}>
           {message.role}: {message.content}
         </div>
+      ))}
+      {toolCalls.map((call) => (
+        <div key={call.id}>Tool call: {call.name}</div>
       ))}
 
       <button
@@ -140,10 +151,10 @@ export function ChatScreen() {
 ## Notes
 
 - AppShell chooses the appropriate AI Gateway transport automatically
-- Public messages stay user/assistant text-first; internal tool messages remain private to the hook
+- Public messages stay user/assistant text-first; tool calls and results never become conversation messages
 - Provider tools can attach optional `sources` to assistant messages
 - System prompts and custom history shaping should use the low-level client directly
-- `stop()` keeps any already-streamed assistant text and ignores late chunks from the stopped request
+- `stop()` keeps already-streamed assistant text, clears the active `toolCalls`, and ignores late events from the stopped request
 
 ## Related
 

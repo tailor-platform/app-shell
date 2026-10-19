@@ -33,11 +33,16 @@ describe("useAIChat", () => {
     const { result } = renderHook(() => useAIChat({ client, model: "gpt-5-mini" }));
 
     expect(result.current.messages).toEqual([]);
+    expect(result.current.toolCalls).toEqual([]);
     expect(result.current.status).toBe("ready");
     expect(result.current.error).toBeUndefined();
   });
 
   it("appends user and assistant messages while streaming", async () => {
+    let releaseFirstChunk!: () => void;
+    const firstChunkGate = new Promise<void>((resolve) => {
+      releaseFirstChunk = resolve;
+    });
     let releaseSecondChunk!: () => void;
     const secondChunkGate = new Promise<void>((resolve) => {
       releaseSecondChunk = resolve;
@@ -46,6 +51,7 @@ describe("useAIChat", () => {
     const client = {
       streamChatCompletion: vi.fn(async function* ({ signal }) {
         expect(signal).toBeInstanceOf(AbortSignal);
+        await firstChunkGate;
         yield { type: "text-delta", text: "Hello" } as const;
         await secondChunkGate;
         yield { type: "text-delta", text: " world" } as const;
@@ -58,6 +64,13 @@ describe("useAIChat", () => {
     let sendPromise: Promise<boolean> | undefined;
     await act(async () => {
       sendPromise = result.current.sendMessage("Hi");
+    });
+
+    expect(result.current.status).toBe("submitted");
+    expect(result.current.messages).toEqual([{ id: "id-1", role: "user", content: "Hi" }]);
+
+    await act(async () => {
+      releaseFirstChunk();
     });
 
     await waitFor(() => {
@@ -340,9 +353,263 @@ describe("useAIChat", () => {
         { id: "id-1", role: "user", content: "Find customer" },
         { id: "id-2", role: "assistant", content: "Customer: Acme Corp" },
       ]);
+      expect(result.current.toolCalls).toEqual([]);
     });
 
     expect(client.streamChatCompletion).toHaveBeenCalledTimes(2);
+  });
+
+  it("exposes calls only during the active flow across text and tool-only rounds", async () => {
+    let releaseTool!: () => void;
+    const toolGate = new Promise<void>((resolve) => {
+      releaseTool = resolve;
+    });
+    let releaseReply!: () => void;
+    const replyGate = new Promise<void>((resolve) => {
+      releaseReply = resolve;
+    });
+    let releaseFinalReply!: () => void;
+    const finalReplyGate = new Promise<void>((resolve) => {
+      releaseFinalReply = resolve;
+    });
+    const echo = defineAIChatTool({
+      schema: z.object({ value: z.string() }),
+      async execute({ value }) {
+        if (value === "first") await toolGate;
+        return value;
+      },
+    });
+    let round = 0;
+    const client = {
+      streamChatCompletion: vi.fn(async function* () {
+        round += 1;
+        if (round === 1) {
+          yield { type: "text-delta", text: "Checking" } as const;
+          for (const value of ["first", "second"]) {
+            yield {
+              type: "tool-call",
+              toolCallId: value,
+              toolName: "echo",
+              argumentsText: JSON.stringify({ value }),
+            } as const;
+          }
+        } else if (round === 2) {
+          await replyGate;
+          yield {
+            type: "tool-call",
+            toolCallId: "third",
+            toolName: "echo",
+            argumentsText: '{"value":"third"}',
+          } as const;
+        } else {
+          await finalReplyGate;
+          yield { type: "text-delta", text: "Done" } as const;
+        }
+        yield { type: "done" } as const;
+      }),
+    } satisfies AIGatewayClient;
+    const { result } = renderHook(() =>
+      useAIChat({ client, model: "gpt-5-mini", tools: { echo } }),
+    );
+
+    let sendPromise: Promise<boolean> | undefined;
+    await act(async () => {
+      sendPromise = result.current.sendMessage("Check three values");
+    });
+
+    const firstCalls = [
+      { id: "first", name: "echo" },
+      { id: "second", name: "echo" },
+    ];
+    expect(result.current.status).toBe("submitted");
+    expect(client.streamChatCompletion).toHaveBeenCalledTimes(1);
+    expect(result.current.toolCalls).toEqual(firstCalls);
+    expect(result.current.messages).toEqual([
+      { id: "id-1", role: "user", content: "Check three values" },
+      { id: "id-2", role: "assistant", content: "Checking" },
+    ]);
+
+    await act(async () => {
+      await expect(result.current.sendMessage("Ignored")).resolves.toBe(false);
+    });
+    expect(result.current.toolCalls).toEqual(firstCalls);
+
+    await act(async () => {
+      releaseTool();
+    });
+    await waitFor(() => expect(client.streamChatCompletion).toHaveBeenCalledTimes(2));
+    expect(result.current.status).toBe("submitted");
+    expect(result.current.toolCalls).toEqual(firstCalls);
+
+    await act(async () => {
+      releaseReply();
+    });
+    await waitFor(() => expect(client.streamChatCompletion).toHaveBeenCalledTimes(3));
+    expect(result.current.toolCalls).toEqual([...firstCalls, { id: "third", name: "echo" }]);
+    expect(result.current.messages).toHaveLength(2);
+    expect(result.current.status).toBe("submitted");
+
+    await act(async () => {
+      releaseFinalReply();
+      await expect(sendPromise).resolves.toBe(true);
+    });
+
+    expect(result.current.status).toBe("ready");
+    expect(result.current.toolCalls).toEqual([]);
+    expect(result.current.messages).toEqual([
+      { id: "id-1", role: "user", content: "Check three values" },
+      { id: "id-2", role: "assistant", content: "Checking" },
+      { id: "id-3", role: "assistant", content: "Done" },
+    ]);
+  });
+
+  it("clears calls on stop and ignores late events while the next flow is active", async () => {
+    let releaseStoppedRequest!: () => void;
+    const stoppedRequestGate = new Promise<void>((resolve) => {
+      releaseStoppedRequest = resolve;
+    });
+    let releaseSecondReply!: () => void;
+    const secondReplyGate = new Promise<void>((resolve) => {
+      releaseSecondReply = resolve;
+    });
+    const lookup = defineAIChatTool({ schema: z.object({}), execute: () => "found" });
+    const client = {
+      streamChatCompletion: vi.fn(async function* ({ messages }) {
+        const lastMessage = messages.at(-1);
+        if (lastMessage?.role === "user") {
+          expect(messages).toEqual([{ role: "user", content: lastMessage.content }]);
+          yield {
+            type: "tool-call",
+            toolCallId: lastMessage.content === "First" ? "observed" : "fresh",
+            toolName: "lookup",
+            argumentsText: "{}",
+          } as const;
+        } else if (messages[0]?.content === "First") {
+          await stoppedRequestGate;
+          yield {
+            type: "tool-call",
+            toolCallId: "late",
+            toolName: "lookup",
+            argumentsText: "{}",
+          } as const;
+        } else {
+          await secondReplyGate;
+          yield { type: "text-delta", text: "Fresh" } as const;
+        }
+        yield { type: "done" } as const;
+      }),
+    } satisfies AIGatewayClient;
+    const { result } = renderHook(() =>
+      useAIChat({ client, model: "gpt-5-mini", tools: { lookup } }),
+    );
+
+    let firstSendPromise: Promise<boolean> | undefined;
+    await act(async () => {
+      firstSendPromise = result.current.sendMessage("First");
+    });
+    expect(result.current.status).toBe("submitted");
+    expect(result.current.toolCalls).toEqual([{ id: "observed", name: "lookup" }]);
+    expect(result.current.messages).toEqual([{ id: "id-1", role: "user", content: "First" }]);
+
+    act(() => result.current.stop());
+    expect(result.current.status).toBe("ready");
+    expect(result.current.toolCalls).toEqual([]);
+
+    let secondSendPromise: Promise<boolean> | undefined;
+    await act(async () => {
+      secondSendPromise = result.current.sendMessage("Second");
+    });
+    expect(result.current.toolCalls).toEqual([{ id: "fresh", name: "lookup" }]);
+    expect(result.current.messages).toEqual([
+      { id: "id-1", role: "user", content: "First" },
+      { id: "id-2", role: "user", content: "Second" },
+    ]);
+
+    await act(async () => {
+      releaseStoppedRequest();
+      await expect(firstSendPromise).resolves.toBe(false);
+    });
+    expect(result.current.toolCalls).toEqual([{ id: "fresh", name: "lookup" }]);
+    expect(result.current.status).toBe("submitted");
+
+    await act(async () => {
+      releaseSecondReply();
+      await expect(secondSendPromise).resolves.toBe(true);
+    });
+    expect(result.current.toolCalls).toEqual([]);
+    expect(result.current.messages).toEqual([
+      { id: "id-1", role: "user", content: "First" },
+      { id: "id-2", role: "user", content: "Second" },
+      { id: "id-3", role: "assistant", content: "Fresh" },
+    ]);
+    expect(result.current.status).toBe("ready");
+    expect(result.current.error).toBeUndefined();
+    expect(client.streamChatCompletion).toHaveBeenCalledTimes(4);
+  });
+
+  it("clears calls after execution and reply errors without adding tool history", async () => {
+    let releaseFailure!: () => void;
+    const failureGate = new Promise<void>((resolve) => {
+      releaseFailure = resolve;
+    });
+    const failingTool = defineAIChatTool({
+      schema: z.object({}),
+      async execute() {
+        await failureGate;
+        throw new Error("tool failed");
+      },
+    });
+    const client = {
+      streamChatCompletion: vi.fn(async function* ({ messages }) {
+        if (messages.at(-1)?.content === "Retry") {
+          yield { type: "text-delta", text: "Recovered" } as const;
+        } else if (messages.at(-1)?.role === "tool") {
+          expect(messages.at(-1)?.content).toBe('{"error":"tool failed"}');
+          throw new Error("reply failed");
+        } else {
+          yield {
+            type: "tool-call",
+            toolCallId: "failed-call",
+            toolName: "failingTool",
+            argumentsText: "{}",
+          } as const;
+        }
+        yield { type: "done" } as const;
+      }),
+    } satisfies AIGatewayClient;
+    const { result } = renderHook(() =>
+      useAIChat({ client, model: "gpt-5-mini", tools: { failingTool } }),
+    );
+
+    let sendPromise: Promise<boolean> | undefined;
+    await act(async () => {
+      sendPromise = result.current.sendMessage("Try the tool");
+    });
+    expect(result.current.toolCalls).toEqual([{ id: "failed-call", name: "failingTool" }]);
+    expect(result.current.messages).toEqual([
+      { id: "id-1", role: "user", content: "Try the tool" },
+    ]);
+
+    await act(async () => {
+      releaseFailure();
+      await expect(sendPromise).resolves.toBe(false);
+    });
+    expect(result.current.status).toBe("error");
+    expect(result.current.error?.message).toBe("reply failed");
+    expect(result.current.toolCalls).toEqual([]);
+    expect(result.current.messages).toEqual([
+      { id: "id-1", role: "user", content: "Try the tool" },
+    ]);
+
+    await act(async () => {
+      await expect(result.current.sendMessage("Retry")).resolves.toBe(true);
+    });
+    expect(result.current.toolCalls).toEqual([]);
+    expect(result.current.messages).toEqual([
+      { id: "id-1", role: "user", content: "Try the tool" },
+      { id: "id-2", role: "user", content: "Retry" },
+      { id: "id-3", role: "assistant", content: "Recovered" },
+    ]);
   });
 
   it("fails after too many tool rounds", async () => {

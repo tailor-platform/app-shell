@@ -31,6 +31,7 @@ import { Response } from "./response";
 import { Source, Sources, SourcesContent, SourcesTrigger } from "./sources";
 import { Suggestion, Suggestions } from "./suggestion";
 import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from "./tool";
+import { ToolCall } from "./tool-call";
 
 type AIChatProps = Omit<ComponentProps<"div">, "children"> & {
   /**
@@ -199,6 +200,7 @@ type AIChatComponent = typeof AIChatRoot & {
   ChainOfThoughtSearchResults: typeof ChainOfThoughtSearchResults;
   ChainOfThoughtSearchResult: typeof ChainOfThoughtSearchResult;
   Tool: typeof Tool;
+  ToolCall: typeof ToolCall;
   ToolHeader: typeof ToolHeader;
   ToolContent: typeof ToolContent;
   ToolInput: typeof ToolInput;
@@ -231,6 +233,7 @@ const AIChat: AIChatComponent = Object.assign(AIChatRoot, {
   ChainOfThoughtSearchResults,
   ChainOfThoughtSearchResult,
   Tool,
+  ToolCall,
   ToolHeader,
   ToolContent,
   ToolInput,
@@ -247,5 +250,6 @@ export type { AIChatHeaderProps } from "./header";
 export type { AIChatConversationProps } from "./conversation";
 export type { AIChatComposerProps } from "./composer";
 export type { ToolState } from "./tool";
+export type { AIChatToolCallProps } from "./tool-call";
 export type { ChainOfThoughtStepStatus } from "./chain-of-thought";
 export type { ChatHistoryGroupData, ChatHistoryItemData } from "./chat-history";

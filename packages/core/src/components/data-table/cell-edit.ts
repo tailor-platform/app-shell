@@ -153,12 +153,10 @@ export function sameDate(
     const right = toCalendarDate(b, timeZone);
     return left && right ? left.compare(right) === 0 : left === right;
   }
+  // Date-only data is incomplete in a datetime editor, not implicit midnight.
+  if (isIsoDate(a) || isIsoDate(b)) return a === b;
   const asInstant = (raw: unknown) => {
-    const normalized = normalizeTemporalFilterValue(
-      "datetime",
-      isIsoDate(raw) ? `${raw}T00:00` : raw,
-      timeZone,
-    );
+    const normalized = normalizeTemporalFilterValue("datetime", raw, timeZone);
     return normalized ? new Date(normalized) : null;
   };
   const left = asInstant(a);

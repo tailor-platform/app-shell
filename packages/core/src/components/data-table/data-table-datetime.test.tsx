@@ -115,6 +115,36 @@ describe("DataTable date-time drafts", () => {
     expect(onValueCommitted).not.toHaveBeenCalled();
   });
 
+  it.each([
+    { value: "2026-10-02", changed: true },
+    { value: "2026-10-01T15:00:00.000Z", changed: false },
+  ])(
+    "confirms explicit midnight only when it completes or changes $value",
+    async ({ value, changed }) => {
+      const { user, onValueChange, onValueCommitted } = setup(value);
+      await user.click(trigger());
+      fireEvent.change(timeInput(), { target: { value: "00:00" } });
+      expect(done().disabled).toBe(false);
+      await user.click(done());
+      if (changed) {
+        expect(onValueChange).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({ id: "1" }),
+          {
+            day: "2026-10-02",
+            time: "00:00",
+          },
+        );
+        expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({ id: "1" }),
+          "2026-10-01T15:00:00.000Z",
+        );
+      } else {
+        expect(onValueChange).not.toHaveBeenCalled();
+        expect(onValueCommitted).not.toHaveBeenCalled();
+      }
+    },
+  );
+
   it("notifies an emptied time as null and restores it on Escape without committing", async () => {
     const { user, onValueChange, onValueCommitted } = setup();
     await user.click(trigger());

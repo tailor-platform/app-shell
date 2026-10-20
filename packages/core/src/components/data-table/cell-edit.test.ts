@@ -177,6 +177,16 @@ describe("dates", () => {
     );
   });
 
+  it("distinguishes incomplete date-only data from explicit midnight in datetime comparisons", () => {
+    const day = "2026-10-02";
+    const midnight = "2026-10-01T15:00:00.000Z";
+    expect(sameDate(day, midnight, true, "Asia/Tokyo")).toBe(false);
+    expect(sameDate(midnight, day, true, "Asia/Tokyo")).toBe(false);
+    expect(sameDate(day, null, true, "Asia/Tokyo")).toBe(false);
+    expect(sameDate(day, day, true, "Asia/Tokyo")).toBe(true);
+    expect(sameDate(day, midnight, false, "Asia/Tokyo")).toBe(true);
+  });
+
   it("compares by day for dates and by minute for date-times", () => {
     expect(sameDate("2026-10-02", new Date(2026, 9, 2, 18), false)).toBe(true);
     expect(sameDate("2026-10-02", "2026-10-03", false)).toBe(false);

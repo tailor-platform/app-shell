@@ -1021,6 +1021,39 @@ describe("DataTable inline editing", () => {
       expect(trigger.closest("td")?.textContent).toContain("Received");
     });
 
+    it("keeps enum fallback labels on editable and locked badge cells after selection", async () => {
+      const user = renderTable(
+        <Harness
+          rows={LINES.map((line) => ({ ...line, status: "pending" }))}
+          columns={(update) => [
+            column({
+              id: "status",
+              label: "Status",
+              type: "badge",
+              filter: {
+                field: "status",
+                type: "enum",
+                options: [
+                  { value: "pending", label: "Pending review" },
+                  { value: "qa_approved", label: "Quality approved" },
+                ],
+              },
+              edit: {
+                canEdit: (row) => row.id === "1",
+                onValueCommitted: (row, value) => update(row.id, { status: value ?? undefined }),
+              },
+            }),
+          ]}
+        />,
+      );
+      expect(screen.getAllByText("Pending review")).toHaveLength(3);
+      const input = screen.getByRole("combobox", { name: "Status" });
+      await user.click(input);
+      await user.click(await screen.findByRole("option", { name: "Quality approved" }));
+      expect(input.closest("td")?.textContent).toBe("Quality approved");
+      expect(screen.getAllByText("Pending review")).toHaveLength(2);
+    });
+
     it("keeps a badge cell with several values read-only", () => {
       renderTable(
         <Harness

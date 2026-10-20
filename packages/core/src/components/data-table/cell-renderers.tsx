@@ -3,7 +3,7 @@ import { parseDate } from "@internationalized/date";
 import { Link } from "react-router";
 import { BadgeList, toValueArray } from "@/components/badge-list";
 import type { SelectOption } from "@/types/collection";
-import { optionLabel } from "./cell-edit";
+import { optionLabel, resolveBadgeOptions } from "./cell-edit";
 import { normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type {
   BadgeCellOptions,
@@ -229,7 +229,11 @@ export function renderTypedValue<TRow extends Record<string, unknown>>(
         options?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
       )(value);
     case "badge":
-      return renderBadge(value, col.typeOptions, col.edit?.options);
+      return renderBadge(
+        value,
+        col.typeOptions,
+        col.edit ? resolveBadgeOptions(col.edit.options, col.typeOptions, col.filter) : undefined,
+      );
     case "link": {
       // A column with dropdown choices stores an option's value and shows its label.
       const label = optionLabel(col.edit?.options, value);

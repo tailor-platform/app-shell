@@ -14,8 +14,7 @@ describe("useCollectionVariables", () => {
     it("returns default variables with pageSize 20", () => {
       const { result } = renderHook(() => useCollectionVariables({}));
       expect(result.current.variables.pagination).toEqual({ first: 20 });
-      expect(result.current.variables.query).toEqual({});
-      expect(Object.keys(result.current.variables.query)).toEqual([]);
+      expect(result.current.variables.query).toBeUndefined();
       expect(result.current.variables.order).toBeUndefined();
       expect(result.current.control.filters).toEqual([]);
       expect(result.current.control.sortStates).toEqual([]);
@@ -184,7 +183,7 @@ describe("useCollectionVariables", () => {
       act(() => {
         result.current.control.removeFilter("amount");
       });
-      expect(result.current.variables.query).toEqual({});
+      expect(result.current.variables.query).toBeUndefined();
     });
 
     it("clears all filters", () => {
@@ -199,10 +198,10 @@ describe("useCollectionVariables", () => {
       });
 
       expect(result.current.control.filters).toHaveLength(0);
-      expect(result.current.variables.query).toEqual({});
+      expect(result.current.variables.query).toBeUndefined();
     });
 
-    it("returns an empty query when filters are replaced with an empty array", () => {
+    it("returns undefined query when filters are replaced with an empty array", () => {
       const { result } = renderHook(() =>
         useCollectionVariables({
           params: { initialFilters: [{ field: "status", operator: "eq", value: "ACTIVE" }] },
@@ -213,7 +212,7 @@ describe("useCollectionVariables", () => {
         result.current.control.setFilters([]);
       });
 
-      expect(result.current.variables.query).toEqual({});
+      expect(result.current.variables.query).toBeUndefined();
     });
 
     it("resets pagination when filters change", () => {
@@ -640,10 +639,10 @@ describe("useCollectionVariables", () => {
       expect("before" in pagination).toBe(false);
     });
 
-    it("returns an empty query object and undefined order when empty", () => {
+    it("returns undefined for query and order when empty", () => {
       const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
 
-      expect(result.current.variables.query).toEqual({});
+      expect(result.current.variables.query).toBeUndefined();
       expect(result.current.variables.order).toBeUndefined();
       expect(result.current.variables.pagination).toEqual({ first: 10 });
     });
@@ -692,14 +691,17 @@ describe("useCollectionVariables", () => {
         });
         expect(result.current.variables.query).toEqual({ amount: { [operator]: value } });
         expect(result.current.variables.order).toEqual([{ field: "amount", direction: "Asc" }]);
-        expectTypeOf(result.current.variables.query).toExtend<{
-          amount?: {
-            gte?: string;
-            in?: string[];
-            nin?: string[];
-            between?: { min: string; max: string };
-          };
-        }>();
+        expectTypeOf(result.current.variables.query).toExtend<
+          | {
+              amount?: {
+                gte?: string;
+                in?: string[];
+                nin?: string[];
+                between?: { min: string; max: string };
+              };
+            }
+          | undefined
+        >();
       },
     );
 
@@ -711,10 +713,7 @@ describe("useCollectionVariables", () => {
         }),
       );
       expect(result.current.variables.pagination).toEqual({ first: 10 });
-      expect(result.current.variables.query).toEqual({});
-      const { status, ...rest } = result.current.variables.query;
-      expect(status).toBeUndefined();
-      expect(rest).toEqual({});
+      expect(result.current.variables.query).toBeUndefined();
     });
 
     it("applies typed initialSort", () => {

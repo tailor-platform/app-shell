@@ -1023,13 +1023,9 @@ const { variables, control } = useCollectionVariables({
 });
 
 // variables.pagination → { first, after? } or { last, before? }
-// variables.query      → filter input object ({} when no filters are active)
+// variables.query      → filter input object or undefined
 // variables.order      → sort input array or undefined
 ```
-
-`variables.query` is always an object, including on the first render and after the last filter is removed or all filters are cleared. You can safely call `Object.keys(variables.query)` or destructure it without an `undefined` fallback. `useURLCollectionVariables` has the same contract. `variables.order` remains `undefined` when no sort is active.
-
-If you previously used the truthiness of `variables.query` to detect active filters, use `control.filters.length > 0` instead.
 
 ### Options
 

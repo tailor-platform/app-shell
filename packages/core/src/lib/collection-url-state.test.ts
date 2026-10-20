@@ -221,7 +221,7 @@ describe("withURLCollectionState", () => {
 });
 
 describe("useURLCollectionVariables", () => {
-  it("returns an empty query object when the URL has no filters", () => {
+  it("returns undefined query when the URL has no filters", () => {
     const wrapper = ({ children }: PropsWithChildren) =>
       createElement(MemoryRouter, { initialEntries: ["/"] }, children);
     const { result } = renderHook(
@@ -229,7 +229,7 @@ describe("useURLCollectionVariables", () => {
       { wrapper },
     );
 
-    expect(result.current.variables.query).toEqual({});
+    expect(result.current.variables.query).toBeUndefined();
     expect(result.current.variables.order).toBeUndefined();
   });
 

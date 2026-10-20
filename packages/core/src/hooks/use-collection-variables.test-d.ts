@@ -100,9 +100,9 @@ describe("BuildQueryVariables", () => {
         in?: string[];
         nin?: string[];
       }>();
-      expectTypeOf<TestTypedCollectionVariables["query"]>().toExtend<{
-        decimalAmount?: DecimalInput;
-      }>();
+      expectTypeOf<TestTypedCollectionVariables["query"]>().toExtend<
+        { decimalAmount?: DecimalInput } | undefined
+      >();
     });
 
     it("enum fields produce literal union types from enumValues", () => {
@@ -148,9 +148,9 @@ describe("BuildQueryVariables", () => {
 });
 
 describe("CollectionVariables", () => {
-  it("always provides a query object", () => {
+  it("allows undefined query when no filters are active", () => {
     expectTypeOf<CollectionVariables["query"]>().toEqualTypeOf<
-      Record<string, Record<string, unknown>>
+      Record<string, Record<string, unknown>> | undefined
     >();
   });
 });
@@ -158,8 +158,9 @@ describe("CollectionVariables", () => {
 describe("TypedCollectionVariables", () => {
   it("extends CollectionVariables while keeping typed query fields", () => {
     expectTypeOf<TestTypedCollectionVariables>().toExtend<CollectionVariables>();
-    expectTypeOf<TestTypedCollectionVariables["query"]>().toExtend<TestQuery>();
-    expectTypeOf<TestTypedCollectionVariables["query"]>().toExtend<{
+    expectTypeOf<TestTypedCollectionVariables["query"]>().toExtend<TestQuery | undefined>();
+    expectTypeOf<undefined>().toExtend<TestTypedCollectionVariables["query"]>();
+    expectTypeOf<NonNullable<TestTypedCollectionVariables["query"]>>().toExtend<{
       title?: { eq?: string; contains?: string };
       status?: { eq?: "active" | "inactive" };
     }>();

@@ -143,14 +143,22 @@ describe("dates", () => {
     expect(toCalendarDate(new Date(2026, 9, 2, 23, 30))?.toString()).toBe("2026-10-02");
     expect(toCalendarDate(null)).toBeNull();
     expect(toTimeText(new Date(2026, 9, 2, 9, 5))).toBe("09:05");
-    expect(toTimeText("2026-10-02")).toBe("00:00");
+    expect(toTimeText("2026-10-02")).toBe("");
     expect(toTimeText(undefined)).toBe("");
   });
 
   it("builds an ISO timestamp from a day and a local time", () => {
     const day = toCalendarDate("2026-10-20")!;
     expect(toIsoDateTime(day, "14:30")).toBe(new Date(2026, 9, 20, 14, 30).toISOString());
-    expect(toIsoDateTime(day, "")).toBe(new Date(2026, 9, 20).toISOString());
+    expect(toIsoDateTime(day, "")).toBeUndefined();
+  });
+
+  it("does not fill or coerce an incomplete or invalid time", () => {
+    const day = toCalendarDate("2026-10-20")!;
+    for (const time of ["", "14:", "9:05", "24:00", "12:60", "-1:00", "abc"]) {
+      expect(toIsoDateTime(day, time)).toBeUndefined();
+    }
+    expect(toIsoDateTime(day, "00:00", "Asia/Tokyo")).toBe("2026-10-19T15:00:00.000Z");
   });
 
   it("initializes and commits date-times in the configured timezone", () => {

@@ -1302,10 +1302,10 @@ describe("DataTable inline editing", () => {
     });
     // @ts-expect-error — business constraints are consumer-owned
     column({ id: "received", type: "number", edit: { min: 0, onValueCommitted: noop } });
-    // @ts-expect-error — validation is not an editor option
     column({
       id: "note",
       type: "text",
+      // @ts-expect-error — validation is not an editor option
       edit: { validate: () => undefined, onValueCommitted: noop },
     });
     // @ts-expect-error — required state is consumer-owned

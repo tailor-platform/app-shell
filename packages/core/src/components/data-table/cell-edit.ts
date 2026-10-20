@@ -119,7 +119,7 @@ export function toCalendarDate(raw: unknown, timeZone = getLocalTimeZone()): Cal
 
 /** The zoned time of a raw date cell value as `"HH:mm"`; `""` when there is none. */
 export function toTimeText(raw: unknown, timeZone = getLocalTimeZone()): string {
-  if (isIsoDate(raw)) return toCalendarDate(raw, timeZone) ? "00:00" : "";
+  if (isIsoDate(raw)) return "";
   const datetime = normalizeTemporalFilterValue("datetime", raw, timeZone);
   return datetime ? localDateTimeParts(datetime, timeZone).time : "";
 }
@@ -129,8 +129,9 @@ export function toIsoDateTime(
   day: CalendarDate,
   time: string,
   timeZone = getLocalTimeZone(),
-): string {
-  const [hours = 0, minutes = 0] = time ? time.split(":").map(Number) : [];
+): string | undefined {
+  if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time)) return undefined;
+  const [hours, minutes] = time.split(":").map(Number);
   return toZoned(new CalendarDateTime(day.year, day.month, day.day, hours, minutes), timeZone)
     .toDate()
     .toISOString();

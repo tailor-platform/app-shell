@@ -25,7 +25,7 @@ import { ComboboxParts } from "@/components/combobox";
 import { Input } from "@/components/input";
 import { Table } from "@/components/table";
 import { Tooltip } from "@/components/tooltip";
-import type { Column } from "./types";
+import type { Column, DateTimeDraft } from "./types";
 import { getCellValue, renderTypedValue } from "./cell-renderers";
 import {
   normalizeNumberText,
@@ -762,40 +762,60 @@ function DateEditCell<TRow extends Record<string, unknown>>({
   const t = useDataTableT();
   const { value: timeZone } = useTimeZone();
   const withTime = col.typeOptions?.dateFormat === "datetime";
-  const { current, display, change, commit: notifyCommitted } = useCellValue(row, col);
+  const { current, display, change, commit } = useCellValue(row, col);
   const register = useNavigationRef<HTMLButtonElement>(navigation, rowKey, colKey);
-  const commit = (next: string | null) => {
-    if (!sameDate(next, current, withTime, timeZone)) {
-      change(next);
-      notifyCommitted(next);
-    }
+  const baseline: DateTimeDraft = {
+    day: toCalendarDate(current, timeZone)?.toString() ?? null,
+    time: toTimeText(current, timeZone) || null,
   };
   const [open, setOpen] = useState(false);
-  // A date-time is picked in two steps (day, then time), so it's committed when
-  // the calendar closes; a date commits as soon as a day is picked.
-  const [draftDay, setDraftDay] = useState<CalendarDate | null>(null);
-  const [draftTime, setDraftTime] = useState("");
+  const [draft, setDraftState] = useState<DateTimeDraft | null>(null);
+  // Close notifications can run before the state update from a pick is rendered.
+  const draftRef = useRef<DateTimeDraft | null>(null);
+  const differs = (a: DateTimeDraft, b: DateTimeDraft) =>
+    a.day !== b.day || (withTime && a.time !== b.time);
+  const notifyDraft = (next: DateTimeDraft) => change(withTime ? { ...next } : next.day);
+  const setDraft = (next: DateTimeDraft) => {
+    const previous = draftRef.current ?? baseline;
+    draftRef.current = next;
+    setDraftState(next);
+    if (differs(previous, next)) notifyDraft(next);
+  };
+  const discardDraft = () => {
+    draftRef.current = null;
+    setDraftState(null);
+  };
+  const finish = (next: string | null) => {
+    discardDraft();
+    setOpen(false);
+    if (!sameDate(next, current, withTime, timeZone)) commit(next);
+  };
+  const activeDraft = draft ?? baseline;
+  const pickedDay = toCalendarDate(activeDraft.day, timeZone);
+  const timestamp =
+    withTime && pickedDay && activeDraft.time
+      ? toIsoDateTime(pickedDay, activeDraft.time, timeZone)
+      : undefined;
   // The trigger's accessible name carries the date hidden in the visual display.
   const accessibleName = typeof display === "string" ? `${label}, ${display}` : label;
-  const pickedDay = withTime ? draftDay : toCalendarDate(current, timeZone);
 
-  const handleOpenChange = (next: boolean, details?: { reason?: string }) => {
+  const handleOpenChange = (next: boolean) => {
     if (next) {
-      setDraftDay(toCalendarDate(current, timeZone));
-      setDraftTime(toTimeText(current, timeZone));
-    } else if (withTime && draftDay && details?.reason !== "escape-key") {
-      commit(toIsoDateTime(draftDay, draftTime, timeZone));
+      if (draftRef.current === null) {
+        draftRef.current = baseline;
+        setDraftState(baseline);
+      }
+    } else {
+      const previous = draftRef.current;
+      discardDraft();
+      if (previous && differs(previous, baseline)) notifyDraft(baseline);
     }
     setOpen(next);
   };
 
   const handlePick = (day: CalendarDate) => {
-    if (withTime) {
-      setDraftDay(day);
-      return;
-    }
-    commit(day.toString());
-    setOpen(false);
+    setDraft({ ...(draftRef.current ?? baseline), day: day.toString() });
+    if (!withTime) finish(day.toString());
   };
 
   return (
@@ -832,8 +852,13 @@ function DateEditCell<TRow extends Record<string, unknown>>({
                 <Input
                   type="time"
                   aria-label={`${label} (${t("chooseTime")})`}
-                  value={draftTime}
-                  onChange={(event) => setDraftTime(event.target.value)}
+                  value={activeDraft.time ?? ""}
+                  onChange={(event) =>
+                    setDraft({
+                      ...(draftRef.current ?? baseline),
+                      time: event.target.value || null,
+                    })
+                  }
                   className="astw:h-8 astw:text-sm"
                 />
               )}
@@ -842,14 +867,20 @@ function DateEditCell<TRow extends Record<string, unknown>>({
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    commit(null);
-                    setOpen(false);
+                    setDraft({ day: null, time: null });
+                    finish(null);
                   }}
                 >
                   {t("editClear")}
                 </Button>
                 {withTime && (
-                  <Button size="sm" onClick={() => handleOpenChange(false)}>
+                  <Button
+                    size="sm"
+                    disabled={timestamp === undefined}
+                    onClick={() => {
+                      if (timestamp !== undefined) finish(timestamp);
+                    }}
+                  >
                     {t("editDone")}
                   </Button>
                 )}

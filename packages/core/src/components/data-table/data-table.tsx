@@ -1095,7 +1095,7 @@ function SortIndicator({ direction }: { direction: "Asc" | "Desc" }) {
   return (
     <span
       data-slot="data-table-sort-indicator"
-      className="astw:text-muted-foreground astw:text-body-sm"
+      className="astw:text-muted-foreground astw:text-label-sm"
       aria-hidden
     >
       {direction === "Asc" ? "▲" : "▼"}

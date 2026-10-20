@@ -36,6 +36,12 @@ import {
   type UseDataTableReturn,
   type MetadataFieldOptions,
   type DataTableContextValue,
+  type TextCellEditOptions,
+  type NumberCellEditOptions,
+  type BadgeCellEditOptions,
+  type DateCellEditOptions,
+  type CellEditState,
+  type DateTimeDraft,
 } from "@tailor-platform/app-shell";
 ```
 
@@ -377,6 +383,132 @@ The trigger is a native `<button>`, so Enter/Space activation and the focus ring
 
 **Known limitation — row count.** Detail rows are real `<tr>` elements, so a screen reader counts them: ten records with two expanded announces as twelve rows. Fixing this needs `aria-rowcount` plus explicit `aria-rowindex` on every row (with detail rows sharing their parent's index) and correct interaction with pagination; `role="presentation"` on the detail row would fix the count but remove the panel from screen-reader table navigation. Neither is implemented.
 
+## Inline editing
+
+Give a typed column an `edit` config to use its built-in editor. This standardizes the editing UI — draft input, IME, keyboard movement, and change notifications — not business validation or persistence. Columns without `edit` keep their existing behavior.
+
+| Column type                          | Editor                                    | `onValueChange` draft                                             | `onValueCommitted` output              |
+| ------------------------------------ | ----------------------------------------- | ----------------------------------------------------------------- | -------------------------------------- |
+| `text` / `link`                      | Direct text input                         | Raw `string`, including `""`                                      | `string \| null`                       |
+| `number` / `money`                   | Direct numeric input                      | Raw `string`, including incomplete input such as `"-"`            | JavaScript `number \| null`            |
+| `text` / `link` with `edit.options`  | Searchable dropdown                       | Selected string `value`, or `null`; not search text or highlights | Selected string `value`, or `null`     |
+| `badge`                              | Searchable dropdown using the same badges | Selected string `value`, or `null`; not search text or highlights | Selected string `value`, or `null`     |
+| `date`                               | Calendar                                  | `"YYYY-MM-DD" \| null`                                            | `"YYYY-MM-DD" \| null`                 |
+| `date` with `dateFormat: "datetime"` | Calendar and time field                   | Complete `DateTimeDraft` snapshot                                 | UTC ISO timestamp, or `null` for Clear |
+
+Callback types describe the **editor's output**, not the original row field's runtime type. For example, text/link/badge editors confirm strings or `null` even when their display accepts numbers or booleans. The editing option types, `CellEditState`, and `DateTimeDraft` are exported from the package root; parsing and navigation helpers remain internal.
+
+For example, inside a receipt page, accept or reject each proposed quantity yourself. Patch the changed field with a functional state update rather than replacing a whole row captured before another edit:
+
+```tsx
+const { column } = createColumnHelper<ReceiptLine>();
+const [lines, setLines] = useState<ReceiptLine[]>(initialLines);
+const toast = useToast();
+
+const columns = [
+  column({ id: "sku", label: "SKU", type: "text" }),
+  column({
+    id: "received",
+    label: "Received",
+    type: "number",
+    typeOptions: { maxDecimals: 0 }, // Display precision, not an input rule.
+    edit: {
+      canEdit: (_row, { selected }) => selected,
+      onValueCommitted: (row, value) => {
+        if (value !== null && (!Number.isInteger(value) || value < 0 || value > row.ordered)) {
+          toast.error(`Enter a whole number from 0 to ${row.ordered}`);
+          return; // Do not adopt the value: the cell returns to data.
+        }
+        setLines((current) =>
+          current.map((line) => (line.id === row.id ? { ...line, received: value } : line)),
+        );
+      },
+    },
+  }),
+];
+
+const table = useDataTable({ columns, data: { rows: lines }, rowSelection: {} });
+```
+
+`ReceiptLine` and `initialLines` are the page's row type and initial data. `useState` comes from React; `useToast`, `createColumnHelper`, and `useDataTable` come from AppShell.
+
+### Editing options
+
+| Option             | Column types            | Contract                                                                                                                                                                                                                                                                                                                                          |
+| ------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `onValueChange`    | all typed columns       | Optional: `(row, draft) => void`. Observes changed editor drafts, including restored drafts on cancellation. See the draft types above. Updating `data` here is outside the supported coordination contract and is the consumer's responsibility. Return values are ignored.                                                                      |
+| `onValueCommitted` | all typed columns       | Required: `(row, value) => void`. Notifies a changed, confirmed value, compared with current consumer-provided `data`, not an edit-start snapshot. Empty or explicitly cleared cells confirm `null`; equal values do not notify. Confirmation does not imply successful business validation, adoption, or persistence. Return values are ignored. |
+| `canEdit`          | all typed columns       | `(row, { selected }) => boolean`. Decides which rows can be edited, like `rowExpansion.canExpand` and an action's `canApply`. Default: rows with an `id`. `selected` is `false` when selection is off; provide `rowSelection: {}` to enable it.                                                                                                   |
+| `options`          | `text`, `link`, `badge` | `readonly { value, label }[]`. Text/link columns become searchable dropdowns; values are strings and their labels are displayed, including in read-only cells. Badge choices default to `typeOptions.badgeLabelMap`, then the column's enum filter options. Without choices, a badge column stays read-only. The "None" choice confirms `null`.   |
+
+Rows need a string or number `id`; rows without one remain read-only and produce a one-time warning. Multi-value badge cells also remain read-only. Editable cells carry a subtle tint at rest, layered over the row's hover and selected states, and drop it while being edited. Dropdown and date cells also show their editor icon on hover or focus; typed-into cells show none. The whole cell is the click target. Editing a cell does not fire `onClickRow`.
+
+### Confirmation and keyboard behavior
+
+- **Enter / Shift+Enter:** confirm and end editing, returning to normal cell display while keeping focus on the same logical cell. Enter or clicking that focused display cell starts editing again.
+- **Tab / Shift+Tab:** confirm and move to the next / previous editable cell, skipping read-only cells. At the ends, focus leaves the table normally.
+- **Esc:** restore the draft from the latest `data`, notifying `onValueChange` only if the draft changed, without `onValueCommitted`.
+- **Dropdowns:** type to filter choices. Exact labels rank first, then prefix matches, then substring matches, with original order retained within each rank. "None" is excluded while a search query is present and available with an empty query. Tab focuses a closed dropdown without opening it; one Enter opens it without confirming. While open, Enter confirms the candidate and ends editing in the same cell; Tab confirms a selected or searched candidate and moves on. Tab without selecting or searching only moves focus. A keyboard-highlighted candidate takes precedence over ranked search matches; hovering does not count as an explicit selection. Clicking a choice confirms immediately. Only Enter, Tab, or clicking a choice confirms: outside click, blur, and Esc discard the search and restore the latest `data`, even for an exactly typed label or keyboard-highlighted candidate, without either callback. Search/highlight changes emit neither callback; confirming a different value emits `onValueChange` followed by `onValueCommitted`.
+- **Dates:** selecting a day emits its draft and confirms immediately. Clear explicitly confirms `null`.
+- **Date-times:** day and time are independent. Both must be valid to enable Done; an empty time does not become midnight. Done confirms the timestamp in the AppShell timezone. Outside closing or Esc cancels and restores the latest data; Clear explicitly confirms `null`.
+- **Blur:** confirms a changed direct-input value. Enter during IME composition confirms the conversion, not the cell. Composition changes may notify raw drafts; normalization waits until cell confirmation.
+
+A date-time draft preserves missing parts rather than inventing a timestamp:
+
+```ts
+type DateTimeDraft = {
+  day: string | null; // "YYYY-MM-DD", or an unselected day.
+  time: string | null; // "HH:mm", or an empty time field.
+};
+```
+
+`onValueChange` receives the complete snapshot whenever either part changes, not just the changed part.
+
+Numeric confirmation uses JavaScript `number`, **not arbitrary-precision Decimal**. Values outside the supported safe range are rejected, and high-precision decimal strings can lose precision when converted to numbers. Editing uses `.` as the decimal separator independently of display locale; `typeOptions.locale` does not select a locale-aware input parser. Full-width digits, valid comma thousands grouping, and currency symbols are normalized on confirmation; a decimal comma such as `1,5` is not accepted. The existing numeric renderer's `Number` conversion is unchanged.
+
+Malformed numeric input is allowed while typing and can notify raw drafts. Enter/Tab cannot confirm it: they show basic parsing feedback and hold focus. Blur discards it, restores the latest `data`, and notifies the restored draft without a commit. Cosmetic changes such as `10` to `10.00` can notify draft changes but do not emit `onValueCommitted`. This is basic parsing, not a business-rule API; `typeOptions` controls display only and never limits the entered value.
+
+### Data ownership and limits
+
+The consumer's `data` is the source of truth. Normally, observe drafts in `onValueChange` and synchronously adopt confirmed values in `onValueCommitted`, optionally after your own validation or normalization. If you reject a confirmed value by leaving `data` unchanged, the cell returns to that value and Tab navigation remains available: the table does not retain a business-invalid draft, add a cell error, or block Tab navigation for you.
+
+External data updates do not overwrite an active draft or emit draft callbacks themselves. Confirmation and cancellation use the latest data. With no active draft, the display follows data normally. Unmount silently discards internal drafts without either callback; if an ordinary blur occurs before unmount, its normal behavior still applies.
+
+There are no `edit.min`, `max`, `maxDecimals`, `required`, `validate`, or `schema` options. Dropdowns and calendars are not constrained by business rules. Required-field handling, error feedback, saving, optimistic updates, rollback, and save indicators belong to the screen. Callback return values are not awaited; handle rejected saves in your own code rather than returning a Promise for DataTable to track. There is no built-in unsaved-changes or leave-page guard.
+
+Editing does not re-run sorting or filtering: rows stay in place until the consumer supplies changed query data. Update only the changed field when persisting, and keep local rows current so later edits, row actions, and bulk actions see the intended data. Conflict resolution, consumer-state rollback, draft persistence across unmounts, and navigation guards remain outside DataTable's responsibility.
+
+For a different editor or validation experience, leave `edit` unset and use the existing cell `render` escape hatch. A `render` supplied alongside `edit` customizes the display, not the built-in editor. Multi-value badge editing, a custom-editor option within `edit`, multi-cell paste, fill-down, and undo history are not provided.
+
+### Consumer-owned saving patterns
+
+DataTable has no save modes, shared saving hook, built-in Save controls, or validation framework. The following are page-level patterns. Both examples use `onValueCommitted`; neither treats observing `onValueChange` as adopting or saving a value.
+
+Both examples use these imports:
+
+```tsx
+import { useRef, useState } from "react";
+import { Button, DataTable, createColumnHelper, useDataTable } from "@tailor-platform/app-shell";
+```
+
+Their simulated persistence rejects quantity `13` so error handling can be tried without a backend. Replace it with your application's API.
+
+#### Immediate saving
+
+Validate the confirmed value, adopt it with a functional field update, then persist only that field. This example permits later edits while saves are pending. A per-row request revision prevents a stale failure from rolling back a newer edit; rollback also patches only this field, preserving changes to other fields. Feedback, saved-value tracking, and in-flight status are consumer-owned.
+
+Revision checks protect local UI updates, not server write ordering or external conflicts. For a real API, serialize writes to the same field or use server-side version checks, and reconcile/refetch after uncertain outcomes. The [goods-receipt showcase](../../examples/vite-app/src/pages/showcase/data-table-lab/inline-editing-demo.tsx) demonstrates the same ownership boundary across editor types.
+
+<!-- example: immediate-saving | A minimal consumer-owned field save with validation, optimistic adoption, feedback, and stale-failure-safe rollback. -->
+
+#### Collect then submit
+
+Confirmed values update local draft rows. Save validates those rows and persists the batch; Cancel restores the last saved rows. The page disables editing while its batch is saving to avoid replacing a later local edit with an older save result.
+
+This batch collects **confirmed/adopted row values**, not unfinished input inside editors. Save does not automatically gather or validate active editor drafts. An ordinary blur may confirm a valid direct input before a button click; malformed numeric blur discards that input, and clicking outside a dropdown or date-time picker cancels its unfinished edit. Tell users to confirm edits first; if your workflow needs to submit unfinished inputs as one coordinated form, use the `render` escape hatch or a dedicated form instead.
+
+<!-- example: collect-then-submit | Local confirmed rows with consumer-owned Save validation, batch persistence, error feedback, and Cancel restoring saved rows. -->
+
 ## Row selection
 
 Pass `rowSelection` to `useDataTable` to enable the checkbox column. Rows must have a string or number `id`; selected ids are their string-normalized values, and rows without an id are excluded. An empty configuration (`rowSelection: {}`) enables uncontrolled selection without a notification callback. Bulk actions belong in `rowSelection.actions`; `rowSelection: { actions: [] }` still enables checkboxes, but does not show the bulk-action bar.
@@ -527,35 +659,35 @@ const table = useDataTable({
 
 ## `Column`
 
-A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated union on `type` — the shape of `typeOptions` is narrowed per branch, so mismatches are compile errors rather than silent runtime no-ops.
+A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated union on `type` — the shapes of `typeOptions`, `accessor`, and optional `edit` are narrowed per branch, so mismatches are compile errors rather than silent runtime no-ops. See [Inline editing](#inline-editing) for typed editors and their change-notification contract.
 
 ### Shared fields
 
-| Property   | Type                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ---------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `label`    | `string`                                  | Column header text. Omit for icon-only columns.                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `header`   | `(ctx: HeaderRenderContext) => ReactNode` | Custom header renderer. Presentation only. When omitted, the built-in header renders `label` and owns the sort button/indicator. When provided, the return value replaces the built-in header entirely; sortable custom headers receive `sortDirection` and `activateSort()` via `ctx` and must render their own click surface for left-click sorting. The header context menu still uses the column metadata (`label`, `sort`, etc.).                                                                      |
-| `render`   | `(row: TRow) => ReactNode`                | Renders the cell content. Presentation only. Optional — overrides the built-in `type` renderer when set. Built-in behaviors that need the raw value (truncate tooltip, cell copy/filter context-menu actions) still resolve it from `accessor` first, then `row[col.id]`, and only fall back to the return value of `render(row)` when it is a primitive (`string`, `number`, `boolean`, or `bigint`).                                                                                                      |
-| `id`       | `string`                                  | Stable identifier for column visibility, persisted layout state, raw-value fallback (`row[col.id]`), and the React key. Falls back to `label` when omitted. Set this explicitly when `label` is absent, not unique, or when a custom-rendered column should still participate in built-in cell behaviors that need a raw value.                                                                                                                                                                             |
-| `width`    | `number`                                  | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `pin`      | `"left" \| "right"`                       | Freezes the column to that edge so it stays visible during horizontal scroll (the default; the user can override it via the toolbar's column-settings control). Sticky offsets are measured from the rendered layout, so `width` isn't required — but setting `width` on pinned columns is recommended for stable sizing. The selection and expand columns auto-pin left and the row-actions column auto-pin right.                                                                                         |
-| `align`    | `"left" \| "right"`                       | Horizontal alignment. Defaults to `"right"` for `type: "number"` and `type: "money"`; `"left"` otherwise. Pass `"left"` to opt a numeric column out.                                                                                                                                                                                                                                                                                                                                                        |
-| `truncate` | `boolean`                                 | Truncate overflowing text with an ellipsis. Wires up an app-shell `<Tooltip>` automatically when the resolved raw cell value is a string or number (`accessor` first, then `row[col.id]`). With `inferColumns`, no explicit `accessor` is needed because `id` is pinned to the field name. Requires another column to anchor the row width (`width` on a neighbor, or a fixed-size column like selection / row actions).                                                                                    |
-| `accessor` | _(narrowed per `type`)_                   | Extracts the raw value. This is the primary source of truth for built-in behaviors that need a value independent of presentation (typed rendering, truncate tooltip, cell copy/filter context-menu actions). The return type is narrowed per `type` branch — returning an array is a compile error on all typed columns except `badge`, and returning a plain object is a compile error on all typed columns. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed. |
-| `sort`     | `SortConfig`                              | Sort configuration. When set, the column participates in the built-in sort behaviors: the default clickable header and the header context-menu sort submenu. Custom headers still need to call `ctx.activateSort()` to opt into left-click sorting.                                                                                                                                                                                                                                                         |
-| `filter`   | `FilterConfig`                            | Filter configuration. When set, the column appears as an option in `DataTable.Filters` and can also drive the cell **Add filter** context-menu submenu when collection `control` is available. The cell menu narrows this to single-value operators only.                                                                                                                                                                                                                                                   |
+| Property   | Type                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`    | `string`                                  | Column header text. Omit for icon-only columns.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `header`   | `(ctx: HeaderRenderContext) => ReactNode` | Custom header renderer. Presentation only. When omitted, the built-in header renders `label` and owns the sort button/indicator. When provided, the return value replaces the built-in header entirely; sortable custom headers receive `sortDirection` and `activateSort()` via `ctx` and must render their own click surface for left-click sorting. The header context menu still uses the column metadata (`label`, `sort`, etc.).                                                                            |
+| `render`   | `(row: TRow) => ReactNode`                | Renders the cell content. Presentation only. Optional — overrides the built-in `type` display renderer when set, not an editor configured through `edit`. Leave `edit` unset to draw your own editor with `render`. Built-in behaviors that need the raw value (truncate tooltip, cell copy/filter context-menu actions) still resolve it from `accessor` first, then `row[col.id]`, and only fall back to the return value of `render(row)` when it is a primitive (`string`, `number`, `boolean`, or `bigint`). |
+| `id`       | `string`                                  | Stable identifier for column visibility, persisted layout state, raw-value fallback (`row[col.id]`), and the React key. Falls back to `label` when omitted. Set this explicitly when `label` is absent, not unique, or when a custom-rendered column should still participate in built-in cell behaviors that need a raw value.                                                                                                                                                                                   |
+| `width`    | `number`                                  | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `pin`      | `"left" \| "right"`                       | Freezes the column to that edge so it stays visible during horizontal scroll (the default; the user can override it via the toolbar's column-settings control). Sticky offsets are measured from the rendered layout, so `width` isn't required — but setting `width` on pinned columns is recommended for stable sizing. The selection and expand columns auto-pin left and the row-actions column auto-pin right.                                                                                               |
+| `align`    | `"left" \| "right"`                       | Horizontal alignment. Defaults to `"right"` for `type: "number"` and `type: "money"`; `"left"` otherwise. Pass `"left"` to opt a numeric column out.                                                                                                                                                                                                                                                                                                                                                              |
+| `truncate` | `boolean`                                 | Truncate overflowing text with an ellipsis. Wires up an app-shell `<Tooltip>` automatically when the resolved raw cell value is a string or number (`accessor` first, then `row[col.id]`). With `inferColumns`, no explicit `accessor` is needed because `id` is pinned to the field name. Requires another column to anchor the row width (`width` on a neighbor, or a fixed-size column like selection / row actions).                                                                                          |
+| `accessor` | _(narrowed per `type`)_                   | Extracts the raw value. This is the primary source of truth for built-in behaviors that need a value independent of presentation (typed rendering, truncate tooltip, cell copy/filter context-menu actions). The return type is narrowed per `type` branch — returning an array is a compile error on all typed columns except `badge`, and returning a plain object is a compile error on all typed columns. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed.       |
+| `sort`     | `SortConfig`                              | Sort configuration. When set, the column participates in the built-in sort behaviors: the default clickable header and the header context-menu sort submenu. Custom headers still need to call `ctx.activateSort()` to opt into left-click sorting.                                                                                                                                                                                                                                                               |
+| `filter`   | `FilterConfig`                            | Filter configuration. When set, the column appears as an option in `DataTable.Filters` and can also drive the cell **Add filter** context-menu submenu when collection `control` is available. The cell menu narrows this to single-value operators only.                                                                                                                                                                                                                                                         |
 
 ### `type`-specific fields
 
-| `type`      | `typeOptions`                                                |
-| ----------- | ------------------------------------------------------------ |
-| _(omitted)_ | _(not allowed; provide `render` to draw the cell)_           |
-| `"text"`    | _(not allowed)_                                              |
-| `"number"`  | `NumberCellOptions`                                          |
-| `"money"`   | `MoneyCellOptions<TRow>`                                     |
-| `"date"`    | `DateCellOptions`                                            |
-| `"badge"`   | `BadgeCellOptions`                                           |
-| `"link"`    | **Required** — `LinkCellOptions<TRow>` (must include `href`) |
+| `type`      | `typeOptions`                                                | Optional `edit`               |
+| ----------- | ------------------------------------------------------------ | ----------------------------- |
+| _(omitted)_ | _(not allowed; provide `render` to draw the cell)_           | _(not allowed)_               |
+| `"text"`    | _(not allowed)_                                              | `TextCellEditOptions<TRow>`   |
+| `"number"`  | `NumberCellOptions`                                          | `NumberCellEditOptions<TRow>` |
+| `"money"`   | `MoneyCellOptions<TRow>`                                     | `NumberCellEditOptions<TRow>` |
+| `"date"`    | `DateCellOptions`                                            | `DateCellEditOptions<TRow>`   |
+| `"badge"`   | `BadgeCellOptions`                                           | `BadgeCellEditOptions<TRow>`  |
+| `"link"`    | **Required** — `LinkCellOptions<TRow>` (must include `href`) | `TextCellEditOptions<TRow>`   |
 
 ## Cell types
 

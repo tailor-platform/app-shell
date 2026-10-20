@@ -6,6 +6,7 @@ import type {
   FilterConfig,
   OperatorForFilterType,
   PageInfo,
+  SelectOption,
   SortConfig,
   SortState,
 } from "@/types/collection";
@@ -83,6 +84,110 @@ export interface LinkCellOptions<TRow extends Record<string, unknown>> {
    */
   href: (row: TRow) => string | null | undefined;
 }
+
+// =============================================================================
+// Inline editing
+// =============================================================================
+
+/** Row state passed to `edit.canEdit` alongside the row. */
+export interface CellEditState {
+  /** Whether the row is selected. Always `false` when row selection is off. */
+  selected: boolean;
+}
+
+/** Incomplete date-time editor state, interpreted in the AppShell timezone. */
+export interface DateTimeDraft {
+  day: string | null;
+  time: string | null;
+}
+
+interface CellEditBase<TRow extends Record<string, unknown>, TValue, TDraft = TValue | null> {
+  /**
+   * Decides, per row, whether the cell can be edited. Receives the row and
+   * whether it is selected, so "editable once selected" is
+   * `(_, { selected }) => selected`. Default: every row with an `id`.
+   */
+  canEdit?: (row: TRow, state: CellEditState) => boolean;
+  /**
+   * Observes editor drafts, including incomplete input and restored drafts on
+   * cancellation. Direct inputs emit raw strings; choices emit selected values,
+   * not search text or highlights. Updating `data` here is outside the supported
+   * coordination contract. The return value is ignored.
+   */
+  onValueChange?: (row: TRow, draft: TDraft) => void;
+  /**
+   * Notifies a changed, confirmed editor output, compared with current `data`.
+   * Empty cells confirm `null`. Confirmation does not imply business validation,
+   * adoption, or persistence; update `data` here to adopt it. Return values are
+   * ignored. Output types follow the editor, not the row field's runtime type.
+   */
+  onValueCommitted: (row: TRow, value: TValue | null) => void;
+}
+
+/**
+ * `edit` config for `type: "text"` and `type: "link"` columns. Without
+ * `options` the cell is typed into: the value is the text as typed, and an
+ * emptied cell commits `null`. A `link` column shows its label as plain text
+ * while the cell can be edited.
+ */
+export interface TextCellEditOptions<TRow extends Record<string, unknown>> extends CellEditBase<
+  TRow,
+  string,
+  string | null
+> {
+  /**
+   * Turns the cell into a dropdown of these choices (a supplier, a warehouse,
+   * a unit of measure). The column's value is an option's `value`, and every
+   * cell in the column — editable or not — shows the matching `label`.
+   * Picking a choice notifies its value; a "None" choice notifies `null`.
+   */
+  options?: readonly SelectOption[];
+}
+
+/**
+ * `edit` config for `type: "badge"` columns: a dropdown whose choices render as
+ * the same badges the cell shows. Picking one notifies its `value`; a "None"
+ * choice notifies `null`. Single-value columns only.
+ */
+export interface BadgeCellEditOptions<TRow extends Record<string, unknown>> extends CellEditBase<
+  TRow,
+  string
+> {
+  /**
+   * The choices. Default: the entries of `typeOptions.badgeLabelMap`, else the
+   * column's enum `filter` options. A badge column with neither can't be
+   * edited.
+   */
+  options?: readonly SelectOption[];
+}
+
+/**
+ * `edit` config for `type: "date"` columns: a calendar that opens from the
+ * cell. Picking a day commits `"YYYY-MM-DD"`. With `dateFormat: "datetime"`
+ * the calendar emits complete `DateTimeDraft` snapshots and Done confirms an
+ * ISO 8601 timestamp in the AppShell timezone only with a valid day and time.
+ * Outside closing / Esc cancels; Clear explicitly confirms `null`.
+ * Date-only drafts are `"YYYY-MM-DD" | null`.
+ */
+export type DateCellEditOptions<TRow extends Record<string, unknown>> = CellEditBase<
+  TRow,
+  string,
+  string | DateTimeDraft | null
+>;
+
+/**
+ * `edit` config for `type: "number"` and `type: "money"` columns. Drafts are raw
+ * strings (including incomplete input); confirmation emits a JavaScript number
+ * or `null`, not an arbitrary-precision Decimal. Editing uses `.` as the decimal
+ * separator, independently of display locale. Full-width digits and valid comma
+ * grouping are normalized on confirmation. Display precision does not constrain
+ * input; business rules belong to the consumer.
+ */
+export type NumberCellEditOptions<TRow extends Record<string, unknown>> = CellEditBase<
+  TRow,
+  number,
+  string
+>;
 
 /**
  * Header render context for non-sortable columns.
@@ -290,40 +395,52 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
  * and `undefined` are always allowed: every built-in renderer maps them to the
  * `—` placeholder.
  *
+ * `edit` makes the cells editable in place and also narrows per branch, so
+ * `onValueCommitted` receives the editor's output type, not necessarily the
+ * original row field's runtime type. Text / link / badge output strings or null.
+ * Every typed column
+ * supports it; untyped (`render`-only) columns don't.
+ *
  * Prefer `Column<TRow>` in most cases; this is exported so consumers can
  * compose more specific column types.
  */
 export type ColumnTypeBranch<TRow extends Record<string, unknown>> =
-  | { type?: undefined; typeOptions?: never; accessor?: (row: TRow) => unknown }
+  | { type?: undefined; typeOptions?: never; accessor?: (row: TRow) => unknown; edit?: never }
   | {
       type: "text";
       typeOptions?: never;
       accessor?: (row: TRow) => string | number | boolean | bigint | null | undefined;
+      edit?: TextCellEditOptions<TRow>;
     }
   | {
       type: "number";
       typeOptions?: NumberCellOptions;
       accessor?: (row: TRow) => number | null | undefined;
+      edit?: NumberCellEditOptions<TRow>;
     }
   | {
       type: "money";
       typeOptions?: MoneyCellOptions<TRow>;
       accessor?: (row: TRow) => number | null | undefined;
+      edit?: NumberCellEditOptions<TRow>;
     }
   | {
       type: "date";
       typeOptions?: DateCellOptions;
       accessor?: (row: TRow) => Date | string | number | null | undefined;
+      edit?: DateCellEditOptions<TRow>;
     }
   | {
       type: "badge";
       typeOptions?: BadgeCellOptions;
       accessor?: (row: TRow) => string | string[] | number | boolean | null | undefined;
+      edit?: BadgeCellEditOptions<TRow>;
     }
   | {
       type: "link";
       typeOptions: LinkCellOptions<TRow>;
       accessor?: (row: TRow) => string | number | boolean | null | undefined;
+      edit?: TextCellEditOptions<TRow>;
     };
 
 /**

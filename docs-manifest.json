@@ -383,7 +383,7 @@
       "kind": "code-backed",
       "outline": "docs-src/components/data-table.docs.outline.md",
       "output": "docs/components/data-table.md",
-      "examples": null,
+      "examples": "docs-src/components/data-table.docs.examples.tsx",
       "sources": [
         "packages/core/src/components/data-table/**",
         "packages/core/src/hooks/use-collection-variables.ts",
@@ -393,7 +393,9 @@
       ],
       "claims": [],
       "symbols": [
+        "BadgeCellEditOptions",
         "BuildQueryVariables",
+        "CellEditState",
         "CollectionControl",
         "CollectionControlProvider",
         "CollectionInitialState",
@@ -409,6 +411,8 @@
         "DataTableFilterConfig",
         "DataTablePaginationProps",
         "DataTableRootProps",
+        "DateCellEditOptions",
+        "DateTimeDraft",
         "FieldMetadata",
         "FieldType",
         "Filter",
@@ -417,6 +421,7 @@
         "HeaderRenderContext",
         "MetadataFieldOptions",
         "NodeType",
+        "NumberCellEditOptions",
         "OPERATORS_BY_FILTER_TYPE",
         "PageInfo",
         "PaginationVariables",
@@ -432,6 +437,7 @@
         "TableMetadataFilter",
         "TableMetadataMap",
         "TableOrderableFieldName",
+        "TextCellEditOptions",
         "UseCollectionOptions",
         "UseCollectionReturn",
         "UseDataTableOptions",
@@ -447,11 +453,11 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "a884f94ccdd70d63",
-        "outline": "fb870a38efa81725",
+        "typeSurface": "3ca8fce7d2efca2d",
+        "outline": "0b7a57e7d2fc04a5",
         "snapshot": null,
-        "outputMd": "8b8f79bf7632766f",
-        "examples": null
+        "outputMd": "1073852822f9e535",
+        "examples": "b3468077b9455521"
       }
     },
     "date-picker": {
@@ -1016,9 +1022,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "9927a04efe8fe1f7",
+        "outline": "4ee60b9818472d4b",
         "snapshot": null,
-        "outputMd": "d2c10cdbb00590a2",
+        "outputMd": "59c93617dc135033",
         "examples": "c0a2bd60e8a04474"
       }
     },
@@ -1728,7 +1734,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "8b8f79bf7632766f",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "1073852822f9e535",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "bc69f14829004f9d",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
@@ -1791,7 +1797,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "aa60091d0e430762",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
-    "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "d2c10cdbb00590a2",
+    "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "214b43b076a41a86",
     "packages/core/skills/app-shell-patterns/SKILL.md": "4be8ba49cfcd2b12"

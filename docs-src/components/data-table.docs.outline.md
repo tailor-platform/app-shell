@@ -1023,9 +1023,11 @@ const { variables, control } = useCollectionVariables({
 });
 
 // variables.pagination → { first, after? } or { last, before? }
-// variables.query      → filter input object or undefined
+// variables.query      → filter input object (undefined when no filters are active)
 // variables.order      → sort input array or undefined
 ```
+
+When you need an object for `Object.keys` or destructuring, use `variables.query ?? {}`.
 
 ### Options
 
@@ -1058,7 +1060,7 @@ const { variables, control } = useCollectionVariables({
   params: { pageSize: 20 },
 });
 
-// variables.query is now BuildQueryVariables<typeof tableMetadata.order>
+// variables.query is now BuildQueryVariables<typeof tableMetadata.order> | undefined
 // variables.order is now { field: OrderableFieldName; direction: "Asc" | "Desc" }[]
 const [result] = useQuery({
   query: LIST_ORDERS, // TypedDocumentNode — variables are fully type-checked

@@ -122,7 +122,7 @@ function Description({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="alert-description"
       className={cn(
-        "astw:col-start-2 astw:grid astw:justify-items-start astw:gap-1 astw:text-body-md astw:[&_p]:leading-relaxed",
+        "astw:col-start-2 astw:grid astw:justify-items-start astw:gap-1 astw:text-body-md astw:[&_p]:text-body-md-relaxed",
         className,
       )}
       {...props}

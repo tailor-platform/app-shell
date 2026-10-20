@@ -40,6 +40,10 @@ describe("typography role usage in components", () => {
     ).toEqual([]);
   });
 
+  it("uses no line height outside the roles except leading-none", () => {
+    expect(findAll(/astw:(?:[^\s"'`:]+:)*leading-(?!none(?![\w-]))[\w.[\]-]+/g)).toEqual([]);
+  });
+
   it("uses only defined role names in role classes", () => {
     const used = findAll(
       /astw:(?:[a-z0-9-]+:)*text-((?:heading|body|label|code)-[a-z0-9-]*)(?![\w-])/g,

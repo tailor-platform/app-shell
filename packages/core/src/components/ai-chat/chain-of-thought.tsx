@@ -131,7 +131,7 @@ function ChainOfThoughtStep({
           stepTextClass[status],
         )}
       >
-        <p className="astw:leading-5">{label}</p>
+        <Text variant="body-md">{label}</Text>
         {description ? <Text variant="body-sm">{description}</Text> : null}
         {children}
       </div>

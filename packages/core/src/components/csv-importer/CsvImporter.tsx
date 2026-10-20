@@ -486,21 +486,27 @@ function CompleteStep({
         <CheckCircle2Icon className="astw:text-primary astw:size-8" />
       </div>
       <div className="astw:flex astw:flex-col astw:items-center astw:gap-3">
-        <div className="astw:grid astw:grid-cols-[auto_1fr] astw:gap-x-6 astw:gap-y-2 astw:text-body-md">
+        <div className="astw:grid astw:grid-cols-[auto_1fr] astw:gap-x-6 astw:gap-y-2">
           <Text variant="label-md" className="astw:text-muted-foreground">
             File
           </Text>
-          <Text variant="body-md">{fileName}</Text>
+          <Text variant="body-md" render={<span />}>
+            {fileName}
+          </Text>
           <Text variant="label-md" className="astw:text-muted-foreground">
             Rows imported
           </Text>
-          <Text variant="body-md">{totalRows}</Text>
+          <Text variant="body-md" render={<span />}>
+            {totalRows}
+          </Text>
           {correctedRows > 0 && (
             <>
               <Text variant="label-md" className="astw:text-muted-foreground">
                 Rows corrected
               </Text>
-              <Text variant="body-md">{correctedRows}</Text>
+              <Text variant="body-md" render={<span />}>
+                {correctedRows}
+              </Text>
             </>
           )}
         </div>

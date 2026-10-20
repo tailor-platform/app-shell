@@ -232,6 +232,90 @@ const stringInvalidOperatorColumn: Column<TestRow> = {
   },
 };
 
+describe.each([
+  { isComposing: true, keyCode: 13 },
+  { isComposing: false, keyCode: 229 },
+])("filter IME handling ($isComposing, $keyCode)", (compositionEvent) => {
+  describe.each(["panel", "chip"] as const)("%s", (surface) => {
+    it.each([
+      { column: stringColumn, initial: "Alice", draft: "株式会社", final: "株式会社東京" },
+      { column: uuidColumn, initial: "uuid-1", draft: "uuid-2", final: "uuid-3" },
+      { column: numberColumn, initial: 1, draft: "2", final: 3 },
+      { column: timeColumn, initial: "09:30", draft: "10:30", final: "11:30" },
+    ])(
+      "does not commit $column.id until Enter outside composition",
+      async ({ column, initial, draft, final }) => {
+        const user = userEvent.setup();
+        const field = column.id!;
+        const operator = column === stringColumn ? "contains" : "eq";
+        const control = makeControl({ filters: [{ field, operator, value: initial }] });
+        render(<TestFilters control={control} columns={[column]} />, { wrapper });
+
+        if (surface === "panel") {
+          await user.click(screen.getByRole("button", { name: "Add filter" }));
+        } else {
+          await openValueEditor(user);
+        }
+
+        const input = await screen.findByDisplayValue(String(initial));
+        await user.click(input);
+        fireEvent.change(input, { target: { value: draft } });
+        fireEvent.keyDown(input, { key: "Enter", ...compositionEvent });
+
+        expect(control.addFilter).not.toHaveBeenCalled();
+        expect(control.removeFilter).not.toHaveBeenCalled();
+        expect(document.activeElement).toBe(input);
+        expect(screen.getByDisplayValue(draft)).toBe(input);
+
+        fireEvent.change(input, { target: { value: String(final) } });
+        fireEvent.keyDown(input, { key: "Enter", ...compositionEvent });
+        expect(control.addFilter).not.toHaveBeenCalled();
+        expect(control.removeFilter).not.toHaveBeenCalled();
+
+        fireEvent.keyDown(input, { key: "Enter", isComposing: false, keyCode: 13 });
+        expect(control.addFilter).toHaveBeenCalledTimes(1);
+        expect(vi.mocked(control.addFilter).mock.calls[0].slice(0, 3)).toEqual([
+          field,
+          operator,
+          final,
+        ]);
+        if (surface === "chip") {
+          await vi.waitFor(() => expect(screen.queryByDisplayValue(String(final))).toBeNull());
+        } else {
+          expect(screen.getByDisplayValue(String(final))).toBe(input);
+        }
+      },
+    );
+
+    it.each(["Min", "Max"])("does not commit a range from %s during composition", async (bound) => {
+      const user = userEvent.setup();
+      const control = makeControl({
+        filters: [{ field: "count", operator: "between", value: { min: 1, max: 10 } }],
+      });
+      render(<TestFilters control={control} columns={[numberColumn]} />, { wrapper });
+      if (surface === "panel") {
+        await user.click(screen.getByRole("button", { name: "Add filter" }));
+      } else {
+        await openValueEditor(user);
+      }
+
+      const input = await screen.findByRole("spinbutton", { name: bound });
+      fireEvent.change(input, { target: { value: bound === "Min" ? "2" : "20" } });
+      fireEvent.keyDown(input, { key: "Enter", ...compositionEvent });
+      expect(control.addFilter).not.toHaveBeenCalled();
+      expect(control.removeFilter).not.toHaveBeenCalled();
+      expect(screen.getByRole("spinbutton", { name: bound })).toBe(input);
+
+      fireEvent.keyDown(input, { key: "Enter", isComposing: false, keyCode: 13 });
+      expect(control.addFilter).toHaveBeenCalledTimes(1);
+      expect(control.addFilter).toHaveBeenCalledWith("count", "between", {
+        min: bound === "Min" ? 2 : 1,
+        max: bound === "Max" ? 20 : 10,
+      });
+    });
+  });
+});
+
 // ---------------------------------------------------------------------------
 // DataTable.Filters — rendering
 // ---------------------------------------------------------------------------

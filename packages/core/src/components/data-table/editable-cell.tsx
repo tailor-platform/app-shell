@@ -168,11 +168,16 @@ const CELL_ICON_CLASS_NAME = cn(
   "astw:[&_svg]:size-3.5",
 );
 
-function useCellValue<TRow extends Record<string, unknown>>(row: TRow, col: EditableColumn<TRow>) {
+function useCellValue<TRow extends Record<string, unknown>>(
+  row: TRow,
+  col: EditableColumn<TRow>,
+  dateRenderer?: (row: TRow) => ReactNode,
+) {
   const { value: timeZone } = useTimeZone();
   const current = getCellValue(row, col);
-  const display = col.render
-    ? col.render(row)
+  const render = col.render ?? dateRenderer;
+  const display = render
+    ? render(row)
     : renderTypedValue(row, col, current, { linkAsText: true, timeZone });
   const change = (value: unknown) => {
     (col.edit?.onValueChange as ((row: TRow, value: unknown) => void) | undefined)?.(row, value);
@@ -280,6 +285,8 @@ interface DataTableEditableCellProps<
   align: "left" | "right";
   tooltipLabel?: string;
   navigation: CellEditNavigation;
+  /** Reuses the table's column-level date formatter cache. */
+  dateRenderer?: (row: TRow) => ReactNode;
   /** `data-slot`, style, class and context-menu handlers shared with static cells. */
   cellProps: ComponentProps<typeof Table.Cell>;
 }
@@ -879,11 +886,12 @@ function DateEditCell<TRow extends Record<string, unknown>>({
   navigation,
   cellProps,
   tooltipLabel,
+  dateRenderer,
 }: DataTableEditableCellProps<TRow, DateColumn<TRow>>) {
   const t = useDataTableT();
   const { value: timeZone } = useTimeZone();
   const withTime = col.typeOptions?.dateFormat === "datetime";
-  const { current, display, change, commit } = useCellValue(row, col);
+  const { current, display, change, commit } = useCellValue(row, col, dateRenderer);
   const register = useNavigationRef<HTMLButtonElement>(navigation, rowKey, colKey);
   const baseline: DateTimeDraft = {
     day: toCalendarDate(current, timeZone)?.toString() ?? null,

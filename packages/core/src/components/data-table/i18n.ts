@@ -131,6 +131,14 @@ export const dataTableLabels = defineI18nLabels({
       `${props.column} ${props.operator} ${props.value}`,
     filterChipLabelEnum: (props: { column: string; operator: string; value: string }) =>
       `${props.column} ${props.operator}: ${props.value}`,
+
+    // Inline cell editing — numeric parsing feedback
+    editNotANumber: "Enter a number",
+    editRevertHint: "Press Esc to undo",
+    editNone: "None",
+    editNoMatches: "No matches",
+    editClear: "Clear",
+    editDone: "Done",
   },
   ja: {
     loading: "読み込み中...",
@@ -245,6 +253,14 @@ export const dataTableLabels = defineI18nLabels({
       `${props.column}: ${props.value} ${props.operator}`,
     filterChipLabelEnum: (props: { column: string; operator: string; value: string }) =>
       `${props.column} ${props.operator}: ${props.value}`,
+
+    // Inline cell editing
+    editNotANumber: "数値を入力してください",
+    editRevertHint: "Escキーで元に戻せます",
+    editNone: "なし",
+    editNoMatches: "一致する項目がありません",
+    editClear: "クリア",
+    editDone: "完了",
   },
 });
 

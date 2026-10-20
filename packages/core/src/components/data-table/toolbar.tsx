@@ -1294,7 +1294,7 @@ function FilterChip({
       className="astw:inline-flex astw:items-center astw:divide-x astw:divide-border astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:bg-background astw:shadow-xs astw:dark:border-input astw:dark:bg-input/30"
     >
       {/* Field segment (icon arrives in Stage 2) */}
-      <span className={cn(segment, "astw:font-medium astw:text-foreground")}>{label}</span>
+      <span className={cn(segment, "astw:text-label-sm astw:text-foreground")}>{label}</span>
 
       {/* Operator segment — searchable dropdown when more than one operator */}
       {operators.length > 1 ? (
@@ -1338,7 +1338,10 @@ function FilterChip({
           render={
             <button
               type="button"
-              className={cn(interactiveSegment, "astw:gap-1 astw:font-medium astw:text-foreground")}
+              className={cn(
+                interactiveSegment,
+                "astw:gap-1 astw:text-label-sm astw:text-foreground",
+              )}
             >
               {valueLabel ? (
                 // Cap long values (e.g. a uuid or a long "contains" string) so the

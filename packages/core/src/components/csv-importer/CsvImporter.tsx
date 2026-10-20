@@ -221,13 +221,13 @@ function MappingStep({
           <thead>
             <tr className="astw:border-b astw:border-border astw:bg-muted/50">
               <th className="astw:w-10 astw:px-3 astw:py-2" />
-              <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
+              <th className="astw:px-3 astw:py-2 astw:text-left astw:text-label-md astw:text-muted-foreground">
                 {t("mappingExpectedField")}
               </th>
-              <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
+              <th className="astw:px-3 astw:py-2 astw:text-left astw:text-label-md astw:text-muted-foreground">
                 {t("mappingCsvColumn")}
               </th>
-              <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
+              <th className="astw:px-3 astw:py-2 astw:text-left astw:text-label-md astw:text-muted-foreground">
                 {t("mappingPreview")}
               </th>
             </tr>
@@ -393,7 +393,7 @@ function ReviewStep({
         <table className="astw:w-full astw:text-body-md">
           <thead className="astw:bg-muted astw:sticky astw:top-0">
             <tr>
-              <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
+              <th className="astw:px-3 astw:py-2 astw:text-left astw:text-label-md astw:text-muted-foreground">
                 #
               </th>
               {activeMappings.map((m) => {
@@ -401,7 +401,7 @@ function ReviewStep({
                 return (
                   <th
                     key={m.csvHeader}
-                    className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground"
+                    className="astw:px-3 astw:py-2 astw:text-left astw:text-label-md astw:text-muted-foreground"
                   >
                     {col?.label ?? m.columnKey}
                   </th>

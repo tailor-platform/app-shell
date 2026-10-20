@@ -90,7 +90,7 @@ function Footer({ className, ...props }: React.ComponentProps<"tfoot">) {
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "astw:border-t astw:border-border astw:font-medium astw:[&>tr]:last:border-b-0",
+        "astw:border-t astw:border-border astw:text-label-md astw:[&>tr]:last:border-b-0",
         className,
       )}
       {...props}
@@ -120,7 +120,7 @@ function Head({ className, align = "left", ...props }: HeadProps) {
     <th
       data-slot="table-head"
       className={cn(
-        "astw:text-foreground astw:h-10 astw:px-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:font-medium astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0",
+        "astw:text-foreground astw:h-10 astw:px-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:text-label-md astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0",
         cellAlignClassName[align],
         className,
       )}

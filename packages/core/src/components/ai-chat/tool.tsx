@@ -87,7 +87,7 @@ function ToolHeader({ toolName, state, title, className, ...props }: ToolHeaderP
     >
       <span className="astw:flex astw:min-w-0 astw:items-center astw:gap-1.5">
         <Wrench className="astw:size-3.5 astw:shrink-0" aria-hidden />
-        <span className="astw:truncate astw:font-medium astw:text-foreground">
+        <span className="astw:truncate astw:text-label-md astw:text-foreground">
           {title ?? toolName}
         </span>
       </span>

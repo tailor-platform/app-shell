@@ -22,7 +22,7 @@ const formatRowsForClipboard = (rows: AppInfoEntry[]) =>
 
 const AppInfoRow = ({ label, value }: AppInfoEntry) => (
   <div className="astw:grid astw:gap-1 astw:py-3 astw:sm:grid-cols-[12rem_minmax(0,1fr)] astw:sm:gap-4">
-    <Text variant="body-md" className="astw:text-muted-foreground" render={<dt />}>
+    <Text variant="label-md" className="astw:text-muted-foreground" render={<dt />}>
       {label}
     </Text>
     <Text variant="body-md" className="astw:min-w-0 astw:break-all" render={<dd />}>

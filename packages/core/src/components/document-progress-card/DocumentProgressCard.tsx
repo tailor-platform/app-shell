@@ -175,7 +175,7 @@ function LegendRow({
           className={cn("astw:h-3.5 astw:w-0.5 astw:shrink-0 astw:rounded-md", colorFill[color])}
         />
         <Text
-          variant="body-md"
+          variant="label-md"
           className="astw:text-muted-foreground astw:truncate"
           render={<span />}
         >

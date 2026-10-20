@@ -487,14 +487,20 @@ function CompleteStep({
       </div>
       <div className="astw:flex astw:flex-col astw:items-center astw:gap-3">
         <div className="astw:grid astw:grid-cols-[auto_1fr] astw:gap-x-6 astw:gap-y-2 astw:text-body-md">
-          <span className="astw:text-muted-foreground">File</span>
-          <span className="astw:font-medium">{fileName}</span>
-          <span className="astw:text-muted-foreground">Rows imported</span>
-          <span className="astw:font-medium">{totalRows}</span>
+          <Text variant="label-md" className="astw:text-muted-foreground">
+            File
+          </Text>
+          <Text variant="body-md">{fileName}</Text>
+          <Text variant="label-md" className="astw:text-muted-foreground">
+            Rows imported
+          </Text>
+          <Text variant="body-md">{totalRows}</Text>
           {correctedRows > 0 && (
             <>
-              <span className="astw:text-muted-foreground">Rows corrected</span>
-              <span className="astw:font-medium">{correctedRows}</span>
+              <Text variant="label-md" className="astw:text-muted-foreground">
+                Rows corrected
+              </Text>
+              <Text variant="body-md">{correctedRows}</Text>
             </>
           )}
         </div>

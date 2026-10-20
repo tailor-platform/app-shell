@@ -147,9 +147,19 @@ describe("BuildQueryVariables", () => {
   });
 });
 
+describe("CollectionVariables", () => {
+  it("allows undefined query when no filters are active", () => {
+    expectTypeOf<CollectionVariables["query"]>().toEqualTypeOf<
+      Record<string, Record<string, unknown>> | undefined
+    >();
+  });
+});
+
 describe("TypedCollectionVariables", () => {
   it("extends CollectionVariables while keeping typed query fields", () => {
     expectTypeOf<TestTypedCollectionVariables>().toExtend<CollectionVariables>();
+    expectTypeOf<TestTypedCollectionVariables["query"]>().toExtend<TestQuery | undefined>();
+    expectTypeOf<undefined>().toExtend<TestTypedCollectionVariables["query"]>();
     expectTypeOf<NonNullable<TestTypedCollectionVariables["query"]>>().toExtend<{
       title?: { eq?: string; contains?: string };
       status?: { eq?: "active" | "inactive" };

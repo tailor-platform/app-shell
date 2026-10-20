@@ -179,6 +179,11 @@ describe("useCollectionVariables", () => {
 
       expect(result.current.control.filters).toHaveLength(1);
       expect(result.current.control.filters[0].field).toBe("amount");
+
+      act(() => {
+        result.current.control.removeFilter("amount");
+      });
+      expect(result.current.variables.query).toBeUndefined();
     });
 
     it("clears all filters", () => {
@@ -193,6 +198,21 @@ describe("useCollectionVariables", () => {
       });
 
       expect(result.current.control.filters).toHaveLength(0);
+      expect(result.current.variables.query).toBeUndefined();
+    });
+
+    it("returns undefined query when filters are replaced with an empty array", () => {
+      const { result } = renderHook(() =>
+        useCollectionVariables({
+          params: { initialFilters: [{ field: "status", operator: "eq", value: "ACTIVE" }] },
+        }),
+      );
+
+      act(() => {
+        result.current.control.setFilters([]);
+      });
+
+      expect(result.current.variables.query).toBeUndefined();
     });
 
     it("resets pagination when filters change", () => {
@@ -693,6 +713,7 @@ describe("useCollectionVariables", () => {
         }),
       );
       expect(result.current.variables.pagination).toEqual({ first: 10 });
+      expect(result.current.variables.query).toBeUndefined();
     });
 
     it("applies typed initialSort", () => {

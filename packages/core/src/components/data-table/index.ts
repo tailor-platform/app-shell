@@ -21,6 +21,7 @@ export type {
   DataTableData,
   DataTableFilterConfig,
   DateCellEditOptions,
+  DateTimeDraft,
   DateCellOptions,
   LinkCellOptions,
   MetadataFieldOptions,

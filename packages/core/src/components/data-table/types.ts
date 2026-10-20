@@ -95,7 +95,13 @@ export interface CellEditState {
   selected: boolean;
 }
 
-interface CellEditBase<TRow extends Record<string, unknown>, TValue> {
+/** Incomplete date-time editor state, interpreted in the AppShell timezone. */
+export interface DateTimeDraft {
+  day: string | null;
+  time: string | null;
+}
+
+interface CellEditBase<TRow extends Record<string, unknown>, TValue, TDraft = TValue | null> {
   /**
    * Decides, per row, whether the cell can be edited. Receives the row and
    * whether it is selected, so "editable once selected" is
@@ -103,12 +109,19 @@ interface CellEditBase<TRow extends Record<string, unknown>, TValue> {
    */
   canEdit?: (row: TRow, state: CellEditState) => boolean;
   /**
-   * Notifies a changed, parsed value when the user leaves the cell, presses
-   * Enter / Tab, or picks a choice — not on every keystroke. Empty cells
-   * notify `null`. Update `data` to adopt the change; validation, persistence,
-   * and rollback belong to the consumer. The return value is ignored.
+   * Observes editor drafts, including incomplete input and restored drafts on
+   * cancellation. Direct inputs emit raw strings; choices emit selected values,
+   * not search text or highlights. Updating `data` here is outside the supported
+   * coordination contract. The return value is ignored.
    */
-  onValueChange: (row: TRow, value: TValue | null) => void;
+  onValueChange?: (row: TRow, draft: TDraft) => void;
+  /**
+   * Notifies a changed, confirmed editor output, compared with current `data`.
+   * Empty cells confirm `null`. Confirmation does not imply business validation,
+   * adoption, or persistence; update `data` here to adopt it. Return values are
+   * ignored. Output types follow the editor, not the row field's runtime type.
+   */
+  onValueCommitted: (row: TRow, value: TValue | null) => void;
 }
 
 /**
@@ -119,7 +132,8 @@ interface CellEditBase<TRow extends Record<string, unknown>, TValue> {
  */
 export interface TextCellEditOptions<TRow extends Record<string, unknown>> extends CellEditBase<
   TRow,
-  string
+  string,
+  string | null
 > {
   /**
    * Turns the cell into a dropdown of these choices (a supplier, a warehouse,
@@ -150,19 +164,29 @@ export interface BadgeCellEditOptions<TRow extends Record<string, unknown>> exte
 /**
  * `edit` config for `type: "date"` columns: a calendar that opens from the
  * cell. Picking a day commits `"YYYY-MM-DD"`. With `dateFormat: "datetime"`
- * the calendar comes with a time field and notifies an ISO 8601 timestamp
- * (`Date#toISOString()`) when it closes. "Clear" notifies `null`.
+ * the calendar emits complete `DateTimeDraft` snapshots and Done confirms an
+ * ISO 8601 timestamp in the AppShell timezone only with a valid day and time.
+ * Outside closing / Esc cancels; Clear explicitly confirms `null`.
+ * Date-only drafts are `"YYYY-MM-DD" | null`.
  */
-export type DateCellEditOptions<TRow extends Record<string, unknown>> = CellEditBase<TRow, string>;
+export type DateCellEditOptions<TRow extends Record<string, unknown>> = CellEditBase<
+  TRow,
+  string,
+  string | DateTimeDraft | null
+>;
 
 /**
- * `edit` config for `type: "number"` and `type: "money"` columns. Notifies a
- * parsed number or `null`; unparsable drafts are not emitted. Display precision
- * in `typeOptions` does not constrain input. Business rules belong to the consumer.
+ * `edit` config for `type: "number"` and `type: "money"` columns. Drafts are raw
+ * strings (including incomplete input); confirmation emits a JavaScript number
+ * or `null`, not an arbitrary-precision Decimal. Editing uses `.` as the decimal
+ * separator, independently of display locale. Full-width digits and valid comma
+ * grouping are normalized on confirmation. Display precision does not constrain
+ * input; business rules belong to the consumer.
  */
 export type NumberCellEditOptions<TRow extends Record<string, unknown>> = CellEditBase<
   TRow,
-  number
+  number,
+  string
 >;
 
 /**
@@ -372,7 +396,9 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
  * `—` placeholder.
  *
  * `edit` makes the cells editable in place and also narrows per branch, so
- * `onValueChange` receives the value type the column holds. Every typed column
+ * `onValueCommitted` receives the editor's output type, not necessarily the
+ * original row field's runtime type. Text / link / badge output strings or null.
+ * Every typed column
  * supports it; untyped (`render`-only) columns don't.
  *
  * Prefer `Column<TRow>` in most cases; this is exported so consumers can

@@ -231,7 +231,7 @@ describe("DataTable", () => {
             label: "Date",
             type: "date",
             typeOptions: { locale: "en-US" },
-            edit: { canEdit: (row) => row.id === "1", onValueChange: vi.fn() },
+            edit: { canEdit: (row) => row.id === "1", onValueCommitted: vi.fn() },
           },
         ],
         data: {

@@ -6,7 +6,6 @@ import {
   useState,
   type ChangeEvent,
   type ComponentProps,
-  type CompositionEvent,
   type FocusEvent,
   type KeyboardEvent,
   type MouseEvent,
@@ -178,7 +177,10 @@ function useCellValue<TRow extends Record<string, unknown>>(row: TRow, col: Edit
   const change = (value: unknown) => {
     (col.edit?.onValueChange as ((row: TRow, value: unknown) => void) | undefined)?.(row, value);
   };
-  return { current, display, change };
+  const commit = (value: unknown) => {
+    (col.edit?.onValueCommitted as ((row: TRow, value: unknown) => void) | undefined)?.(row, value);
+  };
+  return { current, display, change, commit };
 }
 
 /**
@@ -272,8 +274,8 @@ interface DataTableEditableCellProps<
 /**
  * A body cell whose value can be edited in place. The value belongs to the
  * consumer: the cell only holds a draft while it is being edited, and notifies
- * `edit.onValueChange` when the user leaves the cell, presses Enter / Tab, or
- * picks a choice. Validation and persistence belong to the consumer.
+ * `edit.onValueChange` for drafts and `edit.onValueCommitted` for changed,
+ * confirmed values. Validation and persistence belong to the consumer.
  *
  * - `number`, `money`, and `text` / `link` without choices are typed into.
  * - `badge`, and `text` / `link` with `edit.options`, are dropdowns you can
@@ -307,7 +309,7 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
 }: DataTableEditableCellProps<TRow>) {
   const t = useDataTableT();
   const errorId = useId();
-  const { current, display, change } = useCellValue(row, col);
+  const { current, display, change, commit } = useCellValue(row, col);
   const register = useNavigationRef<HTMLInputElement>(navigation, rowKey, colKey);
 
   const [draft, setDraftState] = useState<string | null>(null);
@@ -329,14 +331,15 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
     ? toNumberEditText(toNumberValue(current))
     : (toTextValue(current) ?? "");
   const text = draft ?? baselineText;
-  const dirty = draft !== null && draft !== baselineText;
   const malformed =
     numeric && draft !== null && parseNumberText(normalizeNumberText(draft)) === undefined;
   const message = showParseError && malformed ? t("editNotANumber") : undefined;
 
-  const revert = () => {
+  const revert = (notify = false) => {
+    const previous = draftRef.current;
     setDraft(null);
     setShowParseError(false);
+    if (notify && previous !== null && previous !== baselineText) change(baselineText);
   };
 
   // Clear the draft before notifying: moving focus immediately fires blur.
@@ -356,18 +359,20 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
         ? sameNumber(value as number | null, toNumberValue(current))
         : value === toTextValue(current));
     revert();
-    if (!unchanged) change(value);
+    if (!unchanged) commit(value);
     return true;
   };
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setDraft(event.target.value);
+    const next = event.target.value;
+    const previous = draftRef.current ?? baselineText;
+    setDraft(next);
+    if (next !== previous) change(next);
   };
 
-  // Full-width digits typed through an IME read back as plain digits.
-  const handleCompositionEnd = (event: CompositionEvent<HTMLInputElement>) => {
+  // Keep IME output raw until cell confirmation, just like other draft changes.
+  const handleCompositionEnd = () => {
     composingRef.current = false;
-    if (numeric) setDraft(normalizeNumberText(event.currentTarget.value));
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -388,24 +393,25 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
         if (navigation.move(from, event.shiftKey ? "prev" : "next")) event.preventDefault();
         return;
       case "Escape":
-        if (draftRef.current === null || !dirty) return;
+        if (draftRef.current === null) return;
         // Handled here, so an enclosing dialog doesn't also close on this Esc.
         event.preventDefault();
         event.stopPropagation();
-        revert();
+        revert(true);
         return;
     }
   };
 
   const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
     setFocused(true);
+    setDraft(baselineText);
     event.currentTarget.select();
   };
 
   // Malformed text cannot be emitted as a number; blur restores consumer data.
   const handleBlur = () => {
     setFocused(false);
-    if (!commitDraft()) revert();
+    if (!commitDraft()) revert(true);
   };
 
   const handleMouseDown = (event: MouseEvent<HTMLInputElement>) => {
@@ -538,7 +544,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
   cellProps,
 }: DataTableEditableCellProps<TRow, ChoiceColumn<TRow>>) {
   const t = useDataTableT();
-  const { current, display, change } = useCellValue(row, col);
+  const { current, display, change, commit } = useCellValue(row, col);
   const register = useNavigationRef<HTMLInputElement>(navigation, rowKey, colKey);
   const value = toTextValue(current);
   const noneLabel = t("editNone");
@@ -579,7 +585,10 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
   const pick = (item: Choice | null) => {
     setQuery(null);
     const next = item?.value ?? null;
-    if (next !== value) change(next);
+    if (next !== value) {
+      change(next);
+      commit(next);
+    }
   };
 
   // A name typed in full counts as picking it when the user moves on.
@@ -753,10 +762,13 @@ function DateEditCell<TRow extends Record<string, unknown>>({
   const t = useDataTableT();
   const { value: timeZone } = useTimeZone();
   const withTime = col.typeOptions?.dateFormat === "datetime";
-  const { current, display, change } = useCellValue(row, col);
+  const { current, display, change, commit: notifyCommitted } = useCellValue(row, col);
   const register = useNavigationRef<HTMLButtonElement>(navigation, rowKey, colKey);
   const commit = (next: string | null) => {
-    if (!sameDate(next, current, withTime, timeZone)) change(next);
+    if (!sameDate(next, current, withTime, timeZone)) {
+      change(next);
+      notifyCommitted(next);
+    }
   };
   const [open, setOpen] = useState(false);
   // A date-time is picked in two steps (day, then time), so it's committed when

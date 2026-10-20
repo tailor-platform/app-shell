@@ -120,7 +120,7 @@ const { column } = createColumnHelper<Line>();
 const skuColumn = column({ id: "sku", label: "SKU", type: "text" });
 
 function receivedColumn(
-  onValueChange: (id: string, value: number | null) => void,
+  onValueCommitted: (id: string, value: number | null) => void,
   update: Update,
   edit: { canEdit?: (row: Line, state: CellEditState) => boolean } = {},
 ): Column<Line> {
@@ -129,8 +129,8 @@ function receivedColumn(
     label: "Received",
     type: "number",
     edit: {
-      onValueChange: (row, value) => {
-        onValueChange(row.id, value);
+      onValueCommitted: (row, value) => {
+        onValueCommitted(row.id, value);
         update(row.id, { received: value });
       },
       ...edit,
@@ -180,7 +180,7 @@ describe("DataTable inline editing", () => {
               label: "Supplier",
               type: "link",
               typeOptions: { href: (row) => `/suppliers/${row.supplier}` },
-              edit: { canEdit: (row) => row.id === "1", onValueChange: noop },
+              edit: { canEdit: (row) => row.id === "1", onValueCommitted: noop },
             }),
           ]}
         />,
@@ -214,7 +214,7 @@ describe("DataTable inline editing", () => {
               label: "Received",
               type: "number",
               typeOptions: { maxDecimals: 2 },
-              edit: { onValueChange: (row, value) => update(row.id, { received: value }) },
+              edit: { onValueCommitted: (row, value) => update(row.id, { received: value }) },
             }),
           ]}
         />,
@@ -227,53 +227,53 @@ describe("DataTable inline editing", () => {
 
   describe("keyboard", () => {
     it("notifies once on Enter without moving focus or notifying again on Tab", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <StrictMode>
           <Harness
             columns={(update) => [
-              receivedColumn(onValueChange, update, { canEdit: (row) => row.id !== "2" }),
+              receivedColumn(onValueCommitted, update, { canEdit: (row) => row.id !== "2" }),
             ]}
           />
         </StrictMode>,
       );
       const [first, third] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, first, "20{Enter}");
-      expect(onValueChange).toHaveBeenCalledTimes(1);
-      expect(onValueChange).toHaveBeenCalledWith("1", 20);
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", 20);
       expect(document.activeElement).toBe(first);
       expect((first as HTMLInputElement).value).toBe("20");
       expect(first.getAttribute("enterkeyhint")).toBe("done");
       await user.keyboard("{Enter}");
       await user.tab();
       expect(document.activeElement).toBe(third);
-      expect(onValueChange).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
     });
 
     it("confirms on Shift+Enter without moving focus", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
-        <Harness columns={(update) => [receivedColumn(onValueChange, update)]} />,
+        <Harness columns={(update) => [receivedColumn(onValueCommitted, update)]} />,
       );
       const inputs = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, inputs[2], "11");
       await user.keyboard("{Shift>}{Enter}{/Shift}");
-      expect(onValueChange).toHaveBeenCalledExactlyOnceWith("3", 11);
+      expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith("3", 11);
       expect(document.activeElement).toBe(inputs[2]);
     });
 
     it("moves to the next editable cell on Tab, skipping read-only columns", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           columns={(update) => [
-            receivedColumn(onValueChange, update),
+            receivedColumn(onValueCommitted, update),
             skuColumn,
             column({
               id: "note",
               label: "Note",
               type: "text",
-              edit: { onValueChange: (row, value) => update(row.id, { note: value }) },
+              edit: { onValueCommitted: (row, value) => update(row.id, { note: value }) },
             }),
           ]}
         />,
@@ -282,8 +282,8 @@ describe("DataTable inline editing", () => {
       const notes = screen.getAllByRole("textbox", { name: "Note" });
       await retype(user, received[0], "18");
       await user.tab();
-      expect(onValueChange).toHaveBeenCalledTimes(1);
-      expect(onValueChange).toHaveBeenCalledWith("1", 18);
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", 18);
       expect(document.activeElement).toBe(notes[0]);
       await user.tab();
       expect(document.activeElement).toBe(received[1]);
@@ -292,15 +292,15 @@ describe("DataTable inline editing", () => {
     });
 
     it("reverts the draft on Escape without notifying", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
-        <Harness columns={(update) => [receivedColumn(onValueChange, update)]} />,
+        <Harness columns={(update) => [receivedColumn(onValueCommitted, update)]} />,
       );
       const [input] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, input, "7{Escape}");
       expect((input as HTMLInputElement).value).toBe("12");
       await user.tab();
-      expect(onValueChange).not.toHaveBeenCalled();
+      expect(onValueCommitted).not.toHaveBeenCalled();
     });
 
     it("selects the whole value when a cell receives focus", () => {
@@ -311,24 +311,24 @@ describe("DataTable inline editing", () => {
     });
 
     it("ignores Enter while an IME is composing and parses full-width digits", () => {
-      const onValueChange = vi.fn();
-      renderTable(<Harness columns={(update) => [receivedColumn(onValueChange, update)]} />);
+      const onValueCommitted = vi.fn();
+      renderTable(<Harness columns={(update) => [receivedColumn(onValueCommitted, update)]} />);
       const [input] = screen.getAllByRole("textbox", { name: "Received" });
       act(() => input.focus());
       fireEvent.compositionStart(input);
       fireEvent.change(input, { target: { value: "１５" } });
       fireEvent.keyDown(input, { key: "Enter", isComposing: true });
-      expect(onValueChange).not.toHaveBeenCalled();
+      expect(onValueCommitted).not.toHaveBeenCalled();
       fireEvent.compositionEnd(input);
       fireEvent.keyDown(input, { key: "Enter" });
-      expect(onValueChange).toHaveBeenCalledWith("1", 15);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", 15);
       expect(document.activeElement).toBe(input);
     });
   });
 
   describe("parsing", () => {
     it("accepts negative and fractional numbers independently of display precision", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           columns={(update) => [
@@ -338,8 +338,8 @@ describe("DataTable inline editing", () => {
               type: "number",
               typeOptions: { maxDecimals: 0 },
               edit: {
-                onValueChange: (row, value) => {
-                  onValueChange(row.id, value);
+                onValueCommitted: (row, value) => {
+                  onValueCommitted(row.id, value);
                   update(row.id, { received: value });
                 },
               },
@@ -349,13 +349,13 @@ describe("DataTable inline editing", () => {
       );
       const [input] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, input, "-3.5678{Enter}");
-      expect(onValueChange).toHaveBeenCalledWith("1", -3.5678);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", -3.5678);
       expect((input as HTMLInputElement).value).toBe("-3.5678");
       expect(input.getAttribute("aria-invalid")).toBeNull();
     });
 
     it("does not restrict money input to the currency's display precision", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           columns={(update) => [
@@ -365,8 +365,8 @@ describe("DataTable inline editing", () => {
               type: "money",
               typeOptions: { currency: (row) => row.currency },
               edit: {
-                onValueChange: (row, value) => {
-                  onValueChange(row.id, value);
+                onValueCommitted: (row, value) => {
+                  onValueCommitted(row.id, value);
                   update(row.id, { price: value ?? 0 });
                 },
               },
@@ -377,31 +377,31 @@ describe("DataTable inline editing", () => {
       const [usd, jpy] = screen.getAllByRole("textbox", { name: "Price" });
       await retype(user, usd, "9.999{Enter}");
       await retype(user, jpy, "12.5{Enter}");
-      expect(onValueChange.mock.calls).toEqual([
+      expect(onValueCommitted.mock.calls).toEqual([
         ["1", 9.999],
         ["2", 12.5],
       ]);
     });
 
     it("reads full-width digits and thousands separators on confirmation", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
-        <Harness columns={(update) => [receivedColumn(onValueChange, update)]} />,
+        <Harness columns={(update) => [receivedColumn(onValueCommitted, update)]} />,
       );
       const [first, second] = screen.getAllByRole("textbox", { name: "Received" });
       await user.click(first);
       await user.clear(first);
       await user.paste("1,234.50");
       await user.keyboard("{Enter}");
-      expect(onValueChange).toHaveBeenCalledWith("1", 1234.5);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", 1234.5);
       await retype(user, second, "１５００{Enter}");
-      expect(onValueChange).toHaveBeenCalledWith("2", 1500);
+      expect(onValueCommitted).toHaveBeenCalledWith("2", 1500);
     });
 
     it("flags malformed numbers only on confirmation and holds Enter and Tab", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
-        <Harness columns={(update) => [receivedColumn(onValueChange, update)]} />,
+        <Harness columns={(update) => [receivedColumn(onValueCommitted, update)]} />,
       );
       const [input] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, input, "abc");
@@ -412,16 +412,16 @@ describe("DataTable inline editing", () => {
       expect(document.activeElement).toBe(input);
       await user.tab();
       expect(document.activeElement).toBe(input);
-      expect(onValueChange).not.toHaveBeenCalled();
+      expect(onValueCommitted).not.toHaveBeenCalled();
       await user.keyboard("{Escape}");
       expect((input as HTMLInputElement).value).toBe("12");
       expect(input.getAttribute("aria-invalid")).toBeNull();
     });
 
     it("clears the parsing error after the malformed number is corrected", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
-        <Harness columns={(update) => [receivedColumn(onValueChange, update)]} />,
+        <Harness columns={(update) => [receivedColumn(onValueCommitted, update)]} />,
       );
       const [input] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, input, "-{Enter}");
@@ -429,18 +429,18 @@ describe("DataTable inline editing", () => {
       await user.keyboard("3");
       expect(input.getAttribute("aria-invalid")).toBeNull();
       await user.keyboard("{Enter}");
-      expect(onValueChange).toHaveBeenCalledWith("1", -3);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", -3);
     });
 
     it("discards an unparseable draft on blur without changing data", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
-        <Harness columns={(update) => [receivedColumn(onValueChange, update)]} />,
+        <Harness columns={(update) => [receivedColumn(onValueCommitted, update)]} />,
       );
       const [input] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, input, "1,5{Enter}");
       await user.click(document.body);
-      expect(onValueChange).not.toHaveBeenCalled();
+      expect(onValueCommitted).not.toHaveBeenCalled();
       expect((input as HTMLInputElement).value).toBe("12");
       expect(input.getAttribute("aria-invalid")).toBeNull();
       expect(input.className).not.toContain("astw:ring-status-attention");
@@ -459,58 +459,58 @@ describe("DataTable inline editing", () => {
 
   describe("consumer-owned values", () => {
     it("notifies on blur, but never for intermediate keystrokes", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
-        <Harness columns={(update) => [receivedColumn(onValueChange, update)]} />,
+        <Harness columns={(update) => [receivedColumn(onValueCommitted, update)]} />,
       );
       const [input] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, input, "18");
-      expect(onValueChange).not.toHaveBeenCalled();
+      expect(onValueCommitted).not.toHaveBeenCalled();
       await user.click(document.body);
-      expect(onValueChange).toHaveBeenCalledTimes(1);
-      expect(onValueChange).toHaveBeenCalledWith("1", 18);
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", 18);
     });
 
     it("does not notify when numeric formatting alone changes", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
-        <Harness columns={(update) => [receivedColumn(onValueChange, update)]} />,
+        <Harness columns={(update) => [receivedColumn(onValueCommitted, update)]} />,
       );
       const [input] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, input, "12.00{Enter}");
       await user.click(input);
       await user.keyboard("{Enter}");
-      expect(onValueChange).not.toHaveBeenCalled();
+      expect(onValueCommitted).not.toHaveBeenCalled();
     });
 
     it("preserves safe integers when editing and notifies distinct values", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={[{ ...LINES[0], received: 1234567890123456 }]}
-          columns={(update) => [receivedColumn(onValueChange, update)]}
+          columns={(update) => [receivedColumn(onValueCommitted, update)]}
         />,
       );
       const input = screen.getByRole("textbox", { name: "Received" }) as HTMLInputElement;
       expect(input.value).toBe("1234567890123456");
       await retype(user, input, "1234567890123457{Enter}");
-      expect(onValueChange).toHaveBeenCalledExactlyOnceWith("1", 1234567890123457);
+      expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith("1", 1234567890123457);
       expect(input.value).toBe("1234567890123457");
     });
 
     it("notifies text as typed and empty text or number cells as null", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           columns={(update) => [
-            receivedColumn(onValueChange, update),
+            receivedColumn(onValueCommitted, update),
             column({
               id: "note",
               label: "Note",
               type: "text",
               edit: {
-                onValueChange: (row, value) => {
-                  onValueChange(row.id, value);
+                onValueCommitted: (row, value) => {
+                  onValueCommitted(row.id, value);
                   update(row.id, { note: value });
                 },
               },
@@ -523,7 +523,7 @@ describe("DataTable inline editing", () => {
       await retype(user, note, "{Enter}");
       const [received] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, received, "{Enter}");
-      expect(onValueChange.mock.calls).toEqual([
+      expect(onValueCommitted.mock.calls).toEqual([
         ["1", " Box 2 "],
         ["1", null],
         ["1", null],
@@ -531,7 +531,7 @@ describe("DataTable inline editing", () => {
     });
 
     it("lets the consumer reject a change without retaining it or blocking movement", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           columns={(update) => [
@@ -540,8 +540,8 @@ describe("DataTable inline editing", () => {
               label: "Received",
               type: "number",
               edit: {
-                onValueChange: (row, value) => {
-                  onValueChange(row.id, value);
+                onValueCommitted: (row, value) => {
+                  onValueCommitted(row.id, value);
                   if (value !== null && value > row.ordered) return;
                   update(row.id, { received: value });
                 },
@@ -552,19 +552,19 @@ describe("DataTable inline editing", () => {
       );
       const [first, second] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, first, "99{Tab}");
-      expect(onValueChange).toHaveBeenCalledTimes(1);
-      expect(onValueChange).toHaveBeenCalledWith("1", 99);
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", 99);
       expect((first as HTMLInputElement).value).toBe("12");
       expect(first.getAttribute("aria-invalid")).toBeNull();
       expect(document.activeElement).toBe(second);
       await retype(user, first, "98");
       await user.click(document.body);
-      expect(onValueChange).toHaveBeenCalledWith("1", 98);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", 98);
       expect((first as HTMLInputElement).value).toBe("12");
     });
 
     it("shows the consumer's normalized value instead of keeping the submitted draft", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           columns={(update) => [
@@ -573,8 +573,8 @@ describe("DataTable inline editing", () => {
               label: "Note",
               type: "text",
               edit: {
-                onValueChange: (row, value) => {
-                  onValueChange(value);
+                onValueCommitted: (row, value) => {
+                  onValueCommitted(value);
                   update(row.id, { note: value?.normalize("NFKC").trim() ?? null });
                 },
               },
@@ -584,24 +584,29 @@ describe("DataTable inline editing", () => {
       );
       const [input] = screen.getAllByRole("textbox", { name: "Note" });
       await retype(user, input, " ＡＢＣ {Enter}");
-      expect(onValueChange).toHaveBeenCalledWith(" ＡＢＣ ");
+      expect(onValueCommitted).toHaveBeenCalledWith(" ＡＢＣ ");
       expect((input as HTMLInputElement).value).toBe("ABC");
       expect(input.closest("td")?.textContent).toContain("ABC");
     });
 
     it("does not keep optimistic cell state or wait for a returned promise", async () => {
       let finish = noop;
-      const onValueChange = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+      const onValueCommitted = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
       const user = renderTable(
         <Harness
           columns={() => [
-            column({ id: "received", label: "Received", type: "number", edit: { onValueChange } }),
+            column({
+              id: "received",
+              label: "Received",
+              type: "number",
+              edit: { onValueCommitted },
+            }),
           ]}
         />,
       );
       const [first, second] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, first, "20{Enter}");
-      expect(onValueChange).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
       expect((first as HTMLInputElement).value).toBe("12");
       expect(document.activeElement).toBe(first);
       await user.tab();
@@ -619,7 +624,7 @@ describe("DataTable inline editing", () => {
               id: "note",
               label: "Note",
               type: "text",
-              edit: { onValueChange: (row, value) => update(row.id, { note: value }) },
+              edit: { onValueCommitted: (row, value) => update(row.id, { note: value }) },
             }),
           ]}
         />,
@@ -747,7 +752,7 @@ describe("DataTable inline editing", () => {
     ];
 
     function supplierColumn(
-      onValueChange: (id: string, value: string | null) => void,
+      onValueCommitted: (id: string, value: string | null) => void,
       update: Update,
     ): Column<Line> {
       return column({
@@ -756,8 +761,8 @@ describe("DataTable inline editing", () => {
         type: "text",
         edit: {
           options: SUPPLIERS,
-          onValueChange: (row, value) => {
-            onValueChange(row.id, value);
+          onValueCommitted: (row, value) => {
+            onValueCommitted(row.id, value);
             update(row.id, { supplier: value ?? "" });
           },
         },
@@ -767,37 +772,37 @@ describe("DataTable inline editing", () => {
     const rowsWith = (supplier: string) => LINES.map((line) => ({ ...line, supplier }));
 
     it("shows choice labels and notifies the picked value", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={rowsWith("acme")}
-          columns={(update) => [supplierColumn(onValueChange, update)]}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
         />,
       );
       const [trigger] = screen.getAllByRole("combobox", { name: "Supplier" });
       expect(trigger.closest("td")?.textContent).toContain("Acme Corp");
       await user.click(trigger);
       await user.click(await screen.findByRole("option", { name: "Globex" }));
-      expect(onValueChange).toHaveBeenCalledTimes(1);
-      expect(onValueChange).toHaveBeenCalledWith("1", "globex");
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", "globex");
       expect(trigger.closest("td")?.textContent).toContain("Globex");
     });
 
     it("offers None and notifies null", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={rowsWith("acme")}
-          columns={(update) => [supplierColumn(onValueChange, update)]}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
         />,
       );
       await user.click(screen.getAllByRole("combobox", { name: "Supplier" })[0]);
       await user.click(await screen.findByRole("option", { name: "None" }));
-      expect(onValueChange).toHaveBeenCalledWith("1", null);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", null);
     });
 
     it("uses data as the source of truth when a consumer rejects a pick", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={rowsWith("acme")}
@@ -806,7 +811,7 @@ describe("DataTable inline editing", () => {
               id: "supplier",
               label: "Supplier",
               type: "text",
-              edit: { options: SUPPLIERS, onValueChange },
+              edit: { options: SUPPLIERS, onValueCommitted },
             }),
           ]}
         />,
@@ -814,18 +819,18 @@ describe("DataTable inline editing", () => {
       const [trigger] = screen.getAllByRole("combobox", { name: "Supplier" });
       await user.click(trigger);
       await user.click(await screen.findByRole("option", { name: "Globex" }));
-      expect(onValueChange).toHaveBeenCalledTimes(1);
-      expect(onValueChange).toHaveBeenCalledWith(expect.objectContaining({ id: "1" }), "globex");
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith(expect.objectContaining({ id: "1" }), "globex");
       expect((trigger as HTMLInputElement).value).toBe("Acme Corp");
       expect(trigger.getAttribute("aria-invalid")).toBeNull();
     });
 
     it("filters choices and picks with Enter without moving focus", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={rowsWith("acme")}
-          columns={(update) => [supplierColumn(onValueChange, update)]}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
         />,
       );
       const [first] = screen.getAllByRole("combobox", { name: "Supplier" });
@@ -836,7 +841,7 @@ describe("DataTable inline editing", () => {
         "Globex",
       ]);
       await user.keyboard("{Enter}");
-      expect(onValueChange).toHaveBeenCalledExactlyOnceWith("1", "globex");
+      expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith("1", "globex");
       await act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
       expect(first.getAttribute("aria-expanded")).toBe("false");
       expect((first as HTMLInputElement).value).toBe("Globex");
@@ -847,27 +852,27 @@ describe("DataTable inline editing", () => {
     it.each(["{Enter}", "{Shift>}{Enter}{/Shift}"])(
       "keeps focus on %s when the dropdown is closed",
       async (key) => {
-        const onValueChange = vi.fn();
+        const onValueCommitted = vi.fn();
         const user = renderTable(
           <Harness
             rows={rowsWith("acme")}
-            columns={(update) => [supplierColumn(onValueChange, update)]}
+            columns={(update) => [supplierColumn(onValueCommitted, update)]}
           />,
         );
         const [first] = screen.getAllByRole("combobox", { name: "Supplier" });
         await user.click(first);
         await user.keyboard(`{Escape}${key}`);
         expect(document.activeElement).toBe(first);
-        expect(onValueChange).not.toHaveBeenCalled();
+        expect(onValueCommitted).not.toHaveBeenCalled();
       },
     );
 
     it("takes the highlighted match on Tab after typing", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={rowsWith("acme")}
-          columns={(update) => [supplierColumn(onValueChange, update)]}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
         />,
       );
       const [first, second] = screen.getAllByRole("combobox", { name: "Supplier" });
@@ -876,17 +881,17 @@ describe("DataTable inline editing", () => {
       await user.keyboard("glo");
       await screen.findByRole("option", { name: "Globex" });
       await user.keyboard("{Tab}");
-      expect(onValueChange).toHaveBeenCalledTimes(1);
-      expect(onValueChange).toHaveBeenCalledWith("1", "globex");
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", "globex");
       expect(document.activeElement).toBe(second);
     });
 
     it("picks a fully typed label when the user leaves the cell", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={rowsWith("acme")}
-          columns={(update) => [supplierColumn(onValueChange, update)]}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
         />,
       );
       const [first] = screen.getAllByRole("combobox", { name: "Supplier" });
@@ -894,16 +899,16 @@ describe("DataTable inline editing", () => {
       await user.clear(first);
       await user.keyboard("GLOBEX");
       await user.click(document.body);
-      expect(onValueChange).toHaveBeenCalledTimes(1);
-      expect(onValueChange).toHaveBeenCalledWith("1", "globex");
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", "globex");
     });
 
     it("says so when nothing matches, and leaves the value alone", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={rowsWith("acme")}
-          columns={(update) => [supplierColumn(onValueChange, update)]}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
         />,
       );
       const [first] = screen.getAllByRole("combobox", { name: "Supplier" });
@@ -912,21 +917,21 @@ describe("DataTable inline editing", () => {
       await user.keyboard("zzz");
       expect(await screen.findByText("No matches")).toBeTruthy();
       await user.click(document.body);
-      expect(onValueChange).not.toHaveBeenCalled();
+      expect(onValueCommitted).not.toHaveBeenCalled();
       expect(first.closest("td")?.textContent).toContain("Acme Corp");
     });
 
     it("does not notify when the current choice is picked again", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={rowsWith("acme")}
-          columns={(update) => [supplierColumn(onValueChange, update)]}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
         />,
       );
       await user.click(screen.getAllByRole("combobox", { name: "Supplier" })[0]);
       await user.click(await screen.findByRole("option", { name: "Acme Corp" }));
-      expect(onValueChange).not.toHaveBeenCalled();
+      expect(onValueCommitted).not.toHaveBeenCalled();
     });
 
     it("shows a read-only link cell's choice label as the link", () => {
@@ -939,7 +944,11 @@ describe("DataTable inline editing", () => {
               label: "Supplier",
               type: "link",
               typeOptions: { href: (row) => `/suppliers/${row.supplier}` },
-              edit: { options: SUPPLIERS, canEdit: (row) => row.id === "1", onValueChange: noop },
+              edit: {
+                options: SUPPLIERS,
+                canEdit: (row) => row.id === "1",
+                onValueCommitted: noop,
+              },
             }),
           ]}
         />,
@@ -961,7 +970,11 @@ describe("DataTable inline editing", () => {
               id: "supplier",
               label: "Supplier",
               type: "text",
-              edit: { options: SUPPLIERS, canEdit: (row) => row.id === "1", onValueChange: noop },
+              edit: {
+                options: SUPPLIERS,
+                canEdit: (row) => row.id === "1",
+                onValueCommitted: noop,
+              },
             }),
           ]}
         />,
@@ -976,7 +989,7 @@ describe("DataTable inline editing", () => {
     });
 
     it("offers a badge column's labelled values as badges", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={LINES.map((line) => ({ ...line, status: "pending" }))}
@@ -990,8 +1003,8 @@ describe("DataTable inline editing", () => {
                 badgeVariantMap: { pending: "outline-neutral", received: "success" },
               },
               edit: {
-                onValueChange: (row, value) => {
-                  onValueChange(row.id, value);
+                onValueCommitted: (row, value) => {
+                  onValueCommitted(row.id, value);
                   update(row.id, { status: value ?? undefined });
                 },
               },
@@ -1004,7 +1017,7 @@ describe("DataTable inline editing", () => {
       const received = await screen.findByRole("option", { name: "Received" });
       expect(received.querySelector('[data-slot="badge"], .astw\\:inline-flex')).not.toBeNull();
       await user.click(received);
-      expect(onValueChange).toHaveBeenCalledWith("1", "received");
+      expect(onValueCommitted).toHaveBeenCalledWith("1", "received");
       expect(trigger.closest("td")?.textContent).toContain("Received");
     });
 
@@ -1020,7 +1033,7 @@ describe("DataTable inline editing", () => {
               label: "Status",
               type: "badge",
               typeOptions: { badgeLabelMap: { pending: "Pending", partial: "Partial" } },
-              edit: { onValueChange: noop },
+              edit: { onValueCommitted: noop },
             }),
           ]}
         />,
@@ -1033,7 +1046,12 @@ describe("DataTable inline editing", () => {
         <Harness
           rows={LINES.map((line) => ({ ...line, status: "pending" }))}
           columns={() => [
-            column({ id: "status", label: "Status", type: "badge", edit: { onValueChange: noop } }),
+            column({
+              id: "status",
+              label: "Status",
+              type: "badge",
+              edit: { onValueCommitted: noop },
+            }),
           ]}
         />,
       );
@@ -1058,7 +1076,7 @@ describe("DataTable inline editing", () => {
     const dateRows = LINES.map((line) => ({ ...line, expected: "2026-10-02" }));
 
     function expectedColumn(
-      onValueChange: (id: string, value: string | null) => void,
+      onValueCommitted: (id: string, value: string | null) => void,
       update: Update,
       datetime = false,
     ): Column<Line> {
@@ -1068,8 +1086,8 @@ describe("DataTable inline editing", () => {
         type: "date",
         typeOptions: { dateFormat: datetime ? "datetime" : "short" },
         edit: {
-          onValueChange: (row, value) => {
-            onValueChange(row.id, value);
+          onValueCommitted: (row, value) => {
+            onValueCommitted(row.id, value);
             update(row.id, { expected: value });
           },
         },
@@ -1114,7 +1132,7 @@ describe("DataTable inline editing", () => {
               label: "Expected",
               type: "date",
               typeOptions: { locale: "en-US" },
-              edit: { onValueChange: noop },
+              edit: { onValueCommitted: noop },
             }),
           ]}
         />,
@@ -1123,39 +1141,45 @@ describe("DataTable inline editing", () => {
     });
 
     it("notifies a picked day as YYYY-MM-DD", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
-        <Harness rows={dateRows} columns={(update) => [expectedColumn(onValueChange, update)]} />,
+        <Harness
+          rows={dateRows}
+          columns={(update) => [expectedColumn(onValueCommitted, update)]}
+        />,
       );
       await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
       await user.click(dayButton("15"));
-      expect(onValueChange).toHaveBeenCalledWith("1", "2026-10-15");
+      expect(onValueCommitted).toHaveBeenCalledWith("1", "2026-10-15");
     });
 
     it("clears a date to null", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
-        <Harness rows={dateRows} columns={(update) => [expectedColumn(onValueChange, update)]} />,
+        <Harness
+          rows={dateRows}
+          columns={(update) => [expectedColumn(onValueCommitted, update)]}
+        />,
       );
       await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
       await user.click(screen.getByRole("button", { name: "Clear" }));
-      expect(onValueChange).toHaveBeenCalledTimes(1);
-      expect(onValueChange).toHaveBeenCalledWith("1", null);
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", null);
     });
 
     it("uses data when the consumer rejects a date change", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={dateRows}
           columns={() => [
-            column({ id: "expected", label: "Expected", type: "date", edit: { onValueChange } }),
+            column({ id: "expected", label: "Expected", type: "date", edit: { onValueCommitted } }),
           ]}
         />,
       );
       await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
       await user.click(dayButton("15"));
-      expect(onValueChange).toHaveBeenCalledWith(
+      expect(onValueCommitted).toHaveBeenCalledWith(
         expect.objectContaining({ id: "1" }),
         "2026-10-15",
       );
@@ -1163,11 +1187,11 @@ describe("DataTable inline editing", () => {
     });
 
     it("notifies a date-time as ISO only when Done is pressed", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={dateRows}
-          columns={(update) => [expectedColumn(onValueChange, update, true)]}
+          columns={(update) => [expectedColumn(onValueCommitted, update, true)]}
         />,
       );
       await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
@@ -1175,24 +1199,27 @@ describe("DataTable inline editing", () => {
       fireEvent.change(screen.getByLabelText("Expected (Choose time)"), {
         target: { value: "14:30" },
       });
-      expect(onValueChange).not.toHaveBeenCalled();
+      expect(onValueCommitted).not.toHaveBeenCalled();
       await user.click(screen.getByRole("button", { name: "Done" }));
-      expect(onValueChange).toHaveBeenCalledTimes(1);
-      expect(onValueChange).toHaveBeenCalledWith("1", new Date(2026, 9, 20, 14, 30).toISOString());
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith(
+        "1",
+        new Date(2026, 9, 20, 14, 30).toISOString(),
+      );
     });
 
     it("abandons a date-time draft when the calendar closes with Escape", async () => {
-      const onValueChange = vi.fn();
+      const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
           rows={dateRows}
-          columns={(update) => [expectedColumn(onValueChange, update, true)]}
+          columns={(update) => [expectedColumn(onValueCommitted, update, true)]}
         />,
       );
       await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
       await user.click(dayButton("20"));
       await user.keyboard("{Escape}");
-      expect(onValueChange).not.toHaveBeenCalled();
+      expect(onValueCommitted).not.toHaveBeenCalled();
     });
   });
 
@@ -1224,7 +1251,7 @@ describe("DataTable inline editing", () => {
           expectTypeOf(state).toEqualTypeOf<CellEditState>();
           return true;
         },
-        onValueChange: (row, value) => {
+        onValueCommitted: (row, value) => {
           expectTypeOf(row).toEqualTypeOf<Line>();
           expectTypeOf(value).toEqualTypeOf<number | null>();
         },
@@ -1234,7 +1261,7 @@ describe("DataTable inline editing", () => {
       id: "price",
       type: "money",
       edit: {
-        onValueChange: (_row, value) => {
+        onValueCommitted: (_row, value) => {
           expectTypeOf(value).toEqualTypeOf<number | null>();
         },
       },
@@ -1243,7 +1270,7 @@ describe("DataTable inline editing", () => {
       id: "note",
       type: "text",
       edit: {
-        onValueChange: (_row, value) => {
+        onValueCommitted: (_row, value) => {
           expectTypeOf(value).toEqualTypeOf<string | null>();
         },
       },
@@ -1252,13 +1279,13 @@ describe("DataTable inline editing", () => {
       id: "supplier",
       type: "link",
       typeOptions: { href: () => "/" },
-      edit: { onValueChange: noop },
+      edit: { onValueCommitted: noop },
     });
     column({
       id: "expected",
       type: "date",
       edit: {
-        onValueChange: (_row, value) => {
+        onValueCommitted: (_row, value) => {
           expectTypeOf(value).toEqualTypeOf<string | null>();
         },
       },
@@ -1268,32 +1295,36 @@ describe("DataTable inline editing", () => {
       type: "badge",
       edit: {
         options: [{ value: "open", label: "Open" }],
-        onValueChange: (_row, value) => {
+        onValueCommitted: (_row, value) => {
           expectTypeOf(value).toEqualTypeOf<string | null>();
         },
       },
     });
     // @ts-expect-error — business constraints are consumer-owned
-    column({ id: "received", type: "number", edit: { min: 0, onValueChange: noop } });
+    column({ id: "received", type: "number", edit: { min: 0, onValueCommitted: noop } });
     // @ts-expect-error — validation is not an editor option
-    column({ id: "note", type: "text", edit: { validate: () => undefined, onValueChange: noop } });
+    column({
+      id: "note",
+      type: "text",
+      edit: { validate: () => undefined, onValueCommitted: noop },
+    });
     // @ts-expect-error — required state is consumer-owned
-    column({ id: "note", type: "text", edit: { required: true, onValueChange: noop } });
+    column({ id: "note", type: "text", edit: { required: true, onValueCommitted: noop } });
     // @ts-expect-error — display precision belongs to typeOptions
-    column({ id: "price", type: "money", edit: { maxDecimals: 2, onValueChange: noop } });
+    column({ id: "price", type: "money", edit: { maxDecimals: 2, onValueCommitted: noop } });
     // @ts-expect-error — calendar business bounds are consumer-owned
-    column({ id: "expected", type: "date", edit: { max: "2027-01-01", onValueChange: noop } });
+    column({ id: "expected", type: "date", edit: { max: "2027-01-01", onValueCommitted: noop } });
     // @ts-expect-error — onCommit is replaced by a value-change notification
     column({ id: "note", type: "text", edit: { onCommit: noop } });
     // @ts-expect-error — dropdown choices aren't a number / money option
-    column({ id: "received", type: "number", edit: { options: [], onValueChange: noop } });
+    column({ id: "received", type: "number", edit: { options: [], onValueCommitted: noop } });
     // @ts-expect-error — columns without a type have no built-in editor
-    column({ id: "sku", render: () => null, edit: { onValueChange: noop } });
+    column({ id: "sku", render: () => null, edit: { onValueCommitted: noop } });
     column({
       id: "received",
       type: "number",
       // @ts-expect-error — an emptied cell notifies null
-      edit: { onValueChange: (_row, _value: number) => {} },
+      edit: { onValueCommitted: (_row, _value: number) => {} },
     });
   });
 
@@ -1309,13 +1340,13 @@ describe("DataTable inline editing", () => {
               id: "supplier",
               label: "Supplier",
               type: "text",
-              edit: { options: [{ value: "Acme", label: "Acme" }], onValueChange: noop },
+              edit: { options: [{ value: "Acme", label: "Acme" }], onValueCommitted: noop },
             }),
             column({
               id: "expected",
               label: "Expected",
               type: "date",
-              edit: { onValueChange: noop },
+              edit: { onValueCommitted: noop },
             }),
           ]}
         />,
@@ -1351,11 +1382,16 @@ describe("DataTable inline editing", () => {
   describe("leaving the page", () => {
     it("does not hold navigation for a returned promise", async () => {
       let finish = noop;
-      const onValueChange = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+      const onValueCommitted = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
       const user = renderInAppRouter(
         <Harness
           columns={() => [
-            column({ id: "received", label: "Received", type: "number", edit: { onValueChange } }),
+            column({
+              id: "received",
+              label: "Received",
+              type: "number",
+              edit: { onValueCommitted },
+            }),
           ]}
         />,
       );
@@ -1363,7 +1399,7 @@ describe("DataTable inline editing", () => {
       await retype(user, input, "20");
       await user.click(screen.getByRole("link", { name: "Elsewhere" }));
       expect(await screen.findByText("Somewhere else")).toBeTruthy();
-      expect(onValueChange).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
       expect(screen.queryByRole("dialog")).toBeNull();
       await act(async () => finish());
     });

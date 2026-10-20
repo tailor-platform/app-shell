@@ -553,7 +553,7 @@ const DataTableLabPage = () => {
           title="Inline editing"
           description={
             <>
-              A goods receipt using <code>onValueChange</code> — scroll right for every editor.
+              A goods receipt using <code>onValueCommitted</code> — scroll right for every editor.
               Editable cells are tinted; hover a dropdown or date cell to see its editor icon, then
               click anywhere in a cell. Enter confirms without moving focus, Tab moves to the next
               editable cell, and Esc undoes a draft.{" "}

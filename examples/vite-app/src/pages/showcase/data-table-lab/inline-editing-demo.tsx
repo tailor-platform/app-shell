@@ -216,7 +216,7 @@ export function InlineEditingDemo() {
       edit: {
         options: SUPPLIERS,
         canEdit: (row) => row.status === "pending",
-        onValueChange: (row, value) => {
+        onValueCommitted: (row, value) => {
           if (value === null) {
             reject(`${row.id}: Supplier is required`);
             return;
@@ -233,7 +233,7 @@ export function InlineEditingDemo() {
       // Optional dropdown: offers "None".
       edit: {
         options: WAREHOUSES,
-        onValueChange: (row, value) =>
+        onValueCommitted: (row, value) =>
           update(row.id, { warehouseId: value }, `Warehouse → ${value ?? "none"}`),
       },
     }),
@@ -246,7 +246,7 @@ export function InlineEditingDemo() {
       typeOptions: { maxDecimals: 0 },
       edit: {
         canEdit: (_row, { selected }) => selected,
-        onValueChange: (row, value) => {
+        onValueCommitted: (row, value) => {
           if (value !== null && (!Number.isInteger(value) || value < 0 || value > row.ordered)) {
             reject(`${row.id}: Received must be a whole number from 0 to ${row.ordered}`);
             return;
@@ -262,7 +262,7 @@ export function InlineEditingDemo() {
       width: 120,
       typeOptions: { currency: (row) => row.currency },
       edit: {
-        onValueChange: (row, value) => {
+        onValueCommitted: (row, value) => {
           const scale = row.currency === "JPY" ? 1 : 100;
           if (value === null || value < 0 || Math.round(value * scale) / scale !== value) {
             reject(
@@ -303,7 +303,7 @@ export function InlineEditingDemo() {
       width: 110,
       typeOptions: { maxDecimals: 1 },
       edit: {
-        onValueChange: (row, value) => {
+        onValueCommitted: (row, value) => {
           if (value === null || value < 0 || value > 100 || Math.round(value * 10) / 10 !== value) {
             reject(`${row.id}: Discount must be 0–100 with at most one decimal`);
             return;
@@ -327,7 +327,7 @@ export function InlineEditingDemo() {
       width: 112,
       typeOptions: { maxDecimals: 3 },
       edit: {
-        onValueChange: (row, value) => {
+        onValueCommitted: (row, value) => {
           if (
             value !== null &&
             (value < 0 || value > 500 || Math.round(value * 1000) / 1000 !== value)
@@ -345,7 +345,7 @@ export function InlineEditingDemo() {
       type: "text",
       width: 120,
       edit: {
-        onValueChange: (row, value) => {
+        onValueCommitted: (row, value) => {
           if (value === null || value.trim() === "") {
             reject(`${row.id}: Lot no. is required`);
             return;
@@ -360,7 +360,7 @@ export function InlineEditingDemo() {
       type: "date",
       width: 140,
       edit: {
-        onValueChange: (row, value) => {
+        onValueCommitted: (row, value) => {
           if (value !== null && value < "2026-09-01") {
             reject(`${row.id}: Expected must be September 2026 or later`);
             return;
@@ -377,7 +377,7 @@ export function InlineEditingDemo() {
       typeOptions: { dateFormat: "datetime" },
       // Date and time: pick a day, set the time, then Done.
       edit: {
-        onValueChange: (row, value) =>
+        onValueCommitted: (row, value) =>
           update(row.id, { receivedAt: value }, `Received at → ${value ?? "cleared"}`),
       },
     }),
@@ -388,7 +388,7 @@ export function InlineEditingDemo() {
       width: 140,
       // The calendar is unconstrained; this screen decides whether to accept a day.
       edit: {
-        onValueChange: (row, value) => {
+        onValueCommitted: (row, value) => {
           if (value !== null && (value < "2026-10-01" || value > "2027-12-31")) {
             reject(`${row.id}: Best before must be October 2026–December 2027`);
             return;
@@ -418,7 +418,7 @@ export function InlineEditingDemo() {
       },
       // Choices come from `badgeLabelMap`; requiredness belongs to the consumer.
       edit: {
-        onValueChange: (row, value) => {
+        onValueCommitted: (row, value) => {
           if (value === null) {
             reject(`${row.id}: Status is required`);
             return;
@@ -438,7 +438,7 @@ export function InlineEditingDemo() {
       },
       // Optional badge dropdown: offers "None".
       edit: {
-        onValueChange: (row, value) =>
+        onValueCommitted: (row, value) =>
           update(row.id, { qc: value as QcResult | null }, `QC → ${value ?? "none"}`),
       },
     }),
@@ -449,7 +449,7 @@ export function InlineEditingDemo() {
       truncate: true,
       width: 180,
       edit: {
-        onValueChange: (row, value) =>
+        onValueCommitted: (row, value) =>
           update(row.id, { note: value }, `Note → ${value ?? "empty"}`),
       },
     }),

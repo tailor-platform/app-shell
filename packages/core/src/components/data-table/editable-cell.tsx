@@ -733,6 +733,10 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
     event.preventDefault();
   };
 
+  const stopWhileEditing = (event: MouseEvent | TouchEvent) => {
+    if (editingRef.current) event.stopPropagation();
+  };
+
   const renderChoice = (item: Choice) => {
     if (item.value === null)
       return <span className="astw:text-muted-foreground">{item.label}</span>;
@@ -814,6 +818,9 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
           onBlur={handleBlur}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
+          onContextMenu={stopWhileEditing}
+          onTouchStart={stopWhileEditing}
+          style={editing ? { WebkitTouchCallout: "default" } : undefined}
           onCompositionStart={() => {
             composingRef.current = true;
           }}

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
@@ -8,7 +8,10 @@ import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
 import { createColumnHelper } from "./field-helpers";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 type Row = { id: string; warehouse: string | null };
 const { column } = createColumnHelper<Row>();
@@ -220,6 +223,28 @@ describe("DataTable dropdown confirmation", () => {
     fireEvent.compositionEnd(input);
     await user.keyboard("{Enter}");
     expect(onCommit).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "tokyo");
+  });
+
+  it("keeps the cell context menu available while the dropdown is at rest", async () => {
+    const { input } = setup();
+    fireEvent.contextMenu(input);
+    expect(await screen.findByRole("menuitem", { name: "Copy value" })).toBeDefined();
+  });
+
+  it("preserves native context menus and touch interactions while searching", async () => {
+    const { input, onDraft, onCommit, search } = setup();
+    await search("Tokyo");
+    const contextMenu = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+    fireEvent(input, contextMenu);
+    expect(contextMenu.defaultPrevented).toBe(false);
+    expect(screen.queryByRole("menu")).toBeNull();
+    vi.useFakeTimers();
+    fireEvent.touchStart(input, { touches: [{ clientX: 10, clientY: 10 }] });
+    act(() => vi.advanceTimersByTime(600));
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(input.value).toBe("Tokyo");
+    expect(onDraft).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
   });
 
   it("silently discards the search on unmount", async () => {

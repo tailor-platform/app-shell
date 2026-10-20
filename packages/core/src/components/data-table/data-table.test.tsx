@@ -220,6 +220,40 @@ describe("DataTable", () => {
     expect(screen.getByText("Inactive")).toBeDefined();
   });
 
+  it("renders editable and read-only dates in the same AppShell timezone", () => {
+    stubBrowserTimeZone();
+    type Row = { id: string; value: string };
+    function Harness() {
+      const table = useDataTable<Row>({
+        columns: [
+          {
+            id: "value",
+            label: "Date",
+            type: "date",
+            typeOptions: { locale: "en-US" },
+            edit: { canEdit: (row) => row.id === "1", onValueCommitted: vi.fn() },
+          },
+        ],
+        data: {
+          rows: [
+            { id: "1", value: "2026-10-09T00:00:00Z" },
+            { id: "2", value: "2026-10-09T00:00:00Z" },
+            { id: "3", value: "2026-10-09" },
+          ],
+        },
+      });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Table />
+        </DataTable.Root>
+      );
+    }
+    render(<Harness />, { wrapper: createTimeZoneWrapper("America/New_York") });
+    expect(screen.getAllByText("Oct 8, 2026")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Date, Oct 8, 2026" })).toBeDefined();
+    expect(screen.getByText("Oct 9, 2026")).toBeDefined();
+  });
+
   it("reuses date formatters on row updates and refreshes them for column or timezone changes", () => {
     const DateTimeFormat = Intl.DateTimeFormat;
     const formatterSpy = vi

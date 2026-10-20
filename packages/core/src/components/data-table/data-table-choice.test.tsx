@@ -84,6 +84,12 @@ function setup({ badge = false }: { badge?: boolean } = {}) {
   return { user, input, next, onDraft, onCommit, search, ...view };
 }
 
+function hoverOption(item: HTMLElement) {
+  fireEvent.pointerMove(item, { pointerType: "mouse" });
+  // Base UI ignores stationary WebKit mousemoves; happy-dom defaults movement to zero.
+  fireEvent.mouseMove(item, { movementX: 1, movementY: 1 });
+}
+
 describe("DataTable dropdown confirmation", () => {
   it("ranks exact, prefix, then substring matches, keeping original order within each rank", async () => {
     const { search, onDraft, onCommit } = setup();
@@ -99,31 +105,25 @@ describe("DataTable dropdown confirmation", () => {
     expect(onCommit).not.toHaveBeenCalled();
   });
 
-  it.each(["Enter", "Tab", "blur"])(
-    "confirms a fully typed exact label on %s",
-    async (confirmation) => {
-      const { user, input, next, onDraft, onCommit, search } = setup();
-      await search("TOKYO DC");
-      await screen.findByRole("option", { name: "Tokyo DC" });
-      if (confirmation === "blur") await user.click(document.body);
-      else await user.keyboard(`{${confirmation}}`);
-      expect(onDraft).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "tokyo");
-      expect(onCommit).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "tokyo");
-      expect(onDraft.mock.invocationCallOrder[0]).toBeLessThan(
-        onCommit.mock.invocationCallOrder[0],
+  it.each(["Enter", "Tab"])("confirms a fully typed exact label on %s", async (confirmation) => {
+    const { user, input, next, onDraft, onCommit, search } = setup();
+    await search("TOKYO DC");
+    await screen.findByRole("option", { name: "Tokyo DC" });
+    await user.keyboard(`{${confirmation}}`);
+    expect(onDraft).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "tokyo");
+    expect(onCommit).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "tokyo");
+    expect(onDraft.mock.invocationCallOrder[0]).toBeLessThan(onCommit.mock.invocationCallOrder[0]);
+    if (confirmation === "Enter") {
+      expect(document.activeElement).toBe(input);
+      expect(input.readOnly).toBe(true);
+      expect(input.closest("td")?.querySelector(":scope > span")?.className).not.toContain(
+        "astw:invisible",
       );
-      if (confirmation === "Enter") {
-        expect(document.activeElement).toBe(input);
-        expect(input.readOnly).toBe(true);
-        expect(input.closest("td")?.querySelector(":scope > span")?.className).not.toContain(
-          "astw:invisible",
-        );
-      }
-      if (confirmation === "Tab") expect(document.activeElement).toBe(next);
-    },
-  );
+    }
+    if (confirmation === "Tab") expect(document.activeElement).toBe(next);
+  });
 
-  it.each(["Enter", "Tab", "blur"])(
+  it.each(["Enter", "Tab"])(
     "respects an explicit highlight instead of the exact match on %s",
     async (confirmation) => {
       const { user, onDraft, onCommit, search } = setup();
@@ -134,11 +134,91 @@ describe("DataTable dropdown confirmation", () => {
       expect(annex.hasAttribute("data-highlighted")).toBe(true);
       expect(onDraft).not.toHaveBeenCalled();
       expect(onCommit).not.toHaveBeenCalled();
-      if (confirmation === "blur") await user.click(document.body);
-      else await user.keyboard(`{${confirmation}}`);
+      await user.keyboard(`{${confirmation}}`);
       expect(onCommit).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "annex");
     },
   );
+
+  describe.each(["outside click", "blur"])("cancelling via %s", (dismissal) => {
+    it.each(["exact label", "keyboard highlight", "hover"])(
+      "discards %s without callbacks and restores the latest data",
+      async (candidate) => {
+        const { user, input, onDraft, onCommit, search, rerender } = setup();
+        await search("Tokyo DC");
+        const annex = await screen.findByRole("option", { name: "Tokyo DC Annex" });
+        if (candidate === "keyboard highlight") await user.keyboard("{ArrowDown}");
+        if (candidate === "hover") hoverOption(annex);
+        if (candidate !== "exact label") {
+          expect(annex.hasAttribute("data-highlighted")).toBe(true);
+        }
+        rerender(<Harness value="osaka" onDraft={onDraft} onCommit={onCommit} />);
+        if (dismissal === "outside click") await user.click(document.body);
+        else act(() => input.blur());
+        expect(input.value).toBe("Osaka");
+        expect(input.readOnly).toBe(true);
+        expect(input.getAttribute("aria-expanded")).toBe("false");
+        expect(onDraft).not.toHaveBeenCalled();
+        expect(onCommit).not.toHaveBeenCalled();
+      },
+    );
+  });
+
+  it.each([false, true])(
+    "opens on the first Enter after Tab navigation, including badge=%s",
+    async (badge) => {
+      const { user, input, next, onDraft, onCommit } = setup({ badge });
+      act(() => input.focus());
+      await user.tab();
+      expect(document.activeElement).toBe(next);
+      expect(next.getAttribute("aria-expanded")).toBe("false");
+      await user.keyboard("{Enter}");
+      expect(next.getAttribute("aria-expanded")).toBe("true");
+      expect(next.readOnly).toBe(false);
+      await user.keyboard("{Escape}");
+      await user.tab({ shift: true });
+      expect(document.activeElement).toBe(input);
+      expect(input.getAttribute("aria-expanded")).toBe("false");
+      await user.keyboard("{Enter}");
+      expect(input.getAttribute("aria-expanded")).toBe("true");
+      expect(input.readOnly).toBe(false);
+      expect(onDraft).not.toHaveBeenCalled();
+      expect(onCommit).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not treat a hovered choice as an explicit Tab selection", async () => {
+    const { user, input, next, onDraft, onCommit } = setup();
+    await user.click(input);
+    const osaka = await screen.findByRole("option", { name: "Osaka" });
+    hoverOption(osaka);
+    expect(osaka.hasAttribute("data-highlighted")).toBe(true);
+    await user.keyboard("{Tab}");
+    expect(document.activeElement).toBe(next);
+    expect(onDraft).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
+  it.each(["Enter", "Tab"])(
+    "does not let hover override a ranked search match on %s",
+    async (key) => {
+      const { user, onCommit, search } = setup();
+      await search("Tokyo DC");
+      const annex = await screen.findByRole("option", { name: "Tokyo DC Annex" });
+      hoverOption(annex);
+      expect(annex.hasAttribute("data-highlighted")).toBe(true);
+      await user.keyboard(`{${key}}`);
+      expect(onCommit).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "tokyo");
+    },
+  );
+
+  it("does not notify again when a confirmed cell loses focus", async () => {
+    const { user, next, onDraft, onCommit, search } = setup();
+    await search("Tokyo DC");
+    await user.keyboard("{Enter}");
+    await user.click(next);
+    expect(onDraft).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "tokyo");
+    expect(onCommit).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "tokyo");
+  });
 
   it.each(["o", "n", "e", "no", "on"])(
     "excludes the clearing option while searching for %s",

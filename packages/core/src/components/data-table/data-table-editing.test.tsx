@@ -886,7 +886,7 @@ describe("DataTable inline editing", () => {
       expect(document.activeElement).toBe(second);
     });
 
-    it("picks a fully typed label when the user leaves the cell", async () => {
+    it("discards a fully typed label when the user clicks outside the cell", async () => {
       const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness
@@ -899,8 +899,8 @@ describe("DataTable inline editing", () => {
       await user.clear(first);
       await user.keyboard("GLOBEX");
       await user.click(document.body);
-      expect(onValueCommitted).toHaveBeenCalledTimes(1);
-      expect(onValueCommitted).toHaveBeenCalledWith("1", "globex");
+      expect(onValueCommitted).not.toHaveBeenCalled();
+      expect((first as HTMLInputElement).value).toBe("Acme Corp");
     });
 
     it("says so when nothing matches, and leaves the value alone", async () => {

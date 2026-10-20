@@ -605,12 +605,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
     setEditingState(next);
   };
   // The displayed search text is local while editing, even if consumer data changes.
-  const [query, setQueryState] = useState<string | null>(null);
-  const queryRef = useRef<string | null>(null);
-  const setQuery = (next: string | null) => {
-    queryRef.current = next;
-    setQueryState(next);
-  };
+  const [query, setQuery] = useState<string | null>(null);
   // Keep the closing list filtered until its animation completes.
   const [listQuery, setListQuery] = useState<string | null>(null);
   const highlightedRef = useRef<Choice | undefined>(undefined);
@@ -672,18 +667,6 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
     );
   };
 
-  // A fully typed label confirms on blur; a deliberate highlight takes precedence.
-  const pickTypedMatch = () => {
-    if (!editingRef.current) return;
-    const typed = queryRef.current;
-    const exact =
-      listQuery && typed
-        ? filtered.find((item) => searchable(item.label) === searchable(typed))
-        : undefined;
-    const item = explicitCandidate() ?? exact;
-    if (item) pick(item);
-  };
-
   const handleKeyDown: NonNullable<ComponentProps<typeof ComboboxParts.Input>["onKeyDown"]> = (
     event,
   ) => {
@@ -695,12 +678,12 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
       case "Enter": {
         event.preventDefault();
         event.preventBaseUIHandler();
-        if (!editingRef.current) {
-          startEditing();
+        if (!open) {
+          if (!editingRef.current) startEditing();
           setOpen(true);
           return;
         }
-        const item = open ? keyboardCandidate() : undefined;
+        const item = keyboardCandidate();
         if (item) pick(item);
         else finishEditing();
         return;
@@ -735,7 +718,6 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
 
   const handleBlur = () => {
     setFocused(false);
-    pickTypedMatch();
     finishEditing();
   };
 
@@ -808,20 +790,16 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
             setOpen(false);
             return;
           }
-          if (details.reason !== "escape-key" && details.reason !== "item-press") {
-            pickTypedMatch();
-          }
           finishEditing();
         }}
         onOpenChangeComplete={(isOpen) => {
           if (!isOpen) setListQuery(null);
         }}
         onItemHighlighted={(item, details) => {
+          // Hover is visual feedback, not a keyboard confirmation candidate.
+          if (details.reason === "pointer") return;
           highlightedRef.current = item;
-          // Leaving the list can unhighlight before blur; keep the user's last choice.
-          if (item && (details.reason === "keyboard" || details.reason === "pointer")) {
-            explicitHighlightRef.current = item;
-          }
+          if (item && details.reason === "keyboard") explicitHighlightRef.current = item;
         }}
         autoHighlight
         itemToStringLabel={choiceLabel}

@@ -942,7 +942,12 @@ function DateEditCell<TRow extends Record<string, unknown>>({
         />
         <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
           <Popover.Positioner sideOffset={4} side="bottom" align="start">
-            <Popover.Popup data-slot="data-table-cell-calendar" className={POPUP_CLASS_NAME}>
+            <Popover.Popup
+              data-slot="data-table-cell-calendar"
+              className={POPUP_CLASS_NAME}
+              onContextMenu={(event) => event.stopPropagation()}
+              onTouchStart={(event) => event.stopPropagation()}
+            >
               <Calendar
                 aria-label={label}
                 value={pickedDay}

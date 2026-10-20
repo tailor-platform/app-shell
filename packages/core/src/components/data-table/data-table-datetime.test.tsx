@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router";
@@ -8,7 +8,10 @@ import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
 import { createColumnHelper } from "./field-helpers";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 type Row = { id: string; expected: string | null };
 const { column } = createColumnHelper<Row>();
@@ -241,6 +244,26 @@ describe("DataTable date-time drafts", () => {
     expect(onValueChange).not.toHaveBeenCalled();
     expect(onValueCommitted).not.toHaveBeenCalled();
   });
+
+  it.each(["calendar", "time"])(
+    "isolates native context menus and long presses inside the %s control",
+    async (control) => {
+      const { user, onValueChange, onValueCommitted } = setup();
+      await user.click(trigger());
+      const target = control === "calendar" ? dayButton("20") : timeInput();
+      const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+      fireEvent(target, event);
+      expect(event.defaultPrevented).toBe(false);
+      expect(screen.queryByRole("menu")).toBeNull();
+      vi.useFakeTimers();
+      fireEvent.touchStart(target, { touches: [{ clientX: 10, clientY: 10 }] });
+      act(() => vi.advanceTimersByTime(600));
+      expect(screen.queryByRole("menu")).toBeNull();
+      expect(timeInput().value).toBe("09:00");
+      expect(onValueChange).not.toHaveBeenCalled();
+      expect(onValueCommitted).not.toHaveBeenCalled();
+    },
+  );
 
   it("discards active drafts silently on unmount", async () => {
     const { user, unmount, onValueChange, onValueCommitted } = setup();

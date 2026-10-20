@@ -180,7 +180,7 @@ function ConversationEmptyState({
         <div className="astw:space-y-1">
           {title ? (
             <Text
-              variant="label-md"
+              variant="heading-sm"
               // eslint-disable-next-line jsx-a11y/heading-has-content
               render={<h3 />}
             >

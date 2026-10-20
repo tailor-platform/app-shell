@@ -1459,6 +1459,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                     label={headerLabel}
                     align={resolveAlign(col)}
                     navigation={navigation}
+                    tooltipLabel={tooltipLabel}
                     cellProps={cellProps}
                   />
                 );

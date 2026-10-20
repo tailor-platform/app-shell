@@ -210,18 +210,24 @@ function EditableCellFrame({
   truncate,
   hideDisplay,
   icon,
+  tooltipLabel,
+  editing,
   children,
 }: {
   cellProps: ComponentProps<typeof Table.Cell>;
   display: ReactNode;
   truncate?: boolean;
+  tooltipLabel?: string;
+  editing: boolean;
   /** Typed-into cells hide the display while the input shows the text. */
   hideDisplay?: "focused" | "forced-colors";
   /** Shown on hover or focus; the cell's tint marks editability at rest. */
   icon?: ReactNode;
   children: ReactNode;
 }) {
-  return (
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const showTooltip = tooltipLabel !== undefined && !editing;
+  const cell = (
     <Table.Cell
       {...cellProps}
       data-editable=""
@@ -253,6 +259,12 @@ function EditableCellFrame({
       )}
     </Table.Cell>
   );
+  return (
+    <Tooltip.Root open={showTooltip && tooltipOpen} onOpenChange={setTooltipOpen}>
+      <Tooltip.Trigger disabled={!showTooltip} render={cell} />
+      <Tooltip.Content>{tooltipLabel}</Tooltip.Content>
+    </Tooltip.Root>
+  );
 }
 
 interface DataTableEditableCellProps<
@@ -266,6 +278,7 @@ interface DataTableEditableCellProps<
   /** Accessible name for the editor — the column's label. */
   label: string;
   align: "left" | "right";
+  tooltipLabel?: string;
   navigation: CellEditNavigation;
   /** `data-slot`, style, class and context-menu handlers shared with static cells. */
   cellProps: ComponentProps<typeof Table.Cell>;
@@ -306,6 +319,7 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
   align,
   navigation,
   cellProps,
+  tooltipLabel,
 }: DataTableEditableCellProps<TRow>) {
   const t = useDataTableT();
   const errorId = useId();
@@ -459,6 +473,8 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
       display={display}
       truncate={col.truncate}
       hideDisplay={editing ? "focused" : "forced-colors"}
+      tooltipLabel={tooltipLabel}
+      editing={editing}
     >
       {message !== undefined && (
         <span id={errorId} className="astw:sr-only">
@@ -553,6 +569,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
   align,
   navigation,
   cellProps,
+  tooltipLabel,
 }: DataTableEditableCellProps<TRow, ChoiceColumn<TRow>>) {
   const t = useDataTableT();
   const { current, display, change, commit } = useCellValue(row, col);
@@ -753,6 +770,8 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
       truncate={col.truncate}
       hideDisplay={editing ? "focused" : "forced-colors"}
       icon={<ChevronDown />}
+      tooltipLabel={tooltipLabel}
+      editing={editing}
     >
       <BaseCombobox.Root<Choice>
         items={items}
@@ -859,6 +878,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
   label,
   navigation,
   cellProps,
+  tooltipLabel,
 }: DataTableEditableCellProps<TRow, DateColumn<TRow>>) {
   const t = useDataTableT();
   const { value: timeZone } = useTimeZone();
@@ -925,6 +945,8 @@ function DateEditCell<TRow extends Record<string, unknown>>({
       display={display}
       truncate={col.truncate}
       icon={<CalendarDays />}
+      tooltipLabel={tooltipLabel}
+      editing={open}
     >
       <Popover.Root open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger

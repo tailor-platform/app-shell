@@ -321,6 +321,7 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
     setDraftState(next);
   };
   const [focused, setFocused] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [showParseError, setShowParseError] = useState(false);
   const composingRef = useRef(false);
@@ -382,7 +383,13 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
     switch (event.key) {
       case "Enter":
         event.preventDefault();
-        commitDraft();
+        if (!editing) {
+          setDraft(baselineText);
+          setEditing(true);
+          event.currentTarget.select();
+        } else if (commitDraft()) {
+          setEditing(false);
+        }
         return;
       case "Tab":
         if (!commitDraft()) {
@@ -398,12 +405,14 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
         event.preventDefault();
         event.stopPropagation();
         revert(true);
+        setEditing(false);
         return;
     }
   };
 
   const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
     setFocused(true);
+    setEditing(true);
     setDraft(baselineText);
     event.currentTarget.select();
   };
@@ -411,16 +420,20 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
   // Malformed text cannot be emitted as a number; blur restores consumer data.
   const handleBlur = () => {
     setFocused(false);
+    setEditing(false);
     if (!commitDraft()) revert(true);
   };
 
   const handleMouseDown = (event: MouseEvent<HTMLInputElement>) => {
-    if (focused) return;
+    if (editing) return;
     // A right-click on a resting cell opens DataTable's cell menu instead of editing.
     if (event.button === 2) {
       event.preventDefault();
       return;
     }
+    setDraft(baselineText);
+    setEditing(true);
+    if (focused) event.currentTarget.select();
     selectOnMouseUpRef.current = true;
   };
 
@@ -434,8 +447,8 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
 
   // While editing, the browser's own menu and long-press (paste, select) win
   // over DataTable's cell menu.
-  const stopWhileFocused = (event: MouseEvent | TouchEvent) => {
-    if (focused) event.stopPropagation();
+  const stopWhileEditing = (event: MouseEvent | TouchEvent) => {
+    if (editing) event.stopPropagation();
   };
 
   const hint = t("editRevertHint");
@@ -445,7 +458,7 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
       cellProps={cellProps}
       display={display}
       truncate={col.truncate}
-      hideDisplay={focused ? "focused" : "forced-colors"}
+      hideDisplay={editing ? "focused" : "forced-colors"}
     >
       {message !== undefined && (
         <span id={errorId} className="astw:sr-only">
@@ -459,6 +472,7 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
               ref={register}
               type="text"
               value={text}
+              readOnly={!editing}
               aria-label={label}
               aria-invalid={message !== undefined ? true : undefined}
               aria-describedby={message !== undefined ? errorId : undefined}
@@ -468,12 +482,12 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
               spellCheck={numeric ? false : undefined}
               className={cn(
                 INPUT_CLASS_NAME,
-                !focused && "astw:text-transparent",
+                !editing && "astw:text-transparent",
                 numeric && "astw:tabular-nums",
                 align === "right" && "astw:text-right",
                 message !== undefined && CELL_ERROR_CLASS_NAME,
               )}
-              style={focused ? { WebkitTouchCallout: "default" } : undefined}
+              style={editing ? { WebkitTouchCallout: "default" } : undefined}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
               onFocus={handleFocus}
@@ -486,8 +500,8 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
               onMouseUp={handleMouseUp}
               onPointerEnter={() => setHovered(true)}
               onPointerLeave={() => setHovered(false)}
-              onContextMenu={stopWhileFocused}
-              onTouchStart={stopWhileFocused}
+              onContextMenu={stopWhileEditing}
+              onTouchStart={stopWhileEditing}
             />
           }
         />

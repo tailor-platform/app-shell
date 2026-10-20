@@ -178,6 +178,39 @@ describe("DataTable editor drafts", () => {
     expect(onValueCommitted).not.toHaveBeenCalled();
   });
 
+  it.each([false, true])(
+    "ends editing on Enter (shift: %s) while keeping same-cell focus",
+    (shiftKey) => {
+      const { input, onValueCommitted } = renderEditor();
+      act(() => input.focus());
+      fireEvent.change(input, { target: { value: "18" } });
+      fireEvent.keyDown(input, { key: "Enter", shiftKey });
+      expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith({ id: "1", value: 12 }, 18);
+      expect(document.activeElement).toBe(input);
+      expect(input.readOnly).toBe(true);
+      expect(input.value).toBe("12");
+      expect(input.className).toContain("astw:text-transparent");
+      expect(input.closest("td")?.querySelector("span")?.className).not.toContain("astw:invisible");
+      fireEvent.keyDown(input, { key: "Enter" });
+      expect(input.readOnly).toBe(false);
+      expect(input.selectionStart).toBe(0);
+      expect(input.selectionEnd).toBe(2);
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("restarts editing when the focused display cell is clicked", () => {
+    const { input, onValueCommitted } = renderEditor();
+    act(() => input.focus());
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(input.readOnly).toBe(true);
+    fireEvent.mouseDown(input, { button: 0 });
+    fireEvent.mouseUp(input, { button: 0 });
+    expect(input.readOnly).toBe(false);
+    expect(document.activeElement).toBe(input);
+    expect(onValueCommitted).not.toHaveBeenCalled();
+  });
+
   it("discards an active draft on unmount without either notification", () => {
     const { input, onValueChange, onValueCommitted, unmount } = renderEditor();
     act(() => input.focus());

@@ -68,7 +68,7 @@ function ChatHistory({
                     className={cn(
                       "astw:flex astw:min-w-0 astw:flex-1 astw:items-center astw:gap-2 astw:px-2 astw:py-1.5 astw:text-left astw:text-body-md",
                       active
-                        ? "astw:font-medium astw:text-foreground"
+                        ? "astw:font-semibold astw:text-foreground"
                         : "astw:text-muted-foreground astw:group-hover:text-foreground",
                     )}
                   >

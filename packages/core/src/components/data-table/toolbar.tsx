@@ -304,7 +304,7 @@ const PANEL_COLUMN_ROW = cn(
 // (+ bold). Applied exclusively — hover is only added when the row isn't selected —
 // so hovering the selected row doesn't repaint it and the two never look alike.
 const PANEL_ROW_HOVER = "astw:hover:bg-muted astw:focus-visible:bg-muted";
-const PANEL_ROW_SELECTED = "astw:bg-accent astw:font-medium astw:text-accent-foreground";
+const PANEL_ROW_SELECTED = "astw:bg-accent astw:font-semibold astw:text-accent-foreground";
 
 /**
  * Seed the add-panel's operator for a field: reuse an active filter's operator

@@ -608,7 +608,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  "astw:peer/menu-button astw:flex astw:w-full astw:items-center astw:gap-2 astw:overflow-hidden astw:rounded-md astw:p-2 astw:text-left astw:text-body-md astw:outline-hidden astw:ring-sidebar-ring astw:transition-[width,height,padding] astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:focus-visible:ring-2 astw:active:bg-sidebar-accent astw:active:text-sidebar-accent-foreground astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:group-has-data-[sidebar=menu-action]/menu-item:pr-8 astw:aria-disabled:pointer-events-none astw:aria-disabled:opacity-50 astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:font-medium astw:data-[active=true]:text-sidebar-accent-foreground astw:data-[state=open]:hover:bg-sidebar-accent astw:data-[state=open]:hover:text-sidebar-accent-foreground astw:group-data-[collapsible=icon]:size-8! astw:group-data-[collapsible=icon]:p-2! astw:[&>span:last-child]:truncate astw:group-data-[collapsible=icon]:[&>span:last-child]:hidden astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
+  "astw:peer/menu-button astw:flex astw:w-full astw:items-center astw:gap-2 astw:overflow-hidden astw:rounded-md astw:p-2 astw:text-left astw:text-body-md astw:outline-hidden astw:ring-sidebar-ring astw:transition-[width,height,padding] astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:focus-visible:ring-2 astw:active:bg-sidebar-accent astw:active:text-sidebar-accent-foreground astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:group-has-data-[sidebar=menu-action]/menu-item:pr-8 astw:aria-disabled:pointer-events-none astw:aria-disabled:opacity-50 astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:font-semibold astw:data-[active=true]:text-sidebar-accent-foreground astw:data-[state=open]:hover:bg-sidebar-accent astw:data-[state=open]:hover:text-sidebar-accent-foreground astw:group-data-[collapsible=icon]:size-8! astw:group-data-[collapsible=icon]:p-2! astw:[&>span:last-child]:truncate astw:group-data-[collapsible=icon]:[&>span:last-child]:hidden astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -818,7 +818,7 @@ function SidebarMenuSubButton({
       onClick: handleClick,
       className: cn(
         "astw:text-sidebar-foreground astw:ring-sidebar-ring astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:active:bg-sidebar-accent astw:active:text-sidebar-accent-foreground astw:[&>svg]:text-sidebar-accent-foreground astw:flex astw:h-7 astw:min-w-0 astw:-translate-x-px astw:items-center astw:gap-2 astw:overflow-hidden astw:rounded-md astw:px-2 astw:outline-hidden astw:focus-visible:ring-2 astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:aria-disabled:pointer-events-none astw:aria-disabled:opacity-50 astw:[&>span:last-child]:truncate astw:group-data-[collapsible=icon]:[&>span:last-child]:hidden astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
-        "astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:font-medium astw:data-[active=true]:text-sidebar-accent-foreground",
+        "astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:font-semibold astw:data-[active=true]:text-sidebar-accent-foreground",
         size === "sm" && "astw:text-body-sm",
         size === "md" && "astw:text-body-md",
         "astw:group-data-[collapsible=icon]:hidden",

@@ -1,0 +1,232 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
+import type { ReactNode } from "react";
+import { createAppShellWrapper } from "../../../tests/test-utils";
+import { DataTable } from "./data-table";
+import { useDataTable } from "./use-data-table";
+import { createColumnHelper } from "./field-helpers";
+
+afterEach(cleanup);
+
+type Row = { id: string; warehouse: string | null };
+const { column } = createColumnHelper<Row>();
+const OPTIONS = [
+  { value: "north", label: "North Tokyo DC" },
+  { value: "annex", label: "Tokyo DC Annex" },
+  { value: "tokyo", label: "Tokyo DC" },
+  { value: "extra", label: "Tokyo DC Extra" },
+  { value: "south", label: "South Tokyo DC" },
+  { value: "osaka", label: "Osaka" },
+  { value: "initial", label: "Initial" },
+];
+
+function Harness({
+  value = "initial",
+  onDraft,
+  onCommit,
+  badge = false,
+}: {
+  value?: string | null;
+  onDraft: (row: Row, value: string | null) => void;
+  onCommit: (row: Row, value: string | null) => void;
+  badge?: boolean;
+}) {
+  const edit = { options: OPTIONS, onValueChange: onDraft, onValueCommitted: onCommit };
+  const table = useDataTable<Row>({
+    data: {
+      rows: [
+        { id: "1", warehouse: value },
+        { id: "2", warehouse: "initial" },
+      ],
+    },
+    columns: [
+      badge
+        ? column({ id: "warehouse", label: "Warehouse", type: "badge", edit })
+        : column({ id: "warehouse", label: "Warehouse", type: "text", edit }),
+    ],
+  });
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
+const AppShellWrapper = createAppShellWrapper("en");
+function Wrapper({ children }: { children: ReactNode }) {
+  return (
+    <MemoryRouter>
+      <AppShellWrapper>{children}</AppShellWrapper>
+    </MemoryRouter>
+  );
+}
+
+function setup({ badge = false }: { badge?: boolean } = {}) {
+  const onDraft = vi.fn();
+  const onCommit = vi.fn();
+  const view = render(<Harness onDraft={onDraft} onCommit={onCommit} badge={badge} />, {
+    wrapper: Wrapper,
+  });
+  const user = userEvent.setup();
+  const [input, next] = screen.getAllByRole("combobox", {
+    name: "Warehouse",
+  }) as HTMLInputElement[];
+  const search = async (text: string) => {
+    await user.click(input);
+    await user.clear(input);
+    await user.keyboard(text);
+  };
+  return { user, input, next, onDraft, onCommit, search, ...view };
+}
+
+describe("DataTable dropdown confirmation", () => {
+  it("ranks exact, prefix, then substring matches, keeping original order within each rank", async () => {
+    const { search, onDraft, onCommit } = setup();
+    await search("Tokyo DC");
+    expect((await screen.findAllByRole("option")).map((item) => item.textContent)).toEqual([
+      "Tokyo DC",
+      "Tokyo DC Annex",
+      "Tokyo DC Extra",
+      "North Tokyo DC",
+      "South Tokyo DC",
+    ]);
+    expect(onDraft).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
+  it.each(["Enter", "Tab", "blur"])(
+    "confirms a fully typed exact label on %s",
+    async (confirmation) => {
+      const { user, input, next, onDraft, onCommit, search } = setup();
+      await search("TOKYO DC");
+      await screen.findByRole("option", { name: "Tokyo DC" });
+      if (confirmation === "blur") await user.click(document.body);
+      else await user.keyboard(`{${confirmation}}`);
+      expect(onDraft).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "tokyo");
+      expect(onCommit).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "tokyo");
+      expect(onDraft.mock.invocationCallOrder[0]).toBeLessThan(
+        onCommit.mock.invocationCallOrder[0],
+      );
+      if (confirmation === "Enter") {
+        expect(document.activeElement).toBe(input);
+        expect(input.readOnly).toBe(true);
+        expect(input.closest("td")?.querySelector(":scope > span")?.className).not.toContain(
+          "astw:invisible",
+        );
+      }
+      if (confirmation === "Tab") expect(document.activeElement).toBe(next);
+    },
+  );
+
+  it.each(["Enter", "Tab", "blur"])(
+    "respects an explicit highlight instead of the exact match on %s",
+    async (confirmation) => {
+      const { user, onDraft, onCommit, search } = setup();
+      await search("Tokyo DC");
+      await screen.findByRole("option", { name: "Tokyo DC" });
+      await user.keyboard("{ArrowDown}");
+      const annex = screen.getByRole("option", { name: "Tokyo DC Annex" });
+      expect(annex.hasAttribute("data-highlighted")).toBe(true);
+      expect(onDraft).not.toHaveBeenCalled();
+      expect(onCommit).not.toHaveBeenCalled();
+      if (confirmation === "blur") await user.click(document.body);
+      else await user.keyboard(`{${confirmation}}`);
+      expect(onCommit).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "annex");
+    },
+  );
+
+  it.each(["o", "n", "e", "no", "on"])(
+    "excludes the clearing option while searching for %s",
+    async (text) => {
+      const { user, onCommit, search } = setup();
+      await search(text);
+      expect(screen.queryByRole("option", { name: "None" })).toBeNull();
+      await user.keyboard("{Tab}");
+      expect(onCommit.mock.calls.every(([, value]) => value !== null)).toBe(true);
+    },
+  );
+
+  it("keeps None available for an empty query and notifies before explicitly clearing", async () => {
+    const { user, input, onDraft, onCommit } = setup();
+    await user.click(input);
+    await user.clear(input);
+    await user.click(await screen.findByRole("option", { name: "None" }));
+    expect(onDraft).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, null);
+    expect(onCommit).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, null);
+    expect(onDraft.mock.invocationCallOrder[0]).toBeLessThan(onCommit.mock.invocationCallOrder[0]);
+  });
+
+  it.each([false, true])("notifies only a changed selection, including badge=%s", async (badge) => {
+    const { user, input, onDraft, onCommit } = setup({ badge });
+    await user.click(input);
+    await user.click(await screen.findByRole("option", { name: "Initial" }));
+    expect(onDraft).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
+    await user.click(input);
+    await user.click(await screen.findByRole("option", { name: "Osaka" }));
+    expect(onDraft).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "osaka");
+    expect(onCommit).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "osaka");
+  });
+
+  it("preserves active search across an external update, then cancels to the latest data without callbacks", async () => {
+    const { user, input, onDraft, onCommit, search, rerender } = setup();
+    await search("Tokyo");
+    rerender(<Harness value="osaka" onDraft={onDraft} onCommit={onCommit} />);
+    expect(input.value).toBe("Tokyo");
+    expect(onDraft).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
+    await user.keyboard("{Escape}");
+    expect(input.value).toBe("Osaka");
+    expect(onDraft).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
+  it("compares a confirmed selection with the latest data", async () => {
+    const { user, onDraft, onCommit, search, rerender } = setup();
+    await search("Tokyo DC");
+    rerender(<Harness value="tokyo" onDraft={onDraft} onCommit={onCommit} />);
+    await user.keyboard("{Enter}");
+    expect(onDraft).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+
+  it("ends editing on Shift+Enter, and Enter or clicking the focused display starts editing again", async () => {
+    const { user, input, search } = setup();
+    await search("Tokyo DC");
+    await user.keyboard("{Shift>}{Enter}{/Shift}");
+    expect(document.activeElement).toBe(input);
+    expect(input.readOnly).toBe(true);
+    expect(input.getAttribute("aria-expanded")).toBe("false");
+    await user.keyboard("{Enter}");
+    expect(input.readOnly).toBe(false);
+    expect(input.getAttribute("aria-expanded")).toBe("true");
+    await user.keyboard("{Escape}");
+    expect(input.readOnly).toBe(true);
+    await user.click(input);
+    expect(input.readOnly).toBe(false);
+    expect(input.getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("does not confirm an IME conversion Enter", async () => {
+    const { user, input, onDraft, onCommit, search } = setup();
+    await search("Tokyo DC");
+    fireEvent.compositionStart(input);
+    fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+    expect(onDraft).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
+    expect(input.readOnly).toBe(false);
+    fireEvent.compositionEnd(input);
+    await user.keyboard("{Enter}");
+    expect(onCommit).toHaveBeenCalledExactlyOnceWith({ id: "1", warehouse: "initial" }, "tokyo");
+  });
+
+  it("silently discards the search on unmount", async () => {
+    const { search, unmount, onDraft, onCommit } = setup();
+    await search("Tokyo DC");
+    unmount();
+    expect(onDraft).not.toHaveBeenCalled();
+    expect(onCommit).not.toHaveBeenCalled();
+  });
+});

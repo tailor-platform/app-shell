@@ -536,12 +536,9 @@ interface Choice {
   label: string;
 }
 
-// Case-, width- and accent-insensitive enough for searching labels: full-width
-// letters and half-width katakana match their usual forms.
+// Case- and width-insensitive searching: full-width letters and half-width
+// katakana match their usual forms.
 const searchable = (text: string) => text.normalize("NFKC").toLocaleLowerCase().trim();
-
-const matchesQuery = (label: string, query: string) =>
-  searchable(label).includes(searchable(query));
 
 const isChoiceEqual = (a: Choice, b: Choice) => a.value === b.value;
 
@@ -563,8 +560,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
   const value = toTextValue(current);
   const noneLabel = t("editNone");
   const choices = columnChoices(col);
-  // Keyed on content: columns are often rebuilt every render, and a new list
-  // would reset the combobox's highlight mid-search.
+  // Keyed on content: rebuilding columns must not reset the highlight mid-search.
   const choicesKey = (choices ?? []).map((c) => `${c.value}\u0000${c.label}`).join("\u0001");
   const items = useMemo<Choice[]>(
     () => [
@@ -578,84 +574,157 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
   const selected = items.find((item) => item.value === value) ?? null;
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
-  // What the user has typed to search; `null` while the input just shows the
-  // current choice (and the list shows every choice).
+  const [editing, setEditingState] = useState(false);
+  const editingRef = useRef(false);
+  const setEditing = (next: boolean) => {
+    editingRef.current = next;
+    setEditingState(next);
+  };
+  // The displayed search text is local while editing, even if consumer data changes.
   const [query, setQueryState] = useState<string | null>(null);
-  // Read by handlers that run before the next render: closing the list on an
-  // outside press happens before the input's blur.
   const queryRef = useRef<string | null>(null);
   const setQuery = (next: string | null) => {
     queryRef.current = next;
     setQueryState(next);
   };
-  // The search the list is filtered by. It outlives the input's text until the
-  // list has finished closing, so a closing list doesn't flash every choice.
+  // Keep the closing list filtered until its animation completes.
   const [listQuery, setListQuery] = useState<string | null>(null);
   const highlightedRef = useRef<Choice | undefined>(undefined);
+  const explicitHighlightRef = useRef<Choice | undefined>(undefined);
+  const composingRef = useRef(false);
   const selectOnMouseUpRef = useRef(false);
   const from = { rowKey, colKey };
 
-  const filtered = listQuery ? items.filter((item) => matchesQuery(item.label, listQuery)) : items;
-  const pick = (item: Choice | null) => {
+  const filtered = useMemo(() => {
+    const search = searchable(listQuery ?? "");
+    if (!search) return items;
+    const rank = (item: Choice) => {
+      const text = searchable(item.label);
+      if (text === search) return 0;
+      return text.startsWith(search) ? 1 : 2;
+    };
+    return (
+      items
+        .filter((item) => item.value !== null && searchable(item.label).includes(search))
+        // Sorting is stable, preserving the original order within each rank.
+        .toSorted((left, right) => rank(left) - rank(right))
+    );
+  }, [items, listQuery]);
+
+  const startEditing = () => {
+    setEditing(true);
+    setQuery(selected?.label ?? "");
+    setListQuery(null);
+    highlightedRef.current = undefined;
+    explicitHighlightRef.current = undefined;
+  };
+
+  const finishEditing = () => {
+    // Clear synchronous state before closing or moving focus can fire blur again.
+    setEditing(false);
     setQuery(null);
-    const next = item?.value ?? null;
-    if (next !== value) {
-      change(next);
-      commit(next);
+    explicitHighlightRef.current = undefined;
+    setOpen(false);
+  };
+
+  const pick = (item: Choice) => {
+    finishEditing();
+    if (item.value !== value) {
+      change(item.value);
+      commit(item.value);
     }
   };
 
-  // A name typed in full counts as picking it when the user moves on.
-  const pickTypedMatch = () => {
-    const typed = queryRef.current;
-    if (!typed) return;
-    const exact = items.find((item) => searchable(item.label) === searchable(typed));
-    if (exact) pick(exact);
+  const explicitCandidate = () => {
+    const item = explicitHighlightRef.current;
+    return item && filtered.includes(item) ? item : undefined;
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+  const keyboardCandidate = () => {
+    const highlighted = highlightedRef.current;
+    return (
+      explicitCandidate() ??
+      (highlighted && filtered.includes(highlighted) ? highlighted : filtered[0])
+    );
+  };
+
+  // A fully typed label confirms on blur; a deliberate highlight takes precedence.
+  const pickTypedMatch = () => {
+    if (!editingRef.current) return;
+    const typed = queryRef.current;
+    const exact =
+      listQuery && typed
+        ? filtered.find((item) => searchable(item.label) === searchable(typed))
+        : undefined;
+    const item = explicitCandidate() ?? exact;
+    if (item) pick(item);
+  };
+
+  const handleKeyDown: NonNullable<ComponentProps<typeof ComboboxParts.Input>["onKeyDown"]> = (
+    event,
+  ) => {
+    if (event.nativeEvent.isComposing || composingRef.current || event.keyCode === 229) {
+      event.preventBaseUIHandler();
+      return;
+    }
     switch (event.key) {
-      case "Enter":
-        // Base UI picks the highlighted choice (see `onValueChange`).
-        if (open && highlightedRef.current) return;
+      case "Enter": {
         event.preventDefault();
-        setOpen(false);
-        setQuery(null);
+        event.preventBaseUIHandler();
+        if (!editingRef.current) {
+          startEditing();
+          setOpen(true);
+          return;
+        }
+        const item = open ? keyboardCandidate() : undefined;
+        if (item) pick(item);
+        else finishEditing();
         return;
+      }
       case "Tab": {
-        // Typing a few letters and pressing Tab takes the highlighted match.
-        const match = open && query ? highlightedRef.current : undefined;
-        setOpen(false);
-        setQuery(null);
-        if (match) pick(match);
+        event.preventBaseUIHandler();
+        const item =
+          editingRef.current && open
+            ? (explicitCandidate() ??
+              (searchable(listQuery ?? "") ? keyboardCandidate() : undefined))
+            : undefined;
+        if (item) pick(item);
+        else finishEditing();
         if (navigation.move(from, event.shiftKey ? "prev" : "next")) event.preventDefault();
         return;
       }
+      case "Escape":
+        if (!editingRef.current && !open) return;
+        event.preventDefault();
+        event.stopPropagation();
+        event.preventBaseUIHandler();
+        finishEditing();
+        return;
     }
   };
 
   const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
     setFocused(true);
-    setQuery(null);
-    setListQuery(null);
+    if (!editingRef.current) startEditing();
     event.currentTarget.select();
   };
 
   const handleBlur = () => {
     setFocused(false);
     pickTypedMatch();
-    setQuery(null);
-    setOpen(false);
+    finishEditing();
   };
 
   const handleMouseDown = (event: MouseEvent<HTMLInputElement>) => {
-    if (focused) return;
-    if (event.button === 2) {
+    if (event.button === 2 && !editingRef.current) {
       event.preventDefault();
       return;
     }
-    selectOnMouseUpRef.current = true;
+    if (!editingRef.current) {
+      startEditing();
+      setOpen(true);
+    }
+    if (!focused) selectOnMouseUpRef.current = true;
   };
 
   const handleMouseUp = (event: MouseEvent<HTMLInputElement>) => {
@@ -678,7 +747,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
       cellProps={cellProps}
       display={display}
       truncate={col.truncate}
-      hideDisplay={focused ? "focused" : "forced-colors"}
+      hideDisplay={editing ? "focused" : "forced-colors"}
       icon={<ChevronDown />}
     >
       <BaseCombobox.Root<Choice>
@@ -686,38 +755,43 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
         filteredItems={filtered}
         value={selected}
         onValueChange={(item, details) => {
-          // Only an explicit pick (click, or Enter on a highlighted choice)
-          // changes the value; clearing the search text doesn't.
-          if (details.reason !== "item-press") return;
-          pick(item);
-          setOpen(false);
+          if (details.reason === "item-press" && item) pick(item);
         }}
         inputValue={query ?? selected?.label ?? ""}
         onInputValueChange={(next, details) => {
           if (details.reason === "input-change" || details.reason === "input-clear") {
             setQuery(next);
             setListQuery(next);
+            explicitHighlightRef.current = undefined;
           }
         }}
         open={open}
         onOpenChange={(next, details) => {
-          setOpen(next);
           if (next) {
-            // Opened by a click or arrow key rather than by typing: every choice.
+            if (!editingRef.current) startEditing();
+            setOpen(true);
             if (details.reason !== "input-change") setListQuery(null);
             return;
           }
-          // Esc abandons the search, and a clicked choice was already picked.
+          // Clearing search text is not selection or cancellation.
+          if (details.reason === "input-clear") {
+            setOpen(false);
+            return;
+          }
           if (details.reason !== "escape-key" && details.reason !== "item-press") {
             pickTypedMatch();
           }
-          setQuery(null);
+          finishEditing();
         }}
         onOpenChangeComplete={(isOpen) => {
           if (!isOpen) setListQuery(null);
         }}
-        onItemHighlighted={(item) => {
-          highlightedRef.current = item ?? undefined;
+        onItemHighlighted={(item, details) => {
+          highlightedRef.current = item;
+          // Leaving the list can unhighlight before blur; keep the user's last choice.
+          if (item && (details.reason === "keyboard" || details.reason === "pointer")) {
+            explicitHighlightRef.current = item;
+          }
         }}
         autoHighlight
         itemToStringLabel={choiceLabel}
@@ -728,11 +802,11 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
           aria-label={label}
           autoComplete="off"
           enterKeyHint="done"
+          readOnly={!editing}
           className={cn(
             INPUT_CLASS_NAME,
             ICON_INPUT_CLASS_NAME,
-            // A dropdown at rest: a pointer. Once in it, a caret to search.
-            !focused && "astw:text-transparent astw:cursor-pointer",
+            !editing && "astw:text-transparent astw:cursor-pointer",
             align === "right" && "astw:text-right",
           )}
           onKeyDown={handleKeyDown}
@@ -740,6 +814,12 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
           onBlur={handleBlur}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
+          onCompositionStart={() => {
+            composingRef.current = true;
+          }}
+          onCompositionEnd={() => {
+            composingRef.current = false;
+          }}
         />
         {/* At least as wide as the cell, and wide enough that choices don't wrap. */}
         <ComboboxParts.Content className="astw:w-max astw:min-w-(--anchor-width) astw:max-w-80">

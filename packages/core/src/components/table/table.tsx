@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { Text } from "../text";
 
 type RootProps = React.ComponentProps<"table"> & {
   /** Additional CSS classes for the outer scrollable `<div>` container. Use this to control height, overflow, or container-level layout. */
@@ -148,10 +149,10 @@ Cell.displayName = "Table.Cell";
 /** A table caption element. */
 function Caption({ className, ...props }: React.ComponentProps<"caption">) {
   return (
-    <caption
-      data-slot="table-caption"
-      className={cn("astw:text-muted-foreground astw:mt-4 astw:text-body-md", className)}
-      {...props}
+    <Text
+      variant="body-md"
+      className={cn("astw:text-muted-foreground astw:mt-4", className)}
+      render={<caption data-slot="table-caption" {...props} />}
     />
   );
 }

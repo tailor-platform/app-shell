@@ -3,6 +3,7 @@ import { Checkbox as BaseCheckbox } from "@base-ui/react/checkbox";
 import { Check, Minus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Text } from "../text";
 
 // `children` and `render` are intentionally excluded: the component owns the
 // box + indicator structure so the visual stays stable, and consumers get a
@@ -119,17 +120,19 @@ function Checkbox({ className, label, ...props }: CheckboxProps) {
   if (label == null) return box;
 
   return (
-    <label
-      data-slot="checkbox-label"
+    <Text
+      variant="body-md"
       className={cn(
-        "astw:inline-flex astw:cursor-pointer astw:items-center astw:gap-2 astw:text-body-md astw:select-none",
+        "astw:inline-flex astw:cursor-pointer astw:items-center astw:gap-2 astw:select-none",
         "astw:has-data-disabled:cursor-not-allowed astw:has-data-disabled:opacity-50",
         className,
       )}
+      // eslint-disable-next-line jsx-a11y/label-has-associated-control
+      render={<label data-slot="checkbox-label" />}
     >
       {box}
       {label}
-    </label>
+    </Text>
   );
 }
 

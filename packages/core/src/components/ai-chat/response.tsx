@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { Text } from "../text";
 
 // Only these schemes render as a clickable link; anything else (a streamed
 // model response can contain arbitrary text) is dropped to plain text rather
@@ -35,12 +36,14 @@ function renderInline(text: string): ReactNode[] {
       tokens.push(<strong key={key++}>{token.slice(2, -2)}</strong>);
     } else if (token.startsWith("`")) {
       tokens.push(
-        <code
+        <Text
+          variant="code-sm"
+          className="astw:rounded astw:bg-muted astw:px-1 astw:py-0.5"
           key={key++}
-          className="astw:rounded astw:bg-muted astw:px-1 astw:py-0.5 astw:font-mono astw:text-code-sm"
+          render={<code />}
         >
           {token.slice(1, -1)}
-        </code>,
+        </Text>,
       );
     } else {
       const linkMatch = /^\[([^\]]{1,500})\]\(([^)]{1,2000})\)$/.exec(token);

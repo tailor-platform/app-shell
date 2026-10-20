@@ -23,6 +23,7 @@ import { Link } from "react-router";
 import { useT } from "@/i18n-labels";
 import { useNavItems, type NavItem } from "@/routing/navigation";
 import { cn } from "@/lib/utils";
+import { Text } from "../text";
 
 function resolveCollapsibleMode(
   collapsible: boolean | undefined,
@@ -160,14 +161,14 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
   const DefaultHeader = (
     <SidebarHeader>
       {icon}
-      <h1
-        className={cn(
-          "astw:text-body-md astw:mb-2 astw:mt-2 astw:px-2",
-          isIconMode && "astw:hidden",
-        )}
+      <Text
+        variant="body-md"
+        className={cn("astw:mb-2 astw:mt-2 astw:px-2", isIconMode && "astw:hidden")}
+        // eslint-disable-next-line jsx-a11y/heading-has-content
+        render={<h1 />}
       >
         {title}
-      </h1>
+      </Text>
     </SidebarHeader>
   );
   const DefaultFooter = null;

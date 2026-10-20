@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { Text } from "../text";
 
 function Root({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -32,17 +33,23 @@ function Header({ className, title, description, children, ...props }: HeaderPro
       {...props}
     >
       {title && (
-        <h3
-          data-slot="card-title"
-          className="astw:text-heading-md astw:leading-none astw:text-card-foreground"
+        <Text
+          variant="heading-md"
+          className="astw:leading-none astw:text-card-foreground"
+          // eslint-disable-next-line jsx-a11y/heading-has-content
+          render={<h3 data-slot="card-title" />}
         >
           {title}
-        </h3>
+        </Text>
       )}
       {description && (
-        <div data-slot="card-description" className="astw:text-muted-foreground astw:text-body-md">
+        <Text
+          variant="body-md"
+          className="astw:text-muted-foreground"
+          render={<div data-slot="card-description" />}
+        >
           {description}
-        </div>
+        </Text>
       )}
       {children}
     </div>

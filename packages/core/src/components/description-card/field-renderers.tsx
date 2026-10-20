@@ -7,6 +7,7 @@ import { Tooltip } from "../tooltip";
 import { Copy, Check, ExternalLink } from "lucide-react";
 import type { ResolvedField, DateFormat } from "./types";
 import { useDescriptionCardT } from "./i18n";
+import { Text } from "../text";
 
 // ============================================================================
 // UTILITIES
@@ -303,13 +304,13 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
   // Always render the same structure, conditionally wrap with tooltip
   const content = (
     <div className="astw:flex astw:items-start astw:gap-1 astw:min-w-0">
-      <p
-        ref={textRef}
-        className="astw:text-label-md astw:text-foreground astw:wrap-break-word astw:m-0"
-        style={lineClampStyle}
+      <Text
+        variant="label-md"
+        className="astw:text-foreground astw:wrap-break-word astw:m-0"
+        render={<p ref={textRef} style={lineClampStyle} />}
       >
         {value}
-      </p>
+      </Text>
       {showCopy && <CopyButton value={String(field.value)} />}
     </div>
   );
@@ -338,7 +339,11 @@ function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
   const values = toValueArray(field.value);
 
   if (values.every((v) => isEmpty(v))) {
-    return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
+    return (
+      <Text variant="label-md" className="astw:text-foreground">
+        {EMPTY_DASH}
+      </Text>
+    );
   }
 
   const badgeOptions = {
@@ -369,7 +374,11 @@ function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function MoneyFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
+    return (
+      <Text variant="label-md" className="astw:text-foreground">
+        {EMPTY_DASH}
+      </Text>
+    );
   }
 
   const currencyKey = field.meta?.currencyKey || "currency";
@@ -377,7 +386,9 @@ function MoneyFieldRenderer({ field }: { field: ResolvedField }) {
   const formatted = formatMoney(field.value, currency);
 
   return (
-    <span className="astw:text-label-md astw:text-foreground astw:tabular-nums">{formatted}</span>
+    <Text variant="label-md" className="astw:text-foreground astw:tabular-nums">
+      {formatted}
+    </Text>
   );
 }
 
@@ -388,13 +399,21 @@ function DateFieldRenderer({ field }: { field: ResolvedField }) {
   const t = useDescriptionCardT();
 
   if (isEmpty(field.value)) {
-    return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
+    return (
+      <Text variant="label-md" className="astw:text-foreground">
+        {EMPTY_DASH}
+      </Text>
+    );
   }
 
   const format = field.meta?.dateFormat || "medium";
   const formatted = formatDate(field.value, format, t);
 
-  return <span className="astw:text-label-md astw:text-foreground">{formatted}</span>;
+  return (
+    <Text variant="label-md" className="astw:text-foreground">
+      {formatted}
+    </Text>
+  );
 }
 
 /**
@@ -402,7 +421,11 @@ function DateFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function LinkFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
+    return (
+      <Text variant="label-md" className="astw:text-foreground">
+        {EMPTY_DASH}
+      </Text>
+    );
   }
 
   const hrefKey = field.meta?.hrefKey;
@@ -411,30 +434,35 @@ function LinkFieldRenderer({ field }: { field: ResolvedField }) {
   const value = String(field.value);
 
   if (!href) {
-    return <span className="astw:text-label-md astw:text-foreground">{value}</span>;
+    return (
+      <Text variant="label-md" className="astw:text-foreground">
+        {value}
+      </Text>
+    );
   }
 
   if (isExternal) {
     return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="astw:inline-flex astw:items-center astw:gap-1 astw:text-body-md astw:text-primary astw:hover:underline"
+      <Text
+        variant="body-md"
+        className="astw:inline-flex astw:items-center astw:gap-1 astw:text-primary astw:hover:underline"
+        // eslint-disable-next-line jsx-a11y/anchor-has-content
+        render={<a href={href} target="_blank" rel="noopener noreferrer" />}
       >
         {value}
         <ExternalLink className="astw:h-3 astw:w-3" />
-      </a>
+      </Text>
     );
   }
 
   return (
-    <Link
-      to={href}
-      className="astw:inline-flex astw:items-center astw:gap-1 astw:text-body-md astw:text-primary astw:hover:underline"
+    <Text
+      variant="body-md"
+      className="astw:inline-flex astw:items-center astw:gap-1 astw:text-primary astw:hover:underline"
+      render={<Link to={href} />}
     >
       {value}
-    </Link>
+    </Text>
   );
 }
 
@@ -443,7 +471,11 @@ function LinkFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function AddressFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
+    return (
+      <Text variant="label-md" className="astw:text-foreground">
+        {EMPTY_DASH}
+      </Text>
+    );
   }
 
   const lines = formatAddress(field.value);
@@ -453,14 +485,18 @@ function AddressFieldRenderer({ field }: { field: ResolvedField }) {
 
   return (
     <div className="astw:flex astw:items-start astw:gap-1 astw:min-w-0">
-      <address className="astw:text-label-md astw:text-foreground astw:not-italic">
+      <Text
+        variant="label-md"
+        className="astw:text-foreground astw:not-italic"
+        render={<address />}
+      >
         {lines.map((line, i) => (
           <React.Fragment key={i}>
             {line}
             {i < lines.length - 1 && <br />}
           </React.Fragment>
         ))}
-      </address>
+      </Text>
       {showCopy && <CopyButton value={addressString} />}
     </div>
   );
@@ -471,7 +507,11 @@ function AddressFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function ReferenceFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
+    return (
+      <Text variant="label-md" className="astw:text-foreground">
+        {EMPTY_DASH}
+      </Text>
+    );
   }
 
   const idKey = field.meta?.referenceIdKey;
@@ -480,15 +520,23 @@ function ReferenceFieldRenderer({ field }: { field: ResolvedField }) {
   const value = String(field.value);
 
   if (!id || !urlPattern) {
-    return <span className="astw:text-label-md astw:text-foreground">{value}</span>;
+    return (
+      <Text variant="label-md" className="astw:text-foreground">
+        {value}
+      </Text>
+    );
   }
 
   const href = urlPattern.replace("{id}", id);
 
   return (
-    <Link to={href} className="astw:text-body-md astw:text-primary astw:hover:underline">
+    <Text
+      variant="body-md"
+      className="astw:text-primary astw:hover:underline"
+      render={<Link to={href} />}
+    >
       {value}
-    </Link>
+    </Text>
   );
 }
 
@@ -520,7 +568,11 @@ export function renderField(field: ResolvedField): React.ReactNode {
     case "reference":
       return <ReferenceFieldRenderer field={field} />;
     default:
-      return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
+      return (
+        <Text variant="label-md" className="astw:text-foreground">
+          {EMPTY_DASH}
+        </Text>
+      );
   }
 }
 

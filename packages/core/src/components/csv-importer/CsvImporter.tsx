@@ -28,6 +28,7 @@ import { parseCsvFile, autoMatchHeaders } from "./csv-parser";
 import { processRows } from "./process-rows";
 import { buildRows, buildSummary } from "./build-rows";
 import { useT } from "./i18n-labels";
+import { Text } from "../text";
 
 // ─── Context for Portal container (Drawer popup ref) ────
 
@@ -144,8 +145,12 @@ function UploadStep({
       >
         <UploadIcon className="astw:text-muted-foreground astw:size-10" />
         <div className="astw:text-center">
-          <p className="astw:text-label-md">{t("uploadButton")}</p>
-          <p className="astw:text-muted-foreground astw:text-body-sm">CSV (max {maxSizeMB}MB)</p>
+          <Text variant="label-md" render={<p />}>
+            {t("uploadButton")}
+          </Text>
+          <Text variant="body-sm" className="astw:text-muted-foreground">
+            CSV (max {maxSizeMB}MB)
+          </Text>
         </div>
         <input
           ref={inputRef}
@@ -156,10 +161,14 @@ function UploadStep({
         />
       </button>
       {error && (
-        <div className="astw:flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-danger-surface astw:px-3 astw:py-2 astw:text-body-md astw:text-danger-text">
+        <Text
+          variant="body-md"
+          className="astw:flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-danger-surface astw:px-3 astw:py-2 astw:text-danger-text"
+          render={<div />}
+        >
           <AlertTriangleIcon className="astw:size-4 astw:shrink-0" />
           {error}
-        </div>
+        </Text>
       )}
       <button
         type="button"
@@ -753,12 +762,16 @@ export function CsvImporter<T extends CsvSchema>({
                       ))}
                     </div>
                     <div className="astw:flex astw:flex-col">
-                      <Drawer.Title className="astw:text-heading-sm">
+                      <Text variant="heading-sm" render={<Drawer.Title />}>
                         {stepTitle[step]}
-                      </Drawer.Title>
-                      <Drawer.Description className="astw:text-muted-foreground astw:text-body-sm">
+                      </Text>
+                      <Text
+                        variant="body-sm"
+                        className="astw:text-muted-foreground"
+                        render={<Drawer.Description />}
+                      >
                         {stepDescription[step]}
-                      </Drawer.Description>
+                      </Text>
                     </div>
                   </div>
                   <Drawer.Close className="astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:outline-hidden">

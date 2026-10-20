@@ -2,6 +2,7 @@ import { Avatar } from "../avatar";
 import { Root, Items, Item, formatTimestamp, getInitials } from "./ActivityCard";
 
 import type { ActivityCardProps, ActivityCardItem } from "./types";
+import { Text } from "../text";
 
 // ============================================================================
 // STANDALONE (pre-assembled) — backwards-compatible with the original API
@@ -44,14 +45,14 @@ function ActivityCardStandalone({
                 ) : undefined
               }
             >
-              <p className="astw:text-label-md astw:text-foreground">
+              <Text variant="label-md" className="astw:text-foreground" render={<p />}>
                 {actorName ? <span>{actorName}</span> : null}
                 {actorName ? " " : null}
                 <span className="astw:text-muted-foreground">{item.description}</span>
-              </p>
-              <p className="astw:text-body-sm astw:leading-none astw:text-muted-foreground">
+              </Text>
+              <Text variant="body-sm" className="astw:leading-none astw:text-muted-foreground">
                 {formatTimestamp(item.timestamp)}
-              </p>
+              </Text>
             </Item>
           );
         }}

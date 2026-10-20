@@ -2,6 +2,7 @@ import * as React from "react";
 import { Fieldset as BaseFieldset } from "@base-ui/react/fieldset";
 
 import { cn } from "@/lib/utils";
+import { Text } from "../text";
 
 /**
  * Groups related fields with a shared legend for accessible form sectioning.
@@ -27,17 +28,17 @@ type FieldsetRootProps = Pick<
 > & { children: React.ReactNode };
 
 function Root({ className, ...props }: FieldsetRootProps) {
-  return <BaseFieldset.Root data-slot="fieldset" className={cn(className)} {...props} />;
+  return <BaseFieldset.Root data-slot="fieldset" className={className} {...props} />;
 }
 Root.displayName = "Fieldset.Root";
 
 /** An accessible legend that is automatically associated with the fieldset. */
 function Legend({ className, ...props }: React.ComponentProps<typeof BaseFieldset.Legend>) {
   return (
-    <BaseFieldset.Legend
-      data-slot="fieldset-legend"
-      className={cn("astw:text-label-md", className)}
-      {...props}
+    <Text
+      variant="label-md"
+      className={cn(className)}
+      render={<BaseFieldset.Legend data-slot="fieldset-legend" {...props} />}
     />
   );
 }

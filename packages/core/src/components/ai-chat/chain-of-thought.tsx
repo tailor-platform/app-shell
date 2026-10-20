@@ -10,6 +10,7 @@ import {
   DisclosureChevron,
   DisclosurePanel,
 } from "./disclosure";
+import { Text } from "../text";
 
 type ChainOfThoughtProps = Omit<ComponentProps<typeof DisclosureRoot>, "children"> & {
   children: ReactNode;
@@ -131,7 +132,7 @@ function ChainOfThoughtStep({
         )}
       >
         <p className="astw:leading-5">{label}</p>
-        {description ? <p className="astw:text-body-sm">{description}</p> : null}
+        {description ? <Text variant="body-sm">{description}</Text> : null}
         {children}
       </div>
     </div>

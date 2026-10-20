@@ -8,6 +8,7 @@ import type {
   ActivityCardItemsProps,
   ActivityCardItemProps,
 } from "./types";
+import { Text } from "../text";
 
 // ============================================================================
 // HELPERS (exported for standalone wrapper)
@@ -102,7 +103,14 @@ function Root<T extends ActivityCardBaseItem>({
       >
         {title != null && (
           <div className="astw:flex astw:items-center astw:px-6 astw:pt-5 astw:pb-2">
-            <h3 className="astw:text-heading-md astw:text-card-foreground">{title}</h3>
+            <Text
+              variant="heading-md"
+              className="astw:text-card-foreground"
+              // eslint-disable-next-line jsx-a11y/heading-has-content
+              render={<h3 />}
+            >
+              {title}
+            </Text>
           </div>
         )}
         {children}
@@ -124,9 +132,13 @@ function renderSection<T extends ActivityCardBaseItem>(
   return (
     <div key={dayLabel ?? "single"} className="astw:flex astw:flex-col astw:gap-5">
       {dayLabel != null && (
-        <p className="astw:text-label-sm astw:leading-none astw:opacity-60 astw:text-foreground">
+        <Text
+          variant="label-sm"
+          className="astw:leading-none astw:opacity-60 astw:text-foreground"
+          render={<p />}
+        >
           {dayLabel}
-        </p>
+        </Text>
       )}
       <div className="astw:relative astw:flex astw:flex-col astw:gap-5">
         {items.map((item, index) => (
@@ -210,7 +222,9 @@ function Items<T extends ActivityCardBaseItem>({ children }: ActivityCardItemsPr
       <div className="astw:relative astw:px-6 astw:pb-5">
         <div className="astw:relative astw:flex astw:flex-col">
           {visible.length === 0 ? (
-            <p className="astw:text-body-md astw:text-muted-foreground">No activities yet</p>
+            <Text variant="body-md" className="astw:text-muted-foreground">
+              No activities yet
+            </Text>
           ) : (
             renderList(visible, children, groupBy)
           )}

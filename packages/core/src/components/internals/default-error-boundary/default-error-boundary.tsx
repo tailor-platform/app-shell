@@ -2,6 +2,7 @@ import { useRouteError, isRouteErrorResponse } from "react-router";
 import { Button } from "../../button";
 import { AlertCircle } from "lucide-react";
 import { useT } from "@/i18n-labels";
+import { Text } from "../../text";
 
 export const DefaultErrorBoundary = () => {
   const error = useRouteError();
@@ -19,10 +20,16 @@ export const DefaultErrorBoundary = () => {
         <div className="astw:flex astw:items-start astw:gap-4">
           <AlertCircle className="astw:h-5 astw:w-5 astw:text-danger-text astw:flex-shrink-0 astw:mt-0.5" />
           <div>
-            <h1 className="astw:text-heading-md">{t("error404Title")}</h1>
-            <p className="astw:text-body-md astw:text-muted-foreground astw:mt-1">
+            <Text
+              variant="heading-md"
+              // eslint-disable-next-line jsx-a11y/heading-has-content
+              render={<h1 />}
+            >
+              {t("error404Title")}
+            </Text>
+            <Text variant="body-md" className="astw:text-muted-foreground astw:mt-1">
               {t("error404Body")}
-            </p>
+            </Text>
             <Button
               variant="outline"
               size="sm"
@@ -45,8 +52,16 @@ export const DefaultErrorBoundary = () => {
       <div className="astw:flex astw:items-start astw:gap-4">
         <AlertCircle className="astw:h-5 astw:w-5 astw:text-danger-text astw:flex-shrink-0 astw:mt-0.5" />
         <div>
-          <h1 className="astw:text-heading-md">{t("errorTitle")}</h1>
-          <p className="astw:text-body-md astw:text-muted-foreground astw:mt-1">{message}</p>
+          <Text
+            variant="heading-md"
+            // eslint-disable-next-line jsx-a11y/heading-has-content
+            render={<h1 />}
+          >
+            {t("errorTitle")}
+          </Text>
+          <Text variant="body-md" className="astw:text-muted-foreground astw:mt-1">
+            {message}
+          </Text>
           <Button
             variant="outline"
             size="sm"

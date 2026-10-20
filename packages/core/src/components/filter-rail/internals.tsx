@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Checkbox } from "../checkbox";
 import { Fieldset } from "../fieldset";
 import { useFilterRailT } from "./i18n";
+import { Text } from "../text";
 
 /** 32px rows by default — density over the 44px touch minimum in a mouse-driven ERP. */
 export const rowHeightClass = (density: "compact" | "comfortable") =>
@@ -96,7 +97,9 @@ export const RailSection = ({
               with the height instead of snapping. */}
           <div className="astw:pt-1.5">
             {hint && (
-              <p className="astw:mb-1.5 astw:text-body-sm astw:text-muted-foreground">{hint}</p>
+              <Text variant="body-sm" className="astw:mb-1.5 astw:text-muted-foreground">
+                {hint}
+              </Text>
             )}
             {children}
           </div>

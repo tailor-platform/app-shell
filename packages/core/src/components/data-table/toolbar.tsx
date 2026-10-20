@@ -30,6 +30,7 @@ import type {
   SelectOption,
 } from "@/types/collection";
 import type { Column, DataTableFilterConfig } from "./types";
+import { Text } from "../text";
 
 // =============================================================================
 // DataTable.Toolbar
@@ -619,7 +620,9 @@ function PanelDateTimeInput({
         />
       </div>
       <div className="astw:flex astw:flex-col astw:gap-1">
-        <span className="astw:text-body-sm astw:text-muted-foreground">{t("chooseTime")}</span>
+        <Text variant="body-sm" className="astw:text-muted-foreground" render={<span />}>
+          {t("chooseTime")}
+        </Text>
         <Input
           type="time"
           aria-label={`${ariaLabel} (${t("chooseTime")})`}
@@ -720,7 +723,11 @@ function PanelDateRangeInput({
         />
       )}
 
-      {error && <p className="astw:text-danger-text astw:text-body-sm">{error}</p>}
+      {error && (
+        <Text variant="body-sm" className="astw:text-danger-text">
+          {error}
+        </Text>
+      )}
     </div>
   );
 }
@@ -1051,7 +1058,11 @@ function BetweenInputGroup({
           className={inputCell}
         />
       </div>
-      {error && <p className="astw:text-danger-text astw:text-body-sm">{error}</p>}
+      {error && (
+        <Text variant="body-sm" className="astw:text-danger-text">
+          {error}
+        </Text>
+      )}
     </div>
   );
 }
@@ -2095,7 +2106,9 @@ function TemporalFilterEditor({
             onChange={setLocalValueMax}
           />
           {betweenError && (
-            <p className="astw:text-danger-text astw:text-body-sm">{betweenError}</p>
+            <Text variant="body-sm" className="astw:text-danger-text">
+              {betweenError}
+            </Text>
           )}
         </div>
       ) : (

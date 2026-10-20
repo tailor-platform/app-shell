@@ -68,7 +68,7 @@ Omit `fill` on pages that should flow and scroll naturally (forms, dashboards, a
 - **Tabs only above `DataTable`** — best when workflows are organized as obvious buckets
 - **Tabs + chips** — when buckets are primary and finer filters help
 - **Bulk actions** — `rowSelection.actions` on `useDataTable` turns `DataTable.Footer` into a bulk-action bar while rows are selected; see `interaction/multi-select`
-- **Targeted inline entry** — opt a typed column into `edit` for quantities, text, choices, or dates. DataTable supplies the editor and confirmation flow; the page owns validation, local row updates, persistence, and error feedback through `onValueChange`. Use `canEdit(row, { selected })` for per-row control; see [DataTable inline editing](../components/data-table.md#inline-editing).
+- **Targeted inline entry** — opt a typed column into `edit` for quantities, text, choices, or dates. Observe raw drafts with optional `onValueChange`; validate and adopt confirmed editor outputs with required `onValueCommitted`. The page owns persistence, optimistic updates, error feedback, and rollback, whether saving each field immediately or collecting confirmed rows for Save/Cancel. Use `canEdit(row, { selected })` for per-row control; see [DataTable inline editing](../components/data-table.md#inline-editing) and [consumer-owned saving patterns](../components/data-table.md#consumer-owned-saving-patterns).
 - **`Table` primitives** — small static lists without collection hooks
 
 ## Constraints

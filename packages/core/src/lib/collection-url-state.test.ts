@@ -221,6 +221,18 @@ describe("withURLCollectionState", () => {
 });
 
 describe("useURLCollectionVariables", () => {
+  it("returns an empty query object when the URL has no filters", () => {
+    const wrapper = ({ children }: PropsWithChildren) =>
+      createElement(MemoryRouter, { initialEntries: ["/"] }, children);
+    const { result } = renderHook(
+      () => useURLCollectionVariables({ tableMetadata: tableMetadata.task }),
+      { wrapper },
+    );
+
+    expect(result.current.variables.query).toEqual({});
+    expect(result.current.variables.order).toBeUndefined();
+  });
+
   it.each([
     ["gte", "2026-10-09T00:00:00", { gte: "2026-10-08T15:00:00.000Z" }],
     ["in", '["2026-10-09T00:00:00"]', { in: ["2026-10-08T15:00:00.000Z"] }],

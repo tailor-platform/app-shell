@@ -14,7 +14,8 @@ describe("useCollectionVariables", () => {
     it("returns default variables with pageSize 20", () => {
       const { result } = renderHook(() => useCollectionVariables({}));
       expect(result.current.variables.pagination).toEqual({ first: 20 });
-      expect(result.current.variables.query).toBeUndefined();
+      expect(result.current.variables.query).toEqual({});
+      expect(Object.keys(result.current.variables.query)).toEqual([]);
       expect(result.current.variables.order).toBeUndefined();
       expect(result.current.control.filters).toEqual([]);
       expect(result.current.control.sortStates).toEqual([]);
@@ -179,6 +180,11 @@ describe("useCollectionVariables", () => {
 
       expect(result.current.control.filters).toHaveLength(1);
       expect(result.current.control.filters[0].field).toBe("amount");
+
+      act(() => {
+        result.current.control.removeFilter("amount");
+      });
+      expect(result.current.variables.query).toEqual({});
     });
 
     it("clears all filters", () => {
@@ -193,6 +199,21 @@ describe("useCollectionVariables", () => {
       });
 
       expect(result.current.control.filters).toHaveLength(0);
+      expect(result.current.variables.query).toEqual({});
+    });
+
+    it("returns an empty query when filters are replaced with an empty array", () => {
+      const { result } = renderHook(() =>
+        useCollectionVariables({
+          params: { initialFilters: [{ field: "status", operator: "eq", value: "ACTIVE" }] },
+        }),
+      );
+
+      act(() => {
+        result.current.control.setFilters([]);
+      });
+
+      expect(result.current.variables.query).toEqual({});
     });
 
     it("resets pagination when filters change", () => {
@@ -619,10 +640,10 @@ describe("useCollectionVariables", () => {
       expect("before" in pagination).toBe(false);
     });
 
-    it("returns undefined for query and order when empty", () => {
+    it("returns an empty query object and undefined order when empty", () => {
       const { result } = renderHook(() => useCollectionVariables({ params: { pageSize: 10 } }));
 
-      expect(result.current.variables.query).toBeUndefined();
+      expect(result.current.variables.query).toEqual({});
       expect(result.current.variables.order).toBeUndefined();
       expect(result.current.variables.pagination).toEqual({ first: 10 });
     });
@@ -671,17 +692,14 @@ describe("useCollectionVariables", () => {
         });
         expect(result.current.variables.query).toEqual({ amount: { [operator]: value } });
         expect(result.current.variables.order).toEqual([{ field: "amount", direction: "Asc" }]);
-        expectTypeOf(result.current.variables.query).toExtend<
-          | {
-              amount?: {
-                gte?: string;
-                in?: string[];
-                nin?: string[];
-                between?: { min: string; max: string };
-              };
-            }
-          | undefined
-        >();
+        expectTypeOf(result.current.variables.query).toExtend<{
+          amount?: {
+            gte?: string;
+            in?: string[];
+            nin?: string[];
+            between?: { min: string; max: string };
+          };
+        }>();
       },
     );
 
@@ -693,6 +711,10 @@ describe("useCollectionVariables", () => {
         }),
       );
       expect(result.current.variables.pagination).toEqual({ first: 10 });
+      expect(result.current.variables.query).toEqual({});
+      const { status, ...rest } = result.current.variables.query;
+      expect(status).toBeUndefined();
+      expect(rest).toEqual({});
     });
 
     it("applies typed initialSort", () => {

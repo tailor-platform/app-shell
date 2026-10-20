@@ -95,6 +95,7 @@ function normalizeCollectionFilter(
  * with metadata-based field name typing and automatic `fieldType` detection.
  * Datetime filters are normalized to RFC 3339 using the AppShell timezone
  * before initialization or updates. Invalid datetime values throw a TypeError.
+ * `variables.query` is always an object (`{}` when no filters are active).
  *
  * Returns `variables` with `query`, `order`, and `pagination` sub-properties
  * that can be mapped to GraphQL query variables.
@@ -126,6 +127,7 @@ export function useCollectionVariables<const TTable extends TableMetadata>(
 
 /**
  * Hook for managing collection query parameters (filters, sort, pagination).
+ * `variables.query` is always an object (`{}` when no filters are active).
  *
  * Returns `variables` with `query`, `order`, and `pagination` sub-properties
  * that can be mapped to GraphQL query variables.
@@ -265,7 +267,6 @@ export function useCollectionVariables(
   // Build collection variables (Tailor Platform format)
   // ---------------------------------------------------------------------------
   const queryVars = useMemo(() => {
-    if (filters.length === 0) return undefined;
     const filterQuery: Record<string, Record<string, unknown>> = {};
     for (const filter of filters) {
       if (filter.caseSensitive === false && typeof filter.value === "string") {

@@ -298,7 +298,8 @@ export type BuildQueryVariables<TTable extends TableMetadata> = {
  * Collection variables split into explicit sub-properties.
  */
 export interface CollectionVariables {
-  query: Record<string, Record<string, unknown>> | undefined;
+  /** Filter input object. Empty (`{}`) when no filters are active. */
+  query: Record<string, Record<string, unknown>>;
   order: { field: string; direction: "Asc" | "Desc" }[] | undefined;
   pagination: PaginationVariables;
 }
@@ -308,7 +309,7 @@ export interface CollectionVariables {
  * `CollectionVariables` shape expected by GraphQL clients.
  */
 export type TypedCollectionVariables<TTable extends TableMetadata> = CollectionVariables & {
-  query: BuildQueryVariables<TTable> | undefined;
+  query: BuildQueryVariables<TTable>;
   order:
     | {
         field: TableOrderableFieldName<TTable>;

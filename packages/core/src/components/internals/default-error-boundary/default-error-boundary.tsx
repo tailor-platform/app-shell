@@ -19,8 +19,10 @@ export const DefaultErrorBoundary = () => {
         <div className="astw:flex astw:items-start astw:gap-4">
           <AlertCircle className="astw:h-5 astw:w-5 astw:text-danger-text astw:flex-shrink-0 astw:mt-0.5" />
           <div>
-            <h1 className="astw:font-semibold astw:text-lg">{t("error404Title")}</h1>
-            <p className="astw:text-sm astw:text-muted-foreground astw:mt-1">{t("error404Body")}</p>
+            <h1 className="astw:text-heading-md">{t("error404Title")}</h1>
+            <p className="astw:text-body-md astw:text-muted-foreground astw:mt-1">
+              {t("error404Body")}
+            </p>
             <Button
               variant="outline"
               size="sm"
@@ -43,8 +45,8 @@ export const DefaultErrorBoundary = () => {
       <div className="astw:flex astw:items-start astw:gap-4">
         <AlertCircle className="astw:h-5 astw:w-5 astw:text-danger-text astw:flex-shrink-0 astw:mt-0.5" />
         <div>
-          <h1 className="astw:font-semibold astw:text-lg">{t("errorTitle")}</h1>
-          <p className="astw:text-sm astw:text-muted-foreground astw:mt-1">{message}</p>
+          <h1 className="astw:text-heading-md">{t("errorTitle")}</h1>
+          <p className="astw:text-body-md astw:text-muted-foreground astw:mt-1">{message}</p>
           <Button
             variant="outline"
             size="sm"

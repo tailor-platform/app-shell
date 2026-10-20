@@ -177,9 +177,9 @@ function ConversationEmptyState({
       {icon}
       {title == null && description == null ? null : (
         <div className="astw:space-y-1">
-          {title ? <h3 className="astw:text-sm astw:font-medium">{title}</h3> : null}
+          {title ? <h3 className="astw:text-label-md">{title}</h3> : null}
           {description ? (
-            <p className="astw:text-sm astw:text-muted-foreground">{description}</p>
+            <p className="astw:text-body-md astw:text-muted-foreground">{description}</p>
           ) : null}
         </div>
       )}

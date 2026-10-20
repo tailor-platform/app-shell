@@ -28,7 +28,7 @@ type SelectableItem =
     };
 
 const paletteItemBase =
-  "astw:relative astw:flex astw:w-full astw:cursor-pointer astw:select-none astw:rounded-sm astw:px-2 astw:py-2 astw:text-sm astw:outline-none astw:text-left";
+  "astw:relative astw:flex astw:w-full astw:cursor-pointer astw:select-none astw:rounded-sm astw:px-2 astw:py-2 astw:text-body-md astw:outline-none astw:text-left";
 
 const paletteItemHighlight = (active: boolean) =>
   active
@@ -583,7 +583,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
         <div className="astw:flex astw:items-center astw:border-b astw:border-border astw:px-3 astw:py-1">
           <SearchIcon className="astw:mr-2 astw:h-4 astw:w-4 astw:shrink-0 astw:opacity-50" />
           {activeSearchSource && (
-            <span className="astw:inline-flex astw:items-center astw:shrink-0 astw:rounded astw:bg-muted astw:px-1.5 astw:py-0.5 astw:mr-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
+            <span className="astw:inline-flex astw:items-center astw:shrink-0 astw:rounded astw:bg-muted astw:px-1.5 astw:py-0.5 astw:mr-1.5 astw:text-label-sm astw:text-muted-foreground">
               {activeSearchSource.prefix}
             </span>
           )}
@@ -591,7 +591,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("commandPaletteSearch")}
-            className="astw:flex astw:h-10 astw:w-full astw:rounded-md astw:bg-transparent astw:py-3 astw:text-sm astw:outline-none astw:border-0 astw:shadow-none astw:focus-visible:ring-0 astw:placeholder:text-muted-foreground astw:disabled:cursor-not-allowed astw:disabled:opacity-50"
+            className="astw:flex astw:h-10 astw:w-full astw:rounded-md astw:bg-transparent astw:py-3 astw:text-body-md astw:outline-none astw:border-0 astw:shadow-none astw:focus-visible:ring-0 astw:placeholder:text-muted-foreground astw:disabled:cursor-not-allowed astw:disabled:opacity-50"
             // oxlint-disable-next-line jsx-a11y/no-autofocus -- intentional: command palette should auto-focus the search input when opened
             autoFocus
           />
@@ -601,13 +601,13 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
           className="astw:max-h-[50vh] astw:overflow-y-auto astw:overflow-x-hidden"
         >
           {selectableItems.length === 0 && !isSearching && !isLoadingDynamicRoutes ? (
-            <div className="astw:py-6 astw:text-center astw:text-sm astw:text-muted-foreground">
+            <div className="astw:py-6 astw:text-center astw:text-body-md astw:text-muted-foreground">
               {t("commandPaletteNoResults")}
             </div>
           ) : (
             <div className="astw:p-1">
               {isLoadingDynamicRoutes && (
-                <output className="astw:flex astw:items-center astw:justify-center astw:gap-2 astw:py-4 astw:text-sm astw:text-muted-foreground">
+                <output className="astw:flex astw:items-center astw:justify-center astw:gap-2 astw:py-4 astw:text-body-md astw:text-muted-foreground">
                   <Spinner aria-label={t("commandPaletteLoadingRoutes")} />
                   {t("commandPaletteLoadingRoutes")}
                 </output>
@@ -615,7 +615,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
               {/* Search mode entries (default mode, filtered by search) */}
               {searchModesCount > 0 && (
                 <>
-                  <div className="astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
+                  <div className="astw:px-2 astw:py-1.5 astw:text-label-sm astw:text-muted-foreground">
                     {t("commandPaletteSearchModes")}
                   </div>
                   {searchModeItems.map((item, index) => {
@@ -637,7 +637,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
                             {source.icon}
                           </span>
                         )}
-                        <span className="astw:font-mono astw:text-xs astw:text-muted-foreground astw:shrink-0">
+                        <span className="astw:font-mono astw:text-code-sm astw:text-muted-foreground astw:shrink-0">
                           {source.prefix}:
                         </span>
                         <span className="astw:truncate">{source.title}</span>
@@ -649,7 +649,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
               {/* Actions section (default mode only) */}
               {filteredActions.length > 0 && (
                 <>
-                  <div className="astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
+                  <div className="astw:px-2 astw:py-1.5 astw:text-label-sm astw:text-muted-foreground">
                     {t("commandPaletteActions")}
                   </div>
                   {filteredActions.map((action, index) => {
@@ -672,7 +672,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
                         )}
                         <span className="astw:truncate">{action.label}</span>
                         {action.group && (
-                          <span className="astw:ml-auto astw:text-xs astw:text-muted-foreground astw:shrink-0">
+                          <span className="astw:ml-auto astw:text-body-sm astw:text-muted-foreground astw:shrink-0">
                             {action.group}
                           </span>
                         )}
@@ -684,7 +684,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
               {/* Pages section (default mode only) */}
               {filteredRoutes.length > 0 && (
                 <>
-                  <div className="astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
+                  <div className="astw:px-2 astw:py-1.5 astw:text-label-sm astw:text-muted-foreground">
                     {t("commandPalettePages")}
                   </div>
                   {filteredRoutes.map((route, index) => {
@@ -704,7 +704,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
                         <span className="astw:truncate astw:w-full astw:text-left">
                           {route.breadcrumb.join(" > ")}
                         </span>
-                        <span className="astw:text-[11px] astw:text-muted-foreground astw:truncate astw:w-full astw:text-left">
+                        <span className="astw:text-body-sm astw:text-muted-foreground astw:truncate astw:w-full astw:text-left">
                           {displayPath.startsWith("/") ? displayPath : `/${displayPath}`}
                         </span>
                       </button>
@@ -715,7 +715,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
               {/* Search results (search mode only) */}
               {activeSearchSource && searchResults.length > 0 && (
                 <>
-                  <div className="astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
+                  <div className="astw:px-2 astw:py-1.5 astw:text-label-sm astw:text-muted-foreground">
                     {activeSearchSource.title}
                   </div>
                   {searchResults.map((result, index) => (
@@ -744,7 +744,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
                         <span className="astw:truncate">{result.label}</span>
                       </span>
                       {result.description && (
-                        <span className="astw:text-[11px] astw:text-muted-foreground astw:truncate astw:w-full astw:text-left">
+                        <span className="astw:text-body-sm astw:text-muted-foreground astw:truncate astw:w-full astw:text-left">
                           {result.description}
                         </span>
                       )}
@@ -756,7 +756,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
           )}
           {/* Searching indicator */}
           {isSearching && (
-            <div className="astw:flex astw:items-center astw:justify-center astw:gap-2 astw:py-4 astw:text-sm astw:text-muted-foreground">
+            <div className="astw:flex astw:items-center astw:justify-center astw:gap-2 astw:py-4 astw:text-body-md astw:text-muted-foreground">
               <Spinner />
               {t("commandPaletteSearching")}
             </div>

@@ -34,13 +34,13 @@ function Header({ className, title, description, children, ...props }: HeaderPro
       {title && (
         <h3
           data-slot="card-title"
-          className="astw:text-lg astw:font-semibold astw:leading-none astw:text-card-foreground"
+          className="astw:text-heading-md astw:leading-none astw:text-card-foreground"
         >
           {title}
         </h3>
       )}
       {description && (
-        <div data-slot="card-description" className="astw:text-muted-foreground astw:text-sm">
+        <div data-slot="card-description" className="astw:text-muted-foreground astw:text-body-md">
           {description}
         </div>
       )}

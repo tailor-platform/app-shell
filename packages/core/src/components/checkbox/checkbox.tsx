@@ -122,7 +122,7 @@ function Checkbox({ className, label, ...props }: CheckboxProps) {
     <label
       data-slot="checkbox-label"
       className={cn(
-        "astw:inline-flex astw:cursor-pointer astw:items-center astw:gap-2 astw:text-sm astw:select-none",
+        "astw:inline-flex astw:cursor-pointer astw:items-center astw:gap-2 astw:text-body-md astw:select-none",
         "astw:has-data-disabled:cursor-not-allowed astw:has-data-disabled:opacity-50",
         className,
       )}

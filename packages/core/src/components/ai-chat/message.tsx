@@ -26,7 +26,7 @@ function Message({ className, from, children, ...props }: MessageProps) {
       <div
         data-slot="ai-chat-message-content"
         className={cn(
-          "astw:flex astw:w-fit astw:min-w-0 astw:max-w-full astw:flex-col astw:gap-2 astw:text-sm astw:leading-relaxed",
+          "astw:flex astw:w-fit astw:min-w-0 astw:max-w-full astw:flex-col astw:gap-2 astw:text-body-md-relaxed",
           from === "user"
             ? "astw:ml-auto astw:max-w-[92%] astw:rounded-lg astw:bg-primary astw:px-3 astw:py-2 astw:text-primary-foreground"
             : "astw:w-full astw:px-3 astw:py-2 astw:text-foreground",

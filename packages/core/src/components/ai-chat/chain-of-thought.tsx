@@ -99,7 +99,7 @@ function ChainOfThoughtStep({
   return (
     <div
       data-slot="ai-chat-chain-of-thought-step"
-      className={cn("astw:group astw:flex astw:gap-2 astw:text-sm", className)}
+      className={cn("astw:group astw:flex astw:gap-2 astw:text-body-md", className)}
       {...props}
     >
       <div className="astw:flex astw:w-4 astw:shrink-0 astw:flex-col astw:items-center astw:gap-1">
@@ -131,7 +131,7 @@ function ChainOfThoughtStep({
         )}
       >
         <p className="astw:leading-5">{label}</p>
-        {description ? <p className="astw:text-xs">{description}</p> : null}
+        {description ? <p className="astw:text-body-sm">{description}</p> : null}
         {children}
       </div>
     </div>
@@ -162,7 +162,7 @@ function ChainOfThoughtSearchResult({
   children,
 }: ChainOfThoughtSearchResultProps) {
   return (
-    <Badge variant={variant} className={cn("astw:text-[10px] astw:font-normal", className)}>
+    <Badge variant={variant} className={cn("astw:text-body-sm", className)}>
       {children}
     </Badge>
   );

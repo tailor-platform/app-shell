@@ -131,7 +131,7 @@ function Title({ className, ...props }: React.ComponentProps<typeof BaseDialog.T
   return (
     <BaseDialog.Title
       data-slot="dialog-title"
-      className={cn("astw:text-lg astw:leading-none astw:font-semibold", className)}
+      className={cn("astw:text-heading-md astw:leading-none", className)}
       {...props}
     />
   );
@@ -143,7 +143,7 @@ function Description({ className, ...props }: React.ComponentProps<typeof BaseDi
   return (
     <BaseDialog.Description
       data-slot="dialog-description"
-      className={cn("astw:text-muted-foreground astw:text-sm", className)}
+      className={cn("astw:text-muted-foreground astw:text-body-md", className)}
       {...props}
     />
   );

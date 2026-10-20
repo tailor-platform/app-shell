@@ -21,8 +21,8 @@ const formatRowsForClipboard = (rows: AppInfoEntry[]) =>
 
 const AppInfoRow = ({ label, value }: AppInfoEntry) => (
   <div className="astw:grid astw:gap-1 astw:py-3 astw:sm:grid-cols-[12rem_minmax(0,1fr)] astw:sm:gap-4">
-    <dt className="astw:text-sm astw:text-muted-foreground">{label}</dt>
-    <dd className="astw:min-w-0 astw:text-sm astw:break-all">{renderValue(value)}</dd>
+    <dt className="astw:text-body-md astw:text-muted-foreground">{label}</dt>
+    <dd className="astw:min-w-0 astw:text-body-md astw:break-all">{renderValue(value)}</dd>
   </div>
 );
 
@@ -60,7 +60,7 @@ export const AppInfoPage = () => {
     <div className="astw:w-full astw:max-w-xl">
       <Card.Root>
         <div className="astw:flex astw:items-center astw:justify-between astw:px-6 astw:pt-6 astw:pb-4">
-          <h1 className="astw:text-lg astw:font-semibold astw:leading-none">{t("appInfoTitle")}</h1>
+          <h1 className="astw:text-heading-md astw:leading-none">{t("appInfoTitle")}</h1>
           <Button variant="outline" size="sm" onClick={handleCopy}>
             {t("appInfoCopy")}
           </Button>

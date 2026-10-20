@@ -379,10 +379,10 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
     return (
       <div className="astw:flex astw:min-h-screen astw:items-center astw:justify-center astw:bg-background astw:p-4">
         <div className="astw:max-w-md astw:rounded-lg astw:border astw:border-danger-border astw:bg-danger-surface astw:p-6 astw:text-center">
-          <h1 className="astw:mb-2 astw:text-lg astw:font-semibold astw:text-danger-text">
+          <h1 className="astw:mb-2 astw:text-heading-md astw:text-danger-text">
             Configuration Error
           </h1>
-          <p className="astw:text-sm astw:text-muted-foreground">{errorMessage}</p>
+          <p className="astw:text-body-md astw:text-muted-foreground">{errorMessage}</p>
         </div>
       </div>
     );

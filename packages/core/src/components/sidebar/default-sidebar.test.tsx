@@ -115,7 +115,7 @@ describe("DefaultSidebar", () => {
     expect(searchButton.textContent).toContain("⌘K");
     expect(searchButton.textContent).not.toContain("Ctrl+K");
     expect(searchButton.className).toContain("astw:h-8");
-    expect(searchButton.className).toContain("astw:text-xs");
+    expect(searchButton.className).toContain("astw:text-body-sm");
     expect(searchButton.closest("li")?.className).toContain("astw:pb-2");
 
     await user.click(searchButton);

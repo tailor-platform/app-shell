@@ -12,7 +12,7 @@ const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-ce
 
 const actionRowBaseClasses = cn(
   "astw:flex astw:items-center astw:gap-2 astw:w-full astw:rounded-md astw:px-3 astw:py-2",
-  "astw:text-sm astw:font-medium astw:transition-colors astw:border astw:border-transparent",
+  "astw:text-label-md astw:transition-colors astw:border astw:border-transparent",
   "astw:bg-transparent astw:text-left astw:cursor-pointer astw:[&_svg]:size-4 astw:[&_svg]:shrink-0",
 );
 
@@ -115,7 +115,7 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
       <Card.Header title={title} className="astw:px-8" />
       <Card.Content className="astw:px-4 astw:pb-4">
         {actions.length === 0 ? (
-          <p className="astw:py-2 astw:pl-3 astw:text-sm astw:text-muted-foreground">
+          <p className="astw:py-2 astw:pl-3 astw:text-body-md astw:text-muted-foreground">
             No actions available
           </p>
         ) : (

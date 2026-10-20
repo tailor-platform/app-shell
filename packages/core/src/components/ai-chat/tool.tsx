@@ -91,7 +91,7 @@ function ToolHeader({ toolName, state, title, className, ...props }: ToolHeaderP
         </span>
       </span>
       <span className="astw:flex astw:shrink-0 astw:items-center astw:gap-2">
-        <span className="astw:flex astw:items-center astw:gap-1 astw:text-[10px] astw:text-muted-foreground">
+        <span className="astw:flex astw:items-center astw:gap-1 astw:text-body-sm astw:text-muted-foreground">
           {STATUS_ICONS[state]}
           {labelKey ? t(labelKey) : <span className="astw:sr-only">{t("aiChatToolDone")}</span>}
         </span>
@@ -115,7 +115,7 @@ function ToolContent({ className, ...props }: ToolContentProps) {
 function JsonBlock({ value }: { value: unknown }) {
   const text = typeof value === "string" ? value : JSON.stringify(value, null, 2);
   return (
-    <pre className="astw:overflow-x-auto astw:rounded astw:bg-muted/50 astw:p-2 astw:text-[11px] astw:leading-relaxed astw:whitespace-pre-wrap">
+    <pre className="astw:overflow-x-auto astw:rounded astw:bg-muted/50 astw:p-2 astw:font-mono astw:text-code-sm astw:whitespace-pre-wrap">
       {text}
     </pre>
   );
@@ -128,7 +128,7 @@ function ToolInput({ input, className, ...props }: ToolInputProps) {
 
   return (
     <div className={cn("astw:space-y-1", className)} {...props}>
-      <h4 className="astw:text-[10px] astw:font-medium astw:uppercase astw:tracking-wide astw:text-muted-foreground">
+      <h4 className="astw:text-label-sm astw:uppercase astw:tracking-wide astw:text-muted-foreground">
         {t("aiChatToolParameters")}
       </h4>
       <JsonBlock value={input} />
@@ -149,7 +149,7 @@ function ToolOutput({ output, errorText, className, ...props }: ToolOutputProps)
     <div className={cn("astw:space-y-1", className)} {...props}>
       <h4
         className={cn(
-          "astw:text-[10px] astw:font-medium astw:uppercase astw:tracking-wide",
+          "astw:text-label-sm astw:uppercase astw:tracking-wide",
           errorText ? "astw:text-danger-text" : "astw:text-muted-foreground",
         )}
       >

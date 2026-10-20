@@ -27,7 +27,7 @@ function Header({ title, icon, actions, className }: AIChatHeaderProps) {
         className,
       )}
     >
-      <div className="astw:flex astw:min-w-0 astw:items-center astw:gap-1.5 astw:text-sm astw:font-semibold astw:text-foreground">
+      <div className="astw:flex astw:min-w-0 astw:items-center astw:gap-1.5 astw:text-heading-sm astw:text-foreground">
         {icon === undefined ? (
           <Sparkles className="astw:size-4 astw:shrink-0 astw:text-primary" aria-hidden />
         ) : (

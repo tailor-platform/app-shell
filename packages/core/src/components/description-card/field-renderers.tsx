@@ -305,7 +305,7 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
     <div className="astw:flex astw:items-start astw:gap-1 astw:min-w-0">
       <p
         ref={textRef}
-        className="astw:text-sm astw:font-medium astw:text-foreground astw:wrap-break-word astw:m-0"
+        className="astw:text-label-md astw:text-foreground astw:wrap-break-word astw:m-0"
         style={lineClampStyle}
       >
         {value}
@@ -322,7 +322,7 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
           {content}
         </Tooltip.Trigger>
         <Tooltip.Content position={{ side: "bottom" }} style={{ maxWidth: 320 }}>
-          <p className="astw:text-sm">{value}</p>
+          <p className="astw:text-body-md">{value}</p>
         </Tooltip.Content>
       </Tooltip.Root>
     );
@@ -338,7 +338,7 @@ function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
   const values = toValueArray(field.value);
 
   if (values.every((v) => isEmpty(v))) {
-    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
+    return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const badgeOptions = {
@@ -369,7 +369,7 @@ function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function MoneyFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
+    return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const currencyKey = field.meta?.currencyKey || "currency";
@@ -377,9 +377,7 @@ function MoneyFieldRenderer({ field }: { field: ResolvedField }) {
   const formatted = formatMoney(field.value, currency);
 
   return (
-    <span className="astw:text-sm astw:font-medium astw:text-foreground astw:tabular-nums">
-      {formatted}
-    </span>
+    <span className="astw:text-label-md astw:text-foreground astw:tabular-nums">{formatted}</span>
   );
 }
 
@@ -390,13 +388,13 @@ function DateFieldRenderer({ field }: { field: ResolvedField }) {
   const t = useDescriptionCardT();
 
   if (isEmpty(field.value)) {
-    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
+    return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const format = field.meta?.dateFormat || "medium";
   const formatted = formatDate(field.value, format, t);
 
-  return <span className="astw:text-sm astw:font-medium astw:text-foreground">{formatted}</span>;
+  return <span className="astw:text-label-md astw:text-foreground">{formatted}</span>;
 }
 
 /**
@@ -404,7 +402,7 @@ function DateFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function LinkFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
+    return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const hrefKey = field.meta?.hrefKey;
@@ -413,7 +411,7 @@ function LinkFieldRenderer({ field }: { field: ResolvedField }) {
   const value = String(field.value);
 
   if (!href) {
-    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{value}</span>;
+    return <span className="astw:text-label-md astw:text-foreground">{value}</span>;
   }
 
   if (isExternal) {
@@ -422,7 +420,7 @@ function LinkFieldRenderer({ field }: { field: ResolvedField }) {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="astw:inline-flex astw:items-center astw:gap-1 astw:text-sm astw:text-primary astw:hover:underline"
+        className="astw:inline-flex astw:items-center astw:gap-1 astw:text-body-md astw:text-primary astw:hover:underline"
       >
         {value}
         <ExternalLink className="astw:h-3 astw:w-3" />
@@ -433,7 +431,7 @@ function LinkFieldRenderer({ field }: { field: ResolvedField }) {
   return (
     <Link
       to={href}
-      className="astw:inline-flex astw:items-center astw:gap-1 astw:text-sm astw:text-primary astw:hover:underline"
+      className="astw:inline-flex astw:items-center astw:gap-1 astw:text-body-md astw:text-primary astw:hover:underline"
     >
       {value}
     </Link>
@@ -445,7 +443,7 @@ function LinkFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function AddressFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
+    return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const lines = formatAddress(field.value);
@@ -455,7 +453,7 @@ function AddressFieldRenderer({ field }: { field: ResolvedField }) {
 
   return (
     <div className="astw:flex astw:items-start astw:gap-1 astw:min-w-0">
-      <address className="astw:text-sm astw:font-medium astw:text-foreground astw:not-italic">
+      <address className="astw:text-label-md astw:text-foreground astw:not-italic">
         {lines.map((line, i) => (
           <React.Fragment key={i}>
             {line}
@@ -473,7 +471,7 @@ function AddressFieldRenderer({ field }: { field: ResolvedField }) {
  */
 function ReferenceFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
-    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>;
+    return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
   }
 
   const idKey = field.meta?.referenceIdKey;
@@ -482,13 +480,13 @@ function ReferenceFieldRenderer({ field }: { field: ResolvedField }) {
   const value = String(field.value);
 
   if (!id || !urlPattern) {
-    return <span className="astw:text-sm astw:font-medium astw:text-foreground">{value}</span>;
+    return <span className="astw:text-label-md astw:text-foreground">{value}</span>;
   }
 
   const href = urlPattern.replace("{id}", id);
 
   return (
-    <Link to={href} className="astw:text-sm astw:text-primary astw:hover:underline">
+    <Link to={href} className="astw:text-body-md astw:text-primary astw:hover:underline">
       {value}
     </Link>
   );
@@ -522,9 +520,7 @@ export function renderField(field: ResolvedField): React.ReactNode {
     case "reference":
       return <ReferenceFieldRenderer field={field} />;
     default:
-      return (
-        <span className="astw:text-sm astw:font-medium astw:text-foreground">{EMPTY_DASH}</span>
-      );
+      return <span className="astw:text-label-md astw:text-foreground">{EMPTY_DASH}</span>;
   }
 }
 

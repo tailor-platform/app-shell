@@ -55,7 +55,7 @@ function AutocompleteInput({
     <BaseAutocomplete.Input
       data-slot="autocomplete-input"
       className={cn(
-        "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:text-foreground astw:placeholder:text-muted-foreground astw:flex astw:h-9 astw:w-full astw:rounded-md astw:border astw:px-3 astw:py-1 astw:text-sm astw:outline-none astw:transition-colors",
+        "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:text-foreground astw:placeholder:text-muted-foreground astw:flex astw:h-9 astw:w-full astw:rounded-md astw:border astw:px-3 astw:py-1 astw:text-body-md astw:outline-none astw:transition-colors",
         "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
         "astw:disabled:cursor-not-allowed astw:disabled:opacity-50",
         className,
@@ -160,7 +160,7 @@ function AutocompleteItem({
     <BaseAutocomplete.Item
       data-slot="autocomplete-item"
       className={cn(
-        "astw:relative astw:flex astw:w-full astw:cursor-default astw:items-center astw:gap-2 astw:rounded-sm astw:py-1.5 astw:px-2 astw:text-sm astw:outline-hidden astw:select-none",
+        "astw:relative astw:flex astw:w-full astw:cursor-default astw:items-center astw:gap-2 astw:rounded-sm astw:py-1.5 astw:px-2 astw:text-body-md astw:outline-hidden astw:select-none",
         "astw:data-highlighted:bg-accent astw:data-highlighted:text-accent-foreground",
         "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
         className,
@@ -179,7 +179,7 @@ function AutocompleteEmpty({
     <BaseAutocomplete.Empty
       data-slot="autocomplete-empty"
       className={cn(
-        "astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-sm astw:text-muted-foreground astw:empty:hidden",
+        "astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-body-md astw:text-muted-foreground astw:empty:hidden",
         className,
       )}
       {...props}
@@ -222,7 +222,7 @@ function AutocompleteGroupLabel({
     <BaseAutocomplete.GroupLabel
       data-slot="autocomplete-group-label"
       className={cn(
-        "astw:text-muted-foreground astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium",
+        "astw:text-muted-foreground astw:px-2 astw:py-1.5 astw:text-label-sm",
         className,
       )}
       {...props}

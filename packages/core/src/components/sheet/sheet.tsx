@@ -256,7 +256,7 @@ function Title({ className, ...props }: React.ComponentProps<typeof Drawer.Title
   return (
     <Drawer.Title
       data-slot="sheet-title"
-      className={cn("astw:text-foreground astw:text-lg astw:font-semibold", className)}
+      className={cn("astw:text-foreground astw:text-heading-md", className)}
       {...props}
     />
   );
@@ -268,7 +268,7 @@ function Description({ className, ...props }: React.ComponentProps<typeof Drawer
   return (
     <Drawer.Description
       data-slot="sheet-description"
-      className={cn("astw:text-muted-foreground astw:text-sm", className)}
+      className={cn("astw:text-muted-foreground astw:text-body-md", className)}
       {...props}
     />
   );

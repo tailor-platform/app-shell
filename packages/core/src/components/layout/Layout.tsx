@@ -116,7 +116,7 @@ export function Header({ title, actions, children }: LayoutHeaderProps) {
     <header data-layout-header="" className="astw:flex astw:w-full astw:flex-col">
       {hasTitleRow && (
         <div className="astw:flex astw:w-full astw:flex-1 astw:items-center astw:justify-between astw:pt-4">
-          {title && <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">{title}</h1>}
+          {title && <h1 className="astw:text-heading-lg">{title}</h1>}
           {actions != null && actions.length > 0 && (
             <div className="astw:ml-auto astw:flex astw:gap-2 astw:items-center">
               {actions.map((action, i) => (
@@ -261,7 +261,7 @@ function LayoutRoot({
           data-layout-header=""
           className="astw:w-full astw:flex astw:justify-between astw:items-center astw:pt-4"
         >
-          {title && <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">{title}</h1>}
+          {title && <h1 className="astw:text-heading-lg">{title}</h1>}
           {actions != null && actions.length > 0 && (
             <div className="astw:flex astw:gap-2 astw:items-center">
               {actions.map((action, i) => (

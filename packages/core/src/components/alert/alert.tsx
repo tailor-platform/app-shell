@@ -11,7 +11,7 @@ import {
 import { cn } from "../../lib/utils";
 
 const alertVariants = cva(
-  "astw:relative astw:w-full astw:rounded-lg astw:border astw:px-4 astw:py-3 astw:text-sm astw:grid astw:grid-cols-[calc(var(--spacing)*4.5)_1fr_auto] astw:gap-x-3 astw:gap-y-0.5 astw:items-start astw:[&>svg]:size-[17.5px] astw:[&>svg]:self-center astw:[&>svg]:shrink-0 astw:[&>svg]:text-current",
+  "astw:relative astw:w-full astw:rounded-lg astw:border astw:px-4 astw:py-3 astw:text-body-md astw:grid astw:grid-cols-[calc(var(--spacing)*4.5)_1fr_auto] astw:gap-x-3 astw:gap-y-0.5 astw:items-start astw:[&>svg]:size-[17.5px] astw:[&>svg]:self-center astw:[&>svg]:shrink-0 astw:[&>svg]:text-current",
   {
     variants: {
       /** Visual style and automatic icon */
@@ -124,7 +124,7 @@ function Description({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="alert-description"
       className={cn(
-        "astw:col-start-2 astw:grid astw:justify-items-start astw:gap-1 astw:text-sm astw:[&_p]:leading-relaxed",
+        "astw:col-start-2 astw:grid astw:justify-items-start astw:gap-1 astw:text-body-md astw:[&_p]:leading-relaxed",
         className,
       )}
       {...props}

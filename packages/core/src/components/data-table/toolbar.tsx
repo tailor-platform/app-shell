@@ -297,7 +297,7 @@ DataTableFilters.displayName = "DataTable.Filters";
 
 const PANEL_COLUMN_ROW = cn(
   "astw:flex astw:w-full astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5",
-  "astw:text-left astw:text-sm astw:outline-hidden astw:cursor-default astw:transition-colors",
+  "astw:text-left astw:text-body-md astw:outline-hidden astw:cursor-default astw:transition-colors",
 );
 // Distinct row states: hover is a subtle muted tint; selection is the solid accent
 // (+ bold). Applied exclusively — hover is only added when the row isn't selected —
@@ -440,12 +440,12 @@ function AddFilterPanel({
                   onChange={(e) => handleFieldQueryChange(e.target.value)}
                   placeholder={t("searchFields")}
                   aria-label={t("searchFields")}
-                  className="astw:h-8 astw:pl-8 astw:text-sm"
+                  className="astw:h-8 astw:pl-8 astw:text-body-md"
                 />
               </div>
               <div className="astw:flex-1 astw:overflow-y-auto">
                 {visibleFieldColumns.length === 0 ? (
-                  <div className="astw:px-2 astw:py-3 astw:text-center astw:text-xs astw:text-muted-foreground">
+                  <div className="astw:px-2 astw:py-3 astw:text-center astw:text-body-sm astw:text-muted-foreground">
                     {t("noFieldsMatch")}
                   </div>
                 ) : (
@@ -619,13 +619,13 @@ function PanelDateTimeInput({
         />
       </div>
       <div className="astw:flex astw:flex-col astw:gap-1">
-        <span className="astw:text-xs astw:text-muted-foreground">{t("chooseTime")}</span>
+        <span className="astw:text-body-sm astw:text-muted-foreground">{t("chooseTime")}</span>
         <Input
           type="time"
           aria-label={`${ariaLabel} (${t("chooseTime")})`}
           value={timePart}
           onChange={(e) => emit(datePart, e.target.value)}
-          className="astw:h-8 astw:text-sm"
+          className="astw:h-8 astw:text-body-md"
         />
       </div>
     </div>
@@ -692,10 +692,10 @@ function PanelDateRangeInput({
               active === b.key && "astw:bg-background astw:shadow-sm",
             )}
           >
-            <span className="astw:text-xs astw:text-muted-foreground">{b.label}</span>
+            <span className="astw:text-body-sm astw:text-muted-foreground">{b.label}</span>
             <span
               className={cn(
-                "astw:w-full astw:truncate astw:text-sm",
+                "astw:w-full astw:truncate astw:text-body-md",
                 active === b.key ? "astw:text-foreground" : "astw:text-muted-foreground",
               )}
             >
@@ -720,7 +720,7 @@ function PanelDateRangeInput({
         />
       )}
 
-      {error && <p className="astw:text-danger-text astw:text-xs">{error}</p>}
+      {error && <p className="astw:text-danger-text astw:text-body-sm">{error}</p>}
     </div>
   );
 }
@@ -933,7 +933,7 @@ function PanelValueEditor({
           onKeyDown={(e) => {
             if (e.key === "Enter") apply();
           }}
-          className="astw:h-8 astw:text-sm"
+          className="astw:h-8 astw:text-body-md"
         />
       </div>
     );
@@ -949,7 +949,7 @@ function PanelValueEditor({
           onKeyDown={(e) => {
             if (e.key === "Enter") apply();
           }}
-          className="astw:h-8 astw:text-sm"
+          className="astw:h-8 astw:text-body-md"
         />
       </div>
     );
@@ -1017,9 +1017,9 @@ function BetweenInputGroup({
     "astw:border-input astw:has-focus-visible:border-ring astw:has-focus-visible:ring-ring/50";
   const rowError = "astw:border-danger-solid astw:has-focus-visible:ring-danger-solid/30";
   const labelCell =
-    "astw:text-secondary-foreground astw:text-xs astw:px-2.5 astw:border-r astw:border-input astw:bg-muted astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14";
+    "astw:text-secondary-foreground astw:text-body-sm astw:px-2.5 astw:border-r astw:border-input astw:bg-muted astw:rounded-l-md astw:h-full astw:flex astw:items-center astw:justify-center astw:shrink-0 astw:min-w-14";
   const inputCell =
-    "astw:h-full astw:text-sm astw:border-0 astw:shadow-none astw:focus-visible:ring-0";
+    "astw:h-full astw:text-body-md astw:border-0 astw:shadow-none astw:focus-visible:ring-0";
   return (
     <div className="astw:flex astw:flex-col astw:gap-1.5">
       <div className={cn(rowBase, rowOk)}>
@@ -1051,7 +1051,7 @@ function BetweenInputGroup({
           className={inputCell}
         />
       </div>
-      {error && <p className="astw:text-danger-text astw:text-xs">{error}</p>}
+      {error && <p className="astw:text-danger-text astw:text-body-sm">{error}</p>}
     </div>
   );
 }
@@ -1155,7 +1155,7 @@ function DateTimeFilterInput({
         aria-label={`${ariaLabel} (time)`}
         value={timePart}
         onChange={(e) => emit(datePart, e.target.value)}
-        className="astw:h-8 astw:w-28 astw:shrink-0 astw:text-sm"
+        className="astw:h-8 astw:w-28 astw:shrink-0 astw:text-body-md"
       />
     </div>
   );
@@ -1268,7 +1268,7 @@ function FilterChip({
   const valueLabel = formatFilterValue(filter, config, t, locale, shellTz.value, label);
 
   const segment =
-    "astw:flex astw:items-center astw:h-6 astw:px-2 astw:text-xs astw:whitespace-nowrap astw:outline-hidden";
+    "astw:flex astw:items-center astw:h-6 astw:px-2 astw:text-body-sm astw:whitespace-nowrap astw:outline-hidden";
   const interactiveSegment = cn(
     segment,
     "astw:cursor-pointer astw:hover:bg-accent astw:focus-visible:bg-accent astw:data-popup-open:bg-accent",
@@ -1412,7 +1412,7 @@ function OperatorList({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("filterOperatorSearchPlaceholder")}
-          className="astw:h-9 astw:w-full astw:bg-transparent astw:text-sm astw:outline-hidden astw:placeholder:text-muted-foreground"
+          className="astw:h-9 astw:w-full astw:bg-transparent astw:text-body-md astw:outline-hidden astw:placeholder:text-muted-foreground"
         />
       </div>
       <div className="astw:p-1">
@@ -1422,7 +1422,7 @@ function OperatorList({
             type="button"
             onClick={() => onSelect(op)}
             className={cn(
-              "astw:flex astw:w-full astw:items-center astw:justify-between astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-left astw:text-sm astw:outline-hidden",
+              "astw:flex astw:w-full astw:items-center astw:justify-between astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-left astw:text-body-md astw:outline-hidden",
               "astw:hover:bg-accent astw:hover:text-accent-foreground astw:focus-visible:bg-accent",
               op === current && "astw:bg-accent/60",
             )}
@@ -1432,7 +1432,7 @@ function OperatorList({
           </button>
         ))}
         {items.length === 0 && (
-          <output className="astw:block astw:px-2 astw:py-1.5 astw:text-sm astw:text-muted-foreground">
+          <output className="astw:block astw:px-2 astw:py-1.5 astw:text-body-md astw:text-muted-foreground">
             {t("filterOperatorNoResults")}
           </output>
         )}
@@ -1540,7 +1540,7 @@ function EnumOptionList({
         <label
           key={option.value}
           className={cn(
-            "astw:flex astw:cursor-pointer astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-sm",
+            "astw:flex astw:cursor-pointer astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-body-md",
             "astw:hover:bg-accent astw:hover:text-accent-foreground",
           )}
         >
@@ -1648,7 +1648,7 @@ function BooleanFilterEditor({
             if (v) setLocalOp(v as BooleanOperator);
           }}
           mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t) })}
-          className="astw:h-8 astw:text-sm"
+          className="astw:h-8 astw:text-body-md"
         />
       )}
       <Select
@@ -1661,7 +1661,7 @@ function BooleanFilterEditor({
           value: v,
           label: v === "true" ? t("filterBooleanTrue") : t("filterBooleanFalse"),
         })}
-        className="astw:h-8 astw:text-sm"
+        className="astw:h-8 astw:text-body-md"
       />
       <Button size="xs" onClick={handleCommit} className="astw:self-end">
         {t("applyFilter")}
@@ -1723,7 +1723,7 @@ function StringFilterEditor({
             if (v) setLocalOp(v as StringOperator);
           }}
           mapItem={(op) => ({ value: op, label: t(`filterOperator_${op}`) })}
-          className="astw:h-8 astw:text-sm"
+          className="astw:h-8 astw:text-body-md"
         />
       )}
       <Input
@@ -1734,7 +1734,7 @@ function StringFilterEditor({
           e.stopPropagation();
           if (e.key === "Enter") handleCommit();
         }}
-        className="astw:h-8 astw:text-sm"
+        className="astw:h-8 astw:text-body-md"
       />
       <Checkbox
         label={t("filterCaseSensitive")}
@@ -1786,7 +1786,7 @@ function UuidFilterEditor({
           e.stopPropagation();
           if (e.key === "Enter") handleCommit();
         }}
-        className="astw:h-8 astw:text-sm"
+        className="astw:h-8 astw:text-body-md"
       />
       <Button size="xs" onClick={handleCommit} className="astw:self-end">
         {t("applyFilter")}
@@ -1905,7 +1905,7 @@ function NumericFilterEditor({
             if (v) setLocalOp(v);
           }}
           mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t, config.type) })}
-          className="astw:h-8 astw:text-sm"
+          className="astw:h-8 astw:text-body-md"
         />
       )}
       {localOp === "between" ? (
@@ -1938,7 +1938,7 @@ function NumericFilterEditor({
             e.stopPropagation();
             if (e.key === "Enter") handleCommit();
           }}
-          className="astw:h-8 astw:text-sm"
+          className="astw:h-8 astw:text-body-md"
         />
       )}
       <Button size="xs" onClick={handleCommit} disabled={!canCommit} className="astw:self-end">
@@ -2094,7 +2094,9 @@ function TemporalFilterEditor({
             value={localValueMax}
             onChange={setLocalValueMax}
           />
-          {betweenError && <p className="astw:text-danger-text astw:text-xs">{betweenError}</p>}
+          {betweenError && (
+            <p className="astw:text-danger-text astw:text-body-sm">{betweenError}</p>
+          )}
         </div>
       ) : (
         <BetweenInputGroup
@@ -2124,7 +2126,7 @@ function TemporalFilterEditor({
               handleCommit();
             }
           }}
-          className="astw:h-8 astw:text-sm"
+          className="astw:h-8 astw:text-body-md"
         />
       );
   }
@@ -2142,7 +2144,7 @@ function TemporalFilterEditor({
             if (v) setLocalOp(v);
           }}
           mapItem={(op) => ({ value: op, label: getOperatorLabel(op, t, config.type) })}
-          className="astw:h-8 astw:text-sm"
+          className="astw:h-8 astw:text-body-md"
         />
       )}
       {valueInput}

@@ -36,7 +36,7 @@ function Legend({ className, ...props }: React.ComponentProps<typeof BaseFieldse
   return (
     <BaseFieldset.Legend
       data-slot="fieldset-legend"
-      className={cn("astw:text-sm astw:font-medium", className)}
+      className={cn("astw:text-label-md", className)}
       {...props}
     />
   );

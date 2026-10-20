@@ -120,7 +120,7 @@ function Label({ className, ...props }: React.ComponentProps<typeof BaseField.La
   return (
     <BaseField.Label
       data-slot="field-label"
-      className={cn("astw:text-sm astw:font-medium", className)}
+      className={cn("astw:text-label-md", className)}
       {...props}
     />
   );
@@ -159,7 +159,7 @@ function Description({ className, ...props }: React.ComponentProps<typeof BaseFi
   return (
     <BaseField.Description
       data-slot="field-description"
-      className={cn("astw:text-muted-foreground astw:text-sm", className)}
+      className={cn("astw:text-muted-foreground astw:text-body-md", className)}
       {...props}
     />
   );
@@ -220,7 +220,7 @@ function Error({ className, ...props }: React.ComponentProps<typeof BaseField.Er
   return (
     <BaseField.Error
       data-slot="field-error"
-      className={cn("astw:text-danger-text astw:text-sm astw:font-medium", className)}
+      className={cn("astw:text-danger-text astw:text-label-md", className)}
       {...props}
     />
   );

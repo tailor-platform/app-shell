@@ -51,7 +51,7 @@ function Root({ className, containerClassName, containerRef, ...props }: RootPro
     >
       <table
         data-slot="table"
-        className={cn("astw:w-full astw:caption-bottom astw:text-sm", className)}
+        className={cn("astw:w-full astw:caption-bottom astw:text-body-md", className)}
         {...props}
       />
     </div>
@@ -150,7 +150,7 @@ function Caption({ className, ...props }: React.ComponentProps<"caption">) {
   return (
     <caption
       data-slot="table-caption"
-      className={cn("astw:text-muted-foreground astw:mt-4 astw:text-sm", className)}
+      className={cn("astw:text-muted-foreground astw:mt-4 astw:text-body-md", className)}
       {...props}
     />
   );

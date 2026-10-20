@@ -50,32 +50,27 @@ export function MetricCard({ title, value, trend, description, icon, className }
             {icon}
           </span>
         )}
-        <span className="astw:text-sm astw:font-medium astw:text-muted-foreground astw:min-w-0 astw:truncate">
+        <span className="astw:text-label-md astw:text-muted-foreground astw:min-w-0 astw:truncate">
           {title}
         </span>
       </div>
 
       {/* Main value */}
-      <div className="astw:text-2xl astw:font-bold astw:tracking-tight astw:break-words">
-        {value}
-      </div>
+      <div className="astw:text-heading-lg astw:break-words">{value}</div>
 
       {/* Optional meta row: trend + description */}
       {hasMeta && (
         <div className="astw:mt-2 astw:flex astw:items-center astw:gap-2 astw:flex-wrap">
           {trend != null && (
             <span
-              className={cn(
-                "astw:text-sm astw:font-medium",
-                trendDirectionClasses[trend.direction],
-              )}
+              className={cn("astw:text-label-md", trendDirectionClasses[trend.direction])}
               data-direction={trend.direction}
             >
               {trend.value}
             </span>
           )}
           {description != null && description !== "" && (
-            <span className="astw:text-sm astw:text-muted-foreground astw:truncate">
+            <span className="astw:text-body-md astw:text-muted-foreground astw:truncate">
               {description}
             </span>
           )}

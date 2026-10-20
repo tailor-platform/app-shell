@@ -44,12 +44,12 @@ function ActivityCardStandalone({
                 ) : undefined
               }
             >
-              <p className="astw:text-sm astw:font-medium astw:leading-normal astw:text-foreground">
+              <p className="astw:text-label-md astw:text-foreground">
                 {actorName ? <span>{actorName}</span> : null}
                 {actorName ? " " : null}
                 <span className="astw:text-muted-foreground">{item.description}</span>
               </p>
-              <p className="astw:text-xs astw:leading-none astw:text-muted-foreground">
+              <p className="astw:text-body-sm astw:leading-none astw:text-muted-foreground">
                 {formatTimestamp(item.timestamp)}
               </p>
             </Item>

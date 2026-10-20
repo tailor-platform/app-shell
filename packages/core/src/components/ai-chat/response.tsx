@@ -37,7 +37,7 @@ function renderInline(text: string): ReactNode[] {
       tokens.push(
         <code
           key={key++}
-          className="astw:rounded astw:bg-muted astw:px-1 astw:py-0.5 astw:font-mono astw:text-xs"
+          className="astw:rounded astw:bg-muted astw:px-1 astw:py-0.5 astw:font-mono astw:text-code-sm"
         >
           {token.slice(1, -1)}
         </code>,

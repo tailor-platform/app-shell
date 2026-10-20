@@ -8,6 +8,8 @@ You can now register **local tools** and **provider tools** via the `tools` opti
 
 Stopped or failed requests retain user messages, partial assistant text, and completed tool exchanges in subsequent request history. Unanswered tool calls are excluded. Stopping does not undo tool side effects or guarantee safe retries of tools that were already running.
 
+**Low-level API compatibility:** `AIGatewayChatMessage` now includes `role: "tool"`, and `AIChatCompletionEvent` now includes `type: "tool-call"`. Exhaustive handlers for these exported unions must handle the new cases, even when tools are not enabled. The high-level `useAIChat().messages` role union remains `"user" | "assistant"`.
+
 ## Local tools
 
 Define tools that run inside AppShell using `defineAIChatTool`. The model decides when to call them, AppShell validates arguments with the schema, executes the handler, and feeds results back into the next model turn automatically.

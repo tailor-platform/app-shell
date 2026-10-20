@@ -41,7 +41,7 @@ export const useT = labels.useT;
 
 `useT` above is exported by **your catalog module**, not directly by `@tailor-platform/app-shell`. The component examples below use this shared setup; import `labels` and `useT` from `./i18n-labels` in application files.
 
-Do not use the old label-first form `{ title: { en: "Requests", ja: "申請一覧" } }`. Nested key objects are not supported; a dotted key such as `"status.PENDING"` is an ordinary flat string key.
+Label keys are flat strings, not nested objects. A dotted key such as `"status.PENDING"` is an ordinary flat string key.
 
 ## Return Value
 

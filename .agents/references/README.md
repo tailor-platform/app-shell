@@ -10,7 +10,7 @@ Use these references from both implementation-time and review-time skills. Treat
 - [react-use-effect.md](react-use-effect.md) — state ownership, `useEffect`, async lifecycle, subscriptions, memoization
 - [accessibility.md](accessibility.md) — interactive semantics, keyboard support, focus, labels, announced state
 - [low-level-apis.md](low-level-apis.md) — timers, measurement, observers, imperative DOM, browser coordination
-- [composite-field-controls.md](composite-field-controls.md) — field semantics, composite inputs, `Field` / `Form` bridging, proxy or hidden inputs, validation wiring, and alignment with nearby Base UI-backed control contracts
+- [composite-field-controls.md](composite-field-controls.md) — field semantics, composite inputs, `Field` / `Form` bridging, proxy or hidden inputs, validation wiring, self-wired registration for `Field.Control`, and alignment with nearby Base UI-backed control contracts
 
 ## Inclusion Criteria
 

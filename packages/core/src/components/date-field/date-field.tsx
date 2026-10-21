@@ -11,6 +11,7 @@ import {
 import { toCalendarDate, today, type DateValue } from "@internationalized/date";
 import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
 import { cn } from "@/lib/utils";
+import { markSelfWired } from "@/lib/self-wired-controls";
 import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
 import {
   useDateFieldState,
@@ -422,6 +423,9 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
 }) as <T extends DateValue = DateValue>(
   props: DatePickerProps<T> & { ref?: Ref<HTMLInputElement> },
 ) => ReactElement;
+
+markSelfWired(DateField, "DateField");
+markSelfWired(DatePicker, "DatePicker");
 
 export { DateField, DatePicker };
 export type { DateControlProps };

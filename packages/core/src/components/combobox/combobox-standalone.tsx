@@ -26,6 +26,7 @@ import { defaultMapItem, isGroupedItems } from "../dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "../dropdown-items";
 import { AsyncErrorState, resolveAsyncContent } from "../internals/async-error-state";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
+import { markSelfWired } from "@/lib/self-wired-controls";
 
 /** Fetcher type for `Combobox.Async`. */
 export type ComboboxAsyncFetcher<T> = AsyncFetcher<T>;
@@ -712,5 +713,8 @@ const Combobox: ComboboxComponent = Object.assign(ComboboxStandalone, {
   useFilter,
   useCreatable,
 });
+
+markSelfWired(Combobox, "Combobox");
+markSelfWired(Combobox.Async, "Combobox.Async");
 
 export { Combobox };

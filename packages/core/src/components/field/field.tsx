@@ -2,14 +2,9 @@ import * as React from "react";
 import { Field as BaseField } from "@base-ui/react/field";
 
 import { useOnceWarnings } from "@/hooks/use-once-warnings";
+import { getSelfWiredName } from "@/lib/self-wired-controls";
 import { cn } from "@/lib/utils";
 import { inputBaseClasses } from "@/lib/input-classes";
-import { Autocomplete } from "../autocomplete";
-import { Checkbox } from "../checkbox";
-import { Combobox } from "../combobox";
-import { DateField, DatePicker, DateRangePicker } from "../date-field";
-import { Select } from "../select";
-import { Textarea } from "../textarea";
 
 // Only the props relevant to the Field abstraction are picked from BaseField.Root.
 // Base UI-internal props (e.g. actionsRef) are intentionally excluded
@@ -134,26 +129,9 @@ function Label({ className, ...props }: React.ComponentProps<typeof BaseField.La
 }
 Label.displayName = "Field.Label";
 
-// Controls that draw their own frame and connect to `Field.Root` themselves.
-// Passed to `Field.Control`'s `render`, they get a second frame plus `<input>`
-// props they don't take (platform-planning#1977).
-const selfWiredControls = new Map<unknown, string>([
-  [Select, "Select"],
-  [Select.Async, "Select.Async"],
-  [Combobox, "Combobox"],
-  [Combobox.Async, "Combobox.Async"],
-  [Autocomplete, "Autocomplete"],
-  [Autocomplete.Async, "Autocomplete.Async"],
-  [Checkbox, "Checkbox"],
-  [Textarea, "Textarea"],
-  [DateField, "DateField"],
-  [DatePicker, "DatePicker"],
-  [DateRangePicker, "DateRangePicker"],
-]);
-
 function renderMisuseWarnings(render: unknown): string[] {
   if (!React.isValidElement(render)) return [];
-  const name = selfWiredControls.get(render.type);
+  const name = getSelfWiredName(render.type);
   if (!name) return [];
   return [
     `Field.Control: \`render={<${name} />}\` draws a second frame around ${name}. ${name} connects to Field.Root by itself — place it directly under <Field.Root> instead of inside Field.Control.`,

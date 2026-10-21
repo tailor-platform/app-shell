@@ -2,6 +2,7 @@ import * as React from "react";
 import { Field as BaseField } from "@base-ui/react/field";
 
 import { cn } from "@/lib/utils";
+import { markSelfWired } from "@/lib/self-wired-controls";
 import { textareaBaseClasses } from "@/lib/input-classes";
 
 // `render` is intentionally excluded: the component owns the `<textarea>` tag
@@ -107,5 +108,7 @@ function Textarea({ className, ...props }: TextareaProps) {
     />
   );
 }
+
+markSelfWired(Textarea, "Textarea");
 
 export { Textarea, type TextareaProps };

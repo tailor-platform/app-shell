@@ -13,6 +13,7 @@ import {
 import { defaultMapItem, isGroupedItems } from "../dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "../dropdown-items";
 import { AsyncErrorState, resolveAsyncContent } from "../internals/async-error-state";
+import { markSelfWired } from "@/lib/self-wired-controls";
 
 /**
  * Fetcher type for `Select.Async`.
@@ -600,5 +601,8 @@ const Select: SelectComponent = Object.assign(SelectStandalone, {
   Parts: SelectParts,
   useAsync,
 });
+
+markSelfWired(Select, "Select");
+markSelfWired(Select.Async, "Select.Async");
 
 export { Select, useAsync };

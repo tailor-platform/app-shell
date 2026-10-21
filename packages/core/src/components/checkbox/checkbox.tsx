@@ -3,6 +3,7 @@ import { Checkbox as BaseCheckbox } from "@base-ui/react/checkbox";
 import { Check, Minus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { markSelfWired } from "@/lib/self-wired-controls";
 
 // `children` and `render` are intentionally excluded: the component owns the
 // box + indicator structure so the visual stays stable, and consumers get a
@@ -132,5 +133,7 @@ function Checkbox({ className, label, ...props }: CheckboxProps) {
     </label>
   );
 }
+
+markSelfWired(Checkbox, "Checkbox");
 
 export { Checkbox, type CheckboxProps };

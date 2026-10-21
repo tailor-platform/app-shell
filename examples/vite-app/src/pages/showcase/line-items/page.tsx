@@ -515,7 +515,7 @@ const PurchaseOrderDemo = ({
                     setLastSaved(cs);
                     // A real save would submit first, then re-key new lines with the
                     // ids the server returns (or pass the saved lines to reset).
-                    lineItems.reset({ idMap: fakeServerIds(cs) });
+                    lineItems.reset({ idMap: fakeServerIds(cs) }, { sent: cs });
                   }}
                 />
               </div>

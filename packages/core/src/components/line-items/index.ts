@@ -21,6 +21,8 @@ export type {
   LineItemsMode,
   LineItemsOrderingMode,
   LineItemsRowData,
+  LineItemsRowSelectionOptions,
+  LineItemsSelectionAction,
   LineItemsRowPatch,
   LineItemsSelectOption,
   LineItemsSortDirection,

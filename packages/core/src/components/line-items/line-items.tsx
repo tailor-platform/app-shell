@@ -20,15 +20,29 @@ import { useLineItemsT } from "./i18n";
 import { LineItemsTable } from "./line-items-table";
 import type { LineItemsRowData, UseLineItemsReturn } from "./types";
 
+/**
+ * Fullscreen is uncontrolled by default. Controlling it takes both props: with
+ * `fullscreen` alone, the toggle and Escape would have no way out of the overlay.
+ */
+type LineItemsFullscreenControl =
+  | {
+      /** Controlled fullscreen state. */
+      fullscreen: boolean;
+      /** Called when the toggle or Escape asks to change it. */
+      onFullscreenChange: (next: boolean) => void;
+    }
+  | {
+      fullscreen?: undefined;
+      /** Observes fullscreen changes while Root owns the state. */
+      onFullscreenChange?: (next: boolean) => void;
+    };
+
 export type LineItemsRootProps<T extends LineItemsRowData> = {
   /** The `useLineItems()` return value this subtree renders. */
   value: UseLineItemsReturn<T>;
   children?: React.ReactNode;
-  /** Controlled fullscreen state. Omit to let Root own it. */
-  fullscreen?: boolean;
-  onFullscreenChange?: (next: boolean) => void;
   className?: string;
-};
+} & LineItemsFullscreenControl;
 
 /** Elements Tab can land on, for keeping focus inside the fullscreen overlay. */
 const FOCUSABLE =

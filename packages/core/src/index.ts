@@ -203,6 +203,8 @@ export {
   type LineItemsOrderingMode,
   type LineItemsRootProps,
   type LineItemsRowData,
+  type LineItemsRowSelectionOptions,
+  type LineItemsSelectionAction,
   type LineItemsRowPatch,
   type LineItemsSelectOption,
   type LineItemsSortDirection,

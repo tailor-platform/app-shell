@@ -58,6 +58,12 @@ So the rule a consumer has to learn is: "a text input goes through `Field.Contro
 <Field.Control render={<Select items={countries} />} /> // #1977
 ```
 
+### `Field.Control` is a wiring primitive styled as an input
+
+In Base UI, `Field.Control` is a logical primitive, not a visual element. It connects an element to `Field.Root` (label, description, validation, value registration) and has no styling of its own. Base UI's `Input` is literally `<Field.Control>` re-exported. The other use of `Field.Control` is to wire in an element that is not a Base UI control, through `render`: a native `<textarea>` or `<select>`, or an input the consumer built.
+
+AppShell applied `inputBaseClasses` on top of `Field.Control`, and that was a mistake. Not every element it wires needs the text-input visual treatment: the classes reach whatever is passed to `render`, which is the cause of #1977's double frame. Styling it also blurs what each component is for. `Input` is the visual text input. `Field.Control` is the link between an element and its field. Once `Field.Control` looks like an input, it competes with `Input` for the same job.
+
 ### How `Input` is used today
 
 On `main` (2026-10-21), no example, doc, or core component puts `<Input>` inside a `Field.Root`. Every usage is standalone: toolbar and data-table search boxes, column settings, editable cells, the command palette, and dialog/sheet examples that hold the value in `useState`. Consumer apps have not been scanned yet (see open questions).
@@ -86,6 +92,8 @@ function Input({ className, ref: forwardedRef, ...props }: InputProps) {
   );
 }
 ```
+
+Outside a `Field.Root`, nothing changes. Base UI's Field context has a default value, so `Field.Control` with no `Field.Root` above it is a plain `<input>`: no field wiring and no `Form` registration (`Textarea` already relies on this).
 
 This is the smallest change, but it is **breaking in a minor release**:
 
@@ -141,7 +149,7 @@ function Input(props: InputProps) {
 What this gives us:
 
 - **Nothing breaks now.** All four risks from option A apply only to code that opts in to `InputField`, and they are behaviours that code wants.
-- **One rule for forms:** every AppShell control goes directly under `Field.Root`. `Field.Control` is only needed for native elements (`render={<textarea />}`-style).
+- **One rule for forms:** every AppShell control goes directly under `Field.Root`. `Field.Control` is only needed to wire in native elements (`render={<textarea />}`-style) and consumer-built inputs.
 - **The name has a precedent.** `DateField` already means "a control that works standalone and connects to `Field.Root` when inside one".
 
 Costs:
@@ -160,7 +168,7 @@ Ship C now (#1977). Discuss B as the follow-up.
 
 ## Open questions
 
-1. **What happens to `Field.Control`'s styling?** Once `InputField` exists, should `Field.Control` become an alias of `InputField`, stay a styled input, or become unstyled like Base UI's? Removing its styling is breaking too, so it would need the same major.
+1. **Should `Field.Control` keep the input styling?** Once `InputField` exists, `Field.Control`'s only job is to link a native or consumer-built input to our fields. Is it still appropriate for it to carry `inputBaseClasses`? The consumer's input brings its own look, so the classes would fight it or need overriding. The alternative is to make `Field.Control` unstyled, like Base UI's. Removing the styling is breaking too, so it would need the same major.
 2. **Naming.** `InputField` versus `TextField`. `TextField` reads better for `type="text"`, but `type` also covers email, number, password, and so on, and `InputField` matches the `<input>` element and `DateField`.
 3. **Consumer usage.** Scan consumer repos (the same way the PR #350 scroll audit did) for `<Input>` inside `Field.Root`, and for `InputProps` passed to a native `<input>`. This sizes the deprecation and tells us whether option A is ever safe.
 4. **`type="file"` under `InputField`.** Opt out of value registration, or make it unsupported?

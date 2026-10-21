@@ -1,4 +1,4 @@
-import type { SelectionAction } from "@/components/data-table/types";
+import type { RowSelectionOptions, SelectionAction } from "@/components/data-table/types";
 import type { ReactNode } from "react";
 
 /**
@@ -223,11 +223,14 @@ export type UseLineItemsOptions<T extends LineItemsRowData> = LineItemsRowSource
   /** Defaults to `"sort"`. Pass `"manual"` to enable drag-reordering. */
   ordering?: LineItemsOrderingMode;
   /**
-   * `true` adds the row-selection checkbox column. `{ actions }` also shows a
-   * bulk-action bar at the foot of `LineItems.Table` while lines are selected —
-   * the same bar, and the same `SelectionAction` shape, as DataTable.
+   * Adds the row-selection checkbox column — the same option as DataTable's
+   * `rowSelection`. Pass `{}` for uncontrolled selection, `{ defaultSelectedIds }`
+   * to seed it, or `{ selectedIds, onChange }` to control it. Selected ids are
+   * `lineRef`s. With `actions`, a bulk-action bar sits at the foot of
+   * `LineItems.Table` while lines are selected; actions get the selected ids
+   * and never clear the selection on their own.
    */
-  selection?: boolean | { actions: SelectionAction<T>[] };
+  rowSelection?: RowSelectionOptions;
   /** Receives edits to `commit: "metadata"` fields, which bypass the change-set. */
   onMetadataCommit?: (event: LineItemsMetadataCommit<T>) => void;
 };
@@ -247,17 +250,14 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
   selectedIds: string[];
   /** The selected lines, in document order. */
   selectedRows: T[];
-  selectionActions: SelectionAction<T>[];
+  selectionActions: SelectionAction[];
   /** Id of the selection action whose request is in flight, or `null`. */
   pendingActionId: string | null;
   /**
    * Tracks a selection action's request: the bar disables its actions while it
-   * is pending and clears the selection once it resolves, unless the action
-   * sets `keepSelection`. The bar calls this for you.
+   * is pending, without changing selection. The bar calls this for you.
    */
-  runSelectionAction:
-    | ((action: { id: string; keepSelection?: boolean }, request: PromiseLike<unknown>) => void)
-    | undefined;
+  runSelectionAction: ((action: { id: string }, request: PromiseLike<unknown>) => void) | undefined;
   /** Active sort, or `null` when in document order. Always `null` under manual ordering. */
   sortState: LineItemsSortState | null;
 

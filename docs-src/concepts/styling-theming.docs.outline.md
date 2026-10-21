@@ -142,17 +142,26 @@ Colors follow shadcn-style semantic naming: a surface token and its matching `-f
 | `--border`                           | hairlines, dividers           | `border-border`                          |
 | `--input`                            | form control borders          | `border-input`                           |
 | `--ring`                             | focus rings                   | `ring-ring` / `outline-ring`             |
+| `--backdrop`                         | dim layer behind a modal      | `bg-backdrop`                            |
 
 Surfaces are named by **role**, not by depth — there is no numbered `surface-1/2/3` ladder, and no third tier of body text below `muted-foreground`. Stack depth with `background` → `card` → `muted` plus a border or shadow, and reach for `popover` when the surface actually floats.
 
+`--backdrop` is the dim layer behind `Dialog` and `Sheet` (black at 50% in both modes). Use `bg-backdrop` for your own modal layers instead of `bg-black/50`. Palettes inherit it; override it on `:root` to change every backdrop at once.
+
+In the default palette, the surface, text and line tokens in this table read the internal gray scale, a white step, and white alpha steps (dark-mode lines), so their values match the gray used across the palette. `--backdrop` reads a black alpha step, and `--ring` is mixed from `--primary`. The other palettes set their own values.
+
 #### Brand & action
 
-| Token                                        | Use                              | Tailwind                                     |
-| -------------------------------------------- | -------------------------------- | -------------------------------------------- |
-| `--primary` / `--primary-foreground`         | primary buttons, emphasis        | `bg-primary` / `text-primary-foreground`     |
-| `--secondary` / `--secondary-foreground`     | secondary buttons, neutral chips | `bg-secondary` / `text-secondary-foreground` |
-| `--accent` / `--accent-foreground`           | hover and selected nav states    | `bg-accent` / `text-accent-foreground`       |
-| `--destructive` / `--destructive-foreground` | destructive actions, errors      | `bg-destructive` / `text-destructive`        |
+| Token                                        | Use                                         | Tailwind                                     |
+| -------------------------------------------- | ------------------------------------------- | -------------------------------------------- |
+| `--primary` / `--primary-foreground`         | primary buttons, emphasis                   | `bg-primary` / `text-primary-foreground`     |
+| `--secondary` / `--secondary-foreground`     | secondary buttons, neutral chips            | `bg-secondary` / `text-secondary-foreground` |
+| `--accent` / `--accent-foreground`           | hover and selected nav states               | `bg-accent` / `text-accent-foreground`       |
+| `--destructive` / `--destructive-foreground` | deprecated alias of danger solid / contrast | `bg-destructive` / `text-destructive`        |
+
+**Deprecated.** `--destructive`, `--destructive-foreground` and their utilities remain for existing code and will be removed in the next major. New code uses the danger roles: `bg-danger-solid`, `text-danger-contrast`, and `text-danger-text` for text. `Button variant="destructive"` is not deprecated yet; the next major renames it to `danger`.
+
+`--destructive` and `--destructive-foreground` are aliases of the danger `solid` and `contrast` roles ([semantic color roles](#semantic-color-roles)), so `bg-destructive` is the danger solid fill in both modes and `Button variant="destructive"` reads the danger roles directly. `text-destructive` still works and resolves to the solid. For text, use `text-danger-text`, which meets 4.5:1 on `--card` and `--background`; the solid is `#dc2626` in dark mode, 3.71:1 on the dark card. To recolour destructive actions, override `--danger-solid` (and the other danger roles), not `--destructive`.
 
 There are no `-hover` or `-active` brand tokens. Express interaction states with Tailwind variants and opacity — `hover:bg-primary/90`, `active:bg-primary/80` — which is what AppShell's own components do.
 
@@ -195,7 +204,7 @@ In the default palette, `text` on `surface` and `contrast` on `solid` and `solid
 
 Most `surface` and `border` values are translucent tints, so an opacity modifier compounds rather than replaces — `bg-info-surface/50` halves the tint's alpha instead of setting it to 50%. Some light-mode values are opaque instead of translucent: the `warning` surface, surface-hover and border, the `info` border and the `danger` surface-hover. They do not blend with a tinted parent. All dark-mode values are translucent.
 
-`Badge`, `Alert`, `CsvImporter` and `MetricCard` read these roles directly, not `--status-*` or `--alert-*`. To recolour them, override the roles. `Badge` `error` and `subtle-error`, and `Alert` `error`, follow `--danger-*`. They no longer follow `--destructive`, which still drives `Button` and `text-destructive`.
+`Badge`, `Alert`, `CsvImporter` and `MetricCard` read these roles directly, not `--status-*` or `--alert-*`. To recolour them, override the roles. `Badge` `error` and `subtle-error`, and `Alert` `error`, follow `--danger-*`. `Button variant="destructive"`, invalid input borders and error text follow `--danger-*` too, and `--destructive` is an alias of `--danger-solid`.
 
 #### Sidebar & charts
 
@@ -271,7 +280,7 @@ Pair a role with a color token from the Color section above. These pairings are 
 | --------------------------------- | ---------------------------------------------- |
 | Page title (`Layout.Header`)      | `text-heading-lg`                              |
 | Section heading                   | `text-heading-md`                              |
-| Card title (`div` or `span`)      | `text-heading-md leading-none`                 |
+| Card title                        | `text-heading-md leading-none`                 |
 | Body copy                         | `text-body-md`                                 |
 | Secondary copy, descriptions      | `text-body-md text-muted-foreground`           |
 | Caption, timestamp, metadata      | `text-body-sm text-muted-foreground`           |
@@ -286,17 +295,24 @@ Pair a role with a color token from the Color section above. These pairings are 
 <span className="text-body-sm text-muted-foreground">Updated 2h ago</span>
 ```
 
+The [`Text`](../components/text.md) component applies the same roles with a `variant` prop. It renders a default element for each role (`h2` for headings, `p` for body text, `span` for the others), and its `render` prop sets the element, such as the heading level:
+
+```tsx
+<Text variant="heading-md" render={<h3 />}>Line items</Text>
+<Text variant="body-md" className="text-muted-foreground">Description copy</Text>
+```
+
 On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's line height and letter spacing, including `leading-none`; see "Change a role" below. AppShell's own components still use the stock utilities (`text-sm`, `font-medium`, and so on) today. They will move to the roles in later changes, so the two sets can appear side by side for now.
 
 **Rules**
 
 - **A role carries no color.** Set the color with a token such as `text-muted-foreground`.
-- **A role does not choose the HTML element.** Pick `h2`, `p`, or `span` from the document structure, not from the size.
+- **A role does not choose the HTML element.** Pick `h2`, `p`, or `span` from the document structure, not from the size. With `Text`, set the element with `render`.
 - **A role sets weight and letter spacing on its own element.** It does not inherit them from a parent. Put an emphasis or tracking class on the element that has the role, not on its parent.
 - **Four modifiers may be combined with a role.** All are stock Tailwind utilities:
   - Compact line height: `leading-none`. Use it only for single-line text, such as a card title. Write it after the role when you merge with `cn()`.
   - Tabular figures: `tabular-nums`.
-  - Emphasis on inline text: `font-medium` or `font-semibold`.
+  - Emphasis on inline text: `font-semibold`. Do not use `font-medium`; on a label role it makes no change.
   - Uppercase: `uppercase`.
 - **Do not combine a role with other `leading-*`, `tracking-*`, or `text-[Npx]` values.** If none of the roles fits, use the nearest role.
 - **12px is the minimum size.** Do not use smaller text.
@@ -305,12 +321,12 @@ On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's 
 
 Always use `tabular-nums` for numbers that stack in a column — without it, digits jitter between rows.
 
-**Change a role.** Each role is four CSS variables named `--app-shell-type-<role>-<size|line-height|weight|letter-spacing>`. Override them on `:root` to change a role for the whole app. Typography has no dark variant, so one override applies to light and dark mode.
+**Change a role.** Each role is four CSS variables named `--type-<role>-<size|line-height|weight|letter-spacing>`. Override them on `:root` to change a role for the whole app. Typography has no dark variant, so one override applies to light and dark mode. 1.17.0 named these variables `--app-shell-type-*`. The old names still work, but they are deprecated and will be removed in the next major; rename them to `--type-*`.
 
 ```css
 :root {
-  --app-shell-type-heading-lg-size: 1.75rem;
-  --app-shell-type-heading-lg-line-height: calc(36 / 28);
+  --type-heading-lg-size: 1.75rem;
+  --type-heading-lg-line-height: calc(36 / 28);
 }
 ```
 
@@ -654,7 +670,7 @@ These are visual-composition rules every screen must follow, regardless of patte
 
 | Intent                             | Pick                                                                                                    |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Destructive action (delete, void)  | `Button variant="destructive"`; `bg-destructive` on custom surfaces; confirm in a dialog at `shadow-lg` |
+| Destructive action (delete, void)  | `Button variant="destructive"`; `bg-danger-solid` on custom surface; confirm in a dialog at `shadow-lg` |
 | Non-blocking caution               | `Badge variant="warning"`, or `bg-warning-surface text-warning-text`                                    |
 | Confirmation / completed state     | `Badge variant="success"`, or `bg-success-surface text-success-text`                                    |
 | Informational callout              | `Badge variant="info"`, or `Alert variant="info"`                                                       |

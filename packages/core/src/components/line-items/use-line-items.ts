@@ -1,5 +1,4 @@
 import * as React from "react";
-import { useSelectionActionRunner } from "@/components/internals/selection-actions/use-selection-action-runner";
 import { fieldCommitScope, fieldsToColumnDefs } from "./field";
 import {
   buildChangeSet,
@@ -17,6 +16,7 @@ import type {
   UseLineItemsOptions,
   UseLineItemsReturn,
 } from "./types";
+import { usePendingAction } from "./use-pending-action";
 
 type RowState<T extends LineItemsRowData> = {
   byRef: Record<string, T>;
@@ -55,12 +55,11 @@ export function useLineItems<T extends LineItemsRowData>(
     onLinesChange,
     mode: modeProp = "edit",
     ordering = "sort",
-    selection: selectionOption = false,
+    rowSelection,
     onMetadataCommit,
   } = options;
-  const selection = selectionOption !== false;
-  const selectionActions =
-    typeof selectionOption === "object" ? selectionOption.actions : EMPTY_ACTIONS;
+  const selection = rowSelection !== undefined;
+  const selectionActions = rowSelection?.actions ?? EMPTY_ACTIONS;
 
   const controlled = controlledLines !== undefined;
   const seed = controlled ? controlledLines : defaultLines;
@@ -101,8 +100,39 @@ export function useLineItems<T extends LineItemsRowData>(
 
   const [filter, setFilterState] = React.useState("");
   const [sortState, setSortState] = React.useState<LineItemsSortState | null>(null);
-  const [selectedSet, setSelectedSet] = React.useState<ReadonlySet<string>>(
-    () => new Set<string>(),
+  // Selection follows DataTable's `rowSelection`: controlled through
+  // `selectedIds` + `onChange`, or uncontrolled from `defaultSelectedIds`.
+  const controlledSelectedIds = rowSelection?.selectedIds;
+  const [uncontrolledSelected, setUncontrolledSelected] = React.useState<ReadonlySet<string>>(
+    () => new Set(rowSelection?.defaultSelectedIds ?? []),
+  );
+  const selectedSet = React.useMemo<ReadonlySet<string>>(
+    () => (controlledSelectedIds ? new Set(controlledSelectedIds) : uncontrolledSelected),
+    [controlledSelectedIds, uncontrolledSelected],
+  );
+  const selectedSetRef = React.useRef(selectedSet);
+  selectedSetRef.current = selectedSet;
+  const onSelectionChangeRef = React.useRef(rowSelection?.onChange);
+  onSelectionChangeRef.current = rowSelection?.onChange;
+  const isSelectionControlled = controlledSelectedIds !== undefined;
+  const isSelectionControlledRef = React.useRef(isSelectionControlled);
+  isSelectionControlledRef.current = isSelectionControlled;
+
+  /**
+   * Applies a selection change and reports it. Derives from the latest value
+   * (a ref, so commands issued back-to-back in one tick compose) and is a
+   * no-op when the updater returns the same set.
+   */
+  const setSelectedSet = React.useCallback(
+    (update: (prev: ReadonlySet<string>) => ReadonlySet<string>) => {
+      const prev = selectedSetRef.current;
+      const next = update(prev);
+      if (next === prev) return;
+      selectedSetRef.current = next;
+      if (!isSelectionControlledRef.current) setUncontrolledSelected(next);
+      onSelectionChangeRef.current?.([...next]);
+    },
+    [],
   );
 
   const columns = React.useMemo<LineItemsColumnDef<T>[]>(
@@ -177,34 +207,37 @@ export function useLineItems<T extends LineItemsRowData>(
     [addLines],
   );
 
-  const removeLines = React.useCallback((refs: readonly string[]) => {
-    if (refs.length === 0) return;
-    const doomed = new Set(refs);
-    pendingNotify.current = true;
+  const removeLines = React.useCallback(
+    (refs: readonly string[]) => {
+      if (refs.length === 0) return;
+      const doomed = new Set(refs);
+      pendingNotify.current = true;
 
-    setRows((prev) => {
-      const byRef = { ...prev.byRef };
-      for (const id of doomed) delete byRef[id];
-      return { byRef, order: prev.order.filter((id) => !doomed.has(id)) };
-    });
+      setRows((prev) => {
+        const byRef = { ...prev.byRef };
+        for (const id of doomed) delete byRef[id];
+        return { byRef, order: prev.order.filter((id) => !doomed.has(id)) };
+      });
 
-    setDirty((prev) => {
-      const inserted = new Set(prev.inserted);
-      const removed = new Set(prev.removed);
-      for (const id of doomed) {
-        inserted.delete(id);
-        if (prev.baseline.rows[id]) removed.add(id);
-      }
-      return { ...prev, inserted, removed };
-    });
+      setDirty((prev) => {
+        const inserted = new Set(prev.inserted);
+        const removed = new Set(prev.removed);
+        for (const id of doomed) {
+          inserted.delete(id);
+          if (prev.baseline.rows[id]) removed.add(id);
+        }
+        return { ...prev, inserted, removed };
+      });
 
-    setSelectedSet((prev) => {
-      if (prev.size === 0) return prev;
-      const next = new Set(prev);
-      for (const id of doomed) next.delete(id);
-      return next.size === prev.size ? prev : next;
-    });
-  }, []);
+      setSelectedSet((prev) => {
+        if (prev.size === 0) return prev;
+        const next = new Set(prev);
+        for (const id of doomed) next.delete(id);
+        return next.size === prev.size ? prev : next;
+      });
+    },
+    [setSelectedSet],
+  );
 
   const removeLine = React.useCallback((lineRef: string) => removeLines([lineRef]), [removeLines]);
 
@@ -312,7 +345,7 @@ export function useLineItems<T extends LineItemsRowData>(
       for (const id of prev) if (byRef[id]) next.add(id);
       return next.size === prev.size ? prev : next;
     });
-  }, [dirty.baseline]);
+  }, [dirty.baseline, setSelectedSet]);
 
   const changeSet = React.useMemo(
     (): LineItemsChangeSet =>
@@ -396,19 +429,19 @@ export function useLineItems<T extends LineItemsRowData>(
         return next;
       });
     },
-    [selection],
+    [selection, setSelectedSet],
   );
 
   const visibleRefs = React.useMemo(() => lines.map((l) => l.lineRef), [lines]);
 
   const selectAllVisible = React.useCallback(() => {
     if (!selection) return;
-    setSelectedSet(new Set(visibleRefs));
-  }, [selection, visibleRefs]);
+    setSelectedSet(() => new Set(visibleRefs));
+  }, [selection, setSelectedSet, visibleRefs]);
 
   const clearSelection = React.useCallback(() => {
     setSelectedSet((prev) => (prev.size === 0 ? prev : new Set<string>()));
-  }, []);
+  }, [setSelectedSet]);
 
   const bulkUpdate = React.useCallback(
     (patch: Partial<T>) => {
@@ -427,11 +460,7 @@ export function useLineItems<T extends LineItemsRowData>(
     [rows, selectedIds],
   );
 
-  const { pendingActionId, runSelectionAction } = useSelectionActionRunner({
-    enabled: selection,
-    clearSelection,
-    owner: "LineItems",
-  });
+  const { pendingActionId, runSelectionAction } = usePendingAction(selection);
 
   const setMode = React.useCallback((m: LineItemsMode) => setModeState(m), []);
   const setFilter = React.useCallback((q: string) => setFilterState(q), []);

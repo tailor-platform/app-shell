@@ -3,6 +3,7 @@ import {
   Card,
   Layout,
   TreePicker,
+  TreeSelect,
   type AppShellPageProps,
   type TreePickerNode,
 } from "@tailor-platform/app-shell";
@@ -47,6 +48,7 @@ const money = (n: number) => `$${n.toFixed(2)}`;
 const TreePickerDemoPage = () => {
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<CatalogItem[]>([]);
+  const [inlineSelected, setInlineSelected] = useState<string[]>([]);
 
   return (
     <Layout>
@@ -74,6 +76,30 @@ const TreePickerDemoPage = () => {
                 ))}
               </ul>
             )}
+          </Card.Content>
+        </Card.Root>
+
+        {/* 🔽 The same tree inline on the page — no dialog */}
+        <Card.Root>
+          <Card.Header
+            title="Tree select (inline)"
+            description={`${inlineSelected.length} selected — the tree on its own, for pages and panels.`}
+          />
+          <Card.Content padding="none">
+            <TreeSelect<CatalogItem>
+              aria-label="Catalog"
+              className="h-80"
+              items={CATALOG_TREE}
+              rowLabel="Product name"
+              metricLabel="Unit price"
+              renderRow={({ node }) => <span className="text-sm">{node.data.name}</span>}
+              renderMetric={({ node }) => (node.children ? null : money(node.data.price))}
+              matchesSearch={({ node, query }) =>
+                `${node.data.sku} ${node.data.name}`.toLowerCase().includes(query.toLowerCase())
+              }
+              value={inlineSelected}
+              onValueChange={(ids) => setInlineSelected(ids)}
+            />
           </Card.Content>
         </Card.Root>
 

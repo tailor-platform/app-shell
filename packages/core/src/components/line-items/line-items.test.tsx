@@ -87,7 +87,7 @@ type HarnessProps = {
   totals?: boolean;
   addRow?: boolean;
   onSave?: (cs: LineItemsChangeSet) => void;
-  selectionActions?: SelectionAction<Line>[];
+  selectionActions?: SelectionAction[];
   onReady?: (api: ReturnType<typeof useLineItems<Line>>) => void;
 };
 
@@ -108,7 +108,7 @@ function Harness({
     defaultLines: seed,
     mode,
     ordering,
-    selection: selectionActions ? { actions: selectionActions } : selection,
+    rowSelection: selectionActions || selection ? { actions: selectionActions } : undefined,
   });
   onReady?.(lineItems);
 
@@ -703,14 +703,14 @@ describe("LineItems", () => {
   });
 
   describe("selection", () => {
-    const remove: SelectionAction<Line> = {
+    const remove: SelectionAction = {
       id: "remove",
       label: "Remove",
       variant: "destructive",
       onClick: () => {},
     };
 
-    it("shows no bulk-action bar for selection: true", async () => {
+    it("shows no bulk-action bar without actions", async () => {
       const user = userEvent.setup();
       render(<Harness selection />);
 
@@ -737,22 +737,16 @@ describe("LineItems", () => {
       expect(within(bar).getByText("3 of 3 selected")).toBeDefined();
     });
 
-    it("counts and passes only the lines canApply accepts", async () => {
+    it("passes the selected lineRefs, in document order", async () => {
       const user = userEvent.setup();
       const onClick = vi.fn();
-      render(
-        <Harness
-          selectionActions={[
-            { id: "bump", label: "Bump", canApply: (l) => (l.quantity ?? 0) > 1, onClick },
-          ]}
-        />,
-      );
+      render(<Harness selectionActions={[{ id: "bump", label: "Bump", onClick }]} />);
 
-      await user.click(screen.getByRole("checkbox", { name: "Select all lines" }));
-      await user.click(screen.getByRole("button", { name: /Bump/ }));
+      await user.click(screen.getByRole("checkbox", { name: "Select line 3" }));
+      await user.click(screen.getByRole("checkbox", { name: "Select line 1" }));
+      await user.click(screen.getByRole("button", { name: "Bump" }));
 
-      expect(screen.getByRole("button", { name: /Bump/ }).textContent).toContain("(2)");
-      expect(onClick.mock.calls[0]?.[0].map((l: Line) => l.lineRef)).toEqual(["1", "2"]);
+      expect(onClick.mock.calls[0]?.[0]).toEqual(["1", "3"]);
     });
 
     it("lets an action remove the selected lines in one update", async () => {
@@ -760,9 +754,7 @@ describe("LineItems", () => {
       let api: ReturnType<typeof useLineItems<Line>> | undefined;
       render(
         <Harness
-          selectionActions={[
-            { ...remove, onClick: (rows) => api?.removeLines(rows.map((r) => r.lineRef)) },
-          ]}
+          selectionActions={[{ ...remove, onClick: (ids) => api?.removeLines(ids) }]}
           onReady={(a) => {
             api = a;
           }}
@@ -793,7 +785,7 @@ describe("LineItems", () => {
       );
     });
 
-    it("clears the selection once a returned promise resolves", async () => {
+    it("tracks a returned promise without clearing the selection", async () => {
       const user = userEvent.setup();
       let resolve: (() => void) | undefined;
       const request = new Promise<void>((r) => {
@@ -810,7 +802,9 @@ describe("LineItems", () => {
       );
 
       await act(async () => resolve?.());
-      expect(screen.queryByRole("toolbar", { name: "Bulk actions" })).toBeNull();
+      const bar = screen.getByRole("toolbar", { name: "Bulk actions" });
+      expect(bar.getAttribute("aria-busy")).toBeNull();
+      expect(within(bar).getByText("1 of 3 selected")).toBeDefined();
     });
 
     it("hides the selection column in view mode", () => {

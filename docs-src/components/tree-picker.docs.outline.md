@@ -2,7 +2,7 @@
 kind: code-backed
 group: tree-picker
 title: TreePicker
-description: Tree-select dialog for picking many items from a hierarchical catalog and committing them in one batch
+description: Pick many items from a hierarchical catalog — inline with TreeSelect, or in a dialog with TreePicker
 sources:
   - packages/core/src/components/tree-picker/**
 ---
@@ -13,10 +13,12 @@ sources:
 
 It is generic and standalone: it knows nothing about line items, or about what your nodes contain. `data` is opaque, handed back only to your render and search callbacks.
 
+The tree itself is also available on its own as **`TreeSelect`**, for use inline on a page, in a side panel, or in a popover. `TreePicker` is `TreeSelect` in a dialog, with a title, Cancel, and an "Add N items" button — the same split as `DateField` and `DatePicker`.
+
 ## Import
 
 ```tsx
-import { TreePicker } from "@tailor-platform/app-shell";
+import { TreePicker, TreeSelect } from "@tailor-platform/app-shell";
 ```
 
 ## Basic Usage
@@ -93,11 +95,42 @@ The default `matchesSearch` stringifies `node.data`, which only works for primit
 
 **Search auto-expands.** A node survives the filter if it matches or if any descendant does. Every ancestor of a match is expanded for the duration of the query, so matches are visible without clicking; manually expanded rows stay expanded once the query clears.
 
-**State resets on close.** Query, selection, and expansion are cleared when the dialog closes, so reopening starts fresh.
+**State resets on open.** Each time the dialog opens, the query, selection, and expansion start fresh.
+
+**Fixed height.** The dialog keeps one height; the list scrolls inside it, so opening or closing a group never resizes the dialog or moves what is on screen.
+
+**Search while browsing.** Groups a search opened can still be closed and reopened, showing only their matches. Escape clears the search first; a second Escape closes the dialog.
 
 **Mouse.** Clicking a group row opens or closes it; its checkbox selects everything inside. Clicking an item row ticks or unticks it.
 
-**Keyboard.** The tree is a `role="tree"` with roving focus: Arrow Up/Down move between visible rows, Arrow Right expands a collapsed parent or steps into it, Arrow Left collapses or steps out to the parent, Space toggles the focused row, and Enter commits — except while typing in the search box.
+**Keyboard.** The tree is a `role="tree"` with roving focus: Arrow Up/Down move between visible rows, Arrow Right expands a collapsed parent or steps into it, Arrow Left collapses or steps out to the parent, Space toggles the focused row, and Enter on a row commits. Enter in the search box or in a `filterSlot` control (a menu or select) is left to that control.
+
+## TreeSelect (inline)
+
+Use `TreeSelect` when the tree belongs on the page itself — a warehouse or category filter in a side panel, a workspace switcher. It takes the same tree props (`items`, `renderRow`, `renderMetric`, `matchesSearch`, `filterSlot`, labels) and adds selection state instead of a commit step. The list scrolls inside it, so give it a height.
+
+```tsx
+const [selected, setSelected] = useState<string[]>([]);
+
+<TreeSelect<Warehouse>
+  aria-label="Warehouses"
+  className="h-96"
+  items={warehouseTree}
+  renderRow={({ node }) => node.data.name}
+  matchesSearch={({ node, query }) => node.data.name.toLowerCase().includes(query.toLowerCase())}
+  value={selected}
+  onValueChange={(ids) => setSelected(ids)}
+/>;
+```
+
+| Prop                             | Type                   | Description                                              |
+| -------------------------------- | ---------------------- | -------------------------------------------------------- |
+| `value`                          | `readonly string[]`    | Controlled selection: the ticked leaf ids.               |
+| `defaultValue`                   | `readonly string[]`    | Initial selection when uncontrolled.                     |
+| `onValueChange`                  | `(ids, nodes) => void` | Every change, as leaf ids and leaf nodes in tree order.  |
+| `onSubmit`                       | `() => void`           | Enter on a tree row — e.g. to submit a surrounding form. |
+| `aria-label` / `aria-labelledby` | `string`               | Names the tree. One is required for assistive tech.      |
+| `className`                      | `string`               | Merged onto the root; set a height here for long trees.  |
 
 ## Loading an async catalog
 

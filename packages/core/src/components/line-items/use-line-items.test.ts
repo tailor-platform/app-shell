@@ -41,12 +41,12 @@ const seed: Line[] = [
 ];
 
 function setup(
-  options?: Pick<UseLineItemsOptions<Line>, "selection" | "mode" | "ordering"> & {
+  options?: Pick<UseLineItemsOptions<Line>, "rowSelection" | "mode" | "ordering"> & {
     defaultLines?: readonly Line[];
   },
 ) {
   return renderHook(() =>
-    useLineItems<Line>({ fields, defaultLines: seed, selection: true, ...options }),
+    useLineItems<Line>({ fields, defaultLines: seed, rowSelection: {}, ...options }),
   );
 }
 
@@ -348,7 +348,7 @@ describe("useLineItems", () => {
     });
 
     it("ignores selection when disabled", () => {
-      const { result } = setup({ selection: false });
+      const { result } = setup({ rowSelection: undefined });
       act(() => {
         result.current.toggleSelect("1");
       });
@@ -400,6 +400,41 @@ describe("useLineItems", () => {
         result.current.removeLine("2");
       });
       expect(result.current.selectedIds).toEqual([]);
+    });
+
+    it("seeds from defaultSelectedIds and reports changes", () => {
+      const onChange = vi.fn();
+      const { result } = setup({ rowSelection: { defaultSelectedIds: ["2"], onChange } });
+      expect(result.current.selectedIds).toEqual(["2"]);
+
+      act(() => {
+        result.current.toggleSelect("1");
+      });
+      expect(result.current.selectedIds).toEqual(["1", "2"]);
+      expect(onChange).toHaveBeenLastCalledWith(["2", "1"]);
+    });
+
+    it("follows controlled selectedIds and only asks onChange to move them", () => {
+      const onChange = vi.fn();
+      const { result, rerender } = renderHook(
+        ({ selectedIds }: { selectedIds: string[] }) =>
+          useLineItems<Line>({
+            fields,
+            defaultLines: seed,
+            rowSelection: { selectedIds, onChange },
+          }),
+        { initialProps: { selectedIds: ["1"] } },
+      );
+
+      act(() => {
+        result.current.toggleSelect("2");
+      });
+      // The owner hasn't committed yet, so the value stays put.
+      expect(result.current.selectedIds).toEqual(["1"]);
+      expect(onChange).toHaveBeenLastCalledWith(["1", "2"]);
+
+      rerender({ selectedIds: ["1", "2"] });
+      expect(result.current.selectedIds).toEqual(["1", "2"]);
     });
   });
 

@@ -2,12 +2,6 @@ import * as React from "react";
 import { ChevronDown, ChevronsUpDown, ChevronUp, GripVertical } from "lucide-react";
 
 import { Checkbox } from "@/components/checkbox";
-import {
-  SelectionActionsAnnouncer,
-  SelectionActionsBar,
-  selectionBarSurfaceClasses,
-  selectionBarTokenClasses,
-} from "@/components/internals/selection-actions/selection-actions-bar";
 import { cn } from "@/lib/utils";
 import {
   ACTIONS_COLUMN_ID,
@@ -45,6 +39,12 @@ import {
   type GridCoord,
 } from "./spreadsheet-logic";
 import { coordKey, useGridSelection } from "./use-grid-selection";
+import {
+  LineItemsSelectionAnnouncer,
+  LineItemsSelectionBar,
+  selectionBarSurfaceClasses,
+  selectionBarTokenClasses,
+} from "./line-items-selection-bar";
 import { useRowVirtualizer } from "./use-row-virtualizer";
 import type { LineItemsRowData } from "./types";
 
@@ -1138,23 +1138,18 @@ export function LineItemsTable<T extends LineItemsRowData>({
               )}
             >
               <div className={cn("astw:contents", selectionBarTokenClasses)}>
-                <SelectionActionsBar
+                <LineItemsSelectionBar
                   actions={lineItems.selectionActions}
-                  selectedRows={lineItems.selectedRows}
+                  selectedIds={lineItems.selectedIds}
                   total={lineItems.allLines.length}
                   clearSelection={lineItems.clearSelection}
                   pendingActionId={lineItems.pendingActionId}
                   runSelectionAction={lineItems.runSelectionAction}
-                  returnFocusTo={(bar) =>
-                    bar
-                      .closest<HTMLElement>('[data-slot="line-items-table"]')
-                      ?.querySelector<HTMLElement>("thead [data-slot=checkbox]")
-                  }
                 />
               </div>
             </div>
           ) : null}
-          <SelectionActionsAnnouncer
+          <LineItemsSelectionAnnouncer
             open={selectionBarOpen}
             selected={lineItems.selectedIds.length}
             total={lineItems.allLines.length}

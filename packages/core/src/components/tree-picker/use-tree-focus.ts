@@ -15,17 +15,16 @@ import type { TreePickerNode } from "./types";
  * - `ArrowLeft` — collapse an expanded parent, else step out to its parent
  * - `Home` / `End` — first / last visible row
  * - `Space` — toggle the focused row (cascading for parents) without moving focus
- * - `Enter` — commit, but never while focus sits in a text input (so it does not
- *   fight typing in the search box) or on a button (whose own click owns it)
+ * - `Enter` — `onSubmit` (TreePicker commits), but only from a tree row
  */
 
 type UseTreeFocusOptions<T> = {
-  open: boolean;
   rows: ReadonlyArray<VisibleRow<T>>;
   setExpanded(id: string, next: boolean): void;
   toggleNode(node: TreePickerNode<T>, next: boolean): void;
   isChecked(node: TreePickerNode<T>): boolean;
-  commit(): void;
+  /** Enter on a tree row. */
+  onSubmit?: () => void;
 };
 
 type UseTreeFocusResult = {
@@ -40,19 +39,14 @@ const ROW_SELECTOR = '[role="treeitem"]';
 const NODE_ID_ATTRIBUTE = "data-node-id";
 
 export function useTreeFocus<T>({
-  open,
   rows,
   setExpanded,
   toggleNode,
   isChecked,
-  commit,
+  onSubmit,
 }: UseTreeFocusOptions<T>): UseTreeFocusResult {
   const [focusedId, setFocusedId] = React.useState<string | null>(null);
   const rowElements = React.useRef(new Map<string, HTMLElement>());
-
-  React.useEffect(() => {
-    if (!open) setFocusedId(null);
-  }, [open]);
 
   const registerRow = React.useCallback((id: string, element: HTMLElement | null) => {
     if (element) rowElements.current.set(id, element);
@@ -82,9 +76,13 @@ export function useTreeFocus<T>({
       const onButton = target.closest("button") !== null;
 
       if (event.key === "Enter") {
-        if (inTextInput || onButton) return;
+        // Only Enter on a tree row commits. Anything else — the search box, a
+        // button, or a menu or select in `filterSlot` (whose portalled options
+        // still bubble here through React) — keeps Enter for itself.
+        if (event.defaultPrevented || inTextInput || onButton) return;
+        if (!target.closest("[role=tree]") || !onSubmit) return;
         event.preventDefault();
-        commit();
+        onSubmit();
         return;
       }
 
@@ -141,7 +139,7 @@ export function useTreeFocus<T>({
           break;
       }
     },
-    [rows, focusRow, setExpanded, toggleNode, isChecked, commit],
+    [rows, focusRow, setExpanded, toggleNode, isChecked, onSubmit],
   );
 
   return { activeRowId, registerRow, onRowFocus, handleKeyDown };

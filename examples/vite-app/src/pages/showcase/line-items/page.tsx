@@ -297,21 +297,21 @@ const PurchaseOrderDemo = ({
     mode,
     ordering,
     // 🔽 Bulk actions: the same footer bar DataTable shows while rows are selected.
+    // Actions get the selected lineRefs; look lines up from `allLines` when needed.
     // Block-bodied handlers keep TypeScript from inferring `lineItems` from itself.
-    selection: {
+    rowSelection: {
       actions: [
         {
           id: "receive",
           label: "Mark received",
           icon: <PackageCheck className="size-4" />,
-          // Only lines still short count — the button reads "Mark received (n)".
-          canApply: (line) => line.receivedQty < line.quantity,
-          onClick: (rows) => {
+          onClick: (ids) => {
+            // Eligibility is the app's call: only lines still short are touched.
+            const picked = new Set(ids);
             lineItems.updateLines(
-              rows.map((line) => ({
-                lineRef: line.lineRef,
-                patch: { receivedQty: line.quantity },
-              })),
+              lineItems.allLines
+                .filter((line) => picked.has(line.lineRef) && line.receivedQty < line.quantity)
+                .map((line) => ({ lineRef: line.lineRef, patch: { receivedQty: line.quantity } })),
             );
           },
         },
@@ -319,8 +319,13 @@ const PurchaseOrderDemo = ({
           id: "duplicate",
           label: "Duplicate",
           icon: <Copy className="size-4" />,
-          onClick: (rows) => {
-            lineItems.addLines(rows.map(({ lineRef: _lineRef, ...line }) => line));
+          onClick: (ids) => {
+            const picked = new Set(ids);
+            lineItems.addLines(
+              lineItems.allLines
+                .filter((line) => picked.has(line.lineRef))
+                .map(({ lineRef: _lineRef, ...line }) => line),
+            );
           },
         },
         {
@@ -328,8 +333,8 @@ const PurchaseOrderDemo = ({
           label: "Remove",
           icon: <Trash2 className="size-4" />,
           variant: "destructive",
-          onClick: (rows) => {
-            lineItems.removeLines(rows.map((line) => line.lineRef));
+          onClick: (ids) => {
+            lineItems.removeLines(ids);
           },
         },
       ],

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChevronDown, ChevronsUpDown, ChevronUp, GripVertical } from "lucide-react";
+import { GripVertical } from "lucide-react";
 
 import { Checkbox } from "@/components/checkbox";
 import { cn } from "@/lib/utils";
@@ -71,11 +71,37 @@ export type LineItemsTableProps<T extends LineItemsRowData> = {
   tableContainerClassName?: string;
 };
 
+// Header and rows match Table: foreground medium text in the header, row
+// rules only — no lines between columns.
 const headCellClasses =
-  "astw:h-10 astw:bg-card astw:px-2 astw:text-left astw:align-middle astw:text-xs astw:font-medium astw:text-muted-foreground astw:whitespace-nowrap astw:overflow-hidden astw:text-ellipsis astw:border-b astw:border-r astw:border-border";
+  "astw:relative astw:h-10 astw:bg-card astw:px-2 astw:text-left astw:align-middle astw:text-sm astw:font-medium astw:text-foreground astw:whitespace-nowrap astw:overflow-hidden astw:text-ellipsis astw:border-b astw:border-border";
 
 const bodyCellClasses =
-  "astw:relative astw:h-9 astw:p-0 astw:align-middle astw:text-sm astw:whitespace-nowrap astw:overflow-hidden astw:text-ellipsis astw:border-b astw:border-r astw:border-border";
+  "astw:relative astw:h-9 astw:p-0 astw:align-middle astw:text-sm astw:whitespace-nowrap astw:overflow-hidden astw:text-ellipsis astw:border-b astw:border-border";
+
+/**
+ * Tints, drawn as a background image so they layer over whatever colour the
+ * cell already has — a pinned cell's opaque card, the row's hover or selected
+ * fade — instead of replacing it with a see-through colour.
+ */
+const tint = {
+  // An editable cell says so at rest, the same tint as DataTable's inline
+  // editing (data-table/editable-cell.tsx); the cell being edited drops it.
+  editable: [
+    "astw:[background-image:linear-gradient(color-mix(in_srgb,var(--foreground)_4%,transparent),color-mix(in_srgb,var(--foreground)_4%,transparent))]",
+    "astw:hover:[background-image:linear-gradient(color-mix(in_srgb,var(--foreground)_7%,transparent),color-mix(in_srgb,var(--foreground)_7%,transparent))]",
+    "astw:focus-within:[background-image:none]",
+  ],
+  selected:
+    "astw:[background-image:linear-gradient(color-mix(in_srgb,var(--primary)_10%,transparent),color-mix(in_srgb,var(--primary)_10%,transparent))]",
+  fill: "astw:[background-image:linear-gradient(color-mix(in_srgb,var(--primary)_15%,transparent),color-mix(in_srgb,var(--primary)_15%,transparent))]",
+};
+
+/**
+ * Pinned columns at most take this share of the grid's width. Past it — a
+ * phone, usually — pinning is dropped, so the other columns still have room.
+ */
+const MAX_PINNED_SHARE = 0.5;
 
 const alignClasses = {
   left: "astw:text-left",
@@ -84,7 +110,6 @@ const alignClasses = {
 } as const;
 
 const ariaSortValues = { asc: "ascending", desc: "descending" } as const;
-const sortIcons = { asc: ChevronUp, desc: ChevronDown } as const;
 
 /**
  * Pinned cells stay opaque so scrolled content never shows through them, which
@@ -104,10 +129,14 @@ function pinClasses(
         // it takes the row's hover tint (muted at 50% over the card), which the
         // see-through cells get from the row itself.
         "astw:bg-card astw:group-hover/row:bg-[color-mix(in_srgb,var(--muted)_50%,var(--card))]",
+    // The edge casts DataTable's shadow while columns are scrolled under it,
+    // so it's clear there's more to see. Overflow stays visible on that cell
+    // for the shadow; its content truncates on an inner element.
+    placement.isBoundary && "astw:overflow-visible",
     placement.isBoundary &&
       (placement.side === "left"
-        ? "astw:shadow-[inset_-1px_0_0_0_var(--border)]"
-        : "astw:shadow-[inset_1px_0_0_0_var(--border)]"),
+        ? "astw:after:pointer-events-none astw:after:absolute astw:after:inset-y-0 astw:after:right-0 astw:after:w-1 astw:after:translate-x-full astw:after:bg-gradient-to-r astw:after:from-black/10 astw:dark:after:from-black/20 astw:after:to-transparent astw:after:content-[''] astw:after:opacity-0 astw:after:transition-opacity astw:[[data-pin-shadow-left]_&]:after:opacity-100"
+        : "astw:after:pointer-events-none astw:after:absolute astw:after:inset-y-0 astw:after:left-0 astw:after:w-1 astw:after:-translate-x-full astw:after:bg-gradient-to-l astw:after:from-black/10 astw:dark:after:from-black/20 astw:after:to-transparent astw:after:content-[''] astw:after:opacity-0 astw:after:transition-opacity astw:[[data-pin-shadow-right]_&]:after:opacity-100"),
   );
 }
 
@@ -149,12 +178,18 @@ export function LineItemsTable<T extends LineItemsRowData>({
   // lines; at the start or end of the list it sits flush.
   const [moreAbove, setMoreAbove] = React.useState(false);
   const [moreBelow, setMoreBelow] = React.useState(false);
+  const [gridWidth, setGridWidth] = React.useState<number | null>(null);
   React.useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const check = () => {
       setMoreAbove(el.scrollTop > 0);
       setMoreBelow(el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+      setGridWidth(el.clientWidth || null);
+      // Pinned edges cast their shadow only while columns sit under them.
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      el.toggleAttribute("data-pin-shadow-left", el.scrollLeft > 0);
+      el.toggleAttribute("data-pin-shadow-right", el.scrollLeft < maxScroll - 1);
     };
     check();
     el.addEventListener("scroll", check, { passive: true });
@@ -170,16 +205,26 @@ export function LineItemsTable<T extends LineItemsRowData>({
   const canReorder = ordering === "manual" && mode === "edit";
   const showSelection = selectionEnabled && mode !== "view";
 
+  // On a narrow grid, pinned columns could leave no room for the rest.
+  const layoutFields = React.useMemo(() => {
+    if (!gridWidth) return fields;
+    const pinnedWidth = fields
+      .filter((f) => f.pin)
+      .reduce((sum, f) => sum + (widths[f.key] ?? f.width ?? 120), 0);
+    if (pinnedWidth <= gridWidth * MAX_PINNED_SHARE) return fields;
+    return fields.map((f) => (f.pin ? { ...f, pin: undefined } : f));
+  }, [fields, gridWidth, widths]);
+
   const layout = React.useMemo(
     () =>
-      computeColumnLayout(fields, {
+      computeColumnLayout(layoutFields, {
         widths,
         hasGrip: canReorder,
         hasSelection: showSelection,
         hasActions: Boolean(renderRowActions),
         actionsWidth: rowActionsWidth,
       }),
-    [canReorder, fields, renderRowActions, rowActionsWidth, showSelection, widths],
+    [canReorder, layoutFields, renderRowActions, rowActionsWidth, showSelection, widths],
   );
 
   const columnDefs = React.useMemo(() => fieldsToColumnDefs(fields), [fields]);
@@ -791,7 +836,6 @@ export function LineItemsTable<T extends LineItemsRowData>({
               {layout.columns.map((c) => {
                 const sortable = Boolean(c.field.sort) && ordering === "sort";
                 const sorted = sortState?.columnId === c.id ? sortState.direction : undefined;
-                const SortIcon = sorted ? sortIcons[sorted] : ChevronsUpDown;
                 const sortedState = sorted ? ariaSortValues[sorted] : "none";
 
                 return (
@@ -804,16 +848,27 @@ export function LineItemsTable<T extends LineItemsRowData>({
                     style={pinStyle(c.placement)}
                   >
                     {sortable ? (
+                      // DataTable's sortable header: the whole cell is the button,
+                      // and a ▲ / ▼ shows only while the column is sorted.
                       <button
                         type="button"
                         onClick={() => lineItems.toggleSort(c.id)}
-                        className="astw:inline-flex astw:max-w-full astw:cursor-pointer astw:items-center astw:gap-1 astw:font-medium astw:outline-none astw:hover:text-foreground astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50"
+                        className={cn(
+                          "astw:-mx-2 astw:flex astw:h-10 astw:w-[calc(100%+1rem)] astw:cursor-pointer astw:select-none astw:items-center astw:gap-1 astw:border-0 astw:bg-transparent astw:px-2 astw:text-inherit astw:outline-none astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50",
+                          c.align === "right" && "astw:justify-end",
+                          c.align === "center" && "astw:justify-center",
+                        )}
                       >
                         <span className="astw:min-w-0 astw:truncate">{c.field.label}</span>
-                        <SortIcon
-                          className={cn("astw:size-3.5", !sorted && "astw:opacity-40")}
-                          aria-hidden="true"
-                        />
+                        {sorted ? (
+                          <span
+                            data-slot="line-items-sort-indicator"
+                            className="astw:text-muted-foreground astw:text-xs"
+                            aria-hidden="true"
+                          >
+                            {sorted === "asc" ? "▲" : "▼"}
+                          </span>
+                        ) : null}
                       </button>
                     ) : (
                       c.field.label
@@ -994,8 +1049,12 @@ export function LineItemsTable<T extends LineItemsRowData>({
                     {layout.columns.map((c) => {
                       const coord = { lineKey: rowKey, columnId: c.id };
                       const editable = fieldIsEditableInMode(c.field, mode);
+                      // View mode has nothing to edit, so no cell shows as active;
+                      // a selected range still tints, for copying.
                       const isActive =
-                        grid.active?.lineKey === rowKey && grid.active?.columnId === c.id;
+                        mode !== "view" &&
+                        grid.active?.lineKey === rowKey &&
+                        grid.active?.columnId === c.id;
                       const isSelected = grid.isSelected(rowKey, c.id);
                       const inFill = isInFillPreview(coord);
                       const amendLocked = fieldIsAmendLocked(c.field, mode);
@@ -1016,10 +1075,13 @@ export function LineItemsTable<T extends LineItemsRowData>({
                             alignClasses[c.align],
                             pinClasses(c.placement, { selected: rowSelected }),
                             editable && "astw:cursor-text",
-                            // Layered lowest so a selection or fill preview reads over it.
-                            amendLocked && "astw:bg-muted/40",
-                            isSelected && !isActive && "astw:bg-primary/10",
-                            inFill && "astw:bg-primary/15",
+                            // One background image at a time: selection and fill win.
+                            editable && !isSelected && !inFill && tint.editable,
+                            // Locked by amend: read-only, like DataTable's read-only
+                            // cells beside editable ones.
+                            amendLocked && "astw:cursor-not-allowed",
+                            isSelected && !isActive && tint.selected,
+                            inFill && tint.fill,
                             // An inset ring paints on the cell bounds exactly, where a
                             // border would shift the grid by a pixel.
                             isSelected &&

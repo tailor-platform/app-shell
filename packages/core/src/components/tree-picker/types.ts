@@ -18,18 +18,11 @@ export type TreePickerNode<T = unknown> = {
   children?: TreePickerNode<T>[];
 };
 
-/** Props for {@link TreePicker}. */
-export interface TreePickerProps<T> {
-  /** Controls dialog visibility. */
-  open: boolean;
-  /**
-   * Fires on every user-driven open/close (Esc, backdrop, close button, Cancel,
-   * and after a successful commit). The picker closes itself after `onCommit`,
-   * so consumers should not also call this from their commit handler.
-   */
-  onOpenChange(open: boolean): void;
-  /** Dialog title. Also labels the `tree` for assistive tech. Default: `"Select items"`. */
-  title?: React.ReactNode;
+/**
+ * What the tree shows and how it is searched — shared by {@link TreeSelect}
+ * (inline) and {@link TreePicker} (the same tree in a dialog).
+ */
+export interface TreeContentProps<T> {
   /** Hierarchical items. Selection is leaf-only (a node with no `children`). */
   items: ReadonlyArray<TreePickerNode<T>>;
   /**
@@ -53,14 +46,49 @@ export interface TreePickerProps<T> {
   matchesSearch?(search: { node: TreePickerNode<T>; query: string }): boolean;
   /** Slot rendered to the right of the search input (e.g. a category filter button). */
   filterSlot?: React.ReactNode;
-  /** Receives the selected **leaf** nodes in DFS tree order. */
-  onCommit(selected: TreePickerNode<T>[]): void;
-  /** Primary CTA label. Default: `"Add N items"`, or `"Add items"` when nothing is selected. */
-  ctaLabel?(count: number): React.ReactNode;
   /** Shown when the (filtered) tree is empty. Default: `"No matching items."`. */
   emptyText?: React.ReactNode;
   /** Search input placeholder. Default: `"Search"`. */
   searchPlaceholder?: string;
+}
+
+/** Props for {@link TreeSelect}. */
+export interface TreeSelectProps<T> extends TreeContentProps<T> {
+  /** Controlled selection: the ticked leaf ids. */
+  value?: readonly string[];
+  /** Initial selection when uncontrolled. */
+  defaultValue?: readonly string[];
+  /** Every selection change, as leaf ids and leaf nodes in tree order. */
+  onValueChange?(ids: string[], nodes: TreePickerNode<T>[]): void;
+  /** Enter on a tree row — e.g. to submit a surrounding form. */
+  onSubmit?(): void;
+  /** Accessible name for the tree. Use this or `aria-labelledby`. */
+  "aria-label"?: string;
+  /** Id of the element naming the tree (e.g. a card or dialog title). */
+  "aria-labelledby"?: string;
+  /**
+   * Merged onto the root. The list scrolls inside it, so give it a height (or
+   * place it in a sized container) for long trees.
+   */
+  className?: string;
+}
+
+/** Props for {@link TreePicker}. */
+export interface TreePickerProps<T> extends TreeContentProps<T> {
+  /** Controls dialog visibility. */
+  open: boolean;
+  /**
+   * Fires on every user-driven open/close (Esc, backdrop, close button, Cancel,
+   * and after a successful commit). The picker closes itself after `onCommit`,
+   * so consumers should not also call this from their commit handler.
+   */
+  onOpenChange(open: boolean): void;
+  /** Dialog title. Also labels the `tree` for assistive tech. Default: `"Select items"`. */
+  title?: React.ReactNode;
+  /** Receives the selected **leaf** nodes in DFS tree order. */
+  onCommit(selected: TreePickerNode<T>[]): void;
+  /** Primary CTA label. Default: `"Add N items"`, or `"Add items"` when nothing is selected. */
+  ctaLabel?(count: number): React.ReactNode;
   /** Merged onto the dialog panel. */
   className?: string;
 }

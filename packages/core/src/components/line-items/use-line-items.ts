@@ -63,7 +63,7 @@ export function useLineItems<T extends LineItemsRowData>(
     onMetadataCommit,
   } = options;
   const selection = rowSelection !== undefined;
-  const selectionActions = rowSelection?.actions ?? EMPTY_ACTIONS;
+  const allSelectionActions = rowSelection?.actions ?? EMPTY_ACTIONS;
 
   const controlled = controlledLines !== undefined;
 
@@ -111,6 +111,11 @@ export function useLineItems<T extends LineItemsRowData>(
   React.useEffect(() => {
     setModeState(modeProp);
   }, [modeProp]);
+
+  const selectionActions = React.useMemo(
+    () => allSelectionActions.filter((action) => (action.modes ?? ["edit"]).includes(mode)),
+    [allSelectionActions, mode],
+  );
 
   const [filter, setFilterState] = React.useState("");
   const [sortState, setSortState] = React.useState<LineItemsSortState | null>(null);

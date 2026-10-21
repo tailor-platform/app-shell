@@ -132,3 +132,12 @@ describe("fieldToColumnDef normalizers", () => {
     expect(due.normalize?.("2026/6/20", row)).toBe("2026-06-20");
   });
 });
+
+describe("field types", () => {
+  it("requires a type on an editable field", () => {
+    // @ts-expect-error — an editable field without `type` would quietly get a text editor.
+    const missing = f.field({ key: "qty", label: "Qty", render: (l) => l.qty, editable: ["edit"] });
+    const readOnly = f.field({ key: "qty", label: "Qty", render: (l) => l.qty });
+    expect([missing.key, readOnly.key]).toEqual(["qty", "qty"]);
+  });
+});

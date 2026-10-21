@@ -38,6 +38,31 @@ export type LineItemsChangeSet = {
 export type LineItemsMode = "view" | "edit" | "amend";
 
 /**
+ * DataTable's `SelectionAction`, plus the modes LineItems offers it in.
+ */
+export type LineItemsSelectionAction = SelectionAction & {
+  /**
+   * Modes the action shows in. Defaults to `["edit"]`: amend is for a document
+   * past confirmation, where bulk changes should be a deliberate opt-in —
+   * `modes: ["edit", "amend"]`.
+   */
+  modes?: LineItemsMode[];
+};
+
+type WithLineItemsActions<O> = O extends unknown
+  ? Omit<O, "actions"> & {
+      /**
+       * Bulk actions, shown at the foot of `LineItems.Table` while lines are
+       * selected. Each gets the selected line keys; see `LineItemsSelectionAction`.
+       */
+      actions?: LineItemsSelectionAction[];
+    }
+  : never;
+
+/** DataTable's `RowSelectionOptions`, with mode-aware actions. */
+export type LineItemsRowSelectionOptions = WithLineItemsActions<RowSelectionOptions>;
+
+/**
  * `"sort"` (default) lets column headers drive row order and emits no reorder
  * ops. `"manual"` preserves document order, enables drag-reordering, and emits
  * `reorder` ops in the change-set.
@@ -154,19 +179,34 @@ export type LineItemsFieldType<T extends LineItemsRowData = LineItemsRowData> =
  * Build these with `createLineItemHelper<T>().field({ … })` to get full
  * inference of `key`, `render`, and `sort.comparator`.
  */
-export type LineItemsField<T extends LineItemsRowData> = {
+export type LineItemsField<T extends LineItemsRowData> = LineItemsFieldBase<T> &
+  (
+    | {
+        /**
+         * Modes in which an editor replaces `render`. Omitted means read-only.
+         * Typical editable line columns pass `["edit"]`.
+         */
+        editable?: undefined;
+        /** Optional on read-only fields; still drives paste parsing and equality. */
+        type?: LineItemsFieldType<T>;
+      }
+    | {
+        /**
+         * Modes in which an editor replaces `render`. Typical editable line
+         * columns pass `["edit"]`.
+         */
+        editable: LineItemsMode[];
+        /** Required when the field is editable: picks the editor, parsing and equality. */
+        type: LineItemsFieldType<T>;
+      }
+  );
+
+type LineItemsFieldBase<T extends LineItemsRowData> = {
   /** Stable column id. For editable fields, use a real key on `T`. */
   key: (keyof T & string) | (string & {});
   label: ReactNode;
   /** Cell content in view mode, and in edit mode whenever no editor is shown. */
   render: (line: T) => ReactNode;
-  /**
-   * Modes in which an editor replaces `render`. Omitted or empty means
-   * read-only. Typical editable line columns pass `["edit"]`.
-   */
-  editable?: LineItemsMode[];
-  /** Required when the field is editable; drives the editor input and equality semantics. */
-  type?: LineItemsFieldType<T>;
   /**
    * `"document"` (default) bundles edits into the change-set; `"metadata"`
    * routes them to `onMetadataCommit` and omits them from it.
@@ -259,7 +299,7 @@ export type UseLineItemsOptions<T extends LineItemsRowData> = LineItemsRowSource
    * `LineItems.Table` while lines are selected; actions get the selected ids
    * and never clear the selection on their own.
    */
-  rowSelection?: RowSelectionOptions;
+  rowSelection?: LineItemsRowSelectionOptions;
   /** Receives edits to `commit: "metadata"` fields, which bypass the change-set. */
   onMetadataCommit?: (event: LineItemsMetadataCommit<T>) => void;
 };
@@ -285,7 +325,8 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
   selectedIds: string[];
   /** The selected lines, in document order. */
   selectedRows: T[];
-  selectionActions: SelectionAction[];
+  /** The bulk actions offered in the current mode. */
+  selectionActions: LineItemsSelectionAction[];
   /** Id of the selection action whose request is in flight, or `null`. */
   pendingActionId: string | null;
   /**

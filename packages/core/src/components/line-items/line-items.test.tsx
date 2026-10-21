@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, Link, RouterProvider } from "react-router";
 import * as React from "react";
 
-import type { SelectionAction } from "@/components/data-table/types";
 import { createLineItemHelper } from "./field";
 import { LineItems } from "./line-items";
 import type {
@@ -12,6 +11,7 @@ import type {
   LineItemsField,
   LineItemsMode,
   LineItemsOrderingMode,
+  LineItemsSelectionAction,
 } from "./types";
 import { useLineItems } from "./use-line-items";
 
@@ -87,7 +87,7 @@ type HarnessProps = {
   totals?: boolean;
   addRow?: boolean;
   onSave?: (cs: LineItemsChangeSet) => void;
-  selectionActions?: SelectionAction[];
+  selectionActions?: LineItemsSelectionAction[];
   onReady?: (api: ReturnType<typeof useLineItems<Line>>) => void;
 };
 
@@ -734,7 +734,7 @@ describe("LineItems", () => {
   });
 
   describe("selection", () => {
-    const remove: SelectionAction = {
+    const remove: LineItemsSelectionAction = {
       id: "remove",
       label: "Remove",
       variant: "destructive",
@@ -836,6 +836,24 @@ describe("LineItems", () => {
       const bar = screen.getByRole("toolbar", { name: "Bulk actions" });
       expect(bar.getAttribute("aria-busy")).toBeNull();
       expect(within(bar).getByText("1 of 3 selected")).toBeDefined();
+    });
+
+    it("offers actions in edit only, unless an action opts into amend", async () => {
+      const user = userEvent.setup();
+      render(
+        <Harness
+          mode="amend"
+          selectionActions={[
+            remove,
+            { id: "flag", label: "Flag for review", modes: ["edit", "amend"], onClick: () => {} },
+          ]}
+        />,
+      );
+
+      await user.click(screen.getByRole("checkbox", { name: "Select line 2" }));
+      const bar = screen.getByRole("toolbar", { name: "Bulk actions" });
+      expect(within(bar).queryByRole("button", { name: "Remove" })).toBeNull();
+      expect(within(bar).getByRole("button", { name: "Flag for review" })).toBeDefined();
     });
 
     it("hides the selection column in view mode", () => {
@@ -1051,6 +1069,15 @@ describe("LineItems", () => {
   });
 
   describe("parts", () => {
+    it("requires onFullscreenChange alongside a controlled fullscreen", () => {
+      function Stuck() {
+        const lineItems = useLineItems<Line>({ fields, defaultLines: seed });
+        // @ts-expect-error — without a handler the toggle and Escape can't leave the overlay.
+        return <LineItems.Root value={lineItems} fullscreen />;
+      }
+      expect(Stuck).toBeTypeOf("function");
+    });
+
     describe("fullscreen", () => {
       it("opens as a labelled modal dialog, locks page scroll, and closes on Escape", async () => {
         const user = userEvent.setup();

@@ -1209,9 +1209,9 @@
       "symbols": ["Select", "SelectAsyncFetcher"],
       "hashes": {
         "typeSurface": "429710973dfa912b",
-        "outline": "3eba8d13da1df95c",
+        "outline": "a8b7834a8817e0d5",
         "snapshot": "68fd61885280b114",
-        "outputMd": "a55198c8cc711bd8",
+        "outputMd": "b3dd3b9a58a9d290",
         "examples": "1ce89cec30045466"
       }
     },
@@ -1766,7 +1766,7 @@
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "66696139a46fabb0",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
-    "packages/core/skills/app-shell-patterns/references/components/select.md": "a55198c8cc711bd8",
+    "packages/core/skills/app-shell-patterns/references/components/select.md": "b3dd3b9a58a9d290",
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "1f81ebd562c50371",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "a36192df64f16adc",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",

@@ -172,8 +172,7 @@ const { Root, Trigger, Value, Content, Item, Group, GroupLabel, Separator } = Se
 ## Form submission
 
 Inside a form, place `Select` directly under `Field.Root`, not inside `Field.Control`. `Select` draws
-its own trigger and registers with the field itself, so `<Field.Control render={<Select />} />`
-renders a second frame around it.
+its own trigger and registers with the field itself.
 
 ```tsx
 <Field.Root name="country">

@@ -1,11 +1,24 @@
-import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  within,
+} from "@testing-library/react";
 import { useState } from "react";
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import type { RowSelectionOptions } from "@/index";
+import type {
+  DataTableContextValue,
+  RowSelectionOptions,
+  SelectionAction,
+  UseDataTableReturn,
+} from "@/index";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import type { Column, DataTableData } from "./types";
+import type { Column, DataTableData, UseDataTableOptions } from "./types";
 
 type Row = { id: string; name: string };
 const columns: Column<Row>[] = [{ label: "Name", render: (row) => row.name }];
@@ -44,13 +57,16 @@ function ControlledTable({
   selectedIds: string[];
   data: DataTableData<Row>;
   onChange: (ids: string[]) => void;
-  onBulk: (rows: Row[]) => void;
+  onBulk: SelectionAction["onClick"];
 }) {
   const table = useDataTable({
     columns,
     data,
-    rowSelection: { selectedIds, onChange },
-    selectionActions: [{ id: "archive", label: "Archive", onClick: onBulk }],
+    rowSelection: {
+      selectedIds,
+      onChange,
+      actions: [{ id: "archive", label: "Archive", onClick: onBulk }],
+    },
   });
   return (
     <DataTable.Root value={table}>
@@ -121,11 +137,11 @@ describe("rowSelection", () => {
     expect(result.current.isRowSelected(pageA.rows[0])).toBe(false);
     rerender({ selectedIds: ["2"], data: pageA });
     expect(result.current.selectedIds).toEqual(["2"]);
-    expect(result.current.selectedRows).toEqual([pageA.rows[1]]);
+    expect(result.current.isRowSelected(pageA.rows[1])).toBe(true);
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps controlled proposals page-scoped and retains history when clear is rejected", () => {
+  it("keeps controlled proposals page-scoped and preserves selection when clear is rejected", () => {
     const { result, rerender, onChange } = renderControlled(["1", "3"]);
     rerender({ selectedIds: ["1", "3"], data: pageB });
     act(() => result.current.deselectAllRows!());
@@ -133,12 +149,11 @@ describe("rowSelection", () => {
     expect(result.current.selectedIds).toEqual(["1", "3"]);
     act(() => result.current.clearSelection!());
     expect(onChange).toHaveBeenLastCalledWith([]);
-    expect(result.current.selectedRows).toEqual([pageA.rows[0], pageB.rows[0]]);
+    expect(result.current.selectedIds).toEqual(["1", "3"]);
     rerender({ selectedIds: ["1"], data: pageB });
     act(() => result.current.selectAllRows!());
     expect(onChange).toHaveBeenLastCalledWith(["1", "3"]);
     expect(result.current.selectedIds).toEqual(["1"]);
-    expect(result.current.selectedRows).toEqual([pageA.rows[0]]);
   });
 
   it("derives repeated controlled commands from the owner's committed ids", () => {
@@ -152,10 +167,10 @@ describe("rowSelection", () => {
   });
 
   it.each(["controlled", "uncontrolled"] as const)(
-    "remembers loaded preselected rows in %s mode",
+    "keeps ordered unique selected IDs independently of loaded rows in %s mode",
     (mode) => {
       const onChange = vi.fn();
-      const ids = ["1", "unseen"];
+      const ids = ["1", "unseen", "1"];
       const { result, rerender } = renderHook(
         ({ data }: { data: DataTableData<Row> | undefined }) =>
           useDataTable({
@@ -168,43 +183,39 @@ describe("rowSelection", () => {
           }),
         { initialProps: { data: undefined as DataTableData<Row> | undefined } },
       );
-      expect(result.current.selectedIds).toEqual(ids);
-      expect(result.current.selectedRows).toEqual([]);
+      expect(result.current.selectedIds).toEqual(["1", "unseen"]);
       rerender({ data: pageA });
-      expect(result.current.selectedRows).toEqual([pageA.rows[0]]);
+      expect(result.current.isRowSelected(pageA.rows[0])).toBe(true);
       const updated = { id: "1", name: "Alice updated" };
       rerender({ data: { rows: [updated] } });
+      expect(result.current.isRowSelected(updated)).toBe(true);
       rerender({ data: pageB });
-      expect(result.current.selectedRows).toEqual([updated]);
+      expect(result.current.selectedIds).toEqual(["1", "unseen"]);
+      expect(result.current.isRowSelected(pageB.rows[0])).toBe(false);
       expect(onChange).not.toHaveBeenCalled();
     },
   );
 
-  it("keeps refetched uncontrolled rows when selection changes on another page", () => {
+  it("retained clearSelection uses the latest committed selection and owner callback", () => {
+    const first = vi.fn();
+    const latest = vi.fn();
     const { result, rerender } = renderHook(
-      ({ data }) => useDataTable({ columns, data, rowSelection: {} }),
-      { initialProps: { data: pageA } },
+      ({ ids, onChange }) =>
+        useDataTable({ columns, data: pageA, rowSelection: { selectedIds: ids, onChange } }),
+      { initialProps: { ids: ["1"], onChange: first } },
     );
-    act(() => result.current.toggleRowSelection!(pageA.rows[0]));
-    const updated = { id: "1", name: "Alice updated" };
-    rerender({ data: { rows: [updated] } });
-    rerender({ data: pageB });
-    expect(result.current.selectedRows).toEqual([updated]);
-    act(() => result.current.selectAllRows!());
-    expect(result.current.selectedRows).toEqual([updated, pageB.rows[0]]);
-    act(() => result.current.deselectAllRows!());
-    expect(result.current.selectedRows).toEqual([updated]);
+    const clear = result.current.clearSelection!;
+    rerender({ ids: ["2"], onChange: latest });
+    act(() => clear());
+    expect(first).not.toHaveBeenCalled();
+    expect(latest).toHaveBeenCalledExactlyOnceWith([]);
+    expect(result.current.selectedIds).toEqual(["2"]);
+    rerender({ ids: [], onChange: latest });
+    act(() => clear());
+    expect(latest).toHaveBeenCalledTimes(1);
   });
 
-  it("remembers external preselection without any table interaction", () => {
-    const { result, rerender, onChange } = renderControlled([]);
-    rerender({ selectedIds: ["2"], data: pageA });
-    rerender({ selectedIds: ["2"], data: pageB });
-    expect(result.current.selectedRows).toEqual([pageA.rows[1]]);
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
-  it("remembers a toggled row when its owner selects it and changes page in the same commit", () => {
+  it("keeps a toggled ID when its owner selects it and changes page in the same commit", () => {
     const { result } = renderHook(() => {
       const [state, setState] = useState({ selectedIds: [] as string[], data: pageA });
       return useDataTable({
@@ -218,7 +229,7 @@ describe("rowSelection", () => {
     });
     act(() => result.current.toggleRowSelection!(pageA.rows[0]));
     expect(result.current.rows).toEqual(pageB.rows);
-    expect(result.current.selectedRows).toEqual([pageA.rows[0]]);
+    expect(result.current.selectedIds).toEqual(["1"]);
   });
 
   it("handles fresh inline selected ids and rows without a render loop", () => {
@@ -231,12 +242,12 @@ describe("rowSelection", () => {
       }),
     );
     rerender();
-    expect(result.current.selectedRows).toEqual([pageA.rows[0]]);
+    expect(result.current.selectedIds).toEqual(["1"]);
     expect(onChange).not.toHaveBeenCalled();
   });
 
   it.each([{ selectedIds: [] }, { selectedIds: ["2"] }])(
-    "consults the latest selection and callback when an action settles: %j",
+    "does not change controlled selection or notify either owner when an action settles: %j",
     async ({ selectedIds }) => {
       const first = vi.fn();
       const latest = vi.fn();
@@ -256,8 +267,8 @@ describe("rowSelection", () => {
         await request;
       });
       expect(first).not.toHaveBeenCalled();
-      if (selectedIds.length) expect(latest).toHaveBeenCalledExactlyOnceWith([]);
-      else expect(latest).not.toHaveBeenCalled();
+      expect(latest).not.toHaveBeenCalled();
+      expect(result.current.selectedIds).toEqual(selectedIds);
       expect(result.current.pendingActionId).toBeNull();
     },
   );
@@ -282,16 +293,99 @@ describe("rowSelection", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Archive" }));
     expect(onBulk).toHaveBeenCalledWith(
-      [pageA.rows[0]],
+      ["1"],
       expect.objectContaining({ clearSelection: expect.any(Function) }),
     );
     rerender(
       <ControlledTable selectedIds={["unseen"]} data={pageB} onChange={onChange} onBulk={onBulk} />,
     );
     const archive = screen.getByRole("button", { name: "Archive" });
-    expect(archive.hasAttribute("disabled")).toBe(true);
+    expect(archive.hasAttribute("disabled")).toBe(false);
     fireEvent.click(archive);
-    expect(onBulk).toHaveBeenCalledTimes(1);
+    expect(onBulk).toHaveBeenCalledTimes(2);
+    expect(onBulk).toHaveBeenLastCalledWith(["unseen"], expect.any(Object));
+  });
+
+  it("lets a consumer remove only completed IDs while preserving ineligible and newly selected IDs", async () => {
+    let complete!: (ids: string[]) => void;
+    const request = new Promise<string[]>((resolve) => {
+      complete = resolve;
+    });
+    const targets = vi.fn();
+    function Consumer() {
+      const [selectedIds, setSelectedIds] = useState(["1", "unseen"]);
+      return (
+        <ControlledTable
+          selectedIds={selectedIds}
+          data={pageA}
+          onChange={setSelectedIds}
+          onBulk={async (ids) => {
+            targets(ids);
+            const completed = new Set(await request);
+            setSelectedIds((current) => current.filter((id) => !completed.has(id)));
+          }}
+        />
+      );
+    }
+    render(<Consumer />, { wrapper });
+    fireEvent.click(screen.getByRole("button", { name: "Archive" }));
+    fireEvent.click(screen.getAllByLabelText("Select row")[1]);
+    expect(targets).toHaveBeenCalledExactlyOnceWith(["1", "unseen"]);
+    await act(async () => {
+      complete(["1"]);
+      await request;
+    });
+    expect(screen.getAllByLabelText("Select row")[0].getAttribute("aria-checked")).toBe("false");
+    expect(screen.getAllByLabelText("Select row")[1].getAttribute("aria-checked")).toBe("true");
+    expect(
+      within(screen.getByRole("toolbar", { name: "Bulk actions" })).getByText("2 selected"),
+    ).toBeDefined();
+  });
+
+  it("does not expose a selected-row cache through the hook or context", () => {
+    expectTypeOf<"selectedRows">().not.toMatchTypeOf<keyof UseDataTableReturn<Row>>();
+    expectTypeOf<"selectedRows">().not.toMatchTypeOf<keyof DataTableContextValue<Row>>();
+    const { result } = renderHook(() => useDataTable({ columns, data: pageA, rowSelection: {} }));
+    expect(result.current).not.toHaveProperty("selectedRows");
+  });
+
+  it("keeps row predicates and automatic selection cleanup out of the selection action API", () => {
+    expectTypeOf<SelectionAction["onClick"]>().parameter(0).toEqualTypeOf<string[]>();
+    expectTypeOf<"canApply">().not.toMatchTypeOf<keyof SelectionAction>();
+    expectTypeOf<"keepSelection">().not.toMatchTypeOf<keyof SelectionAction>();
+  });
+
+  it("groups actions with selection without weakening its ownership contract", () => {
+    expectTypeOf<UseDataTableOptions<Row>["rowSelection"]>().toEqualTypeOf<
+      RowSelectionOptions | undefined
+    >();
+    expectTypeOf<NonNullable<UseDataTableReturn<Row>["rowSelection"]>["actions"]>().toEqualTypeOf<
+      SelectionAction[] | undefined
+    >();
+    expectTypeOf<
+      NonNullable<DataTableContextValue<Row>["rowSelection"]>["actions"]
+    >().toEqualTypeOf<SelectionAction[] | undefined>();
+    expectTypeOf<RowSelectionOptions["actions"]>().toEqualTypeOf<SelectionAction[] | undefined>();
+    expectTypeOf<{ actions: SelectionAction[] }>().toMatchTypeOf<RowSelectionOptions>();
+    expectTypeOf<{
+      actions: SelectionAction[];
+      defaultSelectedIds: string[];
+    }>().toMatchTypeOf<RowSelectionOptions>();
+    expectTypeOf<{
+      actions: SelectionAction[];
+      selectedIds: string[];
+      onChange: (ids: string[]) => void;
+    }>().toMatchTypeOf<RowSelectionOptions>();
+    expectTypeOf<{
+      actions: SelectionAction[];
+      selectedIds: string[];
+    }>().not.toMatchTypeOf<RowSelectionOptions>();
+    expectTypeOf<{
+      actions: SelectionAction[];
+      selectedIds: string[];
+      defaultSelectedIds: string[];
+      onChange: (ids: string[]) => void;
+    }>().not.toMatchTypeOf<RowSelectionOptions>();
   });
 
   it("requires an owner callback for controlled ids and rejects mixing controlled/default ids", () => {

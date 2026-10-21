@@ -1,5 +1,222 @@
 # @tailor-platform/app-shell
 
+## 1.18.0
+
+### Minor Changes
+
+- 06ee7c2: `--destructive` and `--destructive-foreground` are now aliases of `--danger-solid` and `--danger-contrast`, and the shipped components read the danger roles instead of `destructive` utilities. The names, `Button variant="destructive"` and `text-destructive` keep working.
+  
+  `--destructive`, `--destructive-foreground` and their utilities (`bg-destructive`, `text-destructive`, `border-destructive`, `text-destructive-foreground`) are deprecated and will be removed in the next major. They keep working in 1.x; new code uses the danger roles: `bg-danger-solid` for fills, `text-danger-text` for text, `text-danger-contrast` for text on the solid, and `border-danger-solid` for invalid-state borders (`border-danger-border` is for decorative borders only; it is 1.67:1 on the card). `Button variant="destructive"` has no replacement yet, so it is not deprecated in this release; the next major renames it to `danger`.
+  
+  Visible changes in the default palette:
+  
+  - Dark-mode `Button variant="destructive"` is a full `#dc2626` fill with white text. It was `#f87171` at 60% opacity. Hover uses `--danger-solid-hover`.
+  - `text-destructive` now resolves to the solid colour: `#dc2626` in dark mode (was `#f87171`), which is below 4.5:1 as text on the dark card. Error text in components uses `text-danger-text` (light `#ce0c17`, dark `#ff9083`). Use `text-danger-text` for text in your own code.
+  - Invalid borders and focus rings on `Input`, `Textarea`, `Checkbox`, `Field` and `DateField` read `--danger-solid`. The dark invalid border changes from `#f87171` to `#dc2626` (3.71:1 on the card).
+  - `CsvImporter` error cells use `bg-danger-surface`, matching the warning cells.
+  - A theme that overrides `--destructive` no longer changes the shipped components; override `--danger-solid` (and the other danger roles) instead. `cream`, `bloom` and the theme template no longer set `--destructive`; their values were the same as the default.
+- 37eb4c1: Add a `--backdrop` colour token and the `bg-backdrop` utility for the dim layer behind modals. `Dialog`, `Sheet` and the CsvImporter drawer use it instead of `bg-black/50`. The value is the same (black at 50%), so nothing changes on screen. Override `--backdrop` on `:root` to change every backdrop at once.
+  
+  In the default palette, the surface and brand colours now read the internal gray scale and a white step, and the dark-mode lines read white alpha steps. All colours are unchanged. If your code reads these tokens with `getComputedStyle(...).getPropertyValue()`, the string changes notation, for example `#171717` instead of `rgba(23, 23, 23, 1)`, for `--primary`, `--primary-foreground`, `--secondary`, `--secondary-foreground`, `--accent-foreground`, `--background`, `--card`, `--card-foreground`, `--popover`, `--popover-foreground`, `--muted`, `--sidebar`, `--sidebar-foreground`, and light-mode `--sidebar-border`. `--foreground`, `--muted-foreground`, `--border` and `--input` already read the gray scale in 1.17.0, and the dark-mode lines keep the same `rgba(...)` string. The `cream` and `bloom` palettes are not changed.
+- 62ff6a9: Add the `Text` component. It applies a typography role with the `variant` prop and does not set a color. Heading roles render `h2`, body roles render `p`, and label and code roles render `span`. Use the `render` prop to choose a different element, such as the heading level.
+  
+  ```tsx
+  import { Text } from "@tailor-platform/app-shell";
+  
+  <Text variant="heading-md" render={<h3 />}>Line items</Text>
+  <Text variant="body-md" className="text-muted-foreground">Orders sent this month.</Text>
+  ```
+- 8e83510: Add typed inline editors to `DataTable` columns with optional `edit.onValueChange` for raw drafts and required `edit.onValueCommitted` for changed, confirmed editor outputs. Enter ends editing in the same cell; Tab confirms and moves between editable cells. Date-time drafts preserve incomplete day/time parts and require explicit Done or Clear.
+  
+  Dropdowns confirm only on Enter, Tab, or clicking a choice; outside click, blur, and Esc cancel without callbacks, including exact-label searches and keyboard-highlighted candidates. Hover is not an explicit selection. Tab focuses a closed dropdown, and one Enter opens it without confirming; Tab without selecting or searching only moves focus.
+  
+  The consumer owns validation, adoption, persistence, and rollback. Document immediate field saving and collect-then-submit patterns, export the editing option types and `DateTimeDraft`, and retain JavaScript-number-based numeric editing with `.` independently of display locale.
+  
+  ```tsx
+  column({
+    id: "received",
+    label: "Received",
+    type: "number",
+    edit: {
+      canEdit: (row) => row.status === "draft",
+      onValueCommitted: (row, value) =>
+        setRows((current) =>
+          current.map((line) => (line.id === row.id ? { ...line, received: value } : line)),
+        ),
+    },
+  });
+  ```
+- 3ac8b19: Rename the typography role variables from `--app-shell-type-<role>-<size|line-height|weight|letter-spacing>` to `--type-<role>-<size|line-height|weight|letter-spacing>`, to match the colour roles (`--danger-*`, ...) and `--semantic-shadow-*`.
+  
+  The old names still work: each `text-*` utility reads the matching `--app-shell-type-*` first and falls back to `--type-*`, so an override such as `--app-shell-type-heading-md-size` keeps its effect, on `:root` or on any other element. The old names are deprecated and will be removed in the next major. Rename them in your CSS:
+  
+  ```css
+  :root {
+    --type-heading-md-size: 1.25rem; /* was --app-shell-type-heading-md-size */
+  }
+  ```
+  
+  The `text-*` utilities (`text-heading-md`, ...) do not change.
+  
+  AppShell no longer defines the `--app-shell-type-*` variables. Code that reads them with `getComputedStyle(...).getPropertyValue()` gets an empty string; read `--type-*` instead.
+
+### Patch Changes
+
+- caf5877: Correct the `defineI18nLabels` guidance for locale-first catalogs, component `useT`, runtime keys, and function-valued labels.
+  Add an i18n pattern and a screen-building skill entry point covering UI language, label organization, and stable server codes.
+- 925d27f: Clarify that collection hooks return `variables.query` as `undefined` when no filters are active.
+  Document `variables.query ?? {}` for callers that need an object; runtime behavior and public types are unchanged.
+
+## 1.17.0
+
+### Minor Changes
+
+- 31e0524: Add semantic colour roles (`--{info|success|warning|danger|neutral}-{surface|surface-hover|border|solid|solid-hover|text|contrast|indicator}`), available as Tailwind colours. `--status-*` and `--alert-*` now alias these roles, and Badge reads them, so `text` on `surface` and `contrast` on `solid` are at least 4.5:1 in the default palette, in light and dark mode.
+  
+  ```tsx
+  <span className="rounded-md bg-success-surface px-2 py-0.5 text-success-text">Paid</span>
+  ```
+  
+  A gray scale (`--primitive-gray-{50..950}`, Tailwind neutral) is also added; the default palette's text and line tokens read it, with no value change.
+  
+  Visible changes in the default palette:
+  
+  - `--status-*` and `--alert-*` are deprecated and will be removed in the next major. `bg-status-*` and `bg-alert-*` keep working; new code uses the roles.
+  - `bg-status-*` and `bg-alert-*` change values. `--status-default` now follows `--muted-foreground` (it was a fixed `#737373`), so it is theme-dependent and translucent in the `cream` and `bloom` palettes.
+  - `--status-*` are fill colours; do not use them as text (below 4.5:1 in dark mode). Use `text-{intent}-text` instead (for example `text-status-completed` becomes `text-success-text`).
+  - Badge, Alert, CsvImporter and MetricCard read the semantic roles. To recolour them, override `--{intent}-*`; overriding `--status-*` or `--alert-*` no longer changes these components.
+  - Badge `error` and `subtle-error`, and Alert `error`, follow `--danger-*` instead of `--destructive`. Button and `text-destructive` still follow `--destructive`.
+  - The warning Badge text is dark instead of white. Alert description text now has the same colour as the Alert title.
+- ce4bcf9: Add `padding="none"` to `Card.Content` for edge-to-edge content such as a `Table`, `DataTable` or divided list.
+  
+  ```tsx
+  <Card.Root>
+    <Card.Header title="Line items" />
+    <Card.Content padding="none">
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    </Card.Content>
+  </Card.Root>
+  ```
+  
+  Cells keep their own 24px inset, so the first column lines up with the card title. Row backgrounds stay inside the card's rounded corners, and a nested `DataTable` drops its own border. This replaces the `className="px-0!"` workaround.
+- 1402b6f: Add controlled and uncontrolled row selection through `useDataTable`'s `rowSelection` option. Pass `selectedIds` with `onChange` to control selection, or `defaultSelectedIds` to initialize table-owned selection. The existing `onSelectionChange` callback is deprecated in favor of `rowSelection.onChange`, but remains supported for compatibility.
+  
+  ```tsx
+  const table = useDataTable({
+    columns,
+    data,
+    rowSelection: { selectedIds, onChange: setSelectedIds },
+  });
+  ```
+- 5893b12: Add `FilterRail`, an always-visible faceted filter rail that sits beside a `DataTable` and writes the same `CollectionControl`.
+  
+  Sections are config — any mix of `checkbox`, `radio`, `boolean`, `text`, `numberRange`, `date`, `dateRange` and `custom` — and every other feature is an optional part: `Header`, `ClearAll` and `Settings` (show / hide, reorder, sort). Each section collapses from a chevron by its title (`defaultCollapsed` to start closed) and still shows its selected count while collapsed. Below `lg` the rail turns itself into a left sheet behind a "Filters" button, like the Sidebar; wrap the page in `FilterRail.Provider` to place that button (`FilterRail.Trigger`) anywhere.
+  
+  ```tsx
+  <FilterRail.Root control={control} sections={sections} layout={layout}>
+    <FilterRail.Header>
+      <FilterRail.ClearAll />
+      <FilterRail.Settings />
+    </FilterRail.Header>
+    <FilterRail.Sections />
+  </FilterRail.Root>
+  ```
+  
+  Companion hook: `useFilterRailLayout` (persisted section layout). Checkbox and radio sections are for small, fixed sets of values; the docs explain which control to use for fields whose values keep growing.
+- ecc2f57: Add `SidebarSection` for grouping flat sidebar navigation items under a static heading. Unlike `SidebarGroup`, a section is neither collapsible nor navigable, and its items keep top-level styling. In the icon rail the heading is hidden. Combine it with `SidebarSeparator` to add dividers.
+  
+  `SidebarSeparator` now adds 4px of space above the line and 8px below it, so the items after a separator read as a new section. Sidebars that already use `SidebarSeparator` get this extra spacing.
+  
+  ```tsx
+  <DefaultSidebar>
+    <SidebarItem to="/overview" />
+    <SidebarSeparator />
+    <SidebarSection title="Services">
+      <SidebarItem to="/ai-gateways" />
+      <SidebarItem to="/applications" />
+    </SidebarSection>
+  </DefaultSidebar>
+  ```
+- 94f6a5a: Add ID-based bulk actions to `DataTable`. Pass `rowSelection.actions` to `useDataTable` and, while rows are selected, `DataTable.Footer` becomes a bulk-action bar: the selection count, your actions, and a Clear button, with pagination kept alongside. `onClick` receives a click-time copy of all selected ids, including ids whose rows have not been loaded. Consumers own eligibility checks, required fetching, confirmation UI, and execution; selection actions do not have row-based `canApply` or automatic eligible counts/disabled states.
+  
+  Return the promise from `onClick` for pending-state tracking: actions and Clear are disabled with a spinner meanwhile. A confirmation dialog can hand a later request back through `helpers.run`. Neither success nor rejection changes selection, and there is no `keepSelection` option. Use controlled `rowSelection` to remove only ids actually changed from the current selection, preserving ineligible records and newer selections. The explicit `clearSelection` helper remains available for intentional clearing of every page.
+  
+  ```tsx
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const table = useDataTable({
+    columns,
+    data,
+    control,
+    rowSelection: {
+      selectedIds,
+      onChange: setSelectedIds,
+      actions: [
+        {
+          id: "activate",
+          label: "Activate",
+          onClick: async (ids) => {
+            const activatedIds = new Set(await activate(ids));
+            setSelectedIds((current) => current.filter((id) => !activatedIds.has(id)));
+          },
+        },
+      ],
+    },
+  });
+  ```
+  
+  `RowAction<TRow>` and the non-generic `SelectionAction` share the non-generic presentation base `DataTableAction` (`id`, `label`, `icon`, `variant`). `RowAction` gains row-based `canApply`; its `isDisabled`, which reads the other way round, is deprecated but still honoured. Bulk eligibility belongs in the consumer's ID-based workflow.
+  
+  Selection stores IDs only, without a row-object cache; consumers fetch records required by their bulk-operation workflow. Providing `rowSelection` enables selection, including `{ actions }` without a callback. Omitted or empty `actions` show no bulk-action bar but still enable checkboxes. The first three actions render as buttons and the rest collapse into a "More actions" menu. On a page-scrolling table the bar sticks to the bottom of the viewport until the table's end scrolls into view.
+  
+  **Behavior change:** the header checkbox is now page-scoped in both directions. Checking it adds the current page's rows to the selection instead of replacing it, and unchecking it removes only the current page's rows instead of clearing every page. `clearSelection` still empties everything (and is now a no-op when nothing is selected), and the new `deselectAllRows` is the page-scoped counterpart of `selectAllRows`.
+  
+  The `interaction/multi-select` pattern in the bundled `app-shell-patterns` skill is rewritten around `rowSelection.actions`, replacing the floating bar on a hand-built table. The hook return value and table context also expose the original configuration as `rowSelection`, keeping actions under `rowSelection.actions` throughout.
+- 403eebe: Add typography role tokens. A role sets font size, line height, font weight, and letter spacing together. Ten `text-*` utilities are available after you import `@tailor-platform/app-shell/styles`: `text-heading-lg`, `text-heading-md`, `text-heading-sm`, `text-body-md`, `text-body-sm`, `text-label-md`, `text-label-sm`, `text-code-sm`, `text-body-md-relaxed`, and `text-body-sm-relaxed`.
+  
+  ```tsx
+  <h2 className="text-heading-md">Purchase orders</h2>
+  <p className="text-body-md text-muted-foreground">Orders sent to suppliers this month.</p>
+  ```
+  
+  Each role reads four CSS variables named `--app-shell-type-<role>-<size|line-height|weight|letter-spacing>`, which you can override on `:root`. AppShell's `cn()` now keeps a role together with a text color class, for example in `className="text-label-md text-muted-foreground"` passed to an AppShell component. If your app has its own `tailwind-merge` setup, see the Typography section of the styling guide.
+- 95bc8f2: Add `showDayOfWeek` to `DateField`, `DatePicker`, and `DateRangePicker`. It appends the locale's short day of the week where the locale places it (`2025/12/19(金)`, `Fri, 12/19/2025`). It is read-only and derived from the entered date. While a date segment is mid-entry it keeps showing the previous day of the week, so typing `25` never flashes the 2nd's. Screen readers hear the full day name with each date segment's value.
+  
+  ```tsx
+  <DatePicker aria-label="Closing date" showDayOfWeek />
+  ```
+
+### Patch Changes
+
+- 529b3ac: Fix the `form/modal` pattern in the docs and the bundled `app-shell-patterns` skill. Both examples built the dialog body on a native `<form onSubmit>` with `new FormData(event.currentTarget)`, which skips `Form` validation and server-error routing and contradicts the pattern's own rules. They now use `Form` with `onFormSubmit(values)`, plain `<Field.Control />`, and a `type="button"` Cancel. Refs tailor-inc/platform-planning#2000.
+- 8bf9540: Fix `DataTable.Filters` datetime values to serialize as RFC 3339 instants and display existing instants in the configured timezone (or the user's local timezone when unset).
+  
+  Document that apps should set `AppShell.timeZone` for shared business-day filtering; `locale` does not determine the timezone. Clarify date-only versus datetime fields and the handling of programmatic and persisted filter values.
+- 8bf9540: Normalize datetime filters in metadata-backed collection hooks before initial queries and filter updates, including URL and saved-view restoration. Interpret timezone-less values in the AppShell timezone and reject invalid datetime values without dropping filter constraints; hooks without metadata remain unchanged.
+  
+  Use the AppShell timezone consistently for built-in DataTable date cells and cell-menu filters, while preserving date-only calendar values. Reuse date formatters per column across rows and unchanged-column renders instead of constructing them for every cell.
+- 4c366d1: Fix 12-hour time display in `DateField`, `DatePicker` and `DateRangePicker`. With `granularity` set to `hour`, `minute` or `second` and a 12-hour cycle (`hourCycle={12}`, or a 12-hour locale such as `en-US`), afternoon values showed as e.g. "18:00 AM", and editing any segment saved them 12 hours early (06:xx). PM values now show as "06:00 PM", midnight and noon as 12 AM / 12 PM, and edits keep the correct hour. Changing `hourCycle` (or a locale change that flips the default cycle) on a mounted field now re-encodes the time segments instead of misreading them. Refs tailor-inc/platform-planning#2039.
+- 430fd6a: `DatePicker` and `DateRangePicker` now open their calendar on the current field value. Previously a date typed into the segments (or set from outside while closed) was ignored, so the popover opened on today's month — or on whatever month was last viewed — and arrow-key + Enter selected relative to that. The calendar now focuses the selected/typed date on every open (the range start, else a typed end), falling back to today when empty.
+- 5893b12: Fix `<Layout fill>` with several columns on narrow screens. Below the breakpoint where the columns stack (`lg` for two columns, `xl` for three), the layout no longer bounds its rows, so no column is squashed to zero height and the content area scrolls as usual — as the `fill` docs already describe. Side-by-side behaviour is unchanged.
+- 266c945: Remove the shadow from Button `secondary` and from the text controls (Input, Textarea, Field.Control, DateField, Select, Combobox, Autocomplete).
+- 5481215: Fix the hook documentation and the bundled `app-shell-patterns` skill where the examples did not match the real return types. Both `useAppShell()` and `useAppShellData()` expose a `contextData` property (not `context`, and not the data object itself); `useAppShell()` also returns the configuration. `useAppShellConfig()` returns `{ title, icon, favicon, appInfo, configurations }` with `modules` under `configurations`, and `useToast()` returns the sonner `toast` function (`toast("Saved")`, `toast.success(...)`) rather than `{ toast }` with a `{ title, description, variant }` object. Copying the old examples produced TS2339 and TS2353 errors.
+- 589a66f: Use the current viewport for the sidebar's first client-only render instead of initially treating mobile and tablet widths as desktop.
+  Existing breakpoints and the desktop fallback during server rendering and initial hydration remain unchanged.
+- d8d4ec3: Fix the selected sidebar item ignoring `--sidebar-accent-foreground`. `SidebarItem`, linked `SidebarGroup` headers, and the auto-generated sidebar now mark the current page's button as active (`data-active="true"`), so its background, weight, and text colour all follow the sidebar accent tokens. Built-in themes look the same; themes that set a distinct `--sidebar-accent-foreground` now show it without a custom `render` workaround. Refs tailor-inc/platform-planning#1946.
+- 8f0250f: Keep the GraphQL documentation and skill example's query context stable between renders.
+  This avoids urql query re-execution loops when the example is used in a component.
+- 8e58b98: Fix localized breadcrumb overrides by recognizing translation functions created by `labels.t()` and resolving callback-returned `LocalizedString` values using the current AppShell locale. This applies to modules, resources, and file-based page metadata while preserving existing URL-segment callbacks.
+  
+  Use `breadcrumbTitle: labels.t("orders")` directly, or `breadcrumbTitle: (segment) => labels.t("order", { id: segment })` for dynamic labels, without `as string`. The existing `() => labels.t(key)` form remains supported.
+- 06c59b8: Fix Decimal metadata and query types to use strings with numeric sort/filter operators, matching the GraphQL Decimal scalar.
+  Preserve decimal precision when adding, editing, or restoring DataTable filters. Regenerate SDK metadata to update decimal fields previously marked as `number`.
+- b7769c5: Fix image preview Blob URLs leaking when `useAttachment` unmounts after a successful `applyChanges()` call.
+  Previews remain available while displayed and are released on deletion or unmount.
+- 1fbf1c8: Button `outline` now has a transparent background (like Input) instead of `--background`, and no shadow, so it no longer shows up as a slightly gray fill on white surfaces such as `Card`. The `cream` and `bloom` themes no longer need their own transparent override for outline buttons, so those rules are removed.
+  
+  Tabs `capsule` uses a translucent black track (`bg-black/5`) instead of `--background`, and the active capsule tab uses `--card` (white in light mode, a slightly lighter `bg-input/60` in dark mode) instead of a tinted `bg-primary/10`, so it no longer follows the theme colour.
+
 ## 1.16.0
 
 ### Minor Changes

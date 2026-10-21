@@ -1,0 +1,9 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Text > snapshots > code role 1`] = `"<span data-slot="text" class="astw:font-mono astw:text-code-sm">PO-0001</span>"`;
+
+exports[`Text > snapshots > default role 1`] = `"<p data-slot="text" class="astw:text-body-md">Orders sent this month.</p>"`;
+
+exports[`Text > snapshots > heading role 1`] = `"<h2 data-slot="text" class="astw:text-heading-md">Purchase orders</h2>"`;
+
+exports[`Text > snapshots > with render prop 1`] = `"<h3 data-slot="text" class="astw:text-heading-md">Line items</h3>"`;

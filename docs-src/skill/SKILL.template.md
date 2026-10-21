@@ -46,11 +46,12 @@ A page is the shape of a whole screen — the outer choice, made before picking 
 ## How to Use
 
 1. Identify the user's intent (list, detail, form, interaction, screen composition, recipe)
-2. Building a whole screen? Match it to a **page** entry first and read that. A page fixes the screen's shape — its layout, what goes where, and in what order — before any of the parts inside it are chosen.
-3. Match each part you are building to a **pattern** entry slug from the tables above. A one-off recipe rather than a screen skips straight to this step.
-4. Read the entry's detailed spec: `references/<category>/<slug>.md` (relative to this file)
-5. Read the concept references for styling, design tokens, GraphQL, and custom components: `references/concepts/`; component and hook APIs live in `references/components/` and `references/api/`
-6. Implement using ONLY the imports listed in the entry's `requiredImports` — for a page, the `requiredImports` of the pattern it sent you to
+2. Before implementing screen text, read [`i18n/labels`](references/patterns/i18n-labels.md) and establish the app's UI language independently of the specification's language. Use feature label catalogs by default, unless the project explicitly opts out for a single-language app. The API reference is [`defineI18nLabels`](references/api/define-i18n-labels.md).
+3. Building a whole screen? Match it to a **page** entry first and read that. A page fixes the screen's shape — its layout, what goes where, and in what order — before any of the parts inside it are chosen.
+4. Match each part you are building to a **pattern** entry slug from the tables above. A one-off recipe rather than a screen skips straight to this step.
+5. Read the entry's detailed spec: `references/<category>/<slug>.md` (relative to this file)
+6. Read the concept references for styling, design tokens, GraphQL, and custom components: `references/concepts/`; component and hook APIs live in `references/components/` and `references/api/`
+7. Implement using ONLY the imports listed in the selected entries' `requiredImports` — for a page, use those of its patterns; for localization, include the `i18n/labels` entry
 
 ## Rules
 
@@ -72,3 +73,4 @@ Full rationale in [`styling-theming`](references/concepts/styling-theming.md) �
 - **Forms default to `form/modal`** — only build a routed full-page form when the design explicitly calls for one.
 - **Forms use AppShell `Form` + `Field`**, submitting via `onFormSubmit` — never a bare `<form onSubmit>` with `FormData`. `onFormSubmit` reads registered `Field.Root`s, so every control (dropdowns included) just needs a wrapping `Field.Root name="…"` — no `name` on the control, no `useState`. React Hook Form is optional, consumer-installed, and only warranted for cross-field validation, field arrays, or a Zod resolver. Details in [`Form`](references/components/form.md) and the `form/*` patterns.
 - **Handle every state:** loading (skeleton), empty (labelled empty state), and error (inline + retry) — never ship only the happy path.
+- **Keep UI language consistent:** apply the chosen language to navigation, component text, accessibility labels, and feedback. Use the catalog's `useT()` for rendered strings and `labels.t()` for `LocalizedString` metadata; keep server codes and comparison values untranslated. See [`i18n/labels`](references/patterns/i18n-labels.md).

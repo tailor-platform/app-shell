@@ -6,6 +6,7 @@ import type {
   FilterConfig,
   OperatorForFilterType,
   PageInfo,
+  SelectOption,
   SortConfig,
   SortState,
 } from "@/types/collection";
@@ -83,6 +84,110 @@ export interface LinkCellOptions<TRow extends Record<string, unknown>> {
    */
   href: (row: TRow) => string | null | undefined;
 }
+
+// =============================================================================
+// Inline editing
+// =============================================================================
+
+/** Row state passed to `edit.canEdit` alongside the row. */
+export interface CellEditState {
+  /** Whether the row is selected. Always `false` when row selection is off. */
+  selected: boolean;
+}
+
+/** Incomplete date-time editor state, interpreted in the AppShell timezone. */
+export interface DateTimeDraft {
+  day: string | null;
+  time: string | null;
+}
+
+interface CellEditBase<TRow extends Record<string, unknown>, TValue, TDraft = TValue | null> {
+  /**
+   * Decides, per row, whether the cell can be edited. Receives the row and
+   * whether it is selected, so "editable once selected" is
+   * `(_, { selected }) => selected`. Default: every row with an `id`.
+   */
+  canEdit?: (row: TRow, state: CellEditState) => boolean;
+  /**
+   * Observes editor drafts, including incomplete input and restored drafts on
+   * cancellation. Direct inputs emit raw strings; choices emit selected values,
+   * not search text or highlights. Updating `data` here is outside the supported
+   * coordination contract. The return value is ignored.
+   */
+  onValueChange?: (row: TRow, draft: TDraft) => void;
+  /**
+   * Notifies a changed, confirmed editor output, compared with current `data`.
+   * Empty cells confirm `null`. Confirmation does not imply business validation,
+   * adoption, or persistence; update `data` here to adopt it. Return values are
+   * ignored. Output types follow the editor, not the row field's runtime type.
+   */
+  onValueCommitted: (row: TRow, value: TValue | null) => void;
+}
+
+/**
+ * `edit` config for `type: "text"` and `type: "link"` columns. Without
+ * `options` the cell is typed into: the value is the text as typed, and an
+ * emptied cell commits `null`. A `link` column shows its label as plain text
+ * while the cell can be edited.
+ */
+export interface TextCellEditOptions<TRow extends Record<string, unknown>> extends CellEditBase<
+  TRow,
+  string,
+  string | null
+> {
+  /**
+   * Turns the cell into a dropdown of these choices (a supplier, a warehouse,
+   * a unit of measure). The column's value is an option's `value`, and every
+   * cell in the column — editable or not — shows the matching `label`.
+   * Picking a choice notifies its value; a "None" choice notifies `null`.
+   */
+  options?: readonly SelectOption[];
+}
+
+/**
+ * `edit` config for `type: "badge"` columns: a dropdown whose choices render as
+ * the same badges the cell shows. Picking one notifies its `value`; a "None"
+ * choice notifies `null`. Single-value columns only.
+ */
+export interface BadgeCellEditOptions<TRow extends Record<string, unknown>> extends CellEditBase<
+  TRow,
+  string
+> {
+  /**
+   * The choices. Default: the entries of `typeOptions.badgeLabelMap`, else the
+   * column's enum `filter` options. A badge column with neither can't be
+   * edited.
+   */
+  options?: readonly SelectOption[];
+}
+
+/**
+ * `edit` config for `type: "date"` columns: a calendar that opens from the
+ * cell. Picking a day commits `"YYYY-MM-DD"`. With `dateFormat: "datetime"`
+ * the calendar emits complete `DateTimeDraft` snapshots and Done confirms an
+ * ISO 8601 timestamp in the AppShell timezone only with a valid day and time.
+ * Outside closing / Esc cancels; Clear explicitly confirms `null`.
+ * Date-only drafts are `"YYYY-MM-DD" | null`.
+ */
+export type DateCellEditOptions<TRow extends Record<string, unknown>> = CellEditBase<
+  TRow,
+  string,
+  string | DateTimeDraft | null
+>;
+
+/**
+ * `edit` config for `type: "number"` and `type: "money"` columns. Drafts are raw
+ * strings (including incomplete input); confirmation emits a JavaScript number
+ * or `null`, not an arbitrary-precision Decimal. Editing uses `.` as the decimal
+ * separator, independently of display locale. Full-width digits and valid comma
+ * grouping are normalized on confirmation. Display precision does not constrain
+ * input; business rules belong to the consumer.
+ */
+export type NumberCellEditOptions<TRow extends Record<string, unknown>> = CellEditBase<
+  TRow,
+  number,
+  string
+>;
 
 /**
  * Header render context for non-sortable columns.
@@ -290,40 +395,52 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
  * and `undefined` are always allowed: every built-in renderer maps them to the
  * `—` placeholder.
  *
+ * `edit` makes the cells editable in place and also narrows per branch, so
+ * `onValueCommitted` receives the editor's output type, not necessarily the
+ * original row field's runtime type. Text / link / badge output strings or null.
+ * Every typed column
+ * supports it; untyped (`render`-only) columns don't.
+ *
  * Prefer `Column<TRow>` in most cases; this is exported so consumers can
  * compose more specific column types.
  */
 export type ColumnTypeBranch<TRow extends Record<string, unknown>> =
-  | { type?: undefined; typeOptions?: never; accessor?: (row: TRow) => unknown }
+  | { type?: undefined; typeOptions?: never; accessor?: (row: TRow) => unknown; edit?: never }
   | {
       type: "text";
       typeOptions?: never;
       accessor?: (row: TRow) => string | number | boolean | bigint | null | undefined;
+      edit?: TextCellEditOptions<TRow>;
     }
   | {
       type: "number";
       typeOptions?: NumberCellOptions;
       accessor?: (row: TRow) => number | null | undefined;
+      edit?: NumberCellEditOptions<TRow>;
     }
   | {
       type: "money";
       typeOptions?: MoneyCellOptions<TRow>;
       accessor?: (row: TRow) => number | null | undefined;
+      edit?: NumberCellEditOptions<TRow>;
     }
   | {
       type: "date";
       typeOptions?: DateCellOptions;
       accessor?: (row: TRow) => Date | string | number | null | undefined;
+      edit?: DateCellEditOptions<TRow>;
     }
   | {
       type: "badge";
       typeOptions?: BadgeCellOptions;
       accessor?: (row: TRow) => string | string[] | number | boolean | null | undefined;
+      edit?: BadgeCellEditOptions<TRow>;
     }
   | {
       type: "link";
       typeOptions: LinkCellOptions<TRow>;
       accessor?: (row: TRow) => string | number | boolean | null | undefined;
+      edit?: TextCellEditOptions<TRow>;
     };
 
 /**
@@ -402,7 +519,16 @@ export type RowExpansionOptions<TRow extends Record<string, unknown>> = {
 );
 
 /** Controlled or uncontrolled row-selection configuration. Keep the mode stable while mounted. */
-export type RowSelectionOptions =
+export type RowSelectionOptions = {
+  /**
+   * Bulk actions for the selected IDs, shown in `DataTable.Footer` while at
+   * least one row is selected. The bar includes the selection count, these
+   * actions, and Clear, with pagination kept alongside. The first three actions
+   * render as buttons; the rest collapse into a "More actions" menu.
+   * Omit or pass an empty array to enable selection without an action bar.
+   */
+  actions?: SelectionAction[];
+} & (
   | {
       /**
        * Controlled selected ids. Update this array from `onChange`.
@@ -418,7 +544,8 @@ export type RowSelectionOptions =
       defaultSelectedIds?: string[];
       /** Notification of user-driven selection changes, including under StrictMode. */
       onChange?: (ids: string[]) => void;
-    };
+    }
+);
 
 /**
  * Options for `useDataTable` hook.
@@ -465,8 +592,8 @@ export type UseDataTableOptions<
   rowSelection?: RowSelectionOptions;
   /**
    * Called with the current array of selected row IDs whenever the selection
-   * changes. Providing this prop — or a non-empty `selectionActions` — enables
-   * the checkbox selection column. Selection is ID-based (`row.id`) and persists
+   * changes. Providing this prop or `rowSelection` enables the checkbox
+   * selection column. Selection is ID-based (`row.id`) and persists
    * across page changes. Remains supported; `rowSelection.onChange` takes
    * precedence when both callbacks are supplied.
    *
@@ -480,17 +607,6 @@ export type UseDataTableOptions<
    * @deprecated Use `rowSelection.onChange` instead.
    */
   onSelectionChange?: (ids: string[]) => void;
-  /**
-   * Bulk actions for the selected rows. While at least one row is selected,
-   * `DataTable.Footer` turns into an action bar: the selection count, these
-   * actions, and a Clear button, with the pagination controls kept alongside.
-   * The bar is omitted when this array is empty or not provided.
-   *
-   * Providing a non-empty array also enables row selection, so
-   * `onSelectionChange` is optional. The first three actions render as buttons;
-   * the rest collapse into a "More actions" menu.
-   */
-  selectionActions?: SelectionAction<TRow>[];
   /**
    * Expandable detail rows. Providing this enables the whole feature: a chevron
    * column is added at the left edge (auto-pinned left, after the selection
@@ -521,50 +637,25 @@ export type UseDataTableOptions<
 // Row Actions
 // =============================================================================
 
-/**
- * What `RowAction` and `SelectionAction` share: how an action looks, and which
- * rows it can act on. Define an action once and spread it into both arrays —
- * only `onClick` differs, since one row and many rows need different handling.
- *
- * @example
- * ```tsx
- * const activate: DataTableAction<Vendor> = {
- *   id: "activate",
- *   label: "Activate",
- *   canApply: (vendor) => vendor.status === "inactive",
- * };
- *
- * useDataTable({
- *   rowActions: [{ ...activate, onClick: (vendor) => activateOne(vendor) }],
- *   selectionActions: [{ ...activate, onClick: (vendors) => activateMany(vendors) }],
- * });
- * ```
- */
-export interface DataTableAction<TRow extends Record<string, unknown>> {
+/** Presentation shared by row actions and selection actions. */
+export interface DataTableAction {
   id: string;
   label: string;
   icon?: ReactNode;
   variant?: "default" | "destructive";
-  /**
-   * Whether the action can act on `row`. Omit it for actions that apply to
-   * every row. A row action is disabled for rows where it returns `false`; a
-   * selection action shows how many selected rows it returns `true` for
-   * ("Activate (6)"), is disabled when there are none, and passes only those
-   * rows to `onClick`.
-   */
-  canApply?: (row: TRow) => boolean;
 }
 
 /**
  * A single row action definition for the actions column.
  */
-export interface RowAction<TRow extends Record<string, unknown>> extends DataTableAction<TRow> {
+export interface RowAction<TRow extends Record<string, unknown>> extends DataTableAction {
+  /** Whether the action can act on this row. Return `false` to disable it. */
+  canApply?: (row: TRow) => boolean;
   /**
    * Return `true` to disable the action for a given row.
    *
    * @deprecated Use `canApply`, which reads the other way round:
-   * `isDisabled: (row) => x` is `canApply: (row) => !x`. It is shared with
-   * `SelectionAction`, so one definition serves both. If both are set, the
+   * `isDisabled: (row) => x` is `canApply: (row) => !x`. If both are set, the
    * action is disabled when either one says so.
    */
   isDisabled?: (row: TRow) => boolean;
@@ -579,43 +670,28 @@ export interface SelectionActionHelpers {
    * Hand the bar a request it should track — for one that starts after
    * `onClick` has returned, typically from a confirm dialog's confirm button.
    * The bar then behaves as if `onClick` had returned it: actions (and Clear)
-   * are disabled while it is pending, and the selection clears once it resolves
-   * unless the action sets `keepSelection`. Returns the request, so it can be
-   * awaited too.
+   * are disabled while it is pending. It never changes selection. Returns the
+   * request, so it can be awaited too.
    */
   run: <T>(request: PromiseLike<T>) => PromiseLike<T>;
 }
 
 /**
- * A bulk action for the selected rows, shown in `DataTable.Footer` while a
- * selection is open. See `UseDataTableOptions.selectionActions`.
+ * An ID-based bulk action shown in `DataTable.Footer` while a selection is open.
+ * Configure through `UseDataTableOptions.rowSelection.actions`.
  */
-export interface SelectionAction<
-  TRow extends Record<string, unknown>,
-> extends DataTableAction<TRow> {
+export interface SelectionAction extends DataTableAction {
   /**
-   * Called with the selected rows the action can act on (see `canApply`),
-   * including rows selected on other pages, as they were last loaded.
+   * Called with a click-time copy of all selected IDs, including unloaded rows.
+   * Consumers own eligibility checks, fetching, confirmation, and execution.
+   * Selection is never automatically cleared: update controlled selection based
+   * on the actual result, preserving ineligible IDs and any new selections.
    *
-   * **Return the promise** for asynchronous work. While it is pending, the bar
-   * disables its actions and shows a spinner on this one; once it resolves, the
-   * selection is cleared — those rows may have changed, and rows remembered
-   * from other pages would otherwise be stale — unless `keepSelection` is set.
-   * A rejected promise leaves the selection as it was, so the action can be
-   * retried.
-   *
-   * **Confirming first?** An `onClick` that only opens a confirm dialog returns
-   * nothing, so the bar has nothing to wait on. Keep `helpers.run` and pass it
-   * the request when the user confirms — `run(deleteRows(rows))` — and the bar
-   * treats it exactly like a returned promise. Otherwise a synchronous handler
-   * leaves the selection alone; call `clearSelection` once the work is done.
+   * Return a promise to disable the bar and show a spinner while it is pending.
+   * For work started later by a confirmation dialog, pass the request to
+   * `helpers.run` instead. Neither success nor failure changes selection.
    */
-  onClick: (rows: TRow[], helpers: SelectionActionHelpers) => void | Promise<unknown>;
-  /**
-   * Keep the selection after this action's promise resolves — for actions that
-   * don't change the rows, such as an export.
-   */
-  keepSelection?: boolean;
+  onClick: (ids: string[], helpers: SelectionActionHelpers) => void | Promise<unknown>;
 }
 
 /**
@@ -693,16 +769,11 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   // Row interaction (passthrough for DataTable.Provider)
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
-  selectionActions?: SelectionAction<TRow>[];
 
   // Row selection
+  /** Selection config (passthrough for `DataTable.Root`). */
+  rowSelection?: RowSelectionOptions;
   selectedIds: string[];
-  /**
-   * The selected rows, in selection order. Rows on the current page are their
-   * latest version; rows selected on other pages are the version last loaded.
-   * Selected ids whose rows have not been loaded are omitted until they are seen.
-   */
-  selectedRows: TRow[];
   isRowSelected: (row: TRow) => boolean;
   toggleRowSelection?: (row: TRow) => void;
   /** Adds every row on the current page to the selection. */
@@ -715,13 +786,10 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   pendingActionId?: string | null;
   /**
    * Tracks a selection action's request: disables the bar while it is pending
-   * and clears the selection once it resolves (unless `keepSelection`). This is
-   * what `SelectionActionHelpers.run` calls. Undefined when selection is off.
+   * without changing selection. This is what `SelectionActionHelpers.run` calls.
+   * Undefined when selection is off.
    */
-  runSelectionAction?: (
-    action: { id: string; keepSelection?: boolean },
-    request: PromiseLike<unknown>,
-  ) => void;
+  runSelectionAction?: (action: { id: string }, request: PromiseLike<unknown>) => void;
   isAllSelected: boolean;
   isIndeterminate: boolean;
 

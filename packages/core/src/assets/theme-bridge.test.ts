@@ -71,19 +71,25 @@ describe("theme bridge", () => {
 
   describe("typography roles", () => {
     const slots = ["size", "line-height", "weight", "letter-spacing"] as const;
-    /** `--app-shell-type-<role>-<slot>` variables in the default palette, grouped by role. */
+    /** `--type-<role>-<slot>` variables in the default palette, grouped by role. */
     const defined = new Map<string, Map<string, string>>();
     for (const m of defaultTheme.matchAll(
-      /^\s*--app-shell-type-([a-z-]+)-(size|line-height|weight|letter-spacing):\s*([^;]+);/gm,
+      /^\s*--type-([a-z-]+)-(size|line-height|weight|letter-spacing):\s*([^;]+);/gm,
     )) {
       const role = m[1];
       defined.set(role, (defined.get(role) ?? new Map()).set(m[2], m[3].trim()));
     }
-    /** Bridge entries `--text-<role>[--<suffix>]: var(--app-shell-type-...)`, keyed by property name. */
+    /**
+     * Bridge entries `--text-<role>[--<suffix>]: var(--app-shell-type-X, var(--type-X))`,
+     * keyed by property name. The value is the `--type-*` name, or a marker when the
+     * entry does not read the same deprecated `--app-shell-type-*` name first.
+     */
     const bridgedText = new Map(
-      [...bridge.matchAll(/^\s*(--text-[a-z-]+):\s*var\((--app-shell-type-[a-z-]+)\);/gm)].map(
-        (m) => [m[1], m[2]],
-      ),
+      [
+        ...bridge.matchAll(
+          /^\s*(--text-[a-z-]+):\s*var\(\s*--app-shell-type-([a-z-]+),\s*var\(\s*--type-([a-z-]+)\s*\)\s*\);/gm,
+        ),
+      ].map((m) => [m[1], m[2] === m[3] ? `--type-${m[3]}` : `mismatched old name ${m[2]}`]),
     );
 
     it("pins the role count at 10", () => {
@@ -107,10 +113,20 @@ describe("theme bridge", () => {
       const expected = new Map<string, string>();
       for (const role of defined.keys()) {
         for (const slot of slots) {
-          expected.set(`--text-${role}${suffix[slot]}`, `--app-shell-type-${role}-${slot}`);
+          expected.set(`--text-${role}${suffix[slot]}`, `--type-${role}-${slot}`);
         }
       }
       expect(bridgedText).toEqual(expected);
+    });
+
+    it("reads the deprecated --app-shell-type-* name first in every bridge entry", () => {
+      // 1.17.0 shipped the roles under --app-shell-type-*. The bridge resolves the
+      // fallback on the element, so an old-name override keeps working at any scope.
+      const typeEntries = [...bridge.matchAll(/^\s*(--text-[a-z-]+):\s*([^;]+);/gm)].filter((m) =>
+        m[2].includes("--type-"),
+      );
+      expect(typeEntries.length).toBe(defined.size * slots.length);
+      expect(typeEntries.filter((m) => !bridgedText.has(m[1])).map((m) => m[1])).toEqual([]);
     });
 
     it("does not collide with a --color-* token that Tailwind resolves first", () => {
@@ -155,5 +171,12 @@ describe("theme bridge", () => {
         expect(values.get("letter-spacing"), `${role} letter-spacing`).toBe(letterSpacing);
       }
     });
+  });
+
+  it("defines --backdrop in the default palette and bridges it as bg-backdrop", () => {
+    // Dialog, Sheet and the CsvImporter drawer use `bg-backdrop`; without both
+    // lines the backdrop compiles to an undefined variable and turns transparent.
+    expect(defaultTheme).toMatch(/^\s*--backdrop:\s*var\(--primitive-black-a7\);/m);
+    expect(bridge).toMatch(/^\s*--color-backdrop:\s*var\(--backdrop\);/m);
   });
 });

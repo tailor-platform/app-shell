@@ -190,6 +190,7 @@ export {
   type LineItemsLineChange,
   type LineItemsMetadataCommit,
   type LineItemsResetInput,
+  type LineItemsResetOptions,
   type LineItemsMode,
   type LineItemsOrderingMode,
   type LineItemsRootProps,

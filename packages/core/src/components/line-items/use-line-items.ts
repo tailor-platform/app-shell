@@ -4,6 +4,8 @@ import {
   buildChangeSet,
   cloneBaseline,
   cloneRow,
+  applySentChanges,
+  diffDocumentFields,
   readLineKey,
   withLineKey,
   type LineItemsBaseline,
@@ -15,6 +17,7 @@ import type {
   LineItemsMetadataCommit,
   LineItemsMode,
   LineItemsResetInput,
+  LineItemsResetOptions,
   LineItemsRowData,
   LineItemsSortState,
   UseLineItemsOptions,
@@ -373,28 +376,72 @@ export function useLineItems<T extends LineItemsRowData>(
   );
 
   const reset = React.useCallback(
-    (saved?: LineItemsResetInput<T>) => {
+    (saved?: LineItemsResetInput<T>, resetOptions?: LineItemsResetOptions) => {
       dirtyNow.current = false;
       metadataEdited.current = new Set<string>();
       const current = rowsRef.current;
-      const pendingNew = dirtyRef.current.inserted;
+      const { baseline: oldBaseline } = dirtyRef.current;
+      const sent = resetOptions?.sent;
+      // What the server now holds: everything on screen, or, given `sent`,
+      // the old baseline plus only what was sent — later edits stay pending.
+      const savedState = sent
+        ? applySentChanges(columns, oldBaseline, current.byKey, sent)
+        : cloneBaseline<T>(current.order, current.byKey);
+      // Lines added since the snapshot, and lines it has that are gone since.
+      const addedSince = (
+        base: LineItemsBaseline<T>,
+        byKey: Record<string, T | undefined>,
+        order: string[],
+      ) => new Set(order.filter((key) => !base.rows[key] && byKey[key]));
+      const removedSince = (base: LineItemsBaseline<T>, byKey: Record<string, T | undefined>) =>
+        new Set(base.order.filter((key) => !byKey[key]));
 
       if (saved === undefined) {
-        if (pendingNew.size > 0) {
+        const pendingNew = [...addedSince(oldBaseline, current.byKey, current.order)].filter(
+          (key) => savedState.rows[key],
+        );
+        if (pendingNew.length > 0) {
           console.warn(
-            `[LineItems] reset() was called with ${pendingNew.size} new line(s) and no saved lines, so they keep temporary keys and a later edit would send an update the server can't match. Pass the saved lines, reset(savedLines), or reset({ idMap }).`,
+            `[LineItems] reset() was called with ${pendingNew.length} new line(s) and no saved lines, so they keep temporary keys and a later edit would send an update the server can't match. Pass the saved lines, reset(savedLines), or reset({ idMap }).`,
           );
         }
         setDirty({
-          baseline: cloneBaseline<T>(current.order, current.byKey),
-          inserted: new Set<string>(),
-          removed: new Set<string>(),
+          baseline: savedState,
+          inserted: addedSince(savedState, current.byKey, current.order),
+          removed: removedSince(savedState, current.byKey),
         });
         return;
       }
 
       if (isLineArray(saved)) {
         const next = seedLines(saved, idKey);
+        if (sent) {
+          // Carry edits made since the send over onto the server's lines.
+          const { byKey, order } = next.rows;
+          const inserted = new Set(next.dirty.inserted);
+          const removed = new Set<string>();
+          for (const key of current.order) {
+            const line = current.byKey[key]!;
+            const sentLine = savedState.rows[key];
+            if (!sentLine) {
+              byKey[key] = line;
+              order.push(key);
+              inserted.add(key);
+              continue;
+            }
+            const patch = diffDocumentFields(columns, line, sentLine);
+            if (byKey[key] && Object.keys(patch).length > 0) {
+              byKey[key] = { ...byKey[key], ...patch } as T;
+            }
+          }
+          for (const key of savedState.order) {
+            if (current.byKey[key] || !byKey[key]) continue;
+            delete byKey[key];
+            order.splice(order.indexOf(key), 1);
+            if (next.dirty.baseline.rows[key]) removed.add(key);
+          }
+          next.dirty = { ...next.dirty, inserted, removed };
+        }
         pendingNotify.current = true;
         setRows(next.rows);
         setDirty(next.dirty);
@@ -402,25 +449,40 @@ export function useLineItems<T extends LineItemsRowData>(
         return;
       }
 
-      // Re-key each new line with the id the server assigned it.
+      // Re-key each line the server created with the id it assigned.
+      const created = sent
+        ? new Set(sent.lineChanges.flatMap((c) => (c.action === "add" ? [c.tempId] : [])))
+        : addedSince(oldBaseline, current.byKey, current.order);
       const rename = new Map<string, string>();
+      for (const key of created) {
+        const serverId = saved.idMap[key];
+        if (serverId === undefined || serverId === null || serverId === "") continue;
+        rename.set(key, String(serverId));
+      }
+      const rekey = (key: string) => rename.get(key) ?? key;
+      const withId = (key: string, row: T) => {
+        const nextKey = rename.get(key);
+        return nextKey ? withLineKey({ ...row, [idKey]: saved.idMap[key] } as T, nextKey) : row;
+      };
+
       const byKey: Record<string, T> = {};
       const order = current.order.map((key) => {
-        const row = current.byKey[key]!;
-        const serverId = pendingNew.has(key) ? saved.idMap[key] : undefined;
-        if (serverId === undefined || serverId === null || serverId === "") {
-          byKey[key] = row;
-          return key;
-        }
-        const nextKey = String(serverId);
-        byKey[nextKey] = withLineKey({ ...row, [idKey]: serverId } as T, nextKey);
-        rename.set(key, nextKey);
-        return nextKey;
+        byKey[rekey(key)] = withId(key, current.byKey[key]!);
+        return rekey(key);
       });
-      const stillNew = new Set([...pendingNew].filter((key) => !rename.has(key) && byKey[key]));
-      if (stillNew.size > 0) {
+      const baselineRows: Record<string, T> = {};
+      const baselineOrder: string[] = [];
+      for (const key of savedState.order) {
+        // A created line the map has no id for stays new: it's sent again.
+        if (created.has(key) && !rename.has(key)) continue;
+        baselineRows[rekey(key)] = withId(key, savedState.rows[key]!);
+        baselineOrder.push(rekey(key));
+      }
+      const baseline = { order: baselineOrder, rows: baselineRows };
+      const stillNew = [...created].filter((key) => !rename.has(key) && current.byKey[key]);
+      if (stillNew.length > 0) {
         console.warn(
-          `[LineItems] reset({ idMap }) has no id for ${stillNew.size} new line(s); they stay new and will be sent as adds again.`,
+          `[LineItems] reset({ idMap }) has no id for ${stillNew.length} new line(s); they stay new and will be sent as adds again.`,
         );
       }
       if (rename.size > 0) {
@@ -428,16 +490,13 @@ export function useLineItems<T extends LineItemsRowData>(
         setRows({ byKey, order });
       }
       setDirty({
-        baseline: cloneBaseline<T>(
-          order.filter((key) => !stillNew.has(key)),
-          byKey,
-        ),
-        inserted: stillNew,
-        removed: new Set<string>(),
+        baseline,
+        inserted: addedSince(baseline, byKey, order),
+        removed: removedSince(baseline, byKey),
       });
       reconcileSelection(byKey, rename);
     },
-    [idKey, reconcileSelection],
+    [columns, idKey, reconcileSelection],
   );
 
   const revert = React.useCallback(() => {

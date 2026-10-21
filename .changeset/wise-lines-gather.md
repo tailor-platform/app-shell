@@ -37,7 +37,6 @@ function Lines({ lines }: { lines: POLine[] }) {
 
   return (
     <LineItems.Root value={lineItems}>
-      <LineItems.Search />
       <LineItems.Table />
       <LineItems.SaveActions
         onSave={async (changeSet) => lineItems.reset(await submit(changeSet.lineChanges))}

@@ -174,7 +174,6 @@ const fields = [
     },
     width: 200,
     pin: "left",
-    search: (l, q) => l.sku.toLowerCase().includes(q.toLowerCase()),
     sort: { comparator: (a, b) => a.sku.localeCompare(b.sku) },
   }),
   f.field({
@@ -184,7 +183,6 @@ const fields = [
     editable: ["edit"],
     type: { kind: "text" },
     flex: true,
-    search: (l, q) => (l.description ?? "").toLowerCase().includes(q.toLowerCase()),
   }),
   f.field({
     key: "uom",
@@ -421,7 +419,6 @@ const PurchaseOrderDemo = ({
               }`}
             >
               <div className="flex items-center justify-end gap-2">
-                <LineItems.SearchToggle placeholder="Search SKU or product" />
                 <Button variant="outline" size="sm" onClick={() => alert("Import from CSV")}>
                   <Upload className="size-4" />
                   Import from CSV

@@ -239,8 +239,6 @@ type LineItemsFieldBase<T extends LineItemsRowData> = {
    * order.
    */
   sort?: { comparator: (a: T, b: T) => number };
-  /** Returns `true` when `line` matches the active search query. */
-  search?: (line: T, query: string) => boolean;
   /**
    * Horizontal alignment. When omitted, `number` fields default to `"right"`
    * and `boolean` fields to `"center"`; everything else to `"left"`.
@@ -326,9 +324,9 @@ export type UseLineItemsOptions<T extends LineItemsRowData> = LineItemsRowSource
 };
 
 export type UseLineItemsReturn<T extends LineItemsRowData> = {
-  /** Document order with the active search filter applied. */
+  /** Display order: document order, or sorted while a sort is active. */
   lines: T[];
-  /** Full document order, ignoring the search filter. */
+  /** Document order, ignoring any sort. */
   allLines: T[];
   fields: LineItemsField<T>[];
   mode: LineItemsMode;
@@ -341,7 +339,6 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
    * a navigation blocker after `await save(); reset(); navigate(…)`.
    */
   hasUnsavedChanges: () => boolean;
-  filter: string;
   selectionEnabled: boolean;
   selectedIds: string[];
   /** The selected lines, in document order. */
@@ -359,7 +356,6 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
   sortState: LineItemsSortState | null;
 
   setMode: (mode: LineItemsMode) => void;
-  setFilter: (query: string) => void;
   /** Cycles the column through ascending, descending, then unsorted. */
   toggleSort: (columnId: string) => void;
   /**
@@ -390,8 +386,8 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
   /** Moves a line after `afterLineKey`, or to the head when `null`. Manual ordering only. */
   reorderLine: (lineKey: string, afterLineKey: string | null) => void;
   toggleSelect: (lineKey: string) => void;
-  /** Selects every row currently passing the search filter. */
-  selectAllVisible: () => void;
+  /** Selects every line. */
+  selectAll: () => void;
   clearSelection: () => void;
   bulkUpdate: (patch: Partial<T>) => void;
   bulkRemove: () => void;

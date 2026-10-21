@@ -9,10 +9,6 @@ export const lineItemsLabels = defineI18nLabels({
     // Root (fullscreen overlay's accessible name)
     fullscreenLabel: "Line items",
 
-    // Search / SearchToggle
-    searchPlaceholder: "Search lines",
-    searchLabel: "Search lines",
-
     // FullscreenToggle
     enterFullscreen: "Expand to fullscreen",
     exitFullscreen: "Exit fullscreen",
@@ -47,9 +43,6 @@ export const lineItemsLabels = defineI18nLabels({
   },
   ja: {
     fullscreenLabel: "明細",
-
-    searchPlaceholder: "明細を検索",
-    searchLabel: "明細を検索",
 
     enterFullscreen: "全画面で表示",
     exitFullscreen: "全画面を終了",

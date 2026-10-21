@@ -874,7 +874,7 @@ describe("DataTable", () => {
       expect(screen.queryByText("Name")).toBeNull();
     });
 
-    it("keeps built-in sort behavior and hit area when header is omitted", () => {
+    it("keeps built-in sort behavior, hit area, and context menu with headerProps", () => {
       const control = makeControl();
 
       function Harness() {
@@ -883,6 +883,11 @@ describe("DataTable", () => {
             {
               label: "Name",
               sort: { field: "name", type: "string" },
+              headerProps: {
+                className: "astw:tabular-nums",
+                style: { backgroundColor: "red" },
+                title: "Employee name",
+              },
               render: (row) => row.name,
             },
           ],
@@ -897,8 +902,9 @@ describe("DataTable", () => {
         );
       }
 
-      render(<Harness />, { wrapper });
+      const { container } = render(<Harness />, { wrapper });
 
+      expect(headByText(container, "Name")?.title).toBe("Employee name");
       const button = screen.getByRole("button", { name: "Name" });
       expect(button.className).toContain("astw:h-10");
       expect(button.className).toContain("astw:-mx-2");
@@ -909,6 +915,9 @@ describe("DataTable", () => {
       expect(control.clearSort).toHaveBeenCalledTimes(1);
       expect(control.setSort).toHaveBeenCalledTimes(1);
       expect(control.setSort).toHaveBeenCalledWith("name", "Asc");
+
+      openHeaderContextMenu(container, "Name");
+      expect(screen.getByRole("menuitem", { name: "Copy label" })).toBeDefined();
     });
 
     it("passes non-sortable context when sort config exists but sorting is inactive", () => {

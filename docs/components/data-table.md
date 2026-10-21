@@ -261,6 +261,85 @@ const table = useDataTable<Order>({
 </DataTable.Root>;
 ```
 
+## Per-cell styling
+
+Use `cellProps(row)` to set `className`, `style`, and `title` on the actual data-cell `<td>`, including its padding. Return `undefined` to keep the defaults. This works with built-in renderers, custom `render`, truncation tooltips, and editable cells. It does not customize headers, loading placeholders, empty/error states, or the built-in selection, expansion, and action cells. Content stays owned by `render`; events, refs, and cell spanning are not supported through `cellProps`.
+
+An explicit `style.backgroundColor` stays visible during row hover and selection, for both scrollable and pinned columns. Cells returning `undefined` retain the default hover/selection backgrounds; checkboxes and row selection semantics are unchanged. Classes are merged after built-in classes, but CSS specificity still applies: pinned cells have their own group-hover and group-aria-selected backgrounds, which a plain background class does not override. Use `style.backgroundColor` when an informational background must remain visible in every state. Keep the value or another non-color cue visible so color is not the only way to understand the cell.
+
+Column `width` and the pinned cell's sticky position/edge offset take precedence over `cellProps.style`. Use this hook for presentation rather than layout overrides. Pinned backgrounds must be opaque to hide scrolling content; the example uses existing solid/contrast token pairs rather than translucent surface tokens.
+
+### Header styling
+
+Set the column's `headerProps` to a static object containing `className`, `style`, and/or `title` to customize the actual `<th>`, including its padding. Unlike `cellProps(row)`, it is not a callback. It works with the default header or a custom `header(ctx)` renderer; styling alone does not replace the built-in sort button or context menu.
+
+Classes are merged after built-in classes, and column `width` and sticky position/edge offset take precedence over `headerProps.style`, just as for body cells. Use opaque backgrounds for pinned headers. Events, refs, content, and cell spanning are not supported through `headerProps`; built-in selection, expansion, and action headers are unaffected.
+
+<example-preview name="per-cell-styling"></example-preview>
+
+```tsx
+function PerCellStyling() {
+  type Overtime = { id: string; employee: string; january: number; february: number };
+  const { column } = createColumnHelper<Overtime>();
+  const overtimeStyle = (hours: number) => {
+    const tone = hours >= 60 ? "danger" : hours >= 40 ? "warning" : "success";
+    return {
+      backgroundColor: `var(--${tone}-solid)`,
+      color: `var(--${tone}-contrast)`,
+    };
+  };
+  const table = useDataTable({
+    data: {
+      rows: [
+        { id: "1", employee: "Alex", january: 24, february: 48 },
+        { id: "2", employee: "Sam", january: 45, february: 64 },
+        { id: "3", employee: "Robin", january: 62, february: 32 },
+      ],
+    },
+    columns: [
+      column({ id: "employee", label: "Employee", type: "text", width: 160 }),
+      column({
+        id: "january",
+        label: "January (hours)",
+        type: "number",
+        width: 180,
+        cellProps: (row) => ({
+          style: overtimeStyle(row.january),
+          title: `${row.january} hours of overtime`,
+        }),
+      }),
+      column({
+        id: "february",
+        label: "February (hours)",
+        type: "number",
+        width: 180,
+        pin: "right",
+        headerProps: {
+          className: "astw:whitespace-nowrap",
+          style: { backgroundColor: "var(--muted)" },
+          title: "February overtime summary",
+        },
+        cellProps: (row) => ({
+          className: "astw:tabular-nums",
+          style: overtimeStyle(row.february),
+          title: `${row.february} hours of overtime`,
+        }),
+      }),
+    ],
+    rowSelection: {},
+  });
+
+  return (
+    <div className="space-y-3">
+      <p>Overtime: below 40 hours is safe, 40–59 is caution, 60 or more is danger.</p>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    </div>
+  );
+}
+```
+
 ## Context menus
 
 `DataTable.Table` adds right-click context menus to both headers and cells:
@@ -272,7 +351,7 @@ const table = useDataTable<Order>({
 
 `DataTable` treats column configuration as two layers:
 
-- **Presentation** — `column.header` and `column.render` control what is rendered.
+- **Presentation** — `column.header` and `column.render` control content; `column.headerProps` and `column.cellProps` customize the surrounding cell elements.
 - **Behavior/data** — `column.label`, `column.id`, `column.accessor`, `column.sort`, `column.filter`, and collection `control` drive built-in behavior such as sorting, truncation tooltips, persistence, and context-menu actions.
 
 This means built-in interactions do **not** infer meaning from rendered DOM content. If a custom-rendered column should still participate in built-in copy/filter/tooltip behavior, give it an `id` or `accessor` that exposes the raw value.
@@ -830,19 +909,21 @@ A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated 
 
 ### Shared fields
 
-| Property   | Type                                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ---------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `label`    | `string`                                  | Column header text. Omit for icon-only columns.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `header`   | `(ctx: HeaderRenderContext) => ReactNode` | Custom header renderer. Presentation only. When omitted, the built-in header renders `label` and owns the sort button/indicator. When provided, the return value replaces the built-in header entirely; sortable custom headers receive `sortDirection` and `activateSort()` via `ctx` and must render their own click surface for left-click sorting. The header context menu still uses the column metadata (`label`, `sort`, etc.).                                                                            |
-| `render`   | `(row: TRow) => ReactNode`                | Renders the cell content. Presentation only. Optional — overrides the built-in `type` display renderer when set, not an editor configured through `edit`. Leave `edit` unset to draw your own editor with `render`. Built-in behaviors that need the raw value (truncate tooltip, cell copy/filter context-menu actions) still resolve it from `accessor` first, then `row[col.id]`, and only fall back to the return value of `render(row)` when it is a primitive (`string`, `number`, `boolean`, or `bigint`). |
-| `id`       | `string`                                  | Stable identifier for column visibility, persisted layout state, raw-value fallback (`row[col.id]`), and the React key. Falls back to `label` when omitted. Set this explicitly when `label` is absent, not unique, or when a custom-rendered column should still participate in built-in cell behaviors that need a raw value.                                                                                                                                                                                   |
-| `width`    | `number`                                  | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `pin`      | `"left" \| "right"`                       | Freezes the column to that edge so it stays visible during horizontal scroll (the default; the user can override it via the toolbar's column-settings control). Sticky offsets are measured from the rendered layout, so `width` isn't required — but setting `width` on pinned columns is recommended for stable sizing. The selection and expand columns auto-pin left and the row-actions column auto-pin right.                                                                                               |
-| `align`    | `"left" \| "right"`                       | Horizontal alignment. Defaults to `"right"` for `type: "number"` and `type: "money"`; `"left"` otherwise. Pass `"left"` to opt a numeric column out.                                                                                                                                                                                                                                                                                                                                                              |
-| `truncate` | `boolean`                                 | Truncate overflowing text with an ellipsis. Wires up an app-shell `<Tooltip>` automatically when the resolved raw cell value is a string or number (`accessor` first, then `row[col.id]`). With `inferColumns`, no explicit `accessor` is needed because `id` is pinned to the field name. Requires another column to anchor the row width (`width` on a neighbor, or a fixed-size column like selection / row actions).                                                                                          |
-| `accessor` | _(narrowed per `type`)_                   | Extracts the raw value. This is the primary source of truth for built-in behaviors that need a value independent of presentation (typed rendering, truncate tooltip, cell copy/filter context-menu actions). The return type is narrowed per `type` branch — returning an array is a compile error on all typed columns except `badge`, and returning a plain object is a compile error on all typed columns. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed.       |
-| `sort`     | `SortConfig`                              | Sort configuration. When set, the column participates in the built-in sort behaviors: the default clickable header and the header context-menu sort submenu. Custom headers still need to call `ctx.activateSort()` to opt into left-click sorting.                                                                                                                                                                                                                                                               |
-| `filter`   | `FilterConfig`                            | Filter configuration. When set, the column appears as an option in `DataTable.Filters` and can also drive the cell **Add filter** context-menu submenu when collection `control` is available. The cell menu narrows this to single-value operators only.                                                                                                                                                                                                                                                         |
+| Property      | Type                                                                                        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`       | `string`                                                                                    | Column header text. Omit for icon-only columns.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `header`      | `(ctx: HeaderRenderContext) => ReactNode`                                                   | Custom header renderer. Presentation only. When omitted, the built-in header renders `label` and owns the sort button/indicator. When provided, the return value replaces the built-in header entirely; sortable custom headers receive `sortDirection` and `activateSort()` via `ctx` and must render their own click surface for left-click sorting. The header context menu still uses the column metadata (`label`, `sort`, etc.).                                                                            |
+| `render`      | `(row: TRow) => ReactNode`                                                                  | Renders the cell content. Presentation only. Optional — overrides the built-in `type` display renderer when set, not an editor configured through `edit`. Leave `edit` unset to draw your own editor with `render`. Built-in behaviors that need the raw value (truncate tooltip, cell copy/filter context-menu actions) still resolve it from `accessor` first, then `row[col.id]`, and only fall back to the return value of `render(row)` when it is a primitive (`string`, `number`, `boolean`, or `bigint`). |
+| `id`          | `string`                                                                                    | Stable identifier for column visibility, persisted layout state, raw-value fallback (`row[col.id]`), and the React key. Falls back to `label` when omitted. Set this explicitly when `label` is absent, not unique, or when a custom-rendered column should still participate in built-in cell behaviors that need a raw value.                                                                                                                                                                                   |
+| `headerProps` | `Pick<ComponentProps<"th">, "className" \| "style" \| "title">`                             | Static classes, inline styles, and native title for this column's `<th>`. Does not replace header content or sorting. Column width and sticky positioning take precedence over inline styles. See [Header styling](#header-styling).                                                                                                                                                                                                                                                                              |
+| `cellProps`   | `(row: TRow) => Pick<ComponentProps<"td">, "className" \| "style" \| "title"> \| undefined` | Sets classes, inline styles, and a native title on the data-cell `<td>`. Column width and sticky positioning take precedence over inline styles. See [Per-cell styling](#per-cell-styling).                                                                                                                                                                                                                                                                                                                       |
+| `width`       | `number`                                                                                    | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `pin`         | `"left" \| "right"`                                                                         | Freezes the column to that edge so it stays visible during horizontal scroll (the default; the user can override it via the toolbar's column-settings control). Sticky offsets are measured from the rendered layout, so `width` isn't required — but setting `width` on pinned columns is recommended for stable sizing. The selection and expand columns auto-pin left and the row-actions column auto-pin right.                                                                                               |
+| `align`       | `"left" \| "right"`                                                                         | Horizontal alignment. Defaults to `"right"` for `type: "number"` and `type: "money"`; `"left"` otherwise. Pass `"left"` to opt a numeric column out.                                                                                                                                                                                                                                                                                                                                                              |
+| `truncate`    | `boolean`                                                                                   | Truncate overflowing text with an ellipsis. Wires up an app-shell `<Tooltip>` automatically when the resolved raw cell value is a string or number (`accessor` first, then `row[col.id]`). With `inferColumns`, no explicit `accessor` is needed because `id` is pinned to the field name. Requires another column to anchor the row width (`width` on a neighbor, or a fixed-size column like selection / row actions).                                                                                          |
+| `accessor`    | _(narrowed per `type`)_                                                                     | Extracts the raw value. This is the primary source of truth for built-in behaviors that need a value independent of presentation (typed rendering, truncate tooltip, cell copy/filter context-menu actions). The return type is narrowed per `type` branch — returning an array is a compile error on all typed columns except `badge`, and returning a plain object is a compile error on all typed columns. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed.       |
+| `sort`        | `SortConfig`                                                                                | Sort configuration. When set, the column participates in the built-in sort behaviors: the default clickable header and the header context-menu sort submenu. Custom headers still need to call `ctx.activateSort()` to opt into left-click sorting.                                                                                                                                                                                                                                                               |
+| `filter`      | `FilterConfig`                                                                              | Filter configuration. When set, the column appears as an option in `DataTable.Filters` and can also drive the cell **Add filter** context-menu submenu when collection `control` is available. The cell menu narrows this to single-value operators only.                                                                                                                                                                                                                                                         |
 
 ### `type`-specific fields
 

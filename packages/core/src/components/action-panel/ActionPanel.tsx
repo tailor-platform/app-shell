@@ -11,8 +11,8 @@ const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-ce
 // ============================================================================
 
 const actionRowBaseClasses = cn(
-  "astw:flex astw:items-center astw:gap-2 astw:w-full astw:rounded-md astw:px-3 astw:py-2",
-  "astw:text-sm astw:font-medium astw:transition-colors astw:border astw:border-transparent",
+  "astw:flex astw:items-center astw:gap-2 astw:w-full astw:rounded-md astw:px-0 astw:py-2",
+  "astw:text-sm astw:font-medium astw:transition-colors astw:border-0",
   "astw:bg-transparent astw:text-left astw:cursor-pointer astw:[&_svg]:size-4 astw:[&_svg]:shrink-0",
 );
 
@@ -95,7 +95,15 @@ function ActionRow({ action }: { action: ActionItem }) {
  * />
  * ```
  */
-export function ActionPanel({ title, actions, className }: ActionPanelProps) {
+export function ActionPanel({
+  title,
+  actions,
+  emptyContent = <p className="astw:text-sm astw:text-muted-foreground">No actions available</p>,
+  className,
+}: ActionPanelProps) {
+  const hasEmptyContent =
+    actions.length === 0 && emptyContent != null && typeof emptyContent !== "boolean";
+
   // Register enabled actions to the CommandPalette context so they are
   // searchable and triggerable from the palette.
   useRegisterCommandPaletteActions(
@@ -113,11 +121,9 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
   return (
     <Card.Root className={cn("astw:min-w-69.5 astw:w-full", className)}>
       <Card.Header title={title} className="astw:px-8" />
-      <Card.Content className="astw:px-4 astw:pb-4">
+      <Card.Content className={cn("astw:px-8 astw:pb-4", hasEmptyContent && "astw:pt-2 astw:pb-6")}>
         {actions.length === 0 ? (
-          <p className="astw:py-2 astw:pl-3 astw:text-sm astw:text-muted-foreground">
-            No actions available
-          </p>
+          emptyContent
         ) : (
           <ul className="astw:flex astw:flex-col astw:gap-0 astw:list-none astw:m-0 astw:p-0">
             {actions.map((action) => (

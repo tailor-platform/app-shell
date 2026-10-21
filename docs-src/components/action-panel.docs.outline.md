@@ -19,25 +19,7 @@ import { ActionPanel } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
-<ActionPanel
-  title="Actions"
-  actions={[
-    {
-      key: "create-invoice",
-      label: "Create new sales invoice",
-      icon: <ReceiptIcon />,
-      onClick: () => openCreateInvoiceModal(),
-    },
-    {
-      key: "view-docs",
-      label: "View documentation",
-      icon: <ExternalLinkIcon />,
-      onClick: () => window.open("/docs", "_blank", "noopener,noreferrer"),
-    },
-  ]}
-/>
-```
+<!-- example: basic-usage -->
 
 <!-- api -->
 
@@ -58,7 +40,15 @@ import { ActionPanel } from "@tailor-platform/app-shell";
 - Rows are rendered as `<button type="button">` elements.
 - `disabled` or `loading` makes the row non-interactive.
 - When `loading` is `true`, the icon slot renders a spinner without shifting layout.
-- Empty actions show a built-in fallback message: `No actions available`.
+- Empty actions show `emptyContent`, which defaults to a styled `No actions available` message.
+
+## Custom Empty Content
+
+Pass a localized string or any `ReactNode` to `emptyContent` to replace the default content when `actions` is empty. Content renders directly inside `Card.Content`, which owns its spacing. The title, empty content, and action icons share the same 32px horizontal inset. Custom content is not wrapped in a paragraph and controls its own typography. It is ignored when actions are present.
+
+<!-- example: custom-empty-content -->
+
+Pass `null` to hide the empty content and its additional vertical spacing while keeping the card and its title. To hide the entire panel when no actions are available, render it conditionally with `actions.length > 0`.
 
 ## With Loading State
 

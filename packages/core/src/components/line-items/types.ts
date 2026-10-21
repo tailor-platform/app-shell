@@ -1,4 +1,5 @@
 import type { RowSelectionOptions, SelectionAction } from "@/components/data-table/types";
+import type { AsyncFetcher } from "@/hooks/use-async-items";
 import type { ReactNode } from "react";
 
 /**
@@ -154,7 +155,27 @@ export type LineItemsFieldType<T extends LineItemsRowData = LineItemsRowData> =
   | { kind: "number"; decimals?: number }
   | {
       kind: "select";
+      /** A fixed list, filtered in the browser — units of measure, statuses. */
       options: ReadonlyArray<LineItemsSelectOption>;
+      fetcher?: never;
+      getOptionLabel?: never;
+      placeholder?: string;
+    }
+  | {
+      kind: "select";
+      options?: never;
+      /**
+       * Loads options from the backend as the user types — a product or SKU
+       * lookup over a real catalogue. The same fetcher `Combobox.Async` takes:
+       * `(query, { signal }) => Promise<LineItemsSelectOption[]>`, with `query`
+       * `null` when the list opens before any typing.
+       */
+      fetcher: AsyncFetcher<LineItemsSelectOption>;
+      /**
+       * The label to show for the stored value, which the loaded results
+       * usually don't include — e.g. read a product name stored on the line.
+       */
+      getOptionLabel: (value: string, line: T) => string;
       placeholder?: string;
     }
   | { kind: "boolean" }

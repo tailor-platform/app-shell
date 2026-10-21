@@ -41,6 +41,9 @@ export const lineItemsLabels = defineI18nLabels({
 
     // Select cell
     noMatches: "No matches.",
+    loadingOptions: "Loading…",
+    loadOptionsFailed: "Couldn't load options.",
+    retry: "Retry",
   },
   ja: {
     fullscreenLabel: "明細",
@@ -68,6 +71,9 @@ export const lineItemsLabels = defineI18nLabels({
     cellLabel: (props: { column: string; line: number }) => `${props.column}、${props.line} 行目`,
 
     noMatches: "一致する項目がありません。",
+    loadingOptions: "読み込み中…",
+    loadOptionsFailed: "候補を読み込めませんでした。",
+    retry: "再試行",
   },
 });
 

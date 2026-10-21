@@ -82,7 +82,7 @@ export const DateRangeControl = ({ section }: { section: DateRangeSection }) => 
                 // Clicking the active preset clears it.
                 onClick={() => (active ? apply(null, null) : apply(preset.from, preset.to))}
                 className={cn(
-                  "astw:cursor-pointer astw:rounded-md astw:border astw:px-1.5 astw:py-0.5 astw:text-xs",
+                  "astw:cursor-pointer astw:rounded-md astw:border astw:px-1.5 astw:py-0.5 astw:text-body-sm",
                   active
                     ? "astw:border-transparent astw:bg-accent astw:text-foreground"
                     : "astw:border-border astw:text-muted-foreground astw:hover:text-foreground",
@@ -177,7 +177,7 @@ export const NumberRangeControl = ({ section }: { section: NumberRangeSection })
     onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => {
       if (event.key === "Enter") apply();
     },
-    className: inputClass,
+    className: cn(inputClass, "astw:text-body-md"),
   };
 
   return (
@@ -189,7 +189,7 @@ export const NumberRangeControl = ({ section }: { section: NumberRangeSection })
         aria-label={t("rangeMinLabel", { section: name })}
         onChange={(event) => setFrom(event.target.value)}
       />
-      <span aria-hidden className="astw:shrink-0 astw:text-xs astw:text-muted-foreground">
+      <span aria-hidden className="astw:shrink-0 astw:text-body-sm astw:text-muted-foreground">
         {t("rangeTo")}
       </span>
       <input
@@ -200,7 +200,7 @@ export const NumberRangeControl = ({ section }: { section: NumberRangeSection })
         onChange={(event) => setTo(event.target.value)}
       />
       {section.unit && (
-        <span className="astw:shrink-0 astw:text-xs astw:text-muted-foreground">
+        <span className="astw:shrink-0 astw:text-body-sm astw:text-muted-foreground">
           {section.unit}
         </span>
       )}

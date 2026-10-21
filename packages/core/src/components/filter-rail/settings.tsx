@@ -98,10 +98,8 @@ function Settings({ className }: SettingsProps) {
         <Popover.Positioner sideOffset={4} side="bottom" align="start">
           <Popover.Popup data-slot="filter-rail-settings" className={POPUP_CLASS}>
             <div className="astw:border-b astw:border-border astw:px-3 astw:py-2">
-              <Popover.Title className="astw:text-sm astw:font-semibold">
-                {t("settings")}
-              </Popover.Title>
-              <Popover.Description className="astw:mt-0.5 astw:text-xs astw:text-muted-foreground">
+              <Popover.Title className="astw:text-heading-sm">{t("settings")}</Popover.Title>
+              <Popover.Description className="astw:mt-0.5 astw:text-body-sm astw:text-muted-foreground">
                 {t("settingsDescription")}
               </Popover.Description>
             </div>
@@ -203,7 +201,7 @@ function Settings({ className }: SettingsProps) {
 
                     <span
                       className={cn(
-                        "astw:min-w-0 astw:flex-1 astw:truncate astw:text-sm",
+                        "astw:min-w-0 astw:flex-1 astw:truncate astw:text-body-md",
                         isHidden && "astw:text-muted-foreground",
                       )}
                       title={clearsFilter ? t("hideSectionClearsHint") : undefined}
@@ -238,7 +236,7 @@ function Settings({ className }: SettingsProps) {
                       // radio's states are a curated vocabulary.
                       <span
                         aria-hidden
-                        className="astw:w-[8.5rem] astw:shrink-0 astw:text-right astw:text-xs astw:text-muted-foreground"
+                        className="astw:w-[8.5rem] astw:shrink-0 astw:text-right astw:text-body-sm astw:text-muted-foreground"
                       >
                         —
                       </span>

@@ -118,7 +118,7 @@ function SavedFilters({ items, loading, error, remove, className }: SavedFilters
                       tabIndex={-1}
                       aria-label={t("deleteSaved", { name: item.name })}
                       title={t("deleteSaved", { name: item.name })}
-                      className="astw:shrink-0 astw:rounded astw:p-0.5 astw:text-muted-foreground astw:opacity-0 astw:transition-opacity astw:group-hover/saved-item:opacity-100 astw:group-data-highlighted/saved-item:opacity-100 astw:hover:text-destructive"
+                      className="astw:shrink-0 astw:rounded astw:p-0.5 astw:text-muted-foreground astw:opacity-0 astw:transition-opacity astw:group-hover/saved-item:opacity-100 astw:group-data-highlighted/saved-item:opacity-100 astw:hover:text-danger-text"
                       onClick={(event) => {
                         // Delete, not apply.
                         event.stopPropagation();
@@ -143,7 +143,7 @@ function SavedFilters({ items, loading, error, remove, className }: SavedFilters
       </Menu.Root>
 
       {error && (
-        <p role="alert" className="astw:text-xs astw:text-destructive">
+        <p role="alert" className="astw:text-body-sm astw:text-danger-text">
           {t("savedFiltersError")}
         </p>
       )}
@@ -250,7 +250,7 @@ function SaveFilter({ items, loading, save, className }: SaveFilterProps) {
             }}
           />
           {replaces && (
-            <p className="astw:text-xs astw:text-muted-foreground">
+            <p className="astw:text-body-sm astw:text-muted-foreground">
               {t("replacesExisting", { name: replaces.name })}
             </p>
           )}

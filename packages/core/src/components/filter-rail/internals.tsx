@@ -11,7 +11,7 @@ export const rowHeightClass = (density: "compact" | "comfortable") =>
   density === "compact" ? "astw:h-8" : "astw:h-10";
 
 export const inputClass =
-  "astw:h-7 astw:w-full astw:min-w-0 astw:rounded-md astw:border astw:border-input astw:bg-transparent astw:px-2 astw:text-sm astw:outline-none astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px] astw:dark:bg-input/30";
+  "astw:h-7 astw:w-full astw:min-w-0 astw:rounded-md astw:border astw:border-input astw:bg-transparent astw:px-2 astw:outline-none astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px] astw:dark:bg-input/30";
 
 // ─── Section shell ───────────────────────────────────────────────────────────
 
@@ -54,7 +54,7 @@ export const RailSection = ({
     >
       <Fieldset.Root className="astw:m-0 astw:min-w-0 astw:border-0 astw:p-0">
         <div className="astw:flex astw:items-center astw:justify-between astw:gap-2">
-          <Fieldset.Legend className="astw:min-w-0 astw:text-xs astw:font-semibold astw:tracking-wide astw:text-foreground astw:uppercase">
+          <Fieldset.Legend className="astw:min-w-0 astw:text-label-sm astw:font-semibold astw:text-foreground astw:uppercase">
             {/* The title is the toggle, so the whole label is a click target. */}
             <Collapsible.Trigger className="astw:group/section-toggle astw:flex astw:min-w-0 astw:cursor-pointer astw:items-center astw:gap-1 astw:rounded astw:uppercase astw:outline-none astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50">
               <ChevronRight
@@ -70,7 +70,7 @@ export const RailSection = ({
             {!open && activeCount > 0 && (
               <span
                 data-slot="filter-rail-section-badge"
-                className="astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:duration-200 astw:motion-reduce:animate-none astw:rounded-full astw:bg-primary astw:px-1.5 astw:text-xs astw:font-medium astw:text-primary-foreground astw:tabular-nums"
+                className="astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:duration-200 astw:motion-reduce:animate-none astw:rounded-full astw:bg-primary astw:px-1.5 astw:text-label-sm astw:text-primary-foreground astw:tabular-nums"
               >
                 <span aria-hidden>{activeCount}</span>
                 <span className="astw:sr-only">{t("sectionActive", { count: activeCount })}</span>
@@ -95,7 +95,9 @@ export const RailSection = ({
           {/* The gap under the title lives inside the panel, so it animates
               with the height instead of snapping. */}
           <div className="astw:pt-1.5">
-            {hint && <p className="astw:mb-1.5 astw:text-xs astw:text-muted-foreground">{hint}</p>}
+            {hint && (
+              <p className="astw:mb-1.5 astw:text-body-sm astw:text-muted-foreground">{hint}</p>
+            )}
             {children}
           </div>
         </Collapsible.Panel>
@@ -118,7 +120,7 @@ export const ClearLink = ({
     type="button"
     onClick={onClick}
     className={cn(
-      "astw:shrink-0 astw:cursor-pointer astw:rounded astw:text-xs astw:text-muted-foreground astw:underline-offset-2 astw:hover:text-foreground astw:hover:underline astw:focus-visible:outline-2 astw:focus-visible:outline-ring",
+      "astw:shrink-0 astw:cursor-pointer astw:rounded astw:text-body-sm astw:text-muted-foreground astw:underline-offset-2 astw:hover:text-foreground astw:hover:underline astw:focus-visible:outline-2 astw:focus-visible:outline-ring",
       className,
     )}
   >
@@ -172,7 +174,7 @@ export const OptionRow = ({
         // Stretch the label so the whole row is clickable.
         className="astw:min-w-0 astw:flex-1"
         label={
-          <span className="astw:flex astw:min-w-0 astw:flex-1 astw:items-center astw:gap-2 astw:text-sm">
+          <span className="astw:flex astw:min-w-0 astw:flex-1 astw:items-center astw:gap-2 astw:text-body-md">
             {icon}
             <span className="astw:truncate">{label}</span>
           </span>
@@ -204,7 +206,7 @@ export const RadioRow = ({
       data-slot="filter-rail-radio"
       data-checked={checked || undefined}
       className={cn(
-        "astw:flex astw:cursor-pointer astw:items-center astw:gap-2 astw:rounded-md astw:px-2 astw:text-sm astw:hover:bg-accent",
+        "astw:flex astw:cursor-pointer astw:items-center astw:gap-2 astw:rounded-md astw:px-2 astw:text-body-md astw:hover:bg-accent",
         rowHeight,
         checked && "astw:bg-accent",
       )}
@@ -239,7 +241,7 @@ export const ShowMore = ({
       type="button"
       onClick={onToggle}
       aria-expanded={expanded}
-      className="astw:mt-0.5 astw:cursor-pointer astw:rounded-md astw:px-2 astw:py-1 astw:text-xs astw:text-muted-foreground astw:underline astw:underline-offset-2 astw:hover:text-foreground"
+      className="astw:mt-0.5 astw:cursor-pointer astw:rounded-md astw:px-2 astw:py-1 astw:text-body-sm astw:text-muted-foreground astw:underline astw:underline-offset-2 astw:hover:text-foreground"
     >
       {expanded ? t("showLess") : t("showMore", { count: hidden })}
     </button>
@@ -266,7 +268,7 @@ export const OptionSearch = ({
       onKeyDown={(event) => {
         if (event.key === "Escape") onChange("");
       }}
-      className={cn(inputClass, "astw:mb-1 astw:text-xs")}
+      className={cn(inputClass, "astw:mb-1 astw:text-body-sm")}
     />
   );
 };

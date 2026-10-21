@@ -51,6 +51,17 @@ const CATALOG: CatalogItem[] = [
   { sku: "DT-TOTE-NAT-OS", name: "Canvas Tote, Natural", price: 22 },
 ];
 
+// 🧪 Dummy Data: stands in for a backend product search, with a little latency.
+async function searchCatalog(
+  query: string | null,
+  { signal }: { signal: AbortSignal },
+): Promise<CatalogItem[]> {
+  await new Promise((resolve) => setTimeout(resolve, 250));
+  signal.throwIfAborted();
+  const q = (query ?? "").toLowerCase();
+  return CATALOG.filter((c) => `${c.sku} ${c.name}`.toLowerCase().includes(q));
+}
+
 const CATALOG_TREE: TreePickerNode<CatalogItem>[] = [
   {
     id: "cat-tees",
@@ -415,9 +426,6 @@ const PurchaseOrderDemo = ({
                   <Upload className="size-4" />
                   Import from CSV
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
-                  Bulk add
-                </Button>
                 <LineItems.FullscreenToggle />
               </div>
             </Card.Header>
@@ -438,14 +446,17 @@ const PurchaseOrderDemo = ({
                     >
                       <ExternalLink className="size-3.5" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Remove ${row.sku}`}
-                      onClick={() => lineItems.removeLine(lineKey)}
-                    >
-                      <X className="size-3.5 text-destructive" />
-                    </Button>
+                    {/* Removing lines is an edit; amend only corrects a confirmed document. */}
+                    {mode === "edit" ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Remove ${row.sku}`}
+                        onClick={() => lineItems.removeLine(lineKey)}
+                      >
+                        <X className="size-3.5 text-destructive" />
+                      </Button>
+                    ) : null}
                   </>
                 )}
               />
@@ -459,11 +470,12 @@ const PurchaseOrderDemo = ({
                 })}
               </LineItems.TotalsRow>
 
-              {/* 🔽 Add a line from the bottom of the table; save sits beside it, in the card */}
+              {/* 🔽 Add lines from the bottom of the table — one at a time from a backend
+                  lookup, or many with Bulk add; save sits beside them, in the card */}
               <div className="mt-2 flex items-center justify-between gap-2">
                 <LineItems.AddRow className="flex-1">
-                  <Combobox
-                    items={CATALOG}
+                  <Combobox.Async
+                    fetcher={searchCatalog}
                     placeholder="+   Add product — type to search…"
                     aria-label="Add product"
                     className="max-w-md flex-1"

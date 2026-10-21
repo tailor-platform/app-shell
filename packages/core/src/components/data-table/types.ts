@@ -315,6 +315,17 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    */
   header?: (ctx: HeaderRenderContext) => ReactNode;
   /**
+   * Renders this column's cell in a sticky table footer. Receives the current
+   * `data.rows` (the current page, not all records or only selected rows).
+   * Formatting belongs to the renderer; `type` and `typeOptions` do not apply.
+   *
+   * A footer row appears when any visible column defines this callback. Columns
+   * without one leave a blank cell; hidden columns' callbacks are not called.
+   * Hidden during loading or errors; loaded empty data receives `rows: []`.
+   * Separate from `DataTable.Footer`, the pagination / bulk-action container.
+   */
+  footer?: (ctx: { rows: readonly TRow[] }) => ReactNode;
+  /**
    * Stable identifier used for column visibility toggling, persisted layout
    * state, raw-value fallback (`row[col.id]`), and as the React key. Falls
    * back to `label` when omitted. Set this explicitly when `label` is absent,

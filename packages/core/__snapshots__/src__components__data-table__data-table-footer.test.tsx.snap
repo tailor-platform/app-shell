@@ -1,0 +1,40 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`DataTable column footer > renders typed and render-only footers after the body, leaving missing and null content blank 1`] = `
+<tfoot
+  class="astw:border-border astw:font-medium astw:[&>tr]:last:border-b-0 astw:sticky astw:bottom-0 astw:z-10 astw:bg-card astw:border-t-0 astw:shadow-[inset_0_1px_0_0_var(--border)]"
+  data-slot="data-table-column-footer"
+>
+  <tr
+    class="astw:data-[state=selected]:bg-muted astw:border-b astw:border-border astw:transition-colors astw:hover:bg-transparent"
+    data-slot="table-row"
+  >
+    <td
+      class="astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:text-left"
+      data-col-key="name"
+      data-slot="data-table-column-footer-cell"
+    >
+      Total
+    </td>
+    <td
+      class="astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:text-right"
+      data-col-key="quantity"
+      data-slot="data-table-column-footer-cell"
+    >
+      <strong>
+        5
+      </strong>
+    </td>
+    <td
+      class="astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:text-left"
+      data-col-key="note"
+      data-slot="data-table-column-footer-cell"
+    />
+    <td
+      class="astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:text-left"
+      data-col-key="id"
+      data-slot="data-table-column-footer-cell"
+    />
+  </tr>
+</tfoot>
+`;

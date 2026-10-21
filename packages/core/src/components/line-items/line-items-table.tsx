@@ -1,13 +1,17 @@
 import * as React from "react";
-import { GripVertical } from "lucide-react";
+import { ChevronRight, GripVertical } from "lucide-react";
 
+import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
+import { useDataTableT } from "@/components/data-table/i18n";
 import { Tooltip } from "@/components/tooltip";
 import { cn } from "@/lib/utils";
 import {
   ACTIONS_COLUMN_ID,
   ACTIONS_COLUMN_WIDTH,
   computeColumnLayout,
+  EXPAND_COLUMN_ID,
+  EXPAND_COLUMN_WIDTH,
   GRIP_COLUMN_ID,
   GRIP_COLUMN_WIDTH,
   pinStyle,
@@ -168,6 +172,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
 }: LineItemsTableProps<T>) {
   const { lineItems, fullscreen, totalsRenderer } = useLineItemsContext<T>("Table");
   const t = useLineItemsT();
+  const dataTableT = useDataTableT();
   const { lines, fields, mode, ordering, selectionEnabled, selectedIds, sortState, getLineKey } =
     lineItems;
 
@@ -205,6 +210,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
   const [widths, setWidths] = React.useState<ColumnWidths>({});
 
   const canReorder = ordering === "manual" && mode === "edit";
+  const showExpand = Boolean(lineItems.rowExpansion);
   const showSelection = selectionEnabled && mode !== "view";
 
   // On a narrow grid, pinned columns could leave no room for the rest.
@@ -223,10 +229,19 @@ export function LineItemsTable<T extends LineItemsRowData>({
         widths,
         hasGrip: canReorder,
         hasSelection: showSelection,
+        hasExpand: showExpand,
         hasActions: Boolean(renderRowActions),
         actionsWidth: rowActionsWidth,
       }),
-    [canReorder, layoutFields, renderRowActions, rowActionsWidth, showSelection, widths],
+    [
+      canReorder,
+      layoutFields,
+      renderRowActions,
+      rowActionsWidth,
+      showExpand,
+      showSelection,
+      widths,
+    ],
   );
 
   const columnDefs = React.useMemo(() => fieldsToColumnDefs(fields), [fields]);
@@ -243,7 +258,9 @@ export function LineItemsTable<T extends LineItemsRowData>({
   const virtualWindow = useRowVirtualizer(scrollRef, {
     rowCount: lines.length,
     rowHeight,
-    enabled: virtualized && !loading,
+    // Detail panels vary in height, which the virtual window's fixed-row maths
+    // can't place, so every line renders while one is open.
+    enabled: virtualized && !loading && lineItems.expandedIds.length === 0,
   });
 
   const visibleLines = lines.slice(virtualWindow.startIndex, virtualWindow.endIndex);
@@ -510,7 +527,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
 
   const handleCopy = React.useCallback(
     (event: React.ClipboardEvent) => {
-      if (grid.selected.size <= 1) return;
+      if (grid.selected.size <= 1 || isInDetailPanel(event.target)) return;
       const coords: GridCoord[] = [];
       for (const lineKey of orderedLineKeys) {
         for (const columnId of gridColumnIds) {
@@ -533,7 +550,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
    */
   const handlePaste = React.useCallback(
     (event: React.ClipboardEvent) => {
-      if (!grid.active || mode === "view") return;
+      if (!grid.active || mode === "view" || isInDetailPanel(event.target)) return;
       const text = event.clipboardData.getData("text/plain");
       const matrix = parseClipboardTsv(text);
       if (matrix.length === 0) return;
@@ -641,6 +658,8 @@ export function LineItemsTable<T extends LineItemsRowData>({
 
   const handleGridKeyDown = React.useCallback(
     (event: React.KeyboardEvent) => {
+      // A detail panel is the app's own content; the grid leaves its keys alone.
+      if (isInDetailPanel(event.target)) return;
       if (isFillDownKey(event)) {
         if (fillDown()) event.preventDefault();
         return;
@@ -712,7 +731,10 @@ export function LineItemsTable<T extends LineItemsRowData>({
   );
 
   const utilityColumnCount =
-    (showSelection ? 1 : 0) + (canReorder ? 1 : 0) + (renderRowActions ? 1 : 0);
+    (showSelection ? 1 : 0) +
+    (canReorder ? 1 : 0) +
+    (showExpand ? 1 : 0) +
+    (renderRowActions ? 1 : 0);
   const columnCount = layout.columns.length + utilityColumnCount;
   // A Set, so per-row checks stay O(1) on long documents.
   const selectedRefSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
@@ -784,6 +806,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
           <colgroup>
             {showSelection ? <col style={{ width: SELECTION_COLUMN_WIDTH }} /> : null}
             {canReorder ? <col style={{ width: GRIP_COLUMN_WIDTH }} /> : null}
+            {showExpand ? <col style={{ width: EXPAND_COLUMN_WIDTH }} /> : null}
             {layout.columns.map((c) => (
               <col key={c.id} style={colWidthStyle(c)} />
             ))}
@@ -832,6 +855,17 @@ export function LineItemsTable<T extends LineItemsRowData>({
                   style={pinStyle(layout.grip)}
                 >
                   <span className="astw:sr-only">{t("reorderColumn")}</span>
+                </th>
+              ) : null}
+
+              {showExpand ? (
+                <th
+                  ref={(el) => void headRefs.current.set(EXPAND_COLUMN_ID, el)}
+                  scope="col"
+                  className={cn(headCellClasses, "astw:px-0", pinClasses(layout.expand))}
+                  style={pinStyle(layout.expand)}
+                >
+                  <span className="astw:sr-only">{dataTableT("expandColumnHeader")}</span>
                 </th>
               ) : null}
 
@@ -930,6 +964,10 @@ export function LineItemsTable<T extends LineItemsRowData>({
               visibleLines.map((row, i) => {
                 const rowIndex = virtualWindow.startIndex + i;
                 const rowKey = getLineKey(row);
+                const expandable = showExpand && (lineItems.rowExpansion?.canExpand?.(row) ?? true);
+                const expanded = expandable && lineItems.isRowExpanded(rowKey);
+                const expandTriggerId = `${tableId}-${rowKey}-expand`;
+                const expandPanelId = `${tableId}-${rowKey}-details`;
                 const isDragging = dragRef === rowKey;
                 const isLifted = liftedRef === rowKey;
                 const rowSelected = selectedRefSet.has(rowKey);
@@ -942,233 +980,269 @@ export function LineItemsTable<T extends LineItemsRowData>({
                     : undefined;
 
                 return (
-                  <tr
-                    key={rowKey}
-                    data-slot="line-items-row"
-                    data-state={rowSelected ? "selected" : undefined}
-                    data-drop-before={dropBefore === rowKey || undefined}
-                    aria-rowindex={rowIndex + 2}
-                    style={{ height: rowHeight }}
-                    className={cn(
-                      "astw:group/row astw:transition-colors astw:hover:bg-muted/50",
-                      rowSelected && "astw:bg-muted",
-                      isDragging && "astw:opacity-50",
-                      isLifted && "astw:ring-1 astw:ring-ring astw:ring-inset",
-                      // The totals row draws its own top rule; without this the
-                      // last line's bottom border doubles it once scrolled to the end.
-                      hasTotals && rowIndex === lines.length - 1 && "astw:[&>td]:border-b-0",
-                    )}
-                    onDragOver={
-                      canReorder
-                        ? (e) => {
-                            if (!dragRef) return;
-                            e.preventDefault();
-                            setDropBefore(rowKey);
-                          }
-                        : undefined
-                    }
-                    onDrop={
-                      canReorder
-                        ? (e) => {
-                            if (!dragRef) return;
-                            e.preventDefault();
-                            moveLine(dragRef, rowKey);
-                            endDrag();
-                          }
-                        : undefined
-                    }
-                  >
-                    {showSelection ? (
-                      <td
-                        className={cn(
-                          bodyCellClasses,
-                          "astw:px-0",
-                          pinClasses(layout.selection, { selected: rowSelected }),
-                          dropLine,
-                        )}
-                        style={pinStyle(layout.selection)}
-                      >
-                        <span className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
-                          <Checkbox
-                            aria-label={t("selectLine", { line: rowIndex + 1 })}
-                            checked={rowSelected}
-                            onCheckedChange={() => lineItems.toggleSelect(rowKey)}
-                          />
-                        </span>
-                      </td>
-                    ) : null}
-
-                    {canReorder ? (
-                      <td
-                        className={cn(
-                          bodyCellClasses,
-                          "astw:px-0",
-                          pinClasses(layout.grip, { selected: rowSelected }),
-                          dropLine,
-                        )}
-                        style={pinStyle(layout.grip)}
-                      >
-                        <span className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
-                          <button
-                            type="button"
-                            draggable
-                            aria-label={t("reorderLine", { line: rowIndex + 1 })}
-                            aria-pressed={isLifted}
-                            className="astw:flex astw:size-6 astw:cursor-grab astw:items-center astw:justify-center astw:rounded astw:text-muted-foreground astw:hover:text-foreground astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50 astw:focus-visible:outline-none"
-                            onDragStart={(e) => {
-                              setDragRef(rowKey);
-                              e.dataTransfer.effectAllowed = "move";
-                              // Firefox refuses to start a drag with no payload.
-                              e.dataTransfer.setData("text/plain", rowKey);
-                            }}
-                            onDragEnd={endDrag}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                setLiftedRef((p) => (p === rowKey ? null : rowKey));
-                                return;
-                              }
-                              if (e.key === "Escape") {
-                                setLiftedRef(null);
-                                return;
-                              }
-                              if (!isLifted) return;
-                              if (e.key === "ArrowUp") {
-                                e.preventDefault();
-                                nudge(rowKey, -1);
-                              } else if (e.key === "ArrowDown") {
-                                e.preventDefault();
-                                nudge(rowKey, 1);
-                              }
-                            }}
-                          >
-                            <GripVertical className="astw:size-4" aria-hidden="true" />
-                          </button>
-                        </span>
-                      </td>
-                    ) : null}
-
-                    {layout.columns.map((c) => {
-                      const coord = { lineKey: rowKey, columnId: c.id };
-                      const editable = fieldIsEditableInMode(c.field, mode);
-                      // View mode has nothing to edit, so no cell shows as active;
-                      // a selected range still tints, for copying.
-                      const isActive =
-                        mode !== "view" &&
-                        grid.active?.lineKey === rowKey &&
-                        grid.active?.columnId === c.id;
-                      const isSelected = grid.isSelected(rowKey, c.id);
-                      const inFill = isInFillPreview(coord);
-                      const amendLocked = fieldIsAmendLocked(c.field, mode);
-                      const error = lineItems.getCellError(rowKey, c.id);
-                      const errorId = error ? `${tableId}-${rowKey}-${c.id}-error` : undefined;
-                      const extra =
-                        typeof c.field.className === "function"
-                          ? c.field.className(row)
-                          : c.field.className;
-
-                      return (
+                  <React.Fragment key={rowKey}>
+                    <tr
+                      data-slot="line-items-row"
+                      data-state={rowSelected ? "selected" : undefined}
+                      data-drop-before={dropBefore === rowKey || undefined}
+                      aria-rowindex={rowIndex + 2}
+                      style={{ height: rowHeight }}
+                      className={cn(
+                        "astw:group/row astw:transition-colors astw:hover:bg-muted/50",
+                        rowSelected && "astw:bg-muted",
+                        isDragging && "astw:opacity-50",
+                        isLifted && "astw:ring-1 astw:ring-ring astw:ring-inset",
+                        // The totals row draws its own top rule; without this the
+                        // last line's bottom border doubles it once scrolled to the end.
+                        hasTotals && rowIndex === lines.length - 1 && "astw:[&>td]:border-b-0",
+                      )}
+                      onDragOver={
+                        canReorder
+                          ? (e) => {
+                              if (!dragRef) return;
+                              e.preventDefault();
+                              setDropBefore(rowKey);
+                            }
+                          : undefined
+                      }
+                      onDrop={
+                        canReorder
+                          ? (e) => {
+                              if (!dragRef) return;
+                              e.preventDefault();
+                              moveLine(dragRef, rowKey);
+                              endDrag();
+                            }
+                          : undefined
+                      }
+                    >
+                      {showSelection ? (
                         <td
-                          key={c.id}
-                          data-slot="line-items-grid-cell"
-                          data-line-key={rowKey}
-                          data-column-id={c.id}
-                          data-locked={amendLocked || undefined}
-                          data-invalid={error ? "" : undefined}
-                          aria-invalid={error ? true : undefined}
-                          aria-describedby={errorId}
                           className={cn(
                             bodyCellClasses,
-                            alignClasses[c.align],
-                            pinClasses(c.placement, { selected: rowSelected }),
-                            editable && "astw:cursor-text",
-                            // One background image at a time: selection and fill win.
-                            editable && !isSelected && !inFill && tint.editable,
-                            // Locked by amend: read-only, like DataTable's read-only
-                            // cells beside editable ones.
-                            amendLocked && "astw:cursor-not-allowed",
-                            isSelected && !isActive && tint.selected,
-                            inFill && tint.fill,
-                            // An inset ring paints on the cell bounds exactly, where a
-                            // border would shift the grid by a pixel.
-                            isSelected &&
-                              !isActive &&
-                              "astw:shadow-[inset_0_0_0_1px_var(--color-ring)]",
-                            (isActive || inFill) &&
-                              "astw:shadow-[inset_0_0_0_2px_var(--color-primary)]",
-                            // DataTable's invalid-cell ring; wins over the active ring.
-                            error && "astw:shadow-[inset_0_0_0_2px_var(--color-destructive)]",
-                            extra,
+                            "astw:px-0",
+                            pinClasses(layout.selection, { selected: rowSelected }),
                             dropLine,
                           )}
-                          style={pinStyle(c.placement)}
-                          onPointerEnter={() => {
-                            // A fill in progress tracks the row under the pointer.
-                            // The window-level handler covers fast drags that
-                            // outrun per-cell events; this covers the rest.
-                            if (fillSource) setFillHoverLineKey(rowKey);
-                            else grid.extendSelection(coord);
-                          }}
-                          onPointerDown={(e) => {
-                            if (e.button !== 0) return;
-                            const target = e.target as HTMLElement;
-                            const interactive = Boolean(
-                              target.closest(
-                                "input, select, button, textarea, [role=combobox], [data-slot=line-items-fill-grip]",
-                              ),
-                            );
-                            if (e.shiftKey) {
-                              e.preventDefault();
-                              grid.beginSelection(coord, { shift: true });
-                              return;
-                            }
-                            // Clicking into an editor must place a caret, so only a
-                            // press on inert cell chrome starts a range drag.
-                            if (interactive) grid.setActive(coord);
-                            else grid.beginSelection(coord);
-                          }}
-                          onPointerUp={grid.endSelection}
+                          style={pinStyle(layout.selection)}
                         >
-                          <LineItemsCell
-                            row={row}
-                            lineKey={rowKey}
-                            field={c.field}
-                            mode={mode}
-                            align={c.align}
-                            editable={editable}
-                            ariaLabel={t("cellLabel", {
-                              column: typeof c.field.label === "string" ? c.field.label : c.id,
-                              line: rowIndex + 1,
-                            })}
-                            showFillGrip={isActive && fieldAllowsFill(c.field, mode)}
-                            handlers={cellHandlers}
-                          />
-                          {error ? <CellErrorTip id={errorId!} message={error} /> : null}
+                          <span className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
+                            <Checkbox
+                              aria-label={t("selectLine", { line: rowIndex + 1 })}
+                              checked={rowSelected}
+                              onCheckedChange={() => lineItems.toggleSelect(rowKey)}
+                            />
+                          </span>
                         </td>
-                      );
-                    })}
+                      ) : null}
 
-                    {renderRowActions ? (
-                      <td
-                        className={cn(
-                          bodyCellClasses,
-                          "astw:px-0",
-                          pinClasses(layout.actions, { selected: rowSelected }),
-                          dropLine,
-                        )}
-                        style={pinStyle(layout.actions)}
-                      >
-                        <span className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
-                          {renderRowActions(row, {
-                            lineKey: rowKey,
-                            isNew: lineItems.isNewLine(row),
-                          })}
-                        </span>
-                      </td>
+                      {canReorder ? (
+                        <td
+                          className={cn(
+                            bodyCellClasses,
+                            "astw:px-0",
+                            pinClasses(layout.grip, { selected: rowSelected }),
+                            dropLine,
+                          )}
+                          style={pinStyle(layout.grip)}
+                        >
+                          <span className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
+                            <button
+                              type="button"
+                              draggable
+                              aria-label={t("reorderLine", { line: rowIndex + 1 })}
+                              aria-pressed={isLifted}
+                              className="astw:flex astw:size-6 astw:cursor-grab astw:items-center astw:justify-center astw:rounded astw:text-muted-foreground astw:hover:text-foreground astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50 astw:focus-visible:outline-none"
+                              onDragStart={(e) => {
+                                setDragRef(rowKey);
+                                e.dataTransfer.effectAllowed = "move";
+                                // Firefox refuses to start a drag with no payload.
+                                e.dataTransfer.setData("text/plain", rowKey);
+                              }}
+                              onDragEnd={endDrag}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  setLiftedRef((p) => (p === rowKey ? null : rowKey));
+                                  return;
+                                }
+                                if (e.key === "Escape") {
+                                  setLiftedRef(null);
+                                  return;
+                                }
+                                if (!isLifted) return;
+                                if (e.key === "ArrowUp") {
+                                  e.preventDefault();
+                                  nudge(rowKey, -1);
+                                } else if (e.key === "ArrowDown") {
+                                  e.preventDefault();
+                                  nudge(rowKey, 1);
+                                }
+                              }}
+                            >
+                              <GripVertical className="astw:size-4" aria-hidden="true" />
+                            </button>
+                          </span>
+                        </td>
+                      ) : null}
+
+                      {showExpand ? (
+                        <td
+                          className={cn(
+                            bodyCellClasses,
+                            "astw:px-0",
+                            pinClasses(layout.expand, { selected: rowSelected }),
+                            dropLine,
+                          )}
+                          style={pinStyle(layout.expand)}
+                        >
+                          {expandable ? (
+                            <span className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
+                              <LineExpandToggle
+                                id={expandTriggerId}
+                                panelId={expandPanelId}
+                                expanded={expanded}
+                                label={lineItems.rowExpansion?.getLabel?.(row)}
+                                onToggle={() => lineItems.toggleRowExpansion(rowKey)}
+                              />
+                            </span>
+                          ) : null}
+                        </td>
+                      ) : null}
+
+                      {layout.columns.map((c) => {
+                        const coord = { lineKey: rowKey, columnId: c.id };
+                        const editable = fieldIsEditableInMode(c.field, mode);
+                        // View mode has nothing to edit, so no cell shows as active;
+                        // a selected range still tints, for copying.
+                        const isActive =
+                          mode !== "view" &&
+                          grid.active?.lineKey === rowKey &&
+                          grid.active?.columnId === c.id;
+                        const isSelected = grid.isSelected(rowKey, c.id);
+                        const inFill = isInFillPreview(coord);
+                        const amendLocked = fieldIsAmendLocked(c.field, mode);
+                        const error = lineItems.getCellError(rowKey, c.id);
+                        const errorId = error ? `${tableId}-${rowKey}-${c.id}-error` : undefined;
+                        const extra =
+                          typeof c.field.className === "function"
+                            ? c.field.className(row)
+                            : c.field.className;
+
+                        return (
+                          <td
+                            key={c.id}
+                            data-slot="line-items-grid-cell"
+                            data-line-key={rowKey}
+                            data-column-id={c.id}
+                            data-locked={amendLocked || undefined}
+                            data-invalid={error ? "" : undefined}
+                            aria-invalid={error ? true : undefined}
+                            aria-describedby={errorId}
+                            className={cn(
+                              bodyCellClasses,
+                              alignClasses[c.align],
+                              pinClasses(c.placement, { selected: rowSelected }),
+                              editable && "astw:cursor-text",
+                              // One background image at a time: selection and fill win.
+                              editable && !isSelected && !inFill && tint.editable,
+                              // Locked by amend: read-only, like DataTable's read-only
+                              // cells beside editable ones.
+                              amendLocked && "astw:cursor-not-allowed",
+                              isSelected && !isActive && tint.selected,
+                              inFill && tint.fill,
+                              // An inset ring paints on the cell bounds exactly, where a
+                              // border would shift the grid by a pixel.
+                              isSelected &&
+                                !isActive &&
+                                "astw:shadow-[inset_0_0_0_1px_var(--color-ring)]",
+                              (isActive || inFill) &&
+                                "astw:shadow-[inset_0_0_0_2px_var(--color-primary)]",
+                              // DataTable's invalid-cell ring; wins over the active ring.
+                              error && "astw:shadow-[inset_0_0_0_2px_var(--color-destructive)]",
+                              extra,
+                              dropLine,
+                            )}
+                            style={pinStyle(c.placement)}
+                            onPointerEnter={() => {
+                              // A fill in progress tracks the row under the pointer.
+                              // The window-level handler covers fast drags that
+                              // outrun per-cell events; this covers the rest.
+                              if (fillSource) setFillHoverLineKey(rowKey);
+                              else grid.extendSelection(coord);
+                            }}
+                            onPointerDown={(e) => {
+                              if (e.button !== 0) return;
+                              const target = e.target as HTMLElement;
+                              const interactive = Boolean(
+                                target.closest(
+                                  "input, select, button, textarea, [role=combobox], [data-slot=line-items-fill-grip]",
+                                ),
+                              );
+                              if (e.shiftKey) {
+                                e.preventDefault();
+                                grid.beginSelection(coord, { shift: true });
+                                return;
+                              }
+                              // Clicking into an editor must place a caret, so only a
+                              // press on inert cell chrome starts a range drag.
+                              if (interactive) grid.setActive(coord);
+                              else grid.beginSelection(coord);
+                            }}
+                            onPointerUp={grid.endSelection}
+                          >
+                            <LineItemsCell
+                              row={row}
+                              lineKey={rowKey}
+                              field={c.field}
+                              mode={mode}
+                              align={c.align}
+                              editable={editable}
+                              ariaLabel={t("cellLabel", {
+                                column: typeof c.field.label === "string" ? c.field.label : c.id,
+                                line: rowIndex + 1,
+                              })}
+                              showFillGrip={isActive && fieldAllowsFill(c.field, mode)}
+                              handlers={cellHandlers}
+                            />
+                            {error ? <CellErrorTip id={errorId!} message={error} /> : null}
+                          </td>
+                        );
+                      })}
+
+                      {renderRowActions ? (
+                        <td
+                          className={cn(
+                            bodyCellClasses,
+                            "astw:px-0",
+                            pinClasses(layout.actions, { selected: rowSelected }),
+                            dropLine,
+                          )}
+                          style={pinStyle(layout.actions)}
+                        >
+                          <span className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
+                            {renderRowActions(row, {
+                              lineKey: rowKey,
+                              isNew: lineItems.isNewLine(row),
+                            })}
+                          </span>
+                        </td>
+                      ) : null}
+
+                      {layout.needsSpacer ? <td className={cn(bodyCellClasses, dropLine)} /> : null}
+                    </tr>
+                    {expandable && lineItems.rowExpansion ? (
+                      <LineItemsExpandedRow
+                        open={expanded}
+                        colSpan={columnCount + (layout.needsSpacer ? 1 : 0)}
+                        panelId={expandPanelId}
+                        triggerId={expandTriggerId}
+                        label={lineItems.rowExpansion.getLabel?.(row)}
+                        viewportWidth={gridWidth}
+                        render={() => lineItems.rowExpansion!.render(row)}
+                      />
                     ) : null}
-
-                    {layout.needsSpacer ? <td className={cn(bodyCellClasses, dropLine)} /> : null}
-                  </tr>
+                  </React.Fragment>
                 );
               })}
 
@@ -1201,6 +1275,12 @@ export function LineItemsTable<T extends LineItemsRowData>({
                   <td
                     className={cn(bodyCellClasses, "astw:px-0", pinClasses(layout.grip))}
                     style={pinStyle(layout.grip)}
+                  />
+                ) : null}
+                {showExpand ? (
+                  <td
+                    className={cn(bodyCellClasses, "astw:px-0", pinClasses(layout.expand))}
+                    style={pinStyle(layout.expand)}
                   />
                 ) : null}
                 {layout.columns.map((c) => (
@@ -1329,5 +1409,173 @@ function CellErrorTip({ id, message }: { id: string; message: string }) {
         <Tooltip.Content position={{ side: "bottom" }}>{message}</Tooltip.Content>
       </Tooltip.Root>
     </>
+  );
+}
+
+/** The chevron that opens a line's detail panel — DataTable's expand toggle. */
+function LineExpandToggle({
+  id,
+  panelId,
+  expanded,
+  label,
+  onToggle,
+}: {
+  id: string;
+  panelId: string;
+  expanded: boolean;
+  label: string | undefined;
+  onToggle: () => void;
+}) {
+  const t = useDataTableT();
+  return (
+    <Button
+      id={id}
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="astw:size-7"
+      aria-expanded={expanded}
+      // Only while expanded — it must never point at an id absent from the DOM.
+      aria-controls={expanded ? panelId : undefined}
+      aria-label={t(expanded ? "collapseRow" : "expandRow", { label })}
+      onClick={onToggle}
+    >
+      <ChevronRight
+        className={cn(
+          "astw:size-4 astw:transition-transform astw:motion-reduce:transition-none",
+          expanded && "astw:rotate-90",
+        )}
+      />
+    </Button>
+  );
+}
+
+/** Matches DataTable's panel reveal. */
+const EXPAND_TRANSITION_MS = 300;
+
+type LineItemsExpandedRowProps = {
+  open: boolean;
+  colSpan: number;
+  panelId: string;
+  triggerId: string;
+  label: string | undefined;
+  /** The grid's visible width, so a scrolled grid keeps the panel in view. */
+  viewportWidth: number | null;
+  render: () => React.ReactNode;
+};
+
+/**
+ * A line's detail panel: one full-width row straight after the line, so
+ * forward-tabbing reaches it next. Mirrors DataTable's expanded row — the same
+ * reveal, labels, and focus handling — and stays mounted through the collapse
+ * so it has something to animate. `render` only runs while it's shown.
+ */
+function LineItemsExpandedRow(props: LineItemsExpandedRowProps) {
+  const { open } = props;
+  // `present` is DOM presence, `entered` the visual state: opening mounts
+  // collapsed so the reveal has a starting point; closing stays mounted until
+  // it has played out.
+  const [present, setPresent] = React.useState(open);
+  const [entered, setEntered] = React.useState(false);
+
+  React.useLayoutEffect(() => {
+    if (open) setPresent(true);
+  }, [open]);
+
+  React.useLayoutEffect(() => {
+    if (!open || !present) return;
+    if (typeof requestAnimationFrame !== "function") {
+      setEntered(true);
+      return;
+    }
+    const frame = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(frame);
+  }, [open, present]);
+
+  // A timer, not `transitionend`: under reduced motion there's no transition.
+  React.useEffect(() => {
+    if (open || !present) return;
+    setEntered(false);
+    const timer = setTimeout(() => setPresent(false), EXPAND_TRANSITION_MS);
+    return () => clearTimeout(timer);
+  }, [open, present]);
+
+  if (!present) return null;
+  return <LineItemsExpandedRowContent {...props} entered={entered} />;
+}
+
+function LineItemsExpandedRowContent({
+  open,
+  entered,
+  colSpan,
+  panelId,
+  triggerId,
+  label,
+  viewportWidth,
+  render,
+}: LineItemsExpandedRowProps & { entered: boolean }) {
+  const t = useDataTableT();
+  const panelRef = React.useRef<HTMLElement>(null);
+
+  // Hand focus back to the chevron as the collapse starts, before the panel
+  // goes inert — an inert element holding focus drops it to <body>.
+  React.useLayoutEffect(() => {
+    if (open) return;
+    const panel = panelRef.current;
+    if (!panel || !panel.contains(document.activeElement)) return;
+    document.getElementById(triggerId)?.focus();
+  }, [open, triggerId]);
+
+  // The line unmounting outright (removed, filtered out) with focus inside.
+  React.useLayoutEffect(() => {
+    const panel = panelRef.current;
+    const trigger = document.getElementById(triggerId);
+    return () => {
+      if (panel?.contains(document.activeElement) && trigger?.isConnected) trigger.focus();
+    };
+  }, [triggerId]);
+
+  return (
+    <tr
+      data-slot="line-items-expanded-row"
+      data-state={open ? "open" : "closed"}
+      className="astw:bg-muted/30"
+    >
+      <td colSpan={colSpan} className="astw:border-b astw:border-border astw:p-0">
+        {/* Pinned to the scrollport's left edge, or a scrolled grid would put
+            the panel off-screen. */}
+        <div
+          className="astw:sticky astw:left-0"
+          style={{ width: viewportWidth ? `min(100%, ${viewportWidth}px)` : "100%" }}
+        >
+          <div
+            className="astw:grid astw:transition-[grid-template-rows,opacity] astw:ease-out astw:motion-reduce:transition-none"
+            style={{
+              gridTemplateRows: entered ? "1fr" : "0fr",
+              opacity: entered ? 1 : 0,
+              transitionDuration: `${EXPAND_TRANSITION_MS}ms`,
+            }}
+          >
+            <div className="astw:min-h-0 astw:overflow-x-auto astw:overflow-y-hidden">
+              <section
+                ref={panelRef}
+                id={panelId}
+                inert={open ? undefined : true}
+                aria-label={t("expandedDetails", { label })}
+                className="astw:px-4 astw:py-3"
+              >
+                {render()}
+              </section>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function isInDetailPanel(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element && target.closest("[data-slot=line-items-expanded-row]") !== null
   );
 }

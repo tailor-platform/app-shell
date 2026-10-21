@@ -954,6 +954,71 @@ describe("LineItems", () => {
     });
   });
 
+  describe("row expansion", () => {
+    function ExpandHarness({
+      onReady,
+    }: {
+      onReady?: (a: ReturnType<typeof useLineItems<Line>>) => void;
+    }) {
+      const lineItems = useLineItems<Line>({
+        fields,
+        defaultLines: seed,
+        rowExpansion: {
+          render: (line) => (
+            <label>
+              Notes for {line.sku}
+              <input aria-label={`notes ${line.sku}`} />
+            </label>
+          ),
+          canExpand: (line) => line.id !== "3",
+          getLabel: (line) => line.sku,
+        },
+      });
+      onReady?.(lineItems);
+      return (
+        <LineItems.Root value={lineItems}>
+          <LineItems.Table />
+        </LineItems.Root>
+      );
+    }
+
+    it("toggles a detail panel under the line, named like DataTable's", async () => {
+      const user = userEvent.setup();
+      render(<ExpandHarness />);
+
+      const toggle = screen.getByRole("button", { name: "Expand row APPLE-01" });
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+      await user.click(toggle);
+
+      expect(toggle.getAttribute("aria-expanded")).toBe("true");
+      const panel = screen.getByRole("region", { name: "APPLE-01 details" });
+      expect(panel.textContent).toContain("Notes for APPLE-01");
+      expect(toggle.getAttribute("aria-controls")).toBe(panel.id);
+      // The detail row sits straight after its line.
+      expect(cell("1", "sku").closest("tr")!.nextElementSibling?.contains(panel)).toBe(true);
+    });
+
+    it("gives lines canExpand rejects no chevron", () => {
+      render(<ExpandHarness />);
+      expect(screen.queryByRole("button", { name: "Expand row CHERRY-03" })).toBeNull();
+      expect(screen.getByRole("button", { name: "Expand row BANANA-02" })).toBeDefined();
+    });
+
+    it("leaves keys and paste inside a panel to the panel", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(<ExpandHarness onReady={(a) => (api = a)} />);
+
+      await user.click(editorIn("1", "quantity"));
+      await user.click(screen.getByRole("button", { name: "Expand row APPLE-01" }));
+      const notes = screen.getByRole("textbox", { name: "notes APPLE-01" });
+      await user.click(notes);
+      fireEvent.paste(notes, { clipboardData: { getData: () => "99" } });
+
+      expect(api?.allLines[0]?.quantity).toBe(2);
+    });
+  });
+
   describe("drag reordering", () => {
     it("renders a labelled grip per row under manual ordering", () => {
       render(<Harness ordering="manual" />);

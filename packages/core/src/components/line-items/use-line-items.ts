@@ -20,6 +20,7 @@ import type {
   UseLineItemsOptions,
   UseLineItemsReturn,
 } from "./types";
+import { useIdSet } from "./use-id-set";
 import { usePendingAction } from "./use-pending-action";
 
 type RowState<T extends LineItemsRowData> = {
@@ -62,6 +63,7 @@ export function useLineItems<T extends LineItemsRowData>(
     mode: modeProp = "edit",
     ordering = "sort",
     rowSelection,
+    rowExpansion,
     onMetadataCommit,
   } = options;
   const selection = rowSelection !== undefined;
@@ -123,38 +125,19 @@ export function useLineItems<T extends LineItemsRowData>(
   const [sortState, setSortState] = React.useState<LineItemsSortState | null>(null);
   // Selection follows DataTable's `rowSelection`: controlled through
   // `selectedIds` + `onChange`, or uncontrolled from `defaultSelectedIds`.
-  const controlledSelectedIds = rowSelection?.selectedIds;
-  const [uncontrolledSelected, setUncontrolledSelected] = React.useState<ReadonlySet<string>>(
-    () => new Set(rowSelection?.defaultSelectedIds ?? []),
-  );
-  const selectedSet = React.useMemo<ReadonlySet<string>>(
-    () => (controlledSelectedIds ? new Set(controlledSelectedIds) : uncontrolledSelected),
-    [controlledSelectedIds, uncontrolledSelected],
-  );
-  const selectedSetRef = React.useRef(selectedSet);
-  selectedSetRef.current = selectedSet;
-  const onSelectionChangeRef = React.useRef(rowSelection?.onChange);
-  onSelectionChangeRef.current = rowSelection?.onChange;
-  const isSelectionControlled = controlledSelectedIds !== undefined;
-  const isSelectionControlledRef = React.useRef(isSelectionControlled);
-  isSelectionControlledRef.current = isSelectionControlled;
+  const [selectedSet, setSelectedSet] = useIdSet({
+    ids: rowSelection?.selectedIds,
+    defaultIds: rowSelection?.defaultSelectedIds,
+    onChange: rowSelection?.onChange,
+  });
 
-  /**
-   * Applies a selection change and reports it. Derives from the latest value
-   * (a ref, so commands issued back-to-back in one tick compose) and is a
-   * no-op when the updater returns the same set.
-   */
-  const setSelectedSet = React.useCallback(
-    (update: (prev: ReadonlySet<string>) => ReadonlySet<string>) => {
-      const prev = selectedSetRef.current;
-      const next = update(prev);
-      if (next === prev) return;
-      selectedSetRef.current = next;
-      if (!isSelectionControlledRef.current) setUncontrolledSelected(next);
-      onSelectionChangeRef.current?.([...next]);
-    },
-    [],
-  );
+  // Expansion follows DataTable's `rowExpansion` the same way. Ids that no
+  // longer name a line just sit inert, as in DataTable.
+  const [expandedSet, setExpandedSet] = useIdSet({
+    ids: rowExpansion?.expandedIds,
+    defaultIds: undefined,
+    onChange: rowExpansion?.onChange,
+  });
 
   /** Drops keys that no longer name a line, and renames re-keyed ones. */
   const reconcileSelection = React.useCallback(
@@ -639,6 +622,31 @@ export function useLineItems<T extends LineItemsRowData>(
 
   const { pendingActionId, runSelectionAction } = usePendingAction(selection);
 
+  const canExpand = rowExpansion?.canExpand;
+  const isRowExpanded = React.useCallback(
+    (lineKey: string) => {
+      if (!rowExpansion || !expandedSet.has(lineKey)) return false;
+      const line = rows.byKey[lineKey];
+      // Gated both ways, as in DataTable: a stale id never opens a panel.
+      return line !== undefined && (canExpand?.(line) ?? true);
+    },
+    [canExpand, expandedSet, rowExpansion, rows],
+  );
+  const toggleRowExpansion = React.useCallback(
+    (lineKey: string) => {
+      setExpandedSet((prev) => {
+        const next = new Set(prev);
+        if (!next.delete(lineKey)) next.add(lineKey);
+        return next;
+      });
+    },
+    [setExpandedSet],
+  );
+  const collapseAllRows = React.useCallback(() => {
+    setExpandedSet((prev) => (prev.size === 0 ? prev : new Set<string>()));
+  }, [setExpandedSet]);
+  const expandedIds = React.useMemo(() => [...expandedSet], [expandedSet]);
+
   const setMode = React.useCallback((m: LineItemsMode) => setModeState(m), []);
   const setFilter = React.useCallback((q: string) => setFilterState(q), []);
 
@@ -660,6 +668,11 @@ export function useLineItems<T extends LineItemsRowData>(
     pendingActionId,
     runSelectionAction,
     sortState: ordering === "sort" ? sortState : null,
+    rowExpansion,
+    expandedIds,
+    isRowExpanded,
+    toggleRowExpansion,
+    collapseAllRows,
 
     getLineKey,
     isNewLine,

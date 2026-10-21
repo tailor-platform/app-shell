@@ -99,6 +99,7 @@ LineItems reads each line's id from `id`, the same convention as DataTable, or f
 | `onLinesChange`    | `(next: T[]) => void`                         | –        | Called once per mutation with the new rows. Required with `lines`; optional with `defaultLines`, to observe edits.                                                                                                           |
 | `mode`             | `"view" \| "edit" \| "amend"`                 | `"edit"` | `"view"` renders every cell read-only. `"amend"` is a partial lock for a confirmed document: every column stays visible, but only fields whose `editable` lists `"amend"` keep an editor; the rest render read-only, tinted. |
 | `ordering`         | `"sort" \| "manual"`                          | `"sort"` | `"manual"` enables drag reordering and emits `reorder` ops.                                                                                                                                                                  |
+| `rowExpansion`     | `RowExpansionOptions<T>`                      | –        | Detail panel per line — see [Expandable lines](#expandable-lines).                                                                                                                                                           |
 | `rowSelection`     | `LineItemsRowSelectionOptions`                | –        | Adds the row-selection checkbox column; with `actions`, the bulk-action bar. Same option as DataTable — see [Selection actions](#selection-actions).                                                                         |
 | `onMetadataCommit` | `(event: LineItemsMetadataCommit<T>) => void` | –        | Receives edits to `commit: "metadata"` fields on saved lines, which bypass the change-set. See [Metadata fields](#metadata-fields).                                                                                          |
 
@@ -172,6 +173,24 @@ const lineItems = useLineItems<POLine>({
 - **Give handlers a block body** when they call the hook's own return value, as above. An expression body makes TypeScript infer `lineItems` from itself and fail with "implicitly has type any".
 - **Edits stay local.** Actions that change lines with `updateLines`, `addLines` or `removeLines` land in the change-set like any other edit, so Save and Discard cover them. Return a promise to disable the bar and show a spinner while it runs, or pass a later request (from a confirm dialog) to `helpers.run`. Selection never clears on its own — call `helpers.clearSelection()` when the action should end it.
 - Up to three actions show inline; the rest collapse into a **More actions** menu. The bar is a `role="toolbar"` named "Bulk actions", its count is announced politely, and when it closes with focus inside, focus returns to the header checkbox.
+
+## Expandable lines
+
+Pass `rowExpansion` to give each line a chevron and a detail panel beneath it — the same option as DataTable's [row expansion](./data-table.md): `render(line)`, `canExpand`, `getLabel` for the accessible names, and controlled `expandedIds` + `onChange` (ids are line keys). The hook returns `expandedIds`, `isRowExpanded(lineKey)`, `toggleRowExpansion(lineKey)` and `collapseAllRows()`.
+
+```tsx
+const lineItems = useLineItems<DeliveryLine>({
+  fields,
+  defaultLines: lines,
+  rowExpansion: {
+    render: (line) => <ComponentStock line={line} />,
+    canExpand: (line) => line.isAssembly,
+    getLabel: (line) => line.sku,
+  },
+});
+```
+
+The panel is the app's own content: the grid's keyboard shortcuts, copy and paste leave it alone. While any panel is open, the grid renders every line instead of a virtual window, because panels vary in height.
 
 ## Field schema
 

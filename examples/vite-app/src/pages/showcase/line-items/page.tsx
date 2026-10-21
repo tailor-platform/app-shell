@@ -323,6 +323,26 @@ const PurchaseOrderDemo = ({
     // 🔽 Bulk actions: the same footer bar DataTable shows while rows are selected.
     // Actions get the selected line keys; look lines up from `allLines` when needed.
     // Block-bodied handlers keep TypeScript from inferring `lineItems` from itself.
+    // 🔽 Detail panel per line — here, how much of it has arrived.
+    rowExpansion: {
+      render: (line) => (
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div>
+            <div className="text-muted-foreground">Ordered</div>
+            <div className="tabular-nums">{line.quantity}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Received</div>
+            <div className="tabular-nums">{line.receivedQty}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Still to come</div>
+            <div className="tabular-nums">{Math.max(0, line.quantity - line.receivedQty)}</div>
+          </div>
+        </div>
+      ),
+      getLabel: (line) => line.sku,
+    },
     rowSelection: {
       actions: [
         {

@@ -1038,6 +1038,7 @@
       "claims": [],
       "symbols": [
         "LineItems",
+        "LineItemsCellError",
         "LineItemsChangeSet",
         "LineItemsColumnAlign",
         "LineItemsCustomEditorContext",
@@ -1068,10 +1069,10 @@
         "useLineItemsGroup"
       ],
       "hashes": {
-        "typeSurface": "de0df1997fe4f416",
-        "outline": "660cdf728cbf92ba",
-        "snapshot": "f4973445acbe4803",
-        "outputMd": "808e7be8cf9869d8",
+        "typeSurface": "9e049a72470755d8",
+        "outline": "d11978292c21e882",
+        "snapshot": "b85e5acd881edfde",
+        "outputMd": "80ca23be1bce8a03",
         "examples": null
       }
     },
@@ -1834,7 +1835,7 @@
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "66696139a46fabb0",
-    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "808e7be8cf9869d8",
+    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "80ca23be1bce8a03",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "ae287e2bb5abc1c6",

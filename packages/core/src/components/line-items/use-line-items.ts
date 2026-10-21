@@ -10,6 +10,7 @@ import {
   type LineItemsColumnDef,
 } from "./internals";
 import type {
+  LineItemsCellError,
   LineItemsChangeSet,
   LineItemsMetadataCommit,
   LineItemsMode,
@@ -37,8 +38,9 @@ type DirtyState<T extends LineItemsRowData> = {
   removed: ReadonlySet<string>;
 };
 
-/** Stable default, so a table without bulk actions never changes identity. */
+/** Stable defaults, so a table without these never changes identity. */
 const EMPTY_ACTIONS: never[] = [];
+const EMPTY_ERRORS: LineItemsCellError[] = [];
 
 /**
  * The single source of truth for a line-items document: row order and lookup,
@@ -477,6 +479,41 @@ export function useLineItems<T extends LineItemsRowData>(
   );
   dirtyNow.current = !changeSet.isEmpty;
 
+  /**
+   * Runs each field's `validate` over new and changed lines — the ones the
+   * change-set would submit. Saved data the user didn't touch never blocks.
+   */
+  const errors = React.useMemo((): LineItemsCellError[] => {
+    const validated = fields.filter((f) => typeof f.validate === "function");
+    if (validated.length === 0 || mode === "view" || changeSet.isEmpty) return EMPTY_ERRORS;
+    const touched = new Set<string>();
+    for (const change of changeSet.lineChanges) {
+      if (change.action === "add") touched.add(change.tempId);
+      else if (change.action === "update") touched.add(change.lineId);
+    }
+    const found: LineItemsCellError[] = [];
+    for (const lineKey of rows.order) {
+      if (!touched.has(lineKey)) continue;
+      const line = rows.byKey[lineKey];
+      if (!line) continue;
+      for (const field of validated) {
+        const message = field.validate!((line as Record<string, unknown>)[field.key], line);
+        if (message) found.push({ lineKey, fieldKey: field.key, message });
+      }
+    }
+    return found.length === 0 ? EMPTY_ERRORS : found;
+  }, [changeSet, fields, mode, rows]);
+
+  const errorIndex = React.useMemo(() => {
+    const index = new Map<string, string>();
+    for (const e of errors) index.set(`${e.lineKey}\u0000${e.fieldKey}`, e.message);
+    return index;
+  }, [errors]);
+  const getCellError = React.useCallback(
+    (lineKey: string, fieldKey: string) => errorIndex.get(`${lineKey}\u0000${fieldKey}`),
+    [errorIndex],
+  );
+
   const getChangeSet = React.useCallback((): LineItemsChangeSet => changeSet, [changeSet]);
   const hasUnsavedChanges = React.useCallback(() => dirtyNow.current, []);
 
@@ -584,6 +621,8 @@ export function useLineItems<T extends LineItemsRowData>(
     ordering,
     isDirty: !changeSet.isEmpty,
     hasUnsavedChanges,
+    errors,
+    getCellError,
     selectionEnabled: selection,
     selectedIds,
     selectedRows,

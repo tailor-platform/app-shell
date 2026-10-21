@@ -178,6 +178,7 @@ export {
   useLineItems,
   useLineItemsGroup,
   createLineItemHelper,
+  type LineItemsCellError,
   type LineItemsChangeSet,
   type LineItemsColumnAlign,
   type LineItemsCustomEditorContext,

@@ -93,12 +93,17 @@ function LineItemsSaveActions({
   const { lineItems } = useLineItemsContext("SaveActions");
   const t = useLineItemsT();
   if (lineItems.mode === "view") return null;
+  const errorCount = lineItems.errors.length;
 
   return (
     <div
       data-slot="line-items-save-actions"
       className={cn("astw:flex astw:items-center astw:gap-2", className)}
     >
+      {/* Says why Save is off, and is announced as it appears. */}
+      <output className="astw:text-sm astw:text-danger-text">
+        {errorCount > 0 ? t("fixErrors", { count: errorCount }) : null}
+      </output>
       <Button
         type="button"
         variant="ghost"
@@ -111,7 +116,7 @@ function LineItemsSaveActions({
       <Button
         type="button"
         size="sm"
-        disabled={!lineItems.isDirty || saving}
+        disabled={!lineItems.isDirty || saving || errorCount > 0}
         onClick={() => onSave(lineItems.getChangeSet())}
       >
         {saveLabel ?? t("saveChanges")}
@@ -303,6 +308,9 @@ function LineItemsDirtyBar({
   if (!isDirty) return null;
 
   const pending = lineItems.getChangeSet().lineChanges.length;
+  const errorCount = lineItems.errors.length;
+  let status: React.ReactNode = label ? label(pending) : t("unsavedChanges", { count: pending });
+  if (errorCount > 0) status = t("fixErrors", { count: errorCount });
 
   return (
     <div
@@ -312,9 +320,7 @@ function LineItemsDirtyBar({
       className={cn(pillClasses, "astw:outline-none", className)}
     >
       {/* <output> is a status region: the count is announced as it appears and changes. */}
-      <output className="astw:opacity-80">
-        {label ? label(pending) : t("unsavedChanges", { count: pending })}
-      </output>
+      <output className="astw:opacity-80">{status}</output>
       <span className="astw:sr-only" aria-live="assertive">
         {blockedNotice}
       </span>
@@ -340,7 +346,11 @@ function LineItemsDirtyBar({
             <button
               type="button"
               data-action="save"
-              className={cn(pillButtonClasses, "astw:bg-background astw:text-foreground")}
+              disabled={errorCount > 0}
+              className={cn(
+                pillButtonClasses,
+                "astw:bg-background astw:text-foreground astw:disabled:opacity-50",
+              )}
               onClick={() => onSave(lineItems.getChangeSet())}
             >
               {saveLabel ?? t("save")}

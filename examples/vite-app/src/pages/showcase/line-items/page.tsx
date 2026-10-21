@@ -198,6 +198,8 @@ const fields = [
     render: (l) => l.quantity ?? 0,
     editable: ["edit"],
     type: { kind: "number", decimals: 0 },
+    // Blocks Save and shows why, until it's fixed.
+    validate: (value) => (Number(value) < 0 ? "Quantity can't be negative" : null),
     width: 100,
     sort: { comparator: (a, b) => (a.quantity ?? 0) - (b.quantity ?? 0) },
   }),

@@ -110,6 +110,7 @@ LineItems reads each line's id from `id`, the same convention as DataTable, or f
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `lines` / `allLines`                            | Rows in display order (sorted while a sort is active), and in document order.              |
 | `isDirty`                                       | Whether current state diverges from the baseline.                                          |
+| `errors` / `getCellError(lineKey, fieldKey)`    | Validation messages for new and changed lines — see [Validation](#validation).             |
 | `hasUnsavedChanges()`                           | `isDirty`, read live: already `false` right after `reset` or `revert`, before a re-render. |
 | `getLineKey(line)` / `isNewLine(line)`          | The key the methods below take, and whether the line is unsaved (no id).                   |
 | `selectedIds` / `selectedRows`                  | The selected lines, as line keys and as rows, in document order.                           |
@@ -189,6 +190,7 @@ const lineItems = useLineItems<POLine>({
 | `className` | `string \| ((line: T) => string \| undefined)` | Per-cell classes — useful for flagging discrepancies.                                         |
 | `normalize` | `(value, row) => unknown`                      | Coerce before comparison and before entering the change-set.                                  |
 | `equals`    | `(a, b, row) => boolean`                       | Custom dirty-equality.                                                                        |
+| `validate`  | `(value, line) => string \| null \| undefined` | Returns a message for an invalid value — see [Validation](#validation).                       |
 | `width`     | `number`                                       | Resting width in pixels.                                                                      |
 | `pin`       | `"left" \| "right"`                            | Freezes the column during horizontal scroll.                                                  |
 | `flex`      | `boolean`                                      | Absorbs leftover horizontal space.                                                            |
@@ -279,6 +281,23 @@ After a successful save, call `reset` so the baseline moves forward and new line
 If the backend only returns the ids it created, map each `add`'s `tempId` to its id instead: `lineItems.reset({ idMap: { [tempId]: serverId } })`. `reset()` with no argument is for saves that added no lines; with new lines pending it warns in the console.
 
 `hasUnsavedChanges()` is clear as soon as `reset` runs, so `await save(); reset(saved); navigate("/orders")` passes `DirtyBar`'s `warnOnNav` guard in one go.
+
+### Validation
+
+Give a field a `validate(value, line)` that returns a message when the value isn't acceptable:
+
+```tsx
+f.field({
+  key: "quantity",
+  label: "Qty",
+  render: (l) => l.quantity,
+  editable: ["edit"],
+  type: { kind: "number", decimals: 0 },
+  validate: (value) => (Number(value) < 0 ? "Quantity can't be negative" : null),
+});
+```
+
+An invalid cell gets a red outline and shows its message on hover or focus, the same as DataTable's inline editing, and the message is part of the cell's accessible description. `SaveActions` and `DirtyBar` keep Save disabled and say how many errors are left. The value is still stored, so a paste or fill that breaks a rule shows exactly where. Only new and changed lines are checked, so saved data nobody touched never blocks an unrelated edit. `errors` and `getCellError(lineKey, fieldKey)` expose the same state for your own controls.
 
 ### Metadata fields
 

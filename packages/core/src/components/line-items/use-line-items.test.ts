@@ -420,6 +420,49 @@ describe("useLineItems", () => {
     });
   });
 
+  describe("validation", () => {
+    const validated = fields.map((field) =>
+      field.key === "quantity"
+        ? {
+            ...field,
+            validate: (v: unknown) => (Number(v) < 0 ? "Quantity can't be negative" : null),
+          }
+        : field,
+    ) as LineItemsField<Line>[];
+
+    it("flags invalid values on changed lines and clears once fixed", () => {
+      const { result } = renderHook(() =>
+        useLineItems<Line>({ fields: validated, defaultLines: seed }),
+      );
+      expect(result.current.errors).toEqual([]);
+
+      act(() => result.current.updateField("2", "quantity", -3));
+      expect(result.current.errors).toEqual([
+        { lineKey: "2", fieldKey: "quantity", message: "Quantity can't be negative" },
+      ]);
+      expect(result.current.getCellError("2", "quantity")).toBe("Quantity can't be negative");
+
+      act(() => result.current.updateField("2", "quantity", 3));
+      expect(result.current.errors).toEqual([]);
+    });
+
+    it("validates new lines, but never saved lines nobody touched", () => {
+      const { result } = renderHook(() =>
+        useLineItems<Line>({
+          fields: validated,
+          defaultLines: [...seed, { id: "9", sku: "OLD", quantity: -1, total: 0 }],
+        }),
+      );
+      expect(result.current.errors).toEqual([]);
+
+      let key = "";
+      act(() => {
+        key = result.current.addLine({ sku: "NEW", quantity: -2, total: 0 });
+      });
+      expect(result.current.errors.map((e) => e.lineKey)).toEqual([key]);
+    });
+  });
+
   describe("metadata fields", () => {
     type Memo = Line & { memo?: string };
     const memoFields = [

@@ -204,7 +204,14 @@ export function InlineEditingDemo() {
   };
 
   const columns = [
-    column({ id: "sku", label: "SKU", type: "text", width: 120, pin: "left" }),
+    column({
+      id: "sku",
+      label: "SKU",
+      type: "text",
+      width: 120,
+      pin: "left",
+      footer: () => "Totals",
+    }),
     column({ id: "product", label: "Product", type: "text" }),
     column({
       id: "supplierId",
@@ -237,13 +244,20 @@ export function InlineEditingDemo() {
           update(row.id, { warehouseId: value }, `Warehouse → ${value ?? "none"}`),
       },
     }),
-    column({ id: "ordered", label: "Ordered", type: "number", width: 88 }),
+    column({
+      id: "ordered",
+      label: "Ordered",
+      type: "number",
+      width: 88,
+      footer: ({ rows }) => rows.reduce((sum, row) => sum + row.ordered, 0),
+    }),
     column({
       id: "received",
       label: "Received",
       type: "number",
       width: 104,
       typeOptions: { maxDecimals: 0 },
+      footer: ({ rows }) => rows.reduce((sum, row) => sum + (row.received ?? 0), 0),
       edit: {
         canEdit: (_row, { selected }) => selected,
         onValueCommitted: (row, value) => {
@@ -326,6 +340,10 @@ export function InlineEditingDemo() {
       type: "number",
       width: 112,
       typeOptions: { maxDecimals: 3 },
+      footer: ({ rows }) =>
+        rows
+          .reduce((sum, row) => sum + (row.weightKg ?? 0), 0)
+          .toLocaleString(undefined, { maximumFractionDigits: 3 }),
       edit: {
         onValueCommitted: (row, value) => {
           if (
@@ -478,7 +496,7 @@ export function InlineEditingDemo() {
           {feedback}
         </p>
       )}
-      <DataTable.Root value={table}>
+      <DataTable.Root value={table} className="max-h-[320px]">
         <DataTable.Table />
         <DataTable.Footer>
           <div aria-live="polite" className="space-y-1 text-sm text-muted-foreground">

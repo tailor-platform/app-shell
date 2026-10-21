@@ -18,11 +18,14 @@ export type PinPlacement = {
 /** Fixed-width utility columns the grid owns rather than the field schema. */
 export const GRIP_COLUMN_ID = "__grip";
 export const SELECTION_COLUMN_ID = "__selection";
+export const EXPAND_COLUMN_ID = "__expand";
 export const ACTIONS_COLUMN_ID = "__actions";
 export const SPACER_COLUMN_ID = "__spacer";
 
 export const GRIP_COLUMN_WIDTH = 36;
 export const SELECTION_COLUMN_WIDTH = 44;
+/** Matches DataTable's expand column. */
+export const EXPAND_COLUMN_WIDTH = 44;
 export const ACTIONS_COLUMN_WIDTH = 56;
 
 export type LayoutColumn<T extends LineItemsRowData> = {
@@ -53,6 +56,7 @@ export type ColumnLayout<T extends LineItemsRowData> = {
   gridColumnIds: string[];
   grip: PinPlacement | undefined;
   selection: PinPlacement | undefined;
+  expand: PinPlacement | undefined;
   actions: PinPlacement | undefined;
   /**
    * True when no column claims `flex` and every column declares a width — the
@@ -78,11 +82,19 @@ export function computeColumnLayout<T extends LineItemsRowData>(
     widths: ColumnWidths;
     hasGrip: boolean;
     hasSelection: boolean;
+    hasExpand?: boolean;
     hasActions: boolean;
     actionsWidth?: number;
   },
 ): ColumnLayout<T> {
-  const { widths, hasGrip, hasSelection, hasActions, actionsWidth = ACTIONS_COLUMN_WIDTH } = opts;
+  const {
+    widths,
+    hasGrip,
+    hasSelection,
+    hasExpand = false,
+    hasActions,
+    actionsWidth = ACTIONS_COLUMN_WIDTH,
+  } = opts;
 
   const left: LineItemsField<T>[] = [];
   const middle: LineItemsField<T>[] = [];
@@ -99,14 +111,25 @@ export function computeColumnLayout<T extends LineItemsRowData>(
   let leftOffset = 0;
   let selection: PinPlacement | undefined;
   let grip: PinPlacement | undefined;
+  let expand: PinPlacement | undefined;
 
+  // Utility columns lead, in order: selection, grip, expand. The last one
+  // before any left-pinned field draws the freeze seam.
   if (hasSelection) {
-    selection = { side: "left", offset: 0, isBoundary: !hasGrip && left.length === 0 };
+    selection = {
+      side: "left",
+      offset: 0,
+      isBoundary: !hasGrip && !hasExpand && left.length === 0,
+    };
     leftOffset += resolveWidth(SELECTION_COLUMN_ID, SELECTION_COLUMN_WIDTH, widths);
   }
   if (hasGrip) {
-    grip = { side: "left", offset: leftOffset, isBoundary: left.length === 0 };
+    grip = { side: "left", offset: leftOffset, isBoundary: !hasExpand && left.length === 0 };
     leftOffset += resolveWidth(GRIP_COLUMN_ID, GRIP_COLUMN_WIDTH, widths);
+  }
+  if (hasExpand) {
+    expand = { side: "left", offset: leftOffset, isBoundary: left.length === 0 };
+    leftOffset += resolveWidth(EXPAND_COLUMN_ID, EXPAND_COLUMN_WIDTH, widths);
   }
   left.forEach((field, i) => {
     placements.set(field, {
@@ -143,6 +166,7 @@ export function computeColumnLayout<T extends LineItemsRowData>(
   const minTableWidth =
     (hasSelection ? SELECTION_COLUMN_WIDTH : 0) +
     (hasGrip ? GRIP_COLUMN_WIDTH : 0) +
+    (hasExpand ? EXPAND_COLUMN_WIDTH : 0) +
     (hasActions ? actionsWidth : 0) +
     columns.reduce((sum, c) => {
       if (typeof c.width === "number") return sum + c.width;
@@ -154,6 +178,7 @@ export function computeColumnLayout<T extends LineItemsRowData>(
     gridColumnIds: columns.map((c) => c.id),
     grip,
     selection,
+    expand,
     actions,
     minTableWidth,
     needsSpacer:

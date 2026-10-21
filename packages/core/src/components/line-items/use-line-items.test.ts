@@ -667,6 +667,29 @@ describe("useLineItems", () => {
     });
   });
 
+  describe("row expansion", () => {
+    it("tracks open lines, controlled or not, gated by canExpand", () => {
+      const onChange = vi.fn();
+      const { result } = renderHook(() =>
+        useLineItems<Line>({
+          fields,
+          defaultLines: seed,
+          rowExpansion: { render: () => null, canExpand: (l) => l.id !== "2", onChange },
+        }),
+      );
+      act(() => result.current.toggleRowExpansion("1"));
+      act(() => result.current.toggleRowExpansion("2"));
+
+      expect(result.current.isRowExpanded("1")).toBe(true);
+      // "2" is in the set but canExpand rejects it, so it stays closed.
+      expect(result.current.isRowExpanded("2")).toBe(false);
+      expect(onChange).toHaveBeenLastCalledWith(["1", "2"]);
+
+      act(() => result.current.collapseAllRows());
+      expect(result.current.expandedIds).toEqual([]);
+    });
+  });
+
   describe("controlled mode", () => {
     it("requires onLinesChange alongside lines at the type level", () => {
       // @ts-expect-error — `lines` without `onLinesChange` would silently drop every edit.

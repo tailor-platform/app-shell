@@ -1,4 +1,8 @@
-import type { RowSelectionOptions, SelectionAction } from "@/components/data-table/types";
+import type {
+  RowExpansionOptions,
+  RowSelectionOptions,
+  SelectionAction,
+} from "@/components/data-table/types";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
 import type { ReactNode } from "react";
 
@@ -332,6 +336,14 @@ export type UseLineItemsOptions<T extends LineItemsRowData> = LineItemsRowSource
    * and never clear the selection on their own.
    */
   rowSelection?: LineItemsRowSelectionOptions;
+  /**
+   * Adds an expand chevron to each line and a detail panel beneath it — the
+   * same option as DataTable's `rowExpansion` (`render`, `canExpand`,
+   * `getLabel`, and controlled `expandedIds` + `onChange`). Ids are line
+   * keys. While a panel is open the grid renders every line rather than a
+   * virtual window, since panels vary in height.
+   */
+  rowExpansion?: RowExpansionOptions<T>;
   /** Receives edits to `commit: "metadata"` fields, which bypass the change-set. */
   onMetadataCommit?: (event: LineItemsMetadataCommit<T>) => void;
 };
@@ -382,6 +394,16 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
    * is pending, without changing selection. The bar calls this for you.
    */
   runSelectionAction: ((action: { id: string }, request: PromiseLike<unknown>) => void) | undefined;
+  /** The `rowExpansion` option, when given. */
+  rowExpansion: RowExpansionOptions<T> | undefined;
+  /** Keys of the lines whose detail panel is open. */
+  expandedIds: string[];
+  /** Whether a line's panel is open. Always `false` without `rowExpansion`. */
+  isRowExpanded: (lineKey: string) => boolean;
+  /** Opens or closes a line's panel. */
+  toggleRowExpansion: (lineKey: string) => void;
+  /** Closes every panel. */
+  collapseAllRows: () => void;
   /** Active sort, or `null` when in document order. Always `null` under manual ordering. */
   sortState: LineItemsSortState | null;
 

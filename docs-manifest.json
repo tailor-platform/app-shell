@@ -699,9 +699,9 @@
       "symbols": ["Form", "FormProps"],
       "hashes": {
         "typeSurface": "7b374d45d53d4535",
-        "outline": "a2cfe48049a3e5ea",
+        "outline": "7fefd291a00de910",
         "snapshot": "88a0c82baaaa2a08",
-        "outputMd": "d6ec66ffc180b303",
+        "outputMd": "e4a66f7b1ee4aa98",
         "examples": null
       }
     },
@@ -1759,7 +1759,7 @@
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "ec6a0ac098d1d87a",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "c6a48c4d8e8b0078",
-    "packages/core/skills/app-shell-patterns/references/components/form.md": "d6ec66ffc180b303",
+    "packages/core/skills/app-shell-patterns/references/components/form.md": "e4a66f7b1ee4aa98",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",

@@ -164,11 +164,12 @@ function renderMisuseWarnings(render: unknown): string[] {
  * A styled text input for the field.
  *
  * Use it for plain text-like inputs, or pass a native element to `render`
- * (e.g. `render={<textarea />}`). Every other AppShell control — `Select`,
- * `Combobox`, `Autocomplete`, `Checkbox`, `Textarea`, `DateField`,
- * `DatePicker`, `DateRangePicker` — goes directly under `Field.Root` instead:
- * it draws its own frame and registers with the Field context itself.
- * Passing one to `render` draws a second frame and logs a warning.
+ * (e.g. `render={<textarea />}`). `Select`, `Combobox`, `Autocomplete`,
+ * `Checkbox`, `Textarea`, `DateField`, `DatePicker` and `DateRangePicker` go
+ * directly under `Field.Root` instead: each draws its own frame and registers
+ * with the Field context itself. Passing one to `render` draws a second frame
+ * and logs a warning. `Input` does not connect to `Field.Root` — use
+ * `Field.Control` in its place inside a field.
  */
 function Control({ className, ...props }: React.ComponentProps<typeof BaseField.Control>) {
   useOnceWarnings(renderMisuseWarnings(props.render));

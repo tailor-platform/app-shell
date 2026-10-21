@@ -17,6 +17,7 @@ export type {
   LineItemsFieldType,
   LineItemsLineChange,
   LineItemsMetadataCommit,
+  LineItemsResetInput,
   LineItemsMode,
   LineItemsOrderingMode,
   LineItemsRowData,

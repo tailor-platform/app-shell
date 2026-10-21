@@ -21,10 +21,16 @@ export type UseLineItemsGroupReturn<G extends LineItemsGroupMembers> = {
   members: G;
   /** True when any member has uncommitted changes. */
   isDirty: boolean;
+  /** `isDirty`, read live — see `UseLineItemsReturn.hasUnsavedChanges`. */
+  hasUnsavedChanges: () => boolean;
   /** Collects every member's change-set for one document-level submit. */
   getChangeSet: () => LineItemsGroupChangeSet<G>;
-  /** Snaps every member's baseline forward. Call after a successful save. */
-  reset: () => void;
+  /**
+   * Snaps every member's baseline forward. Call after a successful save, with
+   * each member's saved lines or `{ idMap }` keyed by member name, so new
+   * lines pick up their server ids — see `LineItemsResetInput`.
+   */
+  reset: (saved?: { [K in keyof G]?: Parameters<G[K]["reset"]>[0] }) => void;
   /** Discards every member's changes back to its baseline. */
   revert: () => void;
 };
@@ -45,8 +51,8 @@ export type UseLineItemsGroupReturn<G extends LineItemsGroupMembers> = {
  * const onSave = async () => {
  *   const { isEmpty, changeSets } = group.getChangeSet();
  *   if (isEmpty) return;
- *   await saveJournalEntry(entry.id, changeSets.debits, changeSets.credits);
- *   group.reset();
+ *   const saved = await saveJournalEntry(entry.id, changeSets.debits, changeSets.credits);
+ *   group.reset({ debits: saved.debits, credits: saved.credits });
  * };
  * ```
  */
@@ -69,8 +75,11 @@ export function useLineItemsGroup<G extends LineItemsGroupMembers>(
   return {
     members,
     isDirty: all.some((m) => m.isDirty),
+    hasUnsavedChanges: () => all.some((m) => m.hasUnsavedChanges()),
     getChangeSet,
-    reset: () => all.forEach((m) => m.reset()),
+    reset: (saved) => {
+      for (const key of Object.keys(members) as (keyof G)[]) members[key].reset(saved?.[key]);
+    },
     revert: () => all.forEach((m) => m.revert()),
   };
 }

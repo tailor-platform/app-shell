@@ -10,7 +10,34 @@ import type {
  * `"excluded"` columns never reach the change-set — computed and read-only
  * columns are flagged this way so a derived total is not submitted as an edit.
  */
-export type LineItemsMutationScope = "document" | "excluded";
+export type LineItemsMutationScope = "document" | "metadata" | "excluded";
+
+/**
+ * Every line held by `useLineItems` carries its key under this symbol: the
+ * line's id (as a string) once saved, or a client-side temp key while it is
+ * new. A symbol keeps the key out of JSON, the change-set, and the app's own
+ * id field, while object spread (`{ ...line }`) still carries it along.
+ */
+export const LINE_KEY: unique symbol = Symbol("LineItems.lineKey");
+
+type Keyed = { [LINE_KEY]?: string };
+
+/** The key LineItems tracks `line` by. */
+export function readLineKey(line: object): string | undefined {
+  return (line as Keyed)[LINE_KEY];
+}
+
+/** A copy of `line` tagged with `key`. */
+export function withLineKey<TRow extends object>(line: TRow, key: string): TRow {
+  return { ...line, [LINE_KEY]: key };
+}
+
+/** A copy of `line` without its key, for handing to the app. */
+export function stripLineKey<TRow extends object>(line: TRow): TRow {
+  const copy = { ...line } as TRow & Keyed;
+  delete copy[LINE_KEY];
+  return copy;
+}
 
 /**
  * Internal column descriptor consumed by the change-set engine. Consumers
@@ -25,7 +52,7 @@ export type LineItemsColumnDef<TRow extends LineItemsRowData> = {
   equals?: (a: unknown, b: unknown, row: TRow) => boolean;
 };
 
-/** Baseline captures document order plus row snapshots keyed by `lineRef`. */
+/** Baseline captures document order plus row snapshots keyed by line key. */
 export type LineItemsBaseline<TRow extends LineItemsRowData> = {
   order: string[];
   rows: Record<string, TRow>;
@@ -78,6 +105,9 @@ export function computeDocumentPatches<TRow extends LineItemsRowData>(
 ): LineItemsLineChange[] {
   const columnIndex = indexColumns(cols);
   const documentKeys = columnsByScope(cols, "document");
+  // A new line has nothing to attach out-of-band edits to yet, so its
+  // metadata fields travel with the add instead.
+  const addKeys = [...documentKeys, ...columnsByScope(cols, "metadata")];
   const currentIds = new Set(currentOrder);
   const lines: LineItemsLineChange[] = [];
 
@@ -104,10 +134,12 @@ export function computeDocumentPatches<TRow extends LineItemsRowData>(
     const row = currentByRef[id];
     if (!row) continue;
     const data: LineItemsRowPatch = {};
-    for (const key of documentKeys) {
+    for (const key of addKeys) {
       data[key] = normalize(key, row[key as keyof TRow], row);
     }
-    lines.push({ action: "add", tempId: id, data });
+    // `line` carries what `data` can't: read-only fields such as a product id
+    // picked from a catalog, which the server still needs to create the line.
+    lines.push({ action: "add", tempId: id, data, line: stripLineKey(row) as LineItemsRowPatch });
   }
 
   for (const id of currentOrder) {
@@ -190,7 +222,7 @@ function columnsByScope<TRow extends LineItemsRowData>(
   for (const c of cols) {
     if ((c.mutationScope ?? "document") !== scope) continue;
     const key = (c.accessorKey as string | undefined) ?? c.id;
-    if (key && key !== "lineRef") keys.push(key);
+    if (key) keys.push(key);
   }
   return keys;
 }
@@ -217,11 +249,15 @@ export function buildChangeSet<TRow extends LineItemsRowData>(
 }
 
 export function cloneRow<TRow extends LineItemsRowData>(row: TRow): TRow {
+  let copy: TRow;
   try {
-    return structuredClone(row) as TRow;
+    copy = structuredClone(row) as TRow;
   } catch {
-    return { ...row } as TRow;
+    copy = { ...row } as TRow;
   }
+  // structuredClone drops symbol keys; put the line key back.
+  const key = readLineKey(row);
+  return key === undefined ? copy : withLineKey(copy, key);
 }
 
 export function cloneBaseline<TRow extends LineItemsRowData>(

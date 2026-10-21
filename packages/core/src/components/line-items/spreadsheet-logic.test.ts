@@ -14,38 +14,38 @@ const cols = ["sku", "qty", "price"];
 
 describe("moveSelectionCoord", () => {
   it("moves within bounds", () => {
-    expect(moveSelectionCoord("ArrowDown", { lineRef: "a", columnId: "qty" }, refs, cols)).toEqual({
-      lineRef: "b",
+    expect(moveSelectionCoord("ArrowDown", { lineKey: "a", columnId: "qty" }, refs, cols)).toEqual({
+      lineKey: "b",
       columnId: "qty",
     });
-    expect(moveSelectionCoord("ArrowRight", { lineRef: "a", columnId: "sku" }, refs, cols)).toEqual(
+    expect(moveSelectionCoord("ArrowRight", { lineKey: "a", columnId: "sku" }, refs, cols)).toEqual(
       {
-        lineRef: "a",
+        lineKey: "a",
         columnId: "qty",
       },
     );
   });
 
   it("clamps at the grid edges rather than wrapping", () => {
-    expect(moveSelectionCoord("ArrowUp", { lineRef: "a", columnId: "sku" }, refs, cols)).toEqual({
-      lineRef: "a",
+    expect(moveSelectionCoord("ArrowUp", { lineKey: "a", columnId: "sku" }, refs, cols)).toEqual({
+      lineKey: "a",
       columnId: "sku",
     });
-    expect(moveSelectionCoord("ArrowDown", { lineRef: "c", columnId: "sku" }, refs, cols)).toEqual({
-      lineRef: "c",
+    expect(moveSelectionCoord("ArrowDown", { lineKey: "c", columnId: "sku" }, refs, cols)).toEqual({
+      lineKey: "c",
       columnId: "sku",
     });
     expect(
-      moveSelectionCoord("ArrowRight", { lineRef: "a", columnId: "price" }, refs, cols),
-    ).toEqual({ lineRef: "a", columnId: "price" });
+      moveSelectionCoord("ArrowRight", { lineKey: "a", columnId: "price" }, refs, cols),
+    ).toEqual({ lineKey: "a", columnId: "price" });
   });
 
   it("returns null for a coordinate outside the grid", () => {
     expect(
-      moveSelectionCoord("ArrowDown", { lineRef: "zz", columnId: "qty" }, refs, cols),
+      moveSelectionCoord("ArrowDown", { lineKey: "zz", columnId: "qty" }, refs, cols),
     ).toBeNull();
     expect(
-      moveSelectionCoord("ArrowDown", { lineRef: "a", columnId: "zz" }, refs, cols),
+      moveSelectionCoord("ArrowDown", { lineKey: "a", columnId: "zz" }, refs, cols),
     ).toBeNull();
   });
 });
@@ -55,18 +55,18 @@ describe("rectangularCells", () => {
     const forward = rectangularCells(
       refs,
       cols,
-      { lineRef: "a", columnId: "sku" },
+      { lineKey: "a", columnId: "sku" },
       {
-        lineRef: "b",
+        lineKey: "b",
         columnId: "qty",
       },
     );
     const reversed = rectangularCells(
       refs,
       cols,
-      { lineRef: "b", columnId: "qty" },
+      { lineKey: "b", columnId: "qty" },
       {
-        lineRef: "a",
+        lineKey: "a",
         columnId: "sku",
       },
     );
@@ -74,10 +74,10 @@ describe("rectangularCells", () => {
     expect(forward).toHaveLength(4);
     expect(forward).toEqual(reversed);
     expect(forward).toEqual([
-      { lineRef: "a", columnId: "sku" },
-      { lineRef: "a", columnId: "qty" },
-      { lineRef: "b", columnId: "sku" },
-      { lineRef: "b", columnId: "qty" },
+      { lineKey: "a", columnId: "sku" },
+      { lineKey: "a", columnId: "qty" },
+      { lineKey: "b", columnId: "sku" },
+      { lineKey: "b", columnId: "qty" },
     ]);
   });
 
@@ -85,13 +85,13 @@ describe("rectangularCells", () => {
     const cells = rectangularCells(
       refs,
       cols,
-      { lineRef: "b", columnId: "qty" },
+      { lineKey: "b", columnId: "qty" },
       {
-        lineRef: "b",
+        lineKey: "b",
         columnId: "qty",
       },
     );
-    expect(cells).toEqual([{ lineRef: "b", columnId: "qty" }]);
+    expect(cells).toEqual([{ lineKey: "b", columnId: "qty" }]);
   });
 
   it("returns nothing for an unknown coordinate", () => {
@@ -99,14 +99,14 @@ describe("rectangularCells", () => {
       rectangularCells(
         refs,
         cols,
-        { lineRef: "zz", columnId: "qty" },
-        { lineRef: "b", columnId: "qty" },
+        { lineKey: "zz", columnId: "qty" },
+        { lineKey: "b", columnId: "qty" },
       ),
     ).toEqual([]);
   });
 });
 
-const display = (lineRef: string, columnId: string) => `${lineRef}/${columnId}`;
+const display = (lineKey: string, columnId: string) => `${lineKey}/${columnId}`;
 
 describe("coordsToRowsMatrix", () => {
   it("reads out the bounding box in document and schema order", () => {
@@ -114,8 +114,8 @@ describe("coordsToRowsMatrix", () => {
       refs,
       cols,
       [
-        { lineRef: "b", columnId: "price" },
-        { lineRef: "a", columnId: "qty" },
+        { lineKey: "b", columnId: "price" },
+        { lineKey: "a", columnId: "qty" },
       ],
       display,
     );
@@ -128,7 +128,7 @@ describe("coordsToRowsMatrix", () => {
 
   it("returns nothing for empty input", () => {
     expect(coordsToRowsMatrix(refs, cols, [], display)).toEqual([]);
-    expect(coordsToRowsMatrix([], cols, [{ lineRef: "a", columnId: "qty" }], display)).toEqual([]);
+    expect(coordsToRowsMatrix([], cols, [{ lineKey: "a", columnId: "qty" }], display)).toEqual([]);
   });
 });
 
@@ -179,10 +179,10 @@ describe("TSV round-trip", () => {
 
 describe("sameCoord", () => {
   it("compares by value and treats null as unequal", () => {
-    expect(sameCoord({ lineRef: "a", columnId: "qty" }, { lineRef: "a", columnId: "qty" })).toBe(
+    expect(sameCoord({ lineKey: "a", columnId: "qty" }, { lineKey: "a", columnId: "qty" })).toBe(
       true,
     );
-    expect(sameCoord({ lineRef: "a", columnId: "qty" }, { lineRef: "b", columnId: "qty" })).toBe(
+    expect(sameCoord({ lineKey: "a", columnId: "qty" }, { lineKey: "b", columnId: "qty" })).toBe(
       false,
     );
     expect(sameCoord(null, null)).toBe(false);

@@ -37,9 +37,9 @@ describe("parseLooseDate", () => {
   });
 });
 
-type Line = { lineRef: string; qty: number | null; due: string | null };
+type Line = { id?: string; qty: number | null; due: string | null };
 const f = createLineItemHelper<Line>();
-const row: Line = { lineRef: "1", qty: 5, due: "2026-06-10" };
+const row: Line = { id: "1", qty: 5, due: "2026-06-10" };
 
 describe("fieldToColumnDef normalizers", () => {
   const qty = fieldToColumnDef(

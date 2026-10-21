@@ -7,7 +7,7 @@ import type { LineItemsField, LineItemsMode, UseLineItemsOptions } from "./types
 import { useLineItems } from "./use-line-items";
 
 type Line = {
-  lineRef: string;
+  id?: string;
   sku: string;
   quantity: number;
   total: number;
@@ -36,8 +36,8 @@ const fields: LineItemsField<Line>[] = [
 ];
 
 const seed: Line[] = [
-  { lineRef: "1", sku: "APPLE-01", quantity: 2, total: 10 },
-  { lineRef: "2", sku: "BANANA-02", quantity: 5, total: 25 },
+  { id: "1", sku: "APPLE-01", quantity: 2, total: 10 },
+  { id: "2", sku: "BANANA-02", quantity: 5, total: 25 },
 ];
 
 function setup(
@@ -53,16 +53,37 @@ function setup(
 describe("useLineItems", () => {
   it("seeds lines from data and starts clean", () => {
     const { result } = setup();
-    expect(result.current.allLines.map((l) => l.lineRef)).toEqual(["1", "2"]);
+    expect(result.current.allLines.map((l) => l.id)).toEqual(["1", "2"]);
     expect(result.current.isDirty).toBe(false);
     expect(result.current.getChangeSet().isEmpty).toBe(true);
   });
 
-  it("generates a lineRef for rows that arrive without one", () => {
-    const { result } = setup({
-      defaultLines: [{ sku: "NO-REF", quantity: 1, total: 0 } as unknown as Line],
-    });
-    expect(result.current.allLines[0]?.lineRef).toBeTruthy();
+  it("treats a line that arrives without an id as new", () => {
+    const { result } = setup({ defaultLines: [{ sku: "NO-ID", quantity: 1, total: 0 }] });
+    const line = result.current.allLines[0]!;
+
+    expect(line.id).toBeUndefined();
+    expect(result.current.isNewLine(line)).toBe(true);
+    expect(result.current.getLineKey(line)).toBeTruthy();
+    expect(result.current.getChangeSet().lineChanges).toEqual([
+      expect.objectContaining({ action: "add", tempId: result.current.getLineKey(line) }),
+    ]);
+  });
+
+  it("reads the id from idKey", () => {
+    type Keyed = { lineNo: number; sku: string; quantity: number; total: number };
+    const { result } = renderHook(() =>
+      useLineItems<Keyed>({
+        fields: fields as unknown as UseLineItemsOptions<Keyed>["fields"],
+        idKey: "lineNo",
+        defaultLines: [{ lineNo: 10, sku: "A", quantity: 1, total: 0 }],
+      }),
+    );
+    act(() => result.current.updateField("10", "quantity", 2));
+
+    expect(result.current.getChangeSet().lineChanges).toEqual([
+      { action: "update", lineId: "10", patch: { quantity: 2 } },
+    ]);
   });
 
   describe("mutations", () => {
@@ -79,6 +100,7 @@ describe("useLineItems", () => {
         action: "add",
         tempId: newRef,
         data: { sku: "CHERRY-03", quantity: 1 },
+        line: { sku: "CHERRY-03", quantity: 1 },
       });
     });
 
@@ -96,7 +118,7 @@ describe("useLineItems", () => {
     it("inserts after a given line when asked", () => {
       const { result } = setup();
       act(() => {
-        result.current.addLine({ sku: "MIDDLE" }, { afterLineRef: "1" });
+        result.current.addLine({ sku: "MIDDLE" }, { afterLineKey: "1" });
       });
       expect(result.current.allLines.map((l) => l.sku)).toEqual([
         "APPLE-01",
@@ -105,10 +127,10 @@ describe("useLineItems", () => {
       ]);
     });
 
-    it("prepends when afterLineRef is null", () => {
+    it("prepends when afterLineKey is null", () => {
       const { result } = setup();
       act(() => {
-        result.current.addLine({ sku: "FIRST" }, { afterLineRef: null });
+        result.current.addLine({ sku: "FIRST" }, { afterLineKey: null });
       });
       expect(result.current.allLines[0]?.sku).toBe("FIRST");
     });
@@ -154,8 +176,8 @@ describe("useLineItems", () => {
       const { result } = setup();
       act(() => {
         result.current.updateLines([
-          { lineRef: "1", patch: { quantity: 11 } },
-          { lineRef: "2", patch: { quantity: 22 } },
+          { lineKey: "1", patch: { quantity: 11 } },
+          { lineKey: "2", patch: { quantity: 22 } },
         ]);
       });
 
@@ -172,7 +194,7 @@ describe("useLineItems", () => {
 
       expect(result.current.allLines).toHaveLength(3);
       expect(result.current.allLines[2]?.sku).toBe("BANANA-02");
-      expect(result.current.allLines[2]?.lineRef).not.toBe("2");
+      expect(result.current.allLines[2]?.id).toBeUndefined();
     });
   });
 
@@ -182,7 +204,7 @@ describe("useLineItems", () => {
       act(() => {
         result.current.reorderLine("2", null);
       });
-      expect(result.current.allLines.map((l) => l.lineRef)).toEqual(["1", "2"]);
+      expect(result.current.allLines.map((l) => l.id)).toEqual(["1", "2"]);
     });
 
     it("moves a line and emits reorder ops under manual ordering", () => {
@@ -191,7 +213,7 @@ describe("useLineItems", () => {
         result.current.reorderLine("2", null);
       });
 
-      expect(result.current.allLines.map((l) => l.lineRef)).toEqual(["2", "1"]);
+      expect(result.current.allLines.map((l) => l.id)).toEqual(["2", "1"]);
       expect(result.current.getChangeSet().lineChanges).toEqual([
         { action: "reorder", lineId: "2", position: 0 },
         { action: "reorder", lineId: "1", position: 1 },
@@ -207,7 +229,7 @@ describe("useLineItems", () => {
         result.current.reorderLine("1", null);
       });
 
-      expect(result.current.allLines.map((l) => l.lineRef)).toEqual(["1", "2"]);
+      expect(result.current.allLines.map((l) => l.id)).toEqual(["1", "2"]);
       expect(result.current.getChangeSet().isEmpty).toBe(true);
     });
   });
@@ -216,7 +238,7 @@ describe("useLineItems", () => {
     it("starts unsorted, in document order", () => {
       const { result } = setup();
       expect(result.current.sortState).toBeNull();
-      expect(result.current.lines.map((l) => l.lineRef)).toEqual(["1", "2"]);
+      expect(result.current.lines.map((l) => l.id)).toEqual(["1", "2"]);
     });
 
     it("cycles ascending, descending, then back to document order", () => {
@@ -238,7 +260,7 @@ describe("useLineItems", () => {
         result.current.toggleSort("quantity");
       });
       expect(result.current.sortState).toBeNull();
-      expect(result.current.lines.map((l) => l.lineRef)).toEqual(["1", "2"]);
+      expect(result.current.lines.map((l) => l.id)).toEqual(["1", "2"]);
     });
 
     it("leaves allLines in document order while sorted", () => {
@@ -247,8 +269,8 @@ describe("useLineItems", () => {
         result.current.toggleSort("quantity");
         result.current.toggleSort("quantity");
       });
-      expect(result.current.lines.map((l) => l.lineRef)).toEqual(["2", "1"]);
-      expect(result.current.allLines.map((l) => l.lineRef)).toEqual(["1", "2"]);
+      expect(result.current.lines.map((l) => l.id)).toEqual(["2", "1"]);
+      expect(result.current.allLines.map((l) => l.id)).toEqual(["1", "2"]);
     });
 
     it("ignores a column with no comparator", () => {
@@ -256,7 +278,7 @@ describe("useLineItems", () => {
       act(() => {
         result.current.toggleSort("total");
       });
-      expect(result.current.lines.map((l) => l.lineRef)).toEqual(["1", "2"]);
+      expect(result.current.lines.map((l) => l.id)).toEqual(["1", "2"]);
     });
 
     it("is inert under manual ordering, which owns row order", () => {
@@ -265,7 +287,7 @@ describe("useLineItems", () => {
         result.current.toggleSort("quantity");
       });
       expect(result.current.sortState).toBeNull();
-      expect(result.current.lines.map((l) => l.lineRef)).toEqual(["1", "2"]);
+      expect(result.current.lines.map((l) => l.id)).toEqual(["1", "2"]);
     });
 
     it("does not make the document dirty", () => {
@@ -308,8 +330,156 @@ describe("useLineItems", () => {
       });
 
       expect(result.current.isDirty).toBe(false);
-      expect(result.current.allLines.map((l) => l.lineRef)).toEqual(["1", "2"]);
+      expect(result.current.allLines.map((l) => l.id)).toEqual(["1", "2"]);
       expect(result.current.allLines[0]?.quantity).toBe(2);
+    });
+
+    it("never writes a temp key into the line's id", () => {
+      const { result } = setup();
+      act(() => {
+        result.current.addLine({ id: "should-be-dropped", sku: "NEW" });
+      });
+      const added = result.current.allLines[2]!;
+
+      expect(added.id).toBeUndefined();
+      expect(result.current.isNewLine(added)).toBe(true);
+      expect(JSON.stringify(added)).not.toContain(result.current.getLineKey(added));
+    });
+
+    it("reset(savedLines) takes the server's lines, ids and values", () => {
+      const { result } = setup();
+      act(() => {
+        result.current.addLine({ sku: "NEW", quantity: 1, total: 0 });
+      });
+
+      act(() => {
+        result.current.reset([...seed, { id: "77", sku: "NEW", quantity: 1, total: 4 }]);
+      });
+      expect(result.current.isDirty).toBe(false);
+      expect(result.current.allLines[2]).toMatchObject({ id: "77", total: 4 });
+
+      act(() => {
+        result.current.updateField("77", "quantity", 3);
+      });
+      expect(result.current.getChangeSet().lineChanges).toEqual([
+        { action: "update", lineId: "77", patch: { quantity: 3 } },
+      ]);
+    });
+
+    it("reset({ idMap }) re-keys new lines with their server ids", () => {
+      const { result } = setup();
+      let tempId = "";
+      act(() => {
+        tempId = result.current.addLine({ sku: "NEW", quantity: 1, total: 0 });
+      });
+      expect(result.current.getChangeSet().lineChanges[0]).toMatchObject({ tempId });
+
+      act(() => {
+        result.current.reset({ idMap: { [tempId]: 501 } });
+      });
+      const saved = result.current.allLines[2]!;
+      expect(saved.id).toBe(501);
+      expect(result.current.isNewLine(saved)).toBe(false);
+      expect(result.current.getLineKey(saved)).toBe("501");
+
+      act(() => {
+        result.current.removeLine("501");
+      });
+      expect(result.current.getChangeSet().lineChanges).toEqual([
+        { action: "remove", lineId: "501" },
+      ]);
+    });
+
+    it("warns when reset() leaves new lines on temp keys", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const { result } = setup();
+      act(() => {
+        result.current.addLine({ sku: "NEW" });
+      });
+      act(() => {
+        result.current.reset();
+      });
+
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("reset(savedLines)"));
+      warn.mockRestore();
+    });
+
+    it("hasUnsavedChanges is false straight after reset, before a re-render", () => {
+      const { result } = setup();
+      act(() => {
+        result.current.updateField("1", "quantity", 9);
+      });
+      const api = result.current;
+      expect(api.hasUnsavedChanges()).toBe(true);
+
+      let readInSameTick: boolean | undefined;
+      act(() => {
+        api.reset();
+        readInSameTick = api.hasUnsavedChanges();
+      });
+      expect(readInSameTick).toBe(false);
+    });
+  });
+
+  describe("metadata fields", () => {
+    type Memo = Line & { memo?: string };
+    const memoFields = [
+      ...fields,
+      createLineItemHelper<Memo>().field({
+        key: "memo",
+        label: "Memo",
+        render: (l) => l.memo,
+        editable: ["edit"],
+        commit: "metadata",
+        type: { kind: "text" },
+      }),
+    ] as LineItemsField<Memo>[];
+
+    it("sends a new line's metadata with its add, not through onMetadataCommit", () => {
+      const onMetadataCommit = vi.fn();
+      const { result } = renderHook(() =>
+        useLineItems<Memo>({ fields: memoFields, defaultLines: seed, onMetadataCommit }),
+      );
+      let key = "";
+      act(() => {
+        key = result.current.addLine({ sku: "NEW", quantity: 1, total: 0 });
+      });
+      act(() => {
+        result.current.updateField(key, "memo", "rush");
+      });
+
+      expect(onMetadataCommit).not.toHaveBeenCalled();
+      expect(result.current.getChangeSet().lineChanges[0]).toMatchObject({
+        action: "add",
+        data: { memo: "rush" },
+      });
+    });
+
+    it("commits a saved line's metadata out-of-band, and Discard leaves it", () => {
+      const onMetadataCommit = vi.fn();
+      const { result } = renderHook(() =>
+        useLineItems<Memo>({ fields: memoFields, defaultLines: seed, onMetadataCommit }),
+      );
+      act(() => {
+        result.current.updateField("1", "memo", "checked");
+        result.current.updateField("1", "quantity", 9);
+      });
+      expect(onMetadataCommit).toHaveBeenCalledWith(
+        expect.objectContaining({ lineId: "1", patch: { memo: "checked" } }),
+      );
+
+      act(() => {
+        result.current.revert();
+      });
+      expect(result.current.allLines[0]).toMatchObject({ quantity: 2, memo: "checked" });
+    });
+
+    it("warns when a metadata field has no onMetadataCommit", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      renderHook(() => useLineItems<Memo>({ fields: memoFields, defaultLines: seed }));
+
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("onMetadataCommit"));
+      warn.mockRestore();
     });
   });
 
@@ -320,7 +490,7 @@ describe("useLineItems", () => {
         result.current.setFilter("banana");
       });
 
-      expect(result.current.lines.map((l) => l.lineRef)).toEqual(["2"]);
+      expect(result.current.lines.map((l) => l.id)).toEqual(["2"]);
       expect(result.current.allLines).toHaveLength(2);
     });
 
@@ -488,33 +658,78 @@ describe("useLineItems", () => {
       expect(onLinesChange.mock.calls[0]?.[0]?.[0]?.quantity).toBe(3);
     });
 
-    it("re-seeds when the set of lineRefs changes", () => {
+    it("re-baselines when the set of lines changes", () => {
       const { result, rerender } = renderHook(
         ({ lines }: { lines: Line[] }) =>
           useLineItems<Line>({ fields, lines, onLinesChange: () => {} }),
         { initialProps: { lines: seed } },
       );
 
-      rerender({ lines: [...seed, { lineRef: "3", sku: "CHERRY-03", quantity: 1, total: 5 }] });
+      rerender({ lines: [...seed, { id: "3", sku: "CHERRY-03", quantity: 1, total: 5 }] });
 
-      expect(result.current.allLines.map((l) => l.lineRef)).toEqual(["1", "2", "3"]);
+      expect(result.current.allLines.map((l) => l.id)).toEqual(["1", "2", "3"]);
       expect(result.current.isDirty).toBe(false);
     });
 
-    it("keeps local edits when the parent re-renders with the same lineRefs", () => {
-      const { result, rerender } = renderHook(
-        ({ lines }: { lines: Line[] }) =>
-          useLineItems<Line>({ fields, lines, onLinesChange: () => {} }),
-        { initialProps: { lines: seed } },
-      );
+    it("keeps local edits through the parent's echo", () => {
+      const { result } = renderRoundTrip();
 
       act(() => {
         result.current.updateField("1", "quantity", 99);
       });
-      rerender({ lines: [...seed] });
 
       expect(result.current.allLines[0]?.quantity).toBe(99);
-      expect(result.current.isDirty).toBe(true);
+      expect(result.current.getChangeSet().lineChanges).toEqual([
+        { action: "update", lineId: "1", patch: { quantity: 99 } },
+      ]);
+    });
+
+    it("adopts new values for the same lines without moving the baseline", () => {
+      const { result, rerender } = renderHook(
+        ({ lines }: { lines: Line[] }) =>
+          useLineItems<Line>({ fields, lines, onLinesChange: () => {} }),
+        { initialProps: { lines: seed } },
+      );
+
+      // The parent recalculates totals, say after a currency change.
+      rerender({ lines: seed.map((l) => ({ ...l, total: l.total * 2 })) });
+      expect(result.current.allLines.map((l) => l.total)).toEqual([20, 50]);
+      // `total` is read-only, so nothing is dirty…
+      expect(result.current.isDirty).toBe(false);
+
+      // …while a parent-side change to an editable field diffs against the baseline.
+      rerender({ lines: seed.map((l) => (l.id === "1" ? { ...l, quantity: 7 } : l)) });
+      expect(result.current.getChangeSet().lineChanges).toEqual([
+        { action: "update", lineId: "1", patch: { quantity: 7 } },
+      ]);
+    });
+
+    it("keeps a new line's key when the parent echoes copies of the lines", () => {
+      const { result } = renderHook(() => {
+        const [lines, setLines] = React.useState<Line[]>(seed);
+        // Copies every line, as a parent mapping over its rows would.
+        return useLineItems<Line>({
+          fields,
+          lines,
+          onLinesChange: (next) => setLines(next.map((l) => ({ ...l }))),
+        });
+      });
+
+      let key = "";
+      act(() => {
+        key = result.current.addLine({ sku: "NEW", quantity: 1, total: 0 });
+      });
+      act(() => {
+        result.current.updateField(key, "quantity", 4);
+      });
+
+      expect(result.current.getChangeSet().lineChanges).toEqual([
+        expect.objectContaining({
+          action: "add",
+          tempId: key,
+          data: expect.objectContaining({ quantity: 4 }),
+        }),
+      ]);
     });
   });
 

@@ -55,8 +55,12 @@ export type LineItemsTableProps<T extends LineItemsRowData> = {
   maxBodyHeight?: React.CSSProperties["maxHeight"];
   /** Set `false` to mount every row (short documents, print, tests). */
   virtualized?: boolean;
-  /** Trailing pinned column of per-row controls. */
-  renderRowActions?: (row: T) => React.ReactNode;
+  /**
+   * Trailing pinned column of per-row controls. `lineKey` is what the hook's
+   * methods take (`removeLine(lineKey)`); `isNew` is `true` until the line is
+   * saved, e.g. to disable an "Open" link that needs its id.
+   */
+  renderRowActions?: (row: T, line: { lineKey: string; isNew: boolean }) => React.ReactNode;
   rowActionsWidth?: number;
   emptyMessage?: React.ReactNode;
   /** Swaps the body for skeleton rows while an initial fetch is in flight. */
@@ -133,7 +137,8 @@ export function LineItemsTable<T extends LineItemsRowData>({
 }: LineItemsTableProps<T>) {
   const { lineItems, fullscreen, totalsRenderer } = useLineItemsContext<T>("Table");
   const t = useLineItemsT();
-  const { lines, fields, mode, ordering, selectionEnabled, selectedIds, sortState } = lineItems;
+  const { lines, fields, mode, ordering, selectionEnabled, selectedIds, sortState, getLineKey } =
+    lineItems;
 
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
   const hasTotals = Boolean(totalsRenderer);
@@ -177,7 +182,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
   );
 
   const columnDefs = React.useMemo(() => fieldsToColumnDefs(fields), [fields]);
-  const orderedLineRefs = React.useMemo(() => lines.map((l) => l.lineRef), [lines]);
+  const orderedLineKeys = React.useMemo(() => lines.map(getLineKey), [getLineKey, lines]);
 
   /**
    * Every schema column takes part in selection and copy, so a computed column
@@ -185,7 +190,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
    */
   const gridColumnIds = React.useMemo(() => layout.columns.map((c) => c.id), [layout.columns]);
 
-  const grid = useGridSelection(orderedLineRefs, gridColumnIds);
+  const grid = useGridSelection(orderedLineKeys, gridColumnIds);
 
   const virtualWindow = useRowVirtualizer(scrollRef, {
     rowCount: lines.length,
@@ -215,9 +220,9 @@ export function LineItemsTable<T extends LineItemsRowData>({
 
   const lineByRef = React.useMemo(() => {
     const map = new Map<string, T>();
-    for (const l of lines) map.set(l.lineRef, l);
+    for (const l of lines) map.set(getLineKey(l), l);
     return map;
-  }, [lines]);
+  }, [getLineKey, lines]);
 
   const fieldById = React.useMemo(() => {
     const map = new Map<string, (typeof fields)[number]>();
@@ -226,8 +231,8 @@ export function LineItemsTable<T extends LineItemsRowData>({
   }, [fields]);
 
   const displayValueOf = React.useCallback(
-    (lineRef: string, columnId: string): string => {
-      const row = lineByRef.get(lineRef);
+    (lineKey: string, columnId: string): string => {
+      const row = lineByRef.get(lineKey);
       if (!row) return "";
       const raw = (row as Record<string, unknown>)[columnId];
       return raw === null || raw === undefined ? "" : String(raw);
@@ -239,14 +244,14 @@ export function LineItemsTable<T extends LineItemsRowData>({
     (coord: GridCoord, value: unknown) => {
       // Looked up across the whole document, not just the visible lines: a
       // cell filtered out mid-edit still commits its typing as it unmounts.
-      const row = lineItems.allLines.find((l) => l.lineRef === coord.lineRef);
+      const row = lineItems.allLines.find((l) => getLineKey(l) === coord.lineKey);
       if (!row) return;
       const normalized = normalizeField(columnDefs, coord.columnId, value, row);
       lineItems.updateLines([
-        { lineRef: coord.lineRef, patch: { [coord.columnId]: normalized } as Partial<T> },
+        { lineKey: coord.lineKey, patch: { [coord.columnId]: normalized } as Partial<T> },
       ]);
     },
-    [columnDefs, lineItems],
+    [columnDefs, getLineKey, lineItems],
   );
 
   /** Keeps the active cell in view without stealing focus or animating. */
@@ -254,7 +259,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
     (coord: GridCoord) => {
       const container = scrollRef.current;
       if (!container) return;
-      const index = orderedLineRefs.indexOf(coord.lineRef);
+      const index = orderedLineKeys.indexOf(coord.lineKey);
       if (index < 0) return;
       // The sticky header and totals row overlay the scroll area, so the row
       // must clear them, not just the container's edges.
@@ -267,7 +272,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
         container.scrollTop = bottom - container.clientHeight + footerHeight;
       }
     },
-    [orderedLineRefs, rowHeight],
+    [orderedLineKeys, rowHeight],
   );
 
   /**
@@ -278,7 +283,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
     const container = scrollRef.current;
     if (!container) return;
     const cell = container.querySelector<HTMLElement>(
-      `[data-line-ref="${CSS.escape(coord.lineRef)}"][data-column-id="${CSS.escape(coord.columnId)}"]`,
+      `[data-line-key="${CSS.escape(coord.lineKey)}"][data-column-id="${CSS.escape(coord.columnId)}"]`,
     );
     // Built-in editors are tagged; a custom editor is whatever it renders, so
     // fall back to the cell's first focusable element.
@@ -316,13 +321,13 @@ export function LineItemsTable<T extends LineItemsRowData>({
    */
   const navigateFromEdit = React.useCallback(
     (to: CellNavigation, from: GridCoord): boolean => {
-      const rowIndex = orderedLineRefs.indexOf(from.lineRef);
+      const rowIndex = orderedLineKeys.indexOf(from.lineKey);
       if (rowIndex < 0) return false;
 
       let nextRow = rowIndex;
       let columnId: string | undefined = from.columnId;
 
-      if (to === "enter-down") nextRow = Math.min(orderedLineRefs.length - 1, rowIndex + 1);
+      if (to === "enter-down") nextRow = Math.min(orderedLineKeys.length - 1, rowIndex + 1);
       else if (to === "enter-up") nextRow = Math.max(0, rowIndex - 1);
       else {
         const cols = editableColumnIds;
@@ -330,7 +335,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
         if (colIndex < 0 || cols.length === 0) return false;
         if (to === "tab") {
           if (colIndex === cols.length - 1) {
-            if (rowIndex === orderedLineRefs.length - 1) return false;
+            if (rowIndex === orderedLineKeys.length - 1) return false;
             nextRow = rowIndex + 1;
             columnId = cols[0];
           } else columnId = cols[colIndex + 1];
@@ -341,34 +346,34 @@ export function LineItemsTable<T extends LineItemsRowData>({
         } else columnId = cols[colIndex - 1];
       }
 
-      const lineRef = orderedLineRefs[nextRow];
-      if (!lineRef || !columnId) return false;
+      const lineKey = orderedLineKeys[nextRow];
+      if (!lineKey || !columnId) return false;
 
-      const coord = { lineRef, columnId };
+      const coord = { lineKey, columnId };
       grid.setActive(coord);
       scrollActiveIntoView(coord);
       focusCellEditor(coord);
       return true;
     },
-    [editableColumnIds, focusCellEditor, grid, orderedLineRefs, scrollActiveIntoView],
+    [editableColumnIds, focusCellEditor, grid, orderedLineKeys, scrollActiveIntoView],
   );
 
   /* ---- Fill gesture ----------------------------------------------------- */
 
   const [fillSource, setFillSource] = React.useState<GridCoord | null>(null);
-  const [fillHoverLineRef, setFillHoverLineRef] = React.useState<string | null>(null);
+  const [fillHoverLineKey, setFillHoverLineKey] = React.useState<string | null>(null);
 
   const isInFillPreview = React.useCallback(
     (coord: GridCoord): boolean => {
-      if (!fillSource || !fillHoverLineRef) return false;
+      if (!fillSource || !fillHoverLineKey) return false;
       if (coord.columnId !== fillSource.columnId) return false;
-      const a = orderedLineRefs.indexOf(fillSource.lineRef);
-      const b = orderedLineRefs.indexOf(fillHoverLineRef);
-      const i = orderedLineRefs.indexOf(coord.lineRef);
+      const a = orderedLineKeys.indexOf(fillSource.lineKey);
+      const b = orderedLineKeys.indexOf(fillHoverLineKey);
+      const i = orderedLineKeys.indexOf(coord.lineKey);
       if (a < 0 || b < 0 || i < 0) return false;
       return i >= Math.min(a, b) && i <= Math.max(a, b);
     },
-    [fillHoverLineRef, fillSource, orderedLineRefs],
+    [fillHoverLineKey, fillSource, orderedLineKeys],
   );
 
   /**
@@ -381,34 +386,34 @@ export function LineItemsTable<T extends LineItemsRowData>({
     const onMove = (e: PointerEvent) => {
       const el = document.elementFromPoint(e.clientX, e.clientY);
       const cell = el?.closest<HTMLElement>("[data-slot=line-items-grid-cell]");
-      const lineRef = cell?.dataset.lineRef;
-      if (lineRef) setFillHoverLineRef(lineRef);
+      const lineKey = cell?.dataset.lineKey;
+      if (lineKey) setFillHoverLineKey(lineKey);
     };
 
     const onUp = () => {
-      const targetRef = fillHoverLineRef;
+      const targetRef = fillHoverLineKey;
       const source = fillSource;
       setFillSource(null);
-      setFillHoverLineRef(null);
-      if (!targetRef || targetRef === source.lineRef) return;
+      setFillHoverLineKey(null);
+      if (!targetRef || targetRef === source.lineKey) return;
 
       const field = fieldById.get(source.columnId);
-      const sourceRow = lineByRef.get(source.lineRef);
+      const sourceRow = lineByRef.get(source.lineKey);
       if (!field || !sourceRow || !fieldAllowsFill(field, mode)) return;
 
-      const a = orderedLineRefs.indexOf(source.lineRef);
-      const b = orderedLineRefs.indexOf(targetRef);
+      const a = orderedLineKeys.indexOf(source.lineKey);
+      const b = orderedLineKeys.indexOf(targetRef);
       if (a < 0 || b < 0) return;
 
       const value = (sourceRow as Record<string, unknown>)[source.columnId];
-      const patches: { lineRef: string; patch: Partial<T> }[] = [];
+      const patches: { lineKey: string; patch: Partial<T> }[] = [];
       for (let i = Math.min(a, b); i <= Math.max(a, b); i++) {
-        const ref = orderedLineRefs[i];
-        if (!ref || ref === source.lineRef) continue;
+        const ref = orderedLineKeys[i];
+        if (!ref || ref === source.lineKey) continue;
         const row = lineByRef.get(ref);
         if (!row) continue;
         patches.push({
-          lineRef: ref,
+          lineKey: ref,
           patch: {
             [source.columnId]: normalizeField(columnDefs, source.columnId, value, row),
           } as Partial<T>,
@@ -421,7 +426,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
     // the fill without writing anything.
     const onCancel = () => {
       setFillSource(null);
-      setFillHoverLineRef(null);
+      setFillHoverLineKey(null);
     };
 
     globalThis.addEventListener("pointermove", onMove);
@@ -435,12 +440,12 @@ export function LineItemsTable<T extends LineItemsRowData>({
   }, [
     columnDefs,
     fieldById,
-    fillHoverLineRef,
+    fillHoverLineKey,
     fillSource,
     lineByRef,
     lineItems,
     mode,
-    orderedLineRefs,
+    orderedLineKeys,
   ]);
 
   /* ---- Clipboard -------------------------------------------------------- */
@@ -449,18 +454,18 @@ export function LineItemsTable<T extends LineItemsRowData>({
     (event: React.ClipboardEvent) => {
       if (grid.selected.size <= 1) return;
       const coords: GridCoord[] = [];
-      for (const lineRef of orderedLineRefs) {
+      for (const lineKey of orderedLineKeys) {
         for (const columnId of gridColumnIds) {
-          if (grid.selected.has(coordKey(lineRef, columnId))) coords.push({ lineRef, columnId });
+          if (grid.selected.has(coordKey(lineKey, columnId))) coords.push({ lineKey, columnId });
         }
       }
       if (coords.length === 0) return;
-      const matrix = coordsToRowsMatrix(orderedLineRefs, gridColumnIds, coords, displayValueOf);
+      const matrix = coordsToRowsMatrix(orderedLineKeys, gridColumnIds, coords, displayValueOf);
       if (matrix.length === 0) return;
       event.preventDefault();
       event.clipboardData.setData("text/plain", serializeMatrixTsv(matrix));
     },
-    [displayValueOf, grid.selected, gridColumnIds, orderedLineRefs],
+    [displayValueOf, grid.selected, gridColumnIds, orderedLineKeys],
   );
 
   /**
@@ -477,40 +482,40 @@ export function LineItemsTable<T extends LineItemsRowData>({
       event.preventDefault();
 
       const patches = new Map<string, Record<string, unknown>>();
-      const put = (lineRef: string, columnId: string, raw: string) => {
+      const put = (lineKey: string, columnId: string, raw: string) => {
         const field = fieldById.get(columnId);
-        const row = lineByRef.get(lineRef);
+        const row = lineByRef.get(lineKey);
         if (!field || !row || !fieldIsEditableInMode(field, mode)) return;
-        const patch = patches.get(lineRef) ?? {};
+        const patch = patches.get(lineKey) ?? {};
         patch[columnId] = normalizeField(columnDefs, columnId, raw, row);
-        patches.set(lineRef, patch);
+        patches.set(lineKey, patch);
       };
 
       const single = matrix.length === 1 && matrix[0]?.length === 1;
       if (single && grid.selected.size > 1) {
         const raw = matrix[0]![0]!;
-        for (const lineRef of orderedLineRefs) {
+        for (const lineKey of orderedLineKeys) {
           for (const columnId of gridColumnIds) {
-            if (grid.selected.has(coordKey(lineRef, columnId))) put(lineRef, columnId, raw);
+            if (grid.selected.has(coordKey(lineKey, columnId))) put(lineKey, columnId, raw);
           }
         }
       } else {
-        const startRow = orderedLineRefs.indexOf(grid.active.lineRef);
+        const startRow = orderedLineKeys.indexOf(grid.active.lineKey);
         const startCol = gridColumnIds.indexOf(grid.active.columnId);
         if (startRow < 0 || startCol < 0) return;
         matrix.forEach((cells, r) => {
-          const lineRef = orderedLineRefs[startRow + r];
-          if (!lineRef) return;
+          const lineKey = orderedLineKeys[startRow + r];
+          if (!lineKey) return;
           cells.forEach((raw, c) => {
             const columnId = gridColumnIds[startCol + c];
-            if (columnId) put(lineRef, columnId, raw);
+            if (columnId) put(lineKey, columnId, raw);
           });
         });
       }
 
       if (patches.size === 0) return;
       lineItems.updateLines(
-        [...patches].map(([lineRef, patch]) => ({ lineRef, patch: patch as Partial<T> })),
+        [...patches].map(([lineKey, patch]) => ({ lineKey, patch: patch as Partial<T> })),
       );
     },
     [
@@ -522,7 +527,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
       lineByRef,
       lineItems,
       mode,
-      orderedLineRefs,
+      orderedLineKeys,
     ],
   );
 
@@ -540,23 +545,23 @@ export function LineItemsTable<T extends LineItemsRowData>({
       if (!field || !fieldAllowsFill(field, mode)) continue;
       let source: unknown;
       let haveSource = false;
-      for (const lineRef of orderedLineRefs) {
-        if (!grid.selected.has(coordKey(lineRef, columnId))) continue;
-        const row = lineByRef.get(lineRef);
+      for (const lineKey of orderedLineKeys) {
+        if (!grid.selected.has(coordKey(lineKey, columnId))) continue;
+        const row = lineByRef.get(lineKey);
         if (!row) continue;
         if (!haveSource) {
           source = (row as Record<string, unknown>)[columnId];
           haveSource = true;
           continue;
         }
-        const patch = patches.get(lineRef) ?? {};
+        const patch = patches.get(lineKey) ?? {};
         patch[columnId] = normalizeField(columnDefs, columnId, source, row);
-        patches.set(lineRef, patch);
+        patches.set(lineKey, patch);
       }
     }
     if (patches.size === 0) return false;
     lineItems.updateLines(
-      [...patches].map(([lineRef, patch]) => ({ lineRef, patch: patch as Partial<T> })),
+      [...patches].map(([lineKey, patch]) => ({ lineKey, patch: patch as Partial<T> })),
     );
     return true;
   }, [
@@ -567,7 +572,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
     lineByRef,
     lineItems,
     mode,
-    orderedLineRefs,
+    orderedLineKeys,
   ]);
 
   const handleGridKeyDown = React.useCallback(
@@ -607,12 +612,12 @@ export function LineItemsTable<T extends LineItemsRowData>({
   const [reorderNotice, setReorderNotice] = React.useState("");
 
   const moveLine = React.useCallback(
-    (lineRef: string, beforeLineRef: string | null) => {
-      const others = orderedLineRefs.filter((id) => id !== lineRef);
-      const at = beforeLineRef ? others.indexOf(beforeLineRef) : others.length;
-      lineItems.reorderLine(lineRef, at <= 0 ? null : (others[at - 1] ?? null));
+    (lineKey: string, beforeLineKey: string | null) => {
+      const others = orderedLineKeys.filter((id) => id !== lineKey);
+      const at = beforeLineKey ? others.indexOf(beforeLineKey) : others.length;
+      lineItems.reorderLine(lineKey, at <= 0 ? null : (others[at - 1] ?? null));
     },
-    [lineItems, orderedLineRefs],
+    [lineItems, orderedLineKeys],
   );
 
   const endDrag = React.useCallback(() => {
@@ -621,15 +626,15 @@ export function LineItemsTable<T extends LineItemsRowData>({
   }, []);
 
   const nudge = React.useCallback(
-    (lineRef: string, delta: -1 | 1) => {
-      const index = orderedLineRefs.indexOf(lineRef);
+    (lineKey: string, delta: -1 | 1) => {
+      const index = orderedLineKeys.indexOf(lineKey);
       const target = index + delta;
-      if (index < 0 || target < 0 || target >= orderedLineRefs.length) return;
-      const others = orderedLineRefs.filter((id) => id !== lineRef);
-      lineItems.reorderLine(lineRef, target === 0 ? null : (others[target - 1] ?? null));
+      if (index < 0 || target < 0 || target >= orderedLineKeys.length) return;
+      const others = orderedLineKeys.filter((id) => id !== lineKey);
+      lineItems.reorderLine(lineKey, target === 0 ? null : (others[target - 1] ?? null));
       setReorderNotice(t("lineMoved", { line: index + 1, position: target + 1 }));
     },
-    [lineItems, orderedLineRefs, t],
+    [lineItems, orderedLineKeys, t],
   );
 
   const utilityColumnCount =
@@ -637,7 +642,8 @@ export function LineItemsTable<T extends LineItemsRowData>({
   const columnCount = layout.columns.length + utilityColumnCount;
   // A Set, so per-row checks stay O(1) on long documents.
   const selectedRefSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
-  const allVisibleSelected = lines.length > 0 && lines.every((l) => selectedRefSet.has(l.lineRef));
+  const allVisibleSelected =
+    lines.length > 0 && lines.every((l) => selectedRefSet.has(getLineKey(l)));
 
   // One stable handlers object for every cell, reading the latest grid logic
   // through a ref, so memoized cells skip re-rendering on unrelated changes.
@@ -658,7 +664,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
         event.preventDefault();
         event.stopPropagation();
         setFillSource(coord);
-        setFillHoverLineRef(coord.lineRef);
+        setFillHoverLineKey(coord.lineKey);
       },
     }),
     [],
@@ -839,23 +845,24 @@ export function LineItemsTable<T extends LineItemsRowData>({
             {!loading &&
               visibleLines.map((row, i) => {
                 const rowIndex = virtualWindow.startIndex + i;
-                const isDragging = dragRef === row.lineRef;
-                const isLifted = liftedRef === row.lineRef;
-                const rowSelected = selectedRefSet.has(row.lineRef);
+                const rowKey = getLineKey(row);
+                const isDragging = dragRef === rowKey;
+                const isLifted = liftedRef === rowKey;
+                const rowSelected = selectedRefSet.has(rowKey);
                 // Drawn per cell rather than on the row, so it crosses the
                 // opaque pinned columns too. Listed last in each `cn` so it
                 // wins over a cell's selection ring while a drag is in flight.
                 const dropLine =
-                  dropBefore === row.lineRef
+                  dropBefore === rowKey
                     ? "astw:shadow-[inset_0_2px_0_0_var(--color-primary)]"
                     : undefined;
 
                 return (
                   <tr
-                    key={row.lineRef}
+                    key={rowKey}
                     data-slot="line-items-row"
                     data-state={rowSelected ? "selected" : undefined}
-                    data-drop-before={dropBefore === row.lineRef || undefined}
+                    data-drop-before={dropBefore === rowKey || undefined}
                     aria-rowindex={rowIndex + 2}
                     style={{ height: rowHeight }}
                     className={cn(
@@ -872,7 +879,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                         ? (e) => {
                             if (!dragRef) return;
                             e.preventDefault();
-                            setDropBefore(row.lineRef);
+                            setDropBefore(rowKey);
                           }
                         : undefined
                     }
@@ -881,7 +888,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                         ? (e) => {
                             if (!dragRef) return;
                             e.preventDefault();
-                            moveLine(dragRef, row.lineRef);
+                            moveLine(dragRef, rowKey);
                             endDrag();
                           }
                         : undefined
@@ -901,7 +908,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                           <Checkbox
                             aria-label={t("selectLine", { line: rowIndex + 1 })}
                             checked={rowSelected}
-                            onCheckedChange={() => lineItems.toggleSelect(row.lineRef)}
+                            onCheckedChange={() => lineItems.toggleSelect(rowKey)}
                           />
                         </span>
                       </td>
@@ -925,16 +932,16 @@ export function LineItemsTable<T extends LineItemsRowData>({
                             aria-pressed={isLifted}
                             className="astw:flex astw:size-6 astw:cursor-grab astw:items-center astw:justify-center astw:rounded astw:text-muted-foreground astw:hover:text-foreground astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50 astw:focus-visible:outline-none"
                             onDragStart={(e) => {
-                              setDragRef(row.lineRef);
+                              setDragRef(rowKey);
                               e.dataTransfer.effectAllowed = "move";
                               // Firefox refuses to start a drag with no payload.
-                              e.dataTransfer.setData("text/plain", row.lineRef);
+                              e.dataTransfer.setData("text/plain", rowKey);
                             }}
                             onDragEnd={endDrag}
                             onKeyDown={(e) => {
                               if (e.key === "Enter" || e.key === " ") {
                                 e.preventDefault();
-                                setLiftedRef((p) => (p === row.lineRef ? null : row.lineRef));
+                                setLiftedRef((p) => (p === rowKey ? null : rowKey));
                                 return;
                               }
                               if (e.key === "Escape") {
@@ -944,10 +951,10 @@ export function LineItemsTable<T extends LineItemsRowData>({
                               if (!isLifted) return;
                               if (e.key === "ArrowUp") {
                                 e.preventDefault();
-                                nudge(row.lineRef, -1);
+                                nudge(rowKey, -1);
                               } else if (e.key === "ArrowDown") {
                                 e.preventDefault();
-                                nudge(row.lineRef, 1);
+                                nudge(rowKey, 1);
                               }
                             }}
                           >
@@ -958,11 +965,11 @@ export function LineItemsTable<T extends LineItemsRowData>({
                     ) : null}
 
                     {layout.columns.map((c) => {
-                      const coord = { lineRef: row.lineRef, columnId: c.id };
+                      const coord = { lineKey: rowKey, columnId: c.id };
                       const editable = fieldIsEditableInMode(c.field, mode);
                       const isActive =
-                        grid.active?.lineRef === row.lineRef && grid.active?.columnId === c.id;
-                      const isSelected = grid.isSelected(row.lineRef, c.id);
+                        grid.active?.lineKey === rowKey && grid.active?.columnId === c.id;
+                      const isSelected = grid.isSelected(rowKey, c.id);
                       const inFill = isInFillPreview(coord);
                       const amendLocked = fieldIsAmendLocked(c.field, mode);
                       const extra =
@@ -974,7 +981,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                         <td
                           key={c.id}
                           data-slot="line-items-grid-cell"
-                          data-line-ref={row.lineRef}
+                          data-line-key={rowKey}
                           data-column-id={c.id}
                           data-locked={amendLocked || undefined}
                           className={cn(
@@ -1001,7 +1008,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                             // A fill in progress tracks the row under the pointer.
                             // The window-level handler covers fast drags that
                             // outrun per-cell events; this covers the rest.
-                            if (fillSource) setFillHoverLineRef(row.lineRef);
+                            if (fillSource) setFillHoverLineKey(rowKey);
                             else grid.extendSelection(coord);
                           }}
                           onPointerDown={(e) => {
@@ -1026,6 +1033,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                         >
                           <LineItemsCell
                             row={row}
+                            lineKey={rowKey}
                             field={c.field}
                             mode={mode}
                             align={c.align}
@@ -1052,7 +1060,10 @@ export function LineItemsTable<T extends LineItemsRowData>({
                         style={pinStyle(layout.actions)}
                       >
                         <span className="astw:flex astw:h-full astw:w-full astw:items-center astw:justify-center">
-                          {renderRowActions(row)}
+                          {renderRowActions(row, {
+                            lineKey: rowKey,
+                            isNew: lineItems.isNewLine(row),
+                          })}
                         </span>
                       </td>
                     ) : null}

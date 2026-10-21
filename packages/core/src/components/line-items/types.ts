@@ -5,13 +5,17 @@ import type { ReactNode } from "react";
  * One typed line-change op produced by `getChangeSet()`. The shape is
  * transport-agnostic — apps map it onto GraphQL mutations or REST calls.
  *
- * - `add` → `{ tempId, data }`; `tempId` is client-only, the server mints the real id.
- * - `update` → `{ lineId, patch }`; only changed fields appear in `patch`.
+ * - `add` → `{ tempId, data, line }`. `data` holds the editable fields (metadata
+ *   fields included); `line` is the whole line, for read-only fields the server
+ *   still needs, such as a picked product's id. `tempId` is client-only, for
+ *   matching results back (see `reset({ idMap })`); the server assigns the id.
+ * - `update` → `{ lineId, patch }`; only changed fields appear in `patch`. `lineId`
+ *   is the line's id (read from `idKey`) as a string.
  * - `remove` → `{ lineId }`.
  * - `reorder` → `{ lineId, position }`; zero-based final index (manual ordering only).
  */
 export type LineItemsLineChange =
-  | { action: "add"; tempId: string; data: LineItemsRowPatch }
+  | { action: "add"; tempId: string; data: LineItemsRowPatch; line: LineItemsRowPatch }
   | { action: "update"; lineId: string; patch: LineItemsRowPatch }
   | { action: "remove"; lineId: string }
   | { action: "reorder"; lineId: string; position: number };
@@ -52,9 +56,13 @@ export type LineItemsColumnAlign = "left" | "center" | "right";
  */
 export type LineItemsFieldCommit = "document" | "metadata";
 
-/** One out-of-band cell edit, emitted for `commit: "metadata"` fields. */
+/**
+ * One out-of-band cell edit, emitted for `commit: "metadata"` fields on saved
+ * lines. On a new line, metadata fields travel with its `add` op instead.
+ */
 export type LineItemsMetadataCommit<T extends LineItemsRowData> = {
-  lineRef: string;
+  /** The saved line's id (read from `idKey`), as a string. */
+  lineId: string;
   patch: LineItemsRowPatch;
   previous: LineItemsRowPatch;
   row: T;
@@ -68,8 +76,23 @@ export type LineItemsSortState = {
   direction: LineItemsSortDirection;
 };
 
-/** Every row exposes a stable `lineRef` — the server id when persisted, else a generated temp id. */
-export type LineItemsRowData = Record<string, unknown> & { lineRef: string };
+/**
+ * A line. Saved lines carry their id in `id` (or the field named by
+ * `idKey`); new lines leave it unset until the app re-keys them after a save.
+ */
+export type LineItemsRowData = Record<string, unknown>;
+
+/**
+ * What `reset` takes after a save. Omit it only when nothing new was added.
+ *
+ * - An array: the lines as saved, usually the server's response. Replaces the
+ *   lines and the baseline, and picks up values the server computed.
+ * - `{ idMap }`: maps each new line's `tempId` (from its `add` op) to the id
+ *   the server assigned, for backends that return created ids.
+ */
+export type LineItemsResetInput<T extends LineItemsRowData> =
+  | readonly T[]
+  | { idMap: Readonly<Record<string, string | number>> };
 
 /** One option for a `kind: "select"` field (SKU pickers, unit of measure, etc.). */
 export type LineItemsSelectOption = {
@@ -218,6 +241,12 @@ type LineItemsRowSource<T extends LineItemsRowData> =
 export type UseLineItemsOptions<T extends LineItemsRowData> = LineItemsRowSource<T> & {
   /** Column schema. Build with `createLineItemHelper<T>().field({ … })`. */
   fields: LineItemsField<T>[];
+  /**
+   * The field holding a saved line's id, the same convention as DataTable's
+   * `row.id`. Defaults to `"id"`. New lines leave it unset; LineItems tracks
+   * them by a temp key until `reset` brings in the saved id.
+   */
+  idKey?: keyof T & string;
   /** Defaults to `"edit"`. */
   mode?: LineItemsMode;
   /** Defaults to `"sort"`. Pass `"manual"` to enable drag-reordering. */
@@ -226,7 +255,7 @@ export type UseLineItemsOptions<T extends LineItemsRowData> = LineItemsRowSource
    * Adds the row-selection checkbox column — the same option as DataTable's
    * `rowSelection`. Pass `{}` for uncontrolled selection, `{ defaultSelectedIds }`
    * to seed it, or `{ selectedIds, onChange }` to control it. Selected ids are
-   * `lineRef`s. With `actions`, a bulk-action bar sits at the foot of
+   * line keys (see `getLineKey`). With `actions`, a bulk-action bar sits at the foot of
    * `LineItems.Table` while lines are selected; actions get the selected ids
    * and never clear the selection on their own.
    */
@@ -245,6 +274,12 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
   ordering: LineItemsOrderingMode;
   /** `true` when current state diverges from the baseline. */
   isDirty: boolean;
+  /**
+   * `isDirty`, read live: already `false` right after `reset` or `revert`,
+   * before React re-renders. For guards that run in the same handler, such as
+   * a navigation blocker after `await save(); reset(); navigate(…)`.
+   */
+  hasUnsavedChanges: () => boolean;
   filter: string;
   selectionEnabled: boolean;
   selectedIds: string[];
@@ -265,34 +300,52 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
   setFilter: (query: string) => void;
   /** Cycles the column through ascending, descending, then unsorted. */
   toggleSort: (columnId: string) => void;
-  /** Inserts one line and returns its new `lineRef`. */
-  addLine: (data: Partial<Omit<T, "lineRef">>, opts?: { afterLineRef?: string | null }) => string;
   /**
-   * Inserts several lines in a single render, returning the new `lineRef`s in
+   * The key LineItems tracks `line` by, which every method taking a `lineKey`
+   * expects: the line's id as a string once saved, or a temp key while new.
+   * Lines keep their key through `{ ...line }` copies.
+   */
+  getLineKey: (line: T) => string;
+  /** `true` for a line not saved yet (no id) — e.g. to disable an "Open" link. */
+  isNewLine: (line: T) => boolean;
+  /**
+   * Inserts one line and returns its key. The id field is left unset (any id
+   * passed in is dropped), so the line reads as new until `reset` re-keys it.
+   */
+  addLine: (data: Partial<T>, opts?: { afterLineKey?: string | null }) => string;
+  /**
+   * Inserts several lines in a single render, returning their keys in
    * input order. Prefer this over looping `addLine` — a bulk picker adding N
    * rows should produce one render and N `add` ops, not N renders.
    */
-  addLines: (
-    items: ReadonlyArray<Partial<Omit<T, "lineRef">>>,
-    opts?: { afterLineRef?: string | null },
-  ) => string[];
-  removeLine: (lineRef: string) => void;
-  /** Removes several lines in one update — for a bulk action's `rows`. */
-  removeLines: (lineRefs: readonly string[]) => void;
-  updateField: <K extends keyof T>(lineRef: string, key: K, value: T[K]) => void;
+  addLines: (items: ReadonlyArray<Partial<T>>, opts?: { afterLineKey?: string | null }) => string[];
+  removeLine: (lineKey: string) => void;
+  /** Removes several lines in one update — for a bulk action's ids. */
+  removeLines: (lineKeys: readonly string[]) => void;
+  updateField: <K extends keyof T>(lineKey: string, key: K, value: T[K]) => void;
   /** Batched updates — one render for a whole paste or fill-drag. */
-  updateLines: (patches: { lineRef: string; patch: Partial<T> }[]) => void;
-  /** Moves a line after `afterLineRef`, or to the head when `null`. Manual ordering only. */
-  reorderLine: (lineRef: string, afterLineRef: string | null) => void;
-  toggleSelect: (lineRef: string) => void;
+  updateLines: (patches: { lineKey: string; patch: Partial<T> }[]) => void;
+  /** Moves a line after `afterLineKey`, or to the head when `null`. Manual ordering only. */
+  reorderLine: (lineKey: string, afterLineKey: string | null) => void;
+  toggleSelect: (lineKey: string) => void;
   /** Selects every row currently passing the search filter. */
   selectAllVisible: () => void;
   clearSelection: () => void;
   bulkUpdate: (patch: Partial<T>) => void;
   bulkRemove: () => void;
-  duplicateLastLine: (derive?: (prev: T, newRef: string) => T) => string | undefined;
-  /** Snaps the baseline forward to current state. Call after a successful save. */
-  reset: () => void;
+  /**
+   * Appends a copy of the last line (without its id) and returns its key.
+   * `derive` adjusts the copy, e.g. to clear a quantity.
+   */
+  duplicateLastLine: (derive?: (prev: T) => Partial<T>) => string | undefined;
+  /**
+   * Snaps the baseline forward after a successful save. Pass the saved lines,
+   * or `{ idMap }`, so new lines pick up their server ids — see
+   * `LineItemsResetInput`. With no argument, new lines keep their temp keys,
+   * and their next edit would be sent as an `update` the server can't match;
+   * LineItems warns about that in development.
+   */
+  reset: (saved?: LineItemsResetInput<T>) => void;
   /** Discards every uncommitted edit, insert, and removal back to the baseline. */
   revert: () => void;
   getChangeSet: () => LineItemsChangeSet;

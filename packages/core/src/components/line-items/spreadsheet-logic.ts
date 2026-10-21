@@ -1,5 +1,5 @@
 /** Logical cell coordinate within the editable grid area. */
-export type GridCoord = { lineRef: string; columnId: string };
+export type GridCoord = { lineKey: string; columnId: string };
 
 export type GridDirection = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 
@@ -7,35 +7,35 @@ export type GridDirection = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight"
 export function moveSelectionCoord(
   dir: GridDirection,
   active: GridCoord,
-  orderedLineRefs: readonly string[],
+  orderedLineKeys: readonly string[],
   columnIds: readonly string[],
 ): GridCoord | null {
-  const ri = orderedLineRefs.indexOf(active.lineRef);
+  const ri = orderedLineKeys.indexOf(active.lineKey);
   const ci = columnIds.indexOf(active.columnId);
   if (ri < 0 || ci < 0) return null;
 
   let nr = ri;
   let nc = ci;
   if (dir === "ArrowUp") nr = Math.max(0, ri - 1);
-  if (dir === "ArrowDown") nr = Math.min(orderedLineRefs.length - 1, ri + 1);
+  if (dir === "ArrowDown") nr = Math.min(orderedLineKeys.length - 1, ri + 1);
   if (dir === "ArrowLeft") nc = Math.max(0, ci - 1);
   if (dir === "ArrowRight") nc = Math.min(columnIds.length - 1, ci + 1);
 
-  const lineRef = orderedLineRefs[nr];
+  const lineKey = orderedLineKeys[nr];
   const columnId = columnIds[nc];
-  if (!lineRef || !columnId) return null;
-  return { lineRef, columnId };
+  if (!lineKey || !columnId) return null;
+  return { lineKey, columnId };
 }
 
 /** Every cell in the rectangle bounded by `a` and `b` (drag-select, shift-click). */
 export function rectangularCells(
-  orderedLineRefs: readonly string[],
+  orderedLineKeys: readonly string[],
   columnIds: readonly string[],
   a: GridCoord,
   b: GridCoord,
 ): GridCoord[] {
-  const ri1 = orderedLineRefs.indexOf(a.lineRef);
-  const ri2 = orderedLineRefs.indexOf(b.lineRef);
+  const ri1 = orderedLineKeys.indexOf(a.lineKey);
+  const ri2 = orderedLineKeys.indexOf(b.lineKey);
   const ci1 = columnIds.indexOf(a.columnId);
   const ci2 = columnIds.indexOf(b.columnId);
   if (ri1 < 0 || ri2 < 0 || ci1 < 0 || ci2 < 0) return [];
@@ -47,11 +47,11 @@ export function rectangularCells(
 
   const out: GridCoord[] = [];
   for (let r = r0; r <= r1; r++) {
-    const lineRef = orderedLineRefs[r];
-    if (!lineRef) continue;
+    const lineKey = orderedLineKeys[r];
+    if (!lineKey) continue;
     for (let c = c0; c <= c1; c++) {
       const columnId = columnIds[c];
-      if (columnId) out.push({ lineRef, columnId });
+      if (columnId) out.push({ lineKey, columnId });
     }
   }
   return out;
@@ -62,12 +62,12 @@ export function rectangularCells(
  * document and schema order, which is what a TSV copy of a selection needs.
  */
 export function coordsToRowsMatrix(
-  orderedLineRefs: readonly string[],
+  orderedLineKeys: readonly string[],
   columnIdsOrdered: readonly string[],
   coords: readonly GridCoord[],
-  getDisplay: (lineRef: string, columnId: string) => string,
+  getDisplay: (lineKey: string, columnId: string) => string,
 ): string[][] {
-  if (!coords.length || !orderedLineRefs.length || !columnIdsOrdered.length) return [];
+  if (!coords.length || !orderedLineKeys.length || !columnIdsOrdered.length) return [];
 
   let r0 = Number.POSITIVE_INFINITY;
   let r1 = Number.NEGATIVE_INFINITY;
@@ -75,8 +75,8 @@ export function coordsToRowsMatrix(
   let c1 = Number.NEGATIVE_INFINITY;
   let found = false;
 
-  for (const { lineRef, columnId } of coords) {
-    const ri = orderedLineRefs.indexOf(lineRef);
+  for (const { lineKey, columnId } of coords) {
+    const ri = orderedLineKeys.indexOf(lineKey);
     const ci = columnIdsOrdered.indexOf(columnId);
     if (ri < 0 || ci < 0) continue;
     found = true;
@@ -89,7 +89,7 @@ export function coordsToRowsMatrix(
 
   const rowRefs: string[] = [];
   for (let r = r0; r <= r1; r++) {
-    const ref = orderedLineRefs[r];
+    const ref = orderedLineKeys[r];
     if (ref) rowRefs.push(ref);
   }
 
@@ -116,5 +116,5 @@ export function parseClipboardTsv(text: string): string[][] {
 
 export function sameCoord(a: GridCoord | null, b: GridCoord | null): boolean {
   if (!a || !b) return false;
-  return a.lineRef === b.lineRef && a.columnId === b.columnId;
+  return a.lineKey === b.lineKey && a.columnId === b.columnId;
 }

@@ -322,11 +322,20 @@ const SHAKE_KEYFRAMES: Keyframe[] = [
  * navigation — links, `navigate()`, back/forward — and needs the data router
  * AppShell provides; the browser's own prompt covers closing or reloading.
  */
-function LineItemsNavGuard({ onBlocked }: { onBlocked: () => void }) {
+function LineItemsNavGuard({
+  onBlocked,
+  hasUnsavedChanges,
+}: {
+  onBlocked: () => void;
+  hasUnsavedChanges: () => boolean;
+}) {
   // Only leaving the page counts: a search-param update on the same route is
-  // not navigation away from the document.
+  // not navigation away from the document. Dirtiness is read live, so
+  // `await save(); reset(); navigate(…)` in one handler goes through even
+  // though this guard is still mounted until the next render.
   const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) => currentLocation.pathname !== nextLocation.pathname,
+    ({ currentLocation, nextLocation }) =>
+      currentLocation.pathname !== nextLocation.pathname && hasUnsavedChanges(),
   );
   const onBlockedRef = React.useRef(onBlocked);
   onBlockedRef.current = onBlocked;
@@ -339,10 +348,14 @@ function LineItemsNavGuard({ onBlocked }: { onBlocked: () => void }) {
   }, [blocker]);
 
   useBeforeUnload(
-    React.useCallback((event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = "";
-    }, []),
+    React.useCallback(
+      (event: BeforeUnloadEvent) => {
+        if (!hasUnsavedChanges()) return;
+        event.preventDefault();
+        event.returnValue = "";
+      },
+      [hasUnsavedChanges],
+    ),
   );
 
   return null;
@@ -423,7 +436,12 @@ function LineItemsDirtyBar({
       <span className="astw:sr-only" aria-live="assertive">
         {blockedNotice}
       </span>
-      {warnOnNav ? <LineItemsNavGuard onBlocked={signalBlocked} /> : null}
+      {warnOnNav ? (
+        <LineItemsNavGuard
+          onBlocked={signalBlocked}
+          hasUnsavedChanges={lineItems.hasUnsavedChanges}
+        />
+      ) : null}
       {children ? (
         children(pending)
       ) : (

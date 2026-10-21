@@ -12,7 +12,7 @@ import type {
  * `sort.comparator` for a row shape `T`.
  *
  * @example
- * type POLine = { lineRef: string; sku: string; quantity: number; total: number };
+ * type POLine = { lineKey: string; sku: string; quantity: number; total: number };
  * const f = createLineItemHelper<POLine>();
  * const fields = [
  *   f.field({ key: "sku", label: "SKU", render: (l) => l.sku, editable: ["edit"], type: { kind: "text" } }),
@@ -62,7 +62,7 @@ export function fieldMutationScope<T extends LineItemsRowData>(
   field: LineItemsField<T>,
 ): LineItemsMutationScope {
   if ((field.editable?.length ?? 0) === 0) return "excluded";
-  return fieldCommitScope(field) === "metadata" ? "excluded" : "document";
+  return fieldCommitScope(field);
 }
 
 /** Whether the column accepts TSV paste in `mode`. */

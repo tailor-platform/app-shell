@@ -57,6 +57,8 @@ const alignClasses = {
 
 export type LineItemsCellProps<T extends LineItemsRowData> = {
   row: T;
+  /** The key the grid tracks `row` by. */
+  lineKey: string;
   field: LineItemsField<T>;
   mode: LineItemsMode;
   align: "left" | "center" | "right";
@@ -72,7 +74,7 @@ export type LineItemsCellProps<T extends LineItemsRowData> = {
 const useIsomorphicLayoutEffect =
   typeof document !== "undefined" ? React.useLayoutEffect : React.useEffect;
 
-type CellCoord = { lineRef: string; columnId: string };
+type CellCoord = { lineKey: string; columnId: string };
 
 /**
  * The grid's cell callbacks, as one stable object that always calls the grid's
@@ -233,6 +235,7 @@ function isArrowKey(key: string): key is ArrowKey {
  */
 function LineItemsCellInner<T extends LineItemsRowData>({
   row,
+  lineKey,
   field,
   mode,
   align,
@@ -241,24 +244,23 @@ function LineItemsCellInner<T extends LineItemsRowData>({
   showFillGrip,
   handlers,
 }: LineItemsCellProps<T>) {
-  const lineRef = row.lineRef;
   const columnId = field.key;
   const onCommit = React.useCallback(
-    (value: unknown) => handlers.commit({ lineRef, columnId }, value),
-    [handlers, lineRef, columnId],
+    (value: unknown) => handlers.commit({ lineKey, columnId }, value),
+    [handlers, lineKey, columnId],
   );
   const onFocusCell = React.useCallback(
-    () => handlers.focus({ lineRef, columnId }),
-    [handlers, lineRef, columnId],
+    () => handlers.focus({ lineKey, columnId }),
+    [handlers, lineKey, columnId],
   );
   const onNavigate = React.useCallback(
-    (to: CellNavigation) => handlers.navigate({ lineRef, columnId }, to),
-    [handlers, lineRef, columnId],
+    (to: CellNavigation) => handlers.navigate({ lineKey, columnId }, to),
+    [handlers, lineKey, columnId],
   );
   const onArrowFromEditor = handlers.arrow;
   const onFillGripPointerDown = React.useCallback(
-    (event: React.PointerEvent) => handlers.fillGripDown({ lineRef, columnId }, event),
-    [handlers, lineRef, columnId],
+    (event: React.PointerEvent) => handlers.fillGripDown({ lineKey, columnId }, event),
+    [handlers, lineKey, columnId],
   );
   const rawValue = (row as Record<string, unknown>)[field.key];
   const [draft, setDraft] = React.useState(() => toEditorValue(rawValue));

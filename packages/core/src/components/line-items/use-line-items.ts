@@ -43,7 +43,7 @@ const EMPTY_ACTIONS: never[] = [];
 /**
  * The single source of truth for a line-items document: row order and lookup,
  * the dirty-tracking baseline behind `isDirty` and `getChangeSet()`, selection
- * and filter state, and every mutation.
+ * and sort state, and every mutation.
  *
  * Pair with `<LineItems.Root value={lineItems}>` to render, or drive the
  * mutations directly from your own controls.
@@ -117,7 +117,6 @@ export function useLineItems<T extends LineItemsRowData>(
     [allSelectionActions, mode],
   );
 
-  const [filter, setFilterState] = React.useState("");
   const [sortState, setSortState] = React.useState<LineItemsSortState | null>(null);
   // Selection follows DataTable's `rowSelection`: controlled through
   // `selectedIds` + `onChange`, or uncontrolled from `defaultSelectedIds`.
@@ -501,23 +500,15 @@ export function useLineItems<T extends LineItemsRowData>(
   );
   const isNewLine = React.useCallback((line: T): boolean => !hasId(line, idKey), [idKey]);
 
-  const filteredLines = React.useMemo((): T[] => {
-    const query = filter.trim();
-    if (query === "") return allLines;
-    const searchable = fields.filter((f) => typeof f.search === "function");
-    if (searchable.length === 0) return allLines;
-    return allLines.filter((row) => searchable.some((f) => f.search!(row, query)));
-  }, [allLines, fields, filter]);
-
   const lines = React.useMemo((): T[] => {
-    if (!sortState) return filteredLines;
+    if (!sortState) return allLines;
     const comparator = fields.find((f) => f.key === sortState.columnId)?.sort?.comparator;
-    if (!comparator) return filteredLines;
+    if (!comparator) return allLines;
     // Inverting the comparator rather than reversing keeps the sort stable, so
     // rows the comparator considers equal stay in document order either way.
     const direction = sortState.direction === "desc" ? -1 : 1;
-    return filteredLines.toSorted((a, b) => direction * comparator(a, b));
-  }, [fields, filteredLines, sortState]);
+    return allLines.toSorted((a, b) => direction * comparator(a, b));
+  }, [allLines, fields, sortState]);
 
   /**
    * Cycles ascending, descending, then back to document order. Manual ordering
@@ -555,12 +546,10 @@ export function useLineItems<T extends LineItemsRowData>(
     [selection, setSelectedSet],
   );
 
-  const visibleKeys = React.useMemo(() => lines.map(getLineKey), [getLineKey, lines]);
-
-  const selectAllVisible = React.useCallback(() => {
+  const selectAll = React.useCallback(() => {
     if (!selection) return;
-    setSelectedSet(() => new Set(visibleKeys));
-  }, [selection, setSelectedSet, visibleKeys]);
+    setSelectedSet(() => new Set(rowsRef.current.order));
+  }, [selection, setSelectedSet]);
 
   const clearSelection = React.useCallback(() => {
     setSelectedSet((prev) => (prev.size === 0 ? prev : new Set<string>()));
@@ -586,7 +575,6 @@ export function useLineItems<T extends LineItemsRowData>(
   const { pendingActionId, runSelectionAction } = usePendingAction(selection);
 
   const setMode = React.useCallback((m: LineItemsMode) => setModeState(m), []);
-  const setFilter = React.useCallback((q: string) => setFilterState(q), []);
 
   return {
     lines,
@@ -596,7 +584,6 @@ export function useLineItems<T extends LineItemsRowData>(
     ordering,
     isDirty: !changeSet.isEmpty,
     hasUnsavedChanges,
-    filter,
     selectionEnabled: selection,
     selectedIds,
     selectedRows,
@@ -608,7 +595,6 @@ export function useLineItems<T extends LineItemsRowData>(
     getLineKey,
     isNewLine,
     setMode,
-    setFilter,
     toggleSort,
     addLine,
     addLines,
@@ -618,7 +604,7 @@ export function useLineItems<T extends LineItemsRowData>(
     updateLines,
     reorderLine,
     toggleSelect,
-    selectAllVisible,
+    selectAll,
     clearSelection,
     bulkUpdate,
     bulkRemove,

@@ -22,7 +22,6 @@ const fields: LineItemsField<Line>[] = [
     render: (l) => l.sku,
     editable: ["edit"],
     type: { kind: "text" },
-    search: (l, q) => l.sku.toLowerCase().includes(q.toLowerCase()),
   }),
   f.field({
     key: "quantity",
@@ -483,26 +482,6 @@ describe("useLineItems", () => {
     });
   });
 
-  describe("filter", () => {
-    it("narrows lines by the searchable fields but leaves allLines intact", () => {
-      const { result } = setup();
-      act(() => {
-        result.current.setFilter("banana");
-      });
-
-      expect(result.current.lines.map((l) => l.id)).toEqual(["2"]);
-      expect(result.current.allLines).toHaveLength(2);
-    });
-
-    it("returns everything for a blank query", () => {
-      const { result } = setup();
-      act(() => {
-        result.current.setFilter("   ");
-      });
-      expect(result.current.lines).toHaveLength(2);
-    });
-  });
-
   describe("selection", () => {
     it("toggles a row on and off", () => {
       const { result } = setup();
@@ -525,21 +504,10 @@ describe("useLineItems", () => {
       expect(result.current.selectedIds).toEqual([]);
     });
 
-    it("selects only the rows passing the filter", () => {
-      const { result } = setup();
-      act(() => {
-        result.current.setFilter("banana");
-      });
-      act(() => {
-        result.current.selectAllVisible();
-      });
-      expect(result.current.selectedIds).toEqual(["2"]);
-    });
-
     it("bulk-updates every selected row", () => {
       const { result } = setup();
       act(() => {
-        result.current.selectAllVisible();
+        result.current.selectAll();
       });
       act(() => {
         result.current.bulkUpdate({ quantity: 42 });
@@ -551,7 +519,7 @@ describe("useLineItems", () => {
     it("bulk-removes every selected row and clears the selection", () => {
       const { result } = setup();
       act(() => {
-        result.current.selectAllVisible();
+        result.current.selectAll();
       });
       act(() => {
         result.current.bulkRemove();

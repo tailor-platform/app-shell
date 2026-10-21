@@ -21,7 +21,7 @@ import { LineItems, useLineItems, createLineItemHelper } from "@tailor-platform/
 
 ```tsx
 type POLine = {
-  lineRef: string;
+  lineKey: string;
   sku: string;
   quantity: number;
   unitPrice: number;
@@ -55,7 +55,7 @@ const fields = [
 ];
 
 function PurchaseOrderLines({ lines }: { lines: POLine[] }) {
-  const lineItems = useLineItems<POLine>({ fields, defaultLines: lines, selection: true });
+  const lineItems = useLineItems<POLine>({ fields, defaultLines: lines, rowSelection: {} });
 
   return (
     <LineItems.Root value={lineItems}>
@@ -67,7 +67,7 @@ function PurchaseOrderLines({ lines }: { lines: POLine[] }) {
 }
 ```
 
-Every row needs a stable `lineRef` — the server id for a persisted line. Rows that arrive without one are assigned a generated id.
+Every row needs a stable `lineKey` — the server id for a persisted line. Rows that arrive without one are assigned a generated id.
 
 ## Parts
 
@@ -83,16 +83,16 @@ Every row needs a stable `lineRef` — the server id for a persisted line. Rows 
 
 ## useLineItems(options)
 
-| Option             | Type                                           | Default  | Description                                                                                                                                                       |
-| ------------------ | ---------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `fields`           | `LineItemsField<T>[]`                          | required | Column schema. Build with `createLineItemHelper<T>().field({…})`.                                                                                                 |
-| `defaultLines`     | `readonly T[]`                                 | `[]`     | Uncontrolled seed rows, also the dirty-tracking baseline. Read once on mount; to load a different document, remount (e.g. with a `key`).                          |
-| `lines`            | `readonly T[]`                                 | –        | Controlled rows. Requires `onLinesChange`; can't be combined with `defaultLines`.                                                                                 |
-| `onLinesChange`    | `(next: T[]) => void`                          | –        | Called once per mutation with the new rows. Required with `lines`; optional with `defaultLines`, to observe edits.                                                |
-| `mode`             | `"view" \| "edit" \| "amend"`                  | `"edit"` | `"view"` renders every cell read-only. `"amend"` keeps only fields whose `editable` lists it open — for a confirmed document where a few fields may still change. |
-| `ordering`         | `"sort" \| "manual"`                           | `"sort"` | `"manual"` enables drag reordering and emits `reorder` ops.                                                                                                       |
-| `selection`        | `boolean \| { actions: SelectionAction<T>[] }` | `false`  | `true` adds the row-selection checkbox column. `{ actions }` also shows the bulk-action bar — see [Selection actions](#selection-actions).                        |
-| `onMetadataCommit` | `(event: LineItemsMetadataCommit<T>) => void`  | –        | Receives edits to `commit: "metadata"` fields, which bypass the change-set.                                                                                       |
+| Option             | Type                                          | Default  | Description                                                                                                                                                       |
+| ------------------ | --------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `fields`           | `LineItemsField<T>[]`                         | required | Column schema. Build with `createLineItemHelper<T>().field({…})`.                                                                                                 |
+| `defaultLines`     | `readonly T[]`                                | `[]`     | Uncontrolled seed rows, also the dirty-tracking baseline. Read once on mount; to load a different document, remount (e.g. with a `key`).                          |
+| `lines`            | `readonly T[]`                                | –        | Controlled rows. Requires `onLinesChange`; can't be combined with `defaultLines`.                                                                                 |
+| `onLinesChange`    | `(next: T[]) => void`                         | –        | Called once per mutation with the new rows. Required with `lines`; optional with `defaultLines`, to observe edits.                                                |
+| `mode`             | `"view" \| "edit" \| "amend"`                 | `"edit"` | `"view"` renders every cell read-only. `"amend"` keeps only fields whose `editable` lists it open — for a confirmed document where a few fields may still change. |
+| `ordering`         | `"sort" \| "manual"`                          | `"sort"` | `"manual"` enables drag reordering and emits `reorder` ops.                                                                                                       |
+| `rowSelection`     | `RowSelectionOptions`                         | —        | Adds the row-selection checkbox column; with `actions`, the bulk-action bar. Same option as DataTable — see [Selection actions](#selection-actions).              |
+| `onMetadataCommit` | `(event: LineItemsMetadataCommit<T>) => void` | –        | Receives edits to `commit: "metadata"` fields, which bypass the change-set.                                                                                       |
 
 ### Return value
 
@@ -100,39 +100,43 @@ Every row needs a stable `lineRef` — the server id for a persisted line. Rows 
 | ----------------------------------------------- | ------------------------------------------------------------------------------ |
 | `lines` / `allLines`                            | Rows with the search filter applied, and the full document order.              |
 | `isDirty`                                       | Whether current state diverges from the baseline.                              |
-| `selectedIds` / `selectedRows`                  | The selected lines, as `lineRef`s and as rows, in document order.              |
+| `selectedIds` / `selectedRows`                  | The selected lines, as `lineKey`s and as rows, in document order.              |
 | `sortState`                                     | Active sort, or `null` in document order. Always `null` under manual ordering. |
 | `toggleSort(columnId)`                          | Cycles a column ascending, descending, then unsorted.                          |
-| `addLine(data, opts?)`                          | Inserts one line, returning its new `lineRef`.                                 |
+| `addLine(data, opts?)`                          | Inserts one line, returning its new `lineKey`.                                 |
 | `addLines(items, opts?)`                        | Inserts many in one render. Use this for bulk pickers.                         |
-| `removeLine(lineRef)` / `removeLines(lineRefs)` | Deletes one line, or several in one update — for a bulk action's rows.         |
-| `updateField(lineRef, key, value)`              | Typed single-cell update.                                                      |
+| `removeLine(lineKey)` / `removeLines(lineKeys)` | Deletes one line, or several in one update — for a bulk action's rows.         |
+| `updateField(lineKey, key, value)`              | Typed single-cell update.                                                      |
 | `updateLines(patches)`                          | Batched updates — one render for a whole paste or fill.                        |
-| `reorderLine(lineRef, afterLineRef)`            | Moves a line. Manual ordering only; pass `null` to move to the head.           |
+| `reorderLine(lineKey, afterLineKey)`            | Moves a line. Manual ordering only; pass `null` to move to the head.           |
 | `bulkUpdate(patch)` / `bulkRemove()`            | Apply to every selected row.                                                   |
 | `reset()`                                       | Snaps the baseline forward. Call after a successful save.                      |
 | `revert()`                                      | Discards every uncommitted change back to the baseline.                        |
 | `getChangeSet()`                                | What changed, ready to submit.                                                 |
 
-`addLine` and `addLines` take `{ afterLineRef }`: omit it to append, pass `null` to prepend, or pass a `lineRef` to insert directly after that line.
+`addLine` and `addLines` take `{ afterLineKey }`: omit it to append, pass `null` to prepend, or pass a `lineKey` to insert directly after that line.
 
 ## Selection actions
 
-Pass `selection: { actions }` to `useLineItems` and, while at least one line is selected, `LineItems.Table` shows a bulk-action bar at its foot: the selection count, your actions, and **Clear**. It is the same bar, and the same [`SelectionAction`](./data-table.md#selectionaction) shape, as DataTable's [selection actions](./data-table.md#selection-actions), so selection reads the same across both.
+Pass `rowSelection` to `useLineItems` to add the checkbox column. It is the same option as DataTable's [`rowSelection`](./data-table.md#selection-actions): `{}` for uncontrolled selection, `{ defaultSelectedIds }` to seed it, or `{ selectedIds, onChange }` to control it. Selected ids are `lineKey`s.
+
+With `actions`, `LineItems.Table` shows a bulk-action bar at its foot while at least one line is selected: the selection count, your actions, and **Clear**. Actions use DataTable's [`SelectionAction`](./data-table.md#selectionaction) shape, so selection reads the same across both.
 
 ```tsx
 const lineItems = useLineItems<POLine>({
   fields,
   defaultLines: lines,
-  selection: {
+  rowSelection: {
     actions: [
       {
         id: "receive",
         label: "Mark received",
-        canApply: (line) => line.receivedQty < line.quantity,
-        onClick: (rows) => {
+        onClick: (ids) => {
+          const picked = new Set(ids);
           lineItems.updateLines(
-            rows.map((l) => ({ lineRef: l.lineRef, patch: { receivedQty: l.quantity } })),
+            lineItems.allLines
+              .filter((l) => picked.has(l.lineKey) && l.receivedQty < l.quantity)
+              .map((l) => ({ lineKey: l.lineKey, patch: { receivedQty: l.quantity } })),
           );
         },
       },
@@ -140,8 +144,8 @@ const lineItems = useLineItems<POLine>({
         id: "remove",
         label: "Remove",
         variant: "destructive",
-        onClick: (rows) => {
-          lineItems.removeLines(rows.map((l) => l.lineRef));
+        onClick: (ids) => {
+          lineItems.removeLines(ids);
         },
       },
     ],
@@ -149,9 +153,9 @@ const lineItems = useLineItems<POLine>({
 });
 ```
 
-- **`canApply` scopes an action.** The button shows how many selected lines qualify — `Mark received (2)` — is disabled when none do, and `onClick` receives only those lines.
+- **Actions get ids, not rows.** `onClick` receives a copy of the selected `lineKey`s; look lines up from `allLines` and decide eligibility in the handler, as with DataTable.
 - **Give handlers a block body** when they call the hook's own return value, as above. An expression body makes TypeScript infer `lineItems` from itself and fail with "implicitly has type any".
-- **Edits stay local.** Actions that change lines with `updateLines`, `addLines` or `removeLines` land in the change-set like any other edit, so Save and Discard cover them. A synchronous handler leaves the selection alone; a returned promise gets DataTable's pending state and clears the selection once it resolves, unless the action sets `keepSelection`.
+- **Edits stay local.** Actions that change lines with `updateLines`, `addLines` or `removeLines` land in the change-set like any other edit, so Save and Discard cover them. Return a promise to disable the bar and show a spinner while it runs, or pass a later request (from a confirm dialog) to `helpers.run`. Selection never clears on its own — call `helpers.clearSelection()` when the action should end it.
 - Up to three actions show inline; the rest collapse into a **More actions** menu. The bar is a `role="toolbar"` named "Bulk actions", its count is announced politely, and when it closes with focus inside, focus returns to the header checkbox.
 
 ## Field schema

@@ -198,6 +198,7 @@ export {
   type LineItemsGroupMembers,
   type LineItemsLineChange,
   type LineItemsMetadataCommit,
+  type LineItemsResetInput,
   type LineItemsMode,
   type LineItemsOrderingMode,
   type LineItemsRootProps,

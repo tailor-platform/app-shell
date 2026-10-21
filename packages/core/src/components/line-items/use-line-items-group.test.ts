@@ -6,7 +6,7 @@ import type { LineItemsField } from "./types";
 import { useLineItems } from "./use-line-items";
 import { useLineItemsGroup } from "./use-line-items-group";
 
-type JournalLine = { lineRef: string; account: string; amount: number };
+type JournalLine = { id?: string; account: string; amount: number };
 
 const f = createLineItemHelper<JournalLine>();
 
@@ -31,11 +31,11 @@ function setup() {
   return renderHook(() => {
     const debits = useLineItems<JournalLine>({
       fields,
-      defaultLines: [{ lineRef: "d1", account: "Cash", amount: 100 }],
+      defaultLines: [{ id: "d1", account: "Cash", amount: 100 }],
     });
     const credits = useLineItems<JournalLine>({
       fields,
-      defaultLines: [{ lineRef: "c1", account: "Receivables", amount: 100 }],
+      defaultLines: [{ id: "c1", account: "Receivables", amount: 100 }],
     });
     return { debits, credits, group: useLineItemsGroup({ debits, credits }) };
   });
@@ -70,7 +70,7 @@ describe("useLineItemsGroup", () => {
     const { result } = renderHook(() => {
       const isEmpty = useLineItems<JournalLine>({
         fields,
-        defaultLines: [{ lineRef: "x1", account: "Cash", amount: 1 }],
+        defaultLines: [{ id: "x1", account: "Cash", amount: 1 }],
       });
       return { isEmpty, group: useLineItemsGroup({ isEmpty }) };
     });

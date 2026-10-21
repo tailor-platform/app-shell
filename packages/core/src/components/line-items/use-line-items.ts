@@ -4,6 +4,8 @@ import {
   buildChangeSet,
   cloneBaseline,
   cloneRow,
+  readLineKey,
+  withLineKey,
   type LineItemsBaseline,
   type LineItemsColumnDef,
 } from "./internals";
@@ -11,6 +13,7 @@ import type {
   LineItemsChangeSet,
   LineItemsMetadataCommit,
   LineItemsMode,
+  LineItemsResetInput,
   LineItemsRowData,
   LineItemsSortState,
   UseLineItemsOptions,
@@ -19,7 +22,7 @@ import type {
 import { usePendingAction } from "./use-pending-action";
 
 type RowState<T extends LineItemsRowData> = {
-  byRef: Record<string, T>;
+  byKey: Record<string, T>;
   order: string[];
 };
 
@@ -34,6 +37,9 @@ type DirtyState<T extends LineItemsRowData> = {
   removed: ReadonlySet<string>;
 };
 
+/** Stable default, so a table without bulk actions never changes identity. */
+const EMPTY_ACTIONS: never[] = [];
+
 /**
  * The single source of truth for a line-items document: row order and lookup,
  * the dirty-tracking baseline behind `isDirty` and `getChangeSet()`, selection
@@ -42,9 +48,6 @@ type DirtyState<T extends LineItemsRowData> = {
  * Pair with `<LineItems.Root value={lineItems}>` to render, or drive the
  * mutations directly from your own controls.
  */
-/** Stable default, so a table without bulk actions never changes identity. */
-const EMPTY_ACTIONS: never[] = [];
-
 export function useLineItems<T extends LineItemsRowData>(
   options: UseLineItemsOptions<T>,
 ): UseLineItemsReturn<T> {
@@ -53,6 +56,7 @@ export function useLineItems<T extends LineItemsRowData>(
     defaultLines,
     lines: controlledLines,
     onLinesChange,
+    idKey = "id" as keyof T & string,
     mode: modeProp = "edit",
     ordering = "sort",
     rowSelection,
@@ -62,36 +66,46 @@ export function useLineItems<T extends LineItemsRowData>(
   const selectionActions = rowSelection?.actions ?? EMPTY_ACTIONS;
 
   const controlled = controlledLines !== undefined;
-  const seed = controlled ? controlledLines : defaultLines;
 
-  const [rows, setRows] = React.useState<RowState<T>>(() => packLines(sanitizeRows(seed ?? [])));
-  const [dirty, setDirty] = React.useState<DirtyState<T>>(() => ({
-    baseline: cloneBaseline<T>(rows.order, rows.byRef),
-    inserted: new Set<string>(),
-    removed: new Set<string>(),
-  }));
+  const [initial] = React.useState(() =>
+    seedLines(controlled ? controlledLines : (defaultLines ?? []), idKey),
+  );
+  const [rows, setRows] = React.useState<RowState<T>>(initial.rows);
+  const [dirty, setDirty] = React.useState<DirtyState<T>>(() => initial.dirty);
+
+  const rowsRef = React.useRef(rows);
+  rowsRef.current = rows;
+  const dirtyRef = React.useRef(dirty);
+  dirtyRef.current = dirty;
 
   /**
-   * Re-seeds from a controlled `lines` prop only when its set of `lineRef`s
-   * changes, not on every value change — a parent re-rendering with equal rows
-   * must not clobber in-flight local edits.
+   * Set by every local mutation so the notify effect below can tell a real edit
+   * apart from the initial mount or a sync from the `lines` prop, neither of
+   * which should echo back to the parent.
    */
-  const seededRefs = React.useRef<string | undefined>(undefined);
+  const pendingNotify = React.useRef(false);
+
+  /** The `lines` array last seen or emitted, so the parent's echo is skipped. */
+  const lastSynced = React.useRef<readonly T[] | undefined>(controlledLines);
+
+  /**
+   * Follows a controlled `lines` prop. The parent's echo of our own emit is
+   * skipped. Other updates are adopted: when the same lines come back with new
+   * values (prices recalculated after a currency change, values the server
+   * normalised), they replace the current values and the baseline stays put,
+   * so local edits keep diffing correctly. When the set of lines changes (a
+   * different document, or saved lines re-keyed with their server ids), the
+   * baseline moves to the new lines.
+   */
   React.useEffect(() => {
-    if (!controlled) return;
-    const key = serializeRefs(controlledLines ?? []);
-    if (seededRefs.current === key) return;
-    seededRefs.current = key;
-    // A re-seed is not a local edit, so it must not echo back to the parent.
+    if (!controlled || controlledLines === lastSynced.current) return;
+    lastSynced.current = controlledLines;
+    // A sync is not a local edit, so it must not echo back to the parent.
     pendingNotify.current = false;
-    const next = packLines(sanitizeRows(controlledLines ?? []));
-    setRows(next);
-    setDirty({
-      baseline: cloneBaseline<T>(next.order, next.byRef),
-      inserted: new Set<string>(),
-      removed: new Set<string>(),
-    });
-  }, [controlled, controlledLines]);
+    const next = seedLines(controlledLines, idKey);
+    setRows(next.rows);
+    if (!sameKeys(next.rows.order, rowsRef.current.order)) setDirty(next.dirty);
+  }, [controlled, controlledLines, idKey]);
 
   const [mode, setModeState] = React.useState<LineItemsMode>(modeProp);
   React.useEffect(() => {
@@ -135,6 +149,25 @@ export function useLineItems<T extends LineItemsRowData>(
     [],
   );
 
+  /** Drops keys that no longer name a line, and renames re-keyed ones. */
+  const reconcileSelection = React.useCallback(
+    (byKey: Record<string, T>, rename?: ReadonlyMap<string, string>) => {
+      setSelectedSet((prev) => {
+        if (prev.size === 0) return prev;
+        const next = new Set<string>();
+        let changed = false;
+        for (const key of prev) {
+          const to = rename?.get(key) ?? key;
+          if (to !== key) changed = true;
+          if (byKey[to]) next.add(to);
+          else changed = true;
+        }
+        return changed ? next : prev;
+      });
+    },
+    [setSelectedSet],
+  );
+
   const columns = React.useMemo<LineItemsColumnDef<T>[]>(
     () => fieldsToColumnDefs(fields),
     [fields],
@@ -159,72 +192,87 @@ export function useLineItems<T extends LineItemsRowData>(
     return keys;
   }, [fields]);
 
-  /**
-   * Set by every local mutation so the notify effect below can tell a real edit
-   * apart from the initial mount or a re-seed from the `lines` prop, neither of
-   * which should echo back to the parent.
-   */
-  const pendingNotify = React.useRef(false);
-
   const metadataKeysRef = React.useRef(metadataKeys);
   metadataKeysRef.current = metadataKeys;
 
-  const rowsRef = React.useRef(rows);
-  rowsRef.current = rows;
+  // A metadata field with no handler would drop its edits silently: they're
+  // kept out of the change-set and nothing else receives them.
+  const warnedNoMetadataHandler = React.useRef(false);
+  React.useEffect(() => {
+    if (warnedNoMetadataHandler.current || metadataKeys.size === 0 || onMetadataCommit) return;
+    warnedNoMetadataHandler.current = true;
+    console.warn(
+      `[LineItems] ${[...metadataKeys].join(", ")} use commit: "metadata", but useLineItems has no onMetadataCommit. Edits to saved lines in those fields go nowhere.`,
+    );
+  }, [metadataKeys, onMetadataCommit]);
+
+  /**
+   * Whether there are unsaved changes right now. Mutations set it straight
+   * away and `reset` / `revert` clear it straight away, so a handler that
+   * saves, resets and navigates in one go reads the new value before React
+   * re-renders. Each render brings it back in line with the change-set.
+   */
+  const dirtyNow = React.useRef(false);
+
+  const markEdited = React.useCallback(() => {
+    pendingNotify.current = true;
+    dirtyNow.current = true;
+  }, []);
 
   const addLines = React.useCallback(
-    (
-      items: ReadonlyArray<Partial<Omit<T, "lineRef">>>,
-      opts?: { afterLineRef?: string | null },
-    ): string[] => {
+    (items: ReadonlyArray<Partial<T>>, opts?: { afterLineKey?: string | null }): string[] => {
       if (items.length === 0) return [];
-      const newRefs = items.map(() => newLineRef());
-      pendingNotify.current = true;
+      const newKeys = items.map(() => newLineKey());
+      markEdited();
 
       setRows((prev) => {
-        const byRef = { ...prev.byRef };
+        const byKey = { ...prev.byKey };
         items.forEach((partial, i) => {
-          const id = newRefs[i]!;
-          byRef[id] = { ...(partial as Record<string, unknown>), lineRef: id } as T;
+          const key = newKeys[i]!;
+          // A new line has no id until the server assigns one. Dropping any id
+          // passed in (say, from a duplicated line) keeps it from posing as an
+          // existing line.
+          const { [idKey]: _id, ...data } = partial as Record<string, unknown>;
+          byKey[key] = withLineKey(data as T, key);
         });
-        return { byRef, order: insertAfter(prev.order, newRefs, opts?.afterLineRef) };
+        return { byKey, order: insertAfter(prev.order, newKeys, opts?.afterLineKey) };
       });
 
       setDirty((prev) => {
         const inserted = new Set(prev.inserted);
-        for (const id of newRefs) inserted.add(id);
+        for (const key of newKeys) inserted.add(key);
         return { ...prev, inserted };
       });
 
-      return newRefs;
+      return newKeys;
     },
-    [],
+    [idKey, markEdited],
   );
 
   const addLine = React.useCallback(
-    (partial: Partial<Omit<T, "lineRef">>, opts?: { afterLineRef?: string | null }): string =>
+    (partial: Partial<T>, opts?: { afterLineKey?: string | null }): string =>
       addLines([partial], opts)[0]!,
     [addLines],
   );
 
   const removeLines = React.useCallback(
-    (refs: readonly string[]) => {
-      if (refs.length === 0) return;
-      const doomed = new Set(refs);
-      pendingNotify.current = true;
+    (keys: readonly string[]) => {
+      if (keys.length === 0) return;
+      const doomed = new Set(keys);
+      markEdited();
 
       setRows((prev) => {
-        const byRef = { ...prev.byRef };
-        for (const id of doomed) delete byRef[id];
-        return { byRef, order: prev.order.filter((id) => !doomed.has(id)) };
+        const byKey = { ...prev.byKey };
+        for (const key of doomed) delete byKey[key];
+        return { byKey, order: prev.order.filter((key) => !doomed.has(key)) };
       });
 
       setDirty((prev) => {
         const inserted = new Set(prev.inserted);
         const removed = new Set(prev.removed);
-        for (const id of doomed) {
-          inserted.delete(id);
-          if (prev.baseline.rows[id]) removed.add(id);
+        for (const key of doomed) {
+          inserted.delete(key);
+          if (prev.baseline.rows[key]) removed.add(key);
         }
         return { ...prev, inserted, removed };
       });
@@ -232,120 +280,183 @@ export function useLineItems<T extends LineItemsRowData>(
       setSelectedSet((prev) => {
         if (prev.size === 0) return prev;
         const next = new Set(prev);
-        for (const id of doomed) next.delete(id);
+        for (const key of doomed) next.delete(key);
         return next.size === prev.size ? prev : next;
       });
     },
-    [setSelectedSet],
+    [markEdited, setSelectedSet],
   );
 
-  const removeLine = React.useCallback((lineRef: string) => removeLines([lineRef]), [removeLines]);
+  const removeLine = React.useCallback((lineKey: string) => removeLines([lineKey]), [removeLines]);
 
-  const updateLines = React.useCallback((patches: { lineRef: string; patch: Partial<T> }[]) => {
-    if (patches.length === 0) return;
-    pendingNotify.current = true;
+  const updateLines = React.useCallback(
+    (patches: { lineKey: string; patch: Partial<T> }[]) => {
+      if (patches.length === 0) return;
+      markEdited();
 
-    if (metadataKeysRef.current.size > 0 && onMetadataCommitRef.current) {
-      const current = rowsRef.current;
-      for (const { lineRef, patch } of patches) {
-        const row = current.byRef[lineRef];
-        if (!row) continue;
-        const metaPatch: Record<string, unknown> = {};
-        const previous: Record<string, unknown> = {};
-        for (const key of Object.keys(patch)) {
-          if (!metadataKeysRef.current.has(key)) continue;
-          metaPatch[key] = (patch as Record<string, unknown>)[key];
-          previous[key] = (row as Record<string, unknown>)[key];
+      if (metadataKeysRef.current.size > 0 && onMetadataCommitRef.current) {
+        const current = rowsRef.current;
+        for (const { lineKey, patch } of patches) {
+          const row = current.byKey[lineKey];
+          // A new line has no id to save against yet; its metadata fields
+          // travel with its `add` op instead.
+          if (!row || !hasId(row, idKey)) continue;
+          const metaPatch: Record<string, unknown> = {};
+          const previous: Record<string, unknown> = {};
+          for (const key of Object.keys(patch)) {
+            if (!metadataKeysRef.current.has(key)) continue;
+            metaPatch[key] = (patch as Record<string, unknown>)[key];
+            previous[key] = (row as Record<string, unknown>)[key];
+          }
+          if (Object.keys(metaPatch).length === 0) continue;
+          onMetadataCommitRef.current({
+            lineId: lineKey,
+            patch: metaPatch,
+            previous,
+            row: { ...row, ...patch } as T,
+          } satisfies LineItemsMetadataCommit<T>);
         }
-        if (Object.keys(metaPatch).length === 0) continue;
-        onMetadataCommitRef.current({
-          lineRef,
-          patch: metaPatch,
-          previous,
-          row: { ...row, ...patch } as T,
-        } satisfies LineItemsMetadataCommit<T>);
       }
-    }
 
-    setRows((prev) => {
-      const byRef = { ...prev.byRef };
-      let touched = false;
-      for (const { lineRef, patch } of patches) {
-        const cur = byRef[lineRef];
-        if (!cur) continue;
-        byRef[lineRef] = { ...cur, ...patch } as T;
-        touched = true;
-      }
-      if (!touched) return prev;
-      return { byRef, order: prev.order };
-    });
-  }, []);
+      setRows((prev) => {
+        const byKey = { ...prev.byKey };
+        let touched = false;
+        for (const { lineKey, patch } of patches) {
+          const cur = byKey[lineKey];
+          if (!cur) continue;
+          byKey[lineKey] = { ...cur, ...patch } as T;
+          touched = true;
+        }
+        if (!touched) return prev;
+        return { byKey, order: prev.order };
+      });
+    },
+    [idKey, markEdited],
+  );
 
   const updateField = React.useCallback(
-    <K extends keyof T>(lineRef: string, key: K, value: T[K]) => {
-      updateLines([{ lineRef, patch: { [key]: value } as unknown as Partial<T> }]);
+    <K extends keyof T>(lineKey: string, key: K, value: T[K]) => {
+      updateLines([{ lineKey, patch: { [key]: value } as unknown as Partial<T> }]);
     },
     [updateLines],
   );
 
   const reorderLine = React.useCallback(
-    (lineRef: string, afterLineRef: string | null) => {
-      if (ordering !== "manual") return;
-      pendingNotify.current = true;
+    (lineKey: string, afterLineKey: string | null) => {
+      if (ordering !== "manual" || lineKey === afterLineKey) return;
+      markEdited();
       setRows((prev) => {
-        if (!prev.byRef[lineRef]) return prev;
-        const without = prev.order.filter((id) => id !== lineRef);
-        return { byRef: prev.byRef, order: insertAfter(without, [lineRef], afterLineRef) };
+        if (!prev.byKey[lineKey]) return prev;
+        const without = prev.order.filter((key) => key !== lineKey);
+        return { byKey: prev.byKey, order: insertAfter(without, [lineKey], afterLineKey) };
       });
     },
-    [ordering],
+    [markEdited, ordering],
   );
 
   const duplicateLastLine = React.useCallback(
-    (derive?: (prev: T, newRef: string) => T): string | undefined => {
-      const last = rows.order.at(-1);
-      const src = last ? rows.byRef[last] : undefined;
+    (derive?: (prev: T) => Partial<T>): string | undefined => {
+      const current = rowsRef.current;
+      const last = current.order.at(-1);
+      const src = last ? current.byKey[last] : undefined;
       if (!src) return undefined;
-      const id = newLineRef();
-      const row = derive ? derive(cloneRow(src), id) : { ...cloneRow(src), lineRef: id };
-      pendingNotify.current = true;
-
-      setRows((prev) => ({ byRef: { ...prev.byRef, [id]: row }, order: [...prev.order, id] }));
-      setDirty((prev) => ({ ...prev, inserted: new Set(prev.inserted).add(id) }));
-      return id;
+      const copy = cloneRow(src);
+      return addLine(derive ? { ...copy, ...derive(cloneRow(src)) } : copy);
     },
-    [rows],
+    [addLine],
   );
 
-  const reset = React.useCallback(() => {
-    setDirty({
-      baseline: cloneBaseline<T>(rows.order, rows.byRef),
-      inserted: new Set<string>(),
-      removed: new Set<string>(),
-    });
-  }, [rows]);
+  const reset = React.useCallback(
+    (saved?: LineItemsResetInput<T>) => {
+      dirtyNow.current = false;
+      const current = rowsRef.current;
+      const pendingNew = dirtyRef.current.inserted;
+
+      if (saved === undefined) {
+        if (pendingNew.size > 0) {
+          console.warn(
+            `[LineItems] reset() was called with ${pendingNew.size} new line(s) and no saved lines, so they keep temporary keys and a later edit would send an update the server can't match. Pass the saved lines, reset(savedLines), or reset({ idMap }).`,
+          );
+        }
+        setDirty({
+          baseline: cloneBaseline<T>(current.order, current.byKey),
+          inserted: new Set<string>(),
+          removed: new Set<string>(),
+        });
+        return;
+      }
+
+      if (isLineArray(saved)) {
+        const next = seedLines(saved, idKey);
+        pendingNotify.current = true;
+        setRows(next.rows);
+        setDirty(next.dirty);
+        reconcileSelection(next.rows.byKey);
+        return;
+      }
+
+      // Re-key each new line with the id the server assigned it.
+      const rename = new Map<string, string>();
+      const byKey: Record<string, T> = {};
+      const order = current.order.map((key) => {
+        const row = current.byKey[key]!;
+        const serverId = pendingNew.has(key) ? saved.idMap[key] : undefined;
+        if (serverId === undefined || serverId === null || serverId === "") {
+          byKey[key] = row;
+          return key;
+        }
+        const nextKey = String(serverId);
+        byKey[nextKey] = withLineKey({ ...row, [idKey]: serverId } as T, nextKey);
+        rename.set(key, nextKey);
+        return nextKey;
+      });
+      const stillNew = new Set([...pendingNew].filter((key) => !rename.has(key) && byKey[key]));
+      if (stillNew.size > 0) {
+        console.warn(
+          `[LineItems] reset({ idMap }) has no id for ${stillNew.size} new line(s); they stay new and will be sent as adds again.`,
+        );
+      }
+      if (rename.size > 0) {
+        pendingNotify.current = true;
+        setRows({ byKey, order });
+      }
+      setDirty({
+        baseline: cloneBaseline<T>(
+          order.filter((key) => !stillNew.has(key)),
+          byKey,
+        ),
+        inserted: stillNew,
+        removed: new Set<string>(),
+      });
+      reconcileSelection(byKey, rename);
+    },
+    [idKey, reconcileSelection],
+  );
 
   const revert = React.useCallback(() => {
-    const order = [...dirty.baseline.order];
-    const byRef: Record<string, T> = {};
-    for (const id of order) {
-      const row = dirty.baseline.rows[id];
-      if (row) byRef[id] = cloneRow(row);
+    dirtyNow.current = false;
+    const { baseline } = dirtyRef.current;
+    const current = rowsRef.current;
+    const order = [...baseline.order];
+    const byKey: Record<string, T> = {};
+    for (const key of order) {
+      const row = baseline.rows[key];
+      if (!row) continue;
+      const restored = cloneRow(row) as Record<string, unknown>;
+      // Metadata fields saved out-of-band already, so Discard leaves them be.
+      const live = current.byKey[key] as Record<string, unknown> | undefined;
+      if (live) for (const field of metadataKeysRef.current) restored[field] = live[field];
+      byKey[key] = restored as T;
     }
     pendingNotify.current = true;
-    setRows({ byRef, order });
+    setRows({ byKey, order });
     setDirty((prev) => ({
       ...prev,
       inserted: new Set<string>(),
       removed: new Set<string>(),
     }));
-    setSelectedSet((prev) => {
-      if (prev.size === 0) return prev;
-      const next = new Set<string>();
-      for (const id of prev) if (byRef[id]) next.add(id);
-      return next.size === prev.size ? prev : next;
-    });
-  }, [dirty.baseline, setSelectedSet]);
+    reconcileSelection(byKey);
+  }, [reconcileSelection]);
 
   const changeSet = React.useMemo(
     (): LineItemsChangeSet =>
@@ -353,30 +464,37 @@ export function useLineItems<T extends LineItemsRowData>(
         columns,
         dirty.baseline,
         rows.order,
-        rows.byRef,
+        rows.byKey,
         dirty.removed,
         dirty.inserted,
         ordering,
       ),
     [columns, dirty, ordering, rows],
   );
+  dirtyNow.current = !changeSet.isEmpty;
 
   const getChangeSet = React.useCallback((): LineItemsChangeSet => changeSet, [changeSet]);
+  const hasUnsavedChanges = React.useCallback(() => dirtyNow.current, []);
 
   const allLines = React.useMemo(
-    (): T[] => rows.order.map((id) => rows.byRef[id]).filter(Boolean) as T[],
+    (): T[] => rows.order.map((key) => rows.byKey[key]).filter(Boolean) as T[],
     [rows],
   );
 
   React.useEffect(() => {
     if (!pendingNotify.current) return;
     pendingNotify.current = false;
-    // The parent will echo these rows back through `lines`; record them as
-    // already seeded so the echo is not mistaken for new data, which would
-    // reset the baseline and drop the edit from the change-set.
-    seededRefs.current = serializeRefs(allLines);
+    // The parent will echo these rows back through `lines`; remember them so
+    // the echo is not mistaken for an update from the parent.
+    lastSynced.current = allLines;
     onLinesChangeRef.current?.(allLines);
   }, [allLines]);
+
+  const getLineKey = React.useCallback(
+    (line: T): string => readLineKey(line) ?? (hasId(line, idKey) ? String(line[idKey]) : ""),
+    [idKey],
+  );
+  const isNewLine = React.useCallback((line: T): boolean => !hasId(line, idKey), [idKey]);
 
   const filteredLines = React.useMemo((): T[] => {
     const query = filter.trim();
@@ -416,28 +534,28 @@ export function useLineItems<T extends LineItemsRowData>(
     () =>
       selectedSet.size === 0
         ? []
-        : rows.order.filter((id) => selectedSet.has(id) && rows.byRef[id]),
+        : rows.order.filter((key) => selectedSet.has(key) && rows.byKey[key]),
     [rows, selectedSet],
   );
 
   const toggleSelect = React.useCallback(
-    (lineRef: string) => {
+    (lineKey: string) => {
       if (!selection) return;
       setSelectedSet((prev) => {
         const next = new Set(prev);
-        if (!next.delete(lineRef)) next.add(lineRef);
+        if (!next.delete(lineKey)) next.add(lineKey);
         return next;
       });
     },
     [selection, setSelectedSet],
   );
 
-  const visibleRefs = React.useMemo(() => lines.map((l) => l.lineRef), [lines]);
+  const visibleKeys = React.useMemo(() => lines.map(getLineKey), [getLineKey, lines]);
 
   const selectAllVisible = React.useCallback(() => {
     if (!selection) return;
-    setSelectedSet(() => new Set(visibleRefs));
-  }, [selection, setSelectedSet, visibleRefs]);
+    setSelectedSet(() => new Set(visibleKeys));
+  }, [selection, setSelectedSet, visibleKeys]);
 
   const clearSelection = React.useCallback(() => {
     setSelectedSet((prev) => (prev.size === 0 ? prev : new Set<string>()));
@@ -446,7 +564,7 @@ export function useLineItems<T extends LineItemsRowData>(
   const bulkUpdate = React.useCallback(
     (patch: Partial<T>) => {
       if (selectedIds.length === 0) return;
-      updateLines(selectedIds.map((lineRef) => ({ lineRef, patch })));
+      updateLines(selectedIds.map((lineKey) => ({ lineKey, patch })));
     },
     [selectedIds, updateLines],
   );
@@ -456,7 +574,7 @@ export function useLineItems<T extends LineItemsRowData>(
   }, [removeLines, selectedIds]);
 
   const selectedRows = React.useMemo(
-    () => selectedIds.map((id) => rows.byRef[id] as T),
+    () => selectedIds.map((key) => rows.byKey[key] as T),
     [rows, selectedIds],
   );
 
@@ -472,6 +590,7 @@ export function useLineItems<T extends LineItemsRowData>(
     mode,
     ordering,
     isDirty: !changeSet.isEmpty,
+    hasUnsavedChanges,
     filter,
     selectionEnabled: selection,
     selectedIds,
@@ -481,6 +600,8 @@ export function useLineItems<T extends LineItemsRowData>(
     runSelectionAction,
     sortState: ordering === "sort" ? sortState : null,
 
+    getLineKey,
+    isNewLine,
     setMode,
     setFilter,
     toggleSort,
@@ -503,52 +624,84 @@ export function useLineItems<T extends LineItemsRowData>(
   };
 }
 
-export function newLineRef(): string {
+export function newLineKey(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
   return `line-${Math.random().toString(36).slice(2, 11)}`;
 }
 
+/** Whether `line` carries a saved id in `idKey`. */
+function hasId<T extends LineItemsRowData>(line: T, idKey: keyof T & string): boolean {
+  const id = line[idKey];
+  return id !== undefined && id !== null && id !== "";
+}
+
+function isLineArray<T extends LineItemsRowData>(
+  saved: LineItemsResetInput<T>,
+): saved is readonly T[] {
+  return Array.isArray(saved);
+}
+
 /**
- * Splices `ids` into `order`: appended when `after` is `undefined`, prepended
- * when `null`, otherwise placed directly after that ref.
+ * Splices `keys` into `order`: appended when `after` is `undefined`, prepended
+ * when `null`, otherwise placed directly after that key.
  */
 function insertAfter(
   order: readonly string[],
-  ids: readonly string[],
+  keys: readonly string[],
   after: string | null | undefined,
 ): string[] {
   const next = [...order];
   if (after === undefined) {
-    next.push(...ids);
+    next.push(...keys);
   } else if (after === null) {
-    next.unshift(...ids);
+    next.unshift(...keys);
   } else {
     const at = next.indexOf(after);
-    if (at === -1) next.push(...ids);
-    else next.splice(at + 1, 0, ...ids);
+    if (at === -1) next.push(...keys);
+    else next.splice(at + 1, 0, ...keys);
   }
   return next;
 }
 
-/** Backfills a generated `lineRef` for any row that arrives without one. */
-function sanitizeRows<T extends LineItemsRowData>(rows: readonly T[]): T[] {
-  return rows.map((row) => {
-    const ref =
-      typeof row.lineRef === "string" && row.lineRef.length > 0 ? row.lineRef : newLineRef();
-    return { ...row, lineRef: ref };
-  });
-}
-
-function packLines<T extends LineItemsRowData>(rows: readonly T[]): RowState<T> {
-  const byRef: Record<string, T> = {};
+/**
+ * Keys incoming lines and builds a fresh baseline from them. A line with an
+ * id is saved and keyed by it; a line without one is new — it keeps the temp
+ * key it already carries (a parent echoing our own lines back) or gets one,
+ * and starts out as an insert, outside the baseline.
+ */
+function seedLines<T extends LineItemsRowData>(
+  input: readonly T[],
+  idKey: keyof T & string,
+): { rows: RowState<T>; dirty: DirtyState<T> } {
+  const byKey: Record<string, T> = {};
   const order: string[] = [];
-  for (const row of rows) {
-    byRef[row.lineRef] = row;
-    order.push(row.lineRef);
+  const inserted = new Set<string>();
+  for (const line of input) {
+    const saved = hasId(line, idKey);
+    let key = saved ? String(line[idKey]) : (readLineKey(line) ?? newLineKey());
+    if (byKey[key]) {
+      console.warn(`[LineItems] Two lines share the key "${key}"; the second gets a new key.`);
+      key = newLineKey();
+    }
+    byKey[key] = withLineKey(line, key);
+    order.push(key);
+    if (!saved) inserted.add(key);
   }
-  return { byRef, order };
+  return {
+    rows: { byKey, order },
+    dirty: {
+      baseline: cloneBaseline<T>(
+        order.filter((key) => !inserted.has(key)),
+        byKey,
+      ),
+      inserted,
+      removed: new Set<string>(),
+    },
+  };
 }
 
-function serializeRefs<T extends LineItemsRowData>(rows: readonly T[]): string {
-  return `${rows.length}:${rows.map((r) => r.lineRef).join(",")}`;
+function sameKeys(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((key) => set.has(key));
 }

@@ -16,7 +16,7 @@ import type {
 import { useLineItems } from "./use-line-items";
 
 type Line = {
-  lineRef: string;
+  id?: string;
   sku: string;
   uom: string;
   quantity: number;
@@ -73,9 +73,9 @@ const fields: LineItemsField<Line>[] = [
 ];
 
 const seed: Line[] = [
-  { lineRef: "1", sku: "APPLE-01", uom: "EA", quantity: 2, note: "", total: 10 },
-  { lineRef: "2", sku: "BANANA-02", uom: "CS", quantity: 5, note: "", total: 25 },
-  { lineRef: "3", sku: "CHERRY-03", uom: "EA", quantity: 1, note: "", total: 4 },
+  { id: "1", sku: "APPLE-01", uom: "EA", quantity: 2, note: "", total: 10 },
+  { id: "2", sku: "BANANA-02", uom: "CS", quantity: 5, note: "", total: 25 },
+  { id: "3", sku: "CHERRY-03", uom: "EA", quantity: 1, note: "", total: 4 },
 ];
 
 type HarnessProps = {
@@ -122,7 +122,10 @@ function Harness({
         renderRowActions={
           renderRowActions
             ? (row: Line) => (
-                <button type="button" onClick={() => lineItems.removeLine(row.lineRef)}>
+                <button
+                  type="button"
+                  onClick={() => lineItems.removeLine(lineItems.getLineKey(row))}
+                >
                   {`Remove ${row.sku}`}
                 </button>
               )
@@ -153,19 +156,19 @@ function Harness({
 }
 
 /** Cells are addressed by coordinate, since editable ones hold inputs not text. */
-function cell(lineRef: string, columnId: string): HTMLElement {
+function cell(lineKey: string, columnId: string): HTMLElement {
   const el = document.querySelector<HTMLElement>(
-    `[data-line-ref="${lineRef}"][data-column-id="${columnId}"]`,
+    `[data-line-key="${lineKey}"][data-column-id="${columnId}"]`,
   );
-  if (!el) throw new Error(`cell ${lineRef}/${columnId} not found`);
+  if (!el) throw new Error(`cell ${lineKey}/${columnId} not found`);
   return el;
 }
 
-function editorIn(lineRef: string, columnId: string): HTMLInputElement {
-  const el = cell(lineRef, columnId).querySelector<HTMLInputElement>(
+function editorIn(lineKey: string, columnId: string): HTMLInputElement {
+  const el = cell(lineKey, columnId).querySelector<HTMLInputElement>(
     "[data-slot=line-items-cell-editor]",
   );
-  if (!el) throw new Error(`no editor in ${lineRef}/${columnId}`);
+  if (!el) throw new Error(`no editor in ${lineKey}/${columnId}`);
   return el;
 }
 
@@ -737,7 +740,7 @@ describe("LineItems", () => {
       expect(within(bar).getByText("3 of 3 selected")).toBeDefined();
     });
 
-    it("passes the selected lineRefs, in document order", async () => {
+    it("passes the selected lineKeys, in document order", async () => {
       const user = userEvent.setup();
       const onClick = vi.fn();
       render(<Harness selectionActions={[{ id: "bump", label: "Bump", onClick }]} />);
@@ -765,7 +768,7 @@ describe("LineItems", () => {
       await user.click(screen.getByRole("checkbox", { name: "Select line 3" }));
       await user.click(screen.getByRole("button", { name: "Remove" }));
 
-      expect(api?.allLines.map((l) => l.lineRef)).toEqual(["2"]);
+      expect(api?.allLines.map((l) => l.id)).toEqual(["2"]);
       expect(api?.getChangeSet().lineChanges).toEqual([
         { action: "remove", lineId: "1" },
         { action: "remove", lineId: "3" },
@@ -871,7 +874,7 @@ describe("LineItems", () => {
       grip.focus();
       await user.keyboard("{Enter}{ArrowDown}");
 
-      expect(api?.allLines.map((l) => l.lineRef)).toEqual(["2", "1", "3"]);
+      expect(api?.allLines.map((l) => l.id)).toEqual(["2", "1", "3"]);
       expect(api?.getChangeSet().lineChanges.filter((c) => c.action === "reorder")).toEqual([
         { action: "reorder", lineId: "2", position: 0 },
         { action: "reorder", lineId: "1", position: 1 },
@@ -894,7 +897,7 @@ describe("LineItems", () => {
       grip.focus();
       await user.keyboard("{Enter}{ArrowDown}{ArrowUp}");
 
-      expect(api?.allLines.map((l) => l.lineRef)).toEqual(["1", "2", "3"]);
+      expect(api?.allLines.map((l) => l.id)).toEqual(["1", "2", "3"]);
       expect(api?.getChangeSet().isEmpty).toBe(true);
     });
 
@@ -913,7 +916,7 @@ describe("LineItems", () => {
       screen.getByRole("button", { name: "Drag to reorder line 1" }).focus();
       await user.keyboard("{ArrowDown}");
 
-      expect(api?.allLines.map((l) => l.lineRef)).toEqual(["1", "2", "3"]);
+      expect(api?.allLines.map((l) => l.id)).toEqual(["1", "2", "3"]);
     });
 
     it("marks the lifted row with aria-pressed", async () => {
@@ -967,7 +970,7 @@ describe("LineItems", () => {
       expect(api?.lines.map((l) => l.quantity)).toEqual([5, 2, 1]);
 
       await user.click(sortButton);
-      expect(api?.lines.map((l) => l.lineRef)).toEqual(["1", "2", "3"]);
+      expect(api?.lines.map((l) => l.id)).toEqual(["1", "2", "3"]);
     });
 
     it("renders no sort affordance under manual ordering", () => {
@@ -1065,6 +1068,17 @@ describe("LineItems", () => {
 
         await user.click(screen.getByRole("link", { name: "Same page" }));
         expect(router.state.location.search).toBe("?tab=2");
+      });
+
+      it("lets save, reset and navigate run in one handler", async () => {
+        const { router, api } = renderInRouter();
+        act(() => api()?.updateField("1", "quantity", 9));
+
+        await act(async () => {
+          api()?.reset();
+          await router.navigate("/elsewhere");
+        });
+        expect(router.state.location.pathname).toBe("/elsewhere");
       });
 
       it("lets navigation through once the document is clean", async () => {
@@ -1176,7 +1190,7 @@ describe("LineItems", () => {
   describe("virtualization", () => {
     it("mounts only a slice of a long document", () => {
       const many: Line[] = Array.from({ length: 500 }, (_, i) => ({
-        lineRef: `L${i}`,
+        id: `L${i}`,
         sku: `SKU-${i}`,
         uom: "EA",
         quantity: i,

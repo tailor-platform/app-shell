@@ -8,6 +8,7 @@ import {
   useLineItems,
   useLineItemsGroup,
   type AppShellPageProps,
+  type LineItemsChangeSet,
   type LineItemsGroupChangeSet,
   type UseLineItemsReturn,
 } from "@tailor-platform/app-shell";
@@ -15,7 +16,8 @@ import { useState } from "react";
 
 // 🧪 Dummy Data: Replace with real data later
 type JournalLine = {
-  lineRef: string;
+  /** Server id; unset on lines added since the last save. */
+  id?: string;
   account: string;
   memo: string;
   amount: number;
@@ -32,14 +34,14 @@ const ACCOUNT_OPTIONS = [
 
 // 🧪 Dummy Data: Replace with real data later
 const INITIAL_DEBITS: JournalLine[] = [
-  { lineRef: "d1", account: "1000", memo: "Customer payment INV-1042", amount: 1250 },
-  { lineRef: "d2", account: "6100", memo: "Inbound freight PO-2231", amount: 180 },
+  { id: "d1", account: "1000", memo: "Customer payment INV-1042", amount: 1250 },
+  { id: "d2", account: "6100", memo: "Inbound freight PO-2231", amount: 180 },
 ];
 
 // 🧪 Dummy Data: Replace with real data later
 const INITIAL_CREDITS: JournalLine[] = [
-  { lineRef: "c1", account: "1200", memo: "Clear receivable INV-1042", amount: 1250 },
-  { lineRef: "c2", account: "2000", memo: "Carrier bill PO-2231", amount: 180 },
+  { id: "c1", account: "1200", memo: "Clear receivable INV-1042", amount: 1250 },
+  { id: "c2", account: "2000", memo: "Carrier bill PO-2231", amount: 180 },
 ];
 
 const money = (n: number) =>
@@ -48,6 +50,16 @@ const money = (n: number) =>
 const sum = (lines: JournalLine[]) => lines.reduce((s, l) => s + (l.amount ?? 0), 0);
 
 const f = createLineItemHelper<JournalLine>();
+
+// 🧪 Dummy Data: stands in for the ids a real backend returns for created lines.
+let nextServerId = 9000;
+function fakeServerIds(changeSet: LineItemsChangeSet): Record<string, string> {
+  const idMap: Record<string, string> = {};
+  for (const change of changeSet.lineChanges) {
+    if (change.action === "add") idMap[change.tempId] = `jl-${nextServerId++}`;
+  }
+  return idMap;
+}
 
 const fields = [
   f.field({
@@ -102,12 +114,12 @@ const JournalSide = ({
       <Card.Content>
         <LineItems.Table
           rowActionsWidth={40}
-          renderRowActions={(row: JournalLine) => (
+          renderRowActions={(row: JournalLine, { lineKey }) => (
             <Button
               variant="ghost"
               size="icon"
               aria-label={`Remove ${row.memo || "line"}`}
-              onClick={() => value.removeLine(row.lineRef)}
+              onClick={() => value.removeLine(lineKey)}
             >
               ×
             </Button>
@@ -138,7 +150,12 @@ const LineItemsJournalDemoPage = () => {
     const changeSet = group.getChangeSet();
     if (changeSet.isEmpty || !balanced) return;
     setLastSaved(changeSet);
-    group.reset();
+    // A real save would submit first, then re-key new lines with the ids the
+    // server returns, per collection.
+    group.reset({
+      debits: { idMap: fakeServerIds(changeSet.changeSets.debits) },
+      credits: { idMap: fakeServerIds(changeSet.changeSets.credits) },
+    });
   };
 
   return (

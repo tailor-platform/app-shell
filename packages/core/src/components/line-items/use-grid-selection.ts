@@ -9,8 +9,8 @@ import {
 } from "./spreadsheet-logic";
 
 /** Flattens a coordinate into a Set key so per-cell lookups stay O(1). */
-export function coordKey(lineRef: string, columnId: string): string {
-  return `${lineRef}::${columnId}`;
+export function coordKey(lineKey: string, columnId: string): string {
+  return `${lineKey}::${columnId}`;
 }
 
 export type GridSelection = {
@@ -32,7 +32,7 @@ export type UseGridSelectionResult = GridSelection & {
   /** Arrow-key navigation. Returns the coord moved to, or `null` at the edge. */
   moveActive: (dir: GridDirection, opts?: { shift?: boolean }) => GridCoord | null;
   clearSelection: () => void;
-  isSelected: (lineRef: string, columnId: string) => boolean;
+  isSelected: (lineKey: string, columnId: string) => boolean;
 };
 
 /**
@@ -42,12 +42,12 @@ export type UseGridSelectionResult = GridSelection & {
  * navigation. A stray native `focus` event must never move it, or a shift-click
  * would collapse the very range it was meant to extend.
  *
- * `orderedLineRefs` and `columnIds` are expected to be memoized by the caller —
+ * `orderedLineKeys` and `columnIds` are expected to be memoized by the caller —
  * a new array identity every render would rebuild every handler here and
  * remount the active cell's editor mid-keystroke.
  */
 export function useGridSelection(
-  orderedLineRefs: readonly string[],
+  orderedLineKeys: readonly string[],
   columnIds: readonly string[],
 ): UseGridSelectionResult {
   const [active, setActiveState] = React.useState<GridCoord | null>(null);
@@ -58,18 +58,18 @@ export function useGridSelection(
 
   const paintRange = React.useCallback(
     (from: GridCoord, to: GridCoord) => {
-      const cells = rectangularCells(orderedLineRefs, columnIds, from, to);
+      const cells = rectangularCells(orderedLineKeys, columnIds, from, to);
       const next = new Set<string>();
-      for (const c of cells) next.add(coordKey(c.lineRef, c.columnId));
+      for (const c of cells) next.add(coordKey(c.lineKey, c.columnId));
       setSelected(next);
     },
-    [columnIds, orderedLineRefs],
+    [columnIds, orderedLineKeys],
   );
 
   const setActive = React.useCallback((coord: GridCoord | null) => {
     setActiveState(coord);
     anchor.current = coord;
-    setSelected(coord ? new Set([coordKey(coord.lineRef, coord.columnId)]) : new Set<string>());
+    setSelected(coord ? new Set([coordKey(coord.lineKey, coord.columnId)]) : new Set<string>());
   }, []);
 
   const beginSelection = React.useCallback(
@@ -84,7 +84,7 @@ export function useGridSelection(
       }
       setActiveState(coord);
       anchor.current = coord;
-      setSelected(new Set([coordKey(coord.lineRef, coord.columnId)]));
+      setSelected(new Set([coordKey(coord.lineKey, coord.columnId)]));
       setDragging(true);
     },
     [paintRange],
@@ -106,7 +106,7 @@ export function useGridSelection(
   const moveActive = React.useCallback(
     (dir: GridDirection, opts?: { shift?: boolean }): GridCoord | null => {
       if (!active) return null;
-      const next = moveSelectionCoord(dir, active, orderedLineRefs, columnIds);
+      const next = moveSelectionCoord(dir, active, orderedLineKeys, columnIds);
       if (!next || sameCoord(next, active)) return null;
 
       setActiveState(next);
@@ -114,11 +114,11 @@ export function useGridSelection(
         paintRange(anchor.current, next);
       } else {
         anchor.current = next;
-        setSelected(new Set([coordKey(next.lineRef, next.columnId)]));
+        setSelected(new Set([coordKey(next.lineKey, next.columnId)]));
       }
       return next;
     },
-    [active, columnIds, orderedLineRefs, paintRange],
+    [active, columnIds, orderedLineKeys, paintRange],
   );
 
   const clearSelection = React.useCallback(() => {
@@ -138,7 +138,7 @@ export function useGridSelection(
   }, [dragging]);
 
   const isSelected = React.useCallback(
-    (lineRef: string, columnId: string) => selected.has(coordKey(lineRef, columnId)),
+    (lineKey: string, columnId: string) => selected.has(coordKey(lineKey, columnId)),
     [selected],
   );
 

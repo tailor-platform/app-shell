@@ -17,7 +17,8 @@ import { useState } from "react";
 
 // 🧪 Dummy Data: Replace with real data later
 type PurchaseOrderLine = {
-  lineRef: string;
+  /** Server id; unset on lines added since the last save. */
+  id?: string;
   sku: string;
   description: string;
   uom: string;
@@ -77,7 +78,7 @@ const CATALOG_TREE: TreePickerNode<CatalogItem>[] = [
 // 🧪 Dummy Data: Replace with real data later
 const INITIAL_LINES: PurchaseOrderLine[] = [
   {
-    lineRef: "pol-1001",
+    id: "pol-1001",
     sku: "DT-TEE-BLK-M",
     description: "Cotton Wreath Tee, Black, Medium",
     uom: "CS",
@@ -88,7 +89,7 @@ const INITIAL_LINES: PurchaseOrderLine[] = [
     note: "",
   },
   {
-    lineRef: "pol-1002",
+    id: "pol-1002",
     sku: "DT-TEE-BLK-L",
     description: "Cotton Wreath Tee, Black, Large",
     uom: "CS",
@@ -99,7 +100,7 @@ const INITIAL_LINES: PurchaseOrderLine[] = [
     note: "Short shipped",
   },
   {
-    lineRef: "pol-1003",
+    id: "pol-1003",
     sku: "DT-HOOD-CRM-L",
     description: "Heavyweight Hoodie, Cream, Large",
     uom: "EA",
@@ -110,7 +111,7 @@ const INITIAL_LINES: PurchaseOrderLine[] = [
     note: "",
   },
   {
-    lineRef: "pol-1004",
+    id: "pol-1004",
     sku: "DT-CAP-NVY-OS",
     description: "Embroidered Cap, Navy, One Size",
     uom: "EA",
@@ -121,7 +122,7 @@ const INITIAL_LINES: PurchaseOrderLine[] = [
     note: "",
   },
   {
-    lineRef: "pol-1005",
+    id: "pol-1005",
     sku: "DT-SOCK-WHT-OS",
     description: "Crew Socks, White, One Size",
     uom: "PLT",
@@ -138,6 +139,16 @@ const lineTotal = (l: PurchaseOrderLine) => (l.quantity ?? 0) * (l.unitPrice ?? 
 
 // ✅ Reusable Component: Can be moved to components/ui/
 const f = createLineItemHelper<PurchaseOrderLine>();
+
+// 🧪 Dummy Data: stands in for the ids a real backend returns for created lines.
+let nextServerId = 9000;
+function fakeServerIds(changeSet: LineItemsChangeSet): Record<string, string> {
+  const idMap: Record<string, string> = {};
+  for (const change of changeSet.lineChanges) {
+    if (change.action === "add") idMap[change.tempId] = `pol-${nextServerId++}`;
+  }
+  return idMap;
+}
 
 const fields = [
   f.field({
@@ -248,7 +259,7 @@ function generateLines(count: number): PurchaseOrderLine[] {
     const quantity = 1 + ((i * 37) % 240);
     const day = 1 + (i % 28);
     return {
-      lineRef: `pol-${2000 + i}`,
+      id: `pol-${2000 + i}`,
       sku: item.sku,
       description: item.name,
       uom: UOM_OPTIONS[i % UOM_OPTIONS.length]!.value,
@@ -297,7 +308,7 @@ const PurchaseOrderDemo = ({
     mode,
     ordering,
     // 🔽 Bulk actions: the same footer bar DataTable shows while rows are selected.
-    // Actions get the selected lineRefs; look lines up from `allLines` when needed.
+    // Actions get the selected line keys; look lines up from `allLines` when needed.
     // Block-bodied handlers keep TypeScript from inferring `lineItems` from itself.
     rowSelection: {
       actions: [
@@ -310,8 +321,14 @@ const PurchaseOrderDemo = ({
             const picked = new Set(ids);
             lineItems.updateLines(
               lineItems.allLines
-                .filter((line) => picked.has(line.lineRef) && line.receivedQty < line.quantity)
-                .map((line) => ({ lineRef: line.lineRef, patch: { receivedQty: line.quantity } })),
+                .filter(
+                  (line) =>
+                    picked.has(lineItems.getLineKey(line)) && line.receivedQty < line.quantity,
+                )
+                .map((line) => ({
+                  lineKey: lineItems.getLineKey(line),
+                  patch: { receivedQty: line.quantity },
+                })),
             );
           },
         },
@@ -321,10 +338,9 @@ const PurchaseOrderDemo = ({
           icon: <Copy className="size-4" />,
           onClick: (ids) => {
             const picked = new Set(ids);
+            // Copies come in without an id, as new lines.
             lineItems.addLines(
-              lineItems.allLines
-                .filter((line) => picked.has(line.lineRef))
-                .map(({ lineRef: _lineRef, ...line }) => line),
+              lineItems.allLines.filter((line) => picked.has(lineItems.getLineKey(line))),
             );
           },
         },
@@ -341,7 +357,7 @@ const PurchaseOrderDemo = ({
     },
     onMetadataCommit: (event) =>
       setMetadataLog((log) =>
-        [`${event.lineRef}: note → ${JSON.stringify(event.patch.note)}`, ...log].slice(0, 5),
+        [`${event.lineId}: note → ${JSON.stringify(event.patch.note)}`, ...log].slice(0, 5),
       ),
   });
 
@@ -410,13 +426,15 @@ const PurchaseOrderDemo = ({
               <LineItems.Table
                 rowHeight={36}
                 rowActionsWidth={72}
-                renderRowActions={(row: PurchaseOrderLine) => (
+                renderRowActions={(row: PurchaseOrderLine, { lineKey, isNew }) => (
                   <>
                     <Button
                       variant="ghost"
                       size="icon"
                       aria-label={`View ${row.sku}`}
-                      onClick={() => alert(`View ${row.sku}`)}
+                      // A new line has no page to open until it's saved.
+                      disabled={isNew}
+                      onClick={() => alert(`View ${row.id}`)}
                     >
                       <ExternalLink className="size-3.5" />
                     </Button>
@@ -424,7 +442,7 @@ const PurchaseOrderDemo = ({
                       variant="ghost"
                       size="icon"
                       aria-label={`Remove ${row.sku}`}
-                      onClick={() => lineItems.removeLine(row.lineRef)}
+                      onClick={() => lineItems.removeLine(lineKey)}
                     >
                       <X className="size-3.5 text-destructive" />
                     </Button>
@@ -461,8 +479,9 @@ const PurchaseOrderDemo = ({
                 <LineItems.SaveActions
                   onSave={(cs) => {
                     setLastSaved(cs);
-                    // A real save would submit first; the baseline moves forward on success.
-                    lineItems.reset();
+                    // A real save would submit first, then re-key new lines with the
+                    // ids the server returns (or pass the saved lines to reset).
+                    lineItems.reset({ idMap: fakeServerIds(cs) });
                   }}
                 />
               </div>

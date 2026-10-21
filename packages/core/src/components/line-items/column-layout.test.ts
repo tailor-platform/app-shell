@@ -12,7 +12,7 @@ import {
 } from "./column-layout";
 import { createLineItemHelper } from "./field";
 
-type Line = { lineRef: string; sku: string; name: string; qty: number; total: number };
+type Line = { id?: string; sku: string; name: string; qty: number; total: number };
 
 const f = createLineItemHelper<Line>();
 

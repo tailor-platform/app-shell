@@ -50,7 +50,7 @@ const FOCUSABLE =
  *       </>
  *     } />
  *     <Card.Content>
- *       <LineItems.Table renderRowActions={(row: POLine) => <RemoveButton lineRef={row.lineRef} />} />
+ *       <LineItems.Table renderRowActions={(_row, { lineKey }) => <RemoveButton lineKey={lineKey} />} />
  *       <LineItems.TotalsRow>{(lines) => ({ total: sum(lines) })}</LineItems.TotalsRow>
  *       <LineItems.AddRow>
  *         <CatalogCombobox onPick={(item) => lineItems.addLine(item)} />

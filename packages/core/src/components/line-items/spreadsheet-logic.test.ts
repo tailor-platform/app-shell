@@ -175,6 +175,28 @@ describe("TSV round-trip", () => {
   it("preserves empty cells inside a row", () => {
     expect(parseClipboardTsv("1\t\t3")).toEqual([["1", "", "3"]]);
   });
+
+  it("keeps line breaks and tabs inside a quoted cell, as Excel and Sheets copy them", () => {
+    const copied = 'A1\t"two\nlines"\nA2\t"say ""hi""\tthere"\n';
+    expect(parseClipboardTsv(copied)).toEqual([
+      ["A1", "two\nlines"],
+      ["A2", 'say "hi"\tthere'],
+    ]);
+  });
+
+  it("reads a quote that doesn't open a cell as text", () => {
+    expect(parseClipboardTsv('5" pipe\tx')).toEqual([['5" pipe', "x"]]);
+  });
+
+  it("quotes cells that need it on copy, and reads them back unchanged", () => {
+    const matrix = [
+      ["plain", "two\nlines"],
+      ['a "quote"', "tab\there"],
+    ];
+    const tsv = serializeMatrixTsv(matrix);
+    expect(tsv).toBe('plain\t"two\nlines"\n"a ""quote"""\t"tab\there"');
+    expect(parseClipboardTsv(tsv)).toEqual(matrix);
+  });
 });
 
 describe("sameCoord", () => {

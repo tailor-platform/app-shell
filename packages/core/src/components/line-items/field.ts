@@ -138,6 +138,28 @@ export function fieldToColumnDef<T extends LineItemsRowData>(
     };
   }
 
+  if (field.type?.kind === "boolean") {
+    def.normalize = (value: unknown, row: T): unknown => {
+      if (typeof value === "boolean") return value;
+      const parsed = parseLooseBoolean(String(value ?? ""));
+      // Unreadable text keeps the current value rather than storing a string.
+      return parsed ?? (row as Record<string, unknown>)[field.key];
+    };
+  }
+
+  if (field.type?.kind === "select") {
+    const { options } = field.type;
+    def.normalize = (value: unknown, row: T): unknown => {
+      if (value === "" || value === null || value === undefined) return null;
+      const text = String(value).trim();
+      // A pasted cell may hold the option's value or the label a copy showed.
+      const match = matchSelectOption(options, text);
+      if (match) return match.value;
+      // Nothing matches: keep the current value rather than invent an option.
+      return (row as Record<string, unknown>)[field.key];
+    };
+  }
+
   if (field.type?.kind === "custom") {
     if (field.type.normalize) def.normalize = field.type.normalize;
     if (field.type.equals) def.equals = field.type.equals;
@@ -188,6 +210,32 @@ export function parseLooseNumber(input: string): number | null {
   }
   if (!/^-?(\d+\.?\d*|\.\d+)$/.test(s)) return null;
   return Number(s);
+}
+
+const TRUE_WORDS = new Set(["true", "yes", "y", "1", "on", "x", "✓", "✔", "☑", "はい"]);
+const FALSE_WORDS = new Set(["false", "no", "n", "0", "off", "", "☐", "いいえ"]);
+
+/**
+ * Reads a pasted checkbox value: TRUE/FALSE as spreadsheets copy them, yes/no,
+ * 1/0, on/off, and check marks. Returns `null` for anything else.
+ */
+export function parseLooseBoolean(input: string): boolean | null {
+  const s = input.trim().toLowerCase();
+  if (TRUE_WORDS.has(s)) return true;
+  if (FALSE_WORDS.has(s)) return false;
+  return null;
+}
+
+/** Finds the option whose value, or failing that whose label, matches `text` (any case). */
+export function matchSelectOption<O extends { value: string; label: string }>(
+  options: ReadonlyArray<O>,
+  text: string,
+): O | undefined {
+  const needle = text.trim().toLowerCase();
+  return (
+    options.find((o) => o.value.toLowerCase() === needle) ??
+    options.find((o) => o.label.toLowerCase() === needle)
+  );
 }
 
 /** Accepts YYYY-MM-DD, YYYY/MM/DD or YYYY.MM.DD; returns ISO YYYY-MM-DD or `null`. */

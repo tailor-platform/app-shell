@@ -102,16 +102,73 @@ export function coordsToRowsMatrix(
   return rowRefs.map((ref) => columnSpan.map((id) => getDisplay(ref, id)));
 }
 
-export function serializeMatrixTsv(rows: readonly string[][]): string {
-  return rows.map((r) => r.join("\t")).join("\n");
+/**
+ * Quotes a cell the way spreadsheets do (RFC 4180 style): one holding a tab,
+ * line break or quote is wrapped in quotes, with inner quotes doubled.
+ */
+function quoteTsvCell(cell: string): string {
+  return /[\t\n\r"]/.test(cell) ? `"${cell.replace(/"/g, '""')}"` : cell;
 }
 
+export function serializeMatrixTsv(rows: readonly string[][]): string {
+  return rows.map((r) => r.map(quoteTsvCell).join("\t")).join("\n");
+}
+
+/**
+ * Parses tab-separated text from a spreadsheet. A cell that starts with a
+ * quote runs to its closing quote, so line breaks and tabs inside it stay in
+ * the cell, and `""` reads as one quote — how Excel and Sheets copy a cell
+ * with a line break in it. A quote anywhere else is plain text.
+ */
 export function parseClipboardTsv(text: string): string[][] {
-  const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-  if (!normalized.trim()) return [];
-  const lines = normalized.split("\n");
-  while (lines.length > 0 && lines[lines.length - 1] === "") lines.pop();
-  return lines.map((line) => line.split("\t"));
+  if (!text.trim()) return [];
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let i = 0;
+  const endCell = () => {
+    row.push(cell);
+    cell = "";
+  };
+  const endRow = () => {
+    endCell();
+    rows.push(row);
+    row = [];
+  };
+
+  while (i < text.length) {
+    const ch = text[i]!;
+    if (ch === '"' && cell === "") {
+      // Quoted cell: read to the closing quote.
+      i++;
+      while (i < text.length) {
+        if (text[i] === '"') {
+          if (text[i + 1] === '"') {
+            cell += '"';
+            i += 2;
+            continue;
+          }
+          i++;
+          break;
+        }
+        cell += text[i];
+        i++;
+      }
+      continue;
+    }
+    if (ch === "\t") {
+      endCell();
+    } else if (ch === "\r" || ch === "\n") {
+      endRow();
+      if (ch === "\r" && text[i + 1] === "\n") i++;
+    } else {
+      cell += ch;
+    }
+    i++;
+  }
+  // A trailing line break ends the last row rather than starting an empty one.
+  if (cell !== "" || row.length > 0) endRow();
+  return rows;
 }
 
 export function sameCoord(a: GridCoord | null, b: GridCoord | null): boolean {

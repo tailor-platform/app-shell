@@ -30,7 +30,11 @@ export type UseLineItemsGroupReturn<G extends LineItemsGroupMembers> = {
    * each member's saved lines or `{ idMap }` keyed by member name, so new
    * lines pick up their server ids — see `LineItemsResetInput`.
    */
-  reset: (saved?: { [K in keyof G]?: Parameters<G[K]["reset"]>[0] }) => void;
+  reset: (
+    saved?: { [K in keyof G]?: Parameters<G[K]["reset"]>[0] },
+    /** `sent`: the group change-set that was saved — see `LineItemsResetOptions`. */
+    options?: { sent?: LineItemsGroupChangeSet<G> },
+  ) => void;
   /** Discards every member's changes back to its baseline. */
   revert: () => void;
 };
@@ -77,8 +81,11 @@ export function useLineItemsGroup<G extends LineItemsGroupMembers>(
     isDirty: all.some((m) => m.isDirty),
     hasUnsavedChanges: () => all.some((m) => m.hasUnsavedChanges()),
     getChangeSet,
-    reset: (saved) => {
-      for (const key of Object.keys(members) as (keyof G)[]) members[key].reset(saved?.[key]);
+    reset: (saved, options) => {
+      for (const key of Object.keys(members) as (keyof G)[]) {
+        const sent = options?.sent?.changeSets[key];
+        members[key].reset(saved?.[key], sent ? { sent } : undefined);
+      }
     },
     revert: () => all.forEach((m) => m.revert()),
   };

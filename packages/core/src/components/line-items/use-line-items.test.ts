@@ -390,6 +390,101 @@ describe("useLineItems", () => {
       ]);
     });
 
+    describe("with { sent }: edits made while a save is in flight", () => {
+      it("stay pending after reset()", () => {
+        const { result } = setup();
+        act(() => result.current.updateField("1", "quantity", 5));
+        const sent = result.current.getChangeSet();
+        // The user keeps editing while the request is out.
+        act(() => result.current.updateField("2", "quantity", 9));
+
+        act(() => result.current.reset(undefined, { sent }));
+        expect(result.current.getChangeSet().lineChanges).toEqual([
+          { action: "update", lineId: "2", patch: { quantity: 9 } },
+        ]);
+      });
+
+      it("stay pending when the same field changes again", () => {
+        const { result } = setup();
+        act(() => result.current.updateField("1", "quantity", 5));
+        const sent = result.current.getChangeSet();
+        act(() => result.current.updateField("1", "quantity", 6));
+
+        act(() => result.current.reset(undefined, { sent }));
+        expect(result.current.getChangeSet().lineChanges).toEqual([
+          { action: "update", lineId: "1", patch: { quantity: 6 } },
+        ]);
+      });
+
+      it("survive reset({ idMap }), on the re-keyed line too", () => {
+        const { result } = setup();
+        let tempId = "";
+        act(() => {
+          tempId = result.current.addLine({ sku: "NEW", quantity: 1, total: 0 });
+        });
+        const sent = result.current.getChangeSet();
+        act(() => result.current.updateField(tempId, "quantity", 3));
+        let later = "";
+        act(() => {
+          later = result.current.addLine({ sku: "LATER", quantity: 1, total: 0 });
+        });
+
+        act(() => result.current.reset({ idMap: { [tempId]: "n1" } }, { sent }));
+        const changes = result.current.getChangeSet().lineChanges;
+        expect(changes).toContainEqual({ action: "update", lineId: "n1", patch: { quantity: 3 } });
+        expect(changes).toContainEqual(expect.objectContaining({ action: "add", tempId: later }));
+        expect(changes).toHaveLength(2);
+      });
+
+      it("are carried onto the server's lines with reset(savedLines)", () => {
+        const { result } = setup();
+        act(() => result.current.updateField("1", "quantity", 5));
+        const sent = result.current.getChangeSet();
+        act(() => result.current.updateField("2", "quantity", 9));
+
+        // The server also recomputed line 1's total.
+        act(() =>
+          result.current.reset(
+            [
+              { id: "1", sku: "APPLE-01", quantity: 5, total: 25 },
+              { id: "2", sku: "BANANA-02", quantity: 5, total: 25 },
+            ],
+            { sent },
+          ),
+        );
+        expect(result.current.allLines.map((l) => [l.quantity, l.total])).toEqual([
+          [5, 25],
+          [9, 25],
+        ]);
+        expect(result.current.getChangeSet().lineChanges).toEqual([
+          { action: "update", lineId: "2", patch: { quantity: 9 } },
+        ]);
+      });
+
+      it("count a sent reorder as saved", () => {
+        const { result } = setup({ ordering: "manual" });
+        act(() => result.current.reorderLine("2", null));
+        const sent = result.current.getChangeSet();
+        expect(sent.isEmpty).toBe(false);
+
+        act(() => result.current.reset(undefined, { sent }));
+        expect(result.current.isDirty).toBe(false);
+        expect(result.current.allLines.map((l) => l.id)).toEqual(["2", "1"]);
+      });
+
+      it("keep a removal made after the send", () => {
+        const { result } = setup();
+        act(() => result.current.updateField("1", "quantity", 5));
+        const sent = result.current.getChangeSet();
+        act(() => result.current.removeLine("2"));
+
+        act(() => result.current.reset(undefined, { sent }));
+        expect(result.current.getChangeSet().lineChanges).toEqual([
+          { action: "remove", lineId: "2" },
+        ]);
+      });
+    });
+
     it("warns when reset() leaves new lines on temp keys", () => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
       const { result } = setup();

@@ -271,3 +271,81 @@ export function cloneBaseline<TRow extends LineItemsRowData>(
   }
   return { order: [...order], rows };
 }
+
+/**
+ * The changed document fields of `row` against `base`, normalized and compared
+ * the way the change-set does it.
+ */
+export function diffDocumentFields<TRow extends LineItemsRowData>(
+  cols: LineItemsColumnDef<TRow>[],
+  row: TRow,
+  base: TRow,
+): LineItemsRowPatch {
+  const columnIndex = indexColumns(cols);
+  const patch: LineItemsRowPatch = {};
+  for (const key of columnsByScope(cols, "document")) {
+    const col = columnIndex.get(key);
+    const normalize = (value: unknown, r: TRow) =>
+      col?.normalize ? col.normalize(value, r) : defaultNormalizeValue(value);
+    const nCur = normalize(row[key as keyof TRow], row);
+    const nBase = normalize(base[key as keyof TRow], base);
+    const same = col?.equals ? col.equals(nCur, nBase, row) : Object.is(nCur, nBase);
+    if (!same) patch[key] = nCur;
+  }
+  return patch;
+}
+
+/**
+ * What the server holds once `sent` has been saved: `baseline` with the sent
+ * ops applied. Edits made after `sent` was taken are left out, so they still
+ * read as changes afterwards. Rows start from the current ones (keeping
+ * read-only fields fresh), with document fields as sent, or as they were in
+ * the baseline where the send didn't touch them.
+ */
+export function applySentChanges<TRow extends LineItemsRowData>(
+  cols: LineItemsColumnDef<TRow>[],
+  baseline: LineItemsBaseline<TRow>,
+  currentByKey: Record<string, TRow | undefined>,
+  sent: LineItemsChangeSet,
+): LineItemsBaseline<TRow> {
+  const documentKeys = columnsByScope(cols, "document");
+  const addKeys = [...documentKeys, ...columnsByScope(cols, "metadata")];
+  const removed = new Set<string>();
+  const updates = new Map<string, LineItemsRowPatch>();
+  const positions = new Map<string, number>();
+  const adds: Extract<LineItemsLineChange, { action: "add" }>[] = [];
+  for (const change of sent.lineChanges) {
+    if (change.action === "remove") removed.add(change.lineId);
+    else if (change.action === "update") updates.set(change.lineId, change.patch);
+    else if (change.action === "reorder") positions.set(change.lineId, change.position);
+    else adds.push(change);
+  }
+
+  // Saved lines in their order after the send: moved lines at their sent
+  // positions, the rest filling the gaps in their previous order.
+  const kept = baseline.order.filter((id) => baseline.rows[id] && !removed.has(id));
+  let order = kept;
+  if (positions.size > 0) {
+    const slots: (string | undefined)[] = Array.from({ length: kept.length });
+    for (const [id, position] of positions) if (position < slots.length) slots[position] = id;
+    const rest = kept.filter((id) => !positions.has(id));
+    order = slots.map((id) => id ?? rest.shift()!);
+  }
+
+  const rows: Record<string, TRow> = {};
+  for (const id of order) {
+    const base = baseline.rows[id]!;
+    const row = { ...(currentByKey[id] ?? base) } as Record<string, unknown>;
+    const patch = updates.get(id);
+    for (const key of documentKeys) {
+      row[key] = patch && key in patch ? patch[key] : (base as Record<string, unknown>)[key];
+    }
+    rows[id] = cloneRow(row as TRow);
+  }
+  for (const add of adds) {
+    const row = { ...(currentByKey[add.tempId] ?? add.line) } as Record<string, unknown>;
+    for (const key of addKeys) if (key in add.data) row[key] = add.data[key];
+    rows[add.tempId] = cloneRow(withLineKey(row as TRow, add.tempId));
+  }
+  return { order: [...order, ...adds.map((a) => a.tempId)], rows };
+}

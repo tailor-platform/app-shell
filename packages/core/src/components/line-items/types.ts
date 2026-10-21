@@ -120,6 +120,17 @@ export type LineItemsRowData = Record<string, unknown>;
  * - `{ idMap }`: maps each new line's `tempId` (from its `add` op) to the id
  *   the server assigned, for backends that return created ids.
  */
+/** Options for `reset`. */
+export type LineItemsResetOptions = {
+  /**
+   * The change-set that was saved — the one `onSave` received. With it, only
+   * what was sent counts as saved: edits made while the request was in flight
+   * stay pending, to go out with the next save. Without it, everything on
+   * screen counts as saved.
+   */
+  sent?: LineItemsChangeSet;
+};
+
 export type LineItemsResetInput<T extends LineItemsRowData> =
   | readonly T[]
   | { idMap: Readonly<Record<string, string | number>> };
@@ -456,7 +467,7 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
    * and their next edit would be sent as an `update` the server can't match;
    * LineItems warns about that in development.
    */
-  reset: (saved?: LineItemsResetInput<T>) => void;
+  reset: (saved?: LineItemsResetInput<T>, options?: LineItemsResetOptions) => void;
   /** Discards every uncommitted edit, insert, and removal back to the baseline. */
   revert: () => void;
   getChangeSet: () => LineItemsChangeSet;

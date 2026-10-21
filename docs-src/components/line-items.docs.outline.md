@@ -292,13 +292,34 @@ After a successful save, call `reset` so the baseline moves forward and new line
     if (changeSet.isEmpty) return;
     const saved = await submitLines(changeSet.lineChanges);
     // Preferred: the lines as saved. Works for any backend, and picks up
-    // values the server computed.
-    lineItems.reset(saved.lines);
+    // values the server computed. `sent` keeps edits made meanwhile pending.
+    lineItems.reset(saved.lines, { sent: changeSet });
   }}
 />
 ```
 
 If the backend only returns the ids it created, map each `add`'s `tempId` to its id instead: `lineItems.reset({ idMap: { [tempId]: serverId } })`. `reset()` with no argument is for saves that added no lines; with new lines pending it warns in the console.
+
+**Pass `{ sent: changeSet }`** — the change-set you submitted — whenever the user can keep editing while the request is out. Only what was sent then counts as saved; anything typed, pasted, added or removed in the meantime stays pending and goes out with the next save. Without it, everything on screen at the time of `reset` counts as saved, including edits that were never sent.
+
+### Auto-save
+
+LineItems never talks to your backend, as with DataTable's inline editing. To save as the user goes, send the change-set after a pause and reset with what was sent:
+
+```tsx
+const changeSet = lineItems.getChangeSet();
+
+React.useEffect(() => {
+  if (changeSet.isEmpty || lineItems.errors.length > 0) return;
+  const timer = setTimeout(async () => {
+    const saved = await saveLines(changeSet);
+    lineItems.reset(saved.lines, { sent: changeSet });
+  }, 800);
+  return () => clearTimeout(timer);
+}, [changeSet]);
+```
+
+The change-set covers every kind of edit — a paste or fill-down across many cells, added, removed and reordered lines — as one request, where a per-cell callback would send dozens. Keep one request in flight at a time (queue the next change-set until the previous save resolves) and show failures in your UI.
 
 `hasUnsavedChanges()` is clear as soon as `reset` runs, so `await save(); reset(saved); navigate("/orders")` passes `DirtyBar`'s `warnOnNav` guard in one go.
 

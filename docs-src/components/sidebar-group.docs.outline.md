@@ -126,13 +126,13 @@ Titles support i18n with `defineI18nLabels`:
 import { defineI18nLabels } from "@tailor-platform/app-shell";
 
 const labels = defineI18nLabels({
-  products: {
-    en: "Products",
-    ja: "商品",
+  en: {
+    products: "Products",
+    settings: "Settings",
   },
-  settings: {
-    en: "Settings",
-    ja: "設定",
+  ja: {
+    products: "商品",
+    settings: "設定",
   },
 });
 

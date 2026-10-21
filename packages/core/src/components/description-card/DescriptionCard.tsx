@@ -6,6 +6,7 @@ import { cn } from "../../lib/utils";
 import type { DescriptionCardProps, FieldConfig, FieldDefinition, ResolvedField } from "./types";
 import { isDivider, isFieldDefinition } from "./types";
 import { renderField, shouldHideField, isFullWidthField, getNestedValue } from "./field-renderers";
+import { Text } from "../text";
 
 // ============================================================================
 // FIELD RESOLVER
@@ -102,9 +103,9 @@ function DescriptionItem({ label, children, fullWidth }: DescriptionItemProps) {
         fullWidth && "astw:col-span-full",
       )}
     >
-      <p className="astw:text-sm astw:font-medium astw:text-muted-foreground astw:leading-none">
+      <Text.p variant="label-md" className="astw:text-muted-foreground astw:leading-none">
         {label}
-      </p>
+      </Text.p>
       <div className="astw:min-w-0">{children}</div>
     </div>
   );
@@ -202,14 +203,18 @@ export function DescriptionCard<TData extends object = Record<string, unknown>>(
       <Card.Root className={cn("astw:@container", className)} style={style}>
         {/* Header */}
         <div className="astw:flex astw:items-center astw:justify-between astw:px-6 astw:py-6">
-          <h3 className="astw:text-lg astw:font-semibold astw:leading-none">{title}</h3>
+          <Text.h3 variant="heading-md" className="astw:leading-none">
+            {title}
+          </Text.h3>
           {headerAction && <div>{headerAction}</div>}
         </div>
 
         {/* Content */}
         <Card.Content className="astw:pb-4">
           {!hasContent ? (
-            <p className="astw:text-sm astw:text-muted-foreground">No information available</p>
+            <Text variant="body-md" className="astw:text-muted-foreground">
+              No information available
+            </Text>
           ) : (
             <div className="astw:space-y-4">
               {sections.map((section, index) => (

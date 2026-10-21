@@ -3,6 +3,7 @@ import { Drawer } from "@base-ui/react/drawer";
 import { ChevronsRight, ChevronsLeft, ChevronsUp, ChevronsDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Text } from "../text";
 
 const sideToCloseIcon: Record<Side, React.ComponentType<React.SVGProps<SVGSVGElement>>> = {
   right: ChevronsRight,
@@ -116,7 +117,7 @@ function Overlay({ className, ...props }: React.ComponentProps<typeof Drawer.Bac
     <Drawer.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-(--z-overlay) astw:bg-black/50",
+        "astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-(--z-overlay) astw:bg-backdrop",
         className,
       )}
       {...props}
@@ -254,10 +255,10 @@ Footer.displayName = "Sheet.Footer";
 /** The title of the sheet, announced by screen readers. */
 function Title({ className, ...props }: React.ComponentProps<typeof Drawer.Title>) {
   return (
-    <Drawer.Title
-      data-slot="sheet-title"
-      className={cn("astw:text-foreground astw:text-lg astw:font-semibold", className)}
-      {...props}
+    <Text
+      variant="heading-md"
+      className={cn("astw:text-foreground", className)}
+      render={<Drawer.Title data-slot="sheet-title" {...props} />}
     />
   );
 }
@@ -266,10 +267,10 @@ Title.displayName = "Sheet.Title";
 /** A description that provides additional context for the sheet. */
 function Description({ className, ...props }: React.ComponentProps<typeof Drawer.Description>) {
   return (
-    <Drawer.Description
-      data-slot="sheet-description"
-      className={cn("astw:text-muted-foreground astw:text-sm", className)}
-      {...props}
+    <Text
+      variant="body-md"
+      className={cn("astw:text-muted-foreground", className)}
+      render={<Drawer.Description data-slot="sheet-description" {...props} />}
     />
   );
 }

@@ -38,6 +38,7 @@ Filled variants for high emphasis, plus subtle variants for lower-emphasis statu
 <Badge variant="subtle-warning">Needs Attention</Badge>
 <Badge variant="subtle-error">Needs Review</Badge>
 <Badge variant="subtle-info">In Progress</Badge>
+<Badge variant="subtle-neutral">Archived</Badge>
 ```
 
 ### Outline Variants with Status Dots
@@ -69,6 +70,7 @@ type BadgeVariant =
   | "subtle-warning" // Low-emphasis yellow
   | "subtle-error" // Low-emphasis red/destructive
   | "subtle-info" // Low-emphasis blue
+  | "subtle-neutral" // Low-emphasis gray
   // Outline variants with status dots
   | "outline-success"
   | "outline-warning"
@@ -195,6 +197,7 @@ function ProductBadge({ product }: { product: Product }) {
 | `subtle-warning` | ![Subtle yellow badge] | Low-emphasis pending or attention states   |
 | `subtle-error`   | ![Subtle red badge]    | Low-emphasis failures or exceptions        |
 | `subtle-info`    | ![Subtle blue badge]   | Low-emphasis informational or in-progress  |
+| `subtle-neutral` | ![Subtle gray badge]   | Low-emphasis tags with no status           |
 
 ### Outline Variants
 

@@ -32,7 +32,7 @@ function Lines({ lines }: { lines: POLine[] }) {
     fields,
     defaultLines: lines,
     ordering: "manual",
-    selection: true,
+    rowSelection: {},
   });
 
   return (
@@ -47,6 +47,6 @@ function Lines({ lines }: { lines: POLine[] }) {
 
 For documents with more than one list of lines (journal debits and credits, work-order components and operations), `useLineItemsGroup({ debits, credits })` puts several `useLineItems` collections under one save boundary: a shared `isDirty`, one keyed `getChangeSet()`, and group-wide `reset()` / `revert()`.
 
-Includes view and edit modes, inline cell editors that commit on blur or Enter, range selection with TSV copy/paste, pinned columns, a sticky totals row, row selection with an optional bulk-action bar (`selection: { actions }`, the same bar as DataTable, at the table's foot), row virtualization for long documents, and drag reordering with a keyboard fallback on the grip handle.
+Includes view and edit modes, inline cell editors that commit on blur or Enter, range selection with TSV copy/paste, pinned columns, a sticky totals row, row selection with an optional bulk-action bar (`rowSelection`, the same option and `SelectionAction` shape as DataTable, with the bar at the table's foot), row virtualization for long documents, and drag reordering with a keyboard fallback on the grip handle.
 
 Built-in labels are localized (English and Japanese) through the app locale, like DataTable.

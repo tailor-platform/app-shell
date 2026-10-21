@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -98,12 +101,41 @@ describe("Button", () => {
     expect(onClick).toHaveBeenCalled();
   });
 
+  it("destructive variant uses only bridged danger utilities", () => {
+    // Precompiled `astw:` utilities emit no CSS when their token is missing
+    // from the Tailwind bridge, so check every danger class the variant uses.
+    const bridge = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "../../assets/theme.bridge.css"),
+      "utf8",
+    );
+    render(<Button variant="destructive">Delete</Button>);
+    const classes = screen.getByRole("button").className.split(/\s+/);
+
+    expect(classes.some((c) => c.includes("destructive"))).toBe(false);
+    expect(classes).toContain("astw:bg-danger-solid");
+    expect(classes).toContain("astw:text-danger-contrast");
+    expect(classes).toContain("astw:hover:bg-danger-solid-hover");
+
+    const tokens = classes
+      .map(
+        (c) =>
+          /^astw:(?:dark:)?(?:hover:|focus-visible:)?(?:bg|text|ring)-(danger-[a-z-]+)/.exec(
+            c,
+          )?.[1],
+      )
+      .filter((t): t is string => t !== undefined);
+    expect(tokens.length).toBeGreaterThanOrEqual(3);
+    for (const token of tokens) {
+      expect(bridge).toContain(`--color-${token}:`);
+    }
+  });
+
   it("renders different variants", () => {
     const { rerender } = render(<Button variant="default">Default</Button>);
     expect(screen.getByRole("button").className).toContain("bg-primary");
 
     rerender(<Button variant="destructive">Destructive</Button>);
-    expect(screen.getByRole("button").className).toContain("bg-destructive");
+    expect(screen.getByRole("button").className).toContain("bg-danger-solid");
 
     rerender(<Button variant="outline">Outline</Button>);
     expect(screen.getByRole("button").className).toContain("border");

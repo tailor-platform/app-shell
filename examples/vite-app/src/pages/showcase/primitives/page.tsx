@@ -177,6 +177,7 @@ const PrimitiveComponentsDemoPage = () => {
                   <Badge variant="subtle-warning">Subtle Warning</Badge>
                   <Badge variant="subtle-error">Subtle Error</Badge>
                   <Badge variant="subtle-info">Subtle Info</Badge>
+                  <Badge variant="subtle-neutral">Subtle Neutral</Badge>
                 </div>
               </div>
               <div>
@@ -232,6 +233,26 @@ const PrimitiveComponentsDemoPage = () => {
                   <Alert.Root variant="info">
                     <Alert.Title>Info</Alert.Title>
                     <Alert.Description>Here is some useful information.</Alert.Description>
+                  </Alert.Root>
+                </div>
+              </div>
+              <div>
+                <div style={labelStyle}>Description only</div>
+                <div className="flex flex-col gap-2">
+                  <Alert.Root variant="success">
+                    <Alert.Description>Authorization completed</Alert.Description>
+                  </Alert.Root>
+                  <Alert.Root variant="info" dismissible>
+                    <Alert.Description>Your changes have been saved.</Alert.Description>
+                  </Alert.Root>
+                  <Alert.Root variant="warning" dismissible>
+                    <Alert.Description>
+                      <p>
+                        Your session is about to expire. Save your changes before signing in again
+                        to avoid losing any unsaved work.
+                      </p>
+                      <p>You can dismiss this notification after saving.</p>
+                    </Alert.Description>
                   </Alert.Root>
                 </div>
               </div>

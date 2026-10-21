@@ -1,7 +1,33 @@
 # Decision: DataTable bulk actions live in the footer, built into the component
 
-> Status: **Decided — built into DataTable as `selectionActions` (Option A below). Implemented by PR #496.**
+> Status: **Decided — built into DataTable as `rowSelection.actions` (Option A below). Implemented by PR #496.**
 > Scope: where multi-select bulk actions render, and the `useDataTable` API that declares them. Ticket: tailor-inc/platform-planning#1738.
+
+## Operation contract update after #604
+
+The footer placement and interaction design below remain unchanged. The original
+row-based bulk-operation contract is superseded by the
+[follow-up proposal on #604](https://github.com/tailor-platform/app-shell/pull/604#issuecomment-6160412655):
+
+- Bulk actions are configured as `rowSelection.actions`, alongside selection
+  state and `onChange`. The hook return value and table context preserve this
+  grouped configuration as `rowSelection`, without a separate top-level action array.
+  Providing `rowSelection` enables checkboxes even with omitted or empty actions;
+  the bar requires non-empty actions and a non-empty selection.
+- `SelectionAction.onClick` receives a click-time copy of every selected ID,
+  including IDs whose rows have never loaded.
+- Selection actions have no `canApply`, automatic eligible counts, or
+  `keepSelection`. Row actions retain their row-based `canApply` predicate.
+- Neither returned promises nor `helpers.run` clear selection. They only track
+  pending work; consumers own eligibility, confirmation, execution, and selection
+  updates based on actual results. `clearSelection` remains an explicit command.
+- Selection stores IDs only. Remove the unreleased `selectedRows` return/context
+  member and the row-history cache that existed only to support it. Consumers
+  fetch any records required by their ID-based workflow.
+
+The original rationale is preserved below as historical context, including the
+superseded row cache and row-based action APIs; it does not describe the current
+operation contract.
 
 ## Context
 
@@ -18,24 +44,25 @@ Sean suggested the **footer** instead, next to the count that already lives ther
 
 ## Decision
 
-**`selectionActions` on `useDataTable`, rendered by `DataTable.Footer`.**
+**`rowSelection.actions` on `useDataTable`, rendered by `DataTable.Footer`.**
 
-The option mirrors `rowActions`: a declarative array on the hook that makes the component render a whole affordance. It is opt-in, and tables without it render exactly as before. A non-empty array also enables selection.
+Like `rowActions`, the action array makes the component render a whole affordance. It is opt-in, and tables without it render exactly as before. Providing `rowSelection` enables selection even when actions are omitted or empty.
 
 ```tsx
 const table = useDataTable({
   columns,
   data,
   control,
-  selectionActions: [
-    {
-      id: "activate",
-      label: "Activate",
-      icon: <Play />,
-      canApply: (v) => v.status === "inactive", // "Activate (6)", disabled at 0
-      onClick: (rows) => activate(rows), // only the eligible rows; return the promise
-    },
-  ],
+  rowSelection: {
+    actions: [
+      {
+        id: "activate",
+        label: "Activate",
+        icon: <Play />,
+        onClick: (ids) => activate(ids), // consumers own eligibility and execution
+      },
+    ],
+  },
 });
 ```
 
@@ -56,7 +83,7 @@ const table = useDataTable({
 
 ## Consequences
 
-- **`interaction/multi-select` is rewritten** around `selectionActions`. The floating bar is retired: the sticky footer covers the "keep it on screen" need, and lists that want bulk actions should be DataTables.
+- **`interaction/multi-select` is rewritten** around `rowSelection.actions`. The floating bar is retired: the sticky footer covers the "keep it on screen" need, and lists that want bulk actions should be DataTables.
 - **#525 interaction:** if it lands controlled/default `rowSelection`, ids selected outside the UI have no remembered row until their page loads. `canApply` counts cover loaded rows only, and this is documented. Whichever of #525 and this lands second adapts the other: the row memory is written wherever selection is written.
 - **Where the pop-out works:** it sticks to the nearest scrolling ancestor. Inside a scrolling drawer or panel it rides that container. Inside a wrapper with `overflow: hidden`, it stays in the footer. The docs say so. `overflow: clip` needs Safari 16+, and Sean asked for a check of `clip` together with `border-radius` there. If that misrenders, the fallback is `clip-path: inset(0 round …)`, which also clips without creating a scroll container.
 - **Toasts vs. the bar:** bulk actions naturally end in a toast, and the default bottom-right toast sits over the footer's pagination for a few seconds. That is tolerable, but worth revisiting when toast placement is next touched.
@@ -65,5 +92,4 @@ const table = useDataTable({
 
 - Width-aware overflow, so actions move into "⋯" as space runs out rather than at a fixed three. This came from Sean's review. It belongs in the generic `Toolbar`, so every toolbar gets it, and each item then needs a way to describe its menu form. To do with Seiya.
 - "Select all N" across pages (needs server-side semantics).
-- A placeable `DataTable.SelectionActions` for custom placement, e.g. an in-toolbar variant. This follows the "option = default placement, sub-component = custom placement" rule from tailor-inc/platform-planning#1699; add it when a consumer needs it.
 - A pending/loading state on an action, tooltips explaining a disabled action, and Escape to clear.

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
 import type { LayoutProps, ColumnProps, LayoutHeaderProps, ColumnArea } from "./types";
+import { Text } from "../text";
 
 /**
  * Layout.Column — A single column within `<Layout>`.
@@ -116,7 +117,7 @@ export function Header({ title, actions, children }: LayoutHeaderProps) {
     <header data-layout-header="" className="astw:flex astw:w-full astw:flex-col">
       {hasTitleRow && (
         <div className="astw:flex astw:w-full astw:flex-1 astw:items-center astw:justify-between astw:pt-4">
-          {title && <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">{title}</h1>}
+          {title && <Text.h1>{title}</Text.h1>}
           {actions != null && actions.length > 0 && (
             <div className="astw:ml-auto astw:flex astw:gap-2 astw:items-center">
               {actions.map((action, i) => (
@@ -198,12 +199,22 @@ function LayoutRoot({
 
   const hasAnyHeader = hasHeaderChild || hasLegacyHeader;
 
+  // `fill` bounds the page only while the columns sit side by side — always for
+  // one column, from `lg` for two, from `xl` for three or more (the breakpoints
+  // the grid template above uses). Below that the columns stack and the page
+  // flows and scrolls as usual; bounding a stacked grid would squash every
+  // column but the last to zero height.
+  let fillFrom: "always" | "lg" | "xl" = "always";
+  if (gridTemplate && effectiveColumnCount === 2) fillFrom = "lg";
+  if (gridTemplate && effectiveColumnCount >= 3) fillFrom = "xl";
+
   return (
     <div
       // Stable marker so an ancestor scroll container (e.g. the AppShell
       // content area) can detect a fill page via CSS `:has([data-layout-fill])`
       // and disable its own scrolling — no parent→child prop coupling needed.
-      {...(fill ? { "data-layout-fill": "" } : {})}
+      // The value says from which breakpoint the page is bounded.
+      {...(fill ? { "data-layout-fill": fillFrom } : {})}
       className={cn(
         "astw:grid astw:grid-cols-1 astw:w-full",
         hasAnyHeader ? "astw:pb-4" : "astw:py-4",
@@ -217,11 +228,26 @@ function LayoutRoot({
         // DataTable can shrink and scroll internally instead of growing the
         // page. Columns also get min-h-0 so the constraint reaches their
         // flex-col children.
-        fill && [
-          "astw:flex-1 astw:min-h-0",
-          hasAnyHeader ? "astw:grid-rows-[auto_minmax(0,1fr)]" : "astw:grid-rows-[minmax(0,1fr)]",
-          "astw:[&>[data-layout-column]]:min-h-0",
-        ],
+        fill && "astw:flex-1",
+        fill &&
+          fillFrom === "always" && [
+            "astw:min-h-0 astw:[&>[data-layout-column]]:min-h-0",
+            hasAnyHeader ? "astw:grid-rows-[auto_minmax(0,1fr)]" : "astw:grid-rows-[minmax(0,1fr)]",
+          ],
+        fill &&
+          fillFrom === "lg" && [
+            "astw:lg:min-h-0 astw:lg:[&>[data-layout-column]]:min-h-0",
+            hasAnyHeader
+              ? "astw:lg:grid-rows-[auto_minmax(0,1fr)]"
+              : "astw:lg:grid-rows-[minmax(0,1fr)]",
+          ],
+        fill &&
+          fillFrom === "xl" && [
+            "astw:xl:min-h-0 astw:xl:[&>[data-layout-column]]:min-h-0",
+            hasAnyHeader
+              ? "astw:xl:grid-rows-[auto_minmax(0,1fr)]"
+              : "astw:xl:grid-rows-[minmax(0,1fr)]",
+          ],
         className,
       )}
       style={
@@ -236,7 +262,7 @@ function LayoutRoot({
           data-layout-header=""
           className="astw:w-full astw:flex astw:justify-between astw:items-center astw:pt-4"
         >
-          {title && <h1 className="astw:text-2xl astw:font-bold astw:tracking-tight">{title}</h1>}
+          {title && <Text.h1>{title}</Text.h1>}
           {actions != null && actions.length > 0 && (
             <div className="astw:flex astw:gap-2 astw:items-center">
               {actions.map((action, i) => (

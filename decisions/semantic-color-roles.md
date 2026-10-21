@@ -83,10 +83,10 @@ This step is the status part of a two-axis palette. The rest is planned as follo
 | ------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
 | Status (this step) | `--primitive-{blue,green,amber,red}-*`                                         | `--{info,success,warning,danger}-{role}`                                                                                       | done                           |
 | Ink and lines      | `--primitive-gray-*`                                                           | base tokens read it (`--foreground`, `--muted-foreground`, `--border`, `--input`)                                              | done for default; themes later |
-| Danger action      | red                                                                            | `--destructive` becomes an alias of `--danger-solid` once its text and border uses move to `--danger-text` / `--danger-border` | next                           |
+| Danger action      | red                                                                            | `--destructive` becomes an alias of `--danger-solid` once its text and border uses move to `--danger-text` / `--danger-border` | done (2026-10-06)              |
 | Brand              | an accent scale per theme (bloom and cream read blue, theme-tailor reads cyan) | `--primary`, `--ring` and brand tints read accent steps                                                                        | with the Theme Generator       |
 
-`--status-*` and `--alert-*` stay as aliases for consumer code and are deprecated: the docs and changeset say so, and they are removed in the next major. Shipped components read the roles. An ESLint rule in `@tailor-platform/eslint-plugin-app-shell` that flags the old utilities and offers the role as a fix is a separate change.
+`--status-*` and `--alert-*` stay as aliases for consumer code and are deprecated: the docs and changeset say so, and they are removed in the next major. Shipped components read the roles. An ESLint rule in `@tailor-platform/eslint-plugin-app-shell` that flags the old utilities and offers the role as a fix is a separate change. Update 2026-10-26: that rule is `no-deprecated-tokens`. It is in `recommended` as a warning, because the old names still work until the next major. It names the replacement in the message but does not fix the code, because a tint such as `bg-destructive/10` maps to `bg-danger-surface` only approximately and the result should be checked in light and dark mode.
 
 The component variant names (`Badge` and `Alert` `error`, Badge `neutral`) are public API and are not renamed here. Aligning them with the intent names (`error` → `danger`) is a breaking change; it is a candidate for the next major, together with removing `--status-*` and `--alert-*`.
 
@@ -108,3 +108,55 @@ The component variant names (`Badge` and `Alert` `error`, Badge `neutral`) are p
 - Alert description text is the same colour as the Alert title in the default palette.
 - Consumers who override `--status-*` or `--alert-*` keep working for their own `bg-status-*` and `bg-alert-*` utilities, which read those tokens. The shipped components (Badge, Alert, CsvImporter, MetricCard — its trend colours were literal `green-600` / `red-600` before) read the roles, not `--status-*` or `--alert-*`. To recolour them, override the roles (`--{intent}-*`); overriding `--status-*` or `--alert-*` no longer changes the components. `--status-*` and `--alert-*` remain for existing consumer code and are not used by components any more.
 - cream, bloom and `_template.css` values are not edited. The header comments now list `--{intent}-{role}` among the inherited tokens.
+
+## Update 2026-10-06: danger action
+
+The "Danger action" row of the target shape is done. `--destructive` and `--destructive-foreground` are aliases of `--danger-solid` and `--danger-contrast` in `default.css`, light and dark. This supersedes the first item under "Out of scope" and the Consequences bullet that says Button and `text-destructive` still follow `--destructive`.
+
+- Names stay in 1.x but are deprecated. `--destructive`, `--destructive-foreground` and their utilities (`bg-destructive`, `text-destructive`, `border-destructive`, `text-destructive-foreground`) keep working and will be removed in the next major, the same as `--status-*` and `--alert-*` ([platform-planning#2084](https://github.com/tailor-inc/platform-planning/issues/2084)). Keeping a second name for one colour leaves two vocabularies, and `text-destructive` is below 4.5:1 as text on the dark card. `text-danger-text` is the role to prefer for text. `Button variant="destructive"` is not deprecated yet because there is no `danger` variant to move to; the next major renames it.
+- Shipped components read the danger roles directly: text uses `text-danger-text`; invalid borders use `border-danger-solid`; focus rings use `ring-danger-solid/20` (dark `/40`, toolbar `/30`); tints use `bg-danger-surface`; the static error box border uses `border-danger-border`. Nothing in `packages/core/src` uses a `destructive` utility.
+- Invalid inputs keep the solid. `border-danger-border` (step a6, 1.67:1 on the card) and step 8 (2.62:1 in light mode) are below the 3:1 non-text minimum. The solid is 4.83:1 in light mode and 3.71:1 in dark mode on the card. A unit test holds the solid at 3:1 or more over `--card` and `--background`.
+- Dark `Button variant="destructive"` is a full `#dc2626` fill (it was `#f87171` at 60% opacity). The white text on `#dc2626` is 4.83:1; hover is `--danger-solid-hover` (5.66:1). Radix and Primer use the mode's step 9 at full; shadcn uses `dark:bg-destructive/60`.
+- `cream`, `bloom` and `_template.css` no longer set `--destructive` (their values equalled the default). `_template.css` lists it under DO NOT SET. A theme that recolours destructive actions overrides `--danger-solid`.
+- Visible changes in the default palette: light `text-destructive` goes from `#dc2626` to `#ce0c17` through `text-danger-text`, and dark from `#f87171` to `#ff9083`; the dark invalid border goes from `#f87171` to `#dc2626`; CsvImporter error cells use `bg-danger-surface`, matching the warning cells (`bg-warning-surface`).
+- Outside this repository: `cp-apps/apps/couturier/src/theme-tailor.css` still overrides `--destructive`, and the Theme Generator still emits `destructive` as a constant. Both stop reaching the shipped components until they move to `--danger-*`.
+
+## Update 2026-10-12: default surfaces, white and alpha scales
+
+The default palette's surfaces and brand tokens read scale steps. For the default palette, this supersedes "all surfaces stay literal" and "Gray has no alpha steps" under Hue scales, and the second item under "Out of scope".
+
+- New primitives, declared once with gray because they are the same in both modes: `--primitive-white` and `--primitive-{white,black}-a1` to `-a12`. The alpha values are Radix `whiteA` / `blackA` (0.05, 0.1, 0.15, 0.2, 0.3, then 0.1 steps to 0.9, and 0.95). They are not bridged, like the other primitives.
+- In `default.css`, every BRAND and SYSTEM colour with an exact step now reads it. Light: background, sidebar and primary foreground 50, secondary and muted 100, sidebar border 200, primary and secondary foreground 900, the other foregrounds 950, card and popover white. Dark: primary 200, secondary, popover and muted 800, card and primary foreground 900, background and sidebar 950, the other foregrounds 50, border and sidebar border white a2, input white a3. No values change: every token resolves to the same colour as before in light and dark mode.
+- White is its own step. The light page is gray 50 and cards are white; putting cards on gray 50 would remove the difference.
+- New role `--backdrop`, `var(--primitive-black-a7)` (50%) in both modes, bridged as `bg-backdrop`. `Dialog`, `Sheet` and the CsvImporter drawer use it instead of `bg-black/50`; the value is the same. The name follows the CSS `::backdrop` pseudo-element and the Base UI `Backdrop` part. It is not `overlay`, because `--z-overlay` already names the modal layer, which holds both the backdrop and the popup.
+- `--accent`, the shadows and the chart colours stay literal. They have no matching step. `--destructive` reads `--danger-solid` (see Update 2026-10-06).
+- `cream`, `bloom` and `_template.css` keep their own literal values. The header comments now list `--backdrop` among the inherited tokens.
+
+## Update 2026-10-24: palettes, literal values and contrast thresholds
+
+Three open points from the remaining-work issue ([platform-planning#2208](https://github.com/tailor-inc/platform-planning/issues/2208)) and the contrast issue ([platform-planning#1892](https://github.com/tailor-inc/platform-planning/issues/1892)) are decided. No colour value changes.
+
+### Status colours are the same in every palette
+
+`cream` and `bloom` do not set the hue roles, and they will not. The info, success, warning and danger roles have the same values in every shipped palette. A palette changes brand and surface colours; a status colour keeps one meaning across products. Material Design 3 treats error the same way: it calls error a static colour that does not change even in dynamic colour schemes. The neutral roles still follow the palette, because they read the system tokens. A palette that needs other status colours overrides the roles (`--{intent}-{role}`), as `_template.css` says.
+
+### Literal values stay literal
+
+`--accent`, `--chart-1` to `--chart-5` and the `--semantic-shadow-*` tokens keep literal values. `DocumentProgressCard` keeps its Tailwind palette colours.
+
+- `--accent` (light `rgb(237, 237, 237)`, dark `rgb(48, 48, 48)`) sits between two gray steps. Moving it to a step changes the hover and selected colour, so it waits for the palette work with the Theme Generator.
+- The chart colours and the `DocumentProgressCard` colours are categorical. They tell series apart and carry no status. The `DocumentProgressCard` `color` prop takes colour names (`indigo`, `pink`, `green` and so on), not intents. The semantic roles do not fit them, and the scales have no steps for most of their hues. A shared categorical palette, if one is needed, is a separate axis.
+- A shadow is a composite value (offsets, blur and colour), not one colour, so it has no scale step to read.
+
+### Contrast thresholds
+
+AppShell's thresholds are 4.5:1 for text (WCAG 1.4.3) and 3:1 for non-text (WCAG 1.4.11). `tests/browser/semantic-contrast.test.ts` now runs the same checks for `default`, `cream` and `bloom`, in light and dark mode, on `--card` and `--background`. The pairs and the hover floor are unchanged, and all three palettes pass. The styling guide states the thresholds and the exceptions:
+
+- `text` on `surface-hover` stays at the 4.2:1 floor. Choosing another step is a visible change for a later PR.
+- In `cream` and `bloom`, the main content area is transparent over the shell gradient. At the top of the bloom light gradient (55% of `--shell-gradient-base`), `text` on `surface` is 4.49:1 for success and 4.48:1 for danger. cream light is 4.68:1 or more. The figure under "Not guaranteed" (4.16:1 over `#efe8ff`) used `--shell-gradient-base` itself, which the gradient covers.
+- `warning` `solid` and `indicator` are 2.15:1 against a light card. They are used with a label.
+- The neutral intent is not checked.
+
+This supersedes "The `cream` and `bloom` palettes and their tinted shell backgrounds" under "Not guaranteed".
+
+**How the checks run.** The contrast checks run in Chromium with Vitest Browser Mode (#652). The browser resolves the built stylesheet, including aliases, palette overrides, inheritance and alpha, so the tests check the colours that consumers get, and the tests no longer need their own CSS parser. Structural checks (bridge completeness, alias chains and the typography role declarations) stay in the Node suite, because they are fast and do not need a browser. CI installs Chromium and runs `vitest.browser.config.ts` after the unit tests. `pnpm test` does not run the browser tests; run `pnpm --filter @tailor-platform/app-shell test:browser` locally.

@@ -196,7 +196,7 @@ describe("Layout", () => {
     expect(grid.className).toContain("astw:grid-rows-[auto_minmax(0,1fr)]");
     expect(grid.className).toContain("astw:[&>[data-layout-column]]:min-h-0");
     // marker an ancestor scroll container can target via :has([data-layout-fill])
-    expect(grid.hasAttribute("data-layout-fill")).toBe(true);
+    expect(grid.getAttribute("data-layout-fill")).toBe("always");
   });
 
   it("fill mode without a header uses a single bounded row", () => {
@@ -208,6 +208,37 @@ describe("Layout", () => {
     const grid = container.firstElementChild as HTMLElement;
     expect(grid.className).toContain("astw:grid-rows-[minmax(0,1fr)]");
     expect(grid.className).not.toContain("astw:grid-rows-[auto_minmax(0,1fr)]");
+  });
+
+  it("fill mode with two columns bounds the rows only from lg, where they sit side by side", () => {
+    const { container } = render(
+      <Layout fill>
+        <Layout.Header title="Page" />
+        <Layout.Column area="left">Rail</Layout.Column>
+        <Layout.Column area="main">Table</Layout.Column>
+      </Layout>,
+    );
+    const grid = container.firstElementChild as HTMLElement;
+    expect(grid.getAttribute("data-layout-fill")).toBe("lg");
+    expect(grid.className).toContain("astw:lg:grid-rows-[auto_minmax(0,1fr)]");
+    expect(grid.className).toContain("astw:lg:min-h-0");
+    // Stacked below lg: no unprefixed row bound, so no column is squashed to 0.
+    expect(grid.className).not.toMatch(/(^|\s)astw:grid-rows-/);
+    expect(grid.className).not.toMatch(/(^|\s)astw:min-h-0/);
+  });
+
+  it("fill mode with three columns bounds the rows only from xl", () => {
+    const { container } = render(
+      <Layout fill>
+        <Layout.Column>A</Layout.Column>
+        <Layout.Column>B</Layout.Column>
+        <Layout.Column>C</Layout.Column>
+      </Layout>,
+    );
+    const grid = container.firstElementChild as HTMLElement;
+    expect(grid.getAttribute("data-layout-fill")).toBe("xl");
+    expect(grid.className).toContain("astw:xl:grid-rows-[minmax(0,1fr)]");
+    expect(grid.className).not.toMatch(/(^|\s)astw:grid-rows-/);
   });
 
   it("does not apply fill classes by default", () => {

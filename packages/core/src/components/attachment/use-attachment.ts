@@ -26,8 +26,7 @@ type OperationEntry = AttachmentOperation & { readonly opKey: string };
 
 // ---------------------------------------------------------------------------
 // Item lifecycle helpers
-// These are the only two places that call URL.createObjectURL / revokeObjectURL.
-// Keeping side effects here makes the rest of the hook free of URL management.
+// Create previews here; release them on item deletion or hook unmount.
 // ---------------------------------------------------------------------------
 
 /**
@@ -139,14 +138,14 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
   // Flush guard: prevents concurrent applyChanges calls from sending duplicate operations.
   const isApplyingRef = useRef(false);
 
-  // Used only by the useEffect cleanup on unmount to revoke any remaining blob URLs.
-  // A ref is needed here because the cleanup function captures the ref object (stable),
-  // not state.operations (which would be stale inside the effect's closure).
-  const operationsRef = useRef(state.operations);
-  operationsRef.current = state.operations;
+  // Previews outlive buffered upload operations after applyChanges succeeds.
+  const previewUrlsRef = useRef(new Set<string>());
 
   const onUpload = useCallback((files: File[]) => {
     const newItems = files.map(buildPendingItem);
+    for (const item of newItems) {
+      if (item.previewUrl?.startsWith("blob:")) previewUrlsRef.current.add(item.previewUrl);
+    }
     const newOps: OperationEntry[] = files.map((file, i) => ({
       type: "upload",
       file,
@@ -158,18 +157,15 @@ export function useAttachment(options: UseAttachmentOptions = {}): UseAttachment
 
   const onDelete = useCallback((item: AttachmentItem) => {
     releasePendingItem(item);
+    if (item.previewUrl) previewUrlsRef.current.delete(item.previewUrl);
     dispatch({ type: "DELETE", itemId: item.id });
   }, []);
 
-  // Revoke all blob URLs for pending image uploads on unmount to prevent memory leaks.
-  // onDelete handles revocation for items removed during the component's lifetime;
-  // this cleanup covers any remaining pending uploads when the component is unmounted
-  // (e.g. the user navigates away without submitting).
+  // Revoke only URLs created by this hook that have not been deleted.
   useEffect(() => {
+    const previewUrls = previewUrlsRef.current;
     return () => {
-      for (const op of operationsRef.current) {
-        if (op.type === "upload") releasePendingItem(op.item);
-      }
+      for (const url of previewUrls) URL.revokeObjectURL(url);
     };
   }, []);
 

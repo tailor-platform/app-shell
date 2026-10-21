@@ -221,4 +221,22 @@ describe("DescriptionCard", () => {
       expect(screen.getByText("42 JPY")).toBeDefined();
     });
   });
+
+  it("renders inline values as span elements", () => {
+    render(
+      <DescriptionCard
+        title="Order"
+        data={{ total: 12480, currency: "USD", due: "2026-10-28T00:00:00Z", empty: null }}
+        fields={[
+          { key: "total", label: "Total", type: "money", meta: { currencyKey: "currency" } },
+          { key: "due", label: "Due", type: "date" },
+          { key: "empty", label: "Empty", type: "date" },
+        ]}
+      />,
+      { wrapper },
+    );
+
+    expect(screen.getByText("$12,480.00").tagName).toBe("SPAN");
+    expect(screen.getByText("–").tagName).toBe("SPAN");
+  });
 });

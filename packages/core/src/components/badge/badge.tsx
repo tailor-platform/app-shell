@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 const badgeVariants = cva(
-  "astw:inline-flex astw:cursor-default astw:items-center astw:rounded-md astw:border astw:px-2 astw:py-0.5 astw:text-xs astw:font-medium astw:transition-colors astw:focus:outline-none astw:focus:ring-2 astw:focus:ring-ring astw:focus:ring-offset-2",
+  "astw:inline-flex astw:cursor-default astw:items-center astw:rounded-md astw:border astw:px-2 astw:py-0.5 astw:text-label-sm astw:transition-colors astw:focus:outline-none astw:focus:ring-2 astw:focus:ring-ring astw:focus:ring-offset-2",
   {
     variants: {
       /** Visual style variant */
@@ -27,6 +27,8 @@ const badgeVariants = cva(
           "astw:border-transparent astw:bg-danger-surface astw:text-danger-text astw:hover:bg-danger-surface-hover",
         "subtle-info":
           "astw:border-transparent astw:bg-info-surface astw:text-info-text astw:hover:bg-info-surface-hover",
+        "subtle-neutral":
+          "astw:border-transparent astw:bg-neutral-surface astw:text-neutral-text astw:hover:bg-neutral-surface-hover",
         // Outline variants with status dots - matches Figma design
         "outline-success":
           "astw:gap-0.5 astw:pl-1.5 astw:pr-2 astw:border-border astw:bg-card astw:text-foreground",

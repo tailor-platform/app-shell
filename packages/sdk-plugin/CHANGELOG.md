@@ -1,5 +1,12 @@
 # @tailor-platform/sdk-plugin-app-shell
 
+## 0.2.1
+
+### Patch Changes
+
+- 06c59b8: Fix Decimal metadata and query types to use strings with numeric sort/filter operators, matching the GraphQL Decimal scalar.
+  Preserve decimal precision when adding, editing, or restoring DataTable filters. Regenerate SDK metadata to update decimal fields previously marked as `number`.
+
 ## 0.2.0
 
 ### Minor Changes

@@ -23,6 +23,7 @@ const tableMetadata = {
       { name: "createdAt", type: "datetime", required: true },
       { name: "title", type: "string", required: true },
       { name: "price", type: "number", required: true },
+      { name: "decimalPrice", type: "decimal", required: true },
       { name: "archived", type: "boolean", required: false },
     ],
   },
@@ -105,6 +106,22 @@ describe("parseCollectionSearchParams", () => {
       { field: "price", operator: "gt", value: 130 },
     ]);
   });
+
+  it.each(["eq", "in", "nin", "between"] as const)(
+    "round-trips decimal %s values and sorting without losing precision",
+    (operator) => {
+      const min = "9007199254740993.123456789";
+      const max = "9007199254740994.123456789";
+      const value = { between: { min, max }, eq: min, in: [min, max], nin: [min, max] }[operator];
+      const state = {
+        filters: [{ field: "decimalPrice", operator, value }],
+        sortStates: [{ field: "decimalPrice", direction: "Asc" as const }],
+        pageSize: 20,
+      };
+      const written = writeCollectionSearchParams(new URLSearchParams(), state);
+      expect(parseCollectionSearchParams(tableMetadata.task, written)).toEqual(state);
+    },
+  );
 
   it("leaves numeric-looking values as strings when no metadata is provided", () => {
     const result = parseCollectionSearchParams(new URLSearchParams("f.price:gt=130"));
@@ -204,6 +221,18 @@ describe("withURLCollectionState", () => {
 });
 
 describe("useURLCollectionVariables", () => {
+  it("returns undefined query when the URL has no filters", () => {
+    const wrapper = ({ children }: PropsWithChildren) =>
+      createElement(MemoryRouter, { initialEntries: ["/"] }, children);
+    const { result } = renderHook(
+      () => useURLCollectionVariables({ tableMetadata: tableMetadata.task }),
+      { wrapper },
+    );
+
+    expect(result.current.variables.query).toBeUndefined();
+    expect(result.current.variables.order).toBeUndefined();
+  });
+
   it.each([
     ["gte", "2026-10-09T00:00:00", { gte: "2026-10-08T15:00:00.000Z" }],
     ["in", '["2026-10-09T00:00:00"]', { in: ["2026-10-08T15:00:00.000Z"] }],

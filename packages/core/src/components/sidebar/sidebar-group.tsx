@@ -10,6 +10,7 @@ import {
   SidebarMenuAction,
   SidebarMenuSub,
 } from "./primitives";
+import { SidebarButtonIcon } from "./sidebar-button-icon";
 import { useHasHover } from "@/hooks/use-has-hover";
 import { useT } from "@/i18n-labels";
 import { useAppShellConfig } from "@/contexts/appshell-context";
@@ -129,7 +130,7 @@ const IconRailFlyout = ({
             style={{ top: pos.top, left: pos.left }}
             className="astw:fixed astw:z-(--z-popup) astw:max-h-[calc(100dvh-1rem)] astw:min-w-48 astw:overflow-y-auto astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-1 astw:text-popover-foreground astw:shadow-md"
           >
-            <div className="astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
+            <div className="astw:px-2 astw:py-1.5 astw:text-label-sm astw:text-muted-foreground">
               {title}
             </div>
             {/* Inside the flyout the items are no longer in the icon rail: they
@@ -191,13 +192,18 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
     // explicit accessible name (the hover flyout's aria-label only mounts on
     // hover).
     const trigger = to ? (
-      <SidebarMenuButton render={<Link to={to} aria-label={resolvedTitle} />} isActive={isActive}>
-        {icon}
+      <SidebarMenuButton
+        render={
+          <Link to={to} aria-label={resolvedTitle} aria-current={isActive ? "page" : undefined} />
+        }
+        isActive={isActive}
+      >
+        <SidebarButtonIcon icon={icon} title={resolvedTitle} />
         <span>{resolvedTitle}</span>
       </SidebarMenuButton>
     ) : (
       <SidebarMenuButton render={<button type="button" aria-label={resolvedTitle} />}>
-        {icon}
+        <SidebarButtonIcon icon={icon} title={resolvedTitle} />
         <span>{resolvedTitle}</span>
       </SidebarMenuButton>
     );
@@ -213,8 +219,12 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
   if (to) {
     return (
       <Collapsible.Root render={<SidebarMenuItem />} defaultOpen={defaultOpen}>
-        <SidebarMenuButton render={<Link to={to} />} isActive={isActive} tooltip={resolvedTitle}>
-          {icon}
+        <SidebarMenuButton
+          render={<Link to={to} aria-current={isActive ? "page" : undefined} />}
+          isActive={isActive}
+          tooltip={resolvedTitle}
+        >
+          <SidebarButtonIcon icon={icon} title={resolvedTitle} />
           <span>{resolvedTitle}</span>
         </SidebarMenuButton>
         <Collapsible.Trigger
@@ -241,7 +251,7 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
           // stays open when toggling a collapsible group.
           onClick={(e) => e.preventDefault()}
         >
-          {icon}
+          <SidebarButtonIcon icon={icon} title={resolvedTitle} />
           <span>{resolvedTitle}</span>
         </SidebarMenuButton>
         <SidebarMenuAction className="astw-rotate-target" render={<span />}>

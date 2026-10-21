@@ -427,6 +427,33 @@ Review whether component styling remains self-contained and consistent:
 <div className="component" />
 ```
 
+### Typography roles
+
+Text that a component renders takes its size, line height, weight, and letter spacing from a typography role, not from a raw size + weight combination. The roles are listed in the Typography section of `docs/concepts/styling-theming.md`.
+
+- Render content text with `Text`: titles, descriptions, captions, hints, messages, error text, and key and value display. For a plain `h1` to `h6`, `p`, `span`, or `div`, use the element component (`Text.h3`, `Text.span`, ...), and put the element's `data-slot` on it. Write `variant` only when the role differs from the element's default (`heading-lg` for `h1`, `heading-md` for `h2`, `heading-sm` for `h3` to `h6`, `body-md` for `p` and `div`, `label-md` for `span`). Use `render` only for a Base UI part or another component, or for other elements such as `dt` or `code`, and keep the part's `data-slot` on the render element.
+- Use the role utility (`astw:text-heading-md`, `astw:text-label-md`, ...) for text that is part of a control or sits inside one (buttons, inputs, menu and list items, badges, toolbars, table cells), in cva strings, and on containers that set the size for their children.
+- Do not write new raw combinations such as `astw:text-lg astw:font-semibold` or `astw:text-sm astw:font-medium`. `tests/typography-usage.test.ts` fails on a raw size.
+- Combine a role only with the four modifiers: `astw:leading-none` (single-line text), `astw:tabular-nums`, `astw:font-semibold` (emphasis on inline text), and `astw:uppercase`. Do not add other `leading-*`, `tracking-*`, or `text-[Npx]` values. 12px is the minimum size.
+- A role carries no color. Set the color with a token such as `astw:text-muted-foreground`.
+- Show a selected item (active navigation or list item) with `astw:font-semibold` and its background.
+- A heading's level comes from the document structure, not from its size. Keep a title that is a heading in a heading element, and pick the role for its look. Do not change the element to get a different size, and do not turn a heading into a `div` to get a different line height. Under the `cream` and `bloom` palettes, `h1` to `h6` ignore `leading-none`; see the Typography section.
+
+```tsx
+// Good
+<Text.h3 variant="heading-md" className="astw:leading-none" data-slot="card-title">
+  {title}
+</Text.h3>
+<Text variant="body-sm" className="astw:text-muted-foreground">{updatedAt}</Text>
+<Text variant="heading-md" render={<BaseDialog.Title data-slot="dialog-title" {...props} />} />
+<button className={cn("astw:rounded-md astw:px-3 astw:text-label-md", className)}>{label}</button>
+```
+
+```tsx
+// Bad: a raw size + weight combination and a line height outside the roles
+<h3 className="astw:text-lg astw:font-semibold astw:leading-7">{title}</h3>
+```
+
 ### Container queries
 
 Prefer Tailwind container-query utilities with arbitrary values.

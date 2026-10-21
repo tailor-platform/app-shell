@@ -29,7 +29,7 @@ dont:
 
 ## Layout
 
-Pass `selectionActions` to `useDataTable`. The moment one row is selected, `DataTable.Footer` becomes the bulk-action bar: a tinted strip with the selection count, the actions, and Clear, with pagination kept on the right. It turns back into the normal footer when the selection empties. In `<Layout fill>` the footer is already pinned; on a page that scrolls, the bar sticks to the bottom of the viewport until the end of the table is reached.
+Pass `rowSelection.actions` to `useDataTable`. The moment one row is selected, `DataTable.Footer` becomes the bulk-action bar: a tinted strip with the selection count, the actions, and Clear, with pagination kept on the right. It turns back into the normal footer when the selection empties. In `<Layout fill>` the footer is already pinned; on a page that scrolls, the bar sticks to the bottom of the viewport until the end of the table is reached.
 
 ```
 +--------------------------------------------------------------------+
@@ -43,7 +43,7 @@ Pass `selectionActions` to `useDataTable`. The moment one row is selected, `Data
 |   [ ] | row   | row   | row   | row                                |
 |   [x] | row   | row   | row   | row                                |
 |   DataTable.Footer, while rows are selected:                       |
-|   3 of 240 selected | [Confirm (2)] [Export] [⋯] | Clear   ‹ 1/10 › |
+|   3 of 240 selected | [Confirm] [Export] [⋯] | Clear       ‹ 1/10 › |
 +--------------------------------------------------------------------+
 ```
 
@@ -53,13 +53,15 @@ Pass `selectionActions` to `useDataTable`. The moment one row is selected, `Data
 
 ## Constraints
 
-- Declare bulk actions with `selectionActions` on `useDataTable` — do NOT hand-build the bar, a floating panel, or checkbox state; the footer renders the count, actions, overflow menu, and Clear
+- Declare bulk actions as the non-generic `SelectionAction[]` in `useDataTable`'s `rowSelection.actions` — do NOT hand-build the bar, a floating panel, or checkboxes; the footer renders the selection count, actions, overflow menu, and Clear. Providing `rowSelection` enables checkboxes even when `actions` is omitted or empty; the bar requires non-empty actions and selected ids
 - Keep `DataTable.Footer` in the tree — it is where the bar renders
-- Give an action `canApply` when it fits only some rows: the bar shows the eligible count, disables the action at 0, and passes only those rows to `onClick`
-- Return the promise from `onClick` for async work: the bar disables its actions while it runs and clears the selection when it resolves; set `keepSelection: true` on actions that don't change rows (export)
+- Selection stores IDs only, not row objects. `onClick` receives a click-time copy of all selected ids (`string[]`), including unloaded ids; fetch any records required for the operation in the consumer's ID-based workflow
+- The consumer owns eligibility checks, required fetching, confirmation UI, and execution; backend validation remains authoritative. Selection actions have no row-based `canApply`, automatic eligible count, or eligibility-based disabled state
+- Return the promise from `onClick` for async work: the bar disables its actions and shows a spinner while it runs. Success and rejection both leave selection unchanged; there is no `keepSelection` option. Rejections are logged; show errors in the consumer UI
+- Use controlled `rowSelection: { selectedIds, onChange }` to remove only ids actually changed, with a functional update against the current selection. Preserve ineligible ids and ids selected after the operation started; cancellation or failure does not clear selection
 - At most 3 actions render inline, in array order; the 4th onward move to the More actions menu — order by frequency and put a destructive action last
-- Destructive bulk actions MUST open an `interaction/confirm` dialog from `onClick`; keep the `run` helper and pass it the request from the dialog's confirm button (`run(deleteRows(rows))`) so the bar shows its pending state and clears on success
-- When an action also exists per row, define it once as a `DataTableAction` and spread it into both `rowActions` and `selectionActions`
+- Destructive bulk actions MUST open an `interaction/confirm` dialog from `onClick`. Optionally keep the `run` helper and pass it the later request (`await run(deleteRows(ids))`) for pending tracking only. `clearSelection` explicitly clears every page when that is intentional
+- Share only presentation fields (`id`, `label`, `icon`, `variant`) as a non-generic `DataTableAction`. `RowAction<TRow>` retains `canApply` for its concrete row; bulk eligibility belongs in the ID-based consumer workflow
 - Selection persists across pagination, filter, and sort changes — do NOT clear it on those
 
 ## Anti-patterns
@@ -67,7 +69,8 @@ Pass `selectionActions` to `useDataTable`. The moment one row is selected, `Data
 - Hand-rolled selection (`useState<Set>`, raw `<input type="checkbox">`, `Table.Root`) when the list is a DataTable
 - A floating or fixed-position action bar over the table instead of the footer bar
 - Placing bulk-action buttons in the page header or the table toolbar
-- Counting eligible rows per action by hand instead of `canApply`
-- Fire-and-forget async `onClick` that doesn't return its promise — users can fire it twice, and the selection goes stale
+- Treating the currently loaded rows as the full selection or deriving bulk eligibility from incomplete row data
+- Clearing the whole selection after partial success, or overwriting it with the click-time snapshot and losing newer selections
+- Fire-and-forget async `onClick` that doesn't return its promise or use `run` — users can fire it twice
 - Firing destructive bulk actions without an interaction/confirm step
 - Per-row `Menu` actions as a substitute for bulk actions when selection > 0

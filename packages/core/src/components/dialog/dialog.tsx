@@ -3,6 +3,7 @@ import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Text } from "../text";
 
 // Only the props relevant to the Dialog abstraction are picked from BaseDialog.Root.
 // Base UI-internal props (e.g. dismissible, animated) are intentionally excluded
@@ -63,7 +64,7 @@ function Overlay({ className, ...props }: React.ComponentProps<typeof BaseDialog
     <BaseDialog.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-(--z-overlay) astw:bg-black/50",
+        "astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-(--z-overlay) astw:bg-backdrop",
         className,
       )}
       {...props}
@@ -129,10 +130,10 @@ Footer.displayName = "Dialog.Footer";
 /** The title of the dialog, announced by screen readers. */
 function Title({ className, ...props }: React.ComponentProps<typeof BaseDialog.Title>) {
   return (
-    <BaseDialog.Title
-      data-slot="dialog-title"
-      className={cn("astw:text-lg astw:leading-none astw:font-semibold", className)}
-      {...props}
+    <Text
+      variant="heading-md"
+      className={cn("astw:leading-none", className)}
+      render={<BaseDialog.Title data-slot="dialog-title" {...props} />}
     />
   );
 }
@@ -141,10 +142,10 @@ Title.displayName = "Dialog.Title";
 /** A description that provides additional context for the dialog. */
 function Description({ className, ...props }: React.ComponentProps<typeof BaseDialog.Description>) {
   return (
-    <BaseDialog.Description
-      data-slot="dialog-description"
-      className={cn("astw:text-muted-foreground astw:text-sm", className)}
-      {...props}
+    <Text
+      variant="body-md"
+      className={cn("astw:text-muted-foreground", className)}
+      render={<BaseDialog.Description data-slot="dialog-description" {...props} />}
     />
   );
 }

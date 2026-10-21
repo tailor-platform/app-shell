@@ -8,6 +8,7 @@
 export type FieldType =
   | "string"
   | "number"
+  | "decimal"
   | "boolean"
   | "uuid"
   | "datetime"
@@ -86,6 +87,7 @@ export interface SelectOption {
 export type FilterConfig =
   | { field: string; type: "string" }
   | { field: string; type: "number" }
+  | { field: string; type: "decimal" }
   | { field: string; type: "datetime" }
   | { field: string; type: "date" }
   | { field: string; type: "time" }
@@ -115,6 +117,7 @@ export const OPERATORS_BY_FILTER_TYPE = {
     "regex",
   ],
   number: ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
+  decimal: ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
   datetime: ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
   date: ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
   time: ["eq", "ne", "gt", "gte", "lt", "lte", "between", "in", "nin"],
@@ -156,6 +159,7 @@ export type OperatorForField<TFilter, F extends string> = [Extract<TFilter, { fi
 export type FieldTypeToFilterConfigType = {
   string: "string";
   number: "number";
+  decimal: "decimal";
   boolean: "boolean";
   uuid: "uuid";
   datetime: "datetime";
@@ -243,6 +247,7 @@ export interface PaginationVariables {
 type FieldTypeToTSType = {
   string: string;
   number: number;
+  decimal: string;
   boolean: boolean;
   uuid: string;
   datetime: string;
@@ -346,7 +351,15 @@ export type TableFieldName<TTable extends TableMetadata> = TTable["fields"][numb
     : never
   : never;
 
-type OrderableFieldType = "string" | "number" | "boolean" | "datetime" | "date" | "time" | "enum";
+type OrderableFieldType =
+  | "string"
+  | "number"
+  | "decimal"
+  | "boolean"
+  | "datetime"
+  | "date"
+  | "time"
+  | "enum";
 
 /**
  * Extract only orderable field names from a single table metadata object.
@@ -518,6 +531,7 @@ export function fieldTypeToSortConfig(field: string, type: FieldType): SortConfi
     case "string":
       return { field, type: "string" };
     case "number":
+    case "decimal":
       return { field, type: "number" };
     case "boolean":
       return { field, type: "boolean" };
@@ -546,6 +560,8 @@ export function fieldTypeToFilterConfig(
       return { field, type: "string" };
     case "number":
       return { field, type: "number" };
+    case "decimal":
+      return { field, type: "decimal" };
     case "boolean":
       return { field, type: "boolean" };
     case "uuid":

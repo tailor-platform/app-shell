@@ -193,6 +193,7 @@ export {
 export { Layout, type LayoutProps } from "./components/layout";
 export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
+export { Text, type TextProps } from "./components/text";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
 export { Spinner, type SpinnerProps } from "./components/spinner";
 export { Input, type InputProps } from "./components/input";
@@ -210,6 +211,12 @@ export type { PositionProps } from "./lib/position";
 export { Sheet } from "./components/sheet";
 export { Tabs } from "./components/tabs";
 export { Toolbar, type ToolbarProps } from "./components/toolbar";
+export {
+  FilterRail,
+  useFilterRailLayout,
+  type FilterRailRootProps,
+  type FilterRailSection,
+} from "./components/filter-rail";
 export { Tooltip } from "./components/tooltip";
 export { Select, type SelectAsyncFetcher } from "./components/select";
 export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox";
@@ -312,6 +319,13 @@ export {
   type UseDataTableReturn,
   type MetadataFieldOptions,
   type DataTableContextValue,
+  type RowSelectionOptions,
+  type TextCellEditOptions,
+  type NumberCellEditOptions,
+  type BadgeCellEditOptions,
+  type DateCellEditOptions,
+  type CellEditState,
+  type DateTimeDraft,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
 export { useURLCollectionVariables, withURLCollectionState } from "./lib/collection-url-state";

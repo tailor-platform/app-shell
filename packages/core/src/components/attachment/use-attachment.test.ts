@@ -6,7 +6,7 @@ import type { AttachmentItem, AttachmentOperation } from "./types";
 
 afterEach(() => {
   cleanup();
-  vi.clearAllMocks();
+  vi.restoreAllMocks();
 });
 
 const existingItem: AttachmentItem = {
@@ -63,6 +63,28 @@ describe("useAttachment", () => {
     createObjectUrlSpy.mockRestore();
   });
 
+  it.each([false, true])("revokes previews on unmount after applyChanges: %s", async (apply) => {
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:preview-url");
+    const revokeObjectUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    const { result, unmount } = renderHook(() =>
+      useAttachment({ initialItems: [{ ...existingItem, previewUrl: "blob:external-preview" }] }),
+    );
+
+    act(() => {
+      result.current.props.onUpload?.([new File(["img"], "photo.jpg", { type: "image/jpeg" })]);
+    });
+    if (apply) {
+      await act(async () => {
+        await result.current.applyChanges(async () => {});
+      });
+    }
+
+    expect(result.current.props.items[0]?.previewUrl).toBe("blob:preview-url");
+    expect(revokeObjectUrlSpy).not.toHaveBeenCalled();
+    unmount();
+    expect(revokeObjectUrlSpy.mock.calls).toEqual([["blob:preview-url"]]);
+  });
+
   it("removes item when onDelete is called for a pending upload", () => {
     const { result } = renderHook(() => useAttachment());
     const file = new File(["hello"], "invoice.pdf", {
@@ -85,7 +107,7 @@ describe("useAttachment", () => {
     vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:preview-url");
     const revokeObjectUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
 
-    const { result } = renderHook(() => useAttachment());
+    const { result, unmount } = renderHook(() => useAttachment());
     const file = new File(["img"], "photo.jpg", { type: "image/jpeg" });
 
     act(() => {
@@ -98,8 +120,8 @@ describe("useAttachment", () => {
     });
 
     expect(revokeObjectUrlSpy).toHaveBeenCalledWith("blob:preview-url");
-
-    revokeObjectUrlSpy.mockRestore();
+    unmount();
+    expect(revokeObjectUrlSpy).toHaveBeenCalledTimes(1);
   });
 
   it("applyChanges receives upload operation for new files", async () => {

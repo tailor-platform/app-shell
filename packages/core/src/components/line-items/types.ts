@@ -263,7 +263,9 @@ type LineItemsFieldBase<T extends LineItemsRowData> = {
    * that was already saved never blocks an unrelated edit. An invalid cell is
    * outlined and shows its message on hover or focus, and `SaveActions` /
    * `DirtyBar` keep Save disabled until every message clears. The value is
-   * still stored, so a paste or fill that breaks the rule shows where.
+   * still stored, so a paste or fill that breaks the rule shows where. On a
+   * `commit: "metadata"` field, an invalid value is not sent to
+   * `onMetadataCommit`.
    */
   validate?: (value: unknown, line: T) => string | null | undefined;
   /** Resting column width in pixels. Auto-sized when omitted. */

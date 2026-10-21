@@ -516,6 +516,22 @@ describe("useLineItems", () => {
       expect(result.current.allLines[0]).toMatchObject({ quantity: 2, memo: "checked" });
     });
 
+    it("doesn't send an invalid metadata value, and flags it", () => {
+      const onMetadataCommit = vi.fn();
+      const strict = memoFields.map((field) =>
+        field.key === "memo"
+          ? { ...field, validate: (v: unknown) => (String(v).length > 5 ? "Too long" : null) }
+          : field,
+      ) as LineItemsField<Memo>[];
+      const { result } = renderHook(() =>
+        useLineItems<Memo>({ fields: strict, defaultLines: seed, onMetadataCommit }),
+      );
+      act(() => result.current.updateField("1", "memo", "far too long"));
+
+      expect(onMetadataCommit).not.toHaveBeenCalled();
+      expect(result.current.getCellError("1", "memo")).toBe("Too long");
+    });
+
     it("warns when a metadata field has no onMetadataCommit", () => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
       renderHook(() => useLineItems<Memo>({ fields: memoFields, defaultLines: seed }));

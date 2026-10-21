@@ -200,6 +200,10 @@ export function useLineItems<T extends LineItemsRowData>(
 
   const metadataKeysRef = React.useRef(metadataKeys);
   metadataKeysRef.current = metadataKeys;
+  const fieldsRef = React.useRef(fields);
+  fieldsRef.current = fields;
+  /** Lines whose metadata fields were edited here: validated like changed lines. */
+  const metadataEdited = React.useRef(new Set<string>());
 
   // A metadata field with no handler would drop its edits silently: they're
   // kept out of the change-set and nothing else receives them.
@@ -300,6 +304,14 @@ export function useLineItems<T extends LineItemsRowData>(
       if (patches.length === 0) return;
       markEdited();
 
+      if (metadataKeysRef.current.size > 0) {
+        for (const { lineKey, patch } of patches) {
+          if (Object.keys(patch).some((key) => metadataKeysRef.current.has(key))) {
+            metadataEdited.current.add(lineKey);
+          }
+        }
+      }
+
       if (metadataKeysRef.current.size > 0 && onMetadataCommitRef.current) {
         const current = rowsRef.current;
         for (const { lineKey, patch } of patches) {
@@ -309,8 +321,12 @@ export function useLineItems<T extends LineItemsRowData>(
           if (!row || !hasId(row, idKey)) continue;
           const metaPatch: Record<string, unknown> = {};
           const previous: Record<string, unknown> = {};
+          const next = { ...row, ...patch } as T;
           for (const key of Object.keys(patch)) {
             if (!metadataKeysRef.current.has(key)) continue;
+            // An invalid value stays in the cell, flagged, but isn't saved.
+            const validate = fieldsRef.current.find((f) => f.key === key)?.validate;
+            if (validate?.((next as Record<string, unknown>)[key], next)) continue;
             metaPatch[key] = (patch as Record<string, unknown>)[key];
             previous[key] = (row as Record<string, unknown>)[key];
           }
@@ -319,7 +335,7 @@ export function useLineItems<T extends LineItemsRowData>(
             lineId: lineKey,
             patch: metaPatch,
             previous,
-            row: { ...row, ...patch } as T,
+            row: next,
           } satisfies LineItemsMetadataCommit<T>);
         }
       }
@@ -375,6 +391,7 @@ export function useLineItems<T extends LineItemsRowData>(
   const reset = React.useCallback(
     (saved?: LineItemsResetInput<T>) => {
       dirtyNow.current = false;
+      metadataEdited.current = new Set<string>();
       const current = rowsRef.current;
       const pendingNew = dirtyRef.current.inserted;
 
@@ -485,8 +502,8 @@ export function useLineItems<T extends LineItemsRowData>(
    */
   const errors = React.useMemo((): LineItemsCellError[] => {
     const validated = fields.filter((f) => typeof f.validate === "function");
-    if (validated.length === 0 || mode === "view" || changeSet.isEmpty) return EMPTY_ERRORS;
-    const touched = new Set<string>();
+    if (validated.length === 0 || mode === "view") return EMPTY_ERRORS;
+    const touched = new Set<string>(metadataEdited.current);
     for (const change of changeSet.lineChanges) {
       if (change.action === "add") touched.add(change.tempId);
       else if (change.action === "update") touched.add(change.lineId);

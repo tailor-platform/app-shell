@@ -12,6 +12,8 @@ import {
   LineItemsFloatingDock,
   LineItemsFullscreenToggle,
   LineItemsSaveActions,
+  LineItemsSearch,
+  LineItemsSearchToggle,
   LineItemsTotalsRow,
 } from "./line-items-parts";
 import { useLineItemsT } from "./i18n";
@@ -57,6 +59,7 @@ const FOCUSABLE =
  *   <Card.Root>
  *     <Card.Header title="Line items" action={
  *       <>
+ *         <LineItems.SearchToggle />
  *         <LineItems.FullscreenToggle />
  *       </>
  *     } />
@@ -228,6 +231,8 @@ LineItemsRoot.displayName = "LineItems.Root";
 export const LineItems = {
   Root: LineItemsRoot,
   Table: LineItemsTable,
+  Search: LineItemsSearch,
+  SearchToggle: LineItemsSearchToggle,
   AddRow: LineItemsAddRow,
   FullscreenToggle: LineItemsFullscreenToggle,
   SaveActions: LineItemsSaveActions,

@@ -40,6 +40,7 @@ const fields: LineItemsField<Line>[] = [
     type: { kind: "text" },
     width: 140,
     pin: "left",
+    search: (l, q) => l.sku.toLowerCase().includes(q.toLowerCase()),
   }),
   f.field({
     key: "uom",
@@ -113,6 +114,8 @@ function Harness({
 
   return (
     <LineItems.Root value={lineItems}>
+      <LineItems.SearchToggle />
+      <LineItems.Search />
       <LineItems.FullscreenToggle />
       <LineItems.Table
         virtualized={virtualized}
@@ -252,7 +255,7 @@ describe("LineItems", () => {
 
   it("throws when a part is used outside Root", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(() => render(<LineItems.Table />)).toThrow(/must be used within <LineItems.Root>/);
+    expect(() => render(<LineItems.Search />)).toThrow(/must be used within <LineItems.Root>/);
     spy.mockRestore();
   });
 
@@ -517,6 +520,27 @@ describe("LineItems", () => {
       await user.type(editor, "42{Enter}");
 
       expect(onLinesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it("commits typing still in flight when its row unmounts", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(
+        <Harness
+          onReady={(a) => {
+            api = a;
+          }}
+        />,
+      );
+
+      const editor = editorIn("1", "note");
+      await user.click(editor);
+      await user.type(editor, "half-typed");
+      // Filtering line 1 out unmounts it without a blur, as scrolling it out of
+      // the virtual window does.
+      act(() => api?.setFilter("BANANA"));
+
+      expect(api?.allLines[0]?.note).toBe("half-typed");
     });
 
     it("commits typing still in flight when the cell turns read-only", async () => {
@@ -1022,6 +1046,21 @@ describe("LineItems", () => {
       expect(api?.isDirty).toBe(false);
     });
 
+    it("while filtered, moving to the top of the view stays below hidden lines above it", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(<Harness ordering="manual" onReady={(a) => (api = a)} />);
+      // Document order 2, 1, 3; the filter hides 2, showing 1 and 3.
+      act(() => api?.reorderLine("2", null));
+      await user.type(screen.getByRole("searchbox", { name: /search lines/i }), "e");
+
+      const grip = screen.getByRole("button", { name: "Drag to reorder line 2" });
+      grip.focus();
+      await user.keyboard("{Enter}{ArrowUp}");
+
+      expect(api?.allLines.map((l) => l.id)).toEqual(["2", "3", "1"]);
+    });
+
     it("moving a line back to its slot leaves the document clean", async () => {
       const user = userEvent.setup();
       let api: ReturnType<typeof useLineItems<Line>> | undefined;
@@ -1238,6 +1277,29 @@ describe("LineItems", () => {
         await user.click(screen.getByRole("link", { name: "Elsewhere" }));
         expect(router.state.location.pathname).toBe("/elsewhere");
       });
+    });
+
+    it("filters rows from the search box", async () => {
+      const user = userEvent.setup();
+      render(<Harness />);
+
+      await user.type(screen.getByRole("searchbox", { name: /search lines/i }), "banana");
+
+      expect(document.querySelectorAll("[data-slot=line-items-row]")).toHaveLength(1);
+      expect(editorIn("2", "sku").value).toBe("BANANA-02");
+    });
+
+    it("SearchToggle expands into an input", async () => {
+      const user = userEvent.setup();
+      render(<Harness />);
+
+      // Collapsed, the toggle *is* the button; expanded, it wraps an input.
+      const toggle = document.querySelector<HTMLElement>("[data-slot=line-items-search-toggle]");
+      expect(toggle?.tagName.toLowerCase()).toBe("button");
+      await user.click(toggle!);
+
+      const expanded = document.querySelector("[data-slot=line-items-search-toggle]");
+      expect(expanded?.querySelector("input")).not.toBeNull();
     });
 
     it("FullscreenToggle reports its pressed state", async () => {

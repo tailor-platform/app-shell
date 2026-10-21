@@ -670,17 +670,28 @@ export function LineItemsTable<T extends LineItemsRowData>({
   /** Announces keyboard reorders, which have no other non-visual feedback. */
   const [reorderNotice, setReorderNotice] = React.useState("");
 
-  /** Moves `lineKey` to just before `beforeLineKey`, or to the end when `null`. */
+  /**
+   * Moves `lineKey` to just before `beforeLineKey` (a visible line), or after
+   * the last visible line when `null`. While filtered, a move to the top of the
+   * view lands directly above the first visible line, not at the top of the
+   * whole document past lines the filter hides.
+   */
   const moveLine = React.useCallback(
     (lineKey: string, beforeLineKey: string | null) => {
       // Dropped back on itself: nothing moves, and no reorder is recorded.
       if (beforeLineKey === lineKey) return;
       const others = orderedLineKeys.filter((id) => id !== lineKey);
       const at = beforeLineKey ? others.indexOf(beforeLineKey) : others.length;
-      if (at < 0) return;
-      lineItems.reorderLine(lineKey, at === 0 ? null : others[at - 1]!);
+      if (at < 0 || others.length === 0) return;
+      if (at > 0) {
+        lineItems.reorderLine(lineKey, others[at - 1]!);
+        return;
+      }
+      const documentOrder = lineItems.allLines.map(getLineKey).filter((id) => id !== lineKey);
+      const index = documentOrder.indexOf(others[0]!);
+      lineItems.reorderLine(lineKey, index > 0 ? documentOrder[index - 1]! : null);
     },
-    [lineItems, orderedLineKeys],
+    [getLineKey, lineItems, orderedLineKeys],
   );
 
   const endDrag = React.useCallback(() => {
@@ -804,7 +815,9 @@ export function LineItemsTable<T extends LineItemsRowData>({
                       checked={allVisibleSelected}
                       indeterminate={selectedIds.length > 0 && !allVisibleSelected}
                       onCheckedChange={() =>
-                        allVisibleSelected ? lineItems.clearSelection() : lineItems.selectAll()
+                        allVisibleSelected
+                          ? lineItems.clearSelection()
+                          : lineItems.selectAllVisible()
                       }
                     />
                   </span>

@@ -239,6 +239,8 @@ type LineItemsFieldBase<T extends LineItemsRowData> = {
    * order.
    */
   sort?: { comparator: (a: T, b: T) => number };
+  /** Returns `true` when `line` matches the active search query. */
+  search?: (line: T, query: string) => boolean;
   /**
    * Horizontal alignment. When omitted, `number` fields default to `"right"`
    * and `boolean` fields to `"center"`; everything else to `"left"`.
@@ -343,9 +345,9 @@ export type LineItemsCellError = {
 };
 
 export type UseLineItemsReturn<T extends LineItemsRowData> = {
-  /** Display order: document order, or sorted while a sort is active. */
+  /** Document order with the active search filter applied. */
   lines: T[];
-  /** Document order, ignoring any sort. */
+  /** Full document order, ignoring the search filter. */
   allLines: T[];
   fields: LineItemsField<T>[];
   mode: LineItemsMode;
@@ -366,6 +368,7 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
   errors: LineItemsCellError[];
   /** The message for one cell, or `undefined` when it's valid. */
   getCellError: (lineKey: string, fieldKey: string) => string | undefined;
+  filter: string;
   selectionEnabled: boolean;
   selectedIds: string[];
   /** The selected lines, in document order. */
@@ -383,6 +386,7 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
   sortState: LineItemsSortState | null;
 
   setMode: (mode: LineItemsMode) => void;
+  setFilter: (query: string) => void;
   /** Cycles the column through ascending, descending, then unsorted. */
   toggleSort: (columnId: string) => void;
   /**
@@ -413,8 +417,8 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
   /** Moves a line after `afterLineKey`, or to the head when `null`. Manual ordering only. */
   reorderLine: (lineKey: string, afterLineKey: string | null) => void;
   toggleSelect: (lineKey: string) => void;
-  /** Selects every line. */
-  selectAll: () => void;
+  /** Selects every row currently passing the search filter. */
+  selectAllVisible: () => void;
   clearSelection: () => void;
   bulkUpdate: (patch: Partial<T>) => void;
   bulkRemove: () => void;

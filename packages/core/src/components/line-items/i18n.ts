@@ -37,6 +37,8 @@ export const lineItemsLabels = defineI18nLabels({
 
     // Select cell
     noMatches: "No matches.",
+    fixErrors: (props: { count: number }) =>
+      props.count === 1 ? "Fix 1 error to save" : `Fix ${props.count} errors to save`,
     loadingOptions: "Loading…",
     loadOptionsFailed: "Couldn't load options.",
     retry: "Retry",
@@ -64,6 +66,8 @@ export const lineItemsLabels = defineI18nLabels({
     cellLabel: (props: { column: string; line: number }) => `${props.column}、${props.line} 行目`,
 
     noMatches: "一致する項目がありません。",
+    fixErrors: (props: { count: number }) =>
+      `保存するには ${props.count} 件のエラーを修正してください`,
     loadingOptions: "読み込み中…",
     loadOptionsFailed: "候補を読み込めませんでした。",
     retry: "再試行",

@@ -9,6 +9,7 @@ export {
 export { createLineItemHelper } from "./field";
 export type { LineItemsTableProps } from "./line-items-table";
 export type {
+  LineItemsCellError,
   LineItemsChangeSet,
   LineItemsColumnAlign,
   LineItemsCustomEditorContext,

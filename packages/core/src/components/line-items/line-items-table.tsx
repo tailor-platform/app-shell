@@ -2,6 +2,7 @@ import * as React from "react";
 import { GripVertical } from "lucide-react";
 
 import { Checkbox } from "@/components/checkbox";
+import { Tooltip } from "@/components/tooltip";
 import { cn } from "@/lib/utils";
 import {
   ACTIONS_COLUMN_ID,
@@ -171,6 +172,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
     lineItems;
 
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
+  const tableId = React.useId();
   const hasTotals = Boolean(totalsRenderer);
 
   // Whether lines are hidden above the sticky header or beneath the sticky
@@ -1045,6 +1047,8 @@ export function LineItemsTable<T extends LineItemsRowData>({
                       const isSelected = grid.isSelected(rowKey, c.id);
                       const inFill = isInFillPreview(coord);
                       const amendLocked = fieldIsAmendLocked(c.field, mode);
+                      const error = lineItems.getCellError(rowKey, c.id);
+                      const errorId = error ? `${tableId}-${rowKey}-${c.id}-error` : undefined;
                       const extra =
                         typeof c.field.className === "function"
                           ? c.field.className(row)
@@ -1057,6 +1061,9 @@ export function LineItemsTable<T extends LineItemsRowData>({
                           data-line-key={rowKey}
                           data-column-id={c.id}
                           data-locked={amendLocked || undefined}
+                          data-invalid={error ? "" : undefined}
+                          aria-invalid={error ? true : undefined}
+                          aria-describedby={errorId}
                           className={cn(
                             bodyCellClasses,
                             alignClasses[c.align],
@@ -1076,6 +1083,8 @@ export function LineItemsTable<T extends LineItemsRowData>({
                               "astw:shadow-[inset_0_0_0_1px_var(--color-ring)]",
                             (isActive || inFill) &&
                               "astw:shadow-[inset_0_0_0_2px_var(--color-primary)]",
+                            // DataTable's invalid-cell ring; wins over the active ring.
+                            error && "astw:shadow-[inset_0_0_0_2px_var(--color-destructive)]",
                             extra,
                             dropLine,
                           )}
@@ -1121,6 +1130,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                             showFillGrip={isActive && fieldAllowsFill(c.field, mode)}
                             handlers={cellHandlers}
                           />
+                          {error ? <CellErrorTip id={errorId!} message={error} /> : null}
                         </td>
                       );
                     })}
@@ -1255,5 +1265,56 @@ function isInteractiveTarget(target: HTMLElement): boolean {
     target.closest(
       'input, textarea, select, button, a[href], [contenteditable="true"], [role="combobox"], [role="checkbox"], [role="button"]',
     ) !== null
+  );
+}
+
+/**
+ * An invalid cell's message, shown as DataTable shows its own: a tooltip
+ * below the cell while it's hovered or holds focus. It sits after the cell's
+ * editor, so appearing or clearing never remounts the editor mid-edit. The
+ * message is also in the cell's accessible description.
+ */
+function CellErrorTip({ id, message }: { id: string; message: string }) {
+  const anchorRef = React.useRef<HTMLSpanElement | null>(null);
+  const [open, setOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const cell = anchorRef.current?.parentElement;
+    if (!cell) return;
+    const update = () => setOpen(cell.matches(":hover, :focus-within"));
+    // Focus has not landed anywhere yet during focusout; check a frame later.
+    const deferUpdate = () => requestAnimationFrame(update);
+    update();
+    cell.addEventListener("pointerenter", update);
+    cell.addEventListener("pointerleave", deferUpdate);
+    cell.addEventListener("focusin", update);
+    cell.addEventListener("focusout", deferUpdate);
+    return () => {
+      cell.removeEventListener("pointerenter", update);
+      cell.removeEventListener("pointerleave", deferUpdate);
+      cell.removeEventListener("focusin", update);
+      cell.removeEventListener("focusout", deferUpdate);
+    };
+  }, []);
+
+  return (
+    <>
+      <span id={id} className="astw:sr-only">
+        {message}
+      </span>
+      <Tooltip.Root open={open}>
+        <Tooltip.Trigger
+          render={
+            <span
+              ref={anchorRef}
+              aria-hidden="true"
+              data-slot="line-items-cell-error"
+              className="astw:pointer-events-none astw:absolute astw:inset-0"
+            />
+          }
+        />
+        <Tooltip.Content position={{ side: "bottom" }}>{message}</Tooltip.Content>
+      </Tooltip.Root>
+    </>
   );
 }

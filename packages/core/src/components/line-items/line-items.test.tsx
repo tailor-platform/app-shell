@@ -611,6 +611,49 @@ describe("LineItems", () => {
       expect(api?.allLines[0]?.productId).toBe("p-2");
     });
 
+    it("outlines an invalid cell, describes it, and keeps Save off until it's fixed", async () => {
+      const user = userEvent.setup();
+      function ValidatedHarness() {
+        const lineItems = useLineItems<Line>({
+          fields: fields.map((field) =>
+            field.key === "quantity"
+              ? { ...field, validate: (v: unknown) => (Number(v) < 0 ? "Can't be negative" : null) }
+              : field,
+          ) as LineItemsField<Line>[],
+          defaultLines: seed,
+        });
+        return (
+          <LineItems.Root value={lineItems}>
+            <LineItems.Table virtualized={false} />
+            <LineItems.SaveActions onSave={() => {}} />
+          </LineItems.Root>
+        );
+      }
+      render(<ValidatedHarness />);
+
+      await user.click(editorIn("1", "quantity"));
+      await user.keyboard("-4");
+      await user.tab();
+
+      const qty = cell("1", "quantity");
+      expect(qty.getAttribute("aria-invalid")).toBe("true");
+      expect(document.getElementById(qty.getAttribute("aria-describedby")!)?.textContent).toBe(
+        "Can't be negative",
+      );
+      expect(screen.getByText("Fix 1 error to save")).toBeDefined();
+      expect(screen.getByRole("button", { name: "Save changes" }).hasAttribute("disabled")).toBe(
+        true,
+      );
+
+      await user.click(editorIn("1", "quantity"));
+      await user.keyboard("4");
+      await user.tab();
+      expect(cell("1", "quantity").hasAttribute("aria-invalid")).toBe(false);
+      expect(screen.getByRole("button", { name: "Save changes" }).hasAttribute("disabled")).toBe(
+        false,
+      );
+    });
+
     it("renders no editors at all in view mode", () => {
       render(<Harness mode="view" />);
       expect(allEditors()).toHaveLength(0);

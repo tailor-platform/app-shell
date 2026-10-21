@@ -257,6 +257,15 @@ type LineItemsFieldBase<T extends LineItemsRowData> = {
    * fields so cosmetic input like `"1"` vs `"1.00"` is not a document change.
    */
   equals?: (a: unknown, b: unknown, row: T) => boolean;
+  /**
+   * Checks the cell's value and returns a message when it's invalid, such as
+   * "Quantity can't be negative". Runs on new and changed lines only, so data
+   * that was already saved never blocks an unrelated edit. An invalid cell is
+   * outlined and shows its message on hover or focus, and `SaveActions` /
+   * `DirtyBar` keep Save disabled until every message clears. The value is
+   * still stored, so a paste or fill that breaks the rule shows where.
+   */
+  validate?: (value: unknown, line: T) => string | null | undefined;
   /** Resting column width in pixels. Auto-sized when omitted. */
   width?: number;
   /**
@@ -323,6 +332,14 @@ export type UseLineItemsOptions<T extends LineItemsRowData> = LineItemsRowSource
   onMetadataCommit?: (event: LineItemsMetadataCommit<T>) => void;
 };
 
+/** A cell whose field's `validate` returned a message. */
+export type LineItemsCellError = {
+  lineKey: string;
+  /** The field's `key`. */
+  fieldKey: string;
+  message: string;
+};
+
 export type UseLineItemsReturn<T extends LineItemsRowData> = {
   /** Display order: document order, or sorted while a sort is active. */
   lines: T[];
@@ -339,6 +356,14 @@ export type UseLineItemsReturn<T extends LineItemsRowData> = {
    * a navigation blocker after `await save(); reset(); navigate(…)`.
    */
   hasUnsavedChanges: () => boolean;
+  /**
+   * Validation messages for new and changed lines, in document order. Save
+   * stays disabled in `SaveActions` and `DirtyBar` while any are open; check
+   * it yourself before submitting from your own controls.
+   */
+  errors: LineItemsCellError[];
+  /** The message for one cell, or `undefined` when it's valid. */
+  getCellError: (lineKey: string, fieldKey: string) => string | undefined;
   selectionEnabled: boolean;
   selectedIds: string[];
   /** The selected lines, in document order. */

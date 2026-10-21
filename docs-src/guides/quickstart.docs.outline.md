@@ -75,10 +75,12 @@ Create your first page at `src/pages/page.tsx`:
 
 ```tsx
 // src/pages/page.tsx
+import { Text } from "@tailor-platform/app-shell";
+
 const HomePage = () => {
   return (
     <div className="p-8">
-      <h1 className="text-2xl font-bold">Welcome to AppShell</h1>
+      <Text.h1>Welcome to AppShell</Text.h1>
     </div>
   );
 };
@@ -111,10 +113,12 @@ src/pages/
 
 ```tsx
 // src/pages/dashboard/page.tsx
+import { Text } from "@tailor-platform/app-shell";
+
 const DashboardPage = () => {
   return (
     <div className="p-8">
-      <h1 className="text-xl font-bold">Dashboard</h1>
+      <Text.h1>Dashboard</Text.h1>
     </div>
   );
 };
@@ -124,13 +128,13 @@ export default DashboardPage;
 
 ```tsx
 // src/pages/dashboard/orders/[id]/page.tsx
-import { useParams } from "@tailor-platform/app-shell";
+import { Text, useParams } from "@tailor-platform/app-shell";
 
 const OrderDetailPage = () => {
   const { id } = useParams();
   return (
     <div className="p-8">
-      <h2 className="text-xl font-bold">Order #{id}</h2>
+      <Text.h1>Order #{id}</Text.h1>
     </div>
   );
 };

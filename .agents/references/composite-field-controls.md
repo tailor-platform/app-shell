@@ -37,6 +37,10 @@ Review for consistency around:
 
 Be skeptical when a composite field control invents a parallel API unless the underlying semantics truly differ.
 
+### Register as self-wired
+
+Every control that draws its own frame and connects to `Field.Root` by itself — composite or a thin Base UI wrapper — gets an entry in `selfWiredControls` in `components/field/field.tsx`, including compound members such as `.Async`. `Field.Control` uses that list to warn when the control is passed to its `render` prop, which draws a double frame. A control missing from the list fails silently: no warning, the same double frame.
+
 ### One semantic value across all input paths
 
 Check whether these paths still converge on the same meaning when they exist:

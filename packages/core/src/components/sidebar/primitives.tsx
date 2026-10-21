@@ -11,6 +11,14 @@ import { Input } from "@/components/input";
 import { Separator } from "@/components/internals/separator";
 import { Sheet } from "@/components/sheet";
 import { Tooltip } from "@/components/tooltip";
+import {
+  ListRoot,
+  ListItem,
+  ListButton,
+  ListSub,
+  ListLabel,
+  listButtonVariants,
+} from "@/components/internals/item-list-base";
 
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
@@ -532,21 +540,21 @@ function SidebarGroupLabel({
   children,
   ...props
 }: React.ComponentProps<"div"> & { render?: React.ReactElement }) {
-  return useRender({
-    defaultTagName: "div",
-    render,
-    props: {
-      "data-slot": "sidebar-group-label",
-      "data-sidebar": "group-label",
-      className: cn(
-        "astw:text-sidebar-foreground/70 astw:ring-sidebar-ring astw:flex astw:h-8 astw:shrink-0 astw:items-center astw:rounded-md astw:px-2 astw:text-xs astw:font-medium astw:outline-hidden astw:transition-[margin,opacity] astw:duration-200 astw:ease-linear astw:focus-visible:ring-2 astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
+  return (
+    <ListLabel
+      render={render}
+      data-slot="sidebar-group-label"
+      data-sidebar="group-label"
+      className={cn(
+        "astw:text-sidebar-foreground/70 astw:ring-sidebar-ring astw:outline-hidden astw:transition-[margin,opacity] astw:duration-200 astw:ease-linear astw:focus-visible:ring-2 astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
         "astw:group-data-[collapsible=icon]:-mt-8 astw:group-data-[collapsible=icon]:opacity-0",
         className,
-      ),
-      children,
-      ...props,
-    },
-  });
+      )}
+      {...props}
+    >
+      {children}
+    </ListLabel>
+  );
 }
 
 function SidebarGroupAction({
@@ -579,36 +587,29 @@ function SidebarGroupContent({ className, ...props }: React.ComponentProps<"div"
     <div
       data-slot="sidebar-group-content"
       data-sidebar="group-content"
-      className={cn("astw:w-full astw:text-sm", className)}
+      className={cn("astw:w-full astw:text-body-md", className)}
       {...props}
     />
   );
 }
 
 function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
-  return (
-    <ul
-      data-slot="sidebar-menu"
-      data-sidebar="menu"
-      className={cn("astw:flex astw:w-full astw:min-w-0 astw:flex-col astw:gap-1", className)}
-      {...props}
-    />
-  );
+  return <ListRoot data-slot="sidebar-menu" data-sidebar="menu" className={className} {...props} />;
 }
 
 function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
   return (
-    <li
+    <ListItem
       data-slot="sidebar-menu-item"
       data-sidebar="menu-item"
-      className={cn("astw:group/menu-item astw:relative", className)}
+      className={cn("astw:group/menu-item", className)}
       {...props}
     />
   );
 }
 
 const sidebarMenuButtonVariants = cva(
-  "astw:peer/menu-button astw:flex astw:w-full astw:items-center astw:gap-2 astw:overflow-hidden astw:rounded-md astw:p-2 astw:text-left astw:text-sm astw:outline-hidden astw:ring-sidebar-ring astw:transition-[width,height,padding] astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:focus-visible:ring-2 astw:active:bg-sidebar-accent astw:active:text-sidebar-accent-foreground astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:group-has-data-[sidebar=menu-action]/menu-item:pr-8 astw:aria-disabled:pointer-events-none astw:aria-disabled:opacity-50 astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:font-medium astw:data-[active=true]:text-sidebar-accent-foreground astw:data-[state=open]:hover:bg-sidebar-accent astw:data-[state=open]:hover:text-sidebar-accent-foreground astw:group-data-[collapsible=icon]:size-8! astw:group-data-[collapsible=icon]:p-2! astw:[&>span:last-child]:truncate astw:group-data-[collapsible=icon]:[&>span:last-child]:hidden astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
+  "astw:peer/menu-button astw:text-sidebar-foreground astw:ring-sidebar-ring astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:active:bg-sidebar-accent astw:active:text-sidebar-accent-foreground astw:group-has-data-[sidebar=menu-action]/menu-item:pr-8 astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:font-semibold astw:data-[active=true]:text-sidebar-accent-foreground astw:data-[state=open]:hover:bg-sidebar-accent astw:data-[state=open]:hover:text-sidebar-accent-foreground astw:group-data-[collapsible=icon]:size-8! astw:group-data-[collapsible=icon]:p-2! astw:[&>span:last-child]:truncate astw:group-data-[collapsible=icon]:[&>span:last-child]:hidden",
   {
     variants: {
       variant: {
@@ -617,9 +618,9 @@ const sidebarMenuButtonVariants = cva(
           "astw:bg-background astw:shadow-[0_0_0_1px_hsl(var(--sidebar-border))] astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
       },
       size: {
-        default: "astw:h-8 astw:text-sm",
+        default: "astw:h-8 astw:text-body-md",
         sm: "astw:h-7 astw:rounded-md astw:gap-1.5 astw:px-3 astw:has-[>svg]:px-2.5",
-        lg: "astw:h-12 astw:text-sm astw:group-data-[collapsible=icon]:p-0!",
+        lg: "astw:h-12 astw:text-body-md astw:group-data-[collapsible=icon]:p-0!",
       },
     },
     defaultVariants: {
@@ -660,20 +661,21 @@ function SidebarMenuButton({
     [onClick, isMobile, setOpenMobile, openIconMode, setOpenIconMode],
   );
 
-  const button = useRender({
-    defaultTagName: "button",
-    render,
-    props: {
-      "data-slot": "sidebar-menu-button",
-      "data-sidebar": "menu-button",
-      "data-size": size,
-      "data-active": isActive,
-      className: cn(sidebarMenuButtonVariants({ variant, size }), className),
-      onClick: handleClick,
-      children,
-      ...props,
-    },
-  });
+  const button = (
+    <ListButton
+      render={render}
+      variant={variant}
+      size={size}
+      isActive={isActive}
+      data-slot="sidebar-menu-button"
+      data-sidebar="menu-button"
+      className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+      onClick={handleClick}
+      {...props}
+    >
+      {children}
+    </ListButton>
+  );
 
   if (!tooltip) {
     return button;
@@ -740,7 +742,7 @@ function SidebarMenuBadge({ className, ...props }: React.ComponentProps<"div">) 
       data-slot="sidebar-menu-badge"
       data-sidebar="menu-badge"
       className={cn(
-        "astw:text-sidebar-foreground astw:pointer-events-none astw:absolute astw:right-1 astw:flex astw:h-5 astw:min-w-5 astw:items-center astw:justify-center astw:rounded-md astw:px-1 astw:text-xs astw:font-medium astw:tabular-nums astw:select-none",
+        "astw:text-sidebar-foreground astw:pointer-events-none astw:absolute astw:right-1 astw:flex astw:h-5 astw:min-w-5 astw:items-center astw:justify-center astw:rounded-md astw:px-1 astw:text-label-sm astw:tabular-nums astw:select-none",
         "astw:peer-hover/menu-button:text-sidebar-accent-foreground astw:peer-data-[active=true]/menu-button:text-sidebar-accent-foreground",
         "astw:peer-data-[size=sm]/menu-button:top-1",
         "astw:peer-data-[size=default]/menu-button:top-1.5",
@@ -755,12 +757,11 @@ function SidebarMenuBadge({ className, ...props }: React.ComponentProps<"div">) 
 
 function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
   return (
-    <ul
+    <ListSub
       data-slot="sidebar-menu-sub"
       data-sidebar="menu-sub"
       className={cn(
-        "astw:border-sidebar-border astw:ml-3.5 astw:mr-0 astw:flex astw:min-w-0 astw:translate-x-px astw:flex-col astw:gap-1 astw:border-l astw:pl-2.5 astw:pr-0 astw:py-0.5",
-        "astw:group-data-[collapsible=icon]:hidden",
+        "astw:w-auto astw:border-sidebar-border astw:group-data-[collapsible=icon]:hidden",
         className,
       )}
       {...props}
@@ -770,10 +771,10 @@ function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
 
 function SidebarMenuSubItem({ className, ...props }: React.ComponentProps<"li">) {
   return (
-    <li
+    <ListItem
       data-slot="sidebar-menu-sub-item"
       data-sidebar="menu-sub-item"
-      className={cn("astw:group/menu-sub-item astw:relative", className)}
+      className={cn("astw:group/menu-sub-item", className)}
       {...props}
     />
   );
@@ -817,10 +818,11 @@ function SidebarMenuSubButton({
       "data-active": isActive,
       onClick: handleClick,
       className: cn(
-        "astw:text-sidebar-foreground astw:ring-sidebar-ring astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:active:bg-sidebar-accent astw:active:text-sidebar-accent-foreground astw:[&>svg]:text-sidebar-accent-foreground astw:flex astw:h-7 astw:min-w-0 astw:-translate-x-px astw:items-center astw:gap-2 astw:overflow-hidden astw:rounded-md astw:px-2 astw:outline-hidden astw:focus-visible:ring-2 astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:aria-disabled:pointer-events-none astw:aria-disabled:opacity-50 astw:[&>span:last-child]:truncate astw:group-data-[collapsible=icon]:[&>span:last-child]:hidden astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
-        "astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:font-medium astw:data-[active=true]:text-sidebar-accent-foreground",
-        size === "sm" && "astw:text-xs",
-        size === "md" && "astw:text-sm",
+        listButtonVariants(),
+        "astw:h-7 astw:py-0 astw:text-sidebar-foreground astw:ring-sidebar-ring astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:active:bg-sidebar-accent astw:active:text-sidebar-accent-foreground astw:[&>svg]:text-sidebar-accent-foreground astw:-translate-x-px astw:[&>span:last-child]:truncate astw:group-data-[collapsible=icon]:[&>span:last-child]:hidden",
+        "astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:font-semibold astw:data-[active=true]:text-sidebar-accent-foreground",
+        size === "sm" && "astw:text-body-sm",
+        size === "md" && "astw:text-body-md",
         "astw:group-data-[collapsible=icon]:hidden",
         className,
       ),

@@ -82,7 +82,11 @@ export const ContentContainer = ({ header, className, children }: ContentContain
             // A <Layout fill> page bounds everything internally, so this area
             // never needs to scroll: clip instead. This also makes the fade
             // inert (no scroll range) and avoids any sub-pixel-overflow bar.
-            "astw:has-data-[layout-fill]:overflow-hidden",
+            // A multi-column fill page is only bounded once its columns sit
+            // side by side; while they stack, this area scrolls as usual.
+            "astw:has-data-[layout-fill=always]:overflow-hidden",
+            "astw:lg:has-data-[layout-fill=lg]:overflow-hidden",
+            "astw:xl:has-data-[layout-fill=xl]:overflow-hidden",
             // Reserve the scrollbar gutter so content doesn't shift when the
             // bar toggles across navigations (no-op with overlay scrollbars).
             "astw:[scrollbar-gutter:stable]",

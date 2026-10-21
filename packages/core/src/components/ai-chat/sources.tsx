@@ -34,7 +34,7 @@ type SourcesProps = Omit<ComponentProps<typeof DisclosureRoot>, "children"> & {
 function Sources({ className, children, ...props }: SourcesProps) {
   return (
     <DisclosureRoot
-      className={cn("astw:flex astw:flex-col astw:gap-1 astw:text-xs", className)}
+      className={cn("astw:flex astw:flex-col astw:gap-1 astw:text-body-sm", className)}
       {...props}
     >
       {children}
@@ -64,7 +64,7 @@ function SourcesContent({ className, ...props }: SourcesContentProps) {
   return (
     <DisclosurePanel
       className={cn(
-        "astw:flex astw:w-full astw:flex-col astw:gap-1 astw:rounded-md astw:bg-muted/50 astw:p-2 astw:text-xs astw:text-muted-foreground",
+        "astw:flex astw:w-full astw:flex-col astw:gap-1 astw:rounded-md astw:bg-muted/50 astw:p-2 astw:text-body-sm astw:text-muted-foreground",
         className,
       )}
       {...props}
@@ -83,7 +83,7 @@ function Source({ title, className, ...props }: SourceProps) {
       type="button"
       data-slot="ai-chat-source"
       className={cn(
-        "astw:flex astw:w-fit astw:max-w-full astw:items-center astw:gap-1.5 astw:truncate astw:text-left astw:text-xs astw:text-muted-foreground astw:hover:text-foreground",
+        "astw:flex astw:w-fit astw:max-w-full astw:items-center astw:gap-1.5 astw:truncate astw:text-left astw:text-body-sm astw:text-muted-foreground astw:hover:text-foreground",
         className,
       )}
       {...props}

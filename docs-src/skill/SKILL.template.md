@@ -1,6 +1,8 @@
 ---
 name: app-shell-patterns
 description: "Best-practice UI patterns and correct component usage for building pages in apps that use @tailor-platform/app-shell. Use when: building or editing any screen, page, list, table, detail view, form, modal, dialog, wizard, or bulk/confirm/toast interaction in an app with @tailor-platform/app-shell installed — when choosing the right AppShell component, layout, or design token for a UI — or when upgrading @tailor-platform/app-shell, or diagnosing styling, theming, or dark-mode breakage that appeared after a version bump."
+metadata:
+  app-shell-version: "{{APP_SHELL_VERSION}}"
 ---
 
 # App-Shell Patterns
@@ -8,6 +10,10 @@ description: "Best-practice UI patterns and correct component usage for building
 ## Purpose
 
 Select and implement the correct UI pattern using @tailor-platform/app-shell components.
+
+## Version
+
+This skill was generated from `@tailor-platform/app-shell` **{{APP_SHELL_VERSION}}**. Before relying on it, compare that with the version installed in the app you're working on (resolve `@tailor-platform/app-shell/package.json` from that app, not the monorepo root). If they differ, this copy is stale: tell the user and suggest re-syncing it from the installed package's `skills/app-shell-patterns/` directory.
 
 ## Concepts
 
@@ -46,11 +52,12 @@ A page is the shape of a whole screen — the outer choice, made before picking 
 ## How to Use
 
 1. Identify the user's intent (list, detail, form, interaction, screen composition, recipe)
-2. Building a whole screen? Match it to a **page** entry first and read that. A page fixes the screen's shape — its layout, what goes where, and in what order — before any of the parts inside it are chosen.
-3. Match each part you are building to a **pattern** entry slug from the tables above. A one-off recipe rather than a screen skips straight to this step.
-4. Read the entry's detailed spec: `references/<category>/<slug>.md` (relative to this file)
-5. Read the concept references for styling, design tokens, GraphQL, and custom components: `references/concepts/`; component and hook APIs live in `references/components/` and `references/api/`
-6. Implement using ONLY the imports listed in the entry's `requiredImports` — for a page, the `requiredImports` of the pattern it sent you to
+2. Before implementing screen text, read [`i18n/labels`](references/patterns/i18n-labels.md) and establish the app's UI language independently of the specification's language. Use feature label catalogs by default, unless the project explicitly opts out for a single-language app. The API reference is [`defineI18nLabels`](references/api/define-i18n-labels.md).
+3. Building a whole screen? Match it to a **page** entry first and read that. A page fixes the screen's shape — its layout, what goes where, and in what order — before any of the parts inside it are chosen.
+4. Match each part you are building to a **pattern** entry slug from the tables above. A one-off recipe rather than a screen skips straight to this step.
+5. Read the entry's detailed spec: `references/<category>/<slug>.md` (relative to this file)
+6. Read the concept references for styling, design tokens, GraphQL, and custom components: `references/concepts/`; component and hook APIs live in `references/components/` and `references/api/`
+7. Implement using ONLY the imports listed in the selected entries' `requiredImports` — for a page, use those of its patterns; for localization, include the `i18n/labels` entry
 
 ## Rules
 
@@ -66,9 +73,12 @@ Full rationale in [`styling-theming`](references/concepts/styling-theming.md) �
 
 - **One primary action per view:** at most one primary/filled `Button`; everything else is `outline`/`secondary`/`ghost`.
 - **Status badges by semantic color:** a **filled** semantic variant for the record's primary/lifecycle status, **`outline-*`** for secondary statuses, **`subtle-*`** for tags; reserve brand `default` for non-status emphasis.
+- **Text uses `Text` and typography roles:** render headings, body copy, labels, and captions with [`Text`](references/components/text.md) and a `variant` (`heading-md`, `body-md`, `body-sm`, `label-md`, …) — never a bare `<p>`, `<h*>`, or `<span>` styled with size and weight utilities such as `text-lg font-semibold` or `text-sm`. Set the heading level with `Text.h1` to `Text.h6` (`<Text.h3 variant="heading-md">`), not by its size, and the color with a token in `className`. For other plain elements use `Text.p`, `Text.span` or `Text.div`; use `render` only to compose with another component. On an element you style yourself, such as a `th`, use the role utility (`text-label-md`). Pick the size with `variant`: a size class such as `text-sm` on `Text` has no effect. `Layout.Header` already renders the page title, and a form field label is [`Field.Label`](references/components/form.md), which already has the label role. Role table and color pairings: [`styling-theming`](references/concepts/styling-theming.md) → Typography.
+- **Status and feedback color by semantic role:** use a component variant first (`Badge`, `Alert`, `Button variant="destructive"`). On your own element, use the roles `{info|success|warning|danger|neutral}-{surface|border|solid|text|contrast|indicator}`, for example `bg-warning-surface text-warning-text border-warning-border`. Error text is `text-danger-text`. Never write the deprecated `--status-*`, `--alert-*` or `--destructive` tokens or their utilities (`bg-status-*`, `text-alert-*`, `bg-destructive`, `text-destructive`) in new code; the next major removes them. When you edit a screen that still uses them, replace them: `text-destructive` → `text-danger-text`, `bg-status-completed` → `bg-success-solid`, `bg-alert-warning-background` → `bg-warning-surface`. Full mapping: [`styling-theming`](references/concepts/styling-theming.md) → Semantic color roles.
 - **No duplicate actions:** an action lives in exactly one place — never repeat the same action in both `Layout.Header` and `ActionPanel`.
 - **Action placement:** primary CTA + status in `Layout.Header`; workflow actions in `ActionPanel`; back/navigation in the breadcrumb — never in `ActionPanel`.
 - **Metric tiles always go in a `Grid`** (`columns={{ initial: 1, md: 2, xl: 4 }}`) — never one-per-row.
 - **Forms default to `form/modal`** — only build a routed full-page form when the design explicitly calls for one.
 - **Forms use AppShell `Form` + `Field`**, submitting via `onFormSubmit` — never a bare `<form onSubmit>` with `FormData`. `onFormSubmit` reads registered `Field.Root`s, so every control (dropdowns included) just needs a wrapping `Field.Root name="…"` — no `name` on the control, no `useState`. React Hook Form is optional, consumer-installed, and only warranted for cross-field validation, field arrays, or a Zod resolver. Details in [`Form`](references/components/form.md) and the `form/*` patterns.
 - **Handle every state:** loading (skeleton), empty (labelled empty state), and error (inline + retry) — never ship only the happy path.
+- **Keep UI language consistent:** apply the chosen language to navigation, component text, accessibility labels, and feedback. Use the catalog's `useT()` for rendered strings and `labels.t()` for `LocalizedString` metadata; keep server codes and comparison values untranslated. See [`i18n/labels`](references/patterns/i18n-labels.md).

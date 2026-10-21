@@ -3,6 +3,8 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { Conversation, ConversationScrollButton } from "./conversation";
+import { AIChatContext } from "./ai-chat-context";
+import type { AIChatStatus } from "@/ai/use-ai-chat";
 
 afterEach(() => {
   cleanup();
@@ -31,7 +33,31 @@ function renderConversation() {
 
 const scrollButton = () => screen.queryByRole("button", { name: "Scroll to latest message" });
 
+const conversationWithStatus = (status: AIChatStatus) => (
+  <AIChatContext.Provider value={{ status }}>
+    <Conversation>content</Conversation>
+  </AIChatContext.Provider>
+);
+
 describe("Conversation", () => {
+  it("shows the waiting indicator only while submitted, including between tool rounds", () => {
+    const { rerender } = render(conversationWithStatus("submitted"));
+
+    expect(screen.getByRole("status").textContent).toBe("Thinking…");
+    expect(screen.getByRole("status").querySelector('[data-slot="spinner"]')).not.toBeNull();
+
+    for (const status of ["streaming", "submitted", "ready", "submitted", "error"] as const) {
+      rerender(conversationWithStatus(status));
+      expect(screen.queryByRole("status") !== null).toBe(status === "submitted");
+    }
+  });
+
+  it("remains usable outside AIChat without a waiting indicator", () => {
+    renderConversation();
+    expect(screen.getByRole("log").textContent).toBe("content");
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
   it("hides the scroll button while the reader is at the bottom", () => {
     renderConversation();
     expect(scrollButton()).toBeNull();

@@ -209,10 +209,8 @@ const productsModule = defineModule({
 import { defineI18nLabels } from "@tailor-platform/app-shell";
 
 const labels = defineI18nLabels({
-  dashboard: {
-    en: "Dashboard",
-    ja: "ダッシュボード",
-  },
+  en: { dashboard: "Dashboard" },
+  ja: { dashboard: "ダッシュボード" },
 });
 
 const dashboardModule = defineModule({

@@ -25,6 +25,7 @@ import { BuiltInCommandPalette } from "@/components/command-palette";
 import { useIsClient } from "@/hooks/use-is-client";
 import { convertPagesToModules } from "@/fs-routes/converter";
 import type { PageEntry } from "@/fs-routes/types";
+import { Text } from "../text";
 
 /**
  * Shared props between `AppShellProps` and the internal `WithPages` wrapper.
@@ -378,11 +379,13 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
     // Render inline error UI instead of throwing
     return (
       <div className="astw:flex astw:min-h-screen astw:items-center astw:justify-center astw:bg-background astw:p-4">
-        <div className="astw:max-w-md astw:rounded-lg astw:border astw:border-destructive/50 astw:bg-destructive/10 astw:p-6 astw:text-center">
-          <h1 className="astw:mb-2 astw:text-lg astw:font-semibold astw:text-destructive">
+        <div className="astw:max-w-md astw:rounded-lg astw:border astw:border-danger-border astw:bg-danger-surface astw:p-6 astw:text-center">
+          <Text.h1 variant="heading-md" className="astw:mb-2 astw:text-danger-text">
             Configuration Error
-          </h1>
-          <p className="astw:text-sm astw:text-muted-foreground">{errorMessage}</p>
+          </Text.h1>
+          <Text variant="body-md" className="astw:text-muted-foreground">
+            {errorMessage}
+          </Text>
         </div>
       </div>
     );

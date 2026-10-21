@@ -49,7 +49,7 @@ function ChatHistory({
         .filter((group) => group.items.length > 0)
         .map((group) => (
           <div key={group.title} className="astw:space-y-0.5">
-            <div className="astw:px-2 astw:pb-1 astw:text-[11px] astw:font-medium astw:uppercase astw:tracking-wide astw:text-muted-foreground">
+            <div className="astw:px-2 astw:pb-1 astw:text-label-sm astw:uppercase astw:tracking-wide astw:text-muted-foreground">
               {group.title}
             </div>
             {group.items.map((item) => {
@@ -66,9 +66,9 @@ function ChatHistory({
                     type="button"
                     onClick={() => onSelect?.(item.id)}
                     className={cn(
-                      "astw:flex astw:min-w-0 astw:flex-1 astw:items-center astw:gap-2 astw:px-2 astw:py-1.5 astw:text-left astw:text-sm",
+                      "astw:flex astw:min-w-0 astw:flex-1 astw:items-center astw:gap-2 astw:px-2 astw:py-1.5 astw:text-left astw:text-body-md",
                       active
-                        ? "astw:font-medium astw:text-foreground"
+                        ? "astw:font-semibold astw:text-foreground"
                         : "astw:text-muted-foreground astw:group-hover:text-foreground",
                     )}
                   >
@@ -83,7 +83,7 @@ function ChatHistory({
                       // Tucked away visually but never removed from the tab
                       // order or the a11y tree — `hidden` would make
                       // `onDelete` mouse-only. Same pattern as `Attachment`.
-                      className="astw:mr-1 astw:shrink-0 astw:rounded astw:p-1 astw:text-muted-foreground astw:opacity-0 astw:transition-opacity astw:hover:text-destructive astw:group-hover:opacity-100 astw:group-focus-within:opacity-100"
+                      className="astw:mr-1 astw:shrink-0 astw:rounded astw:p-1 astw:text-muted-foreground astw:opacity-0 astw:transition-opacity astw:hover:text-danger-text astw:group-hover:opacity-100 astw:group-focus-within:opacity-100"
                     >
                       <Trash2 className="astw:size-3.5" aria-hidden />
                     </button>

@@ -1,15 +1,14 @@
 import {
   Children,
   isValidElement,
-  useEffect,
   useMemo,
-  useRef,
   type ComponentProps,
   type ReactElement,
   type ReactNode,
 } from "react";
 
 import type { AIChatStatus } from "@/ai/use-ai-chat";
+import { useOnceWarnings } from "@/hooks/use-once-warnings";
 import { cn } from "@/lib/utils";
 import { Action, Actions } from "./actions";
 import { AIChatContext } from "./ai-chat-context";
@@ -31,6 +30,7 @@ import { Response } from "./response";
 import { Source, Sources, SourcesContent, SourcesTrigger } from "./sources";
 import { Suggestion, Suggestions } from "./suggestion";
 import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from "./tool";
+import { ToolCall } from "./tool-call";
 
 type AIChatProps = Omit<ComponentProps<"div">, "children"> & {
   /**
@@ -79,27 +79,6 @@ type AIChatProps = Omit<ComponentProps<"div">, "children"> & {
  * </Card.Root>
  * ```
  */
-/**
- * Emits each distinct message once per mounted root.
- *
- * The root re-renders on every streamed token, so warning inline during
- * render would repeat the same line hundreds of times in a single response —
- * and twice per render again under StrictMode. Deliberately not gated on
- * `process.env.NODE_ENV`: this package has no other reference to `process`,
- * and adding one would break consumers whose bundler does not shim it.
- */
-function useOnceWarnings(warnings: readonly string[]) {
-  const seen = useRef<Set<string>>(new Set());
-
-  useEffect(() => {
-    for (const warning of warnings) {
-      if (seen.current.has(warning)) continue;
-      seen.current.add(warning);
-      console.warn(warning);
-    }
-  });
-}
-
 type Regions = {
   header?: ReactElement;
   conversation?: ReactElement;
@@ -199,6 +178,7 @@ type AIChatComponent = typeof AIChatRoot & {
   ChainOfThoughtSearchResults: typeof ChainOfThoughtSearchResults;
   ChainOfThoughtSearchResult: typeof ChainOfThoughtSearchResult;
   Tool: typeof Tool;
+  ToolCall: typeof ToolCall;
   ToolHeader: typeof ToolHeader;
   ToolContent: typeof ToolContent;
   ToolInput: typeof ToolInput;
@@ -231,6 +211,7 @@ const AIChat: AIChatComponent = Object.assign(AIChatRoot, {
   ChainOfThoughtSearchResults,
   ChainOfThoughtSearchResult,
   Tool,
+  ToolCall,
   ToolHeader,
   ToolContent,
   ToolInput,
@@ -247,5 +228,6 @@ export type { AIChatHeaderProps } from "./header";
 export type { AIChatConversationProps } from "./conversation";
 export type { AIChatComposerProps } from "./composer";
 export type { ToolState } from "./tool";
+export type { AIChatToolCallProps } from "./tool-call";
 export type { ChainOfThoughtStepStatus } from "./chain-of-thought";
 export type { ChatHistoryGroupData, ChatHistoryItemData } from "./chat-history";

@@ -8,6 +8,7 @@ export {
 } from "./components/sidebar/index";
 export { DynamicBreadcrumb, usePathSegments } from "./components/sidebar/dynamic-breadcrumb";
 export { CommandPalette } from "./components/command-palette";
+export { ItemList } from "./components/item-list";
 export {
   useOpenCommandPalette,
   useRegisterCommandPaletteActions,
@@ -71,15 +72,24 @@ export {
   type AIGatewayClient,
   type AIGatewayChatMessage,
   type AIGatewayChatRequest,
+  type AIGatewayToolCall,
+  type AIGatewayFunctionTool,
   type AIChatCompletionEvent,
 } from "./ai/client";
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
+export {
+  defineAIChatTool,
+  type AIChatToolContext,
+  type AIChatToolSchema,
+  type AILocalTool,
+} from "./ai/tools";
 export {
   AIChat,
   type AIChatProps,
   type AIChatHeaderProps,
   type AIChatConversationProps,
   type AIChatComposerProps,
+  type AIChatToolCallProps,
   type ToolState,
   type ChainOfThoughtStepStatus,
   type ChatHistoryGroupData,
@@ -193,6 +203,7 @@ export {
 export { Layout, type LayoutProps } from "./components/layout";
 export { Grid, type GridProps, type GridItemProps } from "./components/grid";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
+export { Text, type TextProps } from "./components/text";
 export { Avatar, avatarVariants, type AvatarProps } from "./components/avatar";
 export { Spinner, type SpinnerProps } from "./components/spinner";
 export { Input, type InputProps } from "./components/input";
@@ -210,6 +221,12 @@ export type { PositionProps } from "./lib/position";
 export { Sheet } from "./components/sheet";
 export { Tabs } from "./components/tabs";
 export { Toolbar, type ToolbarProps } from "./components/toolbar";
+export {
+  FilterRail,
+  useFilterRailLayout,
+  type FilterRailRootProps,
+  type FilterRailSection,
+} from "./components/filter-rail";
 export { Tooltip } from "./components/tooltip";
 export { Select, type SelectAsyncFetcher } from "./components/select";
 export { Combobox, type ComboboxAsyncFetcher } from "./components/combobox";
@@ -292,8 +309,12 @@ export {
   type TableOrderableFieldName,
 } from "./types/collection";
 
+// Selector aggregations
+export { aggregations, type Aggregation } from "./lib/aggregations";
+
 // DataTable
 export {
+  CellEditError,
   DataTable,
   useDataTable,
   useDataTableContext,
@@ -304,6 +325,7 @@ export {
   type DataTableData,
   type DataTableFilterConfig,
   type HeaderRenderContext,
+  type FooterRenderContext,
   type DataTableAction,
   type RowAction,
   type SelectionAction,
@@ -312,6 +334,13 @@ export {
   type UseDataTableReturn,
   type MetadataFieldOptions,
   type DataTableContextValue,
+  type RowSelectionOptions,
+  type TextCellEditOptions,
+  type NumberCellEditOptions,
+  type BadgeCellEditOptions,
+  type DateCellEditOptions,
+  type CellEditState,
+  type DateTimeDraft,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
 export { useURLCollectionVariables, withURLCollectionState } from "./lib/collection-url-state";

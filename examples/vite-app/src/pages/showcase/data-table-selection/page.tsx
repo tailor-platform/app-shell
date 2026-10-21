@@ -76,8 +76,7 @@ function makeVendors(count: number): Vendor[] {
       category: pick(CATEGORIES),
       owner: pick(OWNERS),
       region: pick(REGIONS),
-      // Weighted so a random multi-select usually spans two or three statuses —
-      // which is what makes the per-action counts in the footer interesting.
+      // Mixed statuses demonstrate consumer-owned eligibility checks.
       status: rand() > 0.45 ? "active" : rand() > 0.4 ? "inactive" : pick(STATUSES),
       spend: Math.round((rand() * 480_000 + 4_000) * 100) / 100,
       lastOrder: new Date(base + Math.floor(rand() * 240) * 86_400_000).toISOString().slice(0, 10),
@@ -207,12 +206,14 @@ const columns = [
 
 // ─── Page ────────────────────────────────────────────────────────────────────
 
-type PendingDelete = { rows: Vendor[]; run: SelectionActionHelpers["run"] };
+type PendingDelete = { ids: string[]; run: SelectionActionHelpers["run"] };
 
 const DataTableSelectionPage = () => {
   const toast = useToast();
   // 🧪 Dummy Data: local state stands in for mutations + a refetch.
   const [vendors, setVendors] = useState(INITIAL_VENDORS);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleting, setDeleting] = useState(false);
   // 🧪 Showcase control: compare the pinned footer with a page-scrolling table.
   const [fill, setFill] = useState(true);
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
@@ -220,48 +221,54 @@ const DataTableSelectionPage = () => {
   const { variables, control } = useCollectionVariables({ params: { pageSize: 25 } });
   const data = useMemo(() => selectPage(vendors, variables), [vendors, variables]);
 
-  // 🧪 Dummy Data: a fake request, slow enough to see the bar's pending state.
-  const setStatus = async (rows: Vendor[], status: VendorStatus) => {
-    await new Promise((resolve) => setTimeout(resolve, 900));
-    const ids = new Set(rows.map((row) => row.id));
-    setVendors((prev) => prev.map((v) => (ids.has(v.id) ? { ...v, status } : v)));
+  const removeCompletedIds = (ids: string[]) => {
+    const completed = new Set(ids);
+    setSelectedIds((current) => current.filter((id) => !completed.has(id)));
   };
 
-  // 🔽 Bulk actions. `canApply` gives each action its "(n)" count and passes
-  // only the eligible rows to `onClick`; the footer disables an action at 0.
-  // Returning the promise makes the bar wait: actions are disabled with a
-  // spinner meanwhile, and the selection clears once it resolves.
-  const selectionActions: SelectionAction<Vendor>[] = [
+  // 🧪 Dummy backend: validate against all vendors, not the table's page/cache.
+  const setStatus = async (ids: string[], status: "active" | "inactive") => {
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    const targets = new Set(ids);
+    const previousStatus = status === "active" ? "inactive" : "active";
+    const completed = new Set(
+      vendors.filter((v) => targets.has(v.id) && v.status === previousStatus).map((v) => v.id),
+    );
+    setVendors((prev) => prev.map((v) => (completed.has(v.id) ? { ...v, status } : v)));
+    return [...completed];
+  };
+
+  // The bar receives every selected ID. Consumers decide eligibility and remove
+  // only completed IDs; returned promises track pending state without clearing.
+  const actions: SelectionAction[] = [
     {
       id: "activate",
       label: "Activate",
       icon: <Play />,
-      canApply: (v) => v.status === "inactive",
-      onClick: async (rows) => {
-        await setStatus(rows, "active");
-        toast.success(`Activated ${rows.length} vendor(s)`);
+      onClick: async (ids) => {
+        const completed = await setStatus(ids, "active");
+        removeCompletedIds(completed);
+        toast.success(`Activated ${completed.length} of ${ids.length} selected vendor(s)`);
       },
     },
     {
       id: "deactivate",
       label: "Deactivate",
       icon: <Pause />,
-      canApply: (v) => v.status === "active",
-      onClick: async (rows) => {
-        await setStatus(rows, "inactive");
-        toast.success(`Deactivated ${rows.length} vendor(s)`);
+      onClick: async (ids) => {
+        const completed = await setStatus(ids, "inactive");
+        removeCompletedIds(completed);
+        toast.success(`Deactivated ${completed.length} of ${ids.length} selected vendor(s)`);
       },
     },
     {
       id: "export",
       label: "Export",
       icon: <Download />,
-      // No `canApply`: applies to every selected row, so no count is shown.
-      // `keepSelection`: exporting doesn't change the rows.
-      keepSelection: true,
-      onClick: async (rows) => {
+      onClick: async (ids) => {
         await new Promise((resolve) => setTimeout(resolve, 600));
-        toast.success(`Exported ${rows.length} vendor(s)`);
+        const exported = vendors.filter((vendor) => ids.includes(vendor.id));
+        toast.success(`Exported ${exported.length} vendor(s)`);
       },
     },
     {
@@ -270,11 +277,9 @@ const DataTableSelectionPage = () => {
       label: "Delete",
       icon: <Trash2 />,
       variant: "destructive",
-      canApply: (v) => v.status === "archived",
-      // Destructive: confirm first (interaction/confirm pattern). Opening the
-      // dialog returns nothing, so keep `run` and hand the request back on
-      // confirm — the bar then shows its pending state and clears on success.
-      onClick: (rows, { run }) => setPendingDelete({ rows, run }),
+      // Capture the click-time IDs for the consumer-owned confirmation dialog.
+      // `run` tracks its later request, but does not change the selection.
+      onClick: (ids, { run }) => setPendingDelete({ ids: [...ids], run }),
     },
   ];
 
@@ -283,22 +288,37 @@ const DataTableSelectionPage = () => {
     data,
     loading: false,
     control,
-    // `selectionActions` alone turns on the checkbox column.
-    selectionActions,
+    rowSelection: { selectedIds, onChange: setSelectedIds, actions },
   });
 
-  // 🧪 Dummy Data: a fake slow delete request.
-  const deleteVendors = async (rows: Vendor[]) => {
+  const deletableVendors = pendingDelete
+    ? vendors.filter((v) => pendingDelete.ids.includes(v.id) && v.status === "archived")
+    : [];
+
+  // 🧪 Dummy backend: only archived vendors may actually be deleted.
+  const deleteVendors = async (ids: string[]) => {
     await new Promise((resolve) => setTimeout(resolve, 900));
-    const ids = new Set(rows.map((row) => row.id));
-    setVendors((prev) => prev.filter((v) => !ids.has(v.id)));
-    toast.error(`Deleted ${rows.length} vendor(s)`);
+    const targets = new Set(ids);
+    const completed = new Set(
+      vendors.filter((v) => targets.has(v.id) && v.status === "archived").map((v) => v.id),
+    );
+    setVendors((prev) => prev.filter((v) => !completed.has(v.id)));
+    return [...completed];
   };
 
-  const confirmDelete = () => {
-    if (!pendingDelete) return;
-    pendingDelete.run(deleteVendors(pendingDelete.rows));
-    setPendingDelete(null);
+  const confirmDelete = async () => {
+    if (!pendingDelete || deleting) return;
+    setDeleting(true);
+    try {
+      const completed = await pendingDelete.run(deleteVendors(pendingDelete.ids));
+      removeCompletedIds(completed);
+      toast.success(`Deleted ${completed.length} vendor(s)`);
+      setPendingDelete(null);
+    } catch {
+      toast.error("Could not delete vendors. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -307,11 +327,13 @@ const DataTableSelectionPage = () => {
       <Layout.Column>
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <p className="max-w-3xl text-sm text-muted-foreground">
-            240 vendor records. Select a few rows: the footer becomes the bulk-action bar, and each
-            action counts the selected rows it applies to — <em>Activate</em> only inactive vendors,{" "}
-            <em>Delete</em> only archived ones — and disables at zero. Selection survives paging,
-            and the header checkbox only adds or removes the current page. In <em>Page scroll</em>,
-            the bar rides the bottom of the window until the table&apos;s end scrolls into view.
+            240 vendor records. Select a few rows: the footer becomes the bulk-action bar. Each
+            action receives every selected ID; this page checks eligibility against the complete
+            vendor list — <em>Activate</em> only inactive vendors, <em>Delete</em> only archived
+            ones — and removes only successfully changed IDs from selection. Selection survives
+            paging, and the header checkbox only adds or removes the current page. In{" "}
+            <em>Page scroll</em>, the bar rides the bottom of the window until the table&apos;s end
+            scrolls into view.
           </p>
           {/* 🧪 Showcase control */}
           <div className="flex shrink-0 items-center gap-1 rounded-md border border-border p-1">
@@ -344,20 +366,27 @@ const DataTableSelectionPage = () => {
         <Dialog.Root
           open={pendingDelete !== null}
           onOpenChange={(open) => {
-            if (!open) setPendingDelete(null);
+            if (!open && !deleting) setPendingDelete(null);
           }}
         >
           <Dialog.Content>
             <Dialog.Header>
-              <Dialog.Title>Delete {pendingDelete?.rows.length} archived vendor(s)?</Dialog.Title>
+              <Dialog.Title>Delete {deletableVendors.length} archived vendor(s)?</Dialog.Title>
               <Dialog.Description>
-                They will be removed from the vendor list. This action cannot be undone.
+                {deletableVendors.length} of {pendingDelete?.ids.length} selected vendors can be
+                deleted. The others will stay selected. This action cannot be undone.
               </Dialog.Description>
             </Dialog.Header>
             <Dialog.Footer>
-              <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
-              <Button variant="destructive" onClick={confirmDelete}>
-                Delete
+              <Dialog.Close render={<Button variant="outline" disabled={deleting} />}>
+                Cancel
+              </Dialog.Close>
+              <Button
+                variant="destructive"
+                disabled={deleting || deletableVendors.length === 0}
+                onClick={confirmDelete}
+              >
+                {deleting ? "Deleting…" : "Delete"}
               </Button>
             </Dialog.Footer>
           </Dialog.Content>

@@ -468,8 +468,7 @@ const contactSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   age: z
     .number({
-      required_error: "Age is required",
-      invalid_type_error: "Age is required",
+      error: "Age is required",
     })
     .min(18, "Must be at least 18")
     .max(120, "Must be 120 or less"),

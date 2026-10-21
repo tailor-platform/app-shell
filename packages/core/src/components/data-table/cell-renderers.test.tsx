@@ -8,6 +8,50 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe("badge choice labels", () => {
+  const filter = {
+    field: "value",
+    type: "enum" as const,
+    options: [{ value: "qa_approved", label: "Quality approved" }],
+  };
+  const labelMap = { badgeLabelMap: { qa_approved: "Approved by QA" } };
+  const edit = { onValueCommitted: () => {} };
+
+  it.each([
+    { name: "enum fallback", edit, typeOptions: undefined, expected: "Quality approved" },
+    { name: "badgeLabelMap precedence", edit, typeOptions: labelMap, expected: "Approved by QA" },
+    {
+      name: "explicit option precedence",
+      edit: { ...edit, options: [{ value: "qa_approved", label: "Explicit choice" }] },
+      typeOptions: labelMap,
+      expected: "Explicit choice",
+    },
+    {
+      name: "non-editable raw value",
+      edit: undefined,
+      typeOptions: undefined,
+      expected: "qa_approved",
+    },
+    {
+      name: "non-editable label map",
+      edit: undefined,
+      typeOptions: labelMap,
+      expected: "Approved by QA",
+    },
+  ])("renders $name", ({ edit: editing, typeOptions, expected }) => {
+    const col: Column<Record<string, unknown>> = {
+      id: "value",
+      type: "badge",
+      filter,
+      typeOptions,
+      edit: editing,
+    };
+    const renderCell = createTypedCellRenderer(col, "Asia/Tokyo");
+    render(<>{renderCell({ value: "qa_approved" })}</>);
+    expect(screen.getByText(expected)).toBeDefined();
+  });
+});
+
 describe("date cell rendering", () => {
   const column: Column<Record<string, unknown>> = {
     id: "value",

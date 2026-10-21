@@ -66,6 +66,7 @@ const AppInner = () => {
             <SidebarGroup title="Showcase" icon={<LayersIcon />}>
               <SidebarItem to="/showcase/colors" />
               <SidebarItem to="/showcase/primitives" />
+              <SidebarItem to="/showcase/item-list" />
               <SidebarItem to="/showcase/dropdown" />
               <SidebarItem to="/showcase/forms" />
               <SidebarItem to="/showcase/forms/zod-rhf" />
@@ -83,6 +84,7 @@ const AppInner = () => {
               <SidebarItem to="/showcase/data-table" />
               <SidebarItem to="/showcase/data-table-lab" />
               <SidebarItem to="/showcase/data-table-selection" />
+              <SidebarItem to="/showcase/filter-rail" />
               <SidebarItem to="/showcase/tree-picker" />
               <SidebarItem to="/showcase/alert-tokens" />
               <SidebarItem to="/showcase/spinner" />

@@ -7,7 +7,7 @@ import { hash, normalizeText } from "./hash";
 import { readManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { loadSurface, snapshotHashForSlug } from "./project";
-import { computeSkill } from "./skill";
+import { computeSkill, computeStampedSkill } from "./skill";
 import { unmanagedOutputs, walkMarkdown } from "./tree";
 
 export interface CheckResult {
@@ -139,6 +139,13 @@ export function check(repoRoot: string): CheckResult {
           message: `skill file ${p} removed — run sync.`,
         });
       }
+    }
+    // The manifest hashes unstamped content, so validate the stamp separately —
+    // otherwise a broken version source would only surface at publish time.
+    try {
+      computeStampedSkill(repoRoot, config, outlines);
+    } catch (e) {
+      findings.push({ level: "block", slug: "skill", message: (e as Error).message });
     }
   }
 

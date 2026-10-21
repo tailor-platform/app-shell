@@ -23,6 +23,7 @@ const variants = [
   "subtle-warning",
   "subtle-error",
   "subtle-info",
+  "subtle-neutral",
 ] as const;
 
 describe("badgeVariants semantic colour classes", () => {

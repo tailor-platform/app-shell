@@ -100,7 +100,10 @@ type ReasoningContentProps = Omit<ComponentProps<typeof DisclosurePanel>, "child
 function ReasoningContent({ children, className, ...props }: ReasoningContentProps) {
   return (
     <DisclosurePanel
-      className={cn("astw:border-l-2 astw:pl-3 astw:text-sm astw:text-muted-foreground", className)}
+      className={cn(
+        "astw:border-l-2 astw:pl-3 astw:text-body-md astw:text-muted-foreground",
+        className,
+      )}
       {...props}
     >
       <Response>{children}</Response>

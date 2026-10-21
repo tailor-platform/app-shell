@@ -8,6 +8,7 @@ import type {
   ActivityCardItemsProps,
   ActivityCardItemProps,
 } from "./types";
+import { Text } from "../text";
 
 // ============================================================================
 // HELPERS (exported for standalone wrapper)
@@ -102,9 +103,9 @@ function Root<T extends ActivityCardBaseItem>({
       >
         {title != null && (
           <div className="astw:flex astw:items-center astw:px-6 astw:pt-5 astw:pb-2">
-            <h3 className="astw:text-lg astw:font-semibold astw:leading-7 astw:text-card-foreground">
+            <Text.h3 variant="heading-md" className="astw:text-card-foreground">
               {title}
-            </h3>
+            </Text.h3>
           </div>
         )}
         {children}
@@ -126,9 +127,12 @@ function renderSection<T extends ActivityCardBaseItem>(
   return (
     <div key={dayLabel ?? "single"} className="astw:flex astw:flex-col astw:gap-5">
       {dayLabel != null && (
-        <p className="astw:text-xs astw:font-semibold astw:leading-none astw:opacity-60 astw:text-foreground">
+        <Text.p
+          variant="label-sm"
+          className="astw:leading-none astw:opacity-60 astw:text-foreground"
+        >
           {dayLabel}
-        </p>
+        </Text.p>
       )}
       <div className="astw:relative astw:flex astw:flex-col astw:gap-5">
         {items.map((item, index) => (
@@ -212,7 +216,9 @@ function Items<T extends ActivityCardBaseItem>({ children }: ActivityCardItemsPr
       <div className="astw:relative astw:px-6 astw:pb-5">
         <div className="astw:relative astw:flex astw:flex-col">
           {visible.length === 0 ? (
-            <p className="astw:text-sm astw:text-muted-foreground">No activities yet</p>
+            <Text variant="body-md" className="astw:text-muted-foreground">
+              No activities yet
+            </Text>
           ) : (
             renderList(visible, children, groupBy)
           )}
@@ -222,7 +228,7 @@ function Items<T extends ActivityCardBaseItem>({ children }: ActivityCardItemsPr
         <button
           type="button"
           onClick={() => setDialogOpen(true)}
-          className="astw:cursor-pointer astw:w-full astw:border-t astw:border-border astw:py-4 astw:text-sm astw:font-medium astw:text-center astw:text-foreground astw:opacity-60 astw:transition-colors astw:hover:opacity-100 astw:hover:bg-secondary/50 astw:focus:outline-none astw:focus-visible:ring-2 astw:focus-visible:ring-ring astw:focus-visible:ring-inset"
+          className="astw:cursor-pointer astw:w-full astw:border-t astw:border-border astw:py-4 astw:text-label-md astw:text-center astw:text-foreground astw:opacity-60 astw:transition-colors astw:hover:opacity-100 astw:hover:bg-secondary/50 astw:focus:outline-none astw:focus-visible:ring-2 astw:focus-visible:ring-ring astw:focus-visible:ring-inset"
         >
           {overflowLabel === "count" ? `+${overflowCount}` : `${overflowCount} more activities`}
         </button>

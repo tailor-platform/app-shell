@@ -1,7 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { createElement, type PropsWithChildren } from "react";
 import { resetLocalTimeZone } from "@internationalized/date";
-import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, expectTypeOf, vi } from "vitest";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import type { TableMetadataMap } from "@/types/collection";
 import { useCollectionVariables } from "./use-collection-variables";
@@ -179,6 +179,11 @@ describe("useCollectionVariables", () => {
 
       expect(result.current.control.filters).toHaveLength(1);
       expect(result.current.control.filters[0].field).toBe("amount");
+
+      act(() => {
+        result.current.control.removeFilter("amount");
+      });
+      expect(result.current.variables.query).toBeUndefined();
     });
 
     it("clears all filters", () => {
@@ -193,6 +198,21 @@ describe("useCollectionVariables", () => {
       });
 
       expect(result.current.control.filters).toHaveLength(0);
+      expect(result.current.variables.query).toBeUndefined();
+    });
+
+    it("returns undefined query when filters are replaced with an empty array", () => {
+      const { result } = renderHook(() =>
+        useCollectionVariables({
+          params: { initialFilters: [{ field: "status", operator: "eq", value: "ACTIVE" }] },
+        }),
+      );
+
+      act(() => {
+        result.current.control.setFilters([]);
+      });
+
+      expect(result.current.variables.query).toBeUndefined();
     });
 
     it("resets pagination when filters change", () => {
@@ -649,9 +669,41 @@ describe("useCollectionVariables", () => {
           { name: "createdAt", type: "datetime", required: true },
           { name: "startTime", type: "time", required: false },
           { name: "count", type: "number", required: false },
+          { name: "amount", type: "decimal", required: false },
         ],
       },
     } as const satisfies TableMetadataMap;
+
+    it.each(["gte", "in", "nin", "between"] as const)(
+      "builds string-based decimal %s variables compatible with GraphQL inputs",
+      (operator) => {
+        const min = "9007199254740993.123456789";
+        const max = "9007199254740994.123456789";
+        const value = { between: { min, max }, gte: min, in: [min, max], nin: [min, max] }[
+          operator
+        ];
+        const { result } = renderHook(() =>
+          useCollectionVariables({ tableMetadata: testMetadata.task }),
+        );
+        act(() => {
+          result.current.control.addFilter("amount", operator, value);
+          result.current.control.setSort("amount", "Asc");
+        });
+        expect(result.current.variables.query).toEqual({ amount: { [operator]: value } });
+        expect(result.current.variables.order).toEqual([{ field: "amount", direction: "Asc" }]);
+        expectTypeOf(result.current.variables.query).toExtend<
+          | {
+              amount?: {
+                gte?: string;
+                in?: string[];
+                nin?: string[];
+                between?: { min: string; max: string };
+              };
+            }
+          | undefined
+        >();
+      },
+    );
 
     it("works with tableMetadata", () => {
       const { result } = renderHook(() =>
@@ -661,6 +713,7 @@ describe("useCollectionVariables", () => {
         }),
       );
       expect(result.current.variables.pagination).toEqual({ first: 10 });
+      expect(result.current.variables.query).toBeUndefined();
     });
 
     it("applies typed initialSort", () => {

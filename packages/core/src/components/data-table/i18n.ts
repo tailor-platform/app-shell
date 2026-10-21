@@ -48,7 +48,7 @@ export const dataTableLabels = defineI18nLabels({
     // Selection actions bar (DataTable.Footer while rows are selected). The
     // Clear button's accessible name extends its visible text, so it is still
     // unambiguous when read outside the bar.
-    selectionActionsLabel: "Bulk actions",
+    bulkActionsLabel: "Bulk actions",
     // Shorter than Pagination's "N of M row(s) selected": the bar shares the
     // footer line with the pagination controls.
     selectionCount: (props: { selected: number; total: number | null }) =>
@@ -131,6 +131,19 @@ export const dataTableLabels = defineI18nLabels({
       `${props.column} ${props.operator} ${props.value}`,
     filterChipLabelEnum: (props: { column: string; operator: string; value: string }) =>
       `${props.column} ${props.operator}: ${props.value}`,
+
+    // Inline cell editing — numeric parsing feedback
+    editNotANumber: "Enter a number",
+    editRevertHint: "Press Esc to undo",
+    editNone: "None",
+    editNoMatches: "No matches",
+    editClear: "Clear",
+    editDone: "Done",
+    editCallbackError: "Could not confirm this change",
+    editShowError: (props: { label: string }) => `Show error for ${props.label}`,
+    editErrorDialog: (props: { label: string }) => `Error in ${props.label}`,
+    editCloseError: "Close error details",
+    editErrorHint: "Press Alt+ArrowDown for error details",
   },
   ja: {
     loading: "読み込み中...",
@@ -170,7 +183,7 @@ export const dataTableLabels = defineI18nLabels({
     selectAll: "全行を選択",
     selectRow: "行を選択",
 
-    selectionActionsLabel: "一括操作",
+    bulkActionsLabel: "一括操作",
     selectionCount: (props: { selected: number; total: number | null }) =>
       props.total === null
         ? `${props.selected} 行を選択中`
@@ -245,6 +258,19 @@ export const dataTableLabels = defineI18nLabels({
       `${props.column}: ${props.value} ${props.operator}`,
     filterChipLabelEnum: (props: { column: string; operator: string; value: string }) =>
       `${props.column} ${props.operator}: ${props.value}`,
+
+    // Inline cell editing
+    editNotANumber: "数値を入力してください",
+    editRevertHint: "Escキーで元に戻せます",
+    editNone: "なし",
+    editNoMatches: "一致する項目がありません",
+    editClear: "クリア",
+    editDone: "完了",
+    editCallbackError: "変更を確定できませんでした",
+    editShowError: (props: { label: string }) => `${props.label}のエラーを表示`,
+    editErrorDialog: (props: { label: string }) => `${props.label}のエラー`,
+    editCloseError: "エラーの詳細を閉じる",
+    editErrorHint: "Alt+↓キーでエラーの詳細を表示できます",
   },
 });
 

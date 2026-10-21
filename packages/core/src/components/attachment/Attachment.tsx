@@ -170,7 +170,7 @@ export function Attachment({
                           aria-hidden
                           data-testid="attachment-image-fallback-icon"
                         />
-                        <p className="astw:flex astw:min-w-0 astw:items-end astw:gap-0.5 astw:text-xs astw:leading-normal astw:text-foreground">
+                        <p className="astw:flex astw:min-w-0 astw:items-end astw:gap-0.5 astw:text-body-sm astw:text-foreground">
                           <span className="astw:min-w-0 astw:flex-1 astw:line-clamp-2 astw:break-all">
                             {baseName}
                           </span>
@@ -192,7 +192,7 @@ export function Attachment({
                       aria-hidden
                       data-testid="attachment-file-icon"
                     />
-                    <p className="astw:flex astw:min-w-0 astw:items-end astw:gap-0.5 astw:text-xs astw:leading-normal astw:text-foreground">
+                    <p className="astw:flex astw:min-w-0 astw:items-end astw:gap-0.5 astw:text-body-sm astw:text-foreground">
                       <span className="astw:min-w-0 astw:flex-1 astw:line-clamp-2 astw:break-all">
                         {baseName}
                       </span>
@@ -242,13 +242,9 @@ export function Attachment({
                 aria-hidden
               />
               <div className="astw:min-w-0 astw:self-stretch astw:text-left">
-                <p className="astw:text-sm astw:leading-normal astw:text-foreground">
-                  {uploadLabel}
-                </p>
+                <p className="astw:text-body-md astw:text-foreground">{uploadLabel}</p>
                 {uploadHint ? (
-                  <p className="astw:text-xs astw:leading-normal astw:text-muted-foreground">
-                    {uploadHint}
-                  </p>
+                  <p className="astw:text-body-sm astw:text-muted-foreground">{uploadHint}</p>
                 ) : null}
               </div>
             </button>

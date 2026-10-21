@@ -1,0 +1,582 @@
+import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
+import { createAppShellWrapper } from "../../../tests/test-utils";
+import { DataTable } from "./data-table";
+import { useDataTable } from "./use-data-table";
+import { TestDataTable, type TestRow } from "./test-utils";
+import type {
+  Column,
+  FooterRenderContext,
+  HeaderRenderContext,
+  UseDataTableOptions,
+  UseDataTableReturn,
+} from "./types";
+
+afterEach(cleanup);
+
+type Row = { id: string; name: string; hours: number };
+const rows: Row[] = [
+  { id: "1", name: "Alex", hours: 60 },
+  { id: "2", name: "Sam", hours: 20 },
+];
+const wrapper = createAppShellWrapper("en");
+
+function Harness({
+  capture,
+  ...options
+}: UseDataTableOptions<Row> & { capture?: (table: UseDataTableReturn<Row>) => void }) {
+  const table = useDataTable(options);
+  capture?.(table);
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
+const cell = (name: string) => screen.getByText(name).closest("td")!;
+
+// Tooltip.Trigger's generated id proves the tooltip is wired without hover timers.
+const isTooltipWired = (element: Element | null) =>
+  typeof element?.id === "string" && element.id.startsWith("base-ui-");
+
+describe("DataTable", () => {
+  describe("column truncate", () => {
+    it("constrains the cell width and truncates in an inner span when truncate=true", () => {
+      const cols: Column<TestRow>[] = [
+        {
+          label: "Name",
+          render: (row) => row.name,
+          accessor: (row) => row.name,
+          truncate: true,
+        },
+        { label: "Status", render: (row) => row.status },
+      ];
+      const { container } = render(<TestDataTable columns={cols} />, {
+        wrapper,
+      });
+      const firstRow = container.querySelector('[data-slot="data-table-row"]');
+      const cells = firstRow?.querySelectorAll('[data-slot="data-table-cell"]') ?? [];
+      // The cell keeps the width constraint but NOT `overflow: hidden` (which would
+      // clip a pinned column's freeze shadow); truncation moves to an inner span.
+      expect(cells[0]?.className).toContain("max-w-0");
+      expect(cells[0]?.className).not.toContain("astw:truncate");
+      expect(cells[0]?.querySelector('span[class*="truncate"]')).toBeTruthy();
+      expect(cells[1]?.className).not.toContain("max-w-0");
+      expect(cells[1]?.querySelector('span[class*="truncate"]')).toBeFalsy();
+    });
+
+    it("wires a Tooltip when accessor returns a string", () => {
+      const cols: Column<TestRow>[] = [
+        {
+          label: "Name",
+          render: (row) => <strong>{row.name}</strong>,
+          accessor: (row) => row.name,
+          truncate: true,
+        },
+      ];
+      const { container } = render(<TestDataTable columns={cols} />, {
+        wrapper,
+      });
+      const cells = container.querySelectorAll('[data-slot="data-table-cell"]');
+      expect(isTooltipWired(cells[0] ?? null)).toBe(true);
+      expect(isTooltipWired(cells[1] ?? null)).toBe(true);
+    });
+
+    it("wires a Tooltip when accessor returns a number", () => {
+      type NumRow = { id: string; count: number };
+      const numRows: NumRow[] = [{ id: "1", count: 42 }];
+      const cols: Column<NumRow>[] = [
+        {
+          label: "Count",
+          render: (row) => row.count,
+          accessor: (row) => row.count,
+          truncate: true,
+        },
+      ];
+      function TruncatedNumberHarness() {
+        const table = useDataTable<NumRow>({
+          columns: cols,
+          data: { rows: numRows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<TruncatedNumberHarness />, { wrapper });
+      const truncatedCell = container.querySelector('[data-slot="data-table-cell"]');
+      expect(isTooltipWired(truncatedCell)).toBe(true);
+    });
+
+    it("does not wire a Tooltip when accessor returns a non-stringifiable value", () => {
+      type ObjRow = { id: string; meta: { tags: string[] } };
+      const objRows: ObjRow[] = [{ id: "1", meta: { tags: ["a"] } }];
+      const cols: Column<ObjRow>[] = [
+        {
+          label: "Meta",
+          render: (row) => JSON.stringify(row.meta),
+          accessor: (row) => row.meta,
+          truncate: true,
+        },
+      ];
+      function TruncatedObjectHarness() {
+        const table = useDataTable<ObjRow>({
+          columns: cols,
+          data: { rows: objRows },
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<TruncatedObjectHarness />, { wrapper });
+      const truncatedCell = container.querySelector('[data-slot="data-table-cell"]');
+      // Truncation still applies (inner span), but no Tooltip wraps the cell.
+      expect(truncatedCell?.querySelector('span[class*="truncate"]')).toBeTruthy();
+      expect(isTooltipWired(truncatedCell)).toBe(false);
+    });
+
+    it("does not wire a Tooltip when accessor is not provided", () => {
+      const cols: Column<TestRow>[] = [
+        {
+          label: "Name",
+          render: (row) => row.name,
+          truncate: true,
+        },
+      ];
+      const { container } = render(<TestDataTable columns={cols} />, {
+        wrapper,
+      });
+      const truncatedCell = container.querySelector('[data-slot="data-table-cell"]');
+      expect(truncatedCell?.querySelector('span[class*="truncate"]')).toBeTruthy();
+      expect(isTooltipWired(truncatedCell)).toBe(false);
+    });
+
+    it("wires a Tooltip via row[col.id] when accessor is omitted but id matches a row field", () => {
+      // Mirrors the `infer("...")` shape: no `accessor`, but `id` is pinned
+      // to a row field so the cell renderer's `row[col.id]` fallback can
+      // resolve the value for both rendering and the truncate tooltip.
+      const cols: Column<TestRow>[] = [
+        {
+          id: "name",
+          label: "Name",
+          render: (row) => <strong>{row.name}</strong>,
+          truncate: true,
+        },
+      ];
+      const { container } = render(<TestDataTable columns={cols} />, {
+        wrapper,
+      });
+      const cells = container.querySelectorAll('[data-slot="data-table-cell"]');
+      expect(isTooltipWired(cells[0] ?? null)).toBe(true);
+      expect(isTooltipWired(cells[1] ?? null)).toBe(true);
+    });
+  });
+});
+
+describe("DataTable cellProps", () => {
+  it("limits the public contract to className, style, and title", () => {
+    type CellProps = NonNullable<ReturnType<NonNullable<Column<Row>["cellProps"]>>>;
+    expectTypeOf<CellProps>().toEqualTypeOf<
+      Pick<ComponentProps<"td">, "className" | "style" | "title">
+    >();
+  });
+
+  it.each(["built-in", "custom", "truncated", "editable"])(
+    "styles the actual cell with a %s renderer",
+    (mode) => {
+      render(
+        <Harness
+          data={{ rows }}
+          columns={[
+            {
+              id: "name",
+              label: "Name",
+              type: "text",
+              render: mode === "custom" ? (row) => <strong>{row.name}</strong> : undefined,
+              truncate: mode === "truncated",
+              edit: mode === "editable" ? { onValueCommitted: vi.fn() } : undefined,
+              cellProps: (row) => {
+                expectTypeOf(row).toEqualTypeOf<Row>();
+                return row.hours >= 40
+                  ? {
+                      className: "astw:tabular-nums",
+                      style: { backgroundColor: "red", color: "white" },
+                      title: `${row.hours} hours`,
+                    }
+                  : undefined;
+              },
+            },
+          ]}
+        />,
+        { wrapper },
+      );
+
+      expect(cell("Alex").style.backgroundColor).toBe("red");
+      expect(cell("Alex").style.color).toBe("white");
+      expect(cell("Alex").className).toContain("astw:py-2");
+      expect(cell("Alex").className).toContain("astw:tabular-nums");
+      expect(cell("Alex").title).toBe("60 hours");
+      expect(cell("Sam").style.backgroundColor).toBe("");
+      expect(cell("Sam").title).toBe("");
+      expect(cell("Sam").className).not.toContain("astw:tabular-nums");
+      const header = screen.getByRole("columnheader");
+      expect(header.style.backgroundColor).toBe("");
+      expect(header.title).toBe("");
+      expect(header.className).not.toContain("astw:tabular-nums");
+    },
+  );
+
+  it.each(["left", "right"] as const)(
+    "preserves %s pinning, width, and selection with a custom background",
+    (pin) => {
+      render(
+        <Harness
+          data={{ rows }}
+          rowSelection={{}}
+          columns={[
+            {
+              id: "name",
+              label: "Name",
+              type: "text",
+              width: 140,
+              pin,
+              cellProps: () => ({
+                className: "astw:bg-muted",
+                style: {
+                  backgroundColor: "red",
+                  position: "relative",
+                  [pin]: 999,
+                  width: 999,
+                },
+              }),
+            },
+            { id: "hours", label: "Hours", type: "number" },
+          ]}
+        />,
+        { wrapper },
+      );
+
+      const styled = cell("Alex");
+      expect(styled.style.position).toBe("sticky");
+      expect(styled.style[pin]).toBe(pin === "left" ? "52px" : "0px");
+      expect(styled.style.width).toBe("140px");
+      expect(styled.className).toContain(`data-pin-shadow-${pin}`);
+      expect(styled.className.split(" ")).toContain("astw:bg-muted");
+      expect(styled.className.split(" ")).not.toContain("astw:bg-card");
+      expect(styled.className).toContain("astw:group-aria-selected:bg-muted");
+      expect(styled.style.backgroundColor).toBe("red");
+      fireEvent.click(screen.getAllByRole("checkbox", { name: "Select row" })[0]);
+      expect(styled.closest("tr")?.getAttribute("aria-selected")).toBe("true");
+      expect(styled.style.backgroundColor).toBe("red");
+      expect(cell("60").style.backgroundColor).toBe("");
+    },
+  );
+
+  it("recomputes and removes styles when row data changes", () => {
+    const columns: Column<Row>[] = [
+      {
+        id: "name",
+        type: "text",
+        cellProps: (row) =>
+          row.hours >= 40
+            ? {
+                className: "astw:tabular-nums",
+                style: { backgroundColor: "red" },
+                title: "High overtime",
+              }
+            : undefined,
+      },
+    ];
+    const { rerender } = render(<Harness columns={columns} data={{ rows }} />, { wrapper });
+    expect(cell("Alex").style.backgroundColor).toBe("red");
+    rerender(<Harness columns={columns} data={{ rows: [{ ...rows[0], hours: 20 }] }} />);
+    expect(cell("Alex").style.backgroundColor).toBe("");
+    expect(cell("Alex").title).toBe("");
+    expect(cell("Alex").className).not.toContain("astw:tabular-nums");
+  });
+
+  it.each([{ loading: true }, { data: { rows: [] } }, { error: new Error("Failed") }])(
+    "does not evaluate row styling for status or loading cells (%j)",
+    (state) => {
+      const cellProps = vi.fn(() => ({ style: { backgroundColor: "red" } }));
+      render(
+        <Harness columns={[{ id: "name", type: "text", cellProps }]} data={{ rows }} {...state} />,
+        { wrapper },
+      );
+      expect(cellProps).not.toHaveBeenCalled();
+    },
+  );
+});
+
+describe("DataTable headerProps", () => {
+  it("accepts only a callback returning className, style, and title or undefined", () => {
+    expectTypeOf<NonNullable<Column<Row>["headerProps"]>>().toEqualTypeOf<
+      (
+        ctx: HeaderRenderContext,
+      ) => Pick<ComponentProps<"th">, "className" | "style" | "title"> | undefined
+    >();
+  });
+
+  it.each([false, true])("styles the actual header with custom content=%s", (custom) => {
+    render(
+      <Harness
+        data={{ rows }}
+        rowSelection={{}}
+        columns={[
+          {
+            id: "name",
+            label: "Name",
+            type: "text",
+            header: custom ? () => <strong>Person</strong> : undefined,
+            headerProps: (ctx) => {
+              expectTypeOf(ctx).toEqualTypeOf<HeaderRenderContext>();
+              expect(ctx).toEqual({ label: "Name", sortable: false });
+              return {
+                className: "astw:tabular-nums",
+                style: { backgroundColor: "red", color: "white" },
+                title: "Employee name",
+              };
+            },
+          },
+          { id: "hours", label: "Hours", type: "number" },
+        ]}
+      />,
+      { wrapper },
+    );
+
+    const header = screen.getByText(custom ? "Person" : "Name").closest("th")!;
+    expect(header.style.backgroundColor).toBe("red");
+    expect(header.style.color).toBe("white");
+    expect(header.title).toBe("Employee name");
+    expect(header.className).toContain("astw:px-2");
+    expect(header.className).toContain("astw:tabular-nums");
+    expect(cell("Alex").style.backgroundColor).toBe("");
+    expect(cell("Alex").title).toBe("");
+    for (const other of screen.getAllByRole("columnheader").filter((th) => th !== header)) {
+      expect(other.style.backgroundColor).toBe("");
+      expect(other.title).toBe("");
+      expect(other.className).not.toContain("astw:tabular-nums");
+    }
+  });
+
+  it.each(["left", "right"] as const)("preserves %s header pinning and width", (pin) => {
+    render(
+      <Harness
+        data={{ rows }}
+        rowSelection={{}}
+        columns={[
+          {
+            id: "name",
+            label: "Name",
+            type: "text",
+            width: 140,
+            pin,
+            headerProps: () => ({
+              className: "astw:bg-muted",
+              style: { backgroundColor: "red", position: "relative", [pin]: 999, width: 999 },
+            }),
+          },
+        ]}
+      />,
+      { wrapper },
+    );
+
+    const header = screen.getByText("Name").closest("th")!;
+    expect(header.style.position).toBe("sticky");
+    expect(header.style[pin]).toBe(pin === "left" ? "52px" : "0px");
+    expect(header.style.width).toBe("140px");
+    expect(header.style.backgroundColor).toBe("red");
+    expect(header.className.split(" ")).toContain("astw:bg-muted");
+    expect(header.className.split(" ")).not.toContain("astw:bg-card");
+    expect(header.className).toContain(`data-pin-shadow-${pin}`);
+  });
+
+  it("removes header customizations when the column definition changes", () => {
+    const column: Column<Row> = { id: "name", label: "Name", type: "text" };
+    const { rerender } = render(
+      <Harness
+        data={{ rows }}
+        columns={[
+          {
+            ...column,
+            headerProps: () => ({
+              className: "astw:tabular-nums",
+              style: { backgroundColor: "red" },
+              title: "Employee name",
+            }),
+          },
+        ]}
+      />,
+      { wrapper },
+    );
+    expect(screen.getByRole("columnheader").title).toBe("Employee name");
+    rerender(<Harness data={{ rows }} columns={[column]} />);
+    const header = screen.getByRole("columnheader");
+    expect(header.style.backgroundColor).toBe("");
+    expect(header.title).toBe("");
+    expect(header.className).not.toContain("astw:tabular-nums");
+  });
+});
+
+describe("DataTable footerProps", () => {
+  it("accepts only a callback returning className, style, and title or undefined", () => {
+    expectTypeOf<NonNullable<Column<Row>["footerProps"]>>().toEqualTypeOf<
+      (
+        ctx: FooterRenderContext<Row>,
+      ) => Pick<ComponentProps<"td">, "className" | "style" | "title"> | undefined
+    >();
+  });
+
+  it.each([false, true])(
+    "styles footer cells with custom content=%s without affecting other cells",
+    (custom) => {
+      const { container } = render(
+        <Harness
+          data={{ rows }}
+          rowSelection={{}}
+          rowExpansion={{ render: () => "Details" }}
+          rowActions={[{ id: "inspect", label: "Inspect", onClick: vi.fn() }]}
+          columns={[
+            {
+              id: "name",
+              label: "Name",
+              type: "text",
+              footer: custom ? () => <strong>Total</strong> : "Total",
+              footerProps: (ctx) => {
+                expectTypeOf(ctx).toEqualTypeOf<FooterRenderContext<Row>>();
+                expectTypeOf(ctx.rows).toEqualTypeOf<readonly Row[]>();
+                expect(ctx.rows).toBe(rows);
+                return {
+                  className: "astw:tabular-nums",
+                  style: { backgroundColor: "red", color: "white" },
+                  title: "Page total",
+                };
+              },
+            },
+            { id: "hours", type: "number", footerProps: () => ({ title: "Blank footer" }) },
+          ]}
+        />,
+        { wrapper },
+      );
+      const footer = cell("Total");
+      expect(footer.style.backgroundColor).toBe("red");
+      expect(footer.style.color).toBe("white");
+      expect(footer.className).toContain("astw:py-2");
+      expect(footer.className).toContain("astw:tabular-nums");
+      expect(footer.title).toBe("Page total");
+      const blank = container.querySelector<HTMLTableCellElement>('tfoot [data-col-key="hours"]')!;
+      expect(blank.title).toBe("Blank footer");
+      expect(blank.textContent).toBe("");
+      for (const other of Array.from(container.querySelectorAll<HTMLTableCellElement>("th, td"))) {
+        if (other === footer || other === blank) continue;
+        expect(other.style.backgroundColor).toBe("");
+        expect(other.title).toBe("");
+        expect(other.className).not.toContain("astw:tabular-nums");
+      }
+    },
+  );
+
+  it.each(["left", "right"] as const)("preserves %s footer pinning and width", (pin) => {
+    render(
+      <Harness
+        data={{ rows }}
+        rowSelection={{}}
+        columns={[
+          {
+            id: "name",
+            type: "text",
+            width: 140,
+            pin,
+            footer: "Total",
+            footerProps: () => ({
+              className: "astw:bg-muted",
+              style: { backgroundColor: "red", position: "relative", [pin]: 999, width: 999 },
+            }),
+          },
+        ]}
+      />,
+      { wrapper },
+    );
+    const footer = cell("Total");
+    expect(footer.style.position).toBe("sticky");
+    expect(footer.style[pin]).toBe(pin === "left" ? "52px" : "0px");
+    expect(footer.style.width).toBe("140px");
+    expect(footer.style.backgroundColor).toBe("red");
+    expect(footer.className.split(" ")).toContain("astw:bg-muted");
+    expect(footer.className.split(" ")).not.toContain("astw:bg-card");
+    expect(footer.className).toContain(`data-pin-shadow-${pin}`);
+  });
+
+  it("recomputes footer styling from current rows, restores defaults, and evaluates empty rows", () => {
+    const footerProps = vi.fn(({ rows: currentRows }: FooterRenderContext<Row>) =>
+      currentRows.some((row) => row.hours >= 40)
+        ? { className: "astw:tabular-nums", style: { backgroundColor: "red" }, title: "High total" }
+        : undefined,
+    );
+    const columns: Column<Row>[] = [{ id: "name", type: "text", footer: "Total", footerProps }];
+    const { rerender } = render(<Harness columns={columns} data={{ rows }} />, { wrapper });
+    expect(cell("Total").style.backgroundColor).toBe("red");
+    rerender(<Harness columns={columns} data={{ rows: [{ ...rows[0], hours: 20 }] }} />);
+    expect(cell("Total").style.backgroundColor).toBe("");
+    expect(cell("Total").title).toBe("");
+    expect(cell("Total").className).not.toContain("astw:tabular-nums");
+    footerProps.mockClear();
+    rerender(<Harness columns={columns} data={{ rows: [] }} />);
+    expect(footerProps).toHaveBeenLastCalledWith({ rows: [] });
+    expect(cell("Total").style.backgroundColor).toBe("");
+  });
+
+  it.each([{ loading: true }, { error: new Error("Failed") }])(
+    "does not evaluate footer styling during loading or errors (%j)",
+    (state) => {
+      const footerProps = vi.fn(() => ({ title: "Page total" }));
+      render(
+        <Harness
+          data={{ rows }}
+          columns={[{ id: "name", footer: "Total", footerProps }]}
+          {...state}
+        />,
+        { wrapper },
+      );
+      expect(footerProps).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not evaluate hidden columns while another footer remains visible", () => {
+    const footerProps = vi.fn(() => ({ title: "Page total" }));
+    let table!: UseDataTableReturn<Row>;
+    render(
+      <Harness
+        data={{ rows }}
+        capture={(value) => {
+          table = value;
+        }}
+        columns={[
+          { id: "name", footer: "Total", footerProps },
+          { id: "hours", footer: "Hours" },
+        ]}
+      />,
+      { wrapper },
+    );
+    footerProps.mockClear();
+    act(() => table.toggleColumn("name"));
+    expect(footerProps).not.toHaveBeenCalled();
+    expect(screen.queryByText("Total")).toBeNull();
+    expect(cell("Hours")).toBeDefined();
+  });
+
+  it("does not create a footer from footerProps alone", () => {
+    const footerProps = vi.fn(() => ({ title: "Page total" }));
+    const { container } = render(
+      <Harness data={{ rows }} columns={[{ id: "name", type: "text", footerProps }]} />,
+      { wrapper },
+    );
+    expect(container.querySelector("tfoot")).toBeNull();
+    expect(footerProps).not.toHaveBeenCalled();
+  });
+});

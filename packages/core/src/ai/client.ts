@@ -6,6 +6,14 @@ import type {
 } from "openai/resources/chat/completions";
 import type { AuthClient } from "@tailor-platform/auth-public-client";
 
+/** Normalized local function tool call emitted by the AI Gateway transport. */
+export interface AIGatewayToolCall {
+  id: string;
+  name: string;
+  argumentsText: string;
+}
+
+/** Internal transcript message shape sent to the AI Gateway transport layer. */
 export type AIGatewayChatMessage =
   | {
       role: "system" | "user";
@@ -14,18 +22,42 @@ export type AIGatewayChatMessage =
   | {
       role: "assistant";
       content?: string;
+      toolCalls?: AIGatewayToolCall[];
+    }
+  | {
+      role: "tool";
+      toolCallId: string;
+      content: string;
     };
+
+/** Normalized local function tool definition understood by the AI Gateway. */
+export interface AIGatewayFunctionTool {
+  type: "function";
+  function: {
+    name: string;
+    description?: string;
+    parameters: Record<string, unknown>;
+  };
+}
 
 export interface AIGatewayChatRequest {
   model: string;
   messages: AIGatewayChatMessage[];
+  tools?: AIGatewayFunctionTool[];
   signal?: AbortSignal;
 }
 
+/** Low-level event stream consumed by `useAIChat()`. */
 export type AIChatCompletionEvent =
   | {
       type: "text-delta";
       text: string;
+    }
+  | {
+      type: "tool-call";
+      toolCallId: string;
+      toolName: string;
+      argumentsText: string;
     }
   | {
       type: "done";
@@ -103,27 +135,34 @@ async function* streamOpenAICompatibleResponse(input: {
   request: AIGatewayChatRequest;
 }): AsyncGenerator<AIChatCompletionEvent, void, unknown> {
   try {
-    const stream = await input.client.chat.completions.create(
-      {
-        model: input.request.model,
-        messages: input.request.messages.map(toOpenAIMessage),
-        stream: true,
-      },
+    const stream = (await input.client.chat.completions.create(
+      buildChatRequestBody(input.request, true),
       {
         signal: input.request.signal,
       },
-    );
+    )) as AsyncIterable<ChatCompletionChunk>;
 
     let finishReason: string | undefined;
+    const toolCalls = new Map<number, Partial<AIGatewayToolCall>>();
 
     for await (const chunk of stream) {
       const choice = chunk.choices[0];
       const delta = extractStreamingText(choice);
       finishReason = extractFinishReason(choice?.finish_reason) ?? finishReason;
+      collectStreamingToolCalls(toolCalls, choice);
 
       if (delta) {
         yield { type: "text-delta", text: delta };
       }
+    }
+
+    for (const toolCall of finalizeStreamingToolCalls(toolCalls)) {
+      yield {
+        type: "tool-call",
+        toolCallId: toolCall.id,
+        toolName: toolCall.name,
+        argumentsText: toolCall.argumentsText,
+      };
     }
 
     yield createDoneEvent(finishReason);
@@ -137,16 +176,12 @@ async function* streamJSONResponse(input: {
   request: AIGatewayChatRequest;
 }): AsyncGenerator<AIChatCompletionEvent, void, unknown> {
   try {
-    const completion = await input.client.chat.completions.create(
-      {
-        model: input.request.model,
-        messages: input.request.messages.map(toOpenAIMessage),
-        stream: false,
-      },
+    const completion = (await input.client.chat.completions.create(
+      buildChatRequestBody(input.request, false),
       {
         signal: input.request.signal,
       },
-    );
+    )) as ChatCompletion;
 
     const choice = completion.choices[0];
     const text = extractFinalText(choice);
@@ -155,10 +190,39 @@ async function* streamJSONResponse(input: {
       yield { type: "text-delta", text };
     }
 
+    for (const toolCall of extractToolCalls(choice)) {
+      yield {
+        type: "tool-call",
+        toolCallId: toolCall.id,
+        toolName: toolCall.name,
+        argumentsText: toolCall.argumentsText,
+      };
+    }
+
     yield createDoneEvent(extractFinishReason(choice?.finish_reason));
   } catch (error) {
     throw normalizeGatewayError(error, input.request.signal);
   }
+}
+
+/**
+ * Builds the narrow OpenAI-compatible request body that Envoy AI Gateway
+ * expects, while preserving AppShell's normalized tool contract internally.
+ */
+function buildChatRequestBody(
+  request: AIGatewayChatRequest,
+  stream: boolean,
+): Parameters<OpenAI["chat"]["completions"]["create"]>[0] {
+  if (request.tools?.some((tool) => tool.type !== "function")) {
+    throw new Error("AI Gateway only supports local function tools.");
+  }
+
+  return {
+    model: request.model,
+    messages: request.messages.map(toOpenAIMessage),
+    ...(request.tools?.length ? { tools: request.tools } : {}),
+    stream,
+  } as Parameters<OpenAI["chat"]["completions"]["create"]>[0];
 }
 
 function withTrailingSlash(value: string): string {
@@ -167,15 +231,93 @@ function withTrailingSlash(value: string): string {
 
 function toOpenAIMessage(message: AIGatewayChatMessage): ChatCompletionMessageParam {
   if (message.role === "assistant") {
-    return message.content === undefined
-      ? { role: "assistant" }
-      : { role: "assistant", content: message.content };
+    return {
+      role: "assistant",
+      ...(message.content !== undefined ? { content: message.content } : { content: null }),
+      ...(message.toolCalls?.length
+        ? {
+            tool_calls: message.toolCalls.map((toolCall) => ({
+              id: toolCall.id,
+              type: "function",
+              function: {
+                name: toolCall.name,
+                arguments: toolCall.argumentsText,
+              },
+            })),
+          }
+        : {}),
+    } as ChatCompletionMessageParam;
+  }
+
+  if (message.role === "tool") {
+    return {
+      role: "tool",
+      tool_call_id: message.toolCallId,
+      content: message.content,
+    } as ChatCompletionMessageParam;
   }
 
   return {
     role: message.role,
     content: message.content,
   };
+}
+
+/**
+ * Accumulates streamed tool-call deltas into complete normalized tool calls.
+ *
+ * OpenAI-compatible streams may split ids, names, and JSON arguments across
+ * many chunks, so this keeps a per-index assembly buffer until the stream ends.
+ */
+function collectStreamingToolCalls(
+  toolCalls: Map<number, Partial<AIGatewayToolCall>>,
+  choice: ChatCompletionChunk["choices"][number] | undefined,
+): void {
+  for (const toolCallDelta of choice?.delta?.tool_calls ?? []) {
+    const existing = toolCalls.get(toolCallDelta.index) ?? { argumentsText: "" };
+
+    if (toolCallDelta.id) {
+      existing.id = toolCallDelta.id;
+    }
+
+    if (toolCallDelta.function?.name) {
+      existing.name = `${existing.name ?? ""}${toolCallDelta.function.name}`;
+    }
+
+    if (toolCallDelta.function?.arguments) {
+      existing.argumentsText = `${existing.argumentsText ?? ""}${toolCallDelta.function.arguments}`;
+    }
+
+    toolCalls.set(toolCallDelta.index, existing);
+  }
+}
+
+/** Finalizes buffered streamed tool calls into stable ordered results. */
+function finalizeStreamingToolCalls(
+  toolCalls: Map<number, Partial<AIGatewayToolCall>>,
+): AIGatewayToolCall[] {
+  return [...toolCalls.entries()]
+    .toSorted(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
+    .map(([, toolCall]) => ({
+      id: toolCall.id ?? crypto.randomUUID(),
+      name: toolCall.name ?? "",
+      argumentsText: toolCall.argumentsText ?? "",
+    }))
+    .filter((toolCall) => toolCall.name.length > 0);
+}
+
+/** Extracts complete function tool calls from a non-streaming completion. */
+function extractToolCalls(
+  choice: ChatCompletion["choices"][number] | undefined,
+): AIGatewayToolCall[] {
+  return (choice?.message?.tool_calls ?? [])
+    .filter((toolCall) => toolCall.type === "function")
+    .map((toolCall) => ({
+      id: toolCall.id ?? crypto.randomUUID(),
+      name: toolCall.function.name,
+      argumentsText: toolCall.function.arguments,
+    }))
+    .filter((toolCall) => toolCall.name.length > 0);
 }
 
 function extractStreamingText(choice: ChatCompletionChunk["choices"][number] | undefined): string {

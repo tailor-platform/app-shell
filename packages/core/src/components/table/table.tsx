@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { Text } from "../text";
 
 type RootProps = React.ComponentProps<"table"> & {
   /** Additional CSS classes for the outer scrollable `<div>` container. Use this to control height, overflow, or container-level layout. */
@@ -51,7 +52,7 @@ function Root({ className, containerClassName, containerRef, ...props }: RootPro
     >
       <table
         data-slot="table"
-        className={cn("astw:w-full astw:caption-bottom astw:text-sm", className)}
+        className={cn("astw:w-full astw:caption-bottom astw:text-body-md", className)}
         {...props}
       />
     </div>
@@ -89,7 +90,7 @@ function Footer({ className, ...props }: React.ComponentProps<"tfoot">) {
     <tfoot
       data-slot="table-footer"
       className={cn(
-        "astw:border-t astw:border-border astw:font-medium astw:[&>tr]:last:border-b-0",
+        "astw:border-t astw:border-border astw:text-label-md astw:[&>tr]:last:border-b-0",
         className,
       )}
       {...props}
@@ -119,7 +120,7 @@ function Head({ className, align = "left", ...props }: HeadProps) {
     <th
       data-slot="table-head"
       className={cn(
-        "astw:text-foreground astw:h-10 astw:px-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:font-medium astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0",
+        "astw:text-foreground astw:h-10 astw:px-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:text-label-md astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0",
         cellAlignClassName[align],
         className,
       )}
@@ -148,10 +149,10 @@ Cell.displayName = "Table.Cell";
 /** A table caption element. */
 function Caption({ className, ...props }: React.ComponentProps<"caption">) {
   return (
-    <caption
-      data-slot="table-caption"
-      className={cn("astw:text-muted-foreground astw:mt-4 astw:text-sm", className)}
-      {...props}
+    <Text
+      variant="body-md"
+      className={cn("astw:text-muted-foreground astw:mt-4", className)}
+      render={<caption data-slot="table-caption" {...props} />}
     />
   );
 }

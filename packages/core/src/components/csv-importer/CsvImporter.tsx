@@ -28,6 +28,7 @@ import { parseCsvFile, autoMatchHeaders } from "./csv-parser";
 import { processRows } from "./process-rows";
 import { buildRows, buildSummary } from "./build-rows";
 import { useT } from "./i18n-labels";
+import { Text } from "../text";
 
 // ─── Context for Portal container (Drawer popup ref) ────
 
@@ -144,8 +145,10 @@ function UploadStep({
       >
         <UploadIcon className="astw:text-muted-foreground astw:size-10" />
         <div className="astw:text-center">
-          <p className="astw:text-sm astw:font-medium">{t("uploadButton")}</p>
-          <p className="astw:text-muted-foreground astw:text-xs">CSV (max {maxSizeMB}MB)</p>
+          <Text.p variant="label-md">{t("uploadButton")}</Text.p>
+          <Text variant="body-sm" className="astw:text-muted-foreground">
+            CSV (max {maxSizeMB}MB)
+          </Text>
         </div>
         <input
           ref={inputRef}
@@ -156,14 +159,14 @@ function UploadStep({
         />
       </button>
       {error && (
-        <div className="astw:flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-destructive/10 astw:px-3 astw:py-2 astw:text-sm astw:text-destructive">
+        <Text.div className="astw:flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-danger-surface astw:px-3 astw:py-2 astw:text-danger-text">
           <AlertTriangleIcon className="astw:size-4 astw:shrink-0" />
           {error}
-        </div>
+        </Text.div>
       )}
       <button
         type="button"
-        className="astw:text-sm astw:text-primary astw:underline astw:cursor-pointer astw:bg-transparent astw:border-none astw:p-0 astw:self-start"
+        className="astw:text-body-md astw:text-primary astw:underline astw:cursor-pointer astw:bg-transparent astw:border-none astw:p-0 astw:self-start"
         onClick={handleTemplateDownload}
       >
         {t("templateDownload")}
@@ -208,17 +211,17 @@ function MappingStep({
     <div data-slot="csv-importer-mapping" className="astw:flex astw:flex-col astw:gap-4">
       {/* Schema-centric table */}
       <div className="astw:overflow-y-auto astw:rounded-md astw:border astw:border-border">
-        <table className="astw:w-full astw:text-sm">
+        <table className="astw:w-full astw:text-body-md">
           <thead>
             <tr className="astw:border-b astw:border-border astw:bg-muted/50">
               <th className="astw:w-10 astw:px-3 astw:py-2" />
-              <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
+              <th className="astw:px-3 astw:py-2 astw:text-left astw:text-label-md astw:text-muted-foreground">
                 {t("mappingExpectedField")}
               </th>
-              <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
+              <th className="astw:px-3 astw:py-2 astw:text-left astw:text-label-md astw:text-muted-foreground">
                 {t("mappingCsvColumn")}
               </th>
-              <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
+              <th className="astw:px-3 astw:py-2 astw:text-left astw:text-label-md astw:text-muted-foreground">
                 {t("mappingPreview")}
               </th>
             </tr>
@@ -235,14 +238,14 @@ function MappingStep({
                   key={col.key}
                   className={cn(
                     "astw:border-b astw:border-border astw:last:border-b-0 astw:transition-colors",
-                    !isMapped && col.required && "astw:bg-destructive/5",
+                    !isMapped && col.required && "astw:bg-danger-surface",
                   )}
                 >
                   {/* Status icon */}
                   <td className="astw:px-3 astw:py-2 astw:align-middle astw:text-center">
                     {isMapped && <CheckCircle2Icon className="astw:size-5 astw:text-primary" />}
                     {!isMapped && col.required && (
-                      <CircleAlertIcon className="astw:size-5 astw:text-destructive" />
+                      <CircleAlertIcon className="astw:size-5 astw:text-danger-text" />
                     )}
                     {!isMapped && !col.required && (
                       <CircleDashedIcon className="astw:size-5 astw:text-muted-foreground/40" />
@@ -255,11 +258,11 @@ function MappingStep({
                       <span className="astw:font-medium">
                         {col.label}
                         {col.required && (
-                          <span className="astw:text-destructive astw:ml-0.5">*</span>
+                          <span className="astw:text-danger-text astw:ml-0.5">*</span>
                         )}
                       </span>
                       {col.description && (
-                        <span className="astw:text-xs astw:text-muted-foreground">
+                        <span className="astw:text-body-sm astw:text-muted-foreground">
                           {col.description}
                         </span>
                       )}
@@ -360,9 +363,9 @@ function ReviewStep({
       data-slot="csv-importer-review"
       className="astw:flex astw:flex-1 astw:min-h-0 astw:flex-col astw:gap-4"
     >
-      <div className="astw:flex astw:gap-4 astw:text-sm">
+      <div className="astw:flex astw:gap-4 astw:text-body-md">
         <span>Total: {rawRows.length} rows</span>
-        {errorCount > 0 && <span className="astw:text-destructive">Errors: {errorCount}</span>}
+        {errorCount > 0 && <span className="astw:text-danger-text">Errors: {errorCount}</span>}
         {warningCount > 0 && (
           <span className="astw:text-warning-text">Warnings: {warningCount}</span>
         )}
@@ -381,10 +384,10 @@ function ReviewStep({
       </div>
 
       <div className="astw:flex-1 astw:min-h-0 astw:overflow-auto astw:rounded-md astw:border astw:border-border">
-        <table className="astw:w-full astw:text-sm">
+        <table className="astw:w-full astw:text-body-md">
           <thead className="astw:bg-muted astw:sticky astw:top-0">
             <tr>
-              <th className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground">
+              <th className="astw:px-3 astw:py-2 astw:text-left astw:text-label-md astw:text-muted-foreground">
                 #
               </th>
               {activeMappings.map((m) => {
@@ -392,7 +395,7 @@ function ReviewStep({
                 return (
                   <th
                     key={m.csvHeader}
-                    className="astw:px-3 astw:py-2 astw:text-left astw:font-medium astw:text-muted-foreground"
+                    className="astw:px-3 astw:py-2 astw:text-left astw:text-label-md astw:text-muted-foreground"
                   >
                     {col?.label ?? m.columnKey}
                   </th>
@@ -416,7 +419,7 @@ function ReviewStep({
                       key={m.csvHeader}
                       className={cn(
                         "astw:px-1 astw:py-1",
-                        issue?.level === "error" && "astw:bg-destructive/10",
+                        issue?.level === "error" && "astw:bg-danger-surface",
                         issue?.level === "warning" && "astw:bg-warning-surface",
                       )}
                     >
@@ -424,8 +427,8 @@ function ReviewStep({
                         <input
                           type="text"
                           className={cn(
-                            "astw:w-full astw:rounded astw:border astw:px-2 astw:py-1 astw:text-sm astw:bg-transparent",
-                            issue?.level === "error" && "astw:border-destructive",
+                            "astw:w-full astw:rounded astw:border astw:px-2 astw:py-1 astw:text-body-md astw:bg-transparent",
+                            issue?.level === "error" && "astw:border-danger-solid",
                             issue?.level === "warning" && "astw:border-warning-solid",
                             !issue && "astw:border-transparent",
                           )}
@@ -435,9 +438,9 @@ function ReviewStep({
                         {issue && (
                           <span
                             className={cn(
-                              "astw:text-xs astw:px-2",
+                              "astw:text-body-sm astw:px-2",
                               issue.level === "error"
-                                ? "astw:text-destructive"
+                                ? "astw:text-danger-text"
                                 : "astw:text-warning-text",
                             )}
                           >
@@ -477,15 +480,21 @@ function CompleteStep({
         <CheckCircle2Icon className="astw:text-primary astw:size-8" />
       </div>
       <div className="astw:flex astw:flex-col astw:items-center astw:gap-3">
-        <div className="astw:grid astw:grid-cols-[auto_1fr] astw:gap-x-6 astw:gap-y-2 astw:text-sm">
-          <span className="astw:text-muted-foreground">File</span>
-          <span className="astw:font-medium">{fileName}</span>
-          <span className="astw:text-muted-foreground">Rows imported</span>
-          <span className="astw:font-medium">{totalRows}</span>
+        <div className="astw:grid astw:grid-cols-[auto_1fr] astw:gap-x-6 astw:gap-y-2">
+          <Text variant="label-md" className="astw:text-muted-foreground">
+            File
+          </Text>
+          <Text.span variant="body-md">{fileName}</Text.span>
+          <Text variant="label-md" className="astw:text-muted-foreground">
+            Rows imported
+          </Text>
+          <Text.span variant="body-md">{totalRows}</Text.span>
           {correctedRows > 0 && (
             <>
-              <span className="astw:text-muted-foreground">Rows corrected</span>
-              <span className="astw:font-medium">{correctedRows}</span>
+              <Text variant="label-md" className="astw:text-muted-foreground">
+                Rows corrected
+              </Text>
+              <Text.span variant="body-md">{correctedRows}</Text.span>
             </>
           )}
         </div>
@@ -711,7 +720,7 @@ export function CsvImporter<T extends CsvSchema>({
   return (
     <Drawer.Root open={open} onOpenChange={handleOpenChange} swipeDirection="down">
       <Drawer.Portal>
-        <Drawer.Backdrop className="astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-50 astw:bg-black/50" />
+        <Drawer.Backdrop className="astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-50 astw:bg-backdrop" />
         <Drawer.Viewport
           data-slot="csv-importer-viewport"
           className="astw:fixed astw:inset-0 astw:z-50 astw:flex astw:items-end astw:justify-stretch"
@@ -741,7 +750,7 @@ export function CsvImporter<T extends CsvSchema>({
                           )}
                           <div
                             className={cn(
-                              "astw:flex astw:size-7 astw:items-center astw:justify-center astw:rounded-full astw:text-xs astw:font-medium",
+                              "astw:flex astw:size-7 astw:items-center astw:justify-center astw:rounded-full astw:text-label-sm",
                               step === s
                                 ? "astw:bg-primary astw:text-primary-foreground"
                                 : stepClassForIndex(step, idx),
@@ -753,12 +762,16 @@ export function CsvImporter<T extends CsvSchema>({
                       ))}
                     </div>
                     <div className="astw:flex astw:flex-col">
-                      <Drawer.Title className="astw:text-sm astw:font-semibold">
+                      <Text variant="heading-sm" render={<Drawer.Title />}>
                         {stepTitle[step]}
-                      </Drawer.Title>
-                      <Drawer.Description className="astw:text-muted-foreground astw:text-xs">
+                      </Text>
+                      <Text
+                        variant="body-sm"
+                        className="astw:text-muted-foreground"
+                        render={<Drawer.Description />}
+                      >
                         {stepDescription[step]}
-                      </Drawer.Description>
+                      </Text>
                     </div>
                   </div>
                   <Drawer.Close className="astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:outline-hidden">
@@ -814,7 +827,7 @@ export function CsvImporter<T extends CsvSchema>({
                     {step === "mapping" && (
                       <button
                         type="button"
-                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:border astw:border-border astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-muted"
+                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:border astw:border-border astw:px-4 astw:py-2 astw:text-label-md astw:transition-colors astw:hover:bg-muted"
                         onClick={() => {
                           reset();
                           setStep("upload");
@@ -827,7 +840,7 @@ export function CsvImporter<T extends CsvSchema>({
                     {step === "review" && (
                       <button
                         type="button"
-                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:border astw:border-border astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-muted"
+                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:border astw:border-border astw:px-4 astw:py-2 astw:text-label-md astw:transition-colors astw:hover:bg-muted"
                         onClick={() => setStep("mapping")}
                       >
                         <ArrowLeftIcon className="astw:size-4" />
@@ -839,7 +852,7 @@ export function CsvImporter<T extends CsvSchema>({
                     {step === "mapping" && (
                       <button
                         type="button"
-                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-primary/90 astw:disabled:opacity-50 astw:disabled:pointer-events-none"
+                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-label-md astw:transition-colors astw:hover:bg-primary/90 astw:disabled:opacity-50 astw:disabled:pointer-events-none"
                         onClick={handleGoToReview}
                         disabled={hasUnmappedRequired}
                       >
@@ -852,7 +865,7 @@ export function CsvImporter<T extends CsvSchema>({
                         {!validated ? (
                           <button
                             type="button"
-                            className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-primary/90 astw:disabled:opacity-50 astw:disabled:pointer-events-none"
+                            className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-label-md astw:transition-colors astw:hover:bg-primary/90 astw:disabled:opacity-50 astw:disabled:pointer-events-none"
                             onClick={handleCheck}
                             disabled={validating}
                           >
@@ -861,7 +874,7 @@ export function CsvImporter<T extends CsvSchema>({
                         ) : (
                           <button
                             type="button"
-                            className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-primary/90 astw:disabled:opacity-50 astw:disabled:pointer-events-none"
+                            className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-label-md astw:transition-colors astw:hover:bg-primary/90 astw:disabled:opacity-50 astw:disabled:pointer-events-none"
                             onClick={handleImport}
                             disabled={hasErrors || importing}
                           >
@@ -880,7 +893,7 @@ export function CsvImporter<T extends CsvSchema>({
                     {step === "complete" && (
                       <button
                         type="button"
-                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-sm astw:font-medium astw:transition-colors astw:hover:bg-primary/90"
+                        className="astw:inline-flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-primary astw:text-primary-foreground astw:px-4 astw:py-2 astw:text-label-md astw:transition-colors astw:hover:bg-primary/90"
                         onClick={() => handleOpenChange(false)}
                       >
                         {t("closeButton")}

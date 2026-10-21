@@ -76,6 +76,9 @@ const checkboxFor = (label: string): HTMLElement =>
 
 // Mouse-only (hidden from assistive tech, which uses the row), so found by its tooltip.
 const expandButton = () => screen.getByTitle(/expand/i);
+/** A group's own caret, whatever its current title (Expand / Collapse). */
+const caretFor = (label: string): HTMLElement =>
+  rowFor(label).querySelector("button[title]") as HTMLElement;
 
 describe("TreePicker", () => {
   // ==========================================================================
@@ -308,6 +311,87 @@ describe("TreePicker", () => {
     expect(screen.queryByText("Hoka One One Bondi 8")).toBeNull();
     // The pruned siblings are gone too.
     expect(screen.queryByText("UK 8 / Black / Women")).toBeNull();
+  });
+
+  it("lets a group the search opened be closed and reopened, still showing only matches", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    await user.type(screen.getByLabelText("Search items"), "UK 9");
+    expect(rowFor("Adidas Ultraboost 22").getAttribute("aria-expanded")).toBe("true");
+
+    await user.click(caretFor("Adidas Ultraboost 22"));
+    expect(rowFor("Adidas Ultraboost 22").getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("UK 9 / Black / Men")).toBeNull();
+
+    await user.click(caretFor("Adidas Ultraboost 22"));
+    expect(screen.getByText("UK 9 / Black / Men")).toBeDefined();
+    expect(screen.queryByText("UK 8 / Black / Women")).toBeNull();
+  });
+
+  it("re-opens search matches when the query changes after a group was closed", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    await user.type(screen.getByLabelText("Search items"), "UK");
+    await user.click(caretFor("Adidas Ultraboost 22"));
+    expect(screen.queryByText("UK 9 / Black / Men")).toBeNull();
+
+    await user.type(screen.getByLabelText("Search items"), " 9");
+    expect(screen.getByText("UK 9 / Black / Men")).toBeDefined();
+  });
+
+  it("Escape clears the search first, then closes the dialog", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+
+    const search = screen.getByLabelText("Search items") as HTMLInputElement;
+    await user.type(search, "UK");
+    await user.keyboard("{Escape}");
+    expect(search.value).toBe("");
+    expect(screen.getByRole("dialog")).toBeDefined();
+
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("does not commit when Enter is pressed in a filterSlot control", async () => {
+    const user = userEvent.setup();
+    const onCommit = vi.fn();
+    render(
+      <Harness
+        onCommit={onCommit}
+        filterSlot={
+          // Stands in for a menu or select option: focusable, not a button or
+          // input, and outside the tree — the case that used to commit.
+          <a href="#category">Category option</a>
+        }
+      />,
+    );
+
+    await user.click(expandButton());
+    await user.click(checkboxFor("UK 9 / Black / Men"));
+    screen.getByRole("link", { name: "Category option" }).focus();
+    await user.keyboard("{Enter}");
+
+    expect(onCommit).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog")).toBeDefined();
+  });
+
+  it("does not commit when a filterSlot control already handled Enter", async () => {
+    const user = userEvent.setup();
+    const onCommit = vi.fn();
+    render(<Harness onCommit={onCommit} />);
+
+    await user.click(expandButton());
+    await user.click(checkboxFor("UK 9 / Black / Men"));
+    // A Base UI menu item calls preventDefault on Enter but lets it bubble.
+    const row = rowFor("UK 9 / Black / Men");
+    row.addEventListener("keydown", (event) => event.preventDefault(), { capture: true });
+    row.focus();
+    await user.keyboard("{Enter}");
+
+    expect(onCommit).not.toHaveBeenCalled();
   });
 
   it("keeps manual expansion after the query is cleared", async () => {

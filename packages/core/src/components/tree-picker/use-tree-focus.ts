@@ -82,7 +82,11 @@ export function useTreeFocus<T>({
       const onButton = target.closest("button") !== null;
 
       if (event.key === "Enter") {
-        if (inTextInput || onButton) return;
+        // Only Enter on a tree row commits. Anything else — the search box, a
+        // button, or a menu or select in `filterSlot` (whose portalled options
+        // still bubble here through React) — keeps Enter for itself.
+        if (event.defaultPrevented || inTextInput || onButton) return;
+        if (!target.closest("[role=tree]")) return;
         event.preventDefault();
         commit();
         return;

@@ -42,6 +42,9 @@ export function useTreeSelection<T>({
   const [query, setQuery] = React.useState("");
   const [selectedLeaves, setSelectedLeaves] = React.useState<Set<string>>(() => new Set());
   const [userExpanded, setUserExpanded] = React.useState<Set<string>>(() => new Set());
+  // Groups the user closed while a search had them auto-expanded. Cleared when
+  // the query changes, so a new search opens its matches again.
+  const [searchCollapsed, setSearchCollapsed] = React.useState<Set<string>>(() => new Set());
 
   // Reset on close so the next open starts empty.
   React.useEffect(() => {
@@ -49,7 +52,12 @@ export function useTreeSelection<T>({
     setQuery("");
     setSelectedLeaves(new Set());
     setUserExpanded(new Set());
+    setSearchCollapsed(new Set());
   }, [open]);
+
+  React.useEffect(() => {
+    setSearchCollapsed((prev) => (prev.size === 0 ? prev : new Set()));
+  }, [query]);
 
   const { kept, autoExpand } = React.useMemo(() => {
     const trimmed = query.trim();
@@ -60,28 +68,39 @@ export function useTreeSelection<T>({
   }, [items, query, matchesSearch]);
 
   const isExpanded = React.useCallback(
-    (id: string) => autoExpand.has(id) || userExpanded.has(id),
-    [autoExpand, userExpanded],
+    (id: string) => (autoExpand.has(id) && !searchCollapsed.has(id)) || userExpanded.has(id),
+    [autoExpand, searchCollapsed, userExpanded],
   );
 
-  const setExpanded = React.useCallback((id: string, next: boolean) => {
-    setUserExpanded((prev) => {
-      if (next === prev.has(id)) return prev;
-      const updated = new Set(prev);
-      if (next) updated.add(id);
-      else updated.delete(id);
-      return updated;
-    });
-  }, []);
+  /**
+   * Opens or closes a group. While searching, a group the search opened can
+   * still be closed (and reopened) — it keeps showing only the matching items.
+   */
+  const setExpanded = React.useCallback(
+    (id: string, next: boolean) => {
+      setUserExpanded((prev) => {
+        if (next === prev.has(id)) return prev;
+        const updated = new Set(prev);
+        if (next) updated.add(id);
+        else updated.delete(id);
+        return updated;
+      });
+      if (!autoExpand.has(id)) return;
+      setSearchCollapsed((prev) => {
+        if (next !== prev.has(id)) return prev;
+        const updated = new Set(prev);
+        if (next) updated.delete(id);
+        else updated.add(id);
+        return updated;
+      });
+    },
+    [autoExpand],
+  );
 
-  const toggleExpand = React.useCallback((id: string) => {
-    setUserExpanded((prev) => {
-      const updated = new Set(prev);
-      if (updated.has(id)) updated.delete(id);
-      else updated.add(id);
-      return updated;
-    });
-  }, []);
+  const toggleExpand = React.useCallback(
+    (id: string) => setExpanded(id, !isExpanded(id)),
+    [isExpanded, setExpanded],
+  );
 
   const toggleNode = React.useCallback((node: TreePickerNode<T>, next: boolean) => {
     setSelectedLeaves((prev) => {

@@ -183,8 +183,19 @@ export function TreePicker<T>({
           <div className="astw:bg-muted/40 astw:flex astw:flex-1 astw:items-center astw:gap-2 astw:rounded-md astw:px-3">
             <SearchIcon className="astw:text-muted-foreground astw:size-4 astw:shrink-0" />
             <Input
+              // `search` gives the browser's clear (✕) button, as in DataTable's
+              // field search.
+              type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
+              // Escape with text clears the search first; with an empty box it
+              // falls through and closes the dialog as usual.
+              onKeyDown={(event) => {
+                if (event.key !== "Escape" || query === "") return;
+                event.preventDefault();
+                event.stopPropagation();
+                setQuery("");
+              }}
               placeholder={searchPlaceholder ?? t("searchPlaceholder")}
               aria-label={t("searchLabel")}
               // `dark:bg-transparent` is not redundant: Input ships `dark:bg-input/30`,

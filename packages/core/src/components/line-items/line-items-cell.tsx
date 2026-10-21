@@ -10,6 +10,7 @@ import {
   ComboboxRoot,
   ComboboxTrigger,
 } from "@/components/combobox/combobox";
+import { useAsyncItems, type AsyncFetcher } from "@/hooks/use-async-items";
 import { cn } from "@/lib/utils";
 import { useLineItemsT } from "./i18n";
 import type {
@@ -129,41 +130,129 @@ function FillGrip({ onPointerDown }: { onPointerDown: (e: React.PointerEvent) =>
   );
 }
 
-/**
- * A searchable select cell. Keeps the current value selectable even when it is
- * absent from `options`, so a value the catalogue no longer offers is never
- * silently dropped.
- */
-function SelectCell<T extends LineItemsRowData>({
-  field,
-  value,
-  ariaLabel,
-  onCommit,
-  onFocusCell,
-  onNavigate,
-  onArrowFromEditor,
-}: Pick<LineItemsCellProps<T>, "field" | "ariaLabel"> & {
+type SelectCellProps<T extends LineItemsRowData> = Pick<
+  LineItemsCellProps<T>,
+  "row" | "field" | "ariaLabel"
+> & {
   value: unknown;
   onCommit: (value: unknown) => void;
   onFocusCell: () => void;
   onNavigate: (to: CellNavigation) => boolean;
   onArrowFromEditor: (key: ArrowKey, shift: boolean) => void;
+};
+
+/**
+ * A searchable select cell, over a fixed `options` list or a backend
+ * `fetcher`. Keeps the current value selectable even when the list lacks it,
+ * so a value the catalogue no longer offers is never silently dropped.
+ */
+function SelectCell<T extends LineItemsRowData>(props: SelectCellProps<T>) {
+  const type = props.field.type;
+  if (type?.kind !== "select") return null;
+  return type.fetcher ? (
+    <AsyncSelectCell {...props} fetcher={type.fetcher} getOptionLabel={type.getOptionLabel} />
+  ) : (
+    <StaticSelectCell {...props} options={type.options} />
+  );
+}
+
+function StaticSelectCell<T extends LineItemsRowData>({
+  options,
+  ...props
+}: SelectCellProps<T> & { options: ReadonlyArray<LineItemsSelectOption> }) {
+  const t = useLineItemsT();
+  const current = toEditorValue(props.value);
+  const items = React.useMemo(
+    () => withCurrentOption([...options], current, () => current),
+    [options, current],
+  );
+  return <SelectCombobox {...props} items={items} current={current} empty={t("noMatches")} />;
+}
+
+function AsyncSelectCell<T extends LineItemsRowData>({
+  fetcher,
+  getOptionLabel,
+  ...props
+}: SelectCellProps<T> & {
+  fetcher: AsyncFetcher<LineItemsSelectOption>;
+  getOptionLabel: (value: string, line: T) => string;
 }) {
   const t = useLineItemsT();
-  const type = field.type;
-  const current = toEditorValue(value);
+  const remote = useAsyncItems({ fetcher });
+  const current = toEditorValue(props.value);
+  const { row } = props;
+  const items = React.useMemo(
+    () => withCurrentOption(remote.items, current, () => getOptionLabel(current, row)),
+    [current, getOptionLabel, remote.items, row],
+  );
 
-  const items = React.useMemo((): LineItemsSelectOption[] => {
-    if (!type || type.kind !== "select") return [];
-    const base = [...type.options];
-    if (current && !base.some((o) => o.value === current)) {
-      base.push({ value: current, label: current });
-    }
-    return base;
-  }, [type, current]);
+  let empty: React.ReactNode = t("noMatches");
+  if (remote.loading) empty = t("loadingOptions");
+  else if (remote.error) {
+    empty = (
+      <span className="astw:flex astw:items-center astw:gap-2">
+        {t("loadOptionsFailed")}
+        <button
+          type="button"
+          className="astw:text-primary astw:underline-offset-2 astw:hover:underline"
+          onClick={remote.retry}
+        >
+          {t("retry")}
+        </button>
+      </span>
+    );
+  }
 
-  if (!type || type.kind !== "select") return null;
+  return (
+    <SelectCombobox
+      {...props}
+      items={items}
+      current={current}
+      empty={empty}
+      // Results arrive already filtered by the backend.
+      filter={null}
+      onInputValueChange={remote.onInputValueChange}
+      onOpenChange={remote.onOpenChange}
+    />
+  );
+}
+
+/**
+ * Adds the stored value to the list when the list lacks it — a retired option,
+ * or a backend result page that doesn't include it — so it still shows its label.
+ */
+function withCurrentOption(
+  items: LineItemsSelectOption[],
+  current: string,
+  labelFor: () => string,
+): LineItemsSelectOption[] {
+  if (!current || items.some((o) => o.value === current)) return items;
+  return [{ value: current, label: labelFor() }, ...items];
+}
+
+function SelectCombobox<T extends LineItemsRowData>({
+  field,
+  ariaLabel,
+  onCommit,
+  onFocusCell,
+  onNavigate,
+  onArrowFromEditor,
+  items,
+  current,
+  empty,
+  filter,
+  onInputValueChange,
+  onOpenChange,
+}: SelectCellProps<T> & {
+  items: LineItemsSelectOption[];
+  current: string;
+  empty: React.ReactNode;
+  filter?: null;
+  onInputValueChange?: (value: string) => void;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const selected = items.find((o) => o.value === current) ?? null;
+  const placeholder = field.type?.kind === "select" ? field.type.placeholder : undefined;
 
   return (
     <ComboboxRoot<LineItemsSelectOption, false>
@@ -172,12 +261,15 @@ function SelectCell<T extends LineItemsRowData>({
       onValueChange={(next) => onCommit(next?.value ?? "")}
       itemToStringLabel={optionLabel}
       itemToStringValue={optionValue}
+      {...(filter === null ? { filter: null } : {})}
+      onInputValueChange={onInputValueChange}
+      onOpenChange={onOpenChange}
     >
       <ComboboxInputGroup className="astw:min-h-0 astw:flex-1 astw:items-stretch astw:border-0 astw:bg-transparent astw:dark:bg-transparent astw:shadow-none astw:ring-0 astw:focus-within:ring-0 astw:focus-within:[box-shadow:none]">
         <ComboboxInput
           data-slot="line-items-cell-editor"
           aria-label={ariaLabel}
-          placeholder={type.placeholder}
+          placeholder={placeholder}
           className={editorClasses}
           onFocus={(e) => {
             onFocusCell();
@@ -215,7 +307,7 @@ function SelectCell<T extends LineItemsRowData>({
         <ComboboxTrigger className="astw:relative astw:inset-y-auto astw:right-0 astw:shrink-0 astw:self-stretch astw:px-1" />
       </ComboboxInputGroup>
       <ComboboxContent>
-        <ComboboxEmpty>{t("noMatches")}</ComboboxEmpty>
+        <ComboboxEmpty>{empty}</ComboboxEmpty>
         <ComboboxList>
           {(item: LineItemsSelectOption) => (
             <ComboboxItem key={item.value} value={item} className="astw:items-start astw:py-2">
@@ -362,6 +454,7 @@ function LineItemsCellInner<T extends LineItemsRowData>({
       <>
         <div className="astw:flex astw:h-full astw:min-h-0 astw:w-full astw:flex-col">
           <SelectCell
+            row={row}
             field={field}
             value={rawValue}
             ariaLabel={ariaLabel}

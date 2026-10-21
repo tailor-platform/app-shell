@@ -586,6 +586,55 @@ describe("LineItems", () => {
       expect(within(uom).getByRole("button")).toBeDefined();
     });
 
+    it("loads select options from a fetcher, labelling the stored value", async () => {
+      const user = userEvent.setup();
+      type Product = { id?: string; productId: string; productName: string };
+      const fetcher = vi.fn(async (query: string | null) =>
+        [
+          { value: "p-1", label: "Apple" },
+          { value: "p-2", label: "Banana" },
+        ].filter((o) => !query || o.label.toLowerCase().includes(query.toLowerCase())),
+      );
+      let api: ReturnType<typeof useLineItems<Product>> | undefined;
+      function AsyncHarness() {
+        const lineItems = useLineItems<Product>({
+          fields: [
+            createLineItemHelper<Product>().field({
+              key: "productId",
+              label: "Product",
+              render: (l) => l.productName,
+              editable: ["edit"],
+              type: {
+                kind: "select",
+                fetcher: { fn: fetcher, debounceMs: 0 },
+                // The results page won't include the stored product; the line has its name.
+                getOptionLabel: (_value, line) => line.productName,
+              },
+            }),
+          ],
+          defaultLines: [{ id: "1", productId: "p-9", productName: "Cherry" }],
+        });
+        api = lineItems;
+        return (
+          <LineItems.Root value={lineItems}>
+            <LineItems.Table virtualized={false} />
+          </LineItems.Root>
+        );
+      }
+      render(<AsyncHarness />);
+
+      const input = editorIn("1", "productId");
+      expect(input.value).toBe("Cherry");
+
+      await user.click(input);
+      await user.clear(input);
+      await user.keyboard("ban");
+      await user.click(await screen.findByRole("option", { name: "Banana" }));
+
+      expect(fetcher).toHaveBeenCalledWith("ban", expect.anything());
+      expect(api?.allLines[0]?.productId).toBe("p-2");
+    });
+
     it("renders no editors at all in view mode", () => {
       render(<Harness mode="view" />);
       expect(allEditors()).toHaveLength(0);

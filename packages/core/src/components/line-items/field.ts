@@ -152,6 +152,9 @@ export function fieldToColumnDef<T extends LineItemsRowData>(
     def.normalize = (value: unknown, row: T): unknown => {
       if (value === "" || value === null || value === undefined) return null;
       const text = String(value).trim();
+      // Backend-loaded options aren't known up front, so a paste is taken as
+      // the value itself.
+      if (!options) return text;
       // A pasted cell may hold the option's value or the label a copy showed.
       const match = matchSelectOption(options, text);
       if (match) return match.value;

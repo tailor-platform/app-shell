@@ -9,7 +9,7 @@ const defaultTheme = readFileSync(
   "utf8",
 );
 const roles = [
-  ...new Set([...defaultTheme.matchAll(/^\s*--app-shell-type-([a-z-]+)-size:/gm)].map((m) => m[1])),
+  ...new Set([...defaultTheme.matchAll(/^\s*--type-([a-z-]+)-size:/gm)].map((m) => m[1])),
 ];
 
 describe("cn", () => {

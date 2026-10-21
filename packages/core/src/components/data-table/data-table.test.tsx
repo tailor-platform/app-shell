@@ -220,6 +220,40 @@ describe("DataTable", () => {
     expect(screen.getByText("Inactive")).toBeDefined();
   });
 
+  it("renders editable and read-only dates in the same AppShell timezone", () => {
+    stubBrowserTimeZone();
+    type Row = { id: string; value: string };
+    function Harness() {
+      const table = useDataTable<Row>({
+        columns: [
+          {
+            id: "value",
+            label: "Date",
+            type: "date",
+            typeOptions: { locale: "en-US" },
+            edit: { canEdit: (row) => row.id === "1", onValueCommitted: vi.fn() },
+          },
+        ],
+        data: {
+          rows: [
+            { id: "1", value: "2026-10-09T00:00:00Z" },
+            { id: "2", value: "2026-10-09T00:00:00Z" },
+            { id: "3", value: "2026-10-09" },
+          ],
+        },
+      });
+      return (
+        <DataTable.Root value={table}>
+          <DataTable.Table />
+        </DataTable.Root>
+      );
+    }
+    render(<Harness />, { wrapper: createTimeZoneWrapper("America/New_York") });
+    expect(screen.getAllByText("Oct 8, 2026")).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Date, Oct 8, 2026" })).toBeDefined();
+    expect(screen.getByText("Oct 9, 2026")).toBeDefined();
+  });
+
   it("reuses date formatters on row updates and refreshes them for column or timezone changes", () => {
     const DateTimeFormat = Intl.DateTimeFormat;
     const formatterSpy = vi
@@ -588,6 +622,31 @@ describe("DataTable", () => {
       await user.click(await screen.findByRole("menuitem", { name: "contains" }));
 
       expect(control.addFilter).toHaveBeenCalledWith("name", "contains", "Alice");
+    });
+
+    it("preserves decimal strings when filtering by a cell value", async () => {
+      const user = userEvent.setup();
+      const control = makeControl();
+      const amount = "9007199254740993.123456789";
+      function Harness() {
+        const table = useDataTable<{ amount: string }>({
+          columns: [
+            { id: "amount", label: "Amount", filter: { type: "decimal", field: "amount" } },
+          ],
+          data: { rows: [{ amount }] },
+          control,
+        });
+        return (
+          <DataTable.Root value={table}>
+            <DataTable.Table />
+          </DataTable.Root>
+        );
+      }
+      const { container } = render(<Harness />, { wrapper });
+      openCellContextMenu(container, amount);
+      hoverMenuItem("Add filter");
+      await user.click(await screen.findByRole("menuitem", { name: "is" }));
+      expect(control.addFilter).toHaveBeenCalledWith("amount", "eq", amount);
     });
 
     it.each([
@@ -2061,23 +2120,23 @@ describe("DataTable", () => {
       expect((await activateItemFor(0)).getAttribute("aria-disabled")).toBe("true");
     });
 
-    it("shares one action definition with selectionActions", () => {
-      // Type-level check that the shared base spreads into both arrays.
-      const activate = {
-        id: "activate",
-        label: "Activate",
-        canApply: (r: TestRow) => r.status !== "Active",
-      };
+    it("shares presentation with rowSelection.actions while keeping the row predicate separate", () => {
+      const activate = { id: "activate", label: "Activate" };
       const options: UseDataTableOptions<TestRow> = {
         columns: testColumns,
         data: testData,
-        rowActions: [{ ...activate, onClick: (row) => void row }],
-        selectionActions: [{ ...activate, onClick: (rows) => void rows }],
+        rowActions: [
+          { ...activate, canApply: (row) => row.status !== "Active", onClick: (row) => void row },
+        ],
+        rowSelection: { actions: [{ ...activate, onClick: (ids) => void ids }] },
       };
       expectTypeOf(options.rowActions![0].canApply).toEqualTypeOf<
         ((row: TestRow) => boolean) | undefined
       >();
-      expect(options.selectionActions).toHaveLength(1);
+      expectTypeOf(options.rowSelection!.actions![0].onClick)
+        .parameter(0)
+        .toEqualTypeOf<string[]>();
+      expect(options.rowSelection!.actions).toHaveLength(1);
     });
   });
 

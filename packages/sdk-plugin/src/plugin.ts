@@ -25,7 +25,7 @@ function mapFieldType(
     string: "string",
     integer: "number",
     float: "number",
-    decimal: "number",
+    decimal: "decimal",
     boolean: "boolean",
     uuid: "uuid",
     datetime: "datetime",

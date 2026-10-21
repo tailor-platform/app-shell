@@ -117,6 +117,40 @@ describe("defineI18nLabels", () => {
     });
   });
 
+  describe("t.dynamic()", () => {
+    it.each([
+      ["en", "Hello"],
+      ["ja", "こんにちは"],
+      ["fr", "Hello"],
+    ])("resolves static labels for locale '%s'", (locale, expected) => {
+      const { result } = renderHook(() => labels.useT(), {
+        wrapper: createWrapper(locale),
+      });
+
+      expect(result.current.dynamic("hello", "Unknown")).toBe(expected);
+    });
+
+    it("falls back to English when the localized key is missing", () => {
+      const partialLabels = defineI18nLabels<never, { hello: string }>({
+        en: { hello: "Hello" },
+        ja: {},
+      });
+      const { result } = renderHook(() => partialLabels.useT(), {
+        wrapper: createWrapper("ja"),
+      });
+
+      expect(result.current.dynamic("hello", "Unknown")).toBe("Hello");
+    });
+
+    it("returns the supplied fallback when the key is unknown", () => {
+      const { result } = renderHook(() => labels.useT(), {
+        wrapper: createWrapper("ja"),
+      });
+
+      expect(result.current.dynamic("unknown.key", "不明")).toBe("不明");
+    });
+  });
+
   describe("labels.t() for meta.title", () => {
     it("resolves English title in module meta when locale is 'en'", async () => {
       const module = defineModule({
@@ -325,6 +359,14 @@ describe("defineI18nLabels", () => {
         wrapper: createWrapper("fr"),
       });
       expect(result.current("welcome", { name: "Pierre" })).toBe("Welcome, Pierre!");
+    });
+
+    it("returns the supplied fallback for function-valued labels in t.dynamic()", () => {
+      const { result } = renderHook(() => dynamicLabels.useT(), {
+        wrapper: createWrapper("ja"),
+      });
+
+      expect(result.current.dynamic("welcome", "不明")).toBe("不明");
     });
 
     describe("labels.t() with dynamic labels", () => {

@@ -7,6 +7,7 @@ import {
 import { CircleUserIcon, PanelRightIcon } from "lucide-react";
 import { PANEL_SECTIONS, sectionId } from "./panel-sections";
 import { useAssistant } from "./assistant-context";
+import { AssistantChat } from "./assistant-chat";
 
 // The demo runs the `GlobalHeaderLayout` mode: an app-wide GlobalHeader (title +
 // route breadcrumb + these actions) over a sidebar that collapses to an icon
@@ -15,9 +16,17 @@ import { useAssistant } from "./assistant-context";
 // live in the sidebar (App.tsx).
 
 const AssistantToggle = () => {
-  const { toggleAssistant } = useAssistant();
+  const { assistantOpen, toggleAssistant } = useAssistant();
   return (
-    <Button variant="outline" size="icon" aria-label="Toggle assistant" onClick={toggleAssistant}>
+    <Button
+      id="assistant-toggle"
+      variant="outline"
+      size="icon"
+      aria-label="Toggle assistant"
+      aria-controls="assistant-panel"
+      aria-expanded={assistantOpen}
+      onClick={toggleAssistant}
+    >
       <PanelRightIcon />
     </Button>
   );
@@ -56,26 +65,16 @@ const TocRail = () => (
 // it doesn't reflow while the column animates; overflow-hidden clips it.
 const AssistantPanel = ({ open, onClose }: { open: boolean; onClose: () => void }) => (
   <aside
+    id="assistant-panel"
+    aria-label="Assistant"
     aria-hidden={!open}
+    inert={!open}
     className={`hidden shrink-0 overflow-hidden bg-background transition-[width] duration-300 ease-in-out md:block ${
       open ? "w-96 border-l" : "w-0"
     }`}
   >
-    <div className="flex h-full w-96 flex-col overflow-y-auto">
-      <div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4">
-        <span className="text-sm font-semibold">Assistant</span>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          Close
-        </Button>
-      </div>
-      <div className="flex flex-col gap-3 p-4">
-        <div className="rounded-lg bg-muted p-3 text-sm">
-          The global header spans above the primary sidebar and both side columns.
-        </div>
-        <div className="rounded-lg border p-3 text-sm text-muted-foreground">
-          The primary sidebar collapses to an icon rail; its toggle sits at the bottom-left.
-        </div>
-      </div>
+    <div className="flex h-full min-h-0 w-96 flex-col">
+      <AssistantChat onClose={onClose} />
     </div>
   </aside>
 );
@@ -90,23 +89,19 @@ export const PanelsBody = () => {
   const { assistantOpen, toggleAssistant } = useAssistant();
   const onPanelsPage = location.pathname === "/dashboard/panels";
 
-  // Non-demo pages: just the content column (the global header is the top bar).
-  if (!onPanelsPage) {
-    return (
-      <GlobalHeaderLayout.ContentContainer>
-        <GlobalHeaderLayout.Outlet />
-      </GlobalHeaderLayout.ContentContainer>
-    );
-  }
+  const closeAssistant = () => {
+    toggleAssistant();
+    document.getElementById("assistant-toggle")?.focus();
+  };
 
   return (
     <>
-      <TocRail />
+      {onPanelsPage ? <TocRail /> : null}
       <GlobalHeaderLayout.ContentContainer>
         <GlobalHeaderLayout.Outlet />
       </GlobalHeaderLayout.ContentContainer>
-      {/* Always mounted so its width can animate open/closed. */}
-      <AssistantPanel open={assistantOpen} onClose={toggleAssistant} />
+      {/* Always mounted across routes and toggles to preserve the active conversation. */}
+      <AssistantPanel open={assistantOpen} onClose={closeAssistant} />
     </>
   );
 };

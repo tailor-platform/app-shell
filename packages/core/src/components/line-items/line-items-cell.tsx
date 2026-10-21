@@ -47,7 +47,10 @@ const numberEditorClasses =
   "astw:[appearance:textfield] astw:[&::-webkit-outer-spin-button]:appearance-none astw:[&::-webkit-inner-spin-button]:appearance-none";
 
 /** Native input type per field kind; anything else is plain text. */
-const inputTypes: Record<string, string> = { number: "number", date: "date" };
+// Numbers use a text input: `type="number"` reports an empty value for text it
+// can't parse ("1,5", a lone comma), which would commit as a cleared cell.
+// Commit runs the text through `parseLooseNumber`, as paste does.
+const inputTypes: Record<string, string> = { date: "date" };
 
 const alignClasses = {
   left: "astw:text-left",
@@ -95,6 +98,16 @@ export type LineItemsCellHandlers = {
   arrow: (key: ArrowKey, shift: boolean) => void;
   fillGripDown: (coord: CellCoord, event: React.PointerEvent) => void;
 };
+
+/** Cmd/Ctrl+D, the spreadsheet fill-down shortcut. */
+export function isFillDownKey(event: React.KeyboardEvent): boolean {
+  return (
+    (event.ctrlKey || event.metaKey) &&
+    !event.altKey &&
+    !event.shiftKey &&
+    event.key.toLowerCase() === "d"
+  );
+}
 
 function toEditorValue(value: unknown): string {
   if (value === null || value === undefined) return "";
@@ -410,6 +423,7 @@ function LineItemsCellInner<T extends LineItemsRowData>({
         data-slot="line-items-cell-editor"
         aria-label={ariaLabel}
         value={draft}
+        inputMode={isNumber ? "decimal" : undefined}
         min={field.type?.kind === "date" ? field.type.min : undefined}
         max={field.type?.kind === "date" ? field.type.max : undefined}
         onChange={(e) => {
@@ -426,6 +440,12 @@ function LineItemsCellInner<T extends LineItemsRowData>({
         }}
         onBlur={() => commit(draft)}
         onKeyDown={(e) => {
+          if (isFillDownKey(e)) {
+            // Commit first, so the grid fills down what was just typed. The
+            // key then bubbles to the grid, which does the fill.
+            commit(draft);
+            return;
+          }
           if (e.altKey && isArrowKey(e.key)) {
             e.preventDefault();
             onArrowFromEditor(e.key, e.shiftKey);

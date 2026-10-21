@@ -25,6 +25,7 @@ import {
 import { useLineItemsT } from "./i18n";
 import { normalizeField } from "./internals";
 import {
+  isFillDownKey,
   LineItemsCell,
   type ArrowKey,
   type CellNavigation,
@@ -240,6 +241,15 @@ export function LineItemsTable<T extends LineItemsRowData>({
     [lineByRef],
   );
 
+  /**
+   * The last value a cell committed. Read by fill-down, which can run in the
+   * same key press as the commit — before the new value reaches `lines`.
+   */
+  const lastCommit = React.useRef<(GridCoord & { value: unknown }) | null>(null);
+  React.useEffect(() => {
+    lastCommit.current = null;
+  }, [lines]);
+
   const commitCell = React.useCallback(
     (coord: GridCoord, value: unknown) => {
       // Looked up across the whole document, not just the visible lines: a
@@ -247,6 +257,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
       const row = lineItems.allLines.find((l) => getLineKey(l) === coord.lineKey);
       if (!row) return;
       const normalized = normalizeField(columnDefs, coord.columnId, value, row);
+      lastCommit.current = { ...coord, value: normalized };
       lineItems.updateLines([
         { lineKey: coord.lineKey, patch: { [coord.columnId]: normalized } as Partial<T> },
       ]);
@@ -550,7 +561,13 @@ export function LineItemsTable<T extends LineItemsRowData>({
         const row = lineByRef.get(lineKey);
         if (!row) continue;
         if (!haveSource) {
-          source = (row as Record<string, unknown>)[columnId];
+          // A value the editor committed a moment ago (Cmd/Ctrl+D straight
+          // after typing) hasn't reached `lines` yet, so read it from there.
+          const pending = lastCommit.current;
+          source =
+            pending?.lineKey === lineKey && pending.columnId === columnId
+              ? pending.value
+              : (row as Record<string, unknown>)[columnId];
           haveSource = true;
           continue;
         }
@@ -577,19 +594,14 @@ export function LineItemsTable<T extends LineItemsRowData>({
 
   const handleGridKeyDown = React.useCallback(
     (event: React.KeyboardEvent) => {
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        !event.altKey &&
-        !event.shiftKey &&
-        event.key.toLowerCase() === "d"
-      ) {
+      if (isFillDownKey(event)) {
         if (fillDown()) event.preventDefault();
         return;
       }
-      if (event.altKey || event.ctrlKey || event.metaKey) return;
-      const target = event.target as HTMLElement;
-      // An open editor owns its own keys; it forwards navigation explicitly.
-      if (target.dataset?.slot === "line-items-cell-editor") return;
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      // Editors, the reorder grip, checkboxes and custom editors' own inputs
+      // own their keys; the built-in editors forward navigation explicitly.
+      if (isInteractiveTarget(event.target as HTMLElement)) return;
       if (!grid.active) return;
 
       const key = event.key;
@@ -611,13 +623,28 @@ export function LineItemsTable<T extends LineItemsRowData>({
   /** Announces keyboard reorders, which have no other non-visual feedback. */
   const [reorderNotice, setReorderNotice] = React.useState("");
 
+  /**
+   * Moves `lineKey` to just before `beforeLineKey` (a visible line), or after
+   * the last visible line when `null`. While filtered, a move to the top of the
+   * view lands directly above the first visible line, not at the top of the
+   * whole document past lines the filter hides.
+   */
   const moveLine = React.useCallback(
     (lineKey: string, beforeLineKey: string | null) => {
+      // Dropped back on itself: nothing moves, and no reorder is recorded.
+      if (beforeLineKey === lineKey) return;
       const others = orderedLineKeys.filter((id) => id !== lineKey);
       const at = beforeLineKey ? others.indexOf(beforeLineKey) : others.length;
-      lineItems.reorderLine(lineKey, at <= 0 ? null : (others[at - 1] ?? null));
+      if (at < 0 || others.length === 0) return;
+      if (at > 0) {
+        lineItems.reorderLine(lineKey, others[at - 1]!);
+        return;
+      }
+      const documentOrder = lineItems.allLines.map(getLineKey).filter((id) => id !== lineKey);
+      const index = documentOrder.indexOf(others[0]!);
+      lineItems.reorderLine(lineKey, index > 0 ? documentOrder[index - 1]! : null);
     },
-    [lineItems, orderedLineKeys],
+    [getLineKey, lineItems, orderedLineKeys],
   );
 
   const endDrag = React.useCallback(() => {
@@ -630,11 +657,11 @@ export function LineItemsTable<T extends LineItemsRowData>({
       const index = orderedLineKeys.indexOf(lineKey);
       const target = index + delta;
       if (index < 0 || target < 0 || target >= orderedLineKeys.length) return;
-      const others = orderedLineKeys.filter((id) => id !== lineKey);
-      lineItems.reorderLine(lineKey, target === 0 ? null : (others[target - 1] ?? null));
+      // Up: before the line above. Down: before the line after the one below.
+      moveLine(lineKey, orderedLineKeys[delta < 0 ? target : target + 1] ?? null);
       setReorderNotice(t("lineMoved", { line: index + 1, position: target + 1 }));
     },
-    [lineItems, orderedLineKeys, t],
+    [moveLine, orderedLineKeys, t],
   );
 
   const utilityColumnCount =
@@ -1172,3 +1199,12 @@ export function LineItemsTable<T extends LineItemsRowData>({
 }
 
 LineItemsTable.displayName = "LineItems.Table";
+
+/** Controls that own their arrow keys: inputs, buttons, links, comboboxes. */
+function isInteractiveTarget(target: HTMLElement): boolean {
+  return (
+    target.closest(
+      'input, textarea, select, button, a[href], [contenteditable="true"], [role="combobox"], [role="checkbox"], [role="button"]',
+    ) !== null
+  );
+}

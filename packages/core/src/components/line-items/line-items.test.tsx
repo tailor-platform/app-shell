@@ -393,6 +393,21 @@ describe("LineItems", () => {
       expect(api?.allLines[0]?.sku).toBe("PASTED");
     });
 
+    it("keeps a typed decimal comma or grouped number instead of clearing the cell", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(<Harness onReady={(a) => (api = a)} />);
+
+      const editor = editorIn("1", "quantity");
+      expect(editor.type).toBe("text");
+      expect(editor.inputMode).toBe("decimal");
+      await user.click(editor);
+      await user.keyboard("1,234");
+      await user.tab();
+
+      expect(api?.allLines[0]?.quantity).toBe(1234);
+    });
+
     it('reads a pasted "1,234" in a number column as a number', async () => {
       const user = userEvent.setup();
       let api: ReturnType<typeof useLineItems<Line>> | undefined;
@@ -622,6 +637,19 @@ describe("LineItems", () => {
       await user.keyboard("{Control>}d{/Control}");
 
       expect(api?.allLines.map((l) => l.quantity)).toEqual([2, 2, 2]);
+    });
+
+    it("fills down what was just typed, without pressing Enter first", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(<Harness onReady={(x) => (api = x)} />);
+
+      await user.click(editorIn("1", "quantity"));
+      await user.keyboard("5");
+      await user.keyboard("{Alt>}{Shift>}{ArrowDown}{ArrowDown}{/Shift}{/Alt}");
+      await user.keyboard("{Control>}d{/Control}");
+
+      expect(api?.allLines.map((l) => l.quantity)).toEqual([5, 5, 5]);
     });
 
     it("appears on the active cell of a fillable column", async () => {
@@ -879,6 +907,48 @@ describe("LineItems", () => {
         { action: "reorder", lineId: "2", position: 0 },
         { action: "reorder", lineId: "1", position: 1 },
       ]);
+    });
+
+    it("keeps moving with the keyboard: the grid leaves the grip's arrows alone", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(<Harness ordering="manual" onReady={(a) => (api = a)} />);
+
+      // With a cell active, the grid would otherwise take the arrows too.
+      await user.click(editorIn("2", "note"));
+      const grip = screen.getByRole("button", { name: "Drag to reorder line 1" });
+      grip.focus();
+      await user.keyboard("{Enter}{ArrowDown}{ArrowDown}");
+
+      expect(api?.allLines.map((l) => l.id)).toEqual(["2", "3", "1"]);
+    });
+
+    it("does nothing when a line is dropped back on itself", () => {
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(<Harness ordering="manual" onReady={(a) => (api = a)} />);
+      const row = cell("2", "sku").closest("tr")!;
+
+      fireEvent.dragStart(screen.getByRole("button", { name: "Drag to reorder line 2" }));
+      fireEvent.dragOver(row);
+      fireEvent.drop(row);
+
+      expect(api?.allLines.map((l) => l.id)).toEqual(["1", "2", "3"]);
+      expect(api?.isDirty).toBe(false);
+    });
+
+    it("while filtered, moving to the top of the view stays below hidden lines above it", async () => {
+      const user = userEvent.setup();
+      let api: ReturnType<typeof useLineItems<Line>> | undefined;
+      render(<Harness ordering="manual" onReady={(a) => (api = a)} />);
+      // Document order 2, 1, 3; the filter hides 2, showing 1 and 3.
+      act(() => api?.reorderLine("2", null));
+      await user.type(screen.getByRole("searchbox", { name: /search lines/i }), "e");
+
+      const grip = screen.getByRole("button", { name: "Drag to reorder line 2" });
+      grip.focus();
+      await user.keyboard("{Enter}{ArrowUp}");
+
+      expect(api?.allLines.map((l) => l.id)).toEqual(["2", "3", "1"]);
     });
 
     it("moving a line back to its slot leaves the document clean", async () => {

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { createLineItemHelper, fieldToColumnDef, parseLooseDate, parseLooseNumber } from "./field";
+import {
+  createLineItemHelper,
+  fieldToColumnDef,
+  parseLooseBoolean,
+  parseLooseDate,
+  parseLooseNumber,
+} from "./field";
 
 describe("parseLooseNumber", () => {
   it.each([
@@ -37,9 +43,32 @@ describe("parseLooseDate", () => {
   });
 });
 
-type Line = { id?: string; qty: number | null; due: string | null };
+describe("parseLooseBoolean", () => {
+  it.each([
+    ["TRUE", true],
+    ["false", false],
+    ["Yes", true],
+    ["0", false],
+    ["✓", true],
+    ["", false],
+  ])("reads %j as %s", (input, expected) => {
+    expect(parseLooseBoolean(input)).toBe(expected);
+  });
+
+  it.each(["maybe", "2", "checked?"])("rejects %j", (input) => {
+    expect(parseLooseBoolean(input)).toBeNull();
+  });
+});
+
+type Line = {
+  id?: string;
+  qty: number | null;
+  due: string | null;
+  urgent?: boolean;
+  uom?: string | null;
+};
 const f = createLineItemHelper<Line>();
-const row: Line = { id: "1", qty: 5, due: "2026-06-10" };
+const row: Line = { id: "1", qty: 5, due: "2026-06-10", urgent: true, uom: "EA" };
 
 describe("fieldToColumnDef normalizers", () => {
   const qty = fieldToColumnDef(
@@ -65,6 +94,36 @@ describe("fieldToColumnDef normalizers", () => {
 
   it("keeps the current value when a number can't be read", () => {
     expect(qty.normalize?.("N/A", row)).toBe(5);
+  });
+
+  const urgent = fieldToColumnDef(
+    f.field({ key: "urgent", label: "Urgent", render: () => null, type: { kind: "boolean" } }),
+  );
+  const uom = fieldToColumnDef(
+    f.field({
+      key: "uom",
+      label: "UoM",
+      render: (l) => l.uom,
+      type: {
+        kind: "select",
+        options: [
+          { value: "EA", label: "Each" },
+          { value: "CS", label: "Case" },
+        ],
+      },
+    }),
+  );
+
+  it("stores a pasted boolean as a boolean, not a string", () => {
+    expect(urgent.normalize?.("FALSE", row)).toBe(false);
+    expect(urgent.normalize?.("true", row)).toBe(true);
+    expect(urgent.normalize?.("unclear", row)).toBe(true);
+  });
+
+  it("matches a pasted select value or label, keeping the current value otherwise", () => {
+    expect(uom.normalize?.("cs", row)).toBe("CS");
+    expect(uom.normalize?.("Case", row)).toBe("CS");
+    expect(uom.normalize?.("Pallet", row)).toBe("EA");
   });
 
   it("keeps the current value for an out-of-range or invalid date", () => {

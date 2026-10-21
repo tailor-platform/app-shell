@@ -1,0 +1,253 @@
+import type { LineItemsColumnDef, LineItemsMutationScope } from "./internals";
+import type {
+  LineItemsColumnAlign,
+  LineItemsField,
+  LineItemsFieldCommit,
+  LineItemsMode,
+  LineItemsRowData,
+} from "./types";
+
+/**
+ * Field schema builder. Gives full inference of `key`, `render(line)`, and
+ * `sort.comparator` for a row shape `T`.
+ *
+ * @example
+ * type POLine = { lineKey: string; sku: string; quantity: number; total: number };
+ * const f = createLineItemHelper<POLine>();
+ * const fields = [
+ *   f.field({ key: "sku", label: "SKU", render: (l) => l.sku, editable: ["edit"], type: { kind: "text" } }),
+ *   f.field({ key: "quantity", label: "Qty", render: (l) => l.quantity, editable: ["edit"], type: { kind: "number", decimals: 0 } }),
+ *   f.field({ key: "total", label: "Total", render: (l) => l.total.toFixed(2) }),
+ * ];
+ */
+export function createLineItemHelper<T extends LineItemsRowData>() {
+  return {
+    field: (f: LineItemsField<T>): LineItemsField<T> => f,
+  };
+}
+
+/**
+ * Whether the field renders an editor (vs its read-only `render` output) in
+ * `mode`. A field opts into amend by listing it, e.g. `editable: ["edit", "amend"]`.
+ */
+export function fieldIsEditableInMode<T extends LineItemsRowData>(
+  field: LineItemsField<T>,
+  mode: LineItemsMode,
+): boolean {
+  if (mode === "view") return false;
+  if (!field.editable || field.editable.length === 0) return false;
+  return field.editable.includes(mode);
+}
+
+/** Cells locked by amend's partial lock get a tint, so what is still editable reads clearly. */
+export function fieldIsAmendLocked<T extends LineItemsRowData>(
+  field: LineItemsField<T>,
+  mode: LineItemsMode,
+): boolean {
+  return mode === "amend" && !fieldIsEditableInMode(field, mode);
+}
+
+/** Resolves where a field's edits go. Non-editable columns never reach the change-set. */
+export function fieldCommitScope<T extends LineItemsRowData>(
+  field: LineItemsField<T>,
+): LineItemsFieldCommit {
+  return field.commit ?? "document";
+}
+
+/**
+ * Whether the field participates in the document change-set. Computed and
+ * read-only columns are excluded, so a derived total never submits as an edit.
+ */
+export function fieldMutationScope<T extends LineItemsRowData>(
+  field: LineItemsField<T>,
+): LineItemsMutationScope {
+  if ((field.editable?.length ?? 0) === 0) return "excluded";
+  return fieldCommitScope(field);
+}
+
+/** Whether the column accepts TSV paste in `mode`. */
+export function fieldAllowsPaste<T extends LineItemsRowData>(
+  field: LineItemsField<T>,
+  mode: LineItemsMode,
+): boolean {
+  return fieldIsEditableInMode(field, mode);
+}
+
+/** Whether a fill handle should be offered for the column in `mode`. */
+export function fieldAllowsFill<T extends LineItemsRowData>(
+  field: LineItemsField<T>,
+  mode: LineItemsMode,
+): boolean {
+  if (mode !== "edit") return false;
+  return fieldIsEditableInMode(field, mode) && fieldMutationScope(field) === "document";
+}
+
+/**
+ * Translates a field into the internal column descriptor the change-set engine
+ * consumes.
+ *
+ * Numeric fields get a normalizer that coerces strings to numbers and rounds by
+ * `decimals`, plus a tolerance-aware `equals`, so cosmetic input differences
+ * like `"1"` vs `"1.00"` do not register as document changes. Precedence for
+ * overrides runs field-level, then type-level, then these built-in defaults.
+ */
+export function fieldToColumnDef<T extends LineItemsRowData>(
+  field: LineItemsField<T>,
+): LineItemsColumnDef<T> {
+  const def: LineItemsColumnDef<T> = {
+    id: field.key,
+    accessorKey: field.key as keyof T & string,
+    mutationScope: fieldMutationScope(field),
+  };
+
+  if (field.type?.kind === "number") {
+    const decimals = field.type.decimals;
+    def.normalize = (value: unknown, row: T): unknown => {
+      if (value === "" || value === null || value === undefined) return null;
+      const n = typeof value === "number" ? value : parseLooseNumber(String(value));
+      // Unreadable input (a pasted word, "N/A") keeps the cell's current value
+      // rather than storing text in a numeric field.
+      if (n === null || Number.isNaN(n)) return (row as Record<string, unknown>)[field.key];
+      if (typeof decimals === "number") {
+        const factor = 10 ** decimals;
+        return Math.round(n * factor) / factor;
+      }
+      return n;
+    };
+    def.equals = (a: unknown, b: unknown): boolean => {
+      if (a === b) return true;
+      if (a == null || b == null) return a == null && b == null;
+      const an = Number(a);
+      const bn = Number(b);
+      if (Number.isNaN(an) || Number.isNaN(bn)) return Object.is(a, b);
+      return Math.abs(an - bn) < 1e-9;
+    };
+  }
+
+  if (field.type?.kind === "date") {
+    const { min, max } = field.type;
+    def.normalize = (value: unknown, row: T): unknown => {
+      if (value === "" || value === null || value === undefined) return null;
+      const iso = parseLooseDate(String(value));
+      // An unreadable or out-of-range date keeps the current value: the
+      // editor's min/max only constrain its picker, not a paste or fill.
+      if (!iso || (min && iso < min) || (max && iso > max)) {
+        return (row as Record<string, unknown>)[field.key];
+      }
+      return iso;
+    };
+  }
+
+  if (field.type?.kind === "boolean") {
+    def.normalize = (value: unknown, row: T): unknown => {
+      if (typeof value === "boolean") return value;
+      const parsed = parseLooseBoolean(String(value ?? ""));
+      // Unreadable text keeps the current value rather than storing a string.
+      return parsed ?? (row as Record<string, unknown>)[field.key];
+    };
+  }
+
+  if (field.type?.kind === "select") {
+    const { options } = field.type;
+    def.normalize = (value: unknown, row: T): unknown => {
+      if (value === "" || value === null || value === undefined) return null;
+      const text = String(value).trim();
+      // Backend-loaded options aren't known up front, so a paste is taken as
+      // the value itself.
+      if (!options) return text;
+      // A pasted cell may hold the option's value or the label a copy showed.
+      const match = matchSelectOption(options, text);
+      if (match) return match.value;
+      // Nothing matches: keep the current value rather than invent an option.
+      return (row as Record<string, unknown>)[field.key];
+    };
+  }
+
+  if (field.type?.kind === "custom") {
+    if (field.type.normalize) def.normalize = field.type.normalize;
+    if (field.type.equals) def.equals = field.type.equals;
+  }
+
+  if (field.normalize) def.normalize = field.normalize;
+  if (field.equals) def.equals = field.equals;
+
+  return def;
+}
+
+export function fieldsToColumnDefs<T extends LineItemsRowData>(
+  fields: LineItemsField<T>[],
+): LineItemsColumnDef<T>[] {
+  return fields.map((f) => fieldToColumnDef(f));
+}
+
+/** Numbers right-align, booleans center, everything else left. */
+export function defaultAlignForField<T extends LineItemsRowData>(
+  field: LineItemsField<T>,
+): LineItemsColumnAlign {
+  if (field.align) return field.align;
+  if (field.type?.kind === "number") return "right";
+  if (field.type?.kind === "boolean") return "center";
+  return "left";
+}
+
+/**
+ * Reads a number the way people paste them from spreadsheets: thousands
+ * separators ("1,234"), a decimal comma ("1,5"), currency symbols, and
+ * full-width digits. Returns `null` when nothing numeric is left.
+ */
+export function parseLooseNumber(input: string): number | null {
+  let s = input
+    .trim()
+    // Full-width digits and signs (common in Japanese input) to ASCII.
+    .replace(/[０-９．，－]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
+    .replace(/[\s\u00a0\u202f_$€£¥￥]/g, "");
+  if (s === "") return null;
+  const lastComma = s.lastIndexOf(",");
+  const lastDot = s.lastIndexOf(".");
+  if (lastComma !== -1 && lastDot !== -1) {
+    // Both present: whichever comes last is the decimal separator.
+    s = lastComma > lastDot ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  } else if (lastComma !== -1) {
+    // Comma only: grouped thousands ("1,234,567") or a decimal comma ("1,5").
+    s = /^-?\d{1,3}(,\d{3})+$/.test(s) ? s.replace(/,/g, "") : s.replace(",", ".");
+  }
+  if (!/^-?(\d+\.?\d*|\.\d+)$/.test(s)) return null;
+  return Number(s);
+}
+
+const TRUE_WORDS = new Set(["true", "yes", "y", "1", "on", "x", "✓", "✔", "☑", "はい"]);
+const FALSE_WORDS = new Set(["false", "no", "n", "0", "off", "", "☐", "いいえ"]);
+
+/**
+ * Reads a pasted checkbox value: TRUE/FALSE as spreadsheets copy them, yes/no,
+ * 1/0, on/off, and check marks. Returns `null` for anything else.
+ */
+export function parseLooseBoolean(input: string): boolean | null {
+  const s = input.trim().toLowerCase();
+  if (TRUE_WORDS.has(s)) return true;
+  if (FALSE_WORDS.has(s)) return false;
+  return null;
+}
+
+/** Finds the option whose value, or failing that whose label, matches `text` (any case). */
+export function matchSelectOption<O extends { value: string; label: string }>(
+  options: ReadonlyArray<O>,
+  text: string,
+): O | undefined {
+  const needle = text.trim().toLowerCase();
+  return (
+    options.find((o) => o.value.toLowerCase() === needle) ??
+    options.find((o) => o.label.toLowerCase() === needle)
+  );
+}
+
+/** Accepts YYYY-MM-DD, YYYY/MM/DD or YYYY.MM.DD; returns ISO YYYY-MM-DD or `null`. */
+export function parseLooseDate(input: string): string | null {
+  const m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(input.trim());
+  if (!m) return null;
+  const [, y, mo, d] = m;
+  const iso = `${y}-${mo!.padStart(2, "0")}-${d!.padStart(2, "0")}`;
+  const date = new Date(`${iso}T00:00:00Z`);
+  // Rejects impossible dates such as 2026-02-31, which Date would roll over.
+  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== iso ? null : iso;
+}

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, Search as SearchIcon } from "lucide-react";
 
 import { useBeforeUnload, useBlocker } from "react-router";
 
@@ -8,6 +8,124 @@ import { cn } from "@/lib/utils";
 import { useLineItemsT } from "./i18n";
 import { useLineItemsContext, type LineItemsTotalsRenderer } from "./line-items-context";
 import type { LineItemsChangeSet, LineItemsRowData } from "./types";
+
+/* ------------------------------------------------------------------ Search */
+
+export type LineItemsSearchProps = {
+  placeholder?: string;
+  /** Set `false` to drop the leading magnifier. */
+  showIcon?: boolean;
+  className?: string;
+};
+
+const searchInputClasses =
+  "astw:border-input astw:h-9 astw:w-full astw:rounded-md astw:border astw:bg-transparent astw:text-sm astw:shadow-xs astw:outline-none astw:placeholder:text-muted-foreground astw:focus-visible:border-ring astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50";
+
+/** Always-visible search box bound to the filter. */
+function LineItemsSearch({ placeholder, showIcon = true, className }: LineItemsSearchProps) {
+  const { lineItems } = useLineItemsContext("Search");
+  const t = useLineItemsT();
+  return (
+    <div
+      data-slot="line-items-search"
+      className={cn("astw:relative astw:w-full astw:max-w-64", className)}
+    >
+      {showIcon ? (
+        <SearchIcon
+          aria-hidden="true"
+          className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-2.5 astw:size-4 astw:-translate-y-1/2 astw:text-muted-foreground"
+        />
+      ) : null}
+      <input
+        type="search"
+        aria-label={placeholder ?? t("searchLabel")}
+        placeholder={placeholder ?? t("searchPlaceholder")}
+        value={lineItems.filter}
+        onChange={(e) => lineItems.setFilter(e.target.value)}
+        className={cn(searchInputClasses, showIcon ? "astw:pr-2 astw:pl-8" : "astw:px-2")}
+      />
+    </div>
+  );
+}
+LineItemsSearch.displayName = "LineItems.Search";
+
+export type LineItemsSearchToggleProps = {
+  placeholder?: string;
+  expandedWidth?: number;
+  variant?: React.ComponentProps<typeof Button>["variant"];
+  className?: string;
+};
+
+/**
+ * Icon button that expands into a search input, then collapses again on blur
+ * when empty. Fits a card header where the full-width `Search` box does not.
+ */
+function LineItemsSearchToggle({
+  placeholder: placeholderProp,
+  expandedWidth = 240,
+  variant = "outline",
+  className,
+}: LineItemsSearchToggleProps) {
+  const { lineItems } = useLineItemsContext("SearchToggle");
+  const t = useLineItemsT();
+  const placeholder = placeholderProp ?? t("searchPlaceholder");
+  const [expanded, setExpanded] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+
+  React.useEffect(() => {
+    if (expanded) inputRef.current?.focus();
+  }, [expanded]);
+
+  if (!expanded) {
+    return (
+      <Button
+        type="button"
+        variant={variant}
+        size="icon"
+        aria-label={placeholder}
+        data-slot="line-items-search-toggle"
+        className={className}
+        onClick={() => setExpanded(true)}
+      >
+        <SearchIcon className="astw:size-4" aria-hidden="true" />
+      </Button>
+    );
+  }
+
+  return (
+    <div
+      data-slot="line-items-search-toggle"
+      className={cn("astw:relative astw:transition-[width] astw:duration-200", className)}
+      style={{ width: expandedWidth }}
+    >
+      <SearchIcon
+        aria-hidden="true"
+        className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-2.5 astw:size-4 astw:-translate-y-1/2 astw:text-muted-foreground"
+      />
+      <input
+        ref={inputRef}
+        type="search"
+        aria-label={placeholder}
+        placeholder={placeholder}
+        value={lineItems.filter}
+        onChange={(e) => lineItems.setFilter(e.target.value)}
+        onBlur={() => {
+          if (lineItems.filter.trim() === "") setExpanded(false);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            // Handled here, so it doesn't also close a fullscreen overlay.
+            e.preventDefault();
+            lineItems.setFilter("");
+            setExpanded(false);
+          }
+        }}
+        className={cn(searchInputClasses, "astw:pr-2 astw:pl-8")}
+      />
+    </div>
+  );
+}
+LineItemsSearchToggle.displayName = "LineItems.SearchToggle";
 
 /* ----------------------------------------------------------------- Add row */
 
@@ -369,5 +487,7 @@ export {
   LineItemsFloatingDock,
   LineItemsFullscreenToggle,
   LineItemsSaveActions,
+  LineItemsSearch,
+  LineItemsSearchToggle,
   LineItemsTotalsRow,
 };

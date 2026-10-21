@@ -9,8 +9,6 @@ description: Spreadsheet-grade editable table for the lines of a document, with 
 
 `LineItems` edits the rows of a document — purchase orders, invoices, journals, work orders, stock transfers — with spreadsheet ergonomics: inline cell editors, range selection, TSV copy/paste, keyboard navigation, drag reordering, and row virtualization for long documents.
 
-There is deliberately no search or filter: a document's lines are edited as a whole, and every line stays in view (long documents scroll, virtualized).
-
 State lives in the `useLineItems` hook; `LineItems.*` renders it. The component is UI-only — it takes no opinion on transport. `getChangeSet()` returns a transport-agnostic description of what changed, which you map onto your own mutations.
 
 ## Import
@@ -61,6 +59,7 @@ function PurchaseOrderLines({ lines }: { lines: POLine[] }) {
 
   return (
     <LineItems.Root value={lineItems}>
+      <LineItems.Search />
       <LineItems.Table />
       <LineItems.SaveActions onSave={(changeSet) => submit(changeSet)} />
     </LineItems.Root>
@@ -83,6 +82,7 @@ LineItems reads each line's id from `id`, the same convention as DataTable, or f
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `LineItems.Root`         | Provides the document to the parts beneath it. Holds no row data of its own.                                                                                                                                                                                                                                                                                                                                              |
 | `LineItems.Table`        | The editable grid: virtualized rows, pinned columns, cell editors, drag reorder.                                                                                                                                                                                                                                                                                                                                          |
+| `LineItems.Search`       | Search box bound to the filter. Only fields with a `search` function participate.                                                                                                                                                                                                                                                                                                                                         |
 | `LineItems.AddRow`       | Appends a line. Renders nothing in view mode.                                                                                                                                                                                                                                                                                                                                                                             |
 | `LineItems.SaveActions`  | Save and discard buttons, both disabled while the document is clean. **The default save surface** — place it in the card, next to the table.                                                                                                                                                                                                                                                                              |
 | `LineItems.FloatingDock` | Sticky container for `DirtyBar`.                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -106,7 +106,7 @@ LineItems reads each line's id from `id`, the same convention as DataTable, or f
 
 | Member                                          | Description                                                                                |
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `lines` / `allLines`                            | Rows in display order (sorted while a sort is active), and in document order.              |
+| `lines` / `allLines`                            | Rows with the search filter applied, and the full document order.                          |
 | `isDirty`                                       | Whether current state diverges from the baseline.                                          |
 | `errors` / `getCellError(lineKey, fieldKey)`    | Validation messages for new and changed lines — see [Validation](#validation).             |
 | `hasUnsavedChanges()`                           | `isDirty`, read live: already `false` right after `reset` or `revert`, before a re-render. |
@@ -184,6 +184,7 @@ const lineItems = useLineItems<POLine>({
 | `type`      | `LineItemsFieldType`                           | Required when editable — the types enforce it. Drives the editor, paste parsing and equality. |
 | `commit`    | `"document" \| "metadata"`                     | Where edits go — see [Metadata fields](#metadata-fields). Defaults to `"document"`.           |
 | `sort`      | `{ comparator }`                               | Makes the header sortable (asc, desc, unsorted). Ignored under manual ordering.               |
+| `search`    | `(line: T, query: string) => boolean`          | Opts the column into `LineItems.Search`.                                                      |
 | `align`     | `"left" \| "center" \| "right"`                | Defaults to right for numbers, center for booleans.                                           |
 | `className` | `string \| ((line: T) => string \| undefined)` | Per-cell classes — useful for flagging discrepancies.                                         |
 | `normalize` | `(value, row) => unknown`                      | Coerce before comparison and before entering the change-set.                                  |
@@ -329,7 +330,7 @@ const onSave = async () => {
 | `reset`             | Snaps every member's baseline forward after a save; takes each member's saved lines or `{ idMap }`, keyed by member name |
 | `revert`            | Discards every member's changes — call on Discard                                                                        |
 
-Each member keeps its own selection, sorting and dirty tracking. The group only adds the shared `isDirty` and the single Save / Discard.
+Each member keeps its own selection, search and dirty tracking. The group only adds the shared `isDirty` and the single Save / Discard.
 
 ## Spreadsheet behavior
 
@@ -356,7 +357,7 @@ Under the default `ordering: "sort"`, a field with a `sort.comparator` gets a cl
 
 Set `ordering: "manual"` to get a grip handle on each row. Reordering uses native HTML5 drag-and-drop, which works with virtualized rows. Because native drag has no keyboard equivalent, the grip also responds to the keyboard: Enter or Space lifts the row, Arrow Up/Down moves it, and Enter or Escape drops it. Touch drag is not supported.
 
-Dropping a line back on itself changes nothing.
+While the search filter hides lines, a line moves among the visible ones: dropped above the first visible line, it lands directly above it, not at the top of the document. Dropping a line back on itself changes nothing.
 
 ## Related
 

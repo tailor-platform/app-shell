@@ -1,2 +1,3 @@
 export { TreePicker } from "./TreePicker";
-export type { TreePickerNode, TreePickerProps } from "./types";
+export { TreeSelect } from "./TreeSelect";
+export type { TreePickerNode, TreePickerProps, TreeSelectProps } from "./types";

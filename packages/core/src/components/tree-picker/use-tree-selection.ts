@@ -7,13 +7,19 @@ import type { TreePickerNode } from "./types";
  * @internal
  * Owns everything about *what is shown and what is ticked*: the search query,
  * the filtered forest, the auto-expand derivation, the leaf-only selection set,
- * and the user's manual expand/collapse set. All of it resets when the dialog
- * closes so each open starts clean.
+ * and the user's manual expand/collapse set. Selection can be controlled
+ * (`value` + `onValueChange`) or left to the hook (`defaultValue`). To start
+ * over — as TreePicker does each time it opens — remount the owner.
  */
 
 type UseTreeSelectionOptions<T> = {
-  open: boolean;
   items: ReadonlyArray<TreePickerNode<T>>;
+  /** Controlled selection: the ticked leaf ids. */
+  value?: readonly string[];
+  /** Initial selection when uncontrolled. */
+  defaultValue?: readonly string[];
+  /** Every selection change, as leaf ids and nodes in tree order. */
+  onValueChange?: (ids: string[], nodes: TreePickerNode<T>[]) => void;
   matchesSearch?: (search: { node: TreePickerNode<T>; query: string }) => boolean;
 };
 
@@ -35,25 +41,24 @@ type UseTreeSelectionResult<T> = {
 };
 
 export function useTreeSelection<T>({
-  open,
   items,
+  value,
+  defaultValue,
+  onValueChange,
   matchesSearch,
 }: UseTreeSelectionOptions<T>): UseTreeSelectionResult<T> {
   const [query, setQuery] = React.useState("");
-  const [selectedLeaves, setSelectedLeaves] = React.useState<Set<string>>(() => new Set());
+  const [uncontrolled, setUncontrolled] = React.useState<ReadonlySet<string>>(
+    () => new Set(defaultValue ?? []),
+  );
+  const selectedLeaves = React.useMemo<ReadonlySet<string>>(
+    () => (value ? new Set(value) : uncontrolled),
+    [value, uncontrolled],
+  );
   const [userExpanded, setUserExpanded] = React.useState<Set<string>>(() => new Set());
   // Groups the user closed while a search had them auto-expanded. Cleared when
   // the query changes, so a new search opens its matches again.
   const [searchCollapsed, setSearchCollapsed] = React.useState<Set<string>>(() => new Set());
-
-  // Reset on close so the next open starts empty.
-  React.useEffect(() => {
-    if (open) return;
-    setQuery("");
-    setSelectedLeaves(new Set());
-    setUserExpanded(new Set());
-    setSearchCollapsed(new Set());
-  }, [open]);
 
   React.useEffect(() => {
     setSearchCollapsed((prev) => (prev.size === 0 ? prev : new Set()));
@@ -102,23 +107,31 @@ export function useTreeSelection<T>({
     [isExpanded, setExpanded],
   );
 
-  const toggleNode = React.useCallback((node: TreePickerNode<T>, next: boolean) => {
-    setSelectedLeaves((prev) => {
-      const updated = new Set(prev);
-      for (const id of leafIds(node)) {
-        if (next) updated.add(id);
-        else updated.delete(id);
-      }
-      return updated;
-    });
-  }, []);
-
   // Ordered against the FULL tree, not the filtered one, so the commit order is
   // stable regardless of the query that was active when the user ticked a row.
   const leavesInTreeOrder = React.useMemo(() => allLeaves(items), [items]);
   const selectedNodes = React.useMemo(
     () => leavesInTreeOrder.filter((node) => selectedLeaves.has(node.id)),
     [leavesInTreeOrder, selectedLeaves],
+  );
+
+  const toggleNode = React.useCallback(
+    (node: TreePickerNode<T>, next: boolean) => {
+      const updated = new Set(selectedLeaves);
+      for (const id of leafIds(node)) {
+        if (next) updated.add(id);
+        else updated.delete(id);
+      }
+      if (value === undefined) setUncontrolled(updated);
+      if (onValueChange) {
+        const nodes = leavesInTreeOrder.filter((leaf) => updated.has(leaf.id));
+        onValueChange(
+          nodes.map((leaf) => leaf.id),
+          nodes,
+        );
+      }
+    },
+    [leavesInTreeOrder, onValueChange, selectedLeaves, value],
   );
 
   return {

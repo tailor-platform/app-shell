@@ -1,5 +1,72 @@
 # @tailor-platform/app-shell
 
+## 1.18.0
+
+### Minor Changes
+
+- 06ee7c2: `--destructive` and `--destructive-foreground` are now aliases of `--danger-solid` and `--danger-contrast`, and the shipped components read the danger roles instead of `destructive` utilities. The names, `Button variant="destructive"` and `text-destructive` keep working.
+  
+  `--destructive`, `--destructive-foreground` and their utilities (`bg-destructive`, `text-destructive`, `border-destructive`, `text-destructive-foreground`) are deprecated and will be removed in the next major. They keep working in 1.x; new code uses the danger roles: `bg-danger-solid` for fills, `text-danger-text` for text, `text-danger-contrast` for text on the solid, and `border-danger-solid` for invalid-state borders (`border-danger-border` is for decorative borders only; it is 1.67:1 on the card). `Button variant="destructive"` has no replacement yet, so it is not deprecated in this release; the next major renames it to `danger`.
+  
+  Visible changes in the default palette:
+  
+  - Dark-mode `Button variant="destructive"` is a full `#dc2626` fill with white text. It was `#f87171` at 60% opacity. Hover uses `--danger-solid-hover`.
+  - `text-destructive` now resolves to the solid colour: `#dc2626` in dark mode (was `#f87171`), which is below 4.5:1 as text on the dark card. Error text in components uses `text-danger-text` (light `#ce0c17`, dark `#ff9083`). Use `text-danger-text` for text in your own code.
+  - Invalid borders and focus rings on `Input`, `Textarea`, `Checkbox`, `Field` and `DateField` read `--danger-solid`. The dark invalid border changes from `#f87171` to `#dc2626` (3.71:1 on the card).
+  - `CsvImporter` error cells use `bg-danger-surface`, matching the warning cells.
+  - A theme that overrides `--destructive` no longer changes the shipped components; override `--danger-solid` (and the other danger roles) instead. `cream`, `bloom` and the theme template no longer set `--destructive`; their values were the same as the default.
+- 37eb4c1: Add a `--backdrop` colour token and the `bg-backdrop` utility for the dim layer behind modals. `Dialog`, `Sheet` and the CsvImporter drawer use it instead of `bg-black/50`. The value is the same (black at 50%), so nothing changes on screen. Override `--backdrop` on `:root` to change every backdrop at once.
+  
+  In the default palette, the surface and brand colours now read the internal gray scale and a white step, and the dark-mode lines read white alpha steps. All colours are unchanged. If your code reads these tokens with `getComputedStyle(...).getPropertyValue()`, the string changes notation, for example `#171717` instead of `rgba(23, 23, 23, 1)`, for `--primary`, `--primary-foreground`, `--secondary`, `--secondary-foreground`, `--accent-foreground`, `--background`, `--card`, `--card-foreground`, `--popover`, `--popover-foreground`, `--muted`, `--sidebar`, `--sidebar-foreground`, and light-mode `--sidebar-border`. `--foreground`, `--muted-foreground`, `--border` and `--input` already read the gray scale in 1.17.0, and the dark-mode lines keep the same `rgba(...)` string. The `cream` and `bloom` palettes are not changed.
+- 62ff6a9: Add the `Text` component. It applies a typography role with the `variant` prop and does not set a color. Heading roles render `h2`, body roles render `p`, and label and code roles render `span`. Use the `render` prop to choose a different element, such as the heading level.
+  
+  ```tsx
+  import { Text } from "@tailor-platform/app-shell";
+  
+  <Text variant="heading-md" render={<h3 />}>Line items</Text>
+  <Text variant="body-md" className="text-muted-foreground">Orders sent this month.</Text>
+  ```
+- 8e83510: Add typed inline editors to `DataTable` columns with optional `edit.onValueChange` for raw drafts and required `edit.onValueCommitted` for changed, confirmed editor outputs. Enter ends editing in the same cell; Tab confirms and moves between editable cells. Date-time drafts preserve incomplete day/time parts and require explicit Done or Clear.
+  
+  Dropdowns confirm only on Enter, Tab, or clicking a choice; outside click, blur, and Esc cancel without callbacks, including exact-label searches and keyboard-highlighted candidates. Hover is not an explicit selection. Tab focuses a closed dropdown, and one Enter opens it without confirming; Tab without selecting or searching only moves focus.
+  
+  The consumer owns validation, adoption, persistence, and rollback. Document immediate field saving and collect-then-submit patterns, export the editing option types and `DateTimeDraft`, and retain JavaScript-number-based numeric editing with `.` independently of display locale.
+  
+  ```tsx
+  column({
+    id: "received",
+    label: "Received",
+    type: "number",
+    edit: {
+      canEdit: (row) => row.status === "draft",
+      onValueCommitted: (row, value) =>
+        setRows((current) =>
+          current.map((line) => (line.id === row.id ? { ...line, received: value } : line)),
+        ),
+    },
+  });
+  ```
+- 3ac8b19: Rename the typography role variables from `--app-shell-type-<role>-<size|line-height|weight|letter-spacing>` to `--type-<role>-<size|line-height|weight|letter-spacing>`, to match the colour roles (`--danger-*`, ...) and `--semantic-shadow-*`.
+  
+  The old names still work: each `text-*` utility reads the matching `--app-shell-type-*` first and falls back to `--type-*`, so an override such as `--app-shell-type-heading-md-size` keeps its effect, on `:root` or on any other element. The old names are deprecated and will be removed in the next major. Rename them in your CSS:
+  
+  ```css
+  :root {
+    --type-heading-md-size: 1.25rem; /* was --app-shell-type-heading-md-size */
+  }
+  ```
+  
+  The `text-*` utilities (`text-heading-md`, ...) do not change.
+  
+  AppShell no longer defines the `--app-shell-type-*` variables. Code that reads them with `getComputedStyle(...).getPropertyValue()` gets an empty string; read `--type-*` instead.
+
+### Patch Changes
+
+- caf5877: Correct the `defineI18nLabels` guidance for locale-first catalogs, component `useT`, runtime keys, and function-valued labels.
+  Add an i18n pattern and a screen-building skill entry point covering UI language, label organization, and stable server codes.
+- 925d27f: Clarify that collection hooks return `variables.query` as `undefined` when no filters are active.
+  Document `variables.query ?? {}` for callers that need an object; runtime behavior and public types are unchanged.
+
 ## 1.17.0
 
 ### Minor Changes

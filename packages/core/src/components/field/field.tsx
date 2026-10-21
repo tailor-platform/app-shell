@@ -1,8 +1,15 @@
 import * as React from "react";
 import { Field as BaseField } from "@base-ui/react/field";
 
+import { useOnceWarnings } from "@/hooks/use-once-warnings";
 import { cn } from "@/lib/utils";
 import { inputBaseClasses } from "@/lib/input-classes";
+import { Autocomplete } from "../autocomplete";
+import { Checkbox } from "../checkbox";
+import { Combobox } from "../combobox";
+import { DateField, DatePicker, DateRangePicker } from "../date-field";
+import { Select } from "../select";
+import { Textarea } from "../textarea";
 
 // Only the props relevant to the Field abstraction are picked from BaseField.Root.
 // Base UI-internal props (e.g. actionsRef) are intentionally excluded
@@ -127,14 +134,44 @@ function Label({ className, ...props }: React.ComponentProps<typeof BaseField.La
 }
 Label.displayName = "Field.Label";
 
+// Controls that draw their own frame and connect to `Field.Root` themselves.
+// Passed to `Field.Control`'s `render`, they get a second frame plus `<input>`
+// props they don't take (platform-planning#1977).
+const selfWiredControls = new Map<unknown, string>([
+  [Select, "Select"],
+  [Select.Async, "Select.Async"],
+  [Combobox, "Combobox"],
+  [Combobox.Async, "Combobox.Async"],
+  [Autocomplete, "Autocomplete"],
+  [Autocomplete.Async, "Autocomplete.Async"],
+  [Checkbox, "Checkbox"],
+  [Textarea, "Textarea"],
+  [DateField, "DateField"],
+  [DatePicker, "DatePicker"],
+  [DateRangePicker, "DateRangePicker"],
+]);
+
+function renderMisuseWarnings(render: unknown): string[] {
+  if (!React.isValidElement(render)) return [];
+  const name = selfWiredControls.get(render.type);
+  if (!name) return [];
+  return [
+    `Field.Control: \`render={<${name} />}\` draws a second frame around ${name}. ${name} connects to Field.Root by itself — place it directly under <Field.Root> instead of inside Field.Control.`,
+  ];
+}
+
 /**
- * A styled input control for the field.
+ * A styled text input for the field.
  *
- * Can be omitted when using another Base UI-backed AppShell input component
- * (e.g. Select, Combobox, Autocomplete) as a sibling — those components
- * register themselves with the Field context automatically.
+ * Use it for plain text-like inputs, or pass a native element to `render`
+ * (e.g. `render={<textarea />}`). Every other AppShell control — `Select`,
+ * `Combobox`, `Autocomplete`, `Checkbox`, `Textarea`, `DateField`,
+ * `DatePicker`, `DateRangePicker` — goes directly under `Field.Root` instead:
+ * it draws its own frame and registers with the Field context itself.
+ * Passing one to `render` draws a second frame and logs a warning.
  */
 function Control({ className, ...props }: React.ComponentProps<typeof BaseField.Control>) {
+  useOnceWarnings(renderMisuseWarnings(props.render));
   return (
     <BaseField.Control
       data-slot="field-control"

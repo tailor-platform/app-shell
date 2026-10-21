@@ -171,6 +171,17 @@ const { Root, Trigger, Value, Content, Item, Group, GroupLabel, Separator } = Se
 
 ## Form submission
 
+Inside a form, place `Select` directly under `Field.Root`, not inside `Field.Control`. `Select` draws
+its own trigger and registers with the field itself, so `<Field.Control render={<Select />} />`
+renders a second frame around it.
+
+```tsx
+<Field.Root name="country">
+  <Field.Label>Country</Field.Label>
+  <Select items={["Japan", "United States"]} placeholder="Select a country" />
+</Field.Root>
+```
+
 Inside a `Field.Root`, the field's `name` identifies the value and these props are unnecessary —
 see [Form](./form.md). They matter for **native** submission: a plain `<form>`, `new FormData(form)`,
 or a server action.

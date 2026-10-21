@@ -100,14 +100,14 @@ A compound component that groups all parts of a form field and manages its valid
 
 ### Sub-components
 
-| Sub-component       | Description                                                                                   |
-| ------------------- | --------------------------------------------------------------------------------------------- |
-| `Field.Root`        | Context boundary for a single field. Manages validation state.                                |
-| `Field.Label`       | Accessible label; `htmlFor` is resolved automatically via context.                            |
-| `Field.Control`     | Styled `<input>`. Can be omitted when using a Base UI-backed AppShell component as the input. |
-| `Field.Description` | Supplementary help text; automatically linked via `aria-describedby`.                         |
-| `Field.Error`       | Validation error message. Use `match` to target specific validity states.                     |
-| `Field.Validity`    | Render-prop access to the field's `ValidityState` for fully custom validation UI.             |
+| Sub-component       | Description                                                                            |
+| ------------------- | -------------------------------------------------------------------------------------- |
+| `Field.Root`        | Context boundary for a single field. Manages validation state.                         |
+| `Field.Label`       | Accessible label; `htmlFor` is resolved automatically via context.                     |
+| `Field.Control`     | Styled text `<input>`. Other AppShell controls go directly under `Field.Root` instead. |
+| `Field.Description` | Supplementary help text; automatically linked via `aria-describedby`.                  |
+| `Field.Error`       | Validation error message. Use `match` to target specific validity states.              |
+| `Field.Validity`    | Render-prop access to the field's `ValidityState` for fully custom validation UI.      |
 
 ### Field.Root Props
 
@@ -134,7 +134,15 @@ A compound component that groups all parts of a form field and manages its valid
 
 ### Using Another AppShell Component as the Control
 
-`Field.Control` can be omitted when using a Base UI-backed AppShell component (e.g. `Select`, `Combobox`). The component registers itself with the `Field` context automatically, inheriting label association and validation state.
+`Field.Control` is a text input. It is the control for plain text-like fields, and you can pass it a native element such as `render={<textarea />}`. Every other AppShell control goes **directly under `Field.Root`**, as a sibling of `Field.Label`. The control registers itself with the `Field` context, so it gets label association, `aria-describedby`, `disabled`, and validation state without `Field.Control`.
+
+| Control                                                                                                                         | Where it goes                                     |
+| ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Plain text, email, number, password, … input                                                                                    | `<Field.Control type="…" />`                      |
+| Native element (`<textarea>`, `<input type="…">`)                                                                               | `<Field.Control render={<textarea />} />`         |
+| `Select`, `Combobox`, `Autocomplete`, `Checkbox`, `Textarea`, `DateField`, `DatePicker`, `DateRangePicker` (and their `.Async`) | Directly under `Field.Root` — not `Field.Control` |
+
+Do not pass these controls to `Field.Control`'s `render` prop. They draw their own frame, so `<Field.Control render={<Select />} />` renders a second border around the select. `Field.Control` also passes them `<input>` props they don't take. `Field.Control` logs a console warning when it detects this.
 
 ```tsx
 const [country, setCountry] = React.useState<string | null>(null);

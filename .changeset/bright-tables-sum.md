@@ -3,7 +3,8 @@
 ---
 
 Add `Column.footer` for totals and summaries in a sticky row that follows column layout without adding synthetic data rows.
-Footer renderers receive the current page's rows; the existing `DataTable.Footer` pagination and bulk-action container is unchanged.
+Footer renderers receive the current page's read-only rows through the exported `FooterRenderContext<TRow>`, mirroring the named `HeaderRenderContext` API.
+The existing `DataTable.Footer` pagination and bulk-action container is unchanged.
 
 ```tsx
 import type { Column } from "@tailor-platform/app-shell";

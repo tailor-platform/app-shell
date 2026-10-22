@@ -88,7 +88,11 @@ const checkboxBoxClasses = cn(
  * />
  * ```
  */
-function Checkbox({ className, label, ...props }: CheckboxProps) {
+const Checkbox = /* @__PURE__ */ markSelfWired(function Checkbox({
+  className,
+  label,
+  ...props
+}: CheckboxProps) {
   const box = (
     <BaseCheckbox.Root
       data-slot="checkbox"
@@ -132,8 +136,6 @@ function Checkbox({ className, label, ...props }: CheckboxProps) {
       {label}
     </label>
   );
-}
-
-markSelfWired(Checkbox, "Checkbox");
+}, "Checkbox");
 
 export { Checkbox, type CheckboxProps };

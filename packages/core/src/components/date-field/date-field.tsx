@@ -79,13 +79,7 @@ export type DatePickerProps<T extends DateValue = DateValue> = DateControlProps<
   timeZone?: string;
 };
 
-/**
- * A segmented date/time input field with no popover.
- *
- * Compose with `Field.Root` for label / description / error presentation, or
- * provide standalone ARIA wiring yourself.
- */
-const DateField = forwardRef(function DateField<T extends DateValue = DateValue>(
+const DateFieldImpl = forwardRef(function DateField<T extends DateValue = DateValue>(
   {
     id,
     className,
@@ -207,13 +201,7 @@ const DateField = forwardRef(function DateField<T extends DateValue = DateValue>
   props: DateFieldProps<T> & { ref?: Ref<HTMLInputElement> },
 ) => ReactElement;
 
-/**
- * A date/time input with a popover calendar.
- *
- * Compose with `Field.Root` for label / description / error presentation, or
- * provide standalone ARIA wiring yourself.
- */
-const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValue>(
+const DatePickerImpl = forwardRef(function DatePicker<T extends DateValue = DateValue>(
   {
     id,
     className,
@@ -424,8 +412,20 @@ const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValu
   props: DatePickerProps<T> & { ref?: Ref<HTMLInputElement> },
 ) => ReactElement;
 
-markSelfWired(DateField, "DateField");
-markSelfWired(DatePicker, "DatePicker");
+/**
+ * A segmented date/time input field with no popover.
+ *
+ * Compose with `Field.Root` for label / description / error presentation, or
+ * provide standalone ARIA wiring yourself.
+ */
+const DateField = /* @__PURE__ */ markSelfWired(DateFieldImpl, "DateField");
+/**
+ * A date/time input with a popover calendar.
+ *
+ * Compose with `Field.Root` for label / description / error presentation, or
+ * provide standalone ARIA wiring yourself.
+ */
+const DatePicker = /* @__PURE__ */ markSelfWired(DatePickerImpl, "DatePicker");
 
 export { DateField, DatePicker };
 export type { DateControlProps };

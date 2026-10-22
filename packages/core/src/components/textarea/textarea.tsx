@@ -86,7 +86,10 @@ type TextareaProps = Omit<
  * />
  * ```
  */
-function Textarea({ className, ...props }: TextareaProps) {
+const Textarea = /* @__PURE__ */ markSelfWired(function Textarea({
+  className,
+  ...props
+}: TextareaProps) {
   return (
     <BaseField.Control
       data-slot="textarea"
@@ -107,8 +110,6 @@ function Textarea({ className, ...props }: TextareaProps) {
       {...(props as React.ComponentProps<typeof BaseField.Control>)}
     />
   );
-}
-
-markSelfWired(Textarea, "Textarea");
+}, "Textarea");
 
 export { Textarea, type TextareaProps };

@@ -110,7 +110,7 @@ function rangesEqual(a: DateRange | null, b: DateRange | null): boolean {
   return a.start.compare(b.start as never) === 0 && a.end.compare(b.end as never) === 0;
 }
 
-const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue = DateValue>(
+const DateRangePickerImpl = forwardRef(function DateRangePicker<T extends DateValue = DateValue>(
   {
     id,
     className,
@@ -438,6 +438,6 @@ const DateRangePicker = forwardRef(function DateRangePicker<T extends DateValue 
   props: DateRangePickerProps<T> & { ref?: Ref<HTMLInputElement> },
 ) => ReactElement;
 
-markSelfWired(DateRangePicker, "DateRangePicker");
+const DateRangePicker = /* @__PURE__ */ markSelfWired(DateRangePickerImpl, "DateRangePicker");
 
 export { DateRangePicker };

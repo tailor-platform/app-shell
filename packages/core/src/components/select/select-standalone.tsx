@@ -582,27 +582,27 @@ type SelectComponent = typeof SelectStandalone & {
   useAsync: typeof useAsync;
 };
 
-const Select: SelectComponent = Object.assign(SelectStandalone, {
-  /**
-   * Async select that fetches items when the dropdown opens.
-   *
-   * **Limitation:** This component defaults to `modal={false}` and
-   * `alignItemWithTrigger={false}` to work around Base UI scroll-lock bugs
-   * with dynamically loaded items. As a result, it may not function correctly
-   * inside focus-trapping containers such as `Dialog` or `Sheet` — the
-   * focus trap can block interaction with the dropdown, or the portal may
-   * render outside the modal's visible area.
-   *
-   * If you need an async dropdown inside a `Dialog` or `Sheet`, prefer
-   * `Combobox.Async` which uses Popover-based positioning and does not
-   * suffer from these constraints.
-   */
-  Async: SelectAsyncStandalone,
-  Parts: SelectParts,
-  useAsync,
-});
-
-markSelfWired(Select, "Select");
-markSelfWired(Select.Async, "Select.Async");
+const Select: SelectComponent = /* @__PURE__ */ markSelfWired(
+  Object.assign(SelectStandalone, {
+    /**
+     * Async select that fetches items when the dropdown opens.
+     *
+     * **Limitation:** This component defaults to `modal={false}` and
+     * `alignItemWithTrigger={false}` to work around Base UI scroll-lock bugs
+     * with dynamically loaded items. As a result, it may not function correctly
+     * inside focus-trapping containers such as `Dialog` or `Sheet` — the
+     * focus trap can block interaction with the dropdown, or the portal may
+     * render outside the modal's visible area.
+     *
+     * If you need an async dropdown inside a `Dialog` or `Sheet`, prefer
+     * `Combobox.Async` which uses Popover-based positioning and does not
+     * suffer from these constraints.
+     */
+    Async: /* @__PURE__ */ markSelfWired(SelectAsyncStandalone, "Select.Async"),
+    Parts: SelectParts,
+    useAsync,
+  }),
+  "Select",
+);
 
 export { Select, useAsync };

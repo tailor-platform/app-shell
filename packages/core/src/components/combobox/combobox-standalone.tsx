@@ -706,15 +706,15 @@ type ComboboxComponent = typeof ComboboxStandalone & {
   useCreatable: typeof useCreatable;
 };
 
-const Combobox: ComboboxComponent = Object.assign(ComboboxStandalone, {
-  Async: ComboboxAsyncStandalone,
-  Parts: ComboboxParts,
-  useAsync,
-  useFilter,
-  useCreatable,
-});
-
-markSelfWired(Combobox, "Combobox");
-markSelfWired(Combobox.Async, "Combobox.Async");
+const Combobox: ComboboxComponent = /* @__PURE__ */ markSelfWired(
+  Object.assign(ComboboxStandalone, {
+    Async: /* @__PURE__ */ markSelfWired(ComboboxAsyncStandalone, "Combobox.Async"),
+    Parts: ComboboxParts,
+    useAsync,
+    useFilter,
+    useCreatable,
+  }),
+  "Combobox",
+);
 
 export { Combobox };

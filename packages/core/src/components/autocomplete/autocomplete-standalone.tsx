@@ -325,14 +325,14 @@ type AutocompleteComponent = typeof AutocompleteStandalone & {
   useFilter: typeof useFilter;
 };
 
-const Autocomplete: AutocompleteComponent = Object.assign(AutocompleteStandalone, {
-  Async: AutocompleteAsyncStandalone,
-  Parts: AutocompleteParts,
-  useAsync,
-  useFilter,
-});
-
-markSelfWired(Autocomplete, "Autocomplete");
-markSelfWired(Autocomplete.Async, "Autocomplete.Async");
+const Autocomplete: AutocompleteComponent = /* @__PURE__ */ markSelfWired(
+  Object.assign(AutocompleteStandalone, {
+    Async: /* @__PURE__ */ markSelfWired(AutocompleteAsyncStandalone, "Autocomplete.Async"),
+    Parts: AutocompleteParts,
+    useAsync,
+    useFilter,
+  }),
+  "Autocomplete",
+);
 
 export { Autocomplete };

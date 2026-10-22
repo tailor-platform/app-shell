@@ -128,6 +128,7 @@ describe("DataTable callback error presentation", () => {
       await user.click(errorTrigger());
       const popup = await screen.findByRole("dialog", { name: "Error in Value" });
       expect(within(popup).getByText(failure.message)).toBeDefined();
+      expect(within(popup).queryByRole("button")).toBeNull();
       expect(fail).toHaveBeenCalledExactlyOnceWith(ROWS[0], "Changed");
       expect(input.value).toBe("Changed");
       expect(input.readOnly).toBe(false);
@@ -192,6 +193,7 @@ describe("DataTable callback error presentation", () => {
     expect(within(popup).getByText("1: INVALID")).toBeDefined();
     expect(renderError).toHaveBeenCalledWith({ row: ROWS[0], error: failure });
     const action = within(popup).getByRole("button", { name: "Explain this error" });
+    expect(within(popup).getAllByRole("button")).toEqual([action]);
     await vi.waitFor(() => expect(document.activeElement).toBe(action));
     await user.keyboard("{Enter}");
     expect(onAction).toHaveBeenCalledTimes(1);
@@ -379,21 +381,19 @@ describe("DataTable callback error presentation", () => {
     expect(queryErrorTrigger()).toBeNull();
   });
 
-  it("reverts a failed draft and error together to the latest consumer data", async () => {
+  it("uses Escape to revert a failed draft and error together to the latest consumer data", () => {
     const onValueChange = vi.fn();
     const onValueCommitted = vi.fn(() => {
       throw new Error("Not accepted");
     });
-    const { input, user, updateRows } = renderEditor({ onValueChange, onValueCommitted });
+    const { input, updateRows } = renderEditor({ onValueChange, onValueCommitted });
     change(input);
     fireEvent.keyDown(input, { key: "Enter" });
     const latest = { id: "1", value: "Updated externally" };
     updateRows([latest]);
     expect(input.value).toBe("Changed");
     expect(input.getAttribute("aria-invalid")).toBe("true");
-    await user.click(errorTrigger());
-    const popup = await screen.findByRole("dialog", { name: "Error in Value" });
-    await user.click(within(popup).getByRole("button", { name: "Revert edit" }));
+    fireEvent.keyDown(input, { key: "Escape" });
     expect(input.value).toBe("Updated externally");
     expect(input.readOnly).toBe(true);
     expect(input.getAttribute("aria-invalid")).toBeNull();
@@ -571,8 +571,11 @@ describe("DataTable callback error presentation", () => {
     expect(trigger.closest("td")?.textContent).toContain("2026-10-20");
     expect(trigger.getAttribute("aria-invalid")).toBe("true");
     await user.click(errorTrigger());
-    const popup = await screen.findByRole("dialog", { name: "Error in Value" });
-    await user.click(within(popup).getByRole("button", { name: "Revert edit" }));
+    await screen.findByRole("dialog", { name: "Error in Value" });
+    await user.keyboard("{Escape}");
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(trigger.getAttribute("aria-label")).toBe("Value, 2026-10-20");
+    fireEvent.keyDown(trigger, { key: "Escape" });
     expect(trigger.getAttribute("aria-label")).toBe(initialLabel);
     expect(trigger.getAttribute("aria-invalid")).toBeNull();
     expect(queryErrorTrigger()).toBeNull();

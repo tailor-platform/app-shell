@@ -131,7 +131,8 @@ interface CellEditBase<TRow extends Record<string, unknown>, TValue, TDraft = TV
    * Callback failures use a standard error popover by default. Pass `false` to
    * disable interception and retain eager edit completion, or `render` to replace
    * the popover's body. Failed drafts stay visible until corrected or cancelled;
-   * Esc / Revert edit restores current data and clears the error together.
+   * Esc restores current data and clears the error together. The standard
+   * popover adds no reset action; custom content may include consumer-owned actions.
    */
   error?:
     | false

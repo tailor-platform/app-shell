@@ -369,9 +369,6 @@ function EditableCellFrame({
                   }}
                 >
                   {callbackError.content}
-                  <Button variant="ghost" size="sm" onClick={onEditorCancel}>
-                    {t("editRevert")}
-                  </Button>
                 </Popover.Popup>
               </Popover.Positioner>
             </Popover.Portal>

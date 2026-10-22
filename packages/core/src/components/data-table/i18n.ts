@@ -135,7 +135,6 @@ export const dataTableLabels = defineI18nLabels({
     // Inline cell editing — numeric parsing feedback
     editNotANumber: "Enter a number",
     editRevertHint: "Press Esc to undo",
-    editRevert: "Revert edit",
     editNone: "None",
     editNoMatches: "No matches",
     editClear: "Clear",
@@ -262,7 +261,6 @@ export const dataTableLabels = defineI18nLabels({
     // Inline cell editing
     editNotANumber: "数値を入力してください",
     editRevertHint: "Escキーで元に戻せます",
-    editRevert: "編集を元に戻す",
     editNone: "なし",
     editNoMatches: "一致する項目がありません",
     editClear: "クリア",

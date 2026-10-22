@@ -107,15 +107,15 @@ export function EditingErrorsDemo() {
         <li>
           In <strong>Draft note</strong>, type <code>!</code> to throw from{" "}
           <code>onValueChange</code>. The failed draft stays visible and cannot be confirmed until
-          you remove <code>!</code>. Press Esc or use <strong>Revert edit</strong> to restore the
-          adopted note and clear its error together.
+          you remove <code>!</code>. Press Esc to restore the adopted note and clear its error
+          together.
         </li>
         <li>
           Set <strong>Async quantity</strong> to <code>13</code> and press Enter. The returned
           Promise rejects after 600 ms; <code>13</code> stays visible while pending and after
           failure. Enter retries the same draft. Change it to <code>14</code> to save successfully,
-          or press Esc / use <strong>Revert edit</strong> to restore the adopted quantity. To test
-          stale failures, confirm 13 and start typing another value before the rejection arrives.
+          or press Esc to restore the adopted quantity. To test stale failures, confirm 13 and start
+          typing another value before the rejection arrives.
         </li>
         <li>
           Set <strong>Custom code</strong> to <code>bad</code> and press Enter. Open its error
@@ -128,8 +128,8 @@ export function EditingErrorsDemo() {
         Click an error icon or press Alt+ArrowDown in its editor to inspect the popover without
         confirming or discarding the draft. Pending and failed drafts survive Tab or blur without
         trapping focus. Only successful confirmation clears the draft; only the consumer adopts
-        successful values. Closing error details keeps the draft; Esc in the editor or Revert edit
-        cancels the draft and its error together.
+        successful values. The standard popover adds no reset action. Closing error details keeps
+        the draft; Esc in the editor cancels the draft and its error together.
       </Text>
       <DataTable.Root value={table}>
         <DataTable.Table />

@@ -20,11 +20,11 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.0",
+    "@tailwindcss/vite": "4.3.3",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
-    "typescript": "~5.9.3",
+    "typescript": "5.9.3",
     "vite": "catalog:"
   }
 }

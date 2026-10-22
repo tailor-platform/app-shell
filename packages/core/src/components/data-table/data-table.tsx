@@ -38,6 +38,13 @@ import { getCellValue, createTypedCellRenderer } from "./cell-renderers";
 import { isDecimalFilterValueValid } from "./filter-value-utils";
 import { isTemporalFilterType, normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import { useCellContextMenu, type CellContextMenuState } from "./use-cell-context-menu";
+import { useCellEditNavigation } from "./use-cell-edit-navigation";
+import {
+  DataTableEditableCell,
+  hasEditorIcon,
+  ICON_SPACE_CLASS_NAME,
+  isEditableColumn,
+} from "./editable-cell";
 import {
   DataTableToolbar,
   DataTableFilters,
@@ -49,7 +56,7 @@ import { DataTablePagination } from "./pagination";
 import {
   DataTableSelectionAnnouncer,
   DataTableSelectionBar,
-  hasSelectionActions,
+  hasBulkActions,
   isSelectionBarOpen,
 } from "./selection-bar";
 export type { DataTablePaginationProps } from "./pagination";
@@ -625,9 +632,8 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     hasNextPage: value.hasNextPage,
     onClickRow: value.onClickRow,
     rowActions: value.rowActions,
-    selectionActions: value.selectionActions,
+    rowSelection: value.rowSelection,
     selectedIds: value.selectedIds,
-    selectedRows: value.selectedRows,
     isRowSelected: value.isRowSelected,
     toggleRowSelection: value.toggleRowSelection,
     selectAllRows: value.selectAllRows,
@@ -1147,7 +1153,6 @@ function DataTableBody({ className }: { className?: string }) {
     "data-slot": "data-table-body",
     className,
   };
-
   if (loading) {
     return (
       <Table.Body {...tableBodyProps}>
@@ -1166,7 +1171,7 @@ function DataTableBody({ className }: { className?: string }) {
     return (
       <Table.Body {...tableBodyProps}>
         <DataTableStatusRow totalColSpan={totalColSpan} state="error">
-          <span className="astw:text-destructive">
+          <span className="astw:text-danger-text">
             {t("errorPrefix")} {error.message}
           </span>
         </DataTableStatusRow>
@@ -1262,16 +1267,28 @@ function DataTableRows<TRow extends Record<string, unknown>>({
     handleContextMenuCloseComplete: handleCellContextMenuCloseComplete,
     getCellContextMenuHandlers,
   } = useCellContextMenu();
+  const navigation = useCellEditNavigation();
+  // Namespaced so an id-less row's index fallback can't collide with a real
+  // id of the same digits — React reconciles duplicate keys by position,
+  // pairing a detail panel with the wrong row.
+  const rowKeys = rows.map((row, rowIndex) => {
+    const rowId = (row as Record<string, unknown>)["id"];
+    return rowId != null ? `id:${String(rowId)}` : `idx:${rowIndex}`;
+  });
+  // Tab / Shift+Tab move between editable cells in the order they render.
+  navigation.setOrder(rowKeys, ordered?.map((col) => keys.get(col) as string) ?? []);
+  // In a table people edit, every data cell says what a click does: editors
+  // show a text or pointer cursor, and the rest show "not allowed". Skipped when
+  // rows are clickable, where the row click is what the cursor should promise.
+  const blockReadOnlyCells = !onClickRow && (ordered?.some(isEditableColumn) ?? false);
+  const warnedMissingIdRef = useRef(false);
 
   return (
     <>
       {rows.map((row, rowIndex) => {
         const rowId = (row as Record<string, unknown>)["id"];
         const selected = isRowSelected?.(row) ?? false;
-        // Namespaced so an id-less row's index fallback can't collide with a real
-        // id of the same digits — React reconciles duplicate keys by position,
-        // pairing a detail panel with the wrong row.
-        const rowKey = rowId != null ? `id:${String(rowId)}` : `idx:${rowIndex}`;
+        const rowKey = rowKeys[rowIndex];
         // Expansion is keyed by id, so a row without one gets no chevron at all
         // rather than a disabled one — it must never be un-toggleable (D5).
         const expandable = hasExpand && rowId != null && (rowExpansion?.canExpand?.(row) ?? true);
@@ -1348,7 +1365,23 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               })()}
             {ordered?.map((col) => {
               const key = keys.get(col) as string;
-              const content = col.render ? col.render(row) : cellRenderers.get(col)?.(row);
+              const editableColumn = isEditableColumn(col);
+              if (editableColumn && rowId == null && !warnedMissingIdRef.current) {
+                warnedMissingIdRef.current = true;
+                console.warn(
+                  `[DataTable] Column "${key}" has an \`edit\` config, but a row has no \`id\`. Rows without an \`id\` are shown read-only.`,
+                );
+              }
+              const editable =
+                editableColumn &&
+                rowId != null &&
+                // A badge dropdown picks one value; a cell holding several stays
+                // read-only rather than have its list replaced by a single pick.
+                !(col.type === "badge" && Array.isArray(getCellValue(row, col))) &&
+                (col.edit?.canEdit?.(row, { selected }) ?? true);
+              // An editable cell renders its own display; skip rendering it twice.
+              let content: ReactNode;
+              if (!editable) content = col.render ? col.render(row) : cellRenderers.get(col)?.(row);
 
               const { style: cellStyle, className: cellClassName } = pinCellProps(
                 placements.get(col),
@@ -1366,11 +1399,23 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                 "body",
               );
               // Truncate via an inner element so the cell's overflow stays visible.
-              const cellBody = col.truncate ? (
-                <span className="astw:block astw:truncate">{content}</span>
-              ) : (
-                content
-              );
+              // A read-only cell of a dropdown / date column keeps the icon's
+              // space like its editable neighbours, so the column's width never shifts.
+              const iconSpace = editableColumn && hasEditorIcon(col);
+              const cellBody =
+                col.truncate || iconSpace ? (
+                  <span
+                    className={cn(
+                      "astw:block",
+                      col.truncate && "astw:truncate",
+                      iconSpace && ICON_SPACE_CLASS_NAME,
+                    )}
+                  >
+                    {content}
+                  </span>
+                ) : (
+                  content
+                );
               const menuValue = getCellContextValue(row, col, content);
               const headerLabel = col.label ?? key;
 
@@ -1397,9 +1442,30 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               const cellProps = {
                 "data-slot": "data-table-cell" as const,
                 style: { ...cellStyle, WebkitTouchCallout: "none" } satisfies CSSProperties,
-                className: cellClassName,
+                className: cn(
+                  cellClassName,
+                  blockReadOnlyCells && !editable && "astw:cursor-not-allowed",
+                ),
                 ...cellContextMenuHandlers,
               };
+              if (editable) {
+                return (
+                  <DataTableEditableCell
+                    key={key}
+                    row={row}
+                    col={col}
+                    rowKey={rowKey}
+                    colKey={key}
+                    label={headerLabel}
+                    align={resolveAlign(col)}
+                    navigation={navigation}
+                    dateRenderer={col.type === "date" ? cellRenderers.get(col) : undefined}
+                    tooltipLabel={tooltipLabel}
+                    cellProps={cellProps}
+                  />
+                );
+              }
+
               const cellElement = <Table.Cell {...cellProps} />;
 
               if (tooltipLabel !== undefined) {
@@ -1732,7 +1798,7 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
         />
         <Menu.Content>
           {actions.map((action) => {
-            // `canApply` is the shared, positive form; the deprecated
+            // `canApply` is the positive form; the deprecated
             // `isDisabled` still counts, so either one can switch it off.
             const disabled =
               (action.canApply ? !action.canApply(row) : false) ||
@@ -1746,7 +1812,7 @@ function RowActionsMenu<TRow extends Record<string, unknown>>({
                     action.onClick(row);
                   }
                 }}
-                className={cn(action.variant === "destructive" && "astw:text-destructive")}
+                className={cn(action.variant === "destructive" && "astw:text-danger-text")}
               >
                 {action.icon}
                 {action.label}
@@ -1898,7 +1964,7 @@ DataTableTable.displayName = "DataTable.Table";
 /** Use `DataTable.Footer` instead of calling this directly. */
 function DataTableFooter({ children, className }: { children?: ReactNode; className?: string }) {
   const ctx = useContext(DataTableContext);
-  const offersBulkActions = hasSelectionActions(ctx);
+  const offersBulkActions = hasBulkActions(ctx);
   const selecting = isSelectionBarOpen(ctx);
 
   return (
@@ -1983,7 +2049,7 @@ export const DataTable = {
    * Footer container for pagination and other footer content.
    * Place inside `DataTable.Root`, after `DataTable.Table`.
    *
-   * When `useDataTable()` is given `selectionActions`, the footer becomes the
+   * When `useDataTable()` is given `rowSelection.actions`, the footer becomes the
    * bulk-action bar while rows are selected — the selection count, the
    * actions, and a Clear button — with its own children (usually
    * `DataTable.Pagination`) kept alongside.

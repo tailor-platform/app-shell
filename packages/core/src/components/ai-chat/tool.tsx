@@ -37,7 +37,7 @@ const STATUS_ICONS: Record<ToolState, ReactNode> = {
   "input-streaming": <CircleDashed className="astw:size-3.5" aria-hidden />,
   "input-available": <Loader2 className="astw:size-3.5 astw:animate-spin" aria-hidden />,
   "output-available": <CheckCircle2 className="astw:size-3.5" aria-hidden />,
-  "output-error": <XCircle className="astw:size-3.5 astw:text-destructive" aria-hidden />,
+  "output-error": <XCircle className="astw:size-3.5 astw:text-danger-text" aria-hidden />,
 };
 
 type ToolProps = Omit<ComponentProps<typeof DisclosureRoot>, "children"> & {
@@ -150,7 +150,7 @@ function ToolOutput({ output, errorText, className, ...props }: ToolOutputProps)
       <h4
         className={cn(
           "astw:text-[10px] astw:font-medium astw:uppercase astw:tracking-wide",
-          errorText ? "astw:text-destructive" : "astw:text-muted-foreground",
+          errorText ? "astw:text-danger-text" : "astw:text-muted-foreground",
         )}
       >
         {errorText ? t("aiChatToolError") : t("aiChatToolResult")}

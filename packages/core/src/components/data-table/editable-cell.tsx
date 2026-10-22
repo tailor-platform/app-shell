@@ -181,6 +181,23 @@ interface CellErrorUI {
   containsTarget: (target: EventTarget | null) => boolean;
 }
 
+// The standard popover body: the error reads as an error (not a tooltip) and
+// says how to get back to the adopted value.
+function DefaultCellErrorContent({ message, hint }: { message: string; hint: string }) {
+  return (
+    <div className="astw:flex astw:gap-2">
+      <CircleAlert
+        aria-hidden="true"
+        className="astw:mt-0.5 astw:size-4 astw:shrink-0 astw:text-destructive"
+      />
+      <div className="astw:flex astw:flex-col astw:gap-0.5">
+        <p className="astw:font-medium">{message}</p>
+        <p className="astw:text-muted-foreground">{hint}</p>
+      </div>
+    </div>
+  );
+}
+
 function useCellValue<TRow extends Record<string, unknown>>(
   row: TRow,
   col: EditableColumn<TRow>,
@@ -219,7 +236,11 @@ function useCellValue<TRow extends Record<string, unknown>>(
           failure,
           id: errorId,
           message: renderError ? t("editCallbackError") : message,
-          content: renderError ? renderError({ row, error: failure.error }) : message,
+          content: renderError ? (
+            renderError({ row, error: failure.error })
+          ) : (
+            <DefaultCellErrorContent message={message} hint={t("editRevertHint")} />
+          ),
           triggerRef,
           popupRef,
           containsTarget: containsErrorTarget,

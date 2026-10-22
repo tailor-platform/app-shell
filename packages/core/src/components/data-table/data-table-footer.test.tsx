@@ -3,7 +3,13 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
-import type { Column, DataTableData, UseDataTableOptions, UseDataTableReturn } from "@/index";
+import type {
+  Column,
+  DataTableData,
+  FooterRenderContext,
+  UseDataTableOptions,
+  UseDataTableReturn,
+} from "@/index";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
 
@@ -83,7 +89,9 @@ describe("DataTable column footer", () => {
         id: "quantity",
         label: "Quantity",
         type: "number",
-        footer: ({ rows: currentRows }) => {
+        footer: (ctx) => {
+          expectTypeOf(ctx).toEqualTypeOf<FooterRenderContext<Line>>();
+          const { rows: currentRows } = ctx;
           expectTypeOf(currentRows).toEqualTypeOf<readonly Line[]>();
           return <strong>{currentRows.reduce((sum, row) => sum + (row.quantity ?? 0), 0)}</strong>;
         },
@@ -125,7 +133,7 @@ describe("DataTable column footer", () => {
   });
 
   it("evaluates footers with an empty array when there are no data rows", () => {
-    const footer = vi.fn(({ rows: currentRows }: { rows: readonly Line[] }) => currentRows.length);
+    const footer = vi.fn(({ rows: currentRows }: FooterRenderContext<Line>) => currentRows.length);
     const { container } = render(
       <Harness
         tableColumns={[{ id: "name", label: "Item", render: (row) => row.name, footer }]}

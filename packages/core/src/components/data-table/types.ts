@@ -212,6 +212,12 @@ interface SortableHeaderRenderContext {
  */
 export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
 
+/** Context passed to custom column `footer` renderers. */
+export interface FooterRenderContext<TRow extends Record<string, unknown>> {
+  /** Current `data.rows` (the current page, not all records or only selected rows). */
+  rows: readonly TRow[];
+}
+
 type DataTableStringFilterOperator = Extract<
   OperatorForFilterType["string"],
   "eq" | "ne" | "contains" | "notContains" | "hasPrefix" | "hasSuffix"
@@ -324,7 +330,7 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    * Hidden during loading or errors; loaded empty data receives `rows: []`.
    * Separate from `DataTable.Footer`, the pagination / bulk-action container.
    */
-  footer?: (ctx: { rows: readonly TRow[] }) => ReactNode;
+  footer?: (ctx: FooterRenderContext<TRow>) => ReactNode;
   /**
    * Stable identifier used for column visibility toggling, persisted layout
    * state, raw-value fallback (`row[col.id]`), and as the React key. Falls

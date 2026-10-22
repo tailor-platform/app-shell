@@ -112,16 +112,32 @@ interface CellEditBase<TRow extends Record<string, unknown>, TValue, TDraft = TV
    * Observes editor drafts, including incomplete input and restored drafts on
    * cancellation. Direct inputs emit raw strings; choices emit selected values,
    * not search text or highlights. Updating `data` here is outside the supported
-   * coordination contract. The return value is ignored.
+   * coordination contract. A failed change check retains its draft and blocks
+   * confirmation; pending change checks finish before `onValueCommitted` runs.
+   * Cancellation notifications cannot create a new cell error after discarding
+   * the draft. Pass `error: false` for unobserved callback behavior.
    */
   onValueChange?: (row: TRow, draft: TDraft) => void;
   /**
-   * Notifies a changed, confirmed editor output, compared with current `data`.
-   * Empty cells confirm `null`. Confirmation does not imply business validation,
-   * adoption, or persistence; update `data` here to adopt it. Return values are
-   * ignored. Output types follow the editor, not the row field's runtime type.
+   * Attempts to confirm a changed editor output, compared with current `data`.
+   * Empty cells confirm `null`. A normal return or fulfilled Promise completes
+   * the edit; throw/rejection retains the draft and error for correction or retry.
+   * Focus may leave while pending. Update `data` here to adopt a successful value;
+   * DataTable does not persist or roll back consumer state. Output types follow
+   * the editor, not the row field's runtime type.
    */
   onValueCommitted: (row: TRow, value: TValue | null) => void;
+  /**
+   * Callback failures use a standard error popover by default. Pass `false` to
+   * disable interception and retain eager edit completion, or `render` to replace
+   * the popover's body. Failed drafts stay visible until corrected or cancelled;
+   * Esc / Revert edit restores current data and clears the error together.
+   */
+  error?:
+    | false
+    | {
+        render: (ctx: { row: TRow; error: unknown }) => ReactNode;
+      };
 }
 
 /**

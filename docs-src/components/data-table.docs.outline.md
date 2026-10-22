@@ -385,7 +385,7 @@ The trigger is a native `<button>`, so Enter/Space activation and the focus ring
 
 ## Inline editing
 
-Give a typed column an `edit` config to use its built-in editor. This standardizes the editing UI — draft input, IME, keyboard movement, and change notifications — not business validation or persistence. Columns without `edit` keep their existing behavior.
+Give a typed column an `edit` config to use its built-in editor. This standardizes the editing UI — draft input, IME, keyboard movement, confirmation, and callback-error presentation. Validation rules and persistence remain consumer-owned; by default, the editor retains a draft until its callbacks complete successfully. Columns without `edit` keep their existing behavior.
 
 | Column type                          | Editor                                    | `onValueChange` draft                                             | `onValueCommitted` output              |
 | ------------------------------------ | ----------------------------------------- | ----------------------------------------------------------------- | -------------------------------------- |
@@ -434,24 +434,25 @@ const table = useDataTable({ columns, data: { rows: lines }, rowSelection: {} })
 
 ### Editing options
 
-| Option             | Column types            | Contract                                                                                                                                                                                                                                                                                                                                          |
-| ------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `onValueChange`    | all typed columns       | Optional: `(row, draft) => void`. Observes changed editor drafts, including restored drafts on cancellation. See the draft types above. Updating `data` here is outside the supported coordination contract and is the consumer's responsibility. Return values are ignored.                                                                      |
-| `onValueCommitted` | all typed columns       | Required: `(row, value) => void`. Notifies a changed, confirmed value, compared with current consumer-provided `data`, not an edit-start snapshot. Empty or explicitly cleared cells confirm `null`; equal values do not notify. Confirmation does not imply successful business validation, adoption, or persistence. Return values are ignored. |
-| `canEdit`          | all typed columns       | `(row, { selected }) => boolean`. Decides which rows can be edited, like `rowExpansion.canExpand` and an action's `canApply`. Default: rows with an `id`. `selected` is `false` when selection is off; provide `rowSelection: {}` to enable it.                                                                                                   |
-| `options`          | `text`, `link`, `badge` | `readonly { value, label }[]`. Text/link columns become searchable dropdowns; values are strings and their labels are displayed, including in read-only cells. Badge choices default to `typeOptions.badgeLabelMap`, then the column's enum filter options. Without choices, a badge column stays read-only. The "None" choice confirms `null`.   |
+| Option             | Column types            | Contract                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------ | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `onValueChange`    | all typed columns       | Optional: `(row, draft) => void`. Observes changed drafts, including restored drafts on cancellation. See the draft types above. Updating `data` here is outside the supported coordination contract. Successful return values are ignored. A failure retains the draft and prevents confirmation; a pending returned Promise must succeed before `onValueCommitted` runs.                                                                                                                                     |
+| `onValueCommitted` | all typed columns       | Required: `(row, value) => void`. Attempts confirmation of a changed editor output, compared with current consumer-provided `data`, not an edit-start snapshot. Empty or explicitly cleared cells output `null`; equal values do not notify. Successful completion ends the edit; a returned Promise delays edit completion until it settles. Throwing or rejecting retains the draft and error for correction or retry. Adoption and persistence remain consumer-owned; successful return values are ignored. |
+| `error`            | all typed columns       | Optional: `false \| { render: (ctx: { row: TRow; error: unknown }) => ReactNode }`. Omit for the standard callback-error popover, pass `false` to disable interception, or provide `render` to customize the popover's body. See [Callback error popovers](#callback-error-popovers).                                                                                                                                                                                                                          |
+| `canEdit`          | all typed columns       | `(row, { selected }) => boolean`. Decides which rows can be edited, like `rowExpansion.canExpand` and an action's `canApply`. Default: rows with an `id`. `selected` is `false` when selection is off; provide `rowSelection: {}` to enable it.                                                                                                                                                                                                                                                                |
+| `options`          | `text`, `link`, `badge` | `readonly { value, label }[]`. Text/link columns become searchable dropdowns; values are strings and their labels are displayed, including in read-only cells. Badge choices default to `typeOptions.badgeLabelMap`, then the column's enum filter options. Without choices, a badge column stays read-only. The "None" choice confirms `null`.                                                                                                                                                                |
 
 Rows need a string or number `id`; rows without one remain read-only and produce a one-time warning. Multi-value badge cells also remain read-only. Editable cells carry a subtle tint at rest, layered over the row's hover and selected states, and drop it while being edited. Dropdown and date cells also show their editor icon on hover or focus; typed-into cells show none. The whole cell is the click target. Editing a cell does not fire `onClickRow`.
 
 ### Confirmation and keyboard behavior
 
-- **Enter / Shift+Enter:** confirm and end editing, returning to normal cell display while keeping focus on the same logical cell. Enter or clicking that focused display cell starts editing again.
-- **Tab / Shift+Tab:** confirm and move to the next / previous editable cell, skipping read-only cells. At the ends, focus leaves the table normally.
-- **Esc:** restore the draft from the latest `data`, notifying `onValueChange` only if the draft changed, without `onValueCommitted`.
-- **Dropdowns:** type to filter choices. Exact labels rank first, then prefix matches, then substring matches, with original order retained within each rank. "None" is excluded while a search query is present and available with an empty query. Tab focuses a closed dropdown without opening it; one Enter opens it without confirming. While open, Enter confirms the candidate and ends editing in the same cell; Tab confirms a selected or searched candidate and moves on. Tab without selecting or searching only moves focus. A keyboard-highlighted candidate takes precedence over ranked search matches; hovering does not count as an explicit selection. Clicking a choice confirms immediately. Only Enter, Tab, or clicking a choice confirms: outside click, blur, and Esc discard the search and restore the latest `data`, even for an exactly typed label or keyboard-highlighted candidate, without either callback. Search/highlight changes emit neither callback; confirming a different value emits `onValueChange` followed by `onValueCommitted`.
-- **Dates:** selecting a day emits its draft and confirms immediately. Clear explicitly confirms `null`.
-- **Date-times:** day and time are independent. Both must be valid to enable Done; an empty time does not become midnight. Done confirms the timestamp in the AppShell timezone. Outside closing or Esc cancels and restores the latest data; Clear explicitly confirms `null`.
-- **Blur:** confirms a changed direct-input value. Enter during IME composition confirms the conversion, not the cell. Composition changes may notify raw drafts; normalization waits until cell confirmation.
+- **Enter / Shift+Enter:** attempt confirmation in the same logical cell. Success ends editing and restores normal cell display; a pending callback keeps the draft visible, and failure keeps it editable with its error. Enter can retry a failed commit. A failed change check or numeric parse must be corrected before confirmation can proceed. Enter or clicking a focused display cell starts editing again.
+- **Tab / Shift+Tab:** attempt confirmation and move to the next / previous editable cell, skipping read-only cells. Callback failures and pending callbacks do not trap focus: their drafts remain in the original cell. At the ends, focus leaves the table normally. Malformed numeric input retains its existing Tab-blocking behavior.
+- **Esc:** cancel the edit and atomically discard its draft and error, returning to the latest `data`. Notify `onValueChange` only if the restored draft differs, without `onValueCommitted`; restoration failures cannot recreate an error after cancellation. Pending callback results are invalidated, not cancelled. If the error popover is open, the first Esc only closes those details; a subsequent Esc in the editor or error trigger cancels the edit.
+- **Dropdowns:** type to filter choices. Exact labels rank first, then prefix matches, then substring matches, with original order retained within each rank. "None" is excluded while a search query is present and available with an empty query. Tab focuses a closed dropdown without opening it; one Enter opens it without confirming. While open, Enter attempts confirmation of the candidate in the same cell; Tab attempts confirmation of a selected or searched candidate and moves on. Tab without selecting or searching only moves focus. A keyboard-highlighted candidate takes precedence over ranked search matches; hovering does not count as an explicit selection. Clicking a choice also attempts confirmation. Outside click, blur, and Esc discard an ordinary unconfirmed search and restore the latest `data`, even for an exactly typed label or keyboard-highlighted candidate, without either callback. A selected candidate whose confirmation is pending or failed remains displayed even if the dropdown closes; Esc or Revert edit cancels it. Search/highlight changes emit neither callback; a different selection emits `onValueChange`, then invokes `onValueCommitted` only after the change check succeeds.
+- **Dates:** selecting a day emits its draft and attempts confirmation immediately. Clear explicitly attempts confirmation of `null`.
+- **Date-times:** day and time are independent. Both must be valid to enable Done; an empty time does not become midnight. Done attempts confirmation of the timestamp in the AppShell timezone. Outside closing cancels an ordinary unfinished edit, but retains a pending or failed draft; Esc cancels either. Clear explicitly attempts confirmation of `null`. While a date editor has an active, pending, or failed draft, its trigger shows that raw draft date/time rather than the adopted value's formatter or custom `column.render`.
+- **Blur:** attempts confirmation of a changed direct-input value. It does not retry an already failed commit or duplicate an in-flight confirmation; failed and pending drafts survive leaving and re-entering the cell. Enter during IME composition confirms the conversion, not the cell. Composition changes may notify raw drafts; normalization waits until cell confirmation.
 
 A date-time draft preserves missing parts rather than inventing a timestamp:
 
@@ -468,17 +469,69 @@ Numeric confirmation uses JavaScript `number`, **not arbitrary-precision Decimal
 
 Malformed numeric input is allowed while typing and can notify raw drafts. Enter/Tab cannot confirm it: they show basic parsing feedback and hold focus. Blur discards it, restores the latest `data`, and notifies the restored draft without a commit. Cosmetic changes such as `10` to `10.00` can notify draft changes but do not emit `onValueCommitted`. This is basic parsing, not a business-rule API; `typeOptions` controls display only and never limits the entered value.
 
+### Callback error popovers
+
+By default, DataTable catches synchronous throws and rejections of Promises returned by `onValueChange` or `onValueCommitted`. The affected cell receives an error outline and an error icon. Click the icon, or press **Alt+ArrowDown** while focused in the cell, to open its popover. The error state is also exposed through `aria-invalid` and an associated description. Opening or using the error popover is not an ordinary editor blur: it does not confirm or discard the draft merely to inspect the error.
+
+No extra configuration is needed for the standard UI. It displays a non-empty `Error.message`, otherwise the localized message “An error occurred”. It never serializes arbitrary thrown values or displays a stack trace. Throw user-facing messages; translate or sanitize internal errors before returning them to this UI. The popover includes a built-in **Revert edit** action (**編集を元に戻す** in Japanese), including when its body is customized, so the draft and error can be discarded together.
+
+```tsx
+edit: {
+  onValueCommitted: async (row, value) => {
+    if (value === null) throw new Error("Enter a quantity");
+    await saveReceived(row.id, value);
+    setLines((current) =>
+      current.map((line) => (line.id === row.id ? { ...line, received: value } : line)),
+    );
+  },
+}
+```
+
+`saveReceived` is the screen's persistence function. DataTable keeps the raw draft while the returned Promise is pending. Successful completion clears that draft and displays the latest consumer-provided `data`; rejection retains the same draft with its error for correction, an explicit Enter retry, or cancellation. Only successful confirmation ends the edit. Repeated Enter or a subsequent blur does not invoke an in-flight confirmation again. This delays **edit completion**, not focus navigation, and does not add a save mode, automatic retry, optimistic row state, or automatic persistence.
+
+To customize the body, provide `error.render`. Its `error` is `unknown`, because JavaScript can throw any value; `row` is the cell's current row. Popover placement, open/close behavior, the error indicator, and the built-in Revert edit action remain owned by DataTable. The body may include links or buttons.
+
+```tsx
+error: {
+  render: ({ row, error }) => (
+    <div>
+      <p>Could not update row {row.id}</p>
+      <p>{error instanceof Error ? error.message : "Please try again later"}</p>
+    </div>
+  ),
+}
+```
+
+The renderer is called only when a callback failure exists. Returning `null` hides its content, not the captured error state. This API has no presentation `type`, inline rendering, or `cellContent` context.
+
+Pass `error: false` when the screen owns error handling entirely:
+
+```tsx
+edit: {
+  onValueCommitted: handleCommitWithOwnFeedback,
+  error: false,
+}
+```
+
+With `false`, DataTable preserves eager edit completion: it clears the draft before invoking the confirmation callback, does not intercept synchronous exceptions, and does not observe returned Promises. Handle failures in the callback rather than relying on a hidden error state. Neither `error: true` nor `error: {}` is needed or accepted. Switching between `error: false` and handled mode remounts the editor, discarding its local session and invalidating old results.
+
+The cell's editing session is either idle, editing a draft, confirming that draft, or retaining a failed draft with its error. **An error never exists without its target draft.** New input clears the previous failure and invalidates older asynchronous results. A failed `onValueChange` prevents `onValueCommitted` from running; a pending change check must succeed first. A failed commit can be retried without losing its draft. Esc and Revert edit atomically discard the draft and error, restore the latest data, and invalidate pending results. Unmount discards the whole session; it is not persisted across page changes. Existing malformed-number feedback keeps its existing Enter/Tab and blur behavior.
+
+Only the returned Promise is observable. A detached operation such as `void saveReceived(...)` is outside this lifecycle; return or await the operation from the callback. The callback types remain `=> void` for compatibility with existing handlers, including async functions; successful return values are ignored. A stale completion cannot clear a newer draft, replace its error, or finish its editor. This protection does not cancel requests, undo callback side effects, roll back optimistic writes, or prevent the consumer from writing stale data, so keep the screen's own request revision or conflict handling when needed.
+
+**Callback completion and adoption are distinct.** `onValueCommitted` is the confirmation attempt, not a notification that persistence has already succeeded. A normal return or fulfilled Promise completes that attempt; DataTable never adopts the returned value. Returning without adopting a value remains a valid consumer-owned rejection strategy: it completes the edit and returns to current data without a callback error. Throw or reject if the draft should remain available with an error.
+
 ### Data ownership and limits
 
-The consumer's `data` is the source of truth. Normally, observe drafts in `onValueChange` and synchronously adopt confirmed values in `onValueCommitted`, optionally after your own validation or normalization. If you reject a confirmed value by leaving `data` unchanged, the cell returns to that value and Tab navigation remains available: the table does not retain a business-invalid draft, add a cell error, or block Tab navigation for you.
+The consumer's `data` is the source of truth for adopted values. Observe drafts in `onValueChange` and adopt values in `onValueCommitted`, optionally after your own validation or normalization. A normal callback completion clears the draft and returns to current data, even when you deliberately leave `data` unchanged. Throwing or returning a rejected Promise instead retains the original draft and its error until correction, successful retry, or cancellation. Tab navigation remains available in either case.
 
-External data updates do not overwrite an active draft or emit draft callbacks themselves. Confirmation and cancellation use the latest data. With no active draft, the display follows data normally. Unmount silently discards internal drafts without either callback; if an ordinary blur occurs before unmount, its normal behavior still applies.
+External data updates do not overwrite an active draft or emit draft callbacks themselves. Confirmation and cancellation use the latest data. With no active draft, the display follows data normally. Unmount silently discards internal drafts and callback errors without either callback; if an ordinary blur occurs before unmount, its normal behavior still applies.
 
-There are no `edit.min`, `max`, `maxDecimals`, `required`, `validate`, or `schema` options. Dropdowns and calendars are not constrained by business rules. Required-field handling, error feedback, saving, optimistic updates, rollback, and save indicators belong to the screen. Callback return values are not awaited; handle rejected saves in your own code rather than returning a Promise for DataTable to track. There is no built-in unsaved-changes or leave-page guard.
+There are no `edit.min`, `max`, `maxDecimals`, `required`, `validate`, or `schema` options. Required-field handling, validation rules, saving, optimistic updates, rollback, and save indicators belong to the screen. DataTable coordinates the local editing lifecycle around callback success or failure; it does not implement business rules or coordinate persistence. There is no built-in unsaved-changes or leave-page guard.
 
 Editing does not re-run sorting or filtering: rows stay in place until the consumer supplies changed query data. Update only the changed field when persisting, and keep local rows current so later edits, row actions, and bulk actions see the intended data. Conflict resolution, consumer-state rollback, draft persistence across unmounts, and navigation guards remain outside DataTable's responsibility.
 
-For a different editor or validation experience, leave `edit` unset and use the existing cell `render` escape hatch. A `render` supplied alongside `edit` customizes the display, not the built-in editor. Multi-value badge editing, a custom-editor option within `edit`, multi-cell paste, fill-down, and undo history are not provided.
+For a different editor or validation experience, leave `edit` unset and use the existing cell `render` escape hatch. A `render` supplied alongside `edit` customizes the adopted value's display, not the active draft or built-in editor. Multi-value badge editing, a custom-editor option within `edit`, multi-cell paste, fill-down, and undo history are not provided.
 
 ### Consumer-owned saving patterns
 
@@ -495,7 +548,7 @@ Their simulated persistence rejects quantity `13` so error handling can be tried
 
 #### Immediate saving
 
-Validate the confirmed value, adopt it with a functional field update, then persist only that field. This example permits later edits while saves are pending. A per-row request revision prevents a stale failure from rolling back a newer edit; rollback also patches only this field, preserving changes to other fields. Feedback, saved-value tracking, and in-flight status are consumer-owned.
+Validate the confirmed value, adopt it with a functional field update, then persist only that field. This example permits later edits while saves are pending. A per-row request revision prevents a stale failure from rolling back a newer edit; rollback also patches only this field, preserving changes to other fields. This pattern handles its own feedback rather than throwing to the cell popover. Saved-value tracking and in-flight status remain consumer-owned.
 
 Revision checks protect local UI updates, not server write ordering or external conflicts. For a real API, serialize writes to the same field or use server-side version checks, and reconcile/refetch after uncertain outcomes. The [goods-receipt showcase](../../examples/vite-app/src/pages/showcase/data-table-lab/inline-editing-demo.tsx) demonstrates the same ownership boundary across editor types.
 
@@ -505,7 +558,7 @@ Revision checks protect local UI updates, not server write ordering or external 
 
 Confirmed values update local draft rows. Save validates those rows and persists the batch; Cancel restores the last saved rows. The page disables editing while its batch is saving to avoid replacing a later local edit with an older save result.
 
-This batch collects **confirmed/adopted row values**, not unfinished input inside editors. Save does not automatically gather or validate active editor drafts. An ordinary blur may confirm a valid direct input before a button click; malformed numeric blur discards that input, and clicking outside a dropdown or date-time picker cancels its unfinished edit. Tell users to confirm edits first; if your workflow needs to submit unfinished inputs as one coordinated form, use the `render` escape hatch or a dedicated form instead.
+This batch collects **confirmed/adopted row values**, not unfinished, pending, or failed input inside editors. Save does not automatically gather drafts, wait for pending cell callbacks, or validate the table. An ordinary blur may confirm a valid direct input before a button click; malformed numeric blur discards that input. Clicking outside a dropdown or date-time picker cancels an ordinary unfinished search/edit, but a pending or failed candidate remains in its cell and is not part of the batch. Tell users to resolve and successfully confirm edits first; if your workflow needs to submit all unfinished inputs as one coordinated form, use the `render` escape hatch or a dedicated form instead.
 
 <!-- example: collect-then-submit | Local confirmed rows with consumer-owned Save validation, batch persistence, error feedback, and Cancel restoring saved rows. -->
 

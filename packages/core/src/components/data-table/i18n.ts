@@ -135,10 +135,15 @@ export const dataTableLabels = defineI18nLabels({
     // Inline cell editing — numeric parsing feedback
     editNotANumber: "Enter a number",
     editRevertHint: "Press Esc to undo",
+    editRevert: "Revert edit",
     editNone: "None",
     editNoMatches: "No matches",
     editClear: "Clear",
     editDone: "Done",
+    editCallbackError: "An error occurred",
+    editShowError: (props: { label: string }) => `Show error for ${props.label}`,
+    editErrorDialog: (props: { label: string }) => `Error in ${props.label}`,
+    editErrorHint: "Press Alt+ArrowDown for error details",
   },
   ja: {
     loading: "読み込み中...",
@@ -257,10 +262,15 @@ export const dataTableLabels = defineI18nLabels({
     // Inline cell editing
     editNotANumber: "数値を入力してください",
     editRevertHint: "Escキーで元に戻せます",
+    editRevert: "編集を元に戻す",
     editNone: "なし",
     editNoMatches: "一致する項目がありません",
     editClear: "クリア",
     editDone: "完了",
+    editCallbackError: "エラーが発生しました",
+    editShowError: (props: { label: string }) => `${props.label}のエラーを表示`,
+    editErrorDialog: (props: { label: string }) => `${props.label}のエラー`,
+    editErrorHint: "Alt+↓キーでエラーの詳細を表示できます",
   },
 });
 

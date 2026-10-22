@@ -4,7 +4,7 @@ import type { ComponentProps } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import type { Column, UseDataTableOptions } from "./types";
+import type { Column, HeaderRenderContext, UseDataTableOptions } from "./types";
 
 afterEach(cleanup);
 
@@ -162,9 +162,11 @@ describe("DataTable cellProps", () => {
 });
 
 describe("DataTable headerProps", () => {
-  it("accepts only a static object with className, style, and title", () => {
+  it("accepts only a callback returning className, style, and title or undefined", () => {
     expectTypeOf<NonNullable<Column<Row>["headerProps"]>>().toEqualTypeOf<
-      Pick<ComponentProps<"th">, "className" | "style" | "title">
+      (
+        ctx: HeaderRenderContext,
+      ) => Pick<ComponentProps<"th">, "className" | "style" | "title"> | undefined
     >();
   });
 
@@ -179,10 +181,14 @@ describe("DataTable headerProps", () => {
             label: "Name",
             type: "text",
             header: custom ? () => <strong>Person</strong> : undefined,
-            headerProps: {
-              className: "astw:tabular-nums",
-              style: { backgroundColor: "red", color: "white" },
-              title: "Employee name",
+            headerProps: (ctx) => {
+              expectTypeOf(ctx).toEqualTypeOf<HeaderRenderContext>();
+              expect(ctx).toEqual({ label: "Name", sortable: false });
+              return {
+                className: "astw:tabular-nums",
+                style: { backgroundColor: "red", color: "white" },
+                title: "Employee name",
+              };
             },
           },
           { id: "hours", label: "Hours", type: "number" },
@@ -218,10 +224,10 @@ describe("DataTable headerProps", () => {
             type: "text",
             width: 140,
             pin,
-            headerProps: {
+            headerProps: () => ({
               className: "astw:bg-muted",
               style: { backgroundColor: "red", position: "relative", [pin]: 999, width: 999 },
-            },
+            }),
           },
         ]}
       />,
@@ -246,11 +252,11 @@ describe("DataTable headerProps", () => {
         columns={[
           {
             ...column,
-            headerProps: {
+            headerProps: () => ({
               className: "astw:tabular-nums",
               style: { backgroundColor: "red" },
               title: "Employee name",
-            },
+            }),
           },
         ]}
       />,

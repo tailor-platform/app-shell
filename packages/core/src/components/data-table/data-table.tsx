@@ -1037,6 +1037,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               }
             : { label, sortable: false };
 
+          const customHeaderProps = col.headerProps?.(headerContext);
           const align = resolveAlign(col);
           const content = col.header
             ? col.header(headerContext)
@@ -1049,7 +1050,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
             placements.get(col),
             {
               style: {
-                ...col.headerProps?.style,
+                ...customHeaderProps?.style,
                 ...(col.width ? { width: col.width } : {}),
               },
               className: cn(align === "right" && "astw:text-right"),
@@ -1060,9 +1061,9 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
             <Table.Head
               key={key}
               data-col-key={key}
-              title={col.headerProps?.title}
+              title={customHeaderProps?.title}
               style={style}
-              className={cn(className, col.headerProps?.className)}
+              className={cn(className, customHeaderProps?.className)}
             >
               <DataTableHeaderContextMenu
                 align={align}

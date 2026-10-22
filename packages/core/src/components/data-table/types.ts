@@ -208,7 +208,7 @@ interface SortableHeaderRenderContext {
 }
 
 /**
- * Context passed to custom `header` renderers.
+ * Context passed to custom `header` renderers and `headerProps` callbacks.
  */
 export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
 
@@ -329,14 +329,16 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   header?: (ctx: HeaderRenderContext) => ReactNode;
   /**
    * Sets `className`, `style`, and `title` on this column's header `<th>`.
-   * This is a static object, unlike the row-aware `cellProps` callback.
+   * Receives the same context as `header`; return `undefined` to keep the defaults.
    * Classes are merged with the built-in classes; column `width` and sticky
    * positioning take precedence over `style`. Use an opaque background for
    * pinned headers. Content stays owned by `header` or the default renderer;
    * sorting and context-menu behavior are unchanged. Built-in selection,
    * expansion, and action headers are not affected.
    */
-  headerProps?: Pick<ComponentProps<"th">, "className" | "style" | "title">;
+  headerProps?: (
+    ctx: HeaderRenderContext,
+  ) => Pick<ComponentProps<"th">, "className" | "style" | "title"> | undefined;
   /**
    * Stable identifier used for column visibility toggling, persisted layout
    * state, raw-value fallback (`row[col.id]`), and as the React key. Falls

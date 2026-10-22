@@ -454,10 +454,10 @@
       ],
       "hashes": {
         "typeSurface": "3ca8fce7d2efca2d",
-        "outline": "7281de586c679363",
+        "outline": "60854c65bcf0997a",
         "snapshot": null,
-        "outputMd": "66a99c767df3cf2e",
-        "examples": "4228b323423f4292"
+        "outputMd": "fc46dfe9da83ba8f",
+        "examples": "410dabe10e067bcf"
       }
     },
     "date-picker": {
@@ -1751,7 +1751,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "66a99c767df3cf2e",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "fc46dfe9da83ba8f",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "bc69f14829004f9d",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",

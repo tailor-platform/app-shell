@@ -37,11 +37,11 @@ export function PerCellStyling() {
         type: "number",
         width: 180,
         pin: "right",
-        headerProps: {
+        headerProps: () => ({
           className: "astw:whitespace-nowrap",
           style: { backgroundColor: "var(--muted)" },
           title: "February overtime summary",
-        },
+        }),
         cellProps: (row) => ({
           className: "astw:tabular-nums",
           style: overtimeStyle(row.february),

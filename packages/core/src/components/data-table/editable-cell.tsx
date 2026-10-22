@@ -128,7 +128,7 @@ const CELL_FOCUS_CLASS_NAME = cn(
 
 // Parsing and callback errors share the cell's error outline.
 const CELL_ERROR_CLASS_NAME =
-  "astw:ring-1 astw:ring-inset astw:ring-destructive astw:focus:ring-1 astw:focus:ring-destructive astw:focus-visible:ring-1 astw:focus-visible:ring-destructive";
+  "astw:ring-[1.5px] astw:ring-inset astw:ring-destructive astw:focus:ring-[1.5px] astw:focus:ring-destructive astw:focus-visible:ring-[1.5px] astw:focus-visible:ring-destructive";
 
 // An editable cell says so at rest with a subtle tint instead of an icon. It's
 // a background *image* layered over whatever colour the cell already has (the
@@ -188,7 +188,11 @@ function DefaultCellErrorContent({ message }: { message: string }) {
     <div className="astw:flex astw:gap-1.5">
       {/* One line-height tall, so the icon centres on the first line of text. */}
       <span className="astw:flex astw:h-lh astw:shrink-0 astw:items-center">
-        <CircleAlert aria-hidden="true" className="astw:size-3.5 astw:opacity-70" />
+        <CircleAlert
+          aria-hidden="true"
+          strokeWidth={2.5}
+          className="astw:size-3.5 astw:opacity-70"
+        />
       </span>
       <p>{message}</p>
     </div>
@@ -369,10 +373,10 @@ function EditableCellFrame({
               aria-label={t("editShowError", { label })}
               aria-keyshortcuts="Alt+ArrowDown"
               tabIndex={-1}
-              className="astw:absolute astw:inset-y-0 astw:right-2 astw:z-10 astw:flex astw:items-center astw:text-destructive astw:outline-none astw:focus-visible:ring-2 astw:focus-visible:ring-destructive astw:[td:last-child>&]:right-6"
+              className="astw:absolute astw:inset-y-0 astw:right-2 astw:z-10 astw:flex astw:items-center astw:text-destructive astw:outline-none astw:[td:last-child>&]:right-6"
               onContextMenu={(event) => event.stopPropagation()}
             >
-              <CircleAlert aria-hidden="true" className="astw:size-3.5" />
+              <CircleAlert aria-hidden="true" strokeWidth={2.5} className="astw:size-3.5" />
             </Popover.Trigger>
             <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
               {/* Opens directly under the cell, not under the small icon trigger. */}

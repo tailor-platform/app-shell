@@ -7,6 +7,7 @@ import { Input } from "@/components/input";
 import { Spinner } from "@/components/spinner";
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
+import { isComposing } from "@/lib/is-composing";
 import { filterRoutes, NavigatableRoute } from "@/routing/path";
 import { useNavItems, NavItem, NavItemResource } from "../../routing/navigation";
 import {
@@ -460,8 +461,7 @@ export function useCommandPalette({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      // Ignore during IME composition
-      if (e.nativeEvent.isComposing) return;
+      if (isComposing(e.nativeEvent)) return;
 
       switch (e.key) {
         case "ArrowDown":

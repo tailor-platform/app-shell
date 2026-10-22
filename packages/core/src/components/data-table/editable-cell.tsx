@@ -18,6 +18,7 @@ import { Popover } from "@base-ui/react/popover";
 import type { CalendarDate } from "@internationalized/date";
 import { CalendarDays, ChevronDown, CircleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isComposing } from "@/lib/is-composing";
 import { useTimeZone } from "@/contexts/appshell-context";
 import { BadgeList } from "@/components/badge-list";
 import { Button } from "@/components/button";
@@ -514,7 +515,7 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     // While an IME is composing, Enter confirms the conversion, not the cell.
-    if (event.nativeEvent.isComposing || composingRef.current || event.keyCode === 229) return;
+    if (isComposing(event.nativeEvent, composingRef.current)) return;
     const from = { rowKey, colKey };
     switch (event.key) {
       case "Enter":
@@ -814,7 +815,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
   const handleKeyDown: NonNullable<ComponentProps<typeof ComboboxParts.Input>["onKeyDown"]> = (
     event,
   ) => {
-    if (event.nativeEvent.isComposing || composingRef.current || event.keyCode === 229) {
+    if (isComposing(event.nativeEvent, composingRef.current)) {
       event.preventBaseUIHandler();
       return;
     }

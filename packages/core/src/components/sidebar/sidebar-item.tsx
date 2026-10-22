@@ -148,7 +148,11 @@ export const SidebarItem = (props: SidebarItemProps) => {
   // Internal link
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton render={<Link to={to} />} isActive={isActive} tooltip={title}>
+      <SidebarMenuButton
+        render={<Link to={to} aria-current={currentPath === to ? "page" : undefined} />}
+        isActive={isActive}
+        tooltip={title}
+      >
         {render ? (
           render(renderProps)
         ) : (

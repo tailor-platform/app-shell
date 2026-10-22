@@ -84,6 +84,17 @@ Other props spread onto the root `<div>`.
 
 Other props spread onto the region's outer `<div>`.
 
+While the root's `status` is `"submitted"`, the conversation automatically appends a [`Spinner`](./spinner.md) and localized “Thinking…” status at the end. This covers the initial reply wait, tool execution, and the next reply wait after a tool result. The indicator disappears when text starts streaming, or when the request finishes, fails, or is stopped. It participates in the conversation's normal auto-scroll behavior; no separate loader state is needed.
+
+### `AIChat.ToolCall`
+
+A compact label for one model-requested tool call. Each label occupies its own row, so multiple calls stack vertically. It does not imply execution success, render tool arguments/results, or manage history.
+
+| Prop        | Type                           | Default  | Description                                      |
+| ----------- | ------------------------------ | -------- | ------------------------------------------------ |
+| `call`      | `{ id: string; name: string }` | required | A `toolCalls` element returned by `useAIChat()`. |
+| `className` | `string`                       | -        | Merged onto the outer row, not the badge.        |
+
 ### `AIChat.Composer`
 
 | Prop            | Type                        | Default  | Description                                                                      |
@@ -112,17 +123,18 @@ Most props stay inside their region. These `AIChat.Composer` props land on **ano
 
 `onValueChange` is wrapped rather than forwarded — it is called from the `Textarea`'s `onChange`, and again with `""` after a submit. `defaultValue` seeds the composer's own state and is never forwarded. Nothing on `AIChat`, `AIChat.Header`, or `AIChat.Conversation` reaches another AppShell component.
 
-Three attached parts wrap an AppShell component. They expose only the props the part's job needs rather than inheriting the wrapped component's surface, so its visual treatment is fixed and not yours to change:
+Four attached parts wrap an AppShell component. They expose only the props the part's job needs rather than inheriting the wrapped component's surface, so its visual treatment is fixed and not yours to change:
 
 | Part                                | Wraps                                                      | Accepts                                                       | Fixed                              |
 | ----------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------- |
 | `AIChat.Suggestion`                 | [`Button`](./button.md)                                    | `suggestion`, `onSelect`, `className`, `disabled`, `children` | `variant="secondary"`, `size="sm"` |
 | `AIChat.Action`                     | [`Button`](./button.md) inside a [`Tooltip`](./tooltip.md) | `label`, `onClick`, `className`, `disabled`, `children`       | `variant="ghost"`, `size="icon"`   |
 | `AIChat.ChainOfThoughtSearchResult` | [`Badge`](./badge.md)                                      | `className`, `children`, `variant`                            | —                                  |
+| `AIChat.ToolCall`                   | [`Badge`](./badge.md)                                      | `call`, `className`                                           | `variant="neutral"`                |
 
 `variant` stays open on `ChainOfThoughtSearchResult` because conveying status is what a `Badge` is for. `AIChat.Action`'s `label` becomes both the accessible name and the tooltip text.
 
-One thing to know about `className` on these: it is merged with `cn()`, which is not configured for AppShell's internal prefix, so it cannot reliably override a base utility from the wrapped component. Add properties the component doesn't set, and reach for the wrapped component's own props or variants to change ones it does — see [Styling AppShell components](../concepts/styling-theming.md#styling-appshell-components).
+`ToolCall` applies `className` to its outer row, not the inner badge. For `Suggestion`, `Action`, and `ChainOfThoughtSearchResult`, `className` is merged with `cn()`, which is not configured for AppShell's internal prefix, so it cannot reliably override a base utility from the wrapped component. Add properties the component doesn't set, and reach for the wrapped component's own props or variants to change ones it does — see [Styling AppShell components](../concepts/styling-theming.md#styling-appshell-components).
 
 ## Filling the page
 
@@ -260,6 +272,28 @@ Structured step timeline for agentic turns — the discrete plan being executed,
 ```
 
 `status` is `"complete" | "active" | "pending"`.
+
+### Tool calls during the active flow
+
+`useAIChat()` returns a transient `toolCalls` list separately from `messages`. Render it with `AIChat.ToolCall` after the message history inside `AIChat.Conversation`:
+
+```tsx
+{
+  toolCalls.length > 0 ? (
+    <AIChat.Message from="assistant">
+      {toolCalls.map((call) => (
+        <AIChat.ToolCall key={call.id} call={call} />
+      ))}
+    </AIChat.Message>
+  ) : null;
+}
+```
+
+Each call renders on its own row, in the order supplied. Labels are localized automatically.
+
+The list clears when the response finishes, is stopped, or fails. It does not create tool messages or persist in the conversation log.
+
+These names record model requests, not execution success. Tool arguments and results stay internal, and provider-managed usage is not exposed here. Do not infer a `ToolHeader` success or running state from name-only metadata.
 
 ### Tool
 

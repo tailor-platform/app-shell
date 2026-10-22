@@ -71,15 +71,31 @@ export {
   type AIGatewayClient,
   type AIGatewayChatMessage,
   type AIGatewayChatRequest,
+  type AIGatewayTool,
+  type AIGatewayToolCall,
+  type AIGatewayFunctionTool,
+  type AIGatewayProviderTool,
   type AIChatCompletionEvent,
+  type AIChatSource,
 } from "./ai/client";
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
+export {
+  defineAIChatTool,
+  aiProviderTool,
+  type AIChatConfiguredTool,
+  type AIChatToolContext,
+  type AIChatToolSchema,
+  type AILocalTool,
+  type AIOpenAIWebSearchTool,
+  type OpenAIWebSearchToolOptions,
+} from "./ai/tools";
 export {
   AIChat,
   type AIChatProps,
   type AIChatHeaderProps,
   type AIChatConversationProps,
   type AIChatComposerProps,
+  type AIChatToolCallProps,
   type ToolState,
   type ChainOfThoughtStepStatus,
   type ChatHistoryGroupData,

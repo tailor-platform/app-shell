@@ -11,8 +11,11 @@ import {
 } from "react";
 
 import { Button } from "@/components/button";
+import { Spinner } from "@/components/spinner";
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
+import { AIChatContext } from "./ai-chat-context";
+import { Message } from "./message";
 
 // How close (px) to the bottom still counts as "pinned".
 const AT_BOTTOM_THRESHOLD_PX = 32;
@@ -57,6 +60,8 @@ function Conversation({
   children,
   ...props
 }: AIChatConversationProps) {
+  const status = useContext(AIChatContext)?.status;
+  const t = useT();
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
@@ -123,7 +128,20 @@ function Conversation({
               against the relative root above, so it stays pinned while
               content scrolls underneath it. */}
           <div ref={contentRef} className="astw:flex astw:min-h-full astw:flex-col">
-            <ConversationContent>{children}</ConversationContent>
+            <ConversationContent>
+              {children}
+              {status === "submitted" ? (
+                <Message from="assistant">
+                  <output
+                    data-slot="ai-chat-loading"
+                    className="astw:flex astw:items-center astw:gap-2 astw:text-body-sm astw:text-muted-foreground"
+                  >
+                    <Spinner size="sm" />
+                    <span>{t("aiChatThinking")}</span>
+                  </output>
+                </Message>
+              ) : null}
+            </ConversationContent>
             <ConversationScrollButton />
           </div>
         </div>

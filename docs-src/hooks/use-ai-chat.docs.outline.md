@@ -2,18 +2,23 @@
 kind: prose
 group: use-ai-chat
 title: useAIChat
-description: Simple text-only chat hook for AI Gateway
+description: AI Gateway chat hook with optional local and provider tools
 ---
 
 # useAIChat
 
-React hook for simple text-only chat on top of `createAIGatewayClient`.
+React hook for AI Gateway chat on top of `createAIGatewayClient`, with optional local and provider tool support.
 
 ## Signature
 
 ```typescript
-const useAIChat: (config: { client: AIGatewayClient; model: string }) => {
+const useAIChat: (config: {
+  client: AIGatewayClient;
+  model: string;
+  tools?: Record<string, AIChatConfiguredTool>;
+}) => {
   messages: AIChatMessage[];
+  toolCalls: { id: string; name: string }[];
   status: "ready" | "submitted" | "streaming" | "error";
   error?: Error;
   sendMessage: (message: string) => Promise<boolean>;
@@ -30,13 +35,27 @@ interface AIChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  sources?: AIChatSource[];
+}
+
+interface AIChatSource {
+  type: "url";
+  url: string;
+  title?: string;
 }
 ```
+
+### `toolCalls`
+
+- **Type:** `{ id: string; name: string }[]`
+- **Description:** Tool calls requested by the model in the active flow, including earlier tool rounds of the current request. This transient list is cleared when the response finishes, is stopped, or fails; it is never added to `messages` or conversation history.
+
+Calls become available before local tool execution. They record requested tool names, not successful execution. Arguments and results remain internal, and provider-managed tool usage is not reported through this field.
 
 ### `status`
 
 - **Type:** `"ready" | "submitted" | "streaming" | "error"`
-- **Description:** Current request state
+- **Description:** Current request state. `submitted` covers waiting for the first text, local tool execution, and waiting for the model's next reply after a tool result. `streaming` begins when text arrives. `AIChat.Conversation` automatically shows a waiting indicator while `submitted`.
 
 ### `error`
 
@@ -54,10 +73,24 @@ interface AIChatMessage {
 - **Type:** `() => void`
 - **Description:** Aborts the current request if one is in progress
 
+### `tools`
+
+Register tools under a single object:
+
+- local tools created with `defineAIChatTool(...)`; their schemas must implement both [Standard Schema](https://standardschema.dev/) validation and Standard JSON Schema generation (for example, Zod 4)
+- provider tools such as `aiProviderTool.openai.webSearch(...)`
+
 ## Usage
 
 ```tsx
-import { createAuthClient, createAIGatewayClient, useAIChat } from "@tailor-platform/app-shell";
+import {
+  aiProviderTool,
+  createAuthClient,
+  createAIGatewayClient,
+  defineAIChatTool,
+  useAIChat,
+} from "@tailor-platform/app-shell";
+import { z } from "zod/v4";
 
 const authClient = createAuthClient({
   clientId: "your-client-id",
@@ -69,10 +102,24 @@ const aiClient = createAIGatewayClient({
   authClient,
 });
 
+const lookupCustomer = defineAIChatTool({
+  description: "Look up a customer in the current workspace",
+  schema: z.object({
+    customerId: z.string(),
+  }),
+  async execute({ customerId }) {
+    return { customerId, name: "Acme Corp" };
+  },
+});
+
 export function ChatScreen() {
-  const { messages, sendMessage, status, stop, error } = useAIChat({
+  const { messages, toolCalls, sendMessage, status, stop, error } = useAIChat({
     client: aiClient,
     model: "gpt-5-mini",
+    tools: {
+      lookupCustomer,
+      web_search: aiProviderTool.openai.webSearch({ searchContextSize: "high" }),
+    },
   });
 
   return (
@@ -81,6 +128,9 @@ export function ChatScreen() {
         <div key={message.id}>
           {message.role}: {message.content}
         </div>
+      ))}
+      {toolCalls.map((call) => (
+        <div key={call.id}>Tool call: {call.name}</div>
       ))}
 
       <button
@@ -101,9 +151,10 @@ export function ChatScreen() {
 ## Notes
 
 - AppShell chooses the appropriate AI Gateway transport automatically
-- The hook is intentionally text-only
+- Public messages stay user/assistant text-first; tool calls and results never become conversation messages
+- Provider tools can attach optional `sources` to assistant messages
 - System prompts and custom history shaping should use the low-level client directly
-- `stop()` keeps any already-streamed assistant text and ignores late chunks from the stopped request
+- `stop()` keeps already-streamed assistant text, clears the active `toolCalls`, and ignores late events from the stopped request
 
 ## Related
 

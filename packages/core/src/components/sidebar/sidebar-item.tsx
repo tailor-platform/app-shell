@@ -149,7 +149,7 @@ export const SidebarItem = (props: SidebarItemProps) => {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
-        render={<Link to={to} aria-current={isActive ? "page" : undefined} />}
+        render={<Link to={to} aria-current={currentPath === to ? "page" : undefined} />}
         isActive={isActive}
         tooltip={title}
       >

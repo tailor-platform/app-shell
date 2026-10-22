@@ -35,6 +35,26 @@ export const filterRailLabels = defineI18nLabels({
     sortLabel: "A–Z",
     resetLayout: "Reset to default",
 
+    // Saved filters
+    savedFilters: "Saved filters",
+    savedFiltersLoading: "Loading…",
+    noSavedFilters: "No saved filters yet",
+    noFilter: "No filter",
+    deleteSaved: (props: { name: string }) => `Delete ${props.name}`,
+    deleteSavedTitle: (props: { name: string }) => `Delete saved filter "${props.name}"?`,
+    deleteSavedDescription:
+      "It will be removed from your saved filters. The filters applied now are not changed.",
+    delete: "Delete",
+    savedFiltersError: "Couldn't load or save your saved filters.",
+    saveFilter: "Save filters",
+    saveFilterDescription: "Saves the filters selected here under a name.",
+    saveFilterName: "Name",
+    saveFilterPlaceholder: "e.g. Low-stock electronics",
+    replacesExisting: (props: { name: string }) => `Replaces the existing "${props.name}".`,
+    cancel: "Cancel",
+    save: "Save",
+    replace: "Replace",
+
     // Compact layout
     activeCount: (props: { label: string; count: number }) =>
       `${props.label}, ${props.count} active`,
@@ -72,6 +92,26 @@ export const filterRailLabels = defineI18nLabels({
     sortGiven: "既定",
     sortLabel: "名前順",
     resetLayout: "既定に戻す",
+
+    savedFilters: "保存したフィルター",
+    savedFiltersLoading: "読み込み中…",
+    noSavedFilters: "保存したフィルターはまだありません",
+    noFilter: "フィルターなし",
+    deleteSaved: (props: { name: string }) => `${props.name}を削除`,
+    deleteSavedTitle: (props: { name: string }) =>
+      `保存したフィルター「${props.name}」を削除しますか？`,
+    deleteSavedDescription:
+      "保存したフィルターから削除されます。現在適用中のフィルターは変わりません。",
+    delete: "削除",
+    savedFiltersError: "保存したフィルターを読み込めない、または保存できませんでした。",
+    saveFilter: "フィルターを保存",
+    saveFilterDescription: "ここで選択しているフィルターに名前を付けて保存します。",
+    saveFilterName: "名前",
+    saveFilterPlaceholder: "例: 在庫僅少の電子機器",
+    replacesExisting: (props: { name: string }) => `既存の「${props.name}」を置き換えます。`,
+    cancel: "キャンセル",
+    save: "保存",
+    replace: "置き換える",
 
     activeCount: (props: { label: string; count: number }) =>
       `${props.label}、${props.count}件適用中`,

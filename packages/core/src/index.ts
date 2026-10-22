@@ -213,6 +213,7 @@ export { Toolbar, type ToolbarProps } from "./components/toolbar";
 export {
   FilterRail,
   useFilterRailLayout,
+  useSavedFilters,
   type FilterRailRootProps,
   type FilterRailSection,
 } from "./components/filter-rail";

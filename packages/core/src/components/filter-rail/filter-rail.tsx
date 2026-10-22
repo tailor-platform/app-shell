@@ -103,6 +103,21 @@ function Provider<TField extends string = string, TSectionField extends TField =
   // does not own.
   const clearAll = useCallback(() => clearFields([...owned]), [clearFields, owned]);
 
+  const railFilters = useMemo(
+    () => filters.filter((filter) => owned.has(filter.field)),
+    [filters, owned],
+  );
+
+  // Applying a saved set: same ownership rule as Clear all. A saved filter on a
+  // field the rail no longer owns (the screen changed) is dropped.
+  const applyRailFilters = useCallback(
+    (next: readonly Filter[]) => {
+      const kept = latest.current.filter((filter) => !owned.has(filter.field));
+      setFiltersWith([...owned], [...kept, ...next.filter((filter) => owned.has(filter.field))]);
+    },
+    [owned, setFiltersWith],
+  );
+
   // Expanded / collapsed per section. Only the user's toggles are stored, so a
   // section without one follows its authored `defaultCollapsed`. Held here, not
   // in the section, so it survives the narrow-screen sheet closing.
@@ -131,7 +146,7 @@ function Provider<TField extends string = string, TSectionField extends TField =
       layout,
       density,
       owned,
-      activeCount: filters.filter((filter) => owned.has(filter.field)).length,
+      activeCount: railFilters.length,
       filteredSections: new Set(
         anySections
           .filter((section) =>
@@ -142,6 +157,8 @@ function Provider<TField extends string = string, TSectionField extends TField =
       commit,
       clearFields,
       clearAll,
+      railFilters,
+      applyRailFilters,
       isSectionOpen,
       setSectionOpen,
       compact,
@@ -160,6 +177,8 @@ function Provider<TField extends string = string, TSectionField extends TField =
       commit,
       clearFields,
       clearAll,
+      railFilters,
+      applyRailFilters,
       isSectionOpen,
       setSectionOpen,
       compact,
@@ -267,7 +286,7 @@ function Header({ title, children, className }: HeaderProps) {
         className,
       )}
     >
-      <h2 className="astw:truncate astw:text-sm astw:font-semibold">{title ?? t("title")}</h2>
+      <h2 className="astw:truncate astw:text-heading-sm">{title ?? t("title")}</h2>
       {children && (
         <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-2">{children}</div>
       )}

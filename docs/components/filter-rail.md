@@ -134,6 +134,38 @@ In development the rail warns in the console when a checkbox or radio section li
 
 `useFilterRailLayout(storageKey)` persists the user's section order, hidden sections and option sort to localStorage. Pass it as `layout` and add `FilterRail.Settings`. Hiding a section that carries a filter also clears that filter. To share a layout across a team, pass your own `{ value, onChange, onReset }` binding instead.
 
+## Saved filters
+
+Users can save the filters selected in the rail under a name and apply them again later. `useSavedFilters(storageKey)` keeps them, personally, in the browser; pass the result to two parts:
+
+- `FilterRail.SavedFilters` — a picker. **No filter** (first) clears the rail; choosing a saved filter applies it. Each saved filter has a delete icon (or press Delete on it), which asks for confirmation first.
+- `FilterRail.SaveFilter` — a footer pinned to the bottom of the rail with **Save filters**. It appears only when filters are applied and they are not already saved. Place it after `FilterRail.Sections`.
+
+```tsx
+const saved = useSavedFilters("products");
+
+<FilterRail.Root control={control} sections={sections}>
+  <FilterRail.SavedFilters {...saved} />
+  <FilterRail.Sections />
+  <FilterRail.SaveFilter {...saved} />
+</FilterRail.Root>;
+```
+
+A saved filter holds only the **rail's own** filters. Applying one replaces those and leaves any other filter on the page alone, the same rule as Clear all. Saving under an existing name replaces it.
+
+To keep saved filters somewhere else — a backend table, so they follow the user across devices — pass a storage adapter. Either method may be async; the picker shows a loading state, and a failure is shown in the rail:
+
+```tsx
+const saved = useSavedFilters("products", {
+  storage: {
+    load: () => api.savedFilters.list("products"),
+    save: (items) => api.savedFilters.replace("products", items),
+  },
+});
+```
+
+Saved filters do not include sort, page size or column layout.
+
 ## Beside a DataTable
 
 The rail sits in its own `Layout.Column`, outside `DataTable.Root`, which is why `control` is a prop. Do not also render `DataTable.Filters` for the same fields — one fact in two places can drift.

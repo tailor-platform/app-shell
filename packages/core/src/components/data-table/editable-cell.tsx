@@ -181,19 +181,16 @@ interface CellErrorUI {
   containsTarget: (target: EventTarget | null) => boolean;
 }
 
-// The standard popover body: the error reads as an error (not a tooltip) and
-// says how to get back to the adopted value.
-function DefaultCellErrorContent({ message, hint }: { message: string; hint: string }) {
+// The standard popover body: the alert icon makes it read as an error rather
+// than a tooltip.
+function DefaultCellErrorContent({ message }: { message: string }) {
   return (
-    <div className="astw:flex astw:gap-2">
+    <div className="astw:flex astw:gap-1.5">
       <CircleAlert
         aria-hidden="true"
-        className="astw:mt-0.5 astw:size-4 astw:shrink-0 astw:text-destructive"
+        className="astw:mt-0.5 astw:size-3.5 astw:shrink-0 astw:text-destructive"
       />
-      <div className="astw:flex astw:flex-col astw:gap-0.5">
-        <p className="astw:font-medium">{message}</p>
-        <p className="astw:text-muted-foreground">{hint}</p>
-      </div>
+      <p>{message}</p>
     </div>
   );
 }
@@ -239,7 +236,7 @@ function useCellValue<TRow extends Record<string, unknown>>(
           content: renderError ? (
             renderError({ row, error: failure.error })
           ) : (
-            <DefaultCellErrorContent message={message} hint={t("editRevertHint")} />
+            <DefaultCellErrorContent message={message} />
           ),
           triggerRef,
           popupRef,
@@ -383,7 +380,10 @@ function EditableCellFrame({
                   ref={callbackError.popupRef}
                   aria-label={t("editErrorDialog", { label })}
                   data-slot="data-table-cell-error"
-                  className={cn(POPUP_CLASS_NAME, "astw:max-w-sm astw:text-body-sm")}
+                  className={cn(
+                    POPUP_CLASS_NAME,
+                    "astw:max-w-xs astw:border-0 astw:px-2.5 astw:py-2 astw:text-body-sm astw:outline-none",
+                  )}
                   onContextMenu={(event) => event.stopPropagation()}
                   onTouchStart={(event) => event.stopPropagation()}
                   onKeyDown={(event) => {

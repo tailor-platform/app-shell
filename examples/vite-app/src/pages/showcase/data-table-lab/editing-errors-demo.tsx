@@ -19,6 +19,10 @@ const { column } = createColumnHelper<ErrorDemoRow>();
 
 function checkNote(value: string | null) {
   if (value?.includes("!")) throw new Error("Remove ! from the note");
+  if (value?.includes("?"))
+    throw new Error(
+      "Notes can't contain questions. Send open questions to the receiving team through the comments panel so they are tracked against this purchase order.",
+    );
 }
 
 /** Callback failures use the table's default popover unless content is overridden. */
@@ -107,8 +111,8 @@ export function EditingErrorsDemo() {
         <li>
           In <strong>Draft note</strong>, type <code>!</code> to throw from{" "}
           <code>onValueChange</code>. The failed draft stays visible and cannot be confirmed until
-          you remove <code>!</code>. Press Esc to restore the adopted note and clear its error
-          together.
+          you remove <code>!</code>. Type <code>?</code> instead to see a longer message wrap. Press
+          Esc to restore the adopted note and clear its error together.
         </li>
         <li>
           Set <strong>Async quantity</strong> to <code>13</code> and press Enter. The returned

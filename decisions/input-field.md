@@ -1,7 +1,7 @@
-# Decision: `InputField` as the Field-aware text input
+# Decision: make `Input` Field-aware
 
-> Status: **Proposed — for discussion. Nothing is implemented.**
-> Scope: the text-input story inside forms: `Input`, `Field.Control`, and a proposed `InputField`. This does not cover the dev warning and docs for platform-planning#1977, which ship separately and stand on their own.
+> Status: **Decided (2026-10-23): option A, rewire `Input` in place. It ships in the next minor release as a fix, and we help consumers migrate. Not implemented yet.**
+> Scope: the text-input story inside forms: `Input` and `Field.Control`. This does not cover the dev warning and docs for platform-planning#1977, which ship separately and stand on their own.
 
 ## Context
 
@@ -117,7 +117,7 @@ function MyInput(props: InputProps) {
 // ⚠️ 4. DOM: new data-valid / data-dirty / data-touched / data-filled / data-focused attributes
 ```
 
-### B. Add `InputField`; deprecate `Input` for the next major (proposed)
+### B. Add `InputField`; deprecate `Input` for the next major
 
 Add a new component that is Field-aware **and** toolbar-aware, and works standalone. That is option A's implementation under a new name. `Input` stays as it is, marked `@deprecated`, and is removed in the next major (milestone "AppShell v2.0.0").
 
@@ -162,9 +162,11 @@ Costs:
 
 Keep both components. Document the rule ("text input → `Field.Control`; everything else → directly under `Field.Root`") and warn on the wrong compositions. This is what #1977 does now. It reduces the mistakes but keeps the exception that causes them.
 
-## Proposal
+## Decision
 
-Ship C now (#1977). Discuss B as the follow-up.
+Ship C now (#1977), then option A in the next minor release.
+
+The team chose A over B. A gives one text input, with no deprecation cycle and no third component kept alongside `Input` and `Field.Control` for a whole major. The change is released as a fix, because today an `Input` inside a `Field.Root` silently gets no label, validation, or form registration. The changeset says that consumers' behaviour changes, and we help them migrate. Before release, we scan internal consumers for the risky patterns listed under option A, and contact the owners of any matches.
 
 ## Open questions
 

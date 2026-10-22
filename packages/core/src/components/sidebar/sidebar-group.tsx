@@ -191,7 +191,12 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
     // explicit accessible name (the hover flyout's aria-label only mounts on
     // hover).
     const trigger = to ? (
-      <SidebarMenuButton render={<Link to={to} aria-label={resolvedTitle} />} isActive={isActive}>
+      <SidebarMenuButton
+        render={
+          <Link to={to} aria-label={resolvedTitle} aria-current={isActive ? "page" : undefined} />
+        }
+        isActive={isActive}
+      >
         {icon}
         <span>{resolvedTitle}</span>
       </SidebarMenuButton>
@@ -213,7 +218,11 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
   if (to) {
     return (
       <Collapsible.Root render={<SidebarMenuItem />} defaultOpen={defaultOpen}>
-        <SidebarMenuButton render={<Link to={to} />} isActive={isActive} tooltip={resolvedTitle}>
+        <SidebarMenuButton
+          render={<Link to={to} aria-current={isActive ? "page" : undefined} />}
+          isActive={isActive}
+          tooltip={resolvedTitle}
+        >
           {icon}
           <span>{resolvedTitle}</span>
         </SidebarMenuButton>

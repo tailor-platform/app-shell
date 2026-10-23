@@ -1,0 +1,155 @@
+---
+kind: code-backed
+group: tree-picker
+title: TreePicker
+description: Pick many items from a hierarchical catalog — inline with TreeSelect, or in a dialog with TreePicker
+sources:
+  - packages/core/src/components/tree-picker/**
+---
+
+# TreePicker
+
+`TreePicker` is a dialog for picking many items out of a hierarchical catalog — products with variants, nested categories — and handing them back in one batch. Ticking a parent selects every leaf beneath it, and searching auto-expands to the matches.
+
+It is generic and standalone: it knows nothing about line items, or about what your nodes contain. `data` is opaque, handed back only to your render and search callbacks.
+
+The tree itself is also available on its own as **`TreeSelect`**, for use inline on a page, in a side panel, or in a popover. `TreePicker` is `TreeSelect` in a dialog, with a title, Cancel, and an "Add N items" button — the same split as `DateField` and `DatePicker`.
+
+## Import
+
+```tsx
+import { TreePicker, TreeSelect } from "@tailor-platform/app-shell";
+```
+
+## Basic Usage
+
+```tsx
+type CatalogItem = { sku: string; name: string; price: number };
+
+const CATALOG: TreePickerNode<CatalogItem>[] = [
+  {
+    id: "tees",
+    data: { sku: "TEES", name: "T-Shirts", price: 0 },
+    children: [
+      { id: "TEE-WHT-S", data: { sku: "TEE-WHT-S", name: "Tee, White, Small", price: 18.5 } },
+      { id: "TEE-WHT-M", data: { sku: "TEE-WHT-M", name: "Tee, White, Medium", price: 18.5 } },
+    ],
+  },
+];
+
+<TreePicker<CatalogItem>
+  open={open}
+  onOpenChange={setOpen}
+  title="Add items from catalog"
+  items={CATALOG}
+  renderRow={({ node }) => node.data.name}
+  renderMetric={({ node }) => (node.children ? null : `$${node.data.price.toFixed(2)}`)}
+  rowLabel="Product"
+  metricLabel="Unit price"
+  matchesSearch={({ node, query }) =>
+    `${node.data.sku} ${node.data.name}`.toLowerCase().includes(query.toLowerCase())
+  }
+  onCommit={(picked) => addToOrder(picked.map((n) => n.data))}
+/>;
+```
+
+## Props
+
+| Prop                | Type                                      | Default                | Description                                                                    |
+| ------------------- | ----------------------------------------- | ---------------------- | ------------------------------------------------------------------------------ |
+| `open`              | `boolean`                                 | required               | Controls dialog visibility.                                                    |
+| `onOpenChange`      | `(open: boolean) => void`                 | required               | Fires on every user-driven open or close, including after a commit.            |
+| `items`             | `ReadonlyArray<TreePickerNode<T>>`        | required               | The catalog tree. Selection is leaf-only.                                      |
+| `renderRow`         | `({ node, depth }) => ReactNode`          | required               | The row's own content. The library draws the checkbox, caret, and indentation. |
+| `onCommit`          | `(selected: TreePickerNode<T>[]) => void` | required               | Receives the selected leaf nodes in tree order.                                |
+| `title`             | `ReactNode`                               | `"Select items"`       | Dialog title. Also labels the tree for assistive tech.                         |
+| `renderMetric`      | `({ node, depth }) => ReactNode`          | –                      | Optional right-aligned metric column.                                          |
+| `rowLabel`          | `ReactNode`                               | `"Item"`               | Header above the `renderRow` column.                                           |
+| `metricLabel`       | `ReactNode`                               | –                      | Header above the metric column.                                                |
+| `matchesSearch`     | `({ node, query }) => boolean`            | substring on `data`    | Search predicate. **Override whenever `data` is an object.**                   |
+| `filterSlot`        | `ReactNode`                               | –                      | Slot beside the search input, e.g. a category filter.                          |
+| `ctaLabel`          | `(count: number) => ReactNode`            | `"Add N items"`        | Primary button label.                                                          |
+| `emptyText`         | `ReactNode`                               | `"No matching items."` | Shown when the filtered tree is empty.                                         |
+| `searchPlaceholder` | `string`                                  | `"Search"`             | Search input placeholder.                                                      |
+| `className`         | `string`                                  | –                      | Merged onto the dialog panel.                                                  |
+
+The default labels are localized (English and Japanese) through the app's locale, like DataTable's; passing a label prop overrides it.
+
+### TreePickerNode
+
+```tsx
+type TreePickerNode<T> = {
+  id: string;
+  data: T;
+  children?: TreePickerNode<T>[];
+};
+```
+
+`id` must be unique across the whole tree — it doubles as the selection key. A node with no `children` is a leaf.
+
+The default `matchesSearch` stringifies `node.data`, which only works for primitives. With object payloads every node becomes `"[object Object]"` and nothing matches, so pass your own predicate.
+
+## Behavior
+
+**Selection is leaf-only.** Only leaves are ever selected, and only leaves reach `onCommit`. A parent's checkbox is derived from its descendants: checked when all of them are selected, indeterminate when some are. Ticking a parent adds or removes all its leaves at once, and the CTA counts leaves, not rows.
+
+**Search auto-expands.** A node survives the filter if it matches or if any descendant does. Every ancestor of a match is expanded for the duration of the query, so matches are visible without clicking; manually expanded rows stay expanded once the query clears.
+
+**State resets on open.** Each time the dialog opens, the query, selection, and expansion start fresh.
+
+**Fixed height.** The dialog keeps one height; the list scrolls inside it, so opening or closing a group never resizes the dialog or moves what is on screen.
+
+**Search while browsing.** Groups a search opened can still be closed and reopened, showing only their matches. Escape clears the search first; a second Escape closes the dialog.
+
+**Mouse.** Clicking a group row opens or closes it; its checkbox selects everything inside. Clicking an item row ticks or unticks it.
+
+**Keyboard.** The tree is a `role="tree"` with roving focus: Arrow Up/Down move between visible rows, Arrow Right expands a collapsed parent or steps into it, Arrow Left collapses or steps out to the parent, Space toggles the focused row, and Enter on a row commits. Enter in the search box or in a `filterSlot` control (a menu or select) is left to that control.
+
+## TreeSelect (inline)
+
+Use `TreeSelect` when the tree belongs on the page itself — a warehouse or category filter in a side panel, a workspace switcher. It takes the same tree props (`items`, `renderRow`, `renderMetric`, `matchesSearch`, `filterSlot`, labels) and adds selection state instead of a commit step. The list scrolls inside it, so give it a height.
+
+```tsx
+const [selected, setSelected] = useState<string[]>([]);
+
+<TreeSelect<Warehouse>
+  aria-label="Warehouses"
+  className="h-96"
+  items={warehouseTree}
+  renderRow={({ node }) => node.data.name}
+  matchesSearch={({ node, query }) => node.data.name.toLowerCase().includes(query.toLowerCase())}
+  value={selected}
+  onValueChange={(ids) => setSelected(ids)}
+/>;
+```
+
+| Prop                             | Type                   | Description                                              |
+| -------------------------------- | ---------------------- | -------------------------------------------------------- |
+| `value`                          | `readonly string[]`    | Controlled selection: the ticked leaf ids.               |
+| `defaultValue`                   | `readonly string[]`    | Initial selection when uncontrolled.                     |
+| `onValueChange`                  | `(ids, nodes) => void` | Every change, as leaf ids and leaf nodes in tree order.  |
+| `onSubmit`                       | `() => void`           | Enter on a tree row — e.g. to submit a surrounding form. |
+| `aria-label` / `aria-labelledby` | `string`               | Names the tree. One is required for assistive tech.      |
+| `className`                      | `string`               | Merged onto the root; set a height here for long trees.  |
+
+## Loading an async catalog
+
+There is deliberately no async variant: auto-expanding to matches needs the whole tree up front. Fetch once before or on open, and drive `emptyText` from your own loading flag.
+
+```tsx
+const { data, isLoading } = useCatalogQuery();
+
+<TreePicker
+  open={open}
+  onOpenChange={setOpen}
+  items={data ?? []}
+  emptyText={isLoading ? "Loading catalog…" : "No matching items."}
+  renderRow={({ node }) => node.data.name}
+  onCommit={handleCommit}
+/>;
+```
+
+## Related
+
+- [Combobox](./combobox.md) — inline single or multi select for flat option lists
+- [Dialog](./dialog.md) — the modal shell this composes

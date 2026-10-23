@@ -1487,6 +1487,29 @@
         "examples": "87b93974e65d3a07"
       }
     },
+    "tree-picker": {
+      "slug": "tree-picker",
+      "kind": "code-backed",
+      "outline": "docs-src/components/tree-picker.docs.outline.md",
+      "output": "docs/components/tree-picker.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/tree-picker/**"],
+      "claims": [],
+      "symbols": [
+        "TreePicker",
+        "TreePickerNode",
+        "TreePickerProps",
+        "TreeSelect",
+        "TreeSelectProps"
+      ],
+      "hashes": {
+        "typeSurface": "de357f2d0fc6aa15",
+        "outline": "5964b1160aa35524",
+        "snapshot": "bddd335be0d1da78",
+        "outputMd": "ed9140c24cac2be2",
+        "examples": null
+      }
+    },
     "use-ai-chat": {
       "slug": "use-ai-chat",
       "kind": "prose",
@@ -1780,6 +1803,7 @@
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
+    "packages/core/skills/app-shell-patterns/references/components/tree-picker.md": "ed9140c24cac2be2",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",
@@ -1818,6 +1842,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "214b43b076a41a86",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "9145efebe27ab6b0"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "5dd75a8a0fcaf29a"
   }
 }

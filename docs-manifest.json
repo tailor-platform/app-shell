@@ -699,9 +699,9 @@
       "symbols": ["Form", "FormProps"],
       "hashes": {
         "typeSurface": "7b374d45d53d4535",
-        "outline": "79c9b0f08ca38027",
+        "outline": "7fefd291a00de910",
         "snapshot": "5d7a7904c5256f29",
-        "outputMd": "91d901b17aed7781",
+        "outputMd": "e4a66f7b1ee4aa98",
         "examples": null
       }
     },
@@ -733,9 +733,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "3301b263f6802090",
+        "outline": "a39589955fe582c8",
         "snapshot": null,
-        "outputMd": "9d068e568c9f3bdc",
+        "outputMd": "be00d1109761b7f1",
         "examples": "7836309f2df327ee"
       }
     },
@@ -1209,9 +1209,9 @@
       "symbols": ["Select", "SelectAsyncFetcher"],
       "hashes": {
         "typeSurface": "429710973dfa912b",
-        "outline": "721e8995f53f0e8f",
+        "outline": "a8b7834a8817e0d5",
         "snapshot": "2ef5b7324018ff8f",
-        "outputMd": "ae287e2bb5abc1c6",
+        "outputMd": "b3dd3b9a58a9d290",
         "examples": "1ce89cec30045466"
       }
     },
@@ -1759,14 +1759,14 @@
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "ec6a0ac098d1d87a",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "c6a48c4d8e8b0078",
-    "packages/core/skills/app-shell-patterns/references/components/form.md": "91d901b17aed7781",
+    "packages/core/skills/app-shell-patterns/references/components/form.md": "e4a66f7b1ee4aa98",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "66696139a46fabb0",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
-    "packages/core/skills/app-shell-patterns/references/components/select.md": "ae287e2bb5abc1c6",
+    "packages/core/skills/app-shell-patterns/references/components/select.md": "b3dd3b9a58a9d290",
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "1f81ebd562c50371",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "a36192df64f16adc",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
@@ -1807,7 +1807,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "30c15545ab3c4954",
     "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "30983a761bc61593",
     "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "9d068e568c9f3bdc",
+    "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "be00d1109761b7f1",
     "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",
     "packages/core/skills/app-shell-patterns/references/patterns/form-single-page.md": "10a0f4d91a120752",
     "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "851afb4672da6673",

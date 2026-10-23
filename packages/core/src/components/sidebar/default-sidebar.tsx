@@ -23,6 +23,7 @@ import { Link } from "react-router";
 import { useT } from "@/i18n-labels";
 import { useNavItems, type NavItem } from "@/routing/navigation";
 import { cn } from "@/lib/utils";
+import { Text } from "../text";
 
 function resolveCollapsibleMode(
   collapsible: boolean | undefined,
@@ -64,18 +65,18 @@ const SearchEntry = () => {
         aria-label={tooltipLabel}
         onClick={() => openCommandPalette()}
         className={cn(
-          "astw:h-8 astw:justify-start astw:gap-2.5 astw:border astw:border-border/80 astw:bg-background/70 astw:px-2.5 astw:py-1.5 astw:text-xs astw:font-normal astw:text-muted-foreground astw:shadow-none",
+          "astw:h-8 astw:justify-start astw:gap-2.5 astw:border astw:border-border/80 astw:bg-background/70 astw:px-2.5 astw:py-1.5 astw:text-body-sm astw:text-muted-foreground astw:shadow-none",
           "astw:hover:bg-muted/30 astw:hover:text-muted-foreground",
           "astw:focus-visible:border-ring astw:focus-visible:ring-ring/40 astw:focus-visible:ring-2",
         )}
       >
         <SearchIcon className="astw:size-3.5 astw:text-muted-foreground astw:opacity-70" />
-        <span className="astw:flex-1 astw:truncate astw:text-xs astw:text-muted-foreground astw:group-data-[collapsible=icon]:hidden">
+        <span className="astw:flex-1 astw:truncate astw:text-body-sm astw:text-muted-foreground astw:group-data-[collapsible=icon]:hidden">
           {t("commandPaletteSearch")}
         </span>
         <kbd
           aria-hidden="true"
-          className="astw:pointer-events-none astw:shrink-0 astw:font-normal astw:text-xs astw:text-muted-foreground astw:opacity-70 astw:group-data-[collapsible=icon]:hidden"
+          className="astw:pointer-events-none astw:shrink-0 astw:text-body-sm astw:text-muted-foreground astw:opacity-70 astw:group-data-[collapsible=icon]:hidden"
         >
           {shortcutLabel}
         </kbd>
@@ -160,9 +161,14 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
   const DefaultHeader = (
     <SidebarHeader>
       {icon}
-      <h1 className={cn("astw:text-sm astw:mb-2 astw:mt-2 astw:px-2", isIconMode && "astw:hidden")}>
+      <Text
+        variant="heading-sm"
+        className={cn("astw:mb-2 astw:mt-2 astw:px-2", isIconMode && "astw:hidden")}
+        // eslint-disable-next-line jsx-a11y/heading-has-content
+        render={<h1 />}
+      >
         {title}
-      </h1>
+      </Text>
     </SidebarHeader>
   );
   const DefaultFooter = null;

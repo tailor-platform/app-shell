@@ -42,7 +42,7 @@ function AsyncErrorState({
         onMouseDown={(e) => e.preventDefault()}
         onClick={onRetry}
         className={cn(
-          "astw:inline-flex astw:items-center astw:gap-1.5 astw:rounded-md astw:px-2 astw:py-1 astw:text-sm astw:font-medium astw:text-foreground astw:outline-none astw:transition-colors",
+          "astw:inline-flex astw:items-center astw:gap-1.5 astw:rounded-md astw:px-2 astw:py-1 astw:text-label-md astw:text-foreground astw:outline-none astw:transition-colors",
           "astw:hover:bg-accent astw:hover:text-accent-foreground",
           "astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
         )}

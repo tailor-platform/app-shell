@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { mergeRefs, useToolbarItem } from "../toolbar/toolbar";
 
 const buttonVariants = cva(
-  "astw:inline-flex astw:cursor-pointer astw:items-center astw:justify-center astw:gap-2 astw:whitespace-nowrap astw:rounded-md astw:text-sm astw:font-medium astw:transition-all astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:[&_svg]:pointer-events-none astw:[&_svg:not([class*='size-'])]:size-4 astw:shrink-0 astw:[&_svg]:shrink-0 astw:outline-none astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px] astw:aria-invalid:ring-danger-solid/20 astw:dark:aria-invalid:ring-danger-solid/40 astw:aria-invalid:border-danger-solid",
+  "astw:inline-flex astw:cursor-pointer astw:items-center astw:justify-center astw:gap-2 astw:whitespace-nowrap astw:rounded-md astw:text-label-md astw:transition-all astw:disabled:pointer-events-none astw:disabled:opacity-50 astw:[&_svg]:pointer-events-none astw:[&_svg:not([class*='size-'])]:size-4 astw:shrink-0 astw:[&_svg]:shrink-0 astw:outline-none astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px] astw:aria-invalid:ring-danger-solid/20 astw:dark:aria-invalid:ring-danger-solid/40 astw:aria-invalid:border-danger-solid",
   {
     variants: {
       /** Visual style variant */
@@ -25,7 +25,7 @@ const buttonVariants = cva(
       /** Button size */
       size: {
         default: "astw:h-9 astw:px-4 astw:py-2 astw:has-[>svg]:px-3",
-        xs: "astw:h-7 astw:rounded-md astw:gap-1 astw:px-2.5 astw:text-xs astw:has-[>svg]:px-1.5",
+        xs: "astw:h-7 astw:rounded-md astw:gap-1 astw:px-2.5 astw:text-label-sm astw:has-[>svg]:px-1.5",
         sm: "astw:h-8 astw:rounded-md astw:gap-1.5 astw:px-3 astw:has-[>svg]:px-2.5",
         lg: "astw:h-10 astw:rounded-md astw:px-6 astw:has-[>svg]:px-4",
         icon: "astw:size-9",

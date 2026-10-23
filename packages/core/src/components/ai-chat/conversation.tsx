@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/button";
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
+import { Text } from "../text";
 
 // How close (px) to the bottom still counts as "pinned".
 const AT_BOTTOM_THRESHOLD_PX = 32;
@@ -177,9 +178,19 @@ function ConversationEmptyState({
       {icon}
       {title == null && description == null ? null : (
         <div className="astw:space-y-1">
-          {title ? <h3 className="astw:text-sm astw:font-medium">{title}</h3> : null}
+          {title ? (
+            <Text
+              variant="heading-sm"
+              // eslint-disable-next-line jsx-a11y/heading-has-content
+              render={<h3 />}
+            >
+              {title}
+            </Text>
+          ) : null}
           {description ? (
-            <p className="astw:text-sm astw:text-muted-foreground">{description}</p>
+            <Text variant="body-md" className="astw:text-muted-foreground">
+              {description}
+            </Text>
           ) : null}
         </div>
       )}

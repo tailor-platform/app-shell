@@ -41,7 +41,7 @@ function DisclosureTrigger({ className, children, ...props }: DisclosureTriggerP
     <Collapsible.Trigger
       data-slot="ai-chat-disclosure-trigger"
       className={cn(
-        "astw:flex astw:w-fit astw:items-center astw:gap-1.5 astw:text-xs astw:text-muted-foreground astw:hover:text-foreground",
+        "astw:flex astw:w-fit astw:items-center astw:gap-1.5 astw:text-body-sm astw:text-muted-foreground astw:hover:text-foreground",
         "astw:[&[data-panel-open]_.ai-chat-disclosure-chevron]:rotate-180",
         className,
       )}

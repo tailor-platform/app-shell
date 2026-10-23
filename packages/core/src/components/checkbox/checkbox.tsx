@@ -3,7 +3,6 @@ import { Checkbox as BaseCheckbox } from "@base-ui/react/checkbox";
 import { Check, Minus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { markSelfWired } from "@/lib/self-wired-controls";
 import { Text } from "../text";
 
 // `children` and `render` are intentionally excluded: the component owns the
@@ -89,11 +88,7 @@ const checkboxBoxClasses = cn(
  * />
  * ```
  */
-const Checkbox = /* @__PURE__ */ markSelfWired(function Checkbox({
-  className,
-  label,
-  ...props
-}: CheckboxProps) {
+function Checkbox({ className, label, ...props }: CheckboxProps) {
   const box = (
     <BaseCheckbox.Root
       data-slot="checkbox"
@@ -139,6 +134,6 @@ const Checkbox = /* @__PURE__ */ markSelfWired(function Checkbox({
       {label}
     </Text>
   );
-}, "Checkbox");
+}
 
 export { Checkbox, type CheckboxProps };

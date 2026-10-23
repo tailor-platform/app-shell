@@ -257,7 +257,7 @@
       "claims": [],
       "symbols": ["Checkbox", "CheckboxProps"],
       "hashes": {
-        "typeSurface": "74553f38c0752227",
+        "typeSurface": "3886bf7012f24283",
         "outline": "916645fe8e5baf10",
         "snapshot": "8d4d6148a3df5d61",
         "outputMd": "14f7ba23f441df38",
@@ -1412,7 +1412,7 @@
       "claims": [],
       "symbols": ["Textarea", "TextareaProps"],
       "hashes": {
-        "typeSurface": "d78798cfa7c90a76",
+        "typeSurface": "3d9225f7356a29b2",
         "outline": "40952524e46c333e",
         "snapshot": "c8500808c03baa29",
         "outputMd": "c940bc01cd573334",

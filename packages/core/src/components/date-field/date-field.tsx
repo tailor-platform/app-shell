@@ -11,7 +11,6 @@ import {
 import { toCalendarDate, today, type DateValue } from "@internationalized/date";
 import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
 import { cn } from "@/lib/utils";
-import { markSelfWired } from "@/lib/self-wired-controls";
 import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
 import {
   useDateFieldState,
@@ -79,7 +78,13 @@ export type DatePickerProps<T extends DateValue = DateValue> = DateControlProps<
   timeZone?: string;
 };
 
-const DateFieldImpl = forwardRef(function DateField<T extends DateValue = DateValue>(
+/**
+ * A segmented date/time input field with no popover.
+ *
+ * Compose with `Field.Root` for label / description / error presentation, or
+ * provide standalone ARIA wiring yourself.
+ */
+const DateField = forwardRef(function DateField<T extends DateValue = DateValue>(
   {
     id,
     className,
@@ -201,7 +206,13 @@ const DateFieldImpl = forwardRef(function DateField<T extends DateValue = DateVa
   props: DateFieldProps<T> & { ref?: Ref<HTMLInputElement> },
 ) => ReactElement;
 
-const DatePickerImpl = forwardRef(function DatePicker<T extends DateValue = DateValue>(
+/**
+ * A date/time input with a popover calendar.
+ *
+ * Compose with `Field.Root` for label / description / error presentation, or
+ * provide standalone ARIA wiring yourself.
+ */
+const DatePicker = forwardRef(function DatePicker<T extends DateValue = DateValue>(
   {
     id,
     className,
@@ -411,21 +422,6 @@ const DatePickerImpl = forwardRef(function DatePicker<T extends DateValue = Date
 }) as <T extends DateValue = DateValue>(
   props: DatePickerProps<T> & { ref?: Ref<HTMLInputElement> },
 ) => ReactElement;
-
-/**
- * A segmented date/time input field with no popover.
- *
- * Compose with `Field.Root` for label / description / error presentation, or
- * provide standalone ARIA wiring yourself.
- */
-const DateField = /* @__PURE__ */ markSelfWired(DateFieldImpl, "DateField");
-/**
- * A date/time input with a popover calendar.
- *
- * Compose with `Field.Root` for label / description / error presentation, or
- * provide standalone ARIA wiring yourself.
- */
-const DatePicker = /* @__PURE__ */ markSelfWired(DatePickerImpl, "DatePicker");
 
 export { DateField, DatePicker };
 export type { DateControlProps };

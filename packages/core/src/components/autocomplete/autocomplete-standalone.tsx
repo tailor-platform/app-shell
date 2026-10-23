@@ -20,7 +20,6 @@ import { defaultMapItem, isGroupedItems } from "../dropdown-items";
 import type { MappedItem, ItemGroup, ExtractItem } from "../dropdown-items";
 import { AsyncErrorState, resolveAsyncContent } from "../internals/async-error-state";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
-import { markSelfWired } from "@/lib/self-wired-controls";
 
 /** Fetcher type for `Autocomplete.Async`. */
 export type AutocompleteAsyncFetcher<T> = AsyncFetcher<T>;
@@ -325,14 +324,11 @@ type AutocompleteComponent = typeof AutocompleteStandalone & {
   useFilter: typeof useFilter;
 };
 
-const Autocomplete: AutocompleteComponent = /* @__PURE__ */ markSelfWired(
-  Object.assign(AutocompleteStandalone, {
-    Async: /* @__PURE__ */ markSelfWired(AutocompleteAsyncStandalone, "Autocomplete.Async"),
-    Parts: AutocompleteParts,
-    useAsync,
-    useFilter,
-  }),
-  "Autocomplete",
-);
+const Autocomplete: AutocompleteComponent = Object.assign(AutocompleteStandalone, {
+  Async: AutocompleteAsyncStandalone,
+  Parts: AutocompleteParts,
+  useAsync,
+  useFilter,
+});
 
 export { Autocomplete };

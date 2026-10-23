@@ -310,6 +310,7 @@ export {
   type DataTableData,
   type DataTableFilterConfig,
   type HeaderRenderContext,
+  type FooterRenderContext,
   type DataTableAction,
   type RowAction,
   type SelectionAction,

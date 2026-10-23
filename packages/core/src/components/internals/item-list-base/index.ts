@@ -6,4 +6,4 @@ export {
   ListLabel,
   listButtonVariants,
   type ListButtonProps,
-} from "./item-list";
+} from "./item-list-base";

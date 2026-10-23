@@ -18,7 +18,7 @@ import {
   ListSub,
   ListLabel,
   listButtonVariants,
-} from "@/components/internals/item-list";
+} from "@/components/internals/item-list-base";
 
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";

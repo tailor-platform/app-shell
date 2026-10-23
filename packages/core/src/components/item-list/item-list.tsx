@@ -7,7 +7,7 @@ import {
   ListButton,
   ListSub,
   ListLabel,
-} from "@/components/internals/item-list";
+} from "@/components/internals/item-list-base";
 import { cn } from "@/lib/utils";
 
 type ItemProps = React.ComponentProps<"button"> & {

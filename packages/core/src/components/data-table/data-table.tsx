@@ -1037,6 +1037,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               }
             : { label, sortable: false };
 
+          const customHeaderProps = col.headerProps?.(headerContext);
           const align = resolveAlign(col);
           const content = col.header
             ? col.header(headerContext)
@@ -1048,13 +1049,22 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           const { style, className } = pinCellProps(
             placements.get(col),
             {
-              style: col.width ? { width: col.width } : undefined,
+              style: {
+                ...customHeaderProps?.style,
+                ...(col.width ? { width: col.width } : {}),
+              },
               className: cn(align === "right" && "astw:text-right"),
             },
             "header",
           );
           return (
-            <Table.Head key={key} data-col-key={key} style={style} className={className}>
+            <Table.Head
+              key={key}
+              data-col-key={key}
+              title={customHeaderProps?.title}
+              style={style}
+              className={cn(className, customHeaderProps?.className)}
+            >
               <DataTableHeaderContextMenu
                 align={align}
                 column={col}
@@ -1383,10 +1393,14 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               let content: ReactNode;
               if (!editable) content = col.render ? col.render(row) : cellRenderers.get(col)?.(row);
 
+              const customCellProps = col.cellProps?.(row);
               const { style: cellStyle, className: cellClassName } = pinCellProps(
                 placements.get(col),
                 {
-                  style: col.width ? { width: col.width } : undefined,
+                  style: {
+                    ...customCellProps?.style,
+                    ...(col.width ? { width: col.width } : {}),
+                  },
                   className: cn(
                     resolveAlign(col) === "right" && "astw:text-right",
                     // Keep the width constraint on the cell, but move the
@@ -1441,10 +1455,12 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               });
               const cellProps = {
                 "data-slot": "data-table-cell" as const,
+                title: customCellProps?.title,
                 style: { ...cellStyle, WebkitTouchCallout: "none" } satisfies CSSProperties,
                 className: cn(
                   cellClassName,
                   blockReadOnlyCells && !editable && "astw:cursor-not-allowed",
+                  customCellProps?.className,
                 ),
                 ...cellContextMenuHandlers,
               };

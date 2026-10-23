@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import type { BadgeOptions } from "@/components/badge-list";
 import type {
   CollectionControl,
@@ -208,7 +208,7 @@ interface SortableHeaderRenderContext {
 }
 
 /**
- * Context passed to custom `header` renderers.
+ * Context passed to custom `header` renderers and `headerProps` callbacks.
  */
 export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
 
@@ -303,6 +303,19 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    */
   render?: (row: TRow) => ReactNode;
   /**
+   * Sets `className`, `style`, and `title` on the data cell's `<td>`, including
+   * its padding, based on the row. Return `undefined` to keep the defaults.
+   * Classes are merged with the built-in classes; CSS specificity still applies.
+   * An inline `style.backgroundColor` remains visible during row hover and
+   * selection, including on pinned cells. Use an opaque background for pinned
+   * cells to prevent content bleeding through. Column `width` and sticky
+   * positioning take precedence over `style`. Content stays owned by `render`;
+   * events, refs, and cell spanning are not configurable through this hook.
+   */
+  cellProps?: (
+    row: TRow,
+  ) => Pick<ComponentProps<"td">, "className" | "style" | "title"> | undefined;
+  /**
    * Custom header renderer.
    *
    * `header` is a **presentation** hook. When omitted, the built-in header
@@ -314,6 +327,18 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    * still driven by `label`, `sort`, and other column metadata.
    */
   header?: (ctx: HeaderRenderContext) => ReactNode;
+  /**
+   * Sets `className`, `style`, and `title` on this column's header `<th>`.
+   * Receives the same context as `header`; return `undefined` to keep the defaults.
+   * Classes are merged with the built-in classes; column `width` and sticky
+   * positioning take precedence over `style`. Use an opaque background for
+   * pinned headers. Content stays owned by `header` or the default renderer;
+   * sorting and context-menu behavior are unchanged. Built-in selection,
+   * expansion, and action headers are not affected.
+   */
+  headerProps?: (
+    ctx: HeaderRenderContext,
+  ) => Pick<ComponentProps<"th">, "className" | "style" | "title"> | undefined;
   /**
    * Stable identifier used for column visibility toggling, persisted layout
    * state, raw-value fallback (`row[col.id]`), and as the React key. Falls

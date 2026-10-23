@@ -1,4 +1,10 @@
-import { DataTable, createColumnHelper, useDataTable, useToast } from "@tailor-platform/app-shell";
+import {
+  DataTable,
+  aggregations,
+  createColumnHelper,
+  useDataTable,
+  useToast,
+} from "@tailor-platform/app-shell";
 import { useRef, useState } from "react";
 
 // ─── Dummy data ──────────────────────────────────────────────────────────────
@@ -210,7 +216,7 @@ export function InlineEditingDemo() {
       type: "text",
       width: 120,
       pin: "left",
-      footer: "Totals",
+      footer: "Aggregates",
     }),
     column({ id: "product", label: "Product", type: "text" }),
     column({
@@ -249,7 +255,7 @@ export function InlineEditingDemo() {
       label: "Ordered",
       type: "number",
       width: 88,
-      footer: ({ rows }) => rows.reduce((sum, row) => sum + row.ordered, 0),
+      footer: aggregations.sum(),
     }),
     column({
       id: "received",
@@ -257,7 +263,7 @@ export function InlineEditingDemo() {
       type: "number",
       width: 104,
       typeOptions: { maxDecimals: 0 },
-      footer: ({ rows }) => rows.reduce((sum, row) => sum + (row.received ?? 0), 0),
+      footer: aggregations.sum(),
       edit: {
         canEdit: (_row, { selected }) => selected,
         onValueCommitted: (row, value) => {
@@ -316,6 +322,7 @@ export function InlineEditingDemo() {
       type: "number",
       width: 110,
       typeOptions: { maxDecimals: 1 },
+      footer: aggregations.max((value) => (value === null ? "–" : `Max: ${value}%`)),
       edit: {
         onValueCommitted: (row, value) => {
           if (value === null || value < 0 || value > 100 || Math.round(value * 10) / 10 !== value) {
@@ -340,10 +347,9 @@ export function InlineEditingDemo() {
       type: "number",
       width: 112,
       typeOptions: { maxDecimals: 3 },
-      footer: ({ rows }) =>
-        rows
-          .reduce((sum, row) => sum + (row.weightKg ?? 0), 0)
-          .toLocaleString(undefined, { maximumFractionDigits: 3 }),
+      footer: aggregations.sum(
+        (total) => total?.toLocaleString(undefined, { maximumFractionDigits: 3 }) ?? "–",
+      ),
       edit: {
         onValueCommitted: (row, value) => {
           if (
@@ -454,6 +460,7 @@ export function InlineEditingDemo() {
         badgeLabelMap: { pass: "Pass", hold: "On hold", fail: "Fail" },
         badgeVariantMap: { pass: "success", hold: "warning", fail: "error" },
       },
+      footer: aggregations.count((count) => `Checked: ${count}`),
       // Optional badge dropdown: offers "None".
       edit: {
         onValueCommitted: (row, value) =>

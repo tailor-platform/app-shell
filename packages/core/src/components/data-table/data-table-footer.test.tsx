@@ -12,6 +12,8 @@ import type {
 } from "@/index";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
+import { createColumnHelper } from "./field-helpers";
+import { aggregations } from "@/lib/aggregations";
 
 afterEach(() => {
   cleanup();
@@ -128,6 +130,7 @@ describe("DataTable column footer", () => {
           expectTypeOf(ctx).toEqualTypeOf<FooterRenderContext<Line>>();
           const { rows: currentRows } = ctx;
           expectTypeOf(currentRows).toEqualTypeOf<readonly Line[]>();
+          expect(ctx.column.id).toBe("quantity");
           return <strong>{currentRows.reduce((sum, row) => sum + (row.quantity ?? 0), 0)}</strong>;
         },
       },
@@ -148,6 +151,40 @@ describe("DataTable column footer", () => {
     expect(footer.className).toContain("astw:bottom-0");
     expect(footer.className).toContain("astw:z-10");
     expect(footer).toMatchSnapshot();
+  });
+
+  it("runs independent aggregations on target column values only after loading", () => {
+    const { column } = createColumnHelper<Line>();
+    const renderTotal = vi.fn((total: number | null) => `Total: ${total}`);
+    const tableColumns = [
+      column({
+        id: "quantity",
+        label: "Quantity",
+        type: "number",
+        footer: aggregations.sum(renderTotal),
+      }),
+      column({
+        id: "doubleQuantity",
+        label: "Double quantity",
+        type: "number",
+        accessor: (row) => (row.quantity ?? 0) * 2,
+        footer: aggregations.sum(),
+      }),
+      column({ id: "note", label: "Note", type: "text", footer: aggregations.count() }),
+    ];
+    const { container, rerender } = render(
+      <Harness tableColumns={tableColumns} options={{ loading: true }} />,
+      { wrapper },
+    );
+    const footer = footerOf(container);
+    expect(footer).not.toBeNull();
+    expect(renderTotal).not.toHaveBeenCalled();
+    expect(footer?.textContent).toBe("");
+
+    rerender(<Harness tableColumns={tableColumns} />);
+    expect(footerOf(container)).toBe(footer);
+    expect(footerCells(container).map((cell) => cell.textContent)).toEqual(["Total: 5", "10", "2"]);
+    expect(renderTotal).toHaveBeenLastCalledWith(5);
   });
 
   it("renders aligned footer skeletons without evaluating callbacks during initial loading", () => {
@@ -207,7 +244,7 @@ describe("DataTable column footer", () => {
       { wrapper },
     );
 
-    expect(footer).toHaveBeenLastCalledWith({ rows: [] });
+    expect(footer).toHaveBeenLastCalledWith(expect.objectContaining({ rows: [] }));
     expect(footerCells(container)[0].textContent).toBe("0");
     expect(screen.getByText("No data")).toBeDefined();
   });
@@ -221,7 +258,7 @@ describe("DataTable column footer", () => {
       { wrapper },
     );
 
-    expect(footer).toHaveBeenLastCalledWith({ rows: [] });
+    expect(footer).toHaveBeenLastCalledWith(expect.objectContaining({ rows: [] }));
     expect(footerCells(container)[0].textContent).toBe(emptyValue ?? "");
   });
 
@@ -257,7 +294,7 @@ describe("DataTable column footer", () => {
     expect(footerOf(container)).toBe(footer);
     expect(footerCells(container)[1].textContent).toBe("7");
     expect(footerCells(container)[1].querySelector("div")).toBeNull();
-    expect(sum).toHaveBeenLastCalledWith({ rows: pageRows });
+    expect(sum).toHaveBeenLastCalledWith(expect.objectContaining({ rows: pageRows }));
   });
 
   it("can display a consumer-provided aggregate without calculating from rows", () => {

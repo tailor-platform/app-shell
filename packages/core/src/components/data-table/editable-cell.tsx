@@ -145,7 +145,7 @@ const EDITABLE_CELL_CLASS_NAME = cn(
 const INPUT_CLASS_NAME = cn(
   OVERLAY_CLASS_NAME,
   CELL_FOCUS_CLASS_NAME,
-  "astw:text-sm astw:cursor-text",
+  "astw:text-body-md astw:cursor-text",
 );
 
 // A dropdown's text stops before its chevron.
@@ -974,7 +974,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
                       time: event.target.value || null,
                     })
                   }
-                  className="astw:h-8 astw:text-sm"
+                  className="astw:h-8 astw:text-body-md"
                 />
               )}
               <div className="astw:flex astw:justify-between astw:gap-2">

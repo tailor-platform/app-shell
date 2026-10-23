@@ -28,6 +28,7 @@ import type {
   FilterRailRootProps,
   FilterRailSection,
 } from "./types";
+import { Text } from "../text";
 
 // ─── Provider ────────────────────────────────────────────────────────────────
 
@@ -261,7 +262,9 @@ function Header({ title, children, className }: HeaderProps) {
         className,
       )}
     >
-      <h2 className="astw:truncate astw:text-sm astw:font-semibold">{title ?? t("title")}</h2>
+      <Text variant="heading-sm" className="astw:truncate">
+        {title ?? t("title")}
+      </Text>
       {children && (
         <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-2">{children}</div>
       )}

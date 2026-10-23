@@ -64,7 +64,7 @@ export function TriggerButton({ children, className }: TriggerButtonProps) {
       {activeCount > 0 && (
         <span
           aria-hidden
-          className="astw:ml-0.5 astw:rounded-full astw:bg-primary astw:px-1.5 astw:text-xs astw:font-medium astw:text-primary-foreground astw:tabular-nums"
+          className="astw:ml-0.5 astw:rounded-full astw:bg-primary astw:px-1.5 astw:text-label-sm astw:text-primary-foreground astw:tabular-nums"
         >
           {activeCount}
         </span>

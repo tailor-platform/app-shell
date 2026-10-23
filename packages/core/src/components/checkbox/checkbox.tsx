@@ -4,6 +4,7 @@ import { Check, Minus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { markSelfWired } from "@/lib/self-wired-controls";
+import { Text } from "../text";
 
 // `children` and `render` are intentionally excluded: the component owns the
 // box + indicator structure so the visual stays stable, and consumers get a
@@ -124,17 +125,19 @@ const Checkbox = /* @__PURE__ */ markSelfWired(function Checkbox({
   if (label == null) return box;
 
   return (
-    <label
-      data-slot="checkbox-label"
+    <Text
+      variant="body-md"
       className={cn(
-        "astw:inline-flex astw:cursor-pointer astw:items-center astw:gap-2 astw:text-sm astw:select-none",
+        "astw:inline-flex astw:cursor-pointer astw:items-center astw:gap-2 astw:select-none",
         "astw:has-data-disabled:cursor-not-allowed astw:has-data-disabled:opacity-50",
         className,
       )}
+      // eslint-disable-next-line jsx-a11y/label-has-associated-control
+      render={<label data-slot="checkbox-label" />}
     >
       {box}
       {label}
-    </label>
+    </Text>
   );
 }, "Checkbox");
 

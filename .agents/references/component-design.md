@@ -431,16 +431,26 @@ Review whether component styling remains self-contained and consistent:
 
 Text that a component renders takes its size, line height, weight, and letter spacing from a typography role, not from a raw size + weight combination. The roles are listed in the Typography section of `docs/concepts/styling-theming.md`.
 
-- Use the role utility (`astw:text-heading-md`, `astw:text-label-md`, ...) on the component's own element, or render `Text` when the element itself is the text.
-- Do not write new raw combinations such as `astw:text-lg astw:font-semibold` or `astw:text-sm astw:font-medium`. Existing ones are being moved to roles.
+- Render content text with `Text`: titles, descriptions, captions, hints, messages, error text, and key and value display. Pass a Base UI part, or an element that differs from the role's default tag, with `render`, and keep the part's `data-slot` on the render element.
+- Use the role utility (`astw:text-heading-md`, `astw:text-label-md`, ...) for text that is part of a control or sits inside one (buttons, inputs, menu and list items, badges, toolbars, table cells), in cva strings, and on containers that set the size for their children.
+- Do not write new raw combinations such as `astw:text-lg astw:font-semibold` or `astw:text-sm astw:font-medium`. `tests/typography-usage.test.ts` fails on a raw size.
 - Combine a role only with the four modifiers: `astw:leading-none` (single-line text), `astw:tabular-nums`, `astw:font-semibold` (emphasis on inline text), and `astw:uppercase`. Do not add other `leading-*`, `tracking-*`, or `text-[Npx]` values. 12px is the minimum size.
 - A role carries no color. Set the color with a token such as `astw:text-muted-foreground`.
+- Show a selected item (active navigation or list item) with `astw:font-semibold` and its background.
 - A heading's level comes from the document structure, not from its size. Keep a title that is a heading in a heading element, and pick the role for its look. Do not change the element to get a different size, and do not turn a heading into a `div` to get a different line height. Under the `cream` and `bloom` palettes, `h1` to `h6` ignore `leading-none`; see the Typography section.
 
 ```tsx
 // Good
-<h3 data-slot="card-title" className="astw:text-heading-md astw:leading-none">{title}</h3>
+<Text
+  variant="heading-md"
+  className="astw:leading-none"
+  // eslint-disable-next-line jsx-a11y/heading-has-content
+  render={<h3 data-slot="card-title" />}
+>
+  {title}
+</Text>
 <Text variant="body-sm" className="astw:text-muted-foreground">{updatedAt}</Text>
+<button className={cn("astw:rounded-md astw:px-3 astw:text-label-md", className)}>{label}</button>
 ```
 
 ```tsx

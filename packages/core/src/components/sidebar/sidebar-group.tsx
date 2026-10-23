@@ -129,7 +129,7 @@ const IconRailFlyout = ({
             style={{ top: pos.top, left: pos.left }}
             className="astw:fixed astw:z-(--z-popup) astw:max-h-[calc(100dvh-1rem)] astw:min-w-48 astw:overflow-y-auto astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-1 astw:text-popover-foreground astw:shadow-md"
           >
-            <div className="astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium astw:text-muted-foreground">
+            <div className="astw:px-2 astw:py-1.5 astw:text-label-sm astw:text-muted-foreground">
               {title}
             </div>
             {/* Inside the flyout the items are no longer in the icon rail: they

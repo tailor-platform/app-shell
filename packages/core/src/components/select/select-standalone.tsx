@@ -481,14 +481,14 @@ function SelectAsyncStandalone<T>(props: SelectAsyncProps<T>) {
     loading,
     error,
     loadingContent: (
-      <div className="astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-sm astw:text-muted-foreground">
+      <div className="astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-body-md astw:text-muted-foreground">
         {loadingText}
       </div>
     ),
     errorContent: (
       <AsyncErrorState
         slot="select-error"
-        className="astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-sm astw:text-muted-foreground"
+        className="astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-body-md astw:text-muted-foreground"
         message={errorText}
         retryText={retryText}
         onRetry={retry}

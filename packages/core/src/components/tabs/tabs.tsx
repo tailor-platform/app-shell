@@ -121,7 +121,7 @@ function Tab({
       ref={mergeRefs(ref, forwardedRef)}
       data-slot="tabs-tab"
       className={cn(
-        "astw:inline-flex astw:cursor-pointer astw:items-center astw:justify-center astw:whitespace-nowrap astw:text-sm astw:font-medium astw:transition-[color,box-shadow] astw:duration-200",
+        "astw:inline-flex astw:cursor-pointer astw:items-center astw:justify-center astw:whitespace-nowrap astw:text-label-md astw:transition-[color,box-shadow] astw:duration-200",
         "astw:text-muted-foreground",
         "astw:focus-visible:outline-ring/70 astw:focus-visible:ring-ring/50 astw:focus-visible:outline-1 astw:focus-visible:ring-[3px]",
         "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",

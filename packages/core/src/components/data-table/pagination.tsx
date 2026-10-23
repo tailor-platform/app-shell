@@ -63,11 +63,13 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
         barOpen ? "astw:flex-1" : "astw:w-full",
       )}
     >
-      {rowInfoText && <div className="astw:text-sm astw:text-muted-foreground">{rowInfoText}</div>}
+      {rowInfoText && (
+        <div className="astw:text-body-md astw:text-muted-foreground">{rowInfoText}</div>
+      )}
       <div className="astw:flex astw:items-center astw:justify-end astw:gap-2 astw:ml-auto">
         {pageSizeOptions && pageSizeOptions.length > 0 && (
           <div className="astw:flex astw:items-center astw:gap-1.5">
-            <span className="astw:text-sm astw:text-muted-foreground astw:whitespace-nowrap">
+            <span className="astw:text-body-md astw:text-muted-foreground astw:whitespace-nowrap">
               {t("paginationRowsPerPage")}
             </span>
             <Select
@@ -81,7 +83,7 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
           </div>
         )}
         {totalPages !== null && (
-          <span className="astw:text-sm astw:text-muted-foreground astw:tabular-nums">
+          <span className="astw:text-body-md astw:text-muted-foreground astw:tabular-nums">
             {t("paginationPage")} {currentPage} / {totalPages}
           </span>
         )}

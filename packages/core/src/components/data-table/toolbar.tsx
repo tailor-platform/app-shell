@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { ChevronDown, Filter as FilterIcon, X, Check, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isComposing } from "@/lib/is-composing";
 import { useCollectionControlOptional } from "@/contexts/collection-control-context";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
@@ -938,7 +939,7 @@ function PanelValueEditor({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") apply();
+            if (e.key === "Enter" && !isComposing(e.nativeEvent)) apply();
           }}
           className="astw:h-8 astw:text-body-md"
         />
@@ -954,7 +955,7 @@ function PanelValueEditor({
           placeholder={t("filterValuePlaceholder", { field: label })}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") apply();
+            if (e.key === "Enter" && !isComposing(e.nativeEvent)) apply();
           }}
           className="astw:h-8 astw:text-body-md"
         />
@@ -1038,7 +1039,7 @@ function BetweenInputGroup({
           onChange={(e) => onChangeMin(e.target.value)}
           onKeyDown={(e) => {
             e.stopPropagation();
-            if (e.key === "Enter") onSubmit();
+            if (e.key === "Enter" && !isComposing(e.nativeEvent)) onSubmit();
           }}
           className={inputCell}
         />
@@ -1053,7 +1054,7 @@ function BetweenInputGroup({
           onChange={(e) => onChangeMax(e.target.value)}
           onKeyDown={(e) => {
             e.stopPropagation();
-            if (e.key === "Enter") onSubmit();
+            if (e.key === "Enter" && !isComposing(e.nativeEvent)) onSubmit();
           }}
           className={inputCell}
         />
@@ -1746,7 +1747,7 @@ function StringFilterEditor({
         onChange={(e) => setLocalValue(e.target.value)}
         onKeyDown={(e) => {
           e.stopPropagation();
-          if (e.key === "Enter") handleCommit();
+          if (e.key === "Enter" && !isComposing(e.nativeEvent)) handleCommit();
         }}
         className="astw:h-8 astw:text-body-md"
       />
@@ -1798,7 +1799,7 @@ function UuidFilterEditor({
         onChange={(e) => setLocalValue(e.target.value)}
         onKeyDown={(e) => {
           e.stopPropagation();
-          if (e.key === "Enter") handleCommit();
+          if (e.key === "Enter" && !isComposing(e.nativeEvent)) handleCommit();
         }}
         className="astw:h-8 astw:text-body-md"
       />
@@ -1950,7 +1951,7 @@ function NumericFilterEditor({
           onChange={(e) => setLocalValue(e.target.value)}
           onKeyDown={(e) => {
             e.stopPropagation();
-            if (e.key === "Enter") handleCommit();
+            if (e.key === "Enter" && !isComposing(e.nativeEvent)) handleCommit();
           }}
           className="astw:h-8 astw:text-body-md"
         />
@@ -2138,7 +2139,7 @@ function TemporalFilterEditor({
           }}
           onKeyDown={(e) => {
             e.stopPropagation();
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && !isComposing(e.nativeEvent)) {
               handleCommit();
             }
           }}

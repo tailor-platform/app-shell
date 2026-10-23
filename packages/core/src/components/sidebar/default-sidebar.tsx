@@ -259,7 +259,14 @@ const AutoSidebarItems = (props: {
               {item.url ? (
                 <>
                   <SidebarMenuButton
-                    render={<Link to={item.url as string} />}
+                    render={
+                      <Link
+                        to={item.url as string}
+                        aria-current={
+                          isActivePath(item.url, props.currentPath) ? "page" : undefined
+                        }
+                      />
+                    }
                     isActive={isActivePath(item.url, props.currentPath)}
                     tooltip={item.title}
                   >
@@ -307,7 +314,14 @@ const AutoSidebarItems = (props: {
                       .map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton
-                            render={<Link to={subItem.url!} />}
+                            render={
+                              <Link
+                                to={subItem.url!}
+                                aria-current={
+                                  isActivePath(subItem.url, props.currentPath) ? "page" : undefined
+                                }
+                              />
+                            }
                             isActive={isActivePath(subItem.url, props.currentPath)}
                           >
                             <span>{subItem.title}</span>

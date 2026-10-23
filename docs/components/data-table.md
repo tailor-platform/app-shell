@@ -312,7 +312,7 @@ function ColumnFooters() {
 - **Consumer-owned content and formatting.** Return text, numbers, or JSX. `type` and `typeOptions` do not format footer results. A column without `footer`, or a renderer returning `null`, leaves an empty cell.
 - **Shared column layout.** Footer cells follow column width, alignment, ordering, visibility, and left/right pinning. Hidden columns' footer callbacks are not called. The row sticks to the bottom of the table's scroll container during vertical scrolling, paired with the sticky header at the top.
 - **Not data rows.** The footer has no generated editors, selection checkboxes, expansion triggers, or row-action menus; their utility columns have empty footer cells to preserve alignment. Footer cells do not trigger `onClickRow`.
-- **Loading and empty states.** Loading and errors hide the footer. Loaded empty data still calls visible footer renderers with `rows: []`, so a sum can display zero. If no visible column defines `footer`, no `<tfoot>` is rendered.
+- **Loading and empty states.** Loading keeps the footer row mounted and replaces defined footer content with skeletons without calling footer renderers, including during page changes. This preserves the footer region without showing stale totals or calculating from incomplete data. Errors hide the footer. Loaded empty data still calls visible footer renderers with `rows: []`, so a sum can display zero. If no visible column defines `footer`, no `<tfoot>` is rendered.
 
 ### Column footer vs. table footer
 

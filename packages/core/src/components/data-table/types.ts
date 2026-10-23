@@ -327,7 +327,8 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    *
    * A footer row appears when any visible column defines this callback. Columns
    * without one leave a blank cell; hidden columns' callbacks are not called.
-   * Hidden during loading or errors; loaded empty data receives `rows: []`.
+   * Loading keeps the footer row with skeletons without calling renderers.
+   * Hidden during errors; loaded empty data receives `rows: []`.
    * Separate from `DataTable.Footer`, the pagination / bulk-action container.
    */
   footer?: (ctx: FooterRenderContext<TRow>) => ReactNode;

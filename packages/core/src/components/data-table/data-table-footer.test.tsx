@@ -73,14 +73,20 @@ const headerCells = (container: HTMLElement) =>
 const keysOf = (cells: HTMLTableCellElement[]) => cells.map((cell) => cell.dataset.colKey);
 
 describe("DataTable column footer", () => {
-  it("does not render a footer when no visible column defines one", () => {
-    const { container } = render(
-      <Harness tableColumns={[{ id: "name", label: "Item", render: (row) => row.name }]} />,
-      { wrapper },
-    );
+  it.each([false, true])(
+    "does not render a footer when no visible column defines one (loading: %s)",
+    (loading) => {
+      const { container } = render(
+        <Harness
+          tableColumns={[{ id: "name", label: "Item", render: (row) => row.name }]}
+          options={{ loading }}
+        />,
+        { wrapper },
+      );
 
-    expect(container.querySelector("tfoot")).toBeNull();
-  });
+      expect(container.querySelector("tfoot")).toBeNull();
+    },
+  );
 
   it("renders typed and render-only footers after the body, leaving missing and null content blank", () => {
     const typedColumns: Column<Line>[] = [
@@ -115,22 +121,52 @@ describe("DataTable column footer", () => {
     expect(footer).toMatchSnapshot();
   });
 
-  it.each([
-    { state: "loading", options: { loading: true } },
-    { state: "error", options: { error: new Error("Request failed") } },
-  ])("does not render or evaluate footers while the body is in $state state", ({ options }) => {
-    const footer = vi.fn(() => "Total");
+  it("renders aligned footer skeletons without evaluating callbacks during initial loading", () => {
+    const label = vi.fn(() => "Total");
+    const sum = vi.fn(({ rows: currentRows }: FooterRenderContext<Line>) =>
+      currentRows.reduce((total, row) => total + (row.quantity ?? 0), 0),
+    );
     const { container } = render(
       <Harness
-        tableColumns={[{ id: "name", label: "Item", render: (row) => row.name, footer }]}
-        options={options}
+        tableColumns={[
+          { ...columns[0], footer: label },
+          { ...columns[1], footer: sum },
+          columns[2],
+        ]}
+        data={{ rows: [] }}
+        options={{ loading: true }}
       />,
       { wrapper },
     );
+    const cells = footerCells(container);
 
-    expect(footerOf(container)).toBeNull();
-    expect(footer).not.toHaveBeenCalled();
+    expect(footerOf(container)).not.toBeNull();
+    expect(keysOf(cells)).toEqual(keysOf(headerCells(container)));
+    expect(cells[0].querySelector("div")?.className).toContain("astw:animate-pulse");
+    expect(cells[1].querySelector("div")?.className).toContain("astw:animate-pulse");
+    expect(cells[1].querySelector("div")?.className).toContain("astw:ml-auto");
+    expect(cells[2].childNodes).toHaveLength(0);
+    expect(footerOf(container)?.textContent).toBe("");
+    expect(label).not.toHaveBeenCalled();
+    expect(sum).not.toHaveBeenCalled();
   });
+
+  it.each([false, true])(
+    "hides footers without evaluating callbacks on error (loading: %s)",
+    (loading) => {
+      const footer = vi.fn(() => "Total");
+      const { container } = render(
+        <Harness
+          tableColumns={[{ id: "name", label: "Item", render: (row) => row.name, footer }]}
+          options={{ loading, error: new Error("Request failed") }}
+        />,
+        { wrapper },
+      );
+
+      expect(footerOf(container)).toBeNull();
+      expect(footer).not.toHaveBeenCalled();
+    },
+  );
 
   it("evaluates footers with an empty array when there are no data rows", () => {
     const footer = vi.fn(({ rows: currentRows }: FooterRenderContext<Line>) => currentRows.length);
@@ -147,13 +183,39 @@ describe("DataTable column footer", () => {
     expect(screen.getByText("No data")).toBeDefined();
   });
 
-  it("uses only the current data rows and recomputes after page data changes", () => {
+  it("keeps the footer mounted during page loading and then displays the new page total", () => {
+    const sum = vi.fn(({ rows: currentRows }: FooterRenderContext<Line>) =>
+      currentRows.reduce((total, row) => total + (row.quantity ?? 0), 0),
+    );
+    const tableColumns = [columns[0], { ...columns[1], footer: sum }, columns[2]];
     const pageRows = [{ ...rows[0], quantity: 7 }];
-    const { container, rerender } = render(<Harness data={{ rows, total: 100 }} />, { wrapper });
+    const { container, rerender } = render(
+      <Harness tableColumns={tableColumns} data={{ rows, total: 100 }} />,
+      { wrapper },
+    );
+    const footer = footerOf(container);
     expect(footerCells(container)[1].textContent).toBe("5");
+    sum.mockClear();
 
-    rerender(<Harness data={{ rows: pageRows, total: 100 }} />);
+    rerender(
+      <Harness
+        tableColumns={tableColumns}
+        data={{ rows, total: 100 }}
+        options={{ loading: true }}
+      />,
+    );
+    expect(footerOf(container)).toBe(footer);
+    expect(footerCells(container)[1].textContent).toBe("");
+    expect(footerCells(container)[1].querySelector("div")?.className).toContain(
+      "astw:animate-pulse",
+    );
+    expect(sum).not.toHaveBeenCalled();
+
+    rerender(<Harness tableColumns={tableColumns} data={{ rows: pageRows, total: 100 }} />);
+    expect(footerOf(container)).toBe(footer);
     expect(footerCells(container)[1].textContent).toBe("7");
+    expect(footerCells(container)[1].querySelector("div")).toBeNull();
+    expect(sum).toHaveBeenLastCalledWith({ rows: pageRows });
   });
 
   it("can display a consumer-provided aggregate without calculating from rows", () => {

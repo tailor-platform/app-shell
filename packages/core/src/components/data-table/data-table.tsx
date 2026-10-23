@@ -1247,7 +1247,7 @@ function DataTableColumnFooter() {
     [columns, pinnedColumns, hasSelection, hasExpand, hasRowActions, widths, columnKeys],
   );
 
-  if (loading || error || !ordered.some((col) => col.footer)) return null;
+  if (error || !ordered.some((col) => col.footer)) return null;
 
   return (
     <Table.Footer
@@ -1292,7 +1292,18 @@ function DataTableColumnFooter() {
                 "footer",
               )}
             >
-              {col.footer?.({ rows })}
+              {col.footer &&
+                (loading ? (
+                  <div
+                    aria-hidden="true"
+                    className={cn(
+                      "astw:h-4 astw:my-0.5 astw:w-3/5 astw:rounded astw:bg-muted astw:animate-pulse",
+                      resolveAlign(col) === "right" && "astw:ml-auto",
+                    )}
+                  />
+                ) : (
+                  col.footer({ rows })
+                ))}
             </Table.Cell>
           );
         })}

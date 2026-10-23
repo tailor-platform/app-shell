@@ -25,7 +25,7 @@ const rows: Line[] = [
   { id: "2", name: "Item B", quantity: 3, note: "Second" },
 ];
 const columns: Column<Line>[] = [
-  { id: "name", label: "Item", render: (row) => row.name, footer: () => "Total" },
+  { id: "name", label: "Item", render: (row) => row.name, footer: "Total" },
   {
     id: "quantity",
     label: "Quantity",
@@ -85,6 +85,35 @@ describe("DataTable column footer", () => {
       );
 
       expect(container.querySelector("tfoot")).toBeNull();
+    },
+  );
+
+  it.each(["Total", ""])(
+    "supports a static footer %j through loading and visibility changes",
+    (label) => {
+      const tableColumns: Column<Line>[] = [{ ...columns[0], footer: label }, columns[2]];
+      let table!: UseDataTableReturn<Line>;
+      const capture = (value: UseDataTableReturn<Line>) => {
+        table = value;
+      };
+      const { container, rerender } = render(
+        <Harness tableColumns={tableColumns} capture={capture} options={{ loading: true }} />,
+        { wrapper },
+      );
+      const footer = footerOf(container);
+      expect(footer).not.toBeNull();
+      expect(footerCells(container)[0].querySelector("div")?.className).toContain(
+        "astw:animate-pulse",
+      );
+      expect(footerCells(container)[1].childNodes).toHaveLength(0);
+
+      rerender(<Harness tableColumns={tableColumns} capture={capture} />);
+      expect(footerOf(container)).toBe(footer);
+      expect(footerCells(container)[0].textContent).toBe(label);
+      expect(footerCells(container)[0].querySelector("div")).toBeNull();
+
+      act(() => table.toggleColumn("name"));
+      expect(footerOf(container)).toBeNull();
     },
   );
 
@@ -181,6 +210,19 @@ describe("DataTable column footer", () => {
     expect(footer).toHaveBeenLastCalledWith({ rows: [] });
     expect(footerCells(container)[0].textContent).toBe("0");
     expect(screen.getByText("No data")).toBeDefined();
+  });
+
+  it.each(["–", null])("preserves the consumer's empty-data display %j", (emptyValue) => {
+    const footer = vi.fn(({ rows: currentRows }: FooterRenderContext<Line>) =>
+      currentRows.length === 0 ? emptyValue : currentRows.length,
+    );
+    const { container } = render(
+      <Harness tableColumns={[{ ...columns[0], footer }]} data={{ rows: [] }} />,
+      { wrapper },
+    );
+
+    expect(footer).toHaveBeenLastCalledWith({ rows: [] });
+    expect(footerCells(container)[0].textContent).toBe(emptyValue ?? "");
   });
 
   it("keeps the footer mounted during page loading and then displays the new page total", () => {

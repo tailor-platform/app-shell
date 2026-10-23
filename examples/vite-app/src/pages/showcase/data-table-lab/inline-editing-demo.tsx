@@ -210,7 +210,7 @@ export function InlineEditingDemo() {
       type: "text",
       width: 120,
       pin: "left",
-      footer: () => "Totals",
+      footer: "Totals",
     }),
     column({ id: "product", label: "Product", type: "text" }),
     column({

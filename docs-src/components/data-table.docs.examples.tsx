@@ -15,7 +15,7 @@ export function ColumnFooters() {
         id: "item",
         label: "Item",
         type: "text",
-        footer: () => "Total",
+        footer: "Total",
       }),
       column({
         id: "quantity",

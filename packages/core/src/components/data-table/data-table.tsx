@@ -1247,7 +1247,7 @@ function DataTableColumnFooter() {
     [columns, pinnedColumns, hasSelection, hasExpand, hasRowActions, widths, columnKeys],
   );
 
-  if (error || !ordered.some((col) => col.footer)) return null;
+  if (error || !ordered.some((col) => col.footer !== undefined)) return null;
 
   return (
     <Table.Footer
@@ -1278,6 +1278,10 @@ function DataTableColumnFooter() {
         )}
         {ordered.map((col) => {
           const key = keys.get(col) as string;
+          let footerContent: ReactNode = null;
+          if (!loading) {
+            footerContent = typeof col.footer === "function" ? col.footer({ rows }) : col.footer;
+          }
           return (
             <Table.Cell
               key={key}
@@ -1292,7 +1296,7 @@ function DataTableColumnFooter() {
                 "footer",
               )}
             >
-              {col.footer &&
+              {col.footer !== undefined &&
                 (loading ? (
                   <div
                     aria-hidden="true"
@@ -1302,7 +1306,7 @@ function DataTableColumnFooter() {
                     )}
                   />
                 ) : (
-                  col.footer({ rows })
+                  footerContent
                 ))}
             </Table.Cell>
           );

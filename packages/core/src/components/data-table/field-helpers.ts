@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type {
   FieldTypeToFilterConfigType,
   FilterConfig,
@@ -6,7 +7,8 @@ import type {
   TableMetadata,
 } from "@/types/collection";
 import { fieldTypeToFilterConfig, fieldTypeToSortConfig } from "@/types/collection";
-import type { Column, ColumnBase, MetadataFieldOptions } from "./types";
+import type { Column, ColumnBase, FooterRenderContext, MetadataFieldOptions } from "./types";
+import type { AGGREGATION, Aggregation, AggregationDefinition } from "@/lib/aggregations";
 
 // =============================================================================
 // column() helper
@@ -60,7 +62,7 @@ function inferColumns<
   return <TFieldName extends TableFieldName<TTable>>(
     dataKey: TFieldName,
     columnOptions?: MetadataFieldOptionsForField<TTable, NoInfer<TFieldName>>,
-  ): InferredColumn<TRow> => {
+  ): InferredColumn<TRow> & { id: TFieldName } => {
     const fieldName = dataKey as string;
     const fieldMeta = fields.find((f) => f.name === fieldName);
     if (!fieldMeta) {
@@ -89,7 +91,7 @@ function inferColumns<
       // This is what lets `column({ ...infer("description"), truncate: true })`
       // wire the truncate tooltip without an explicit `accessor` —
       // `getCellValue` falls through to `row[col.id]`.
-      id: fieldName,
+      id: dataKey,
       label,
       width: columnOptions?.width,
       sort,
@@ -128,14 +130,90 @@ export type ColumnInferFn<
 > = <TFieldName extends TableFieldName<TTable>>(
   dataKey: TFieldName,
   options?: MetadataFieldOptionsForField<TTable, NoInfer<TFieldName>>,
-) => InferredColumn<TRow>;
+) => InferredColumn<TRow> & { id: TFieldName };
+
+type ColumnFieldValue<TRow, TColumn> = TColumn extends { id: infer TKey }
+  ? TKey extends keyof TRow
+    ? TRow[TKey]
+    : unknown
+  : unknown;
+
+type AccessorValue<TRow, TColumn, TAccessor> = TAccessor extends (row: TRow) => infer TValue
+  ? TValue
+  : ColumnFieldValue<TRow, TColumn>;
+
+type AggregationSource<TRow, TColumn> = TColumn extends { accessor: infer TAccessor }
+  ? AccessorValue<TRow, TColumn, TAccessor>
+  : TColumn extends { accessor?: infer TAccessor }
+    ? AccessorValue<TRow, TColumn, TAccessor> | ColumnFieldValue<TRow, TColumn>
+    : ColumnFieldValue<TRow, TColumn>;
+
+type IsNumericSource<TValue> = 0 extends 1 & TValue
+  ? false
+  : [NonNullable<TValue>] extends [never]
+    ? false
+    : [NonNullable<TValue>] extends [number]
+      ? true
+      : false;
+
+type ConcreteAggregationKinds<TColumn> = TColumn extends { footer?: infer TFooter }
+  ? Extract<TFooter, Aggregation<unknown>>[typeof AGGREGATION]["kind"]
+  : never;
+
+type InvalidAggregationColumns<TRow, TColumn> = TColumn extends unknown
+  ? [Exclude<ConcreteAggregationKinds<TColumn>, "count">] extends [never]
+    ? never
+    : IsNumericSource<AggregationSource<TRow, TColumn>> extends true
+      ? never
+      : TColumn
+  : never;
+
+// Collect failures before validating the union so a valid alternative cannot erase them.
+type ValidateAggregation<TRow, TColumn> = [InvalidAggregationColumns<TRow, TColumn>] extends [never]
+  ? unknown
+  : { readonly __numericAggregationRequiresNumber: never };
+
+type PlainFooterRenderer<TRow extends Record<string, unknown>> = ((
+  ctx: FooterRenderContext<TRow>,
+) => ReactNode) & { readonly [AGGREGATION]?: never };
+
+type UnionKeys<T> = T extends unknown ? keyof T : never;
+type NoExtraKeys<TActual, TExpected> =
+  Exclude<keyof TActual, UnionKeys<TExpected>> extends never
+    ? unknown
+    : { [TKey in Exclude<keyof TActual, UnionKeys<TExpected>>]: never };
+
+type ApplicableColumn<TRow extends Record<string, unknown>, TColumn> = TColumn extends {
+  type: infer TType;
+}
+  ? Extract<Column<TRow>, { type: TType }>
+  : Extract<Column<TRow>, { type?: undefined }>;
+
+type ValidateOptionProperty<TColumn, TKey extends PropertyKey, TAllowed> =
+  TColumn extends Record<TKey, infer TActual>
+    ? { [TProperty in TKey]: NoExtraKeys<TActual, TAllowed> }
+    : unknown;
+
+// Generic inference must not make unsupported column/editor options appear valid.
+type ValidateColumnOptions<TRow extends Record<string, unknown>, TColumn> = NoExtraKeys<
+  TColumn,
+  Column<TRow>
+> &
+  ValidateOptionProperty<TColumn, "edit", NonNullable<ApplicableColumn<TRow, TColumn>["edit"]>> &
+  ValidateOptionProperty<
+    TColumn,
+    "typeOptions",
+    NonNullable<ApplicableColumn<TRow, TColumn>["typeOptions"]>
+  >;
 
 /**
  * Object returned by `createColumnHelper`.
  */
 export interface ColumnHelper<TRow extends Record<string, unknown>> {
   /**
-   * Define a column with an explicit render function.
+   * Define a column. Numeric aggregation definitions retain their concrete
+   * configuration to check the accessor result or row field type.
+   * Direct or previously widened `Column<TRow>` definitions are not checked.
    *
    * @example
    * ```tsx
@@ -143,7 +221,17 @@ export interface ColumnHelper<TRow extends Record<string, unknown>> {
    * column({ label: "Actions", render: (row) => <button>Edit {row.name}</button> })
    * ```
    */
-  column: (options: Column<TRow>) => Column<TRow>;
+  column: {
+    // Keep legacy excess-property checks separate from aggregation inference.
+    (
+      options: Column<TRow> & {
+        footer?: string | PlainFooterRenderer<TRow> | AggregationDefinition<ReactNode, "count">;
+      },
+    ): Column<TRow>;
+    <const TColumn extends Column<TRow>>(
+      options: TColumn & ValidateAggregation<TRow, TColumn> & ValidateColumnOptions<TRow, TColumn>,
+    ): TColumn & Column<TRow>;
+  };
   /**
    * Bind table metadata once and return a per-field column factory.
    *
@@ -190,7 +278,7 @@ export interface ColumnHelper<TRow extends Record<string, unknown>> {
  */
 export function createColumnHelper<TRow extends Record<string, unknown>>(): ColumnHelper<TRow> {
   return {
-    column: (options: Column<TRow>) => column<TRow>(options),
+    column: <const TColumn extends Column<TRow>>(options: TColumn): TColumn => ({ ...options }),
     inferColumns: <const TTable extends TableMetadata = TableMetadata>(tableMetadata: TTable) =>
       inferColumns<TRow, TTable>(tableMetadata),
   };

@@ -1,5 +1,11 @@
 import { useRef, useState } from "react";
-import { Button, DataTable, createColumnHelper, useDataTable } from "@tailor-platform/app-shell";
+import {
+  Button,
+  DataTable,
+  aggregations,
+  createColumnHelper,
+  useDataTable,
+} from "@tailor-platform/app-shell";
 
 export function ColumnFooters() {
   type Line = { id: string; item: string; quantity: number | null };
@@ -27,7 +33,68 @@ export function ColumnFooters() {
               current.map((line) => (line.id === row.id ? { ...line, quantity } : line)),
             ),
         },
-        footer: ({ rows }) => rows.reduce((sum, row) => sum + (row.quantity ?? 0), 0),
+        footer: aggregations.sum(),
+      }),
+    ],
+  });
+
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
+export function ColumnAggregations() {
+  type Line = {
+    id: string;
+    item: string;
+    quantity: number | null;
+    weightKg: number | null;
+    discount: number;
+    unitPrice: number;
+    note: string | null;
+  };
+  const rows: Line[] = [
+    {
+      id: "1",
+      item: "Small carton",
+      quantity: 2,
+      weightKg: 1.25,
+      discount: 0,
+      unitPrice: 12,
+      note: null,
+    },
+    {
+      id: "2",
+      item: "Large carton",
+      quantity: 3,
+      weightKg: 2.5,
+      discount: 5,
+      unitPrice: 10,
+      note: "Ready",
+    },
+  ];
+  const { column } = createColumnHelper<Line>();
+  const table = useDataTable({
+    data: { rows },
+    columns: [
+      column({ id: "item", label: "Item", type: "text", footer: "Aggregates" }),
+      column({ id: "quantity", label: "Quantity", type: "number", footer: aggregations.sum() }),
+      column({
+        id: "weightKg",
+        label: "Weight (kg)",
+        type: "number",
+        typeOptions: { maxDecimals: 3 },
+        footer: aggregations.avg((average) => <strong>{average?.toFixed(3) ?? "–"}</strong>),
+      }),
+      column({ id: "discount", label: "Discount %", type: "number", footer: aggregations.max() }),
+      column({ id: "unitPrice", label: "Unit price", type: "number", footer: aggregations.min() }),
+      column({
+        id: "note",
+        label: "Note",
+        type: "text",
+        footer: aggregations.count((count) => `${count} with notes`),
       }),
     ],
   });

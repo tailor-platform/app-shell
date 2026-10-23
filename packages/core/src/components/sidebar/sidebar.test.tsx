@@ -162,6 +162,15 @@ describe("SidebarItem", () => {
     expect(menu.getByTestId("custom").textContent).toContain("Dashboard Custom");
   });
 
+  it("marks a custom-rendered active item on its link", () => {
+    renderWithProviders(
+      <SidebarItem to="/dashboard/overview" render={({ title }) => <span>{title}</span>} />,
+      "/dashboard/overview",
+    );
+
+    expect(getSidebarMenu().getByRole("link").getAttribute("aria-current")).toBe("page");
+  });
+
   it("renders external link with target blank", () => {
     renderWithProviders(<SidebarItem to="https://docs.example.com" external />);
 
@@ -169,6 +178,7 @@ describe("SidebarItem", () => {
     const link = menu.getByRole("link");
     expect(link.getAttribute("target")).toBe("_blank");
     expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(link.hasAttribute("aria-current")).toBe(false);
   });
 
   it("auto-detects external URLs without external prop", () => {
@@ -185,6 +195,7 @@ describe("SidebarItem", () => {
     const menu = getSidebarMenu();
     const link = menu.getByRole("link");
     expect(link.getAttribute("data-active")).toBe("true");
+    expect(link.getAttribute("aria-current")).toBe("page");
   });
 
   it("applies the theme's selected background and text tokens when active, without hover", () => {
@@ -208,8 +219,8 @@ describe("SidebarItem", () => {
     );
 
     const link = getSidebarMenu().getByRole("link", { name: "Small link" });
-    expect(link.className).toContain("astw:text-xs");
-    expect(link.className).toContain("astw:data-[active=true]:font-medium");
+    expect(link.className).toContain("astw:text-body-sm");
+    expect(link.className).toContain("astw:data-[active=true]:font-semibold");
     expect(link.className).not.toContain("astw:data-[active=true]:text-label-");
   });
 
@@ -218,6 +229,7 @@ describe("SidebarItem", () => {
 
     const link = getSidebarMenu().getByRole("link");
     expect(link.getAttribute("data-active")).toBe("false");
+    expect(link.hasAttribute("aria-current")).toBe(false);
   });
 
   it("falls back to URL-based title for unknown paths", () => {
@@ -287,10 +299,12 @@ describe("SidebarGroup", () => {
     const headerLink = links.find((l) => l.getAttribute("href") === "/products")!;
     const childLink = links.find((l) => l.getAttribute("href") === "/products/all")!;
     expect(headerLink.getAttribute("data-active")).toBe("true");
+    expect(headerLink.getAttribute("aria-current")).toBe("page");
     expect(headerLink.className).toContain(
       "astw:data-[active=true]:text-sidebar-accent-foreground",
     );
     expect(childLink.getAttribute("data-active")).toBe("false");
+    expect(childLink.hasAttribute("aria-current")).toBe(false);
   });
 
   it("supports localized title function", () => {

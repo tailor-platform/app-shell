@@ -17,6 +17,7 @@ import { Popover } from "@base-ui/react/popover";
 import type { CalendarDate } from "@internationalized/date";
 import { CalendarDays, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isComposing } from "@/lib/is-composing";
 import { useTimeZone } from "@/contexts/appshell-context";
 import { BadgeList } from "@/components/badge-list";
 import { Button } from "@/components/button";
@@ -144,7 +145,7 @@ const EDITABLE_CELL_CLASS_NAME = cn(
 const INPUT_CLASS_NAME = cn(
   OVERLAY_CLASS_NAME,
   CELL_FOCUS_CLASS_NAME,
-  "astw:text-sm astw:cursor-text",
+  "astw:text-body-md astw:cursor-text",
 );
 
 // A dropdown's text stops before its chevron.
@@ -399,7 +400,7 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     // While an IME is composing, Enter confirms the conversion, not the cell.
-    if (event.nativeEvent.isComposing || composingRef.current || event.keyCode === 229) return;
+    if (isComposing(event.nativeEvent, composingRef.current)) return;
     const from = { rowKey, colKey };
     switch (event.key) {
       case "Enter":
@@ -670,7 +671,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
   const handleKeyDown: NonNullable<ComponentProps<typeof ComboboxParts.Input>["onKeyDown"]> = (
     event,
   ) => {
-    if (event.nativeEvent.isComposing || composingRef.current || event.keyCode === 229) {
+    if (isComposing(event.nativeEvent, composingRef.current)) {
       event.preventBaseUIHandler();
       return;
     }
@@ -973,7 +974,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
                       time: event.target.value || null,
                     })
                   }
-                  className="astw:h-8 astw:text-sm"
+                  className="astw:h-8 astw:text-body-md"
                 />
               )}
               <div className="astw:flex astw:justify-between astw:gap-2">

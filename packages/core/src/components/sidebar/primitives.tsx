@@ -546,7 +546,7 @@ function SidebarGroupLabel({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        "astw:text-sidebar-foreground/70 astw:ring-sidebar-ring astw:text-xs astw:font-medium astw:outline-hidden astw:transition-[margin,opacity] astw:duration-200 astw:ease-linear astw:focus-visible:ring-2 astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
+        "astw:text-sidebar-foreground/70 astw:ring-sidebar-ring astw:outline-hidden astw:transition-[margin,opacity] astw:duration-200 astw:ease-linear astw:focus-visible:ring-2 astw:[&>svg]:size-4 astw:[&>svg]:shrink-0",
         "astw:group-data-[collapsible=icon]:-mt-8 astw:group-data-[collapsible=icon]:opacity-0",
         className,
       )}
@@ -587,7 +587,7 @@ function SidebarGroupContent({ className, ...props }: React.ComponentProps<"div"
     <div
       data-slot="sidebar-group-content"
       data-sidebar="group-content"
-      className={cn("astw:w-full astw:text-sm", className)}
+      className={cn("astw:w-full astw:text-body-md", className)}
       {...props}
     />
   );
@@ -609,7 +609,7 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  "astw:peer/menu-button astw:text-sm astw:text-sidebar-foreground astw:ring-sidebar-ring astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:active:bg-sidebar-accent astw:active:text-sidebar-accent-foreground astw:group-has-data-[sidebar=menu-action]/menu-item:pr-8 astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:font-medium astw:data-[active=true]:text-sidebar-accent-foreground astw:data-[state=open]:hover:bg-sidebar-accent astw:data-[state=open]:hover:text-sidebar-accent-foreground astw:group-data-[collapsible=icon]:size-8! astw:group-data-[collapsible=icon]:p-2! astw:[&>span:last-child]:truncate astw:group-data-[collapsible=icon]:[&>span:last-child]:hidden",
+  "astw:peer/menu-button astw:text-sidebar-foreground astw:ring-sidebar-ring astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:active:bg-sidebar-accent astw:active:text-sidebar-accent-foreground astw:group-has-data-[sidebar=menu-action]/menu-item:pr-8 astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:font-semibold astw:data-[active=true]:text-sidebar-accent-foreground astw:data-[state=open]:hover:bg-sidebar-accent astw:data-[state=open]:hover:text-sidebar-accent-foreground astw:group-data-[collapsible=icon]:size-8! astw:group-data-[collapsible=icon]:p-2! astw:[&>span:last-child]:truncate astw:group-data-[collapsible=icon]:[&>span:last-child]:hidden",
   {
     variants: {
       variant: {
@@ -618,9 +618,9 @@ const sidebarMenuButtonVariants = cva(
           "astw:bg-background astw:shadow-[0_0_0_1px_hsl(var(--sidebar-border))] astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
       },
       size: {
-        default: "astw:h-8 astw:text-sm",
+        default: "astw:h-8 astw:text-body-md",
         sm: "astw:h-7 astw:rounded-md astw:gap-1.5 astw:px-3 astw:has-[>svg]:px-2.5",
-        lg: "astw:h-12 astw:text-sm astw:group-data-[collapsible=icon]:p-0!",
+        lg: "astw:h-12 astw:text-body-md astw:group-data-[collapsible=icon]:p-0!",
       },
     },
     defaultVariants: {
@@ -742,7 +742,7 @@ function SidebarMenuBadge({ className, ...props }: React.ComponentProps<"div">) 
       data-slot="sidebar-menu-badge"
       data-sidebar="menu-badge"
       className={cn(
-        "astw:text-sidebar-foreground astw:pointer-events-none astw:absolute astw:right-1 astw:flex astw:h-5 astw:min-w-5 astw:items-center astw:justify-center astw:rounded-md astw:px-1 astw:text-xs astw:font-medium astw:tabular-nums astw:select-none",
+        "astw:text-sidebar-foreground astw:pointer-events-none astw:absolute astw:right-1 astw:flex astw:h-5 astw:min-w-5 astw:items-center astw:justify-center astw:rounded-md astw:px-1 astw:text-label-sm astw:tabular-nums astw:select-none",
         "astw:peer-hover/menu-button:text-sidebar-accent-foreground astw:peer-data-[active=true]/menu-button:text-sidebar-accent-foreground",
         "astw:peer-data-[size=sm]/menu-button:top-1",
         "astw:peer-data-[size=default]/menu-button:top-1.5",
@@ -820,9 +820,9 @@ function SidebarMenuSubButton({
       className: cn(
         listButtonVariants(),
         "astw:h-7 astw:py-0 astw:text-sidebar-foreground astw:ring-sidebar-ring astw:hover:bg-sidebar-accent astw:hover:text-sidebar-accent-foreground astw:active:bg-sidebar-accent astw:active:text-sidebar-accent-foreground astw:[&>svg]:text-sidebar-accent-foreground astw:-translate-x-px astw:[&>span:last-child]:truncate astw:group-data-[collapsible=icon]:[&>span:last-child]:hidden",
-        "astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:font-medium astw:data-[active=true]:text-sidebar-accent-foreground",
-        size === "sm" && "astw:text-xs",
-        size === "md" && "astw:text-sm",
+        "astw:data-[active=true]:bg-sidebar-accent astw:data-[active=true]:font-semibold astw:data-[active=true]:text-sidebar-accent-foreground",
+        size === "sm" && "astw:text-body-sm",
+        size === "md" && "astw:text-body-md",
         "astw:group-data-[collapsible=icon]:hidden",
         className,
       ),

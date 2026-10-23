@@ -11,6 +11,7 @@ import { Button } from "@/components/button";
 import { Textarea } from "@/components/textarea";
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
+import { isComposing } from "@/lib/is-composing";
 import { useAIChatContext } from "./ai-chat-context";
 
 type AIChatComposerProps = {
@@ -121,7 +122,7 @@ function Composer({
       submitOnEnter &&
       event.key === "Enter" &&
       !event.shiftKey &&
-      !event.nativeEvent.isComposing
+      !isComposing(event.nativeEvent)
     ) {
       event.preventDefault();
       event.currentTarget.form?.requestSubmit();

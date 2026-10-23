@@ -46,7 +46,7 @@ Some lint rules report this example; see [Lint](#lint).
 | `body-sm`         | `p`             | Caption, timestamp, metadata                    |
 | `body-md-relaxed` | `p`             | Long text, such as a chat message or a document |
 | `body-sm-relaxed` | `p`             | Long text at the small size                     |
-| `label-md`        | `span`          | Field label, short UI text, figures in a table  |
+| `label-md`        | `span`          | Field label, short UI text                      |
 | `label-sm`        | `span`          | Small label, badge text                         |
 | `code-sm`         | `span`          | ID and code. `Text` adds `font-mono` for you    |
 
@@ -132,4 +132,4 @@ The `cream` and `bloom` palettes set the line height and letter spacing of `h1` 
 - [Card](./card.md) - The table above lists `heading-md` for card titles
 - [Layout](./layout.md) - The table above lists `heading-lg` for the page title
 
-AppShell's own components, including these two, still use the stock utilities. They will move to the roles in a later change.
+AppShell's own components, including these two, render their titles and descriptions with `Text`.

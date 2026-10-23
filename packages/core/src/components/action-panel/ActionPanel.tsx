@@ -3,6 +3,7 @@ import { Card } from "../card";
 import { Spinner } from "../spinner";
 import { useRegisterCommandPaletteActions } from "../../contexts/command-palette-context";
 import type { ActionPanelProps, ActionItem } from "./types";
+import { Text } from "../text";
 
 const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-center";
 
@@ -12,7 +13,7 @@ const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-ce
 
 const actionRowBaseClasses = cn(
   "astw:flex astw:items-center astw:gap-2 astw:w-full astw:rounded-md astw:px-3 astw:py-2",
-  "astw:text-sm astw:font-medium astw:transition-colors astw:border astw:border-transparent",
+  "astw:text-label-md astw:transition-colors astw:border astw:border-transparent",
   "astw:bg-transparent astw:text-left astw:cursor-pointer astw:[&_svg]:size-4 astw:[&_svg]:shrink-0",
 );
 
@@ -115,9 +116,9 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
       <Card.Header title={title} className="astw:px-8" />
       <Card.Content className="astw:px-4 astw:pb-4">
         {actions.length === 0 ? (
-          <p className="astw:py-2 astw:pl-3 astw:text-sm astw:text-muted-foreground">
+          <Text variant="body-md" className="astw:py-2 astw:pl-3 astw:text-muted-foreground">
             No actions available
-          </p>
+          </Text>
         ) : (
           <ul className="astw:flex astw:flex-col astw:gap-0 astw:list-none astw:m-0 astw:p-0">
             {actions.map((action) => (

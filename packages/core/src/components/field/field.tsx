@@ -3,6 +3,7 @@ import { Field as BaseField } from "@base-ui/react/field";
 
 import { cn } from "@/lib/utils";
 import { inputBaseClasses } from "@/lib/input-classes";
+import { Text } from "../text";
 
 // Only the props relevant to the Field abstraction are picked from BaseField.Root.
 // Base UI-internal props (e.g. actionsRef) are intentionally excluded
@@ -118,10 +119,10 @@ Root.displayName = "Field.Root";
  */
 function Label({ className, ...props }: React.ComponentProps<typeof BaseField.Label>) {
   return (
-    <BaseField.Label
-      data-slot="field-label"
-      className={cn("astw:text-sm astw:font-medium", className)}
-      {...props}
+    <Text
+      variant="label-md"
+      className={cn(className)}
+      render={<BaseField.Label data-slot="field-label" {...props} />}
     />
   );
 }
@@ -157,10 +158,10 @@ Control.displayName = "Field.Control";
  */
 function Description({ className, ...props }: React.ComponentProps<typeof BaseField.Description>) {
   return (
-    <BaseField.Description
-      data-slot="field-description"
-      className={cn("astw:text-muted-foreground astw:text-sm", className)}
-      {...props}
+    <Text
+      variant="body-md"
+      className={cn("astw:text-muted-foreground", className)}
+      render={<BaseField.Description data-slot="field-description" {...props} />}
     />
   );
 }
@@ -218,10 +219,10 @@ Description.displayName = "Field.Description";
  */
 function Error({ className, ...props }: React.ComponentProps<typeof BaseField.Error>) {
   return (
-    <BaseField.Error
-      data-slot="field-error"
-      className={cn("astw:text-danger-text astw:text-sm astw:font-medium", className)}
-      {...props}
+    <Text
+      variant="label-md"
+      className={cn("astw:text-danger-text", className)}
+      render={<BaseField.Error data-slot="field-error" {...props} />}
     />
   );
 }

@@ -57,7 +57,7 @@ function ComboboxInput({
       ref={mergeRefs(ref, forwardedRef)}
       data-slot="combobox-input"
       className={cn(
-        "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:text-foreground astw:placeholder:text-muted-foreground astw:flex astw:h-9 astw:w-full astw:rounded-md astw:border astw:px-3 astw:py-1 astw:text-sm astw:outline-none astw:transition-colors",
+        "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:text-foreground astw:placeholder:text-muted-foreground astw:flex astw:h-9 astw:w-full astw:rounded-md astw:border astw:px-3 astw:py-1 astw:text-body-md astw:outline-none astw:transition-colors",
         "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
         "astw:disabled:cursor-not-allowed astw:disabled:opacity-50",
         className,
@@ -164,7 +164,7 @@ function ComboboxItem({
     <BaseCombobox.Item
       data-slot="combobox-item"
       className={cn(
-        "astw:relative astw:flex astw:w-full astw:cursor-default astw:items-center astw:gap-2 astw:rounded-sm astw:py-1.5 astw:pr-8 astw:pl-2 astw:text-sm astw:outline-hidden astw:select-none",
+        "astw:relative astw:flex astw:w-full astw:cursor-default astw:items-center astw:gap-2 astw:rounded-sm astw:py-1.5 astw:pr-8 astw:pl-2 astw:text-body-md astw:outline-hidden astw:select-none",
         "astw:data-highlighted:bg-accent astw:data-highlighted:text-accent-foreground",
         "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
         className,
@@ -187,7 +187,7 @@ function ComboboxEmpty({ className, ...props }: React.ComponentProps<typeof Base
     <BaseCombobox.Empty
       data-slot="combobox-empty"
       className={cn(
-        "astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-sm astw:text-muted-foreground astw:empty:hidden",
+        "astw:px-4 astw:pt-2 astw:pb-4 astw:text-center astw:text-body-md astw:text-muted-foreground astw:empty:hidden",
         className,
       )}
       {...props}
@@ -209,7 +209,7 @@ function ComboboxGroupLabel({
     <BaseCombobox.GroupLabel
       data-slot="combobox-group-label"
       className={cn(
-        "astw:text-muted-foreground astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium",
+        "astw:text-muted-foreground astw:px-2 astw:py-1.5 astw:text-label-sm",
         className,
       )}
       {...props}
@@ -244,7 +244,7 @@ function ComboboxChips({ className, ...props }: React.ComponentProps<typeof Base
     <BaseCombobox.Chips
       data-slot="combobox-chips"
       className={cn(
-        "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:flex astw:min-h-9 astw:w-full astw:flex-wrap astw:items-center astw:gap-1 astw:rounded-md astw:border astw:px-1.5 astw:py-1 astw:text-sm",
+        "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:flex astw:min-h-9 astw:w-full astw:flex-wrap astw:items-center astw:gap-1 astw:rounded-md astw:border astw:px-1.5 astw:py-1 astw:text-body-md",
         "astw:focus-within:border-ring astw:focus-within:ring-ring/50 astw:focus-within:ring-[3px]",
         // Strip standalone styles from nested Input
         "astw:[&_[data-slot=combobox-input]]:border-0 astw:[&_[data-slot=combobox-input]]:bg-transparent astw:[&_[data-slot=combobox-input]]:shadow-none astw:[&_[data-slot=combobox-input]]:ring-0",
@@ -263,7 +263,7 @@ function ComboboxChip({ className, ...props }: React.ComponentProps<typeof BaseC
     <BaseCombobox.Chip
       data-slot="combobox-chip"
       className={cn(
-        "astw:bg-secondary astw:text-secondary-foreground astw:flex astw:cursor-default astw:items-center astw:gap-1 astw:rounded-md astw:px-1.5 astw:py-0.5 astw:text-sm astw:outline-none",
+        "astw:bg-secondary astw:text-secondary-foreground astw:flex astw:cursor-default astw:items-center astw:gap-1 astw:rounded-md astw:px-1.5 astw:py-0.5 astw:text-body-md astw:outline-none",
         "astw:data-highlighted:bg-primary astw:data-highlighted:text-primary-foreground",
         "astw:focus-within:bg-primary astw:focus-within:text-primary-foreground",
         className,

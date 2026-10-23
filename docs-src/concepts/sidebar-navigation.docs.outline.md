@@ -69,6 +69,8 @@ const App = () => (
 ### SidebarItem
 
 A navigation item that automatically resolves title and icon from resource definitions.
+Active internal sidebar links expose `aria-current="page"` on the link itself, including
+items with custom `render` content. Inactive and external links do not expose it.
 
 #### Props
 

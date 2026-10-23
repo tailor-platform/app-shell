@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderRHFForm } from "../../../tests/rhf-test-utils";
+import { Checkbox } from "../checkbox";
+import { Select } from "../select";
 import { Field } from "./field";
 
 afterEach(() => {
@@ -200,6 +202,52 @@ describe("Field", () => {
         </Field.Root>,
       );
       expect(screen.getByText("Something went wrong")).toBeDefined();
+    });
+  });
+
+  describe("render misuse warning", () => {
+    it("warns when a self-wired control is passed to render", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      render(
+        <Field.Root name="country">
+          <Field.Control render={<Select items={["Japan"]} />} />
+        </Field.Root>,
+      );
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).toContain("render={<Select />}");
+      expect(warn.mock.calls[0][0]).toContain("directly under <Field.Root>");
+      warn.mockRestore();
+    });
+
+    it("names the compound member", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      render(
+        <Field.Root name="country">
+          <Field.Control render={<Select.Async fetcher={async () => []} />} />
+        </Field.Root>,
+      );
+      expect(warn.mock.calls[0][0]).toContain("render={<Select.Async />}");
+      warn.mockRestore();
+    });
+
+    it("warns once across re-renders", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const { rerender } = render(<Field.Control render={<Checkbox />} />);
+      rerender(<Field.Control render={<Checkbox />} />);
+      expect(warn).toHaveBeenCalledTimes(1);
+      warn.mockRestore();
+    });
+
+    it("stays silent for a plain control or a native element", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      render(
+        <Field.Root name="bio">
+          <Field.Control />
+          <Field.Control render={<textarea />} />
+        </Field.Root>,
+      );
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
     });
   });
 });

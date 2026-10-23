@@ -2,7 +2,7 @@
 
 exports[`DataTable column footer > renders typed and render-only footers after the body, leaving missing and null content blank 1`] = `
 <tfoot
-  class="astw:border-border astw:font-medium astw:[&>tr]:last:border-b-0 astw:sticky astw:bottom-0 astw:z-10 astw:bg-card astw:border-t-0 astw:shadow-[inset_0_1px_0_0_var(--border)]"
+  class="astw:border-border astw:text-label-md astw:[&>tr]:last:border-b-0 astw:sticky astw:bottom-0 astw:z-10 astw:bg-card astw:border-t-0 astw:shadow-[inset_0_1px_0_0_var(--border)]"
   data-slot="data-table-column-footer"
 >
   <tr

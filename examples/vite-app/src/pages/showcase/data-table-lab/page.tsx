@@ -12,6 +12,7 @@ import {
 import { FlaskConical } from "lucide-react";
 import { useMemo } from "react";
 import { InlineEditingDemo } from "./inline-editing-demo";
+import { EditingErrorsDemo } from "./editing-errors-demo";
 
 // ─── Dummy data ──────────────────────────────────────────────────────────────
 // 🧪 Dummy Data: Replace with a real GraphQL-backed source later.
@@ -572,6 +573,18 @@ const DataTableLabPage = () => {
           }
         >
           <InlineEditingDemo />
+        </Section>
+
+        <Section
+          title="Editing errors — prototype"
+          description={
+            <>
+              Callback failures use a standard cell-error popover by default. Only the Custom code
+              column supplies <code>error.render</code>; the other columns need no error config.
+            </>
+          }
+        >
+          <EditingErrorsDemo />
         </Section>
 
         <Section

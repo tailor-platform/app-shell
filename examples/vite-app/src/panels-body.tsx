@@ -2,6 +2,7 @@ import {
   AppearanceSwitcher,
   Button,
   GlobalHeaderLayout,
+  ItemList,
   useLocation,
 } from "@tailor-platform/app-shell";
 import { CircleUserIcon, PanelRightIcon } from "lucide-react";
@@ -37,16 +38,34 @@ const TocRail = () => (
     <div className="flex h-14 shrink-0 items-center px-4">
       <span className="text-sm font-semibold">Contents</span>
     </div>
-    <nav className="flex flex-col gap-0.5 px-2 pb-4">
-      {PANEL_SECTIONS.map((section) => (
-        <a
-          key={section}
-          href={`#${sectionId(section)}`}
-          className="rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-        >
-          {section}
-        </a>
-      ))}
+    <nav aria-label="Contents" className="px-2 pb-4">
+      <ItemList.Root className="astw:gap-0.5">
+        {PANEL_SECTIONS.map(({ title, children }) =>
+          children ? (
+            <ItemList.Group
+              key={title}
+              title={title}
+              render={<a href={`#${sectionId(title)}`} aria-label={title} />}
+            >
+              {children.map((child) => (
+                <ItemList.Item
+                  key={child}
+                  render={<a href={`#${sectionId(child)}`} aria-label={child} />}
+                >
+                  {child}
+                </ItemList.Item>
+              ))}
+            </ItemList.Group>
+          ) : (
+            <ItemList.Item
+              key={title}
+              render={<a href={`#${sectionId(title)}`} aria-label={title} />}
+            >
+              {title}
+            </ItemList.Item>
+          ),
+        )}
+      </ItemList.Root>
     </nav>
   </aside>
 );

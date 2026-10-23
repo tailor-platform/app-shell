@@ -280,7 +280,14 @@ Set `column.footer` to render a total or other summary beneath that column witho
 - **Not data rows.** The footer has no generated editors, selection checkboxes, expansion triggers, or row-action menus; their utility columns have empty footer cells to preserve alignment. Footer cells do not trigger `onClickRow`.
 - **Loading and empty states.** Loading and errors hide the footer. Loaded empty data still calls visible footer renderers with `rows: []`, so a sum can display zero. If no visible column defines `footer`, no `<tfoot>` is rendered.
 
-The column footer is separate from `DataTable.Footer`, which remains the container outside the `<table>` for pagination and bulk actions. No additional JSX component is needed for column footers.
+### Column footer vs. table footer
+
+These APIs use “footer” at different scopes:
+
+- **Column footer — `column.footer`.** Content for a column-aligned cell inside the table's `<tfoot>`, such as a label, total, or note. It shares the column's layout, including width, alignment, and pinning.
+- **Table footer — `DataTable.Footer`.** A container outside the `<table>` for pagination and other table-level content. It becomes the bulk-action bar while rows are selected.
+
+`DataTable.Table` renders column footers automatically; no additional JSX component is needed. `DataTable.Footer` does not render or configure column footers, and either region can be used without the other.
 
 ## Context menus
 

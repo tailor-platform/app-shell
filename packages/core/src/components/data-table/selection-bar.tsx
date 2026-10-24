@@ -17,7 +17,7 @@ const MAX_INLINE_ACTIONS = 3;
  * bar fits on one line and leaves room for the table rows. Pagination hides
  * its labels at the same width through the `data-table-footer` container.
  */
-export const NARROW_FOOTER_WIDTH = 480;
+const NARROW_FOOTER_WIDTH = 480;
 
 /** Whether the footer around `ref` is narrower than `NARROW_FOOTER_WIDTH`. */
 function useIsNarrowFooter(ref: RefObject<HTMLElement | null>): boolean {

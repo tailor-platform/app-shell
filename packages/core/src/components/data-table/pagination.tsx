@@ -65,103 +65,102 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
   return (
     // Beside the bar, flex-1 instead of w-full lets both share one line and
     // wraps the controls onto a line of their own only when they don't fit.
-    // In a narrow footer (phone widths) the row count, the page-size switcher
-    // and the page buttons wrap onto separate lines instead of being clipped by
-    // the table frame, and the "Rows per page" / "Page" words become sr-only.
+    // The row count, the page-size switcher and the page buttons are siblings
+    // in one wrapping row, so a narrow footer (phone widths) breaks between
+    // them instead of letting the table frame clip the buttons. The count's
+    // mr-auto keeps it on the left; everything else packs to the right.
     <div
       className={cn(
-        "astw:flex astw:flex-wrap astw:items-center astw:justify-between astw:gap-2",
+        "astw:flex astw:flex-wrap astw:items-center astw:justify-end astw:gap-2",
         barOpen ? "astw:flex-1" : "astw:w-full",
       )}
     >
       {rowInfoText && (
-        <div className="astw:text-body-md astw:text-muted-foreground astw:whitespace-nowrap">
+        <div className="astw:mr-auto astw:text-body-md astw:text-muted-foreground astw:whitespace-nowrap">
           {rowInfoText}
         </div>
       )}
-      <div className="astw:flex astw:flex-wrap astw:items-center astw:justify-end astw:gap-2 astw:ml-auto">
-        {pageSizeOptions && pageSizeOptions.length > 0 && (
-          <div className="astw:flex astw:items-center astw:gap-1.5">
+      {pageSizeOptions && pageSizeOptions.length > 0 && (
+        <div className="astw:flex astw:items-center astw:gap-1.5">
+          <span
+            className={cn(
+              "astw:text-body-md astw:text-muted-foreground astw:whitespace-nowrap",
+              NARROW_FOOTER_SR_ONLY,
+            )}
+          >
+            {t("paginationRowsPerPage")}
+          </span>
+          <Select
+            items={pageSizeOptions.map(String)}
+            value={String(pageSize)}
+            onValueChange={(item) => {
+              if (item) setPageSize(Number(item));
+            }}
+            className="astw:w-17.5"
+          />
+        </div>
+      )}
+      {/* The page text and its buttons wrap as one unit, so the buttons never
+            split across lines. */}
+      <div className="astw:flex astw:items-center astw:gap-2">
+        {totalPages !== null && (
+          <>
+            {/* The full "Page 1 / 5" stays one text node for screen readers
+                  and text queries; a narrow footer shows "1 / 5" in its place. */}
             <span
               className={cn(
-                "astw:text-body-md astw:text-muted-foreground astw:whitespace-nowrap",
+                "astw:text-body-md astw:text-muted-foreground astw:tabular-nums astw:whitespace-nowrap",
                 NARROW_FOOTER_SR_ONLY,
               )}
             >
-              {t("paginationRowsPerPage")}
+              {t("paginationPage")} {currentPage} / {totalPages}
             </span>
-            <Select
-              items={pageSizeOptions.map(String)}
-              value={String(pageSize)}
-              onValueChange={(item) => {
-                if (item) setPageSize(Number(item));
-              }}
-              className="astw:w-17.5"
-            />
-          </div>
-        )}
-        {/* The page text and its buttons wrap as one unit, so the buttons never
-            split across lines. */}
-        <div className="astw:flex astw:items-center astw:gap-2">
-          {totalPages !== null && (
-            <>
-              {/* The full "Page 1 / 5" stays one text node for screen readers
-                  and text queries; a narrow footer shows "1 / 5" in its place. */}
-              <span
-                className={cn(
-                  "astw:text-body-md astw:text-muted-foreground astw:tabular-nums astw:whitespace-nowrap",
-                  NARROW_FOOTER_SR_ONLY,
-                )}
-              >
-                {t("paginationPage")} {currentPage} / {totalPages}
-              </span>
-              <span
-                aria-hidden="true"
-                className="astw:hidden astw:text-body-md astw:text-muted-foreground astw:tabular-nums astw:whitespace-nowrap astw:@max-[480px]/data-table-footer:inline"
-              >
-                {currentPage} / {totalPages}
-              </span>
-            </>
-          )}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={goToFirstPage}
-            disabled={!hasPrevPage}
-            aria-label={t("paginationFirst")}
-          >
-            <ChevronsLeft className="astw:size-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => goToPrevPage(pageInfo)}
-            disabled={!hasPrevPage}
-            aria-label={t("paginationPrevious")}
-          >
-            <ChevronLeft className="astw:size-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => goToNextPage(pageInfo)}
-            disabled={!hasNextPage || (totalPages !== null && currentPage >= totalPages)}
-            aria-label={t("paginationNext")}
-          >
-            <ChevronRight className="astw:size-4" />
-          </Button>
-          {totalPages !== null && (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={goToLastPage}
-              disabled={!hasNextPage}
-              aria-label={t("paginationLast")}
+            <span
+              aria-hidden="true"
+              className="astw:hidden astw:text-body-md astw:text-muted-foreground astw:tabular-nums astw:whitespace-nowrap astw:@max-[480px]/data-table-footer:inline"
             >
-              <ChevronsRight className="astw:size-4" />
-            </Button>
-          )}
-        </div>
+              {currentPage} / {totalPages}
+            </span>
+          </>
+        )}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={goToFirstPage}
+          disabled={!hasPrevPage}
+          aria-label={t("paginationFirst")}
+        >
+          <ChevronsLeft className="astw:size-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => goToPrevPage(pageInfo)}
+          disabled={!hasPrevPage}
+          aria-label={t("paginationPrevious")}
+        >
+          <ChevronLeft className="astw:size-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => goToNextPage(pageInfo)}
+          disabled={!hasNextPage || (totalPages !== null && currentPage >= totalPages)}
+          aria-label={t("paginationNext")}
+        >
+          <ChevronRight className="astw:size-4" />
+        </Button>
+        {totalPages !== null && (
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={goToLastPage}
+            disabled={!hasNextPage}
+            aria-label={t("paginationLast")}
+          >
+            <ChevronsRight className="astw:size-4" />
+          </Button>
+        )}
       </div>
     </div>
   );

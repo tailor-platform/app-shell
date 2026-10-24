@@ -146,7 +146,7 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
         <span className="astw:text-label-md astw:whitespace-nowrap astw:tabular-nums">
           {countText}
         </span>
-        <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />
+        {!narrow && <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />}
         {inline.map((action) => {
           return (
             <Button
@@ -194,7 +194,7 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
             </Menu.Content>
           </Menu.Root>
         )}
-        <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />
+        {!narrow && <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />}
         <Button
           size="sm"
           variant="ghost"

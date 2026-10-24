@@ -4,36 +4,49 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 /**
- * WCAG 1.4.3 contrast checks for the semantic colour roles, computed from
- * `themes/default.css` itself. Nothing is copied into the test, so a change to
- * a hue step or an alias that breaks a pair fails here.
+ * WCAG 1.4.3 contrast checks for the semantic colour roles, computed from the
+ * shipped theme files themselves. Nothing is copied into the test, so a change
+ * to a hue step, an alias or a palette surface that breaks a pair fails here.
  *
- * Scope of the guarantee: the default state of each pair, on the default
- * palette's `--card` and `--background`. Not covered on purpose:
+ * Scope of the guarantee: the default state of each pair, on `--card` and
+ * `--background`, in every shipped palette (default, cream, bloom). The
+ * palettes do not set the roles, so the pairs differ only by the page colour.
+ * Not covered on purpose:
  * - hover states (`surface-hover`) against 4.5:1: subtle-badge hover text is
  *   below 4.5:1 for some roles (danger and success in light mode). They are held
  *   at a documented floor (MIN_HOVER_TEXT) so they cannot get worse unnoticed,
  *   see decisions/semantic-color-roles.md;
- * - branded palettes (cream, bloom) and their tinted shell backgrounds;
+ * - the tinted shell background of cream and bloom (`--shell-gradient-base`);
  * - the neutral intent, whose values are the pre-existing system tokens;
  * - the warning `solid` fill against the card (a fill, not a text pair).
  */
 const here = dirname(fileURLToPath(import.meta.url));
-const css = readFileSync(join(here, "themes/default.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+const readTheme = (name: string) =>
+  readFileSync(join(here, `themes/${name}.css`), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+const defaultCss = readTheme("default");
 
 type Rgba = { r: number; g: number; b: number; a: number };
 type Mode = "light" | "dark";
+type Palette = "default" | "cream" | "bloom";
 
-/** Custom properties in effect on <html> for a mode, applying rules in source order. */
-function variablesFor(mode: Mode): Map<string, string> {
+/**
+ * Custom properties in effect on <html> for a mode, applying rules in source
+ * order. A palette file is imported after `default.css` and overrides it.
+ */
+function variablesFor(mode: Mode, palette: Palette = "default"): Map<string, string> {
   const vars = new Map<string, string>();
-  for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-    const selectors = rule[1].split(",").map((s) => s.trim());
-    // <html class="dark"> matches both `:root` and `.dark`; light matches `:root` only.
-    const applies = selectors.some((s) => s === ":root" || (mode === "dark" && s === ".dark"));
-    if (!applies) continue;
-    for (const decl of rule[2].matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
-      vars.set(decl[1], decl[2].replace(/\s+/g, " ").trim());
+  const sheets = palette === "default" ? [defaultCss] : [defaultCss, readTheme(palette)];
+  for (const css of sheets) {
+    for (const rule of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const selectors = rule[1].split(",").map((s) => s.trim());
+      // <html class="dark"> matches `:root`, `.dark` and `:root.dark`; light matches `:root` only.
+      const applies = selectors.some(
+        (s) => s === ":root" || (mode === "dark" && (s === ".dark" || s === ":root.dark")),
+      );
+      if (!applies) continue;
+      for (const decl of rule[2].matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
+        vars.set(decl[1], decl[2].replace(/\s+/g, " ").trim());
+      }
     }
   }
   return vars;
@@ -93,80 +106,98 @@ const MIN_NON_TEXT = 3;
 /** Known and accepted: subtle hover text is below AA for some roles. A floor, not a pass. */
 const MIN_HOVER_TEXT = 4.2;
 const modes: Mode[] = ["light", "dark"];
+const palettes: Palette[] = ["default", "cream", "bloom"];
 const intents = ["info", "success", "warning", "danger"] as const;
 const alertVariantFor = { info: "info", success: "success", warning: "warning", danger: "error" };
 const pages = ["--card", "--background"] as const;
 
-describe.each(modes)("semantic colour contrast (%s)", (mode) => {
-  const vars = variablesFor(mode);
-  const color = (name: string) => parseColor(`var(${name})`, vars);
-  /** Foreground drawn on a translucent surface that sits on a page colour. */
-  const pair = (fg: string, surface: string, page: string) => {
-    const base = color(page);
-    const bg = over(color(surface), base);
-    return contrast(over(color(fg), bg), bg);
-  };
+describe.each(palettes.flatMap((palette) => modes.map((mode) => [palette, mode] as const)))(
+  "semantic colour contrast (%s, %s)",
+  (palette, mode) => {
+    const vars = variablesFor(mode, palette);
+    const color = (name: string) => parseColor(`var(${name})`, vars);
+    /** Foreground drawn on a translucent surface that sits on a page colour. */
+    const pair = (fg: string, surface: string, page: string) => {
+      const base = color(page);
+      const bg = over(color(surface), base);
+      return contrast(over(color(fg), bg), bg);
+    };
 
-  it("resolves the page colours to opaque values", () => {
-    for (const page of pages) expect(color(page).a).toBe(1);
-  });
-
-  describe.each(intents)("%s", (intent) => {
-    const role = (name: string) => `--${intent}-${name}`;
-
-    it("the contrast role meets 4.5:1 on solid", () => {
-      expect(contrast(color(role("contrast")), color(role("solid")))).toBeGreaterThanOrEqual(
-        MIN_TEXT,
-      );
+    it("resolves the page colours to opaque values", () => {
+      for (const page of pages) expect(color(page).a).toBe(1);
     });
 
-    it("the contrast role meets 4.5:1 on solid-hover", () => {
-      expect(contrast(color(role("contrast")), color(role("solid-hover")))).toBeGreaterThanOrEqual(
-        MIN_TEXT,
-      );
-    });
+    describe.each(intents)("%s", (intent) => {
+      const role = (name: string) => `--${intent}-${name}`;
 
-    it.each(pages)("text meets 4.5:1 on surface over %s", (page) => {
-      expect(pair(role("text"), role("surface"), page)).toBeGreaterThanOrEqual(MIN_TEXT);
-    });
-
-    it.each(pages)(
-      "text stays above the documented hover floor on surface-hover over %s",
-      (page) => {
-        expect(pair(role("text"), role("surface-hover"), page)).toBeGreaterThanOrEqual(
-          MIN_HOVER_TEXT,
+      it("the contrast role meets 4.5:1 on solid", () => {
+        expect(contrast(color(role("contrast")), color(role("solid")))).toBeGreaterThanOrEqual(
+          MIN_TEXT,
         );
-      },
-    );
+      });
 
-    const variant = alertVariantFor[intent];
+      it("the contrast role meets 4.5:1 on solid-hover", () => {
+        expect(
+          contrast(color(role("contrast")), color(role("solid-hover"))),
+        ).toBeGreaterThanOrEqual(MIN_TEXT);
+      });
 
-    it.each(pages)("alert foreground meets 4.5:1 on alert background over %s", (page) => {
-      expect(
-        pair(`--alert-${variant}-foreground`, `--alert-${variant}-background`, page),
-      ).toBeGreaterThanOrEqual(MIN_TEXT);
+      it.each(pages)("text meets 4.5:1 on surface over %s", (page) => {
+        expect(pair(role("text"), role("surface"), page)).toBeGreaterThanOrEqual(MIN_TEXT);
+      });
+
+      it.each(pages)(
+        "text stays above the documented hover floor on surface-hover over %s",
+        (page) => {
+          expect(pair(role("text"), role("surface-hover"), page)).toBeGreaterThanOrEqual(
+            MIN_HOVER_TEXT,
+          );
+        },
+      );
+
+      const variant = alertVariantFor[intent];
+
+      it.each(pages)("alert foreground meets 4.5:1 on alert background over %s", (page) => {
+        expect(
+          pair(`--alert-${variant}-foreground`, `--alert-${variant}-background`, page),
+        ).toBeGreaterThanOrEqual(MIN_TEXT);
+      });
+
+      it.each(pages)("alert description meets 4.5:1 on alert background over %s", (page) => {
+        expect(
+          pair(`--alert-${variant}-foreground-muted`, `--alert-${variant}-background`, page),
+        ).toBeGreaterThanOrEqual(MIN_TEXT);
+      });
     });
 
-    it.each(pages)("alert description meets 4.5:1 on alert background over %s", (page) => {
-      expect(
-        pair(`--alert-${variant}-foreground-muted`, `--alert-${variant}-background`, page),
-      ).toBeGreaterThanOrEqual(MIN_TEXT);
-    });
-  });
+    describe("destructive aliases", () => {
+      it.each([
+        ["--destructive", "--danger-solid"],
+        ["--destructive-foreground", "--danger-contrast"],
+      ])("%s resolves to %s", (alias, role) => {
+        expect(vars.get(alias)).toBe(`var(${role})`);
+        expect(color(alias)).toEqual(color(role));
+      });
 
-  describe("destructive aliases", () => {
-    it.each([
-      ["--destructive", "--danger-solid"],
-      ["--destructive-foreground", "--danger-contrast"],
-    ])("%s resolves to %s", (alias, role) => {
-      expect(vars.get(alias)).toBe(`var(${role})`);
-      expect(color(alias)).toEqual(color(role));
+      it.each(pages)("danger solid meets 3:1 against %s (invalid-input border)", (page) => {
+        expect(contrast(color("--danger-solid"), color(page))).toBeGreaterThanOrEqual(MIN_NON_TEXT);
+      });
     });
+  },
+);
 
-    it.each(pages)("danger solid meets 3:1 against %s (invalid-input border)", (page) => {
-      expect(contrast(color("--danger-solid"), color(page))).toBeGreaterThanOrEqual(MIN_NON_TEXT);
-    });
-  });
+describe("palette files", () => {
+  // Guards the parser: if a palette's selectors stopped matching, the checks
+  // above would silently run against the default palette.
+  it.each(["cream", "bloom"] as const)(
+    "%s overrides --card and --muted in dark mode",
+    (palette) => {
+      const own = variablesFor("dark", palette);
+      const base = variablesFor("dark");
+      expect(own.get("--card")).not.toBe(base.get("--card"));
+      expect(own.get("--muted")).not.toBe(base.get("--muted"));
+    },
+  );
 });
 
 describe("default palette neutral tokens", () => {

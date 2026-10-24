@@ -82,7 +82,7 @@
       "hashes": {
         "typeSurface": "f28bf34ae1466912",
         "outline": "6138eac23571e177",
-        "snapshot": "d795320d53bd9ddb",
+        "snapshot": "049e72553f5b7a6f",
         "outputMd": "db2c4388ca783a75",
         "examples": "65d5fc73550e395a"
       }
@@ -1345,9 +1345,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "c76f789e50713de5",
+        "outline": "5da7385a0806c2ea",
         "snapshot": null,
-        "outputMd": "bea2c2be5e2ba53c",
+        "outputMd": "78dcc1a9d4f7ce3e",
         "examples": "4d19f4f688e0f0ac"
       }
     },
@@ -1734,7 +1734,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "3670e37a3c78abe7",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "bea2c2be5e2ba53c",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "78dcc1a9d4f7ce3e",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",

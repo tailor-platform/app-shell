@@ -82,7 +82,7 @@
       "hashes": {
         "typeSurface": "f28bf34ae1466912",
         "outline": "6138eac23571e177",
-        "snapshot": "d795320d53bd9ddb",
+        "snapshot": "049e72553f5b7a6f",
         "outputMd": "db2c4388ca783a75",
         "examples": "65d5fc73550e395a"
       }
@@ -206,11 +206,11 @@
       "claims": [],
       "symbols": ["Badge", "BadgeProps", "badgeVariants"],
       "hashes": {
-        "typeSurface": "86af3a3088ed46c4",
-        "outline": "c3273f9810b6dd91",
+        "typeSurface": "f4b8b24fb5f5bab1",
+        "outline": "0712a6c09e7ab542",
         "snapshot": null,
-        "outputMd": "0cb27fbce6f76e2e",
-        "examples": "edd9868442daa0b0"
+        "outputMd": "3d62a0fe0a539934",
+        "examples": "5aaa54515d4643ea"
       }
     },
     "button": {
@@ -1744,7 +1744,7 @@
     "packages/core/skills/app-shell-patterns/references/components/attachment.md": "35bebce540d6ac28",
     "packages/core/skills/app-shell-patterns/references/components/autocomplete.md": "bd6ae01bf39d1ad6",
     "packages/core/skills/app-shell-patterns/references/components/avatar.md": "a874b74c176bcb47",
-    "packages/core/skills/app-shell-patterns/references/components/badge.md": "0cb27fbce6f76e2e",
+    "packages/core/skills/app-shell-patterns/references/components/badge.md": "3d62a0fe0a539934",
     "packages/core/skills/app-shell-patterns/references/components/button.md": "bce0e2fada1d1638",
     "packages/core/skills/app-shell-patterns/references/components/card.md": "675dc665e5082ff0",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",

@@ -631,9 +631,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "ead7d94daf36e8da",
+        "outline": "4c5600d8b48764d8",
         "snapshot": null,
-        "outputMd": "717ef4e7ae835aff",
+        "outputMd": "55b2e5043d541c95",
         "examples": null
       }
     },
@@ -1345,9 +1345,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "c76f789e50713de5",
+        "outline": "eb4f242edc78ee73",
         "snapshot": null,
-        "outputMd": "bea2c2be5e2ba53c",
+        "outputMd": "36ac0fd5deb6d592",
         "examples": "4d19f4f688e0f0ac"
       }
     },
@@ -1734,7 +1734,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "3670e37a3c78abe7",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "bea2c2be5e2ba53c",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "36ac0fd5deb6d592",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
@@ -1816,8 +1816,8 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "aa60091d0e430762",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
-    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
+    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "55b2e5043d541c95",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "214b43b076a41a86",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "9145efebe27ab6b0"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "df7a2bce470c1d7b"
   }
 }

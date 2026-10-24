@@ -289,17 +289,18 @@ Pair a role with a color token from the Color section above. These pairings are 
 
 <!-- example: typography-roles -->
 
-```tsx
-<h2 className="text-heading-md">Section</h2>
-<p className="text-body-md text-muted-foreground">Description copy</p>
-<span className="text-body-sm text-muted-foreground">Updated 2h ago</span>
-```
-
-The [`Text`](../components/text.md) component applies the same roles with a `variant` prop. It renders a default element for each role (`h2` for headings, `p` for body text, `span` for the others), and its `render` prop sets the element, such as the heading level:
+For headings, body copy, labels, and captions, use the [`Text`](../components/text.md) component. Do not style a bare `p`, `h1` to `h6`, or `span` with `text-sm`, `text-xs`, or `font-*`. `Text` applies the same roles with a `variant` prop. It renders a default element for each role (`h2` for headings, `p` for body text, `span` for the others), and its `render` prop sets the element, such as the heading level:
 
 ```tsx
 <Text variant="heading-md" render={<h3 />}>Line items</Text>
 <Text variant="body-md" className="text-muted-foreground">Description copy</Text>
+<Text variant="body-sm" className="text-muted-foreground">Updated 2h ago</Text>
+```
+
+Use the role utility when you style an element that you render yourself, such as a table header cell or a link:
+
+```tsx
+<th className="text-label-md text-muted-foreground">Amount</th>
 ```
 
 On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's line height and letter spacing, including `leading-none`; see "Change a role" below. AppShell's own components use the roles: content text renders with `Text`, and controls use the role utility.

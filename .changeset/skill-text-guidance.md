@@ -2,5 +2,5 @@
 "@tailor-platform/app-shell": patch
 ---
 
-The `app-shell-patterns` skill now tells agents to write headings, body copy, labels, and captions with `Text` and a typography role, instead of a bare `<p>`, `<h*>`, or `<span>` with `text-sm` or `text-xs`.
-The document detail page example and the typography guide now follow this rule. The example's `Value` helper now uses `body-md`, the same role as the built-in `DescriptionCard` values.
+The `app-shell-patterns` skill has two new rules. Text uses `Text` and typography roles, not a bare `<p>`, `<h*>`, or `<span>` with `text-sm` or `text-lg font-semibold`. Status and feedback colors use the semantic color roles, not the deprecated `--status-*`, `--alert-*`, or `--destructive` tokens.
+The document detail page example, the typography guide, and the quickstart now use `Text`. The example's `Value` helper now uses `body-md`, the same role as the built-in `DescriptionCard` values.

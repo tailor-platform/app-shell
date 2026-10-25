@@ -1124,9 +1124,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "d5b840df87bc79e9",
+        "outline": "9b52f8cdbf18c8ac",
         "snapshot": null,
-        "outputMd": "6eb4056555d8ae7b",
+        "outputMd": "f2ad75a76a1d5206",
         "examples": null
       }
     },
@@ -1818,6 +1818,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "55b2e5043d541c95",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "214b43b076a41a86",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "df7a2bce470c1d7b"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "295c65741dd94817"
   }
 }

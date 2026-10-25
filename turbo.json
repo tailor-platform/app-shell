@@ -14,7 +14,8 @@
       "dependsOn": ["^build"]
     },
     "check-dts": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "passThroughEnv": ["HTTPS_PROXY"]
     },
     "lint": {},
     "test": {

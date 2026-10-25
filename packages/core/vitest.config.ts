@@ -1,5 +1,5 @@
 import path from "node:path";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 const coverageEnabled = process.env.CI === "true";
 const projectDir = import.meta.dirname;
@@ -10,6 +10,8 @@ export default defineConfig({
   },
   test: {
     environment: "happy-dom",
+    // `pnpm build` writes to dist/. Keep any test file there out of the run.
+    exclude: [...configDefaults.exclude, "dist/**"],
     typecheck: {
       enabled: true,
     },

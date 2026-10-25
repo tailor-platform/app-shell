@@ -18,8 +18,11 @@ import { describe, expect, it } from "vitest";
  * - the neutral intent, whose values are the pre-existing system tokens;
  * - the warning `solid` fill against the card (a fill, not a text pair).
  */
-const here = dirname(fileURLToPath(import.meta.url));
-const css = readFileSync(join(here, "themes/default.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+const assetsDir = join(dirname(fileURLToPath(import.meta.url)), "../src/assets");
+const css = readFileSync(join(assetsDir, "themes/default.css"), "utf8").replace(
+  /\/\*[\s\S]*?\*\//g,
+  "",
+);
 
 type Rgba = { r: number; g: number; b: number; a: number };
 type Mode = "light" | "dark";

@@ -23,6 +23,7 @@
   },
   "files": [
     "dist/**",
+    "!dist/**/*.test.*",
     "skills/**"
   ],
   "type": "module",

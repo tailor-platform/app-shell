@@ -705,7 +705,7 @@ export default function PurchaseOrderDetailPage({
           destructive: it's a problem to clear, not information to read.
           Each hold is released on its own, beside its own reason. */}
       {order.holds.length > 0 && (
-        <Card.Root className="border-destructive">
+        <Card.Root className="border-danger-solid">
           <Card.Header title="On hold" />
           <Card.Content className="flex flex-col gap-3">
             {order.holds.map((hold) => (

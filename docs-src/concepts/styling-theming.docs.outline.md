@@ -289,7 +289,7 @@ Pair a role with a color token from the Color section above. These pairings are 
 
 <!-- example: typography-roles -->
 
-For headings, body copy, labels, and captions, use the [`Text`](../components/text.md) component. Do not style a bare `p`, `h1` to `h6`, or `span` with `text-sm`, `text-xs`, or `font-*`. `Text` applies the same roles with a `variant` prop. It renders a default element for each role (`h2` for headings, `p` for body text, `span` for the others), and its `render` prop sets the element, such as the heading level:
+For headings, body copy, labels, and captions, use the [`Text`](../components/text.md) component. Do not style a bare `p`, `h1` to `h6`, or `span` with `text-sm`, `text-xs`, or `font-*`. A form field label is [`Field.Label`](../components/form.md), which already has the `label-md` role. `Text` applies the same roles with a `variant` prop. It renders a default element for each role (`h2` for headings, `p` for body text, `span` for the others), and its `render` prop sets the element, such as the heading level:
 
 ```tsx
 <Text variant="heading-md" render={<h3 />}>Line items</Text>

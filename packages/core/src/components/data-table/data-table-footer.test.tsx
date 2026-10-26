@@ -406,96 +406,134 @@ describe("DataTable column footer", () => {
     expect(table.selectedIds).toEqual(rows.map((row) => row.id));
   });
 
-  it("remeasures pinned offsets as footer widths and utility columns change", () => {
-    const observers: TestResizeObserver[] = [];
-    class TestResizeObserver implements ResizeObserver {
-      readonly targets = new Set<Element>();
-      constructor(readonly callback: ResizeObserverCallback) {
-        observers.push(this);
+  it.each([false, true])(
+    "remeasures pinned offsets as column widths and utility columns change (footer: %s)",
+    (hasFooter) => {
+      const observers: TestResizeObserver[] = [];
+      class TestResizeObserver implements ResizeObserver {
+        readonly targets = new Set<Element>();
+        constructor(readonly callback: ResizeObserverCallback) {
+          observers.push(this);
+        }
+        observe(target: Element) {
+          this.targets.add(target);
+        }
+        unobserve(target: Element) {
+          this.targets.delete(target);
+        }
+        disconnect() {
+          this.targets.clear();
+        }
       }
-      observe(target: Element) {
-        this.targets.add(target);
-      }
-      unobserve(target: Element) {
-        this.targets.delete(target);
-      }
-      disconnect() {
-        this.targets.clear();
-      }
-    }
-    vi.stubGlobal("ResizeObserver", TestResizeObserver);
-    let nameWidth = 100;
-    const measure = vi
-      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
-      .mockImplementation(function (this: HTMLElement) {
-        return new DOMRect(0, 0, this.dataset.colKey === "name" ? nameWidth : 100, 40);
+      vi.stubGlobal("ResizeObserver", TestResizeObserver);
+      let nameWidth = 100.25;
+      const measure = vi
+        .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+        .mockImplementation(function (this: HTMLElement) {
+          return new DOMRect(0, 0, this.dataset.colKey === "name" ? nameWidth : 100, 40);
+        });
+      const stableColumns: Column<Line>[] = [
+        {
+          ...columns[0],
+          pin: "left",
+          footer: hasFooter ? ({ rows: currentRows }) => currentRows[0]?.name : undefined,
+        },
+        { ...columns[1], pin: "left", footer: hasFooter ? columns[1].footer : undefined },
+      ];
+      const { container, rerender, unmount } = render(<Harness tableColumns={stableColumns} />, {
+        wrapper,
       });
-    const stableColumns: Column<Line>[] = [
-      {
-        ...columns[0],
-        pin: "left",
-        footer: ({ rows: currentRows }) => currentRows[0]?.name,
-      },
-      { ...columns[1], pin: "left" },
-    ];
-    const { container, rerender } = render(<Harness tableColumns={stableColumns} />, { wrapper });
-    const nameHeader = headerCells(container)[0];
-    const port = container.querySelector('[data-slot="table-container"]')!;
-    const notifyResize = (target: Element) => {
-      act(() => {
-        const entry: ResizeObserverEntry = {
-          target,
-          contentRect: new DOMRect(),
-          borderBoxSize: [],
-          contentBoxSize: [],
-          devicePixelContentBoxSize: [],
-        };
-        observers
-          .filter((observer) => observer.targets.has(target))
-          .forEach((observer) => observer.callback([entry], observer));
-      });
-    };
+      const nameHeader = headerCells(container)[0];
+      const port = container.querySelector<HTMLElement>('[data-slot="table-container"]')!;
+      let viewportWidth = port.clientWidth;
+      vi.spyOn(port, "clientWidth", "get").mockImplementation(() => viewportWidth);
+      const notifyResize = (target: Element) => {
+        act(() => {
+          const entry: ResizeObserverEntry = {
+            target,
+            contentRect: new DOMRect(),
+            borderBoxSize: [],
+            contentBoxSize: [],
+            devicePixelContentBoxSize: [],
+          };
+          observers
+            .filter((observer) => observer.targets.has(target))
+            .forEach((observer) => observer.callback([entry], observer));
+        });
+      };
 
-    expect(footerCells(container)[1].style.left).toBe("100px");
-    expect(observers.some((observer) => observer.targets.has(nameHeader))).toBe(true);
-    measure.mockClear();
-    notifyResize(port);
-    expect(measure).not.toHaveBeenCalled();
+      expect(!!footerOf(container)).toBe(hasFooter);
+      expect(headerCells(container)[1].style.left).toBe("100.25px");
+      if (hasFooter) expect(footerCells(container)[1].style.left).toBe("100.25px");
+      expect(observers.some((observer) => observer.targets.has(nameHeader))).toBe(true);
+      measure.mockClear();
+      notifyResize(port);
+      expect(measure).not.toHaveBeenCalled();
 
-    rerender(
-      <Harness
-        tableColumns={stableColumns}
-        data={{ rows: [{ ...rows[0], name: "A much longer total label" }] }}
-      />,
-    );
-    nameWidth = 200;
-    notifyResize(nameHeader);
+      rerender(
+        <Harness
+          tableColumns={stableColumns}
+          data={{ rows: [{ ...rows[0], name: "A much longer total label" }] }}
+        />,
+      );
+      nameWidth = 200.5;
+      notifyResize(nameHeader);
 
-    expect(footerCells(container)[0].textContent).toBe("A much longer total label");
-    expect(footerCells(container)[1].style.left).toBe("200px");
-    expect(headerCells(container)[1].style.left).toBe("200px");
-
-    const utilities: Partial<UseDataTableOptions<Line>>[] = [
-      { rowSelection: {} },
-      { rowExpansion: { render: () => "Details" } },
-      { rowActions: [{ id: "inspect", label: "Inspect", onClick: vi.fn() }] },
-    ];
-    for (const options of utilities) {
-      rerender(<Harness tableColumns={stableColumns} options={options} />);
-      const utility = headerCells(container).find((cell) =>
-        cell.dataset.colKey?.startsWith("__datatable_"),
+      if (hasFooter) {
+        expect(footerCells(container)[0].textContent).toBe("A much longer total label");
+        expect(footerCells(container)[1].style.left).toBe("200.5px");
+      }
+      expect(headerCells(container)[1].style.left).toBe("200.5px");
+      const quantityCell = container.querySelector<HTMLTableCellElement>(
+        '[data-slot="data-table-row"] td:nth-child(2)',
       )!;
-      expect(observers.some((observer) => observer.targets.has(utility))).toBe(true);
-      const expectedOffset = options.rowActions ? "0px" : "100px";
-      expect(
-        footerCells(container).find((cell) => cell.dataset.colKey === "name")?.style.left,
-      ).toBe(expectedOffset);
+      expect(quantityCell.style.left).toBe("200.5px");
 
-      rerender(<Harness tableColumns={stableColumns} />);
-      expect(observers.some((observer) => observer.targets.has(utility))).toBe(false);
-      expect(footerCells(container)[0].style.left).toBe("0px");
-    }
-  });
+      measure.mockClear();
+      viewportWidth = 600;
+      nameWidth = 150.75;
+      notifyResize(port);
+      expect(measure).toHaveBeenCalled();
+      expect(port.style.getPropertyValue("--data-table-viewport")).toBe("600px");
+      expect(headerCells(container)[1].style.left).toBe("150.75px");
+      expect(quantityCell.style.left).toBe("150.75px");
+      if (hasFooter) expect(footerCells(container)[1].style.left).toBe("150.75px");
+
+      measure.mockClear();
+      notifyResize(port);
+      expect(measure).not.toHaveBeenCalled();
+
+      const utilities: Partial<UseDataTableOptions<Line>>[] = [
+        { rowSelection: {} },
+        { rowExpansion: { render: () => "Details" } },
+        { rowActions: [{ id: "inspect", label: "Inspect", onClick: vi.fn() }] },
+      ];
+      for (const options of utilities) {
+        rerender(<Harness tableColumns={stableColumns} options={options} />);
+        const utility = headerCells(container).find((cell) =>
+          cell.dataset.colKey?.startsWith("__datatable_"),
+        )!;
+        expect(observers.some((observer) => observer.targets.has(utility))).toBe(true);
+        const expectedOffset = options.rowActions ? "0px" : "100px";
+        expect(
+          headerCells(container).find((cell) => cell.dataset.colKey === "name")?.style.left,
+        ).toBe(expectedOffset);
+        if (hasFooter) {
+          expect(
+            footerCells(container).find((cell) => cell.dataset.colKey === "name")?.style.left,
+          ).toBe(expectedOffset);
+        }
+
+        rerender(<Harness tableColumns={stableColumns} />);
+        expect(observers.some((observer) => observer.targets.has(utility))).toBe(false);
+        expect(headerCells(container)[0].style.left).toBe("0px");
+        if (hasFooter) expect(footerCells(container)[0].style.left).toBe("0px");
+      }
+
+      unmount();
+      expect(observers.every((observer) => observer.targets.size === 0)).toBe(true);
+    },
+  );
 
   it("keeps the existing DataTable.Footer separate from the table's aggregate row", () => {
     const { container } = render(<Harness footerBar />, { wrapper });

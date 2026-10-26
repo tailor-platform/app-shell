@@ -127,6 +127,53 @@ export function ColumnAggregations() {
   );
 }
 
+export function ComposedAggregations() {
+  type Line = { id: string; amount: number | null; currency: "JPY" | "USD" };
+  const [mixed, setMixed] = useState(false);
+  const rows: Line[] = [
+    { id: "1", amount: 1000, currency: "JPY" },
+    { id: "2", amount: 500, currency: mixed ? "USD" : "JPY" },
+    { id: "3", amount: null, currency: "USD" },
+  ];
+  const sumAmount = aggregations.sum(
+    (row: Line) => row.amount,
+    (total) => (total === null ? "Invalid amount" : total.toLocaleString("en-US")),
+  );
+  const { column } = createColumnHelper<Line>();
+  const table = useDataTable({
+    data: { rows },
+    columns: [
+      column({ id: "id", label: "Line", type: "text" }),
+      column({
+        id: "amount",
+        label: "Amount",
+        type: "money",
+        typeOptions: { currency: (row) => row.currency },
+        footer: (ctx) => {
+          const currencies = new Set(
+            ctx.rows.filter((row) => row.amount != null).map((row) => row.currency),
+          );
+          if (currencies.size > 1) {
+            return `Mixed currencies: ${[...currencies].join(", ")}`;
+          }
+          return sumAmount(ctx);
+        },
+      }),
+    ],
+  });
+
+  return (
+    <div className="space-y-3">
+      <Button variant="outline" aria-pressed={mixed} onClick={() => setMixed((value) => !value)}>
+        Mix currencies
+      </Button>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    </div>
+  );
+}
+
 export function ImmediateSaving() {
   type Line = { id: string; item: string; ordered: number; received: number | null };
   const initialRows: Line[] = [

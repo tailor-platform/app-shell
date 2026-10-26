@@ -420,6 +420,63 @@ function ColumnAggregations() {
 - **Typed selectors with runtime validation.** Numeric selectors must return `number | null | undefined`; selecting a string, mixed, or unknown value is a type error regardless of the column's presentation `type`. Runtime validation remains in place for untrusted values, `NaN`, and infinities. `count(selector)` accepts values of any type. Keep selectors and transformers pure; exceptions from them propagate to the caller.
 - **Same footer lifecycle.** The callback receives the current page's adopted `data.rows`, not only selected rows or records on other pages. Loading displays skeletons without evaluating selectors or transformers. Aggregations do not add synthetic records, row interactions, or a new formatting system. Only callbacks with renderable output can be assigned to `footer`; object-producing transformers remain valid outside DataTable.
 
+#### Composing with business validation
+
+Use a normal footer callback to check relationships between rows before invoking an aggregation. In this example, the outer footer rejects mixed currencies with a descriptive message, `sumAmount` performs the numeric calculation, and its transformer handles formatting or an invalid numeric result. The transformer is not an error handler and does not receive row context.
+
+Only rows with non-nullish amounts participate in the currency check, matching the aggregation's nullish-value handling. Toggle **Mix currencies** to switch between a valid total and a mixed-currency message. No currency conversion or new aggregation API is involved.
+
+<example-preview name="composed-aggregations"></example-preview>
+
+```tsx
+function ComposedAggregations() {
+  type Line = { id: string; amount: number | null; currency: "JPY" | "USD" };
+  const [mixed, setMixed] = useState(false);
+  const rows: Line[] = [
+    { id: "1", amount: 1000, currency: "JPY" },
+    { id: "2", amount: 500, currency: mixed ? "USD" : "JPY" },
+    { id: "3", amount: null, currency: "USD" },
+  ];
+  const sumAmount = aggregations.sum(
+    (row: Line) => row.amount,
+    (total) => (total === null ? "Invalid amount" : total.toLocaleString("en-US")),
+  );
+  const { column } = createColumnHelper<Line>();
+  const table = useDataTable({
+    data: { rows },
+    columns: [
+      column({ id: "id", label: "Line", type: "text" }),
+      column({
+        id: "amount",
+        label: "Amount",
+        type: "money",
+        typeOptions: { currency: (row) => row.currency },
+        footer: (ctx) => {
+          const currencies = new Set(
+            ctx.rows.filter((row) => row.amount != null).map((row) => row.currency),
+          );
+          if (currencies.size > 1) {
+            return `Mixed currencies: ${[...currencies].join(", ")}`;
+          }
+          return sumAmount(ctx);
+        },
+      }),
+    ],
+  });
+
+  return (
+    <div className="space-y-3">
+      <Button variant="outline" aria-pressed={mixed} onClick={() => setMixed((value) => !value)}>
+        Mix currencies
+      </Button>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    </div>
+  );
+}
+```
+
 ### Column footer vs. table footer
 
 These APIs use “footer” at different scopes:

@@ -93,6 +93,43 @@ describe("selector aggregations", () => {
     ).toBe(false);
   });
 
+  it("composes row validation with aggregation and result formatting", () => {
+    type MoneyLine = { amount: number | null; currency: string };
+    const selector = vi.fn((row: MoneyLine) => row.amount);
+    const transformer = vi.fn((total: number | null) =>
+      total === null ? "Invalid amount" : total.toLocaleString("en-US"),
+    );
+    const sumAmount = aggregations.sum(selector, transformer);
+    const moneyFooter = (ctx: { rows: readonly MoneyLine[] }) => {
+      const currencies = new Set(
+        ctx.rows.filter((row) => row.amount != null).map((row) => row.currency),
+      );
+      if (currencies.size > 1) {
+        return `Mixed currencies: ${[...currencies].join(", ")}`;
+      }
+      return sumAmount(ctx);
+    };
+
+    const rows: MoneyLine[] = [
+      { amount: 1000, currency: "JPY" },
+      { amount: 500, currency: "JPY" },
+      { amount: null, currency: "USD" },
+    ];
+    expect(moneyFooter({ rows })).toBe("1,500");
+    selector.mockClear();
+    transformer.mockClear();
+
+    expect(moneyFooter({ rows: [rows[0], { amount: 500, currency: "USD" }] })).toBe(
+      "Mixed currencies: JPY, USD",
+    );
+    expect(selector).not.toHaveBeenCalled();
+    expect(transformer).not.toHaveBeenCalled();
+
+    expect(moneyFooter({ rows: [rows[2]] })).toBe("0");
+    expect(moneyFooter({ rows: [] })).toBe("0");
+    expect(moneyFooter({ rows: [{ amount: Number.NaN, currency: "JPY" }] })).toBe("Invalid amount");
+  });
+
   it("passes each row alone to its selector and does not select empty input", () => {
     const row = { quantity: 2 };
     const selector = vi.fn((value: typeof row) => value.quantity);

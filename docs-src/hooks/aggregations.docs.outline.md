@@ -71,6 +71,48 @@ A transformer receives only the result, not rows, selected values, columns, or U
 
 For detached callbacks, annotate the selector's row parameter as above so the row and transformed result types can both be inferred. Row types are not restricted to objects; for example, `aggregations.sum<number>((value) => value)({ rows: [1, 2] })` returns `3`.
 
+## Composing with business validation
+
+An aggregation is an ordinary callback, so a wrapper can validate the supplied rows before calling it. Keep business rules in the wrapper, numeric calculation in the aggregation, and result formatting in the transformer. The transformer is not an error handler: it receives `null` for invalid numeric results but has no row context or business-error details; selector exceptions still propagate.
+
+For example, reject mixed currencies before adding monetary amounts:
+
+```tsx
+type MoneyLine = { amount: number | null; currency: string };
+
+const sumAmount = aggregations.sum(
+  (row: MoneyLine) => row.amount,
+  (total) => (total === null ? "Invalid amount" : total.toLocaleString("en-US")),
+);
+
+const moneyFooter = (ctx: { rows: readonly MoneyLine[] }) => {
+  const currencies = new Set(
+    ctx.rows.filter((row) => row.amount != null).map((row) => row.currency),
+  );
+  if (currencies.size > 1) {
+    return `Mixed currencies: ${[...currencies].join(", ")}`;
+  }
+  return sumAmount(ctx);
+};
+
+moneyFooter({
+  rows: [
+    { amount: 1000, currency: "JPY" },
+    { amount: 500, currency: "JPY" },
+  ],
+}); // "1,500"
+moneyFooter({
+  rows: [
+    { amount: 1000, currency: "JPY" },
+    { amount: 500, currency: "USD" },
+  ],
+}); // "Mixed currencies: JPY, USD"
+```
+
+The guard ignores nullish amounts because they do not contribute to the sum. A rejected currency combination returns directly without evaluating the selector or transformer. Neither the wrapper nor the helper converts currencies or provides arbitrary-precision arithmetic.
+
+Pass `moneyFooter` directly as a column's `footer`. See the [runnable DataTable example](../components/data-table.md#composing-with-business-validation) to toggle mixed currencies and observe the composed behavior.
+
 ## DataTable integration
 
 Pass an aggregation callback directly to a column footer. It is an ordinary footer renderer that reads the current `ctx.rows`; DataTable needs no aggregation-specific handling:

@@ -54,9 +54,9 @@
       "symbols": ["Aggregation", "aggregations"],
       "hashes": {
         "typeSurface": "0c11b3ba9d3529ad",
-        "outline": "f9d9b75632aa6528",
+        "outline": "5cfd5048505b0913",
         "snapshot": null,
-        "outputMd": "9c7086bacea85f8f",
+        "outputMd": "daf6c93e7285ee88",
         "examples": null
       }
     },
@@ -472,10 +472,10 @@
       ],
       "hashes": {
         "typeSurface": "05cbf8a4bdb7a863",
-        "outline": "921ad344acc3757c",
+        "outline": "d3ad59bbe7b797aa",
         "snapshot": "a97e067c66e46ef6",
-        "outputMd": "8c68f35d5bbda778",
-        "examples": "9a6e8e975922bab0"
+        "outputMd": "c0ce7e8a6873502e",
+        "examples": "10abd548e6affb9d"
       }
     },
     "date-picker": {
@@ -1769,7 +1769,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "8c68f35d5bbda778",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "c0ce7e8a6873502e",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "bc69f14829004f9d",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
@@ -1799,7 +1799,7 @@
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
-    "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "9c7086bacea85f8f",
+    "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "daf6c93e7285ee88",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",
     "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "3035dea9ac31b7f5",

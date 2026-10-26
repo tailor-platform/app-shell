@@ -298,6 +298,9 @@ export {
   type TableOrderableFieldName,
 } from "./types/collection";
 
+// Selector aggregations
+export { aggregations, type Aggregation } from "./lib/aggregations";
+
 // DataTable
 export {
   CellEditError,

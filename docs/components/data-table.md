@@ -264,7 +264,7 @@ const table = useDataTable<Order>({
 
 ## Column footers
 
-Set `column.footer` to a static string such as `footer: "Total"`, or a renderer for a total or other content beneath that column without adding synthetic rows to `data.rows`. `DataTable.Table` automatically renders one `<tfoot>` row when at least one visible column defines a footer, including an empty string. Fixed header text still uses `column.label`; `column.header` remains a custom renderer that replaces the built-in header UI.
+Set `column.footer` to a static string such as `footer: "Total"` or a renderer to show content beneath that column without adding synthetic rows to `data.rows`. The [`aggregations`](../api/aggregations.md) helpers create ordinary footer renderers from typed selectors. `DataTable.Table` automatically renders one `<tfoot>` row when at least one visible column defines a footer, including an empty string. Fixed header text still uses `column.label`; `column.header` remains a custom renderer that replaces the built-in header UI.
 
 <example-preview name="column-footers"></example-preview>
 
@@ -295,7 +295,7 @@ function ColumnFooters() {
               current.map((line) => (line.id === row.id ? { ...line, quantity } : line)),
             ),
         },
-        footer: ({ rows }) => rows.reduce((sum, row) => sum + (row.quantity ?? 0), 0),
+        footer: aggregations.sum((row) => row.quantity),
       }),
     ],
   });
@@ -311,10 +311,172 @@ function ColumnFooters() {
 - **Current rows, not all records.** `ctx.rows` is the current `data.rows` array exposed as read-only, so a paginated table computes a page total. Selection does not narrow it. For a server-calculated total across all pages, use a closure such as `footer: () => totalQuantity` instead.
 - **Current adopted values.** Updating `data.rows`, including adopting a confirmed cell edit, updates the footer. Unconfirmed editor drafts are not included, and footer callbacks must not mutate rows.
 - **Consumer-owned content and formatting.** A string is displayed as-is; renderers can return text, numbers, or JSX. `type` and `typeOptions` do not format footer results. A column without `footer`, or a renderer returning `null`, leaves an empty cell.
-- **Do not sum mixed currencies.** A `money` column can resolve its currency per row, so check that all amounts being summed use the same currency before displaying a monetary total. If multiple currencies are present, return a placeholder such as `"N/A"` or `"–"` instead of adding the amounts together. Currency checks, aggregation, and formatting belong to the consumer; the table does not convert currencies or validate footer totals.
+- **Do not sum mixed currencies.** A `money` column can resolve its currency per row, so check that all amounts being summed use the same currency before displaying a monetary total. If multiple currencies are present, return a placeholder such as `"N/A"` or `"–"` instead of adding the amounts together. Currency checks remain the consumer's responsibility; see [Composing with business validation](#composing-with-business-validation) for how to guard an aggregation. The table does not convert currencies or validate footer totals.
 - **Shared column layout.** Footer cells follow column width, alignment, ordering, visibility, and left/right pinning. Hidden columns' footer callbacks are not called. The row sticks to the bottom of the table's scroll container during vertical scrolling, paired with the sticky header at the top.
 - **Not data rows.** The footer has no generated editors, selection checkboxes, expansion triggers, or row-action menus; their utility columns have empty footer cells to preserve alignment. Footer cells do not trigger `onClickRow`.
 - **Loading and empty states.** Loading keeps the footer row mounted and replaces defined footer content with skeletons without calling footer renderers, including during page changes. This preserves the footer region without showing stale totals or calculating from incomplete data. Errors hide the footer. Loaded empty data still calls visible footer renderers with `rows: []`; the consumer chooses whether to return zero, a dash, or `null` for a blank cell. The table does not substitute these values. Check `rows.length` to distinguish no records from records whose total is zero. If no visible column defines `footer`, no `<tfoot>` is rendered.
+
+### Aggregation helpers
+
+Import [`aggregations`](../api/aggregations.md) and pass a required row selector to `.sum()`, `.avg()`, `.min()`, `.max()`, or `.count()`. For example, `footer: aggregations.sum((row) => row.quantity)` returns an ordinary footer renderer that selects and sums quantities from the current `ctx.rows`. Inline selectors infer the row type from the surrounding column definition. The same callback can be invoked outside DataTable with `{ rows }`.
+
+The selector determines the source independently of the column's `id`, `accessor`, and `render`. To aggregate a computed cell value, explicitly use the same calculation in the selector; the table does not derive or apply it automatically.
+
+<example-preview name="column-aggregations"></example-preview>
+
+```tsx
+function ColumnAggregations() {
+  type Line = {
+    id: string;
+    item: string;
+    quantity: number | null;
+    weightKg: number | null;
+    discount: number;
+    unitPrice: number;
+    note: string | null;
+  };
+  const rows: Line[] = [
+    {
+      id: "1",
+      item: "Small carton",
+      quantity: 2,
+      weightKg: 1.25,
+      discount: 0,
+      unitPrice: 12,
+      note: null,
+    },
+    {
+      id: "2",
+      item: "Large carton",
+      quantity: 3,
+      weightKg: 2.5,
+      discount: 5,
+      unitPrice: 10,
+      note: "Ready",
+    },
+  ];
+  const { column } = createColumnHelper<Line>();
+  const table = useDataTable({
+    data: { rows },
+    columns: [
+      column({ id: "item", label: "Item", type: "text", footer: "Aggregates" }),
+      column({
+        id: "quantity",
+        label: "Quantity",
+        type: "number",
+        footer: aggregations.sum((row) => row.quantity),
+      }),
+      column({
+        id: "weightKg",
+        label: "Weight (kg)",
+        type: "number",
+        typeOptions: { maxDecimals: 3 },
+        footer: aggregations.avg(
+          (row) => row.weightKg,
+          (average) => <strong>{average?.toFixed(3) ?? "–"}</strong>,
+        ),
+      }),
+      column({
+        id: "discount",
+        label: "Discount %",
+        type: "number",
+        footer: aggregations.max((row) => row.discount),
+      }),
+      column({
+        id: "unitPrice",
+        label: "Unit price",
+        type: "number",
+        footer: aggregations.min((row) => row.unitPrice),
+      }),
+      column({
+        id: "note",
+        label: "Note",
+        type: "text",
+        footer: aggregations.count(
+          (row) => row.note,
+          (count) => `${count} with notes`,
+        ),
+      }),
+    ],
+  });
+
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+```
+
+| Helper            | Values                                                                      | No non-null values |
+| ----------------- | --------------------------------------------------------------------------- | ------------------ |
+| `sum(selector)`   | Sum of finite numbers                                                       | `0`                |
+| `avg(selector)`   | Average of finite numbers; nullish values are excluded from the denominator | `null`             |
+| `min(selector)`   | Minimum finite number; no date or string comparison                         | `null`             |
+| `max(selector)`   | Maximum finite number; no date or string comparison                         | `null`             |
+| `count(selector)` | Number of non-nullish values of any type                                    | `0`                |
+
+- **Missing and invalid values.** All helpers skip selected `null` and `undefined` values. Numeric helpers return `null` for the entire aggregate if any non-nullish selected value is not a finite JavaScript number, including numeric strings, `NaN`, and infinities. They do not coerce values or display a partial total. A non-finite calculated result also returns `null`. `count(selector)` counts selected values such as `0`, `false`, and the empty string; it is not a truthiness check or a count of all rows.
+- **Plain output by default.** Without a transformer, the result is displayed as a number, or a blank cell for `null`. Column `type` and `typeOptions` do not format it. Pass an optional second argument such as `aggregations.sum((row) => row.quantity, (value) => value === null ? "–" : value + " units")` to customize the output. Numeric transformers receive `number | null`; count transformers receive `number`. Transformers receive only the result and run once per invocation, including empty and invalid input. For more involved logic, use a custom `footer: (ctx) => ...` callback.
+- **Typed selectors with runtime validation.** Numeric selectors must return `number | null | undefined`; selecting a string, mixed, or unknown value is a type error regardless of the column's presentation `type`. Runtime validation remains in place for untrusted values, `NaN`, and infinities. `count(selector)` accepts values of any type. Keep selectors and transformers pure; exceptions from them propagate to the caller.
+- **Same footer lifecycle.** The callback receives the current page's adopted `data.rows`, not only selected rows or records on other pages. Loading displays skeletons without evaluating selectors or transformers. Aggregations do not add synthetic records, row interactions, or a new formatting system. Only callbacks with renderable output can be assigned to `footer`; object-producing transformers remain valid outside DataTable.
+
+#### Composing with business validation
+
+Use a normal footer callback to check relationships between rows before invoking an aggregation. In this example, the outer footer rejects mixed currencies with a descriptive message, `sumAmount` performs the numeric calculation, and its transformer handles formatting or an invalid numeric result. The transformer is not an error handler and does not receive row context.
+
+Only rows with non-nullish amounts participate in the currency check, matching the aggregation's nullish-value handling. Toggle **Mix currencies** to switch between a valid total and a mixed-currency message. No currency conversion or new aggregation API is involved.
+
+<example-preview name="composed-aggregations"></example-preview>
+
+```tsx
+function ComposedAggregations() {
+  type Line = { id: string; amount: number | null; currency: "JPY" | "USD" };
+  const [mixed, setMixed] = useState(false);
+  const rows: Line[] = [
+    { id: "1", amount: 1000, currency: "JPY" },
+    { id: "2", amount: 500, currency: mixed ? "USD" : "JPY" },
+    { id: "3", amount: null, currency: "USD" },
+  ];
+  const sumAmount = aggregations.sum(
+    (row: Line) => row.amount,
+    (total) => (total === null ? "Invalid amount" : total.toLocaleString("en-US")),
+  );
+  const { column } = createColumnHelper<Line>();
+  const table = useDataTable({
+    data: { rows },
+    columns: [
+      column({ id: "id", label: "Line", type: "text" }),
+      column({
+        id: "amount",
+        label: "Amount",
+        type: "money",
+        typeOptions: { currency: (row) => row.currency },
+        footer: (ctx) => {
+          const currencies = new Set(
+            ctx.rows.filter((row) => row.amount != null).map((row) => row.currency),
+          );
+          if (currencies.size > 1) {
+            return `Mixed currencies: ${[...currencies].join(", ")}`;
+          }
+          return sumAmount(ctx);
+        },
+      }),
+    ],
+  });
+
+  return (
+    <div className="space-y-3">
+      <Button variant="outline" aria-pressed={mixed} onClick={() => setMixed((value) => !value)}>
+        Mix currencies
+      </Button>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    </div>
+  );
+}
+```
 
 ### Column footer vs. table footer
 
@@ -949,7 +1111,7 @@ A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated 
 | ---------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `label`    | `string`                                                    | Column header text. Omit for icon-only columns.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `header`   | `(ctx: HeaderRenderContext) => ReactNode`                   | Custom header renderer. Presentation only. When omitted, the built-in header renders `label` and owns the sort button/indicator. When provided, the return value replaces the built-in header entirely; sortable custom headers receive `sortDirection` and `activateSort()` via `ctx` and must render their own click surface for left-click sorting. The header context menu still uses the column metadata (`label`, `sort`, etc.).                                                                            |
-| `footer`   | `string \| ((ctx: FooterRenderContext<TRow>) => ReactNode)` | Optional static string or column footer renderer. Renderers receive current `data.rows` (the current page, not selected rows or all records). Enables the automatic sticky `<tfoot>` row; no default content or typed formatting is applied. See [Column footers](#column-footers).                                                                                                                                                                                                                               |
+| `footer`   | `string \| ((ctx: FooterRenderContext<TRow>) => ReactNode)` | Optional static string or column footer renderer, including callbacks created by `aggregations`. Renderers receive current `data.rows` (the current page, not selected rows or all records). Enables the automatic sticky `<tfoot>` row; no default content or typed formatting is applied. See [Column footers](#column-footers).                                                                                                                                                                                |
 | `render`   | `(row: TRow) => ReactNode`                                  | Renders the cell content. Presentation only. Optional — overrides the built-in `type` display renderer when set, not an editor configured through `edit`. Leave `edit` unset to draw your own editor with `render`. Built-in behaviors that need the raw value (truncate tooltip, cell copy/filter context-menu actions) still resolve it from `accessor` first, then `row[col.id]`, and only fall back to the return value of `render(row)` when it is a primitive (`string`, `number`, `boolean`, or `bigint`). |
 | `id`       | `string`                                                    | Stable identifier for column visibility, persisted layout state, raw-value fallback (`row[col.id]`), and the React key. Falls back to `label` when omitted. Set this explicitly when `label` is absent, not unique, or when a custom-rendered column should still participate in built-in cell behaviors that need a raw value.                                                                                                                                                                                   |
 | `width`    | `number`                                                    | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -1388,7 +1550,7 @@ useDataTable<Order>({
 
 ## `createColumnHelper`
 
-Factory that captures the row type once and returns `column` and `inferColumns` with `TRow` already bound. Prefer this over the standalone `column()` function to avoid repeating the generic parameter.
+Factory that captures the row type once and returns `column` and `inferColumns` with `TRow` already bound. Prefer this over the standalone `column()` function to avoid repeating the generic parameter. Selector-based `aggregations` are imported separately; inline footer selectors infer their row type from the column definition.
 
 ```tsx
 const { column, inferColumns } = createColumnHelper<Order>();
@@ -1587,5 +1749,6 @@ const columns = [
 
 ## Related
 
+- [aggregations](../api/aggregations.md) — Selector-based aggregation helpers for column footers
 - [CsvImporter](./csv-importer.md) — Guided CSV import flow
 - [Table](./table.md) — Low-level table primitives used internally by DataTable

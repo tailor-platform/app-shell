@@ -183,9 +183,9 @@ test("generic object results are available outside DataTable but are not rendera
   column({ id: "qty", footer: summary });
   // @ts-expect-error Direct column definitions also require renderable output.
   const invalid: Column<Row> = { id: "qty", footer: summary };
-  // @ts-expect-error Inline transformer output must also be renderable.
   column({
     id: "qty",
+    // @ts-expect-error Inline transformer output must also be renderable.
     footer: aggregations.sum(
       (row) => row.qty,
       (total) => ({ total }),
@@ -218,9 +218,9 @@ test("selectors are required and a transformed result requires a matching transf
   aggregations.count();
   // @ts-expect-error A requested transformed result requires a transformer.
   aggregations.sum<Row, string>((row) => row.qty);
-  // @ts-expect-error The transformer receives a numeric result, not text.
   aggregations.sum(
     (row: Row) => row.qty,
+    // @ts-expect-error The transformer receives a numeric result, not text.
     (value: string) => value,
   );
 });

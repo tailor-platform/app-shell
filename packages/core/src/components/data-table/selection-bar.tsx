@@ -109,7 +109,7 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
       className="astw:max-w-full astw:shrink-0"
     >
       <Toolbar.Group>
-        <span className="astw:text-sm astw:font-medium astw:whitespace-nowrap astw:tabular-nums">
+        <span className="astw:text-label-md astw:whitespace-nowrap astw:tabular-nums">
           {countText}
         </span>
         <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />

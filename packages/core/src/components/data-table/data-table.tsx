@@ -116,7 +116,7 @@ const HEADER_CONTEXT_MENU_POPUP_CLASS = cn(
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
 const HEADER_CONTEXT_MENU_ITEM_CLASS = cn(
-  "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-sm astw:outline-hidden",
+  "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-body-md astw:outline-hidden",
   "astw:data-highlighted:bg-accent astw:data-highlighted:text-accent-foreground",
   "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
 );
@@ -1095,7 +1095,7 @@ function SortIndicator({ direction }: { direction: "Asc" | "Desc" }) {
   return (
     <span
       data-slot="data-table-sort-indicator"
-      className="astw:text-muted-foreground astw:text-xs"
+      className="astw:text-muted-foreground astw:text-label-sm"
       aria-hidden
     >
       {direction === "Asc" ? "▲" : "▼"}

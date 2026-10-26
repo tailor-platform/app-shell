@@ -19,7 +19,7 @@ import type { CalendarDay, CalendarViewState } from "./use-calendar-base-state";
 // arbitrary variants match attribute presence) — the same contract the
 // react-aria implementation uses, so the visual identity is identical.
 const calendarCellVariants = cva(
-  "astw:flex astw:size-9 astw:cursor-pointer astw:items-center astw:justify-center astw:rounded-md astw:text-sm",
+  "astw:flex astw:size-9 astw:cursor-pointer astw:items-center astw:justify-center astw:rounded-md astw:text-body-md",
   {
     variants: {
       state: {
@@ -161,11 +161,7 @@ export function CalendarView({
         >
           <ChevronLeftIcon className="astw:size-4" />
         </button>
-        <span
-          id={headingId}
-          aria-live="polite"
-          className="astw:text-sm astw:font-medium astw:text-foreground"
-        >
+        <span id={headingId} aria-live="polite" className="astw:text-label-md astw:text-foreground">
           {state.title}
         </span>
         <button
@@ -203,7 +199,7 @@ export function CalendarView({
                 key={i}
                 scope="col"
                 aria-label={day.long}
-                className="astw:w-9 astw:pb-1 astw:text-center astw:text-xs astw:font-normal astw:text-muted-foreground"
+                className="astw:w-9 astw:pb-1 astw:text-center astw:text-body-sm astw:text-muted-foreground"
               >
                 <span aria-hidden="true">{day.short}</span>
               </th>

@@ -1,5 +1,11 @@
 import { useRef, useState } from "react";
-import { Button, DataTable, createColumnHelper, useDataTable } from "@tailor-platform/app-shell";
+import {
+  Button,
+  DataTable,
+  aggregations,
+  createColumnHelper,
+  useDataTable,
+} from "@tailor-platform/app-shell";
 
 export function PerCellStyling() {
   type Overtime = { id: string; employee: string; january: number; february: number };
@@ -88,7 +94,7 @@ export function ColumnFooters() {
               current.map((line) => (line.id === row.id ? { ...line, quantity } : line)),
             ),
         },
-        footer: ({ rows }) => rows.reduce((sum, row) => sum + (row.quantity ?? 0), 0),
+        footer: aggregations.sum((row) => row.quantity),
         footerProps: ({ rows }) =>
           rows.length > 0
             ? {
@@ -108,6 +114,135 @@ export function ColumnFooters() {
     <DataTable.Root value={table}>
       <DataTable.Table />
     </DataTable.Root>
+  );
+}
+
+export function ColumnAggregations() {
+  type Line = {
+    id: string;
+    item: string;
+    quantity: number | null;
+    weightKg: number | null;
+    discount: number;
+    unitPrice: number;
+    note: string | null;
+  };
+  const rows: Line[] = [
+    {
+      id: "1",
+      item: "Small carton",
+      quantity: 2,
+      weightKg: 1.25,
+      discount: 0,
+      unitPrice: 12,
+      note: null,
+    },
+    {
+      id: "2",
+      item: "Large carton",
+      quantity: 3,
+      weightKg: 2.5,
+      discount: 5,
+      unitPrice: 10,
+      note: "Ready",
+    },
+  ];
+  const { column } = createColumnHelper<Line>();
+  const table = useDataTable({
+    data: { rows },
+    columns: [
+      column({ id: "item", label: "Item", type: "text", footer: "Aggregates" }),
+      column({
+        id: "quantity",
+        label: "Quantity",
+        type: "number",
+        footer: aggregations.sum((row) => row.quantity),
+      }),
+      column({
+        id: "weightKg",
+        label: "Weight (kg)",
+        type: "number",
+        typeOptions: { maxDecimals: 3 },
+        footer: aggregations.avg(
+          (row) => row.weightKg,
+          (average) => <strong>{average?.toFixed(3) ?? "–"}</strong>,
+        ),
+      }),
+      column({
+        id: "discount",
+        label: "Discount %",
+        type: "number",
+        footer: aggregations.max((row) => row.discount),
+      }),
+      column({
+        id: "unitPrice",
+        label: "Unit price",
+        type: "number",
+        footer: aggregations.min((row) => row.unitPrice),
+      }),
+      column({
+        id: "note",
+        label: "Note",
+        type: "text",
+        footer: aggregations.count(
+          (row) => row.note,
+          (count) => `${count} with notes`,
+        ),
+      }),
+    ],
+  });
+
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
+export function ComposedAggregations() {
+  type Line = { id: string; amount: number | null; currency: "JPY" | "USD" };
+  const [mixed, setMixed] = useState(false);
+  const rows: Line[] = [
+    { id: "1", amount: 1000, currency: "JPY" },
+    { id: "2", amount: 500, currency: mixed ? "USD" : "JPY" },
+    { id: "3", amount: null, currency: "USD" },
+  ];
+  const sumAmount = aggregations.sum(
+    (row: Line) => row.amount,
+    (total) => (total === null ? "Invalid amount" : total.toLocaleString("en-US")),
+  );
+  const { column } = createColumnHelper<Line>();
+  const table = useDataTable({
+    data: { rows },
+    columns: [
+      column({ id: "id", label: "Line", type: "text" }),
+      column({
+        id: "amount",
+        label: "Amount",
+        type: "money",
+        typeOptions: { currency: (row) => row.currency },
+        footer: (ctx) => {
+          const currencies = new Set(
+            ctx.rows.filter((row) => row.amount != null).map((row) => row.currency),
+          );
+          if (currencies.size > 1) {
+            return `Mixed currencies: ${[...currencies].join(", ")}`;
+          }
+          return sumAmount(ctx);
+        },
+      }),
+    ],
+  });
+
+  return (
+    <div className="space-y-3">
+      <Button variant="outline" aria-pressed={mixed} onClick={() => setMixed((value) => !value)}>
+        Mix currencies
+      </Button>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    </div>
   );
 }
 

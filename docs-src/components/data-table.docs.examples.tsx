@@ -33,7 +33,7 @@ export function ColumnFooters() {
               current.map((line) => (line.id === row.id ? { ...line, quantity } : line)),
             ),
         },
-        footer: aggregations.sum(),
+        footer: aggregations.sum((row) => row.quantity),
       }),
     ],
   });
@@ -80,21 +80,42 @@ export function ColumnAggregations() {
     data: { rows },
     columns: [
       column({ id: "item", label: "Item", type: "text", footer: "Aggregates" }),
-      column({ id: "quantity", label: "Quantity", type: "number", footer: aggregations.sum() }),
+      column({
+        id: "quantity",
+        label: "Quantity",
+        type: "number",
+        footer: aggregations.sum((row) => row.quantity),
+      }),
       column({
         id: "weightKg",
         label: "Weight (kg)",
         type: "number",
         typeOptions: { maxDecimals: 3 },
-        footer: aggregations.avg((average) => <strong>{average?.toFixed(3) ?? "–"}</strong>),
+        footer: aggregations.avg(
+          (row) => row.weightKg,
+          (average) => <strong>{average?.toFixed(3) ?? "–"}</strong>,
+        ),
       }),
-      column({ id: "discount", label: "Discount %", type: "number", footer: aggregations.max() }),
-      column({ id: "unitPrice", label: "Unit price", type: "number", footer: aggregations.min() }),
+      column({
+        id: "discount",
+        label: "Discount %",
+        type: "number",
+        footer: aggregations.max((row) => row.discount),
+      }),
+      column({
+        id: "unitPrice",
+        label: "Unit price",
+        type: "number",
+        footer: aggregations.min((row) => row.unitPrice),
+      }),
       column({
         id: "note",
         label: "Note",
         type: "text",
-        footer: aggregations.count((count) => `${count} with notes`),
+        footer: aggregations.count(
+          (row) => row.note,
+          (count) => `${count} with notes`,
+        ),
       }),
     ],
   });

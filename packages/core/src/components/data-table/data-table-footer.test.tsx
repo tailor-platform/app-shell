@@ -130,7 +130,6 @@ describe("DataTable column footer", () => {
           expectTypeOf(ctx).toEqualTypeOf<FooterRenderContext<Line>>();
           const { rows: currentRows } = ctx;
           expectTypeOf(currentRows).toEqualTypeOf<readonly Line[]>();
-          expect(ctx.column.id).toBe("quantity");
           return <strong>{currentRows.reduce((sum, row) => sum + (row.quantity ?? 0), 0)}</strong>;
         },
       },
@@ -153,24 +152,30 @@ describe("DataTable column footer", () => {
     expect(footer).toMatchSnapshot();
   });
 
-  it("runs independent aggregations on target column values only after loading", () => {
+  it("aggregates selected row values only after loading", () => {
     const { column } = createColumnHelper<Line>();
+    const selectQuantity = vi.fn((row: Line) => row.quantity);
     const renderTotal = vi.fn((total: number | null) => `Total: ${total}`);
     const tableColumns = [
       column({
         id: "quantity",
         label: "Quantity",
         type: "number",
-        footer: aggregations.sum(renderTotal),
+        footer: aggregations.sum(selectQuantity, renderTotal),
       }),
       column({
         id: "doubleQuantity",
         label: "Double quantity",
         type: "number",
         accessor: (row) => (row.quantity ?? 0) * 2,
-        footer: aggregations.sum(),
+        footer: aggregations.sum((row) => (row.quantity ?? 0) * 2),
       }),
-      column({ id: "note", label: "Note", type: "text", footer: aggregations.count() }),
+      column({
+        id: "note",
+        label: "Note",
+        type: "text",
+        footer: aggregations.count((row) => row.note),
+      }),
     ];
     const { container, rerender } = render(
       <Harness tableColumns={tableColumns} options={{ loading: true }} />,
@@ -178,13 +183,91 @@ describe("DataTable column footer", () => {
     );
     const footer = footerOf(container);
     expect(footer).not.toBeNull();
+    expect(selectQuantity).not.toHaveBeenCalled();
     expect(renderTotal).not.toHaveBeenCalled();
     expect(footer?.textContent).toBe("");
 
     rerender(<Harness tableColumns={tableColumns} />);
     expect(footerOf(container)).toBe(footer);
     expect(footerCells(container).map((cell) => cell.textContent)).toEqual(["Total: 5", "10", "2"]);
+    expect(selectQuantity).toHaveBeenCalledWith(rows[0]);
+    expect(selectQuantity).toHaveBeenCalledWith(rows[1]);
     expect(renderTotal).toHaveBeenLastCalledWith(5);
+  });
+
+  it("uses selector values independently of column accessors and rendered content", () => {
+    const { container } = render(
+      <Harness
+        tableColumns={[
+          {
+            id: "quantity",
+            type: "number",
+            accessor: () => 999,
+            render: () => "Not a numeric value",
+            footer: aggregations.sum((row) => row.quantity),
+          },
+        ]}
+      />,
+      { wrapper },
+    );
+
+    expect(footerCells(container)[0].textContent).toBe("5");
+  });
+
+  it("does not evaluate aggregation selectors or transformers on errors or hidden columns", () => {
+    const selector = vi.fn((row: Line) => row.quantity);
+    const transformer = vi.fn((total: number | null) => total);
+    const tableColumns: Column<Line>[] = [
+      { id: "quantity", footer: aggregations.sum(selector, transformer) },
+      columns[2],
+    ];
+    let table!: UseDataTableReturn<Line>;
+    const capture = (value: UseDataTableReturn<Line>) => {
+      table = value;
+    };
+    const { container, rerender } = render(
+      <Harness
+        tableColumns={tableColumns}
+        capture={capture}
+        options={{ error: new Error("Request failed") }}
+      />,
+      { wrapper },
+    );
+    expect(footerOf(container)).toBeNull();
+    expect(selector).not.toHaveBeenCalled();
+    expect(transformer).not.toHaveBeenCalled();
+
+    rerender(<Harness tableColumns={tableColumns} capture={capture} />);
+    expect(footerCells(container)[0].textContent).toBe("5");
+    selector.mockClear();
+    transformer.mockClear();
+
+    act(() => table.toggleColumn("quantity"));
+    expect(footerOf(container)).toBeNull();
+    expect(selector).not.toHaveBeenCalled();
+    expect(transformer).not.toHaveBeenCalled();
+  });
+
+  it("passes invalid and empty aggregation results to the transformer", () => {
+    const transformer = vi.fn((total: number | null) =>
+      total === null ? "Unavailable" : String(total),
+    );
+    const tableColumns: Column<Line>[] = [
+      { id: "quantity", footer: aggregations.sum((row) => row.quantity, transformer) },
+    ];
+    const { container, rerender } = render(
+      <Harness
+        tableColumns={tableColumns}
+        data={{ rows: [{ ...rows[0], quantity: Number.NaN }] }}
+      />,
+      { wrapper },
+    );
+    expect(footerCells(container)[0].textContent).toBe("Unavailable");
+    expect(transformer).toHaveBeenLastCalledWith(null);
+
+    rerender(<Harness tableColumns={tableColumns} data={{ rows: [] }} />);
+    expect(footerCells(container)[0].textContent).toBe("0");
+    expect(transformer).toHaveBeenLastCalledWith(0);
   });
 
   it("renders aligned footer skeletons without evaluating callbacks during initial loading", () => {
@@ -319,8 +402,7 @@ describe("DataTable column footer", () => {
             id: "quantity",
             label: "Quantity",
             type: "number",
-            footer: ({ rows: footerRows }) =>
-              footerRows.reduce((sum, row) => sum + (row.quantity ?? 0), 0),
+            footer: aggregations.sum((row) => row.quantity),
             edit: {
               onValueCommitted: (row, value) =>
                 setRows((current) =>

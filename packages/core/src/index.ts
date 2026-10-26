@@ -298,7 +298,7 @@ export {
   type TableOrderableFieldName,
 } from "./types/collection";
 
-// Value aggregations
+// Selector aggregations
 export { aggregations, type Aggregation } from "./lib/aggregations";
 
 // DataTable

@@ -2,71 +2,90 @@
 kind: code-backed
 group: aggregations
 title: Value aggregations
-description: Reusable sum, average, minimum, maximum, and non-null count over raw values, with optional result-only transformation
+description: Reusable selector-based sum, average, minimum, maximum, and non-null count over row collections, with optional result-only transformation
 sources:
   - packages/core/src/lib/aggregations.ts
 ---
 
 # Value aggregations
 
-`aggregations` creates reusable functions over arrays of raw values. It has no dependency on React, DataTable, rows, or column definitions.
+`aggregations` creates reusable callbacks that select values from a row collection and aggregate them. Each callback accepts `{ rows: readonly TRow[] }`; the module has no dependency on React, DataTable, or column definitions.
 
 ```tsx
 import { aggregations, type Aggregation } from "@tailor-platform/app-shell";
 
-const sum = aggregations.sum();
-sum([1, 2, null]); // 3
-sum([4, 5]); // 9: the function keeps no previous aggregate state
+type Line = { quantity: number | null };
 
-const summary: Aggregation<string> = aggregations.sum((value) =>
-  value === null ? "Unavailable" : `${value} units`,
+const sum = aggregations.sum((row: Line) => row.quantity);
+sum({ rows: [{ quantity: 1 }, { quantity: 2 }, { quantity: null }] }); // 3
+sum({ rows: [{ quantity: 4 }, { quantity: 5 }] }); // 9: no previous aggregate state
+
+const summary: Aggregation<Line, string> = aggregations.sum(
+  (row: Line) => row.quantity,
+  (value) => (value === null ? "Unavailable" : `${value} units`),
 );
-summary([1, 2]); // "3 units"
+summary({ rows: [{ quantity: 1 }, { quantity: 2 }] }); // "3 units"
 ```
 
 ## Operations
 
-| Factory                | Result                                  | Empty or all-nullish input |
-| ---------------------- | --------------------------------------- | -------------------------- |
-| `aggregations.sum()`   | Sum of finite numbers                   | `0`                        |
-| `aggregations.avg()`   | Average of finite numbers               | `null`                     |
-| `aggregations.min()`   | Minimum finite number                   | `null`                     |
-| `aggregations.max()`   | Maximum finite number                   | `null`                     |
-| `aggregations.count()` | Count of non-nullish values of any type | `0`                        |
+| Factory                        | Result                                  | Empty or all-nullish selected values |
+| ------------------------------ | --------------------------------------- | ------------------------------------ |
+| `aggregations.sum(selector)`   | Sum of finite numbers                   | `0`                                  |
+| `aggregations.avg(selector)`   | Average of finite numbers               | `null`                               |
+| `aggregations.min(selector)`   | Minimum finite number                   | `null`                               |
+| `aggregations.max(selector)`   | Maximum finite number                   | `null`                               |
+| `aggregations.count(selector)` | Count of non-nullish values of any type | `0`                                  |
 
-Each factory returns a callable `Aggregation<TResult>`. Pass a read-only or mutable array of values to that function; the input is not mutated.
+A selector is required. It receives one row at a time and determines the values to aggregate. Numeric selectors must return `number | null | undefined`; count selectors may return any type. There is no automatic field lookup or connection to a column's `id`, `accessor`, or rendered content.
 
-All operations skip `null` and `undefined`. Numeric operations return `null` for the entire result if any other value is not a finite JavaScript number, including numeric strings, booleans, dates, `NaN`, and infinities. They do not coerce values, compare dates or strings, or return a partial result. Average divides by the number of non-nullish numeric values, not the input length.
+Each factory returns an `Aggregation<TRow, TResult>` callback. Pass a read-only or mutable row array through `{ rows }`; aggregation does not mutate it or retain state between invocations. Selectors and transformers must be pure and must not mutate rows. Exceptions from either callback propagate to the caller.
+
+All operations skip selected `null` and `undefined` values. Numeric operations also validate selected values at runtime and return `null` for the entire result if any other value is not a finite JavaScript number, including numeric strings, booleans, dates, `NaN`, and infinities. They do not coerce values, compare dates or strings, or return a partial result. Average divides by the number of non-nullish numeric values, not the row count.
 
 Calculations use ordinary JavaScript numbers. A non-finite calculated result returns `null`; for average, this includes an intermediate sum overflow even when the mathematical average could be finite. These functions do not provide arbitrary-precision arithmetic.
 
-`count()` counts `0`, `false`, and `""` as present values. It counts values, not truthy values; use the array's `length` when every entry, including nullish entries, should count.
+`count(selector)` counts selected `0`, `false`, and `""` as present values. It counts non-nullish values, not truthy values; use `rows.length` when every row should count.
 
 ## Optional transformer
 
-Pass one function directly to the factory to transform the final result:
+Pass a second function to transform the final result:
 
 ```tsx
-const averageText = aggregations.avg((value) => value?.toFixed(2) ?? "–");
-averageText([1, null, 2]); // "1.50"
+const averageText = aggregations.avg(
+  (row: Line) => row.quantity,
+  (value) => value?.toFixed(2) ?? "–",
+);
+averageText({ rows: [{ quantity: 1 }, { quantity: null }, { quantity: 2 }] }); // "1.50"
 
-const detailed = aggregations.sum((total) => ({ total, valid: total !== null }));
-detailed([1, 2]); // { total: 3, valid: true }
+const detailed = aggregations.sum(
+  (row: Line) => row.quantity,
+  (total) => ({ total, valid: total !== null }),
+);
+detailed({ rows: [{ quantity: 1 }, { quantity: 2 }] }); // { total: 3, valid: true }
 ```
 
-The transformer is called exactly once per aggregation invocation, including for empty or invalid input. Numeric transformers receive `number | null`; count transformers receive `number`. Its return type becomes the callable's result type, and may be text, JSX, an object, or another value. The aggregation library does not interpret the transformed result.
+The transformer is called exactly once per aggregation invocation, including for empty or invalid input. Numeric transformers receive `number | null`; count transformers receive `number`. Its return type becomes the callback's result type, and may be text, JSX, an object, or another value. The aggregation library does not interpret the transformed result.
 
-A transformer only receives the result. It does not receive values, rows, columns, or UI context. Select or filter input values before invoking the aggregation when the calculation needs a different input set.
+A transformer receives only the result, not rows, selected values, columns, or UI context. Filter `rows` before invoking the callback when the calculation needs a different input set.
+
+For detached callbacks, annotate the selector's row parameter as above so the row and transformed result types can both be inferred. Row types are not restricted to objects; for example, `aggregations.sum<number>((value) => value)({ rows: [1, 2] })` returns `3`.
 
 ## DataTable integration
 
-Pass the same callable directly to a column footer. DataTable obtains the column's raw values from its accessor or row field and invokes it:
+Pass an aggregation callback directly to a column footer. It is an ordinary footer renderer that reads the current `ctx.rows`; DataTable needs no aggregation-specific handling:
 
 ```tsx
 import { aggregations, createColumnHelper } from "@tailor-platform/app-shell";
 
 const { column } = createColumnHelper<{ quantity: number | null }>();
-column({ id: "quantity", type: "number", footer: aggregations.sum() });
+column({
+  id: "quantity",
+  type: "number",
+  footer: aggregations.sum((row) => row.quantity),
+});
 ```
 
-Use a transformer for simple footer text or JSX. DataTable only accepts aggregation results it can render; object-producing aggregations remain available for non-UI use. For the current-page scope, loading behavior, source-type checking, or full custom footer context, see [DataTable column footers](../components/data-table.md#column-footers).
+Inline selectors infer the row type from the surrounding footer definition. The selector is the source of truth even when the column has an `accessor`; write the same calculation in the selector if the footer should aggregate a computed cell value.
+
+Use a transformer for simple footer text or JSX. DataTable only accepts callback results it can render; object-producing aggregations remain available for non-UI use. For the current-page scope, loading behavior, and custom renderers, see [DataTable column footers](../components/data-table.md#column-footers).

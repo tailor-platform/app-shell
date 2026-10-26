@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import type { BadgeOptions } from "@/components/badge-list";
-import type { AggregationDefinition } from "@/lib/aggregations";
 import type {
   CollectionControl,
   Filter,
@@ -217,8 +216,6 @@ export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeade
 export interface FooterRenderContext<TRow extends Record<string, unknown>> {
   /** Current `data.rows` (the current page, not all records or only selected rows). */
   rows: readonly TRow[];
-  /** The column whose raw values and footer are being rendered. */
-  column: Readonly<Column<TRow>>;
 }
 
 type DataTableStringFilterOperator = Extract<
@@ -324,9 +321,9 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    */
   header?: (ctx: HeaderRenderContext) => ReactNode;
   /**
-   * Content for this column's cell in a sticky table footer: a static string,
-   * a renderer receiving the current `data.rows`, or a value aggregation applied
-   * to this column's raw values. `type` and `typeOptions` do not format results.
+   * Content for this column's cell in a sticky table footer: a static string
+   * or a renderer receiving the current `data.rows` (the current page, not all
+   * records or only selected rows). `type` and `typeOptions` do not apply.
    *
    * A footer row appears when any visible column defines a footer, including
    * an empty string. Columns without one leave a blank cell; hidden columns'
@@ -335,10 +332,7 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    * Hidden during errors; loaded empty data receives `rows: []`.
    * Separate from `DataTable.Footer`, the pagination / bulk-action container.
    */
-  footer?:
-    | string
-    | ((ctx: FooterRenderContext<TRow>) => ReactNode)
-    | AggregationDefinition<ReactNode>;
+  footer?: string | ((ctx: FooterRenderContext<TRow>) => ReactNode);
   /**
    * Stable identifier used for column visibility toggling, persisted layout
    * state, raw-value fallback (`row[col.id]`), and as the React key. Falls
@@ -474,9 +468,7 @@ export type ColumnTypeBranch<TRow extends Record<string, unknown>> =
  * rendering, or pass `render` to draw the cell yourself.
  *
  * `Column` is a discriminated union on `type`, so wrong-shape `typeOptions`
- * are a compile error rather than silently ignored at runtime. Source-type
- * checking for aggregation footers is provided by `createColumnHelper().column`
- * for definitions that retain their concrete source and aggregation types.
+ * are a compile error rather than silently ignored at runtime.
  */
 export type Column<TRow extends Record<string, unknown>> = ColumnBase<TRow> &
   ColumnTypeBranch<TRow>;

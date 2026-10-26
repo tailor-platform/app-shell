@@ -255,7 +255,7 @@ export function InlineEditingDemo() {
       label: "Ordered",
       type: "number",
       width: 88,
-      footer: aggregations.sum(),
+      footer: aggregations.sum((row) => row.ordered),
     }),
     column({
       id: "received",
@@ -263,7 +263,7 @@ export function InlineEditingDemo() {
       type: "number",
       width: 104,
       typeOptions: { maxDecimals: 0 },
-      footer: aggregations.sum(),
+      footer: aggregations.sum((row) => row.received),
       edit: {
         canEdit: (_row, { selected }) => selected,
         onValueCommitted: (row, value) => {
@@ -322,7 +322,10 @@ export function InlineEditingDemo() {
       type: "number",
       width: 110,
       typeOptions: { maxDecimals: 1 },
-      footer: aggregations.max((value) => (value === null ? "–" : `Max: ${value}%`)),
+      footer: aggregations.max(
+        (row) => row.discount,
+        (value) => (value === null ? "–" : `Max: ${value}%`),
+      ),
       edit: {
         onValueCommitted: (row, value) => {
           if (value === null || value < 0 || value > 100 || Math.round(value * 10) / 10 !== value) {
@@ -348,6 +351,7 @@ export function InlineEditingDemo() {
       width: 112,
       typeOptions: { maxDecimals: 3 },
       footer: aggregations.sum(
+        (row) => row.weightKg,
         (total) => total?.toLocaleString(undefined, { maximumFractionDigits: 3 }) ?? "–",
       ),
       edit: {
@@ -460,7 +464,10 @@ export function InlineEditingDemo() {
         badgeLabelMap: { pass: "Pass", hold: "On hold", fail: "Fail" },
         badgeVariantMap: { pass: "success", hold: "warning", fail: "error" },
       },
-      footer: aggregations.count((count) => `Checked: ${count}`),
+      footer: aggregations.count(
+        (row) => row.qc,
+        (count) => `Checked: ${count}`,
+      ),
       // Optional badge dropdown: offers "None".
       edit: {
         onValueCommitted: (row, value) =>

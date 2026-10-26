@@ -1,6 +1,7 @@
 import { createElement, type ReactElement } from "react";
 import { expectTypeOf, test } from "vitest";
-import { column as defineColumn, createColumnHelper } from "./field-helpers";
+import { createColumnHelper } from "./field-helpers";
+import { useDataTable } from "./use-data-table";
 import type { Column, FooterRenderContext } from "./types";
 import { aggregations, type Aggregation } from "@/lib/aggregations";
 
@@ -11,153 +12,112 @@ type Row = {
   name: string;
   mixed: number | string;
   unknown: unknown;
-  unsafe: ReturnType<typeof JSON.parse>;
-  empty: null;
 };
 
 const { column, inferColumns } = createColumnHelper<Row>();
 const onValueCommitted = () => {};
+const rows: Row[] = [{ id: "1", qty: 2, name: "One", mixed: 2, unknown: null }];
+const metadata = {
+  name: "row",
+  pluralForm: "rows",
+  fields: [
+    { name: "qty", type: "number", required: false },
+    { name: "name", type: "string", required: true },
+  ],
+} as const;
 
-function preserve<TRow extends Record<string, unknown>>(definition: Column<TRow>): Column<TRow> {
-  return { ...definition };
-}
-
-test("numeric aggregations follow the source type, not the presentation type", () => {
-  column({ id: "qty", type: "text", footer: aggregations.sum() });
-  column({ id: "optional", type: "number", footer: aggregations.avg() });
-  column({ id: "qty", footer: aggregations.min() });
-  column({ id: "qty", type: "money", footer: aggregations.max() });
-
+test("numeric aggregation sources follow the selector rather than the column ID or presentation", () => {
   for (const aggregate of [
     aggregations.sum,
     aggregations.avg,
     aggregations.min,
     aggregations.max,
   ]) {
-    // @ts-expect-error A number presentation does not make a string field numeric.
-    column({ id: "name", type: "number", footer: aggregate() });
-    // @ts-expect-error Mixed numeric/string fields cannot be numerically aggregated.
-    column({ id: "mixed", footer: aggregate() });
-    // @ts-expect-error Unknown fields do not establish a numeric source.
-    column({ id: "unknown", footer: aggregate() });
-    // @ts-expect-error Any-valued fields do not establish a numeric source.
-    column({ id: "unsafe", footer: aggregate() });
-    // @ts-expect-error A null-only field does not establish a numeric source.
-    column({ id: "empty", footer: aggregate() });
-    // @ts-expect-error The field must exist when no accessor is supplied.
-    column({ id: "missing", footer: aggregate() });
-    // @ts-expect-error A footer without an ID or accessor has no numeric source.
-    column({ label: "Total", footer: aggregate() });
+    column({ id: "name", type: "text", footer: aggregate((row) => row.qty) });
+    column({ id: "optional", footer: aggregate((row) => row.optional) });
+    column({ id: "computed", footer: aggregate((row) => (row.qty ?? 0) * 2) });
+    // @ts-expect-error A number presentation does not make the selected string numeric.
+    column({ id: "qty", type: "number", footer: aggregate((row) => row.name) });
+    // @ts-expect-error Mixed numeric/string values cannot be numerically aggregated.
+    column({ id: "mixed", footer: aggregate((row) => row.mixed) });
+    // @ts-expect-error Unknown values do not establish a numeric source.
+    column({ id: "unknown", footer: aggregate((row) => row.unknown) });
+    // @ts-expect-error The selector must reference an existing row field.
+    column({ id: "qty", footer: aggregate((row) => row.missing) });
   }
 });
 
-test("a possible numeric aggregation cannot hide behind a count union", () => {
-  function withConditionalAggregation(enabled: boolean) {
-    const footer = enabled ? aggregations.sum() : aggregations.count();
-    column({ id: "qty", footer });
-    // @ts-expect-error The selected aggregation can still require numeric input.
-    column({ id: "name", footer });
-
-    const combined: Aggregation<number | null, "sum" | "count"> = footer;
-    column({ id: "qty", footer: combined });
-    // @ts-expect-error A union of kinds on one callable can still require numeric input.
-    column({ id: "name", footer: combined });
-  }
-  void withConditionalAggregation;
-});
-
-test("conditional footers and column alternatives validate every numeric aggregation source", () => {
-  function withConditionalDefinition(enabled: boolean) {
-    const sum = aggregations.sum();
-    column({ id: "qty", footer: enabled ? sum : undefined });
-    column({ id: "optional", footer: enabled ? sum : "Total" });
-    column({ id: "qty", footer: enabled ? sum : () => "Total" });
-
-    // @ts-expect-error An optional numeric aggregation still requires a numeric source.
-    column({ id: "name", footer: enabled ? sum : undefined });
-    // @ts-expect-error A string alternative cannot hide a numeric aggregation.
-    column({ id: "name", footer: enabled ? sum : "Total" });
-    // @ts-expect-error A plain callback alternative cannot hide a numeric aggregation.
-    column({ id: "name", footer: enabled ? sum : () => "Total" });
-    // @ts-expect-error Every possible source must support the numeric aggregation.
-    column({ ...(enabled ? { id: "qty" as const } : { id: "name" as const }), footer: sum });
-    // @ts-expect-error A valid alternative must not erase an invalid numeric source.
-    column(enabled ? { id: "qty", footer: sum } : { id: "name", footer: sum });
-
-    column({ ...(enabled ? { id: "qty" as const } : { id: "optional" as const }), footer: sum });
-    column(enabled ? { id: "qty", footer: sum } : { id: "name", footer: aggregations.count() });
-  }
-  void withConditionalDefinition;
-});
-
-test("accessor output takes precedence and supports computed columns", () => {
-  column({
-    id: "name",
-    type: "number",
-    accessor: (row) => row.name.length,
-    footer: aggregations.sum(),
-  });
-  column({
-    id: "computed",
-    type: "number",
-    accessor: (row) => (row.qty == null ? undefined : row.qty * 2),
-    footer: aggregations.avg(),
-  });
-  column({ label: "Computed", accessor: (row) => row.optional, footer: aggregations.min() });
-
-  // @ts-expect-error A string accessor overrides the numeric row field.
-  column({ id: "qty", type: "text", accessor: (row) => row.name, footer: aggregations.sum() });
-  // @ts-expect-error An unknown accessor overrides the numeric row field.
-  column({ id: "qty", accessor: (row) => row.unknown, footer: aggregations.max() });
-  // @ts-expect-error An any-valued accessor does not establish a numeric source.
-  column({ id: "qty", accessor: (row) => row.unsafe, footer: aggregations.avg() });
-  // @ts-expect-error A null-only accessor does not establish a numeric source.
-  column({ id: "qty", accessor: () => null, footer: aggregations.min() });
-
-  function withOptionalAccessor(
-    numeric: ((row: Row) => number) | undefined,
-    text: ((row: Row) => string) | undefined,
-  ) {
-    column({ id: "qty", accessor: numeric, footer: aggregations.sum() });
-    // @ts-expect-error Either accessor output or the fallback field can be nonnumeric.
-    column({ id: "qty", accessor: text, footer: aggregations.sum() });
-    // @ts-expect-error An absent numeric accessor would fall back to a string field.
-    column({ id: "name", accessor: numeric, footer: aggregations.sum() });
-  }
-  void withOptionalAccessor;
-});
-
-test("direct and widened Column definitions retain the existing unchecked source contract", () => {
-  const direct: Column<Row>[] = [
-    { id: "qty", type: "text", footer: aggregations.sum() },
-    { id: "name", type: "number", footer: aggregations.sum() },
-  ];
-  expectTypeOf(direct).toEqualTypeOf<Column<Row>[]>();
-
-  const widened: Column<Row> = { id: "name", type: "number", footer: aggregations.sum() };
-  column(widened);
-  column<Column<Row>>({ id: "name", footer: aggregations.avg() });
-  defineColumn<Row>({ id: "name", footer: aggregations.avg() });
-});
-
-test("union-valued editor presentation types remain compatible without a footer", () => {
-  function editorColumn(type: "text" | "number" | "money") {
-    const edit = {
-      onValueCommitted: (row: Row, value: string | number | null) => {
-        void row;
-        void value;
+test("typed column arrays and metadata spreads preserve selector and render inference", () => {
+  const infer = inferColumns(metadata);
+  const columns: Column<Row>[] = [
+    column({
+      ...infer("name"),
+      render: (row) => {
+        expectTypeOf(row).toEqualTypeOf<Row>();
+        return row.name;
       },
-    };
-    const direct: Column<Row>[] = [{ id: "mixed", type, edit }];
-    column({ id: "mixed", type, edit });
-    return direct;
-  }
-  expectTypeOf(editorColumn("text")).toEqualTypeOf<Column<Row>[]>();
+    }),
+    column({
+      ...infer("qty"),
+      type: "number",
+      footer: aggregations.sum((row) => {
+        expectTypeOf(row).toEqualTypeOf<Row>();
+        return row.qty;
+      }),
+    }),
+    { id: "name", footer: aggregations.count((row) => row.name) },
+  ];
+  const checked = [
+    { id: "qty", footer: aggregations.avg((row) => row.optional) },
+  ] satisfies Column<Row>[];
+  expectTypeOf(columns).toEqualTypeOf<Column<Row>[]>();
+  expectTypeOf(checked[0].footer({ rows })).toEqualTypeOf<number | null>();
 });
 
-test("count, static footers and ordinary callback inference remain available", () => {
-  column({ id: "name", type: "text", footer: aggregations.count() });
-  column({ id: "unknown", footer: aggregations.count() });
+test("useDataTable can infer selector rows from its data without an explicit row generic", () => {
+  function useInferredTable() {
+    return useDataTable({
+      data: { rows },
+      columns: [
+        {
+          id: "qty",
+          footer: aggregations.sum((row) => {
+            expectTypeOf(row).toEqualTypeOf<Row>();
+            return row.qty;
+          }),
+        },
+      ],
+    });
+  }
+  void useInferredTable;
+});
+
+test("column preserves broad, narrowed-ID and ordinary-footer generic wrappers", () => {
+  function define<T extends Column<Row>>(options: T) {
+    return column(options);
+  }
+  function defineNamed<T extends Column<Row> & { id: "name" }>(options: T) {
+    return column(options);
+  }
+  function defineFooter<
+    T extends Column<Row> & { footer: (ctx: { rows: readonly Row[] }) => string },
+  >(options: T) {
+    return column(options);
+  }
+
+  expectTypeOf(
+    define({ id: "qty", footer: aggregations.sum((row: Row) => row.qty) }),
+  ).toEqualTypeOf<Column<Row>>();
+  expectTypeOf(defineNamed({ id: "name", type: "text" })).toEqualTypeOf<Column<Row>>();
+  expectTypeOf(
+    defineFooter({
+      id: "name",
+      footer: (ctx: FooterRenderContext<Row>) => ctx.rows[0]?.name ?? "",
+    }),
+  ).toEqualTypeOf<Column<Row>>();
+});
+
+test("ordinary footer callbacks and union-valued editor types remain compatible", () => {
   column({ id: "qty", footer: "Total" });
   column({ id: "qty", footer: "" });
   column({
@@ -165,150 +125,163 @@ test("count, static footers and ordinary callback inference remain available", (
     footer: (ctx) => {
       expectTypeOf(ctx).toEqualTypeOf<FooterRenderContext<Row>>();
       expectTypeOf(ctx.rows).toEqualTypeOf<readonly Row[]>();
-      expectTypeOf(ctx.column).toEqualTypeOf<Readonly<Column<Row>>>();
-      // @ts-expect-error Rows are exposed as a read-only array.
-      ctx.rows.push({
-        id: "1",
-        qty: 1,
-        name: "One",
-        mixed: 1,
-        unknown: null,
-        unsafe: null,
-        empty: null,
-      });
-      // @ts-expect-error Column configuration is read-only.
-      ctx.column.id = "name";
       // @ts-expect-error The bound row type rejects unknown properties.
       void ctx.rows[0].missing;
       return ctx.rows[0]?.name;
     },
   });
+
+  function editorColumn(type: "text" | "number" | "money") {
+    const edit = { onValueCommitted: (_row: Row, _value: string | number | null) => {} };
+    const direct: Column<Row>[] = [{ id: "mixed", type, edit }];
+    column({ id: "mixed", type, edit });
+    return direct;
+  }
+  expectTypeOf(editorColumn("text")).toEqualTypeOf<Column<Row>[]>();
 });
 
-test("transformers receive only the final result and can return renderable values", () => {
+test("transformers infer numeric and count results and support renderable output", () => {
   column({
     id: "qty",
-    footer: aggregations.sum((value) => {
-      expectTypeOf(value).toEqualTypeOf<number | null>();
-      return value === null ? "Unavailable" : `${value} units`;
-    }),
+    footer: aggregations.sum(
+      (row) => {
+        expectTypeOf(row).toEqualTypeOf<Row>();
+        return row.qty;
+      },
+      (value) => {
+        expectTypeOf(value).toEqualTypeOf<number | null>();
+        return value === null ? "Unavailable" : `${value} units`;
+      },
+    ),
   });
   column({
     id: "name",
-    footer: aggregations.count((value) => {
-      expectTypeOf(value).toEqualTypeOf<number>();
-      return createElement("strong", null, value);
-    }),
+    footer: aggregations.count(
+      (row) => row.unknown,
+      (value) => {
+        expectTypeOf(value).toEqualTypeOf<number>();
+        return createElement("strong", null, value);
+      },
+    ),
   });
 
-  const jsx = aggregations.sum((value) => createElement("strong", null, value));
-  expectTypeOf(jsx([1, 2])).toMatchTypeOf<ReactElement>();
+  const jsx = aggregations.sum(
+    (row: Row) => row.qty,
+    (value) => createElement("strong", null, value),
+  );
+  expectTypeOf(jsx({ rows })).toMatchTypeOf<ReactElement>();
   column({ id: "qty", footer: jsx });
+});
 
-  const object = aggregations.sum((value) => ({ total: value }));
-  expectTypeOf(object([1, 2])).toEqualTypeOf<{ total: number | null }>();
+test("generic object results are available outside DataTable but are not renderable footers", () => {
+  const summary = aggregations.sum(
+    (row: Row) => row.qty,
+    (total) => ({ total }),
+  );
+  expectTypeOf(summary({ rows })).toEqualTypeOf<{ total: number | null }>();
   // @ts-expect-error DataTable cannot render arbitrary transformed objects.
-  column({ id: "qty", footer: object });
-  // @ts-expect-error Direct definitions also require renderable output.
-  const invalid: Column<Row> = { id: "qty", footer: object };
+  column({ id: "qty", footer: summary });
+  // @ts-expect-error Direct column definitions also require renderable output.
+  const invalid: Column<Row> = { id: "qty", footer: summary };
+  // @ts-expect-error Inline transformer output must also be renderable.
+  column({
+    id: "qty",
+    footer: aggregations.sum(
+      (row) => row.qty,
+      (total) => ({ total }),
+    ),
+  });
   void invalid;
 });
 
-test("detached aggregations do not need a row generic", () => {
-  const total = aggregations.sum();
-  const formatted = aggregations.avg((value) => value?.toFixed(2) ?? "–");
-  expectTypeOf(total).toEqualTypeOf<Aggregation<number | null, "sum">>();
-  expectTypeOf(formatted([1, 2])).toEqualTypeOf<string>();
-  column({ id: "qty", footer: total });
-  column({ id: "qty", footer: formatted });
-  const other = createColumnHelper<{ amount: number }>();
-  other.column({ id: "amount", footer: total });
-  // @ts-expect-error Transforming the output does not make a string input numeric.
-  column({ id: "name", footer: formatted });
-  // @ts-expect-error A result generic requires a transformer.
-  aggregations.sum<string>();
-  // @ts-expect-error Aggregations are independent of row-bound helpers.
-  void createColumnHelper<Row>().aggregations;
+test("detached callbacks support readonly contexts, shared row shapes and primitive rows", () => {
+  const total = aggregations.sum((row: Row) => row.qty);
+  expectTypeOf(total).toEqualTypeOf<Aggregation<Row, number | null>>();
+  expectTypeOf(total({ rows })).toEqualTypeOf<number | null>();
+  expectTypeOf(aggregations.count((row: Row) => row.name)({ rows })).toEqualTypeOf<number>();
+  expectTypeOf(aggregations.sum((row: Row) => row.qty, undefined)({ rows })).toEqualTypeOf<
+    number | null
+  >();
+
+  const shared = aggregations.sum((row: { readonly qty: number | null }) => row.qty);
+  const frozen = Object.freeze([Object.freeze({ qty: 2 }), Object.freeze({ qty: null })]);
+  expectTypeOf(shared({ rows: frozen })).toEqualTypeOf<number | null>();
+  column({ id: "qty", footer: shared });
+  const numeric = aggregations.sum<number>((value) => value);
+  expectTypeOf(numeric({ rows: Object.freeze([1, 2]) })).toEqualTypeOf<number | null>();
 });
 
-test("numeric aggregation inference does not admit unsupported configuration keys", () => {
+test("selectors are required and a transformed result requires a matching transformer", () => {
+  // @ts-expect-error An aggregation requires a selector.
+  aggregations.sum();
+  // @ts-expect-error Count also requires a selector.
+  aggregations.count();
+  // @ts-expect-error A requested transformed result requires a transformer.
+  aggregations.sum<Row, string>((row) => row.qty);
+  // @ts-expect-error The transformer receives a numeric result, not text.
+  aggregations.sum(
+    (row: Row) => row.qty,
+    (value: string) => value,
+  );
+});
+
+test("aggregation footers retain existing column, editor and formatting option checks", () => {
   // @ts-expect-error Unknown top-level column options are rejected.
-  column({ id: "qty", type: "number", footer: aggregations.sum(), bogus: true });
+  column({ id: "qty", footer: aggregations.sum((row) => row.qty), bogus: true });
   column({
     id: "qty",
     type: "number",
-    footer: aggregations.sum(),
-    // @ts-expect-error Business bounds are consumer-owned, including with aggregations.
+    footer: aggregations.sum((row) => row.qty),
+    // @ts-expect-error Business bounds remain consumer-owned.
     edit: { onValueCommitted, min: 0 },
   });
   column({
     id: "qty",
     type: "number",
-    footer: aggregations.sum(),
+    footer: aggregations.avg((row) => row.qty),
     // @ts-expect-error Validation is not an editor option.
     edit: { onValueCommitted, validate: () => undefined },
   });
   column({
     id: "qty",
     type: "number",
-    footer: aggregations.avg(),
+    footer: aggregations.avg((row) => row.qty),
     // @ts-expect-error Required is not an editor option.
     edit: { onValueCommitted, required: true },
   });
   column({
     id: "qty",
     type: "number",
-    footer: aggregations.min(),
+    footer: aggregations.min((row) => row.qty),
     // @ts-expect-error Decimal formatting belongs to typeOptions.
     edit: { onValueCommitted, maxDecimals: 2 },
   });
-  // @ts-expect-error Numeric editors do not accept dropdown options.
   column({
     id: "qty",
     type: "number",
-    footer: aggregations.max(),
+    footer: aggregations.max((row) => row.qty),
+    // @ts-expect-error Numeric editors do not accept dropdown options.
     edit: { onValueCommitted, options: [] },
   });
-  // @ts-expect-error Currency is not a number-cell formatting option.
   column({
     id: "qty",
     type: "number",
-    footer: aggregations.sum(),
+    footer: aggregations.max((row) => row.qty),
+    // @ts-expect-error Currency is not a number-cell formatting option.
     typeOptions: { maxDecimals: 2, currency: "USD" },
   });
   column({
     id: "qty",
     type: "text",
-    footer: aggregations.sum(),
-    // @ts-expect-error Text edit options also retain excess-property checking.
+    footer: aggregations.sum((row) => row.qty),
+    // @ts-expect-error Text editor options retain excess-property checks.
     edit: { onValueCommitted, validate: () => undefined },
   });
-  // @ts-expect-error Count uses the legacy exact-options path.
-  column({ id: "name", type: "text", footer: aggregations.count(), bogus: true });
+  // @ts-expect-error Count also rejects unknown column options.
+  column({ id: "name", footer: aggregations.count((row) => row.name), bogus: true });
 });
 
-test("metadata inference preserves source IDs through spread overrides", () => {
-  const metadata = {
-    name: "row",
-    pluralForm: "rows",
-    fields: [
-      { name: "qty", type: "number", required: false },
-      { name: "name", type: "string", required: true },
-    ],
-  } as const;
-  const infer = inferColumns(metadata);
-  expectTypeOf(infer("qty").id).toEqualTypeOf<"qty">();
-
-  column({ ...infer("qty"), type: "number", footer: aggregations.sum() });
-  column({ ...infer("name"), type: "text", footer: aggregations.count() });
-  // @ts-expect-error The inferred string field remains a nonnumeric source.
-  column({ ...infer("name"), type: "number", footer: aggregations.sum() });
-});
-
-test("column and editor inference remain usable in generic consumers", () => {
-  expectTypeOf(preserve(column({ id: "qty", footer: aggregations.sum() }))).toEqualTypeOf<
-    Column<Row>
-  >();
+test("aggregation footers preserve editor callback inference", () => {
   column({
     id: "qty",
     type: "number",
@@ -318,6 +291,6 @@ test("column and editor inference remain usable in generic consumers", () => {
         expectTypeOf(value).toEqualTypeOf<number | null>();
       },
     },
-    footer: aggregations.sum(),
+    footer: aggregations.sum((row) => row.qty),
   });
 });

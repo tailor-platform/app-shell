@@ -14,7 +14,6 @@ import {
 import { ContextMenu } from "@base-ui/react/context-menu";
 import { ChevronRight, Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { isAggregation, type Aggregation } from "@/lib/aggregations";
 import { useTimeZone } from "@/contexts/appshell-context";
 import {
   CollectionControlProvider,
@@ -1215,10 +1214,6 @@ DataTableBody.displayName = "DataTable.Body";
 // Column footer (internal — separate from DataTable.Footer)
 // =============================================================================
 
-function isFooterAggregation(value: unknown): value is Aggregation<ReactNode> {
-  return isAggregation(value);
-}
-
 function DataTableColumnFooter() {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
@@ -1285,13 +1280,7 @@ function DataTableColumnFooter() {
           const key = keys.get(col) as string;
           let footerContent: ReactNode = null;
           if (!loading) {
-            if (isFooterAggregation(col.footer)) {
-              footerContent = col.footer(rows.map((row) => getCellValue(row, col)));
-            } else if (typeof col.footer === "function") {
-              footerContent = col.footer({ rows, column: col });
-            } else if (typeof col.footer === "string") {
-              footerContent = col.footer;
-            }
+            footerContent = typeof col.footer === "function" ? col.footer({ rows }) : col.footer;
           }
           return (
             <Table.Cell

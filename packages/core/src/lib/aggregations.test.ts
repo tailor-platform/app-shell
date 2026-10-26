@@ -1,31 +1,23 @@
 import { describe, expect, expectTypeOf, it, vi } from "vitest";
-import {
-  AGGREGATION,
-  aggregations,
-  isAggregation,
-  type Aggregation,
-  type AggregationDefinition,
-} from "./aggregations";
+import { aggregations, type Aggregation } from "./aggregations";
 
 const numericKinds = ["sum", "avg", "min", "max"] as const;
-const numericFactories: Record<
-  (typeof numericKinds)[number],
-  {
-    (): Aggregation<number | null>;
-    <TResult>(transformer: (value: number | null) => TResult): Aggregation<TResult>;
-  }
-> = aggregations;
+type NumericValue = number | null | undefined;
+// Exercise runtime validation at an untyped-data boundary.
+const selectNumber = (value: unknown) => value as NumericValue;
 
 describe.each(numericKinds)("aggregations.%s", (kind) => {
-  it("aggregates finite numbers, including zero and negatives, while skipping nullish values", () => {
+  it("aggregates finite selected numbers, including zero and negatives, while skipping nullish values", () => {
     const expected = { sum: 6, avg: 2, min: -2, max: 8 };
-    expect(numericFactories[kind]()([null, -2, 0, undefined, 8])).toBe(expected[kind]);
+    expect(aggregations[kind](selectNumber)({ rows: [null, -2, 0, undefined, 8] })).toBe(
+      expected[kind],
+    );
   });
 
-  it.each([{ values: [] }, { values: [null, undefined] }])(
-    "handles no numeric values in $values",
-    ({ values }) => {
-      expect(numericFactories[kind]()(values)).toBe(kind === "sum" ? 0 : null);
+  it.each([{ rows: [] }, { rows: [null, undefined] }])(
+    "handles no numeric values in $rows",
+    ({ rows }) => {
+      expect(aggregations[kind](selectNumber)({ rows })).toBe(kind === "sum" ? 0 : null);
     },
   );
 
@@ -41,9 +33,9 @@ describe.each(numericKinds)("aggregations.%s", (kind) => {
     { name: "date", value: new Date("2026-01-01") },
     { name: "bigint", value: 2n },
   ])(
-    "rejects the whole aggregate for a $name instead of coercing or partially summing",
+    "rejects the whole aggregate for a selected $name instead of coercing or partially summing",
     ({ value }) => {
-      expect(numericFactories[kind]()([1, value, 3])).toBeNull();
+      expect(aggregations[kind](selectNumber)({ rows: [1, value, 3] })).toBeNull();
     },
   );
 
@@ -51,160 +43,140 @@ describe.each(numericKinds)("aggregations.%s", (kind) => {
     const transformer = vi.fn((value: number | null) =>
       value === null ? "Unavailable" : `Result: ${value}`,
     );
-    const aggregate = numericFactories[kind](transformer);
+    const aggregate = aggregations[kind](selectNumber, transformer);
     const expected = { sum: 3, avg: 1.5, min: 1, max: 2 };
 
-    expect(aggregate([1, 2])).toBe(`Result: ${expected[kind]}`);
+    expect(aggregate({ rows: [1, 2] })).toBe(`Result: ${expected[kind]}`);
     expect(transformer).toHaveBeenCalledExactlyOnceWith(expected[kind]);
 
-    expect(aggregate([])).toBe(kind === "sum" ? "Result: 0" : "Unavailable");
+    expect(aggregate({ rows: [] })).toBe(kind === "sum" ? "Result: 0" : "Unavailable");
     expect(transformer).toHaveBeenCalledTimes(2);
     expect(transformer).toHaveBeenLastCalledWith(kind === "sum" ? 0 : null);
 
-    expect(aggregate([1, "2"])).toBe("Unavailable");
+    expect(aggregate({ rows: [1, "2"] })).toBe("Unavailable");
     expect(transformer).toHaveBeenCalledTimes(3);
     expect(transformer).toHaveBeenLastCalledWith(null);
   });
-
-  it("preserves the operation marker without materializing its phantom result", () => {
-    const aggregate = numericFactories[kind]((value) => String(value));
-    expect(aggregate[AGGREGATION]).toEqual({ kind });
-    expect("result" in aggregate[AGGREGATION]).toBe(false);
-    expect(isAggregation(aggregate)).toBe(true);
-  });
 });
 
-describe("aggregation values and transformations", () => {
-  it("returns unformatted numeric results by default", () => {
-    expect(aggregations.sum()([1.25, 2.5])).toBe(3.75);
-    expect(aggregations.avg()([1.25, 2.5])).toBe(1.875);
-    expect(aggregations.sum(undefined)([1, 2])).toBe(3);
+describe("selector aggregations", () => {
+  it("returns unformatted numeric results by default, including an undefined transformer", () => {
+    expect(aggregations.sum(selectNumber)({ rows: [1.25, 2.5] })).toBe(3.75);
+    expect(aggregations.avg(selectNumber)({ rows: [1.25, 2.5] })).toBe(1.875);
+    expect(aggregations.sum(selectNumber, undefined)({ rows: [1, 2] })).toBe(3);
   });
 
-  it("reuses detached aggregation functions without row types or retained state", () => {
-    const sum = aggregations.sum();
-    const formatAverage = aggregations.avg((value) => value?.toFixed(2) ?? "–");
-    expect(sum([1, 2, null])).toBe(3);
-    expect(sum([4, 5])).toBe(9);
-    expect(formatAverage([1, 2])).toBe("1.50");
-    expect(formatAverage([])).toBe("–");
+  it("reuses detached callbacks over selected row fields without retained state", () => {
+    type Row = { quantity: number | null };
+    const sum = aggregations.sum((row: Row) => row.quantity);
+    const formatAverage = aggregations.avg(
+      (row: Row) => row.quantity,
+      (value) => value?.toFixed(2) ?? "–",
+    );
+
+    expect(sum({ rows: [{ quantity: 1 }, { quantity: 2 }, { quantity: null }] })).toBe(3);
+    expect(sum({ rows: [{ quantity: 4 }, { quantity: 5 }] })).toBe(9);
+    expect(formatAverage({ rows: [{ quantity: 1 }, { quantity: 2 }] })).toBe("1.50");
+    expect(formatAverage({ rows: [] })).toBe("–");
   });
 
-  it("accepts arbitrary transformer output without knowing React or another UI", () => {
-    const sum = aggregations.sum((value) => ({ type: "p", props: { children: value } }));
-    expect(sum([1, 2])).toEqual({ type: "p", props: { children: 3 } });
-    expect(aggregations.sum(() => undefined)([1, 2])).toBeUndefined();
-    expect(aggregations.count(() => false)([1, 2])).toBe(false);
+  it("preserves arbitrary transformed output without knowing React or DataTable", () => {
+    const sum = aggregations.sum(selectNumber, (value) => ({ total: value }));
+    expectTypeOf(sum).toEqualTypeOf<Aggregation<unknown, { total: number | null }>>();
+    expect(sum({ rows: [1, 2] })).toEqual({ total: 3 });
+    expect(aggregations.sum(selectNumber, () => undefined)({ rows: [1, 2] })).toBeUndefined();
+    expect(
+      aggregations.count(
+        (value: unknown) => value,
+        () => false,
+      )({ rows: [1, 2] }),
+    ).toBe(false);
   });
 
-  it("infers raw and transformed result types without permitting a fake no-argument result type", () => {
-    expectTypeOf(aggregations.sum()).toEqualTypeOf<Aggregation<number | null, "sum">>();
-    expectTypeOf(aggregations.count()).toEqualTypeOf<Aggregation<number, "count">>();
-    expectTypeOf(
-      aggregations.avg((value) => {
-        expectTypeOf(value).toEqualTypeOf<number | null>();
-        return String(value);
-      }),
-    ).toEqualTypeOf<Aggregation<string, "avg">>();
-    expectTypeOf(
-      aggregations.count((value) => {
-        expectTypeOf(value).toEqualTypeOf<number>();
-        return { count: value };
-      }),
-    ).toEqualTypeOf<Aggregation<{ count: number }, "count">>();
+  it("passes each row alone to its selector and does not select empty input", () => {
+    const row = { quantity: 2 };
+    const selector = vi.fn((value: typeof row) => value.quantity);
+    const sum = aggregations.sum(selector);
 
-    // @ts-expect-error A requested output type needs a transformer that produces it.
-    aggregations.sum<string>();
-    // @ts-expect-error The transformer must actually return the requested output type.
-    aggregations.sum<string>((value) => value);
+    expect(sum({ rows: [row] })).toBe(2);
+    expect(selector).toHaveBeenCalledExactlyOnceWith(row);
+    expect(sum({ rows: [] })).toBe(0);
+    expect(selector).toHaveBeenCalledTimes(1);
   });
 
-  it("preserves output typing in a noncallable definition view without losing callback inference", () => {
-    const option: {
-      content: AggregationDefinition<number | string | null> | ((ctx: { label: string }) => string);
-    } = {
-      content: (ctx) => {
-        expectTypeOf(ctx).toEqualTypeOf<{ label: string }>();
-        return ctx.label;
-      },
-    };
-    expect(typeof option.content).toBe("function");
+  it("does not pass an array index as Number.parseInt's radix", () => {
+    expect(aggregations.sum(Number.parseInt)({ rows: ["1", "2", "3"] })).toBe(6);
+  });
 
-    const numeric: AggregationDefinition<number> = aggregations.count();
-    expect(numeric[AGGREGATION].kind).toBe("count");
-    // @ts-expect-error A definition view retains the transformed result type.
-    const invalid: AggregationDefinition<number> = aggregations.sum(() => ({ count: 1 }));
-    void invalid;
+  it("propagates selector exceptions without evaluating the transformer", () => {
+    const transformer = vi.fn((value: number | null) => value);
+    const sum = aggregations.sum(() => {
+      throw new Error("Selector failed");
+    }, transformer);
+
+    expect(() => sum({ rows: [1] })).toThrow("Selector failed");
+    expect(transformer).not.toHaveBeenCalled();
+  });
+
+  it("propagates transformer exceptions", () => {
+    const sum = aggregations.sum(selectNumber, () => {
+      throw new Error("Transformer failed");
+    });
+
+    expect(() => sum({ rows: [1] })).toThrow("Transformer failed");
   });
 
   it("returns null for a nonfinite calculated result", () => {
-    const values = [Number.MAX_VALUE, Number.MAX_VALUE];
-    expect(aggregations.sum()(values)).toBeNull();
-    expect(aggregations.avg()(values)).toBeNull();
-    expect(aggregations.min()(values)).toBe(Number.MAX_VALUE);
-    expect(aggregations.max()(values)).toBe(Number.MAX_VALUE);
+    const rows = [Number.MAX_VALUE, Number.MAX_VALUE];
+    expect(aggregations.sum(selectNumber)({ rows })).toBeNull();
+    expect(aggregations.avg(selectNumber)({ rows })).toBeNull();
+    expect(aggregations.min(selectNumber)({ rows })).toBe(Number.MAX_VALUE);
+    expect(aggregations.max(selectNumber)({ rows })).toBe(Number.MAX_VALUE);
   });
 
   it("finds min and max without spreading a large collection into function arguments", () => {
-    const values = Array.from({ length: 200_000 }, (_, index) => index - 100_000);
-    expect(aggregations.min()(values)).toBe(-100_000);
-    expect(aggregations.max()(values)).toBe(99_999);
+    const rows = Array.from({ length: 200_000 }, (_, index) => index - 100_000);
+    expect(aggregations.min(selectNumber)({ rows })).toBe(-100_000);
+    expect(aggregations.max(selectNumber)({ rows })).toBe(99_999);
   });
 
-  it("does not mutate frozen input or its values", () => {
+  it("does not mutate frozen row arrays or row objects", () => {
+    const first = Object.freeze({ quantity: 3 });
+    const rows = Object.freeze([first, Object.freeze({ quantity: 1 })]);
+    for (const kind of numericKinds) {
+      aggregations[kind]((row: (typeof rows)[number]) => row.quantity)({ rows });
+    }
+    expect(aggregations.count((row: (typeof rows)[number]) => row.quantity)({ rows })).toBe(2);
+    expect(rows).toEqual([{ quantity: 3 }, { quantity: 1 }]);
+    expect(rows[0]).toBe(first);
+
     const numeric = Object.freeze([3, null, 1]);
-    for (const kind of [...numericKinds, "count"] as const) aggregations[kind]()(numeric);
+    expect(aggregations.sum(selectNumber)({ rows: numeric })).toBe(4);
     expect(numeric).toEqual([3, null, 1]);
-
-    const value = Object.freeze({ name: "Example" });
-    const objects = Object.freeze([value]);
-    expect(aggregations.count()(objects)).toBe(1);
-    expect(aggregations.sum()(objects)).toBeNull();
-    expect(objects[0]).toBe(value);
-  });
-
-  it("does not identify ordinary callbacks or marker-only objects as callable aggregations", () => {
-    expect(isAggregation(() => 1)).toBe(false);
-    expect(isAggregation({ [AGGREGATION]: { kind: "sum" } })).toBe(false);
-    expect(isAggregation(null)).toBe(false);
-    expect(isAggregation("sum")).toBe(false);
   });
 });
 
 describe("aggregations.count", () => {
-  it("counts non-nullish values of any type without a truthiness check", () => {
-    expect(
-      aggregations.count()([
-        0,
-        false,
-        "",
-        "text",
-        {},
-        [],
-        2n,
-        Number.NaN,
-        Infinity,
-        null,
-        undefined,
-      ]),
-    ).toBe(9);
+  it("counts non-nullish selected values of any type without a truthiness check", () => {
+    const rows = [0, false, "", "text", {}, [], 2n, Number.NaN, Infinity, null, undefined];
+    expect(aggregations.count((value: unknown) => value)({ rows })).toBe(9);
   });
 
-  it.each([{ values: [] }, { values: [null, undefined] }])(
-    "returns zero when there are no non-nullish values in $values",
-    ({ values }) => {
-      expect(aggregations.count()(values)).toBe(0);
+  it.each([{ rows: [] }, { rows: [null, undefined] }])(
+    "returns zero when there are no non-nullish values in $rows",
+    ({ rows }) => {
+      expect(aggregations.count((value: unknown) => value)({ rows })).toBe(0);
     },
   );
 
   it.each([
-    { values: [], expected: 0 },
-    { values: [false, 0, null], expected: 2 },
-  ])("transforms the result $expected once", ({ values, expected }) => {
+    { rows: [], expected: 0 },
+    { rows: [false, 0, null], expected: 2 },
+  ])("transforms the result $expected once", ({ rows, expected }) => {
     const transformer = vi.fn((value: number) => `${value} entries`);
-    const count = aggregations.count(transformer);
-    expect(count(values)).toBe(`${expected} entries`);
+    const count = aggregations.count((value: unknown) => value, transformer);
+
+    expect(count({ rows })).toBe(`${expected} entries`);
     expect(transformer).toHaveBeenCalledExactlyOnceWith(expected);
-    expect(count[AGGREGATION].kind).toBe("count");
   });
 });

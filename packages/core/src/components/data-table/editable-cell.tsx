@@ -128,7 +128,7 @@ const CELL_FOCUS_CLASS_NAME = cn(
 
 // Parsing and callback errors share the cell's error outline.
 const CELL_ERROR_CLASS_NAME =
-  "astw:ring-2 astw:ring-inset astw:ring-destructive astw:focus:ring-destructive astw:focus-visible:ring-destructive";
+  "astw:ring-[1.5px] astw:ring-inset astw:ring-destructive astw:focus:ring-[1.5px] astw:focus:ring-destructive astw:focus-visible:ring-[1.5px] astw:focus-visible:ring-destructive";
 
 // An editable cell says so at rest with a subtle tint instead of an icon. It's
 // a background *image* layered over whatever colour the cell already has (the
@@ -181,6 +181,24 @@ interface CellErrorUI {
   containsTarget: (target: EventTarget | null) => boolean;
 }
 
+// The standard popover body: the alert icon makes it read as an error rather
+// than a tooltip.
+function DefaultCellErrorContent({ message }: { message: string }) {
+  return (
+    <div className="astw:flex astw:gap-1.5">
+      {/* One line-height tall, so the icon centres on the first line of text. */}
+      <span className="astw:flex astw:h-lh astw:shrink-0 astw:items-center">
+        <CircleAlert
+          aria-hidden="true"
+          strokeWidth={2.5}
+          className="astw:size-3.5 astw:opacity-70"
+        />
+      </span>
+      <p>{message}</p>
+    </div>
+  );
+}
+
 function useCellValue<TRow extends Record<string, unknown>>(
   row: TRow,
   col: EditableColumn<TRow>,
@@ -219,7 +237,11 @@ function useCellValue<TRow extends Record<string, unknown>>(
           failure,
           id: errorId,
           message: renderError ? t("editCallbackError") : message,
-          content: renderError ? renderError({ row, error: failure.error }) : message,
+          content: renderError ? (
+            renderError({ row, error: failure.error })
+          ) : (
+            <DefaultCellErrorContent message={message} />
+          ),
           triggerRef,
           popupRef,
           containsTarget: containsErrorTarget,
@@ -351,18 +373,31 @@ function EditableCellFrame({
               aria-label={t("editShowError", { label })}
               aria-keyshortcuts="Alt+ArrowDown"
               tabIndex={-1}
-              className="astw:absolute astw:inset-y-0 astw:right-2 astw:z-10 astw:flex astw:items-center astw:text-destructive astw:outline-none astw:focus-visible:ring-2 astw:focus-visible:ring-destructive astw:[td:last-child>&]:right-6"
+              className="astw:absolute astw:inset-y-0 astw:right-2 astw:z-10 astw:flex astw:items-center astw:text-destructive astw:outline-none astw:[td:last-child>&]:right-6"
               onContextMenu={(event) => event.stopPropagation()}
             >
-              <CircleAlert aria-hidden="true" className="astw:size-3.5" />
+              <CircleAlert aria-hidden="true" strokeWidth={2.5} className="astw:size-3.5" />
             </Popover.Trigger>
             <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
-              <Popover.Positioner sideOffset={4} side="bottom" align="end">
+              {/* Opens directly under the cell, not under the small icon trigger. */}
+              <Popover.Positioner
+                anchor={() => callbackError.triggerRef.current?.closest("td") ?? null}
+                sideOffset={4}
+                side="bottom"
+                align="start"
+              >
                 <Popover.Popup
                   ref={callbackError.popupRef}
                   aria-label={t("editErrorDialog", { label })}
                   data-slot="data-table-cell-error"
-                  className={cn(POPUP_CLASS_NAME, "astw:max-w-sm astw:text-body-sm")}
+                  className={cn(
+                    POPUP_CLASS_NAME,
+                    // Same tint as Alert's error variant. --danger-surface is
+                    // translucent, so it's layered as an image over the opaque
+                    // popover colour; table lines don't show through.
+                    "astw:[background-image:linear-gradient(var(--danger-surface),var(--danger-surface))]",
+                    "astw:max-w-xs astw:border-0 astw:px-2.5 astw:py-2 astw:text-body-sm astw:text-danger-text astw:shadow-sm astw:outline-none",
+                  )}
                   onContextMenu={(event) => event.stopPropagation()}
                   onTouchStart={(event) => event.stopPropagation()}
                   onKeyDown={(event) => {

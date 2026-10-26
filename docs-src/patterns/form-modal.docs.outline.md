@@ -67,7 +67,9 @@ placeholder.
   render_ — a submit gate, a dependent placeholder, a live character count. That state is
   load-bearing, not mirrored; see `form/composer`.
 - **`Field.Control` is already a styled input.** Write `<Field.Control />`, not
-  `<Field.Control render={<Input />} />`.
+  `<Field.Control render={<Input />} />`. Every other control — `Select`, `Combobox`,
+  `Autocomplete`, `Checkbox`, `Textarea`, `DateField`, `DatePicker` — goes directly under
+  `Field.Root`. Passing one to `Field.Control`'s `render` draws a second frame around it.
 - **Object items need `itemToStringValue`.** Items shaped `{ value, label }` submit `value`
   automatically; any other object submits as a JSON string unless you supply it.
 - **Server errors go through `Form`'s `errors` prop**, keyed by field `name` — not a toast or a
@@ -85,4 +87,5 @@ placeholder.
 - Registering the create path as a separate top-level route — that unmounts the parent list
 - Reaching for React Hook Form on a form this size — `onFormSubmit` already covers it
 - Holding a `Select`/`Combobox` value in `useState` just to submit it — `Field.Root` already does
+- Wrapping a `Select`/`Combobox` in `Field.Control` (`render={<Select />}`) — a double frame
 - Surfacing API validation failures in a toast or banner instead of routing them via `errors`

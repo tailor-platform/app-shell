@@ -34,6 +34,7 @@ describe("ActionPanel", () => {
   it("renders empty state when no actions", () => {
     renderActionPanel({ title: "Actions", actions: [] });
     const message = screen.getByText("No actions available");
+    expect(message.className).toContain("astw:text-body-md");
     expect(message.parentElement?.getAttribute("data-slot")).toBe("card-content");
     expect(message.parentElement?.className).toContain("astw:px-8");
     expect(message.parentElement?.className).toContain("astw:pt-2");
@@ -135,6 +136,7 @@ describe("ActionPanel", () => {
     expect(button.className).toContain("astw:px-0");
     expect(button.className).toContain("astw:py-2");
     expect(button.className).toContain("astw:border-0");
+    expect(button.className).toContain("astw:text-label-md");
     expect(container.querySelector('[data-slot="card-header"]')?.className).toContain("astw:px-8");
     const content = container.querySelector('[data-slot="card-content"]');
     expect(content?.className).toContain("astw:px-8");

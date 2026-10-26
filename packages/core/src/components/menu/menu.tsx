@@ -84,7 +84,7 @@ function Item({ className, ...props }: React.ComponentProps<typeof BaseMenu.Item
     <BaseMenu.Item
       data-slot="menu-item"
       className={cn(
-        "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-sm astw:outline-hidden",
+        "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-body-md astw:outline-hidden",
         "astw:data-highlighted:bg-accent astw:data-highlighted:text-accent-foreground",
         "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
         "astw:[&_svg]:pointer-events-none astw:[&_svg]:shrink-0 astw:[&_svg:not([class*='size-'])]:size-4",
@@ -102,7 +102,7 @@ function LinkItem({ className, ...props }: React.ComponentProps<typeof BaseMenu.
     <BaseMenu.LinkItem
       data-slot="menu-link-item"
       className={cn(
-        "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-sm astw:outline-hidden astw:no-underline",
+        "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-body-md astw:outline-hidden astw:no-underline",
         "astw:data-highlighted:bg-accent astw:data-highlighted:text-accent-foreground",
         "astw:[&_svg]:pointer-events-none astw:[&_svg]:shrink-0 astw:[&_svg:not([class*='size-'])]:size-4",
         className,
@@ -119,7 +119,7 @@ function CheckboxItem({ className, ...props }: React.ComponentProps<typeof BaseM
     <BaseMenu.CheckboxItem
       data-slot="menu-checkbox-item"
       className={cn(
-        "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:py-1.5 astw:pr-2 astw:pl-8 astw:text-sm astw:outline-hidden",
+        "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:py-1.5 astw:pr-2 astw:pl-8 astw:text-body-md astw:outline-hidden",
         "astw:data-highlighted:bg-accent astw:data-highlighted:text-accent-foreground",
         "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
         className,
@@ -154,7 +154,7 @@ function RadioItem({ className, ...props }: React.ComponentProps<typeof BaseMenu
     <BaseMenu.RadioItem
       data-slot="menu-radio-item"
       className={cn(
-        "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:py-1.5 astw:pr-2 astw:pl-8 astw:text-sm astw:outline-hidden",
+        "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:py-1.5 astw:pr-2 astw:pl-8 astw:text-body-md astw:outline-hidden",
         "astw:data-highlighted:bg-accent astw:data-highlighted:text-accent-foreground",
         "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
         className,
@@ -201,7 +201,7 @@ function GroupLabel({ className, ...props }: React.ComponentProps<typeof BaseMen
     <BaseMenu.GroupLabel
       data-slot="menu-group-label"
       className={cn(
-        "astw:px-2 astw:py-1.5 astw:text-xs astw:font-semibold astw:text-muted-foreground",
+        "astw:px-2 astw:py-1.5 astw:text-label-sm astw:text-muted-foreground",
         className,
       )}
       {...props}
@@ -249,7 +249,7 @@ function SubmenuTrigger({
     <BaseMenu.SubmenuTrigger
       data-slot="menu-submenu-trigger"
       className={cn(
-        "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-sm astw:outline-hidden",
+        "astw:relative astw:flex astw:w-full astw:cursor-default astw:select-none astw:items-center astw:gap-2 astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-body-md astw:outline-hidden",
         "astw:data-highlighted:bg-accent astw:data-highlighted:text-accent-foreground",
         "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
         "astw:[&_svg]:pointer-events-none astw:[&_svg]:shrink-0 astw:[&_svg:not([class*='size-'])]:size-4",

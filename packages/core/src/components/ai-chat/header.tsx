@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Text } from "../text";
 
 type AIChatHeaderProps = {
   /** Title text. */
@@ -27,14 +28,18 @@ function Header({ title, icon, actions, className }: AIChatHeaderProps) {
         className,
       )}
     >
-      <div className="astw:flex astw:min-w-0 astw:items-center astw:gap-1.5 astw:text-sm astw:font-semibold astw:text-foreground">
+      <Text
+        variant="heading-sm"
+        className="astw:flex astw:min-w-0 astw:items-center astw:gap-1.5 astw:text-foreground"
+        render={<div />}
+      >
         {icon === undefined ? (
           <Sparkles className="astw:size-4 astw:shrink-0 astw:text-primary" aria-hidden />
         ) : (
           icon
         )}
         {title == null ? null : <span className="astw:truncate">{title}</span>}
-      </div>
+      </Text>
       {actions == null ? null : (
         <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-0.5">{actions}</div>
       )}

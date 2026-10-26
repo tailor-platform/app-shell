@@ -3,6 +3,7 @@ import { Card } from "../card";
 import { Spinner } from "../spinner";
 import { useRegisterCommandPaletteActions } from "../../contexts/command-palette-context";
 import type { ActionPanelProps, ActionItem } from "./types";
+import { Text } from "../text";
 
 const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-center";
 
@@ -12,7 +13,7 @@ const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-ce
 
 const actionRowBaseClasses = cn(
   "astw:flex astw:items-center astw:gap-2 astw:w-full astw:rounded-md astw:px-0 astw:py-2",
-  "astw:text-sm astw:font-medium astw:transition-colors astw:border-0",
+  "astw:text-label-md astw:transition-colors astw:border-0",
   "astw:bg-transparent astw:text-left astw:cursor-pointer astw:[&_svg]:size-4 astw:[&_svg]:shrink-0",
 );
 
@@ -98,7 +99,11 @@ function ActionRow({ action }: { action: ActionItem }) {
 export function ActionPanel({
   title,
   actions,
-  emptyContent = <p className="astw:text-sm astw:text-muted-foreground">No actions available</p>,
+  emptyContent = (
+    <Text variant="body-md" className="astw:text-muted-foreground">
+      No actions available
+    </Text>
+  ),
   className,
 }: ActionPanelProps) {
   const hasEmptyContent =

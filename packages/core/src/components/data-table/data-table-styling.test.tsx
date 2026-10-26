@@ -1,10 +1,16 @@
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import type { Column, HeaderRenderContext, UseDataTableOptions } from "./types";
+import type {
+  Column,
+  FooterRenderContext,
+  HeaderRenderContext,
+  UseDataTableOptions,
+  UseDataTableReturn,
+} from "./types";
 
 afterEach(cleanup);
 
@@ -15,8 +21,12 @@ const rows: Row[] = [
 ];
 const wrapper = createAppShellWrapper("en");
 
-function Harness(options: UseDataTableOptions<Row>) {
+function Harness({
+  capture,
+  ...options
+}: UseDataTableOptions<Row> & { capture?: (table: UseDataTableReturn<Row>) => void }) {
   const table = useDataTable(options);
+  capture?.(table);
   return (
     <DataTable.Root value={table}>
       <DataTable.Table />
@@ -268,5 +278,163 @@ describe("DataTable headerProps", () => {
     expect(header.style.backgroundColor).toBe("");
     expect(header.title).toBe("");
     expect(header.className).not.toContain("astw:tabular-nums");
+  });
+});
+
+describe("DataTable footerProps", () => {
+  it("accepts only a callback returning className, style, and title or undefined", () => {
+    expectTypeOf<NonNullable<Column<Row>["footerProps"]>>().toEqualTypeOf<
+      (
+        ctx: FooterRenderContext<Row>,
+      ) => Pick<ComponentProps<"td">, "className" | "style" | "title"> | undefined
+    >();
+  });
+
+  it.each([false, true])(
+    "styles footer cells with custom content=%s without affecting other cells",
+    (custom) => {
+      const { container } = render(
+        <Harness
+          data={{ rows }}
+          rowSelection={{}}
+          rowExpansion={{ render: () => "Details" }}
+          rowActions={[{ id: "inspect", label: "Inspect", onClick: vi.fn() }]}
+          columns={[
+            {
+              id: "name",
+              label: "Name",
+              type: "text",
+              footer: custom ? () => <strong>Total</strong> : "Total",
+              footerProps: (ctx) => {
+                expectTypeOf(ctx).toEqualTypeOf<FooterRenderContext<Row>>();
+                expectTypeOf(ctx.rows).toEqualTypeOf<readonly Row[]>();
+                expect(ctx.rows).toBe(rows);
+                return {
+                  className: "astw:tabular-nums",
+                  style: { backgroundColor: "red", color: "white" },
+                  title: "Page total",
+                };
+              },
+            },
+            { id: "hours", type: "number", footerProps: () => ({ title: "Blank footer" }) },
+          ]}
+        />,
+        { wrapper },
+      );
+      const footer = cell("Total");
+      expect(footer.style.backgroundColor).toBe("red");
+      expect(footer.style.color).toBe("white");
+      expect(footer.className).toContain("astw:py-2");
+      expect(footer.className).toContain("astw:tabular-nums");
+      expect(footer.title).toBe("Page total");
+      const blank = container.querySelector<HTMLTableCellElement>('tfoot [data-col-key="hours"]')!;
+      expect(blank.title).toBe("Blank footer");
+      expect(blank.textContent).toBe("");
+      for (const other of Array.from(container.querySelectorAll<HTMLTableCellElement>("th, td"))) {
+        if (other === footer || other === blank) continue;
+        expect(other.style.backgroundColor).toBe("");
+        expect(other.title).toBe("");
+        expect(other.className).not.toContain("astw:tabular-nums");
+      }
+    },
+  );
+
+  it.each(["left", "right"] as const)("preserves %s footer pinning and width", (pin) => {
+    render(
+      <Harness
+        data={{ rows }}
+        rowSelection={{}}
+        columns={[
+          {
+            id: "name",
+            type: "text",
+            width: 140,
+            pin,
+            footer: "Total",
+            footerProps: () => ({
+              className: "astw:bg-muted",
+              style: { backgroundColor: "red", position: "relative", [pin]: 999, width: 999 },
+            }),
+          },
+        ]}
+      />,
+      { wrapper },
+    );
+    const footer = cell("Total");
+    expect(footer.style.position).toBe("sticky");
+    expect(footer.style[pin]).toBe(pin === "left" ? "52px" : "0px");
+    expect(footer.style.width).toBe("140px");
+    expect(footer.style.backgroundColor).toBe("red");
+    expect(footer.className.split(" ")).toContain("astw:bg-muted");
+    expect(footer.className.split(" ")).not.toContain("astw:bg-card");
+    expect(footer.className).toContain(`data-pin-shadow-${pin}`);
+  });
+
+  it("recomputes footer styling from current rows, restores defaults, and evaluates empty rows", () => {
+    const footerProps = vi.fn(({ rows: currentRows }: FooterRenderContext<Row>) =>
+      currentRows.some((row) => row.hours >= 40)
+        ? { className: "astw:tabular-nums", style: { backgroundColor: "red" }, title: "High total" }
+        : undefined,
+    );
+    const columns: Column<Row>[] = [{ id: "name", type: "text", footer: "Total", footerProps }];
+    const { rerender } = render(<Harness columns={columns} data={{ rows }} />, { wrapper });
+    expect(cell("Total").style.backgroundColor).toBe("red");
+    rerender(<Harness columns={columns} data={{ rows: [{ ...rows[0], hours: 20 }] }} />);
+    expect(cell("Total").style.backgroundColor).toBe("");
+    expect(cell("Total").title).toBe("");
+    expect(cell("Total").className).not.toContain("astw:tabular-nums");
+    footerProps.mockClear();
+    rerender(<Harness columns={columns} data={{ rows: [] }} />);
+    expect(footerProps).toHaveBeenLastCalledWith({ rows: [] });
+    expect(cell("Total").style.backgroundColor).toBe("");
+  });
+
+  it.each([{ loading: true }, { error: new Error("Failed") }])(
+    "does not evaluate footer styling during loading or errors (%j)",
+    (state) => {
+      const footerProps = vi.fn(() => ({ title: "Page total" }));
+      render(
+        <Harness
+          data={{ rows }}
+          columns={[{ id: "name", footer: "Total", footerProps }]}
+          {...state}
+        />,
+        { wrapper },
+      );
+      expect(footerProps).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not evaluate hidden columns while another footer remains visible", () => {
+    const footerProps = vi.fn(() => ({ title: "Page total" }));
+    let table!: UseDataTableReturn<Row>;
+    render(
+      <Harness
+        data={{ rows }}
+        capture={(value) => {
+          table = value;
+        }}
+        columns={[
+          { id: "name", footer: "Total", footerProps },
+          { id: "hours", footer: "Hours" },
+        ]}
+      />,
+      { wrapper },
+    );
+    footerProps.mockClear();
+    act(() => table.toggleColumn("name"));
+    expect(footerProps).not.toHaveBeenCalled();
+    expect(screen.queryByText("Total")).toBeNull();
+    expect(cell("Hours")).toBeDefined();
+  });
+
+  it("does not create a footer from footerProps alone", () => {
+    const footerProps = vi.fn(() => ({ title: "Page total" }));
+    const { container } = render(
+      <Harness data={{ rows }} columns={[{ id: "name", type: "text", footerProps }]} />,
+      { wrapper },
+    );
+    expect(container.querySelector("tfoot")).toBeNull();
+    expect(footerProps).not.toHaveBeenCalled();
   });
 });

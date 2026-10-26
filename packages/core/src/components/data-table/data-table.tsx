@@ -1288,23 +1288,32 @@ function DataTableColumnFooter() {
         )}
         {ordered.map((col) => {
           const key = keys.get(col) as string;
+          const footerContext = { rows };
+          const customFooterProps = loading ? undefined : col.footerProps?.(footerContext);
           let footerContent: ReactNode = null;
           if (!loading) {
-            footerContent = typeof col.footer === "function" ? col.footer({ rows }) : col.footer;
+            footerContent =
+              typeof col.footer === "function" ? col.footer(footerContext) : col.footer;
           }
+          const { style, className } = pinCellProps(
+            placements.get(col),
+            {
+              style: {
+                ...customFooterProps?.style,
+                ...(col.width ? { width: col.width } : {}),
+              },
+              className: cn(resolveAlign(col) === "right" && "astw:text-right"),
+            },
+            "footer",
+          );
           return (
             <Table.Cell
               key={key}
               data-slot="data-table-column-footer-cell"
               data-col-key={key}
-              {...pinCellProps(
-                placements.get(col),
-                {
-                  style: col.width ? { width: col.width } : undefined,
-                  className: cn(resolveAlign(col) === "right" && "astw:text-right"),
-                },
-                "footer",
-              )}
+              title={customFooterProps?.title}
+              style={style}
+              className={cn(className, customFooterProps?.className)}
             >
               {col.footer !== undefined &&
                 (loading ? (

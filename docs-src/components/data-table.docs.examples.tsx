@@ -89,6 +89,17 @@ export function ColumnFooters() {
             ),
         },
         footer: ({ rows }) => rows.reduce((sum, row) => sum + (row.quantity ?? 0), 0),
+        footerProps: ({ rows }) =>
+          rows.length > 0
+            ? {
+                className: "tabular-nums",
+                style: {
+                  backgroundColor: "var(--success-solid)",
+                  color: "var(--success-contrast)",
+                },
+                title: `Quantity total for ${rows.length} items on this page`,
+              }
+            : undefined,
       }),
     ],
   });

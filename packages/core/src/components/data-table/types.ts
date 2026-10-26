@@ -212,7 +212,7 @@ interface SortableHeaderRenderContext {
  */
 export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
 
-/** Context passed to custom column `footer` renderers. */
+/** Context passed to custom column `footer` renderers and `footerProps` callbacks. */
 export interface FooterRenderContext<TRow extends Record<string, unknown>> {
   /** Current `data.rows` (the current page, not all records or only selected rows). */
   rows: readonly TRow[];
@@ -358,6 +358,19 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    * Separate from `DataTable.Footer`, the pagination / bulk-action container.
    */
   footer?: string | ((ctx: FooterRenderContext<TRow>) => ReactNode);
+  /**
+   * Sets `className`, `style`, and `title` on this column's footer `<td>`.
+   * Receives the same context as `footer`; return `undefined` to keep the defaults.
+   * Classes are merged with the built-in classes; column `width` and sticky
+   * positioning take precedence over `style`. Use an opaque background for
+   * pinned footer cells. Content stays owned by `footer`; events, refs, and
+   * cell spanning are not configurable through this hook.
+   * Does not create a footer row by itself. Not called while loading, on errors,
+   * or for hidden columns. Built-in utility footer cells are not affected.
+   */
+  footerProps?: (
+    ctx: FooterRenderContext<TRow>,
+  ) => Pick<ComponentProps<"td">, "className" | "style" | "title"> | undefined;
   /**
    * Stable identifier used for column visibility toggling, persisted layout
    * state, raw-value fallback (`row[col.id]`), and as the React key. Falls

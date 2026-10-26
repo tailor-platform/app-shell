@@ -567,11 +567,13 @@ const DataTableLabPage = () => {
               Lot no. rejects empty text. Warehouse, QC, and Note can be cleared. Dates use an
               unconstrained calendar: Expected rejects days before September 2026, Best before
               accepts October 2026–December 2027, and Received at adds a time field. There is no
-              built-in unsaved-changes prompt when leaving. The sticky <strong>Totals</strong> row
-              uses <code>Column.footer</code> to sum Ordered, Received, and Weight across all six
-              records, not just selected rows. Edit Weight directly, or tick a row to edit Received,
-              and confirm to update the totals. Scroll inside the table to keep the header and
-              totals in view. These summaries are not data rows; the separate footer below still
+              built-in unsaved-changes prompt when leaving. The sticky <strong>Aggregates</strong>{" "}
+              row uses <code>aggregations</code> with explicit row selectors to sum Ordered,
+              Received, and Weight, show the maximum Discount, and count non-null QC values across
+              all six records, not just selected rows. Weight's result-only transformer formats its
+              total to three decimals. Edit Weight directly, or tick a row to edit Received, and
+              confirm to update the totals. Scroll inside the table to keep the header and
+              aggregates in view. These summaries are not data rows; the separate footer below still
               shows change and saving feedback.
             </>
           }

@@ -43,6 +43,23 @@
         "examples": "eb7ab46dc420129f"
       }
     },
+    "aggregations": {
+      "slug": "aggregations",
+      "kind": "code-backed",
+      "outline": "docs-src/hooks/aggregations.docs.outline.md",
+      "output": "docs/api/aggregations.md",
+      "examples": null,
+      "sources": ["packages/core/src/lib/aggregations.ts"],
+      "claims": [],
+      "symbols": ["Aggregation", "aggregations"],
+      "hashes": {
+        "typeSurface": "0c11b3ba9d3529ad",
+        "outline": "5cfd5048505b0913",
+        "snapshot": null,
+        "outputMd": "daf6c93e7285ee88",
+        "examples": null
+      }
+    },
     "ai-chat": {
       "slug": "ai-chat",
       "kind": "code-backed",
@@ -455,10 +472,10 @@
       ],
       "hashes": {
         "typeSurface": "05cbf8a4bdb7a863",
-        "outline": "a1cfaa391d7f68d8",
+        "outline": "93a2a1e3c380f5b9",
         "snapshot": "a97e067c66e46ef6",
-        "outputMd": "8b1e693010c77535",
-        "examples": "686d2336dc14620a"
+        "outputMd": "94d4e9340fdb20f3",
+        "examples": "10abd548e6affb9d"
       }
     },
     "date-picker": {
@@ -1211,7 +1228,7 @@
       "hashes": {
         "typeSurface": "429710973dfa912b",
         "outline": "a8b7834a8817e0d5",
-        "snapshot": "2ef5b7324018ff8f",
+        "snapshot": "bd7e6f45871b88e7",
         "outputMd": "b3dd3b9a58a9d290",
         "examples": "1ce89cec30045466"
       }
@@ -1752,7 +1769,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "8b1e693010c77535",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "94d4e9340fdb20f3",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "bc69f14829004f9d",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
@@ -1782,6 +1799,7 @@
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
+    "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "daf6c93e7285ee88",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",
     "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "3035dea9ac31b7f5",
@@ -1819,6 +1837,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "214b43b076a41a86",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "9145efebe27ab6b0"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "bf57b75f98645b89"
   }
 }

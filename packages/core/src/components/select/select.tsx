@@ -59,7 +59,7 @@ function SelectTrigger({
       ref={mergeRefs(ref, forwardedRef)}
       data-slot="select-trigger"
       className={cn(
-        "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:text-foreground astw:flex astw:h-9 astw:w-full astw:items-center astw:justify-between astw:gap-2 astw:rounded-md astw:border astw:px-3 astw:py-2 astw:text-sm astw:outline-none astw:transition-colors",
+        "astw:border-input astw:bg-transparent astw:dark:bg-input/30 astw:text-foreground astw:flex astw:h-9 astw:w-full astw:items-center astw:justify-between astw:gap-2 astw:rounded-md astw:border astw:px-3 astw:py-2 astw:text-body-md astw:outline-none astw:transition-colors",
         "astw:focus-visible:border-ring astw:focus-visible:ring-ring/50 astw:focus-visible:ring-[3px]",
         "astw:disabled:cursor-not-allowed astw:disabled:opacity-50",
         "astw:placeholder:text-muted-foreground",
@@ -100,7 +100,7 @@ function SelectContent({
         <BaseSelect.Popup
           data-slot="select-content"
           className={cn(
-            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-(--z-popup) astw:w-[var(--anchor-width)] astw:min-w-32 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-(--z-popup) astw:w-[var(--anchor-width)] astw:min-w-32 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:p-1 astw:shadow-md",
             className,
           )}
           {...props}
@@ -120,7 +120,7 @@ function SelectItem({
     <BaseSelect.Item
       data-slot="select-item"
       className={cn(
-        "astw:relative astw:flex astw:w-full astw:cursor-default astw:items-center astw:gap-2 astw:rounded-sm astw:py-1.5 astw:pr-8 astw:pl-2 astw:text-sm astw:outline-hidden astw:select-none",
+        "astw:relative astw:flex astw:w-full astw:cursor-default astw:items-center astw:gap-2 astw:rounded-sm astw:py-1.5 astw:pr-8 astw:pl-2 astw:text-body-md astw:outline-hidden astw:select-none",
         "astw:focus:bg-accent astw:focus:text-accent-foreground",
         "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
         "astw:[&_svg]:pointer-events-none astw:[&_svg:not([class*='size-'])]:size-4 astw:[&_svg]:shrink-0",
@@ -152,7 +152,7 @@ function SelectGroupLabel({
     <BaseSelect.GroupLabel
       data-slot="select-group-label"
       className={cn(
-        "astw:text-muted-foreground astw:px-2 astw:py-1.5 astw:text-xs astw:font-medium",
+        "astw:text-muted-foreground astw:px-2 astw:py-1.5 astw:text-label-sm",
         className,
       )}
       {...props}

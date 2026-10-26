@@ -198,7 +198,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           type="button"
           onClick={() => toggleColumn(key)}
           title={meta.label.get(key) ?? key}
-          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-sm"
+          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-body-md"
         >
           {meta.label.get(key) ?? key}
         </button>
@@ -235,13 +235,13 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     if (keys.length === 0) {
       rows = filtered ? (
         // Filtered to nothing — show a search empty state, not the drop zone.
-        <div className="astw:px-1.5 astw:py-3 astw:text-center astw:text-xs astw:text-muted-foreground">
+        <div className="astw:px-1.5 astw:py-3 astw:text-center astw:text-body-sm astw:text-muted-foreground">
           {t("noColumnsMatch")}
         </div>
       ) : (
         <div
           className={cn(
-            "astw:mx-1 astw:rounded-sm astw:border astw:border-dashed astw:border-border astw:px-1.5 astw:py-2 astw:text-xs astw:text-muted-foreground astw:italic",
+            "astw:mx-1 astw:rounded-sm astw:border astw:border-dashed astw:border-border astw:px-1.5 astw:py-2 astw:text-body-sm astw:text-muted-foreground astw:italic",
             active && "astw:border-primary astw:text-primary",
           )}
         >
@@ -272,7 +272,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           active && "astw:bg-accent/40",
         )}
       >
-        <div className="astw:px-1.5 astw:pb-1 astw:text-xs astw:font-medium astw:text-muted-foreground">
+        <div className="astw:px-1.5 astw:pb-1 astw:text-label-sm astw:text-muted-foreground">
           {title}
         </div>
         {/* Only the Scrollable section gets an internal scroll cap; the pinned
@@ -318,7 +318,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t("searchColumns")}
                   aria-label={t("searchColumns")}
-                  className="astw:h-8 astw:pl-8 astw:text-sm"
+                  className="astw:h-8 astw:pl-8 astw:text-body-md"
                 />
               </div>
               {renderSection("left", t("sectionPinnedLeft"))}

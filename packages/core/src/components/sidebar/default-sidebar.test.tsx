@@ -115,7 +115,7 @@ describe("DefaultSidebar", () => {
     expect(searchButton.textContent).toContain("⌘K");
     expect(searchButton.textContent).not.toContain("Ctrl+K");
     expect(searchButton.className).toContain("astw:h-8");
-    expect(searchButton.className).toContain("astw:text-xs");
+    expect(searchButton.className).toContain("astw:text-body-sm");
     expect(searchButton.closest("li")?.className).toContain("astw:pb-2");
 
     await user.click(searchButton);
@@ -452,6 +452,7 @@ describe("DefaultSidebar auto-generation", () => {
     // Active styling (background, weight and --sidebar-accent-foreground text)
     // is keyed on data-active, so the item must carry it — not just a class.
     expect(overviewLink.getAttribute("data-active")).toBe("true");
+    expect(overviewLink.getAttribute("aria-current")).toBe("page");
   });
 
   it("excludes componentless resources from sidebar links", async () => {

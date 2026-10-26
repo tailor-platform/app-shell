@@ -161,23 +161,22 @@ describe("CommandPaletteContent Integration", () => {
       });
     });
 
-    it("ignores Enter during IME composition", async () => {
+    it.each([
+      { isComposing: true, keyCode: 13 },
+      { isComposing: false, keyCode: 229 },
+    ])("ignores IME Enter (%j) but navigates on normal Enter", async (ime) => {
       renderCommandPaletteContent();
 
       fireEvent.keyDown(document, { key: "k", metaKey: true });
       const dialog = await screen.findByRole("dialog");
 
-      // Simulate IME composition
-      const enterEvent = new KeyboardEvent("keydown", {
-        key: "Enter",
-        bubbles: true,
-        isComposing: true,
-      });
-
-      dialog.dispatchEvent(enterEvent);
-
-      // Dialog should remain open
+      fireEvent.keyDown(dialog, { key: "Enter", ...ime });
       expect(screen.getByPlaceholderText("Search pages...")).toBeDefined();
+
+      fireEvent.keyDown(dialog, { key: "Enter" });
+      await vi.waitFor(() => {
+        expect(screen.queryByPlaceholderText("Search pages...")).toBeNull();
+      });
     });
   });
 

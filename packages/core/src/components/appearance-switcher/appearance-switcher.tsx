@@ -40,7 +40,7 @@ function isColorTheme(value: string): value is ColorTheme {
 /** Shared radio-item chrome — used by both the mode and font grids. */
 function radioItemClasses(active: boolean) {
   return cn(
-    "astw:relative astw:flex astw:h-auto astw:w-full astw:cursor-default astw:select-none astw:flex-col astw:items-center astw:justify-center astw:gap-1.5 astw:rounded-xl astw:border-0 astw:bg-transparent astw:px-2 astw:py-2 astw:text-center astw:text-xs astw:font-medium astw:leading-tight astw:outline-hidden",
+    "astw:relative astw:flex astw:h-auto astw:w-full astw:cursor-default astw:select-none astw:flex-col astw:items-center astw:justify-center astw:gap-1.5 astw:rounded-xl astw:border-0 astw:bg-transparent astw:px-2 astw:py-2 astw:text-center astw:text-label-sm astw:outline-hidden",
     "astw:data-highlighted:bg-muted/80 astw:data-highlighted:text-foreground",
     "astw:data-disabled:pointer-events-none astw:data-disabled:opacity-50",
     "astw:[&_[data-slot=menu-radio-item-indicator]]:hidden",

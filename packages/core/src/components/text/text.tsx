@@ -76,7 +76,9 @@ function Text({ className, variant, render, children, ref, ...props }: TextProps
     props: {
       "data-slot": "text",
       className: cn(textVariants({ variant: role, className })),
-      children,
+      // Pass children only when given, so a `render` part that supplies its own
+      // content (such as Base UI's Field.Error with the validation message) keeps it.
+      ...(children !== undefined && { children }),
       ...props,
     },
   });

@@ -18,6 +18,7 @@ export type {
   ColumnCellType,
   ColumnTypeBranch,
   HeaderRenderContext,
+  FooterRenderContext,
   DataTableData,
   DataTableFilterConfig,
   DateCellEditOptions,

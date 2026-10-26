@@ -82,7 +82,7 @@
       "hashes": {
         "typeSurface": "f28bf34ae1466912",
         "outline": "6138eac23571e177",
-        "snapshot": "d795320d53bd9ddb",
+        "snapshot": "049e72553f5b7a6f",
         "outputMd": "db2c4388ca783a75",
         "examples": "65d5fc73550e395a"
       }
@@ -418,6 +418,7 @@
         "Filter",
         "FilterConfig",
         "FilterOperator",
+        "FooterRenderContext",
         "HeaderRenderContext",
         "MetadataFieldOptions",
         "NodeType",
@@ -453,11 +454,11 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "3ca8fce7d2efca2d",
-        "outline": "0b7a57e7d2fc04a5",
-        "snapshot": null,
-        "outputMd": "1073852822f9e535",
-        "examples": "b3468077b9455521"
+        "typeSurface": "05cbf8a4bdb7a863",
+        "outline": "a1cfaa391d7f68d8",
+        "snapshot": "5c6c7491553784ee",
+        "outputMd": "8b1e693010c77535",
+        "examples": "686d2336dc14620a"
       }
     },
     "date-picker": {
@@ -1363,7 +1364,7 @@
       "hashes": {
         "typeSurface": "bc60676f880b485b",
         "outline": "9381eff2f7987a0e",
-        "snapshot": "18b98aa5db32996b",
+        "snapshot": "2399605a11c63aed",
         "outputMd": "f85ec64ceb7f4acf",
         "examples": "2b9d94065f2f77b7"
       }
@@ -1751,7 +1752,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "1073852822f9e535",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "8b1e693010c77535",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "bc69f14829004f9d",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",

@@ -1,6 +1,44 @@
 import { useRef, useState } from "react";
 import { Button, DataTable, createColumnHelper, useDataTable } from "@tailor-platform/app-shell";
 
+export function ColumnFooters() {
+  type Line = { id: string; item: string; quantity: number | null };
+  const [rows, setRows] = useState<Line[]>([
+    { id: "1", item: "Small carton", quantity: 2 },
+    { id: "2", item: "Large carton", quantity: 3 },
+  ]);
+  const { column } = createColumnHelper<Line>();
+  const table = useDataTable({
+    data: { rows },
+    columns: [
+      column({
+        id: "item",
+        label: "Item",
+        type: "text",
+        footer: "Total",
+      }),
+      column({
+        id: "quantity",
+        label: "Quantity",
+        type: "number",
+        edit: {
+          onValueCommitted: (row, quantity) =>
+            setRows((current) =>
+              current.map((line) => (line.id === row.id ? { ...line, quantity } : line)),
+            ),
+        },
+        footer: ({ rows }) => rows.reduce((sum, row) => sum + (row.quantity ?? 0), 0),
+      }),
+    ],
+  });
+
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
 export function ImmediateSaving() {
   type Line = { id: string; item: string; ordered: number; received: number | null };
   const initialRows: Line[] = [

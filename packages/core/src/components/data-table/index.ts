@@ -1,6 +1,7 @@
 // DataTable compound component
 export { DataTable, type DataTablePaginationProps, type DataTableRootProps } from "./data-table";
 
+export { CellEditError } from "./cell-edit-error";
 export { useDataTable } from "./use-data-table";
 export { useDataTableContext, type DataTableContextValue } from "./data-table-context";
 

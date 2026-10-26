@@ -3,7 +3,7 @@ import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import type { TextCellEditOptions } from "@/index";
+import { CellEditError, type TextCellEditOptions } from "@/index";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
@@ -105,15 +105,22 @@ const errorTrigger = () => screen.getByRole("button", { name: "Show error for Va
 const queryErrorTrigger = () => screen.queryByRole("button", { name: "Show error for Value" });
 
 describe("DataTable callback error presentation", () => {
+  it("exports CellEditError as a named native error", () => {
+    const error = new CellEditError("Enter a quantity");
+    expect(error).toBeInstanceOf(Error);
+    expect(error.name).toBe("CellEditError");
+    expect(error.message).toBe("Enter a quantity");
+  });
+
   it.each(["change", "commit"] as const)(
-    "shows a synchronous %s failure in the default popover without opting in",
+    "automatically shows a synchronous %s failure without moving focus",
     async (source) => {
-      const failure = new Error("Cannot accept this value");
+      const failure = new CellEditError("Cannot accept this value");
       const fail = vi.fn(() => {
         throw failure;
       });
       const onValueCommitted = source === "commit" ? fail : vi.fn();
-      const { input, user } = renderEditor({
+      const { input } = renderEditor({
         onValueChange: source === "change" ? fail : undefined,
         onValueCommitted,
       });
@@ -124,11 +131,10 @@ describe("DataTable callback error presentation", () => {
       expect(
         document.getElementById(input.getAttribute("aria-describedby")!)?.textContent,
       ).toContain(failure.message);
-      expect(screen.queryByRole("dialog")).toBeNull();
-      await user.click(errorTrigger());
       const popup = await screen.findByRole("dialog", { name: "Error in Value" });
       expect(within(popup).getByText(failure.message)).toBeDefined();
-      expect(within(popup).queryByRole("button")).toBeNull();
+      expect(within(popup).getByRole("button", { name: "Close error details" })).toBeDefined();
+      expect(document.activeElement).toBe(input);
       expect(fail).toHaveBeenCalledExactlyOnceWith(ROWS[0], "Changed");
       expect(input.value).toBe("Changed");
       expect(input.readOnly).toBe(false);
@@ -143,7 +149,7 @@ describe("DataTable callback error presentation", () => {
     "retains the draft while a returned %s promise is pending and after rejection",
     async (source) => {
       const request = deferred();
-      const { input, user } = renderEditor({
+      const { input } = renderEditor({
         onValueChange: source === "change" ? () => request.promise : undefined,
         onValueCommitted: source === "commit" ? () => request.promise : noop,
       });
@@ -155,16 +161,92 @@ describe("DataTable callback error presentation", () => {
       expect(input.readOnly).toBe(false);
       expect(input.value).toBe("Changed");
       expect(queryErrorTrigger()).toBeNull();
-      await rejectRequest(request, new Error("Server rejected the value"));
+      await rejectRequest(request, new CellEditError("Server rejected the value"));
       expect(input.value).toBe("Changed");
       expect(input.readOnly).toBe(false);
       expect(input.closest("td")?.getAttribute("aria-busy")).toBeNull();
-      await user.click(errorTrigger());
       expect(
         within(await screen.findByRole("dialog", { name: "Error in Value" })).getByText(
           "Server rejected the value",
         ),
       ).toBeDefined();
+      expect(document.activeElement).toBe(input);
+    },
+  );
+
+  it("dismisses only the details until a new failure and supports mouse and keyboard reopening", async () => {
+    const onValueChange = vi.fn(() => {
+      throw new Error("Draft rejected");
+    });
+    const onValueCommitted = vi.fn();
+    const { input, user, updateRows } = renderEditor({ onValueChange, onValueCommitted });
+    change(input);
+    const popup = await screen.findByRole("dialog", { name: "Error in Value" });
+    await user.click(within(popup).getByRole("button", { name: "Close error details" }));
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(input.value).toBe("Changed");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(queryErrorTrigger()).not.toBeNull();
+    updateRows([{ ...ROWS[0] }]);
+    await user.click(screen.getByRole("button", { name: "Outside" }));
+    await user.click(input);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(onValueChange).toHaveBeenCalledTimes(1);
+    expect(onValueCommitted).not.toHaveBeenCalled();
+
+    await user.click(errorTrigger());
+    const reopened = await screen.findByRole("dialog", { name: "Error in Value" });
+    await vi.waitFor(() =>
+      expect(document.activeElement).toBe(
+        within(reopened).getByRole("button", { name: "Close error details" }),
+      ),
+    );
+    await user.keyboard("{Escape}");
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
+    const keyboardPopup = await screen.findByRole("dialog", { name: "Error in Value" });
+    const close = within(keyboardPopup).getByRole("button", { name: "Close error details" });
+    await vi.waitFor(() => expect(document.activeElement).toBe(close));
+    await user.keyboard("{Enter}");
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+    await user.click(input);
+    fireEvent.change(input, { target: { value: "New draft" } });
+    expect(await screen.findByRole("dialog", { name: "Error in Value" })).toBeDefined();
+    expect(document.activeElement).toBe(input);
+    expect(input.value).toBe("New draft");
+    expect(onValueChange).toHaveBeenCalledTimes(2);
+    expect(onValueCommitted).not.toHaveBeenCalled();
+  });
+
+  it.each(["outside", "next cell"] as const)(
+    "auto-opens an async failure after moving to %s without stealing focus on open or dismissal",
+    async (destination) => {
+      const save = deferred();
+      const onValueCommitted = vi.fn(() => save.promise);
+      const { input, inputs, user } = renderEditor(
+        { onValueCommitted },
+        { rows: [...ROWS, { id: "2", value: "Second" }] },
+      );
+      const target =
+        destination === "outside" ? screen.getByRole("button", { name: "Outside" }) : inputs[1];
+      change(input);
+      if (destination === "outside") await user.click(target);
+      else await user.tab();
+      expect(document.activeElement).toBe(target);
+      await rejectRequest(save, new CellEditError("Save failed"));
+      expect(
+        within(await screen.findByRole("dialog", { name: "Error in Value" })).getByText(
+          "Save failed",
+        ),
+      ).toBeDefined();
+      expect(document.activeElement).toBe(target);
+      await user.click(target);
+      await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(document.activeElement).toBe(target);
+      expect(input.value).toBe("Changed");
+      expect(input.getAttribute("aria-invalid")).toBe("true");
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
     },
   );
 
@@ -188,12 +270,18 @@ describe("DataTable callback error presentation", () => {
       error: { render: renderError },
     });
     change(input);
-    fireEvent.keyDown(input, { key: "ArrowDown", altKey: true });
     const popup = await screen.findByRole("dialog", { name: "Error in Value" });
+    expect(document.activeElement).toBe(input);
+    await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
+    expect(document.activeElement).toBe(popup);
+    await user.tab();
     expect(within(popup).getByText("1: INVALID")).toBeDefined();
     expect(renderError).toHaveBeenCalledWith({ row: ROWS[0], error: failure });
     const action = within(popup).getByRole("button", { name: "Explain this error" });
-    expect(within(popup).getAllByRole("button")).toEqual([action]);
+    expect(within(popup).getAllByRole("button")).toEqual([
+      action,
+      within(popup).getByRole("button", { name: "Close error details" }),
+    ]);
     await vi.waitFor(() => expect(document.activeElement).toBe(action));
     await user.keyboard("{Enter}");
     expect(onAction).toHaveBeenCalledTimes(1);
@@ -213,39 +301,93 @@ describe("DataTable callback error presentation", () => {
     expect(input.getAttribute("aria-invalid")).toBe("true");
   });
 
-  it.each([null, undefined, false, "not an Error"])(
-    "uses a generic message for thrown %j instead of treating it as no error",
-    async (failure) => {
-      const { input, user } = renderEditor({
-        onValueChange: () => {
-          throw failure;
-        },
-        onValueCommitted: noop,
+  it.each([
+    new Error("Internal server details"),
+    new TypeError("Internal type details"),
+    Object.assign(new Error("Not a CellEditError instance"), { name: "CellEditError" }),
+    new CellEditError(""),
+    null,
+    undefined,
+    false,
+    "not an Error",
+  ])("uses generic visual and accessible feedback for thrown %j", async (failure) => {
+    const { input } = renderEditor({
+      onValueChange: () => {
+        throw failure;
+      },
+      onValueCommitted: noop,
+    });
+    change(input);
+    const popup = await screen.findByRole("dialog", { name: "Error in Value" });
+    expect(within(popup).getByText("An error occurred")).toBeDefined();
+    expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toBe(
+      "An error occurred. Press Alt+ArrowDown for error details",
+    );
+    expect(popup.textContent).toBe("An error occurred");
+    expect(input.value).toBe("Changed");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+  });
+
+  it.each(["change", "commit"] as const)(
+    "hides unexpected errors from rejected %s promises",
+    async (source) => {
+      const request = deferred();
+      const { input } = renderEditor({
+        onValueChange: source === "change" ? () => request.promise : undefined,
+        onValueCommitted: source === "commit" ? () => request.promise : noop,
       });
       change(input);
-      await user.click(errorTrigger());
+      if (source === "commit") fireEvent.keyDown(input, { key: "Enter" });
+      await rejectRequest(request, new Error("Internal server details"));
       const popup = await screen.findByRole("dialog", { name: "Error in Value" });
-      expect(within(popup).getByText("An error occurred")).toBeDefined();
+      expect(popup.textContent).toBe("An error occurred");
+      expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toBe(
+        "An error occurred. Press Alt+ArrowDown for error details",
+      );
+      expect(input.value).toBe("Changed");
+      expect(input.getAttribute("aria-invalid")).toBe("true");
     },
   );
 
-  it("localizes the generic error and accessible popup labels", async () => {
-    const { input, user } = renderEditor(
+  it("passes unexpected errors unchanged to custom renderers without leaking them into accessible feedback", async () => {
+    const failure = new Error("Internal server details");
+    const renderError = vi.fn(() => <p>Custom feedback</p>);
+    const { input } = renderEditor({
+      onValueCommitted: () => {
+        throw failure;
+      },
+      error: { render: renderError },
+    });
+    change(input);
+    fireEvent.keyDown(input, { key: "Enter" });
+    const popup = await screen.findByRole("dialog", { name: "Error in Value" });
+    expect(popup.textContent).toBe("Custom feedback");
+    expect(renderError).toHaveBeenCalledWith({ row: ROWS[0], error: failure });
+    expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toBe(
+      "An error occurred. Press Alt+ArrowDown for error details",
+    );
+  });
+
+  it.each([
+    { failure: new Error("Internal server details"), message: "エラーが発生しました" },
+    { failure: new CellEditError("数量を入力してください"), message: "数量を入力してください" },
+  ])("localizes popup labels and displays $message", async ({ failure, message }) => {
+    const { input } = renderEditor(
       {
         onValueChange: () => {
-          throw undefined;
+          throw failure;
         },
         onValueCommitted: noop,
       },
       { locale: "ja" },
     );
     change(input);
-    await user.click(screen.getByRole("button", { name: "Valueのエラーを表示" }));
-    expect(
-      within(await screen.findByRole("dialog", { name: "Valueのエラー" })).getByText(
-        "エラーが発生しました",
-      ),
-    ).toBeDefined();
+    const popup = await screen.findByRole("dialog", { name: "Valueのエラー" });
+    expect(within(popup).getByText(message)).toBeDefined();
+    expect(within(popup).getByRole("button", { name: "エラーの詳細を閉じる" })).toBeDefined();
+    expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toBe(
+      `${message}. Alt+↓キーでエラーの詳細を表示できます`,
+    );
   });
 
   it("clears an error on a newer successful input and ignores older rejection results", async () => {
@@ -261,7 +403,7 @@ describe("DataTable callback error presentation", () => {
     });
     change(input, "Older");
     fireEvent.change(input, { target: { value: "Current" } });
-    await rejectRequest(current, new Error("Current failure"));
+    await rejectRequest(current, new CellEditError("Current failure"));
     expect(input.getAttribute("aria-invalid")).toBe("true");
     await rejectRequest(old, new Error("Outdated failure"));
     expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toContain(
@@ -338,20 +480,29 @@ describe("DataTable callback error presentation", () => {
     expect(onValueCommitted).toHaveBeenCalledTimes(1);
   });
 
-  it("retains a failed confirmation through blur and refocus, then permits an Enter retry", async () => {
+  it("retains an async blur failure through refocus and unchanged blur, then permits an Enter retry", async () => {
+    const save = deferred();
     let rejected = true;
-    const onValueCommitted = vi.fn(() => {
-      if (rejected) throw new Error("Temporary save failure");
-    });
+    const onValueCommitted = vi.fn(() => (rejected ? save.promise : undefined));
     const { input, user } = renderEditor({ onValueCommitted });
+    const outside = screen.getByRole("button", { name: "Outside" });
     change(input);
-    fireEvent.keyDown(input, { key: "Enter" });
-    await user.click(screen.getByRole("button", { name: "Outside" }));
+    await user.click(outside);
+    expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith(ROWS[0], "Changed");
+    await rejectRequest(save, new CellEditError("Temporary save failure"));
     expect(input.value).toBe("Changed");
     expect(input.getAttribute("aria-invalid")).toBe("true");
+    await user.click(input);
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    await user.click(outside);
+    expect(input.value).toBe("Changed");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toContain(
+      "Temporary save failure",
+    );
+    expect(queryErrorTrigger()).not.toBeNull();
     expect(onValueCommitted).toHaveBeenCalledTimes(1);
     await user.click(input);
-    expect(input.value).toBe("Changed");
     rejected = false;
     fireEvent.keyDown(input, { key: "Enter" });
     expect(onValueCommitted).toHaveBeenCalledTimes(2);
@@ -376,6 +527,8 @@ describe("DataTable callback error presentation", () => {
     expect(input.value).toBe("１３.５０");
     expect(input.getAttribute("aria-invalid")).toBe("true");
     fireEvent.keyDown(input, { key: "Escape" });
+    expect(input.value).toBe("１３.５０");
+    fireEvent.keyDown(input, { key: "Escape" });
     expect(input.value).toBe("12");
     expect(input.getAttribute("aria-invalid")).toBeNull();
     expect(queryErrorTrigger()).toBeNull();
@@ -394,6 +547,8 @@ describe("DataTable callback error presentation", () => {
     expect(input.value).toBe("Changed");
     expect(input.getAttribute("aria-invalid")).toBe("true");
     fireEvent.keyDown(input, { key: "Escape" });
+    expect(input.value).toBe("Changed");
+    fireEvent.keyDown(input, { key: "Escape" });
     expect(input.value).toBe("Updated externally");
     expect(input.readOnly).toBe(true);
     expect(input.getAttribute("aria-invalid")).toBeNull();
@@ -403,24 +558,45 @@ describe("DataTable callback error presentation", () => {
     expect(onValueCommitted).toHaveBeenCalledTimes(1);
   });
 
-  it("uses the first Escape to close error details and the next Escape to cancel the failed draft", async () => {
+  it("supports keyboard error inspection, focus return, Tab navigation, and Escape cancellation", async () => {
     const onValueCommitted = vi.fn(() => {
-      throw new Error("Not accepted");
+      throw new CellEditError("Not accepted");
     });
-    const { input, user } = renderEditor({ onValueCommitted });
+    const { input, inputs, user } = renderEditor(
+      { onValueCommitted },
+      { rows: [...ROWS, { id: "2", value: "Second" }] },
+    );
     change(input);
-    fireEvent.keyDown(input, { key: "Enter" });
-    fireEvent.keyDown(input, { key: "ArrowDown", altKey: true });
-    await screen.findByRole("dialog", { name: "Error in Value" });
+    await user.keyboard("{Enter}");
+    expect(input.getAttribute("aria-keyshortcuts")).toBe("Alt+ArrowDown");
+    expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toContain(
+      "Press Alt+ArrowDown for error details",
+    );
+    await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
+    const popup = await screen.findByRole("dialog", { name: "Error in Value" });
+    expect(within(popup).getByText("Not accepted")).toBeDefined();
+    expect(document.activeElement).toBe(popup);
     await user.keyboard("{Escape}");
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await vi.waitFor(() =>
+      expect(input.closest("td")?.contains(document.activeElement)).toBe(true),
+    );
     expect(input.value).toBe("Changed");
     expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(onValueCommitted).toHaveBeenCalledTimes(1);
+    await user.tab();
+    expect(document.activeElement).toBe(inputs[1]);
+    expect(onValueCommitted).toHaveBeenCalledTimes(2);
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(input);
+    await user.keyboard("{Escape}");
+    expect(input.value).toBe("Changed");
     await user.keyboard("{Escape}");
     expect(input.value).toBe("Original");
     expect(input.getAttribute("aria-invalid")).toBeNull();
     expect(queryErrorTrigger()).toBeNull();
-    expect(onValueCommitted).toHaveBeenCalledTimes(1);
+    expect(onValueCommitted).toHaveBeenCalledTimes(2);
   });
 
   it("clears cancellation errors and ignores pending results after Escape", async () => {
@@ -481,7 +657,7 @@ describe("DataTable callback error presentation", () => {
     "retains a rejected %s choice through error inspection until cancellation",
     async (type) => {
       const onValueCommitted = vi.fn(() => {
-        throw new Error("Choice rejected");
+        throw new CellEditError("Choice rejected");
       });
       const user = renderColumn({
         id: "value",
@@ -498,7 +674,6 @@ describe("DataTable callback error presentation", () => {
       const input = screen.getByRole("combobox", { name: "Value" }) as HTMLInputElement;
       await user.click(input);
       await user.click(await screen.findByRole("option", { name: "Changed" }));
-      await user.click(errorTrigger());
       expect(within(await screen.findByRole("dialog")).getByText("Choice rejected")).toBeDefined();
       await user.keyboard("{Escape}");
       await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
@@ -650,7 +825,7 @@ describe("DataTable callback error presentation", () => {
       typeOptions: { dateFormat: "datetime" },
       edit: {
         onValueChange: () => {
-          throw new Error("Time rejected");
+          throw new CellEditError("Time rejected");
         },
         onValueCommitted,
       },
@@ -658,7 +833,6 @@ describe("DataTable callback error presentation", () => {
     await user.click(screen.getByRole("button", { name: /^Value/ }));
     const time = screen.getByLabelText("Value (Choose time)") as HTMLInputElement;
     fireEvent.change(time, { target: { value: "14:30" } });
-    await user.click(errorTrigger());
     const popup = await screen.findByRole("dialog", { name: "Error in Value" });
     expect(within(popup).getByText("Time rejected")).toBeDefined();
     expect(time.isConnected).toBe(true);

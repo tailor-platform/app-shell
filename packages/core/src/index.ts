@@ -300,6 +300,7 @@ export {
 
 // DataTable
 export {
+  CellEditError,
   DataTable,
   useDataTable,
   useDataTableContext,

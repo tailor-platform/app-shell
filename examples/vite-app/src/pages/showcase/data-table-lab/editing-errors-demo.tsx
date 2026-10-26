@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import {
   Button,
+  CellEditError,
   DataTable,
   Text,
   createColumnHelper,
@@ -19,10 +20,10 @@ const { column } = createColumnHelper<ErrorDemoRow>();
 
 function checkNote(value: string | null) {
   if (value?.includes("!!"))
-    throw new Error(
+    throw new CellEditError(
       "Notes can't contain repeated exclamation marks. Keep notes factual and send anything urgent to the receiving team through the comments panel so it is tracked against this purchase order.",
     );
-  if (value?.includes("!")) throw new Error("Remove ! from the note");
+  if (value?.includes("!")) throw new CellEditError("Remove ! from the note");
 }
 
 /** Callback failures use the table's default popover unless content is overridden. */
@@ -63,7 +64,8 @@ export function EditingErrorsDemo() {
           setSavingCount((count) => count + 1);
           try {
             await new Promise<void>((resolve) => setTimeout(resolve, 600));
-            if (value === 13) throw new Error("Quantity 13 was rejected by the simulated server");
+            if (value === 13)
+              throw new CellEditError("Quantity 13 was rejected by the simulated server");
             if (revision === quantityRevision.current) {
               update(row.id, { quantity: value });
             }
@@ -80,7 +82,7 @@ export function EditingErrorsDemo() {
       width: 180,
       edit: {
         onValueCommitted: (row, value) => {
-          if (!value?.startsWith("SKU-")) throw new Error("Item code must start with SKU-");
+          if (!value?.startsWith("SKU-")) throw new CellEditError("Item code must start with SKU-");
           update(row.id, { code: value });
         },
         error: {
@@ -88,7 +90,7 @@ export function EditingErrorsDemo() {
             <div className="space-y-2">
               <Text variant="label-md">Code issue for {row.name}</Text>
               <Text variant="body-sm">
-                {error instanceof Error ? error.message : "The code could not be accepted."}
+                {error instanceof CellEditError ? error.message : "The code could not be accepted."}
               </Text>
               <Button
                 variant="outline"
@@ -111,21 +113,23 @@ export function EditingErrorsDemo() {
         <li>
           In <strong>Draft note</strong>, type <code>!</code> to throw from{" "}
           <code>onValueChange</code>. The failed draft stays visible and cannot be confirmed until
-          you remove <code>!</code>. Type <code>!!</code> to see a longer message wrap. Press Esc to
-          restore the adopted note and clear its error together.
+          you remove <code>!</code>. Type <code>!!</code> to see a longer message wrap. Error
+          details open automatically without moving focus. Close them with × or Esc; a subsequent
+          Esc restores the adopted note and clears its error.
         </li>
         <li>
           Set <strong>Async quantity</strong> to <code>13</code> and press Enter. The returned
           Promise rejects after 600 ms; <code>13</code> stays visible while pending and after
           failure. Enter retries the same draft. Change it to <code>14</code> to save successfully,
-          or press Esc to restore the adopted quantity. To test stale failures, confirm 13 and start
-          typing another value before the rejection arrives.
+          or close its error details and press Esc to restore the adopted quantity. To test stale
+          failures, confirm 13 and start typing another value before the rejection arrives.
         </li>
         <li>
-          Set <strong>Custom code</strong> to <code>bad</code> and press Enter. Open its error
-          popover and use <strong>Show valid code example</strong> to try interactive custom
-          content. The failed <code>bad</code> draft remains editable; change it to{" "}
-          <code>SKU-101</code> and confirm to adopt a valid code.
+          Set <strong>Custom code</strong> to <code>bad</code> and press Enter. Its error popover
+          opens automatically; press Alt+ArrowDown to focus the details and use{" "}
+          <strong>Show valid code example</strong> to try interactive custom content. The failed{" "}
+          <code>bad</code> draft remains editable; change it to <code>SKU-101</code> and confirm to
+          adopt a valid code.
         </li>
       </ul>
       <Text variant="body-sm" className="text-muted-foreground">

@@ -16,7 +16,7 @@ import {
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { Popover } from "@base-ui/react/popover";
 import type { CalendarDate } from "@internationalized/date";
-import { CalendarDays, ChevronDown, CircleAlert } from "lucide-react";
+import { CalendarDays, ChevronDown, CircleAlert, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isComposing } from "@/lib/is-composing";
 import { useTimeZone } from "@/contexts/appshell-context";
@@ -29,6 +29,7 @@ import { Table } from "@/components/table";
 import { Tooltip } from "@/components/tooltip";
 import type { Column, DateTimeDraft } from "./types";
 import { getCellValue, renderTypedValue } from "./cell-renderers";
+import { CellEditError } from "./cell-edit-error";
 import {
   normalizeNumberText,
   parseNumberText,
@@ -128,7 +129,7 @@ const CELL_FOCUS_CLASS_NAME = cn(
 
 // Parsing and callback errors share the cell's error outline.
 const CELL_ERROR_CLASS_NAME =
-  "astw:ring-[1.5px] astw:ring-inset astw:ring-destructive astw:focus:ring-[1.5px] astw:focus:ring-destructive astw:focus-visible:ring-[1.5px] astw:focus-visible:ring-destructive";
+  "astw:ring-[1.5px] astw:ring-inset astw:ring-danger-solid astw:focus:ring-[1.5px] astw:focus:ring-danger-solid astw:focus-visible:ring-[1.5px] astw:focus-visible:ring-danger-solid";
 
 // An editable cell says so at rest with a subtle tint instead of an icon. It's
 // a background *image* layered over whatever colour the cell already has (the
@@ -228,7 +229,7 @@ function useCellValue<TRow extends Record<string, unknown>>(
   const errorConfig = col.edit?.error;
   const renderError = errorConfig && errorConfig.render;
   const message =
-    failure?.error instanceof Error && failure.error.message
+    failure?.error instanceof CellEditError && failure.error.message
       ? failure.error.message
       : t("editCallbackError");
   const callbackError: CellErrorUI | undefined =
@@ -304,7 +305,9 @@ function EditableCellFrame({
 }) {
   const t = useDataTableT();
   const [tooltipOpen, setTooltipOpen] = useState(false);
-  const [openFailure, setOpenFailure] = useState<CellEditFailure | null>(null);
+  const [dismissedFailure, setDismissedFailure] = useState<CellEditFailure | null>(null);
+  const [manuallyOpenedFailure, setManuallyOpenedFailure] = useState<CellEditFailure | null>(null);
+  const errorOpen = !!callbackError && dismissedFailure !== callbackError.failure;
   const showTooltip = tooltipLabel !== undefined && !editing && !callbackError;
   const cell = (
     <Table.Cell
@@ -329,16 +332,23 @@ function EditableCellFrame({
         onEditorLeave?.();
       }}
       onKeyDownCapture={(event) => {
-        if (callbackError && event.key === "Escape" && openFailure !== callbackError.failure) {
+        if (
+          callbackError &&
+          event.key === "Escape" &&
+          !callbackError.popupRef.current?.contains(event.target as Node)
+        ) {
           event.preventDefault();
           event.stopPropagation();
-          onEditorCancel();
+          if (errorOpen) setDismissedFailure(callbackError.failure);
+          else onEditorCancel();
           return;
         }
         if (callbackError && event.altKey && event.key === "ArrowDown") {
           event.preventDefault();
           event.stopPropagation();
-          setOpenFailure(callbackError.failure);
+          setManuallyOpenedFailure(callbackError.failure);
+          setDismissedFailure(null);
+          if (errorOpen) callbackError.popupRef.current?.focus({ preventScroll: true });
         }
       }}
       // Editing a cell must never fire `onClickRow`.
@@ -365,15 +375,18 @@ function EditableCellFrame({
             {callbackError.message}. {t("editErrorHint")}
           </output>
           <Popover.Root
-            open={openFailure === callbackError.failure}
-            onOpenChange={(open) => setOpenFailure(open ? callbackError.failure : null)}
+            open={errorOpen}
+            onOpenChange={(open) => {
+              setDismissedFailure(open ? null : callbackError.failure);
+              if (open) setManuallyOpenedFailure(callbackError.failure);
+            }}
           >
             <Popover.Trigger
               ref={callbackError.triggerRef}
               aria-label={t("editShowError", { label })}
               aria-keyshortcuts="Alt+ArrowDown"
               tabIndex={-1}
-              className="astw:absolute astw:inset-y-0 astw:right-2 astw:z-10 astw:flex astw:items-center astw:text-destructive astw:outline-none astw:[td:last-child>&]:right-6"
+              className="astw:absolute astw:inset-y-0 astw:right-2 astw:z-10 astw:flex astw:items-center astw:text-danger-text astw:outline-none astw:[td:last-child>&]:right-6"
               onContextMenu={(event) => event.stopPropagation()}
             >
               <CircleAlert aria-hidden="true" strokeWidth={2.5} className="astw:size-3.5" />
@@ -382,12 +395,13 @@ function EditableCellFrame({
               {/* Opens directly under the cell, not under the small icon trigger. */}
               <Popover.Positioner
                 anchor={() => callbackError.triggerRef.current?.closest("td") ?? null}
-                sideOffset={4}
+                sideOffset={2}
                 side="bottom"
                 align="start"
               >
                 <Popover.Popup
                   ref={callbackError.popupRef}
+                  initialFocus={manuallyOpenedFailure === callbackError.failure}
                   aria-label={t("editErrorDialog", { label })}
                   data-slot="data-table-cell-error"
                   className={cn(
@@ -404,7 +418,15 @@ function EditableCellFrame({
                     if (event.key === "Escape") event.stopPropagation();
                   }}
                 >
-                  {callbackError.content}
+                  <div className="astw:flex astw:items-center astw:gap-2">
+                    <div className="astw:min-w-0 astw:flex-1">{callbackError.content}</div>
+                    <Popover.Close
+                      aria-label={t("editCloseError")}
+                      render={<Button variant="ghost" size="icon" className="astw:size-6" />}
+                    >
+                      <X aria-hidden="true" className="astw:size-4" />
+                    </Popover.Close>
+                  </div>
                 </Popover.Popup>
               </Popover.Positioner>
             </Popover.Portal>

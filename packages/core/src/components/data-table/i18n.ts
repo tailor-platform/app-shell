@@ -142,6 +142,7 @@ export const dataTableLabels = defineI18nLabels({
     editCallbackError: "An error occurred",
     editShowError: (props: { label: string }) => `Show error for ${props.label}`,
     editErrorDialog: (props: { label: string }) => `Error in ${props.label}`,
+    editCloseError: "Close error details",
     editErrorHint: "Press Alt+ArrowDown for error details",
   },
   ja: {
@@ -268,6 +269,7 @@ export const dataTableLabels = defineI18nLabels({
     editCallbackError: "エラーが発生しました",
     editShowError: (props: { label: string }) => `${props.label}のエラーを表示`,
     editErrorDialog: (props: { label: string }) => `${props.label}のエラー`,
+    editCloseError: "エラーの詳細を閉じる",
     editErrorHint: "Alt+↓キーでエラーの詳細を表示できます",
   },
 });

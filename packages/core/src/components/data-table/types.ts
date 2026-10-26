@@ -128,11 +128,14 @@ interface CellEditBase<TRow extends Record<string, unknown>, TValue, TDraft = TV
    */
   onValueCommitted: (row: TRow, value: TValue | null) => void;
   /**
-   * Callback failures use a standard error popover by default. Pass `false` to
-   * disable interception and retain eager edit completion, or `render` to replace
-   * the popover's body. Failed drafts stay visible until corrected or cancelled;
-   * Esc restores current data and clears the error together. The standard
-   * popover adds no reset action; custom content may include consumer-owned actions.
+   * Callback failures automatically open an error popover without moving focus.
+   * Only non-empty `CellEditError` messages are displayed by the standard UI;
+   * other failures use localized generic feedback. Translate messages before throwing.
+   * Pass `false` to disable interception and retain eager edit completion, or
+   * `render` to replace the popover's body. Closing the details retains the draft
+   * and error; reopen with the error icon or Alt+ArrowDown. Esc closes open details
+   * first, then restores current data and clears the error. The standard popover
+   * adds no reset action; custom content may include consumer-owned actions.
    */
   error?:
     | false

@@ -13,6 +13,7 @@ description: Compound data table component with sortable columns, filter chips, 
 
 ```tsx
 import {
+  CellEditError,
   DataTable,
   useDataTable,
   useDataTableContext,
@@ -392,12 +393,11 @@ Give a typed column an `edit` config to use its built-in editor. This standardiz
 
 Callback types describe the **editor's output**, not the original row field's runtime type. For example, text/link/badge editors confirm strings or `null` even when their display accepts numbers or booleans. The editing option types, `CellEditState`, and `DateTimeDraft` are exported from the package root; parsing and navigation helpers remain internal.
 
-For example, inside a receipt page, accept or reject each proposed quantity yourself. Patch the changed field with a functional state update rather than replacing a whole row captured before another edit:
+For example, inside a receipt page, accept or reject each proposed quantity yourself. Throw `CellEditError` for invalid quantities to retain the draft and show the message in the cell's error popover. Patch the changed field with a functional state update rather than replacing a whole row captured before another edit:
 
 ```tsx
 const { column } = createColumnHelper<ReceiptLine>();
 const [lines, setLines] = useState<ReceiptLine[]>(initialLines);
-const toast = useToast();
 
 const columns = [
   column({ id: "sku", label: "SKU", type: "text" }),
@@ -410,8 +410,7 @@ const columns = [
       canEdit: (_row, { selected }) => selected,
       onValueCommitted: (row, value) => {
         if (value !== null && (!Number.isInteger(value) || value < 0 || value > row.ordered)) {
-          toast.error(`Enter a whole number from 0 to ${row.ordered}`);
-          return; // Do not adopt the value: the cell returns to data.
+          throw new CellEditError(`Enter a whole number from 0 to ${row.ordered}`);
         }
         setLines((current) =>
           current.map((line) => (line.id === row.id ? { ...line, received: value } : line)),
@@ -424,7 +423,7 @@ const columns = [
 const table = useDataTable({ columns, data: { rows: lines }, rowSelection: {} });
 ```
 
-`ReceiptLine` and `initialLines` are the page's row type and initial data. `useState` comes from React; `useToast`, `createColumnHelper`, and `useDataTable` come from AppShell.
+`ReceiptLine` and `initialLines` are the page's row type and initial data. `useState` comes from React; `CellEditError`, `createColumnHelper`, and `useDataTable` come from AppShell.
 
 ### Editing options
 
@@ -465,14 +464,14 @@ Malformed numeric input is allowed while typing and can notify raw drafts. Enter
 
 ### Callback error popovers
 
-By default, DataTable catches synchronous throws and rejections of Promises returned by `onValueChange` or `onValueCommitted`. The affected cell receives an error outline and an error icon. Click the icon, or press **Alt+ArrowDown** while focused in the cell, to open its popover. The error state is also exposed through `aria-invalid` and an associated description. Opening or using the error popover is not an ordinary editor blur: it does not confirm or discard the draft merely to inspect the error.
+By default, DataTable catches synchronous throws and rejections of Promises returned by `onValueChange` or `onValueCommitted`. The affected cell receives an error outline and an error icon, and each new failure automatically opens its popover without moving focus — even if an asynchronous failure arrives after you have moved to another cell. The close button dismisses only the details, retaining the draft and error; the same failure does not reopen merely on rerender or refocus. Click the icon, or press **Alt+ArrowDown** while focused in the cell, to reopen the details. Alt+ArrowDown also moves focus into details that are already open. The error state is exposed through `aria-invalid` and an associated description. Opening or using the error popover is not an ordinary editor blur: it does not confirm or discard the draft merely to inspect the error.
 
-No extra configuration is needed for the standard UI. It displays a non-empty `Error.message`, otherwise the localized message “An error occurred”. It never serializes arbitrary thrown values or displays a stack trace. Throw user-facing messages; translate or sanitize internal errors before returning them to this UI. The standard popover displays the error only; it adds no reset or rollback action. Consumer-owned actions can be included in `error.render` when appropriate.
+No extra configuration is needed for the standard UI. It displays a non-empty message only for `CellEditError`, a native `Error` subclass exported from the package root. Ordinary errors, other thrown values, and empty `CellEditError` messages display the localized message “An error occurred” in both the popover and its accessible description. It never serializes arbitrary thrown values or displays a stack trace. Use `CellEditError` only for messages that are safe to show to users. Translate in consumer code, for example `throw new CellEditError(t("quantityRequired"))`; DataTable displays that message as provided and never treats it as a translation key. The standard popover adds no reset or rollback action. Consumer-owned actions can be included in `error.render` when appropriate.
 
 ```tsx
 edit: {
   onValueCommitted: async (row, value) => {
-    if (value === null) throw new Error("Enter a quantity");
+    if (value === null) throw new CellEditError("Enter a quantity");
     await saveReceived(row.id, value);
     setLines((current) =>
       current.map((line) => (line.id === row.id ? { ...line, received: value } : line)),
@@ -483,14 +482,14 @@ edit: {
 
 `saveReceived` is the screen's persistence function. DataTable keeps the raw draft while the returned Promise is pending. Successful completion clears that draft and displays the latest consumer-provided `data`; rejection retains the same draft with its error for correction, an explicit Enter retry, or cancellation. Only successful confirmation ends the edit. Repeated Enter or a subsequent blur does not invoke an in-flight confirmation again. This delays **edit completion**, not focus navigation, and does not add a save mode, automatic retry, optimistic row state, or automatic persistence.
 
-To customize the body, provide `error.render`. Its `error` is `unknown`, because JavaScript can throw any value; `row` is the cell's current row. Popover placement, open/close behavior, and the error indicator remain owned by DataTable. The body may include consumer-owned links or buttons; DataTable adds no actions alongside it.
+To customize the body, provide `error.render`. Its `error` is the original thrown value, unchanged and typed as `unknown`, because JavaScript can throw any value; `row` is the cell's current row. Custom content owns its message-safety policy; narrow to `CellEditError` before displaying its message to follow the standard UI's policy. Popover placement, open/close behavior, and the error indicator remain owned by DataTable. The body may include consumer-owned links or buttons; DataTable adds only the close button alongside it.
 
 ```tsx
 error: {
   render: ({ row, error }) => (
     <div>
       <p>Could not update row {row.id}</p>
-      <p>{error instanceof Error ? error.message : "Please try again later"}</p>
+      <p>{error instanceof CellEditError ? error.message : "Please try again later"}</p>
     </div>
   ),
 }

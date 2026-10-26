@@ -2,9 +2,11 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Show cell-local error popovers by default when DataTable editing callbacks throw or return a rejected Promise. Keep pending and failed drafts editable, wait for a successful `onValueChange` check before confirmation, and clear drafts only after confirmation succeeds; Esc closes open error details first, then discards the draft and error together without trapping cell navigation.
-Throw the exported `CellEditError` with a translated, user-facing message to display its text; other failures use localized generic feedback. Custom renderers still receive the original thrown value.
-Each new failure automatically opens its popover without moving focus. Close the details without discarding the failed draft, then reopen them with the error icon or Alt+ArrowDown. The standard popover adds no reset action. Customize its body and any consumer-owned actions with `edit.error.render({ row, error })`, or set `edit.error: false` to retain eager edit completion without callback interception. Data adoption, persistence, and rollback remain consumer-owned.
+Add built-in error popovers to DataTable inline editing. When `onValueChange` or `onValueCommitted` throws or returns a rejected Promise, the affected cell shows an error. Throw the exported `CellEditError` with a translated, user-facing message to display that text; other failures use localized generic feedback.
+
+Alongside this feedback, the editor now retains pending and failed drafts for correction or retry. Confirmation waits for any pending `onValueChange` check to succeed, and the draft clears only after confirmation succeeds. Drafts remain editable without trapping cell navigation; data adoption, persistence, and rollback remain consumer-owned.
+
+Each new failure automatically opens its popover without moving focus. Closing the details retains the draft and error, which can be inspected again with the error icon or Alt+ArrowDown. Esc closes open details first; a subsequent Esc discards the draft and error together. The standard popover adds no reset action.
 
 For example, reject negative quantities with a user-facing message. Invalid drafts remain editable; successful confirmation updates the consumer-owned rows:
 
@@ -49,7 +51,7 @@ function EditableItems() {
 }
 ```
 
-The standard error popover needs no configuration. To replace only its body, add `error` alongside `onValueCommitted` in the column's `edit` config:
+The standard error popover needs no configuration. To customize its body or include consumer-owned actions, add `error.render` to the column's `edit` config. The renderer receives the current row and the original thrown value:
 
 ```tsx
 error: {
@@ -62,4 +64,4 @@ error: {
 },
 ```
 
-Use `error: false` instead when the callback handles its own failures and feedback.
+If the callback handles its own failures and feedback instead, set `edit.error: false` to disable callback interception and retain eager edit completion.

@@ -212,6 +212,12 @@ interface SortableHeaderRenderContext {
  */
 export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
 
+/** Context passed to custom column `footer` renderers. */
+export interface FooterRenderContext<TRow extends Record<string, unknown>> {
+  /** Current `data.rows` (the current page, not all records or only selected rows). */
+  rows: readonly TRow[];
+}
+
 type DataTableStringFilterOperator = Extract<
   OperatorForFilterType["string"],
   "eq" | "ne" | "contains" | "notContains" | "hasPrefix" | "hasSuffix"
@@ -339,6 +345,19 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
   headerProps?: (
     ctx: HeaderRenderContext,
   ) => Pick<ComponentProps<"th">, "className" | "style" | "title"> | undefined;
+  /**
+   * Content for this column's cell in a sticky table footer: a static string
+   * or a renderer receiving the current `data.rows` (the current page, not all
+   * records or only selected rows). `type` and `typeOptions` do not apply.
+   *
+   * A footer row appears when any visible column defines a footer, including
+   * an empty string. Columns without one leave a blank cell; hidden columns'
+   * callbacks are not called.
+   * Loading keeps the footer row with skeletons without calling renderers.
+   * Hidden during errors; loaded empty data receives `rows: []`.
+   * Separate from `DataTable.Footer`, the pagination / bulk-action container.
+   */
+  footer?: string | ((ctx: FooterRenderContext<TRow>) => ReactNode);
   /**
    * Stable identifier used for column visibility toggling, persisted layout
    * state, raw-value fallback (`row[col.id]`), and as the React key. Falls

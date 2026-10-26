@@ -28,7 +28,7 @@ function Input({ className, type, ref: forwardedRef, ...props }: InputProps) {
       data-slot="input"
       className={cn(
         inputBaseClasses,
-        "astw:file:text-foreground astw:file:inline-flex astw:file:h-7 astw:file:border-0 astw:file:bg-transparent astw:file:text-sm astw:file:font-medium",
+        "astw:file:text-foreground astw:file:inline-flex astw:file:h-7 astw:file:border-0 astw:file:bg-transparent astw:file:text-label-md",
         "astw:aria-invalid:ring-danger-solid/20 astw:dark:aria-invalid:ring-danger-solid/40 astw:aria-invalid:border-danger-solid",
         className,
       )}

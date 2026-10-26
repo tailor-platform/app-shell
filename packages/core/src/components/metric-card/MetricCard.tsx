@@ -1,6 +1,7 @@
 import { cn } from "../../lib/utils";
 import { Card } from "../card";
 import type { MetricCardProps, MetricCardTrendDirection } from "./types";
+import { Text } from "../text";
 
 // ============================================================================
 // CONSTANTS
@@ -50,34 +51,35 @@ export function MetricCard({ title, value, trend, description, icon, className }
             {icon}
           </span>
         )}
-        <span className="astw:text-sm astw:font-medium astw:text-muted-foreground astw:min-w-0 astw:truncate">
+        <Text variant="label-md" className="astw:text-muted-foreground astw:min-w-0 astw:truncate">
           {title}
-        </span>
+        </Text>
       </div>
 
       {/* Main value */}
-      <div className="astw:text-2xl astw:font-bold astw:tracking-tight astw:break-words">
+      <Text variant="heading-lg" className="astw:break-words" render={<div />}>
         {value}
-      </div>
+      </Text>
 
       {/* Optional meta row: trend + description */}
       {hasMeta && (
         <div className="astw:mt-2 astw:flex astw:items-center astw:gap-2 astw:flex-wrap">
           {trend != null && (
             <span
-              className={cn(
-                "astw:text-sm astw:font-medium",
-                trendDirectionClasses[trend.direction],
-              )}
+              className={cn("astw:text-label-md", trendDirectionClasses[trend.direction])}
               data-direction={trend.direction}
             >
               {trend.value}
             </span>
           )}
           {description != null && description !== "" && (
-            <span className="astw:text-sm astw:text-muted-foreground astw:truncate">
+            <Text
+              variant="body-md"
+              className="astw:text-muted-foreground astw:truncate"
+              render={<span />}
+            >
               {description}
-            </span>
+            </Text>
           )}
         </div>
       )}

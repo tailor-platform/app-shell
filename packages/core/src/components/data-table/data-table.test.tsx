@@ -2683,37 +2683,13 @@ describe("DataTable", () => {
     });
 
     it("does not measure a nested DataTable's header into the outer table's widths", () => {
-      // Built-in column keys are module constants shared by every instance, so an
-      // unscoped descendant query let the inner table's selection column (later
-      // in document order) overwrite the outer one's measured width and shift
-      // every pinned column left of where it belongs.
-      //
-      // Widths are 0 in the test DOM, so the two selection headers are stubbed to
-      // distinguishable non-zero values — 70 outer, 40 inner. The outer expand
-      // column must land at 70, never 40.
-      // Stub on whichever prototype actually owns `offsetWidth` (installing one
-      // if none does), rather than assuming `HTMLElement`. A spy on the wrong
-      // link of the chain silently no-ops and every cell measures 0, and a stub
-      // placed on the elements themselves is lost if React recreates the header
-      // nodes on re-render. This survives both.
-      const offsetWidthOwner = (() => {
-        let proto: object | null = Object.getPrototypeOf(document.createElement("th"));
-        while (proto && !Object.getOwnPropertyDescriptor(proto, "offsetWidth")) {
-          proto = Object.getPrototypeOf(proto);
-        }
-        if (proto) return proto;
-        Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
-          configurable: true,
-          get: () => 0,
-        });
-        return HTMLElement.prototype;
-      })();
-      const offsetWidth = vi
-        .spyOn(offsetWidthOwner as HTMLElement, "offsetWidth", "get")
-        .mockImplementation(function (this: HTMLElement) {
-          if (this.dataset?.colKey !== "__datatable_selection__") return 0;
-          return this.closest("[data-nested]") ? 40 : 70;
-        });
+      // Shared column keys must not let a nested header overwrite the outer width.
+      vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+        function (this: HTMLElement) {
+          if (this.dataset.colKey !== "__datatable_selection__") return new DOMRect();
+          return new DOMRect(0, 0, this.closest("[data-nested]") ? 40 : 70, 40);
+        },
+      );
 
       function NestedTable() {
         const table = useDataTable<TestRow>({
@@ -2750,46 +2726,18 @@ describe("DataTable", () => {
       fireEvent.click(screen.getAllByLabelText("Expand row")[0]);
       expect(container.querySelectorAll("table").length).toBeGreaterThan(1);
 
-      // Guard the stub itself, so a future environment where it stops taking
-      // effect fails here — naming the cause — rather than at the layout
-      // assertion below, which would just read the declared 52px fallback and
-      // look like a pinning bug.
       const selectionHeaders = container.querySelectorAll<HTMLElement>(
         '[data-slot="data-table-header"] th[data-col-key="__datatable_selection__"]',
       );
-      // Outer thead precedes the nested table in the outer tbody.
       expect(selectionHeaders).toHaveLength(2);
-      expect([selectionHeaders[0].offsetWidth, selectionHeaders[1].offsetWidth]).toEqual([70, 40]);
+      expect(Array.from(selectionHeaders, (cell) => cell.getBoundingClientRect().width)).toEqual([
+        70, 40,
+      ]);
 
-      // Preconditions for the production filter (`cell.closest("table") === ownTable`).
-      // Asserted explicitly so that if a DOM implementation resolves either side
-      // differently, this names the cause instead of surfacing as a pin offset.
-      const scrollContainer = container.querySelector('[data-slot="table-container"]');
-      const outerTable = scrollContainer?.querySelector("table");
-      expect(outerTable).not.toBeNull();
-      expect(selectionHeaders[0].closest("table")).toBe(outerTable);
-      expect(selectionHeaders[1].closest("table")).not.toBe(outerTable);
-
-      // Force the measure effect to re-run now that the nested table is mounted
-      // (in a browser the ResizeObserver does this when the row expands).
+      // Resubscribe while the nested table is mounted to exercise the ownership filter.
       act(() => api.toggleColumn("Status"));
 
-      const left = container.querySelector<HTMLElement>(EXPAND_TH)?.style.left;
-
-      // The invariant: the inner table's width must never reach the outer
-      // table's offsets. That is what the `closest("table") === ownTable` filter
-      // exists for, and removing it makes this fail with "40px".
-      expect(left).not.toBe("40px");
-      // Which of the two legitimate values appears depends on whether the DOM
-      // implementation feeds real geometry to the component's layout effect.
-      // Where it does, the offset is the outer table's measured 70px. Where
-      // every element reports `offsetWidth: 0` to the component — as happens in
-      // CI, which is also why every other pinning test here asserts declared
-      // fallbacks — the declared 52px stands. Asserting 70px unconditionally
-      // pins the test to one environment's layout behaviour, not to the
-      // behaviour under test.
-      expect(["70px", "52px"]).toContain(left);
-      offsetWidth.mockRestore();
+      expect(container.querySelector<HTMLElement>(EXPAND_TH)?.style.left).toBe("70px");
     });
 
     it("keeps collapseAllRows stable and inert while nothing is expanded", () => {

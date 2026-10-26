@@ -59,6 +59,15 @@ describe("Alert", () => {
       expect(container.innerHTML).toMatchSnapshot();
     });
 
+    it.each([false, true])("description only (dismissible=%s)", (dismissible) => {
+      const { container } = render(
+        <Alert.Root variant="success" dismissible={dismissible}>
+          <Alert.Description>Authorization completed</Alert.Description>
+        </Alert.Root>,
+      );
+      expect(container.innerHTML).toMatchSnapshot();
+    });
+
     it("with dismissible", () => {
       const { container } = render(
         <Alert.Root dismissible>

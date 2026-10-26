@@ -218,7 +218,7 @@ export const CheckboxControl = ({ section }: { section: CheckboxSection }) => {
         );
       })}
       {visible.length === 0 && (
-        <p className="astw:px-2 astw:py-1 astw:text-xs astw:text-muted-foreground">
+        <p className="astw:px-2 astw:py-1 astw:text-body-sm astw:text-muted-foreground">
           {t("noMatchingValues")}
         </p>
       )}

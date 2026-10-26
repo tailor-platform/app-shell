@@ -143,7 +143,7 @@ export function BadgeList({
         <Popover.Root>
           <Popover.Trigger
             openOnHover
-            className="astw:cursor-default astw:rounded-md astw:px-2 astw:py-0.5 astw:text-xs astw:font-medium astw:text-muted-foreground astw:hover:bg-muted astw:transition-colors"
+            className="astw:cursor-default astw:rounded-md astw:px-2 astw:py-0.5 astw:text-label-sm astw:text-muted-foreground astw:hover:bg-muted astw:transition-colors"
           >
             +{overflow.length}
           </Popover.Trigger>

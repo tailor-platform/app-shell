@@ -1,8 +1,9 @@
+import { Field as BaseField } from "@base-ui/react/field";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import * as React from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { Text, type TextProps } from "./text";
 
 afterEach(() => {
@@ -142,5 +143,17 @@ describe("Text", () => {
       </Text>,
     );
     expect(ref.current?.tagName).toBe("H2");
+  });
+
+  it("keeps the message a Base UI part supplies when no children are given", async () => {
+    render(
+      <BaseField.Root validate={() => "Enter a quantity."} validationMode="onBlur">
+        <BaseField.Control data-testid="qty" />
+        <Text variant="label-md" render={<BaseField.Error />} />
+      </BaseField.Root>,
+    );
+    fireEvent.focus(screen.getByTestId("qty"));
+    fireEvent.blur(screen.getByTestId("qty"));
+    expect(await screen.findByText("Enter a quantity.")).toBeDefined();
   });
 });

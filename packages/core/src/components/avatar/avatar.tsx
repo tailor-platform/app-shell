@@ -5,14 +5,14 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const avatarVariants = cva(
-  "astw:relative astw:flex astw:shrink-0 astw:items-center astw:justify-center astw:overflow-hidden astw:rounded-full astw:bg-muted astw:text-muted-foreground astw:font-medium",
+  "astw:relative astw:flex astw:shrink-0 astw:items-center astw:justify-center astw:overflow-hidden astw:rounded-full astw:bg-muted astw:text-muted-foreground",
   {
     variants: {
       size: {
-        xs: "astw:size-4 astw:text-[8px]",
-        sm: "astw:size-6 astw:text-[10px]",
-        default: "astw:size-7 astw:text-xs",
-        lg: "astw:size-10 astw:text-sm",
+        xs: "astw:size-4 astw:text-label-sm",
+        sm: "astw:size-6 astw:text-label-sm",
+        default: "astw:size-7 astw:text-label-sm",
+        lg: "astw:size-10 astw:text-label-md",
       },
     },
     defaultVariants: {

@@ -283,7 +283,7 @@ There are 8 core roles and 2 relaxed body variants:
 | `heading-sm`      | `text-heading-sm`      | 14px / 20px        | 600    | Sub-section heading                             |
 | `body-md`         | `text-body-md`         | 14px / 20px        | 400    | Body copy, descriptions                         |
 | `body-sm`         | `text-body-sm`         | 12px / 16px        | 400    | Caption, timestamp, metadata                    |
-| `label-md`        | `text-label-md`        | 14px / 20px        | 500    | Field label, short UI text, figures in a table  |
+| `label-md`        | `text-label-md`        | 14px / 20px        | 500    | Field label, short UI text                      |
 | `label-sm`        | `text-label-sm`        | 12px / 16px        | 500    | Small label, badge text                         |
 | `code-sm`         | `text-code-sm`         | 12px / 18px        | 400    | ID and code. Use with `font-mono`               |
 | `body-md-relaxed` | `text-body-md-relaxed` | 14px / 24px        | 400    | Long text, such as a chat message or a document |
@@ -301,7 +301,7 @@ Pair a role with a color token from the Color section above. These pairings are 
 | Body copy                         | `text-body-md`                                 |
 | Secondary copy, descriptions      | `text-body-md text-muted-foreground`           |
 | Caption, timestamp, metadata      | `text-body-sm text-muted-foreground`           |
-| Numeric value in a table or field | `text-label-md tabular-nums`                   |
+| Numeric value in a table or field | `text-body-md tabular-nums`                    |
 | ID, code                          | `font-mono text-code-sm text-muted-foreground` |
 
 <example-preview name="typography-roles"></example-preview>
@@ -417,7 +417,7 @@ The [`Text`](../components/text.md) component applies the same roles with a `var
 <Text variant="body-md" className="text-muted-foreground">Description copy</Text>
 ```
 
-On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's line height and letter spacing, including `leading-none`; see "Change a role" below. AppShell's own components still use the stock utilities (`text-sm`, `font-medium`, and so on) today. They will move to the roles in later changes, so the two sets can appear side by side for now.
+On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's line height and letter spacing, including `leading-none`; see "Change a role" below. AppShell's own components use the roles: content text renders with `Text`, and controls use the role utility.
 
 **Rules**
 

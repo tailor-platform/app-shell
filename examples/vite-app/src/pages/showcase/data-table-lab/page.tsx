@@ -551,7 +551,7 @@ const DataTableLabPage = () => {
         </div>
 
         <Section
-          title="Inline editing"
+          title="Inline editing + column footers"
           description={
             <>
               A goods receipt using <code>onValueCommitted</code> — scroll right for every editor.
@@ -568,7 +568,12 @@ const DataTableLabPage = () => {
               Lot no. rejects empty text. Warehouse, QC, and Note can be cleared. Dates use an
               unconstrained calendar: Expected rejects days before September 2026, Best before
               accepts October 2026–December 2027, and Received at adds a time field. There is no
-              built-in unsaved-changes prompt when leaving.
+              built-in unsaved-changes prompt when leaving. The sticky <strong>Totals</strong> row
+              uses <code>Column.footer</code> to sum Ordered, Received, and Weight across all six
+              records, not just selected rows. Edit Weight directly, or tick a row to edit Received,
+              and confirm to update the totals. Scroll inside the table to keep the header and
+              totals in view. These summaries are not data rows; the separate footer below still
+              shows change and saving feedback.
             </>
           }
         >

@@ -2,7 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add built-in error popovers to DataTable inline editing. When `onValueChange` or `onValueCommitted` throws or returns a rejected Promise, the affected cell shows an error. Throw the exported `CellEditError` with a translated, user-facing message to display that text; other failures use localized generic feedback.
+Add built-in error popovers to DataTable inline editing. When `onValueChange` or `onValueCommitted` throws or returns a rejected Promise, the affected cell shows an error. Throw the exported `CellEditError` with a translated, user-facing message to display that text; other failures display the localized message “Could not confirm this change”.
 
 Alongside this feedback, the editor now retains pending and failed drafts for correction or retry. Confirmation waits for any pending `onValueChange` check to succeed, and the draft clears only after confirmation succeeds. Drafts remain editable without trapping cell navigation; data adoption, persistence, and rollback remain consumer-owned.
 

@@ -319,11 +319,11 @@ describe("DataTable callback error presentation", () => {
     });
     change(input);
     const popup = await screen.findByRole("dialog", { name: "Error in Value" });
-    expect(within(popup).getByText("An error occurred")).toBeDefined();
+    expect(within(popup).getByText("Could not confirm this change")).toBeDefined();
     expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toBe(
-      "An error occurred. Press Alt+ArrowDown for error details",
+      "Could not confirm this change. Press Alt+ArrowDown for error details",
     );
-    expect(popup.textContent).toBe("An error occurred");
+    expect(popup.textContent).toBe("Could not confirm this change");
     expect(input.value).toBe("Changed");
     expect(input.getAttribute("aria-invalid")).toBe("true");
   });
@@ -340,9 +340,9 @@ describe("DataTable callback error presentation", () => {
       if (source === "commit") fireEvent.keyDown(input, { key: "Enter" });
       await rejectRequest(request, new Error("Internal server details"));
       const popup = await screen.findByRole("dialog", { name: "Error in Value" });
-      expect(popup.textContent).toBe("An error occurred");
+      expect(popup.textContent).toBe("Could not confirm this change");
       expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toBe(
-        "An error occurred. Press Alt+ArrowDown for error details",
+        "Could not confirm this change. Press Alt+ArrowDown for error details",
       );
       expect(input.value).toBe("Changed");
       expect(input.getAttribute("aria-invalid")).toBe("true");
@@ -364,12 +364,12 @@ describe("DataTable callback error presentation", () => {
     expect(popup.textContent).toBe("Custom feedback");
     expect(renderError).toHaveBeenCalledWith({ row: ROWS[0], error: failure });
     expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toBe(
-      "An error occurred. Press Alt+ArrowDown for error details",
+      "Could not confirm this change. Press Alt+ArrowDown for error details",
     );
   });
 
   it.each([
-    { failure: new Error("Internal server details"), message: "エラーが発生しました" },
+    { failure: new Error("Internal server details"), message: "変更を確定できませんでした" },
     { failure: new CellEditError("数量を入力してください"), message: "数量を入力してください" },
   ])("localizes popup labels and displays $message", async ({ failure, message }) => {
     const { input } = renderEditor(

@@ -4,8 +4,35 @@ import {
   type AppShellPageProps,
 } from "@tailor-platform/app-shell";
 import { Columns3 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { PANEL_SECTIONS, sectionId } from "../../../panel-sections";
+
+const PanelSection = ({
+  title,
+  subsection = false,
+  children,
+}: {
+  title: string;
+  subsection?: boolean;
+  children?: ReactNode;
+}) => {
+  const Heading = subsection ? "h3" : "h2";
+  return (
+    <section id={sectionId(title)} className={subsection ? "mt-6 scroll-mt-4" : "scroll-mt-4"}>
+      <Heading className={subsection ? "text-heading-sm" : "text-heading-md"}>{title}</Heading>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Filler copy so the content column scrolls independently of the two side columns. The rail on
+        the left and the assistant on the right stay put while this scrolls, and each has its own
+        scrollbar.
+      </p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Collapse the sidebar (⌘B) and every column reflows — they are flex siblings of the sidebar,
+        so nothing is pinned to a hardcoded width.
+      </p>
+      {children}
+    </section>
+  );
+};
 
 /**
  * Demo page for the `SidebarLayout` `body` slot (issue #1643).
@@ -41,19 +68,12 @@ const PanelsPage = () => {
             ? "not resolved ✗"
             : `resolved ✓ — scrollTop ${Math.round(scrollTop)}`}
         </p>
-        {PANEL_SECTIONS.map((section) => (
-          <section key={section} id={sectionId(section)} className="scroll-mt-4">
-            <h2 className="text-lg font-semibold tracking-tight">{section}</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Filler copy so the content column scrolls independently of the two side columns. The
-              rail on the left and the assistant on the right stay put while this scrolls, and each
-              has its own scrollbar.
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Collapse the sidebar (⌘B) and every column reflows — they are flex siblings of the
-              sidebar, so nothing is pinned to a hardcoded width.
-            </p>
-          </section>
+        {PANEL_SECTIONS.map(({ title, children }) => (
+          <PanelSection key={title} title={title}>
+            {children?.map((child) => (
+              <PanelSection key={child} title={child} subsection />
+            ))}
+          </PanelSection>
         ))}
       </Layout.Column>
     </Layout>

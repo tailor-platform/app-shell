@@ -230,6 +230,7 @@ describe("Text", () => {
     });
 
     it("names each component after its element", () => {
+      expect(Text.displayName).toBe("Text");
       expect(Text.h1.displayName).toBe("Text.h1");
       expect(Text.div.displayName).toBe("Text.div");
     });

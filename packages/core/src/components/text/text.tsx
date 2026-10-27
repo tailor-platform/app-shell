@@ -71,6 +71,8 @@ function TextRoot({ className, variant, render, children, ref, ...props }: TextP
   });
 }
 
+TextRoot.displayName = "Text";
+
 /**
  * The role each element component applies when no `variant` is given. They
  * follow `defaultTagNames`: body roles render `p`, label roles render `span`.

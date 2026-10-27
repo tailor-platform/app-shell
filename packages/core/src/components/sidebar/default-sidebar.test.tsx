@@ -376,7 +376,7 @@ describe("DefaultSidebar opt-in props", () => {
 
     const fallbacks = document.querySelectorAll('[data-slot="sidebar-icon-fallback"]');
     expect(Array.from(fallbacks, (el) => el.textContent)).toEqual(["F", "B"]);
-    expect(fallbacks[0]?.className).toContain("astw:group-data-[collapsible=icon]:flex");
+    expect(fallbacks[0]?.getAttribute("class")).toContain("astw:group-data-[collapsible=icon]:block");
     expect(screen.getByTestId("home-icon")).toBeDefined();
   });
 

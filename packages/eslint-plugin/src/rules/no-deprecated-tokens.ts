@@ -72,8 +72,12 @@ const UTILITY = new RegExp(
   `^(${UTILITY_PREFIXES.join("|")})-(destructive(?:-foreground)?|status-(?:${Object.keys(STATUS_INTENTS).join("|")})|alert-(?:${Object.keys(ALERT_INTENTS).join("|")})-(?:foreground-muted|background|border|foreground))(?:/(\\d+))?$`,
 );
 
-const CSS_VARIABLE =
-  /--(?:destructive(?:-foreground)?|status-(?:completed|attention|danger|neutral|default)|alert-(?:error|info|neutral|success|warning)-(?:foreground-muted|background|border|foreground)|app-shell-type-[a-z0-9-]+)(?![a-z0-9-])/g;
+/** Every `--name` in a string. One character class, so the scan stays linear. */
+const CSS_VARIABLE_CANDIDATE = /--[a-z0-9-]+/g;
+
+/** Checked against one candidate at a time, so the alternation never runs on the whole string. */
+const DEPRECATED_VARIABLE =
+  /^--(?:destructive(?:-foreground)?|status-(?:completed|attention|danger|neutral|default)|alert-(?:error|info|neutral|success|warning)-(?:foreground-muted|background|border|foreground)|app-shell-type-[a-z0-9-]+)$/;
 
 /** The role a utility should use when the old token gave a whole fill or text colour. */
 function solidRole(prefix: string): string {
@@ -150,8 +154,10 @@ function findDeprecated(text: string): { found: string; replacement: string }[] 
     results.push({ found: token, replacement: `${variants}${leading}${replacement}${trailing}` });
   }
 
-  for (const [name] of text.matchAll(CSS_VARIABLE)) {
-    results.push({ found: name, replacement: replaceVariable(name) });
+  for (const [name] of text.matchAll(CSS_VARIABLE_CANDIDATE)) {
+    if (DEPRECATED_VARIABLE.test(name)) {
+      results.push({ found: name, replacement: replaceVariable(name) });
+    }
   }
 
   return results;

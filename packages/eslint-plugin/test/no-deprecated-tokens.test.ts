@@ -23,6 +23,7 @@ ruleTester.run("no-deprecated-tokens", noDeprecatedTokens, {
     'const view = <div className="status-row text-muted-foreground" />;',
     'const copy = "This is a destructive action.";',
     "const classes = cn(`flex ${gap} bg-danger-surface`);",
+    'const style = { color: "var(--destructive-ring)" };',
   ],
   invalid: [
     {

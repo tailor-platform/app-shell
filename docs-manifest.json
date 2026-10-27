@@ -1430,11 +1430,11 @@
       "claims": [],
       "symbols": ["Text", "TextProps"],
       "hashes": {
-        "typeSurface": "ed54a16ca677dbe3",
-        "outline": "114c81c557b82a18",
-        "snapshot": "cb5f569f7dd2ecfc",
-        "outputMd": "5b6cf767868d6558",
-        "examples": "4a832708dc79474b"
+        "typeSurface": "053c8236047c6ec4",
+        "outline": "1441d9d6e3f5975b",
+        "snapshot": "83be7198ffac5470",
+        "outputMd": "24262ae6cb49a138",
+        "examples": "c31a669057c28ba7"
       }
     },
     "textarea": {
@@ -1811,7 +1811,7 @@
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "30bb32e57fc78bd9",
-    "packages/core/skills/app-shell-patterns/references/components/text.md": "5b6cf767868d6558",
+    "packages/core/skills/app-shell-patterns/references/components/text.md": "24262ae6cb49a138",
     "packages/core/skills/app-shell-patterns/references/components/textarea.md": "c940bc01cd573334",
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",

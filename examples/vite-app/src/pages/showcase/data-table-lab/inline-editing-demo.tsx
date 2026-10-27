@@ -1,4 +1,10 @@
-import { DataTable, createColumnHelper, useDataTable, useToast } from "@tailor-platform/app-shell";
+import {
+  DataTable,
+  aggregations,
+  createColumnHelper,
+  useDataTable,
+  useToast,
+} from "@tailor-platform/app-shell";
 import { useRef, useState } from "react";
 
 // ─── Dummy data ──────────────────────────────────────────────────────────────
@@ -204,7 +210,14 @@ export function InlineEditingDemo() {
   };
 
   const columns = [
-    column({ id: "sku", label: "SKU", type: "text", width: 120, pin: "left" }),
+    column({
+      id: "sku",
+      label: "SKU",
+      type: "text",
+      width: 120,
+      pin: "left",
+      footer: "Aggregates",
+    }),
     column({ id: "product", label: "Product", type: "text" }),
     column({
       id: "supplierId",
@@ -237,13 +250,20 @@ export function InlineEditingDemo() {
           update(row.id, { warehouseId: value }, `Warehouse → ${value ?? "none"}`),
       },
     }),
-    column({ id: "ordered", label: "Ordered", type: "number", width: 88 }),
+    column({
+      id: "ordered",
+      label: "Ordered",
+      type: "number",
+      width: 88,
+      footer: aggregations.sum((row) => row.ordered),
+    }),
     column({
       id: "received",
       label: "Received",
       type: "number",
       width: 104,
       typeOptions: { maxDecimals: 0 },
+      footer: aggregations.sum((row) => row.received),
       edit: {
         canEdit: (_row, { selected }) => selected,
         onValueCommitted: (row, value) => {
@@ -302,6 +322,10 @@ export function InlineEditingDemo() {
       type: "number",
       width: 110,
       typeOptions: { maxDecimals: 1 },
+      footer: aggregations.max(
+        (row) => row.discount,
+        (value) => (value === null ? "–" : `Max: ${value}%`),
+      ),
       edit: {
         onValueCommitted: (row, value) => {
           if (value === null || value < 0 || value > 100 || Math.round(value * 10) / 10 !== value) {
@@ -326,6 +350,10 @@ export function InlineEditingDemo() {
       type: "number",
       width: 112,
       typeOptions: { maxDecimals: 3 },
+      footer: aggregations.sum(
+        (row) => row.weightKg,
+        (total) => total?.toLocaleString(undefined, { maximumFractionDigits: 3 }) ?? "–",
+      ),
       edit: {
         onValueCommitted: (row, value) => {
           if (
@@ -436,6 +464,10 @@ export function InlineEditingDemo() {
         badgeLabelMap: { pass: "Pass", hold: "On hold", fail: "Fail" },
         badgeVariantMap: { pass: "success", hold: "warning", fail: "error" },
       },
+      footer: aggregations.count(
+        (row) => row.qc,
+        (count) => `Checked: ${count}`,
+      ),
       // Optional badge dropdown: offers "None".
       edit: {
         onValueCommitted: (row, value) =>
@@ -478,7 +510,7 @@ export function InlineEditingDemo() {
           {feedback}
         </p>
       )}
-      <DataTable.Root value={table}>
+      <DataTable.Root value={table} className="max-h-[320px]">
         <DataTable.Table />
         <DataTable.Footer>
           <div aria-live="polite" className="space-y-1 text-sm text-muted-foreground">

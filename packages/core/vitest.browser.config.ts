@@ -4,6 +4,9 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: ["@tailor-platform/app-shell", "@testing-library/react"],
+  },
   test: {
     name: "styles",
     include: ["tests/browser/**/*.test.{ts,tsx}"],

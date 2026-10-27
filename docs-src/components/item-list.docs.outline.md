@@ -35,32 +35,43 @@ import { ItemList } from "@tailor-platform/app-shell";
 
 ## Items, Links, and Actions
 
-`ItemList.Item` renders a `button` with `type="button"` by default. Use `onClick` for actions, or supply an anchor or application link through `render` for navigation.
+`ItemList.Item` is for links and actions, not static rows. It requires `onClick`, `render`, or both; omitting both is a type error, including for a disabled Item. With `onClick`, it renders a `button` with `type="button"` by default. Supply an anchor or application link through `render` for navigation.
 
 `render` replaces the interactive element inside the row, not the containing `li`. `children` supplies its label, and `icon` supplies an optional decorative leading icon. Standard button props, classes, attributes, and refs apply to the inner operation. A disabled Item is skipped by Tab and cancels clicks, including navigation through a supplied link.
 
 <!-- example: links-and-actions -->
 
-`isActive` controls visual emphasis only. The caller owns active-route matching and should supply `aria-current="page"` on a link representing the current page. No selection state, `listbox` role, or `aria-selected` is implied.
+For application navigation, use `Link` or `NavLink` from `@tailor-platform/app-shell` inside an AppShell-managed page. Do not import routing APIs directly from `react-router` or create a separate router around the list. The routes in this example belong to the documentation app; use your application's route paths in your own pages.
+
+<!-- example: app-shell-routing -->
+
+`NavLink` owns route matching and supplies `aria-current="page"` when matched; ItemList styles that attribute with the same emphasis as `isActive`. Use `end` when only the exact destination should be current. With a plain link, the caller supplies `aria-current="page"` when appropriate.
+
+`isActive` remains a boolean for explicit visual emphasis, including local actions. It does not imply `aria-current`, selection state, a `listbox` role, or `aria-selected`. ItemList does not perform route matching.
 
 ### Item Props
 
-| Prop        | Type           | Default | Description                                                          |
-| ----------- | -------------- | ------- | -------------------------------------------------------------------- |
-| `icon`      | `ReactNode`    | —       | Optional decorative leading icon                                     |
-| `children`  | `ReactNode`    | —       | Compact row label                                                    |
-| `render`    | `ReactElement` | —       | Replaces the inner button, for example with an anchor or Router link |
-| `isActive`  | `boolean`      | `false` | Visual emphasis without route matching or selection state            |
-| `disabled`  | `boolean`      | —       | Disables clicks and removes the operation from the tab order         |
-| `className` | `string`       | —       | Classes applied to the inner operation                               |
+| Prop        | Type                                   | Default | Description                                                        |
+| ----------- | -------------------------------------- | ------- | ------------------------------------------------------------------ |
+| `icon`      | `ReactNode`                            | —       | Optional decorative leading icon                                   |
+| `children`  | `ReactNode`                            | —       | Compact row label                                                  |
+| `render`    | `ReactElement`                         | —       | Replaces the inner button; required unless `onClick` is supplied   |
+| `onClick`   | `MouseEventHandler<HTMLButtonElement>` | —       | Action handler; required unless `render` is supplied               |
+| `isActive`  | `boolean`                              | `false` | Explicit visual emphasis without route matching or selection state |
+| `disabled`  | `boolean`                              | —       | Disables clicks and removes the operation from the tab order       |
+| `className` | `string`                               | —       | Classes applied to the inner operation                             |
 
-Other standard button props, such as `onClick`, `title`, and ARIA attributes, are forwarded to the inner operation. Put link-specific props such as `href`, `target`, and `rel` on the element passed to `render`.
+Other standard button props, such as `title` and ARIA attributes, are forwarded to the inner operation. Put link-specific props such as `href`, `target`, and `rel` on the element passed to `render`.
+
+Rows without an `icon` do not reserve icon space. To align a mixed list, explicitly pass `icon={<span />}` on a row that needs an empty icon slot. Lists with no icons keep their compact indentation.
 
 ## Groups and Heading Hierarchies
 
-Without `render`, clicking a group's heading toggles its child list. `defaultOpen` defaults to `true`; set it to `false` to start collapsed. Groups can be nested.
+`expandOnClick` defaults to `true`: clicking a group's heading toggles its child list, whether or not `render` is supplied. `render` only replaces the heading's main operation; it does not determine the expansion behavior. `defaultOpen` defaults to `true`; set it to `false` to start collapsed. Groups can be nested.
 
-With `render`, the heading's main operation becomes the supplied link or action. A separate button, named by the group title, expands and collapses the group. Navigating therefore does not toggle it. `isActive` controls the main heading operation's visual emphasis.
+Set `expandOnClick={false}` to separate the heading's main operation from expansion. This requires `onClick` or `render` so the heading does not become an inert button. A separate button, named by the group title, expands and collapses the group. Use this for linked headings so navigation does not toggle the list.
+
+`onClick` applies only to the heading's main operation. Clicking a child Item or the separate expand button does not invoke it. `isActive` and `aria-current="page"` control emphasis on the main heading operation, not the separate expand button.
 
 For a table of contents, use a linked Group for a parent heading and Items for its child headings. Keep the list data aligned with the actual heading hierarchy and anchor IDs in the document.
 
@@ -68,16 +79,20 @@ For a table of contents, use a linked Group for a parent heading and Items for i
 
 ### Group Props
 
-| Prop          | Type           | Default | Description                                                           |
-| ------------- | -------------- | ------- | --------------------------------------------------------------------- |
-| `title`       | `string`       | —       | Resolved group label                                                  |
-| `icon`        | `ReactNode`    | —       | Optional decorative leading icon                                      |
-| `render`      | `ReactElement` | —       | Replaces the main heading operation; expansion uses a separate button |
-| `isActive`    | `boolean`      | `false` | Visual emphasis for the heading operation                             |
-| `defaultOpen` | `boolean`      | `true`  | Initial uncontrolled expanded state                                   |
-| `children`    | `ReactNode`    | —       | Nested Items, Groups, Sections, or Separators                         |
+| Prop            | Type                                   | Default | Description                                                                                       |
+| --------------- | -------------------------------------- | ------- | ------------------------------------------------------------------------------------------------- |
+| `title`         | `ReactNode`                            | —       | Accessible group label, including text and optional decorations                                   |
+| `icon`          | `ReactNode`                            | —       | Optional decorative leading icon                                                                  |
+| `render`        | `ReactElement`                         | —       | Replaces the main heading operation without changing expansion behavior                           |
+| `onClick`       | `MouseEventHandler<HTMLButtonElement>` | —       | Handler for the main heading operation only                                                       |
+| `expandOnClick` | `boolean`                              | `true`  | Toggle from the heading; `false` requires `onClick` or `render` and adds a separate expand button |
+| `isActive`      | `boolean`                              | `false` | Explicit visual emphasis for the heading operation                                                |
+| `defaultOpen`   | `boolean`                              | `true`  | Initial uncontrolled expanded state                                                               |
+| `children`      | `ReactNode`                            | —       | Nested Items, Groups, Sections, or Separators                                                     |
 
-Other standard `li` props, including `className`, apply to the containing group item, not its heading operation.
+Other standard `li` props, including `className`, apply to the containing group item, not its heading operation. `onClick` is the exception described above.
+
+A Group's rendered label names its heading operation, separate expand button, and child list. Keep meaningful text in a rich `title`; ReactNode content is not converted into a string. Meaningful details such as counts can be read with the label, while purely decorative elements should use `aria-hidden="true"`. An icon-only title needs screen-reader text. Do not put links or buttons inside the title, because the heading itself is interactive.
 
 ## Sections and Separators
 
@@ -90,6 +105,6 @@ Neither Group nor Section requires wrapping its children in another `ItemList.Ro
 - Keep labels concise; they truncate in narrow containers.
 - Use `aria-label` or `aria-labelledby` on Root when a list needs an accessible name.
 - Native links and buttons retain their keyboard interactions. Group buttons announce their expanded state and support Enter and Space.
-- Resolve translated strings before passing them to `title`; ItemList does not translate labels.
+- Resolve translations before passing labels; ItemList does not translate them. Group titles can contain ReactNode content, while Section titles remain strings.
 - ItemList is an ordinary list, not a menu or selection widget. It does not provide arrow-key selection, search, reordering, or Sidebar icon-rail behavior.
 - Existing Sidebar components retain route metadata resolution, rail tooltips and flyouts, and drawer dismissal while sharing the underlying list presentation.

@@ -1022,10 +1022,10 @@
       "symbols": ["ItemList"],
       "hashes": {
         "typeSurface": "04f04b801848d563",
-        "outline": "207659e58b6f8f84",
+        "outline": "35b0f0b6aae84c17",
         "snapshot": null,
-        "outputMd": "8eb1f6a58c795043",
-        "examples": "b58f24d381adcfb0"
+        "outputMd": "0190e797cd8ed318",
+        "examples": "771eb7a57d7fdc63"
       }
     },
     "layout": {
@@ -1780,7 +1780,7 @@
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
-    "packages/core/skills/app-shell-patterns/references/components/item-list.md": "8eb1f6a58c795043",
+    "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "66696139a46fabb0",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",

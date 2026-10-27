@@ -17,7 +17,7 @@
     "react-dom": "catalog:",
     "react-hook-form": "^7.71.2",
     "tailwindcss": "catalog:",
-    "zod": "^4.0.0"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.3",

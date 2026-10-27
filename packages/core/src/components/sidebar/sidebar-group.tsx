@@ -10,6 +10,7 @@ import {
   SidebarMenuAction,
   SidebarMenuSub,
 } from "./primitives";
+import { SidebarButtonIcon } from "./sidebar-button-icon";
 import { useHasHover } from "@/hooks/use-has-hover";
 import { useT } from "@/i18n-labels";
 import { useAppShellConfig } from "@/contexts/appshell-context";
@@ -197,12 +198,12 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
         }
         isActive={isActive}
       >
-        {icon}
+        <SidebarButtonIcon icon={icon} title={resolvedTitle} />
         <span>{resolvedTitle}</span>
       </SidebarMenuButton>
     ) : (
       <SidebarMenuButton render={<button type="button" aria-label={resolvedTitle} />}>
-        {icon}
+        <SidebarButtonIcon icon={icon} title={resolvedTitle} />
         <span>{resolvedTitle}</span>
       </SidebarMenuButton>
     );
@@ -223,7 +224,7 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
           isActive={isActive}
           tooltip={resolvedTitle}
         >
-          {icon}
+          <SidebarButtonIcon icon={icon} title={resolvedTitle} />
           <span>{resolvedTitle}</span>
         </SidebarMenuButton>
         <Collapsible.Trigger
@@ -250,7 +251,7 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
           // stays open when toggling a collapsible group.
           onClick={(e) => e.preventDefault()}
         >
-          {icon}
+          <SidebarButtonIcon icon={icon} title={resolvedTitle} />
           <span>{resolvedTitle}</span>
         </SidebarMenuButton>
         <SidebarMenuAction className="astw-rotate-target" render={<span />}>

@@ -356,6 +356,30 @@ describe("DefaultSidebar opt-in props", () => {
     expect(heading?.className).toContain("astw:group-data-[collapsible=icon]:opacity-0");
   });
 
+  it("falls back to the title's initial for icon-less items and groups in the rail", () => {
+    renderWithProps(
+      {
+        iconRail: true,
+        hideHeader: true,
+        children: (
+          <>
+            <SidebarItem to="/features" title="features" />
+            <SidebarGroup title="Billing">
+              <SidebarItem to="/invoices" title="Invoices" />
+            </SidebarGroup>
+            <SidebarItem to="/home" title="Home" icon={<Home data-testid="home-icon" />} />
+          </>
+        ),
+      },
+      { defaultOpen: false },
+    );
+
+    const fallbacks = document.querySelectorAll('[data-slot="sidebar-icon-fallback"]');
+    expect(Array.from(fallbacks, (el) => el.textContent)).toEqual(["F", "B"]);
+    expect(fallbacks[0]?.className).toContain("astw:group-data-[collapsible=icon]:flex");
+    expect(screen.getByTestId("home-icon")).toBeDefined();
+  });
+
   it("reveals a group's children in a hover flyout in the icon rail", async () => {
     const user = userEvent.setup();
     renderWithProps(

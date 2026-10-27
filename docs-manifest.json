@@ -1329,9 +1329,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "ffd040e38c8f8a4b",
+        "outline": "9de06d8c23042287",
         "snapshot": null,
-        "outputMd": "3670e37a3c78abe7",
+        "outputMd": "5a3c8bac248061f9",
         "examples": null
       }
     },
@@ -1768,7 +1768,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "a59a10293fba053b",
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
-    "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "3670e37a3c78abe7",
+    "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "bea2c2be5e2ba53c",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",

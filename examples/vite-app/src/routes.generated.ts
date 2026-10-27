@@ -41,6 +41,7 @@ export type GeneratedRouteParams = {
   "/showcase/forms/zod-rhf": {};
   "/showcase/grid": {};
   "/showcase/input-field": {};
+  "/showcase/item-list": {};
   "/showcase/layouts": {};
   "/showcase/metric-card": {};
   "/showcase/primitives": {};

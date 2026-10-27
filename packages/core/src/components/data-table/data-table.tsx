@@ -404,7 +404,7 @@ function computePinLayout<TRow extends Record<string, unknown>>(
 function pinCellProps(
   placement: PinPlacement | undefined,
   base: { style?: CSSProperties; className?: string },
-  variant: "header" | "body",
+  variant: "header" | "body" | "footer",
 ): { style?: CSSProperties; className?: string } {
   if (!placement) return base;
   const style: CSSProperties = {
@@ -414,15 +414,15 @@ function pinCellProps(
   };
   const className = cn(
     base.className,
-    // Below the sticky header (z-10) but above non-pinned scrolling cells.
+    // Below the sticky header/footer (z-10) but above non-pinned scrolling cells.
     "astw:z-[1]",
-    variant === "header"
-      ? // The header's bottom hairline is drawn by the thead inset-shadow, which
-        // the opaque pinned background covers. Redraw it with a `::before` (which
-        // renders under `border-collapse`, where a cell border would be dropped on
-        // the sticky header row). Body cells don't need this — the row's collapsed
-        // border already paints over the cell background.
-        "astw:bg-card astw:before:pointer-events-none astw:before:absolute astw:before:inset-x-0 astw:before:bottom-0 astw:before:h-px astw:before:bg-border astw:before:content-['']"
+    variant !== "body"
+      ? // Opaque pinned cells cover the section's inset-shadow divider; redraw
+        // it on the cell because collapsed borders disappear on sticky sections.
+        cn(
+          "astw:bg-card astw:before:pointer-events-none astw:before:absolute astw:before:inset-x-0 astw:before:h-px astw:before:bg-border astw:before:content-['']",
+          variant === "header" ? "astw:before:bottom-0" : "astw:before:top-0",
+        )
       : cn(
           "astw:bg-card astw:transition-colors",
           // Match the row's hover/selected fade timing; without the cell-level
@@ -1211,6 +1211,123 @@ function DataTableBody({ className }: { className?: string }) {
 DataTableBody.displayName = "DataTable.Body";
 
 // =============================================================================
+// Column footer (internal — separate from DataTable.Footer)
+// =============================================================================
+
+function DataTableColumnFooter() {
+  const ctx = useContext(DataTableContext);
+  if (!ctx) {
+    throw new Error("<DataTableColumnFooter> must be used within <DataTable.Root>");
+  }
+  const {
+    columns: allColumns,
+    visibleColumns: columns,
+    pinnedColumns,
+    rows,
+    loading,
+    error,
+    toggleRowSelection,
+    rowExpansion,
+    rowActions,
+  } = ctx;
+  const widths = useContext(PinMeasureContext);
+  const hasSelection = !!toggleRowSelection;
+  const hasExpand = !!rowExpansion;
+  const hasRowActions = !!rowActions?.length;
+  const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
+  const { ordered, keys, placements, selection, expand, actions } = useMemo(
+    () =>
+      computePinLayout(columns, pinnedColumns, {
+        hasSelection,
+        hasExpand,
+        hasRowActions,
+        widths,
+        columnKeys,
+      }),
+    [columns, pinnedColumns, hasSelection, hasExpand, hasRowActions, widths, columnKeys],
+  );
+
+  if (error || !ordered.some((col) => col.footer !== undefined)) return null;
+
+  return (
+    <Table.Footer
+      data-slot="data-table-column-footer"
+      className={cn(
+        "astw:sticky astw:bottom-0 astw:z-10 astw:bg-card",
+        "astw:border-t-0 astw:shadow-[inset_0_1px_0_0_var(--border)]",
+      )}
+    >
+      <Table.Row className="astw:hover:bg-transparent">
+        {hasSelection && (
+          <Table.Cell
+            data-slot="data-table-column-footer-cell"
+            data-col-key={SELECTION_KEY}
+            {...pinCellProps(
+              selection,
+              { style: { width: SELECTION_WIDTH }, className: "astw:pl-3!" },
+              "footer",
+            )}
+          />
+        )}
+        {hasExpand && (
+          <Table.Cell
+            data-slot="data-table-column-footer-cell"
+            data-col-key={EXPAND_KEY}
+            {...pinCellProps(expand, { style: { width: EXPAND_WIDTH } }, "footer")}
+          />
+        )}
+        {ordered.map((col) => {
+          const key = keys.get(col) as string;
+          let footerContent: ReactNode = null;
+          if (!loading) {
+            footerContent = typeof col.footer === "function" ? col.footer({ rows }) : col.footer;
+          }
+          return (
+            <Table.Cell
+              key={key}
+              data-slot="data-table-column-footer-cell"
+              data-col-key={key}
+              {...pinCellProps(
+                placements.get(col),
+                {
+                  style: col.width ? { width: col.width } : undefined,
+                  className: cn(resolveAlign(col) === "right" && "astw:text-right"),
+                },
+                "footer",
+              )}
+            >
+              {col.footer !== undefined &&
+                (loading ? (
+                  <div
+                    aria-hidden="true"
+                    className={cn(
+                      "astw:h-4 astw:my-0.5 astw:w-3/5 astw:rounded astw:bg-muted astw:animate-pulse",
+                      resolveAlign(col) === "right" && "astw:ml-auto",
+                    )}
+                  />
+                ) : (
+                  footerContent
+                ))}
+            </Table.Cell>
+          );
+        })}
+        {hasRowActions && (
+          <Table.Cell
+            data-slot="data-table-column-footer-cell"
+            data-col-key={ACTIONS_KEY}
+            {...pinCellProps(
+              actions,
+              { style: { width: ACTIONS_WIDTH }, className: "astw:pr-2!" },
+              "footer",
+            )}
+          />
+        )}
+      </Table.Row>
+    </Table.Footer>
+  );
+}
+
+// =============================================================================
 // Row rendering
 // =============================================================================
 
@@ -1839,6 +1956,9 @@ function DataTableTable({ className }: { className?: string }) {
   const pinnedColumns = ctx?.pinnedColumns;
   const currentPage = ctx?.currentPage;
   const pageSize = ctx?.pageSize;
+  const hasSelection = !!ctx?.toggleRowSelection;
+  const hasExpand = !!ctx?.rowExpansion;
+  const hasRowActions = !!ctx?.rowActions?.length;
 
   // Measure each column's *rendered* width from the (always-present) header row
   // and publish it via PinMeasureContext, so sticky offsets reflect real
@@ -1849,28 +1969,18 @@ function DataTableTable({ className }: { className?: string }) {
   useIsomorphicLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    // The observer fires on every frame of a detail row's reveal, which is a pure
-    // height change. Without this guard each toggle re-ran the whole scan dozens
-    // of times.
+    // Own table only: an expanded row can contain another DataTable.
+    const ownTable = el.querySelector("table");
+    const cells = Array.from(
+      el.querySelectorAll<HTMLElement>("[data-slot='data-table-header'] [data-col-key]"),
+    ).filter((cell) => cell.closest("table") === ownTable);
     let lastWidth = -1;
-    let lastTableWidth = -1;
 
     const measure = () => {
-      // Own table only: `rowExpansion.render` can nest a DataTable, and the built-in
-      // column keys are module constants, so an unscoped query would let an inner
-      // header overwrite these widths. `querySelector` is pre-order.
-      const ownTable = el.querySelector("table");
       const width = el.clientWidth;
-      const tableWidth = ownTable?.offsetWidth ?? 0;
-      if (width === lastWidth && tableWidth === lastTableWidth) return;
       lastWidth = width;
-      lastTableWidth = tableWidth;
-      const cells = el.querySelectorAll<HTMLElement>(
-        "[data-slot='data-table-header'] [data-col-key]",
-      );
       const next: ColumnWidths = {};
       cells.forEach((cell) => {
-        if (cell.closest("table") !== ownTable) return;
         const key = cell.dataset.colKey;
         // Fractional width (not the integer-rounded offsetWidth) so accumulated
         // sticky offsets land exactly on each column's real edge — otherwise the
@@ -1892,12 +2002,15 @@ function DataTableTable({ className }: { className?: string }) {
     };
     measure();
     if (typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(measure);
+    const observer = new ResizeObserver((entries) => {
+      // Footer content can redistribute columns without changing table width.
+      // Ignore container-only height changes while detail rows animate.
+      if (el.clientWidth !== lastWidth || entries.some((entry) => entry.target !== el)) measure();
+    });
     observer.observe(el);
-    const table = el.querySelector("table");
-    if (table) observer.observe(table);
+    cells.forEach((cell) => observer.observe(cell));
     return () => observer.disconnect();
-  }, [visibleColumns, pinnedColumns]);
+  }, [visibleColumns, pinnedColumns, hasSelection, hasExpand, hasRowActions]);
 
   // Reflect horizontal scroll position onto the container as data attributes so
   // the pinned-column freeze shadows show only while there is content scrolled
@@ -1951,6 +2064,7 @@ function DataTableTable({ className }: { className?: string }) {
       >
         <DataTableHeaders />
         <DataTableBody />
+        <DataTableColumnFooter />
       </Table.Root>
     </PinMeasureContext.Provider>
   );
@@ -2041,7 +2155,8 @@ export const DataTable = {
   /** Built-in column visibility, ordering, and pinning controls. */
   ColumnSettings: DataTableColumnSettings,
   /**
-   * Renders `<table>` with built-in `Headers` and `Body`.
+   * Renders `<table>` with built-in headers, body, and a sticky footer row
+   * when a visible column defines `footer`.
    * Place inside `DataTable.Root`.
    */
   Table: DataTableTable,

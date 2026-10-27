@@ -13,7 +13,7 @@ export const SidebarButtonIcon = ({ icon, title }: { icon?: ReactNode; title: st
     <span
       aria-hidden="true"
       data-slot="sidebar-icon-fallback"
-      className="astw:hidden astw:size-4 astw:shrink-0 astw:items-center astw:justify-center astw:text-xs astw:font-semibold astw:group-data-[collapsible=icon]:flex"
+      className="astw:hidden astw:size-4 astw:shrink-0 astw:items-center astw:justify-center astw:rounded-[4px] astw:border-[1.5px] astw:border-current astw:text-[9px] astw:leading-none astw:font-semibold astw:group-data-[collapsible=icon]:flex"
     >
       {initial}
     </span>

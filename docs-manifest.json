@@ -1029,6 +1029,23 @@
         "examples": null
       }
     },
+    "item-list": {
+      "slug": "item-list",
+      "kind": "code-backed",
+      "outline": "docs-src/components/item-list.docs.outline.md",
+      "output": "docs/components/item-list.md",
+      "examples": "docs-src/components/item-list.docs.examples.tsx",
+      "sources": ["packages/core/src/components/item-list/**"],
+      "claims": [],
+      "symbols": ["ItemList"],
+      "hashes": {
+        "typeSurface": "04f04b801848d563",
+        "outline": "35b0f0b6aae84c17",
+        "snapshot": null,
+        "outputMd": "0190e797cd8ed318",
+        "examples": "771eb7a57d7fdc63"
+      }
+    },
     "layout": {
       "slug": "layout",
       "kind": "code-backed",
@@ -1781,6 +1798,7 @@
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
+    "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "66696139a46fabb0",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
@@ -1837,6 +1855,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "214b43b076a41a86",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "bf57b75f98645b89"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "56e3de32cc1393e0"
   }
 }

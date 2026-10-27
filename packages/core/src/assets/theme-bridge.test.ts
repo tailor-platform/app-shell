@@ -69,6 +69,23 @@ describe("theme bridge", () => {
     expect(bridgedTokens(SEMANTIC_PREFIX).size).toBe(40);
   });
 
+  it.each([
+    ["--destructive", "--danger-solid"],
+    ["--destructive-foreground", "--danger-contrast"],
+  ])("keeps %s linked to %s for consumer overrides", (alias, target) => {
+    const sheets = [
+      defaultTheme,
+      ...["cream", "bloom"].map((name) => readFileSync(join(here, `themes/${name}.css`), "utf8")),
+    ];
+    const values = sheets.flatMap((css) =>
+      [...css.matchAll(new RegExp(`^\\s*${alias}:\\s*([^;]+);`, "gm"))].map((match) =>
+        match[1].trim(),
+      ),
+    );
+    expect(values.length).toBeGreaterThan(0);
+    expect(new Set(values)).toEqual(new Set([`var(${target})`]));
+  });
+
   describe("typography roles", () => {
     const slots = ["size", "line-height", "weight", "letter-spacing"] as const;
     /** `--type-<role>-<slot>` variables in the default palette, grouped by role. */

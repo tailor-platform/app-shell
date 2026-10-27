@@ -235,7 +235,7 @@ saying so, and it is never a substitute for scrolling or paging.
 
 Columns, left to right:
 
-1. **Identity** — the item name, with the SKU beneath it in muted mono `text-xs`. Two facts, one column.
+1. **Identity** — the item name, with the SKU beneath it in muted `code-sm`. Two facts, one column.
 2. **The record's own numbers** — quantity, unit of measure, unit price. Every document has these.
 3. **Numbers from related records**, where they exist and the reader needs them (see below).
 4. **Subtotal**, derived, last.
@@ -561,7 +561,7 @@ says "clickable" without a hover, and the resting underline is noise. Add
 - **Internal** (another route in the app) → the `Link` exported by app-shell, with `to`. Never a bare `<a href>` for an in-app route.
 - **External** (another system) → `<a target="_blank" rel="noopener noreferrer">` with a lucide `ExternalLink` at `size-3` after the label, so the new tab is signposted. There is no dedicated external-link component; this is the whole recipe.
 - **Identifiers** keep their `font-mono` on top of the link style.
-- **A `render` field owns its typography.** `DescriptionCard` applies none of its value styling to custom output, so a bare string from `render` reads a size larger than the values around it. Wrap it in `text-sm font-medium text-foreground` — the reference implementation's `Value` helper.
+- **A `render` field owns its typography.** `DescriptionCard` applies none of its value styling to custom output, so a bare string from `render` does not match the values around it. Wrap it in `Text` with `variant="body-md"` and `text-foreground`, the same role the built-in values use — the reference implementation's `Value` helper.
 
 ## Patterns for the parts
 
@@ -597,6 +597,7 @@ import {
   Link,
   Table,
   Tabs,
+  Text,
 } from "@tailor-platform/app-shell";
 import type { ActionPanelProps } from "@tailor-platform/app-shell";
 import {
@@ -640,15 +641,17 @@ const formatDay = (value: string) =>
 
 /**
  * A `render` field owns its own presentation — DescriptionCard applies none of
- * the built-in value typography to it — so match that style here or the two
- * dates read a size larger than every other value on the card.
+ * the built-in value typography to it — so use the same role here (`body-md`)
+ * or the two dates do not match every other value on the card.
  */
 const Value = ({ children }: { children: React.ReactNode }) => (
-  <span className="text-sm font-medium text-foreground">{children}</span>
+  <Text variant="body-md" className="text-foreground" render={<span />}>
+    {children}
+  </Text>
 );
 
 /** House link: primary colour at rest, underline only on hover. */
-const DOC_LINK = "font-mono text-xs text-primary underline-offset-4 hover:underline";
+const DOC_LINK = "font-mono text-code-sm text-primary underline-offset-4 hover:underline";
 
 export default function PurchaseOrderDetailPage({
   order,
@@ -702,16 +705,18 @@ export default function PurchaseOrderDetailPage({
           destructive: it's a problem to clear, not information to read.
           Each hold is released on its own, beside its own reason. */}
       {order.holds.length > 0 && (
-        <Card.Root className="border-destructive">
+        <Card.Root className="border-danger-solid">
           <Card.Header title="On hold" />
           <Card.Content className="flex flex-col gap-3">
             {order.holds.map((hold) => (
               <div key={hold.id} className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-foreground">{hold.reason}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <Text variant="label-md" className="text-foreground" render={<p />}>
+                    {hold.reason}
+                  </Text>
+                  <Text variant="body-sm" className="text-muted-foreground">
                     Placed by {hold.placedBy} on {formatDay(hold.placedAt)}
-                  </p>
+                  </Text>
                 </div>
                 <Button
                   size="sm"
@@ -836,7 +841,9 @@ export default function PurchaseOrderDetailPage({
         <Card.Header title="Line items" />
         <Card.Content padding="none">
           {order.lineItems.length === 0 ? (
-            <p className="px-6 text-sm text-muted-foreground">No line items on this order.</p>
+            <Text variant="body-md" className="px-6 text-muted-foreground">
+              No line items on this order.
+            </Text>
           ) : (
             <Table.Root>
               <Table.Header>
@@ -855,9 +862,9 @@ export default function PurchaseOrderDetailPage({
                     {/* Two facts, one column. */}
                     <Table.Cell>
                       <span className="block">{line.itemName}</span>
-                      <span className="block font-mono text-xs text-muted-foreground">
+                      <Text variant="code-sm" className="block text-muted-foreground">
                         {line.sku}
-                      </span>
+                      </Text>
                     </Table.Cell>
                     <Table.Cell align="right" className="tabular-nums">
                       {line.qty}
@@ -870,9 +877,13 @@ export default function PurchaseOrderDetailPage({
                     <Table.Cell align="right" className="tabular-nums">
                       {line.received}
                       {line.received !== line.qty && (
-                        <span className="ml-1 text-xs text-muted-foreground">
+                        <Text
+                          variant="body-sm"
+                          className="ml-1 text-muted-foreground"
+                          render={<span />}
+                        >
                           ({line.qty - line.received})
-                        </span>
+                        </Text>
                       )}
                     </Table.Cell>
                     <Table.Cell align="right" className="tabular-nums">
@@ -903,9 +914,9 @@ export default function PurchaseOrderDetailPage({
         <Card.Header title="Goods receipts" />
         <Card.Content padding="none">
           {order.goodsReceipts.length === 0 ? (
-            <p className="px-6 text-sm text-muted-foreground">
+            <Text variant="body-md" className="px-6 text-muted-foreground">
               No goods receipts linked to this order.
-            </p>
+            </Text>
           ) : (
             <Table.Root>
               <Table.Header>
@@ -948,15 +959,15 @@ export default function PurchaseOrderDetailPage({
                 href={file.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-primary underline-offset-4 hover:underline"
+                className="inline-flex items-center gap-2 text-body-md text-primary underline-offset-4 hover:underline"
               >
                 <FileText className="size-4 shrink-0" />
                 {file.name}
                 <ExternalLink className="size-3 shrink-0" />
               </a>
-              <span className="shrink-0 text-xs text-muted-foreground">
+              <Text variant="body-sm" className="shrink-0 text-muted-foreground" render={<span />}>
                 {file.sizeLabel} · {formatDay(file.uploadedAt)}
-              </span>
+              </Text>
             </div>
           ))}
         </Card.Content>
@@ -1037,9 +1048,9 @@ export default function PurchaseOrderDetailPage({
                         <Table.Row key={line.id}>
                           <Table.Cell>
                             <span className="block">{line.account}</span>
-                            <span className="block font-mono text-xs text-muted-foreground">
+                            <Text variant="code-sm" className="block text-muted-foreground">
                               {line.accountCode}
-                            </span>
+                            </Text>
                           </Table.Cell>
                           <Table.Cell align="right" className="tabular-nums">
                             {line.debit === null ? "—" : `${line.debit.toLocaleString()}`}
@@ -1073,14 +1084,14 @@ export default function PurchaseOrderDetailPage({
                 href={externalSource.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"
+                className="inline-flex items-center gap-1 text-body-md text-primary underline-offset-4 hover:underline"
               >
                 {externalSource.recordLabel}
                 <ExternalLink className="size-3" />
               </a>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <Text variant="body-sm" className="mt-1 text-muted-foreground">
                 Synced {externalSource.syncedAt.toLocaleDateString()}
-              </p>
+              </Text>
             </Card.Content>
           </Card.Root>
         )}

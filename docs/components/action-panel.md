@@ -49,12 +49,12 @@ _Generated from the type surface — first-party props only._
 
 ### ActionPanelProps
 
-| Prop            | Type           | Default | Description                                                                                                                                                                                                                 |
-| --------------- | -------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `actions`       | `ActionItem[]` | -       | List of actions to render                                                                                                                                                                                                   |
-| `className?`    | `string`       | -       | Additional CSS classes for the card container                                                                                                                                                                               |
-| `emptyContent?` | `ReactNode`    | -       | Content shown with consistent padding when actions is empty. Defaults to a styled "No actions available" message. Pass null to hide the empty content and its additional vertical spacing while keeping the card and title. |
-| `title`         | `string`       | -       | Card title                                                                                                                                                                                                                  |
+| Prop            | Type           | Default | Description                                                                                                                                                                                                                                                                                                   |
+| --------------- | -------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `actions`       | `ActionItem[]` | -       | List of actions to render                                                                                                                                                                                                                                                                                     |
+| `className?`    | `string`       | -       | Additional CSS classes for the card container                                                                                                                                                                                                                                                                 |
+| `emptyContent?` | `ReactNode`    | -       | Content shown with consistent padding when actions is empty. Defaults to a localized "No actions available" message. Strings use the default body text styling; other React nodes render unchanged. Pass null to hide the empty content and its additional vertical spacing while keeping the card and title. |
+| `title`         | `string`       | -       | Card title                                                                                                                                                                                                                                                                                                    |
 
 ## Exports
 
@@ -78,11 +78,11 @@ _Generated from the type surface — first-party props only._
 - Rows are rendered as `<button type="button">` elements.
 - `disabled` or `loading` makes the row non-interactive.
 - When `loading` is `true`, the icon slot renders a spinner without shifting layout.
-- Empty actions show `emptyContent`, which defaults to a styled `No actions available` message.
+- Empty actions show `emptyContent`, which defaults to a styled message localized using the AppShell locale: `No actions available` in English or `利用可能なアクションはありません` in Japanese.
 
 ## Custom Empty Content
 
-Pass a localized string or any `ReactNode` to `emptyContent` to replace the default content when `actions` is empty. Content renders directly inside `Card.Content`, which owns its spacing. The title, empty content, and action icons share the same 32px horizontal inset. Custom content is not wrapped in a paragraph and controls its own typography. It is ignored when actions are present.
+Pass a string or any `ReactNode` to `emptyContent` to replace the default content when `actions` is empty. Strings use the same muted `Text` body styling as the default message. Other React nodes render directly inside `Card.Content` without a paragraph wrapper and control their own typography. `Card.Content` owns the spacing, and the title, empty content, and action icons share the same 32px horizontal inset. Action rows retain horizontal padding around their hover backgrounds and focus rings. Custom empty content is ignored when actions are present.
 
 <example-preview name="custom-empty-content"></example-preview>
 

@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { ActionPanel } from "./ActionPanel";
+import { AppShellConfigContext, buildConfigurations } from "../../contexts/appshell-context";
 import {
   CommandPaletteProvider,
   useCommandPaletteActions,
@@ -20,8 +21,15 @@ afterEach(() => {
   cleanup();
 });
 
-const renderActionPanel = (props: React.ComponentProps<typeof ActionPanel>) =>
-  render(<ActionPanel {...props} />, { wrapper });
+const renderActionPanel = (props: React.ComponentProps<typeof ActionPanel>, locale = "en") =>
+  render(
+    <AppShellConfigContext.Provider
+      value={{ configurations: buildConfigurations({ modules: [], locale }) }}
+    >
+      <ActionPanel {...props} />
+    </AppShellConfigContext.Provider>,
+    { wrapper },
+  );
 
 describe("ActionPanel", () => {
   it("renders title", () => {
@@ -41,19 +49,38 @@ describe("ActionPanel", () => {
     expect(message.parentElement?.className).toContain("astw:pb-6");
   });
 
-  it("renders a localized string instead of the default empty content", () => {
-    renderActionPanel({
-      title: "操作",
-      actions: [],
-      emptyContent: "利用可能な操作はありません",
-    });
+  it.each([
+    ["en", "No actions available"],
+    ["ja", "利用可能なアクションはありません"],
+    ["fr", "No actions available"],
+  ])("localizes the default empty content for %s", (locale, message) => {
+    renderActionPanel({ title: "Actions", actions: [], emptyContent: undefined }, locale);
+
+    const content = screen.getByText(message);
+    expect(content.className).toContain("astw:text-body-md");
+    expect(content.className).toContain("astw:text-muted-foreground");
+  });
+
+  it.each(["en", "ja"])("styles a custom string instead of the %s default", (locale) => {
+    renderActionPanel(
+      {
+        title: "操作",
+        actions: [],
+        emptyContent: "利用可能な操作はありません",
+      },
+      locale,
+    );
 
     const content = screen.getByText("利用可能な操作はありません");
-    expect(content.getAttribute("data-slot")).toBe("card-content");
-    expect(content.className).toContain("astw:px-8");
-    expect(content.className).toContain("astw:pt-2");
-    expect(content.className).toContain("astw:pb-6");
+    expect(content.tagName).toBe("P");
+    expect(content.className).toContain("astw:text-body-md");
+    expect(content.className).toContain("astw:text-muted-foreground");
+    expect(content.parentElement?.getAttribute("data-slot")).toBe("card-content");
+    expect(content.parentElement?.className).toContain("astw:px-8");
+    expect(content.parentElement?.className).toContain("astw:pt-2");
+    expect(content.parentElement?.className).toContain("astw:pb-6");
     expect(screen.queryByText("No actions available")).toBeNull();
+    expect(screen.queryByText("利用可能なアクションはありません")).toBeNull();
   });
 
   it("renders custom JSX without a paragraph wrapper", () => {

@@ -12,9 +12,9 @@
       "symbols": ["ActionPanel", "ActionPanelProps"],
       "hashes": {
         "typeSurface": "f497e4e3021d029a",
-        "outline": "d5ee9ded5fa2b31a",
+        "outline": "2e5fe6fdb0636b7c",
         "snapshot": null,
-        "outputMd": "623f42fc80c7a06c",
+        "outputMd": "dc861082aa9610af",
         "examples": "79d8f5c1ae3099a3"
       }
     },
@@ -1753,7 +1753,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "3670e37a3c78abe7",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "bea2c2be5e2ba53c",
-    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "623f42fc80c7a06c",
+    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "dc861082aa9610af",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "db2c4388ca783a75",

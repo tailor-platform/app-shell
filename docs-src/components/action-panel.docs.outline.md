@@ -40,11 +40,11 @@ import { ActionPanel } from "@tailor-platform/app-shell";
 - Rows are rendered as `<button type="button">` elements.
 - `disabled` or `loading` makes the row non-interactive.
 - When `loading` is `true`, the icon slot renders a spinner without shifting layout.
-- Empty actions show `emptyContent`, which defaults to a styled `No actions available` message.
+- Empty actions show `emptyContent`, which defaults to a styled message localized using the AppShell locale: `No actions available` in English or `利用可能なアクションはありません` in Japanese.
 
 ## Custom Empty Content
 
-Pass a localized string or any `ReactNode` to `emptyContent` to replace the default content when `actions` is empty. Content renders directly inside `Card.Content`, which owns its spacing. The title, empty content, and action icons share the same 32px horizontal inset. Custom content is not wrapped in a paragraph and controls its own typography. It is ignored when actions are present.
+Pass a string or any `ReactNode` to `emptyContent` to replace the default content when `actions` is empty. Strings use the same muted `Text` body styling as the default message. Other React nodes render directly inside `Card.Content` without a paragraph wrapper and control their own typography. `Card.Content` owns the spacing, and the title, empty content, and action icons share the same 32px horizontal inset. Action rows retain horizontal padding around their hover backgrounds and focus rings. Custom empty content is ignored when actions are present.
 
 <!-- example: custom-empty-content -->
 

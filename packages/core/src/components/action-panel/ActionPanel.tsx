@@ -1,3 +1,4 @@
+import { useT } from "@/i18n-labels";
 import { cn } from "../../lib/utils";
 import { Card } from "../card";
 import { Spinner } from "../spinner";
@@ -96,18 +97,22 @@ function ActionRow({ action }: { action: ActionItem }) {
  * />
  * ```
  */
-export function ActionPanel({
-  title,
-  actions,
-  emptyContent = (
-    <Text variant="body-md" className="astw:text-muted-foreground">
-      No actions available
-    </Text>
-  ),
-  className,
-}: ActionPanelProps) {
+export function ActionPanel({ title, actions, emptyContent, className }: ActionPanelProps) {
+  const t = useT();
+  const resolvedEmptyContent =
+    emptyContent === undefined ? t("actionPanelNoActions") : emptyContent;
+  const renderedEmptyContent =
+    typeof resolvedEmptyContent === "string" ? (
+      <Text variant="body-md" className="astw:text-muted-foreground">
+        {resolvedEmptyContent}
+      </Text>
+    ) : (
+      resolvedEmptyContent
+    );
   const hasEmptyContent =
-    actions.length === 0 && emptyContent != null && typeof emptyContent !== "boolean";
+    actions.length === 0 &&
+    resolvedEmptyContent != null &&
+    typeof resolvedEmptyContent !== "boolean";
 
   // Register enabled actions to the CommandPalette context so they are
   // searchable and triggerable from the palette.
@@ -128,7 +133,7 @@ export function ActionPanel({
       <Card.Header title={title} className="astw:px-8" />
       <Card.Content className={cn("astw:px-8 astw:pb-4", hasEmptyContent && "astw:pt-2 astw:pb-6")}>
         {actions.length === 0 ? (
-          emptyContent
+          renderedEmptyContent
         ) : (
           <ul className="astw:flex astw:flex-col astw:gap-0 astw:list-none astw:my-0 astw:-mx-3 astw:p-0">
             {actions.map((action) => (

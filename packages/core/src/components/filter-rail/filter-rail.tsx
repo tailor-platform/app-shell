@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import { useOnceWarnings } from "@/hooks/use-once-warnings";
 import { cn } from "@/lib/utils";
 import type { CollectionControl, Filter } from "@/types/collection";
 import { Sheet } from "../sheet";
@@ -51,14 +52,7 @@ function Provider<TField extends string = string, TSectionField extends TField =
   onChangeRef.current = onFilterChange;
 
   // Dev guard: two sections on one field silently overwrite each other.
-  const warned = useRef(new Set<string>());
-  useEffect(() => {
-    for (const problem of findRailProblems(anySections)) {
-      if (warned.current.has(problem)) continue;
-      warned.current.add(problem);
-      console.warn(problem);
-    }
-  }, [anySections]);
+  useOnceWarnings(useMemo(() => findRailProblems(anySections), [anySections]));
 
   const owned = useMemo(() => railFields(anySections), [anySections]);
   const filters = anyControl.filters;

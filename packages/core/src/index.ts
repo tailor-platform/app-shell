@@ -299,6 +299,9 @@ export {
   type TableOrderableFieldName,
 } from "./types/collection";
 
+// Selector aggregations
+export { aggregations, type Aggregation } from "./lib/aggregations";
+
 // DataTable
 export {
   DataTable,
@@ -311,6 +314,7 @@ export {
   type DataTableData,
   type DataTableFilterConfig,
   type HeaderRenderContext,
+  type FooterRenderContext,
   type DataTableAction,
   type RowAction,
   type SelectionAction,

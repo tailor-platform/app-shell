@@ -413,6 +413,7 @@ describe("createColumnHelper()", () => {
     const helper = createColumnHelper<OrderRow>();
     expect(typeof helper.column).toBe("function");
     expect(typeof helper.inferColumns).toBe("function");
+    expect(helper).not.toHaveProperty("aggregations");
   });
 
   it("column() works without type parameter", () => {

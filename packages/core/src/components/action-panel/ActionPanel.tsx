@@ -12,7 +12,7 @@ const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-ce
 // ============================================================================
 
 const actionRowBaseClasses = cn(
-  "astw:flex astw:items-center astw:gap-2 astw:w-full astw:rounded-md astw:px-0 astw:py-2",
+  "astw:flex astw:items-center astw:gap-2 astw:w-full astw:rounded-md astw:px-3 astw:py-2",
   "astw:text-label-md astw:transition-colors astw:border-0",
   "astw:bg-transparent astw:text-left astw:cursor-pointer astw:[&_svg]:size-4 astw:[&_svg]:shrink-0",
 );
@@ -130,7 +130,7 @@ export function ActionPanel({
         {actions.length === 0 ? (
           emptyContent
         ) : (
-          <ul className="astw:flex astw:flex-col astw:gap-0 astw:list-none astw:m-0 astw:p-0">
+          <ul className="astw:flex astw:flex-col astw:gap-0 astw:list-none astw:my-0 astw:-mx-3 astw:p-0">
             {actions.map((action) => (
               <li key={action.key}>
                 <ActionRow action={action} />

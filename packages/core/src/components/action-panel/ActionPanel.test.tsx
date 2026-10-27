@@ -133,7 +133,10 @@ describe("ActionPanel", () => {
     const { container } = renderActionPanel({ title: "Actions", actions });
 
     const button = screen.getByRole("button", { name: "Create invoice" });
-    expect(button.className).toContain("astw:px-0");
+    expect(button.className).toContain("astw:px-3");
+    expect(screen.getByRole("list").className).toContain("astw:-mx-3");
+    expect(screen.getByRole("list").className).toContain("astw:my-0");
+    expect(screen.getByRole("list").className).not.toContain("astw:m-0");
     expect(button.className).toContain("astw:py-2");
     expect(button.className).toContain("astw:border-0");
     expect(button.className).toContain("astw:text-label-md");

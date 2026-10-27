@@ -10,14 +10,21 @@ import {
 } from "@/components/internals/item-list-base";
 import { cn } from "@/lib/utils";
 
+const currentPageClasses =
+  "astw:aria-[current=page]:bg-accent astw:aria-[current=page]:font-semibold astw:aria-[current=page]:text-accent-foreground";
+
+type RequiredOperation =
+  | { onClick: React.MouseEventHandler<HTMLButtonElement> }
+  | { render: React.ReactElement };
+
 type ItemProps = React.ComponentProps<"button"> & {
   /** Optional decorative leading icon. */
   icon?: React.ReactNode;
-  /** Visual emphasis only; the caller owns route matching and aria-current. */
+  /** Visual emphasis only; aria-current="page" also supplies active styling. */
   isActive?: boolean;
   /** Replaces the inner button, not the containing list item. */
   render?: React.ReactElement;
-};
+} & RequiredOperation;
 
 function ItemContent({
   icon,
@@ -47,7 +54,7 @@ function ItemContent({
 }
 
 /** A compact link or action row. No AppShell, router, or Sidebar provider is required. */
-function Item({ icon, children, disabled, render, tabIndex, ...props }: ItemProps) {
+function Item({ icon, children, disabled, render, tabIndex, className, ...props }: ItemProps) {
   // Capture before handlers supplied through render, which useRender invokes first.
   return (
     <ListItem
@@ -62,6 +69,7 @@ function Item({ icon, children, disabled, render, tabIndex, ...props }: ItemProp
     >
       <ListButton
         {...props}
+        className={cn(currentPageClasses, className)}
         render={render}
         disabled={disabled}
         aria-disabled={disabled || props["aria-disabled"]}
@@ -73,28 +81,37 @@ function Item({ icon, children, disabled, render, tabIndex, ...props }: ItemProp
   );
 }
 
-type GroupProps = Omit<React.ComponentProps<"li">, "title"> & {
-  /** Resolved group label. */
-  title: string;
+type GroupProps = Omit<React.ComponentProps<"li">, "title" | "onClick"> & {
+  /** Group label with meaningful accessible text; do not nest interactive elements. */
+  title: React.ReactNode;
   icon?: React.ReactNode;
-  /** Replaces the main heading action; expansion gets a separate button. */
+  /** Replaces the main heading operation without changing expansion behavior. */
   render?: React.ReactElement;
   isActive?: boolean;
+  /** Runs only for the heading operation, not children or a separate expand button. */
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+  /** Whether clicking the heading toggles the child list; false requires an operation. @default true */
+  expandOnClick?: boolean;
   /** Whether the child list starts expanded. @default true */
   defaultOpen?: boolean;
-};
+} & ({ expandOnClick?: true } | RequiredOperation);
 
-/** An expandable group. A supplied heading link and the expand button remain separate controls. */
+/** An expandable group with optional separation of its heading action and expand control. */
 function Group({
   title,
   icon,
   render,
   isActive,
+  onClick,
+  expandOnClick = true,
   defaultOpen = true,
   children,
   ...props
 }: GroupProps) {
+  // Control expansion without imposing button semantics on a supplied heading link.
+  const [open, setOpen] = React.useState(defaultOpen);
   const titleId = React.useId();
+  const panelId = React.useId();
   const heading = (
     <ItemContent icon={icon} id={titleId}>
       {title}
@@ -109,30 +126,46 @@ function Group({
 
   return (
     <Collapsible.Root
-      defaultOpen={defaultOpen}
+      open={open}
+      onOpenChange={setOpen}
       render={<ListItem data-slot="item-list-group" {...props} />}
     >
-      {render ? (
+      {!expandOnClick ? (
         <div className="astw:flex astw:items-center astw:gap-1">
-          <ListButton render={render} isActive={isActive}>
+          <ListButton
+            render={render}
+            isActive={isActive}
+            onClick={onClick}
+            className={currentPageClasses}
+          >
             {heading}
           </ListButton>
           <Collapsible.Trigger
             aria-labelledby={titleId}
+            aria-controls={open ? panelId : undefined}
             className="astw:group/item-list-trigger astw:flex astw:size-8 astw:shrink-0 astw:items-center astw:justify-center astw:rounded-md astw:text-muted-foreground astw:outline-hidden astw:ring-ring astw:hover:bg-accent astw:hover:text-accent-foreground astw:focus-visible:ring-2"
           >
             {chevron}
           </Collapsible.Trigger>
         </div>
       ) : (
-        <Collapsible.Trigger
-          render={<ListButton isActive={isActive} className="astw:group/item-list-trigger" />}
+        <ListButton
+          render={render}
+          isActive={isActive}
+          className={cn(currentPageClasses, "astw:group/item-list-trigger")}
+          aria-expanded={open}
+          aria-controls={open ? panelId : undefined}
+          data-panel-open={open ? "" : undefined}
+          onClick={(event) => {
+            onClick?.(event);
+            if (!event.defaultPrevented) setOpen((value) => !value);
+          }}
         >
           {heading}
           {chevron}
-        </Collapsible.Trigger>
+        </ListButton>
       )}
-      <Collapsible.Panel>
+      <Collapsible.Panel id={panelId}>
         <ListSub aria-labelledby={titleId}>{children}</ListSub>
       </Collapsible.Panel>
     </Collapsible.Root>

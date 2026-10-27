@@ -46,6 +46,7 @@ const TocRail = () => (
               key={title}
               title={title}
               render={<a href={`#${sectionId(title)}`} aria-label={title} />}
+              expandOnClick={false}
             >
               {children.map((child) => (
                 <ItemList.Item

@@ -1,10 +1,19 @@
 import { useState } from "react";
-import { ItemList, Layout, Link, type AppShellPageProps } from "@tailor-platform/app-shell";
+import {
+  ItemList,
+  Layout,
+  Link,
+  NavLink,
+  type AppShellPageProps,
+} from "@tailor-platform/app-shell";
 import { Archive, Bell, Folder, Home, List, Package, Settings, ShoppingCart } from "lucide-react";
 
 const ItemListPage = () => {
   const [activeView, setActiveView] = useState("Overview");
   const [notifications, setNotifications] = useState(0);
+  const handleCheckNotifications = () => {
+    setNotifications((count) => count + 1);
+  };
 
   return (
     <Layout>
@@ -41,6 +50,7 @@ const ItemListPage = () => {
                 </ItemList.Item>
                 <ItemList.Group title="Products" icon={<Package />}>
                   <ItemList.Item
+                    icon={<span />}
                     isActive={activeView === "All products"}
                     onClick={() => setActiveView("All products")}
                   >
@@ -60,11 +70,8 @@ const ItemListPage = () => {
                 </ItemList.Item>
               </ItemList.Section>
               <ItemList.Separator />
-              <ItemList.Item icon={<Bell />} onClick={() => setNotifications((count) => count + 1)}>
+              <ItemList.Item icon={<Bell />} onClick={handleCheckNotifications}>
                 Check notifications
-              </ItemList.Item>
-              <ItemList.Item icon={<Archive />} disabled>
-                Export unavailable
               </ItemList.Item>
             </ItemList.Root>
             <output className="mt-4 block text-body-sm text-muted-foreground">
@@ -83,13 +90,14 @@ const ItemListPage = () => {
               expansion as separate controls.
             </p>
             <ItemList.Root aria-label="Example page links">
-              <ItemList.Item icon={<Home />} render={<Link to="/dashboard" />}>
+              <ItemList.Item icon={<Home />} render={<NavLink to="/dashboard" end />}>
                 Dashboard
               </ItemList.Item>
               <ItemList.Group
                 title="Orders"
                 icon={<ShoppingCart />}
-                render={<Link to="/dashboard/orders" />}
+                render={<NavLink to="/dashboard/orders" end />}
+                expandOnClick={false}
                 defaultOpen={false}
               >
                 <ItemList.Item render={<Link to="/dashboard/orders" />}>Order list</ItemList.Item>
@@ -103,6 +111,9 @@ const ItemListPage = () => {
                   Settings
                 </ItemList.Item>
               </ItemList.Section>
+              <ItemList.Item icon={<Archive />} render={<Link to="/dashboard/products" />} disabled>
+                Product list unavailable
+              </ItemList.Item>
             </ItemList.Root>
           </section>
         </div>

@@ -6,16 +6,16 @@
       "kind": "code-backed",
       "outline": "docs-src/components/action-panel.docs.outline.md",
       "output": "docs/components/action-panel.md",
-      "examples": null,
+      "examples": "docs-src/components/action-panel.docs.examples.tsx",
       "sources": ["packages/core/src/components/action-panel/**"],
       "claims": [],
       "symbols": ["ActionPanel", "ActionPanelProps"],
       "hashes": {
         "typeSurface": "f497e4e3021d029a",
-        "outline": "a2d7daced73b465e",
+        "outline": "2e5fe6fdb0636b7c",
         "snapshot": null,
-        "outputMd": "71794d4b561e4d4b",
-        "examples": null
+        "outputMd": "dc861082aa9610af",
+        "examples": "79d8f5c1ae3099a3"
       }
     },
     "activity-card": {
@@ -412,6 +412,7 @@
       "symbols": [
         "BadgeCellEditOptions",
         "BuildQueryVariables",
+        "CellEditError",
         "CellEditState",
         "CollectionControl",
         "CollectionControlProvider",
@@ -471,10 +472,10 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "05cbf8a4bdb7a863",
-        "outline": "93a2a1e3c380f5b9",
+        "typeSurface": "33eb2bdd6be1c774",
+        "outline": "8ca624c7ec761939",
         "snapshot": "a97e067c66e46ef6",
-        "outputMd": "94d4e9340fdb20f3",
+        "outputMd": "b1ee3ccb6cb4a1f4",
         "examples": "10abd548e6affb9d"
       }
     },
@@ -1380,9 +1381,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "052cc2c234995a16",
+        "outline": "9f6a42c42dd3f54f",
         "snapshot": null,
-        "outputMd": "755e362908623d2c",
+        "outputMd": "7ee0130a20b88310",
         "examples": "4d19f4f688e0f0ac"
       }
     },
@@ -1769,8 +1770,8 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "755e362908623d2c",
-    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "7ee0130a20b88310",
+    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "dc861082aa9610af",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "db2c4388ca783a75",
@@ -1786,7 +1787,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "94d4e9340fdb20f3",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "b1ee3ccb6cb4a1f4",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "bc69f14829004f9d",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",

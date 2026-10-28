@@ -131,3 +131,32 @@ The default palette's surfaces and brand tokens read scale steps. For the defaul
 - New role `--backdrop`, `var(--primitive-black-a7)` (50%) in both modes, bridged as `bg-backdrop`. `Dialog`, `Sheet` and the CsvImporter drawer use it instead of `bg-black/50`; the value is the same. The name follows the CSS `::backdrop` pseudo-element and the Base UI `Backdrop` part. It is not `overlay`, because `--z-overlay` already names the modal layer, which holds both the backdrop and the popup.
 - `--accent`, the shadows and the chart colours stay literal. They have no matching step. `--destructive` reads `--danger-solid` (see Update 2026-10-06).
 - `cream`, `bloom` and `_template.css` keep their own literal values. The header comments now list `--backdrop` among the inherited tokens.
+
+## Update 2026-10-24: palettes, literal values and contrast thresholds
+
+Three open points from the remaining-work issue ([platform-planning#2208](https://github.com/tailor-inc/platform-planning/issues/2208)) and the contrast issue ([platform-planning#1892](https://github.com/tailor-inc/platform-planning/issues/1892)) are decided. No colour value changes.
+
+### Status colours are the same in every palette
+
+`cream` and `bloom` do not set the hue roles, and they will not. The info, success, warning and danger roles have the same values in every shipped palette. A palette changes brand and surface colours; a status colour keeps one meaning across products. Material Design 3 treats error the same way: it calls error a static colour that does not change even in dynamic colour schemes. The neutral roles still follow the palette, because they read the system tokens. A palette that needs other status colours overrides the roles (`--{intent}-{role}`), as `_template.css` says.
+
+### Literal values stay literal
+
+`--accent`, `--chart-1` to `--chart-5` and the `--semantic-shadow-*` tokens keep literal values. `DocumentProgressCard` keeps its Tailwind palette colours.
+
+- `--accent` (light `rgb(237, 237, 237)`, dark `rgb(48, 48, 48)`) sits between two gray steps. Moving it to a step changes the hover and selected colour, so it waits for the palette work with the Theme Generator.
+- The chart colours and the `DocumentProgressCard` colours are categorical. They tell series apart and carry no status. The `DocumentProgressCard` `color` prop takes colour names (`indigo`, `pink`, `green` and so on), not intents. The semantic roles do not fit them, and the scales have no steps for most of their hues. A shared categorical palette, if one is needed, is a separate axis.
+- A shadow is a composite value (offsets, blur and colour), not one colour, so it has no scale step to read.
+
+### Contrast thresholds
+
+AppShell's thresholds are 4.5:1 for text (WCAG 1.4.3) and 3:1 for non-text (WCAG 1.4.11). `tests/browser/semantic-contrast.test.ts` now runs the same checks for `default`, `cream` and `bloom`, in light and dark mode, on `--card` and `--background`. The pairs and the hover floor are unchanged, and all three palettes pass. The styling guide states the thresholds and the exceptions:
+
+- `text` on `surface-hover` stays at the 4.2:1 floor. Choosing another step is a visible change for a later PR.
+- In `cream` and `bloom`, the main content area is transparent over the shell gradient. At the top of the bloom light gradient (55% of `--shell-gradient-base`), `text` on `surface` is 4.49:1 for success and 4.48:1 for danger. cream light is 4.68:1 or more. The figure under "Not guaranteed" (4.16:1 over `#efe8ff`) used `--shell-gradient-base` itself, which the gradient covers.
+- `warning` `solid` and `indicator` are 2.15:1 against a light card. They are used with a label.
+- The neutral intent is not checked.
+
+This supersedes "The `cream` and `bloom` palettes and their tinted shell backgrounds" under "Not guaranteed".
+
+**How the checks run.** The contrast checks run in Chromium with Vitest Browser Mode (#652). The browser resolves the built stylesheet, including aliases, palette overrides, inheritance and alpha, so the tests check the colours that consumers get, and the tests no longer need their own CSS parser. Structural checks (bridge completeness, alias chains and the typography role declarations) stay in the Node suite, because they are fast and do not need a browser. CI installs Chromium and runs `vitest.browser.config.ts` after the unit tests. `pnpm test` does not run the browser tests; run `pnpm --filter @tailor-platform/app-shell test:browser` locally.

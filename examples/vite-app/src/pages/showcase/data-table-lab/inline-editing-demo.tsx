@@ -1,4 +1,5 @@
 import {
+  CellEditError,
   DataTable,
   aggregations,
   createColumnHelper,
@@ -231,8 +232,7 @@ export function InlineEditingDemo() {
         canEdit: (row) => row.status === "pending",
         onValueCommitted: (row, value) => {
           if (value === null) {
-            reject(`${row.id}: Supplier is required`);
-            return;
+            throw new CellEditError(`${row.id}: Supplier is required`);
           }
           update(row.id, { supplierId: value }, `Supplier → ${value}`);
         },
@@ -268,8 +268,9 @@ export function InlineEditingDemo() {
         canEdit: (_row, { selected }) => selected,
         onValueCommitted: (row, value) => {
           if (value !== null && (!Number.isInteger(value) || value < 0 || value > row.ordered)) {
-            reject(`${row.id}: Received must be a whole number from 0 to ${row.ordered}`);
-            return;
+            throw new CellEditError(
+              `${row.id}: Received must be a whole number from 0 to ${row.ordered}`,
+            );
           }
           update(row.id, { received: value }, `Received → ${value ?? "empty"}`);
         },
@@ -285,10 +286,9 @@ export function InlineEditingDemo() {
         onValueCommitted: (row, value) => {
           const scale = row.currency === "JPY" ? 1 : 100;
           if (value === null || value < 0 || Math.round(value * scale) / scale !== value) {
-            reject(
+            throw new CellEditError(
               `${row.id}: Unit price is required, non-negative, and must fit ${row.currency} precision`,
             );
-            return;
           }
           const request = priceSaves.current.get(row.id)!;
           const revision = ++request.revision;
@@ -329,8 +329,7 @@ export function InlineEditingDemo() {
       edit: {
         onValueCommitted: (row, value) => {
           if (value === null || value < 0 || value > 100 || Math.round(value * 10) / 10 !== value) {
-            reject(`${row.id}: Discount must be 0–100 with at most one decimal`);
-            return;
+            throw new CellEditError(`${row.id}: Discount must be 0–100 with at most one decimal`);
           }
           update(row.id, { discount: value }, `Discount → ${value}%`);
         },
@@ -360,8 +359,9 @@ export function InlineEditingDemo() {
             value !== null &&
             (value < 0 || value > 500 || Math.round(value * 1000) / 1000 !== value)
           ) {
-            reject(`${row.id}: Weight must be 0–500 kg with at most three decimals`);
-            return;
+            throw new CellEditError(
+              `${row.id}: Weight must be 0–500 kg with at most three decimals`,
+            );
           }
           update(row.id, { weightKg: value }, `Weight → ${value ?? "empty"} kg`);
         },
@@ -375,8 +375,7 @@ export function InlineEditingDemo() {
       edit: {
         onValueCommitted: (row, value) => {
           if (value === null || value.trim() === "") {
-            reject(`${row.id}: Lot no. is required`);
-            return;
+            throw new CellEditError(`${row.id}: Lot no. is required`);
           }
           update(row.id, { lot: value }, `Lot → ${value}`);
         },
@@ -390,8 +389,7 @@ export function InlineEditingDemo() {
       edit: {
         onValueCommitted: (row, value) => {
           if (value !== null && value < "2026-09-01") {
-            reject(`${row.id}: Expected must be September 2026 or later`);
-            return;
+            throw new CellEditError(`${row.id}: Expected must be September 2026 or later`);
           }
           update(row.id, { expected: value }, `Expected → ${value ?? "cleared"}`);
         },
@@ -418,8 +416,7 @@ export function InlineEditingDemo() {
       edit: {
         onValueCommitted: (row, value) => {
           if (value !== null && (value < "2026-10-01" || value > "2027-12-31")) {
-            reject(`${row.id}: Best before must be October 2026–December 2027`);
-            return;
+            throw new CellEditError(`${row.id}: Best before must be October 2026–December 2027`);
           }
           update(row.id, { bestBefore: value }, `Best before → ${value ?? "cleared"}`);
         },
@@ -448,8 +445,7 @@ export function InlineEditingDemo() {
       edit: {
         onValueCommitted: (row, value) => {
           if (value === null) {
-            reject(`${row.id}: Status is required`);
-            return;
+            throw new CellEditError(`${row.id}: Status is required`);
           }
           update(row.id, { status: value as LineStatus }, `Status → ${value}`);
         },
@@ -498,9 +494,10 @@ export function InlineEditingDemo() {
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
         <strong>Consumer-owned rules and saving.</strong> Editors notify on Enter, Tab, blur, or a
-        pick. This screen accepts or rejects the value: rejected business values return to the
-        existing data, without adding cell errors or blocking Tab navigation. Saving has no built-in
-        indicator, rollback, or leave-page prompt.
+        pick. Invalid business values throw <code>CellEditError</code>, retaining the draft with a
+        cell error without trapping Tab navigation. This screen owns saving indicators and
+        optimistic rollback; saving failures still use its own feedback. There is no leave-page
+        prompt.
       </p>
       {feedback && (
         <p

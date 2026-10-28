@@ -1,6 +1,7 @@
 import {
   useCallback,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -10,12 +11,13 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  type RefObject,
   type TouchEvent,
 } from "react";
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { Popover } from "@base-ui/react/popover";
 import type { CalendarDate } from "@internationalized/date";
-import { CalendarDays, ChevronDown } from "lucide-react";
+import { CalendarDays, ChevronDown, CircleAlert, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isComposing } from "@/lib/is-composing";
 import { useTimeZone } from "@/contexts/appshell-context";
@@ -28,6 +30,7 @@ import { Table } from "@/components/table";
 import { Tooltip } from "@/components/tooltip";
 import type { Column, DateTimeDraft } from "./types";
 import { getCellValue, renderTypedValue } from "./cell-renderers";
+import { CellEditError } from "./cell-edit-error";
 import {
   normalizeNumberText,
   parseNumberText,
@@ -43,6 +46,7 @@ import {
 } from "./cell-edit";
 import type { CellEditNavigation } from "./use-cell-edit-navigation";
 import { useDataTableT } from "./i18n";
+import { useCellEditSession, type CellEditFailure } from "./use-cell-edit-session";
 
 /**
  * A column whose cells can be edited in place.
@@ -124,9 +128,9 @@ const CELL_FOCUS_CLASS_NAME = cn(
   "astw:focus-visible:ring-2 astw:focus-visible:ring-inset astw:focus-visible:ring-primary",
 );
 
-// Only malformed numeric input is handled here; business errors belong to the consumer.
+// Parsing and callback errors share the cell's error outline.
 const CELL_ERROR_CLASS_NAME =
-  "astw:ring-2 astw:ring-inset astw:ring-destructive astw:focus:ring-destructive astw:focus-visible:ring-destructive";
+  "astw:ring-[1.5px] astw:ring-inset astw:ring-danger-solid astw:focus:ring-[1.5px] astw:focus:ring-danger-solid astw:focus-visible:ring-[1.5px] astw:focus-visible:ring-danger-solid";
 
 // An editable cell says so at rest with a subtle tint instead of an icon. It's
 // a background *image* layered over whatever colour the cell already has (the
@@ -169,9 +173,38 @@ const CELL_ICON_CLASS_NAME = cn(
   "astw:[&_svg]:size-3.5",
 );
 
+interface CellErrorUI {
+  failure: CellEditFailure;
+  id: string;
+  message: string;
+  content: ReactNode;
+  triggerRef: RefObject<HTMLButtonElement | null>;
+  popupRef: RefObject<HTMLDivElement | null>;
+  containsTarget: (target: EventTarget | null) => boolean;
+}
+
+// The standard popover body: the alert icon makes it read as an error rather
+// than a tooltip.
+function DefaultCellErrorContent({ message }: { message: string }) {
+  return (
+    <div className="astw:flex astw:gap-1.5">
+      {/* One line-height tall, so the icon centres on the first line of text. */}
+      <span className="astw:flex astw:h-lh astw:shrink-0 astw:items-center">
+        <CircleAlert
+          aria-hidden="true"
+          strokeWidth={2.5}
+          className="astw:size-3.5 astw:opacity-70"
+        />
+      </span>
+      <p>{message}</p>
+    </div>
+  );
+}
+
 function useCellValue<TRow extends Record<string, unknown>>(
   row: TRow,
   col: EditableColumn<TRow>,
+  failure: CellEditFailure | undefined,
   dateRenderer?: (row: TRow) => ReactNode,
 ) {
   const { value: timeZone } = useTimeZone();
@@ -180,13 +213,43 @@ function useCellValue<TRow extends Record<string, unknown>>(
   const display = render
     ? render(row)
     : renderTypedValue(row, col, current, { linkAsText: true, timeZone });
-  const change = (value: unknown) => {
-    (col.edit?.onValueChange as ((row: TRow, value: unknown) => void) | undefined)?.(row, value);
-  };
-  const commit = (value: unknown) => {
-    (col.edit?.onValueCommitted as ((row: TRow, value: unknown) => void) | undefined)?.(row, value);
-  };
-  return { current, display, change, commit };
+  const t = useDataTableT();
+  const errorId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  const containsErrorTarget = (target: EventTarget | null) =>
+    target instanceof Node &&
+    !!(triggerRef.current?.contains(target) || popupRef.current?.contains(target));
+  const change = (value: unknown) =>
+    (col.edit?.onValueChange as ((row: TRow, value: unknown) => unknown) | undefined)?.(row, value);
+  const commit = (value: unknown) =>
+    (col.edit?.onValueCommitted as ((row: TRow, value: unknown) => unknown) | undefined)?.(
+      row,
+      value,
+    );
+  const errorConfig = col.edit?.error;
+  const renderError = errorConfig && errorConfig.render;
+  const message =
+    failure?.error instanceof CellEditError && failure.error.message
+      ? failure.error.message
+      : t("editCallbackError");
+  const callbackError: CellErrorUI | undefined =
+    failure && failure.source !== "parse"
+      ? {
+          failure,
+          id: errorId,
+          message: renderError ? t("editCallbackError") : message,
+          content: renderError ? (
+            renderError({ row, error: failure.error })
+          ) : (
+            <DefaultCellErrorContent message={message} />
+          ),
+          triggerRef,
+          popupRef,
+          containsTarget: containsErrorTarget,
+        }
+      : undefined;
+  return { current, display, change, commit, callbackError, containsErrorTarget };
 }
 
 /**
@@ -218,6 +281,12 @@ function EditableCellFrame({
   icon,
   tooltipLabel,
   editing,
+  callbackError,
+  label,
+  onEditorLeave,
+  onEditorCancel,
+  getFailure,
+  confirming,
   children,
 }: {
   cellProps: ComponentProps<typeof Table.Cell>;
@@ -225,21 +294,94 @@ function EditableCellFrame({
   truncate?: boolean;
   tooltipLabel?: string;
   editing: boolean;
+  callbackError?: CellErrorUI;
+  label: string;
+  onEditorLeave?: () => void;
+  onEditorCancel: () => void;
+  getFailure: () => CellEditFailure | undefined;
+  confirming: boolean;
   /** Typed-into cells hide the display while the input shows the text. */
   hideDisplay?: "focused" | "forced-colors";
   /** Shown on hover or focus; the cell's tint marks editability at rest. */
   icon?: ReactNode;
   children: ReactNode;
 }) {
+  const t = useDataTableT();
   const [tooltipOpen, setTooltipOpen] = useState(false);
-  const showTooltip = tooltipLabel !== undefined && !editing;
+  const [dismissedFailure, setDismissedFailure] = useState<CellEditFailure | null>(null);
+  const [manuallyOpenedFailure, setManuallyOpenedFailure] = useState<CellEditFailure | null>(null);
+  const [navigationDismissedFailure, setNavigationDismissedFailure] =
+    useState<CellEditFailure | null>(null);
+  const errorActionsRef = useRef<Popover.Root.Actions | null>(null);
+  const tabNavigationRef = useRef(false);
+  const errorOpen = !!callbackError && dismissedFailure !== callbackError.failure;
+  const showTooltip = tooltipLabel !== undefined && !editing && !callbackError;
+  const dismissForNavigation = () => {
+    const failure = getFailure();
+    if (!failure || failure.source === "parse") return;
+    setNavigationDismissedFailure(failure);
+    setDismissedFailure(failure);
+  };
+  useLayoutEffect(() => {
+    // Remove closing focus guards before native Tab chooses its destination.
+    if (!errorOpen && navigationDismissedFailure === callbackError?.failure)
+      errorActionsRef.current?.unmount();
+  }, [errorOpen, callbackError?.failure, navigationDismissedFailure]);
   const cell = (
     <Table.Cell
       {...cellProps}
       data-editable=""
+      aria-busy={confirming || undefined}
       // The editor is positioned against the cell. A pinned cell is already
       // positioned (sticky), which its inline style keeps.
-      className={cn(cellProps.className, "astw:relative astw:group/cell", EDITABLE_CELL_CLASS_NAME)}
+      className={cn(
+        cellProps.className,
+        "astw:relative astw:group/cell",
+        EDITABLE_CELL_CLASS_NAME,
+        callbackError && CELL_ERROR_CLASS_NAME,
+      )}
+      // The editor and its portaled error popup are one logical focus group.
+      onBlur={(event) => {
+        if (
+          event.currentTarget.contains(event.relatedTarget) ||
+          callbackError?.containsTarget(event.relatedTarget)
+        )
+          return;
+        if (tabNavigationRef.current) dismissForNavigation();
+        onEditorLeave?.();
+      }}
+      onKeyDown={(event) => {
+        if (
+          event.key === "Tab" &&
+          !event.defaultPrevented &&
+          event.currentTarget.contains(event.target as Node)
+        )
+          dismissForNavigation();
+        tabNavigationRef.current = false;
+      }}
+      onKeyDownCapture={(event) => {
+        tabNavigationRef.current =
+          event.key === "Tab" && event.currentTarget.contains(event.target as Node);
+        if (
+          callbackError &&
+          event.key === "Escape" &&
+          !callbackError.popupRef.current?.contains(event.target as Node)
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+          if (errorOpen) setDismissedFailure(callbackError.failure);
+          else onEditorCancel();
+          return;
+        }
+        if (callbackError && event.altKey && event.key === "ArrowDown") {
+          event.preventDefault();
+          event.stopPropagation();
+          setNavigationDismissedFailure(null);
+          setManuallyOpenedFailure(callbackError.failure);
+          setDismissedFailure(null);
+          if (errorOpen) callbackError.popupRef.current?.focus({ preventScroll: true });
+        }
+      }}
       // Editing a cell must never fire `onClickRow`.
       onClick={(event) => event.stopPropagation()}
     >
@@ -247,7 +389,7 @@ function EditableCellFrame({
         aria-hidden="true"
         className={cn(
           "astw:block",
-          icon !== undefined && ICON_SPACE_CLASS_NAME,
+          (icon !== undefined || callbackError) && ICON_SPACE_CLASS_NAME,
           truncate && "astw:truncate",
           // Transparent input text is forced visible in forced-colors mode;
           // hide the display instead so the two don't overlap.
@@ -258,7 +400,76 @@ function EditableCellFrame({
         {display}
       </span>
       {children}
-      {icon !== undefined && (
+      {callbackError && (
+        <>
+          <output id={callbackError.id} className="astw:sr-only">
+            {callbackError.message}. {t("editErrorHint")}
+          </output>
+          <Popover.Root
+            actionsRef={errorActionsRef}
+            open={errorOpen}
+            onOpenChange={(open) => {
+              setDismissedFailure(open ? null : callbackError.failure);
+              if (open) {
+                setNavigationDismissedFailure(null);
+                setManuallyOpenedFailure(callbackError.failure);
+              }
+            }}
+          >
+            <Popover.Trigger
+              ref={callbackError.triggerRef}
+              aria-label={t("editShowError", { label })}
+              aria-keyshortcuts="Alt+ArrowDown"
+              tabIndex={-1}
+              className="astw:absolute astw:inset-y-0 astw:right-2 astw:z-10 astw:flex astw:items-center astw:text-danger-text astw:outline-none astw:[td:last-child>&]:right-6"
+              onContextMenu={(event) => event.stopPropagation()}
+            >
+              <CircleAlert aria-hidden="true" strokeWidth={2.5} className="astw:size-3.5" />
+            </Popover.Trigger>
+            <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+              {/* Opens directly under the cell, not under the small icon trigger. */}
+              <Popover.Positioner
+                anchor={() => callbackError.triggerRef.current?.closest("td") ?? null}
+                sideOffset={2}
+                side="bottom"
+                align="start"
+              >
+                <Popover.Popup
+                  ref={callbackError.popupRef}
+                  initialFocus={manuallyOpenedFailure === callbackError.failure}
+                  finalFocus={navigationDismissedFailure !== callbackError.failure}
+                  aria-label={t("editErrorDialog", { label })}
+                  data-slot="data-table-cell-error"
+                  className={cn(
+                    POPUP_CLASS_NAME,
+                    // Same tint as Alert's error variant. --danger-surface is
+                    // translucent, so it's layered as an image over the opaque
+                    // popover colour; table lines don't show through.
+                    "astw:[background-image:linear-gradient(var(--danger-surface),var(--danger-surface))]",
+                    "astw:max-w-xs astw:border-0 astw:px-2.5 astw:py-2 astw:text-body-sm astw:text-danger-text astw:shadow-sm astw:outline-none",
+                  )}
+                  onContextMenu={(event) => event.stopPropagation()}
+                  onTouchStart={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") event.stopPropagation();
+                  }}
+                >
+                  <div className="astw:flex astw:items-center astw:gap-2">
+                    <div className="astw:min-w-0 astw:flex-1">{callbackError.content}</div>
+                    <Popover.Close
+                      aria-label={t("editCloseError")}
+                      render={<Button variant="ghost" size="icon" className="astw:size-6" />}
+                    >
+                      <X aria-hidden="true" className="astw:size-4" />
+                    </Popover.Close>
+                  </div>
+                </Popover.Popup>
+              </Popover.Positioner>
+            </Popover.Portal>
+          </Popover.Root>
+        </>
+      )}
+      {icon !== undefined && !callbackError && (
         <span aria-hidden="true" className={CELL_ICON_CLASS_NAME}>
           {icon}
         </span>
@@ -309,11 +520,12 @@ export function DataTableEditableCell<TRow extends Record<string, unknown>>(
   props: DataTableEditableCellProps<TRow>,
 ) {
   const { col } = props;
-  if (col.type === "date") return <DateEditCell {...props} col={col} />;
+  const mode = col.edit?.error === false ? "unhandled" : "handled";
+  if (col.type === "date") return <DateEditCell key={mode} {...props} col={col} />;
   if (col.type === "badge" || ((col.type === "text" || col.type === "link") && col.edit?.options)) {
-    return <ChoiceEditCell {...props} col={col} />;
+    return <ChoiceEditCell key={mode} {...props} col={col} />;
   }
-  return <TypingEditCell {...props} col={col} />;
+  return <TypingEditCell key={mode} {...props} col={col} />;
 }
 
 // ── Typing: text, number, money, link ───────────────────────────────────────
@@ -331,21 +543,18 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
 }: DataTableEditableCellProps<TRow>) {
   const t = useDataTableT();
   const errorId = useId();
-  const { current, display, change, commit } = useCellValue(row, col);
+  const session = useCellEditSession<string>(col.edit?.error !== false);
+  const { state } = session;
+  const failure = state.status === "failed" ? state : undefined;
+  const { current, display, change, commit, callbackError, containsErrorTarget } = useCellValue(
+    row,
+    col,
+    failure,
+  );
   const register = useNavigationRef<HTMLInputElement>(navigation, rowKey, colKey);
-
-  const [draft, setDraftState] = useState<string | null>(null);
-  // Read by handlers that run before the next render: the blur fired by moving
-  // focus right after Enter must see that Enter already committed the draft.
-  const draftRef = useRef(draft);
-  const setDraft = (next: string | null) => {
-    draftRef.current = next;
-    setDraftState(next);
-  };
+  const editing = state.status !== "idle";
   const [focused, setFocused] = useState(false);
-  const [editing, setEditing] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [showParseError, setShowParseError] = useState(false);
   const composingRef = useRef(false);
   const selectOnMouseUpRef = useRef(false);
 
@@ -353,27 +562,27 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
   const baselineText = numeric
     ? toNumberEditText(toNumberValue(current))
     : (toTextValue(current) ?? "");
-  const text = draft ?? baselineText;
-  const malformed =
-    numeric && draft !== null && parseNumberText(normalizeNumberText(draft)) === undefined;
-  const message = showParseError && malformed ? t("editNotANumber") : undefined;
+  const text = state.status === "idle" ? baselineText : state.draft;
+  const message = failure?.source === "parse" ? t("editNotANumber") : undefined;
 
   const revert = (notify = false) => {
-    const previous = draftRef.current;
-    setDraft(null);
-    setShowParseError(false);
-    if (notify && previous !== null && previous !== baselineText) change(baselineText);
+    const previous = session.getState();
+    session.cancel(
+      notify && previous.status !== "idle" && previous.draft !== baselineText
+        ? () => change(baselineText)
+        : undefined,
+    );
   };
 
-  // Clear the draft before notifying: moving focus immediately fires blur.
   const commitDraft = (): boolean => {
-    const draftText = draftRef.current;
-    if (draftText === null) return true;
+    const active = session.getState();
+    if (active.status === "idle" || active.status === "confirming") return true;
+    const draftText = active.draft;
     const value = numeric
       ? parseNumberText(normalizeNumberText(draftText))
       : toTextValue(draftText);
     if (value === undefined) {
-      setShowParseError(true);
+      session.fail(undefined, "parse");
       return false;
     }
     const unchanged =
@@ -381,16 +590,15 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
       (numeric
         ? sameNumber(value as number | null, toNumberValue(current))
         : value === toTextValue(current));
-    revert();
-    if (!unchanged) commit(value);
+    session.confirm(() => (unchanged ? undefined : commit(value)));
     return true;
   };
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const next = event.target.value;
-    const previous = draftRef.current ?? baselineText;
-    setDraft(next);
-    if (next !== previous) change(next);
+    const active = session.getState();
+    const previous = active.status === "idle" ? baselineText : active.draft;
+    if (next !== previous) session.change(next, () => change(next));
   };
 
   // Keep IME output raw until cell confirmation, just like other draft changes.
@@ -405,44 +613,50 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
     switch (event.key) {
       case "Enter":
         event.preventDefault();
-        if (!editing) {
-          setDraft(baselineText);
-          setEditing(true);
+        if (session.getState().status === "idle") {
+          session.begin(baselineText);
           event.currentTarget.select();
-        } else if (commitDraft()) {
-          setEditing(false);
+        } else {
+          commitDraft();
         }
         return;
-      case "Tab":
-        if (!commitDraft()) {
+      case "Tab": {
+        const active = session.getState();
+        const failedCommit = active.status === "failed" && active.source === "commit";
+        if (!failedCommit && !commitDraft()) {
           event.preventDefault();
           return;
         }
         // At the first / last editable cell, native Tab leaves the table.
         if (navigation.move(from, event.shiftKey ? "prev" : "next")) event.preventDefault();
         return;
+      }
       case "Escape":
-        if (draftRef.current === null) return;
+        if (session.getState().status === "idle") return;
         // Handled here, so an enclosing dialog doesn't also close on this Esc.
         event.preventDefault();
         event.stopPropagation();
         revert(true);
-        setEditing(false);
         return;
     }
   };
 
   const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
+    const withinCell = focused || containsErrorTarget(event.relatedTarget);
     setFocused(true);
-    setEditing(true);
-    setDraft(baselineText);
+    if (withinCell) return;
+    session.begin(baselineText);
     event.currentTarget.select();
   };
 
-  // Malformed text cannot be emitted as a number; blur restores consumer data.
   const handleBlur = () => {
     setFocused(false);
-    setEditing(false);
+    const active = session.getState();
+    if (active.status === "failed") {
+      // Preserve callback failures; malformed numeric blur still cancels the edit.
+      if (active.source === "parse") revert(true);
+      return;
+    }
     if (!commitDraft()) revert(true);
   };
 
@@ -453,8 +667,7 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
       event.preventDefault();
       return;
     }
-    setDraft(baselineText);
-    setEditing(true);
+    session.begin(baselineText);
     if (focused) event.currentTarget.select();
     selectOnMouseUpRef.current = true;
   };
@@ -483,6 +696,12 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
       hideDisplay={editing ? "focused" : "forced-colors"}
       tooltipLabel={tooltipLabel}
       editing={editing}
+      callbackError={callbackError}
+      label={label}
+      onEditorLeave={handleBlur}
+      onEditorCancel={() => revert(true)}
+      getFailure={session.getFailure}
+      confirming={state.status === "confirming"}
     >
       {message !== undefined && (
         <span id={errorId} className="astw:sr-only">
@@ -498,8 +717,9 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
               value={text}
               readOnly={!editing}
               aria-label={label}
-              aria-invalid={message !== undefined ? true : undefined}
-              aria-describedby={message !== undefined ? errorId : undefined}
+              aria-invalid={message !== undefined || callbackError ? true : undefined}
+              aria-describedby={message !== undefined ? errorId : callbackError?.id}
+              aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
               inputMode={numeric ? "text" : undefined}
               enterKeyHint="done"
               autoComplete="off"
@@ -509,13 +729,13 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
                 !editing && "astw:text-transparent",
                 numeric && "astw:tabular-nums",
                 align === "right" && "astw:text-right",
-                message !== undefined && CELL_ERROR_CLASS_NAME,
+                (message !== undefined || callbackError) && CELL_ERROR_CLASS_NAME,
+                callbackError && ICON_INPUT_CLASS_NAME,
               )}
               style={editing ? { WebkitTouchCallout: "default" } : undefined}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
               onFocus={handleFocus}
-              onBlur={handleBlur}
               onCompositionStart={() => {
                 composingRef.current = true;
               }}
@@ -560,6 +780,8 @@ interface Choice {
   label: string;
 }
 
+type ChoiceDraft = Choice & { notified?: boolean };
+
 // Case- and width-insensitive searching: full-width letters and half-width
 // katakana match their usual forms.
 const searchable = (text: string) => text.normalize("NFKC").toLocaleLowerCase().trim();
@@ -580,7 +802,13 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
   tooltipLabel,
 }: DataTableEditableCellProps<TRow, ChoiceColumn<TRow>>) {
   const t = useDataTableT();
-  const { current, display, change, commit } = useCellValue(row, col);
+  const session = useCellEditSession<ChoiceDraft>(col.edit?.error !== false);
+  const { state } = session;
+  const { current, display, change, commit, callbackError, containsErrorTarget } = useCellValue(
+    row,
+    col,
+    state.status === "failed" ? state : undefined,
+  );
   const register = useNavigationRef<HTMLInputElement>(navigation, rowKey, colKey);
   const value = toTextValue(current);
   const noneLabel = t("editNone");
@@ -599,12 +827,8 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
   const selected = items.find((item) => item.value === value) ?? null;
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
-  const [editing, setEditingState] = useState(false);
-  const editingRef = useRef(false);
-  const setEditing = (next: boolean) => {
-    editingRef.current = next;
-    setEditingState(next);
-  };
+  const editing = state.status !== "idle";
+  const activeChoice = state.status === "idle" ? selected : state.draft;
   // The displayed search text is local while editing, even if consumer data changes.
   const [query, setQuery] = useState<string | null>(null);
   // Keep the closing list filtered until its animation completes.
@@ -632,27 +856,44 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
   }, [items, listQuery]);
 
   const startEditing = () => {
-    setEditing(true);
+    session.begin(selected ?? { value, label: value ?? noneLabel });
     setQuery(selected?.label ?? "");
     setListQuery(null);
     highlightedRef.current = undefined;
     explicitHighlightRef.current = undefined;
   };
 
-  const finishEditing = () => {
-    // Clear synchronous state before closing or moving focus can fire blur again.
-    setEditing(false);
+  const closeEditor = () => {
     setQuery(null);
     explicitHighlightRef.current = undefined;
     setOpen(false);
   };
 
+  const cancelEditing = () => {
+    const active = session.getState();
+    session.cancel(
+      active.status !== "idle" && active.draft.notified && active.draft.value !== value
+        ? () => change(value)
+        : undefined,
+    );
+    closeEditor();
+  };
+
+  const leaveEditor = () => {
+    const active = session.getState();
+    if (active.status === "failed" || active.status === "confirming") closeEditor();
+    else cancelEditing();
+  };
+
   const pick = (item: Choice) => {
-    finishEditing();
-    if (item.value !== value) {
-      change(item.value);
-      commit(item.value);
-    }
+    const active = session.getState();
+    if (active.status === "confirming" && active.draft.value === item.value) return;
+    session.change(
+      { ...item, notified: item.value !== value },
+      item.value !== value ? () => change(item.value) : undefined,
+    );
+    setQuery(item.label);
+    session.confirm(() => (item.value !== value ? commit(item.value) : undefined), closeEditor);
   };
 
   const explicitCandidate = () => {
@@ -679,55 +920,66 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
       case "Enter": {
         event.preventDefault();
         event.preventBaseUIHandler();
+        const active = session.getState();
+        if (active.status === "confirming") return;
         if (!open) {
-          if (!editingRef.current) startEditing();
+          if (active.status === "failed" && active.source === "commit") {
+            session.confirm(
+              () => (active.draft.value !== value ? commit(active.draft.value) : undefined),
+              closeEditor,
+            );
+            return;
+          }
+          if (active.status === "idle") startEditing();
           setOpen(true);
           return;
         }
         const item = keyboardCandidate();
         if (item) pick(item);
-        else finishEditing();
+        else leaveEditor();
         return;
       }
       case "Tab": {
         event.preventBaseUIHandler();
         const item =
-          editingRef.current && open
+          session.getState().status !== "idle" && open
             ? (explicitCandidate() ??
               (searchable(listQuery ?? "") ? keyboardCandidate() : undefined))
             : undefined;
         if (item) pick(item);
-        else finishEditing();
+        else leaveEditor();
         if (navigation.move(from, event.shiftKey ? "prev" : "next")) event.preventDefault();
         return;
       }
       case "Escape":
-        if (!editingRef.current && !open) return;
+        if (session.getState().status === "idle" && !open) return;
         event.preventDefault();
         event.stopPropagation();
         event.preventBaseUIHandler();
-        finishEditing();
+        cancelEditing();
         return;
     }
   };
 
   const handleFocus = (event: FocusEvent<HTMLInputElement>) => {
+    const withinCell = focused || containsErrorTarget(event.relatedTarget);
     setFocused(true);
-    if (!editingRef.current) startEditing();
+    if (withinCell) return;
+    if (session.getState().status === "idle") startEditing();
     event.currentTarget.select();
   };
 
   const handleBlur = () => {
     setFocused(false);
-    finishEditing();
+    leaveEditor();
   };
 
   const handleMouseDown = (event: MouseEvent<HTMLInputElement>) => {
-    if (event.button === 2 && !editingRef.current) {
+    if (event.button === 2 && session.getState().status === "idle") {
       event.preventDefault();
       return;
     }
-    if (!editingRef.current) {
+    if (session.getState().status === "idle") {
       startEditing();
       setOpen(true);
     }
@@ -741,7 +993,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
   };
 
   const stopWhileEditing = (event: MouseEvent | TouchEvent) => {
-    if (editingRef.current) event.stopPropagation();
+    if (session.getState().status !== "idle") event.stopPropagation();
   };
 
   const renderChoice = (item: Choice) => {
@@ -762,17 +1014,29 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
       icon={<ChevronDown />}
       tooltipLabel={tooltipLabel}
       editing={editing}
+      callbackError={callbackError}
+      label={label}
+      onEditorLeave={handleBlur}
+      onEditorCancel={cancelEditing}
+      getFailure={session.getFailure}
+      confirming={state.status === "confirming"}
     >
       <BaseCombobox.Root<Choice>
         items={items}
         filteredItems={filtered}
-        value={selected}
+        value={activeChoice}
         onValueChange={(item, details) => {
           if (details.reason === "item-press" && item) pick(item);
         }}
-        inputValue={query ?? selected?.label ?? ""}
+        inputValue={query ?? activeChoice?.label ?? ""}
         onInputValueChange={(next, details) => {
           if (details.reason === "input-change" || details.reason === "input-clear") {
+            const active = session.getState();
+            session.change(
+              active.status === "idle"
+                ? (selected ?? { value, label: value ?? noneLabel })
+                : active.draft,
+            );
             setQuery(next);
             setListQuery(next);
             explicitHighlightRef.current = undefined;
@@ -781,9 +1045,17 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
         open={open}
         onOpenChange={(next, details) => {
           if (next) {
-            if (!editingRef.current) startEditing();
+            if (session.getState().status === "idle") startEditing();
             setOpen(true);
             if (details.reason !== "input-change") setListQuery(null);
+            return;
+          }
+          if (
+            containsErrorTarget(details.event.target) ||
+            ("relatedTarget" in details.event &&
+              containsErrorTarget(details.event.relatedTarget as EventTarget | null))
+          ) {
+            details.cancel();
             return;
           }
           // Clearing search text is not selection or cancellation.
@@ -791,7 +1063,8 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
             setOpen(false);
             return;
           }
-          finishEditing();
+          if (details.reason === "escape-key") cancelEditing();
+          else leaveEditor();
         }}
         onOpenChangeComplete={(isOpen) => {
           if (!isOpen) setListQuery(null);
@@ -809,6 +1082,9 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
         <ComboboxParts.Input
           ref={register}
           aria-label={label}
+          aria-invalid={callbackError ? true : undefined}
+          aria-describedby={callbackError?.id}
+          aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
           autoComplete="off"
           enterKeyHint="done"
           readOnly={!editing}
@@ -817,10 +1093,10 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
             ICON_INPUT_CLASS_NAME,
             !editing && "astw:text-transparent astw:cursor-pointer",
             align === "right" && "astw:text-right",
+            callbackError && CELL_ERROR_CLASS_NAME,
           )}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
-          onBlur={handleBlur}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onContextMenu={stopWhileEditing}
@@ -870,77 +1146,121 @@ function DateEditCell<TRow extends Record<string, unknown>>({
   const t = useDataTableT();
   const { value: timeZone } = useTimeZone();
   const withTime = col.typeOptions?.dateFormat === "datetime";
-  const { current, display, change, commit } = useCellValue(row, col, dateRenderer);
+  const session = useCellEditSession<DateTimeDraft>(col.edit?.error !== false);
+  const { state } = session;
+  const { current, display, change, commit, callbackError, containsErrorTarget } = useCellValue(
+    row,
+    col,
+    state.status === "failed" ? state : undefined,
+    dateRenderer,
+  );
   const register = useNavigationRef<HTMLButtonElement>(navigation, rowKey, colKey);
   const baseline: DateTimeDraft = {
     day: toCalendarDate(current, timeZone)?.toString() ?? null,
     time: toTimeText(current, timeZone) || null,
   };
   const [open, setOpen] = useState(false);
-  const [draft, setDraftState] = useState<DateTimeDraft | null>(null);
-  // Close notifications can run before the state update from a pick is rendered.
-  const draftRef = useRef<DateTimeDraft | null>(null);
   const differs = (a: DateTimeDraft, b: DateTimeDraft) =>
     a.day !== b.day || (withTime && a.time !== b.time);
   const notifyDraft = (next: DateTimeDraft) => change(withTime ? { ...next } : next.day);
   const setDraft = (next: DateTimeDraft) => {
-    const previous = draftRef.current ?? baseline;
-    draftRef.current = next;
-    setDraftState(next);
-    if (differs(previous, next)) notifyDraft(next);
+    const active = session.getState();
+    const previous = active.status === "idle" ? baseline : active.draft;
+    if (!differs(previous, next)) {
+      session.begin(next);
+      return;
+    }
+    session.change(next, () => notifyDraft(next));
   };
-  const discardDraft = () => {
-    draftRef.current = null;
-    setDraftState(null);
+  const cancelEditing = () => {
+    const active = session.getState();
+    session.cancel(
+      active.status !== "idle" && differs(active.draft, baseline)
+        ? () => notifyDraft(baseline)
+        : undefined,
+    );
+    setOpen(false);
   };
   const finish = (next: string | null) => {
-    discardDraft();
-    setOpen(false);
-    if (!sameDate(next, current, withTime, timeZone)) commit(next);
+    session.confirm(
+      () => (sameDate(next, current, withTime, timeZone) ? undefined : commit(next)),
+      () => setOpen(false),
+    );
   };
-  const activeDraft = draft ?? baseline;
+  const activeDraft = state.status === "idle" ? baseline : state.draft;
   const pickedDay = toCalendarDate(activeDraft.day, timeZone);
   const timestamp =
     withTime && pickedDay && activeDraft.time
       ? toIsoDateTime(pickedDay, activeDraft.time, timeZone)
       : undefined;
+  const draftDisplay = withTime
+    ? `${activeDraft.day ?? "—"} ${activeDraft.time ?? "—"}`
+    : (activeDraft.day ?? "—");
+  const visibleDisplay = state.status === "idle" ? display : draftDisplay;
   // The trigger's accessible name carries the date hidden in the visual display.
-  const accessibleName = typeof display === "string" ? `${label}, ${display}` : label;
+  const accessibleName = typeof visibleDisplay === "string" ? `${label}, ${visibleDisplay}` : label;
 
-  const handleOpenChange = (next: boolean) => {
+  const handleOpenChange = (next: boolean, details?: Popover.Root.ChangeEventDetails) => {
+    if (
+      !next &&
+      details &&
+      (containsErrorTarget(details.event.target) ||
+        ("relatedTarget" in details.event &&
+          containsErrorTarget(details.event.relatedTarget as EventTarget | null)))
+    ) {
+      details.cancel();
+      return;
+    }
     if (next) {
-      if (draftRef.current === null) {
-        draftRef.current = baseline;
-        setDraftState(baseline);
-      }
+      session.begin(baseline);
     } else {
-      const previous = draftRef.current;
-      discardDraft();
-      if (previous && differs(previous, baseline)) notifyDraft(baseline);
+      const active = session.getState();
+      if (
+        details?.reason === "escape-key" ||
+        (active.status !== "failed" && active.status !== "confirming")
+      ) {
+        cancelEditing();
+        return;
+      }
     }
     setOpen(next);
   };
 
   const handlePick = (day: CalendarDate) => {
-    setDraft({ ...(draftRef.current ?? baseline), day: day.toString() });
+    const active = session.getState();
+    setDraft({ ...(active.status === "idle" ? baseline : active.draft), day: day.toString() });
     if (!withTime) finish(day.toString());
   };
 
   return (
     <EditableCellFrame
       cellProps={cellProps}
-      display={display}
+      display={visibleDisplay}
       truncate={col.truncate}
       icon={<CalendarDays />}
       tooltipLabel={tooltipLabel}
       editing={open}
+      callbackError={callbackError}
+      label={label}
+      onEditorCancel={cancelEditing}
+      getFailure={session.getFailure}
+      confirming={state.status === "confirming"}
     >
       <Popover.Root open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger
           ref={register}
           aria-label={accessibleName}
-          className={TRIGGER_CLASS_NAME}
+          aria-invalid={callbackError ? true : undefined}
+          aria-describedby={callbackError?.id}
+          aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
+          className={cn(TRIGGER_CLASS_NAME, callbackError && CELL_ERROR_CLASS_NAME)}
           onKeyDown={(event) => {
+            if (event.key === "Escape" && !open && session.getState().status !== "idle") {
+              event.preventDefault();
+              event.stopPropagation();
+              cancelEditing();
+              return;
+            }
             if (event.key === "ArrowDown" && !open) {
               event.preventDefault();
               handleOpenChange(true);
@@ -970,7 +1290,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
                   value={activeDraft.time ?? ""}
                   onChange={(event) =>
                     setDraft({
-                      ...(draftRef.current ?? baseline),
+                      ...activeDraft,
                       time: event.target.value || null,
                     })
                   }

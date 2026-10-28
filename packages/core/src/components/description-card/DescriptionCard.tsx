@@ -103,13 +103,9 @@ function DescriptionItem({ label, children, fullWidth }: DescriptionItemProps) {
         fullWidth && "astw:col-span-full",
       )}
     >
-      <Text
-        variant="label-md"
-        className="astw:text-muted-foreground astw:leading-none"
-        render={<p />}
-      >
+      <Text.p variant="label-md" className="astw:text-muted-foreground astw:leading-none">
         {label}
-      </Text>
+      </Text.p>
       <div className="astw:min-w-0">{children}</div>
     </div>
   );
@@ -207,14 +203,9 @@ export function DescriptionCard<TData extends object = Record<string, unknown>>(
       <Card.Root className={cn("astw:@container", className)} style={style}>
         {/* Header */}
         <div className="astw:flex astw:items-center astw:justify-between astw:px-6 astw:py-6">
-          <Text
-            variant="heading-md"
-            className="astw:leading-none"
-            // eslint-disable-next-line jsx-a11y/heading-has-content
-            render={<h3 />}
-          >
+          <Text.h3 variant="heading-md" className="astw:leading-none">
             {title}
-          </Text>
+          </Text.h3>
           {headerAction && <div>{headerAction}</div>}
         </div>
 

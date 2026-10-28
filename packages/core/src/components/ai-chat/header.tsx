@@ -28,10 +28,9 @@ function Header({ title, icon, actions, className }: AIChatHeaderProps) {
         className,
       )}
     >
-      <Text
+      <Text.div
         variant="heading-sm"
         className="astw:flex astw:min-w-0 astw:items-center astw:gap-1.5 astw:text-foreground"
-        render={<div />}
       >
         {icon === undefined ? (
           <Sparkles className="astw:size-4 astw:shrink-0 astw:text-primary" aria-hidden />
@@ -39,7 +38,7 @@ function Header({ title, icon, actions, className }: AIChatHeaderProps) {
           icon
         )}
         {title == null ? null : <span className="astw:truncate">{title}</span>}
-      </Text>
+      </Text.div>
       {actions == null ? null : (
         <div className="astw:flex astw:shrink-0 astw:items-center astw:gap-0.5">{actions}</div>
       )}

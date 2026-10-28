@@ -97,10 +97,9 @@ export function DocumentProgressCard({
     >
       {/* Header: optional title + optional completion percentage */}
       {(title != null || hasPercent) && (
-        <Text
+        <Text.div
           variant="heading-md"
           className="astw:flex astw:items-start astw:justify-between astw:gap-4 astw:leading-none astw:text-card-foreground"
-          render={<div />}
         >
           <span className="astw:min-w-0">{title}</span>
           {hasPercent && (
@@ -108,7 +107,7 @@ export function DocumentProgressCard({
               {clampedPercent}%
             </span>
           )}
-        </Text>
+        </Text.div>
       )}
 
       {/* Bar + legend */}
@@ -174,17 +173,13 @@ function LegendRow({
           aria-hidden
           className={cn("astw:h-3.5 astw:w-0.5 astw:shrink-0 astw:rounded-md", colorFill[color])}
         />
-        <Text
-          variant="label-md"
-          className="astw:text-muted-foreground astw:truncate"
-          render={<span />}
-        >
+        <Text.span variant="label-md" className="astw:text-muted-foreground astw:truncate">
           {label}
-        </Text>
+        </Text.span>
       </div>
-      <Text variant="body-md" className="astw:text-card-foreground astw:shrink-0" render={<span />}>
+      <Text.span variant="body-md" className="astw:text-card-foreground astw:shrink-0">
         {value}
-      </Text>
+      </Text.span>
     </div>
   );
 }

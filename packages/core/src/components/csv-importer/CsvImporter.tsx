@@ -145,9 +145,7 @@ function UploadStep({
       >
         <UploadIcon className="astw:text-muted-foreground astw:size-10" />
         <div className="astw:text-center">
-          <Text variant="label-md" render={<p />}>
-            {t("uploadButton")}
-          </Text>
+          <Text.p variant="label-md">{t("uploadButton")}</Text.p>
           <Text variant="body-sm" className="astw:text-muted-foreground">
             CSV (max {maxSizeMB}MB)
           </Text>
@@ -161,14 +159,13 @@ function UploadStep({
         />
       </button>
       {error && (
-        <Text
+        <Text.div
           variant="body-md"
           className="astw:flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-danger-surface astw:px-3 astw:py-2 astw:text-danger-text"
-          render={<div />}
         >
           <AlertTriangleIcon className="astw:size-4 astw:shrink-0" />
           {error}
-        </Text>
+        </Text.div>
       )}
       <button
         type="button"
@@ -490,23 +487,17 @@ function CompleteStep({
           <Text variant="label-md" className="astw:text-muted-foreground">
             File
           </Text>
-          <Text variant="body-md" render={<span />}>
-            {fileName}
-          </Text>
+          <Text.span variant="body-md">{fileName}</Text.span>
           <Text variant="label-md" className="astw:text-muted-foreground">
             Rows imported
           </Text>
-          <Text variant="body-md" render={<span />}>
-            {totalRows}
-          </Text>
+          <Text.span variant="body-md">{totalRows}</Text.span>
           {correctedRows > 0 && (
             <>
               <Text variant="label-md" className="astw:text-muted-foreground">
                 Rows corrected
               </Text>
-              <Text variant="body-md" render={<span />}>
-                {correctedRows}
-              </Text>
+              <Text.span variant="body-md">{correctedRows}</Text.span>
             </>
           )}
         </div>

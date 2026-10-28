@@ -178,15 +178,7 @@ function ConversationEmptyState({
       {icon}
       {title == null && description == null ? null : (
         <div className="astw:space-y-1">
-          {title ? (
-            <Text
-              variant="heading-sm"
-              // eslint-disable-next-line jsx-a11y/heading-has-content
-              render={<h3 />}
-            >
-              {title}
-            </Text>
-          ) : null}
+          {title ? <Text.h3 variant="heading-sm">{title}</Text.h3> : null}
           {description ? (
             <Text variant="body-md" className="astw:text-muted-foreground">
               {description}

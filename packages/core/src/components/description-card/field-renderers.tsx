@@ -304,13 +304,14 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
   // Always render the same structure, conditionally wrap with tooltip
   const content = (
     <div className="astw:flex astw:items-start astw:gap-1 astw:min-w-0">
-      <Text
+      <Text.p
         variant="body-md"
         className="astw:text-foreground astw:wrap-break-word astw:m-0"
-        render={<p ref={textRef} style={lineClampStyle} />}
+        ref={textRef}
+        style={lineClampStyle}
       >
         {value}
-      </Text>
+      </Text.p>
       {showCopy && <CopyButton value={String(field.value)} />}
     </div>
   );
@@ -340,9 +341,9 @@ function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
 
   if (values.every((v) => isEmpty(v))) {
     return (
-      <Text variant="body-md" className="astw:text-foreground" render={<span />}>
+      <Text.span variant="body-md" className="astw:text-foreground">
         {EMPTY_DASH}
-      </Text>
+      </Text.span>
     );
   }
 
@@ -375,9 +376,9 @@ function BadgeFieldRenderer({ field }: { field: ResolvedField }) {
 function MoneyFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
     return (
-      <Text variant="body-md" className="astw:text-foreground" render={<span />}>
+      <Text.span variant="body-md" className="astw:text-foreground">
         {EMPTY_DASH}
-      </Text>
+      </Text.span>
     );
   }
 
@@ -386,9 +387,9 @@ function MoneyFieldRenderer({ field }: { field: ResolvedField }) {
   const formatted = formatMoney(field.value, currency);
 
   return (
-    <Text variant="body-md" className="astw:text-foreground astw:tabular-nums" render={<span />}>
+    <Text.span variant="body-md" className="astw:text-foreground astw:tabular-nums">
       {formatted}
-    </Text>
+    </Text.span>
   );
 }
 
@@ -400,9 +401,9 @@ function DateFieldRenderer({ field }: { field: ResolvedField }) {
 
   if (isEmpty(field.value)) {
     return (
-      <Text variant="body-md" className="astw:text-foreground" render={<span />}>
+      <Text.span variant="body-md" className="astw:text-foreground">
         {EMPTY_DASH}
-      </Text>
+      </Text.span>
     );
   }
 
@@ -410,9 +411,9 @@ function DateFieldRenderer({ field }: { field: ResolvedField }) {
   const formatted = formatDate(field.value, format, t);
 
   return (
-    <Text variant="body-md" className="astw:text-foreground" render={<span />}>
+    <Text.span variant="body-md" className="astw:text-foreground">
       {formatted}
-    </Text>
+    </Text.span>
   );
 }
 
@@ -422,9 +423,9 @@ function DateFieldRenderer({ field }: { field: ResolvedField }) {
 function LinkFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
     return (
-      <Text variant="body-md" className="astw:text-foreground" render={<span />}>
+      <Text.span variant="body-md" className="astw:text-foreground">
         {EMPTY_DASH}
-      </Text>
+      </Text.span>
     );
   }
 
@@ -435,9 +436,9 @@ function LinkFieldRenderer({ field }: { field: ResolvedField }) {
 
   if (!href) {
     return (
-      <Text variant="body-md" className="astw:text-foreground" render={<span />}>
+      <Text.span variant="body-md" className="astw:text-foreground">
         {value}
-      </Text>
+      </Text.span>
     );
   }
 
@@ -472,9 +473,9 @@ function LinkFieldRenderer({ field }: { field: ResolvedField }) {
 function AddressFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
     return (
-      <Text variant="body-md" className="astw:text-foreground" render={<span />}>
+      <Text.span variant="body-md" className="astw:text-foreground">
         {EMPTY_DASH}
-      </Text>
+      </Text.span>
     );
   }
 
@@ -504,9 +505,9 @@ function AddressFieldRenderer({ field }: { field: ResolvedField }) {
 function ReferenceFieldRenderer({ field }: { field: ResolvedField }) {
   if (isEmpty(field.value)) {
     return (
-      <Text variant="body-md" className="astw:text-foreground" render={<span />}>
+      <Text.span variant="body-md" className="astw:text-foreground">
         {EMPTY_DASH}
-      </Text>
+      </Text.span>
     );
   }
 
@@ -517,9 +518,9 @@ function ReferenceFieldRenderer({ field }: { field: ResolvedField }) {
 
   if (!id || !urlPattern) {
     return (
-      <Text variant="body-md" className="astw:text-foreground" render={<span />}>
+      <Text.span variant="body-md" className="astw:text-foreground">
         {value}
-      </Text>
+      </Text.span>
     );
   }
 
@@ -565,9 +566,9 @@ export function renderField(field: ResolvedField): React.ReactNode {
       return <ReferenceFieldRenderer field={field} />;
     default:
       return (
-        <Text variant="body-md" className="astw:text-foreground" render={<span />}>
+        <Text.span variant="body-md" className="astw:text-foreground">
           {EMPTY_DASH}
-        </Text>
+        </Text.span>
       );
   }
 }

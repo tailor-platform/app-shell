@@ -4,6 +4,8 @@ exports[`Text > snapshots > code role 1`] = `"<span data-slot="text" class="astw
 
 exports[`Text > snapshots > default role 1`] = `"<p data-slot="text" class="astw:text-body-md">Orders sent this month.</p>"`;
 
+exports[`Text > snapshots > element component 1`] = `"<h1 data-slot="text" class="astw:text-heading-lg">Purchase orders</h1>"`;
+
 exports[`Text > snapshots > heading role 1`] = `"<h2 data-slot="text" class="astw:text-heading-md">Purchase orders</h2>"`;
 
 exports[`Text > snapshots > with render prop 1`] = `"<h3 data-slot="text" class="astw:text-heading-md">Line items</h3>"`;

@@ -207,6 +207,23 @@ describe("SidebarItem", () => {
     expect(link.className).toContain("astw:data-[active=true]:text-sidebar-accent-foreground");
   });
 
+  it("preserves the small submenu typography when active", () => {
+    renderWithProviders(
+      <SidebarMenuSub>
+        <SidebarMenuSubItem>
+          <SidebarMenuSubButton size="sm" isActive href="/dashboard">
+            Small link
+          </SidebarMenuSubButton>
+        </SidebarMenuSubItem>
+      </SidebarMenuSub>,
+    );
+
+    const link = getSidebarMenu().getByRole("link", { name: "Small link" });
+    expect(link.className).toContain("astw:text-body-sm");
+    expect(link.className).toContain("astw:data-[active=true]:font-semibold");
+    expect(link.className).not.toContain("astw:data-[active=true]:text-label-");
+  });
+
   it("is not active when path does not match", () => {
     renderWithProviders(<SidebarItem to="/dashboard" activeMatch="exact" />, "/dashboard/overview");
 
@@ -548,6 +565,30 @@ describe("Mobile sidebar", () => {
     await vi.waitFor(() => {
       expect(screen.queryByTestId("sub-menu-button")).toBeNull();
     });
+  });
+
+  it("respects cancellation on a rendered link and preserves tooltip composition", async () => {
+    const user = userEvent.setup();
+    const cancelNavigation = vi.fn((event) => event.preventDefault());
+    const onClick = vi.fn();
+    renderMobileSidebar(
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          render={<Link to="/dashboard" onClick={cancelNavigation} />}
+          tooltip="Dashboard"
+          onClick={onClick}
+          data-testid="cancelled-link"
+        >
+          Dashboard
+        </SidebarMenuButton>
+      </SidebarMenuItem>,
+    );
+
+    await user.click(screen.getByTestId("mobile-trigger"));
+    await user.click(await screen.findByTestId("cancelled-link"));
+    expect(cancelNavigation).toHaveBeenCalledTimes(1);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("cancelled-link")).toBeDefined();
   });
 
   it("does NOT close when a collapsible group header is clicked", async () => {

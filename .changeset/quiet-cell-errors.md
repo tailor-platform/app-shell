@@ -4,9 +4,9 @@
 
 Add built-in error popovers to DataTable inline editing. When `onValueChange` or `onValueCommitted` throws or returns a rejected Promise, the affected cell shows an error. Throw the exported `CellEditError` with a translated, user-facing message to display that text; other failures display the localized message “Could not confirm this change”.
 
-Alongside this feedback, the editor now retains pending and failed drafts for correction or retry. Confirmation waits for any pending `onValueChange` check to succeed, and the draft clears only after confirmation succeeds. Drafts remain editable without trapping cell navigation; data adoption, persistence, and rollback remain consumer-owned.
+Alongside this feedback, the editor now retains pending and failed drafts for correction or retry. Confirmation waits for any pending `onValueChange` check to succeed, and the draft clears only after confirmation succeeds. Drafts remain editable without trapping cell navigation. For direct inputs, Tab and Shift+Tab retain an already failed commit without retrying it; press Enter to retry. Data adoption, persistence, and rollback remain consumer-owned.
 
-Each new failure automatically opens its popover without moving focus. Closing the details retains the draft and error, which can be inspected again with the error icon or Alt+ArrowDown. Esc closes open details first; a subsequent Esc discards the draft and error together. The standard popover adds no reset action.
+Each new failure automatically opens its popover without moving focus. Closing the details retains the draft and error, which can be inspected again with the error icon or Alt+ArrowDown. Tab or Shift+Tab to another cell or out of the table dismisses the details without trapping focus; Tab within interactive error content remains available. Esc closes open details first; a subsequent Esc discards the draft and error together. The standard popover adds no reset action.
 
 For example, reject negative quantities with a user-facing message. Invalid drafts remain editable; successful confirmation updates the consumer-owned rows:
 

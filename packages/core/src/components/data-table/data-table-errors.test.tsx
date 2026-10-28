@@ -23,6 +23,7 @@ function Harness({ edit, rows = ROWS }: { edit: TextCellEditOptions<Row>; rows?:
   const table = useDataTable<Row>({ columns, data: { rows } });
   return (
     <>
+      <button type="button">Before table</button>
       <DataTable.Root value={table}>
         <DataTable.Table />
       </DataTable.Root>
@@ -250,6 +251,33 @@ describe("DataTable callback error presentation", () => {
     },
   );
 
+  it.each(["automatic", "manual"] as const)(
+    "preserves the outside click destination when dismissing %s details",
+    async (opening) => {
+      const onValueCommitted = vi.fn(() => {
+        throw new CellEditError("Save failed");
+      });
+      const { input, user } = renderEditor({ onValueCommitted });
+      change(input);
+      await user.keyboard("{Enter}");
+      await screen.findByRole("dialog", { name: "Error in Value" });
+      if (opening === "manual") {
+        await user.keyboard("{Escape}");
+        await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+        await user.click(errorTrigger());
+        await screen.findByRole("dialog", { name: "Error in Value" });
+      }
+
+      const outside = screen.getByRole("button", { name: "Outside" });
+      await user.click(outside);
+      await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(document.activeElement).toBe(outside);
+      expect(input.value).toBe("Changed");
+      expect(input.getAttribute("aria-invalid")).toBe("true");
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+    },
+  );
+
   it("supports custom error content, keyboard inspection, and interactive actions without committing the draft", async () => {
     const failure = { code: "INVALID" };
     const onValueCommitted = vi.fn();
@@ -283,6 +311,13 @@ describe("DataTable callback error presentation", () => {
       within(popup).getByRole("button", { name: "Close error details" }),
     ]);
     await vi.waitFor(() => expect(document.activeElement).toBe(action));
+    await user.tab();
+    expect(document.activeElement).toBe(
+      within(popup).getByRole("button", { name: "Close error details" }),
+    );
+    expect(screen.getByRole("dialog", { name: "Error in Value" })).toBe(popup);
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(action);
     await user.keyboard("{Enter}");
     expect(onAction).toHaveBeenCalledTimes(1);
     expect(onValueCommitted).not.toHaveBeenCalled();
@@ -513,6 +548,111 @@ describe("DataTable callback error presentation", () => {
     expect(queryErrorTrigger()).toBeNull();
   });
 
+  it.each([
+    { name: "Tab to the next cell", index: 0, shift: false, outside: false },
+    { name: "Shift+Tab to the previous cell", index: 1, shift: true, outside: false },
+    { name: "Tab out of the table", index: 1, shift: false, outside: true },
+    { name: "Shift+Tab out of the table", index: 0, shift: true, outside: true },
+  ])(
+    "retains an async commit failure without retrying on $name",
+    async ({ index, shift, outside }) => {
+      const save = deferred();
+      const retry = deferred();
+      const onValueCommitted = vi
+        .fn()
+        .mockImplementationOnce(() => save.promise)
+        .mockImplementationOnce(() => retry.promise);
+      const { inputs, user } = renderEditor(
+        { onValueCommitted },
+        { rows: [...ROWS, { id: "2", value: "Second" }] },
+      );
+      const input = inputs[index];
+      change(input);
+      await user.keyboard("{Enter}");
+      await rejectRequest(save, new CellEditError("Save failed"));
+      await screen.findByRole("dialog", { name: "Error in Value" });
+
+      await user.tab({ shift });
+      expect(document.activeElement).toBe(
+        outside
+          ? screen.getByRole("button", { name: shift ? "Before table" : "Outside" })
+          : inputs[1 - index],
+      );
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(input.value).toBe("Changed");
+      expect(input.getAttribute("aria-invalid")).toBe("true");
+      expect(input.closest("td")?.getAttribute("aria-busy")).toBeNull();
+      expect(queryErrorTrigger()).not.toBeNull();
+      expect(
+        document.getElementById(input.getAttribute("aria-describedby")!)?.textContent,
+      ).toContain("Save failed");
+      expect(screen.queryByRole("dialog")).toBeNull();
+
+      await user.click(input);
+      expect(screen.queryByRole("dialog")).toBeNull();
+      await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
+      const reopened = await screen.findByRole("dialog", { name: "Error in Value" });
+      await vi.waitFor(() => expect(reopened.contains(document.activeElement)).toBe(true));
+      await user.keyboard("{Escape}");
+      await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(input.closest("td")?.contains(document.activeElement)).toBe(true);
+      expect(input.value).toBe("Changed");
+      await user.click(input);
+      await user.keyboard("{Enter}");
+      expect(onValueCommitted).toHaveBeenCalledTimes(2);
+      expect(input.closest("td")?.getAttribute("aria-busy")).toBe("true");
+      await resolveRequest(retry);
+      expect(input.getAttribute("aria-invalid")).toBeNull();
+      expect(queryErrorTrigger()).toBeNull();
+    },
+  );
+
+  it.each(["next cell", "outside"] as const)(
+    "keeps a synchronous Tab failure's details closed when moving to %s",
+    async (destination) => {
+      const onValueCommitted = vi.fn(() => {
+        throw new CellEditError("Save failed");
+      });
+      const { input, inputs, user } = renderEditor(
+        { onValueCommitted },
+        { rows: destination === "next cell" ? [...ROWS, { id: "2", value: "Second" }] : ROWS },
+      );
+      change(input);
+
+      await user.tab();
+      expect(document.activeElement).toBe(
+        destination === "next cell" ? inputs[1] : screen.getByRole("button", { name: "Outside" }),
+      );
+      expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith(ROWS[0], "Changed");
+      expect(input.value).toBe("Changed");
+      expect(input.getAttribute("aria-invalid")).toBe("true");
+      expect(queryErrorTrigger()).not.toBeNull();
+      expect(screen.queryByRole("dialog")).toBeNull();
+      await user.click(input);
+      expect(screen.queryByRole("dialog")).toBeNull();
+    },
+  );
+
+  it("confirms a changed draft on Tab after an earlier commit failed", async () => {
+    const save = deferred();
+    const onValueCommitted = vi.fn().mockImplementationOnce(() => save.promise);
+    const { input, inputs, user } = renderEditor(
+      { onValueCommitted },
+      { rows: [...ROWS, { id: "2", value: "Second" }] },
+    );
+    change(input);
+    await user.keyboard("{Enter}");
+    await rejectRequest(save, new CellEditError("Save failed"));
+    fireEvent.change(input, { target: { value: "Corrected" } });
+
+    await user.tab();
+    expect(document.activeElement).toBe(inputs[1]);
+    expect(onValueCommitted).toHaveBeenCalledTimes(2);
+    expect(onValueCommitted).toHaveBeenLastCalledWith(ROWS[0], "Corrected");
+    expect(input.getAttribute("aria-invalid")).toBeNull();
+    expect(queryErrorTrigger()).toBeNull();
+  });
+
   it("retains the exact numeric draft rather than its normalized rejected output", () => {
     const onValueCommitted = vi.fn(() => {
       throw new Error("Quantity rejected");
@@ -586,17 +726,16 @@ describe("DataTable callback error presentation", () => {
     expect(onValueCommitted).toHaveBeenCalledTimes(1);
     await user.tab();
     expect(document.activeElement).toBe(inputs[1]);
-    expect(onValueCommitted).toHaveBeenCalledTimes(2);
+    expect(onValueCommitted).toHaveBeenCalledTimes(1);
     expect(input.getAttribute("aria-invalid")).toBe("true");
     await user.tab({ shift: true });
     expect(document.activeElement).toBe(input);
-    await user.keyboard("{Escape}");
-    expect(input.value).toBe("Changed");
+    expect(screen.queryByRole("dialog")).toBeNull();
     await user.keyboard("{Escape}");
     expect(input.value).toBe("Original");
     expect(input.getAttribute("aria-invalid")).toBeNull();
     expect(queryErrorTrigger()).toBeNull();
-    expect(onValueCommitted).toHaveBeenCalledTimes(2);
+    expect(onValueCommitted).toHaveBeenCalledTimes(1);
   });
 
   it("clears cancellation errors and ignores pending results after Escape", async () => {

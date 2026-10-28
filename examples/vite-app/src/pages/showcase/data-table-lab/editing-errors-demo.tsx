@@ -120,16 +120,18 @@ export function EditingErrorsDemo() {
         <li>
           Set <strong>Async quantity</strong> to <code>13</code> and press Enter. The returned
           Promise rejects after 600 ms; <code>13</code> stays visible while pending and after
-          failure. Enter retries the same draft. Change it to <code>14</code> to save successfully,
-          or close its error details and press Esc to restore the adopted quantity. To test stale
-          failures, confirm 13 and start typing another value before the rejection arrives.
+          failure. Tab closes the error details and moves on without retrying the failed draft;
+          Enter retries it. Change it to <code>14</code> to save successfully, or close its error
+          details and press Esc to restore the adopted quantity. To test stale failures, confirm 13
+          and start typing another value before the rejection arrives.
         </li>
         <li>
           Set <strong>Custom code</strong> to <code>bad</code> and press Enter. Its error popover
           opens automatically; press Alt+ArrowDown to focus the details and use{" "}
           <strong>Show valid code example</strong> to try interactive custom content. The failed{" "}
           <code>bad</code> draft remains editable; change it to <code>SKU-101</code> and confirm to
-          adopt a valid code.
+          adopt a valid code. Tab out of the cell keeps the failed draft and error icon but closes
+          the details; Tab within the details still moves between their buttons.
         </li>
       </ul>
       <Text variant="body-sm" className="text-muted-foreground">

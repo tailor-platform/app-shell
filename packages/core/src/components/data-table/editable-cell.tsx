@@ -1,6 +1,7 @@
 import {
   useCallback,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -284,6 +285,7 @@ function EditableCellFrame({
   label,
   onEditorLeave,
   onEditorCancel,
+  getFailure,
   confirming,
   children,
 }: {
@@ -296,6 +298,7 @@ function EditableCellFrame({
   label: string;
   onEditorLeave?: () => void;
   onEditorCancel: () => void;
+  getFailure: () => CellEditFailure | undefined;
   confirming: boolean;
   /** Typed-into cells hide the display while the input shows the text. */
   hideDisplay?: "focused" | "forced-colors";
@@ -307,8 +310,23 @@ function EditableCellFrame({
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [dismissedFailure, setDismissedFailure] = useState<CellEditFailure | null>(null);
   const [manuallyOpenedFailure, setManuallyOpenedFailure] = useState<CellEditFailure | null>(null);
+  const [navigationDismissedFailure, setNavigationDismissedFailure] =
+    useState<CellEditFailure | null>(null);
+  const errorActionsRef = useRef<Popover.Root.Actions | null>(null);
+  const tabNavigationRef = useRef(false);
   const errorOpen = !!callbackError && dismissedFailure !== callbackError.failure;
   const showTooltip = tooltipLabel !== undefined && !editing && !callbackError;
+  const dismissForNavigation = () => {
+    const failure = getFailure();
+    if (!failure || failure.source === "parse") return;
+    setNavigationDismissedFailure(failure);
+    setDismissedFailure(failure);
+  };
+  useLayoutEffect(() => {
+    // Remove closing focus guards before native Tab chooses its destination.
+    if (!errorOpen && navigationDismissedFailure === callbackError?.failure)
+      errorActionsRef.current?.unmount();
+  }, [errorOpen, callbackError?.failure, navigationDismissedFailure]);
   const cell = (
     <Table.Cell
       {...cellProps}
@@ -329,9 +347,21 @@ function EditableCellFrame({
           callbackError?.containsTarget(event.relatedTarget)
         )
           return;
+        if (tabNavigationRef.current) dismissForNavigation();
         onEditorLeave?.();
       }}
+      onKeyDown={(event) => {
+        if (
+          event.key === "Tab" &&
+          !event.defaultPrevented &&
+          event.currentTarget.contains(event.target as Node)
+        )
+          dismissForNavigation();
+        tabNavigationRef.current = false;
+      }}
       onKeyDownCapture={(event) => {
+        tabNavigationRef.current =
+          event.key === "Tab" && event.currentTarget.contains(event.target as Node);
         if (
           callbackError &&
           event.key === "Escape" &&
@@ -346,6 +376,7 @@ function EditableCellFrame({
         if (callbackError && event.altKey && event.key === "ArrowDown") {
           event.preventDefault();
           event.stopPropagation();
+          setNavigationDismissedFailure(null);
           setManuallyOpenedFailure(callbackError.failure);
           setDismissedFailure(null);
           if (errorOpen) callbackError.popupRef.current?.focus({ preventScroll: true });
@@ -375,10 +406,14 @@ function EditableCellFrame({
             {callbackError.message}. {t("editErrorHint")}
           </output>
           <Popover.Root
+            actionsRef={errorActionsRef}
             open={errorOpen}
             onOpenChange={(open) => {
               setDismissedFailure(open ? null : callbackError.failure);
-              if (open) setManuallyOpenedFailure(callbackError.failure);
+              if (open) {
+                setNavigationDismissedFailure(null);
+                setManuallyOpenedFailure(callbackError.failure);
+              }
             }}
           >
             <Popover.Trigger
@@ -402,6 +437,7 @@ function EditableCellFrame({
                 <Popover.Popup
                   ref={callbackError.popupRef}
                   initialFocus={manuallyOpenedFailure === callbackError.failure}
+                  finalFocus={navigationDismissedFailure !== callbackError.failure}
                   aria-label={t("editErrorDialog", { label })}
                   data-slot="data-table-cell-error"
                   className={cn(
@@ -584,14 +620,17 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
           commitDraft();
         }
         return;
-      case "Tab":
-        if (!commitDraft()) {
+      case "Tab": {
+        const active = session.getState();
+        const failedCommit = active.status === "failed" && active.source === "commit";
+        if (!failedCommit && !commitDraft()) {
           event.preventDefault();
           return;
         }
         // At the first / last editable cell, native Tab leaves the table.
         if (navigation.move(from, event.shiftKey ? "prev" : "next")) event.preventDefault();
         return;
+      }
       case "Escape":
         if (session.getState().status === "idle") return;
         // Handled here, so an enclosing dialog doesn't also close on this Esc.
@@ -661,6 +700,7 @@ function TypingEditCell<TRow extends Record<string, unknown>>({
       label={label}
       onEditorLeave={handleBlur}
       onEditorCancel={() => revert(true)}
+      getFailure={session.getFailure}
       confirming={state.status === "confirming"}
     >
       {message !== undefined && (
@@ -978,6 +1018,7 @@ function ChoiceEditCell<TRow extends Record<string, unknown>>({
       label={label}
       onEditorLeave={handleBlur}
       onEditorCancel={cancelEditing}
+      getFailure={session.getFailure}
       confirming={state.status === "confirming"}
     >
       <BaseCombobox.Root<Choice>
@@ -1202,6 +1243,7 @@ function DateEditCell<TRow extends Record<string, unknown>>({
       callbackError={callbackError}
       label={label}
       onEditorCancel={cancelEditing}
+      getFailure={session.getFailure}
       confirming={state.status === "confirming"}
     >
       <Popover.Root open={open} onOpenChange={handleOpenChange}>

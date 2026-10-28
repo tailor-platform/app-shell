@@ -162,5 +162,10 @@ export function useCellEditSession<TDraft>(enabled: boolean) {
     }
   };
 
-  return { state, getState: () => session.state, begin, change, confirm, fail, cancel };
+  const getFailure = () => {
+    const current = session.state;
+    return current.status === "failed" ? current : undefined;
+  };
+
+  return { state, getState: () => session.state, getFailure, begin, change, confirm, fail, cancel };
 }

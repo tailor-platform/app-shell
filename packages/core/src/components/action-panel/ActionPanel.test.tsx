@@ -3,6 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { ActionPanel } from "./ActionPanel";
+import { AppShellConfigContext, buildConfigurations } from "../../contexts/appshell-context";
 import {
   CommandPaletteProvider,
   useCommandPaletteActions,
@@ -20,8 +21,15 @@ afterEach(() => {
   cleanup();
 });
 
-const renderActionPanel = (props: React.ComponentProps<typeof ActionPanel>) =>
-  render(<ActionPanel {...props} />, { wrapper });
+const renderActionPanel = (props: React.ComponentProps<typeof ActionPanel>, locale = "en") =>
+  render(
+    <AppShellConfigContext.Provider
+      value={{ configurations: buildConfigurations({ modules: [], locale }) }}
+    >
+      <ActionPanel {...props} />
+    </AppShellConfigContext.Provider>,
+    { wrapper },
+  );
 
 describe("ActionPanel", () => {
   it("renders title", () => {
@@ -33,7 +41,110 @@ describe("ActionPanel", () => {
 
   it("renders empty state when no actions", () => {
     renderActionPanel({ title: "Actions", actions: [] });
-    expect(screen.getByText("No actions available")).toBeDefined();
+    const message = screen.getByText("No actions available");
+    expect(message.className).toContain("astw:text-body-md");
+    expect(message.parentElement?.getAttribute("data-slot")).toBe("card-content");
+    expect(message.parentElement?.className).toContain("astw:px-8");
+    expect(message.parentElement?.className).toContain("astw:pt-2");
+    expect(message.parentElement?.className).toContain("astw:pb-6");
+  });
+
+  it.each([
+    ["en", "No actions available"],
+    ["ja", "利用可能なアクションはありません"],
+    ["fr", "No actions available"],
+  ])("localizes the default empty content for %s", (locale, message) => {
+    renderActionPanel({ title: "Actions", actions: [], emptyContent: undefined }, locale);
+
+    const content = screen.getByText(message);
+    expect(content.className).toContain("astw:text-body-md");
+    expect(content.className).toContain("astw:text-muted-foreground");
+  });
+
+  it.each(["en", "ja"])("styles a custom string instead of the %s default", (locale) => {
+    renderActionPanel(
+      {
+        title: "操作",
+        actions: [],
+        emptyContent: "利用可能な操作はありません",
+      },
+      locale,
+    );
+
+    const content = screen.getByText("利用可能な操作はありません");
+    expect(content.tagName).toBe("P");
+    expect(content.className).toContain("astw:text-body-md");
+    expect(content.className).toContain("astw:text-muted-foreground");
+    expect(content.parentElement?.getAttribute("data-slot")).toBe("card-content");
+    expect(content.parentElement?.className).toContain("astw:px-8");
+    expect(content.parentElement?.className).toContain("astw:pt-2");
+    expect(content.parentElement?.className).toContain("astw:pb-6");
+    expect(screen.queryByText("No actions available")).toBeNull();
+    expect(screen.queryByText("利用可能なアクションはありません")).toBeNull();
+  });
+
+  it("renders custom JSX without a paragraph wrapper", () => {
+    renderActionPanel({
+      title: "操作",
+      actions: [],
+      emptyContent: (
+        <div data-testid="custom-empty-state">
+          <p>利用可能な操作はありません</p>
+          <a href="/help/actions">操作について</a>
+        </div>
+      ),
+    });
+
+    expect(screen.getByText("利用可能な操作はありません")).toBeDefined();
+    expect(screen.getByRole("link", { name: "操作について" }).getAttribute("href")).toBe(
+      "/help/actions",
+    );
+    const customContent = screen.getByTestId("custom-empty-state");
+    expect(customContent.closest("p")).toBeNull();
+    expect(customContent.parentElement?.getAttribute("data-slot")).toBe("card-content");
+    expect(customContent.parentElement?.className).toContain("astw:px-8");
+    expect(customContent.parentElement?.className).toContain("astw:pt-2");
+    expect(customContent.parentElement?.className).toContain("astw:pb-6");
+    expect(screen.queryByText("No actions available")).toBeNull();
+  });
+
+  it.each([null, false, true])("renders no empty-state padding for %j", (emptyContent) => {
+    const { container } = renderActionPanel({
+      title: "Actions",
+      actions: [],
+      emptyContent,
+    });
+
+    expect(screen.queryByText("No actions available")).toBeNull();
+    const content = container.querySelector('[data-slot="card-content"]');
+    expect(content?.textContent).toBe("");
+    expect(content?.childElementCount).toBe(0);
+    expect(content?.className).toContain("astw:px-8");
+    expect(content?.className).toContain("astw:pb-4");
+    expect(content?.className).not.toContain("astw:pt-2");
+    expect(screen.getByRole("heading", { name: "Actions" })).toBeDefined();
+  });
+
+  it("does not fall back to the default for an empty string", () => {
+    renderActionPanel({ title: "Actions", actions: [], emptyContent: "" });
+    expect(screen.queryByText("No actions available")).toBeNull();
+  });
+
+  it("renders zero as custom content", () => {
+    renderActionPanel({ title: "Actions", actions: [], emptyContent: 0 });
+    expect(screen.getByText("0").getAttribute("data-slot")).toBe("card-content");
+  });
+
+  it("does not render empty content when actions are present", () => {
+    renderActionPanel({
+      title: "Actions",
+      actions: [{ key: "1", label: "Create invoice", icon: <MockIcon /> }],
+      emptyContent: <div>利用可能な操作はありません</div>,
+    });
+
+    expect(screen.getByRole("button", { name: "Create invoice" })).toBeDefined();
+    expect(screen.queryByText("利用可能な操作はありません")).toBeNull();
+    expect(screen.queryByText("No actions available")).toBeNull();
   });
 
   it("renders action list with buttons when onClick is provided", () => {
@@ -46,9 +157,21 @@ describe("ActionPanel", () => {
       },
       { key: "2", label: "Edit order", icon: <MockIcon />, onClick: () => {} },
     ];
-    renderActionPanel({ title: "Actions", actions });
+    const { container } = renderActionPanel({ title: "Actions", actions });
 
-    expect(screen.getByRole("button", { name: "Create invoice" })).toBeDefined();
+    const button = screen.getByRole("button", { name: "Create invoice" });
+    expect(button.className).toContain("astw:px-3");
+    expect(screen.getByRole("list").className).toContain("astw:-mx-3");
+    expect(screen.getByRole("list").className).toContain("astw:my-0");
+    expect(screen.getByRole("list").className).not.toContain("astw:m-0");
+    expect(button.className).toContain("astw:py-2");
+    expect(button.className).toContain("astw:border-0");
+    expect(button.className).toContain("astw:text-label-md");
+    expect(container.querySelector('[data-slot="card-header"]')?.className).toContain("astw:px-8");
+    const content = container.querySelector('[data-slot="card-content"]');
+    expect(content?.className).toContain("astw:px-8");
+    expect(content?.className).toContain("astw:pb-4");
+    expect(content?.className).not.toContain("astw:pt-2");
     expect(screen.getByRole("button", { name: "Edit order" })).toBeDefined();
     expect(screen.getAllByTestId("mock-icon").length).toBe(2);
   });

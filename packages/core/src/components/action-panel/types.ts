@@ -37,6 +37,12 @@ export interface ActionPanelProps {
   title: string;
   /** List of actions to render */
   actions: ActionItem[];
+  /**
+   * Content shown with consistent padding when actions is empty. Defaults to a localized "No actions available" message.
+   * Strings use the default body text styling; other React nodes render unchanged.
+   * Pass null to hide the empty content and its additional vertical spacing while keeping the card and title.
+   */
+  emptyContent?: ReactNode;
   /** Additional CSS classes for the card container */
   className?: string;
 }

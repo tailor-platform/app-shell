@@ -10,8 +10,7 @@ export default defineConfig({
   },
   test: {
     environment: "happy-dom",
-    // `pnpm build` writes to dist/. Keep any test file there out of the run.
-    exclude: [...configDefaults.exclude, "dist/**"],
+    exclude: [...configDefaults.exclude, "dist/**", "tests/browser/**"],
     typecheck: {
       enabled: true,
     },

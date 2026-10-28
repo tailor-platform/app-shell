@@ -112,16 +112,36 @@ interface CellEditBase<TRow extends Record<string, unknown>, TValue, TDraft = TV
    * Observes editor drafts, including incomplete input and restored drafts on
    * cancellation. Direct inputs emit raw strings; choices emit selected values,
    * not search text or highlights. Updating `data` here is outside the supported
-   * coordination contract. The return value is ignored.
+   * coordination contract. A failed change check retains its draft and blocks
+   * confirmation; pending change checks finish before `onValueCommitted` runs.
+   * Cancellation notifications cannot create a new cell error after discarding
+   * the draft. Pass `error: false` for unobserved callback behavior.
    */
   onValueChange?: (row: TRow, draft: TDraft) => void;
   /**
-   * Notifies a changed, confirmed editor output, compared with current `data`.
-   * Empty cells confirm `null`. Confirmation does not imply business validation,
-   * adoption, or persistence; update `data` here to adopt it. Return values are
-   * ignored. Output types follow the editor, not the row field's runtime type.
+   * Attempts to confirm a changed editor output, compared with current `data`.
+   * Empty cells confirm `null`. A normal return or fulfilled Promise completes
+   * the edit; throw/rejection retains the draft and error for correction or retry.
+   * Focus may leave while pending. Update `data` here to adopt a successful value;
+   * DataTable does not persist or roll back consumer state. Output types follow
+   * the editor, not the row field's runtime type.
    */
   onValueCommitted: (row: TRow, value: TValue | null) => void;
+  /**
+   * Callback failures automatically open an error popover without moving focus.
+   * Only non-empty `CellEditError` messages are displayed by the standard UI;
+   * other failures use localized generic feedback. Translate messages before throwing.
+   * Pass `false` to disable interception and retain eager edit completion, or
+   * `render` to replace the popover's body. Closing the details retains the draft
+   * and error; reopen with the error icon or Alt+ArrowDown. Esc closes open details
+   * first, then restores current data and clears the error. The standard popover
+   * adds no reset action; custom content may include consumer-owned actions.
+   */
+  error?:
+    | false
+    | {
+        render: (ctx: { row: TRow; error: unknown }) => ReactNode;
+      };
 }
 
 /**
@@ -211,6 +231,12 @@ interface SortableHeaderRenderContext {
  * Context passed to custom `header` renderers.
  */
 export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
+
+/** Context passed to custom column `footer` renderers. */
+export interface FooterRenderContext<TRow extends Record<string, unknown>> {
+  /** Current `data.rows` (the current page, not all records or only selected rows). */
+  rows: readonly TRow[];
+}
 
 type DataTableStringFilterOperator = Extract<
   OperatorForFilterType["string"],
@@ -314,6 +340,19 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    * still driven by `label`, `sort`, and other column metadata.
    */
   header?: (ctx: HeaderRenderContext) => ReactNode;
+  /**
+   * Content for this column's cell in a sticky table footer: a static string
+   * or a renderer receiving the current `data.rows` (the current page, not all
+   * records or only selected rows). `type` and `typeOptions` do not apply.
+   *
+   * A footer row appears when any visible column defines a footer, including
+   * an empty string. Columns without one leave a blank cell; hidden columns'
+   * callbacks are not called.
+   * Loading keeps the footer row with skeletons without calling renderers.
+   * Hidden during errors; loaded empty data receives `rows: []`.
+   * Separate from `DataTable.Footer`, the pagination / bulk-action container.
+   */
+  footer?: string | ((ctx: FooterRenderContext<TRow>) => ReactNode);
   /**
    * Stable identifier used for column visibility toggling, persisted layout
    * state, raw-value fallback (`row[col.id]`), and as the React key. Falls

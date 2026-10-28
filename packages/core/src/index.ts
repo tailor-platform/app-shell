@@ -304,6 +304,7 @@ export { aggregations, type Aggregation } from "./lib/aggregations";
 
 // DataTable
 export {
+  CellEditError,
   DataTable,
   useDataTable,
   useDataTableContext,

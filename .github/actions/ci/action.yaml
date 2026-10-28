@@ -22,6 +22,12 @@ runs:
     # sets skipLibCheck: true and never looks at the emitted declarations.
     - run: pnpm exec turbo run lint test type-check check-dts
       shell: bash
+    - name: Install Chromium for style contract tests
+      run: pnpm --filter @tailor-platform/app-shell exec playwright install --with-deps chromium
+      shell: bash
+    - name: Check styles in Chromium
+      run: pnpm --filter @tailor-platform/app-shell exec vitest run --config vitest.browser.config.ts
+      shell: bash
     # Deterministic docs + generated-skill drift gate (no LLM). Runs uncached
     # so a docs/ change always re-validates the manifest and consumer skill.
     - run: pnpm docs:check

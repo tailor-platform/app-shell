@@ -38,7 +38,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 - **`text-destructive` resolves to the solid.** In dark mode it changes from `#f87171` to `#dc2626`, which is 3.71:1 on the dark card, below 4.5:1 for text. Components shipped with AppShell now use `text-danger-text` for error text, and invalid borders and focus rings read `--danger-solid`. In dark mode the invalid border changes from `#f87171` to `#dc2626`.
 - **Themes that override `--destructive` no longer reach the components.** `Button`, invalid `Input`, `Textarea`, `Checkbox`, `Field` and `DateField` borders and rings, error text and the `CsvImporter` error cells read `--danger-*`. An override of `--destructive` still changes `bg-destructive` and `text-destructive` on your own elements, so the two reds can drift apart. The `cream` and `bloom` palettes no longer set `--destructive`; their values were the same as the default.
 
-How to detect it: search the app for `destructive` in class names and in theme CSS, including Theme Generator output that sets `--destructive`. In JS and TS files, the `no-deprecated-tokens` rule in `@tailor-platform/eslint-plugin-app-shell` reports these names and the role to use instead. It does not read CSS files. Compare `Button variant="destructive"`, an invalid `Input` and an error message in light and dark mode after upgrading.
+How to detect it: search the app for `destructive` in class names and in theme CSS, including Theme Generator output that sets `--destructive`. In JS and TS files, the `no-deprecated-tokens` rule in `@tailor-platform/eslint-plugin-app-shell` reports these names and the role to use instead. The rule is available from 1.19.0, and it does not read CSS files. Compare `Button variant="destructive"`, an invalid `Input` and an error message in light and dark mode after upgrading.
 
 What to change:
 
@@ -58,7 +58,7 @@ The roles are documented in [Styling & theming](./concepts/styling-theming.md#br
 - **Component recolouring moves to the roles.** `Badge`, `Alert`, `CsvImporter` and `MetricCard` read the roles directly. A theme that overrides `--status-*` or `--alert-*` no longer changes these components; override `--{intent}-*` instead. `Badge` `error` / `subtle-error` and `Alert` `error` read `--danger-*`, so overriding `--destructive` no longer reaches them either. `Button variant="destructive"` and `text-destructive` still follow `--destructive`.
 - **`text-status-*` loses contrast in dark mode.** The `--status-*` values are now the step-9 fills, which are below 4.5:1 as text on the dark card.
 
-How to detect it: search the app for `status-`, `alert-` and theme overrides of `--status-`, `--alert-` and `--destructive`. In JS and TS files, the `no-deprecated-tokens` rule in `@tailor-platform/eslint-plugin-app-shell` reports these names and the role to use instead. It does not read CSS files. Compare `Badge` and `Alert` in light and dark mode after upgrading.
+How to detect it: search the app for `status-`, `alert-` and theme overrides of `--status-`, `--alert-` and `--destructive`. In JS and TS files, the `no-deprecated-tokens` rule in `@tailor-platform/eslint-plugin-app-shell` reports these names and the role to use instead. The rule is available from 1.19.0, and it does not read CSS files. Compare `Badge` and `Alert` in light and dark mode after upgrading.
 
 What to change:
 

@@ -99,6 +99,9 @@ function replaceUtility(prefix: string, token: string, opacity: number | undefin
   }
   if (token.startsWith("status-")) {
     const intent = STATUS_INTENTS[token.slice("status-".length)];
+    // `--status-default` is `--neutral-indicator`, not the neutral solid fill or text.
+    if (intent === "neutral" && (opacity === undefined || opacity >= 50))
+      return `${prefix}-neutral-indicator`;
     const role = opacity === undefined ? solidRole(prefix) : tintRole(prefix, opacity);
     return `${prefix}-${intent}-${role}`;
   }

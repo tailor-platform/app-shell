@@ -64,6 +64,14 @@ ruleTester.run("no-deprecated-tokens", noDeprecatedTokens, {
       ],
     },
     {
+      code: 'const view = <span className="bg-status-default text-status-default border-status-default/60" />;',
+      errors: [
+        error("bg-status-default", "bg-neutral-indicator"),
+        error("text-status-default", "text-neutral-indicator"),
+        error("border-status-default/60", "border-neutral-indicator"),
+      ],
+    },
+    {
       code: 'const view = <div className="bg-alert-error-background text-alert-warning-foreground" />;',
       errors: [
         error("bg-alert-error-background", "bg-danger-surface"),

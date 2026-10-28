@@ -42,11 +42,7 @@ function Header({ className, title, description, children, ...props }: HeaderPro
         </Text.h3>
       )}
       {description && (
-        <Text.div
-          variant="body-md"
-          className="astw:text-muted-foreground"
-          data-slot="card-description"
-        >
+        <Text.div className="astw:text-muted-foreground" data-slot="card-description">
           {description}
         </Text.div>
       )}

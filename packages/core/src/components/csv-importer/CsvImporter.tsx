@@ -159,10 +159,7 @@ function UploadStep({
         />
       </button>
       {error && (
-        <Text.div
-          variant="body-md"
-          className="astw:flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-danger-surface astw:px-3 astw:py-2 astw:text-danger-text"
-        >
+        <Text.div className="astw:flex astw:items-center astw:gap-2 astw:rounded-md astw:bg-danger-surface astw:px-3 astw:py-2 astw:text-danger-text">
           <AlertTriangleIcon className="astw:size-4 astw:shrink-0" />
           {error}
         </Text.div>

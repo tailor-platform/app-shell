@@ -305,7 +305,6 @@ function TextFieldRenderer({ field }: { field: ResolvedField }) {
   const content = (
     <div className="astw:flex astw:items-start astw:gap-1 astw:min-w-0">
       <Text.p
-        variant="body-md"
         className="astw:text-foreground astw:wrap-break-word astw:m-0"
         ref={textRef}
         style={lineClampStyle}

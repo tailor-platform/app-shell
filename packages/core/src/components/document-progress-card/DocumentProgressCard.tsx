@@ -173,9 +173,7 @@ function LegendRow({
           aria-hidden
           className={cn("astw:h-3.5 astw:w-0.5 astw:shrink-0 astw:rounded-md", colorFill[color])}
         />
-        <Text.span variant="label-md" className="astw:text-muted-foreground astw:truncate">
-          {label}
-        </Text.span>
+        <Text.span className="astw:text-muted-foreground astw:truncate">{label}</Text.span>
       </div>
       <Text.span variant="body-md" className="astw:text-card-foreground astw:shrink-0">
         {value}

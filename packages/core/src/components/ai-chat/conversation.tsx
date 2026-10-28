@@ -178,7 +178,7 @@ function ConversationEmptyState({
       {icon}
       {title == null && description == null ? null : (
         <div className="astw:space-y-1">
-          {title ? <Text.h3 variant="heading-sm">{title}</Text.h3> : null}
+          {title ? <Text.h3>{title}</Text.h3> : null}
           {description ? (
             <Text variant="body-md" className="astw:text-muted-foreground">
               {description}

@@ -589,7 +589,7 @@ describe("DataTable inline editing", () => {
       expect(input.closest("td")?.textContent).toContain("ABC");
     });
 
-    it("does not keep optimistic cell state or wait for a returned promise", async () => {
+    it("retains a pending draft without adopting it or blocking focus movement", async () => {
       let finish = noop;
       const onValueCommitted = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
       const user = renderTable(
@@ -607,10 +607,12 @@ describe("DataTable inline editing", () => {
       const [first, second] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, first, "20{Enter}");
       expect(onValueCommitted).toHaveBeenCalledTimes(1);
-      expect((first as HTMLInputElement).value).toBe("12");
+      expect((first as HTMLInputElement).value).toBe("20");
       expect(document.activeElement).toBe(first);
       await user.tab();
       expect(document.activeElement).toBe(second);
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect((first as HTMLInputElement).value).toBe("20");
       await act(async () => finish());
       expect((first as HTMLInputElement).value).toBe("12");
     });

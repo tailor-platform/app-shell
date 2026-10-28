@@ -53,6 +53,7 @@
     "vendor:fonts": "node scripts/sync-noto-fonts.mjs",
     "lint": "oxlint -c .oxlintrc.jsonc",
     "test": "vitest run",
+    "test:browser": "pnpm build && vitest run --config vitest.browser.config.ts",
     "type-check": "tsc --incremental"
   },
   "dependencies": {
@@ -84,8 +85,10 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
+    "@vitest/browser-playwright": "4.1.11",
     "@vitest/coverage-v8": "4.1.11",
     "happy-dom": "21.0.4",
+    "playwright": "1.63.0",
     "postcss": "8.5.31",
     "react": "catalog:",
     "react-dom": "catalog:",

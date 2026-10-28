@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 
 /**
  * Compiles theme.bridge.css with Tailwind and checks the emitted utility rules.
- * The string-level checks in src/assets/theme-bridge.test.ts confirm that the
+ * The string-level checks in tests/theme-bridge.test.ts confirm that the
  * bridge names the right variables. This test confirms that Tailwind turns those
  * entries into the four declarations a role needs, both for AppShell's own
  * prefixed build (`astw:`) and for a consumer's unprefixed build.

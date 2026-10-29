@@ -2,12 +2,12 @@ import type { ReactNode } from "react";
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { createAppShellWrapper } from "../../../tests/test-utils";
+import { createAppShellWrapper } from "../../../../tests/test-utils";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
-import { DataTable } from "./data-table";
-import { useDataTable } from "./use-data-table";
+import { DataTable } from "../data-table";
+import { useDataTable } from "../use-data-table";
 import type { CollectionControl } from "@/types/collection";
-import type { Column } from "./types";
+import type { Column } from "../types";
 
 afterEach(() => {
   cleanup();

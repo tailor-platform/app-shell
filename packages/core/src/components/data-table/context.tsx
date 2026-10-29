@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react";
 import type { Column, RowAction, RowExpansionOptions, RowSelectionOptions } from "./types";
 import type { PageInfo, SortState } from "@/types/collection";
+import type { ColumnWidths } from "./column-layout";
 
 /**
  * Context value provided by `DataTable.Root`.
@@ -108,6 +109,13 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
 const DataTableContext = createContext<DataTableContextValue<any> | null>(null);
 
 export { DataTableContext };
+
+/**
+ * Rendered column widths (px) keyed by column key, published by `DataTable.Table`
+ * after it measures the header row. Empty until the first measurement; consumers
+ * fall back to each column's declared `width` (or 0) meanwhile.
+ */
+export const PinMeasureContext = createContext<ColumnWidths>({});
 
 /**
  * Hook to access the full DataTable state (rows, columns, sorting, pagination,

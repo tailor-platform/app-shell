@@ -9,10 +9,10 @@ import type {
   NumberCellEditOptions,
   TextCellEditOptions,
 } from "@/index";
-import { createAppShellWrapper } from "../../../tests/test-utils";
-import { DataTable } from "./data-table";
-import { useDataTable } from "./use-data-table";
-import type { Column } from "./types";
+import { createAppShellWrapper } from "../../../../tests/test-utils";
+import { DataTable } from "../data-table";
+import { useDataTable } from "../use-data-table";
+import type { Column } from "../types";
 
 afterEach(cleanup);
 

@@ -3,10 +3,10 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
-import { createAppShellWrapper } from "../../../tests/test-utils";
-import { DataTable } from "./data-table";
-import { useDataTable } from "./use-data-table";
-import { createColumnHelper } from "./field-helpers";
+import { createAppShellWrapper } from "../../../../tests/test-utils";
+import { DataTable } from "../data-table";
+import { useDataTable } from "../use-data-table";
+import { createColumnHelper } from "../field-helpers";
 
 afterEach(() => {
   cleanup();

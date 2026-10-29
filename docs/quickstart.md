@@ -80,9 +80,7 @@ import { Text } from "@tailor-platform/app-shell";
 const HomePage = () => {
   return (
     <div className="p-8">
-      <Text variant="heading-lg" render={<h1 />}>
-        Welcome to AppShell
-      </Text>
+      <Text.h1>Welcome to AppShell</Text.h1>
     </div>
   );
 };
@@ -120,9 +118,7 @@ import { Text } from "@tailor-platform/app-shell";
 const DashboardPage = () => {
   return (
     <div className="p-8">
-      <Text variant="heading-lg" render={<h1 />}>
-        Dashboard
-      </Text>
+      <Text.h1>Dashboard</Text.h1>
     </div>
   );
 };
@@ -138,9 +134,7 @@ const OrderDetailPage = () => {
   const { id } = useParams();
   return (
     <div className="p-8">
-      <Text variant="heading-lg" render={<h1 />}>
-        Order #{id}
-      </Text>
+      <Text.h1>Order #{id}</Text.h1>
     </div>
   );
 };

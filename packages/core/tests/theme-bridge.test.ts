@@ -10,9 +10,9 @@ import { describe, expect, it } from "vitest";
  * bridge entry would leave every other test green while the utility silently
  * stops producing colour.
  */
-const here = dirname(fileURLToPath(import.meta.url));
-const bridge = readFileSync(join(here, "theme.bridge.css"), "utf8");
-const defaultTheme = readFileSync(join(here, "themes/default.css"), "utf8");
+const assetsDir = join(dirname(fileURLToPath(import.meta.url)), "../src/assets");
+const bridge = readFileSync(join(assetsDir, "theme.bridge.css"), "utf8");
+const defaultTheme = readFileSync(join(assetsDir, "themes/default.css"), "utf8");
 
 /** Semantic colour roles: 5 intents x 8 roles, named `--{intent}-{role}`. */
 const SEMANTIC_PREFIX = "(?:info|success|warning|danger|neutral)";
@@ -67,6 +67,25 @@ describe("theme bridge", () => {
   it("bridges all 40 semantic colour roles", () => {
     // 5 intents x 8 roles, pinned for the same reason as the alert count.
     expect(bridgedTokens(SEMANTIC_PREFIX).size).toBe(40);
+  });
+
+  it.each([
+    ["--destructive", "--danger-solid"],
+    ["--destructive-foreground", "--danger-contrast"],
+  ])("keeps %s linked to %s for consumer overrides", (alias, target) => {
+    const sheets = [
+      defaultTheme,
+      ...["cream", "bloom"].map((name) =>
+        readFileSync(join(assetsDir, `themes/${name}.css`), "utf8"),
+      ),
+    ];
+    const values = sheets.flatMap((css) =>
+      [...css.matchAll(new RegExp(`^\\s*${alias}:\\s*([^;]+);`, "gm"))].map((match) =>
+        match[1].trim(),
+      ),
+    );
+    expect(values.length).toBeGreaterThan(0);
+    expect(new Set(values)).toEqual(new Set([`var(${target})`]));
   });
 
   describe("typography roles", () => {

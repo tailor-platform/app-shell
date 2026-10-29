@@ -7,14 +7,27 @@ import { createAppShellWrapper } from "../../../../../tests/test-utils";
 import { DataTable } from "../../data-table";
 import { useDataTable } from "../../use-data-table";
 import { createColumnHelper } from "../../field-helpers";
+import type { Column } from "../../types";
+import {
+  Harness,
+  LINES,
+  column,
+  noop,
+  receivedColumn,
+  renderTable,
+  skuColumn,
+  type Line,
+  type Update,
+} from "./test-utils";
 
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 type Row = { id: string; warehouse: string | null };
-const { column } = createColumnHelper<Row>();
+const { column: choiceColumn } = createColumnHelper<Row>();
 const OPTIONS = [
   { value: "north", label: "North Tokyo DC" },
   { value: "annex", label: "Tokyo DC Annex" },
@@ -25,7 +38,7 @@ const OPTIONS = [
   { value: "initial", label: "Initial" },
 ];
 
-function Harness({
+function ChoiceHarness({
   value = "initial",
   onDraft,
   onCommit,
@@ -46,8 +59,8 @@ function Harness({
     },
     columns: [
       badge
-        ? column({ id: "warehouse", label: "Warehouse", type: "badge", edit })
-        : column({ id: "warehouse", label: "Warehouse", type: "text", edit }),
+        ? choiceColumn({ id: "warehouse", label: "Warehouse", type: "badge", edit })
+        : choiceColumn({ id: "warehouse", label: "Warehouse", type: "text", edit }),
     ],
   });
   return (
@@ -69,7 +82,7 @@ function Wrapper({ children }: { children: ReactNode }) {
 function setup({ badge = false }: { badge?: boolean } = {}) {
   const onDraft = vi.fn();
   const onCommit = vi.fn();
-  const view = render(<Harness onDraft={onDraft} onCommit={onCommit} badge={badge} />, {
+  const view = render(<ChoiceHarness onDraft={onDraft} onCommit={onCommit} badge={badge} />, {
     wrapper: Wrapper,
   });
   const user = userEvent.setup();
@@ -151,7 +164,7 @@ describe("DataTable dropdown confirmation", () => {
         if (candidate !== "exact label") {
           expect(annex.hasAttribute("data-highlighted")).toBe(true);
         }
-        rerender(<Harness value="osaka" onDraft={onDraft} onCommit={onCommit} />);
+        rerender(<ChoiceHarness value="osaka" onDraft={onDraft} onCommit={onCommit} />);
         if (dismissal === "outside click") await user.click(document.body);
         else act(() => input.blur());
         expect(input.value).toBe("Osaka");
@@ -256,7 +269,7 @@ describe("DataTable dropdown confirmation", () => {
   it("preserves active search across an external update, then cancels to the latest data without callbacks", async () => {
     const { user, input, onDraft, onCommit, search, rerender } = setup();
     await search("Tokyo");
-    rerender(<Harness value="osaka" onDraft={onDraft} onCommit={onCommit} />);
+    rerender(<ChoiceHarness value="osaka" onDraft={onDraft} onCommit={onCommit} />);
     expect(input.value).toBe("Tokyo");
     expect(onDraft).not.toHaveBeenCalled();
     expect(onCommit).not.toHaveBeenCalled();
@@ -269,7 +282,7 @@ describe("DataTable dropdown confirmation", () => {
   it("compares a confirmed selection with the latest data", async () => {
     const { user, onDraft, onCommit, search, rerender } = setup();
     await search("Tokyo DC");
-    rerender(<Harness value="tokyo" onDraft={onDraft} onCommit={onCommit} />);
+    rerender(<ChoiceHarness value="tokyo" onDraft={onDraft} onCommit={onCommit} />);
     await user.keyboard("{Enter}");
     expect(onDraft).not.toHaveBeenCalled();
     expect(onCommit).not.toHaveBeenCalled();
@@ -333,5 +346,370 @@ describe("DataTable dropdown confirmation", () => {
     unmount();
     expect(onDraft).not.toHaveBeenCalled();
     expect(onCommit).not.toHaveBeenCalled();
+  });
+});
+
+const hasIconSpace = (cell: Element | undefined) =>
+  cell?.querySelector(":scope > span")?.className.includes("astw:pr-5") ?? false;
+
+describe("DataTable inline editing", () => {
+  describe("dropdowns", () => {
+    const SUPPLIERS = [
+      { value: "acme", label: "Acme Corp" },
+      { value: "globex", label: "Globex" },
+    ];
+
+    function supplierColumn(
+      onValueCommitted: (id: string, value: string | null) => void,
+      update: Update,
+    ): Column<Line> {
+      return column({
+        id: "supplier",
+        label: "Supplier",
+        type: "text",
+        edit: {
+          options: SUPPLIERS,
+          onValueCommitted: (row, value) => {
+            onValueCommitted(row.id, value);
+            update(row.id, { supplier: value ?? "" });
+          },
+        },
+      });
+    }
+
+    const rowsWith = (supplier: string) => LINES.map((line) => ({ ...line, supplier }));
+
+    it("shows choice labels and notifies the picked value", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
+        />,
+      );
+      const [trigger] = screen.getAllByRole("combobox", { name: "Supplier" });
+      expect(trigger.closest("td")?.textContent).toContain("Acme Corp");
+      await user.click(trigger);
+      await user.click(await screen.findByRole("option", { name: "Globex" }));
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", "globex");
+      expect(trigger.closest("td")?.textContent).toContain("Globex");
+    });
+
+    it("offers None and notifies null", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
+        />,
+      );
+      await user.click(screen.getAllByRole("combobox", { name: "Supplier" })[0]);
+      await user.click(await screen.findByRole("option", { name: "None" }));
+      expect(onValueCommitted).toHaveBeenCalledWith("1", null);
+    });
+
+    it("uses data as the source of truth when a consumer rejects a pick", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={() => [
+            column({
+              id: "supplier",
+              label: "Supplier",
+              type: "text",
+              edit: { options: SUPPLIERS, onValueCommitted },
+            }),
+          ]}
+        />,
+      );
+      const [trigger] = screen.getAllByRole("combobox", { name: "Supplier" });
+      await user.click(trigger);
+      await user.click(await screen.findByRole("option", { name: "Globex" }));
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith(expect.objectContaining({ id: "1" }), "globex");
+      expect((trigger as HTMLInputElement).value).toBe("Acme Corp");
+      expect(trigger.getAttribute("aria-invalid")).toBeNull();
+    });
+
+    it("filters choices and picks with Enter without moving focus", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
+        />,
+      );
+      const [first] = screen.getAllByRole("combobox", { name: "Supplier" });
+      await user.click(first);
+      await user.clear(first);
+      await user.keyboard("glo");
+      expect((await screen.findAllByRole("option")).map((option) => option.textContent)).toEqual([
+        "Globex",
+      ]);
+      await user.keyboard("{Enter}");
+      expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith("1", "globex");
+      await act(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
+      expect(first.getAttribute("aria-expanded")).toBe("false");
+      expect((first as HTMLInputElement).value).toBe("Globex");
+      expect(first.getAttribute("enterkeyhint")).toBe("done");
+      expect(document.activeElement).toBe(first);
+    });
+
+    it.each(["{Enter}", "{Shift>}{Enter}{/Shift}"])(
+      "keeps focus on %s when the dropdown is closed",
+      async (key) => {
+        const onValueCommitted = vi.fn();
+        const user = renderTable(
+          <Harness
+            rows={rowsWith("acme")}
+            columns={(update) => [supplierColumn(onValueCommitted, update)]}
+          />,
+        );
+        const [first] = screen.getAllByRole("combobox", { name: "Supplier" });
+        await user.click(first);
+        await user.keyboard(`{Escape}${key}`);
+        expect(document.activeElement).toBe(first);
+        expect(onValueCommitted).not.toHaveBeenCalled();
+      },
+    );
+
+    it("takes the highlighted match on Tab after typing", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
+        />,
+      );
+      const [first, second] = screen.getAllByRole("combobox", { name: "Supplier" });
+      await user.click(first);
+      await user.clear(first);
+      await user.keyboard("glo");
+      await screen.findByRole("option", { name: "Globex" });
+      await user.keyboard("{Tab}");
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", "globex");
+      expect(document.activeElement).toBe(second);
+    });
+
+    it("discards a fully typed label when the user clicks outside the cell", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
+        />,
+      );
+      const [first] = screen.getAllByRole("combobox", { name: "Supplier" });
+      await user.click(first);
+      await user.clear(first);
+      await user.keyboard("GLOBEX");
+      await user.click(document.body);
+      expect(onValueCommitted).not.toHaveBeenCalled();
+      expect((first as HTMLInputElement).value).toBe("Acme Corp");
+    });
+
+    it("says so when nothing matches, and leaves the value alone", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
+        />,
+      );
+      const [first] = screen.getAllByRole("combobox", { name: "Supplier" });
+      await user.click(first);
+      await user.clear(first);
+      await user.keyboard("zzz");
+      expect(await screen.findByText("No matches")).toBeTruthy();
+      await user.click(document.body);
+      expect(onValueCommitted).not.toHaveBeenCalled();
+      expect(first.closest("td")?.textContent).toContain("Acme Corp");
+    });
+
+    it("does not notify when the current choice is picked again", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(onValueCommitted, update)]}
+        />,
+      );
+      await user.click(screen.getAllByRole("combobox", { name: "Supplier" })[0]);
+      await user.click(await screen.findByRole("option", { name: "Acme Corp" }));
+      expect(onValueCommitted).not.toHaveBeenCalled();
+    });
+
+    it("shows a read-only link cell's choice label as the link", () => {
+      renderTable(
+        <Harness
+          rows={rowsWith("globex")}
+          columns={() => [
+            column({
+              id: "supplier",
+              label: "Supplier",
+              type: "link",
+              typeOptions: { href: (row) => `/suppliers/${row.supplier}` },
+              edit: {
+                options: SUPPLIERS,
+                canEdit: (row) => row.id === "1",
+                onValueCommitted: noop,
+              },
+            }),
+          ]}
+        />,
+      );
+      expect(screen.getAllByRole("combobox", { name: "Supplier" })).toHaveLength(1);
+      expect(screen.getAllByRole("link").map((link) => link.textContent)).toEqual([
+        "Globex",
+        "Globex",
+      ]);
+    });
+
+    it("keeps icon space on read-only rows so the column's width never shifts", () => {
+      renderTable(
+        <Harness
+          rows={rowsWith("globex")}
+          columns={() => [
+            skuColumn,
+            column({
+              id: "supplier",
+              label: "Supplier",
+              type: "text",
+              edit: {
+                options: SUPPLIERS,
+                canEdit: (row) => row.id === "1",
+                onValueCommitted: noop,
+              },
+            }),
+          ]}
+        />,
+      );
+      const rows = screen.getAllByRole("row").slice(1);
+      expect(rows.map((row) => hasIconSpace(row.querySelectorAll("td")[1]))).toEqual([
+        true,
+        true,
+        true,
+      ]);
+      expect(hasIconSpace(rows[1].querySelectorAll("td")[0])).toBe(false);
+    });
+
+    it("offers a badge column's labelled values as badges", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={LINES.map((line) => ({ ...line, status: "pending" }))}
+          columns={(update) => [
+            column({
+              id: "status",
+              label: "Status",
+              type: "badge",
+              typeOptions: {
+                badgeLabelMap: { pending: "Pending", received: "Received" },
+                badgeVariantMap: { pending: "outline-neutral", received: "success" },
+              },
+              edit: {
+                onValueCommitted: (row, value) => {
+                  onValueCommitted(row.id, value);
+                  update(row.id, { status: value ?? undefined });
+                },
+              },
+            }),
+          ]}
+        />,
+      );
+      const [trigger] = screen.getAllByRole("combobox", { name: "Status" });
+      await user.click(trigger);
+      const received = await screen.findByRole("option", { name: "Received" });
+      expect(received.querySelector('[data-slot="badge"], .astw\\:inline-flex')).not.toBeNull();
+      await user.click(received);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", "received");
+      expect(trigger.closest("td")?.textContent).toContain("Received");
+    });
+
+    it("keeps enum fallback labels on editable and locked badge cells after selection", async () => {
+      const user = renderTable(
+        <Harness
+          rows={LINES.map((line) => ({ ...line, status: "pending" }))}
+          columns={(update) => [
+            column({
+              id: "status",
+              label: "Status",
+              type: "badge",
+              filter: {
+                field: "status",
+                type: "enum",
+                options: [
+                  { value: "pending", label: "Pending review" },
+                  { value: "qa_approved", label: "Quality approved" },
+                ],
+              },
+              edit: {
+                canEdit: (row) => row.id === "1",
+                onValueCommitted: (row, value) => update(row.id, { status: value ?? undefined }),
+              },
+            }),
+          ]}
+        />,
+      );
+      expect(screen.getAllByText("Pending review")).toHaveLength(3);
+      const input = screen.getByRole("combobox", { name: "Status" });
+      await user.click(input);
+      await user.click(await screen.findByRole("option", { name: "Quality approved" }));
+      expect(input.closest("td")?.textContent).toBe("Quality approved");
+      expect(screen.getAllByText("Pending review")).toHaveLength(2);
+    });
+
+    it("keeps a badge cell with several values read-only", () => {
+      renderTable(
+        <Harness
+          rows={LINES.map((line, i) =>
+            i === 0 ? { ...line, status: ["pending", "partial"] as unknown as string } : line,
+          )}
+          columns={() => [
+            column({
+              id: "status",
+              label: "Status",
+              type: "badge",
+              typeOptions: { badgeLabelMap: { pending: "Pending", partial: "Partial" } },
+              edit: { onValueCommitted: noop },
+            }),
+          ]}
+        />,
+      );
+      expect(screen.queryAllByRole("combobox", { name: "Status" })).toHaveLength(2);
+    });
+
+    it("isn't editable when a badge column has no choices", () => {
+      renderTable(
+        <Harness
+          rows={LINES.map((line) => ({ ...line, status: "pending" }))}
+          columns={() => [
+            column({
+              id: "status",
+              label: "Status",
+              type: "badge",
+              edit: { onValueCommitted: noop },
+            }),
+          ]}
+        />,
+      );
+      expect(screen.queryAllByRole("combobox")).toHaveLength(0);
+    });
+
+    it("moves on with Tab from a closed dropdown", async () => {
+      const user = renderTable(
+        <Harness
+          rows={rowsWith("acme")}
+          columns={(update) => [supplierColumn(vi.fn(), update), receivedColumn(vi.fn(), update)]}
+        />,
+      );
+      const [supplier] = screen.getAllByRole("combobox", { name: "Supplier" });
+      act(() => supplier.focus());
+      await user.tab();
+      expect(document.activeElement).toBe(screen.getAllByRole("textbox", { name: "Received" })[0]);
+    });
   });
 });

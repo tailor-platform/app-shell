@@ -7,14 +7,17 @@ import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-
 import { DataTable } from "../../data-table";
 import { useDataTable } from "../../use-data-table";
 import { createColumnHelper } from "../../field-helpers";
+import type { Column } from "../../types";
+import { Harness, LINES, column, noop, renderTable, type Line, type Update } from "./test-utils";
 
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 type Row = { id: string; expected: string | null };
-const { column } = createColumnHelper<Row>();
+const { column: dateColumn } = createColumnHelper<Row>();
 const configurations = buildConfigurations({ modules: [], locale: "en", timeZone: "Asia/Tokyo" });
 
 function Wrapper({ children }: { children: ReactNode }) {
@@ -25,7 +28,7 @@ function Wrapper({ children }: { children: ReactNode }) {
   );
 }
 
-function Harness({
+function DateHarness({
   value,
   datetime,
   onValueChange,
@@ -38,7 +41,7 @@ function Harness({
 }) {
   const table = useDataTable<Row>({
     columns: [
-      column({
+      dateColumn({
         id: "expected",
         label: "Expected",
         type: "date",
@@ -60,13 +63,13 @@ function setup(value: string | null = "2026-10-02T00:00:00.000Z", datetime = tru
   const onValueChange = vi.fn();
   const onValueCommitted = vi.fn();
   const props = { value, datetime, onValueChange, onValueCommitted };
-  const result = render(<Harness {...props} />, { wrapper: Wrapper });
+  const result = render(<DateHarness {...props} />, { wrapper: Wrapper });
   return {
     user,
     onValueChange,
     onValueCommitted,
     unmount: result.unmount,
-    update: (next: string | null) => result.rerender(<Harness {...props} value={next} />),
+    update: (next: string | null) => result.rerender(<DateHarness {...props} value={next} />),
   };
 }
 
@@ -290,5 +293,153 @@ describe("DataTable date-time drafts", () => {
     expect(onValueChange.mock.invocationCallOrder[0]).toBeLessThan(
       onValueCommitted.mock.invocationCallOrder[0],
     );
+  });
+});
+
+describe("DataTable inline editing", () => {
+  describe("dates", () => {
+    const dateRows = LINES.map((line) => ({ ...line, expected: "2026-10-02" }));
+
+    function expectedColumn(
+      onValueCommitted: (id: string, value: string | null) => void,
+      update: Update,
+      datetime = false,
+    ): Column<Line> {
+      return column({
+        id: "expected",
+        label: "Expected",
+        type: "date",
+        typeOptions: { dateFormat: datetime ? "datetime" : "short" },
+        edit: {
+          onValueCommitted: (row, value) => {
+            onValueCommitted(row.id, value);
+            update(row.id, { expected: value });
+          },
+        },
+      });
+    }
+
+    it("shows a date-only value as that day in any time zone", () => {
+      const tz = process.env.TZ;
+      process.env.TZ = "America/Los_Angeles";
+      try {
+        renderTable(
+          <Harness
+            rows={dateRows}
+            columns={() => [
+              column({
+                id: "expected",
+                label: "Expected",
+                type: "date",
+                typeOptions: { locale: "en-US" },
+              }),
+            ]}
+          />,
+        );
+        expect(screen.getAllByText("Oct 2, 2026")).toHaveLength(3);
+      } finally {
+        process.env.TZ = tz;
+      }
+    });
+
+    it("names the date trigger with its current value", () => {
+      renderTable(
+        <Harness
+          rows={dateRows}
+          columns={() => [
+            column({
+              id: "expected",
+              label: "Expected",
+              type: "date",
+              typeOptions: { locale: "en-US" },
+              edit: { onValueCommitted: noop },
+            }),
+          ]}
+        />,
+      );
+      expect(screen.getAllByRole("button", { name: "Expected, Oct 2, 2026" })).toHaveLength(3);
+    });
+
+    it("notifies a picked day as YYYY-MM-DD", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={dateRows}
+          columns={(update) => [expectedColumn(onValueCommitted, update)]}
+        />,
+      );
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
+      await user.click(dayButton("15"));
+      expect(onValueCommitted).toHaveBeenCalledWith("1", "2026-10-15");
+    });
+
+    it("clears a date to null", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={dateRows}
+          columns={(update) => [expectedColumn(onValueCommitted, update)]}
+        />,
+      );
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
+      await user.click(screen.getByRole("button", { name: "Clear" }));
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", null);
+    });
+
+    it("uses data when the consumer rejects a date change", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={dateRows}
+          columns={() => [
+            column({ id: "expected", label: "Expected", type: "date", edit: { onValueCommitted } }),
+          ]}
+        />,
+      );
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
+      await user.click(dayButton("15"));
+      expect(onValueCommitted).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "1" }),
+        "2026-10-15",
+      );
+      expect(screen.getAllByRole("button", { name: "Expected, Oct 2, 2026" })).toHaveLength(3);
+    });
+
+    it("notifies a date-time as ISO only when Done is pressed", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={dateRows}
+          columns={(update) => [expectedColumn(onValueCommitted, update, true)]}
+        />,
+      );
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
+      await user.click(dayButton("20"));
+      fireEvent.change(screen.getByLabelText("Expected (Choose time)"), {
+        target: { value: "14:30" },
+      });
+      expect(onValueCommitted).not.toHaveBeenCalled();
+      await user.click(screen.getByRole("button", { name: "Done" }));
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith(
+        "1",
+        new Date(2026, 9, 20, 14, 30).toISOString(),
+      );
+    });
+
+    it("abandons a date-time draft when the calendar closes with Escape", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={dateRows}
+          columns={(update) => [expectedColumn(onValueCommitted, update, true)]}
+        />,
+      );
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
+      await user.click(dayButton("20"));
+      await user.keyboard("{Escape}");
+      expect(onValueCommitted).not.toHaveBeenCalled();
+    });
   });
 });

@@ -44,7 +44,7 @@ type SidebarLayoutCommonProps = {
    * Width is not persisted.
    * Applies to the built-in sidebar primitives, not arbitrary `sidebar` markup.
    *
-   * @default false
+   * @default true
    */
   resizable?: boolean;
 

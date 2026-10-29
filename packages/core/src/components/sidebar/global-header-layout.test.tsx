@@ -66,9 +66,9 @@ describe("GlobalHeaderLayout", () => {
     expect(sidebar.getAttribute("data-collapsible")).toBe("icon");
   });
 
-  it("forwards resizable to the primary sidebar", async () => {
+  it("enables resizing by default", async () => {
     stubDesktopViewport();
-    renderLayout({ resizable: true });
+    renderLayout();
     const handle = await screen.findByRole("separator", { name: "Resize sidebar" });
     fireEvent.keyDown(handle, { key: "ArrowRight" });
 
@@ -76,6 +76,18 @@ describe("GlobalHeaderLayout", () => {
     expect(wrapper.style.getPropertyValue("--sidebar-width")).toBe("272px");
     expect(handle.getAttribute("aria-valuenow")).toBe("272");
   });
+
+  it.each([true, false])(
+    "forwards resizable=false without handles (defaultOpen=%s)",
+    async (defaultOpen) => {
+      stubDesktopViewport();
+      renderLayout({ resizable: false, defaultOpen });
+
+      await waitFor(() => expect(document.querySelector('[data-slot="sidebar"]')).not.toBeNull());
+      expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Expand sidebar" })).toBeNull();
+    },
+  );
 
   it("collapses to the icon rail with Home and expands from its handle at the default width", async () => {
     stubDesktopViewport();

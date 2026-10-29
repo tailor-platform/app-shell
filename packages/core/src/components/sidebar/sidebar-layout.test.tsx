@@ -148,14 +148,27 @@ describe("SidebarLayout", () => {
   });
 
   describe("resizable", () => {
-    it("keeps resizing opt-in and preserves the default width", async () => {
+    it("enables resizing by default", async () => {
       stubDesktopViewport();
       renderSidebarLayout();
 
-      await waitFor(() => expect(document.querySelector('[data-slot="sidebar"]')).not.toBeNull());
-      expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
-      expect(sidebarWidth()).toBe("16rem");
+      const handle = await screen.findByRole("separator", { name: "Resize sidebar" });
+      expect(handle.getAttribute("aria-valuenow")).toBe("256");
+      expect(sidebarWidth()).toBe("256px");
     });
+
+    it.each([true, false])(
+      "disables resize and expand handles with resizable=false (defaultOpen=%s)",
+      async (defaultOpen) => {
+        stubDesktopViewport();
+        renderSidebarLayout({ resizable: false, defaultOpen });
+
+        await waitFor(() => expect(document.querySelector('[data-slot="sidebar"]')).not.toBeNull());
+        expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+        expect(screen.queryByRole("button", { name: "Expand sidebar" })).toBeNull();
+        expect(sidebarWidth()).toBe("16rem");
+      },
+    );
 
     it("exposes an accessible handle and clamps keyboard resizing when collapse is disabled", async () => {
       stubDesktopViewport();

@@ -69,7 +69,7 @@ function SidebarProvider({
   open: openProp,
   onOpenChange: setOpenProp,
   collapsible = true,
-  resizable = false,
+  resizable = true,
   className,
   style,
   children,

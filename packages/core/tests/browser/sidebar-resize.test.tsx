@@ -27,7 +27,7 @@ it.each(["rail", "offcanvas", "fixed"] as const)(
     const Layout = mode === "rail" ? GlobalHeaderLayout : SidebarLayout;
     const view = render(
       <AppShell title="Resize test" modules={modules}>
-        <Layout resizable defaultOpen={false} collapsible={mode !== "fixed"} body={<div />} />
+        <Layout defaultOpen={false} collapsible={mode !== "fixed"} body={<div />} />
       </AppShell>,
     );
     const handle = await view.findByRole(mode === "fixed" ? "separator" : "button", {

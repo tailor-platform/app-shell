@@ -51,7 +51,7 @@ type GlobalHeaderLayoutCommonProps = {
   /** Whether the sidebar can be collapsed. @default true */
   collapsible?: boolean;
 
-  /** Show a drag handle to resize the expanded desktop sidebar (192–480px). @default false */
+  /** Show a drag handle to resize the expanded desktop sidebar (192–480px). @default true */
   resizable?: boolean;
 };
 

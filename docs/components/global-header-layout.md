@@ -64,7 +64,7 @@ function App() {
 | `sidebar`     | `React.ReactNode`                                               | `<GlobalHeaderLayout.DefaultSidebar />` | Replaces the primary sidebar.                                     |
 | `defaultOpen` | `boolean`                                                       | `true`                                  | Whether the sidebar starts expanded on desktop.                   |
 | `collapsible` | `boolean`                                                       | `true`                                  | Whether the sidebar can be collapsed.                             |
-| `resizable`   | `boolean`                                                       | `false`                                 | Show a handle to resize the expanded desktop sidebar (192–480px). |
+| `resizable`   | `boolean`                                                       | `true`                                  | Show a handle to resize the expanded desktop sidebar (192–480px). |
 | `children`    | `(props: { Outlet: () => React.ReactNode }) => React.ReactNode` | current route outlet                    | Custom content renderer for the stock content container.          |
 | `body`        | `React.ReactNode`                                               | -                                       | Escape hatch that replaces the entire region beside the sidebar.  |
 
@@ -72,11 +72,19 @@ function App() {
 
 ## Resizing the sidebar
 
+Resizing is enabled on desktop by default:
+
 ```tsx
-<GlobalHeaderLayout resizable />
+<GlobalHeaderLayout />
 ```
 
-This enables the same visible drag handle and keyboard resizing as [`SidebarLayout resizable`](./sidebar-layout.md#resizing-the-sidebar). Between the icon rail and 192px, dragging uses a resistance curve; closing finishes slightly early, in the final 20% near the rail. At 192px and above, resizing follows the pointer 1:1. One gesture can open, resize, and collapse without releasing or jumping to 256px. Clicking or using the keyboard to expand still restores the default 256px width. With `collapsible={false}`, resizing simply stops at 192px. Width is not saved across reloads. Mobile/tablet overlays and the collapsed rail width are unchanged.
+Set `resizable={false}` to disable it:
+
+```tsx
+<GlobalHeaderLayout resizable={false} />
+```
+
+The visible drag handle and keyboard resizing match [`SidebarLayout`](./sidebar-layout.md#resizing-the-sidebar). Between the icon rail and 192px, dragging uses a resistance curve; closing finishes slightly early, in the final 20% near the rail. At 192px and above, resizing follows the pointer 1:1. One gesture can open, resize, and collapse without releasing or jumping to 256px. Clicking or using the keyboard to expand still restores the default 256px width. With `collapsible={false}`, resizing simply stops at 192px. Width is not saved across reloads. Mobile/tablet overlays and the collapsed rail width are unchanged.
 
 ## Built-in parts
 

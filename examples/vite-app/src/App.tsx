@@ -36,7 +36,6 @@ const AppInner = () => {
           app-wide top bar over the whole shell and a sidebar that collapses to a
           persistent icon rail (toggle at the bottom-left). */}
       <GlobalHeaderLayout
-        resizable
         header={<GlobalHeaderLayout.DefaultHeader actions={headerActions} />}
         body={<PanelsBody />}
         sidebar={

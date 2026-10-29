@@ -55,7 +55,7 @@ This gives you:
 | `sidebar`     | `React.ReactNode` | `<SidebarLayout.DefaultSidebar />` | Replaces the entire sidebar region.                                                                          |
 | `defaultOpen` | `boolean`         | `true`                             | Whether the sidebar starts expanded on desktop.                                                              |
 | `collapsible` | `boolean`         | `true`                             | Whether the sidebar can be collapsed. When `false`, toggle controls are hidden and `defaultOpen` is ignored. |
-| `resizable`   | `boolean`         | `false`                            | Show a desktop handle to resize when expanded (192–480px) or drag/click to expand when collapsed.            |
+| `resizable`   | `boolean`         | `true`                             | Show a desktop handle to resize when expanded (192–480px) or drag/click to expand when collapsed.            |
 | `topBar`      | `React.ReactNode` | -                                  | Full-width bar above both the sidebar and the content region.                                                |
 
 ### Default content mode
@@ -79,8 +79,16 @@ Use this when you need to compose your own columns beside the sidebar.
 
 ## Resizing the sidebar
 
+Resizing is enabled on desktop by default:
+
 ```tsx
-<SidebarLayout resizable />
+<SidebarLayout />
+```
+
+Set `resizable={false}` to hide the handle and keep the sidebar at its fixed width:
+
+```tsx
+<SidebarLayout resizable={false} />
 ```
 
 The expanded desktop sidebar shows a grip at the center of its outer edge. Only the grip's hit area shows the resize cursor and starts a drag; the rest of the sidebar edge is not interactive. Drag the grip to resize, or focus the handle and use Left/Right arrows (16px steps), Home (192px), or End (480px).

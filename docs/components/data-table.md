@@ -37,6 +37,7 @@ import {
   type DateCellEditOptions,
   type CellEditState,
   type DateTimeDraft,
+  type FooterRenderContext,
 } from "@tailor-platform/app-shell";
 ```
 
@@ -262,6 +263,85 @@ const table = useDataTable<Order>({
 </DataTable.Root>;
 ```
 
+## Per-cell styling
+
+Use `cellProps(row)` to set `className`, `style`, and `title` on the actual data-cell `<td>`, including its padding. Return `undefined` to keep the defaults. This works with built-in renderers, custom `render`, truncation tooltips, and editable cells. It does not customize headers, footers, loading placeholders, empty/error states, or the built-in selection, expansion, and action cells. Content stays owned by `render`; events, refs, and cell spanning are not supported through `cellProps`.
+
+An explicit `style.backgroundColor` stays visible during row hover and selection, for both scrollable and pinned columns. Cells returning `undefined` retain the default hover/selection backgrounds; checkboxes and row selection semantics are unchanged. Classes are merged after built-in classes, but CSS specificity still applies: pinned cells have their own group-hover and group-aria-selected backgrounds, which a plain background class does not override. Use `style.backgroundColor` when an informational background must remain visible in every state. Keep the value or another non-color cue visible so color is not the only way to understand the cell.
+
+Column `width` and the pinned cell's sticky position/edge offset take precedence over `cellProps.style`. Use this hook for presentation rather than layout overrides. Pinned backgrounds must be opaque to hide scrolling content; the example uses existing solid/contrast token pairs rather than translucent surface tokens.
+
+### Header styling
+
+Use `headerProps(ctx)` to return `className`, `style`, and/or `title` to customize the actual `<th>`, including its padding. Like `cellProps(row)`, return `undefined` to keep the defaults. It receives the same `HeaderRenderContext` as `header(ctx)`: `label` and `sortable`, plus `sortDirection` and `activateSort()` when sortable. It works with the default header or a custom `header(ctx)` renderer; styling alone does not replace the built-in sort button or context menu.
+
+Classes are merged after built-in classes, and column `width` and sticky position/edge offset take precedence over the returned `style`, just as for body cells. Use opaque backgrounds for pinned headers. Events, refs, content, and cell spanning are not supported through `headerProps`; built-in selection, expansion, and action headers are unaffected.
+
+<example-preview name="per-cell-styling"></example-preview>
+
+```tsx
+function PerCellStyling() {
+  type Overtime = { id: string; employee: string; january: number; february: number };
+  const { column } = createColumnHelper<Overtime>();
+  const overtimeStyle = (hours: number) => {
+    const tone = hours >= 60 ? "danger" : hours >= 40 ? "warning" : "success";
+    return {
+      backgroundColor: `var(--${tone}-solid)`,
+      color: `var(--${tone}-contrast)`,
+    };
+  };
+  const table = useDataTable({
+    data: {
+      rows: [
+        { id: "1", employee: "Alex", january: 24, february: 48 },
+        { id: "2", employee: "Sam", january: 45, february: 64 },
+        { id: "3", employee: "Robin", january: 62, february: 32 },
+      ],
+    },
+    columns: [
+      column({ id: "employee", label: "Employee", type: "text", width: 160 }),
+      column({
+        id: "january",
+        label: "January (hours)",
+        type: "number",
+        width: 180,
+        cellProps: (row) => ({
+          style: overtimeStyle(row.january),
+          title: `${row.january} hours of overtime`,
+        }),
+      }),
+      column({
+        id: "february",
+        label: "February (hours)",
+        type: "number",
+        width: 180,
+        pin: "right",
+        headerProps: () => ({
+          className: "astw:whitespace-nowrap",
+          style: { backgroundColor: "var(--muted)" },
+          title: "February overtime summary",
+        }),
+        cellProps: (row) => ({
+          className: "astw:tabular-nums",
+          style: overtimeStyle(row.february),
+          title: `${row.february} hours of overtime`,
+        }),
+      }),
+    ],
+    rowSelection: {},
+  });
+
+  return (
+    <div className="space-y-3">
+      <p>Overtime: below 40 hours is safe, 40–59 is caution, 60 or more is danger.</p>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    </div>
+  );
+}
+```
+
 ## Column footers
 
 Set `column.footer` to a static string such as `footer: "Total"` or a renderer to show content beneath that column without adding synthetic rows to `data.rows`. The [`aggregations`](../api/aggregations.md) helpers create ordinary footer renderers from typed selectors. `DataTable.Table` automatically renders one `<tfoot>` row when at least one visible column defines a footer, including an empty string. Fixed header text still uses `column.label`; `column.header` remains a custom renderer that replaces the built-in header UI.
@@ -296,6 +376,17 @@ function ColumnFooters() {
             ),
         },
         footer: aggregations.sum((row) => row.quantity),
+        footerProps: ({ rows }) =>
+          rows.length > 0
+            ? {
+                className: "tabular-nums",
+                style: {
+                  backgroundColor: "var(--success-solid)",
+                  color: "var(--success-contrast)",
+                },
+                title: `Quantity total for ${rows.length} items on this page`,
+              }
+            : undefined,
       }),
     ],
   });
@@ -315,6 +406,14 @@ function ColumnFooters() {
 - **Shared column layout.** Footer cells follow column width, alignment, ordering, visibility, and left/right pinning. Hidden columns' footer callbacks are not called. The row sticks to the bottom of the table's scroll container during vertical scrolling, paired with the sticky header at the top.
 - **Not data rows.** The footer has no generated editors, selection checkboxes, expansion triggers, or row-action menus; their utility columns have empty footer cells to preserve alignment. Footer cells do not trigger `onClickRow`.
 - **Loading and empty states.** Loading keeps the footer row mounted and replaces defined footer content with skeletons without calling footer renderers, including during page changes. This preserves the footer region without showing stale totals or calculating from incomplete data. Errors hide the footer. Loaded empty data still calls visible footer renderers with `rows: []`; the consumer chooses whether to return zero, a dash, or `null` for a blank cell. The table does not substitute these values. Check `rows.length` to distinguish no records from records whose total is zero. If no visible column defines `footer`, no `<tfoot>` is rendered.
+
+### Footer styling
+
+Use `footerProps(ctx)` to return `className`, `style`, and/or `title` for the actual footer `<td>`, including its padding. It receives the same `FooterRenderContext<TRow>` as `footer(ctx)`, with the current page's read-only `rows`. Return `undefined` to keep the defaults. It works with static strings, custom footer renderers, and blank footer cells when another visible column defines `footer`; `footerProps` alone does not create a footer row.
+
+Classes are merged after built-in classes; column `width` and sticky position/edge offset take precedence over the returned `style`. Use opaque backgrounds for pinned footer cells. Content stays owned by `footer`; events, refs, and cell spanning are not supported. Built-in selection, expansion, and action footer cells and the separate `DataTable.Footer` container are unaffected.
+
+Footer styling callbacks are not called while loading, on errors, or for hidden columns. Loaded empty data calls them with `rows: []`, and styles are recomputed when `data.rows` changes.
 
 ### Aggregation helpers
 
@@ -498,7 +597,7 @@ These APIs use “footer” at different scopes:
 
 `DataTable` treats column configuration as two layers:
 
-- **Presentation** — `column.header`, `column.render`, and `column.footer` control what is rendered.
+- **Presentation** — `column.header`, `column.render`, and `column.footer` control rendered content; `column.headerProps`, `column.cellProps`, and `column.footerProps` customize the surrounding header, data-cell, and footer elements.
 - **Behavior/data** — `column.label`, `column.id`, `column.accessor`, `column.sort`, `column.filter`, and collection `control` drive built-in behavior such as sorting, truncation tooltips, persistence, and context-menu actions.
 
 This means built-in interactions do **not** infer meaning from rendered DOM content. If a custom-rendered column should still participate in built-in copy/filter/tooltip behavior, give it an `id` or `accessor` that exposes the raw value.
@@ -1107,20 +1206,23 @@ A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated 
 
 ### Shared fields
 
-| Property   | Type                                                        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ---------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `label`    | `string`                                                    | Column header text. Omit for icon-only columns.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `header`   | `(ctx: HeaderRenderContext) => ReactNode`                   | Custom header renderer. Presentation only. When omitted, the built-in header renders `label` and owns the sort button/indicator. When provided, the return value replaces the built-in header entirely; sortable custom headers receive `sortDirection` and `activateSort()` via `ctx` and must render their own click surface for left-click sorting. The header context menu still uses the column metadata (`label`, `sort`, etc.).                                                                            |
-| `footer`   | `string \| ((ctx: FooterRenderContext<TRow>) => ReactNode)` | Optional static string or column footer renderer, including callbacks created by `aggregations`. Renderers receive current `data.rows` (the current page, not selected rows or all records). Enables the automatic sticky `<tfoot>` row; no default content or typed formatting is applied. See [Column footers](#column-footers).                                                                                                                                                                                |
-| `render`   | `(row: TRow) => ReactNode`                                  | Renders the cell content. Presentation only. Optional — overrides the built-in `type` display renderer when set, not an editor configured through `edit`. Leave `edit` unset to draw your own editor with `render`. Built-in behaviors that need the raw value (truncate tooltip, cell copy/filter context-menu actions) still resolve it from `accessor` first, then `row[col.id]`, and only fall back to the return value of `render(row)` when it is a primitive (`string`, `number`, `boolean`, or `bigint`). |
-| `id`       | `string`                                                    | Stable identifier for column visibility, persisted layout state, raw-value fallback (`row[col.id]`), and the React key. Falls back to `label` when omitted. Set this explicitly when `label` is absent, not unique, or when a custom-rendered column should still participate in built-in cell behaviors that need a raw value.                                                                                                                                                                                   |
-| `width`    | `number`                                                    | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `pin`      | `"left" \| "right"`                                         | Freezes the column to that edge so it stays visible during horizontal scroll (the default; the user can override it via the toolbar's column-settings control). Sticky offsets are measured from the rendered layout, so `width` isn't required — but setting `width` on pinned columns is recommended for stable sizing. The selection and expand columns auto-pin left and the row-actions column auto-pin right.                                                                                               |
-| `align`    | `"left" \| "right"`                                         | Horizontal alignment. Defaults to `"right"` for `type: "number"` and `type: "money"`; `"left"` otherwise. Pass `"left"` to opt a numeric column out.                                                                                                                                                                                                                                                                                                                                                              |
-| `truncate` | `boolean`                                                   | Truncate overflowing text with an ellipsis. Wires up an app-shell `<Tooltip>` automatically when the resolved raw cell value is a string or number (`accessor` first, then `row[col.id]`). With `inferColumns`, no explicit `accessor` is needed because `id` is pinned to the field name. Requires another column to anchor the row width (`width` on a neighbor, or a fixed-size column like selection / row actions).                                                                                          |
-| `accessor` | _(narrowed per `type`)_                                     | Extracts the raw value. This is the primary source of truth for built-in behaviors that need a value independent of presentation (typed rendering, truncate tooltip, cell copy/filter context-menu actions). The return type is narrowed per `type` branch — returning an array is a compile error on all typed columns except `badge`, and returning a plain object is a compile error on all typed columns. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed.       |
-| `sort`     | `SortConfig`                                                | Sort configuration. When set, the column participates in the built-in sort behaviors: the default clickable header and the header context-menu sort submenu. Custom headers still need to call `ctx.activateSort()` to opt into left-click sorting.                                                                                                                                                                                                                                                               |
-| `filter`   | `FilterConfig`                                              | Filter configuration. When set, the column appears as an option in `DataTable.Filters` and can also drive the cell **Add filter** context-menu submenu when collection `control` is available. The cell menu narrows this to single-value operators only.                                                                                                                                                                                                                                                         |
+| Property      | Type                                                                                                             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`       | `string`                                                                                                         | Column header text. Omit for icon-only columns.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `header`      | `(ctx: HeaderRenderContext) => ReactNode`                                                                        | Custom header renderer. Presentation only. When omitted, the built-in header renders `label` and owns the sort button/indicator. When provided, the return value replaces the built-in header entirely; sortable custom headers receive `sortDirection` and `activateSort()` via `ctx` and must render their own click surface for left-click sorting. The header context menu still uses the column metadata (`label`, `sort`, etc.).                                                                            |
+| `footer`      | `string \| ((ctx: FooterRenderContext<TRow>) => ReactNode)`                                                      | Optional static string or column footer renderer, including callbacks created by `aggregations`. Renderers receive current `data.rows` (the current page, not selected rows or all records). Enables the automatic sticky `<tfoot>` row; no default content or typed formatting is applied. See [Column footers](#column-footers).                                                                                                                                                                                |
+| `render`      | `(row: TRow) => ReactNode`                                                                                       | Renders the cell content. Presentation only. Optional — overrides the built-in `type` display renderer when set, not an editor configured through `edit`. Leave `edit` unset to draw your own editor with `render`. Built-in behaviors that need the raw value (truncate tooltip, cell copy/filter context-menu actions) still resolve it from `accessor` first, then `row[col.id]`, and only fall back to the return value of `render(row)` when it is a primitive (`string`, `number`, `boolean`, or `bigint`). |
+| `id`          | `string`                                                                                                         | Stable identifier for column visibility, persisted layout state, raw-value fallback (`row[col.id]`), and the React key. Falls back to `label` when omitted. Set this explicitly when `label` is absent, not unique, or when a custom-rendered column should still participate in built-in cell behaviors that need a raw value.                                                                                                                                                                                   |
+| `headerProps` | `(ctx: HeaderRenderContext) => Pick<ComponentProps<"th">, "className" \| "style" \| "title"> \| undefined`       | Sets classes, inline styles, and a native title on this column's `<th>` based on the header context. Return `undefined` to keep the defaults. Does not replace header content or sorting. Column width and sticky positioning take precedence over inline styles. See [Header styling](#header-styling).                                                                                                                                                                                                          |
+| `cellProps`   | `(row: TRow) => Pick<ComponentProps<"td">, "className" \| "style" \| "title"> \| undefined`                      | Sets classes, inline styles, and a native title on the data-cell `<td>`. Column width and sticky positioning take precedence over inline styles. See [Per-cell styling](#per-cell-styling).                                                                                                                                                                                                                                                                                                                       |
+| `footerProps` | `(ctx: FooterRenderContext<TRow>) => Pick<ComponentProps<"td">, "className" \| "style" \| "title"> \| undefined` | Sets classes, inline styles, and a native title on this column's footer `<td>` based on current rows. Return `undefined` to keep the defaults. Does not create a footer row or replace its content. Column width and sticky positioning take precedence. See [Footer styling](#footer-styling).                                                                                                                                                                                                                   |
+| `width`       | `number`                                                                                                         | Fixed column width in pixels. Optional.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `pin`         | `"left" \| "right"`                                                                                              | Freezes the column to that edge so it stays visible during horizontal scroll (the default; the user can override it via the toolbar's column-settings control). Sticky offsets are measured from the rendered layout, so `width` isn't required — but setting `width` on pinned columns is recommended for stable sizing. The selection and expand columns auto-pin left and the row-actions column auto-pin right.                                                                                               |
+| `align`       | `"left" \| "right"`                                                                                              | Horizontal alignment. Defaults to `"right"` for `type: "number"` and `type: "money"`; `"left"` otherwise. Pass `"left"` to opt a numeric column out.                                                                                                                                                                                                                                                                                                                                                              |
+| `truncate`    | `boolean`                                                                                                        | Truncate overflowing text with an ellipsis. Wires up an app-shell `<Tooltip>` automatically when the resolved raw cell value is a string or number (`accessor` first, then `row[col.id]`). With `inferColumns`, no explicit `accessor` is needed because `id` is pinned to the field name. Requires another column to anchor the row width (`width` on a neighbor, or a fixed-size column like selection / row actions).                                                                                          |
+| `accessor`    | _(narrowed per `type`)_                                                                                          | Extracts the raw value. This is the primary source of truth for built-in behaviors that need a value independent of presentation (typed rendering, truncate tooltip, cell copy/filter context-menu actions). The return type is narrowed per `type` branch — returning an array is a compile error on all typed columns except `badge`, and returning a plain object is a compile error on all typed columns. Untyped columns (`type` omitted) retain `unknown`. `null` and `undefined` are always allowed.       |
+| `sort`        | `SortConfig`                                                                                                     | Sort configuration. When set, the column participates in the built-in sort behaviors: the default clickable header and the header context-menu sort submenu. Custom headers still need to call `ctx.activateSort()` to opt into left-click sorting.                                                                                                                                                                                                                                                               |
+| `filter`      | `FilterConfig`                                                                                                   | Filter configuration. When set, the column appears as an option in `DataTable.Filters` and can also drive the cell **Add filter** context-menu submenu when collection `control` is available. The cell menu narrows this to single-value operators only.                                                                                                                                                                                                                                                         |
 
 ### `type`-specific fields
 

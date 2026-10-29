@@ -7,6 +7,67 @@ import {
   useDataTable,
 } from "@tailor-platform/app-shell";
 
+export function PerCellStyling() {
+  type Overtime = { id: string; employee: string; january: number; february: number };
+  const { column } = createColumnHelper<Overtime>();
+  const overtimeStyle = (hours: number) => {
+    const tone = hours >= 60 ? "danger" : hours >= 40 ? "warning" : "success";
+    return {
+      backgroundColor: `var(--${tone}-solid)`,
+      color: `var(--${tone}-contrast)`,
+    };
+  };
+  const table = useDataTable({
+    data: {
+      rows: [
+        { id: "1", employee: "Alex", january: 24, february: 48 },
+        { id: "2", employee: "Sam", january: 45, february: 64 },
+        { id: "3", employee: "Robin", january: 62, february: 32 },
+      ],
+    },
+    columns: [
+      column({ id: "employee", label: "Employee", type: "text", width: 160 }),
+      column({
+        id: "january",
+        label: "January (hours)",
+        type: "number",
+        width: 180,
+        cellProps: (row) => ({
+          style: overtimeStyle(row.january),
+          title: `${row.january} hours of overtime`,
+        }),
+      }),
+      column({
+        id: "february",
+        label: "February (hours)",
+        type: "number",
+        width: 180,
+        pin: "right",
+        headerProps: () => ({
+          className: "astw:whitespace-nowrap",
+          style: { backgroundColor: "var(--muted)" },
+          title: "February overtime summary",
+        }),
+        cellProps: (row) => ({
+          className: "astw:tabular-nums",
+          style: overtimeStyle(row.february),
+          title: `${row.february} hours of overtime`,
+        }),
+      }),
+    ],
+    rowSelection: {},
+  });
+
+  return (
+    <div className="space-y-3">
+      <p>Overtime: below 40 hours is safe, 40–59 is caution, 60 or more is danger.</p>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    </div>
+  );
+}
+
 export function ColumnFooters() {
   type Line = { id: string; item: string; quantity: number | null };
   const [rows, setRows] = useState<Line[]>([
@@ -34,6 +95,17 @@ export function ColumnFooters() {
             ),
         },
         footer: aggregations.sum((row) => row.quantity),
+        footerProps: ({ rows }) =>
+          rows.length > 0
+            ? {
+                className: "tabular-nums",
+                style: {
+                  backgroundColor: "var(--success-solid)",
+                  color: "var(--success-contrast)",
+                },
+                title: `Quantity total for ${rows.length} items on this page`,
+              }
+            : undefined,
       }),
     ],
   });

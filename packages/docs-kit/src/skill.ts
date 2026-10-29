@@ -86,9 +86,28 @@ export function readSkillVersion(repoRoot: string, config: DocsConfig): string |
 
 /** Substitute the package version into a computed skill file. Applied only when
  * writing — the manifest hashes the unstamped content, so a changesets version
- * bump never registers as skill drift. */
+ * bump never registers as skill drift. Throws rather than ship a literal
+ * placeholder, which would tell every consumer their copy is stale. */
 export function stampSkill(content: string, version: string | null): string {
-  return version === null ? content : content.replace(VERSION_PLACEHOLDER, version);
+  if (version !== null) return content.replace(VERSION_PLACEHOLDER, version);
+  if (content.includes("{{APP_SHELL_VERSION}}")) {
+    throw new Error("skill template uses {{APP_SHELL_VERSION}} but skill.versionSource is not set");
+  }
+  return content;
+}
+
+/** Compute the skill and stamp it, so a bad version source fails before any write. */
+export function computeStampedSkill(
+  repoRoot: string,
+  config: DocsConfig,
+  outlines: Outline[],
+): Map<string, { content: string; stamped: string }> {
+  const version = readSkillVersion(repoRoot, config);
+  const files = new Map<string, { content: string; stamped: string }>();
+  for (const [p, content] of computeSkill(repoRoot, config, outlines)) {
+    files.set(p, { content, stamped: stampSkill(content, version) });
+  }
+  return files;
 }
 
 /** Compute the whole consumer skill as a map of repo-relative path → content.

@@ -13,7 +13,7 @@ Select and implement the correct UI pattern using @tailor-platform/app-shell com
 
 ## Version
 
-This skill was generated from `@tailor-platform/app-shell` **{{APP_SHELL_VERSION}}**. Before relying on it, compare that with the installed version (`node_modules/@tailor-platform/app-shell/package.json`). If they differ, this copy is stale: tell the user and suggest re-syncing the skill from the installed package (`node_modules/@tailor-platform/app-shell/skills/app-shell-patterns/`).
+This skill was generated from `@tailor-platform/app-shell` **{{APP_SHELL_VERSION}}**. Before relying on it, compare that with the version installed in the app you're working on (resolve `@tailor-platform/app-shell/package.json` from that app, not the monorepo root). If they differ, this copy is stale: tell the user and suggest re-syncing it from the installed package's `skills/app-shell-patterns/` directory.
 
 ## Concepts
 

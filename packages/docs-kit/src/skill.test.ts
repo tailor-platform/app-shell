@@ -24,8 +24,12 @@ describe("stampSkill", () => {
     expect(stampSkill(content, "1.17.0")).toBe('app-shell-version: "1.17.0"\n**1.17.0**');
   });
 
-  it("leaves content untouched without a version", () => {
-    expect(stampSkill("{{APP_SHELL_VERSION}}", null)).toBe("{{APP_SHELL_VERSION}}");
+  it("leaves placeholder-free content untouched without a version", () => {
+    expect(stampSkill("no stamp here", null)).toBe("no stamp here");
+  });
+
+  it("throws rather than ship an unfilled placeholder", () => {
+    expect(() => stampSkill("{{APP_SHELL_VERSION}}", null)).toThrow(/versionSource/);
   });
 });
 

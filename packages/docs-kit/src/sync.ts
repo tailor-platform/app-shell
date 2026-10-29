@@ -8,7 +8,7 @@ import { type Finding, reconcile } from "./coverage";
 import { hash, normalizeText } from "./hash";
 import { writeManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
-import { computeSkill, readSkillVersion, stampSkill } from "./skill";
+import { computeStampedSkill } from "./skill";
 import { loadSurface, snapshotHashForSlug } from "./project";
 import type { Manifest, ManifestEntry } from "./types";
 
@@ -104,13 +104,13 @@ export function sync(repoRoot: string): SyncResult {
   // docs + authored guidance, and hash each file so `check` can validate it.
   let skill: Record<string, string> | undefined;
   if (config.skill) {
+    const files = computeStampedSkill(repoRoot, config, outlines);
     rmSync(join(repoRoot, config.skill.outDir), { recursive: true, force: true });
     skill = {};
-    const version = readSkillVersion(repoRoot, config);
-    for (const [skillRel, content] of computeSkill(repoRoot, config, outlines)) {
+    for (const [skillRel, { content, stamped }] of files) {
       const abs = join(repoRoot, skillRel);
       mkdirSync(dirname(abs), { recursive: true });
-      writeFileSync(abs, stampSkill(content, version), "utf8");
+      writeFileSync(abs, stamped, "utf8");
       skill[skillRel] = hash(normalizeText(content));
       written.push(skillRel);
     }

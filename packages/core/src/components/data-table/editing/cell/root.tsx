@@ -1,8 +1,8 @@
-import type { Column } from "../types";
+import type { Column } from "../../types";
 import { columnChoices, type EditableColumn, type DataTableEditableCellProps } from "./shared";
-import { TypingEditCell } from "./typing-cell";
-import { ChoiceEditCell } from "./choice-cell";
-import { DateEditCell } from "./date-cell";
+import { TypingEditCell } from "./typing";
+import { ChoiceEditCell } from "./choice";
+import { DateEditCell } from "./date";
 
 /**
  * Whether the column carries an `edit` config it can use: any typed column

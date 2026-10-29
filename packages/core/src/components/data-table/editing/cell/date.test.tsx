@@ -4,9 +4,9 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
-import { DataTable } from "../data-table";
-import { useDataTable } from "../use-data-table";
-import { createColumnHelper } from "../field-helpers";
+import { DataTable } from "../../data-table";
+import { useDataTable } from "../../use-data-table";
+import { createColumnHelper } from "../../field-helpers";
 
 afterEach(() => {
   cleanup();

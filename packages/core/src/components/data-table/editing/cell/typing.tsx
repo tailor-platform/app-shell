@@ -19,9 +19,9 @@ import {
   toNumberEditText,
   toNumberValue,
   toTextValue,
-} from "../cell-values";
-import { useDataTableT } from "../i18n";
-import { useCellEditSession } from "./use-session";
+} from "../../cell-values";
+import { useDataTableT } from "../../i18n";
+import { useCellEditSession } from "../use-session";
 import {
   CELL_ERROR_CLASS_NAME,
   ICON_INPUT_CLASS_NAME,

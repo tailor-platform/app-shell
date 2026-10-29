@@ -13,9 +13,9 @@ import { cn } from "@/lib/utils";
 import { isComposing } from "@/lib/is-composing";
 import { BadgeList } from "@/components/badge-list";
 import { ComboboxParts } from "@/components/combobox";
-import { toTextValue } from "../cell-values";
-import { useDataTableT } from "../i18n";
-import { useCellEditSession } from "./use-session";
+import { toTextValue } from "../../cell-values";
+import { useDataTableT } from "../../i18n";
+import { useCellEditSession } from "../use-session";
 import {
   CELL_ERROR_CLASS_NAME,
   ICON_INPUT_CLASS_NAME,

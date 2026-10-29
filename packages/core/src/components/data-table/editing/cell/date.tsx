@@ -7,11 +7,11 @@ import { useTimeZone } from "@/contexts/appshell-context";
 import { Button } from "@/components/button";
 import { Calendar } from "@/components/calendar";
 import { Input } from "@/components/input";
-import type { DateTimeDraft } from "../types";
-import { sameDate, toCalendarDate, toIsoDateTime, toTimeText } from "../cell-values";
-import { useDataTableT } from "../i18n";
-import type { CellEditNavigation } from "./use-navigation";
-import { useCellEditSession } from "./use-session";
+import type { DateTimeDraft } from "../../types";
+import { sameDate, toCalendarDate, toIsoDateTime, toTimeText } from "../../cell-values";
+import { useDataTableT } from "../../i18n";
+import type { CellEditNavigation } from "../use-navigation";
+import { useCellEditSession } from "../use-session";
 import {
   OVERLAY_CLASS_NAME,
   CELL_FOCUS_CLASS_NAME,

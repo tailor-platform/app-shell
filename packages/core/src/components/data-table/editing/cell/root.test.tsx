@@ -4,11 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { Link, MemoryRouter, createMemoryRouter } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import { StrictMode, useState } from "react";
-import { createAppShellWrapper } from "../../../../tests/test-utils";
-import { DataTable } from "../data-table";
-import { useDataTable } from "../use-data-table";
-import { createColumnHelper } from "../field-helpers";
-import type { CellEditState, Column, UseDataTableOptions } from "../types";
+import { createAppShellWrapper } from "../../../../../tests/test-utils";
+import { DataTable } from "../../data-table";
+import { useDataTable } from "../../use-data-table";
+import { createColumnHelper } from "../../field-helpers";
+import type { CellEditState, Column, UseDataTableOptions } from "../../types";
 
 afterEach(() => {
   cleanup();

@@ -2,10 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { createAppShellWrapper } from "../../../../tests/test-utils";
-import { DataTable } from "../data-table";
-import { useDataTable } from "../use-data-table";
-import type { Column } from "../types";
+import { createAppShellWrapper } from "../../../../../tests/test-utils";
+import { DataTable } from "../../data-table";
+import { useDataTable } from "../../use-data-table";
+import type { Column } from "../../types";
 
 afterEach(cleanup);
 

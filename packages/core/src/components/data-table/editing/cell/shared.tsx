@@ -15,13 +15,13 @@ import { useTimeZone } from "@/contexts/appshell-context";
 import { Button } from "@/components/button";
 import { Table } from "@/components/table";
 import { Tooltip } from "@/components/tooltip";
-import type { Column } from "../types";
-import { getCellValue, renderTypedValue } from "../cell-renderers";
-import { CellEditError } from "../cell-edit-error";
-import { resolveBadgeOptions } from "../cell-values";
-import type { CellEditNavigation } from "./use-navigation";
-import { useDataTableT } from "../i18n";
-import type { CellEditFailure } from "./use-session";
+import type { Column } from "../../types";
+import { getCellValue, renderTypedValue } from "../../cell-renderers";
+import { CellEditError } from "../../cell-edit-error";
+import { resolveBadgeOptions } from "../../cell-values";
+import type { CellEditNavigation } from "../use-navigation";
+import { useDataTableT } from "../../i18n";
+import type { CellEditFailure } from "../use-session";
 
 /**
  * A column whose cells can be edited in place.

@@ -50,6 +50,9 @@ type GlobalHeaderLayoutCommonProps = {
 
   /** Whether the sidebar can be collapsed. @default true */
   collapsible?: boolean;
+
+  /** Show a drag handle to resize the expanded desktop sidebar (192–480px). @default false */
+  resizable?: boolean;
 };
 
 /** Default content layout — you render the page via the `Outlet` render prop. */
@@ -100,7 +103,7 @@ export type GlobalHeaderLayoutProps = GlobalHeaderLayoutDefaultProps | GlobalHea
  * ```
  */
 export function GlobalHeaderLayout(props: GlobalHeaderLayoutProps) {
-  const { header, sidebar, body, children, defaultOpen, collapsible } = props;
+  const { header, sidebar, body, children, defaultOpen, collapsible, resizable } = props;
 
   // The global top bar is the app-wide header, so the content column carries no
   // header of its own — compose everything beside the sidebar via the body slot.
@@ -117,6 +120,7 @@ export function GlobalHeaderLayout(props: GlobalHeaderLayoutProps) {
       body={content}
       defaultOpen={defaultOpen}
       collapsible={collapsible}
+      resizable={resizable}
     />
   );
 }

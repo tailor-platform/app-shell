@@ -71,6 +71,26 @@ function entryTable(list: Outline[], dir: string): string {
   return blocks.join("\n\n");
 }
 
+const VERSION_PLACEHOLDER = /\{\{APP_SHELL_VERSION\}\}/g;
+
+/** Read the version stamped into the skill, or null when no source is configured. */
+export function readSkillVersion(repoRoot: string, config: DocsConfig): string | null {
+  const source = config.skill?.versionSource;
+  if (!source) return null;
+  const { version } = JSON.parse(readFileSync(join(repoRoot, source), "utf8")) as {
+    version?: string;
+  };
+  if (!version) throw new Error(`${source} has no "version" field`);
+  return version;
+}
+
+/** Substitute the package version into a computed skill file. Applied only when
+ * writing — the manifest hashes the unstamped content, so a changesets version
+ * bump never registers as skill drift. */
+export function stampSkill(content: string, version: string | null): string {
+  return version === null ? content : content.replace(VERSION_PLACEHOLDER, version);
+}
+
 /** Compute the whole consumer skill as a map of repo-relative path → content.
  * Pure: reads only committed inputs (the generated docs incl. concepts, the SKILL template, and the migrations doc) and writes nothing — so `sync`
  * can emit it and `check` can recompute and validate it without the (gitignored)

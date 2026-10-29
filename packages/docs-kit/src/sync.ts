@@ -8,7 +8,7 @@ import { type Finding, reconcile } from "./coverage";
 import { hash, normalizeText } from "./hash";
 import { writeManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
-import { computeSkill } from "./skill";
+import { computeSkill, readSkillVersion, stampSkill } from "./skill";
 import { loadSurface, snapshotHashForSlug } from "./project";
 import type { Manifest, ManifestEntry } from "./types";
 
@@ -106,10 +106,11 @@ export function sync(repoRoot: string): SyncResult {
   if (config.skill) {
     rmSync(join(repoRoot, config.skill.outDir), { recursive: true, force: true });
     skill = {};
+    const version = readSkillVersion(repoRoot, config);
     for (const [skillRel, content] of computeSkill(repoRoot, config, outlines)) {
       const abs = join(repoRoot, skillRel);
       mkdirSync(dirname(abs), { recursive: true });
-      writeFileSync(abs, content, "utf8");
+      writeFileSync(abs, stampSkill(content, version), "utf8");
       skill[skillRel] = hash(normalizeText(content));
       written.push(skillRel);
     }

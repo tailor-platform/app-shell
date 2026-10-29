@@ -1,6 +1,8 @@
 ---
 name: app-shell-patterns
 description: "Best-practice UI patterns and correct component usage for building pages in apps that use @tailor-platform/app-shell. Use when: building or editing any screen, page, list, table, detail view, form, modal, dialog, wizard, or bulk/confirm/toast interaction in an app with @tailor-platform/app-shell installed — when choosing the right AppShell component, layout, or design token for a UI — or when upgrading @tailor-platform/app-shell, or diagnosing styling, theming, or dark-mode breakage that appeared after a version bump."
+metadata:
+  app-shell-version: "{{APP_SHELL_VERSION}}"
 ---
 
 # App-Shell Patterns
@@ -8,6 +10,10 @@ description: "Best-practice UI patterns and correct component usage for building
 ## Purpose
 
 Select and implement the correct UI pattern using @tailor-platform/app-shell components.
+
+## Version
+
+This skill was generated from `@tailor-platform/app-shell` **{{APP_SHELL_VERSION}}**. Before relying on it, compare that with the installed version (`node_modules/@tailor-platform/app-shell/package.json`). If they differ, this copy is stale: tell the user and suggest re-syncing the skill from the installed package (`node_modules/@tailor-platform/app-shell/skills/app-shell-patterns/`).
 
 ## Concepts
 

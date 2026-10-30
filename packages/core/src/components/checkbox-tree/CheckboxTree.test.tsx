@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { Field } from "../field";
+import { Form } from "../form";
 import { CheckboxTree } from "./CheckboxTree";
 import type { CheckboxTreeSelection } from "./types";
 
@@ -146,6 +147,31 @@ describe("CheckboxTree", () => {
         ["A2", "loose", "not-loaded-yet"],
         expect.anything(),
       );
+    });
+
+    it("treats a controlled value reset to undefined as an empty selection", async () => {
+      const user = userEvent.setup();
+      function Resettable() {
+        const [value, setValue] = React.useState<string[] | undefined>(undefined);
+        return (
+          <>
+            <CheckboxTree<Node>
+              items={WAREHOUSES}
+              mapItem={mapItem}
+              aria-label="Bins"
+              value={value}
+              onValueChange={setValue}
+            />
+            <button onClick={() => setValue(undefined)}>Reset</button>
+          </>
+        );
+      }
+      render(<Resettable />);
+
+      await user.click(screen.getByText("Loose stock"));
+      expect(checkedOf("Loose stock")).toBe("true");
+      await user.click(screen.getByRole("button", { name: "Reset" }));
+      expect(checkedOf("Loose stock")).toBe("false");
     });
 
     it("follows a controlled value", async () => {
@@ -473,6 +499,105 @@ describe("CheckboxTree", () => {
       const root = document.querySelector("[data-slot=checkbox-tree]")!;
       expect(root.hasAttribute("data-invalid")).toBe(true);
       expect(root.hasAttribute("data-disabled")).toBe(true);
+    });
+
+    it("gives Base UI Form and Field validate the selection as an array", async () => {
+      const user = userEvent.setup();
+      const onFormSubmit = vi.fn();
+      const validate = vi.fn(() => null);
+      render(
+        <Form onFormSubmit={onFormSubmit}>
+          <Field.Root name="bins" validate={validate} validationMode="onChange">
+            <CheckboxTree<Node>
+              items={WAREHOUSES}
+              mapItem={mapItem}
+              aria-label="Bins"
+              defaultValue={["A2"]}
+            />
+          </Field.Root>
+          <button type="submit">Save</button>
+        </Form>,
+      );
+
+      await user.click(screen.getByText("Loose stock"));
+      expect(validate).toHaveBeenLastCalledWith(["A2", "loose"], expect.anything());
+      await user.click(screen.getByRole("button", { name: "Save" }));
+      expect(onFormSubmit.mock.calls[0]![0]).toMatchObject({ bins: ["A2", "loose"] });
+    });
+
+    it("submits leaves that serialize to the same string, without key collisions", async () => {
+      const user = userEvent.setup();
+      const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+      render(
+        <form data-testid="form">
+          <CheckboxTree<Node>
+            items={WAREHOUSES}
+            mapItem={mapItem}
+            aria-label="Bins"
+            name="bins"
+            valueShape="exact"
+            itemToStringValue={(bin) => bin.id}
+          />
+        </form>,
+      );
+
+      await expand(user, "Warehouse X");
+      await expand(user, "Warehouse Y");
+      await user.click(screen.getByText("X · A1"));
+      await user.click(screen.getByText("Y · A1"));
+
+      const data = new FormData(screen.getByTestId("form") as HTMLFormElement);
+      expect(data.getAll("bins")).toEqual(["A1", "A1"]);
+      expect(consoleError).not.toHaveBeenCalledWith(
+        expect.stringContaining("same key"),
+        expect.anything(),
+        expect.anything(),
+      );
+      consoleError.mockRestore();
+    });
+
+    it("submits exact selections for items that aren't loaded yet", () => {
+      render(
+        <form data-testid="form">
+          <CheckboxTree<Node>
+            items={WAREHOUSES}
+            mapItem={mapItem}
+            aria-label="Bins"
+            name="bins"
+            valueShape="exact"
+            defaultValue={{ "wh-z": { B1: true }, loose: true }}
+          />
+        </form>,
+      );
+
+      const data = new FormData(screen.getByTestId("form") as HTMLFormElement);
+      expect(data.getAll("bins")).toEqual(["loose", "wh-z/B1"]);
+    });
+
+    it("marks the tree aria-invalid inside an invalid Field.Root", () => {
+      render(
+        <Field.Root name="scope" error={{ message: "Required" }}>
+          <CheckboxTree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />
+        </Field.Root>,
+      );
+      expect(screen.getByRole("tree").getAttribute("aria-invalid")).toBe("true");
+    });
+
+    it("reports a pre-filled selection to Field on mount", () => {
+      render(
+        <Field.Root name="scope">
+          <CheckboxTree<Node>
+            items={WAREHOUSES}
+            mapItem={mapItem}
+            aria-label="Bins"
+            defaultValue={["loose"]}
+          />
+        </Field.Root>,
+      );
+      const root =
+        document.querySelector("[data-slot=field]") ?? document.querySelector("[data-filled]");
+      expect(document.querySelector("[data-filled]")).not.toBeNull();
+      expect(root).not.toBeNull();
     });
 
     it("fires onBlur once focus leaves the tree, not between rows", () => {

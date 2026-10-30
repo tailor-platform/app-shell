@@ -7,7 +7,13 @@ import { cn } from "@/lib/utils";
 
 import { CheckboxTreeRow, columnCellProps } from "./CheckboxTreeRow";
 import { useCheckboxTreeT } from "./i18n";
-import { checkState, flattenVisible, type TreeNode } from "./tree-model";
+import {
+  checkState,
+  flattenVisible,
+  pathId,
+  unknownSelectionPaths,
+  type TreeNode,
+} from "./tree-model";
 import type {
   CheckboxTreeChangeDetails,
   CheckboxTreeProps,
@@ -18,6 +24,8 @@ import type {
 import { useCheckboxTreeField } from "./use-checkbox-tree-field";
 import { useTreeFocus } from "./use-tree-focus";
 import { useTreeSelection } from "./use-tree-selection";
+
+type SubmittedEntry = { id: string; value: string };
 
 /**
  * A searchable, multi-select checkbox tree for picking many items out of a
@@ -92,26 +100,29 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
   const fieldRoot = useFieldRootContext();
   const treeDisabled = !!disabled || !!fieldRoot.disabled;
 
-  /** The strings submitted for a selection — one per selected leaf. */
-  const submittedValues = React.useCallback(
-    (selected: CheckboxTreeSelectedItem<T>[], keys: readonly string[]): string[] => {
+  /**
+   * What the form submits for a selection: one entry per selected leaf, plus
+   * the kept values that aren't in the tree. `id` keys the hidden inputs, since
+   * two leaves can serialize to the same string.
+   */
+  const submittedEntries = React.useCallback(
+    (selected: CheckboxTreeSelectedItem<T>[], unknown: string[][]): SubmittedEntry[] => {
       const toString = (entry: CheckboxTreeSelectedItem<T>) =>
         itemToStringValue?.(entry.item, { path: entry.path, parents: entry.parents }) ??
         (exact ? entry.path.join("/") : entry.key);
-      if (exact) return selected.map(toString);
-      // Keys mode keeps keys that aren't in the tree; submit those as they are.
-      const byKey = new Map(selected.map((entry) => [entry.key, entry]));
-      return keys.map((key) => {
-        const entry = byKey.get(key);
-        return entry ? toString(entry) : key;
-      });
+      const idOf = (path: readonly string[]) => (exact ? pathId(path) : path.at(-1)!);
+      return [
+        ...selected.map((entry) => ({ id: idOf(entry.path), value: toString(entry) })),
+        ...unknown.map((path) => ({ id: idOf(path), value: path.join("/") })),
+      ];
     },
     [exact, itemToStringValue],
   );
 
   // The field bridge is created after the selection hook (it needs the current
-  // value), so the change handler reaches it through a ref.
-  const fieldChangeRef = React.useRef<(value: string) => void>(() => {});
+  // value), so the change handler reaches it and the tree through refs.
+  const fieldChangeRef = React.useRef<(values: readonly string[]) => void>(() => {});
+  const treeRef = React.useRef<TreeNode<T>[]>([]);
   const consumerOnValueChange = props.onValueChange as
     | ((value: string[] | CheckboxTreeSelection, details: CheckboxTreeChangeDetails<T>) => void)
     | undefined;
@@ -119,10 +130,18 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
   const handleValueChange = React.useCallback(
     (value: string[] | CheckboxTreeSelection, details: CheckboxTreeChangeDetails<T>) => {
       consumerOnValueChange?.(value, details);
-      const keys = Array.isArray(value) ? value : [];
-      fieldChangeRef.current(submittedValues(details.selected, keys).join("\n"));
+      let unknown: string[][];
+      if (Array.isArray(value)) {
+        const selectedKeys = new Set(details.selected.map((entry) => entry.key));
+        unknown = value.filter((key) => !selectedKeys.has(key)).map((key) => [key]);
+      } else {
+        unknown = unknownSelectionPaths(treeRef.current, value);
+      }
+      fieldChangeRef.current(
+        submittedEntries(details.selected, unknown).map((entry) => entry.value),
+      );
     },
-    [consumerOnValueChange, submittedValues],
+    [consumerOnValueChange, submittedEntries],
   );
 
   const valueProps = {
@@ -143,20 +162,30 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
     isSelected,
     toggleNode,
     selected,
-    keys,
-  } = useTreeSelection({ items, mapItem, matchesSearch, disabled: treeDisabled, ...valueProps });
+    unknown,
+  } = useTreeSelection({
+    items,
+    mapItem,
+    matchesSearch,
+    disabled: treeDisabled,
+    // A `value` prop that is present but `undefined` (e.g. a form reset) is
+    // still controlled: it means "nothing selected".
+    controlled: "value" in props,
+    ...valueProps,
+  });
+  treeRef.current = tree;
 
-  const values = React.useMemo(
-    () => submittedValues(selected, keys),
-    [submittedValues, selected, keys],
+  const entries = React.useMemo(
+    () => submittedEntries(selected, unknown),
+    [submittedEntries, selected, unknown],
   );
-  const inputValue = values.join("\n");
+  const values = React.useMemo(() => entries.map((entry) => entry.value), [entries]);
 
   const field = useCheckboxTreeField({
     id,
     name,
     disabled,
-    inputValue,
+    values,
     ariaLabelledBy,
     onBlur,
     rootRef,
@@ -225,14 +254,14 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
         aria-hidden="true"
         disabled={field.isDisabled}
         required={required}
-        value={inputValue}
+        value={field.proxyValue}
         onChange={() => {}}
         onFocus={focusTree}
         className="astw:pointer-events-none astw:absolute astw:size-px astw:overflow-hidden astw:opacity-0"
       />
       {field.name && !field.isDisabled
-        ? values.map((value) => (
-            <input key={value} type="hidden" name={field.name} form={form} value={value} />
+        ? entries.map((entry) => (
+            <input key={entry.id} type="hidden" name={field.name} form={form} value={entry.value} />
           ))
         : null}
 
@@ -307,6 +336,7 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
           aria-labelledby={field.labelledBy}
           aria-describedby={field.describedBy}
           aria-required={required || undefined}
+          aria-invalid={field.isInvalid || undefined}
           aria-disabled={treeDisabled || undefined}
           data-slot="checkbox-tree-list"
           // Keys are handled on the tree itself, so the search box and anything

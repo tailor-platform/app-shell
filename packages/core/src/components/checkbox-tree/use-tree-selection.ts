@@ -10,6 +10,7 @@ import {
   leavesOf,
   selectionFromIds,
   toSelectedItem,
+  unknownSelectionPaths,
   type TreeNode,
 } from "./tree-model";
 import type {
@@ -34,6 +35,12 @@ type UseTreeSelectionOptions<T> = {
   matchesSearch?: (item: T, query: string) => boolean;
   /** Ignores every toggle (the whole tree is disabled). */
   disabled?: boolean;
+  /**
+   * Whether the parent owns the value. Defaults to `value !== undefined`; pass
+   * `true` when a `value` prop is present, so a controlled `undefined` (e.g. a
+   * form reset) reads as an empty selection instead of stale internal state.
+   */
+  controlled?: boolean;
 } & CheckboxTreeValueProps<T>;
 
 export type UseTreeSelectionResult<T> = {
@@ -50,8 +57,11 @@ export type UseTreeSelectionResult<T> = {
   toggleNode(node: TreeNode<T>, next: boolean): void;
   /** Selected leaves in tree order (one per key in the keys shape). */
   selected: CheckboxTreeSelectedItem<T>[];
-  /** The current keys value, including keys not in the tree (keys shape only; empty otherwise). */
-  keys: readonly string[];
+  /**
+   * Selected values that aren't in the tree, kept as they were: keys in the
+   * keys shape (`[["key"]]`), leaf paths in the exact shape.
+   */
+  unknown: string[][];
 };
 
 const EMPTY_KEYS: readonly string[] = [];
@@ -83,12 +93,17 @@ export function useTreeSelection<T>(
     exact ? (options.defaultValue as CheckboxTreeSelection | undefined) : undefined,
   );
 
-  const keysValue = !exact
-    ? ((options.value as readonly string[] | undefined) ?? keysState)
-    : EMPTY_KEYS;
-  const exactValue = exact
-    ? ((options.value as CheckboxTreeSelection | undefined) ?? exactState)
-    : undefined;
+  const controlled = options.controlled ?? options.value !== undefined;
+  // A controlled `undefined` is an empty selection, never stale internal state.
+  let keysValue: readonly string[] = EMPTY_KEYS;
+  let exactValue: CheckboxTreeSelection | undefined;
+  if (exact) {
+    exactValue = controlled ? (options.value as CheckboxTreeSelection | undefined) : exactState;
+  } else {
+    keysValue = controlled
+      ? ((options.value as readonly string[] | undefined) ?? EMPTY_KEYS)
+      : keysState;
+  }
 
   const selectedIds = React.useMemo(
     () => (exact ? idsFromSelection(tree, exactValue) : idsFromKeys(leaves, keysValue)),
@@ -113,6 +128,12 @@ export function useTreeSelection<T>(
   );
 
   const selected = React.useMemo(() => selectedFrom(selectedIds), [selectedFrom, selectedIds]);
+
+  const unknown = React.useMemo((): string[][] => {
+    if (exact) return unknownSelectionPaths(tree, exactValue);
+    const known = new Set(leaves.map((leaf) => leaf.key));
+    return keysValue.filter((key) => !known.has(key)).map((key) => [key]);
+  }, [exact, tree, exactValue, leaves, keysValue]);
 
   const { kept, autoExpand } = React.useMemo(() => {
     const trimmed = query.trim();
@@ -166,8 +187,6 @@ export function useTreeSelection<T>(
   const onValueChange = options.onValueChange as
     | ((value: string[] | CheckboxTreeSelection, details: CheckboxTreeChangeDetails<T>) => void)
     | undefined;
-  const controlled = options.value !== undefined;
-
   const toggleNode = React.useCallback(
     (node: TreeNode<T>, next: boolean) => {
       if (disabled) return;
@@ -225,6 +244,6 @@ export function useTreeSelection<T>(
     isSelected,
     toggleNode,
     selected,
-    keys: keysValue,
+    unknown,
   };
 }

@@ -252,6 +252,36 @@ export function selectionFromIds<T>(
   return out;
 }
 
+/**
+ * The leaf paths an exact selection lists that don't exist in the tree (e.g.
+ * items not loaded yet). They're kept in the value, so they're submitted too.
+ */
+export function unknownSelectionPaths<T>(
+  nodes: ReadonlyArray<TreeNode<T>>,
+  selection: CheckboxTreeSelection | undefined,
+  prefix: string[] = [],
+): string[][] {
+  if (!selection) return [];
+  const out: string[][] = [];
+  for (const [key, entry] of Object.entries(selection)) {
+    const path = [...prefix, key];
+    const matching = nodes.filter((node) => node.key === key);
+    if (matching.length === 0) {
+      out.push(...selectionLeafPaths(entry, path));
+      continue;
+    }
+    if (entry === true) continue;
+    const children = matching.flatMap((node) => node.children);
+    if (children.length > 0) out.push(...unknownSelectionPaths(children, entry, path));
+  }
+  return out;
+}
+
+function selectionLeafPaths(entry: true | CheckboxTreeSelection, path: string[]): string[][] {
+  if (entry === true) return [path];
+  return Object.entries(entry).flatMap(([key, child]) => selectionLeafPaths(child, [...path, key]));
+}
+
 function mergeUnknown<T>(
   out: CheckboxTreeSelection,
   previous: CheckboxTreeSelection,

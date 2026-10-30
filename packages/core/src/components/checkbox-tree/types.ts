@@ -154,7 +154,11 @@ export type CheckboxTreeProps<T> = CheckboxTreeContentProps<T> &
     required?: boolean;
     /** Locks the whole tree and leaves it out of form submission. */
     disabled?: boolean;
-    /** Id for the tree's form control, e.g. for `<label htmlFor>`. Field generates one otherwise. */
+    /**
+     * Id for the tree's form control (Field generates one otherwise). A native
+     * `<label htmlFor>` focuses the tree but doesn't name it — name it with a
+     * `Field.Label`, `aria-label` or `aria-labelledby`.
+     */
     id?: string;
     /** Ref to the hidden proxy input that carries `required` and Field validation. */
     inputRef?: React.Ref<HTMLInputElement>;

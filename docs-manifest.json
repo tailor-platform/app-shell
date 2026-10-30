@@ -14,8 +14,8 @@
         "typeSurface": "f497e4e3021d029a",
         "outline": "2e5fe6fdb0636b7c",
         "snapshot": null,
-        "outputMd": "eeb1145eb0c1b6d0",
-        "examples": "0271d15e3ef1f3b5"
+        "outputMd": "03362008aa77d4cf",
+        "examples": "97546c5d7e75d710"
       }
     },
     "activity-card": {
@@ -1229,9 +1229,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "6220fbd76e10badf",
+        "outline": "3a657beac0334bbf",
         "snapshot": null,
-        "outputMd": "be312a4180fa08e8",
+        "outputMd": "5f77dda61ce9abd4",
         "examples": null
       }
     },
@@ -1756,9 +1756,9 @@
       "symbols": ["WithGuard", "WithGuardProps"],
       "hashes": {
         "typeSurface": "82ec0e51747a308b",
-        "outline": "821b6b7ae450cdbd",
+        "outline": "2cf6d6a02b0e3585",
         "snapshot": null,
-        "outputMd": "23875a1c20ffc237",
+        "outputMd": "8d4fc931339d9a3f",
         "examples": null
       }
     }
@@ -1769,10 +1769,10 @@
     "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "e189f95dbe4b0286",
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "a59a10293fba053b",
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
-    "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "be312a4180fa08e8",
+    "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "5f77dda61ce9abd4",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "1ed3e6d92e582e26",
-    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "eeb1145eb0c1b6d0",
+    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "03362008aa77d4cf",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "1a2bb081c3e34482",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "82313d5b6fe140d2",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "db2c4388ca783a75",
@@ -1818,7 +1818,7 @@
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
-    "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "23875a1c20ffc237",
+    "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "8d4fc931339d9a3f",
     "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "daf6c93e7285ee88",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",

@@ -20,7 +20,7 @@ import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
 ## Basic Usage
 
 ```tsx
-import { hidden, pass, Text, WithGuard } from "@tailor-platform/app-shell";
+import { WithGuard, pass, hidden, Text } from "@tailor-platform/app-shell";
 
 const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
 

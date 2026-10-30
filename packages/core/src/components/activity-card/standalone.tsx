@@ -45,11 +45,11 @@ function ActivityCardStandalone({
                 ) : undefined
               }
             >
-              <Text variant="label-md" className="astw:text-foreground" render={<p />}>
+              <Text.p variant="label-md" className="astw:text-foreground">
                 {actorName ? <span>{actorName}</span> : null}
                 {actorName ? " " : null}
                 <span className="astw:text-muted-foreground">{item.description}</span>
-              </Text>
+              </Text.p>
               <Text variant="body-sm" className="astw:leading-none astw:text-muted-foreground">
                 {formatTimestamp(item.timestamp)}
               </Text>

@@ -57,9 +57,9 @@ export function MetricCard({ title, value, trend, description, icon, className }
       </div>
 
       {/* Main value */}
-      <Text variant="heading-lg" className="astw:break-words" render={<div />}>
+      <Text.div variant="heading-lg" className="astw:break-words">
         {value}
-      </Text>
+      </Text.div>
 
       {/* Optional meta row: trend + description */}
       {hasMeta && (
@@ -73,13 +73,9 @@ export function MetricCard({ title, value, trend, description, icon, className }
             </span>
           )}
           {description != null && description !== "" && (
-            <Text
-              variant="body-md"
-              className="astw:text-muted-foreground astw:truncate"
-              render={<span />}
-            >
+            <Text.span variant="body-md" className="astw:text-muted-foreground astw:truncate">
               {description}
-            </Text>
+            </Text.span>
           )}
         </div>
       )}

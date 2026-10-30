@@ -6,8 +6,9 @@ import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Input } from "@/components/input";
 import { Tooltip } from "@/components/tooltip";
-import { useDataTableContext } from "./data-table-context";
+import { useDataTableContext } from "./context";
 import { useDataTableT } from "./i18n";
+import { columnKeyAt } from "./column-layout";
 
 // Shared popup styling, matching DataTable's filter popover. The width cap lives
 // on the popup itself (not the inner fieldset) so base-ui measures the real width
@@ -16,13 +17,6 @@ const POPUP_CLASS = cn(
   "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:max-w-[360px] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
-
-// The DataTable column key formula (mirrors useDataTable's getColumnKey);
-// ctx.columns is the full column list in definition order, so the index-based
-// fallback lines up with the keys in ctx.columnOrder.
-function columnKey(col: { id?: string; label?: string }, index: number): string {
-  return col.id ?? col.label ?? String(index);
-}
 
 type Section = "left" | "scrollable" | "right";
 
@@ -76,7 +70,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     const label = new Map<string, string>();
     const defaultPin = new Map<string, "left" | "right" | undefined>();
     columns.forEach((col, i) => {
-      const key = columnKey(col, i);
+      const key = columnKeyAt(col, i);
       label.set(key, col.label ?? key);
       defaultPin.set(key, col.pin);
     });

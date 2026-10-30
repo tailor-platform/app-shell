@@ -380,14 +380,9 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
     return (
       <div className="astw:flex astw:min-h-screen astw:items-center astw:justify-center astw:bg-background astw:p-4">
         <div className="astw:max-w-md astw:rounded-lg astw:border astw:border-danger-border astw:bg-danger-surface astw:p-6 astw:text-center">
-          <Text
-            variant="heading-md"
-            className="astw:mb-2 astw:text-danger-text"
-            // eslint-disable-next-line jsx-a11y/heading-has-content
-            render={<h1 />}
-          >
+          <Text.h1 variant="heading-md" className="astw:mb-2 astw:text-danger-text">
             Configuration Error
-          </Text>
+          </Text.h1>
           <Text variant="body-md" className="astw:text-muted-foreground">
             {errorMessage}
           </Text>

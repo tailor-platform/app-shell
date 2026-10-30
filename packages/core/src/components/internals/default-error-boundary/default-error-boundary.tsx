@@ -20,13 +20,7 @@ export const DefaultErrorBoundary = () => {
         <div className="astw:flex astw:items-start astw:gap-4">
           <AlertCircle className="astw:h-5 astw:w-5 astw:text-danger-text astw:flex-shrink-0 astw:mt-0.5" />
           <div>
-            <Text
-              variant="heading-md"
-              // eslint-disable-next-line jsx-a11y/heading-has-content
-              render={<h1 />}
-            >
-              {t("error404Title")}
-            </Text>
+            <Text.h1 variant="heading-md">{t("error404Title")}</Text.h1>
             <Text variant="body-md" className="astw:text-muted-foreground astw:mt-1">
               {t("error404Body")}
             </Text>
@@ -52,13 +46,7 @@ export const DefaultErrorBoundary = () => {
       <div className="astw:flex astw:items-start astw:gap-4">
         <AlertCircle className="astw:h-5 astw:w-5 astw:text-danger-text astw:flex-shrink-0 astw:mt-0.5" />
         <div>
-          <Text
-            variant="heading-md"
-            // eslint-disable-next-line jsx-a11y/heading-has-content
-            render={<h1 />}
-          >
-            {t("errorTitle")}
-          </Text>
+          <Text.h1 variant="heading-md">{t("errorTitle")}</Text.h1>
           <Text variant="body-md" className="astw:text-muted-foreground astw:mt-1">
             {message}
           </Text>

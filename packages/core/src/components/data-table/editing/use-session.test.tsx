@@ -1,7 +1,7 @@
 import { StrictMode, type ReactNode } from "react";
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { useCellEditSession } from "./use-cell-edit-session";
+import { useCellEditSession } from "./use-session";
 
 afterEach(cleanup);
 

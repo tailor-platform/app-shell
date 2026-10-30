@@ -98,7 +98,8 @@
     "typescript": "5.9.3",
     "vite": "catalog:",
     "vite-plugin-dts": "5.1.2",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "zod": "4.4.3"
   },
   "peerDependencies": {
     "react": ">=19.2.7",

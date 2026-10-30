@@ -7,7 +7,7 @@ description: Create a low-level AI Gateway client that reuses AppShell authentic
 
 # createAIGatewayClient
 
-Creates a small AI Gateway transport client for text-only chat completions.
+Creates a small AI Gateway transport client for chat completions and local function tool calls.
 
 ## Signature
 
@@ -43,6 +43,7 @@ interface AIGatewayClient {
 The iterable yields completion events:
 
 - `text-delta` — append `event.text` to build the assistant response
+- `tool-call` — a local function tool call requested by the model
 - `done` — terminal event with an optional `finishReason`
 
 ## Related Types
@@ -56,11 +57,33 @@ type AIGatewayChatMessage =
   | {
       role: "assistant";
       content?: string;
+      toolCalls?: AIGatewayToolCall[];
+    }
+  | {
+      role: "tool";
+      toolCallId: string;
+      content: string;
     };
+
+interface AIGatewayToolCall {
+  id: string;
+  name: string;
+  argumentsText: string;
+}
+
+interface AIGatewayFunctionTool {
+  type: "function";
+  function: {
+    name: string;
+    description?: string;
+    parameters: Record<string, unknown>;
+  };
+}
 
 interface AIGatewayChatRequest {
   model: string;
   messages: AIGatewayChatMessage[];
+  tools?: AIGatewayFunctionTool[];
   signal?: AbortSignal;
 }
 
@@ -68,6 +91,12 @@ type AIChatCompletionEvent =
   | {
       type: "text-delta";
       text: string;
+    }
+  | {
+      type: "tool-call";
+      toolCallId: string;
+      toolName: string;
+      argumentsText: string;
     }
   | {
       type: "done";
@@ -106,7 +135,8 @@ console.log(text);
 ## Notes
 
 - AppShell chooses the appropriate AI Gateway transport automatically
-- The low-level API is intentionally narrow: text deltas plus completion metadata
+- Local tools are sent as normalized `type: "function"` definitions; provider-native tools are not supported
+- The low-level API stays event-based so hooks can layer streaming UI and tool loops on top
 - `request.signal` is passed through so callers can abort in-flight work
 
 ## Related

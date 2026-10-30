@@ -26,12 +26,12 @@ function BasicUsage() {
   return (
     <Layout>
       <Layout.Column>
-        <h2>Main Content</h2>
-        <p>Your main content goes here...</p>
+        <Text.h2>Main Content</Text.h2>
+        <Text.p>Your main content goes here...</Text.p>
       </Layout.Column>
       <Layout.Column>
-        <h2>Sidebar</h2>
-        <p>Additional info or actions...</p>
+        <Text.h2>Sidebar</Text.h2>
+        <Text.p>Additional info or actions...</Text.p>
       </Layout.Column>
     </Layout>
   );
@@ -230,7 +230,7 @@ If any `Layout.Column` has an `area` prop, all columns switch to area-based widt
     <nav>Sidebar</nav>
   </Layout.Column>
   <Layout.Column area="main">
-    <h2>Content</h2>
+    <Text.h2>Content</Text.h2>
   </Layout.Column>
 </Layout>
 ```
@@ -310,12 +310,12 @@ function OrderDetailPage() {
       </Layout.Column>
       <Layout.Column>
         <Card>
-          <h3>Quick Actions</h3>
+          <Text.h3>Quick Actions</Text.h3>
           <Button fullWidth>Mark as Shipped</Button>
           <Button fullWidth>Send Invoice</Button>
         </Card>
         <Card>
-          <h3>Order History</h3>
+          <Text.h3>Order History</Text.h3>
           <Timeline events={order.history} />
         </Card>
       </Layout.Column>
@@ -333,7 +333,7 @@ function Dashboard() {
       <Layout.Header title="Dashboard" />
       <Layout.Column>
         <Card>
-          <h3>Navigation</h3>
+          <Text.h3>Navigation</Text.h3>
           <nav>
             <a href="#overview">Overview</a>
             <a href="#sales">Sales</a>
@@ -343,17 +343,17 @@ function Dashboard() {
       </Layout.Column>
       <Layout.Column>
         <Card>
-          <h2>Sales Overview</h2>
+          <Text.h2>Sales Overview</Text.h2>
           <Chart data={salesData} />
         </Card>
         <Card>
-          <h2>Recent Orders</h2>
+          <Text.h2>Recent Orders</Text.h2>
           <OrdersTable orders={recentOrders} />
         </Card>
       </Layout.Column>
       <Layout.Column>
         <Card>
-          <h3>Activity Feed</h3>
+          <Text.h3>Activity Feed</Text.h3>
           <ActivityList activities={activities} />
         </Card>
       </Layout.Column>
@@ -381,7 +381,7 @@ function ProductEditor() {
       />
       <Layout.Column>
         <Card>
-          <h3>Product Details</h3>
+          <Text.h3>Product Details</Text.h3>
           <Input
             label="Name"
             value={product.name}
@@ -402,7 +402,7 @@ function ProductEditor() {
       </Layout.Column>
       <Layout.Column>
         <Card>
-          <h3>Preview</h3>
+          <Text.h3>Preview</Text.h3>
           <ProductCard product={product} />
         </Card>
       </Layout.Column>
@@ -439,7 +439,7 @@ function EditorPage() {
   <Layout.Header title="Settings" actions={[<Button key="save">Save Changes</Button>]} />
   <Layout.Column>
     <Card>
-      <h3>Account Settings</h3>
+      <Text.h3>Account Settings</Text.h3>
       <SettingsForm />
     </Card>
   </Layout.Column>

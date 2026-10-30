@@ -131,7 +131,7 @@ Reach for `TestRouter` when the component under test is the subject; mount `AppS
 ## Example
 
 ```tsx
-import { useNavigate, useParams, useLocation, Link } from "@tailor-platform/app-shell";
+import { useNavigate, useParams, useLocation, Link, Text } from "@tailor-platform/app-shell";
 
 const MyComponent = () => {
   const navigate = useNavigate();
@@ -145,8 +145,8 @@ const MyComponent = () => {
 
   return (
     <div>
-      <p>Current path: {location.pathname}</p>
-      <p>Route param ID: {id}</p>
+      <Text.p>Current path: {location.pathname}</Text.p>
+      <Text.p>Route param ID: {id}</Text.p>
 
       {/* Client-side link */}
       <Link to="/products">View Products</Link>

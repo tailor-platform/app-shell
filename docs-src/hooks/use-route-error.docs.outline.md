@@ -26,7 +26,7 @@ const useRouteError: () => unknown;
 ### Basic Error Boundary
 
 ```typescript
-import { useRouteError } from "@tailor-platform/app-shell";
+import { Text, useRouteError } from "@tailor-platform/app-shell";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -37,8 +37,8 @@ function ErrorBoundary() {
 
   return (
     <div>
-      <h1>Something went wrong</h1>
-      <p>{message}</p>
+      <Text.h1>Something went wrong</Text.h1>
+      <Text.p>{message}</Text.p>
       <button onClick={() => window.location.reload()}>
         Try Again
       </button>
@@ -79,7 +79,7 @@ const productsModule = defineModule({
 ### Advanced Error Handling
 
 ```typescript
-import { isRouteErrorResponse, useRouteError } from "@tailor-platform/app-shell";
+import { isRouteErrorResponse, Text, useRouteError } from "@tailor-platform/app-shell";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -88,8 +88,8 @@ function ErrorBoundary() {
   if (isRouteErrorResponse(error)) {
     return (
       <div>
-        <h1>{error.status} {error.statusText}</h1>
-        <p>{error.data}</p>
+        <Text.h1>{error.status} {error.statusText}</Text.h1>
+        <Text.p>{error.data}</Text.p>
       </div>
     );
   }
@@ -98,8 +98,8 @@ function ErrorBoundary() {
   if (error instanceof Error) {
     return (
       <div>
-        <h1>Error</h1>
-        <p>{error.message}</p>
+        <Text.h1>Error</Text.h1>
+        <Text.p>{error.message}</Text.p>
         <pre>{error.stack}</pre>
       </div>
     );
@@ -108,8 +108,8 @@ function ErrorBoundary() {
   // Handle unknown errors
   return (
     <div>
-      <h1>Unknown Error</h1>
-      <p>Something went wrong</p>
+      <Text.h1>Unknown Error</Text.h1>
+      <Text.p>Something went wrong</Text.p>
     </div>
   );
 }
@@ -129,8 +129,8 @@ function ErrorBoundary() {
 
   return (
     <div>
-      <h1>Error</h1>
-      <p>We've been notified and will fix this soon.</p>
+      <Text.h1>Error</Text.h1>
+      <Text.p>We've been notified and will fix this soon.</Text.p>
     </div>
   );
 }

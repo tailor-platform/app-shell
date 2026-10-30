@@ -113,7 +113,7 @@ For a scrollable list, put the overflow on `Card.Content`. Rows supply their own
 ```tsx
 <Card.Root>
   <Card.Content>
-    <p>No header needed for this card.</p>
+    <Text.p>No header needed for this card.</Text.p>
   </Card.Content>
 </Card.Root>
 ```

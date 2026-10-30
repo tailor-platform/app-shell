@@ -58,7 +58,7 @@ With a visible label + description:
   aria-labelledby="invoice-date-label"
   aria-describedby="invoice-date-help"
 />
-<p id="invoice-date-help">Format follows your locale</p>
+<Text.p id="invoice-date-help">Format follows your locale</Text.p>
 ```
 
 Inside `Field.Root`:
@@ -126,7 +126,7 @@ Use standard HTML + ARIA when rendering the field standalone:
   value={value}
   onChange={setValue}
 />
-{error && <p id="delivery-date-error">{error}</p>}
+{error && <Text.p id="delivery-date-error">{error}</Text.p>}
 ```
 
 Or let `Field.Root` wire the label, description, and error elements:

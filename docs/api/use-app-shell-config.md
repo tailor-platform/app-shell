@@ -56,15 +56,15 @@ const useAppShellConfig: () => {
 ### Display App Info
 
 ```typescript
-import { useAppShellConfig } from "@tailor-platform/app-shell";
+import { Text, useAppShellConfig } from "@tailor-platform/app-shell";
 
 function AppInfo() {
   const { title, configurations } = useAppShellConfig();
 
   return (
     <div>
-      <h2>{title}</h2>
-      <p>Base: {configurations.basePath}</p>
+      <Text.h2>{title}</Text.h2>
+      <Text.p>Base: {configurations.basePath}</Text.p>
     </div>
   );
 }
@@ -96,7 +96,7 @@ function SettingsMenu() {
 
   return (
     <div>
-      <h3>Settings</h3>
+      <Text.h3>Settings</Text.h3>
       {configurations.settingsResources.map((resource) => (
         <button key={resource.path}>{resource.path}</button>
       ))}

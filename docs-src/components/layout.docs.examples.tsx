@@ -1,15 +1,15 @@
-import { Layout } from "@tailor-platform/app-shell";
+import { Layout, Text } from "@tailor-platform/app-shell";
 
 export function BasicUsage() {
   return (
     <Layout>
       <Layout.Column>
-        <h2>Main Content</h2>
-        <p>Your main content goes here...</p>
+        <Text.h2>Main Content</Text.h2>
+        <Text.p>Your main content goes here...</Text.p>
       </Layout.Column>
       <Layout.Column>
-        <h2>Sidebar</h2>
-        <p>Additional info or actions...</p>
+        <Text.h2>Sidebar</Text.h2>
+        <Text.p>Additional info or actions...</Text.p>
       </Layout.Column>
     </Layout>
   );

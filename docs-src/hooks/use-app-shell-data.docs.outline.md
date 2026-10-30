@@ -28,15 +28,15 @@ const useAppShellData: () => {
 ### Basic Access
 
 ```typescript
-import { useAppShellData } from "@tailor-platform/app-shell";
+import { Text, useAppShellData } from "@tailor-platform/app-shell";
 
 function UserProfile() {
   const { contextData } = useAppShellData();
 
   return (
     <div>
-      <p>Welcome, {contextData.currentUser?.name}</p>
-      <p>Role: {contextData.currentUser?.role}</p>
+      <Text.p>Welcome, {contextData.currentUser?.name}</Text.p>
+      <Text.p>Role: {contextData.currentUser?.role}</Text.p>
     </div>
   );
 }
@@ -54,8 +54,8 @@ function UserInfo() {
 
   return (
     <div>
-      <h2>{contextData.currentUser.name}</h2>
-      <p>{contextData.currentUser.email}</p>
+      <Text.h2>{contextData.currentUser.name}</Text.h2>
+      <Text.p>{contextData.currentUser.email}</Text.p>
     </div>
   );
 }

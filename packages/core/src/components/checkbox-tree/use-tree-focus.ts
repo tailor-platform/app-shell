@@ -1,0 +1,145 @@
+import * as React from "react";
+
+import type { TreeNode, VisibleRow } from "./tree-model";
+
+/**
+ * @internal
+ * Implements the ARIA tree keyboard contract on top of a flattened list of
+ * visible rows:
+ *
+ * - **roving tabindex** — exactly one visible row is in the tab order
+ * - `ArrowDown` / `ArrowUp` — move between *visible* rows (a collapsed parent's
+ *   children are not visible, so they are skipped)
+ * - `ArrowRight` — expand a collapsed parent, else step into its first child
+ * - `ArrowLeft` — collapse an expanded parent, else step out to its parent
+ * - `Home` / `End` — first / last visible row
+ * - `Space` — toggle the focused row (cascading for parents) without moving focus
+ * - `Enter` — `onAction` (the row's default action), but only from a tree row
+ */
+
+type UseTreeFocusOptions<T> = {
+  rows: ReadonlyArray<VisibleRow<T>>;
+  setExpanded(id: string, next: boolean): void;
+  toggleNode(node: TreeNode<T>, next: boolean): void;
+  isChecked(node: TreeNode<T>): boolean;
+  /** Enter on a tree row. */
+  onAction?: () => void;
+};
+
+type UseTreeFocusResult = {
+  /** The single row that carries `tabIndex={0}`; every other row gets `-1`. */
+  activeRowId: string | null;
+  registerRow(id: string, element: HTMLElement | null): void;
+  onRowFocus(id: string): void;
+  handleKeyDown(event: React.KeyboardEvent): void;
+};
+
+const ROW_SELECTOR = '[role="treeitem"]';
+const NODE_ID_ATTRIBUTE = "data-node-id";
+
+export function useTreeFocus<T>({
+  rows,
+  setExpanded,
+  toggleNode,
+  isChecked,
+  onAction,
+}: UseTreeFocusOptions<T>): UseTreeFocusResult {
+  const [focusedId, setFocusedId] = React.useState<string | null>(null);
+  const rowElements = React.useRef(new Map<string, HTMLElement>());
+
+  const registerRow = React.useCallback((id: string, element: HTMLElement | null) => {
+    if (element) rowElements.current.set(id, element);
+    else rowElements.current.delete(id);
+  }, []);
+
+  const onRowFocus = React.useCallback((id: string) => setFocusedId(id), []);
+
+  // The remembered row may have been filtered away by the search query; fall
+  // back to the first visible row so the tree always has exactly one tab stop.
+  const activeRowId =
+    focusedId !== null && rows.some((row) => row.node.id === focusedId)
+      ? focusedId
+      : (rows[0]?.node.id ?? null);
+
+  const focusRow = React.useCallback((id: string | undefined) => {
+    if (id === undefined) return;
+    setFocusedId(id);
+    rowElements.current.get(id)?.focus();
+  }, []);
+
+  const handleKeyDown = React.useCallback(
+    (event: React.KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target === null) return;
+      const inTextInput = target.tagName === "INPUT";
+      const onButton = target.closest("button") !== null;
+
+      if (event.key === "Enter") {
+        // Only Enter on a tree row runs `onAction`. Anything else — the search box, a
+        // button, or a menu or select in `filterSlot` (whose portalled options
+        // still bubble here through React) — keeps Enter for itself.
+        if (event.defaultPrevented || inTextInput || onButton) return;
+        if (!target.closest("[role=tree]") || !onAction) return;
+        event.preventDefault();
+        onAction();
+        return;
+      }
+
+      if (inTextInput) return;
+
+      const rowElement = target.closest(ROW_SELECTOR);
+      const nodeId = rowElement?.getAttribute(NODE_ID_ATTRIBUTE);
+      if (nodeId == null) return;
+      const index = rows.findIndex((row) => row.node.id === nodeId);
+      const row = rows[index];
+      if (row === undefined) return;
+
+      switch (event.key) {
+        case "ArrowDown": {
+          event.preventDefault();
+          focusRow(rows[index + 1]?.node.id);
+          break;
+        }
+        case "ArrowUp": {
+          event.preventDefault();
+          focusRow(rows[index - 1]?.node.id);
+          break;
+        }
+        case "ArrowRight": {
+          if (row.node.isLeaf) break;
+          event.preventDefault();
+          if (row.expanded) focusRow(rows[index + 1]?.node.id);
+          else setExpanded(row.node.id, true);
+          break;
+        }
+        case "ArrowLeft": {
+          event.preventDefault();
+          if (!row.node.isLeaf && row.expanded) setExpanded(row.node.id, false);
+          else if (row.parentId !== null) focusRow(row.parentId);
+          break;
+        }
+        case "Home": {
+          event.preventDefault();
+          focusRow(rows[0]?.node.id);
+          break;
+        }
+        case "End": {
+          event.preventDefault();
+          focusRow(rows.at(-1)?.node.id);
+          break;
+        }
+        case " ": {
+          if (onButton) break;
+          event.preventDefault();
+          toggleNode(row.node, !isChecked(row.node));
+          break;
+        }
+        default:
+          break;
+      }
+    },
+    [rows, focusRow, setExpanded, toggleNode, isChecked, onAction],
+  );
+
+  return { activeRowId, registerRow, onRowFocus, handleKeyDown };
+}

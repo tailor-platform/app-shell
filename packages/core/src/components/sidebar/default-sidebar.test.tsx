@@ -11,7 +11,7 @@ import { SidebarItem } from "./sidebar-item";
 import { SidebarGroup } from "./sidebar-group";
 import { SidebarSection } from "./sidebar-section";
 import { SidebarSeparator } from "./sidebar-separator";
-import { defineModule, defineResource } from "@/resource";
+import { defineModule, defineResource, redirectTo } from "@/resource";
 import { AppShell } from "@/components/appshell";
 import { useURLCollectionVariables } from "@/lib/collection-url-state";
 import { useEffect } from "react";
@@ -168,6 +168,64 @@ describe("DefaultSidebar", () => {
     expect(screen.getByRole("link", { name: /dashboard/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /products/i })).toBeDefined();
   });
+
+  it.each([true, false])(
+    "keeps redirecting parents in auto navigation and their descendants in the palette (has component: %s)",
+    async (hasComponent) => {
+      const user = userEvent.setup();
+      stubDesktopViewport();
+      const modules = [
+        defineModule({
+          path: "workspace",
+          meta: { title: "Workspace" },
+          component: hasComponent ? () => <div>Workspace Root</div> : undefined,
+          guards: [() => redirectTo("/workspace/section/list")],
+          resources: [
+            defineResource({
+              path: "section",
+              meta: { title: "Section" },
+              component: hasComponent ? () => <div>Section Root</div> : undefined,
+              guards: [() => redirectTo("/workspace/section/list")],
+              subResources: [
+                defineResource({
+                  path: "list",
+                  meta: { title: "List" },
+                  component: () => <div>List Page</div>,
+                }),
+              ],
+            }),
+          ],
+        }),
+      ];
+
+      window.history.pushState({}, "", "/workspace/section/list");
+      render(
+        <AppShell title="Test" modules={modules}>
+          <SidebarLayout />
+        </AppShell>,
+      );
+
+      expect(await screen.findByText("List Page")).toBeDefined();
+      const sidebar = document.querySelector<HTMLElement>('[data-slot="sidebar"]');
+      assert(sidebar);
+      const moduleLink = await within(sidebar).findByRole("link", { name: "Workspace" });
+      expect(moduleLink.getAttribute("href")).toBe("/workspace");
+      const resourceLink = await within(sidebar).findByRole("link", { name: "Section" });
+      expect(resourceLink.getAttribute("href")).toBe("/workspace/section");
+
+      await user.click(within(sidebar).getByRole("button", { name: /search/i }));
+
+      const dialog = await screen.findByRole("dialog");
+      const descendantEntry = await within(dialog).findByRole("button", {
+        name: "Workspace > Section > List /workspace/section/list",
+      });
+      expect(descendantEntry).toBeDefined();
+      expect(within(dialog).getByRole("button", { name: "Workspace /workspace" })).toBeDefined();
+      expect(
+        within(dialog).getByRole("button", { name: "Workspace > Section /workspace/section" }),
+      ).toBeDefined();
+    },
+  );
 
   it("keeps explicit sidebar navigation working after a page writes search params", async () => {
     // Asserts on the link's text label, so the sidebar must be expanded rather

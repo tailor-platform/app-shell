@@ -108,10 +108,11 @@ Root.displayName = "Alert.Root";
 
 function Title({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <Text
+    <Text.div
       variant="label-md"
       className={cn("astw:col-start-2 astw:line-clamp-1 astw:min-h-4", className)}
-      render={<div data-slot="alert-title" {...props} />}
+      data-slot="alert-title"
+      {...props}
     />
   );
 }

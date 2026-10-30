@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createCellEditNavigation } from "./use-cell-edit-navigation";
+import { createCellEditNavigation } from "./use-navigation";
 
 function cell(isConnected = true) {
   return { focus: vi.fn(), isConnected } as unknown as HTMLElement & {

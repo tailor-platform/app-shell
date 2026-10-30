@@ -645,9 +645,9 @@ const formatDay = (value: string) =>
  * or the two dates do not match every other value on the card.
  */
 const Value = ({ children }: { children: React.ReactNode }) => (
-  <Text variant="body-md" className="text-foreground" render={<span />}>
+  <Text.span variant="body-md" className="text-foreground">
     {children}
-  </Text>
+  </Text.span>
 );
 
 /** House link: primary colour at rest, underline only on hover. */
@@ -711,9 +711,9 @@ export default function PurchaseOrderDetailPage({
             {order.holds.map((hold) => (
               <div key={hold.id} className="flex items-start justify-between gap-4">
                 <div>
-                  <Text variant="label-md" className="text-foreground" render={<p />}>
+                  <Text.p variant="label-md" className="text-foreground">
                     {hold.reason}
-                  </Text>
+                  </Text.p>
                   <Text variant="body-sm" className="text-muted-foreground">
                     Placed by {hold.placedBy} on {formatDay(hold.placedAt)}
                   </Text>
@@ -877,13 +877,9 @@ export default function PurchaseOrderDetailPage({
                     <Table.Cell align="right" className="tabular-nums">
                       {line.received}
                       {line.received !== line.qty && (
-                        <Text
-                          variant="body-sm"
-                          className="ml-1 text-muted-foreground"
-                          render={<span />}
-                        >
+                        <Text.span variant="body-sm" className="ml-1 text-muted-foreground">
                           ({line.qty - line.received})
-                        </Text>
+                        </Text.span>
                       )}
                     </Table.Cell>
                     <Table.Cell align="right" className="tabular-nums">
@@ -965,9 +961,9 @@ export default function PurchaseOrderDetailPage({
                 {file.name}
                 <ExternalLink className="size-3 shrink-0" />
               </a>
-              <Text variant="body-sm" className="shrink-0 text-muted-foreground" render={<span />}>
+              <Text.span variant="body-sm" className="shrink-0 text-muted-foreground">
                 {file.sizeLabel} · {formatDay(file.uploadedAt)}
-              </Text>
+              </Text.span>
             </div>
           ))}
         </Card.Content>

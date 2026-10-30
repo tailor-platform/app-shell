@@ -65,14 +65,9 @@ export const AppInfoPage = () => {
     <div className="astw:w-full astw:max-w-xl">
       <Card.Root>
         <div className="astw:flex astw:items-center astw:justify-between astw:px-6 astw:pt-6 astw:pb-4">
-          <Text
-            variant="heading-md"
-            className="astw:leading-none"
-            // eslint-disable-next-line jsx-a11y/heading-has-content
-            render={<h1 />}
-          >
+          <Text.h1 variant="heading-md" className="astw:leading-none">
             {t("appInfoTitle")}
-          </Text>
+          </Text.h1>
           <Button variant="outline" size="sm" onClick={handleCopy}>
             {t("appInfoCopy")}
           </Button>

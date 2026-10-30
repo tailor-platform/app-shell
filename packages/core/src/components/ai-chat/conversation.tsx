@@ -11,8 +11,11 @@ import {
 } from "react";
 
 import { Button } from "@/components/button";
+import { Spinner } from "@/components/spinner";
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
+import { AIChatContext } from "./ai-chat-context";
+import { Message } from "./message";
 import { Text } from "../text";
 
 // How close (px) to the bottom still counts as "pinned".
@@ -58,6 +61,8 @@ function Conversation({
   children,
   ...props
 }: AIChatConversationProps) {
+  const status = useContext(AIChatContext)?.status;
+  const t = useT();
   const viewportRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
@@ -124,7 +129,20 @@ function Conversation({
               against the relative root above, so it stays pinned while
               content scrolls underneath it. */}
           <div ref={contentRef} className="astw:flex astw:min-h-full astw:flex-col">
-            <ConversationContent>{children}</ConversationContent>
+            <ConversationContent>
+              {children}
+              {status === "submitted" ? (
+                <Message from="assistant">
+                  <output
+                    data-slot="ai-chat-loading"
+                    className="astw:flex astw:items-center astw:gap-2 astw:text-body-sm astw:text-muted-foreground"
+                  >
+                    <Spinner size="sm" />
+                    <span>{t("aiChatThinking")}</span>
+                  </output>
+                </Message>
+              ) : null}
+            </ConversationContent>
             <ConversationScrollButton />
           </div>
         </div>
@@ -178,15 +196,7 @@ function ConversationEmptyState({
       {icon}
       {title == null && description == null ? null : (
         <div className="astw:space-y-1">
-          {title ? (
-            <Text
-              variant="heading-sm"
-              // eslint-disable-next-line jsx-a11y/heading-has-content
-              render={<h3 />}
-            >
-              {title}
-            </Text>
-          ) : null}
+          {title ? <Text.h3>{title}</Text.h3> : null}
           {description ? (
             <Text variant="body-md" className="astw:text-muted-foreground">
               {description}

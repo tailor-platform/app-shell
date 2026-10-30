@@ -12,6 +12,7 @@ import {
 import { FlaskConical } from "lucide-react";
 import { useMemo } from "react";
 import { InlineEditingDemo } from "./inline-editing-demo";
+import { EditingErrorsDemo } from "./editing-errors-demo";
 
 // ─── Dummy data ──────────────────────────────────────────────────────────────
 // 🧪 Dummy Data: Replace with a real GraphQL-backed source later.
@@ -550,28 +551,47 @@ const DataTableLabPage = () => {
         </div>
 
         <Section
-          title="Inline editing"
+          title="Inline editing + column footers"
           description={
             <>
               A goods receipt using <code>onValueCommitted</code> — scroll right for every editor.
               Editable cells are tinted; hover a dropdown or date cell to see its editor icon, then
               click anywhere in a cell. Enter confirms without moving focus, Tab moves to the next
-              editable cell, and Esc undoes a draft.{" "}
-              <strong>The screen owns validation and saving:</strong> a rejected business value
-              returns to the current data with a message outside the table; it does not block Tab
-              navigation or create a cell error. Tick a row to edit <strong>Received</strong> (whole
-              numbers from 0 to ordered), try 150 in <strong>Discount %</strong> (0–100, one
-              decimal), or more than 500 in <strong>Weight (kg)</strong> (three decimals).{" "}
-              <strong>Unit price</strong> updates locally before saving; values above 10,000 fail
-              after a delay and are rolled back by this screen. Supplier and Status reject "None";
+              editable cell, and Esc closes open error details first, then undoes a draft.{" "}
+              <strong>The screen owns validation and saving:</strong> invalid business values throw{" "}
+              <code>CellEditError</code>, retaining the draft with a cell error without trapping Tab
+              navigation. Tick a row to edit <strong>Received</strong> (whole numbers from 0 to
+              ordered), try 150 in <strong>Discount %</strong> (0–100, one decimal), or more than
+              500 in <strong>Weight (kg)</strong> (three decimals). <strong>Unit price</strong>{" "}
+              updates locally before saving; values above 10,000 fail after a delay, are rolled back
+              by this screen, and show consumer-owned feedback. Supplier and Status reject "None";
               Lot no. rejects empty text. Warehouse, QC, and Note can be cleared. Dates use an
               unconstrained calendar: Expected rejects days before September 2026, Best before
               accepts October 2026–December 2027, and Received at adds a time field. There is no
-              built-in unsaved-changes prompt when leaving.
+              built-in unsaved-changes prompt when leaving. The sticky <strong>Aggregates</strong>{" "}
+              row uses <code>aggregations</code> with explicit row selectors to sum Ordered,
+              Received, and Weight, show the maximum Discount, and count non-null QC values across
+              all six records, not just selected rows. Weight's result-only transformer formats its
+              total to three decimals. Edit Weight directly, or tick a row to edit Received, and
+              confirm to update the totals. Scroll inside the table to keep the header and
+              aggregates in view. These summaries are not data rows; the separate footer below still
+              shows change and saving feedback.
             </>
           }
         >
           <InlineEditingDemo />
+        </Section>
+
+        <Section
+          title="Editing errors — prototype"
+          description={
+            <>
+              Callback failures use a standard cell-error popover by default. Only the Custom code
+              column supplies <code>error.render</code>; the other columns need no error config.
+            </>
+          }
+        >
+          <EditingErrorsDemo />
         </Section>
 
         <Section

@@ -5,7 +5,7 @@ import { Button } from "@/components/button";
 import { Menu } from "@/components/menu";
 import { Spinner } from "@/components/spinner";
 import { Toolbar } from "@/components/toolbar";
-import { useDataTableContext, type DataTableContextValue } from "./data-table-context";
+import { useDataTableContext, type DataTableContextValue } from "./context";
 import { useDataTableT } from "./i18n";
 import type { SelectionAction, SelectionActionHelpers } from "./types";
 
@@ -109,7 +109,7 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
       className="astw:max-w-full astw:shrink-0"
     >
       <Toolbar.Group>
-        <span className="astw:text-sm astw:font-medium astw:whitespace-nowrap astw:tabular-nums">
+        <span className="astw:text-label-md astw:whitespace-nowrap astw:tabular-nums">
           {countText}
         </span>
         <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />

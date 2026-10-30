@@ -66,6 +66,7 @@ const AppInner = () => {
             <SidebarGroup title="Showcase" icon={<LayersIcon />}>
               <SidebarItem to="/showcase/colors" />
               <SidebarItem to="/showcase/primitives" />
+              <SidebarItem to="/showcase/item-list" />
               <SidebarItem to="/showcase/dropdown" />
               <SidebarItem to="/showcase/forms" />
               <SidebarItem to="/showcase/forms/zod-rhf" />

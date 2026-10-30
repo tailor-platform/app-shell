@@ -6,8 +6,9 @@ import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Input } from "@/components/input";
 import { Tooltip } from "@/components/tooltip";
-import { useDataTableContext } from "./data-table-context";
+import { useDataTableContext } from "./context";
 import { useDataTableT } from "./i18n";
+import { columnKeyAt } from "./column-layout";
 
 // Shared popup styling, matching DataTable's filter popover. The width cap lives
 // on the popup itself (not the inner fieldset) so base-ui measures the real width
@@ -16,13 +17,6 @@ const POPUP_CLASS = cn(
   "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:max-w-[360px] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
-
-// The DataTable column key formula (mirrors useDataTable's getColumnKey);
-// ctx.columns is the full column list in definition order, so the index-based
-// fallback lines up with the keys in ctx.columnOrder.
-function columnKey(col: { id?: string; label?: string }, index: number): string {
-  return col.id ?? col.label ?? String(index);
-}
 
 type Section = "left" | "scrollable" | "right";
 
@@ -76,7 +70,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     const label = new Map<string, string>();
     const defaultPin = new Map<string, "left" | "right" | undefined>();
     columns.forEach((col, i) => {
-      const key = columnKey(col, i);
+      const key = columnKeyAt(col, i);
       label.set(key, col.label ?? key);
       defaultPin.set(key, col.pin);
     });
@@ -198,7 +192,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           type="button"
           onClick={() => toggleColumn(key)}
           title={meta.label.get(key) ?? key}
-          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-sm"
+          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-body-md"
         >
           {meta.label.get(key) ?? key}
         </button>
@@ -235,13 +229,13 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     if (keys.length === 0) {
       rows = filtered ? (
         // Filtered to nothing — show a search empty state, not the drop zone.
-        <div className="astw:px-1.5 astw:py-3 astw:text-center astw:text-xs astw:text-muted-foreground">
+        <div className="astw:px-1.5 astw:py-3 astw:text-center astw:text-body-sm astw:text-muted-foreground">
           {t("noColumnsMatch")}
         </div>
       ) : (
         <div
           className={cn(
-            "astw:mx-1 astw:rounded-sm astw:border astw:border-dashed astw:border-border astw:px-1.5 astw:py-2 astw:text-xs astw:text-muted-foreground astw:italic",
+            "astw:mx-1 astw:rounded-sm astw:border astw:border-dashed astw:border-border astw:px-1.5 astw:py-2 astw:text-body-sm astw:text-muted-foreground astw:italic",
             active && "astw:border-primary astw:text-primary",
           )}
         >
@@ -272,7 +266,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           active && "astw:bg-accent/40",
         )}
       >
-        <div className="astw:px-1.5 astw:pb-1 astw:text-xs astw:font-medium astw:text-muted-foreground">
+        <div className="astw:px-1.5 astw:pb-1 astw:text-label-sm astw:text-muted-foreground">
           {title}
         </div>
         {/* Only the Scrollable section gets an internal scroll cap; the pinned
@@ -318,7 +312,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t("searchColumns")}
                   aria-label={t("searchColumns")}
-                  className="astw:h-8 astw:pl-8 astw:text-sm"
+                  className="astw:h-8 astw:pl-8 astw:text-body-md"
                 />
               </div>
               {renderSection("left", t("sectionPinnedLeft"))}

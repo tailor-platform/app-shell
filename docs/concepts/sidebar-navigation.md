@@ -69,16 +69,18 @@ const App = () => (
 ### SidebarItem
 
 A navigation item that automatically resolves title and icon from resource definitions.
+Active internal sidebar links expose `aria-current="page"` on the link itself, including
+items with custom `render` content. Inactive and external links do not expose it.
 
 #### Props
 
-| Prop       | Type              | Required | Description                                                                     |
-| ---------- | ----------------- | -------- | ------------------------------------------------------------------------------- |
-| `to`       | `string`          | Yes      | Target URL. External URLs (http://...) are rendered as external links           |
-| `title`    | `LocalizedString` | No       | Override title (i18n supported). When omitted, auto-resolved from resource meta |
-| `icon`     | `ReactNode`       | No       | Override icon. When omitted, auto-resolved from resource meta                   |
-| `external` | `boolean`         | No       | Opens link in new tab with external link icon                                   |
-| `render`   | `function`        | No       | Custom render function for full UI control                                      |
+| Prop       | Type              | Required | Description                                                                                                                      |
+| ---------- | ----------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `to`       | `string`          | Yes      | Target URL. External URLs (http://...) are rendered as external links                                                            |
+| `title`    | `LocalizedString` | No       | Override title (i18n supported). When omitted, auto-resolved from resource meta                                                  |
+| `icon`     | `ReactNode`       | No       | Override icon. When omitted, auto-resolved from resource meta; with no icon at all, the icon rail shows the title's first letter |
+| `external` | `boolean`         | No       | Opens link in new tab with external link icon                                                                                    |
+| `render`   | `function`        | No       | Custom render function for full UI control                                                                                       |
 
 #### Examples
 
@@ -124,13 +126,13 @@ A collapsible group for organizing navigation items.
 
 #### Props
 
-| Prop          | Type              | Required | Description                                    |
-| ------------- | ----------------- | -------- | ---------------------------------------------- |
-| `title`       | `LocalizedString` | Yes      | Group title (supports i18n)                    |
-| `icon`        | `ReactNode`       | No       | Group icon                                     |
-| `to`          | `string`          | No       | When specified, title becomes a clickable link |
-| `defaultOpen` | `boolean`         | No       | Initial expanded state. Default: `true`        |
-| `children`    | `ReactNode`       | Yes      | Child items (SidebarItem, SidebarGroup, etc.)  |
+| Prop          | Type              | Required | Description                                                            |
+| ------------- | ----------------- | -------- | ---------------------------------------------------------------------- |
+| `title`       | `LocalizedString` | Yes      | Group title (supports i18n)                                            |
+| `icon`        | `ReactNode`       | No       | Group icon. When omitted, the icon rail shows the title's first letter |
+| `to`          | `string`          | No       | When specified, title becomes a clickable link                         |
+| `defaultOpen` | `boolean`         | No       | Initial expanded state. Default: `true`                                |
+| `children`    | `ReactNode`       | Yes      | Child items (SidebarItem, SidebarGroup, etc.)                          |
 
 #### Examples
 

@@ -6,16 +6,16 @@
       "kind": "code-backed",
       "outline": "docs-src/components/action-panel.docs.outline.md",
       "output": "docs/components/action-panel.md",
-      "examples": null,
+      "examples": "docs-src/components/action-panel.docs.examples.tsx",
       "sources": ["packages/core/src/components/action-panel/**"],
       "claims": [],
       "symbols": ["ActionPanel", "ActionPanelProps"],
       "hashes": {
         "typeSurface": "f497e4e3021d029a",
-        "outline": "a2d7daced73b465e",
+        "outline": "2e5fe6fdb0636b7c",
         "snapshot": null,
-        "outputMd": "71794d4b561e4d4b",
-        "examples": null
+        "outputMd": "dc861082aa9610af",
+        "examples": "79d8f5c1ae3099a3"
       }
     },
     "activity-card": {
@@ -43,6 +43,23 @@
         "examples": "eb7ab46dc420129f"
       }
     },
+    "aggregations": {
+      "slug": "aggregations",
+      "kind": "code-backed",
+      "outline": "docs-src/hooks/aggregations.docs.outline.md",
+      "output": "docs/api/aggregations.md",
+      "examples": null,
+      "sources": ["packages/core/src/lib/aggregations.ts"],
+      "claims": [],
+      "symbols": ["Aggregation", "aggregations"],
+      "hashes": {
+        "typeSurface": "0c11b3ba9d3529ad",
+        "outline": "5cfd5048505b0913",
+        "snapshot": null,
+        "outputMd": "daf6c93e7285ee88",
+        "examples": null
+      }
+    },
     "ai-chat": {
       "slug": "ai-chat",
       "kind": "code-backed",
@@ -65,7 +82,7 @@
       "hashes": {
         "typeSurface": "7cb8a34c1c36eb02",
         "outline": "797e012e34847b80",
-        "snapshot": "e43bea5b03d30595",
+        "snapshot": "a21f0e323ea4774e",
         "outputMd": "824d1aa36bb7f194",
         "examples": null
       }
@@ -82,7 +99,7 @@
       "hashes": {
         "typeSurface": "f28bf34ae1466912",
         "outline": "6138eac23571e177",
-        "snapshot": "202f4fa7806204a0",
+        "snapshot": "049e72553f5b7a6f",
         "outputMd": "db2c4388ca783a75",
         "examples": "65d5fc73550e395a"
       }
@@ -140,7 +157,7 @@
       "hashes": {
         "typeSurface": "0a9f0c3f82e57e02",
         "outline": "66aaf22c5067aef1",
-        "snapshot": "4cc22ecbb5ea4434",
+        "snapshot": "a5bfea8fbe1224ea",
         "outputMd": "35bebce540d6ac28",
         "examples": null
       }
@@ -174,7 +191,7 @@
       "hashes": {
         "typeSurface": "81040ce8342602bc",
         "outline": "b8d3f69b4adc4f13",
-        "snapshot": "70d538794b811717",
+        "snapshot": "714e29c5156e1f91",
         "outputMd": "bd6ae01bf39d1ad6",
         "examples": "63e2a53825a527a4"
       }
@@ -191,7 +208,7 @@
       "hashes": {
         "typeSurface": "d6ee5e809e0f0590",
         "outline": "e368c9ff0db15bb3",
-        "snapshot": "b70ad798aec94bc9",
+        "snapshot": "ef0699939dd47de5",
         "outputMd": "a874b74c176bcb47",
         "examples": "009005eeac70961d"
       }
@@ -206,11 +223,11 @@
       "claims": [],
       "symbols": ["Badge", "BadgeProps", "badgeVariants"],
       "hashes": {
-        "typeSurface": "86af3a3088ed46c4",
-        "outline": "c3273f9810b6dd91",
+        "typeSurface": "f4b8b24fb5f5bab1",
+        "outline": "0712a6c09e7ab542",
         "snapshot": null,
-        "outputMd": "0cb27fbce6f76e2e",
-        "examples": "edd9868442daa0b0"
+        "outputMd": "3d62a0fe0a539934",
+        "examples": "5aaa54515d4643ea"
       }
     },
     "button": {
@@ -225,7 +242,7 @@
       "hashes": {
         "typeSurface": "16df9927f8394548",
         "outline": "200f12eb4bec959a",
-        "snapshot": "aa2095c057e2cbee",
+        "snapshot": "f57af2cc49c8b4d8",
         "outputMd": "bce0e2fada1d1638",
         "examples": "1ee01b1e27764cd2"
       }
@@ -242,7 +259,7 @@
       "hashes": {
         "typeSurface": "6ce6f0fdf2450cec",
         "outline": "a8c217856c9c367a",
-        "snapshot": "31ad44b3faa1da06",
+        "snapshot": "e6783ef54e17e11e",
         "outputMd": "675dc665e5082ff0",
         "examples": "b20054836086ced0"
       }
@@ -259,7 +276,7 @@
       "hashes": {
         "typeSurface": "3886bf7012f24283",
         "outline": "916645fe8e5baf10",
-        "snapshot": "2d057b30b9401e12",
+        "snapshot": "8d4d6148a3df5d61",
         "outputMd": "14f7ba23f441df38",
         "examples": "e8f09fba5acb116f"
       }
@@ -276,7 +293,7 @@
       "hashes": {
         "typeSurface": "74ec02220321c626",
         "outline": "d56abfe9595252ba",
-        "snapshot": "dfb2af263b78cd70",
+        "snapshot": "b2d280c2ba21f456",
         "outputMd": "dfb775c7c4307409",
         "examples": "4c96b71b68808c66"
       }
@@ -395,6 +412,7 @@
       "symbols": [
         "BadgeCellEditOptions",
         "BuildQueryVariables",
+        "CellEditError",
         "CellEditState",
         "CollectionControl",
         "CollectionControlProvider",
@@ -418,6 +436,7 @@
         "Filter",
         "FilterConfig",
         "FilterOperator",
+        "FooterRenderContext",
         "HeaderRenderContext",
         "MetadataFieldOptions",
         "NodeType",
@@ -453,11 +472,11 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "3ca8fce7d2efca2d",
-        "outline": "0b7a57e7d2fc04a5",
-        "snapshot": null,
-        "outputMd": "1073852822f9e535",
-        "examples": "b3468077b9455521"
+        "typeSurface": "33eb2bdd6be1c774",
+        "outline": "b3b98ba3cd0bd4a5",
+        "snapshot": "a97e067c66e46ef6",
+        "outputMd": "640e1060814bd7e9",
+        "examples": "c7f4624e218ed59f"
       }
     },
     "date-picker": {
@@ -615,7 +634,7 @@
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
         "outline": "bda40376d6e3e008",
-        "snapshot": "ac70f5a7004d3bab",
+        "snapshot": "81a29fe2495df98d",
         "outputMd": "ec6a0ac098d1d87a",
         "examples": "934c52d4e8761404"
       }
@@ -631,9 +650,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "ead7d94daf36e8da",
+        "outline": "a87752a8b4c3e0b7",
         "snapshot": null,
-        "outputMd": "717ef4e7ae835aff",
+        "outputMd": "5a6612349cb50ef1",
         "examples": null
       }
     },
@@ -649,7 +668,7 @@
       "hashes": {
         "typeSurface": "306ea2ad2a256b8d",
         "outline": "c1448e17cc81a142",
-        "snapshot": "57f1bbb52b30d78b",
+        "snapshot": "b2cfca0400f29ba0",
         "outputMd": "d0fb940f685f8869",
         "examples": "6962c6f28d09eb0a"
       }
@@ -683,7 +702,7 @@
       "hashes": {
         "typeSurface": "b795ce4e10be0653",
         "outline": "d9e8930edd2a191c",
-        "snapshot": "89321bc807b1eaa1",
+        "snapshot": "ddebbf9718587cff",
         "outputMd": "c6a48c4d8e8b0078",
         "examples": null
       }
@@ -699,9 +718,9 @@
       "symbols": ["Form", "FormProps"],
       "hashes": {
         "typeSurface": "7b374d45d53d4535",
-        "outline": "79c9b0f08ca38027",
-        "snapshot": "88a0c82baaaa2a08",
-        "outputMd": "91d901b17aed7781",
+        "outline": "7fefd291a00de910",
+        "snapshot": "5d7a7904c5256f29",
+        "outputMd": "e4a66f7b1ee4aa98",
         "examples": null
       }
     },
@@ -733,9 +752,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "3301b263f6802090",
+        "outline": "a39589955fe582c8",
         "snapshot": null,
-        "outputMd": "9d068e568c9f3bdc",
+        "outputMd": "be00d1109761b7f1",
         "examples": "7836309f2df327ee"
       }
     },
@@ -938,7 +957,7 @@
       "hashes": {
         "typeSurface": "7c5b64c579f508ee",
         "outline": "9b273bc9e509f1fe",
-        "snapshot": "e9b20c2459b52b79",
+        "snapshot": "9e448d8e65418e9b",
         "outputMd": "a3a6c9679af99d37",
         "examples": "fc036f7af21b9dd4"
       }
@@ -1011,6 +1030,23 @@
         "examples": null
       }
     },
+    "item-list": {
+      "slug": "item-list",
+      "kind": "code-backed",
+      "outline": "docs-src/components/item-list.docs.outline.md",
+      "output": "docs/components/item-list.md",
+      "examples": "docs-src/components/item-list.docs.examples.tsx",
+      "sources": ["packages/core/src/components/item-list/**"],
+      "claims": [],
+      "symbols": ["ItemList"],
+      "hashes": {
+        "typeSurface": "04f04b801848d563",
+        "outline": "35b0f0b6aae84c17",
+        "snapshot": null,
+        "outputMd": "0190e797cd8ed318",
+        "examples": "771eb7a57d7fdc63"
+      }
+    },
     "layout": {
       "slug": "layout",
       "kind": "code-backed",
@@ -1023,7 +1059,7 @@
       "hashes": {
         "typeSurface": "c7e8fec79020d657",
         "outline": "02ed5081ea465edf",
-        "snapshot": "2510afae99b97375",
+        "snapshot": "03dedb3cc14b1eaf",
         "outputMd": "66696139a46fabb0",
         "examples": "2a4aa694c4d48324"
       }
@@ -1057,7 +1093,7 @@
       "hashes": {
         "typeSurface": "943616def28cafb0",
         "outline": "8f06df28129676c8",
-        "snapshot": "6233cd9de511210f",
+        "snapshot": "44c485a38e8d9eb4",
         "outputMd": "ceb4a05822538d20",
         "examples": "cff0508bb5520ae6"
       }
@@ -1090,9 +1126,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "72b143b96a554f6e",
+        "outline": "4a3f8bfe2a04a5ce",
         "snapshot": null,
-        "outputMd": "bf724842da5a8114",
+        "outputMd": "ef5dd9ad722f609f",
         "examples": null
       }
     },
@@ -1124,9 +1160,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "d5b840df87bc79e9",
+        "outline": "82b05468b438d199",
         "snapshot": null,
-        "outputMd": "6eb4056555d8ae7b",
+        "outputMd": "2261883b6d0069d3",
         "examples": null
       }
     },
@@ -1209,9 +1245,9 @@
       "symbols": ["Select", "SelectAsyncFetcher"],
       "hashes": {
         "typeSurface": "429710973dfa912b",
-        "outline": "721e8995f53f0e8f",
-        "snapshot": "68fd61885280b114",
-        "outputMd": "ae287e2bb5abc1c6",
+        "outline": "a8b7834a8817e0d5",
+        "snapshot": "bd7e6f45871b88e7",
+        "outputMd": "b3dd3b9a58a9d290",
         "examples": "1ce89cec30045466"
       }
     },
@@ -1227,7 +1263,7 @@
       "hashes": {
         "typeSurface": "e760949efcbe4c38",
         "outline": "464d91acc48f7c9d",
-        "snapshot": "2c9114c5a81198be",
+        "snapshot": "429bdb8c86bb2ad6",
         "outputMd": "1f81ebd562c50371",
         "examples": "b0eebb8c5e2219dc"
       }
@@ -1294,9 +1330,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "7e12558d80191549",
+        "outline": "9de06d8c23042287",
         "snapshot": null,
-        "outputMd": "e342ef02dc2b9b86",
+        "outputMd": "5a3c8bac248061f9",
         "examples": null
       }
     },
@@ -1345,9 +1381,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "f7ca9d0f8db238e9",
+        "outline": "4081996c98e029b0",
         "snapshot": null,
-        "outputMd": "5c55865c499890a8",
+        "outputMd": "1ed3e6d92e582e26",
         "examples": "4d19f4f688e0f0ac"
       }
     },
@@ -1363,7 +1399,7 @@
       "hashes": {
         "typeSurface": "bc60676f880b485b",
         "outline": "9381eff2f7987a0e",
-        "snapshot": "54e27fa3789afbd2",
+        "snapshot": "c788f8a131677ada",
         "outputMd": "f85ec64ceb7f4acf",
         "examples": "2b9d94065f2f77b7"
       }
@@ -1380,7 +1416,7 @@
       "hashes": {
         "typeSurface": "f6795191b952e110",
         "outline": "b73ba87ed529e09d",
-        "snapshot": "40acc0898ecb5e4f",
+        "snapshot": "655d96c1394a3ace",
         "outputMd": "30bb32e57fc78bd9",
         "examples": "b07f258088e81cac"
       }
@@ -1395,11 +1431,11 @@
       "claims": [],
       "symbols": ["Text", "TextProps"],
       "hashes": {
-        "typeSurface": "ed54a16ca677dbe3",
-        "outline": "81e7ce4d7d73ba60",
-        "snapshot": "cb5f569f7dd2ecfc",
-        "outputMd": "0e872fb19aff887a",
-        "examples": "4a832708dc79474b"
+        "typeSurface": "053c8236047c6ec4",
+        "outline": "1441d9d6e3f5975b",
+        "snapshot": "83be7198ffac5470",
+        "outputMd": "24262ae6cb49a138",
+        "examples": "c31a669057c28ba7"
       }
     },
     "textarea": {
@@ -1465,7 +1501,7 @@
       "hashes": {
         "typeSurface": "2d88f0306efcaa77",
         "outline": "1257a84ccd91d5c3",
-        "snapshot": "c85c431dcd58bc43",
+        "snapshot": "56d61f993125508c",
         "outputMd": "91d70b140c7bb747",
         "examples": null
       }
@@ -1482,7 +1518,7 @@
       "hashes": {
         "typeSurface": "d652b740db9471c7",
         "outline": "eea5aed5cf4c8f33",
-        "snapshot": "13ed55385962bf3a",
+        "snapshot": "22f8d6be85ad8f80",
         "outputMd": "113c95b2995917ed",
         "examples": "87b93974e65d3a07"
       }
@@ -1756,9 +1792,9 @@
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "a59a10293fba053b",
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "8034c7f885994b29",
-    "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "e342ef02dc2b9b86",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "5c55865c499890a8",
-    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "71794d4b561e4d4b",
+    "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "1ed3e6d92e582e26",
+    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "dc861082aa9610af",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "db2c4388ca783a75",
@@ -1767,14 +1803,14 @@
     "packages/core/skills/app-shell-patterns/references/components/attachment.md": "35bebce540d6ac28",
     "packages/core/skills/app-shell-patterns/references/components/autocomplete.md": "bd6ae01bf39d1ad6",
     "packages/core/skills/app-shell-patterns/references/components/avatar.md": "a874b74c176bcb47",
-    "packages/core/skills/app-shell-patterns/references/components/badge.md": "0cb27fbce6f76e2e",
+    "packages/core/skills/app-shell-patterns/references/components/badge.md": "3d62a0fe0a539934",
     "packages/core/skills/app-shell-patterns/references/components/button.md": "bce0e2fada1d1638",
     "packages/core/skills/app-shell-patterns/references/components/card.md": "675dc665e5082ff0",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "1073852822f9e535",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "640e1060814bd7e9",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "bc69f14829004f9d",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "3422388a0cc78571",
@@ -1782,14 +1818,15 @@
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "ec6a0ac098d1d87a",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "c6a48c4d8e8b0078",
-    "packages/core/skills/app-shell-patterns/references/components/form.md": "91d901b17aed7781",
+    "packages/core/skills/app-shell-patterns/references/components/form.md": "e4a66f7b1ee4aa98",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
+    "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "66696139a46fabb0",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
-    "packages/core/skills/app-shell-patterns/references/components/select.md": "ae287e2bb5abc1c6",
+    "packages/core/skills/app-shell-patterns/references/components/select.md": "b3dd3b9a58a9d290",
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "1f81ebd562c50371",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "a36192df64f16adc",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
@@ -1798,13 +1835,14 @@
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "30bb32e57fc78bd9",
-    "packages/core/skills/app-shell-patterns/references/components/text.md": "0e872fb19aff887a",
+    "packages/core/skills/app-shell-patterns/references/components/text.md": "24262ae6cb49a138",
     "packages/core/skills/app-shell-patterns/references/components/textarea.md": "c940bc01cd573334",
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
     "packages/core/skills/app-shell-patterns/references/components/tree-picker.md": "ed9140c24cac2be2",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
+    "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "daf6c93e7285ee88",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",
     "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "3035dea9ac31b7f5",
@@ -1831,7 +1869,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "30c15545ab3c4954",
     "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "30983a761bc61593",
     "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "9d068e568c9f3bdc",
+    "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "be00d1109761b7f1",
     "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",
     "packages/core/skills/app-shell-patterns/references/patterns/form-single-page.md": "10a0f4d91a120752",
     "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "851afb4672da6673",
@@ -1840,8 +1878,8 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "aa60091d0e430762",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
-    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "717ef4e7ae835aff",
-    "packages/core/skills/app-shell-patterns/references/migrations.md": "214b43b076a41a86",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "5dd75a8a0fcaf29a"
+    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "5a6612349cb50ef1",
+    "packages/core/skills/app-shell-patterns/references/migrations.md": "e0286979718e2769",
+    "packages/core/skills/app-shell-patterns/SKILL.md": "499597eb274ec687"
   }
 }

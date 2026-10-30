@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { AIChat } from "./ai-chat";
@@ -253,19 +253,21 @@ describe("AIChat", () => {
       expect(onSubmit).not.toHaveBeenCalled();
     });
 
-    it("does not submit on Enter during IME composition", async () => {
+    it.each([
+      { isComposing: true, keyCode: 13 },
+      { isComposing: false, keyCode: 229 },
+    ])("ignores IME Enter (%j) but submits on normal Enter", async (ime) => {
       const user = userEvent.setup();
       const { onSubmit } = renderComposer();
       await user.type(textbox(), "変換");
-      textbox().dispatchEvent(
-        new KeyboardEvent("keydown", {
-          key: "Enter",
-          bubbles: true,
-          cancelable: true,
-          isComposing: true,
-        }),
-      );
+
+      fireEvent.keyDown(textbox(), { key: "Enter", ...ime });
       expect(onSubmit).not.toHaveBeenCalled();
+      expect(textbox().value).toBe("変換");
+
+      await user.keyboard("{Enter}");
+      expect(onSubmit).toHaveBeenCalledExactlyOnceWith("変換");
+      expect(textbox().value).toBe("");
     });
 
     it("disables submit while the draft is empty or whitespace-only", async () => {

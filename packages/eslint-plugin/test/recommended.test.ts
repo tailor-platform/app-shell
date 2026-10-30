@@ -26,4 +26,11 @@ describe("recommended", () => {
     expect(result.status).toBe(1);
     expect(result.stdout).toContain(`@tailor-platform/app-shell(${rule})`);
   });
+
+  it("reports deprecated tokens as a warning", () => {
+    const result = lint("test/fixture/deprecated-tokens-warning.tsx");
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("@tailor-platform/app-shell(no-deprecated-tokens)");
+  });
 });

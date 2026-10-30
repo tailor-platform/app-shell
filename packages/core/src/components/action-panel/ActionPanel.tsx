@@ -1,8 +1,10 @@
+import { useT } from "@/i18n-labels";
 import { cn } from "../../lib/utils";
 import { Card } from "../card";
 import { Spinner } from "../spinner";
 import { useRegisterCommandPaletteActions } from "../../contexts/command-palette-context";
 import type { ActionPanelProps, ActionItem } from "./types";
+import { Text } from "../text";
 
 const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-center";
 
@@ -12,7 +14,7 @@ const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-ce
 
 const actionRowBaseClasses = cn(
   "astw:flex astw:items-center astw:gap-2 astw:w-full astw:rounded-md astw:px-3 astw:py-2",
-  "astw:text-sm astw:font-medium astw:transition-colors astw:border astw:border-transparent",
+  "astw:text-label-md astw:transition-colors astw:border-0",
   "astw:bg-transparent astw:text-left astw:cursor-pointer astw:[&_svg]:size-4 astw:[&_svg]:shrink-0",
 );
 
@@ -95,7 +97,23 @@ function ActionRow({ action }: { action: ActionItem }) {
  * />
  * ```
  */
-export function ActionPanel({ title, actions, className }: ActionPanelProps) {
+export function ActionPanel({ title, actions, emptyContent, className }: ActionPanelProps) {
+  const t = useT();
+  const resolvedEmptyContent =
+    emptyContent === undefined ? t("actionPanelNoActions") : emptyContent;
+  const renderedEmptyContent =
+    typeof resolvedEmptyContent === "string" ? (
+      <Text variant="body-md" className="astw:text-muted-foreground">
+        {resolvedEmptyContent}
+      </Text>
+    ) : (
+      resolvedEmptyContent
+    );
+  const hasEmptyContent =
+    actions.length === 0 &&
+    resolvedEmptyContent != null &&
+    typeof resolvedEmptyContent !== "boolean";
+
   // Register enabled actions to the CommandPalette context so they are
   // searchable and triggerable from the palette.
   useRegisterCommandPaletteActions(
@@ -113,13 +131,11 @@ export function ActionPanel({ title, actions, className }: ActionPanelProps) {
   return (
     <Card.Root className={cn("astw:min-w-69.5 astw:w-full", className)}>
       <Card.Header title={title} className="astw:px-8" />
-      <Card.Content className="astw:px-4 astw:pb-4">
+      <Card.Content className={cn("astw:px-8 astw:pb-4", hasEmptyContent && "astw:pt-2 astw:pb-6")}>
         {actions.length === 0 ? (
-          <p className="astw:py-2 astw:pl-3 astw:text-sm astw:text-muted-foreground">
-            No actions available
-          </p>
+          renderedEmptyContent
         ) : (
-          <ul className="astw:flex astw:flex-col astw:gap-0 astw:list-none astw:m-0 astw:p-0">
+          <ul className="astw:flex astw:flex-col astw:gap-0 astw:list-none astw:my-0 astw:-mx-3 astw:p-0">
             {actions.map((action) => (
               <li key={action.key}>
                 <ActionRow action={action} />

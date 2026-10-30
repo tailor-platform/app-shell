@@ -1,5 +1,250 @@
 import { useRef, useState } from "react";
-import { Button, DataTable, createColumnHelper, useDataTable } from "@tailor-platform/app-shell";
+import {
+  Button,
+  DataTable,
+  aggregations,
+  createColumnHelper,
+  useDataTable,
+} from "@tailor-platform/app-shell";
+
+export function PerCellStyling() {
+  type Overtime = { id: string; employee: string; january: number; february: number };
+  const { column } = createColumnHelper<Overtime>();
+  const overtimeStyle = (hours: number) => {
+    const tone = hours >= 60 ? "danger" : hours >= 40 ? "warning" : "success";
+    return {
+      backgroundColor: `var(--${tone}-solid)`,
+      color: `var(--${tone}-contrast)`,
+    };
+  };
+  const table = useDataTable({
+    data: {
+      rows: [
+        { id: "1", employee: "Alex", january: 24, february: 48 },
+        { id: "2", employee: "Sam", january: 45, february: 64 },
+        { id: "3", employee: "Robin", january: 62, february: 32 },
+      ],
+    },
+    columns: [
+      column({ id: "employee", label: "Employee", type: "text", width: 160 }),
+      column({
+        id: "january",
+        label: "January (hours)",
+        type: "number",
+        width: 180,
+        cellProps: (row) => ({
+          style: overtimeStyle(row.january),
+          title: `${row.january} hours of overtime`,
+        }),
+      }),
+      column({
+        id: "february",
+        label: "February (hours)",
+        type: "number",
+        width: 180,
+        pin: "right",
+        headerProps: () => ({
+          className: "astw:whitespace-nowrap",
+          style: { backgroundColor: "var(--muted)" },
+          title: "February overtime summary",
+        }),
+        cellProps: (row) => ({
+          className: "astw:tabular-nums",
+          style: overtimeStyle(row.february),
+          title: `${row.february} hours of overtime`,
+        }),
+      }),
+    ],
+    rowSelection: {},
+  });
+
+  return (
+    <div className="space-y-3">
+      <p>Overtime: below 40 hours is safe, 40–59 is caution, 60 or more is danger.</p>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    </div>
+  );
+}
+
+export function ColumnFooters() {
+  type Line = { id: string; item: string; quantity: number | null };
+  const [rows, setRows] = useState<Line[]>([
+    { id: "1", item: "Small carton", quantity: 2 },
+    { id: "2", item: "Large carton", quantity: 3 },
+  ]);
+  const { column } = createColumnHelper<Line>();
+  const table = useDataTable({
+    data: { rows },
+    columns: [
+      column({
+        id: "item",
+        label: "Item",
+        type: "text",
+        footer: "Total",
+      }),
+      column({
+        id: "quantity",
+        label: "Quantity",
+        type: "number",
+        edit: {
+          onValueCommitted: (row, quantity) =>
+            setRows((current) =>
+              current.map((line) => (line.id === row.id ? { ...line, quantity } : line)),
+            ),
+        },
+        footer: aggregations.sum((row) => row.quantity),
+        footerProps: ({ rows }) =>
+          rows.length > 0
+            ? {
+                className: "tabular-nums",
+                style: {
+                  backgroundColor: "var(--success-solid)",
+                  color: "var(--success-contrast)",
+                },
+                title: `Quantity total for ${rows.length} items on this page`,
+              }
+            : undefined,
+      }),
+    ],
+  });
+
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
+export function ColumnAggregations() {
+  type Line = {
+    id: string;
+    item: string;
+    quantity: number | null;
+    weightKg: number | null;
+    discount: number;
+    unitPrice: number;
+    note: string | null;
+  };
+  const rows: Line[] = [
+    {
+      id: "1",
+      item: "Small carton",
+      quantity: 2,
+      weightKg: 1.25,
+      discount: 0,
+      unitPrice: 12,
+      note: null,
+    },
+    {
+      id: "2",
+      item: "Large carton",
+      quantity: 3,
+      weightKg: 2.5,
+      discount: 5,
+      unitPrice: 10,
+      note: "Ready",
+    },
+  ];
+  const { column } = createColumnHelper<Line>();
+  const table = useDataTable({
+    data: { rows },
+    columns: [
+      column({ id: "item", label: "Item", type: "text", footer: "Aggregates" }),
+      column({
+        id: "quantity",
+        label: "Quantity",
+        type: "number",
+        footer: aggregations.sum((row) => row.quantity),
+      }),
+      column({
+        id: "weightKg",
+        label: "Weight (kg)",
+        type: "number",
+        typeOptions: { maxDecimals: 3 },
+        footer: aggregations.avg(
+          (row) => row.weightKg,
+          (average) => <strong>{average?.toFixed(3) ?? "–"}</strong>,
+        ),
+      }),
+      column({
+        id: "discount",
+        label: "Discount %",
+        type: "number",
+        footer: aggregations.max((row) => row.discount),
+      }),
+      column({
+        id: "unitPrice",
+        label: "Unit price",
+        type: "number",
+        footer: aggregations.min((row) => row.unitPrice),
+      }),
+      column({
+        id: "note",
+        label: "Note",
+        type: "text",
+        footer: aggregations.count(
+          (row) => row.note,
+          (count) => `${count} with notes`,
+        ),
+      }),
+    ],
+  });
+
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
+export function ComposedAggregations() {
+  type Line = { id: string; amount: number | null; currency: "JPY" | "USD" };
+  const [mixed, setMixed] = useState(false);
+  const rows: Line[] = [
+    { id: "1", amount: 1000, currency: "JPY" },
+    { id: "2", amount: 500, currency: mixed ? "USD" : "JPY" },
+    { id: "3", amount: null, currency: "USD" },
+  ];
+  const sumAmount = aggregations.sum(
+    (row: Line) => row.amount,
+    (total) => (total === null ? "Invalid amount" : total.toLocaleString("en-US")),
+  );
+  const { column } = createColumnHelper<Line>();
+  const table = useDataTable({
+    data: { rows },
+    columns: [
+      column({ id: "id", label: "Line", type: "text" }),
+      column({
+        id: "amount",
+        label: "Amount",
+        type: "money",
+        typeOptions: { currency: (row) => row.currency },
+        footer: (ctx) => {
+          const currencies = new Set(
+            ctx.rows.filter((row) => row.amount != null).map((row) => row.currency),
+          );
+          if (currencies.size > 1) {
+            return `Mixed currencies: ${[...currencies].join(", ")}`;
+          }
+          return sumAmount(ctx);
+        },
+      }),
+    ],
+  });
+
+  return (
+    <div className="space-y-3">
+      <Button variant="outline" aria-pressed={mixed} onClick={() => setMixed((value) => !value)}>
+        Mix currencies
+      </Button>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    </div>
+  );
+}
 
 export function ImmediateSaving() {
   type Line = { id: string; item: string; ordered: number; received: number | null };

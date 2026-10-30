@@ -200,7 +200,14 @@ Each intent has eight roles. The intents are `info`, `success`, `warning`, `dang
 <span className="rounded-md bg-success-surface px-2 py-0.5 text-success-text">Paid</span>
 ```
 
-In the default palette, `text` on `surface` and `contrast` on `solid` and `solid-hover` are at least 4.5:1 for the four hue intents, in light and dark mode, on `--card` and `--background`. A unit test checks this from the shipped CSS. `text` on `surface-hover` is held at 4.2:1 by the same test; it is below 4.5:1 for `danger` and `success` in light mode. The test does not cover the `cream` and `bloom` palettes or the `neutral` intent.
+The hue roles have the same values in every shipped palette. `cream` and `bloom` change brand and surface colors, not status colors. The `neutral` roles follow the palette, because they read the system tokens.
+
+**Contrast.** AppShell's thresholds are 4.5:1 for text (WCAG 1.4.3) and 3:1 for non-text (WCAG 1.4.11). In every shipped palette (`default`, `cream`, `bloom`), in light and dark mode, on `--card` and `--background`, `text` on `surface` and `contrast` on `solid` and `solid-hover` are at least 4.5:1 for the four hue intents, and `danger` `solid` (the invalid-input border) is at least 3:1. A browser test checks this in Chromium against the built stylesheet. Known exceptions:
+
+- `text` on `surface-hover` is below 4.5:1 for `danger` and `success` in light mode. The test holds it at 4.2:1 or more.
+- In `cream` and `bloom`, the main content area is transparent over the shell gradient. At the top of the `bloom` light gradient, `text` on `surface` is 4.49:1 for `success` and 4.48:1 for `danger`. Put status content on a card when it needs to pass.
+- `warning` `solid` and `indicator` are 2.15:1 against a light card. Use them with a label, not as the only sign of a state.
+- The `neutral` intent reads the system tokens and is not checked.
 
 Most `surface` and `border` values are translucent tints, so an opacity modifier compounds rather than replaces — `bg-info-surface/50` halves the tint's alpha instead of setting it to 50%. Some light-mode values are opaque instead of translucent: the `warning` surface, surface-hover and border, the `info` border and the `danger` surface-hover. They do not blend with a tinted parent. All dark-mode values are translucent.
 
@@ -210,7 +217,7 @@ Most `surface` and `border` values are translucent tints, so an opacity modifier
 
 `--sidebar`, `--sidebar-foreground`, `--sidebar-border`, `--sidebar-primary(-foreground)`, `--sidebar-accent(-foreground)`, `--sidebar-ring` → `bg-sidebar`, `text-sidebar-foreground`, and so on. These let a palette tint the shell independently of page content.
 
-`--chart-1` … `--chart-5` → `bg-chart-1`, `text-chart-1`, `fill-chart-1`. Use them in order for categorical series.
+`--chart-1` … `--chart-5` → `bg-chart-1`, `text-chart-1`, `fill-chart-1`. Use them in order for categorical series. They tell series apart and carry no status, so they are not semantic roles and have literal values.
 
 #### Alerts
 
@@ -266,7 +273,7 @@ There are 8 core roles and 2 relaxed body variants:
 | `heading-sm`      | `text-heading-sm`      | 14px / 20px        | 600    | Sub-section heading                             |
 | `body-md`         | `text-body-md`         | 14px / 20px        | 400    | Body copy, descriptions                         |
 | `body-sm`         | `text-body-sm`         | 12px / 16px        | 400    | Caption, timestamp, metadata                    |
-| `label-md`        | `text-label-md`        | 14px / 20px        | 500    | Field label, short UI text, figures in a table  |
+| `label-md`        | `text-label-md`        | 14px / 20px        | 500    | Field label, short UI text                      |
 | `label-sm`        | `text-label-sm`        | 12px / 16px        | 500    | Small label, badge text                         |
 | `code-sm`         | `text-code-sm`         | 12px / 18px        | 400    | ID and code. Use with `font-mono`               |
 | `body-md-relaxed` | `text-body-md-relaxed` | 14px / 24px        | 400    | Long text, such as a chat message or a document |
@@ -284,25 +291,26 @@ Pair a role with a color token from the Color section above. These pairings are 
 | Body copy                         | `text-body-md`                                 |
 | Secondary copy, descriptions      | `text-body-md text-muted-foreground`           |
 | Caption, timestamp, metadata      | `text-body-sm text-muted-foreground`           |
-| Numeric value in a table or field | `text-label-md tabular-nums`                   |
+| Numeric value in a table or field | `text-body-md tabular-nums`                    |
 | ID, code                          | `font-mono text-code-sm text-muted-foreground` |
 
 <!-- example: typography-roles -->
 
-```tsx
-<h2 className="text-heading-md">Section</h2>
-<p className="text-body-md text-muted-foreground">Description copy</p>
-<span className="text-body-sm text-muted-foreground">Updated 2h ago</span>
-```
-
-The [`Text`](../components/text.md) component applies the same roles with a `variant` prop. It renders a default element for each role (`h2` for headings, `p` for body text, `span` for the others), and its `render` prop sets the element, such as the heading level:
+For headings, body copy, labels, and captions, use the [`Text`](../components/text.md) component. Do not style a bare `p`, `h1` to `h6`, or `span` with `text-sm`, `text-xs`, or `font-*`. A form field label is [`Field.Label`](../components/form.md), which already has the `label-md` role. `Text` applies the same roles with a `variant` prop. It renders a default element for each role (`h2` for headings, `p` for body text, `span` for the others). To set the element, such as the heading level, use an element component (`Text.h1` to `Text.h6`, `Text.p`, `Text.span`, `Text.div`):
 
 ```tsx
-<Text variant="heading-md" render={<h3 />}>Line items</Text>
+<Text.h3 variant="heading-md">Line items</Text.h3>
 <Text variant="body-md" className="text-muted-foreground">Description copy</Text>
+<Text variant="body-sm" className="text-muted-foreground">Updated 2h ago</Text>
 ```
 
-On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's line height and letter spacing, including `leading-none`; see "Change a role" below. AppShell's own components still use the stock utilities (`text-sm`, `font-medium`, and so on) today. They will move to the roles in later changes, so the two sets can appear side by side for now.
+Use the role utility when you style an element that you render yourself, such as a table header cell or a link:
+
+```tsx
+<th className="text-label-md text-muted-foreground">Amount</th>
+```
+
+On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's line height and letter spacing, including `leading-none`; see "Change a role" below. AppShell's own components use the roles: content text renders with `Text`, and controls use the role utility.
 
 **Rules**
 

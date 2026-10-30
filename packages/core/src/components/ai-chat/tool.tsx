@@ -9,6 +9,7 @@ import {
   DisclosureChevron,
   DisclosurePanel,
 } from "./disclosure";
+import { Text } from "../text";
 
 /**
  * Maps 1:1 to the AI SDK's tool-part lifecycle, so a streaming loop can
@@ -86,12 +87,12 @@ function ToolHeader({ toolName, state, title, className, ...props }: ToolHeaderP
     >
       <span className="astw:flex astw:min-w-0 astw:items-center astw:gap-1.5">
         <Wrench className="astw:size-3.5 astw:shrink-0" aria-hidden />
-        <span className="astw:truncate astw:font-medium astw:text-foreground">
+        <span className="astw:truncate astw:text-label-md astw:text-foreground">
           {title ?? toolName}
         </span>
       </span>
       <span className="astw:flex astw:shrink-0 astw:items-center astw:gap-2">
-        <span className="astw:flex astw:items-center astw:gap-1 astw:text-[10px] astw:text-muted-foreground">
+        <span className="astw:flex astw:items-center astw:gap-1 astw:text-body-sm astw:text-muted-foreground">
           {STATUS_ICONS[state]}
           {labelKey ? t(labelKey) : <span className="astw:sr-only">{t("aiChatToolDone")}</span>}
         </span>
@@ -115,9 +116,13 @@ function ToolContent({ className, ...props }: ToolContentProps) {
 function JsonBlock({ value }: { value: unknown }) {
   const text = typeof value === "string" ? value : JSON.stringify(value, null, 2);
   return (
-    <pre className="astw:overflow-x-auto astw:rounded astw:bg-muted/50 astw:p-2 astw:text-[11px] astw:leading-relaxed astw:whitespace-pre-wrap">
+    <Text
+      variant="code-sm"
+      className="astw:overflow-x-auto astw:rounded astw:bg-muted/50 astw:p-2 astw:whitespace-pre-wrap"
+      render={<pre />}
+    >
       {text}
-    </pre>
+    </Text>
   );
 }
 
@@ -128,9 +133,14 @@ function ToolInput({ input, className, ...props }: ToolInputProps) {
 
   return (
     <div className={cn("astw:space-y-1", className)} {...props}>
-      <h4 className="astw:text-[10px] astw:font-medium astw:uppercase astw:tracking-wide astw:text-muted-foreground">
+      <Text
+        variant="label-sm"
+        className="astw:uppercase astw:tracking-wide astw:text-muted-foreground"
+        // eslint-disable-next-line jsx-a11y/heading-has-content
+        render={<h4 />}
+      >
         {t("aiChatToolParameters")}
-      </h4>
+      </Text>
       <JsonBlock value={input} />
     </div>
   );
@@ -147,14 +157,17 @@ function ToolOutput({ output, errorText, className, ...props }: ToolOutputProps)
   if (output == null && !errorText) return null;
   return (
     <div className={cn("astw:space-y-1", className)} {...props}>
-      <h4
+      <Text
+        variant="label-sm"
         className={cn(
-          "astw:text-[10px] astw:font-medium astw:uppercase astw:tracking-wide",
+          "astw:uppercase astw:tracking-wide",
           errorText ? "astw:text-danger-text" : "astw:text-muted-foreground",
         )}
+        // eslint-disable-next-line jsx-a11y/heading-has-content
+        render={<h4 />}
       >
         {errorText ? t("aiChatToolError") : t("aiChatToolResult")}
-      </h4>
+      </Text>
       <JsonBlock value={errorText ?? output} />
     </div>
   );

@@ -9,7 +9,7 @@ sources:
 
 # Text
 
-The `Text` component applies a [typography role](../concepts/styling-theming.md#typography) to its content. A role sets font size, line height, font weight, and letter spacing together. The role does not set the color, and it does not choose the HTML element. Use the `render` prop to choose the element (Base UI render pattern).
+The `Text` component applies a [typography role](../concepts/styling-theming.md#typography) to its content. A role sets font size, line height, font weight, and letter spacing together. The role does not set the color, and it does not choose the HTML element. To choose the element, use an element component such as `Text.h1` or `Text.p`, or use the `render` prop (Base UI render pattern) to compose with another component.
 
 ## Import
 
@@ -23,7 +23,34 @@ import { Text } from "@tailor-platform/app-shell";
 
 <!-- api -->
 
-All standard HTML attributes are also accepted. Put an attribute that belongs to one element, such as `htmlFor` on a `label`, on the `render` element:
+## Element Components
+
+`Text.h1` to `Text.h6`, `Text.p`, `Text.span`, and `Text.div` always render their named HTML element. Each one applies a default role, so you do not repeat `variant` for ordinary text:
+
+<!-- example: element-components -->
+
+| Component           | Default `variant` |
+| ------------------- | ----------------- |
+| `Text.h1`           | `heading-lg`      |
+| `Text.h2`           | `heading-md`      |
+| `Text.h3`–`Text.h6` | `heading-sm`      |
+| `Text.p`            | `body-md`         |
+| `Text.span`         | `label-md`        |
+| `Text.div`          | `body-md`         |
+
+The element sets the meaning and `variant` sets the appearance. The default is only a starting point, and any role works on any element:
+
+```tsx
+<Text.h1 variant="heading-sm">A compact page title</Text.h1>
+<Text.h3 variant="heading-lg">A visually prominent subsection</Text.h3>
+<Text.span variant="body-sm">Updated recently</Text.span>
+```
+
+The element components take `variant`, `className`, the element's own attributes, and a ref typed for the element (`HTMLHeadingElement` for `Text.h2`). They do not take `render`. For any other element, or to compose with another component, use `Text` with `render`.
+
+## Using `render`
+
+All standard HTML attributes are also accepted by `Text`. Put an attribute that belongs to one element, such as `htmlFor` on a `label`, on the `render` element:
 
 ```tsx
 <Text variant="label-md" render={<label htmlFor="quantity" />}>
@@ -35,7 +62,7 @@ Some lint rules report this example; see [Lint](#lint).
 
 ## Roles
 
-`variant` takes one of the ten roles. Each role renders a default element when you do not pass `render`:
+`variant` takes one of the ten roles. On `Text`, each role renders a default element when you do not pass `render`:
 
 | `variant`         | Default element | Use                                             |
 | ----------------- | --------------- | ----------------------------------------------- |
@@ -46,7 +73,7 @@ Some lint rules report this example; see [Lint](#lint).
 | `body-sm`         | `p`             | Caption, timestamp, metadata                    |
 | `body-md-relaxed` | `p`             | Long text, such as a chat message or a document |
 | `body-sm-relaxed` | `p`             | Long text at the small size                     |
-| `label-md`        | `span`          | Field label, short UI text, figures in a table  |
+| `label-md`        | `span`          | Field label, short UI text                      |
 | `label-sm`        | `span`          | Small label, badge text                         |
 | `code-sm`         | `span`          | ID and code. `Text` adds `font-mono` for you    |
 
@@ -56,30 +83,28 @@ The sizes and line heights are in the [Typography section of the styling guide](
 
 ## Heading Level
 
-All three heading roles render `h2` by default. The heading level comes from the document structure, not from the visual size, so set it with `render`:
+On `Text`, all three heading roles render `h2` by default. The heading level comes from the document structure, not from the visual size, so set it with `Text.h1` to `Text.h6`:
 
 ```tsx
-<Text variant="heading-md" render={<h3 />}>
-  Line items
-</Text>
+<Text.h3 variant="heading-md">Line items</Text.h3>
 ```
 
-To use a heading role for text that is not a heading, render a `div` or a `span`:
+To use a heading role for text that is not a heading, use `Text.div` or `Text.span`:
 
 ```tsx
-<Text variant="heading-md" render={<div />}>
-  1,240 orders
-</Text>
+<Text.div variant="heading-md">1,240 orders</Text.div>
 ```
 
 ## Lint
 
-Some `jsx-a11y` rules check that an element has text inside it, for example `heading-has-content` for `<h3 />` and `label-has-associated-control` for `<label />`. These rules report the element in `render` as empty, because they do not see that `Text` passes its children to that element. If your app enables them, disable the rule on that line. ESLint and oxlint both read this comment:
+Some `jsx-a11y` rules check that an element has text inside it, for example `heading-has-content` for `<h3 />` and `label-has-associated-control` for `<label />`. These rules report the element in `render` as empty, because they do not see that `Text` passes its children to that element.
+
+For headings, use `Text.h1` to `Text.h6`. The rules do not report them. For other elements, such as `label`, use `render`, and if your app enables the rule, disable it on that line. ESLint and oxlint both read this comment:
 
 ```tsx
-// eslint-disable-next-line jsx-a11y/heading-has-content -- Text renders the children
-<Text variant="heading-md" render={<h3 />}>
-  Line items
+// eslint-disable-next-line jsx-a11y/label-has-associated-control -- Text renders the children
+<Text variant="label-md" render={<label htmlFor="quantity" />}>
+  Quantity
 </Text>
 ```
 
@@ -93,9 +118,9 @@ Set the color with a color token in `className`. Four modifiers may also be comb
 <Text variant="body-md" className="text-muted-foreground">
   Orders sent this month.
 </Text>
-<Text variant="heading-md" render={<h3 />} className="leading-none">
+<Text.h3 variant="heading-md" className="leading-none">
   Card title
-</Text>
+</Text.h3>
 <Text variant="label-md" className="tabular-nums">
   1,240.00
 </Text>
@@ -117,11 +142,17 @@ Each role is also a plain utility, for example `text-heading-md`. Use the utilit
 import { type TextProps } from "@tailor-platform/app-shell";
 ```
 
+The element components have no exported props type. Read it from the component:
+
+```tsx
+type SectionTitleProps = React.ComponentProps<typeof Text.h2>;
+```
+
 ## Accessibility
 
-- A heading role renders a real heading (`h2`) by default, so screen readers list it with the other headings. Set the level with `render` so the levels follow the page structure.
+- A heading role on `Text` renders a real heading (`h2`) by default, so screen readers list it with the other headings. Set the level with `Text.h1` to `Text.h6` so the levels follow the page structure.
 - Do not choose a heading level for its size. `Text` keeps the size and the level separate.
-- `body-*` roles render `p`. Inside another `p`, render a `span` instead (`<Text render={<span />}>`): the browser closes the outer `p` before the inner one, so React warns and server rendering fails to hydrate. Inside inline elements such as `button`, `label` or `span`, a `p` is invalid HTML too, so render a `span` there as well.
+- `body-*` roles render `p` on `Text`. Inside another `p`, use `Text.span` instead (`<Text.span variant="body-md">`): the browser closes the outer `p` before the inner one, so React warns and server rendering fails to hydrate. Inside inline elements such as `button`, `label` or `span`, a `p` is invalid HTML too, so render a `span` there as well.
 
 ## Palettes
 
@@ -132,4 +163,4 @@ The `cream` and `bloom` palettes set the line height and letter spacing of `h1` 
 - [Card](./card.md) - The table above lists `heading-md` for card titles
 - [Layout](./layout.md) - The table above lists `heading-lg` for the page title
 
-AppShell's own components, including these two, still use the stock utilities. They will move to the roles in a later change.
+AppShell's own components, including these two, render their titles and descriptions with `Text`.

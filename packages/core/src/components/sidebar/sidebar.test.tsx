@@ -162,6 +162,15 @@ describe("SidebarItem", () => {
     expect(menu.getByTestId("custom").textContent).toContain("Dashboard Custom");
   });
 
+  it("marks a custom-rendered active item on its link", () => {
+    renderWithProviders(
+      <SidebarItem to="/dashboard/overview" render={({ title }) => <span>{title}</span>} />,
+      "/dashboard/overview",
+    );
+
+    expect(getSidebarMenu().getByRole("link").getAttribute("aria-current")).toBe("page");
+  });
+
   it("renders external link with target blank", () => {
     renderWithProviders(<SidebarItem to="https://docs.example.com" external />);
 
@@ -169,6 +178,7 @@ describe("SidebarItem", () => {
     const link = menu.getByRole("link");
     expect(link.getAttribute("target")).toBe("_blank");
     expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(link.hasAttribute("aria-current")).toBe(false);
   });
 
   it("auto-detects external URLs without external prop", () => {
@@ -185,6 +195,7 @@ describe("SidebarItem", () => {
     const menu = getSidebarMenu();
     const link = menu.getByRole("link");
     expect(link.getAttribute("data-active")).toBe("true");
+    expect(link.getAttribute("aria-current")).toBe("page");
   });
 
   it("applies the theme's selected background and text tokens when active, without hover", () => {
@@ -196,11 +207,29 @@ describe("SidebarItem", () => {
     expect(link.className).toContain("astw:data-[active=true]:text-sidebar-accent-foreground");
   });
 
+  it("preserves the small submenu typography when active", () => {
+    renderWithProviders(
+      <SidebarMenuSub>
+        <SidebarMenuSubItem>
+          <SidebarMenuSubButton size="sm" isActive href="/dashboard">
+            Small link
+          </SidebarMenuSubButton>
+        </SidebarMenuSubItem>
+      </SidebarMenuSub>,
+    );
+
+    const link = getSidebarMenu().getByRole("link", { name: "Small link" });
+    expect(link.className).toContain("astw:text-body-sm");
+    expect(link.className).toContain("astw:data-[active=true]:font-semibold");
+    expect(link.className).not.toContain("astw:data-[active=true]:text-label-");
+  });
+
   it("is not active when path does not match", () => {
     renderWithProviders(<SidebarItem to="/dashboard" activeMatch="exact" />, "/dashboard/overview");
 
     const link = getSidebarMenu().getByRole("link");
     expect(link.getAttribute("data-active")).toBe("false");
+    expect(link.hasAttribute("aria-current")).toBe(false);
   });
 
   it("falls back to URL-based title for unknown paths", () => {
@@ -270,10 +299,12 @@ describe("SidebarGroup", () => {
     const headerLink = links.find((l) => l.getAttribute("href") === "/products")!;
     const childLink = links.find((l) => l.getAttribute("href") === "/products/all")!;
     expect(headerLink.getAttribute("data-active")).toBe("true");
+    expect(headerLink.getAttribute("aria-current")).toBe("page");
     expect(headerLink.className).toContain(
       "astw:data-[active=true]:text-sidebar-accent-foreground",
     );
     expect(childLink.getAttribute("data-active")).toBe("false");
+    expect(childLink.hasAttribute("aria-current")).toBe(false);
   });
 
   it("supports localized title function", () => {
@@ -534,6 +565,30 @@ describe("Mobile sidebar", () => {
     await vi.waitFor(() => {
       expect(screen.queryByTestId("sub-menu-button")).toBeNull();
     });
+  });
+
+  it("respects cancellation on a rendered link and preserves tooltip composition", async () => {
+    const user = userEvent.setup();
+    const cancelNavigation = vi.fn((event) => event.preventDefault());
+    const onClick = vi.fn();
+    renderMobileSidebar(
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          render={<Link to="/dashboard" onClick={cancelNavigation} />}
+          tooltip="Dashboard"
+          onClick={onClick}
+          data-testid="cancelled-link"
+        >
+          Dashboard
+        </SidebarMenuButton>
+      </SidebarMenuItem>,
+    );
+
+    await user.click(screen.getByTestId("mobile-trigger"));
+    await user.click(await screen.findByTestId("cancelled-link"));
+    expect(cancelNavigation).toHaveBeenCalledTimes(1);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("cancelled-link")).toBeDefined();
   });
 
   it("does NOT close when a collapsible group header is clicked", async () => {

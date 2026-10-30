@@ -115,7 +115,7 @@ describe("DefaultSidebar", () => {
     expect(searchButton.textContent).toContain("⌘K");
     expect(searchButton.textContent).not.toContain("Ctrl+K");
     expect(searchButton.className).toContain("astw:h-8");
-    expect(searchButton.className).toContain("astw:text-xs");
+    expect(searchButton.className).toContain("astw:text-body-sm");
     expect(searchButton.closest("li")?.className).toContain("astw:pb-2");
 
     await user.click(searchButton);
@@ -356,6 +356,32 @@ describe("DefaultSidebar opt-in props", () => {
     expect(heading?.className).toContain("astw:group-data-[collapsible=icon]:opacity-0");
   });
 
+  it("falls back to the title's initial for icon-less items and groups in the rail", () => {
+    renderWithProps(
+      {
+        iconRail: true,
+        hideHeader: true,
+        children: (
+          <>
+            <SidebarItem to="/features" title="features" />
+            <SidebarGroup title="Billing">
+              <SidebarItem to="/invoices" title="Invoices" />
+            </SidebarGroup>
+            <SidebarItem to="/home" title="Home" icon={<Home data-testid="home-icon" />} />
+          </>
+        ),
+      },
+      { defaultOpen: false },
+    );
+
+    const fallbacks = document.querySelectorAll('[data-slot="sidebar-icon-fallback"]');
+    expect(Array.from(fallbacks, (el) => el.textContent)).toEqual(["F", "B"]);
+    expect(fallbacks[0]?.getAttribute("class")).toContain(
+      "astw:group-data-[collapsible=icon]:block",
+    );
+    expect(screen.getByTestId("home-icon")).toBeDefined();
+  });
+
   it("reveals a group's children in a hover flyout in the icon rail", async () => {
     const user = userEvent.setup();
     renderWithProps(
@@ -452,6 +478,7 @@ describe("DefaultSidebar auto-generation", () => {
     // Active styling (background, weight and --sidebar-accent-foreground text)
     // is keyed on data-active, so the item must carry it — not just a class.
     expect(overviewLink.getAttribute("data-active")).toBe("true");
+    expect(overviewLink.getAttribute("aria-current")).toBe("page");
   });
 
   it("excludes componentless resources from sidebar links", async () => {

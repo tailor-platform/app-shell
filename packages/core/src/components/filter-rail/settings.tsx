@@ -9,6 +9,7 @@ import { orderSections, sectionFields } from "./apply-layout";
 import { sectionName, useFilterRailContext } from "./filter-rail-context";
 import { useFilterRailT } from "./i18n";
 import type { UserOptionSort } from "./types";
+import { Text } from "../text";
 
 const POPUP_CLASS = cn(
   "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:w-[24rem] astw:max-w-[calc(100vw-2rem)] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
@@ -98,12 +99,16 @@ function Settings({ className }: SettingsProps) {
         <Popover.Positioner sideOffset={4} side="bottom" align="start">
           <Popover.Popup data-slot="filter-rail-settings" className={POPUP_CLASS}>
             <div className="astw:border-b astw:border-border astw:px-3 astw:py-2">
-              <Popover.Title className="astw:text-sm astw:font-semibold">
+              <Text variant="heading-sm" render={<Popover.Title />}>
                 {t("settings")}
-              </Popover.Title>
-              <Popover.Description className="astw:mt-0.5 astw:text-xs astw:text-muted-foreground">
+              </Text>
+              <Text
+                variant="body-sm"
+                className="astw:mt-0.5 astw:text-muted-foreground"
+                render={<Popover.Description />}
+              >
                 {t("settingsDescription")}
-              </Popover.Description>
+              </Text>
             </div>
 
             <ul
@@ -203,7 +208,7 @@ function Settings({ className }: SettingsProps) {
 
                     <span
                       className={cn(
-                        "astw:min-w-0 astw:flex-1 astw:truncate astw:text-sm",
+                        "astw:min-w-0 astw:flex-1 astw:truncate astw:text-body-md",
                         isHidden && "astw:text-muted-foreground",
                       )}
                       title={clearsFilter ? t("hideSectionClearsHint") : undefined}
@@ -238,7 +243,7 @@ function Settings({ className }: SettingsProps) {
                       // radio's states are a curated vocabulary.
                       <span
                         aria-hidden
-                        className="astw:w-[8.5rem] astw:shrink-0 astw:text-right astw:text-xs astw:text-muted-foreground"
+                        className="astw:w-[8.5rem] astw:shrink-0 astw:text-right astw:text-body-sm astw:text-muted-foreground"
                       >
                         —
                       </span>

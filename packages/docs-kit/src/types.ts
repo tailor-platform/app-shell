@@ -104,6 +104,9 @@ export interface SkillConfig {
   migrationsSource: string;
   /** Base blob URL for rewriting the migrations doc's relative links. */
   repoBlobUrl: string;
+  /** Repo-relative package.json whose `version` is stamped into SKILL.md's
+   * `{{APP_SHELL_VERSION}}` at write time. */
+  versionSource?: string;
 }
 
 export interface DocsConfig {

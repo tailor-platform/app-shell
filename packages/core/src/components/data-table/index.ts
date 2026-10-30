@@ -3,7 +3,7 @@ export { DataTable, type DataTablePaginationProps, type DataTableRootProps } fro
 
 export { CellEditError } from "./cell-edit-error";
 export { useDataTable } from "./use-data-table";
-export { useDataTableContext, type DataTableContextValue } from "./data-table-context";
+export { useDataTableContext, type DataTableContextValue } from "./context";
 
 // Field helpers
 export { createColumnHelper } from "./field-helpers";

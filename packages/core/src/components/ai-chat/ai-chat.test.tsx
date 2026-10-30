@@ -77,6 +77,18 @@ describe("AIChat", () => {
     });
   });
 
+  it("shows the submitted state", () => {
+    const { container } = render(
+      <AIChat status="submitted">
+        <AIChat.Conversation>
+          <AIChat.Message from="user">Hello</AIChat.Message>
+        </AIChat.Conversation>
+        <AIChat.Composer onSubmit={vi.fn()} onStop={vi.fn()} />
+      </AIChat>,
+    );
+    expect(container.innerHTML).toMatchSnapshot();
+  });
+
   describe("region placement", () => {
     it("renders Header, Conversation, Composer in that order regardless of source order", () => {
       const { container } = render(

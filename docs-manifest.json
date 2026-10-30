@@ -74,16 +74,17 @@
         "AIChatConversationProps",
         "AIChatHeaderProps",
         "AIChatProps",
+        "AIChatToolCallProps",
         "ChainOfThoughtStepStatus",
         "ChatHistoryGroupData",
         "ChatHistoryItemData",
         "ToolState"
       ],
       "hashes": {
-        "typeSurface": "7cb8a34c1c36eb02",
-        "outline": "797e012e34847b80",
-        "snapshot": "a21f0e323ea4774e",
-        "outputMd": "824d1aa36bb7f194",
+        "typeSurface": "932ff7674cc6df99",
+        "outline": "0d84350ee1e55312",
+        "snapshot": "39edd53bc6562561",
+        "outputMd": "82313d5b6fe140d2",
         "examples": null
       }
     },
@@ -326,9 +327,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "171ba8a5b6eda15b",
+        "outline": "43a13487e8f3e6bd",
         "snapshot": null,
-        "outputMd": "7eaff97521a14ab0",
+        "outputMd": "ed0db6372d25e2f9",
         "examples": null
       }
     },
@@ -1534,9 +1535,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "4cf294ec6ae1492f",
+        "outline": "807ee6ee2b33d5de",
         "snapshot": null,
-        "outputMd": "f4a88f636000fd60",
+        "outputMd": "3bcaceab3290ca92",
         "examples": null
       }
     },
@@ -1773,7 +1774,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "1ed3e6d92e582e26",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "dc861082aa9610af",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "4f386e49380fb0b0",
-    "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "824d1aa36bb7f194",
+    "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "82313d5b6fe140d2",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "db2c4388ca783a75",
     "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "081e4c7bb61db191",
     "packages/core/skills/app-shell-patterns/references/components/appearance-switcher.md": "b55f1d538651d467",
@@ -1819,7 +1820,7 @@
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
     "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "daf6c93e7285ee88",
-    "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "7eaff97521a14ab0",
+    "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",
     "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "3035dea9ac31b7f5",
     "packages/core/skills/app-shell-patterns/references/api/define-module.md": "199295d8e7a9f4fa",
@@ -1831,7 +1832,7 @@
     "packages/core/skills/app-shell-patterns/references/api/router/use-location.md": "ddb44cc51af636cc",
     "packages/core/skills/app-shell-patterns/references/api/router/use-navigate.md": "d018cb13a7ddc38b",
     "packages/core/skills/app-shell-patterns/references/api/router/use-params.md": "535f701e77dfc4e6",
-    "packages/core/skills/app-shell-patterns/references/api/use-ai-chat.md": "f4a88f636000fd60",
+    "packages/core/skills/app-shell-patterns/references/api/use-ai-chat.md": "3bcaceab3290ca92",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell.md": "ce989e06790aade8",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "1a0a937f3a412c13",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "2d2eaf5aa04d95d3",
@@ -1856,6 +1857,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "5a6612349cb50ef1",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "e0286979718e2769",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "de250e21921fc3e8"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "2c900e3b4d203b31"
   }
 }

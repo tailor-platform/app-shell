@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod/v4";
-import { aiProviderTool, defineAIChatTool } from "./tools";
+import { defineAIChatTool } from "./tools";
 
 describe("AI chat tool helpers", () => {
   it("accepts Zod schemas for local tool definitions", async () => {
@@ -34,14 +34,5 @@ describe("AI chat tool helpers", () => {
         { signal: new AbortController().signal, messages: [] },
       ),
     ).resolves.toEqual({ customerId: "cust-1", includeInactive: undefined, name: "Acme" });
-  });
-
-  it("creates provider tool definitions", () => {
-    expect(aiProviderTool.openai.webSearch({ searchContextSize: "high" })).toEqual({
-      kind: "provider",
-      provider: "openai",
-      tool: "webSearch",
-      options: { searchContextSize: "high" },
-    });
   });
 });

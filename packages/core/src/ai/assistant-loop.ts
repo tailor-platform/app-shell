@@ -2,12 +2,9 @@ import type {
   AIGatewayChatMessage,
   AIGatewayClient,
   AIGatewayFunctionTool,
-  AIGatewayProviderTool,
-  AIGatewayTool,
   AIGatewayToolCall,
-  AIChatSource,
 } from "./client";
-import type { AIChatConfiguredTool, AILocalTool } from "./tools";
+import type { AILocalTool } from "./tools";
 import { deriveVisibleMessages, resolveToolCalls } from "./tool-execution";
 
 const MAX_TOOL_ROUNDS = 8;
@@ -17,8 +14,8 @@ const MAX_TOOL_ROUNDS = 8;
  * - normalized AI Gateway tool definitions sent over the wire
  * - local tool executors kept for in-process validation and execution
  */
-function normalizeConfiguredTools(tools: Record<string, AIChatConfiguredTool> | undefined): {
-  gatewayTools: AIGatewayTool[];
+function normalizeConfiguredTools(tools: Record<string, AILocalTool> | undefined): {
+  gatewayTools: AIGatewayFunctionTool[];
   localTools: Map<string, AILocalTool>;
 } {
   if (!tools) {
@@ -30,24 +27,15 @@ function normalizeConfiguredTools(tools: Record<string, AIChatConfiguredTool> | 
 
   const localTools = new Map<string, AILocalTool>();
   const gatewayTools = Object.entries(tools).map(([name, tool]) => {
-    if (tool.kind === "local") {
-      localTools.set(name, tool);
-      return {
-        type: "function",
-        function: {
-          name,
-          ...(tool.description ? { description: tool.description } : {}),
-          parameters: tool.schema["~standard"].jsonSchema.input({ target: "draft-07" }),
-        },
-      } satisfies AIGatewayFunctionTool;
-    }
-
+    localTools.set(name, tool);
     return {
-      type: "provider",
-      provider: "openai",
-      name: "web_search",
-      ...(tool.options ? { options: tool.options } : {}),
-    } satisfies AIGatewayProviderTool;
+      type: "function",
+      function: {
+        name,
+        ...(tool.description ? { description: tool.description } : {}),
+        parameters: tool.schema["~standard"].jsonSchema.input({ target: "draft-07" }),
+      },
+    } satisfies AIGatewayFunctionTool;
   });
 
   return {
@@ -63,7 +51,6 @@ export interface AIChatAssistantTurnResult {
 
 export type AssistantLoopEvent =
   | { type: "text-delta"; delta: string }
-  | { type: "sources"; sources: AIChatSource[] }
   | { type: "turn-end"; turn: AIChatAssistantTurnResult }
   | { type: "tool-resolution-start" }
   | {
@@ -80,7 +67,7 @@ export type AssistantLoopEvent =
 export async function* runAssistantLoop(input: {
   client: AIGatewayClient;
   model: string;
-  tools: Record<string, AIChatConfiguredTool> | undefined;
+  tools: Record<string, AILocalTool> | undefined;
   transcript: AIGatewayChatMessage[];
   signal: AbortSignal;
 }): AsyncGenerator<AssistantLoopEvent> {
@@ -129,13 +116,13 @@ export async function* runAssistantLoop(input: {
 
 /**
  * Streams one assistant turn from the AI Gateway.
- * Yields text-delta and sources events as they arrive.
+ * Yields text-delta events as they arrive.
  * Returns the collected turn result (content + tool calls) via generator return.
  */
 async function* streamAssistantTurn(input: {
   client: AIGatewayClient;
   model: string;
-  tools: AIGatewayTool[];
+  tools: AIGatewayFunctionTool[];
   transcript: AIGatewayChatMessage[];
   signal: AbortSignal;
 }): AsyncGenerator<AssistantLoopEvent, AIChatAssistantTurnResult> {
@@ -160,11 +147,6 @@ async function* streamAssistantTurn(input: {
         name: event.toolName,
         argumentsText: event.argumentsText,
       });
-      continue;
-    }
-
-    if (event.sources?.length) {
-      yield { type: "sources", sources: event.sources };
     }
   }
 

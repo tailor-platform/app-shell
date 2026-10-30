@@ -6,13 +6,6 @@ import type {
 } from "openai/resources/chat/completions";
 import type { AuthClient } from "@tailor-platform/auth-public-client";
 
-/** Source/citation metadata attached to assistant messages when available. */
-export interface AIChatSource {
-  type: "url";
-  url: string;
-  title?: string;
-}
-
 /** Normalized local function tool call emitted by the AI Gateway transport. */
 export interface AIGatewayToolCall {
   id: string;
@@ -47,20 +40,10 @@ export interface AIGatewayFunctionTool {
   };
 }
 
-/** Normalized provider tool definition passed through to the AI Gateway. */
-export interface AIGatewayProviderTool {
-  type: "provider";
-  provider: "openai";
-  name: "web_search";
-  options?: unknown;
-}
-
-export type AIGatewayTool = AIGatewayFunctionTool | AIGatewayProviderTool;
-
 export interface AIGatewayChatRequest {
   model: string;
   messages: AIGatewayChatMessage[];
-  tools?: AIGatewayTool[];
+  tools?: AIGatewayFunctionTool[];
   signal?: AbortSignal;
 }
 
@@ -79,7 +62,6 @@ export type AIChatCompletionEvent =
   | {
       type: "done";
       finishReason?: string;
-      sources?: AIChatSource[];
     };
 
 export interface AIGatewayClient {
@@ -161,14 +143,12 @@ async function* streamOpenAICompatibleResponse(input: {
     )) as AsyncIterable<ChatCompletionChunk>;
 
     let finishReason: string | undefined;
-    let sources: AIChatSource[] | undefined;
     const toolCalls = new Map<number, Partial<AIGatewayToolCall>>();
 
     for await (const chunk of stream) {
       const choice = chunk.choices[0];
       const delta = extractStreamingText(choice);
       finishReason = extractFinishReason(choice?.finish_reason) ?? finishReason;
-      sources = extractSources(choice) ?? sources;
       collectStreamingToolCalls(toolCalls, choice);
 
       if (delta) {
@@ -185,7 +165,7 @@ async function* streamOpenAICompatibleResponse(input: {
       };
     }
 
-    yield createDoneEvent(finishReason, sources);
+    yield createDoneEvent(finishReason);
   } catch (error) {
     throw normalizeGatewayError(error, input.request.signal);
   }
@@ -219,7 +199,7 @@ async function* streamJSONResponse(input: {
       };
     }
 
-    yield createDoneEvent(extractFinishReason(choice?.finish_reason), extractSources(choice));
+    yield createDoneEvent(extractFinishReason(choice?.finish_reason));
   } catch (error) {
     throw normalizeGatewayError(error, input.request.signal);
   }
@@ -233,6 +213,10 @@ function buildChatRequestBody(
   request: AIGatewayChatRequest,
   stream: boolean,
 ): Parameters<OpenAI["chat"]["completions"]["create"]>[0] {
+  if (request.tools?.some((tool) => tool.type !== "function")) {
+    throw new Error("AI Gateway only supports local function tools.");
+  }
+
   return {
     model: request.model,
     messages: request.messages.map(toOpenAIMessage),
@@ -369,66 +353,12 @@ function extractText(content: unknown): string {
     .join("");
 }
 
-/**
- * Best-effort parser for normalized provider sources/citations.
- *
- * This intentionally tolerates response-shape differences so AppShell can
- * surface sources without depending on one provider-specific payload format.
- */
-function extractSources(value: unknown): AIChatSource[] | undefined {
-  if (!value || typeof value !== "object") {
-    return undefined;
-  }
-
-  if ("message" in value) {
-    return extractSources((value as { message?: unknown }).message);
-  }
-
-  if ("delta" in value) {
-    return extractSources((value as { delta?: unknown }).delta);
-  }
-
-  if (!("sources" in value) || !Array.isArray(value.sources)) {
-    return undefined;
-  }
-
-  const sources = value.sources
-    .map((source) => {
-      if (!source || typeof source !== "object") {
-        return null;
-      }
-
-      if ((source as { type?: unknown }).type !== "url") {
-        return null;
-      }
-
-      const url = (source as { url?: unknown }).url;
-      if (typeof url !== "string" || url.length === 0) {
-        return null;
-      }
-
-      const title = (source as { title?: unknown }).title;
-      return {
-        type: "url" as const,
-        url,
-        ...(typeof title === "string" && title.length > 0 ? { title } : {}),
-      };
-    })
-    .filter((source) => source !== null);
-
-  return sources.length > 0 ? sources : undefined;
-}
-
 function extractFinishReason(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
-function createDoneEvent(finishReason?: string, sources?: AIChatSource[]): AIChatCompletionEvent {
-  return {
-    type: "done",
-    ...(finishReason ? { finishReason } : {}),
-    ...(sources?.length ? { sources } : {}),
-  };
+function createDoneEvent(finishReason?: string): AIChatCompletionEvent {
+  return finishReason ? { type: "done", finishReason } : { type: "done" };
 }
 
 function normalizeGatewayError(error: unknown, signal?: AbortSignal): Error {

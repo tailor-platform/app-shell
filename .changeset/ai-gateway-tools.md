@@ -2,9 +2,9 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add tool support to `useAIChat()` and the AI Gateway transport layer. Streamed function names and arguments are assembled across chunks independently for each tool call.
+Add local tool support to `useAIChat()` and the AI Gateway transport layer. Streamed function names and arguments are assembled across chunks independently for each tool call.
 
-You can now register **local tools** and **provider tools** via the `tools` option on `useAIChat()`. Tool-call and tool-result protocol messages stay internal to the hook — the public `messages` array remains user/assistant text only.
+You can now register **local tools** via the `tools` option on `useAIChat()`. Tool-call and tool-result protocol messages stay internal to the hook — the public `messages` array remains user/assistant text only. Provider-native tools are not supported.
 
 Stopped or failed requests retain user messages, partial assistant text, and completed tool exchanges in subsequent request history. Unanswered tool calls are excluded. Stopping does not undo tool side effects or guarantee safe retries of tools that were already running.
 
@@ -44,33 +44,12 @@ The `execute` function receives a second argument with:
 
 Stopping a request while tool arguments are being validated prevents the tool from starting. Cancellation is propagated rather than returned to the model as a tool error.
 
-## Provider tools
-
-Provider tools are not executed locally — they are passed through to the AI Gateway and handled upstream by the model provider.
-
-```ts
-import { aiProviderTool } from "@tailor-platform/app-shell";
-
-const webSearch = aiProviderTool.openai.webSearch({
-  searchContextSize: "high",
-  userLocation: {
-    type: "approximate",
-    country: "JP",
-    city: "Tokyo",
-    timezone: "Asia/Tokyo",
-  },
-  filters: {
-    allowedDomains: ["nikkei.com", "reuters.com"],
-  },
-});
-```
-
 ## Registering tools with `useAIChat`
 
 Pass tools as a record to the `tools` option. The key becomes the tool name sent to the model.
 
 ```tsx
-import { useAIChat, defineAIChatTool, aiProviderTool } from "@tailor-platform/app-shell";
+import { useAIChat, defineAIChatTool } from "@tailor-platform/app-shell";
 import { z } from "zod/v4";
 
 const lookupCustomer = defineAIChatTool({
@@ -89,7 +68,6 @@ function ChatPanel({ client }) {
     model: "gpt-5-mini",
     tools: {
       lookupCustomer,
-      web_search: aiProviderTool.openai.webSearch({ searchContextSize: "high" }),
     },
   });
 

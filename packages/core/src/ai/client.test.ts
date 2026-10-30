@@ -278,17 +278,23 @@ describe("createAIGatewayClient", () => {
     ]);
   });
 
-  it("emits sources from json responses", async () => {
+  it("emits local function tool calls from json responses", async () => {
     const authClient = createMockAuthClient(
       new Response(
         JSON.stringify({
           choices: [
             {
               message: {
-                content: "Grounded answer",
-                sources: [{ type: "url", url: "https://example.com", title: "Example" }],
+                content: null,
+                tool_calls: [
+                  {
+                    id: "call_1",
+                    type: "function",
+                    function: { name: "lookupCustomer", arguments: '{"customerId":"cust-1"}' },
+                  },
+                ],
               },
-              finish_reason: "stop",
+              finish_reason: "tool_calls",
             },
           ],
         }),
@@ -302,18 +308,57 @@ describe("createAIGatewayClient", () => {
       gatewayUri: "https://gateway.example.com",
       authClient,
     });
+    const tools = [
+      {
+        type: "function" as const,
+        function: {
+          name: "lookupCustomer",
+          parameters: { type: "object", properties: { customerId: { type: "string" } } },
+        },
+      },
+    ];
 
     await expect(
-      collectEvents(client, createRequest({ model: "gemini-2.5-flash" })),
+      collectEvents(client, createRequest({ model: "gemini-2.5-flash", tools })),
     ).resolves.toEqual([
-      { type: "text-delta", text: "Grounded answer" },
       {
-        type: "done",
-        finishReason: "stop",
-        sources: [{ type: "url", url: "https://example.com", title: "Example" }],
+        type: "tool-call",
+        toolCallId: "call_1",
+        toolName: "lookupCustomer",
+        argumentsText: '{"customerId":"cust-1"}',
       },
+      { type: "done", finishReason: "tool_calls" },
     ]);
+
+    const [input, init] = getRequestCall(authClient);
+    expect(JSON.parse(String(await readRequestBody(input, init)))).toMatchObject({
+      tools,
+      stream: false,
+    });
   });
+
+  it.each(["gpt-5-mini", "gemini-2.5-flash"])(
+    "rejects provider tools before sending a request for %s",
+    async (model) => {
+      const authClient = createMockAuthClient(new Response());
+      const client = createAIGatewayClient({
+        gatewayUri: "https://gateway.example.com",
+        authClient,
+      });
+
+      await expect(
+        collectEvents(
+          client,
+          createRequest({
+            model,
+            // @ts-expect-error Provider tools are not supported.
+            tools: [{ type: "provider", provider: "openai", name: "web_search" }],
+          }),
+        ),
+      ).rejects.toThrow("AI Gateway only supports local function tools.");
+      expect(authClient.fetch).not.toHaveBeenCalled();
+    },
+  );
 
   it("emits done even when json responses do not include assistant text", async () => {
     const authClient = createMockAuthClient(

@@ -2,8 +2,8 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod/v4";
 import { useAIChat } from "./use-ai-chat";
-import type { AIGatewayChatRequest, AIGatewayClient, AIChatCompletionEvent } from "./client";
-import { aiProviderTool, defineAIChatTool } from "./tools";
+import type { AIGatewayChatRequest, AIGatewayClient } from "./client";
+import { defineAIChatTool } from "./tools";
 
 function createAbortError(): Error {
   if (typeof DOMException !== "undefined") {
@@ -851,54 +851,6 @@ describe("useAIChat", () => {
       }
     },
   );
-
-  it("passes provider tools through and exposes sources", async () => {
-    const client = {
-      streamChatCompletion: vi.fn(async function* ({ tools }) {
-        expect(tools).toEqual([
-          {
-            type: "provider",
-            provider: "openai",
-            name: "web_search",
-            options: { searchContextSize: "high" },
-          },
-        ]);
-        yield { type: "text-delta", text: "Latest market news" } as const;
-        const doneEvent: AIChatCompletionEvent = {
-          type: "done",
-          finishReason: "stop",
-          sources: [{ type: "url", url: "https://example.com", title: "Example" }],
-        };
-        yield doneEvent;
-      }),
-    } satisfies AIGatewayClient;
-
-    const { result } = renderHook(() =>
-      useAIChat({
-        client,
-        model: "gpt-5-mini",
-        tools: {
-          web_search: aiProviderTool.openai.webSearch({ searchContextSize: "high" }),
-        },
-      }),
-    );
-
-    await act(async () => {
-      await expect(result.current.sendMessage("Search the web")).resolves.toBe(true);
-    });
-
-    await waitFor(() => {
-      expect(result.current.messages).toEqual([
-        { id: "id-1", role: "user", content: "Search the web" },
-        {
-          id: "id-2",
-          role: "assistant",
-          content: "Latest market news",
-          sources: [{ type: "url", url: "https://example.com", title: "Example" }],
-        },
-      ]);
-    });
-  });
 
   it("ignores blank and concurrent sends", async () => {
     let releaseRequest!: () => void;

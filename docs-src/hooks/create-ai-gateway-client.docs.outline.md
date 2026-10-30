@@ -7,7 +7,7 @@ description: Create a low-level AI Gateway client that reuses AppShell authentic
 
 # createAIGatewayClient
 
-Creates a small AI Gateway transport client for chat completions, tool calls, and optional sources.
+Creates a small AI Gateway transport client for chat completions and local function tool calls.
 
 ## Signature
 
@@ -44,7 +44,7 @@ The iterable yields completion events:
 
 - `text-delta` — append `event.text` to build the assistant response
 - `tool-call` — a local function tool call requested by the model
-- `done` — terminal event with an optional `finishReason` and optional `sources`
+- `done` — terminal event with an optional `finishReason`
 
 ## Related Types
 
@@ -71,26 +71,19 @@ interface AIGatewayToolCall {
   argumentsText: string;
 }
 
-type AIGatewayTool =
-  | {
-      type: "function";
-      function: {
-        name: string;
-        description?: string;
-        parameters: Record<string, unknown>;
-      };
-    }
-  | {
-      type: "provider";
-      provider: "openai";
-      name: "web_search";
-      options?: unknown;
-    };
+interface AIGatewayFunctionTool {
+  type: "function";
+  function: {
+    name: string;
+    description?: string;
+    parameters: Record<string, unknown>;
+  };
+}
 
 interface AIGatewayChatRequest {
   model: string;
   messages: AIGatewayChatMessage[];
-  tools?: AIGatewayTool[];
+  tools?: AIGatewayFunctionTool[];
   signal?: AbortSignal;
 }
 
@@ -108,14 +101,7 @@ type AIChatCompletionEvent =
   | {
       type: "done";
       finishReason?: string;
-      sources?: AIChatSource[];
     };
-
-interface AIChatSource {
-  type: "url";
-  url: string;
-  title?: string;
-}
 ```
 
 ## Usage
@@ -149,7 +135,7 @@ console.log(text);
 ## Notes
 
 - AppShell chooses the appropriate AI Gateway transport automatically
-- Local tools are sent as normalized `type: "function"` definitions; provider tools are passed through as normalized `type: "provider"` definitions
+- Local tools are sent as normalized `type: "function"` definitions; provider-native tools are not supported
 - The low-level API stays event-based so hooks can layer streaming UI and tool loops on top
 - `request.signal` is passed through so callers can abort in-flight work
 

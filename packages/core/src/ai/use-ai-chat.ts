@@ -1,19 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isAbortError } from "./client";
-import type { AIGatewayChatMessage, AIGatewayClient, AIChatSource } from "./client";
+import type { AIGatewayChatMessage, AIGatewayClient } from "./client";
 import {
   runAssistantLoop,
   type AIChatAssistantTurnResult,
   type AssistantLoopEvent,
 } from "./assistant-loop";
-import type { AIChatConfiguredTool } from "./tools";
+import type { AILocalTool } from "./tools";
 
 /** Public chat message shape exposed by `useAIChat()`. */
 export interface AIChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  sources?: AIChatSource[];
 }
 
 export type AIChatStatus = "ready" | "submitted" | "streaming" | "error";
@@ -51,10 +50,6 @@ class ChatRequestContext {
     return { messageId: this.turnMessageId!, content: this.turnContent, isNew };
   }
 
-  get currentMessageId(): string | null {
-    return this.turnMessageId;
-  }
-
   commitTurn(turn: AIChatAssistantTurnResult): void {
     if (turn.gatewayAssistantMessage.content || turn.toolCalls.length > 0) {
       this.transcript.push(turn.gatewayAssistantMessage);
@@ -87,7 +82,7 @@ class ChatRequestContext {
 }
 
 /**
- * React hook for AI Gateway chat with optional local and provider tools.
+ * React hook for AI Gateway chat with optional local tools.
  *
  * Messages stay text-first. Requested tool names are exposed only for the
  * active request; tool-call and tool-result protocol messages remain internal.
@@ -95,7 +90,7 @@ class ChatRequestContext {
 export function useAIChat(config: {
   client: AIGatewayClient;
   model: string;
-  tools?: Record<string, AIChatConfiguredTool>;
+  tools?: Record<string, AILocalTool>;
 }): {
   messages: AIChatMessage[];
   /** Requested tools in the active flow; cleared on completion, stop, or error. */
@@ -226,16 +221,6 @@ function applyEvent(
           previous.map((entry) => (entry.id === messageId ? { ...entry, content } : entry)),
         );
       }
-      break;
-    }
-
-    case "sources": {
-      const id = ctx.currentMessageId;
-      if (!id) break;
-      const { sources } = event;
-      updateMessages((previous) =>
-        previous.map((entry) => (entry.id === id ? { ...entry, sources } : entry)),
-      );
       break;
     }
 

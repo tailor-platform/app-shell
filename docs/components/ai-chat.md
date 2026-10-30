@@ -293,7 +293,7 @@ Each call renders on its own row, in the order supplied. Labels are localized au
 
 The list clears when the response finishes, is stopped, or fails. It does not create tool messages or persist in the conversation log.
 
-These names record model requests, not execution success. Tool arguments and results stay internal, and provider-managed usage is not exposed here. Do not infer a `ToolHeader` success or running state from name-only metadata.
+These names record model requests, not execution success. Tool arguments and results stay internal. Do not infer a `ToolHeader` success or running state from name-only metadata.
 
 ### Tool
 
@@ -313,7 +313,7 @@ Collapsible tool-call card. Maps 1:1 to the AI SDK's tool-part lifecycle, so a s
 
 ### Sources
 
-Compact "Used N sources" citation trigger under a grounded answer.
+Compact "Used N sources" citation trigger under a grounded answer. Supply source data from your application; `useAIChat()` does not return citation metadata.
 
 ```tsx
 <AIChat.Sources>

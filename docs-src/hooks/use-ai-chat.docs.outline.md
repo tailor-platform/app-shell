@@ -2,12 +2,12 @@
 kind: prose
 group: use-ai-chat
 title: useAIChat
-description: AI Gateway chat hook with optional local and provider tools
+description: AI Gateway chat hook with optional local tools
 ---
 
 # useAIChat
 
-React hook for AI Gateway chat on top of `createAIGatewayClient`, with optional local and provider tool support.
+React hook for AI Gateway chat on top of `createAIGatewayClient`, with optional local tool support.
 
 ## Signature
 
@@ -15,7 +15,7 @@ React hook for AI Gateway chat on top of `createAIGatewayClient`, with optional 
 const useAIChat: (config: {
   client: AIGatewayClient;
   model: string;
-  tools?: Record<string, AIChatConfiguredTool>;
+  tools?: Record<string, AILocalTool>;
 }) => {
   messages: AIChatMessage[];
   toolCalls: { id: string; name: string }[];
@@ -35,13 +35,6 @@ interface AIChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  sources?: AIChatSource[];
-}
-
-interface AIChatSource {
-  type: "url";
-  url: string;
-  title?: string;
 }
 ```
 
@@ -50,7 +43,7 @@ interface AIChatSource {
 - **Type:** `{ id: string; name: string }[]`
 - **Description:** Tool calls requested by the model in the active flow, including earlier tool rounds of the current request. This transient list is cleared when the response finishes, is stopped, or fails; it is never added to `messages` or conversation history.
 
-Calls become available before local tool execution. They record requested tool names, not successful execution. Arguments and results remain internal, and provider-managed tool usage is not reported through this field.
+Calls become available before local tool execution. They record requested tool names, not successful execution. Arguments and results remain internal.
 
 ### `status`
 
@@ -75,16 +68,12 @@ Calls become available before local tool execution. They record requested tool n
 
 ### `tools`
 
-Register tools under a single object:
-
-- local tools created with `defineAIChatTool(...)`; their schemas must implement both [Standard Schema](https://standardschema.dev/) validation and Standard JSON Schema generation (for example, Zod 4)
-- provider tools such as `aiProviderTool.openai.webSearch(...)`
+Register local tools under a single object using `defineAIChatTool(...)`. Their schemas must implement both [Standard Schema](https://standardschema.dev/) validation and Standard JSON Schema generation (for example, Zod 4). Provider-native tools are not supported.
 
 ## Usage
 
 ```tsx
 import {
-  aiProviderTool,
   createAuthClient,
   createAIGatewayClient,
   defineAIChatTool,
@@ -118,7 +107,6 @@ export function ChatScreen() {
     model: "gpt-5-mini",
     tools: {
       lookupCustomer,
-      web_search: aiProviderTool.openai.webSearch({ searchContextSize: "high" }),
     },
   });
 
@@ -152,7 +140,6 @@ export function ChatScreen() {
 
 - AppShell chooses the appropriate AI Gateway transport automatically
 - Public messages stay user/assistant text-first; tool calls and results never become conversation messages
-- Provider tools can attach optional `sources` to assistant messages
 - System prompts and custom history shaping should use the low-level client directly
 - `stop()` keeps already-streamed assistant text, clears the active `toolCalls`, and ignores late events from the stopped request
 

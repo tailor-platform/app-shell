@@ -1,0 +1,445 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import type { ReactNode } from "react";
+import { MemoryRouter } from "react-router";
+import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
+import { DataTable } from "../../data-table";
+import { useDataTable } from "../../use-data-table";
+import { createColumnHelper } from "../../field-helpers";
+import type { Column } from "../../types";
+import { Harness, LINES, column, noop, renderTable, type Line, type Update } from "./test-utils";
+
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
+
+type Row = { id: string; expected: string | null };
+const { column: dateColumn } = createColumnHelper<Row>();
+const configurations = buildConfigurations({ modules: [], locale: "en", timeZone: "Asia/Tokyo" });
+
+function Wrapper({ children }: { children: ReactNode }) {
+  return (
+    <AppShellConfigContext.Provider value={{ configurations }}>
+      <MemoryRouter>{children}</MemoryRouter>
+    </AppShellConfigContext.Provider>
+  );
+}
+
+function DateHarness({
+  value,
+  datetime,
+  onValueChange,
+  onValueCommitted,
+}: {
+  value: string | null;
+  datetime: boolean;
+  onValueChange: (row: Row, draft: unknown) => void;
+  onValueCommitted: (row: Row, value: string | null) => void;
+}) {
+  const table = useDataTable<Row>({
+    columns: [
+      dateColumn({
+        id: "expected",
+        label: "Expected",
+        type: "date",
+        typeOptions: { dateFormat: datetime ? "datetime" : "short", locale: "en-US" },
+        edit: { onValueChange, onValueCommitted },
+      }),
+    ],
+    data: { rows: [{ id: "1", expected: value }] },
+  });
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
+function setup(value: string | null = "2026-10-02T00:00:00.000Z", datetime = true) {
+  const user = userEvent.setup();
+  const onValueChange = vi.fn();
+  const onValueCommitted = vi.fn();
+  const props = { value, datetime, onValueChange, onValueCommitted };
+  const result = render(<DateHarness {...props} />, { wrapper: Wrapper });
+  return {
+    user,
+    onValueChange,
+    onValueCommitted,
+    unmount: result.unmount,
+    update: (next: string | null) => result.rerender(<DateHarness {...props} value={next} />),
+  };
+}
+
+const trigger = () => screen.getByRole("button", { name: /^Expected/ });
+const timeInput = () => screen.getByLabelText("Expected (Choose time)") as HTMLInputElement;
+const done = () => screen.getByRole("button", { name: "Done" }) as HTMLButtonElement;
+const dayButton = (day: string) =>
+  within(document.querySelector<HTMLElement>('[data-slot="data-table-cell-calendar"]')!)
+    .getAllByRole("button")
+    .find((button) => button.textContent === day && !button.dataset.outsideMonth)!;
+const baseline = { day: "2026-10-02", time: "09:00" };
+
+describe("DataTable date-time drafts", () => {
+  it("preserves a missing day and emits complete draft snapshots, not timestamps", async () => {
+    const { user, onValueChange, onValueCommitted } = setup(null);
+    await user.click(trigger());
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(done().disabled).toBe(true);
+    fireEvent.change(timeInput(), { target: { value: "14:30" } });
+    expect(onValueChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "1" }), {
+      day: null,
+      time: "14:30",
+    });
+    expect(done().disabled).toBe(true);
+    await user.click(dayButton("15"));
+    const snapshot = onValueChange.mock.lastCall![1] as { day: string; time: string };
+    expect(snapshot).toEqual({ day: expect.stringMatching(/^\d{4}-\d{2}-15$/), time: "14:30" });
+    expect(onValueCommitted).not.toHaveBeenCalled();
+    expect(done().disabled).toBe(false);
+    await user.click(done());
+    expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ id: "1" }),
+      new Date(`${snapshot.day}T14:30:00+09:00`).toISOString(),
+    );
+  });
+
+  it("does not substitute midnight for a missing time, including date-only data", async () => {
+    const { user, onValueChange, onValueCommitted } = setup("2026-10-02");
+    await user.click(trigger());
+    expect(timeInput().value).toBe("");
+    expect(done().disabled).toBe(true);
+    await user.click(dayButton("20"));
+    expect(onValueChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "1" }), {
+      day: "2026-10-20",
+      time: null,
+    });
+    expect(done().disabled).toBe(true);
+    await user.click(done());
+    expect(onValueCommitted).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { value: "2026-10-02", changed: true },
+    { value: "2026-10-01T15:00:00.000Z", changed: false },
+  ])(
+    "confirms explicit midnight only when it completes or changes $value",
+    async ({ value, changed }) => {
+      const { user, onValueChange, onValueCommitted } = setup(value);
+      await user.click(trigger());
+      fireEvent.change(timeInput(), { target: { value: "00:00" } });
+      expect(done().disabled).toBe(false);
+      await user.click(done());
+      if (changed) {
+        expect(onValueChange).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({ id: "1" }),
+          {
+            day: "2026-10-02",
+            time: "00:00",
+          },
+        );
+        expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({ id: "1" }),
+          "2026-10-01T15:00:00.000Z",
+        );
+      } else {
+        expect(onValueChange).not.toHaveBeenCalled();
+        expect(onValueCommitted).not.toHaveBeenCalled();
+      }
+    },
+  );
+
+  it("notifies an emptied time as null and restores it on Escape without committing", async () => {
+    const { user, onValueChange, onValueCommitted } = setup();
+    await user.click(trigger());
+    fireEvent.change(timeInput(), { target: { value: "" } });
+    expect(onValueChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "1" }), {
+      day: "2026-10-02",
+      time: null,
+    });
+    expect(done().disabled).toBe(true);
+    await user.keyboard("{Escape}");
+    expect(onValueChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "1" }), baseline);
+    expect(onValueCommitted).not.toHaveBeenCalled();
+    await user.click(trigger());
+    expect(timeInput().value).toBe("09:00");
+  });
+
+  it("cancels outside presses rather than confirming a complete draft", async () => {
+    const { user, onValueChange, onValueCommitted } = setup();
+    await user.click(trigger());
+    await user.click(dayButton("20"));
+    fireEvent.change(timeInput(), { target: { value: "14:30" } });
+    await user.click(document.body);
+    expect(onValueChange).toHaveBeenLastCalledWith(expect.objectContaining({ id: "1" }), baseline);
+    expect(onValueCommitted).not.toHaveBeenCalled();
+  });
+
+  it("keeps active drafts on external updates and restores the latest data on cancellation", async () => {
+    const { user, update, onValueChange, onValueCommitted } = setup();
+    await user.click(trigger());
+    await user.click(dayButton("20"));
+    fireEvent.change(timeInput(), { target: { value: "14:30" } });
+    onValueChange.mockClear();
+    update("2026-10-25T07:45:00.000Z");
+    expect(timeInput().value).toBe("14:30");
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(onValueCommitted).not.toHaveBeenCalled();
+    await user.keyboard("{Escape}");
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: "1" }), {
+      day: "2026-10-25",
+      time: "16:45",
+    });
+    expect(onValueCommitted).not.toHaveBeenCalled();
+  });
+
+  it("compares a confirmed draft with latest data, not the value when opened", async () => {
+    const { user, update, onValueChange, onValueCommitted } = setup();
+    await user.click(trigger());
+    await user.click(dayButton("20"));
+    fireEvent.change(timeInput(), { target: { value: "14:30" } });
+    onValueChange.mockClear();
+    update("2026-10-20T05:30:00.000Z");
+    expect(onValueChange).not.toHaveBeenCalled();
+    await user.click(done());
+    expect(onValueCommitted).not.toHaveBeenCalled();
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it("compares even an untouched open draft with latest data", async () => {
+    const { user, update, onValueChange, onValueCommitted } = setup();
+    await user.click(trigger());
+    update("2026-10-25T07:45:00.000Z");
+    expect(timeInput().value).toBe("09:00");
+    await user.click(done());
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ id: "1" }),
+      "2026-10-02T00:00:00.000Z",
+    );
+  });
+
+  it("explicit Clear emits the empty snapshot before a null commitment", async () => {
+    const { user, onValueChange, onValueCommitted } = setup();
+    await user.click(trigger());
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: "1" }), {
+      day: null,
+      time: null,
+    });
+    expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ id: "1" }),
+      null,
+    );
+    expect(onValueChange.mock.invocationCallOrder[0]).toBeLessThan(
+      onValueCommitted.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("does not notify unchanged Clear or dismissal", async () => {
+    const { user, onValueChange, onValueCommitted } = setup(null);
+    await user.click(trigger());
+    await user.click(screen.getByRole("button", { name: "Clear" }));
+    await user.click(trigger());
+    await user.keyboard("{Escape}");
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(onValueCommitted).not.toHaveBeenCalled();
+  });
+
+  it.each(["calendar", "time"])(
+    "isolates native context menus and long presses inside the %s control",
+    async (control) => {
+      const { user, onValueChange, onValueCommitted } = setup();
+      await user.click(trigger());
+      const target = control === "calendar" ? dayButton("20") : timeInput();
+      const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+      fireEvent(target, event);
+      expect(event.defaultPrevented).toBe(false);
+      expect(screen.queryByRole("menu")).toBeNull();
+      vi.useFakeTimers();
+      fireEvent.touchStart(target, { touches: [{ clientX: 10, clientY: 10 }] });
+      act(() => vi.advanceTimersByTime(600));
+      expect(screen.queryByRole("menu")).toBeNull();
+      expect(timeInput().value).toBe("09:00");
+      expect(onValueChange).not.toHaveBeenCalled();
+      expect(onValueCommitted).not.toHaveBeenCalled();
+    },
+  );
+
+  it("discards active drafts silently on unmount", async () => {
+    const { user, unmount, onValueChange, onValueCommitted } = setup();
+    await user.click(trigger());
+    await user.click(dayButton("20"));
+    onValueChange.mockClear();
+    unmount();
+    expect(onValueChange).not.toHaveBeenCalled();
+    expect(onValueCommitted).not.toHaveBeenCalled();
+  });
+
+  it("emits date-only string drafts followed by the confirmed day", async () => {
+    const { user, onValueChange, onValueCommitted } = setup("2026-10-02", false);
+    await user.click(trigger());
+    await user.click(dayButton("20"));
+    expect(onValueChange).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ id: "1" }),
+      "2026-10-20",
+    );
+    expect(onValueCommitted).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ id: "1" }),
+      "2026-10-20",
+    );
+    expect(onValueChange.mock.invocationCallOrder[0]).toBeLessThan(
+      onValueCommitted.mock.invocationCallOrder[0],
+    );
+  });
+});
+
+describe("DataTable inline editing", () => {
+  describe("dates", () => {
+    const dateRows = LINES.map((line) => ({ ...line, expected: "2026-10-02" }));
+
+    function expectedColumn(
+      onValueCommitted: (id: string, value: string | null) => void,
+      update: Update,
+      datetime = false,
+    ): Column<Line> {
+      return column({
+        id: "expected",
+        label: "Expected",
+        type: "date",
+        typeOptions: { dateFormat: datetime ? "datetime" : "short" },
+        edit: {
+          onValueCommitted: (row, value) => {
+            onValueCommitted(row.id, value);
+            update(row.id, { expected: value });
+          },
+        },
+      });
+    }
+
+    it("shows a date-only value as that day in any time zone", () => {
+      const tz = process.env.TZ;
+      process.env.TZ = "America/Los_Angeles";
+      try {
+        renderTable(
+          <Harness
+            rows={dateRows}
+            columns={() => [
+              column({
+                id: "expected",
+                label: "Expected",
+                type: "date",
+                typeOptions: { locale: "en-US" },
+              }),
+            ]}
+          />,
+        );
+        expect(screen.getAllByText("Oct 2, 2026")).toHaveLength(3);
+      } finally {
+        process.env.TZ = tz;
+      }
+    });
+
+    it("names the date trigger with its current value", () => {
+      renderTable(
+        <Harness
+          rows={dateRows}
+          columns={() => [
+            column({
+              id: "expected",
+              label: "Expected",
+              type: "date",
+              typeOptions: { locale: "en-US" },
+              edit: { onValueCommitted: noop },
+            }),
+          ]}
+        />,
+      );
+      expect(screen.getAllByRole("button", { name: "Expected, Oct 2, 2026" })).toHaveLength(3);
+    });
+
+    it("notifies a picked day as YYYY-MM-DD", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={dateRows}
+          columns={(update) => [expectedColumn(onValueCommitted, update)]}
+        />,
+      );
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
+      await user.click(dayButton("15"));
+      expect(onValueCommitted).toHaveBeenCalledWith("1", "2026-10-15");
+    });
+
+    it("clears a date to null", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={dateRows}
+          columns={(update) => [expectedColumn(onValueCommitted, update)]}
+        />,
+      );
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
+      await user.click(screen.getByRole("button", { name: "Clear" }));
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith("1", null);
+    });
+
+    it("uses data when the consumer rejects a date change", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={dateRows}
+          columns={() => [
+            column({ id: "expected", label: "Expected", type: "date", edit: { onValueCommitted } }),
+          ]}
+        />,
+      );
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
+      await user.click(dayButton("15"));
+      expect(onValueCommitted).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "1" }),
+        "2026-10-15",
+      );
+      expect(screen.getAllByRole("button", { name: "Expected, Oct 2, 2026" })).toHaveLength(3);
+    });
+
+    it("notifies a date-time as ISO only when Done is pressed", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={dateRows}
+          columns={(update) => [expectedColumn(onValueCommitted, update, true)]}
+        />,
+      );
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
+      await user.click(dayButton("20"));
+      fireEvent.change(screen.getByLabelText("Expected (Choose time)"), {
+        target: { value: "14:30" },
+      });
+      expect(onValueCommitted).not.toHaveBeenCalled();
+      await user.click(screen.getByRole("button", { name: "Done" }));
+      expect(onValueCommitted).toHaveBeenCalledTimes(1);
+      expect(onValueCommitted).toHaveBeenCalledWith(
+        "1",
+        new Date(2026, 9, 20, 14, 30).toISOString(),
+      );
+    });
+
+    it("abandons a date-time draft when the calendar closes with Escape", async () => {
+      const onValueCommitted = vi.fn();
+      const user = renderTable(
+        <Harness
+          rows={dateRows}
+          columns={(update) => [expectedColumn(onValueCommitted, update, true)]}
+        />,
+      );
+      await user.click(screen.getAllByRole("button", { name: /^Expected/ })[0]);
+      await user.click(dayButton("20"));
+      await user.keyboard("{Escape}");
+      expect(onValueCommitted).not.toHaveBeenCalled();
+    });
+  });
+});

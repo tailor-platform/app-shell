@@ -71,6 +71,45 @@ function entryTable(list: Outline[], dir: string): string {
   return blocks.join("\n\n");
 }
 
+const VERSION_PLACEHOLDER = /\{\{APP_SHELL_VERSION\}\}/g;
+
+/** Read the version stamped into the skill, or null when no source is configured. */
+export function readSkillVersion(repoRoot: string, config: DocsConfig): string | null {
+  const source = config.skill?.versionSource;
+  if (!source) return null;
+  const { version } = JSON.parse(readFileSync(join(repoRoot, source), "utf8")) as {
+    version?: string;
+  };
+  if (!version) throw new Error(`${source} has no "version" field`);
+  return version;
+}
+
+/** Substitute the package version into a computed skill file. Applied only when
+ * writing — the manifest hashes the unstamped content, so a changesets version
+ * bump never registers as skill drift. Throws rather than ship a literal
+ * placeholder, which would tell every consumer their copy is stale. */
+export function stampSkill(content: string, version: string | null): string {
+  if (version !== null) return content.replace(VERSION_PLACEHOLDER, version);
+  if (content.includes("{{APP_SHELL_VERSION}}")) {
+    throw new Error("skill template uses {{APP_SHELL_VERSION}} but skill.versionSource is not set");
+  }
+  return content;
+}
+
+/** Compute the skill and stamp it, so a bad version source fails before any write. */
+export function computeStampedSkill(
+  repoRoot: string,
+  config: DocsConfig,
+  outlines: Outline[],
+): Map<string, { content: string; stamped: string }> {
+  const version = readSkillVersion(repoRoot, config);
+  const files = new Map<string, { content: string; stamped: string }>();
+  for (const [p, content] of computeSkill(repoRoot, config, outlines)) {
+    files.set(p, { content, stamped: stampSkill(content, version) });
+  }
+  return files;
+}
+
 /** Compute the whole consumer skill as a map of repo-relative path → content.
  * Pure: reads only committed inputs (the generated docs incl. concepts, the SKILL template, and the migrations doc) and writes nothing — so `sync`
  * can emit it and `check` can recompute and validate it without the (gitignored)

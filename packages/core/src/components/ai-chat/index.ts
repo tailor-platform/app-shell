@@ -4,6 +4,7 @@ export {
   type AIChatHeaderProps,
   type AIChatConversationProps,
   type AIChatComposerProps,
+  type AIChatToolCallProps,
   type ToolState,
   type ChainOfThoughtStepStatus,
   type ChatHistoryGroupData,

@@ -161,14 +161,12 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
   const DefaultHeader = (
     <SidebarHeader>
       {icon}
-      <Text
+      <Text.h1
         variant="heading-sm"
         className={cn("astw:mb-2 astw:mt-2 astw:px-2", isIconMode && "astw:hidden")}
-        // eslint-disable-next-line jsx-a11y/heading-has-content
-        render={<h1 />}
       >
         {title}
-      </Text>
+      </Text.h1>
     </SidebarHeader>
   );
   const DefaultFooter = null;

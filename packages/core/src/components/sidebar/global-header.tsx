@@ -49,9 +49,9 @@ export const GlobalHeader = ({ actions }: GlobalHeaderProps) => {
     <header className="astw:flex astw:h-14 astw:shrink-0 astw:items-center astw:justify-between astw:gap-2 astw:border-b astw:border-border astw:px-4">
       <div className="astw:flex astw:min-w-0 astw:flex-1 astw:items-center astw:gap-2">
         {icon}
-        <Text variant="heading-sm" className="astw:shrink-0 astw:truncate" render={<span />}>
+        <Text.span variant="heading-sm" className="astw:shrink-0 astw:truncate">
           {title}
-        </Text>
+        </Text.span>
         <div className="astw:mx-1 astw:h-5 astw:w-px astw:shrink-0 astw:bg-border" />
         <div className="astw:flex astw:min-w-0 astw:flex-1 astw:items-center astw:overflow-hidden">
           <DynamicBreadcrumb />

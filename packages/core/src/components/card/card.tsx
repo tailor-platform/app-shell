@@ -33,23 +33,18 @@ function Header({ className, title, description, children, ...props }: HeaderPro
       {...props}
     >
       {title && (
-        <Text
+        <Text.h3
           variant="heading-md"
           className="astw:leading-none astw:text-card-foreground"
-          // eslint-disable-next-line jsx-a11y/heading-has-content
-          render={<h3 data-slot="card-title" />}
+          data-slot="card-title"
         >
           {title}
-        </Text>
+        </Text.h3>
       )}
       {description && (
-        <Text
-          variant="body-md"
-          className="astw:text-muted-foreground"
-          render={<div data-slot="card-description" />}
-        >
+        <Text.div className="astw:text-muted-foreground" data-slot="card-description">
           {description}
-        </Text>
+        </Text.div>
       )}
       {children}
     </div>

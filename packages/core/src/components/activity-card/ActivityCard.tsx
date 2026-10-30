@@ -103,14 +103,9 @@ function Root<T extends ActivityCardBaseItem>({
       >
         {title != null && (
           <div className="astw:flex astw:items-center astw:px-6 astw:pt-5 astw:pb-2">
-            <Text
-              variant="heading-md"
-              className="astw:text-card-foreground"
-              // eslint-disable-next-line jsx-a11y/heading-has-content
-              render={<h3 />}
-            >
+            <Text.h3 variant="heading-md" className="astw:text-card-foreground">
               {title}
-            </Text>
+            </Text.h3>
           </div>
         )}
         {children}
@@ -132,13 +127,12 @@ function renderSection<T extends ActivityCardBaseItem>(
   return (
     <div key={dayLabel ?? "single"} className="astw:flex astw:flex-col astw:gap-5">
       {dayLabel != null && (
-        <Text
+        <Text.p
           variant="label-sm"
           className="astw:leading-none astw:opacity-60 astw:text-foreground"
-          render={<p />}
         >
           {dayLabel}
-        </Text>
+        </Text.p>
       )}
       <div className="astw:relative astw:flex astw:flex-col astw:gap-5">
         {items.map((item, index) => (

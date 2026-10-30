@@ -2,25 +2,34 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add `TreeSelect` and `TreePicker` for picking many items from a hierarchical catalog. `TreeSelect` is the searchable multi-select tree on its own, for use inline on a page or in a panel; `TreePicker` is the same tree in a fixed-height dialog with an "Add N items" commit, the way `DatePicker` wraps `DateField`.
+Add `CheckboxTree` and `CheckboxTreePicker` for picking many items from a hierarchical catalog. `CheckboxTree` is the searchable multi-select tree on its own, for use inline and in forms; `CheckboxTreePicker` is the same tree in a fixed-height dialog with an "Add N items" commit, the way `DatePicker` wraps `DateField`.
 
-Selection is leaf-only: a parent checkbox is derived from its descendants (checked, or indeterminate when partial), and ticking it selects every leaf beneath. Searching keeps any node that matches or has a matching descendant, and auto-expands the ancestors of matches. The tree is keyboard-navigable (`role="tree"` with roving focus, arrow keys to move and expand, Space to toggle, Enter to commit).
+Pass your own items with `mapItem`, as with `Select` and `Combobox`. A key only needs to be unique among its siblings. Selection is leaf-only: ticking a parent selects every enabled leaf beneath it, and a parent's checkbox is checked or indeterminate from its leaves.
 
 ```tsx
-import { TreePicker } from "@tailor-platform/app-shell";
+import { CheckboxTree } from "@tailor-platform/app-shell";
 
-<TreePicker<CatalogItem>
-  open={open}
-  onOpenChange={setOpen}
-  title="Add items from catalog"
-  items={catalog}
-  renderRow={({ node }) => node.data.name}
-  renderMetric={({ node }) => (node.children ? null : `$${node.data.price.toFixed(2)}`)}
-  matchesSearch={({ node, query }) => node.data.name.toLowerCase().includes(query.toLowerCase())}
-  onCommit={(picked) => addToOrder(picked.map((n) => n.data))}
+<CheckboxTree<Category | Product>
+  aria-label="Products"
+  items={categories}
+  mapItem={(item) =>
+    "products" in item
+      ? { key: item.id, label: item.name, children: item.products }
+      : { key: item.sku, label: item.name }
+  }
+  trailingColumn={{
+    header: "Unit price",
+    render: ({ item, isLeaf }) => (isLeaf ? money(item.price) : null),
+  }}
+  value={skus}
+  onValueChange={setSkus}
 />;
 ```
 
-It is generic and standalone: `data` is opaque to the picker, and `onCommit` hands back the picked leaves for the app to use however it needs.
+- **Two value shapes:** a list of leaf keys (`valueShape: "keys"`, the default), or an exact nested selection (`valueShape: "exact"`) for when the same key means different things under different parents. `onValueChange` reports the same shape plus the selected leaves with their paths and parents.
+- **Rows:** `renderItem` for the main column, plus `leadingColumn` / `trailingColumn` with aligned header cells.
+- **Forms:** `name` submits one hidden input per selected leaf; `required`, `disabled`, `itemToStringValue`, and `Field.Root` integration (label, description, error, invalid state) work as on `Select`.
+- **Keyboard:** `role="tree"` with roving focus — arrows to move and expand, Space to toggle, Enter runs `onAction` (or submits the owning form; the picker commits).
+- **Disabled items:** `disabled` from `mapItem`, cascading from a parent to its children.
 
 Built-in labels are localized (English and Japanese) through the app locale; any label prop overrides them.

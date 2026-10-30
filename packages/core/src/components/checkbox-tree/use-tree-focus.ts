@@ -1,7 +1,6 @@
 import * as React from "react";
 
-import type { VisibleRow } from "./tree-utils";
-import type { TreePickerNode } from "./types";
+import type { TreeNode, VisibleRow } from "./tree-model";
 
 /**
  * @internal
@@ -15,16 +14,16 @@ import type { TreePickerNode } from "./types";
  * - `ArrowLeft` — collapse an expanded parent, else step out to its parent
  * - `Home` / `End` — first / last visible row
  * - `Space` — toggle the focused row (cascading for parents) without moving focus
- * - `Enter` — `onSubmit` (TreePicker commits), but only from a tree row
+ * - `Enter` — `onAction` (the row's default action), but only from a tree row
  */
 
 type UseTreeFocusOptions<T> = {
   rows: ReadonlyArray<VisibleRow<T>>;
   setExpanded(id: string, next: boolean): void;
-  toggleNode(node: TreePickerNode<T>, next: boolean): void;
-  isChecked(node: TreePickerNode<T>): boolean;
+  toggleNode(node: TreeNode<T>, next: boolean): void;
+  isChecked(node: TreeNode<T>): boolean;
   /** Enter on a tree row. */
-  onSubmit?: () => void;
+  onAction?: () => void;
 };
 
 type UseTreeFocusResult = {
@@ -43,7 +42,7 @@ export function useTreeFocus<T>({
   setExpanded,
   toggleNode,
   isChecked,
-  onSubmit,
+  onAction,
 }: UseTreeFocusOptions<T>): UseTreeFocusResult {
   const [focusedId, setFocusedId] = React.useState<string | null>(null);
   const rowElements = React.useRef(new Map<string, HTMLElement>());
@@ -76,13 +75,13 @@ export function useTreeFocus<T>({
       const onButton = target.closest("button") !== null;
 
       if (event.key === "Enter") {
-        // Only Enter on a tree row commits. Anything else — the search box, a
+        // Only Enter on a tree row runs `onAction`. Anything else — the search box, a
         // button, or a menu or select in `filterSlot` (whose portalled options
         // still bubble here through React) — keeps Enter for itself.
         if (event.defaultPrevented || inTextInput || onButton) return;
-        if (!target.closest("[role=tree]") || !onSubmit) return;
+        if (!target.closest("[role=tree]") || !onAction) return;
         event.preventDefault();
-        onSubmit();
+        onAction();
         return;
       }
 
@@ -107,7 +106,7 @@ export function useTreeFocus<T>({
           break;
         }
         case "ArrowRight": {
-          if (row.leaf) break;
+          if (row.node.isLeaf) break;
           event.preventDefault();
           if (row.expanded) focusRow(rows[index + 1]?.node.id);
           else setExpanded(row.node.id, true);
@@ -115,7 +114,7 @@ export function useTreeFocus<T>({
         }
         case "ArrowLeft": {
           event.preventDefault();
-          if (!row.leaf && row.expanded) setExpanded(row.node.id, false);
+          if (!row.node.isLeaf && row.expanded) setExpanded(row.node.id, false);
           else if (row.parentId !== null) focusRow(row.parentId);
           break;
         }
@@ -139,7 +138,7 @@ export function useTreeFocus<T>({
           break;
       }
     },
-    [rows, focusRow, setExpanded, toggleNode, isChecked, onSubmit],
+    [rows, focusRow, setExpanded, toggleNode, isChecked, onAction],
   );
 
   return { activeRowId, registerRow, onRowFocus, handleKeyDown };

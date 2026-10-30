@@ -167,12 +167,17 @@ export { Alert, alertVariants, type AlertProps } from "./components/alert";
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export type { BadgeVariant, BadgeOptions } from "./components/badge-list";
 export {
-  TreePicker,
-  TreeSelect,
-  type TreePickerProps,
-  type TreePickerNode,
-  type TreeSelectProps,
-} from "./components/tree-picker";
+  CheckboxTree,
+  CheckboxTreePicker,
+  type CheckboxTreeChangeDetails,
+  type CheckboxTreeColumn,
+  type CheckboxTreeMappedItem,
+  type CheckboxTreePickerProps,
+  type CheckboxTreeProps,
+  type CheckboxTreeRowState,
+  type CheckboxTreeSelectedItem,
+  type CheckboxTreeSelection,
+} from "./components/checkbox-tree";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export {
   ActivityCard,

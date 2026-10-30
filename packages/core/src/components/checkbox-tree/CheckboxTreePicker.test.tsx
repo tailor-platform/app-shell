@@ -3,36 +3,39 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { TreePicker } from "./TreePicker";
-import type { TreePickerNode } from "./types";
+import { CheckboxTreePicker } from "./CheckboxTreePicker";
+import type { CheckboxTreeSelectedItem } from "./types";
 
 afterEach(() => {
   cleanup();
 });
 
-type Item = { name: string; available: number };
+type Item = { key: string; name: string; available: number; children?: Item[] };
 
-const TREE: TreePickerNode<Item>[] = [
-  { id: "p1", data: { name: "Nike Vomero 18", available: 3 } },
+const TREE: Item[] = [
+  { key: "p1", name: "Nike Vomero 18", available: 3 },
   {
-    id: "p2",
-    data: { name: "Adidas Ultraboost 22", available: 0 },
+    key: "p2",
+    name: "Adidas Ultraboost 22",
+    available: 0,
     children: [
-      { id: "p2-uk8w", data: { name: "UK 8 / Black / Women", available: 9 } },
-      { id: "p2-uk9m", data: { name: "UK 9 / Black / Men", available: 9 } },
-      { id: "p2-uk10m", data: { name: "UK 10 / Black / Men", available: 9 } },
+      { key: "p2-uk8w", name: "UK 8 / Black / Women", available: 9 },
+      { key: "p2-uk9m", name: "UK 9 / Black / Men", available: 9 },
+      { key: "p2-uk10m", name: "UK 10 / Black / Men", available: 9 },
     ],
   },
-  { id: "p3", data: { name: "Hoka One One Bondi 8", available: 15 } },
+  { key: "p3", name: "Hoka One One Bondi 8", available: 15 },
 ];
+
+const mapItem = (item: Item) => ({ key: item.key, label: item.name, children: item.children });
 
 type HarnessProps = {
   initialOpen?: boolean;
-  onCommit?: (items: TreePickerNode<Item>[]) => void;
+  onCommit?: (items: CheckboxTreeSelectedItem<Item>[]) => void;
   ctaLabel?: (count: number) => string;
   filterSlot?: React.ReactNode;
   withMetric?: boolean;
-  items?: TreePickerNode<Item>[];
+  items?: Item[];
 };
 
 function Harness({
@@ -47,17 +50,18 @@ function Harness({
   return (
     <>
       <button onClick={() => setOpen(true)}>Reopen</button>
-      <TreePicker<Item>
+      <CheckboxTreePicker<Item>
         open={open}
         onOpenChange={setOpen}
         title="Bulk picker"
         items={items}
-        rowLabel="Product Name"
-        metricLabel={withMetric ? "Total available" : undefined}
-        renderRow={({ node }) => <span>{node.data.name}</span>}
-        renderMetric={withMetric ? ({ node }) => <span>{node.data.available}</span> : undefined}
-        matchesSearch={({ node, query }) =>
-          node.data.name.toLowerCase().includes(query.toLowerCase())
+        mapItem={mapItem}
+        itemHeader="Product Name"
+        renderItem={({ item }) => <span>{item.name}</span>}
+        trailingColumn={
+          withMetric
+            ? { header: "Total available", render: ({ item }) => <span>{item.available}</span> }
+            : undefined
         }
         onCommit={onCommit}
         ctaLabel={ctaLabel}
@@ -72,7 +76,7 @@ const rowFor = (label: string): HTMLElement => screen.getByText(label).closest("
 
 /** The checkbox drawn inside the row for a given visible label. */
 const checkboxFor = (label: string): HTMLElement =>
-  rowFor(label).querySelector("[role=checkbox]") as HTMLElement;
+  rowFor(label).querySelector("[data-slot=checkbox-tree-checkbox]") as HTMLElement;
 
 // Mouse-only (hidden from assistive tech, which uses the row), so found by its tooltip.
 const expandButton = () => screen.getByTitle(/expand/i);
@@ -80,7 +84,7 @@ const expandButton = () => screen.getByTitle(/expand/i);
 const caretFor = (label: string): HTMLElement =>
   rowFor(label).querySelector("button[title]") as HTMLElement;
 
-describe("TreePicker", () => {
+describe("CheckboxTreePicker", () => {
   // ==========================================================================
   // Snapshots
   // ==========================================================================
@@ -146,8 +150,8 @@ describe("TreePicker", () => {
     await user.click(cta);
 
     expect(onCommit).toHaveBeenCalledTimes(1);
-    const selected = onCommit.mock.calls[0]![0] as TreePickerNode<Item>[];
-    expect(selected.map((n) => n.id)).toEqual(["p2-uk8w", "p2-uk10m", "p3"]);
+    const selected = onCommit.mock.calls[0]![0] as CheckboxTreeSelectedItem<Item>[];
+    expect(selected.map((n) => n.key)).toEqual(["p2-uk8w", "p2-uk10m", "p3"]);
     await waitFor(() => expect(screen.queryByText("Nike Vomero 18")).toBeNull());
   });
 
@@ -157,10 +161,10 @@ describe("TreePicker", () => {
 
     await user.click(expandButton());
     await user.click(screen.getByText("UK 9 / Black / Men"));
-    expect(checkboxFor("UK 9 / Black / Men").getAttribute("aria-checked")).toBe("true");
+    expect(rowFor("UK 9 / Black / Men").getAttribute("aria-checked")).toBe("true");
 
     await user.click(screen.getByText("UK 9 / Black / Men"));
-    expect(checkboxFor("UK 9 / Black / Men").getAttribute("aria-checked")).toBe("false");
+    expect(rowFor("UK 9 / Black / Men").getAttribute("aria-checked")).toBe("false");
   });
 
   it("toggles once when the checkbox itself is clicked", async () => {
@@ -169,7 +173,7 @@ describe("TreePicker", () => {
 
     await user.click(expandButton());
     await user.click(checkboxFor("UK 9 / Black / Men"));
-    expect(checkboxFor("UK 9 / Black / Men").getAttribute("aria-checked")).toBe("true");
+    expect(rowFor("UK 9 / Black / Men").getAttribute("aria-checked")).toBe("true");
   });
 
   it("opens and closes a group when its row is clicked, without checking it", async () => {
@@ -201,13 +205,13 @@ describe("TreePicker", () => {
     await user.click(checkboxFor("Adidas Ultraboost 22"));
 
     for (const label of ["UK 8 / Black / Women", "UK 9 / Black / Men", "UK 10 / Black / Men"]) {
-      expect(checkboxFor(label).getAttribute("aria-checked")).toBe("true");
+      expect(rowFor(label).getAttribute("aria-checked")).toBe("true");
     }
     expect(rowFor("Adidas Ultraboost 22").getAttribute("aria-checked")).toBe("true");
 
     await user.click(screen.getByRole("button", { name: /add 3 items/i }));
-    const selected = onCommit.mock.calls[0]![0] as TreePickerNode<Item>[];
-    expect(selected.map((n) => n.id)).toEqual(["p2-uk8w", "p2-uk9m", "p2-uk10m"]);
+    const selected = onCommit.mock.calls[0]![0] as CheckboxTreeSelectedItem<Item>[];
+    expect(selected.map((n) => n.key)).toEqual(["p2-uk8w", "p2-uk9m", "p2-uk10m"]);
   });
 
   it("parent toggle deselects every descendant leaf", async () => {
@@ -222,7 +226,7 @@ describe("TreePicker", () => {
     expect((screen.getByRole("button", { name: /add items/i }) as HTMLButtonElement).disabled).toBe(
       true,
     );
-    expect(checkboxFor("UK 8 / Black / Women").getAttribute("aria-checked")).toBe("false");
+    expect(rowFor("UK 8 / Black / Women").getAttribute("aria-checked")).toBe("false");
   });
 
   it("partial child selection drives the parent into the mixed state", async () => {
@@ -233,7 +237,7 @@ describe("TreePicker", () => {
     await user.click(checkboxFor("UK 8 / Black / Women"));
 
     expect(rowFor("Adidas Ultraboost 22").getAttribute("aria-checked")).toBe("mixed");
-    expect(checkboxFor("Adidas Ultraboost 22").getAttribute("aria-checked")).toBe("mixed");
+    expect(rowFor("Adidas Ultraboost 22").getAttribute("aria-checked")).toBe("mixed");
   });
 
   it("never stores parent ids in the selection — commit yields leaves only", async () => {
@@ -244,9 +248,9 @@ describe("TreePicker", () => {
     await user.click(checkboxFor("Adidas Ultraboost 22"));
     await user.click(screen.getByRole("button", { name: /add 3 items/i }));
 
-    const selected = onCommit.mock.calls[0]![0] as TreePickerNode<Item>[];
-    expect(selected.some((n) => n.id === "p2")).toBe(false);
-    expect(selected.every((n) => n.children === undefined)).toBe(true);
+    const selected = onCommit.mock.calls[0]![0] as CheckboxTreeSelectedItem<Item>[];
+    expect(selected.some((n) => n.key === "p2")).toBe(false);
+    expect(selected.every((n) => n.item.children === undefined)).toBe(true);
   });
 
   it("disables the CTA with no selection and Cancel does not commit", async () => {
@@ -473,7 +477,7 @@ describe("TreePicker", () => {
     expect(tabStops()[0]).toBe(rowFor("Hoka One One Bondi 8"));
 
     // The checkbox inside a row is never its own tab stop.
-    expect(checkboxFor("Hoka One One Bondi 8").getAttribute("tabindex")).toBe("-1");
+    expect(checkboxFor("Hoka One One Bondi 8").hasAttribute("tabindex")).toBe(false);
     await user.click(checkboxFor("Nike Vomero 18"));
     await waitFor(() => expect(tabStops()).toHaveLength(1));
   });
@@ -595,7 +599,9 @@ describe("TreePicker", () => {
     rowFor("Nike Vomero 18").focus();
     await user.keyboard("{Enter}");
     expect(onCommit).toHaveBeenCalledTimes(1);
-    expect((onCommit.mock.calls[0]![0] as TreePickerNode<Item>[]).map((n) => n.id)).toEqual(["p1"]);
+    expect(
+      (onCommit.mock.calls[0]![0] as CheckboxTreeSelectedItem<Item>[]).map((n) => n.key),
+    ).toEqual(["p1"]);
   });
 
   it("does not commit on Enter when nothing is selected", async () => {

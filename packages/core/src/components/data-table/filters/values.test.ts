@@ -5,7 +5,7 @@ import {
   localDateTimeParts,
   normalizeTemporalFilterValue,
 } from "@/lib/temporal-filter-values";
-import { isDecimalFilterValueValid, isDecimalRangeOrdered } from "./filter-value-utils";
+import { isDecimalFilterValueValid, isDecimalRangeOrdered } from "./values";
 
 function mockDate(local: {
   year: number;

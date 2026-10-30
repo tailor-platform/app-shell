@@ -13,7 +13,7 @@ import {
   toNumberEditText,
   toNumberValue,
   toTextValue,
-} from "./cell-edit";
+} from "./cell-values";
 
 describe("typed text that isn't a number", () => {
   it("is reported as not a number, not silently accepted", () => {

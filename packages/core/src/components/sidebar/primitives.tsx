@@ -5,6 +5,8 @@ import { useRender } from "@base-ui/react/use-render";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
+import { DEFAULT_SIDEBAR_WIDTH, MIN_WIDTH, SidebarResizeHandle } from "./sidebar-resize-handle";
+import { mergeRefs } from "@/components/toolbar/toolbar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
@@ -37,6 +39,9 @@ type SidebarContextProps = {
   openIconMode: boolean;
   setOpenIconMode: (open: boolean) => void;
   collapsible: boolean;
+  resizable: boolean;
+  sidebarWidth: number;
+  setSidebarWidth: (width: number) => void;
 };
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
@@ -64,6 +69,7 @@ function SidebarProvider({
   open: openProp,
   onOpenChange: setOpenProp,
   collapsible = true,
+  resizable = true,
   className,
   style,
   children,
@@ -73,11 +79,13 @@ function SidebarProvider({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   collapsible?: boolean;
+  resizable?: boolean;
 }) {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const [openMobile, setOpenMobile] = React.useState(false);
   const [openIconMode, setOpenIconMode] = React.useState(false);
+  const [sidebarWidth, setSidebarWidth] = React.useState(DEFAULT_SIDEBAR_WIDTH);
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
@@ -87,13 +95,14 @@ function SidebarProvider({
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value;
+      if (openState && !open && resizable) setSidebarWidth(DEFAULT_SIDEBAR_WIDTH);
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
         _setOpen(openState);
       }
     },
-    [setOpenProp, open],
+    [setOpenProp, open, resizable],
   );
 
   // Determine if we're in icon mode (tablet range)
@@ -141,6 +150,9 @@ function SidebarProvider({
       openIconMode,
       setOpenIconMode,
       collapsible,
+      resizable,
+      sidebarWidth,
+      setSidebarWidth,
     }),
     [
       state,
@@ -154,6 +166,8 @@ function SidebarProvider({
       openIconMode,
       setOpenIconMode,
       collapsible,
+      resizable,
+      sidebarWidth,
     ],
   );
 
@@ -164,7 +178,7 @@ function SidebarProvider({
           data-slot="sidebar-wrapper"
           style={
             {
-              "--sidebar-width": SIDEBAR_WIDTH,
+              "--sidebar-width": resizable ? `${sidebarWidth}px` : SIDEBAR_WIDTH,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
               ...style,
             } as React.CSSProperties
@@ -197,8 +211,38 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset";
   collapsible?: "offcanvas" | "icon" | "none";
 }) {
-  const { isMobile, state, openMobile, setOpenMobile, isIconMode, openIconMode, setOpenIconMode } =
-    useSidebar();
+  const {
+    isMobile,
+    state,
+    openMobile,
+    setOpenMobile,
+    isIconMode,
+    openIconMode,
+    setOpenIconMode,
+    resizable,
+    sidebarWidth,
+    setSidebarWidth,
+    setOpen,
+    collapsible: canCollapse,
+  } = useSidebar();
+  const sidebarRef = React.useRef<HTMLDivElement>(null);
+  let collapsedWidth = "0px";
+  if (collapsible === "icon") {
+    collapsedWidth =
+      variant === "sidebar"
+        ? "var(--sidebar-width-icon)"
+        : "calc(var(--sidebar-width-icon) + var(--astw-spacing) * 4)";
+  }
+  const resizeHandle = resizable && !isMobile && !isIconMode && (
+    <SidebarResizeHandle
+      width={sidebarWidth}
+      onWidthChange={setSidebarWidth}
+      sidebarRef={sidebarRef}
+      onOpenChange={canCollapse && collapsible !== "none" ? setOpen : undefined}
+      collapsed={canCollapse && collapsible !== "none" && state === "collapsed"}
+      side={side}
+    />
+  );
 
   if (collapsible === "none") {
     return (
@@ -206,12 +250,16 @@ function Sidebar({
         data-slot="sidebar"
         className={cn(
           "astw:bg-sidebar astw:text-sidebar-foreground astw:flex astw:w-(--sidebar-width) astw:flex-col",
+          resizable &&
+            "astw:relative astw:shrink-0 astw:has-[[data-resizing=true]]:w-(--sidebar-drag-width)!",
           variant === "inset" && "astw:border-x astw:border-x-border",
           className,
         )}
         {...props}
+        ref={mergeRefs(sidebarRef, props.ref)}
       >
         {children}
+        {resizeHandle}
       </div>
     );
   }
@@ -320,12 +368,28 @@ function Sidebar({
   return (
     <>
       <div
+        ref={sidebarRef}
         className={cn(
           "astw:group astw:peer astw:text-sidebar-foreground",
           // The icon rail is visible at every width; other modes stay desktop-only
           // (mobile uses the Sheet above).
           collapsible === "icon" ? "astw:block" : "astw:hidden astw:md:block",
         )}
+        style={
+          resizable
+            ? ({
+                "--sidebar-collapsed-width": collapsedWidth,
+                "--sidebar-min-width": `${MIN_WIDTH}px`,
+                "--sidebar-drag-pane-width":
+                  collapsible === "offcanvas"
+                    ? "max(var(--sidebar-min-width), var(--sidebar-drag-width))"
+                    : "var(--sidebar-drag-width)",
+                "--sidebar-drag-offset":
+                  "calc(var(--sidebar-drag-width) - var(--sidebar-drag-pane-width))",
+              } as React.CSSProperties)
+            : undefined
+        }
+        data-resize-mode={resizable ? collapsible : undefined}
         data-state={state}
         data-collapsible={dataCollapsible}
         data-variant={variant}
@@ -336,7 +400,8 @@ function Sidebar({
         <div
           data-slot="sidebar-gap"
           className={cn(
-            "astw:relative astw:w-(--sidebar-width) astw:bg-transparent astw:transition-[width] astw:duration-200 astw:ease-linear",
+            "astw:relative astw:w-(--sidebar-width) astw:bg-transparent astw:transition-[width] astw:duration-200 astw:ease-linear astw:group-has-[[data-resizing=true]]:transition-none",
+            resizable && "astw:group-has-[[data-resizing=true]]:w-(--sidebar-drag-width)!",
             "astw:group-data-[collapsible=offcanvas]:w-0",
             "astw:group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
@@ -347,7 +412,12 @@ function Sidebar({
         <div
           data-slot="sidebar-container"
           className={cn(
-            "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear",
+            "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:group-has-[[data-resizing=true]]:transition-none",
+            resizable && "astw:group-has-[[data-resizing=true]]:w-(--sidebar-drag-pane-width)!",
+            resizable &&
+              (side === "left"
+                ? "astw:group-has-[[data-resizing=true]]:left-(--sidebar-drag-offset)!"
+                : "astw:group-has-[[data-resizing=true]]:right-(--sidebar-drag-offset)!"),
             // Visible at every width for the icon rail; desktop-only otherwise.
             collapsible === "icon" ? "astw:flex" : "astw:hidden astw:md:flex",
             side === "left"
@@ -365,12 +435,16 @@ function Sidebar({
           <div
             data-sidebar="sidebar"
             data-slot="sidebar-inner"
-            className="astw:bg-sidebar astw:group-data-[variant=floating]:border-sidebar-border astw:flex astw:h-full astw:w-full astw:flex-col astw:group-data-[variant=floating]:rounded-lg astw:group-data-[variant=floating]:border astw:group-data-[variant=floating]:shadow-sm"
+            className={cn(
+              "astw:bg-sidebar astw:group-data-[variant=floating]:border-sidebar-border astw:flex astw:h-full astw:w-full astw:flex-col astw:group-data-[variant=floating]:rounded-lg astw:group-data-[variant=floating]:border astw:group-data-[variant=floating]:shadow-sm",
+              "astw:group-has-[[data-resizing=true]]:overflow-hidden",
+            )}
           >
             <SidebarRailContext.Provider value={dataCollapsible === "icon"}>
               {children}
             </SidebarRailContext.Provider>
           </div>
+          {resizeHandle}
         </div>
       </div>
       {/* Mobile: the toggle opens the full sidebar as a slide-in overlay on top

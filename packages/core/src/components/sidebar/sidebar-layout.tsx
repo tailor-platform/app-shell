@@ -35,6 +35,20 @@ type SidebarLayoutCommonProps = {
   collapsible?: boolean;
 
   /**
+   * Show a desktop handle: drag to resize when expanded (192–480px),
+   * or drag toward the content / click to expand when collapsed.
+   * Dragging between the collapsed width and 192px uses resistance, then follows
+   * the pointer 1:1 without releasing. With `collapsible={false}`, it stops at 192px.
+   * Arrow keys adjust the width; Home collapses and End selects the maximum.
+   * Click/keyboard expansion restores 256px; drag expansion follows the pointer.
+   * Width is not persisted.
+   * Applies to the built-in sidebar primitives, not arbitrary `sidebar` markup.
+   *
+   * @default true
+   */
+  resizable?: boolean;
+
+  /**
    * A global top bar rendered above **everything** — spanning the full width
    * across the top of the primary sidebar and the content region alike. The
    * sidebar and content then sit in a row beneath it.
@@ -165,12 +179,13 @@ type SidebarLayoutBodyProps = SidebarLayoutCommonProps & {
 export type SidebarLayoutProps = SidebarLayoutDefaultProps | SidebarLayoutBodyProps;
 
 export function SidebarLayout(props: SidebarLayoutProps) {
-  const { sidebar, header, children, body, defaultOpen, collapsible, topBar } = props;
+  const { sidebar, header, children, body, defaultOpen, collapsible, resizable, topBar } = props;
 
   return (
     <SidebarProvider
       defaultOpen={defaultOpen}
       collapsible={collapsible}
+      resizable={resizable}
       // When a global top bar is present, publish its height so the fixed sidebar
       // starts below it (see --appshell-topbar-h in sidebar.tsx) instead of
       // overlapping it.

@@ -3,14 +3,15 @@ import { applyPalette, colour, contrastOn, sample } from "./theme-utils";
 
 /**
  * Shipped CSS is resolved by Chromium, including aliases, palette overrides and alpha.
- * Scope: card/background in all palettes and modes. Shell gradients, neutral intent
- * contrast and warning solid/card contrast remain excluded. Subtle hover's 4.2 floor
+ * Scope: card/background in all palettes and modes. Shell gradients and warning
+ * solid/card contrast remain excluded. Subtle hover's 4.2 floor
  * is a documented exception, not an AA pass; see decisions/semantic-color-roles.md.
  */
 const palettes = ["default", "cream", "bloom"] as const;
 const modes = ["light", "dark"] as const;
 const pages = ["--card", "--background"] as const;
 const intents = ["info", "success", "warning", "danger"] as const;
+const neutral = (name: string) => `--neutral-${name}`;
 const alertVariantFor = { info: "info", success: "success", warning: "warning", danger: "error" };
 
 it("measures opaque, transparent and translucent contrast without a CSS parser", () => {
@@ -65,6 +66,20 @@ describe.each(palettes.flatMap((palette) => modes.map((mode) => [palette, mode] 
             pair(`--alert-${variant}-${slot}`, `--alert-${variant}-background`, page),
           ).toBeGreaterThanOrEqual(4.5);
         });
+      });
+    });
+
+    // The neutral roles follow the palette's own surfaces, so they are checked separately
+    // from the hue intents. Their text is the palette foreground, so hover has no floor.
+    describe("neutral", () => {
+      it.each(["solid", "solid-hover"])("contrast meets 4.5:1 on %s", (surface) => {
+        expect(pair(neutral("contrast"), neutral(surface), "--card")).toBeGreaterThanOrEqual(4.5);
+      });
+
+      it.each(
+        pages.flatMap((page) => (["surface", "surface-hover"] as const).map((s) => [s, page])),
+      )("text meets 4.5:1 on %s over %s", (surface, page) => {
+        expect(pair(neutral("text"), neutral(surface), page)).toBeGreaterThanOrEqual(4.5);
       });
     });
 

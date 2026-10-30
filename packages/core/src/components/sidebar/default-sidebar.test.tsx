@@ -364,6 +364,7 @@ describe("DefaultSidebar opt-in props", () => {
         children: (
           <>
             <SidebarItem to="/features" title="features" />
+            <SidebarItem to="/invoices-ja" title="請求書" />
             <SidebarGroup title="Billing">
               <SidebarItem to="/invoices" title="Invoices" />
             </SidebarGroup>
@@ -375,10 +376,14 @@ describe("DefaultSidebar opt-in props", () => {
     );
 
     const fallbacks = document.querySelectorAll('[data-slot="sidebar-icon-fallback"]');
-    expect(Array.from(fallbacks, (el) => el.textContent)).toEqual(["F", "B"]);
+    expect(Array.from(fallbacks, (el) => el.textContent)).toEqual(["F", "請", "B"]);
     expect(fallbacks[0]?.getAttribute("class")).toContain(
       "astw:group-data-[collapsible=icon]:block",
     );
+    // Hairline frame: 0.5px at 20% of the text color
+    const frame = fallbacks[0]?.querySelector("rect");
+    expect(frame?.getAttribute("stroke-width")).toBe("0.5");
+    expect(frame?.getAttribute("stroke-opacity")).toBe("0.2");
     expect(screen.getByTestId("home-icon")).toBeDefined();
   });
 

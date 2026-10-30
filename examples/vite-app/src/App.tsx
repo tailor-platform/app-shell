@@ -70,6 +70,7 @@ const AppInner = () => {
               <SidebarItem to="/showcase/dropdown" />
               <SidebarItem to="/showcase/forms" />
               <SidebarItem to="/showcase/forms/zod-rhf" />
+              <SidebarItem to="/showcase/input-field" />
               <SidebarItem to="/showcase/csv-importer" />
               <SidebarItem to="/showcase/card" />
               <SidebarItem to="/showcase/metric-card" />

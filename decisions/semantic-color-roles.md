@@ -155,7 +155,7 @@ AppShell's thresholds are 4.5:1 for text (WCAG 1.4.3) and 3:1 for non-text (WCAG
 - `text` on `surface-hover` stays at the 4.2:1 floor. Choosing another step is a visible change for a later PR.
 - In `cream` and `bloom`, the main content area is transparent over the shell gradient. At the top of the bloom light gradient (55% of `--shell-gradient-base`), `text` on `surface` is 4.49:1 for success and 4.48:1 for danger. cream light is 4.68:1 or more. The figure under "Not guaranteed" (4.16:1 over `#efe8ff`) used `--shell-gradient-base` itself, which the gradient covers.
 - `warning` `solid` and `indicator` are 2.15:1 against a light card. They are used with a label.
-- The neutral intent is not checked.
+- The neutral intent is not checked. Update 2026-10-30: the test now checks it in every palette and mode. `text` on `surface` and `surface-hover`, and `contrast` on `solid` and `solid-hover`, are at least 4.5:1, so it is no longer an exception.
 
 This supersedes "The `cream` and `bloom` palettes and their tinted shell backgrounds" under "Not guaranteed".
 

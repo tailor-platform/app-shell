@@ -8,6 +8,7 @@ export {
 } from "./components/sidebar/index";
 export { DynamicBreadcrumb, usePathSegments } from "./components/sidebar/dynamic-breadcrumb";
 export { CommandPalette } from "./components/command-palette";
+export { ItemList } from "./components/item-list";
 export {
   useOpenCommandPalette,
   useRegisterCommandPaletteActions,
@@ -319,6 +320,7 @@ export { aggregations, type Aggregation } from "./lib/aggregations";
 
 // DataTable
 export {
+  CellEditError,
   DataTable,
   useDataTable,
   useDataTableContext,

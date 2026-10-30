@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import type { BadgeOptions } from "@/components/badge-list";
 import type {
   CollectionControl,
@@ -112,16 +112,36 @@ interface CellEditBase<TRow extends Record<string, unknown>, TValue, TDraft = TV
    * Observes editor drafts, including incomplete input and restored drafts on
    * cancellation. Direct inputs emit raw strings; choices emit selected values,
    * not search text or highlights. Updating `data` here is outside the supported
-   * coordination contract. The return value is ignored.
+   * coordination contract. A failed change check retains its draft and blocks
+   * confirmation; pending change checks finish before `onValueCommitted` runs.
+   * Cancellation notifications cannot create a new cell error after discarding
+   * the draft. Pass `error: false` for unobserved callback behavior.
    */
   onValueChange?: (row: TRow, draft: TDraft) => void;
   /**
-   * Notifies a changed, confirmed editor output, compared with current `data`.
-   * Empty cells confirm `null`. Confirmation does not imply business validation,
-   * adoption, or persistence; update `data` here to adopt it. Return values are
-   * ignored. Output types follow the editor, not the row field's runtime type.
+   * Attempts to confirm a changed editor output, compared with current `data`.
+   * Empty cells confirm `null`. A normal return or fulfilled Promise completes
+   * the edit; throw/rejection retains the draft and error for correction or retry.
+   * Focus may leave while pending. Update `data` here to adopt a successful value;
+   * DataTable does not persist or roll back consumer state. Output types follow
+   * the editor, not the row field's runtime type.
    */
   onValueCommitted: (row: TRow, value: TValue | null) => void;
+  /**
+   * Callback failures automatically open an error popover without moving focus.
+   * Only non-empty `CellEditError` messages are displayed by the standard UI;
+   * other failures use localized generic feedback. Translate messages before throwing.
+   * Pass `false` to disable interception and retain eager edit completion, or
+   * `render` to replace the popover's body. Closing the details retains the draft
+   * and error; reopen with the error icon or Alt+ArrowDown. Esc closes open details
+   * first, then restores current data and clears the error. The standard popover
+   * adds no reset action; custom content may include consumer-owned actions.
+   */
+  error?:
+    | false
+    | {
+        render: (ctx: { row: TRow; error: unknown }) => ReactNode;
+      };
 }
 
 /**
@@ -208,11 +228,11 @@ interface SortableHeaderRenderContext {
 }
 
 /**
- * Context passed to custom `header` renderers.
+ * Context passed to custom `header` renderers and `headerProps` callbacks.
  */
 export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
 
-/** Context passed to custom column `footer` renderers. */
+/** Context passed to custom column `footer` renderers and `footerProps` callbacks. */
 export interface FooterRenderContext<TRow extends Record<string, unknown>> {
   /** Current `data.rows` (the current page, not all records or only selected rows). */
   rows: readonly TRow[];
@@ -309,6 +329,19 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    */
   render?: (row: TRow) => ReactNode;
   /**
+   * Sets `className`, `style`, and `title` on the data cell's `<td>`, including
+   * its padding, based on the row. Return `undefined` to keep the defaults.
+   * Classes are merged with the built-in classes; CSS specificity still applies.
+   * An inline `style.backgroundColor` remains visible during row hover and
+   * selection, including on pinned cells. Use an opaque background for pinned
+   * cells to prevent content bleeding through. Column `width` and sticky
+   * positioning take precedence over `style`. Content stays owned by `render`;
+   * events, refs, and cell spanning are not configurable through this hook.
+   */
+  cellProps?: (
+    row: TRow,
+  ) => Pick<ComponentProps<"td">, "className" | "style" | "title"> | undefined;
+  /**
    * Custom header renderer.
    *
    * `header` is a **presentation** hook. When omitted, the built-in header
@@ -320,6 +353,18 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    * still driven by `label`, `sort`, and other column metadata.
    */
   header?: (ctx: HeaderRenderContext) => ReactNode;
+  /**
+   * Sets `className`, `style`, and `title` on this column's header `<th>`.
+   * Receives the same context as `header`; return `undefined` to keep the defaults.
+   * Classes are merged with the built-in classes; column `width` and sticky
+   * positioning take precedence over `style`. Use an opaque background for
+   * pinned headers. Content stays owned by `header` or the default renderer;
+   * sorting and context-menu behavior are unchanged. Built-in selection,
+   * expansion, and action headers are not affected.
+   */
+  headerProps?: (
+    ctx: HeaderRenderContext,
+  ) => Pick<ComponentProps<"th">, "className" | "style" | "title"> | undefined;
   /**
    * Content for this column's cell in a sticky table footer: a static string
    * or a renderer receiving the current `data.rows` (the current page, not all
@@ -333,6 +378,19 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    * Separate from `DataTable.Footer`, the pagination / bulk-action container.
    */
   footer?: string | ((ctx: FooterRenderContext<TRow>) => ReactNode);
+  /**
+   * Sets `className`, `style`, and `title` on this column's footer `<td>`.
+   * Receives the same context as `footer`; return `undefined` to keep the defaults.
+   * Classes are merged with the built-in classes; column `width` and sticky
+   * positioning take precedence over `style`. Use an opaque background for
+   * pinned footer cells. Content stays owned by `footer`; events, refs, and
+   * cell spanning are not configurable through this hook.
+   * Does not create a footer row by itself. Not called while loading, on errors,
+   * or for hidden columns. Built-in utility footer cells are not affected.
+   */
+  footerProps?: (
+    ctx: FooterRenderContext<TRow>,
+  ) => Pick<ComponentProps<"td">, "className" | "style" | "title"> | undefined;
   /**
    * Stable identifier used for column visibility toggling, persisted layout
    * state, raw-value fallback (`row[col.id]`), and as the React key. Falls

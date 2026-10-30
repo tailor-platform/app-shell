@@ -1,4 +1,4 @@
-import { ActionPanel } from "@tailor-platform/app-shell";
+import { ActionPanel, Text } from "@tailor-platform/app-shell";
 import { ExternalLink, Receipt } from "lucide-react";
 
 export function BasicUsage() {
@@ -30,8 +30,8 @@ export function CustomEmptyContent() {
       actions={[]}
       emptyContent={
         <div>
-          <p>利用可能な操作はありません</p>
-          <p>ステータスが変わると、操作が表示されます。</p>
+          <Text.p>利用可能な操作はありません</Text.p>
+          <Text.p>ステータスが変わると、操作が表示されます。</Text.p>
         </div>
       }
     />

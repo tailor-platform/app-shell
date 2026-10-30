@@ -94,8 +94,8 @@ function CustomEmptyContent() {
       actions={[]}
       emptyContent={
         <div>
-          <p>利用可能な操作はありません</p>
-          <p>ステータスが変わると、操作が表示されます。</p>
+          <Text.p>利用可能な操作はありません</Text.p>
+          <Text.p>ステータスが変わると、操作が表示されます。</Text.p>
         </div>
       }
     />

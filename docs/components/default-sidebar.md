@@ -94,7 +94,7 @@ When the app title and primary toggle live in a full-width top bar, hide the sid
 function UserProfile() {
   return (
     <div className="border-t p-4">
-      <p className="text-sm font-medium">Ada Lovelace</p>
+      <Text.p variant="label-md">Ada Lovelace</Text.p>
       <button type="button" className="mt-2 text-sm text-muted-foreground">
         Logout
       </button>

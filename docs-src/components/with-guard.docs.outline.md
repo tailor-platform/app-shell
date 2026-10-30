@@ -20,14 +20,14 @@ import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
 ## Basic Usage
 
 ```tsx
-import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
+import { hidden, pass, Text, WithGuard } from "@tailor-platform/app-shell";
 
 const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
 
 function AdminPanel() {
   return (
     <div>
-      <h1>Dashboard</h1>
+      <Text.h1>Dashboard</Text.h1>
 
       <WithGuard guards={[isAdmin]}>
         <Button>Delete All Users</Button>
@@ -99,7 +99,7 @@ const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass()
 Show alternative content when guard fails:
 
 ```tsx
-<WithGuard guards={[isAdmin]} fallback={<p>You need admin access to view this.</p>}>
+<WithGuard guards={[isAdmin]} fallback={<Text.p>You need admin access to view this.</Text.p>}>
   <AdminPanel />
 </WithGuard>
 ```
@@ -198,8 +198,8 @@ const isPremium = ({ context }) =>
   guards={[isPremium]}
   fallback={
     <Card>
-      <h3>Premium Feature</h3>
-      <p>Upgrade to access advanced analytics.</p>
+      <Text.h3>Premium Feature</Text.h3>
+      <Text.p>Upgrade to access advanced analytics.</Text.p>
       <Button>Upgrade Now</Button>
     </Card>
   }

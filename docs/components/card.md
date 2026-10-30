@@ -25,7 +25,7 @@ function BasicUsage() {
     <Card.Root>
       <Card.Header title="Order Details" description="Summary of order #1234" />
       <Card.Content>
-        <p>Content goes here</p>
+        <Text.p>Content goes here</Text.p>
       </Card.Content>
     </Card.Root>
   );
@@ -154,7 +154,7 @@ For a scrollable list, put the overflow on `Card.Content`. Rows supply their own
 ```tsx
 <Card.Root>
   <Card.Content>
-    <p>No header needed for this card.</p>
+    <Text.p>No header needed for this card.</Text.p>
   </Card.Content>
 </Card.Root>
 ```

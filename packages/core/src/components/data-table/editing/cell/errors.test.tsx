@@ -4,10 +4,10 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { CellEditError, type TextCellEditOptions } from "@/index";
-import { createAppShellWrapper } from "../../../tests/test-utils";
-import { DataTable } from "./data-table";
-import { useDataTable } from "./use-data-table";
-import type { Column } from "./types";
+import { createAppShellWrapper } from "../../../../../tests/test-utils";
+import { DataTable } from "../../data-table";
+import { useDataTable } from "../../use-data-table";
+import type { Column } from "../../types";
 
 afterEach(() => {
   cleanup();

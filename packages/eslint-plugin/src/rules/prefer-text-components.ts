@@ -55,7 +55,15 @@ const DEFAULT_ROLES: Record<string, string> = {
 };
 
 /** Functions that join class names. Their string arguments are read like a `className` string. */
-const CLASS_HELPERS = new Set(["cn", "clsx", "cx", "twMerge", "twJoin"]);
+const CLASS_HELPERS = new Set([
+  "cn",
+  "clsx",
+  "cx",
+  "classNames",
+  "classnames",
+  "twMerge",
+  "twJoin",
+]);
 
 /**
  * Stock Tailwind font sizes, and arbitrary sizes in a length unit or with a `length:` hint.
@@ -66,7 +74,6 @@ const SIZE_UTILITY =
 
 function findSizes(text: string): string[] {
   return text.split(/\s+/).filter((token) => {
-    if (!token) return false;
     const { utility } = splitVariants(token);
     // Tailwind v4 puts `!` at the end; v3 put it at the start.
     return SIZE_UTILITY.test(utility.replace(/^!|!$/, ""));
@@ -84,6 +91,9 @@ function collectStrings(node: Node | null | undefined, out: string[]): void {
       for (const quasi of node.quasis ?? []) out.push(quasi.value.cooked ?? quasi.value.raw);
       return;
     case "JSXExpressionContainer":
+    case "TSAsExpression":
+    case "TSSatisfiesExpression":
+    case "TSNonNullExpression":
       collectStrings(node.expression, out);
       return;
     case "ConditionalExpression":
@@ -127,7 +137,7 @@ export const preferTextComponents = {
       useTextElement:
         "`<{{element}}>` sets its text size with `{{found}}`. Use `<Text.{{element}}>` from `@tailor-platform/app-shell` (default role `{{role}}`), and set another typography role with `variant` if needed. `Text.{{element}}` is available from AppShell 1.19.0.",
       useTextSpan:
-        "`<span>` sets its text size with `{{found}}`. Use `<Text.span>` from `@tailor-platform/app-shell` (default role `{{role}}`), or replace the size with a typography role utility such as `text-body-sm` when you style the element yourself. `Text.span` is available from AppShell 1.19.0.",
+        "`<span>` sets its text size with `{{found}}`. Use `<Text.span>` from `@tailor-platform/app-shell` (default role `{{role}}`), or replace the size with a typography role utility such as `text-label-md` or `text-body-sm` when you style the element yourself. `Text.span` is available from AppShell 1.19.0.",
     },
   },
   create(context: RuleContext) {

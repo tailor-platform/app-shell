@@ -104,6 +104,14 @@ ruleTester.run("prefer-text-components", preferTextComponents, {
       errors: [span("text-xs")],
     },
     {
+      code: 'const view = <p className={classNames("text-sm", { "font-semibold": active })}>Note</p>;',
+      errors: [element("p", "text-sm", "body-md")],
+    },
+    {
+      code: 'const view = <p className={"text-sm" as string}>Note</p>;',
+      errors: [element("p", "text-sm", "body-md")],
+    },
+    {
       code: 'const view = <p className={label || "text-sm"}>Note</p>;',
       errors: [element("p", "text-sm", "body-md")],
     },

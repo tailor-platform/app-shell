@@ -35,8 +35,8 @@ export default defineConfig({
 });
 ```
 
-- `@tailor-platform/app-shell/prefer-text-components` — reports a Tailwind font size (`text-xs` to `text-9xl`, and arbitrary sizes such as `text-[11px]`) on a plain `p`, `h1` to `h6`, or `span` element, and names the `Text` element component to use. For example, `<p className="text-sm">` → `<Text.p>` (default role `body-md`), and `<h3 className="text-lg font-semibold">` → `<Text.h3>` (default role `heading-sm`; set another role with `variant`). For `span`, it names `Text.span` (default role `label-md`), or a role utility such as `text-body-sm` when you style the element yourself.
-  - It reads string and template literals in `className`, ternary branches, and the arguments of `cn`, `clsx`, `cx`, `twMerge` and `twJoin`. It does not follow variables or constants.
+- `@tailor-platform/app-shell/prefer-text-components` — reports a Tailwind font size (`text-xs` to `text-9xl`, and arbitrary sizes such as `text-[11px]`) on a plain `p`, `h1` to `h6`, or `span` element, and names the `Text` element component to use. For example, `<p className="text-sm">` → `<Text.p>` (default role `body-md`), and `<h3 className="text-lg font-semibold">` → `<Text.h3>` (default role `heading-sm`; set another role with `variant`). For `span`, it names `Text.span` (default role `label-md`), or a role utility such as `text-label-md` or `text-body-sm` when you style the element yourself.
+  - It reads string and template literals in `className`, ternary branches, and the arguments of `cn`, `clsx`, `cx`, `classNames`, `twMerge` and `twJoin`. It does not follow variables or constants.
   - It does not report weight utilities on their own. `font-semibold` is allowed with a role for emphasis.
   - It has no autofix. A size does not decide the role: `text-sm` can be `body-md`, `label-md` or `heading-sm`.
   - `Text.p` and the other element components are available from `@tailor-platform/app-shell` 1.19.0. In an app on an earlier version, the rule names components that do not exist yet, so upgrade AppShell before you enable it.

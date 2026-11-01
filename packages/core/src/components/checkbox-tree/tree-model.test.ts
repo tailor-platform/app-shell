@@ -13,6 +13,7 @@ import {
   pathId,
   selectionFromIds,
 } from "./tree-model";
+import type { CheckboxTreeSelection } from "./types";
 
 type Item = { key: string; name: string; children?: Item[]; disabled?: boolean };
 
@@ -167,6 +168,32 @@ describe("tree-model", () => {
         p2: { c: { wide: true } },
         p3: { a: true },
       });
+    });
+
+    it("never writes through inherited properties when merging untrusted selections", () => {
+      const ids = new Set([find(["p1"]).id]);
+      const hostile = JSON.parse(
+        '{"__proto__":{"polluted":true},"constructor":{"prototype":{"polluted":true}}}',
+      );
+      const out = selectionFromIds(tree(), ids, hostile);
+
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+      expect(Object.getPrototypeOf(out)).toBe(Object.prototype);
+      expect(out.constructor).toEqual({ prototype: { polluted: true } });
+      expect(Object.hasOwn(out, "__proto__")).toBe(false);
+    });
+
+    it("treats a node keyed `constructor` as an ordinary key", () => {
+      const nodes = buildTree(
+        [{ key: "constructor", name: "C", children: [{ key: "x", name: "X" }] }],
+        mapItem,
+      );
+      // Built from JSON, as untrusted data would be — a `constructor` key in an
+      // object literal fights TypeScript's Object members.
+      const selection = JSON.parse('{"constructor":{"x":true}}') as CheckboxTreeSelection;
+      const ids = idsFromSelection(nodes, selection);
+      expect(selectionFromIds(nodes, ids, undefined)).toEqual({ constructor: { x: true } });
+      expect(idsFromSelection(nodes, {}).size).toBe(0);
     });
 
     it("keeps branches of the previous selection that aren't in the tree", () => {

@@ -203,6 +203,23 @@ export function keysFromIds<T>(
 
 /* ------------------------------------------------------------ exact shape */
 
+/**
+ * Selections are keyed by consumer data, so they're read and written as own
+ * properties only: an inherited `constructor` / `__proto__` must never be
+ * treated as a nested level, or a merge could write into `Object.prototype`.
+ * A `__proto__` key can't be stored safely on a plain object, so it's skipped.
+ */
+function ownEntry(
+  level: CheckboxTreeSelection,
+  key: string,
+): true | CheckboxTreeSelection | undefined {
+  return Object.hasOwn(level, key) ? level[key] : undefined;
+}
+
+function isUnsafeKey(key: string): boolean {
+  return key === "__proto__";
+}
+
 /** Leaf ids selected by an exact selection. `true` on a parent selects every leaf beneath it. */
 export function idsFromSelection<T>(
   nodes: ReadonlyArray<TreeNode<T>>,
@@ -211,7 +228,7 @@ export function idsFromSelection<T>(
   const ids = new Set<string>();
   const walk = (list: ReadonlyArray<TreeNode<T>>, level: CheckboxTreeSelection) => {
     for (const node of list) {
-      const entry = level[node.key];
+      const entry = ownEntry(level, node.key);
       if (entry === undefined) continue;
       if (entry === true) {
         for (const leaf of leavesOf(node)) ids.add(leaf.id);
@@ -236,14 +253,14 @@ export function selectionFromIds<T>(
 ): CheckboxTreeSelection {
   const out: CheckboxTreeSelection = {};
   for (const leaf of allLeaves(nodes)) {
-    if (!ids.has(leaf.id)) continue;
+    if (!ids.has(leaf.id) || leaf.path.some(isUnsafeKey)) continue;
     let level = out;
     leaf.path.forEach((key, index) => {
       if (index === leaf.path.length - 1) {
         level[key] = true;
         return;
       }
-      const next = level[key];
+      const next = ownEntry(level, key);
       if (next === undefined || next === true) level[key] = {};
       level = level[key] as CheckboxTreeSelection;
     });
@@ -288,6 +305,7 @@ function mergeUnknown<T>(
   nodes: ReadonlyArray<TreeNode<T>>,
 ) {
   for (const [key, entry] of Object.entries(previous)) {
+    if (isUnsafeKey(key)) continue;
     const matching = nodes.filter((node) => node.key === key);
     if (matching.length === 0) {
       out[key] = entry;
@@ -296,7 +314,7 @@ function mergeUnknown<T>(
     if (entry === true) continue;
     const children = matching.flatMap((node) => node.children);
     if (children.length === 0) continue;
-    const target = out[key];
+    const target = ownEntry(out, key);
     const level: CheckboxTreeSelection = target && target !== true ? target : {};
     mergeUnknown(level, entry, children);
     if (Object.keys(level).length > 0 && target !== true) out[key] = level;

@@ -32,12 +32,15 @@ const tokens = new Set(
 const findAll = (pattern: RegExp) =>
   sources.flatMap(({ file, text }) => [...text.matchAll(pattern)].map((m) => `${file}: ${m[0]}`));
 
-// Every quoted class list (string literal or template) in every source file.
+// Every class list in a double-quoted string or a template literal (the two
+// forms the formatter leaves in source). A single quote may appear inside an
+// arbitrary variant such as `[class*='size-']`, so it does not end the list.
 const classLists = sources.flatMap(({ file, text }) =>
-  [...text.matchAll(/["'`]([^"'`\n]*astw:[^"'`\n]*)["'`]/g)].map((m) => ({ file, classes: m[1] })),
+  [...text.matchAll(/["`]([^"`\n]*astw:[^"`\n]*)["`]/g)].map((m) => ({ file, classes: m[1] })),
 );
 
-const rawZ = /astw:(?:[a-z0-9-]+:)*z-(?:\d+|\[[^\]]+\])(?![\w-])/g;
+// A raw z utility: a number or an arbitrary value that is not a z token.
+const rawZ = /astw:(?:[a-z0-9-]+:)*z-(?:\d+|\[(?!var\(--z-)[^\]]+\])(?![\w-])/g;
 
 describe("z-index usage", () => {
   it("declares the z tokens", () => {

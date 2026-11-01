@@ -9,7 +9,7 @@ import {
   useToast,
 } from "@tailor-platform/app-shell";
 import { AppShell } from "@tailor-platform/app-shell/testing";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 // Regression for tailor-inc/platform-planning#2040 and the stacking rule in
 // decisions/floating-ui-stacking.md. Rendered through the real AppShell so the
@@ -87,9 +87,10 @@ const expectOnTop = (testId: string) =>
   });
 
 describe("floating UI stacking", () => {
-  const user = userEvent.setup();
+  let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(async () => {
+    user = userEvent.setup();
     render(
       <AppShell memory initialEntries={["/home"]} title="Test" modules={modules()}>
         <SidebarLayout />
@@ -99,6 +100,11 @@ describe("floating UI stacking", () => {
     // The trap from #2040 is in place: the column the Toaster mounts from has a mask.
     const column = document.querySelector("[data-appshell-scroll-container]")!;
     await waitFor(() => expect(getComputedStyle(column).maskImage).not.toBe("none"));
+  });
+
+  // Toasts live in Sonner's module-level store, not in the tree cleanup() unmounts.
+  afterEach(() => {
+    fireToast.dismiss();
   });
 
   it("portals the Toaster to body and keeps it readable while a dialog is open", async () => {

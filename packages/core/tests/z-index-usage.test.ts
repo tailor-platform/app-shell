@@ -41,7 +41,13 @@ const rawZ = /astw:(?:[a-z0-9-]+:)*z-(?:\d+|\[[^\]]+\])(?![\w-])/g;
 
 describe("z-index usage", () => {
   it("declares the z tokens", () => {
-    expect([...tokens].sort()).toEqual(["overlay", "popup", "sidebar", "sidebar-rail", "toast"]);
+    expect([...tokens].toSorted()).toEqual([
+      "overlay",
+      "popup",
+      "sidebar",
+      "sidebar-rail",
+      "toast",
+    ]);
   });
 
   it("uses no raw z utility on a viewport-fixed element", () => {

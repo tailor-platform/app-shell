@@ -59,7 +59,7 @@ const useAuth: () => {
 ### Basic Authentication Flow
 
 ```typescript
-import { useAuth } from "@tailor-platform/app-shell";
+import { Text, useAuth } from "@tailor-platform/app-shell";
 
 function MyComponent() {
   const { isAuthenticated, isReady, login, logout } = useAuth();
@@ -74,7 +74,7 @@ function MyComponent() {
 
   return (
     <div>
-      <p>You are logged in!</p>
+      <Text.p>You are logged in!</Text.p>
       <button onClick={logout}>Log Out</button>
     </div>
   );
@@ -108,7 +108,7 @@ function AuthStatus() {
   if (error) {
     return (
       <div>
-        <p>Authentication failed: {error}</p>
+        <Text.p>Authentication failed: {error}</Text.p>
         <button onClick={login}>Retry</button>
       </div>
     );

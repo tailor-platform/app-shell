@@ -232,14 +232,14 @@ Access the configured timezone in components using [`useTimeZone`](../api/use-ti
 - **Description:** Global error boundary component applied to all routes
 
 ```tsx
-import { useRouteError } from "@tailor-platform/app-shell";
+import { Text, useRouteError } from "@tailor-platform/app-shell";
 
 const GlobalErrorBoundary = () => {
   const error = useRouteError() as Error;
   return (
     <div className="p-8">
-      <h1 className="text-xl font-bold mb-4">Something went wrong</h1>
-      <p className="text-red-600">{error.message}</p>
+      <Text.h1 className="mb-4">Something went wrong</Text.h1>
+      <Text.p className="text-danger-text">{error.message}</Text.p>
     </div>
   );
 };
@@ -432,6 +432,7 @@ import {
   SidebarLayout,
   defineModule,
   defineResource,
+  Text,
   useRouteError,
 } from "@tailor-platform/app-shell";
 import { Building } from "lucide-react";
@@ -450,8 +451,8 @@ const ErrorBoundary = () => {
   const error = useRouteError() as Error;
   return (
     <div className="p-8">
-      <h1 className="text-xl font-bold">Error</h1>
-      <p>{error.message}</p>
+      <Text.h1>Error</Text.h1>
+      <Text.p>{error.message}</Text.p>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
@@ -42,6 +43,7 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
     toggleRowSelection,
   } = ctx;
   const t = useDataTableT();
+  const pageSizeLabelId = useId();
 
   const selectionEnabled = toggleRowSelection !== undefined;
   const selectedCount = selectedIds.length;
@@ -82,7 +84,9 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
       )}
       {pageSizeOptions && pageSizeOptions.length > 0 && (
         <div className="astw:flex astw:items-center astw:gap-1.5">
+          {/* Names the select even while a narrow footer hides it visually. */}
           <span
+            id={pageSizeLabelId}
             className={cn(
               "astw:text-body-md astw:text-muted-foreground astw:whitespace-nowrap",
               NARROW_FOOTER_SR_ONLY,
@@ -91,6 +95,7 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
             {t("paginationRowsPerPage")}
           </span>
           <Select
+            aria-labelledby={pageSizeLabelId}
             items={pageSizeOptions.map(String)}
             value={String(pageSize)}
             onValueChange={(item) => {

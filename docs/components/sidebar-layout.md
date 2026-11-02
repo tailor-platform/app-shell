@@ -48,13 +48,12 @@ This gives you:
 
 ### Common props
 
-| Prop          | Type              | Default                            | Description                                                                                                  |
-| ------------- | ----------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `sidebar`     | `React.ReactNode` | `<SidebarLayout.DefaultSidebar />` | Replaces the entire sidebar region.                                                                          |
-| `defaultOpen` | `boolean`         | `true`                             | Whether the sidebar starts expanded on desktop.                                                              |
-| `collapsible` | `boolean`         | `true`                             | Whether the sidebar can be collapsed. When `false`, toggle controls are hidden and `defaultOpen` is ignored. |
-| `resizable`   | `boolean`         | `true`                             | Show a desktop handle to resize when expanded (192–480px) or drag/click to expand when collapsed.            |
-| `topBar`      | `React.ReactNode` | -                                  | Full-width bar above both the sidebar and the content region.                                                |
+| Prop          | Type              | Default                            | Description                                                                                                                                    |
+| ------------- | ----------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sidebar`     | `React.ReactNode` | `<SidebarLayout.DefaultSidebar />` | Replaces the entire sidebar region.                                                                                                            |
+| `defaultOpen` | `boolean`         | `true`                             | Whether the sidebar starts expanded on desktop.                                                                                                |
+| `collapsible` | `boolean`         | `true`                             | Whether the sidebar can be collapsed and resized. When `false`, it stays expanded at a fixed width without controls; `defaultOpen` is ignored. |
+| `topBar`      | `React.ReactNode` | -                                  | Full-width bar above both the sidebar and the content region.                                                                                  |
 
 ### Default content mode
 
@@ -77,25 +76,27 @@ Use this when you need to compose your own columns beside the sidebar.
 
 ## Resizing the sidebar
 
-Resizing is enabled on desktop by default:
+Desktop sidebars include collapse and resize controls when `collapsible` is enabled (the default):
 
 ```tsx
 <SidebarLayout />
 ```
 
-Set `resizable={false}` to hide the handle and keep the sidebar at its fixed width:
+Disable both behaviors to keep the sidebar expanded at a fixed width:
 
 ```tsx
-<SidebarLayout resizable={false} />
+<SidebarLayout collapsible={false} />
 ```
 
-The expanded desktop sidebar shows a grip at the center of its outer edge. Only the grip's hit area shows the resize cursor and starts a drag; the rest of the sidebar edge is not interactive. Drag the grip to resize, or focus the handle and use Left/Right arrows (16px steps), Home (192px), or End (480px).
+With `collapsible={false}`, `defaultOpen` is ignored, the keyboard shortcut is not intercepted, and `useAppShellSidebar()` reports `open: true` with inert `setOpen()` and `toggle()` actions.
+
+The expanded desktop sidebar shows a grip at the center of its outer edge. Only the grip's hit area shows the resize cursor and starts a drag; the rest of the sidebar edge is not interactive. Drag the grip to resize, or focus the handle and use Left/Right arrows (16px steps), Home (collapse), or End (480px).
 
 The initial width is 256px. The collapsed desktop sidebar keeps its handle. Clicking it or using Enter/Space restores the default 256px width.
 
 Dragging uses a position-based resistance curve, not a delayed CSS transition. Between the collapsed width and the minimum expanded width (192px), most of the interval uses a 25% movement gain: moving the pointer 10px moves the edge only 2.5px. In the final quarter near the opposite boundary, a smooth position-based blend catches up to the pointer. The edge stops when the pointer stops; it does not catch up over time. At 192px and above it follows the pointer 1:1, up to 480px. Shrinking through the same range resists toward the collapsed position. It collapses slightly early, when the pointer enters the final 20% of that interval, with the curve already meeting the collapsed width at that point. The same pointer stays captured across both transitions, without a jump to 256px.
 
-Releasing inside the resistance range settles back to the current mode's boundary (collapsed width or 192px). Left arrow/Home at the minimum still collapses via keyboard. With `collapsible={false}`, dragging stops at 192px without entering the resistance range.
+Releasing inside the resistance range settles back to the current mode's boundary (collapsed width or 192px). Left arrow at the minimum, or Home, collapses via keyboard.
 
 Live drag pixels are applied through CSS custom properties rather than React state on every pointer movement. React commits the width at mode changes and when the gesture ends; ARIA values stay current during dragging. Width changes still require browser layout because the content column resizes live.
 

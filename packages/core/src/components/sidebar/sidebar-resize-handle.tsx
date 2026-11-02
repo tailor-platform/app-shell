@@ -42,7 +42,7 @@ export function SidebarResizeHandle({
   width: number;
   onWidthChange: (width: number) => void;
   sidebarRef: React.RefObject<HTMLDivElement | null>;
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange: (open: boolean) => void;
   collapsed?: boolean;
   side: "left" | "right";
 }) {
@@ -63,7 +63,7 @@ export function SidebarResizeHandle({
   const direction = side === "left" ? 1 : -1;
   const resize = (next: number) => {
     onWidthChange(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, next)));
-    if (next <= MIN_WIDTH) onOpenChange?.(false);
+    if (next <= MIN_WIDTH) onOpenChange(false);
   };
   const clearDrag = () => {
     drag.current?.sidebar.style.removeProperty(DRAG_WIDTH_PROPERTY);
@@ -117,7 +117,7 @@ export function SidebarResizeHandle({
           "astw:group-data-[resize-mode=offcanvas]:-translate-x-1/2",
       )}
       onClick={(event) => {
-        if (collapsed && (event.detail === 0 || !moved.current)) onOpenChange?.(true);
+        if (collapsed && (event.detail === 0 || !moved.current)) onOpenChange(true);
       }}
       onPointerDown={(event) => {
         if (event.button !== 0 || !event.isPrimary || !sidebarRef.current) return;
@@ -149,12 +149,12 @@ export function SidebarResizeHandle({
           start.collapsedWidth + (MIN_WIDTH - start.collapsedWidth) * COLLAPSE_EARLY_RATIO;
         const nextWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, pointerWidth));
         let nextCollapsed = collapsed;
-        if (collapsed && pointerWidth >= MIN_WIDTH && onOpenChange) {
+        if (collapsed && pointerWidth >= MIN_WIDTH) {
           nextCollapsed = false;
           onOpenChange(true);
           onWidthChange(nextWidth);
         }
-        if (!collapsed && pointerWidth <= collapseAt && onOpenChange) {
+        if (!collapsed && pointerWidth <= collapseAt) {
           nextCollapsed = true;
           moved.current = true;
           start.collapseAt = collapseAt;
@@ -162,14 +162,12 @@ export function SidebarResizeHandle({
           onWidthChange(nextWidth);
         }
         start.nextWidth = nextWidth;
-        const visualWidth = onOpenChange
-          ? getSidebarDragWidth(
-              pointerWidth,
-              start.collapsedWidth,
-              collapsed,
-              collapsed ? start.collapseAt : collapseAt,
-            )
-          : nextWidth;
+        const visualWidth = getSidebarDragWidth(
+          pointerWidth,
+          start.collapsedWidth,
+          collapsed,
+          collapsed ? start.collapseAt : collapseAt,
+        );
         // Transient pixels bypass React; commit only mode changes and the final width.
         start.sidebar.style.setProperty(DRAG_WIDTH_PROPERTY, `${visualWidth}px`);
         if (!nextCollapsed) {

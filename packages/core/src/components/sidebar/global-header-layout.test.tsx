@@ -1,5 +1,5 @@
 import { render, cleanup, waitFor, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, afterEach, vi } from "vitest";
+import { describe, it, expect, expectTypeOf, afterEach, vi } from "vitest";
 import { GlobalHeaderLayout } from "./global-header-layout";
 import { GlobalHeader } from "./global-header";
 import { ContentContainer } from "./content-container";
@@ -66,7 +66,7 @@ describe("GlobalHeaderLayout", () => {
     expect(sidebar.getAttribute("data-collapsible")).toBe("icon");
   });
 
-  it("enables resizing by default", async () => {
+  it("provides a desktop resize handle when collapsing is enabled", async () => {
     stubDesktopViewport();
     renderLayout();
     const handle = await screen.findByRole("separator", { name: "Resize sidebar" });
@@ -77,21 +77,25 @@ describe("GlobalHeaderLayout", () => {
     expect(handle.getAttribute("aria-valuenow")).toBe("272");
   });
 
-  it.each([true, false])(
-    "forwards resizable=false without handles (defaultOpen=%s)",
-    async (defaultOpen) => {
-      stubDesktopViewport();
-      renderLayout({ resizable: false, defaultOpen });
+  it("does not expose a separate resizable prop", () => {
+    expectTypeOf<Parameters<typeof GlobalHeaderLayout>[0]>().not.toHaveProperty("resizable");
+  });
 
-      await waitFor(() => expect(document.querySelector('[data-slot="sidebar"]')).not.toBeNull());
-      expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
-      expect(screen.queryByRole("button", { name: "Expand sidebar" })).toBeNull();
-    },
-  );
+  it("hides resize and collapse controls when collapsing is disabled", async () => {
+    stubDesktopViewport();
+    renderLayout({ collapsible: false, defaultOpen: false });
+    await waitFor(() => expect(document.querySelector('[data-slot="sidebar"]')).not.toBeNull());
+    expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Expand sidebar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Toggle Sidebar" })).toBeNull();
+    expect(
+      document.querySelector('[data-slot="sidebar"]')?.getAttribute("data-collapsible"),
+    ).toBeNull();
+  });
 
   it("collapses to the icon rail with Home and expands from its handle at the default width", async () => {
     stubDesktopViewport();
-    renderLayout({ resizable: true });
+    renderLayout();
     fireEvent.keyDown(await screen.findByRole("separator", { name: "Resize sidebar" }), {
       key: "Home",
     });
@@ -106,7 +110,7 @@ describe("GlobalHeaderLayout", () => {
 
   it("measures the icon rail for resistant opening and closing without replacing the handle", async () => {
     stubDesktopViewport();
-    renderLayout({ resizable: true, defaultOpen: false });
+    renderLayout({ defaultOpen: false });
     const handle = await screen.findByRole("button", { name: "Expand sidebar" });
     Object.defineProperty(handle, "setPointerCapture", { value: vi.fn() });
     const sidebar = document.querySelector('[data-slot="sidebar"]') as HTMLElement;

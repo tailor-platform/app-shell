@@ -16,7 +16,7 @@ function ResizableSidebar({
 }: {
   side?: "left" | "right";
   collapsed?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  onOpenChange: (open: boolean) => void;
   onWidthCommit: (width: number) => void;
 }) {
   const [width, setWidth] = useState(256);

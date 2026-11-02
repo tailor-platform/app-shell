@@ -4,7 +4,8 @@ import { SidebarContext } from "./primitives";
 export type AppShellSidebarState = {
   /**
    * Whether the sidebar is expanded on desktop — the same signal the DOM
-   * exposes as `[data-slot="sidebar"][data-state]`.
+   * exposes as `[data-slot="sidebar"][data-state]` when collapsing is enabled.
+   * Always `true` when `collapsible={false}`, regardless of `defaultOpen`.
    *
    * On mobile the sidebar is an overlay sheet rather than an in-flow column,
    * so this does not describe how much room the content has; branch on
@@ -15,12 +16,13 @@ export type AppShellSidebarState = {
   /** Whether the viewport is below the mobile breakpoint (768px). */
   isMobile: boolean;
 
-  /** Expand or collapse the sidebar. */
+  /** Expand or collapse the sidebar. Does nothing when `collapsible={false}`. */
   setOpen: (open: boolean) => void;
 
   /**
    * Toggle the sidebar — the same action as `<SidebarLayout.Trigger />` and the
    * ⌘B / Ctrl+B shortcut, including the mobile and tablet overlay behaviour.
+   * Does nothing when `collapsible={false}`.
    */
   toggle: () => void;
 };

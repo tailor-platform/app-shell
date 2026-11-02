@@ -22,26 +22,38 @@ afterEach(() => {
 });
 
 it.each(["rail", "offcanvas", "fixed"] as const)(
-  "applies live CSS widths and restores the %s layout without inline geometry",
+  "uses live CSS geometry only when collapsing is enabled (%s)",
   async (mode) => {
     const Layout = mode === "rail" ? GlobalHeaderLayout : SidebarLayout;
     const view = render(
       <AppShell title="Resize test" modules={modules}>
-        <Layout defaultOpen={false} collapsible={mode !== "fixed"} body={<div />} />
+        <Layout
+          defaultOpen={false}
+          collapsible={mode !== "fixed"}
+          body={<div data-testid="layout-content" />}
+        />
       </AppShell>,
     );
-    const handle = await view.findByRole(mode === "fixed" ? "separator" : "button", {
-      name: mode === "fixed" ? "Resize sidebar" : "Expand sidebar",
-    });
-    const root = handle.closest<HTMLElement>('[data-slot="sidebar"]')!;
-    const pane = root.querySelector<HTMLElement>('[data-slot="sidebar-container"]') ?? root;
+    await view.findByTestId("layout-content");
+    const root = view.container.querySelector<HTMLElement>('[data-slot="sidebar"]')!;
+    if (mode === "fixed") {
+      expect(root.querySelector('[data-slot="sidebar-resize-handle"]')).toBeNull();
+      expect(view.queryByRole("button", { name: "Toggle Sidebar" })).toBeNull();
+      expect(root.getBoundingClientRect().width).toBe(256);
+      root.style.setProperty("--sidebar-drag-width", "320px");
+      expect(root.getBoundingClientRect().width).toBe(256);
+      root.style.removeProperty("--sidebar-drag-width");
+      return;
+    }
+    const handle = await view.findByRole("button", { name: "Expand sidebar" });
+    const pane = root.querySelector<HTMLElement>('[data-slot="sidebar-container"]')!;
     const gap = root.querySelector<HTMLElement>('[data-slot="sidebar-gap"]');
     // These are static CSS contracts; event/state transitions are covered by the unit tests.
     pane.style.transition = "none";
     if (gap) gap.style.transition = "none";
     const originalPaneWidth = pane.getBoundingClientRect().width;
     const originalGapWidth = gap?.getBoundingClientRect().width;
-    const liveWidth = { rail: 80, offcanvas: 24, fixed: 320 }[mode];
+    const liveWidth = mode === "rail" ? 80 : 24;
 
     root.style.setProperty("--sidebar-drag-width", `${liveWidth}px`);
     handle.dataset.resizing = "true";

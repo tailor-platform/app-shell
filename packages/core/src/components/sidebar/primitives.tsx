@@ -6,7 +6,6 @@ import { useRender } from "@base-ui/react/use-render";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { DEFAULT_SIDEBAR_WIDTH, MIN_WIDTH, SidebarResizeHandle } from "./sidebar-resize-handle";
-import { mergeRefs } from "@/components/toolbar/toolbar";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
@@ -39,7 +38,6 @@ type SidebarContextProps = {
   openIconMode: boolean;
   setOpenIconMode: (open: boolean) => void;
   collapsible: boolean;
-  resizable: boolean;
   sidebarWidth: number;
   setSidebarWidth: (width: number) => void;
 };
@@ -69,7 +67,6 @@ function SidebarProvider({
   open: openProp,
   onOpenChange: setOpenProp,
   collapsible = true,
-  resizable = true,
   className,
   style,
   children,
@@ -79,7 +76,6 @@ function SidebarProvider({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   collapsible?: boolean;
-  resizable?: boolean;
 }) {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
@@ -90,19 +86,20 @@ function SidebarProvider({
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
   const [_open, _setOpen] = React.useState(defaultOpen);
-  const open = openProp ?? _open;
+  const open = collapsible ? (openProp ?? _open) : true;
 
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
+      if (!collapsible) return;
       const openState = typeof value === "function" ? value(open) : value;
-      if (openState && !open && resizable) setSidebarWidth(DEFAULT_SIDEBAR_WIDTH);
+      if (openState && !open) setSidebarWidth(DEFAULT_SIDEBAR_WIDTH);
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
         _setOpen(openState);
       }
     },
-    [setOpenProp, open, resizable],
+    [setOpenProp, open, collapsible],
   );
 
   // Determine if we're in icon mode (tablet range)
@@ -110,6 +107,7 @@ function SidebarProvider({
 
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
+    if (!collapsible) return;
     if (isMobile) {
       return setOpenMobile((prev) => !prev);
     } else if (isIconMode) {
@@ -118,10 +116,11 @@ function SidebarProvider({
     } else {
       return setOpen((prev) => !prev);
     }
-  }, [isMobile, isIconMode, setOpen, setOpenMobile]);
+  }, [collapsible, isMobile, isIconMode, setOpen, setOpenMobile]);
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
+    if (!collapsible) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
@@ -131,7 +130,7 @@ function SidebarProvider({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSidebar]);
+  }, [collapsible, toggleSidebar]);
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
@@ -150,7 +149,6 @@ function SidebarProvider({
       openIconMode,
       setOpenIconMode,
       collapsible,
-      resizable,
       sidebarWidth,
       setSidebarWidth,
     }),
@@ -166,7 +164,6 @@ function SidebarProvider({
       openIconMode,
       setOpenIconMode,
       collapsible,
-      resizable,
       sidebarWidth,
     ],
   );
@@ -178,7 +175,7 @@ function SidebarProvider({
           data-slot="sidebar-wrapper"
           style={
             {
-              "--sidebar-width": resizable ? `${sidebarWidth}px` : SIDEBAR_WIDTH,
+              "--sidebar-width": `${sidebarWidth}px`,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
               ...style,
             } as React.CSSProperties
@@ -219,7 +216,6 @@ function Sidebar({
     isIconMode,
     openIconMode,
     setOpenIconMode,
-    resizable,
     sidebarWidth,
     setSidebarWidth,
     setOpen,
@@ -233,13 +229,13 @@ function Sidebar({
         ? "var(--sidebar-width-icon)"
         : "calc(var(--sidebar-width-icon) + var(--astw-spacing) * 4)";
   }
-  const resizeHandle = resizable && !isMobile && !isIconMode && (
+  const resizeHandle = canCollapse && collapsible !== "none" && !isMobile && !isIconMode && (
     <SidebarResizeHandle
       width={sidebarWidth}
       onWidthChange={setSidebarWidth}
       sidebarRef={sidebarRef}
-      onOpenChange={canCollapse && collapsible !== "none" ? setOpen : undefined}
-      collapsed={canCollapse && collapsible !== "none" && state === "collapsed"}
+      onOpenChange={setOpen}
+      collapsed={state === "collapsed"}
       side={side}
     />
   );
@@ -249,17 +245,13 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          "astw:bg-sidebar astw:text-sidebar-foreground astw:flex astw:w-(--sidebar-width) astw:flex-col",
-          resizable &&
-            "astw:relative astw:shrink-0 astw:has-[[data-resizing=true]]:w-(--sidebar-drag-width)!",
+          "astw:bg-sidebar astw:text-sidebar-foreground astw:flex astw:shrink-0 astw:w-(--sidebar-width) astw:flex-col",
           variant === "inset" && "astw:border-x astw:border-x-border",
           className,
         )}
         {...props}
-        ref={mergeRefs(sidebarRef, props.ref)}
       >
         {children}
-        {resizeHandle}
       </div>
     );
   }
@@ -376,20 +368,18 @@ function Sidebar({
           collapsible === "icon" ? "astw:block" : "astw:hidden astw:md:block",
         )}
         style={
-          resizable
-            ? ({
-                "--sidebar-collapsed-width": collapsedWidth,
-                "--sidebar-min-width": `${MIN_WIDTH}px`,
-                "--sidebar-drag-pane-width":
-                  collapsible === "offcanvas"
-                    ? "max(var(--sidebar-min-width), var(--sidebar-drag-width))"
-                    : "var(--sidebar-drag-width)",
-                "--sidebar-drag-offset":
-                  "calc(var(--sidebar-drag-width) - var(--sidebar-drag-pane-width))",
-              } as React.CSSProperties)
-            : undefined
+          {
+            "--sidebar-collapsed-width": collapsedWidth,
+            "--sidebar-min-width": `${MIN_WIDTH}px`,
+            "--sidebar-drag-pane-width":
+              collapsible === "offcanvas"
+                ? "max(var(--sidebar-min-width), var(--sidebar-drag-width))"
+                : "var(--sidebar-drag-width)",
+            "--sidebar-drag-offset":
+              "calc(var(--sidebar-drag-width) - var(--sidebar-drag-pane-width))",
+          } as React.CSSProperties
         }
-        data-resize-mode={resizable ? collapsible : undefined}
+        data-resize-mode={collapsible}
         data-state={state}
         data-collapsible={dataCollapsible}
         data-variant={variant}
@@ -401,7 +391,7 @@ function Sidebar({
           data-slot="sidebar-gap"
           className={cn(
             "astw:relative astw:w-(--sidebar-width) astw:bg-transparent astw:transition-[width] astw:duration-200 astw:ease-linear astw:group-has-[[data-resizing=true]]:transition-none",
-            resizable && "astw:group-has-[[data-resizing=true]]:w-(--sidebar-drag-width)!",
+            "astw:group-has-[[data-resizing=true]]:w-(--sidebar-drag-width)!",
             "astw:group-data-[collapsible=offcanvas]:w-0",
             "astw:group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
@@ -413,11 +403,10 @@ function Sidebar({
           data-slot="sidebar-container"
           className={cn(
             "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:group-has-[[data-resizing=true]]:transition-none",
-            resizable && "astw:group-has-[[data-resizing=true]]:w-(--sidebar-drag-pane-width)!",
-            resizable &&
-              (side === "left"
-                ? "astw:group-has-[[data-resizing=true]]:left-(--sidebar-drag-offset)!"
-                : "astw:group-has-[[data-resizing=true]]:right-(--sidebar-drag-offset)!"),
+            "astw:group-has-[[data-resizing=true]]:w-(--sidebar-drag-pane-width)!",
+            side === "left"
+              ? "astw:group-has-[[data-resizing=true]]:left-(--sidebar-drag-offset)!"
+              : "astw:group-has-[[data-resizing=true]]:right-(--sidebar-drag-offset)!",
             // Visible at every width for the icon rail; desktop-only otherwise.
             collapsible === "icon" ? "astw:flex" : "astw:hidden astw:md:flex",
             side === "left"
@@ -471,7 +460,8 @@ function Sidebar({
 }
 
 function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, collapsible } = useSidebar();
+  if (!collapsible) return null;
 
   return (
     <Button
@@ -493,7 +483,8 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, collapsible } = useSidebar();
+  if (!collapsible) return null;
 
   return (
     <button

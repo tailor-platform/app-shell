@@ -133,14 +133,12 @@ function ToolInput({ input, className, ...props }: ToolInputProps) {
 
   return (
     <div className={cn("astw:space-y-1", className)} {...props}>
-      <Text
+      <Text.h4
         variant="label-sm"
         className="astw:uppercase astw:tracking-wide astw:text-muted-foreground"
-        // eslint-disable-next-line jsx-a11y/heading-has-content
-        render={<h4 />}
       >
         {t("aiChatToolParameters")}
-      </Text>
+      </Text.h4>
       <JsonBlock value={input} />
     </div>
   );
@@ -157,17 +155,15 @@ function ToolOutput({ output, errorText, className, ...props }: ToolOutputProps)
   if (output == null && !errorText) return null;
   return (
     <div className={cn("astw:space-y-1", className)} {...props}>
-      <Text
+      <Text.h4
         variant="label-sm"
         className={cn(
           "astw:uppercase astw:tracking-wide",
           errorText ? "astw:text-danger-text" : "astw:text-muted-foreground",
         )}
-        // eslint-disable-next-line jsx-a11y/heading-has-content
-        render={<h4 />}
       >
         {errorText ? t("aiChatToolError") : t("aiChatToolResult")}
-      </Text>
+      </Text.h4>
       <JsonBlock value={errorText ?? output} />
     </div>
   );

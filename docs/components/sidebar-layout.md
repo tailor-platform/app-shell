@@ -90,9 +90,9 @@ Disable both behaviors to keep the sidebar expanded at a fixed width:
 
 With `collapsible={false}`, `defaultOpen` is ignored, the keyboard shortcut is not intercepted, and `useAppShellSidebar()` reports `open: true` with inert `setOpen()` and `toggle()` actions.
 
-The expanded desktop sidebar shows a grip at the center of its outer edge. Only the grip's hit area shows the resize cursor and starts a drag; the rest of the sidebar edge is not interactive. Drag the grip to resize, or focus the handle and use Left/Right arrows (16px steps), Home (collapse), or End (480px).
+The whole outer edge of the expanded desktop sidebar is a resize handle. Hovering it shows the resize cursor, thickens the border to 2px, and shows a small pill beside the border that follows the pointer. Drag anywhere along the edge to resize, or focus the handle and use Left/Right arrows (16px steps), Home (collapse), or End (480px). Double-click the edge to restore the default 256px width; double-click it again at 256px to collapse.
 
-The initial width is 256px. The collapsed desktop sidebar keeps its handle. Clicking it or using Enter/Space restores the default 256px width.
+The initial width is 256px. The collapsed desktop sidebar keeps its handle. Double-clicking it or using Enter/Space restores the default 256px width; a single click does nothing, matching the expanded edge.
 
 Dragging uses a position-based resistance curve, not a delayed CSS transition. Between the collapsed width and the minimum expanded width (192px), most of the interval uses a 25% movement gain: moving the pointer 10px moves the edge only 2.5px. In the final quarter near the opposite boundary, a smooth position-based blend catches up to the pointer. The edge stops when the pointer stops; it does not catch up over time. At 192px and above it follows the pointer 1:1, up to 480px. Shrinking through the same range resists toward the collapsed position. It collapses slightly early, when the pointer enters the final 20% of that interval, with the curve already meeting the collapsed width at that point. The same pointer stays captured across both transitions, without a jump to 256px.
 

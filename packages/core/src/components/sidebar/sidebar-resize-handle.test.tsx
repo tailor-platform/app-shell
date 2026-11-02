@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getSidebarDragWidth, SidebarResizeHandle } from "./sidebar-resize-handle";
 
@@ -274,5 +274,58 @@ describe("SidebarResizeHandle", () => {
     expect(width(handle)).toBe(312);
     fireEvent.keyDown(handle, { key: "ArrowRight" });
     expect(width(handle)).toBe(296);
+  });
+
+  it("tracks the pointer height and shows the focus state only for keyboard use", () => {
+    const { handle } = renderHandle();
+    vi.spyOn(handle, "getBoundingClientRect").mockReturnValue(new DOMRect(250, 100, 20, 800));
+    fireEvent.pointerMove(handle, { ...pointer, clientY: 400 });
+    expect(handle.style.getPropertyValue("--sidebar-handle-y")).toBe("300px");
+
+    fireEvent.pointerDown(handle, { ...pointer, clientX: 250 });
+    fireEvent.pointerUp(handle, pointer);
+    expect(document.activeElement).toBe(handle);
+    expect(handle.dataset.focus).toBe("pointer");
+    fireEvent.keyDown(handle, { key: "Meta" });
+    expect(handle.dataset.focus).toBe("pointer");
+    // A window switch blurs and refocuses the handle without moving focus elsewhere.
+    fireEvent.blur(handle);
+    fireEvent.focus(handle);
+    expect(handle.dataset.focus).toBe("pointer");
+    fireEvent.keyDown(handle, { key: "ArrowRight" });
+    expect(handle.dataset.focus).toBe("keyboard");
+
+    act(() => handle.blur());
+    expect(handle.dataset.focus).toBeUndefined();
+    expect(handle.style.getPropertyValue("--sidebar-handle-y")).toBe("");
+    act(() => handle.focus());
+    expect(handle.dataset.focus).toBe("keyboard");
+  });
+
+  it("double-click restores the default width, then collapses from it", () => {
+    const { handle, onOpenChange, onWidthCommit } = renderHandle();
+    fireEvent.keyDown(handle, { key: "End" });
+    expect(width(handle)).toBe(480);
+    onWidthCommit.mockClear();
+
+    fireEvent.click(handle, { detail: 1 });
+    fireEvent.click(handle, { detail: 2 });
+    expect(onWidthCommit).toHaveBeenCalledExactlyOnceWith(256);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    fireEvent.click(handle, { detail: 1 });
+    fireEvent.click(handle, { detail: 2 });
+    expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false);
+    expect(onWidthCommit).toHaveBeenCalledOnce();
+  });
+
+  it("expands the collapsed handle on double-click or keyboard activation, not a single click", () => {
+    const { handle, onOpenChange } = renderHandle("left", true, 64);
+    fireEvent.click(handle, { detail: 1 });
+    expect(onOpenChange).not.toHaveBeenCalled();
+    fireEvent.click(handle, { detail: 2 });
+    expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(true);
+    fireEvent.click(handle, { detail: 0 });
+    expect(onOpenChange).toHaveBeenCalledTimes(2);
   });
 });

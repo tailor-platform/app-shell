@@ -417,6 +417,12 @@ function Sidebar({
               ? "astw:p-2 astw:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
               : "astw:group-data-[collapsible=icon]:w-(--sidebar-width-icon) astw:group-data-[side=left]:border-r astw:group-data-[side=right]:border-l",
             variant === "inset" && "astw:border-x astw:border-x-border",
+            // Thicken the edge to 2px while its resize handle is hovered, keyboard-focused or
+            // dragged. A shadow rather than a wider border, so neither content nor handle shifts.
+            variant !== "floating" &&
+              (side === "left"
+                ? "astw:has-[[data-slot=sidebar-resize-handle]:hover]:shadow-[1px_0_0_var(--border)] astw:has-[[data-slot=sidebar-resize-handle][data-focus=keyboard]]:shadow-[1px_0_0_var(--border)] astw:has-[[data-resizing=true]]:shadow-[1px_0_0_var(--border)]"
+                : "astw:has-[[data-slot=sidebar-resize-handle]:hover]:shadow-[-1px_0_0_var(--border)] astw:has-[[data-slot=sidebar-resize-handle][data-focus=keyboard]]:shadow-[-1px_0_0_var(--border)] astw:has-[[data-resizing=true]]:shadow-[-1px_0_0_var(--border)]"),
             className,
           )}
           {...props}

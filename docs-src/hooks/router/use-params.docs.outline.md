@@ -182,7 +182,7 @@ function ProductEdit() {
 
   return (
     <form>
-      <h1>Edit Product {id}</h1>
+      <Text.h1>Edit Product {id}</Text.h1>
       {/* form fields */}
     </form>
   );
@@ -203,7 +203,7 @@ function DeleteConfirmation() {
 
   return (
     <div>
-      <p>Delete product {id}?</p>
+      <Text.p>Delete product {id}?</Text.p>
       <button onClick={handleDelete}>Confirm</button>
     </div>
   );

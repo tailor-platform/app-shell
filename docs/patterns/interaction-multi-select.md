@@ -112,7 +112,7 @@ function InteractionMultiSelect() {
               cancelled; shipped orders are excluded. Cancelled orders can&apos;t be reopened.
             </Dialog.Description>
           </Dialog.Header>
-          {cancelError && <p role="alert">{cancelError}</p>}
+          {cancelError && <Text.p role="alert">{cancelError}</Text.p>}
           <Dialog.Footer>
             <Dialog.Close render={<Button variant="outline" disabled={cancelling} />}>
               Keep orders

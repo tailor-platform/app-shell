@@ -333,7 +333,7 @@ function PerCellStyling() {
 
   return (
     <div className="space-y-3">
-      <p>Overtime: below 40 hours is safe, 40–59 is caution, 60 or more is danger.</p>
+      <Text.p>Overtime: below 40 hours is safe, 40–59 is caution, 60 or more is danger.</Text.p>
       <DataTable.Root value={table}>
         <DataTable.Table />
       </DataTable.Root>
@@ -812,8 +812,8 @@ To customize the body, provide `error.render`. Its `error` is the original throw
 error: {
   render: ({ row, error }) => (
     <div>
-      <p>Could not update row {row.id}</p>
-      <p>{error instanceof CellEditError ? error.message : "Please try again later"}</p>
+      <Text.p>Could not update row {row.id}</Text.p>
+      <Text.p>{error instanceof CellEditError ? error.message : "Please try again later"}</Text.p>
     </div>
   ),
 }
@@ -944,10 +944,10 @@ function ImmediateSaving() {
 
   return (
     <div className="space-y-3">
-      <p role="status">
+      <Text.p role="status">
         {savingCount ? `${savingCount} field save(s) pending` : "No saves pending"}
-      </p>
-      {error && <p role="alert">{error}</p>}
+      </Text.p>
+      {error && <Text.p role="alert">{error}</Text.p>}
       <DataTable.Root value={table}>
         <DataTable.Table />
       </DataTable.Root>
@@ -1027,8 +1027,10 @@ function CollectThenSubmit() {
 
   return (
     <div className="space-y-3">
-      <p role="status">{saving ? "Saving batch…" : "Confirm edits, then Save or Cancel"}</p>
-      {error && <p role="alert">{error}</p>}
+      <Text.p role="status">
+        {saving ? "Saving batch…" : "Confirm edits, then Save or Cancel"}
+      </Text.p>
+      {error && <Text.p role="alert">{error}</Text.p>}
       <DataTable.Root value={table}>
         <DataTable.Table />
       </DataTable.Root>

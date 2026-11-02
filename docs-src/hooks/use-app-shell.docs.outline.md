@@ -120,8 +120,8 @@ function UserInfo() {
 
   return (
     <div>
-      <h2>{contextData.currentUser.name}</h2>
-      <p>{contextData.currentUser.email}</p>
+      <Text.h2>{contextData.currentUser.name}</Text.h2>
+      <Text.p>{contextData.currentUser.email}</Text.p>
     </div>
   );
 }

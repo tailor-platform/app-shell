@@ -473,7 +473,7 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "33eb2bdd6be1c774",
+        "typeSurface": "f265de88190a4f95",
         "outline": "b3b98ba3cd0bd4a5",
         "snapshot": "a97e067c66e46ef6",
         "outputMd": "640e1060814bd7e9",
@@ -1109,7 +1109,7 @@
       "hashes": {
         "typeSurface": "d978aa19f89787dd",
         "outline": "56ba2762ab3fe4c0",
-        "snapshot": "c8c64d1e44d12e13",
+        "snapshot": "2e77c2043cfeabb1",
         "outputMd": "1edcf4130d30d57c",
         "examples": null
       }
@@ -1590,9 +1590,9 @@
       ],
       "hashes": {
         "typeSurface": "de357f2d0fc6aa15",
-        "outline": "5964b1160aa35524",
-        "snapshot": "bddd335be0d1da78",
-        "outputMd": "ed9140c24cac2be2",
+        "outline": "74174e727051e283",
+        "snapshot": "b22c741a4d2d6e88",
+        "outputMd": "37ee0306a4fcec6c",
         "examples": null
       }
     },
@@ -1891,7 +1891,7 @@
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
-    "packages/core/skills/app-shell-patterns/references/components/tree-picker.md": "ed9140c24cac2be2",
+    "packages/core/skills/app-shell-patterns/references/components/tree-picker.md": "37ee0306a4fcec6c",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
     "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "daf6c93e7285ee88",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",
@@ -1931,6 +1931,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "930db027a28bbe24",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "e0286979718e2769",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "2c900e3b4d203b31"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "c1aec6551308bc11"
   }
 }

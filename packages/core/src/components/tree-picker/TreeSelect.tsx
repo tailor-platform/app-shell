@@ -130,7 +130,7 @@ export function TreeSelect<T>({
       <div
         data-slot="tree-select-column-header"
         aria-hidden
-        className="astw:bg-muted/40 astw:text-muted-foreground astw:border-border astw:flex astw:items-center astw:gap-3 astw:border-y astw:px-4 astw:py-2 astw:text-xs astw:font-medium astw:tracking-wide astw:uppercase"
+        className="astw:bg-muted/40 astw:text-muted-foreground astw:border-border astw:flex astw:items-center astw:gap-3 astw:border-y astw:px-4 astw:py-2 astw:text-label-sm astw:uppercase"
       >
         {/* Mirrors the row's checkbox + caret so the labels line up. */}
         <span className="astw:size-4 astw:shrink-0" />
@@ -142,7 +142,7 @@ export function TreeSelect<T>({
       {visibleRows.length === 0 ? (
         <div
           data-slot="tree-select-empty"
-          className="astw:text-muted-foreground astw:flex-1 astw:px-6 astw:py-8 astw:text-center astw:text-sm"
+          className="astw:text-muted-foreground astw:flex-1 astw:px-6 astw:py-8 astw:text-center astw:text-body-md"
         >
           {emptyText ?? t("emptyText")}
         </div>

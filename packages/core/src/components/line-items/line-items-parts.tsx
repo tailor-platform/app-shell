@@ -19,7 +19,7 @@ export type LineItemsSearchProps = {
 };
 
 const searchInputClasses =
-  "astw:border-input astw:h-9 astw:w-full astw:rounded-md astw:border astw:bg-transparent astw:text-sm astw:shadow-xs astw:outline-none astw:placeholder:text-muted-foreground astw:focus-visible:border-ring astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50";
+  "astw:border-input astw:h-9 astw:w-full astw:rounded-md astw:border astw:bg-transparent astw:text-body-md astw:shadow-xs astw:outline-none astw:placeholder:text-muted-foreground astw:focus-visible:border-ring astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50";
 
 /** Always-visible search box bound to the filter. */
 function LineItemsSearch({ placeholder, showIcon = true, className }: LineItemsSearchProps) {
@@ -219,7 +219,7 @@ function LineItemsSaveActions({
       className={cn("astw:flex astw:items-center astw:gap-2", className)}
     >
       {/* Says why Save is off, and is announced as it appears. */}
-      <output className="astw:text-sm astw:text-danger-text">
+      <output className="astw:text-body-md astw:text-danger-text">
         {errorCount > 0 ? t("fixErrors", { count: errorCount }) : null}
       </output>
       <Button
@@ -304,10 +304,10 @@ function LineItemsFloatingDock({ children, className }: LineItemsFloatingDockPro
 LineItemsFloatingDock.displayName = "LineItems.FloatingDock";
 
 const pillClasses =
-  "astw:pointer-events-auto astw:flex astw:items-center astw:gap-3 astw:rounded-lg astw:bg-foreground astw:px-3 astw:py-2 astw:text-xs astw:text-background astw:shadow-lg";
+  "astw:pointer-events-auto astw:flex astw:items-center astw:gap-3 astw:rounded-lg astw:bg-foreground astw:px-3 astw:py-2 astw:text-body-sm astw:text-background astw:shadow-lg";
 
 const pillButtonClasses =
-  "astw:rounded-md astw:px-2.5 astw:py-1 astw:text-xs astw:font-medium astw:outline-none astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50";
+  "astw:rounded-md astw:px-2.5 astw:py-1 astw:text-label-sm astw:outline-none astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50";
 
 /** A short side-to-side shake, played with the Web Animations API. */
 const SHAKE_KEYFRAMES: Keyframe[] = [

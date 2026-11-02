@@ -94,7 +94,7 @@ function TreePickerRow<T>({
         data-node-id={node.id}
         data-depth={depth}
         className={cn(
-          "astw:border-border/60 astw:flex astw:cursor-pointer astw:items-center astw:gap-3 astw:border-b astw:px-4 astw:py-2.5 astw:text-sm astw:select-none astw:hover:bg-muted/50",
+          "astw:border-border/60 astw:flex astw:cursor-pointer astw:items-center astw:gap-3 astw:border-b astw:px-4 astw:py-2.5 astw:text-body-md astw:select-none astw:hover:bg-muted/50",
           "astw:focus-visible:ring-ring/50 astw:focus-visible:ring-2 astw:focus-visible:outline-none astw:focus-visible:ring-inset",
           // Revealed children ease in while the dialog grows to fit them.
           depth > 0 &&

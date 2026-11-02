@@ -79,10 +79,10 @@ export type LineItemsTableProps<T extends LineItemsRowData> = {
 // Header and rows match Table: foreground medium text in the header, row
 // rules only — no lines between columns.
 const headCellClasses =
-  "astw:relative astw:h-10 astw:bg-card astw:px-2 astw:text-left astw:align-middle astw:text-sm astw:font-medium astw:text-foreground astw:whitespace-nowrap astw:overflow-hidden astw:text-ellipsis astw:border-b astw:border-border";
+  "astw:relative astw:h-10 astw:bg-card astw:px-2 astw:text-left astw:align-middle astw:text-label-md astw:text-foreground astw:whitespace-nowrap astw:overflow-hidden astw:text-ellipsis astw:border-b astw:border-border";
 
 const bodyCellClasses =
-  "astw:relative astw:h-9 astw:p-0 astw:align-middle astw:text-sm astw:whitespace-nowrap astw:overflow-hidden astw:text-ellipsis astw:border-b astw:border-border";
+  "astw:relative astw:h-9 astw:p-0 astw:align-middle astw:text-body-md astw:whitespace-nowrap astw:overflow-hidden astw:text-ellipsis astw:border-b astw:border-border";
 
 /**
  * Tints, drawn as a background image so they layer over whatever colour the
@@ -899,7 +899,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
                         {sorted ? (
                           <span
                             data-slot="line-items-sort-indicator"
-                            className="astw:text-muted-foreground astw:text-xs"
+                            className="astw:text-muted-foreground astw:text-label-sm"
                             aria-hidden="true"
                           >
                             {sorted === "asc" ? "▲" : "▼"}
@@ -949,7 +949,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
               <tr>
                 <td
                   colSpan={columnCount + (layout.needsSpacer ? 1 : 0)}
-                  className="astw:px-6 astw:py-10 astw:text-center astw:text-sm astw:text-muted-foreground"
+                  className="astw:px-6 astw:py-10 astw:text-center astw:text-body-md astw:text-muted-foreground"
                 >
                   {emptyMessage ?? t("emptyMessage")}
                 </td>
@@ -1256,7 +1256,7 @@ export function LineItemsTable<T extends LineItemsRowData>({
               data-slot="line-items-totals"
               // The top rule separates totals from the lines scrolling beneath them.
               className={cn(
-                "astw:sticky astw:bottom-0 astw:z-10 astw:bg-card astw:font-medium astw:[&_td]:border-t",
+                "astw:sticky astw:bottom-0 astw:z-10 astw:bg-card astw:[&_td]:text-label-md astw:[&_td]:border-t",
                 "astw:transition-[filter] astw:duration-150 astw:motion-reduce:transition-none",
                 moreBelow && [
                   "astw:drop-shadow-[0_-2px_3px_rgb(0_0_0/0.1)]",

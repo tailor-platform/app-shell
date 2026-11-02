@@ -35,7 +35,7 @@ const editorClasses = cn(
   // `dark:bg-transparent` is not redundant: the wrapped input ships
   // `dark:bg-input/30`, and tailwind-merge only dedupes within one variant, so a
   // bare `bg-transparent` leaves the dark fill painted over the cell.
-  "astw:h-full astw:min-h-0 astw:w-full astw:min-w-0 astw:flex-1 astw:border-0 astw:bg-transparent astw:dark:bg-transparent astw:px-2 astw:text-sm astw:leading-none astw:text-foreground",
+  "astw:h-full astw:min-h-0 astw:w-full astw:min-w-0 astw:flex-1 astw:border-0 astw:bg-transparent astw:dark:bg-transparent astw:px-2 astw:text-body-md astw:leading-none astw:text-foreground",
   // Clipped values end in an ellipsis until focused, then scroll as usual.
   "astw:text-ellipsis",
   "astw:rounded-none astw:shadow-none astw:outline-none astw:ring-0",
@@ -312,9 +312,9 @@ function SelectCombobox<T extends LineItemsRowData>({
           {(item: LineItemsSelectOption) => (
             <ComboboxItem key={item.value} value={item} className="astw:items-start astw:py-2">
               <div className="astw:flex astw:flex-col astw:gap-0.5">
-                <span className="astw:text-sm astw:font-medium">{item.label}</span>
+                <span className="astw:text-label-md">{item.label}</span>
                 {item.description ? (
-                  <span className="astw:text-muted-foreground astw:text-xs">
+                  <span className="astw:text-muted-foreground astw:text-body-sm">
                     {item.description}
                   </span>
                 ) : null}

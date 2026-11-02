@@ -100,7 +100,7 @@ export function LineItemsSelectionBar({
       className="astw:max-w-full astw:shrink-0"
     >
       <Toolbar.Group>
-        <span className="astw:text-sm astw:font-medium astw:whitespace-nowrap astw:tabular-nums">
+        <span className="astw:text-label-md astw:whitespace-nowrap astw:tabular-nums">
           {t("selectionCount", { selected: selectedIds.length, total })}
         </span>
         <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />

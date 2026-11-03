@@ -117,6 +117,7 @@ const TreeDemoPage = () => {
           />
           <Card.Content padding="none">
             <Tree<CatalogNode>
+              selectionMode="checkbox"
               aria-label="Catalog"
               className="h-80"
               items={CATALOG}
@@ -145,6 +146,7 @@ const TreeDemoPage = () => {
               <Field.Root name="bins">
                 <Field.Label>Bins to count</Field.Label>
                 <Tree<StockNode>
+                  selectionMode="checkbox"
                   className="h-72 rounded-md border"
                   items={WAREHOUSES}
                   mapItem={(node, { parents }) =>

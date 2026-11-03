@@ -201,6 +201,7 @@ function TreePickerBody<T>({
 
       <Tree<T>
         {...treeProps}
+        selectionMode="checkbox"
         filter={filter}
         aria-labelledby={titleId}
         className="astw:border-border astw:flex-1 astw:border-t"

@@ -6,7 +6,7 @@ import { checkboxBoxClasses } from "@/components/checkbox/checkbox";
 
 import { useTreeT } from "./i18n";
 import type { TreeNode } from "./tree-model";
-import type { TreeContentProps, TreeRowState } from "./types";
+import type { TreeContentProps, TreeRowState, TreeSelectionMode } from "./types";
 
 /**
  * @internal
@@ -22,10 +22,15 @@ import type { TreeContentProps, TreeRowState } from "./types";
 type TreeRowProps<T> = Pick<TreeContentProps<T>, "renderItem"> & {
   node: TreeNode<T>;
   depth: number;
+  selectionMode: TreeSelectionMode;
   isExpanded(id: string): boolean;
   onToggleExpand(id: string): void;
   getCheckState(node: TreeNode<T>): { checked: boolean; indeterminate: boolean };
   onToggleNode(node: TreeNode<T>, next: boolean): void;
+  /** The selected row's key in `"single"` mode. */
+  selectedKey: string | null;
+  /** A click anywhere on the row except its own controls; the tree decides what it does. */
+  onRowClick(node: TreeNode<T>): void;
   activeRowId: string | null;
   registerRow(id: string, element: HTMLElement | null): void;
   onRowFocus(id: string): void;
@@ -42,11 +47,14 @@ function TreeRow<T>(props: TreeRowProps<T>) {
   const {
     node,
     depth,
+    selectionMode,
     isExpanded,
     onToggleExpand,
     hasBranches,
     getCheckState,
     onToggleNode,
+    selectedKey,
+    onRowClick,
     renderItem,
     activeRowId,
     registerRow,
@@ -57,8 +65,15 @@ function TreeRow<T>(props: TreeRowProps<T>) {
   const leaf = node.isLeaf;
   const expanded = !leaf && isExpanded(node.id);
   const disabled = treeDisabled || node.disabled;
-  const { checked, indeterminate } = getCheckState(node);
-  const keepsCaretSpace = depth === 0 && hasBranches;
+  const withCheckbox = selectionMode === "checkbox";
+  const { checked, indeterminate } = withCheckbox
+    ? getCheckState(node)
+    : { checked: false, indeterminate: false };
+  const selected = selectionMode === "single" && selectedKey === node.key;
+  // A leaf keeps the caret's space so its label lines up with its siblings'.
+  // Beside a checkbox, nested leaves don't need it: the indent already aligns
+  // them, so the label sits right beside the checkbox.
+  const keepsCaretSpace = depth === 0 ? hasBranches : !withCheckbox;
 
   const row: TreeRowState<T> = {
     item: node.item,
@@ -68,6 +83,7 @@ function TreeRow<T>(props: TreeRowProps<T>) {
     isLeaf: leaf,
     checked,
     indeterminate,
+    selected,
     expanded,
     disabled,
   };
@@ -82,25 +98,26 @@ function TreeRow<T>(props: TreeRowProps<T>) {
         role="treeitem"
         aria-level={depth + 1}
         aria-expanded={leaf ? undefined : expanded}
-        aria-checked={indeterminate ? "mixed" : checked}
+        aria-checked={withCheckbox ? (indeterminate ? "mixed" : checked) : undefined}
+        aria-selected={selectionMode === "single" ? selected : undefined}
         aria-disabled={disabled || undefined}
         tabIndex={!treeDisabled && activeRowId === node.id ? 0 : -1}
         onFocus={() => onRowFocus(node.id)}
-        // The whole row is a hit target: a group row opens or closes (its
-        // checkbox still selects everything inside), an item row ticks. Clicks
-        // on the checkbox and caret are theirs already, and anything
-        // interactive the consumer renders in the row keeps its own behaviour.
+        // The whole row is a hit target, and the tree decides what a click
+        // does. Clicks on the checkbox and caret are theirs already, and
+        // anything interactive the consumer renders in the row keeps its own
+        // behaviour.
         onClick={(event) => {
           if (treeDisabled) return;
           const target = event.target as HTMLElement;
           if (target.closest("button, a, input, label, [data-slot=tree-checkbox]")) return;
-          if (leaf) onToggleNode(node, !checked);
-          else onToggleExpand(node.id);
+          onRowClick(node);
         }}
         data-slot="tree-row"
         data-node-id={node.id}
         data-depth={depth}
         data-disabled={disabled || undefined}
+        data-selected={selected || undefined}
         className={cn(
           "astw:border-border/60 astw:flex astw:items-center astw:gap-3 astw:border-b astw:px-4 astw:py-2.5 astw:text-body-md astw:select-none",
           treeDisabled ? "astw:cursor-not-allowed" : "astw:cursor-pointer astw:hover:bg-muted/50",
@@ -109,11 +126,12 @@ function TreeRow<T>(props: TreeRowProps<T>) {
           // Revealed children ease in as their group opens.
           depth > 0 &&
             "astw:bg-muted/30 astw:animate-in astw:fade-in-0 astw:slide-in-from-top-1 astw:duration-200 astw:motion-reduce:animate-none",
+          "astw:data-selected:bg-muted",
         )}
       >
         {/* Indentation as real spacers — keeps every style in a Tailwind class.
-            Each step is one caret wide, so a child's checkbox sits under its
-            parent's caret and the labels line up. */}
+            Each step is one caret wide, so a child's checkbox (or caret) sits
+            under its parent's caret. */}
         {Array.from({ length: depth }, (_, level) => (
           <span key={level} className="astw:w-5 astw:shrink-0" aria-hidden />
         ))}
@@ -122,24 +140,24 @@ function TreeRow<T>(props: TreeRowProps<T>) {
             state and handles the keys, so this box is visual — a real Checkbox
             here would also register itself with a surrounding Field and submit
             its own value. It reuses Checkbox's styles so it looks the same. */}
-        <span
-          aria-hidden
-          data-slot="tree-checkbox"
-          data-checked={(checked && !indeterminate) || undefined}
-          data-indeterminate={indeterminate || undefined}
-          data-disabled={disabled || undefined}
-          onClick={() => {
-            if (!disabled) onToggleNode(node, !checked);
-          }}
-          className={cn(checkboxBoxClasses, "astw:data-disabled:opacity-50")}
-        >
-          {indeterminate && <Minus className="astw:size-3" />}
-          {checked && !indeterminate && <Check className="astw:size-3" />}
-        </span>
+        {withCheckbox ? (
+          <span
+            aria-hidden
+            data-slot="tree-checkbox"
+            data-checked={(checked && !indeterminate) || undefined}
+            data-indeterminate={indeterminate || undefined}
+            data-disabled={disabled || undefined}
+            onClick={() => {
+              if (!disabled) onToggleNode(node, !checked);
+            }}
+            className={cn(checkboxBoxClasses, "astw:data-disabled:opacity-50")}
+          >
+            {indeterminate && <Minus className="astw:size-3" />}
+            {checked && !indeterminate && <Check className="astw:size-3" />}
+          </span>
+        ) : null}
 
         {leaf ? (
-          // Nested leaves need no caret space (the indent already aligns them),
-          // so the label sits right beside the checkbox.
           keepsCaretSpace && <span className="astw:size-5 astw:shrink-0" aria-hidden />
         ) : (
           <button

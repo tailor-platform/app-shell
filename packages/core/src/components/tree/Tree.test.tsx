@@ -48,14 +48,28 @@ afterEach(() => {
 
 describe("Tree", () => {
   it("renders inline, without a dialog, named by aria-label", () => {
-    render(<Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />);
+    render(
+      <Tree<Node>
+        selectionMode="checkbox"
+        items={WAREHOUSES}
+        mapItem={mapItem}
+        aria-label="Bins"
+      />,
+    );
 
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("tree", { name: "Bins" })).toBeDefined();
   });
 
   it("shows each item's label by default, with no search box of its own", () => {
-    render(<Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />);
+    render(
+      <Tree<Node>
+        selectionMode="checkbox"
+        items={WAREHOUSES}
+        mapItem={mapItem}
+        aria-label="Bins"
+      />,
+    );
 
     expect(screen.getByText("Warehouse X")).toBeDefined();
     expect(screen.queryByRole("searchbox")).toBeNull();
@@ -65,6 +79,7 @@ describe("Tree", () => {
     const user = userEvent.setup();
     render(
       <Tree<Node>
+        selectionMode="checkbox"
         items={WAREHOUSES}
         mapItem={mapItem}
         aria-label="Bins"
@@ -83,6 +98,7 @@ describe("Tree", () => {
     it("shows matches and their ancestors, and opens the groups they're in", () => {
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WAREHOUSES}
           mapItem={mapItem}
           aria-label="Bins"
@@ -100,6 +116,7 @@ describe("Tree", () => {
       const seen: Array<[string, string, string[]]> = [];
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WAREHOUSES}
           mapItem={mapItem}
           aria-label="Bins"
@@ -121,6 +138,7 @@ describe("Tree", () => {
           <>
             <button onClick={() => setCount(count + 1)}>Rerender {count}</button>
             <Tree<Node>
+              selectionMode="checkbox"
               items={WAREHOUSES}
               mapItem={mapItem}
               aria-label="Bins"
@@ -139,11 +157,188 @@ describe("Tree", () => {
 
     it('says "No matching items." while filtering, and "No items." otherwise', () => {
       const { rerender } = render(
-        <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" filter={() => false} />,
+        <Tree<Node>
+          selectionMode="checkbox"
+          items={WAREHOUSES}
+          mapItem={mapItem}
+          aria-label="Bins"
+          filter={() => false}
+        />,
       );
       expect(screen.getByText("No matching items.")).toBeDefined();
-      rerender(<Tree<Node> items={[]} mapItem={mapItem} aria-label="Bins" />);
+      rerender(
+        <Tree<Node> selectionMode="checkbox" items={[]} mapItem={mapItem} aria-label="Bins" />,
+      );
       expect(screen.getByText("No items.")).toBeDefined();
+    });
+  });
+
+  describe('selectionMode "none" (default)', () => {
+    it("draws no checkboxes and exposes no selection", () => {
+      const { container } = render(
+        <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />,
+      );
+
+      const tree = screen.getByRole("tree");
+      expect(tree.getAttribute("aria-multiselectable")).toBeNull();
+      expect(container.querySelector("[data-slot=tree-checkbox]")).toBeNull();
+      expect(container.querySelector("input")).toBeNull();
+      expect(rowFor("Loose stock").getAttribute("aria-checked")).toBeNull();
+      expect(rowFor("Loose stock").getAttribute("aria-selected")).toBeNull();
+    });
+
+    it("runs onAction when a leaf is clicked, and opens a parent when it is", async () => {
+      const user = userEvent.setup();
+      const onAction = vi.fn();
+      render(
+        <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" onAction={onAction} />,
+      );
+
+      await user.click(screen.getByText("Warehouse X"));
+      expect(rowFor("Warehouse X").getAttribute("aria-expanded")).toBe("true");
+      expect(onAction).not.toHaveBeenCalled();
+
+      await user.click(screen.getByText("X · A2"));
+      expect(onAction).toHaveBeenCalledWith(expect.objectContaining({ id: "A2" }), "A2");
+    });
+
+    it("runs onAction for Enter on any row, parents included", async () => {
+      const user = userEvent.setup();
+      const onAction = vi.fn();
+      render(
+        <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" onAction={onAction} />,
+      );
+
+      rowFor("Warehouse Y").focus();
+      await user.keyboard(" ");
+      await user.keyboard("{Enter}");
+      expect(onAction).toHaveBeenCalledTimes(1);
+      expect(onAction).toHaveBeenCalledWith(expect.objectContaining({ id: "wh-y" }), "wh-y");
+    });
+
+    it("indents a nested leaf past its parent's caret", async () => {
+      const user = userEvent.setup();
+      render(<Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />);
+
+      await user.click(screen.getByText("Warehouse X"));
+      // One indent step plus the caret's space, against the parent's caret alone.
+      const spacers = rowFor("X · A1").querySelectorAll(":scope > span[aria-hidden]");
+      expect(spacers.length).toBe(2);
+    });
+  });
+
+  describe('selectionMode "single"', () => {
+    it("selects the clicked row, one at a time, parents included", async () => {
+      const user = userEvent.setup();
+      const onSelectedKeyChange = vi.fn();
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={mapItem}
+          aria-label="Bins"
+          selectionMode="single"
+          onSelectedKeyChange={onSelectedKeyChange}
+        />,
+      );
+
+      expect(rowFor("Loose stock").getAttribute("aria-selected")).toBe("false");
+      await user.click(screen.getByText("Loose stock"));
+      expect(rowFor("Loose stock").getAttribute("aria-selected")).toBe("true");
+      expect(rowFor("Loose stock").hasAttribute("data-selected")).toBe(true);
+
+      await user.click(screen.getByText("Warehouse X"));
+      expect(rowFor("Warehouse X").getAttribute("aria-selected")).toBe("true");
+      expect(rowFor("Loose stock").getAttribute("aria-selected")).toBe("false");
+      expect(onSelectedKeyChange).toHaveBeenLastCalledWith(
+        "wh-x",
+        expect.objectContaining({ id: "wh-x" }),
+      );
+    });
+
+    it("opens a closed parent when it is selected, and leaves closing to the caret", async () => {
+      const user = userEvent.setup();
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={mapItem}
+          aria-label="Bins"
+          selectionMode="single"
+        />,
+      );
+
+      await user.click(screen.getByText("Warehouse X"));
+      expect(rowFor("Warehouse X").getAttribute("aria-expanded")).toBe("true");
+      await user.click(screen.getByText("Warehouse X"));
+      expect(rowFor("Warehouse X").getAttribute("aria-expanded")).toBe("true");
+      await user.click(rowFor("Warehouse X").querySelector("button[title]") as HTMLElement);
+      expect(rowFor("Warehouse X").getAttribute("aria-expanded")).toBe("false");
+    });
+
+    it("selects the focused row with Space", async () => {
+      const user = userEvent.setup();
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={mapItem}
+          aria-label="Bins"
+          selectionMode="single"
+        />,
+      );
+
+      rowFor("Warehouse Y").focus();
+      await user.keyboard(" ");
+      expect(rowFor("Warehouse Y").getAttribute("aria-selected")).toBe("true");
+    });
+
+    it("follows a controlled selectedKey", () => {
+      const { rerender } = render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={mapItem}
+          aria-label="Bins"
+          selectionMode="single"
+          selectedKey="loose"
+        />,
+      );
+      expect(rowFor("Loose stock").getAttribute("aria-selected")).toBe("true");
+
+      rerender(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={mapItem}
+          aria-label="Bins"
+          selectionMode="single"
+          selectedKey={null}
+        />,
+      );
+      expect(rowFor("Loose stock").getAttribute("aria-selected")).toBe("false");
+    });
+
+    it("never selects a disabled row", async () => {
+      const user = userEvent.setup();
+      const onSelectedKeyChange = vi.fn();
+      render(
+        <Tree<Node>
+          items={[{ id: "locked", name: "Locked", locked: true }]}
+          mapItem={mapItem}
+          aria-label="Bins"
+          selectionMode="single"
+          onSelectedKeyChange={onSelectedKeyChange}
+        />,
+      );
+
+      await user.click(screen.getByText("Locked"));
+      expect(onSelectedKeyChange).not.toHaveBeenCalled();
+    });
+
+    it("only takes value and form props in checkbox mode", () => {
+      const base = { items: WAREHOUSES, mapItem, "aria-label": "Bins" };
+      // @ts-expect-error `value` belongs to checkbox mode
+      void (<Tree<Node> {...base} selectionMode="single" value={["A1"]} />);
+      // @ts-expect-error `name` belongs to checkbox mode
+      void (<Tree<Node> {...base} name="bins" />);
+      // @ts-expect-error `selectedKey` belongs to single mode
+      void (<Tree<Node> {...base} selectionMode="checkbox" selectedKey="A1" />);
     });
   });
 
@@ -153,6 +348,7 @@ describe("Tree", () => {
       const onValueChange = vi.fn();
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WAREHOUSES}
           mapItem={mapItem}
           aria-label="Bins"
@@ -177,6 +373,7 @@ describe("Tree", () => {
       const onValueChange = vi.fn();
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WAREHOUSES}
           mapItem={mapItem}
           aria-label="Bins"
@@ -202,6 +399,7 @@ describe("Tree", () => {
         return (
           <>
             <Tree<Node>
+              selectionMode="checkbox"
               items={WAREHOUSES}
               mapItem={mapItem}
               aria-label="Bins"
@@ -227,6 +425,7 @@ describe("Tree", () => {
         return (
           <>
             <Tree<Node>
+              selectionMode="checkbox"
               items={WAREHOUSES}
               mapItem={mapItem}
               aria-label="Bins"
@@ -249,6 +448,7 @@ describe("Tree", () => {
       const seen: Array<[string, string[]]> = [];
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WAREHOUSES}
           mapItem={(item, { parents }) => {
             seen.push([item.id, parents.map((parent) => parent.id)]);
@@ -272,6 +472,7 @@ describe("Tree", () => {
       const onValueChange = vi.fn();
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WAREHOUSES}
           mapItem={scopedMapItem}
           aria-label="Bins"
@@ -305,6 +506,7 @@ describe("Tree", () => {
       const onValueChange = vi.fn();
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WAREHOUSES}
           mapItem={scopedMapItem}
           aria-label="Bins"
@@ -323,6 +525,7 @@ describe("Tree", () => {
       const user = userEvent.setup();
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WAREHOUSES}
           mapItem={scopedMapItem}
           aria-label="Bins"
@@ -340,6 +543,7 @@ describe("Tree", () => {
       const onValueChange = vi.fn();
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WAREHOUSES}
           mapItem={scopedMapItem}
           aria-label="Bins"
@@ -366,6 +570,7 @@ describe("Tree", () => {
       const onValueChange = vi.fn();
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WAREHOUSES}
           mapItem={scopedMapItem}
           aria-label="Bins"
@@ -384,12 +589,16 @@ describe("Tree", () => {
 
     it("rules out combinations that would lose a parent's state", () => {
       const base = { items: WAREHOUSES, mapItem, "aria-label": "Bins" };
+      const checkbox = { selectionMode: "checkbox" } as const;
+      const downLeaves = { selectionPropagation: "down", valueStrategy: "leaves" } as const;
+      const noneTopmost = { selectionPropagation: "none", valueStrategy: "topmost" } as const;
+      const noneAll = { selectionPropagation: "none", valueStrategy: "all" } as const;
       // @ts-expect-error parents that are items need valueStrategy "all"
-      void (<Tree<Node> {...base} selectionPropagation="down" valueStrategy="leaves" />);
+      void (<Tree<Node> {...base} {...checkbox} {...downLeaves} />);
       // @ts-expect-error parents that are items need valueStrategy "all"
-      void (<Tree<Node> {...base} selectionPropagation="none" valueStrategy="topmost" />);
-      void (<Tree<Node> {...base} selectionPropagation="none" valueStrategy="all" />);
-      void (<Tree<Node> {...base} valueStrategy="all" />);
+      void (<Tree<Node> {...base} {...checkbox} {...noneTopmost} />);
+      void (<Tree<Node> {...base} {...checkbox} {...noneAll} />);
+      void (<Tree<Node> {...base} {...checkbox} valueStrategy="all" />);
     });
   });
 
@@ -411,6 +620,7 @@ describe("Tree", () => {
       const onValueChange = vi.fn();
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WITH_LOCKED}
           mapItem={mapItem}
           aria-label="Bins"
@@ -429,6 +639,7 @@ describe("Tree", () => {
       const onValueChange = vi.fn();
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WITH_LOCKED}
           mapItem={mapItem}
           aria-label="Bins"
@@ -448,6 +659,7 @@ describe("Tree", () => {
       const onValueChange = vi.fn();
       render(
         <Tree<Node>
+          selectionMode="checkbox"
           items={WITH_LOCKED}
           mapItem={mapItem}
           aria-label="Bins"
@@ -466,7 +678,13 @@ describe("Tree", () => {
       const user = userEvent.setup();
       const onAction = vi.fn();
       render(
-        <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" onAction={onAction} />,
+        <Tree<Node>
+          selectionMode="checkbox"
+          items={WAREHOUSES}
+          mapItem={mapItem}
+          aria-label="Bins"
+          onAction={onAction}
+        />,
       );
 
       rowFor("Loose stock").focus();
@@ -479,7 +697,12 @@ describe("Tree", () => {
       const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
       render(
         <form onSubmit={onSubmit}>
-          <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />
+          <Tree<Node>
+            selectionMode="checkbox"
+            items={WAREHOUSES}
+            mapItem={mapItem}
+            aria-label="Bins"
+          />
         </form>,
       );
 
@@ -494,7 +717,13 @@ describe("Tree", () => {
       const user = userEvent.setup();
       render(
         <form data-testid="form">
-          <Tree<Node> items={WAREHOUSES} mapItem={scopedMapItem} aria-label="Bins" name="bins" />
+          <Tree<Node>
+            selectionMode="checkbox"
+            items={WAREHOUSES}
+            mapItem={scopedMapItem}
+            aria-label="Bins"
+            name="bins"
+          />
         </form>,
       );
 
@@ -512,6 +741,7 @@ describe("Tree", () => {
       render(
         <form data-testid="form">
           <Tree<Node>
+            selectionMode="checkbox"
             items={WAREHOUSES}
             mapItem={scopedMapItem}
             aria-label="Bins"
@@ -533,7 +763,14 @@ describe("Tree", () => {
       const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
       render(
         <form onSubmit={onSubmit}>
-          <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" name="bins" required />
+          <Tree<Node>
+            selectionMode="checkbox"
+            items={WAREHOUSES}
+            mapItem={mapItem}
+            aria-label="Bins"
+            name="bins"
+            required
+          />
           <button type="submit">Save</button>
         </form>,
       );
@@ -552,6 +789,7 @@ describe("Tree", () => {
       render(
         <form data-testid="form">
           <Tree<Node>
+            selectionMode="checkbox"
             items={WAREHOUSES}
             mapItem={mapItem}
             aria-label="Bins"
@@ -575,7 +813,12 @@ describe("Tree", () => {
         <form data-testid="form">
           <Field.Root name="scope">
             <Field.Label>Bins to count</Field.Label>
-            <Tree<Node> items={WAREHOUSES} mapItem={mapItem} name="ignored" />
+            <Tree<Node>
+              selectionMode="checkbox"
+              items={WAREHOUSES}
+              mapItem={mapItem}
+              name="ignored"
+            />
             <Field.Description>Pick at least one.</Field.Description>
           </Field.Root>
         </form>,
@@ -597,7 +840,12 @@ describe("Tree", () => {
     it("marks itself invalid inside an invalid Field.Root, and disabled from it", () => {
       render(
         <Field.Root name="scope" error={{ message: "Required" }} disabled>
-          <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />
+          <Tree<Node>
+            selectionMode="checkbox"
+            items={WAREHOUSES}
+            mapItem={mapItem}
+            aria-label="Bins"
+          />
         </Field.Root>,
       );
 
@@ -614,6 +862,7 @@ describe("Tree", () => {
         <Form onFormSubmit={onFormSubmit}>
           <Field.Root name="bins" validate={validate} validationMode="onChange">
             <Tree<Node>
+              selectionMode="checkbox"
               items={WAREHOUSES}
               mapItem={mapItem}
               aria-label="Bins"
@@ -636,6 +885,7 @@ describe("Tree", () => {
       render(
         <form data-testid="form">
           <Tree<Node>
+            selectionMode="checkbox"
             items={WAREHOUSES}
             mapItem={scopedMapItem}
             aria-label="Bins"
@@ -664,6 +914,7 @@ describe("Tree", () => {
       render(
         <form data-testid="form">
           <Tree<Node>
+            selectionMode="checkbox"
             items={WAREHOUSES}
             mapItem={scopedMapItem}
             aria-label="Bins"
@@ -680,7 +931,12 @@ describe("Tree", () => {
     it("marks the tree aria-invalid inside an invalid Field.Root", () => {
       render(
         <Field.Root name="scope" error={{ message: "Required" }}>
-          <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />
+          <Tree<Node>
+            selectionMode="checkbox"
+            items={WAREHOUSES}
+            mapItem={mapItem}
+            aria-label="Bins"
+          />
         </Field.Root>,
       );
       expect(screen.getByRole("tree").getAttribute("aria-invalid")).toBe("true");
@@ -690,6 +946,7 @@ describe("Tree", () => {
       render(
         <Field.Root name="scope">
           <Tree<Node>
+            selectionMode="checkbox"
             items={WAREHOUSES}
             mapItem={mapItem}
             aria-label="Bins"
@@ -707,7 +964,13 @@ describe("Tree", () => {
       const onBlur = vi.fn();
       render(
         <>
-          <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" onBlur={onBlur} />
+          <Tree<Node>
+            selectionMode="checkbox"
+            items={WAREHOUSES}
+            mapItem={mapItem}
+            aria-label="Bins"
+            onBlur={onBlur}
+          />
           <button>Outside</button>
         </>,
       );

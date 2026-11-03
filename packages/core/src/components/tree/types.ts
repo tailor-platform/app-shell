@@ -45,6 +45,8 @@ export type TreeRowState<T> = {
   checked: boolean;
   /** With `"full"` propagation, a parent with some, but not all, enabled leaves ticked. */
   indeterminate: boolean;
+  /** The row is the selected one, in `"single"` mode. */
+  selected: boolean;
   expanded: boolean;
   disabled: boolean;
 };
@@ -134,40 +136,91 @@ export type TreeValueProps<T> = {
   onValueChange?: (value: string[], details: TreeChangeDetails<T>) => void;
 };
 
+/**
+ * What clicking and Space do to a row.
+ *
+ * - `"none"`: nothing is selected. Clicking a leaf runs `onAction`, and clicking
+ *   a parent opens or closes it. For browsing.
+ * - `"single"`: one row is selected at a time, parents included (`selectedKey`).
+ *   For master–detail views.
+ * - `"checkbox"`: rows have checkboxes and the tree is a multi-select form
+ *   control (`value`).
+ */
+export type TreeSelectionMode = "none" | "single" | "checkbox";
+
+/**
+ * Rules out another mode's props, so that (say) `name` without
+ * `selectionMode: "checkbox"` is a type error rather than silently ignored.
+ */
+type Excluding<P> = { [K in Exclude<keyof P, "selectionMode">]?: never };
+
+/** `"single"` mode's own props. */
+type SingleSelectionOwnProps<T> = {
+  /** What clicking and Space do to a row. Default `"none"`. */
+  selectionMode: "single";
+  /** Controlled selection: the selected row's key, or `null` for none. */
+  selectedKey?: string | null;
+  /** Initial selection when uncontrolled. */
+  defaultSelectedKey?: string | null;
+  /** Fires when the user selects a row, with its key and your item. */
+  onSelectedKeyChange?: (key: string, item: T) => void;
+};
+
+/** `"checkbox"` mode's own props. */
+type CheckboxSelectionOwnProps<T> = {
+  /** What clicking and Space do to a row. Default `"none"`. */
+  selectionMode: "checkbox";
+  /**
+   * Names the hidden inputs that carry the value on native form submission,
+   * one per key (read with `formData.getAll(name)`). Inside a `Field.Root`, the
+   * field's `name` wins.
+   */
+  name?: string;
+  /** `id` of the form that owns the hidden inputs, when the tree is rendered outside it. */
+  form?: string;
+  /** The string written into each hidden input. Defaults to the item's key. */
+  itemToStringValue?: (item: T, context: TreeMapItemContext<T>) => string;
+  /** At least one item must be ticked before the owning form can submit. */
+  required?: boolean;
+  /**
+   * Id for the tree's form control (Field generates one otherwise). A native
+   * `<label htmlFor>` focuses the tree but doesn't name it — name it with a
+   * `Field.Label`, `aria-label` or `aria-labelledby`.
+   */
+  id?: string;
+  /** Ref to the hidden proxy input that carries `required` and Field validation. */
+  inputRef?: React.Ref<HTMLInputElement>;
+  /** Fires when focus leaves the tree (not each row). */
+  onBlur?: () => void;
+} & TreeValueProps<T> &
+  TreeSelectionBehaviorProps;
+
+/** Props for {@link Tree} with `selectionMode: "none"` (the default). */
+export type TreeNoSelectionProps<T> = {
+  /** What clicking and Space do to a row. Default `"none"`. */
+  selectionMode?: "none";
+} & Excluding<SingleSelectionOwnProps<T>> &
+  Excluding<CheckboxSelectionOwnProps<T>>;
+
+/** Props for {@link Tree} with `selectionMode: "single"`. */
+export type TreeSingleSelectionProps<T> = SingleSelectionOwnProps<T> &
+  Excluding<CheckboxSelectionOwnProps<T>>;
+
+/** Props for {@link Tree} with `selectionMode: "checkbox"`: the value, how ticking works, and forms. */
+export type TreeCheckboxSelectionProps<T> = CheckboxSelectionOwnProps<T> &
+  Excluding<SingleSelectionOwnProps<T>>;
+
 /** Props for {@link Tree}. */
 export type TreeProps<T> = TreeContentProps<T> &
-  TreeFilterProps<T> &
-  TreeValueProps<T> &
-  TreeSelectionBehaviorProps & {
+  TreeFilterProps<T> & {
     /**
-     * Enter on a row — the row's default action. When omitted and the tree is
-     * inside a `<form>`, Enter submits the form (like Enter in a text input).
+     * Enter on a row — the row's default action. In `"none"` mode a click on a
+     * leaf runs it too. In `"checkbox"` mode without `onAction`, Enter inside a
+     * `<form>` submits it (like Enter in a text input).
      */
-    onAction?: () => void;
-    /**
-     * Names the hidden inputs that carry the selection on native form
-     * submission, one per selected leaf (read with `formData.getAll(name)`).
-     * Inside a `Field.Root`, the field's `name` wins.
-     */
-    name?: string;
-    /** `id` of the form that owns the hidden inputs, when the tree is rendered outside it. */
-    form?: string;
-    /** The string written into each hidden input. Defaults to the leaf's key. */
-    itemToStringValue?: (item: T, context: TreeMapItemContext<T>) => string;
-    /** At least one leaf must be selected before the owning form can submit. */
-    required?: boolean;
-    /** Locks the whole tree and leaves it out of form submission. */
+    onAction?: (item: T, key: string) => void;
+    /** Locks the whole tree, and in `"checkbox"` mode leaves it out of form submission. */
     disabled?: boolean;
-    /**
-     * Id for the tree's form control (Field generates one otherwise). A native
-     * `<label htmlFor>` focuses the tree but doesn't name it — name it with a
-     * `Field.Label`, `aria-label` or `aria-labelledby`.
-     */
-    id?: string;
-    /** Ref to the hidden proxy input that carries `required` and Field validation. */
-    inputRef?: React.Ref<HTMLInputElement>;
-    /** Fires when focus leaves the tree (not each row). */
-    onBlur?: () => void;
     /** Accessible name for the tree. Use this, `aria-labelledby`, or a `Field.Label`. */
     "aria-label"?: string;
     /** Id of the element naming the tree (e.g. a card or dialog title). */
@@ -177,7 +230,7 @@ export type TreeProps<T> = TreeContentProps<T> &
      * place it in a sized container) for long trees.
      */
     className?: string;
-  };
+  } & (TreeNoSelectionProps<T> | TreeSingleSelectionProps<T> | TreeCheckboxSelectionProps<T>);
 
 /** Props for {@link TreePicker}. */
 export type TreePickerProps<T> = TreeContentProps<T> &

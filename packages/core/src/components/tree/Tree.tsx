@@ -14,22 +14,29 @@ import { useTreeSelection } from "./use-tree-selection";
 type SubmittedEntry = { id: string; value: string };
 
 /**
- * A multi-select checkbox tree for picking many items out of a
- * hierarchical catalog — products with variants, accounts with sub-accounts,
- * warehouses with bins. By default parents are containers: ticking one ticks
- * every enabled leaf beneath it, its checkbox shows checked or indeterminate from
- * its leaves, and the value lists leaves. `selectionPropagation` makes parents
- * items in their own right, and `valueStrategy` chooses what the value lists.
+ * A tree of your own items, for browsing hierarchies (accounts, locations,
+ * categories), picking one node, or ticking many. It follows the ARIA tree
+ * pattern: one tab stop, arrows to move and open, Space to select or tick, and
+ * Enter for `onAction`.
  *
- * Pass your own items with `mapItem` (as with `Select` / `Combobox`). The
- * selection is a list of keys, and the same key in two places is one item. When
- * codes repeat with different meanings, compose a unique key from the `parents`
- * that `mapItem` receives.
+ * Pass your own items with `mapItem` (as with `Select` / `Combobox`). A key is
+ * the item's identity across the whole tree: the same key in two places is one
+ * item. When codes repeat with different meanings, compose a unique key from
+ * the `parents` that `mapItem` receives.
  *
- * It renders inline and works as a form control: `name` submits one hidden
- * input per selected leaf, and inside a `Field.Root` it picks up the label,
- * description, error, `required` and invalid state. For the common "pick, then
- * add" flow in a dialog, use {@link TreePicker}.
+ * `selectionMode` sets what a row does:
+ *
+ * - `"none"` (default): browsing. Clicking a leaf runs `onAction`.
+ * - `"single"`: one selected row (`selectedKey`), for master–detail views.
+ * - `"checkbox"`: a multi-select form control (`value`). By default parents are
+ *   containers: ticking one ticks every enabled leaf beneath it, and the value
+ *   lists leaves. `selectionPropagation` and `valueStrategy` change that. `name`
+ *   submits one hidden input per value key, and inside a `Field.Root` it picks
+ *   up the label, description, error, `required` and invalid state.
+ *
+ * `filter` narrows the tree to matches and their ancestors. The tree has no
+ * search box of its own; for the "search, pick, then add" flow in a dialog, use
+ * {@link TreePicker}.
  *
  * The list scrolls inside the component, so give it a height (or a sized
  * container) for long trees.
@@ -48,6 +55,7 @@ type SubmittedEntry = { id: string; value: string };
  *         ? { key: item.id, label: item.name, children: item.bins }
  *         : { key: `${(parents[0] as Warehouse).id}/${item.code}`, label: item.code }
  *     }
+ *     selectionMode="checkbox"
  *     value={bins}
  *     onValueChange={setBins}
  *   />
@@ -62,31 +70,31 @@ export function Tree<T>(props: TreeProps<T>) {
     filter,
     emptyText,
     onAction,
-    name,
-    form,
-    itemToStringValue,
-    required,
     disabled,
-    id,
-    inputRef,
-    onBlur,
     "aria-label": ariaLabel,
     "aria-labelledby": ariaLabelledBy,
     className,
   } = props;
   const t = useTreeT();
-  const selectionPropagation = props.selectionPropagation ?? "full";
+  const selectionMode = props.selectionMode ?? "none";
+  const checkbox = props.selectionMode === "checkbox" ? props : null;
+  const single = props.selectionMode === "single" ? props : null;
+  const selectionPropagation = checkbox?.selectionPropagation ?? "full";
   // Only "all" keeps a parent's own state, so it's the only strategy when
   // parents are items (the types already rule the others out).
-  const valueStrategy = selectionPropagation === "full" ? (props.valueStrategy ?? "leaves") : "all";
+  const valueStrategy =
+    selectionPropagation === "full" ? (checkbox?.valueStrategy ?? "leaves") : "all";
+  const itemToStringValue = checkbox?.itemToStringValue;
+  const form = checkbox?.form;
+  const required = checkbox?.required;
   const rootRef = React.useRef<HTMLDivElement>(null);
   const fieldRoot = useFieldRootContext();
-  const treeDisabled = !!disabled || !!fieldRoot.disabled;
+  const treeDisabled = !!disabled || (!!checkbox && !!fieldRoot.disabled);
 
   /**
-   * What the form submits for a selection: one entry per selected leaf, plus
-   * the kept values that aren't in the tree. `id` (the key) keys the hidden
-   * inputs, since two leaves can serialize to the same string.
+   * What the form submits for a selection: one entry per value item, plus the
+   * kept values that aren't in the tree. `id` (the key) keys the hidden inputs,
+   * since two items can serialize to the same string.
    */
   const submittedEntries = React.useCallback(
     (selected: TreeSelectedItem<T>[], unknown: readonly string[]): SubmittedEntry[] => [
@@ -102,7 +110,7 @@ export function Tree<T>(props: TreeProps<T>) {
   // The field bridge is created after the selection hook (it needs the current
   // value), so the change handler reaches it through a ref.
   const fieldChangeRef = React.useRef<(values: readonly string[]) => void>(() => {});
-  const consumerOnValueChange = props.onValueChange;
+  const consumerOnValueChange = checkbox?.onValueChange;
 
   const handleValueChange = React.useCallback(
     (value: string[], details: TreeChangeDetails<T>) => {
@@ -133,49 +141,105 @@ export function Tree<T>(props: TreeProps<T>) {
     disabled: treeDisabled,
     // A `value` prop that is present but `undefined` (e.g. a form reset) is
     // still controlled: it means "nothing selected".
-    controlled: "value" in props,
+    controlled: !!checkbox && "value" in checkbox,
     selectionPropagation,
     valueStrategy,
-    value: props.value,
-    defaultValue: props.defaultValue,
+    value: checkbox?.value,
+    defaultValue: checkbox?.defaultValue,
     onValueChange: handleValueChange,
   });
 
+  // `"single"`: one selected key, controlled or not.
+  const [selectedKeyState, setSelectedKeyState] = React.useState<string | null>(
+    () => single?.defaultSelectedKey ?? null,
+  );
+  const selectedKey =
+    single && "selectedKey" in single ? (single.selectedKey ?? null) : selectedKeyState;
+  const onSelectedKeyChange = single?.onSelectedKeyChange;
+  const selectNode = React.useCallback(
+    (node: TreeNode<T>) => {
+      if (treeDisabled || node.disabled || node.key === selectedKey) return;
+      setSelectedKeyState(node.key);
+      onSelectedKeyChange?.(node.key, node.item);
+    },
+    [treeDisabled, selectedKey, onSelectedKeyChange],
+  );
+
   const entries = React.useMemo(
-    () => submittedEntries(selected, unknown),
-    [submittedEntries, selected, unknown],
+    () => (checkbox ? submittedEntries(selected, unknown) : []),
+    [checkbox, submittedEntries, selected, unknown],
   );
   const values = React.useMemo(() => entries.map((entry) => entry.value), [entries]);
 
   const field = useTreeField({
-    id,
-    name,
+    enabled: !!checkbox,
+    id: checkbox?.id,
+    name: checkbox?.name,
     disabled,
     values,
     ariaLabelledBy,
-    onBlur,
+    onBlur: checkbox?.onBlur,
     rootRef,
-    inputRef,
+    inputRef: checkbox?.inputRef,
   });
   fieldChangeRef.current = field.handleChange;
 
   const hasBranches = tree.some((node) => !node.isLeaf);
 
-  const isChecked = React.useCallback(
-    (node: TreeNode<T>) => getCheckState(node).checked,
-    [getCheckState],
+  // Enter on a row. In `"checkbox"` mode with no `onAction`, it submits the
+  // owning form — as Enter in a text input does.
+  const runAction = React.useCallback(
+    (node: TreeNode<T>) => {
+      if (onAction) {
+        onAction(node.item, node.key);
+        return;
+      }
+      if (!checkbox) return;
+      const owner = form ? document.getElementById(form) : rootRef.current?.closest("form");
+      if (owner instanceof HTMLFormElement) owner.requestSubmit();
+    },
+    [checkbox, form, onAction],
   );
 
-  // With no `onAction`, Enter on a row submits the owning form — as Enter in a
-  // text input does.
-  const resolvedOnAction = React.useCallback(() => {
-    if (onAction) {
-      onAction();
-      return;
-    }
-    const owner = form ? document.getElementById(form) : rootRef.current?.closest("form");
-    if (owner instanceof HTMLFormElement) owner.requestSubmit();
-  }, [form, onAction]);
+  /** Space: selects in `"single"`, ticks in `"checkbox"`, and does nothing in `"none"`. */
+  const pressNode = React.useCallback(
+    (node: TreeNode<T>) => {
+      if (selectionMode === "single") selectNode(node);
+      else if (selectionMode === "checkbox") toggleNode(node, !getCheckState(node).checked);
+    },
+    [selectionMode, selectNode, toggleNode, getCheckState],
+  );
+
+  /**
+   * A click anywhere on a row. `"checkbox"`: a leaf ticks, a parent opens or
+   * closes (its checkbox still ticks it). `"single"`: the row is selected, and a
+   * closed parent opens (its caret closes it). `"none"`: a leaf runs
+   * `onAction`, a parent opens or closes.
+   */
+  const clickNode = React.useCallback(
+    (node: TreeNode<T>) => {
+      if (selectionMode === "single") {
+        selectNode(node);
+        if (!node.isLeaf && !isExpanded(node.id)) setExpanded(node.id, true);
+      } else if (!node.isLeaf) {
+        toggleExpand(node.id);
+      } else if (selectionMode === "checkbox") {
+        toggleNode(node, !getCheckState(node).checked);
+      } else if (!node.disabled) {
+        onAction?.(node.item, node.key);
+      }
+    },
+    [
+      selectionMode,
+      selectNode,
+      isExpanded,
+      setExpanded,
+      toggleExpand,
+      toggleNode,
+      getCheckState,
+      onAction,
+    ],
+  );
 
   // Rendering is recursive but keyboard navigation needs the flat, visible
   // order — both derive from the same `isExpanded` predicate, so they agree.
@@ -184,9 +248,8 @@ export function Tree<T>(props: TreeProps<T>) {
   const { activeRowId, registerRow, onRowFocus, handleKeyDown } = useTreeFocus({
     rows: visibleRows,
     setExpanded,
-    toggleNode,
-    isChecked,
-    onAction: resolvedOnAction,
+    onSpace: pressNode,
+    onAction: runAction,
   });
 
   /** Label clicks and form validation focus the proxy; hand focus to the tree's tab stop. */
@@ -201,6 +264,7 @@ export function Tree<T>(props: TreeProps<T>) {
     <div
       ref={rootRef}
       data-slot="tree"
+      data-selection-mode={selectionMode}
       data-disabled={treeDisabled || undefined}
       data-invalid={field.isInvalid || undefined}
       onFocus={field.handleFocus}
@@ -210,26 +274,36 @@ export function Tree<T>(props: TreeProps<T>) {
         className,
       )}
     >
-      {/* Proxy for Field / Form: carries `required` and validity; nameless, so
-          it is never submitted itself. */}
-      <input
-        ref={field.proxyRef}
-        id={field.controlId}
-        form={form}
-        tabIndex={-1}
-        aria-hidden="true"
-        disabled={field.isDisabled}
-        required={required}
-        value={field.proxyValue}
-        onChange={() => {}}
-        onFocus={focusTree}
-        className="astw:pointer-events-none astw:absolute astw:size-px astw:overflow-hidden astw:opacity-0"
-      />
-      {field.name && !field.isDisabled
-        ? entries.map((entry) => (
-            <input key={entry.id} type="hidden" name={field.name} form={form} value={entry.value} />
-          ))
-        : null}
+      {checkbox ? (
+        <>
+          {/* Proxy for Field / Form: carries `required` and validity; nameless,
+              so it is never submitted itself. */}
+          <input
+            ref={field.proxyRef}
+            id={field.controlId}
+            form={form}
+            tabIndex={-1}
+            aria-hidden="true"
+            disabled={field.isDisabled}
+            required={required}
+            value={field.proxyValue}
+            onChange={() => {}}
+            onFocus={focusTree}
+            className="astw:pointer-events-none astw:absolute astw:size-px astw:overflow-hidden astw:opacity-0"
+          />
+          {field.name && !field.isDisabled
+            ? entries.map((entry) => (
+                <input
+                  key={entry.id}
+                  type="hidden"
+                  name={field.name}
+                  form={form}
+                  value={entry.value}
+                />
+              ))
+            : null}
+        </>
+      ) : null}
 
       {visibleRows.length === 0 ? (
         <div
@@ -241,7 +315,7 @@ export function Tree<T>(props: TreeProps<T>) {
       ) : (
         <div
           role="tree"
-          aria-multiselectable="true"
+          aria-multiselectable={checkbox ? true : undefined}
           aria-label={field.labelledBy ? undefined : ariaLabel}
           aria-labelledby={field.labelledBy}
           aria-describedby={field.describedBy}
@@ -262,11 +336,14 @@ export function Tree<T>(props: TreeProps<T>) {
               key={node.id}
               node={node}
               depth={0}
+              selectionMode={selectionMode}
               hasBranches={hasBranches}
               isExpanded={isExpanded}
               onToggleExpand={toggleExpand}
               getCheckState={getCheckState}
               onToggleNode={toggleNode}
+              selectedKey={selectedKey}
+              onRowClick={clickNode}
               renderItem={renderItem}
               activeRowId={activeRowId}
               registerRow={registerRow}

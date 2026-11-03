@@ -1535,23 +1535,27 @@
       "symbols": [
         "Tree",
         "TreeChangeDetails",
+        "TreeCheckboxSelectionProps",
         "TreeFilterContext",
         "TreeFilterProps",
         "TreeMapItemContext",
         "TreeMappedItem",
+        "TreeNoSelectionProps",
         "TreePicker",
         "TreePickerProps",
         "TreeProps",
         "TreeRowState",
         "TreeSelectedItem",
         "TreeSelectionBehaviorProps",
+        "TreeSelectionMode",
         "TreeSelectionPropagation",
+        "TreeSingleSelectionProps",
         "TreeValueStrategy"
       ],
       "hashes": {
-        "typeSurface": "ead9165305747110",
+        "typeSurface": "343d595c9ce52cab",
         "outline": "295c513825c3e266",
-        "snapshot": "d1501f2de312df4c",
+        "snapshot": "6db41d93e7a1d8f7",
         "outputMd": "885649f5b2a07df8",
         "examples": null
       }

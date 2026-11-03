@@ -13,17 +13,17 @@ import type { TreeNode, VisibleRow } from "./tree-model";
  * - `ArrowRight` — expand a collapsed parent, else step into its first child
  * - `ArrowLeft` — collapse an expanded parent, else step out to its parent
  * - `Home` / `End` — first / last visible row
- * - `Space` — toggle the focused row (cascading for parents) without moving focus
+ * - `Space` — `onSpace` for the focused row (select or tick) without moving focus
  * - `Enter` — `onAction` (the row's default action), but only from a tree row
  */
 
 type UseTreeFocusOptions<T> = {
   rows: ReadonlyArray<VisibleRow<T>>;
   setExpanded(id: string, next: boolean): void;
-  toggleNode(node: TreeNode<T>, next: boolean): void;
-  isChecked(node: TreeNode<T>): boolean;
+  /** Space on a tree row. */
+  onSpace(node: TreeNode<T>): void;
   /** Enter on a tree row. */
-  onAction?: () => void;
+  onAction(node: TreeNode<T>): void;
 };
 
 type UseTreeFocusResult = {
@@ -40,8 +40,7 @@ const NODE_ID_ATTRIBUTE = "data-node-id";
 export function useTreeFocus<T>({
   rows,
   setExpanded,
-  toggleNode,
-  isChecked,
+  onSpace,
   onAction,
 }: UseTreeFocusOptions<T>): UseTreeFocusResult {
   const [focusedId, setFocusedId] = React.useState<string | null>(null);
@@ -74,17 +73,6 @@ export function useTreeFocus<T>({
       const inTextInput = target.tagName === "INPUT";
       const onButton = target.closest("button") !== null;
 
-      if (event.key === "Enter") {
-        // Only Enter on a tree row runs `onAction`. Anything else — the search box, a
-        // button, or a menu or select in `filterSlot` (whose portalled options
-        // still bubble here through React) — keeps Enter for itself.
-        if (event.defaultPrevented || inTextInput || onButton) return;
-        if (!target.closest("[role=tree]") || !onAction) return;
-        event.preventDefault();
-        onAction();
-        return;
-      }
-
       if (inTextInput) return;
 
       const rowElement = target.closest(ROW_SELECTOR);
@@ -93,6 +81,16 @@ export function useTreeFocus<T>({
       const index = rows.findIndex((row) => row.node.id === nodeId);
       const row = rows[index];
       if (row === undefined) return;
+
+      if (event.key === "Enter") {
+        // Only Enter on a tree row runs `onAction`. Anything else — a button,
+        // or a menu or select whose portalled options still bubble here
+        // through React — keeps Enter for itself.
+        if (event.defaultPrevented || onButton) return;
+        event.preventDefault();
+        onAction(row.node);
+        return;
+      }
 
       switch (event.key) {
         case "ArrowDown": {
@@ -131,14 +129,14 @@ export function useTreeFocus<T>({
         case " ": {
           if (onButton) break;
           event.preventDefault();
-          toggleNode(row.node, !isChecked(row.node));
+          onSpace(row.node);
           break;
         }
         default:
           break;
       }
     },
-    [rows, focusRow, setExpanded, toggleNode, isChecked, onAction],
+    [rows, focusRow, setExpanded, onSpace, onAction],
   );
 
   return { activeRowId, registerRow, onRowFocus, handleKeyDown };

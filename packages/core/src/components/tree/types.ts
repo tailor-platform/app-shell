@@ -33,7 +33,7 @@ export type TreeChangeDetails<T> = {
   selected: TreeSelectedItem<T>[];
 };
 
-/** What `renderItem` and the column `render` functions receive for each row. */
+/** What `renderItem` receives for each row. */
 export type TreeRowState<T> = {
   item: T;
   key: string;
@@ -49,48 +49,41 @@ export type TreeRowState<T> = {
   disabled: boolean;
 };
 
-/** An extra column beside the main one. The tree lines it up across rows and gives it a header cell. */
 /** What `mapItem` receives alongside each item. */
 export type TreeMapItemContext<T> = {
   /** The item's ancestors, top level first. Empty for top-level items. */
   parents: T[];
 };
 
-export type TreeColumn<T> = {
-  header?: React.ReactNode;
-  render: (row: TreeRowState<T>) => React.ReactNode;
-  /** Defaults to `"start"` for the leading column and `"end"` for the trailing one. */
-  align?: "start" | "center" | "end";
-  /** Fixed width (px number or CSS length). Set it so cells line up when content varies. */
-  width?: number | string;
+/** What `filter` receives alongside each item. */
+export type TreeFilterContext<T> = {
+  /** The item's `label` from `mapItem`. */
+  label: string;
+  /** The item's ancestors, top level first. */
+  parents: T[];
 };
 
-/** What the tree shows and how it is searched — shared by `Tree` and `TreePicker`. */
+/** What the tree shows — shared by `Tree` and `TreePicker`. */
 export interface TreeContentProps<T> {
   /** Your top-level items. Children come from `mapItem`. */
   items: ReadonlyArray<T>;
   /** Reads an item's key, label, children and disabled state. */
   mapItem: (item: T, context: TreeMapItemContext<T>) => TreeMappedItem<T>;
-  /** The main column's content. Defaults to the item's `label`. */
+  /** The row's content. Defaults to the item's `label`. */
   renderItem?: (row: TreeRowState<T>) => React.ReactNode;
-  /** Header above the main column. Default: `"Item"`. */
-  itemHeader?: React.ReactNode;
-  /** A column between the expand caret and the main column (e.g. a thumbnail or status icon). */
-  leadingColumn?: TreeColumn<T>;
-  /** A right-aligned column after the main one (e.g. price, stock or unit). */
-  trailingColumn?: TreeColumn<T>;
-  /**
-   * Search predicate. Defaults to a case-insensitive match on the item's
-   * `label`. A node is kept when it or any descendant matches.
-   */
-  matchesSearch?: (item: T, query: string) => boolean;
-  /** Slot rendered to the right of the search input (e.g. a category filter button). */
-  filterSlot?: React.ReactNode;
-  /** Shown when the (filtered) tree is empty. Default: `"No matching items."`. */
+  /** Shown when there's nothing to show. Defaults to "No items.", or "No matching items." while filtering. */
   emptyText?: React.ReactNode;
-  /** Search input placeholder. Default: `"Search"`. */
-  searchPlaceholder?: string;
 }
+
+/** Props for {@link Tree}'s filtering. */
+export type TreeFilterProps<T> = {
+  /**
+   * Shows only the items that match, plus their ancestors. Groups with a match
+   * open on their own, and the user can still close them. A parent that matches
+   * with no matching children keeps all its children, so it can still be opened.
+   */
+  filter?: (item: T, context: TreeFilterContext<T>) => boolean;
+};
 
 /**
  * How ticking spreads through the tree.
@@ -143,6 +136,7 @@ export type TreeValueProps<T> = {
 
 /** Props for {@link Tree}. */
 export type TreeProps<T> = TreeContentProps<T> &
+  TreeFilterProps<T> &
   TreeValueProps<T> &
   TreeSelectionBehaviorProps & {
     /**
@@ -196,6 +190,15 @@ export type TreePickerProps<T> = TreeContentProps<T> &
      * so consumers should not also call this from their commit handler.
      */
     onOpenChange(open: boolean): void;
+    /**
+     * Search predicate. Defaults to a case-insensitive match on the item's
+     * `label`. An item is kept when it or any descendant matches.
+     */
+    matchesSearch?: (item: T, query: string) => boolean;
+    /** Rendered to the right of the search input (e.g. a category filter button). */
+    filterSlot?: React.ReactNode;
+    /** Search input placeholder. Default: `"Search"`. */
+    searchPlaceholder?: string;
     /** Dialog title. Also labels the tree for assistive tech. Default: `"Select items"`. */
     title?: React.ReactNode;
     /** Receives the value's items in tree order (see `valueStrategy`). */

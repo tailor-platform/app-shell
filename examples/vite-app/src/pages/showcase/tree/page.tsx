@@ -58,6 +58,21 @@ const WAREHOUSES: Warehouse[] = [
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 
+/** A product row with its price on the right; a category row is just its name. */
+const renderCatalogItem = ({ item }: { item: CatalogNode }) => (
+  <span className="flex w-full items-center justify-between gap-3">
+    <span className="flex flex-col">
+      <span className="text-sm">{item.name}</span>
+      {isCategory(item) ? null : (
+        <span className="text-muted-foreground font-mono text-xs">{item.sku}</span>
+      )}
+    </span>
+    {isCategory(item) ? null : (
+      <span className="text-muted-foreground tabular-nums">{money(item.price)}</span>
+    )}
+  </span>
+);
+
 const TreeDemoPage = () => {
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<Product[]>([]);
@@ -106,16 +121,7 @@ const TreeDemoPage = () => {
               className="h-80"
               items={CATALOG}
               mapItem={mapCatalogItem}
-              itemHeader="Product name"
-              matchesSearch={(node, query) =>
-                `${isCategory(node) ? node.id : node.sku} ${node.name}`
-                  .toLowerCase()
-                  .includes(query.toLowerCase())
-              }
-              trailingColumn={{
-                header: "Unit price",
-                render: ({ item }) => (isCategory(item) ? null : money(item.price)),
-              }}
+              renderItem={renderCatalogItem}
               value={skus}
               onValueChange={setSkus}
             />
@@ -150,12 +156,14 @@ const TreeDemoPage = () => {
                           disabled: node.counting,
                         }
                   }
-                  itemHeader="Location"
-                  trailingColumn={{
-                    header: "Status",
-                    render: ({ item, isLeaf }) =>
-                      isLeaf && "code" in item && item.counting ? "Counting" : null,
-                  }}
+                  renderItem={({ item, isLeaf }) => (
+                    <span className="flex w-full justify-between gap-3">
+                      <span>{"name" in item ? item.name : item.code}</span>
+                      {isLeaf && "code" in item && item.counting ? (
+                        <span className="text-muted-foreground">Counting</span>
+                      ) : null}
+                    </span>
+                  )}
                   value={bins}
                   onValueChange={setBins}
                   required
@@ -182,19 +190,12 @@ const TreeDemoPage = () => {
           title="Add products"
           items={CATALOG}
           mapItem={mapCatalogItem}
-          itemHeader="Product name"
-          renderItem={({ item }) => (
-            <span className="flex flex-col">
-              <span className="text-sm">{item.name}</span>
-              {isCategory(item) ? null : (
-                <span className="text-muted-foreground font-mono text-xs">{item.sku}</span>
-              )}
-            </span>
-          )}
-          trailingColumn={{
-            header: "Unit price",
-            render: ({ item }) => (isCategory(item) ? null : money(item.price)),
-          }}
+          renderItem={renderCatalogItem}
+          matchesSearch={(node, query) =>
+            `${isCategory(node) ? node.id : node.sku} ${node.name}`
+              .toLowerCase()
+              .includes(query.toLowerCase())
+          }
           onCommit={(selected) =>
             setPicked(
               selected.map((entry) => entry.item).filter((n): n is Product => !isCategory(n)),

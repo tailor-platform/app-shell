@@ -2,7 +2,8 @@ export { Tree } from "./Tree";
 export { TreePicker } from "./TreePicker";
 export type {
   TreeChangeDetails,
-  TreeColumn,
+  TreeFilterContext,
+  TreeFilterProps,
   TreeMapItemContext,
   TreeMappedItem,
   TreePickerProps,

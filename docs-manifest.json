@@ -1535,7 +1535,8 @@
       "symbols": [
         "Tree",
         "TreeChangeDetails",
-        "TreeColumn",
+        "TreeFilterContext",
+        "TreeFilterProps",
         "TreeMapItemContext",
         "TreeMappedItem",
         "TreePicker",
@@ -1548,9 +1549,9 @@
         "TreeValueStrategy"
       ],
       "hashes": {
-        "typeSurface": "7bd96f2ea7e753b8",
+        "typeSurface": "ead9165305747110",
         "outline": "295c513825c3e266",
-        "snapshot": "3f737243603bdc33",
+        "snapshot": "d1501f2de312df4c",
         "outputMd": "885649f5b2a07df8",
         "examples": null
       }

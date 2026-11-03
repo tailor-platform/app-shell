@@ -54,55 +54,97 @@ describe("Tree", () => {
     expect(screen.getByRole("tree", { name: "Bins" })).toBeDefined();
   });
 
-  it("shows each item's label by default and searches on it", async () => {
-    const user = userEvent.setup();
+  it("shows each item's label by default, with no search box of its own", () => {
     render(<Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />);
 
     expect(screen.getByText("Warehouse X")).toBeDefined();
-    await user.type(screen.getByRole("searchbox"), "y · a1");
-
-    expect(screen.getByText("Y · A1")).toBeDefined();
-    expect(screen.queryByText("X · A1")).toBeNull();
+    expect(screen.queryByRole("searchbox")).toBeNull();
   });
 
-  it("gives renderItem and the columns the row state, and heads the columns", async () => {
+  it("gives renderItem the row state", async () => {
     const user = userEvent.setup();
     render(
       <Tree<Node>
         items={WAREHOUSES}
         mapItem={mapItem}
         aria-label="Bins"
-        itemHeader="Location"
-        renderItem={({ item, depth, isLeaf }) => (
-          <span>{`${item.name} (depth ${depth}${isLeaf ? ", leaf" : ""})`}</span>
+        renderItem={({ item, depth, isLeaf, indeterminate }) => (
+          <span>{`${item.name} (depth ${depth}${isLeaf ? ", leaf" : ""}${indeterminate ? ", some" : ""})`}</span>
         )}
-        leadingColumn={{ header: "Icon", render: ({ isLeaf }) => (isLeaf ? "▪" : "▸") }}
-        trailingColumn={{
-          header: "State",
-          render: ({ checked, indeterminate }) => {
-            if (checked) return "all";
-            return indeterminate ? "some" : "none";
-          },
-        }}
       />,
     );
 
-    const header = document.querySelector("[data-slot=tree-column-header]")!;
-    expect(header.textContent).toContain("Icon");
-    expect(header.textContent).toContain("Location");
-    expect(header.textContent).toContain("State");
-
     await expand(user, "Warehouse X (depth 0)");
     await user.click(screen.getByText("X · A1 (depth 1, leaf)"));
-    const parent = rowFor("Warehouse X (depth 0)");
-    expect(parent.querySelector("[data-slot=tree-trailing]")!.textContent).toBe("some");
-    expect(parent.querySelector("[data-slot=tree-leading]")!.textContent).toBe("▸");
+    expect(screen.getByText("Warehouse X (depth 0, some)")).toBeDefined();
   });
 
-  it("shows focus on the search wrapper, since the input drops its own ring", () => {
-    render(<Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />);
-    const wrapper = screen.getByRole("searchbox").parentElement!;
-    expect(wrapper.className).toContain("focus-within:ring-[3px]");
+  describe("filter", () => {
+    it("shows matches and their ancestors, and opens the groups they're in", () => {
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={mapItem}
+          aria-label="Bins"
+          filter={(_, { label }) => label === "Y · A1"}
+        />,
+      );
+
+      expect(rowFor("Warehouse Y").getAttribute("aria-expanded")).toBe("true");
+      expect(screen.getByText("Y · A1")).toBeDefined();
+      expect(screen.queryByText("Warehouse X")).toBeNull();
+      expect(screen.queryByText("Loose stock")).toBeNull();
+    });
+
+    it("passes each item's label and parents to the filter", () => {
+      const seen: Array<[string, string, string[]]> = [];
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={mapItem}
+          aria-label="Bins"
+          filter={(item, { label, parents }) => {
+            seen.push([item.id, label, parents.map((parent) => parent.id)]);
+            return true;
+          }}
+        />,
+      );
+
+      expect(seen).toContainEqual(["A1", "Y · A1", ["wh-y"]]);
+    });
+
+    it("keeps a group the user closed closed when an inline filter is recreated", async () => {
+      const user = userEvent.setup();
+      function Harness() {
+        const [count, setCount] = React.useState(0);
+        return (
+          <>
+            <button onClick={() => setCount(count + 1)}>Rerender {count}</button>
+            <Tree<Node>
+              items={WAREHOUSES}
+              mapItem={mapItem}
+              aria-label="Bins"
+              filter={(_, { label }) => label.endsWith("A1")}
+            />
+          </>
+        );
+      }
+      render(<Harness />);
+
+      await user.click(rowFor("Warehouse X").querySelector("button[title]") as HTMLElement);
+      expect(rowFor("Warehouse X").getAttribute("aria-expanded")).toBe("false");
+      await user.click(screen.getByRole("button", { name: /Rerender/ }));
+      expect(rowFor("Warehouse X").getAttribute("aria-expanded")).toBe("false");
+    });
+
+    it('says "No matching items." while filtering, and "No items." otherwise', () => {
+      const { rerender } = render(
+        <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" filter={() => false} />,
+      );
+      expect(screen.getByText("No matching items.")).toBeDefined();
+      rerender(<Tree<Node> items={[]} mapItem={mapItem} aria-label="Bins" />);
+      expect(screen.getByText("No items.")).toBeDefined();
+    });
   });
 
   describe("value", () => {

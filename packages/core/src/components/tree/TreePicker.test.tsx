@@ -10,21 +10,20 @@ afterEach(() => {
   cleanup();
 });
 
-type Item = { key: string; name: string; available: number; children?: Item[] };
+type Item = { key: string; name: string; children?: Item[] };
 
 const TREE: Item[] = [
-  { key: "p1", name: "Nike Vomero 18", available: 3 },
+  { key: "p1", name: "Nike Vomero 18" },
   {
     key: "p2",
     name: "Adidas Ultraboost 22",
-    available: 0,
     children: [
-      { key: "p2-uk8w", name: "UK 8 / Black / Women", available: 9 },
-      { key: "p2-uk9m", name: "UK 9 / Black / Men", available: 9 },
-      { key: "p2-uk10m", name: "UK 10 / Black / Men", available: 9 },
+      { key: "p2-uk8w", name: "UK 8 / Black / Women" },
+      { key: "p2-uk9m", name: "UK 9 / Black / Men" },
+      { key: "p2-uk10m", name: "UK 10 / Black / Men" },
     ],
   },
-  { key: "p3", name: "Hoka One One Bondi 8", available: 15 },
+  { key: "p3", name: "Hoka One One Bondi 8" },
 ];
 
 const mapItem = (item: Item) => ({ key: item.key, label: item.name, children: item.children });
@@ -34,7 +33,6 @@ type HarnessProps = {
   onCommit?: (items: TreeSelectedItem<Item>[]) => void;
   ctaLabel?: (count: number) => string;
   filterSlot?: React.ReactNode;
-  withMetric?: boolean;
   items?: Item[];
 };
 
@@ -43,7 +41,6 @@ function Harness({
   onCommit = vi.fn(),
   ctaLabel,
   filterSlot,
-  withMetric = true,
   items = TREE,
 }: HarnessProps) {
   const [open, setOpen] = React.useState(initialOpen);
@@ -56,13 +53,7 @@ function Harness({
         title="Bulk picker"
         items={items}
         mapItem={mapItem}
-        itemHeader="Product Name"
         renderItem={({ item }) => <span>{item.name}</span>}
-        trailingColumn={
-          withMetric
-            ? { header: "Total available", render: ({ item }) => <span>{item.available}</span> }
-            : undefined
-        }
         onCommit={onCommit}
         ctaLabel={ctaLabel}
         filterSlot={filterSlot}
@@ -97,12 +88,6 @@ describe("TreePicker", () => {
 
     it("open with collapsed tree", async () => {
       const { baseElement } = render(<Harness />);
-      await waitFor(() => expect(screen.getByText("Nike Vomero 18")).toBeDefined());
-      expect(baseElement.innerHTML).toMatchSnapshot();
-    });
-
-    it("open without the metric column", async () => {
-      const { baseElement } = render(<Harness withMetric={false} />);
       await waitFor(() => expect(screen.getByText("Nike Vomero 18")).toBeDefined());
       expect(baseElement.innerHTML).toMatchSnapshot();
     });
@@ -424,7 +409,13 @@ describe("TreePicker", () => {
 
   it("renders the empty text for an empty catalog", async () => {
     render(<Harness items={[]} />);
-    await waitFor(() => expect(screen.getByText(/no matching items/i)).toBeDefined());
+    await waitFor(() => expect(screen.getByText("No items.")).toBeDefined());
+  });
+
+  it("shows focus on the search wrapper, since the input drops its own ring", async () => {
+    render(<Harness />);
+    const wrapper = (await screen.findByRole("searchbox")).parentElement!;
+    expect(wrapper.className).toContain("focus-within:ring-[3px]");
   });
 
   it("renders the filter slot next to the search input", async () => {

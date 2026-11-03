@@ -92,33 +92,42 @@ export function allLeaves<T>(nodes: ReadonlyArray<TreeNode<T>>): TreeNode<T>[] {
  * its descendants survive — in which case it is returned as a *clone* holding
  * only the surviving children (a parent that matches on its own but has no
  * surviving descendant keeps its full child list, so the user can still drill
- * into it). `autoExpand` collects every parent with a surviving descendant.
+ * into it). `autoExpand` collects every parent with a surviving descendant, and
+ * `matchKey` names the set of surviving rows, so callers can tell a new set of
+ * matches from the same one found again.
  */
 export function filterTree<T>(
   nodes: ReadonlyArray<TreeNode<T>>,
   matches: (node: TreeNode<T>) => boolean,
-): { kept: TreeNode<T>[]; autoExpand: Set<string> } {
+): { kept: TreeNode<T>[]; autoExpand: Set<string>; matchKey: string } {
   const autoExpand = new Set<string>();
+  const survivors: string[] = [];
 
   const walk = (list: ReadonlyArray<TreeNode<T>>): TreeNode<T>[] => {
     const out: TreeNode<T>[] = [];
     for (const node of list) {
       if (node.isLeaf) {
-        if (matches(node)) out.push(node);
+        if (matches(node)) {
+          survivors.push(node.id);
+          out.push(node);
+        }
         continue;
       }
       const keptChildren = walk(node.children);
       if (keptChildren.length > 0) {
+        survivors.push(node.id);
         autoExpand.add(node.id);
         out.push({ ...node, children: keptChildren });
       } else if (matches(node)) {
+        survivors.push(node.id);
         out.push(node);
       }
     }
     return out;
   };
 
-  return { kept: walk(nodes), autoExpand };
+  const kept = walk(nodes);
+  return { kept, autoExpand, matchKey: survivors.join("\n") };
 }
 
 /** One row as it appears on screen, flattened for roving-tabindex keyboard nav. */

@@ -6,7 +6,7 @@ import { checkboxBoxClasses } from "@/components/checkbox/checkbox";
 
 import { useTreeT } from "./i18n";
 import type { TreeNode } from "./tree-model";
-import type { TreeColumn, TreeContentProps, TreeRowState } from "./types";
+import type { TreeContentProps, TreeRowState } from "./types";
 
 /**
  * @internal
@@ -19,10 +19,7 @@ import type { TreeColumn, TreeContentProps, TreeRowState } from "./types";
  * state is derived from its leaves, otherwise each row shows its own.
  */
 
-type TreeRowProps<T> = Pick<
-  TreeContentProps<T>,
-  "renderItem" | "leadingColumn" | "trailingColumn"
-> & {
+type TreeRowProps<T> = Pick<TreeContentProps<T>, "renderItem"> & {
   node: TreeNode<T>;
   depth: number;
   isExpanded(id: string): boolean;
@@ -41,21 +38,6 @@ type TreeRowProps<T> = Pick<
   treeDisabled: boolean;
 };
 
-const ALIGN_CLASSES = {
-  start: "astw:justify-start astw:text-left",
-  center: "astw:justify-center astw:text-center",
-  end: "astw:justify-end astw:text-right",
-} as const;
-
-/** Classes and style for a leading/trailing column cell — shared by rows and the header. */
-export function columnCellProps<T>(column: TreeColumn<T>, side: "leading" | "trailing") {
-  const align = column.align ?? (side === "leading" ? "start" : "end");
-  return {
-    className: cn("astw:flex astw:shrink-0 astw:items-center", ALIGN_CLASSES[align]),
-    style: column.width === undefined ? undefined : { width: column.width },
-  };
-}
-
 function TreeRow<T>(props: TreeRowProps<T>) {
   const {
     node,
@@ -66,8 +48,6 @@ function TreeRow<T>(props: TreeRowProps<T>) {
     getCheckState,
     onToggleNode,
     renderItem,
-    leadingColumn,
-    trailingColumn,
     activeRowId,
     registerRow,
     onRowFocus,
@@ -181,28 +161,9 @@ function TreeRow<T>(props: TreeRowProps<T>) {
           </button>
         )}
 
-        {leadingColumn ? (
-          <div data-slot="tree-leading" {...columnCellProps(leadingColumn, "leading")}>
-            {leadingColumn.render(row)}
-          </div>
-        ) : null}
-
         <div className="astw:flex astw:min-w-0 astw:flex-1 astw:items-center">
           {renderItem ? renderItem(row) : node.label}
         </div>
-
-        {trailingColumn ? (
-          <div
-            data-slot="tree-trailing"
-            {...columnCellProps(trailingColumn, "trailing")}
-            className={cn(
-              columnCellProps(trailingColumn, "trailing").className,
-              "astw:text-muted-foreground astw:tabular-nums",
-            )}
-          >
-            {trailingColumn.render(row)}
-          </div>
-        ) : null}
       </div>
 
       {expanded

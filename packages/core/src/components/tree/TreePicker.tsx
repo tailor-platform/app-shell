@@ -1,7 +1,9 @@
 import * as React from "react";
+import { SearchIcon } from "lucide-react";
 
 import { Button } from "@/components/button";
 import { Dialog } from "@/components/dialog";
+import { Input } from "@/components/input";
 import { cn } from "@/lib/utils";
 
 import { Tree } from "./Tree";
@@ -21,8 +23,8 @@ import type {
  *
  * The picker owns the dialog chrome, the search box, expand/collapse, and the
  * selection while it is open; each open starts empty. The consumer owns how
- * items are read (`mapItem`), how rows look (`renderItem`, `leadingColumn`,
- * `trailingColumn`) and what happens on commit (`onCommit`).
+ * items are read (`mapItem`), how rows look (`renderItem`), how search matches
+ * (`matchesSearch`) and what happens on commit (`onCommit`).
  *
  * By default parents are containers: ticking one ticks every enabled leaf
  * beneath it, and `onCommit` receives the ticked leaves in tree order with their
@@ -40,17 +42,18 @@ import type {
  *   open={open}
  *   onOpenChange={setOpen}
  *   title="Add items"
- *   itemHeader="Product"
  *   items={catalog}
  *   mapItem={(item) =>
  *     "products" in item
  *       ? { key: item.id, label: item.name, children: item.products }
  *       : { key: item.sku, label: item.name }
  *   }
- *   trailingColumn={{
- *     header: "Unit price",
- *     render: ({ item, isLeaf }) => (isLeaf ? money((item as Product).price) : null),
- *   }}
+ *   renderItem={({ item }) => (
+ *     <span className="flex w-full justify-between gap-3">
+ *       <span>{item.name}</span>
+ *       {"price" in item ? <span>{money(item.price)}</span> : null}
+ *     </span>
+ *   )}
  *   onCommit={(picked) => addToOrder(picked.map((entry) => entry.item as Product))}
  * />
  * ```
@@ -64,6 +67,9 @@ export function TreePicker<T>({
   title,
   onCommit,
   ctaLabel,
+  matchesSearch,
+  filterSlot,
+  searchPlaceholder,
   className,
   ...treeProps
 }: TreePickerProps<T>) {
@@ -94,6 +100,9 @@ export function TreePicker<T>({
           onOpenChange={onOpenChange}
           onCommit={onCommit}
           ctaLabel={ctaLabel}
+          matchesSearch={matchesSearch}
+          filterSlot={filterSlot}
+          searchPlaceholder={searchPlaceholder}
           treeProps={treeProps}
         />
       </Dialog.Content>
@@ -102,18 +111,40 @@ export function TreePicker<T>({
 }
 TreePicker.displayName = "TreePicker";
 
-/** One open of the picker: the title, the tree, and the commit footer. */
+/** One open of the picker: the title, the search, the tree, and the commit footer. */
 function TreePickerBody<T>({
   title,
   onOpenChange,
   onCommit,
   ctaLabel,
+  matchesSearch,
+  filterSlot,
+  searchPlaceholder,
   treeProps,
-}: Pick<TreePickerProps<T>, "title" | "onOpenChange" | "onCommit" | "ctaLabel"> & {
+}: Pick<
+  TreePickerProps<T>,
+  | "title"
+  | "onOpenChange"
+  | "onCommit"
+  | "ctaLabel"
+  | "matchesSearch"
+  | "filterSlot"
+  | "searchPlaceholder"
+> & {
   treeProps: TreeContentProps<T> & TreeSelectionBehaviorProps;
 }) {
   const titleId = React.useId();
   const t = useTreeT();
+  const [query, setQuery] = React.useState("");
+
+  // Memoized on the query, so the tree sees a new filter only when it changes.
+  const filter = React.useMemo(() => {
+    const trimmed = query.trim();
+    if (trimmed === "") return undefined;
+    const needle = trimmed.toLowerCase();
+    return (item: T, { label }: { label: string }) =>
+      matchesSearch ? matchesSearch(item, trimmed) : label.toLowerCase().includes(needle);
+  }, [query, matchesSearch]);
   const [selected, setSelected] = React.useState<TreeSelectedItem<T>[]>([]);
   const count = selected.length;
   const defaultCta = count > 0 ? t("addCount", { count }) : t("addItems");
@@ -130,10 +161,49 @@ function TreePickerBody<T>({
         <Dialog.Title id={titleId}>{title ?? t("title")}</Dialog.Title>
       </Dialog.Header>
 
+      <div
+        data-slot="tree-picker-search"
+        className="astw:flex astw:items-center astw:gap-2 astw:px-6 astw:pt-4 astw:pb-3"
+      >
+        <div
+          className={cn(
+            "astw:bg-muted/40 astw:flex astw:flex-1 astw:items-center astw:gap-2 astw:rounded-md astw:px-3",
+            // The input drops its own ring to sit flush in this wrapper, so the
+            // wrapper shows focus instead.
+            "astw:focus-within:ring-ring/50 astw:focus-within:ring-[3px]",
+          )}
+        >
+          <SearchIcon className="astw:text-muted-foreground astw:size-4 astw:shrink-0" />
+          <Input
+            // `search` gives the browser's clear (✕) button, as in DataTable's
+            // field search.
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            // Escape with text clears the search first; with an empty box it
+            // falls through and closes the dialog.
+            onKeyDown={(event) => {
+              if (event.key !== "Escape" || query === "") return;
+              event.preventDefault();
+              event.stopPropagation();
+              setQuery("");
+            }}
+            placeholder={searchPlaceholder ?? t("searchPlaceholder")}
+            aria-label={t("searchLabel")}
+            // `dark:bg-transparent` is not redundant: Input ships `dark:bg-input/30`,
+            // which tailwind-merge will not dedupe against a bare `bg-transparent`,
+            // so in dark mode it paints a second fill over the wrapper's own.
+            className="astw:focus-visible:ring-0 astw:border-0 astw:bg-transparent astw:dark:bg-transparent astw:px-0 astw:shadow-none"
+          />
+        </div>
+        {filterSlot}
+      </div>
+
       <Tree<T>
         {...treeProps}
+        filter={filter}
         aria-labelledby={titleId}
-        className="astw:flex-1"
+        className="astw:border-border astw:flex-1 astw:border-t"
         onValueChange={(_, details) => setSelected(details.selected)}
         onAction={commit}
       />

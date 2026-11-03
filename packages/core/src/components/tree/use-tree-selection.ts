@@ -13,6 +13,7 @@ import {
   type TreeNode,
 } from "./tree-model";
 import type {
+  TreeFilterContext,
   TreeMapItemContext,
   TreeMappedItem,
   TreeSelectedItem,
@@ -24,7 +25,7 @@ import type {
 /**
  * @internal
  * Owns everything about *what is shown and what is ticked*: the normalized
- * tree, the search query and filtered forest, auto-expansion, the user's own
+ * tree, the filtered forest, auto-expansion, the user's own
  * expand/collapse, and the selection. To start over — as
  * TreePicker does each time it opens — remount the owner.
  */
@@ -32,7 +33,7 @@ import type {
 type UseTreeSelectionOptions<T> = {
   items: ReadonlyArray<T>;
   mapItem: (item: T, context: TreeMapItemContext<T>) => TreeMappedItem<T>;
-  matchesSearch?: (item: T, query: string) => boolean;
+  filter?: (item: T, context: TreeFilterContext<T>) => boolean;
   /** Ignores every toggle (the whole tree is disabled). */
   disabled?: boolean;
   /**
@@ -47,9 +48,7 @@ type UseTreeSelectionOptions<T> = {
 
 export type UseTreeSelectionResult<T> = {
   tree: TreeNode<T>[];
-  query: string;
-  setQuery(query: string): void;
-  /** The forest to render — the whole tree when the query is empty, filtered otherwise. */
+  /** The forest to render: the whole tree, or the filtered one while `filter` is set. */
   kept: TreeNode<T>[];
   isExpanded(id: string): boolean;
   toggleExpand(id: string): void;
@@ -69,27 +68,16 @@ const EMPTY_KEYS: readonly string[] = [];
 export function useTreeSelection<T>(
   options: UseTreeSelectionOptions<T>,
 ): UseTreeSelectionResult<T> {
-  const {
-    items,
-    mapItem,
-    matchesSearch,
-    disabled = false,
-    selectionPropagation,
-    valueStrategy,
-  } = options;
+  const { items, mapItem, filter, disabled = false, selectionPropagation, valueStrategy } = options;
 
   const tree = React.useMemo(() => buildTree(items, mapItem), [items, mapItem]);
   const index = React.useMemo(() => indexTree(tree), [tree]);
 
-  const [query, setQuery] = React.useState("");
   const [userExpanded, setUserExpanded] = React.useState<Set<string>>(() => new Set());
-  // Groups the user closed while a search had them auto-expanded. Cleared when
-  // the query changes, so a new search opens its matches again.
+  // Groups the user closed while a filter had them auto-expanded. Cleared when
+  // the matches change, so a new search opens its matches again — but not when
+  // an inline `filter` is merely recreated with the same matches.
   const [searchCollapsed, setSearchCollapsed] = React.useState<Set<string>>(() => new Set());
-
-  React.useEffect(() => {
-    setSearchCollapsed((prev) => (prev.size === 0 ? prev : new Set()));
-  }, [query]);
 
   const [keysState, setKeysState] = React.useState<readonly string[]>(
     () => options.defaultValue ?? EMPTY_KEYS,
@@ -112,14 +100,16 @@ export function useTreeSelection<T>(
   const selected = React.useMemo(() => listed(state).map(toSelectedItem), [listed, state]);
   const { unknown } = state;
 
-  const { kept, autoExpand } = React.useMemo(() => {
-    const trimmed = query.trim();
-    if (trimmed === "") return { kept: tree, autoExpand: new Set<string>() };
-    const needle = trimmed.toLowerCase();
+  const { kept, autoExpand, matchKey } = React.useMemo(() => {
+    if (!filter) return { kept: tree, autoExpand: new Set<string>(), matchKey: null };
     return filterTree(tree, (node) =>
-      matchesSearch ? matchesSearch(node.item, trimmed) : node.label.toLowerCase().includes(needle),
+      filter(node.item, { label: node.label, parents: node.parents }),
     );
-  }, [tree, query, matchesSearch]);
+  }, [tree, filter]);
+
+  React.useEffect(() => {
+    setSearchCollapsed((prev) => (prev.size === 0 ? prev : new Set()));
+  }, [matchKey]);
 
   const isExpanded = React.useCallback(
     (id: string) => (autoExpand.has(id) && !searchCollapsed.has(id)) || userExpanded.has(id),
@@ -127,7 +117,7 @@ export function useTreeSelection<T>(
   );
 
   /**
-   * Opens or closes a group. While searching, a group the search opened can
+   * Opens or closes a group. While filtering, a group the filter opened can
    * still be closed (and reopened) — it keeps showing only the matching items.
    */
   const setExpanded = React.useCallback(
@@ -179,8 +169,6 @@ export function useTreeSelection<T>(
 
   return {
     tree,
-    query,
-    setQuery,
     kept,
     isExpanded,
     toggleExpand,

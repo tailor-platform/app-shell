@@ -1,11 +1,9 @@
 import * as React from "react";
-import { SearchIcon } from "lucide-react";
 import { useFieldRootContext } from "@base-ui/react/internals/field-root-context";
 
-import { Input } from "@/components/input";
 import { cn } from "@/lib/utils";
 
-import { TreeRow, columnCellProps } from "./TreeRow";
+import { TreeRow } from "./TreeRow";
 import { useTreeT } from "./i18n";
 import { flattenVisible, type TreeNode } from "./tree-model";
 import type { TreeChangeDetails, TreeProps, TreeSelectedItem } from "./types";
@@ -16,7 +14,7 @@ import { useTreeSelection } from "./use-tree-selection";
 type SubmittedEntry = { id: string; value: string };
 
 /**
- * A searchable, multi-select checkbox tree for picking many items out of a
+ * A multi-select checkbox tree for picking many items out of a
  * hierarchical catalog — products with variants, accounts with sub-accounts,
  * warehouses with bins. By default parents are containers: ticking one ticks
  * every enabled leaf beneath it, its checkbox shows checked or indeterminate from
@@ -61,13 +59,8 @@ export function Tree<T>(props: TreeProps<T>) {
     items,
     mapItem,
     renderItem,
-    itemHeader,
-    leadingColumn,
-    trailingColumn,
-    matchesSearch,
-    filterSlot,
+    filter,
     emptyText,
-    searchPlaceholder,
     onAction,
     name,
     form,
@@ -125,8 +118,6 @@ export function Tree<T>(props: TreeProps<T>) {
 
   const {
     tree,
-    query,
-    setQuery,
     kept,
     isExpanded,
     toggleExpand,
@@ -138,7 +129,7 @@ export function Tree<T>(props: TreeProps<T>) {
   } = useTreeSelection({
     items,
     mapItem,
-    matchesSearch,
+    filter,
     disabled: treeDisabled,
     // A `value` prop that is present but `undefined` (e.g. a form reset) is
     // still controlled: it means "nothing selected".
@@ -240,68 +231,12 @@ export function Tree<T>(props: TreeProps<T>) {
           ))
         : null}
 
-      <div
-        data-slot="tree-search"
-        className="astw:flex astw:items-center astw:gap-2 astw:px-6 astw:pt-4 astw:pb-3"
-      >
-        <div
-          className={cn(
-            "astw:bg-muted/40 astw:flex astw:flex-1 astw:items-center astw:gap-2 astw:rounded-md astw:px-3",
-            // The input drops its own ring to sit flush in this wrapper, so the
-            // wrapper shows focus instead.
-            "astw:focus-within:ring-ring/50 astw:focus-within:ring-[3px]",
-          )}
-        >
-          <SearchIcon className="astw:text-muted-foreground astw:size-4 astw:shrink-0" />
-          <Input
-            // `search` gives the browser's clear (✕) button, as in DataTable's
-            // field search.
-            type="search"
-            value={query}
-            disabled={treeDisabled}
-            onChange={(event) => setQuery(event.target.value)}
-            // Escape with text clears the search first; with an empty box it
-            // falls through (e.g. to close a surrounding dialog).
-            onKeyDown={(event) => {
-              if (event.key !== "Escape" || query === "") return;
-              event.preventDefault();
-              event.stopPropagation();
-              setQuery("");
-            }}
-            placeholder={searchPlaceholder ?? t("searchPlaceholder")}
-            aria-label={t("searchLabel")}
-            // `dark:bg-transparent` is not redundant: Input ships `dark:bg-input/30`,
-            // which tailwind-merge will not dedupe against a bare `bg-transparent`,
-            // so in dark mode it paints a second fill over the wrapper's own.
-            className="astw:focus-visible:ring-0 astw:border-0 astw:bg-transparent astw:dark:bg-transparent astw:px-0 astw:shadow-none"
-          />
-        </div>
-        {filterSlot}
-      </div>
-
-      <div
-        data-slot="tree-column-header"
-        aria-hidden
-        className="astw:bg-muted/40 astw:text-muted-foreground astw:border-border astw:flex astw:items-center astw:gap-3 astw:border-y astw:px-4 astw:py-2 astw:text-label-sm astw:tracking-wide astw:uppercase"
-      >
-        {/* Mirrors the row's checkbox + caret so the labels line up. */}
-        <span className="astw:size-4 astw:shrink-0" />
-        <span className="astw:size-5 astw:shrink-0" />
-        {leadingColumn ? (
-          <div {...columnCellProps(leadingColumn, "leading")}>{leadingColumn.header}</div>
-        ) : null}
-        <div className="astw:min-w-0 astw:flex-1">{itemHeader ?? t("itemHeader")}</div>
-        {trailingColumn ? (
-          <div {...columnCellProps(trailingColumn, "trailing")}>{trailingColumn.header}</div>
-        ) : null}
-      </div>
-
       {visibleRows.length === 0 ? (
         <div
           data-slot="tree-empty"
           className="astw:text-muted-foreground astw:flex-1 astw:px-6 astw:py-8 astw:text-center astw:text-body-md"
         >
-          {emptyText ?? t("emptyText")}
+          {emptyText ?? (filter ? t("emptyText") : t("noItems"))}
         </div>
       ) : (
         <div
@@ -314,8 +249,8 @@ export function Tree<T>(props: TreeProps<T>) {
           aria-invalid={field.isInvalid || undefined}
           aria-disabled={treeDisabled || undefined}
           data-slot="tree-list"
-          // Keys are handled on the tree itself, so the search box and anything
-          // in `filterSlot` keep their own keys (Enter never fires from them).
+          // Keys are handled on the tree itself, so controls around it keep their
+          // own keys (Enter never fires from them).
           onKeyDown={handleKeyDown}
           // Focus lives on the rows (roving tabindex); -1 keeps the tree itself
           // programmatically focusable without adding a second tab stop.
@@ -333,8 +268,6 @@ export function Tree<T>(props: TreeProps<T>) {
               getCheckState={getCheckState}
               onToggleNode={toggleNode}
               renderItem={renderItem}
-              leadingColumn={leadingColumn}
-              trailingColumn={trailingColumn}
               activeRowId={activeRowId}
               registerRow={registerRow}
               onRowFocus={onRowFocus}

@@ -1,22 +1,22 @@
 ---
 kind: code-backed
-group: checkbox-tree
-title: CheckboxTree
-description: Pick many items from a hierarchical catalog — inline with CheckboxTree, or in a dialog with CheckboxTreePicker
+group: tree
+title: Tree
+description: Pick many items from a hierarchical catalog — inline with Tree, or in a dialog with TreePicker
 sources:
-  - packages/core/src/components/checkbox-tree/**
+  - packages/core/src/components/tree/**
 ---
 
-# CheckboxTree
+# Tree
 
-`CheckboxTree` is a searchable, multi-select tree for picking many items out of a hierarchical catalog — products with variants, warehouses with bins, accounts with sub-accounts. Ticking a parent selects every leaf beneath it, and searching auto-expands to the matches.
+`Tree` is a searchable, multi-select tree for picking many items out of a hierarchical catalog — products with variants, warehouses with bins, accounts with sub-accounts. Ticking a parent selects every leaf beneath it, and searching auto-expands to the matches.
 
-It renders inline and works as a form control. For the common "pick, then add" flow, **`CheckboxTreePicker`** is the same tree in a dialog with a title, Cancel, and an "Add N items" button — the same split as `DateField` and `DatePicker`.
+It renders inline and works as a form control. For the common "pick, then add" flow, **`TreePicker`** is the same tree in a dialog with a title, Cancel, and an "Add N items" button — the same split as `DateField` and `DatePicker`.
 
 ## Import
 
 ```tsx
-import { CheckboxTree, CheckboxTreePicker } from "@tailor-platform/app-shell";
+import { Tree, TreePicker } from "@tailor-platform/app-shell";
 ```
 
 ## Basic Usage
@@ -29,7 +29,7 @@ type Product = { sku: string; name: string; price: number };
 
 const [selected, setSelected] = useState<string[]>([]);
 
-<CheckboxTree<Category | Product>
+<Tree<Category | Product>
   aria-label="Products"
   className="h-96"
   items={categories}
@@ -50,7 +50,7 @@ A `key` only has to be unique **among its siblings**: the tree identifies each i
 The row shows the item's `label` by default. `renderItem` replaces it, and `leadingColumn` / `trailingColumn` add aligned columns with their own header cells — the tree lines them up across rows, so you don't rebuild that alignment inside `renderItem`. Each `render` receives the row's state.
 
 ```tsx
-<CheckboxTree<Category | Product>
+<Tree<Category | Product>
   {...props}
   itemHeader="Product"
   renderItem={({ item, isLeaf }) =>
@@ -86,17 +86,13 @@ Selection is **leaf-only**: only leaves are ever values. How a value identifies 
 **`"keys"` (default)** — the value is a list of leaf keys, and a key is selected wherever it appears. Use it when leaf keys are unique (database ids, SKUs), or when a repeated key really is the same item, like one product listed in two collections — ticking it in one place ticks it in both.
 
 ```tsx
-<CheckboxTree
-  {...props}
-  defaultValue={["TEE-1", "CAP-1"]}
-  onValueChange={(keys) => setKeys(keys)}
-/>
+<Tree {...props} defaultValue={["TEE-1", "CAP-1"]} onValueChange={(keys) => setKeys(keys)} />
 ```
 
 **`"exact"`** — the value is a nested selection by key, from the top level down. Use it when the same key means different things under different parents, like bin `A1` in two warehouses. `true` selects that leaf, or every leaf beneath that parent.
 
 ```tsx
-<CheckboxTree
+<Tree
   {...props}
   valueShape="exact"
   // Bin A1 in Warehouse X, plus every bin in Warehouse Y
@@ -109,13 +105,13 @@ Selection is **leaf-only**: only leaves are ever values. How a value identifies 
 
 ## Forms
 
-`CheckboxTree` works like `Select` and the other form controls: as a plain form field, inside `Field.Root`, and with React Hook Form.
+`Tree` works like `Select` and the other form controls: as a plain form field, inside `Field.Root`, and with React Hook Form.
 
 ```tsx
 <form action={saveCount}>
   <Field.Root name="bins">
     <Field.Label>Bins to count</Field.Label>
-    <CheckboxTree<Warehouse | Bin> {...props} valueShape="exact" required />
+    <Tree<Warehouse | Bin> {...props} valueShape="exact" required />
     <Field.Description>Pick at least one bin.</Field.Description>
   </Field.Root>
   <Button type="submit">Start count</Button>
@@ -136,12 +132,12 @@ Return `disabled: true` from `mapItem` to lock an item. A disabled parent locks 
 mapItem={(bin) => ({ key: bin.code, label: bin.code, disabled: bin.status === "counting" })}
 ```
 
-## CheckboxTreePicker
+## TreePicker
 
 The same tree in a dialog. It takes the same item, row, and search props, plus a commit step. Each open starts empty, and `onCommit` receives the selected leaves with their paths and parents.
 
 ```tsx
-<CheckboxTreePicker<Category | Product>
+<TreePicker<Category | Product>
   open={open}
   onOpenChange={setOpen}
   title="Add items from catalog"
@@ -158,7 +154,7 @@ The same tree in a dialog. It takes the same item, row, and search props, plus a
 
 ## Props
 
-### Shared (CheckboxTree and CheckboxTreePicker)
+### Shared (Tree and TreePicker)
 
 | Prop                | Type                                                | Default                | Description                                                         |
 | ------------------- | --------------------------------------------------- | ---------------------- | ------------------------------------------------------------------- |
@@ -173,12 +169,12 @@ The same tree in a dialog. It takes the same item, row, and search props, plus a
 | `emptyText`         | `ReactNode`                                         | `"No matching items."` | Shown when the filtered tree is empty.                              |
 | `searchPlaceholder` | `string`                                            | `"Search"`             | Search input placeholder.                                           |
 
-### CheckboxTree
+### Tree
 
 | Prop                             | Type                                  | Default     | Description                                                            |
 | -------------------------------- | ------------------------------------- | ----------- | ---------------------------------------------------------------------- |
 | `valueShape`                     | `"keys" \| "exact"`                   | `"keys"`    | How a value identifies a leaf.                                         |
-| `value` / `defaultValue`         | `string[]` or `CheckboxTreeSelection` | –           | Controlled / initial selection, in the shape `valueShape` names.       |
+| `value` / `defaultValue`         | `string[]` or `TreeSelection`         | –           | Controlled / initial selection, in the shape `valueShape` names.       |
 | `onValueChange`                  | `(value, { selected }) => void`       | –           | Every change, in the same shape, plus the selected leaves.             |
 | `onAction`                       | `() => void`                          | submit form | Enter on a row. Without it, Enter submits the owning form.             |
 | `name` / `form`                  | `string`                              | –           | Hidden inputs for native form submission. `Field.Root`'s name wins.    |
@@ -188,17 +184,17 @@ The same tree in a dialog. It takes the same item, row, and search props, plus a
 | `aria-label` / `aria-labelledby` | `string`                              | –           | Names the tree, when there's no `Field.Label`.                         |
 | `className`                      | `string`                              | –           | Merged onto the root; give it a height for long trees.                 |
 
-### CheckboxTreePicker
+### TreePicker
 
-| Prop           | Type                                                | Default          | Description                                                         |
-| -------------- | --------------------------------------------------- | ---------------- | ------------------------------------------------------------------- |
-| `open`         | `boolean`                                           | required         | Controls dialog visibility.                                         |
-| `onOpenChange` | `(open: boolean) => void`                           | required         | Fires on every user-driven open or close, including after a commit. |
-| `onCommit`     | `(selected: CheckboxTreeSelectedItem<T>[]) => void` | required         | Receives the selected leaves in tree order.                         |
-| `title`        | `ReactNode`                                         | `"Select items"` | Dialog title. Also labels the tree for assistive tech.              |
-| `valueShape`   | `"keys" \| "exact"`                                 | `"keys"`         | How selection works while picking.                                  |
-| `ctaLabel`     | `(count: number) => ReactNode`                      | `"Add N items"`  | Primary button label.                                               |
-| `className`    | `string`                                            | –                | Merged onto the dialog panel.                                       |
+| Prop           | Type                                        | Default          | Description                                                         |
+| -------------- | ------------------------------------------- | ---------------- | ------------------------------------------------------------------- |
+| `open`         | `boolean`                                   | required         | Controls dialog visibility.                                         |
+| `onOpenChange` | `(open: boolean) => void`                   | required         | Fires on every user-driven open or close, including after a commit. |
+| `onCommit`     | `(selected: TreeSelectedItem<T>[]) => void` | required         | Receives the selected leaves in tree order.                         |
+| `title`        | `ReactNode`                                 | `"Select items"` | Dialog title. Also labels the tree for assistive tech.              |
+| `valueShape`   | `"keys" \| "exact"`                         | `"keys"`         | How selection works while picking.                                  |
+| `ctaLabel`     | `(count: number) => ReactNode`              | `"Add N items"`  | Primary button label.                                               |
+| `className`    | `string`                                    | –                | Merged onto the dialog panel.                                       |
 
 The default labels are localized (English and Japanese) through the app's locale, like DataTable's; passing a label prop overrides it.
 
@@ -219,7 +215,7 @@ There is deliberately no async variant: auto-expanding to matches needs the whol
 ```tsx
 const { data, isLoading } = useCatalogQuery();
 
-<CheckboxTreePicker
+<TreePicker
   open={open}
   onOpenChange={setOpen}
   items={data ?? []}
@@ -233,4 +229,4 @@ const { data, isLoading } = useCatalogQuery();
 
 - [Combobox](./combobox.md) — inline single or multi select for flat option lists
 - [Select](./select.md) — dropdown select, with the same `items` + `mapItem` pattern
-- [Dialog](./dialog.md) — the modal shell `CheckboxTreePicker` composes
+- [Dialog](./dialog.md) — the modal shell `TreePicker` composes

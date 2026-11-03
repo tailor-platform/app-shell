@@ -4,7 +4,7 @@
 import "@/contexts/appshell-context";
 import { defineI18nLabels } from "@/hooks/i18n";
 
-export const checkboxTreeLabels = defineI18nLabels({
+export const treeLabels = defineI18nLabels({
   en: {
     title: "Select items",
     itemHeader: "Item",
@@ -32,4 +32,4 @@ export const checkboxTreeLabels = defineI18nLabels({
   },
 });
 
-export const useCheckboxTreeT = checkboxTreeLabels.useT;
+export const useTreeT = treeLabels.useT;

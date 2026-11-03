@@ -14,11 +14,11 @@ import {
   type TreeNode,
 } from "./tree-model";
 import type {
-  CheckboxTreeChangeDetails,
-  CheckboxTreeMappedItem,
-  CheckboxTreeSelectedItem,
-  CheckboxTreeSelection,
-  CheckboxTreeValueProps,
+  TreeChangeDetails,
+  TreeMappedItem,
+  TreeSelectedItem,
+  TreeSelection,
+  TreeValueProps,
 } from "./types";
 
 /**
@@ -26,12 +26,12 @@ import type {
  * Owns everything about *what is shown and what is ticked*: the normalized
  * tree, the search query and filtered forest, auto-expansion, the user's own
  * expand/collapse, and the selection in either value shape. To start over — as
- * CheckboxTreePicker does each time it opens — remount the owner.
+ * TreePicker does each time it opens — remount the owner.
  */
 
 type UseTreeSelectionOptions<T> = {
   items: ReadonlyArray<T>;
-  mapItem: (item: T) => CheckboxTreeMappedItem<T>;
+  mapItem: (item: T) => TreeMappedItem<T>;
   matchesSearch?: (item: T, query: string) => boolean;
   /** Ignores every toggle (the whole tree is disabled). */
   disabled?: boolean;
@@ -41,7 +41,7 @@ type UseTreeSelectionOptions<T> = {
    * form reset) reads as an empty selection instead of stale internal state.
    */
   controlled?: boolean;
-} & CheckboxTreeValueProps<T>;
+} & TreeValueProps<T>;
 
 export type UseTreeSelectionResult<T> = {
   tree: TreeNode<T>[];
@@ -56,7 +56,7 @@ export type UseTreeSelectionResult<T> = {
   /** Selects or clears every enabled leaf beneath `node` in one update. */
   toggleNode(node: TreeNode<T>, next: boolean): void;
   /** Selected leaves in tree order (one per key in the keys shape). */
-  selected: CheckboxTreeSelectedItem<T>[];
+  selected: TreeSelectedItem<T>[];
   /**
    * Selected values that aren't in the tree, kept as they were: keys in the
    * keys shape (`[["key"]]`), leaf paths in the exact shape.
@@ -89,16 +89,16 @@ export function useTreeSelection<T>(
   const [keysState, setKeysState] = React.useState<readonly string[]>(() =>
     !exact ? ((options.defaultValue as readonly string[] | undefined) ?? EMPTY_KEYS) : EMPTY_KEYS,
   );
-  const [exactState, setExactState] = React.useState<CheckboxTreeSelection | undefined>(() =>
-    exact ? (options.defaultValue as CheckboxTreeSelection | undefined) : undefined,
+  const [exactState, setExactState] = React.useState<TreeSelection | undefined>(() =>
+    exact ? (options.defaultValue as TreeSelection | undefined) : undefined,
   );
 
   const controlled = options.controlled ?? options.value !== undefined;
   // A controlled `undefined` is an empty selection, never stale internal state.
   let keysValue: readonly string[] = EMPTY_KEYS;
-  let exactValue: CheckboxTreeSelection | undefined;
+  let exactValue: TreeSelection | undefined;
   if (exact) {
-    exactValue = controlled ? (options.value as CheckboxTreeSelection | undefined) : exactState;
+    exactValue = controlled ? (options.value as TreeSelection | undefined) : exactState;
   } else {
     keysValue = controlled
       ? ((options.value as readonly string[] | undefined) ?? EMPTY_KEYS)
@@ -111,8 +111,8 @@ export function useTreeSelection<T>(
   );
 
   const selectedFrom = React.useCallback(
-    (ids: ReadonlySet<string>): CheckboxTreeSelectedItem<T>[] => {
-      const out: CheckboxTreeSelectedItem<T>[] = [];
+    (ids: ReadonlySet<string>): TreeSelectedItem<T>[] => {
+      const out: TreeSelectedItem<T>[] = [];
       const seenKeys = new Set<string>();
       for (const leaf of leaves) {
         if (!ids.has(leaf.id)) continue;
@@ -185,7 +185,7 @@ export function useTreeSelection<T>(
   );
 
   const onValueChange = options.onValueChange as
-    | ((value: string[] | CheckboxTreeSelection, details: CheckboxTreeChangeDetails<T>) => void)
+    | ((value: string[] | TreeSelection, details: TreeChangeDetails<T>) => void)
     | undefined;
   const toggleNode = React.useCallback(
     (node: TreeNode<T>, next: boolean) => {

@@ -5,8 +5,8 @@ import { useFieldRootContext } from "@base-ui/react/internals/field-root-context
 import { Input } from "@/components/input";
 import { cn } from "@/lib/utils";
 
-import { CheckboxTreeRow, columnCellProps } from "./CheckboxTreeRow";
-import { useCheckboxTreeT } from "./i18n";
+import { TreeRow, columnCellProps } from "./TreeRow";
+import { useTreeT } from "./i18n";
 import {
   checkState,
   flattenVisible,
@@ -15,13 +15,13 @@ import {
   type TreeNode,
 } from "./tree-model";
 import type {
-  CheckboxTreeChangeDetails,
-  CheckboxTreeProps,
-  CheckboxTreeSelectedItem,
-  CheckboxTreeSelection,
-  CheckboxTreeValueProps,
+  TreeChangeDetails,
+  TreeProps,
+  TreeSelectedItem,
+  TreeSelection,
+  TreeValueProps,
 } from "./types";
-import { useCheckboxTreeField } from "./use-checkbox-tree-field";
+import { useTreeField } from "./use-tree-field";
 import { useTreeFocus } from "./use-tree-focus";
 import { useTreeSelection } from "./use-tree-selection";
 
@@ -43,18 +43,18 @@ type SubmittedEntry = { id: string; value: string };
  * It renders inline and works as a form control: `name` submits one hidden
  * input per selected leaf, and inside a `Field.Root` it picks up the label,
  * description, error, `required` and invalid state. For the common "pick, then
- * add" flow in a dialog, use {@link CheckboxTreePicker}.
+ * add" flow in a dialog, use {@link TreePicker}.
  *
  * The list scrolls inside the component, so give it a height (or a sized
  * container) for long trees.
  *
  * @example
  * ```tsx
- * const [bins, setBins] = useState<CheckboxTreeSelection>({});
+ * const [bins, setBins] = useState<TreeSelection>({});
  *
  * <Field.Root name="bins">
  *   <Field.Label>Bins to count</Field.Label>
- *   <CheckboxTree<Warehouse | Bin>
+ *   <Tree<Warehouse | Bin>
  *     className="astw:h-96"
  *     items={warehouses}
  *     mapItem={(item) =>
@@ -69,7 +69,7 @@ type SubmittedEntry = { id: string; value: string };
  * </Field.Root>
  * ```
  */
-export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
+export function Tree<T>(props: TreeProps<T>) {
   const {
     items,
     mapItem,
@@ -94,7 +94,7 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
     "aria-labelledby": ariaLabelledBy,
     className,
   } = props;
-  const t = useCheckboxTreeT();
+  const t = useTreeT();
   const exact = props.valueShape === "exact";
   const rootRef = React.useRef<HTMLDivElement>(null);
   const fieldRoot = useFieldRootContext();
@@ -106,8 +106,8 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
    * two leaves can serialize to the same string.
    */
   const submittedEntries = React.useCallback(
-    (selected: CheckboxTreeSelectedItem<T>[], unknown: string[][]): SubmittedEntry[] => {
-      const toString = (entry: CheckboxTreeSelectedItem<T>) =>
+    (selected: TreeSelectedItem<T>[], unknown: string[][]): SubmittedEntry[] => {
+      const toString = (entry: TreeSelectedItem<T>) =>
         itemToStringValue?.(entry.item, { path: entry.path, parents: entry.parents }) ??
         (exact ? entry.path.join("/") : entry.key);
       const idOf = (path: readonly string[]) => (exact ? pathId(path) : path.at(-1)!);
@@ -124,11 +124,11 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
   const fieldChangeRef = React.useRef<(values: readonly string[]) => void>(() => {});
   const treeRef = React.useRef<TreeNode<T>[]>([]);
   const consumerOnValueChange = props.onValueChange as
-    | ((value: string[] | CheckboxTreeSelection, details: CheckboxTreeChangeDetails<T>) => void)
+    | ((value: string[] | TreeSelection, details: TreeChangeDetails<T>) => void)
     | undefined;
 
   const handleValueChange = React.useCallback(
-    (value: string[] | CheckboxTreeSelection, details: CheckboxTreeChangeDetails<T>) => {
+    (value: string[] | TreeSelection, details: TreeChangeDetails<T>) => {
       consumerOnValueChange?.(value, details);
       let unknown: string[][];
       if (Array.isArray(value)) {
@@ -149,7 +149,7 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
     value: props.value,
     defaultValue: props.defaultValue,
     onValueChange: handleValueChange,
-  } as CheckboxTreeValueProps<T>;
+  } as TreeValueProps<T>;
 
   const {
     tree,
@@ -181,7 +181,7 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
   );
   const values = React.useMemo(() => entries.map((entry) => entry.value), [entries]);
 
-  const field = useCheckboxTreeField({
+  const field = useTreeField({
     id,
     name,
     disabled,
@@ -234,7 +234,7 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
   return (
     <div
       ref={rootRef}
-      data-slot="checkbox-tree"
+      data-slot="tree"
       data-disabled={treeDisabled || undefined}
       data-invalid={field.isInvalid || undefined}
       onFocus={field.handleFocus}
@@ -266,7 +266,7 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
         : null}
 
       <div
-        data-slot="checkbox-tree-search"
+        data-slot="tree-search"
         className="astw:flex astw:items-center astw:gap-2 astw:px-6 astw:pt-4 astw:pb-3"
       >
         <div
@@ -305,7 +305,7 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
       </div>
 
       <div
-        data-slot="checkbox-tree-column-header"
+        data-slot="tree-column-header"
         aria-hidden
         className="astw:bg-muted/40 astw:text-muted-foreground astw:border-border astw:flex astw:items-center astw:gap-3 astw:border-y astw:px-4 astw:py-2 astw:text-label-sm astw:tracking-wide astw:uppercase"
       >
@@ -323,7 +323,7 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
 
       {visibleRows.length === 0 ? (
         <div
-          data-slot="checkbox-tree-empty"
+          data-slot="tree-empty"
           className="astw:text-muted-foreground astw:flex-1 astw:px-6 astw:py-8 astw:text-center astw:text-body-md"
         >
           {emptyText ?? t("emptyText")}
@@ -338,7 +338,7 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
           aria-required={required || undefined}
           aria-invalid={field.isInvalid || undefined}
           aria-disabled={treeDisabled || undefined}
-          data-slot="checkbox-tree-list"
+          data-slot="tree-list"
           // Keys are handled on the tree itself, so the search box and anything
           // in `filterSlot` keep their own keys (Enter never fires from them).
           onKeyDown={handleKeyDown}
@@ -348,7 +348,7 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
           className="astw:min-h-0 astw:flex-1 astw:overflow-y-auto astw:outline-none"
         >
           {kept.map((node) => (
-            <CheckboxTreeRow
+            <TreeRow
               key={node.id}
               node={node}
               depth={0}
@@ -371,4 +371,4 @@ export function CheckboxTree<T>(props: CheckboxTreeProps<T>) {
     </div>
   );
 }
-CheckboxTree.displayName = "CheckboxTree";
+Tree.displayName = "Tree";

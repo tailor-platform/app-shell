@@ -13,7 +13,7 @@ import {
   pathId,
   selectionFromIds,
 } from "./tree-model";
-import type { CheckboxTreeSelection } from "./types";
+import type { TreeSelection } from "./types";
 
 type Item = { key: string; name: string; children?: Item[]; disabled?: boolean };
 
@@ -190,7 +190,7 @@ describe("tree-model", () => {
       );
       // Built from JSON, as untrusted data would be — a `constructor` key in an
       // object literal fights TypeScript's Object members.
-      const selection = JSON.parse('{"constructor":{"x":true}}') as CheckboxTreeSelection;
+      const selection = JSON.parse('{"constructor":{"x":true}}') as TreeSelection;
       const ids = idsFromSelection(nodes, selection);
       expect(selectionFromIds(nodes, ids, undefined)).toEqual({ constructor: { x: true } });
       expect(idsFromSelection(nodes, {}).size).toBe(0);

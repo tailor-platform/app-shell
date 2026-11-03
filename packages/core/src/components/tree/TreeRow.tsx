@@ -4,9 +4,9 @@ import { Check, ChevronRightIcon, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { checkboxBoxClasses } from "@/components/checkbox/checkbox";
 
-import { useCheckboxTreeT } from "./i18n";
+import { useTreeT } from "./i18n";
 import { checkState, type TreeNode } from "./tree-model";
-import type { CheckboxTreeColumn, CheckboxTreeContentProps, CheckboxTreeRowState } from "./types";
+import type { TreeColumn, TreeContentProps, TreeRowState } from "./types";
 
 /**
  * @internal
@@ -19,8 +19,8 @@ import type { CheckboxTreeColumn, CheckboxTreeContentProps, CheckboxTreeRowState
  * leaf-only selection; nothing about a parent is ever stored.
  */
 
-type CheckboxTreeRowProps<T> = Pick<
-  CheckboxTreeContentProps<T>,
+type TreeRowProps<T> = Pick<
+  TreeContentProps<T>,
   "renderItem" | "leadingColumn" | "trailingColumn"
 > & {
   node: TreeNode<T>;
@@ -48,7 +48,7 @@ const ALIGN_CLASSES = {
 } as const;
 
 /** Classes and style for a leading/trailing column cell — shared by rows and the header. */
-export function columnCellProps<T>(column: CheckboxTreeColumn<T>, side: "leading" | "trailing") {
+export function columnCellProps<T>(column: TreeColumn<T>, side: "leading" | "trailing") {
   const align = column.align ?? (side === "leading" ? "start" : "end");
   return {
     className: cn("astw:flex astw:shrink-0 astw:items-center", ALIGN_CLASSES[align]),
@@ -56,7 +56,7 @@ export function columnCellProps<T>(column: CheckboxTreeColumn<T>, side: "leading
   };
 }
 
-function CheckboxTreeRow<T>(props: CheckboxTreeRowProps<T>) {
+function TreeRow<T>(props: TreeRowProps<T>) {
   const {
     node,
     depth,
@@ -73,14 +73,14 @@ function CheckboxTreeRow<T>(props: CheckboxTreeRowProps<T>) {
     onRowFocus,
     treeDisabled,
   } = props;
-  const t = useCheckboxTreeT();
+  const t = useTreeT();
   const leaf = node.isLeaf;
   const expanded = !leaf && isExpanded(node.id);
   const disabled = treeDisabled || node.disabled;
   const { checked, indeterminate } = checkState(node, isSelected);
   const keepsCaretSpace = depth === 0 && hasBranches;
 
-  const row: CheckboxTreeRowState<T> = {
+  const row: TreeRowState<T> = {
     item: node.item,
     key: node.key,
     path: node.path,
@@ -114,11 +114,11 @@ function CheckboxTreeRow<T>(props: CheckboxTreeRowProps<T>) {
         onClick={(event) => {
           if (treeDisabled) return;
           const target = event.target as HTMLElement;
-          if (target.closest("button, a, input, label, [data-slot=checkbox-tree-checkbox]")) return;
+          if (target.closest("button, a, input, label, [data-slot=tree-checkbox]")) return;
           if (leaf) onToggleNode(node, !checked);
           else onToggleExpand(node.id);
         }}
-        data-slot="checkbox-tree-row"
+        data-slot="tree-row"
         data-node-id={node.id}
         data-depth={depth}
         data-disabled={disabled || undefined}
@@ -145,7 +145,7 @@ function CheckboxTreeRow<T>(props: CheckboxTreeRowProps<T>) {
             its own value. It reuses Checkbox's styles so it looks the same. */}
         <span
           aria-hidden
-          data-slot="checkbox-tree-checkbox"
+          data-slot="tree-checkbox"
           data-checked={(checked && !indeterminate) || undefined}
           data-indeterminate={indeterminate || undefined}
           data-disabled={disabled || undefined}
@@ -183,7 +183,7 @@ function CheckboxTreeRow<T>(props: CheckboxTreeRowProps<T>) {
         )}
 
         {leadingColumn ? (
-          <div data-slot="checkbox-tree-leading" {...columnCellProps(leadingColumn, "leading")}>
+          <div data-slot="tree-leading" {...columnCellProps(leadingColumn, "leading")}>
             {leadingColumn.render(row)}
           </div>
         ) : null}
@@ -194,7 +194,7 @@ function CheckboxTreeRow<T>(props: CheckboxTreeRowProps<T>) {
 
         {trailingColumn ? (
           <div
-            data-slot="checkbox-tree-trailing"
+            data-slot="tree-trailing"
             {...columnCellProps(trailingColumn, "trailing")}
             className={cn(
               columnCellProps(trailingColumn, "trailing").className,
@@ -208,12 +208,12 @@ function CheckboxTreeRow<T>(props: CheckboxTreeRowProps<T>) {
 
       {expanded
         ? node.children.map((child) => (
-            <CheckboxTreeRow key={child.id} {...props} node={child} depth={depth + 1} />
+            <TreeRow key={child.id} {...props} node={child} depth={depth + 1} />
           ))
         : null}
     </React.Fragment>
   );
 }
-CheckboxTreeRow.displayName = "CheckboxTree.Row";
+TreeRow.displayName = "Tree.Row";
 
-export { CheckboxTreeRow };
+export { TreeRow };

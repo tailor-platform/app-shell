@@ -1,12 +1,12 @@
 import {
   Button,
   Card,
-  CheckboxTree,
-  CheckboxTreePicker,
+  Tree,
+  TreePicker,
   Field,
   Layout,
   type AppShellPageProps,
-  type CheckboxTreeSelection,
+  type TreeSelection,
 } from "@tailor-platform/app-shell";
 import { useState } from "react";
 
@@ -59,20 +59,20 @@ const WAREHOUSES: Warehouse[] = [
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 
-const CheckboxTreeDemoPage = () => {
+const TreeDemoPage = () => {
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<Product[]>([]);
   const [skus, setSkus] = useState<string[]>([]);
-  const [bins, setBins] = useState<CheckboxTreeSelection>({});
+  const [bins, setBins] = useState<TreeSelection>({});
   const [submitted, setSubmitted] = useState<string[] | null>(null);
 
   return (
     <Layout>
       <Layout.Column>
-        {/* 🔽 CheckboxTreePicker: pick, then add */}
+        {/* 🔽 TreePicker: pick, then add */}
         <Card.Root>
           <Card.Header
-            title="CheckboxTreePicker"
+            title="TreePicker"
             description="Pick many products from a grouped catalog and commit them in one batch."
           >
             <div className="flex items-center justify-end gap-2">
@@ -95,14 +95,14 @@ const CheckboxTreeDemoPage = () => {
           </Card.Content>
         </Card.Root>
 
-        {/* 🔽 CheckboxTree inline, "keys" shape: a product in two categories is one selection */}
+        {/* 🔽 Tree inline, "keys" shape: a product in two categories is one selection */}
         <Card.Root>
           <Card.Header
-            title="CheckboxTree (keys)"
+            title="Tree (keys)"
             description={`${skus.length} selected: ${skus.join(", ") || "none"}. The tote and cap are also in "Gift edit"; ticking either copy ticks both.`}
           />
           <Card.Content padding="none">
-            <CheckboxTree<CatalogNode>
+            <Tree<CatalogNode>
               aria-label="Catalog"
               className="h-80"
               items={CATALOG}
@@ -123,10 +123,10 @@ const CheckboxTreeDemoPage = () => {
           </Card.Content>
         </Card.Root>
 
-        {/* 🔽 CheckboxTree in a form, "exact" shape: A1 in Tokyo and A1 in Osaka are different bins */}
+        {/* 🔽 Tree in a form, "exact" shape: A1 in Tokyo and A1 in Osaka are different bins */}
         <Card.Root>
           <Card.Header
-            title="CheckboxTree in a form (exact)"
+            title="Tree in a form (exact)"
             description="Bin codes repeat across warehouses, so each bin is selected on its own. B1 is locked while it's being counted. Submit to see the form data."
           />
           <Card.Content>
@@ -139,7 +139,7 @@ const CheckboxTreeDemoPage = () => {
             >
               <Field.Root name="bins">
                 <Field.Label>Bins to count</Field.Label>
-                <CheckboxTree<StockNode>
+                <Tree<StockNode>
                   className="h-72 rounded-md border"
                   items={WAREHOUSES}
                   mapItem={(node) =>
@@ -174,7 +174,7 @@ const CheckboxTreeDemoPage = () => {
           </Card.Content>
         </Card.Root>
 
-        <CheckboxTreePicker<CatalogNode>
+        <TreePicker<CatalogNode>
           open={open}
           onOpenChange={setOpen}
           title="Add products"
@@ -204,10 +204,10 @@ const CheckboxTreeDemoPage = () => {
   );
 };
 
-CheckboxTreeDemoPage.appShellPageProps = {
+TreeDemoPage.appShellPageProps = {
   meta: {
     title: "Checkbox Tree",
   },
 } satisfies AppShellPageProps;
 
-export default CheckboxTreeDemoPage;
+export default TreeDemoPage;

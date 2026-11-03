@@ -6,7 +6,7 @@ import { useLabelableContext, useLabelableId } from "@base-ui/react/internals/la
 
 /**
  * @internal
- * Bridges CheckboxTree into Base UI's `Field` / `Form`, the way the date
+ * Bridges Tree into Base UI's `Field` / `Form`, the way the date
  * widgets do (see `use-date-field-bridge.ts`): a hidden, nameless proxy
  * `<input>` is registered as the field control, so `required`, `Field.Error`,
  * dirty/filled/touched state and `Form` submit-blocking all work. The field's
@@ -16,7 +16,7 @@ import { useLabelableContext, useLabelableId } from "@base-ui/react/internals/la
  * through separate hidden inputs (one per value), rendered by the component.
  */
 
-type UseCheckboxTreeFieldOptions = {
+type UseTreeFieldOptions = {
   id?: string;
   name?: string;
   disabled?: boolean;
@@ -43,7 +43,7 @@ export function serializeValues(values: readonly string[]): string {
   return values.length === 0 ? "" : JSON.stringify(values);
 }
 
-export function useCheckboxTreeField({
+export function useTreeField({
   id,
   name,
   disabled,
@@ -52,7 +52,7 @@ export function useCheckboxTreeField({
   onBlur,
   rootRef,
   inputRef,
-}: UseCheckboxTreeFieldOptions) {
+}: UseTreeFieldOptions) {
   const fieldRoot = useFieldRootContext();
   const { clearErrors } = useFormContext();
   const { labelId, messageIds } = useLabelableContext();

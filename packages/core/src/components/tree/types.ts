@@ -1,10 +1,10 @@
 import type * as React from "react";
 
 /**
- * How {@link CheckboxTree} reads one of your items. Mirrors `MappedItem` from
+ * How {@link Tree} reads one of your items. Mirrors `MappedItem` from
  * `Select` / `Combobox`, plus the tree's `children` and `disabled`.
  */
-export type CheckboxTreeMappedItem<T> = {
+export type TreeMappedItem<T> = {
   /** Identifies the item among its siblings. Only needs to be unique within its parent. */
   key: string;
   /** Plain text: the default row content, the default search text, and the accessible name. */
@@ -24,10 +24,10 @@ export type CheckboxTreeMappedItem<T> = {
  * // Bin A1 in Warehouse X, plus every bin in Warehouse Y
  * { "wh-x": { A1: true }, "wh-y": true }
  */
-export type CheckboxTreeSelection = { [key: string]: true | CheckboxTreeSelection };
+export type TreeSelection = { [key: string]: true | TreeSelection };
 
-/** One selected leaf, as reported by `onValueChange` and `CheckboxTreePicker`'s `onCommit`. */
-export type CheckboxTreeSelectedItem<T> = {
+/** One selected leaf, as reported by `onValueChange` and `TreePicker`'s `onCommit`. */
+export type TreeSelectedItem<T> = {
   /** The leaf's own `key`. */
   key: string;
   /** Keys from the top level down to this leaf. */
@@ -38,13 +38,13 @@ export type CheckboxTreeSelectedItem<T> = {
   parents: T[];
 };
 
-export type CheckboxTreeChangeDetails<T> = {
+export type TreeChangeDetails<T> = {
   /** The selected leaves in tree order. In `"keys"` mode, one entry per key. */
-  selected: CheckboxTreeSelectedItem<T>[];
+  selected: TreeSelectedItem<T>[];
 };
 
 /** What `renderItem` and the column `render` functions receive for each row. */
-export type CheckboxTreeRowState<T> = {
+export type TreeRowState<T> = {
   item: T;
   key: string;
   path: string[];
@@ -61,29 +61,29 @@ export type CheckboxTreeRowState<T> = {
 };
 
 /** An extra column beside the main one. The tree lines it up across rows and gives it a header cell. */
-export type CheckboxTreeColumn<T> = {
+export type TreeColumn<T> = {
   header?: React.ReactNode;
-  render: (row: CheckboxTreeRowState<T>) => React.ReactNode;
+  render: (row: TreeRowState<T>) => React.ReactNode;
   /** Defaults to `"start"` for the leading column and `"end"` for the trailing one. */
   align?: "start" | "center" | "end";
   /** Fixed width (px number or CSS length). Set it so cells line up when content varies. */
   width?: number | string;
 };
 
-/** What the tree shows and how it is searched — shared by `CheckboxTree` and `CheckboxTreePicker`. */
-export interface CheckboxTreeContentProps<T> {
+/** What the tree shows and how it is searched — shared by `Tree` and `TreePicker`. */
+export interface TreeContentProps<T> {
   /** Your top-level items. Children come from `mapItem`. */
   items: ReadonlyArray<T>;
   /** Reads an item's key, label, children and disabled state. */
-  mapItem: (item: T) => CheckboxTreeMappedItem<T>;
+  mapItem: (item: T) => TreeMappedItem<T>;
   /** The main column's content. Defaults to the item's `label`. */
-  renderItem?: (row: CheckboxTreeRowState<T>) => React.ReactNode;
+  renderItem?: (row: TreeRowState<T>) => React.ReactNode;
   /** Header above the main column. Default: `"Item"`. */
   itemHeader?: React.ReactNode;
   /** A column between the expand caret and the main column (e.g. a thumbnail or status icon). */
-  leadingColumn?: CheckboxTreeColumn<T>;
+  leadingColumn?: TreeColumn<T>;
   /** A right-aligned column after the main one (e.g. price, stock or unit). */
-  trailingColumn?: CheckboxTreeColumn<T>;
+  trailingColumn?: TreeColumn<T>;
   /**
    * Search predicate. Defaults to a case-insensitive match on the item's
    * `label`. A node is kept when it or any descendant matches.
@@ -102,13 +102,13 @@ export interface CheckboxTreeContentProps<T> {
  * same product under two categories is one selection. Use it when leaf keys
  * are unique, or when repeats really are the same item.
  */
-export type CheckboxTreeKeysValueProps<T> = {
+export type TreeKeysValueProps<T> = {
   valueShape?: "keys";
   /** Controlled selection: the selected leaf keys. */
   value?: readonly string[];
   /** Initial selection when uncontrolled. */
   defaultValue?: readonly string[];
-  onValueChange?: (value: string[], details: CheckboxTreeChangeDetails<T>) => void;
+  onValueChange?: (value: string[], details: TreeChangeDetails<T>) => void;
 };
 
 /**
@@ -116,22 +116,20 @@ export type CheckboxTreeKeysValueProps<T> = {
  * warehouses are two separate selections. Use it when leaf keys repeat with
  * different meanings.
  */
-export type CheckboxTreeExactValueProps<T> = {
+export type TreeExactValueProps<T> = {
   valueShape: "exact";
   /** Controlled selection. */
-  value?: CheckboxTreeSelection;
+  value?: TreeSelection;
   /** Initial selection when uncontrolled. */
-  defaultValue?: CheckboxTreeSelection;
-  onValueChange?: (value: CheckboxTreeSelection, details: CheckboxTreeChangeDetails<T>) => void;
+  defaultValue?: TreeSelection;
+  onValueChange?: (value: TreeSelection, details: TreeChangeDetails<T>) => void;
 };
 
-export type CheckboxTreeValueProps<T> =
-  | CheckboxTreeKeysValueProps<T>
-  | CheckboxTreeExactValueProps<T>;
+export type TreeValueProps<T> = TreeKeysValueProps<T> | TreeExactValueProps<T>;
 
-/** Props for {@link CheckboxTree}. */
-export type CheckboxTreeProps<T> = CheckboxTreeContentProps<T> &
-  CheckboxTreeValueProps<T> & {
+/** Props for {@link Tree}. */
+export type TreeProps<T> = TreeContentProps<T> &
+  TreeValueProps<T> & {
     /**
      * Enter on a row — the row's default action. When omitted and the tree is
      * inside a `<form>`, Enter submits the form (like Enter in a text input).
@@ -175,8 +173,8 @@ export type CheckboxTreeProps<T> = CheckboxTreeContentProps<T> &
     className?: string;
   };
 
-/** Props for {@link CheckboxTreePicker}. */
-export type CheckboxTreePickerProps<T> = CheckboxTreeContentProps<T> & {
+/** Props for {@link TreePicker}. */
+export type TreePickerProps<T> = TreeContentProps<T> & {
   /** Controls dialog visibility. */
   open: boolean;
   /**
@@ -187,10 +185,10 @@ export type CheckboxTreePickerProps<T> = CheckboxTreeContentProps<T> & {
   onOpenChange(open: boolean): void;
   /** Dialog title. Also labels the tree for assistive tech. Default: `"Select items"`. */
   title?: React.ReactNode;
-  /** How selection works while picking. See `CheckboxTree`'s `valueShape`. Default `"keys"`. */
+  /** How selection works while picking. See `Tree`'s `valueShape`. Default `"keys"`. */
   valueShape?: "keys" | "exact";
   /** Receives the selected leaves in tree order. */
-  onCommit(selected: CheckboxTreeSelectedItem<T>[]): void;
+  onCommit(selected: TreeSelectedItem<T>[]): void;
   /** Primary CTA label. Default: `"Add N items"`, or `"Add items"` when nothing is selected. */
   ctaLabel?(count: number): React.ReactNode;
   /** Merged onto the dialog panel. */

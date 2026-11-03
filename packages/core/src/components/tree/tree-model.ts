@@ -1,8 +1,4 @@
-import type {
-  CheckboxTreeMappedItem,
-  CheckboxTreeSelectedItem,
-  CheckboxTreeSelection,
-} from "./types";
+import type { TreeMappedItem, TreeSelectedItem, TreeSelection } from "./types";
 
 /**
  * @internal
@@ -34,7 +30,7 @@ export function pathId(path: readonly string[]): string {
 
 export function buildTree<T>(
   items: ReadonlyArray<T>,
-  mapItem: (item: T) => CheckboxTreeMappedItem<T>,
+  mapItem: (item: T) => TreeMappedItem<T>,
   parentPath: string[] = [],
   parents: T[] = [],
   parentDisabled = false,
@@ -162,7 +158,7 @@ export function checkState<T>(
   return { checked, indeterminate };
 }
 
-export function toSelectedItem<T>(leaf: TreeNode<T>): CheckboxTreeSelectedItem<T> {
+export function toSelectedItem<T>(leaf: TreeNode<T>): TreeSelectedItem<T> {
   return { key: leaf.key, path: leaf.path, item: leaf.item, parents: leaf.parents };
 }
 
@@ -209,10 +205,7 @@ export function keysFromIds<T>(
  * treated as a nested level, or a merge could write into `Object.prototype`.
  * A `__proto__` key can't be stored safely on a plain object, so it's skipped.
  */
-function ownEntry(
-  level: CheckboxTreeSelection,
-  key: string,
-): true | CheckboxTreeSelection | undefined {
+function ownEntry(level: TreeSelection, key: string): true | TreeSelection | undefined {
   return Object.hasOwn(level, key) ? level[key] : undefined;
 }
 
@@ -223,10 +216,10 @@ function isUnsafeKey(key: string): boolean {
 /** Leaf ids selected by an exact selection. `true` on a parent selects every leaf beneath it. */
 export function idsFromSelection<T>(
   nodes: ReadonlyArray<TreeNode<T>>,
-  selection: CheckboxTreeSelection | undefined,
+  selection: TreeSelection | undefined,
 ): Set<string> {
   const ids = new Set<string>();
-  const walk = (list: ReadonlyArray<TreeNode<T>>, level: CheckboxTreeSelection) => {
+  const walk = (list: ReadonlyArray<TreeNode<T>>, level: TreeSelection) => {
     for (const node of list) {
       const entry = ownEntry(level, node.key);
       if (entry === undefined) continue;
@@ -249,9 +242,9 @@ export function idsFromSelection<T>(
 export function selectionFromIds<T>(
   nodes: ReadonlyArray<TreeNode<T>>,
   ids: ReadonlySet<string>,
-  previous: CheckboxTreeSelection | undefined,
-): CheckboxTreeSelection {
-  const out: CheckboxTreeSelection = {};
+  previous: TreeSelection | undefined,
+): TreeSelection {
+  const out: TreeSelection = {};
   for (const leaf of allLeaves(nodes)) {
     if (!ids.has(leaf.id) || leaf.path.some(isUnsafeKey)) continue;
     let level = out;
@@ -262,7 +255,7 @@ export function selectionFromIds<T>(
       }
       const next = ownEntry(level, key);
       if (next === undefined || next === true) level[key] = {};
-      level = level[key] as CheckboxTreeSelection;
+      level = level[key] as TreeSelection;
     });
   }
   if (previous) mergeUnknown(out, previous, nodes);
@@ -275,7 +268,7 @@ export function selectionFromIds<T>(
  */
 export function unknownSelectionPaths<T>(
   nodes: ReadonlyArray<TreeNode<T>>,
-  selection: CheckboxTreeSelection | undefined,
+  selection: TreeSelection | undefined,
   prefix: string[] = [],
 ): string[][] {
   if (!selection) return [];
@@ -294,14 +287,14 @@ export function unknownSelectionPaths<T>(
   return out;
 }
 
-function selectionLeafPaths(entry: true | CheckboxTreeSelection, path: string[]): string[][] {
+function selectionLeafPaths(entry: true | TreeSelection, path: string[]): string[][] {
   if (entry === true) return [path];
   return Object.entries(entry).flatMap(([key, child]) => selectionLeafPaths(child, [...path, key]));
 }
 
 function mergeUnknown<T>(
-  out: CheckboxTreeSelection,
-  previous: CheckboxTreeSelection,
+  out: TreeSelection,
+  previous: TreeSelection,
   nodes: ReadonlyArray<TreeNode<T>>,
 ) {
   for (const [key, entry] of Object.entries(previous)) {
@@ -315,7 +308,7 @@ function mergeUnknown<T>(
     const children = matching.flatMap((node) => node.children);
     if (children.length === 0) continue;
     const target = ownEntry(out, key);
-    const level: CheckboxTreeSelection = target && target !== true ? target : {};
+    const level: TreeSelection = target && target !== true ? target : {};
     mergeUnknown(level, entry, children);
     if (Object.keys(level).length > 0 && target !== true) out[key] = level;
   }

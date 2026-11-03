@@ -5,8 +5,8 @@ import userEvent from "@testing-library/user-event";
 
 import { Field } from "../field";
 import { Form } from "../form";
-import { CheckboxTree } from "./CheckboxTree";
-import type { CheckboxTreeSelection } from "./types";
+import { Tree } from "./Tree";
+import type { TreeSelection } from "./types";
 
 /** Warehouses with bins. Bin codes repeat across warehouses (A1 is in both). */
 type Node = { id: string; name: string; bins?: Node[]; locked?: boolean };
@@ -40,9 +40,9 @@ afterEach(() => {
   cleanup();
 });
 
-describe("CheckboxTree", () => {
+describe("Tree", () => {
   it("renders inline, without a dialog, named by aria-label", () => {
-    render(<CheckboxTree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />);
+    render(<Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />);
 
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("tree", { name: "Bins" })).toBeDefined();
@@ -50,7 +50,7 @@ describe("CheckboxTree", () => {
 
   it("shows each item's label by default and searches on it", async () => {
     const user = userEvent.setup();
-    render(<CheckboxTree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />);
+    render(<Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />);
 
     expect(screen.getByText("Warehouse X")).toBeDefined();
     await user.type(screen.getByRole("searchbox"), "y · a1");
@@ -62,7 +62,7 @@ describe("CheckboxTree", () => {
   it("gives renderItem and the columns the row state, and heads the columns", async () => {
     const user = userEvent.setup();
     render(
-      <CheckboxTree<Node>
+      <Tree<Node>
         items={WAREHOUSES}
         mapItem={mapItem}
         aria-label="Bins"
@@ -81,7 +81,7 @@ describe("CheckboxTree", () => {
       />,
     );
 
-    const header = document.querySelector("[data-slot=checkbox-tree-column-header]")!;
+    const header = document.querySelector("[data-slot=tree-column-header]")!;
     expect(header.textContent).toContain("Icon");
     expect(header.textContent).toContain("Location");
     expect(header.textContent).toContain("State");
@@ -89,12 +89,12 @@ describe("CheckboxTree", () => {
     await expand(user, "Warehouse X (depth 0)");
     await user.click(screen.getByText("X · A1 (depth 1, leaf)"));
     const parent = rowFor("Warehouse X (depth 0)");
-    expect(parent.querySelector("[data-slot=checkbox-tree-trailing]")!.textContent).toBe("some");
-    expect(parent.querySelector("[data-slot=checkbox-tree-leading]")!.textContent).toBe("▸");
+    expect(parent.querySelector("[data-slot=tree-trailing]")!.textContent).toBe("some");
+    expect(parent.querySelector("[data-slot=tree-leading]")!.textContent).toBe("▸");
   });
 
   it("shows focus on the search wrapper, since the input drops its own ring", () => {
-    render(<CheckboxTree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />);
+    render(<Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />);
     const wrapper = screen.getByRole("searchbox").parentElement!;
     expect(wrapper.className).toContain("focus-within:ring-[3px]");
   });
@@ -104,7 +104,7 @@ describe("CheckboxTree", () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
       render(
-        <CheckboxTree<Node>
+        <Tree<Node>
           items={WAREHOUSES}
           mapItem={mapItem}
           aria-label="Bins"
@@ -130,7 +130,7 @@ describe("CheckboxTree", () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
       render(
-        <CheckboxTree<Node>
+        <Tree<Node>
           items={WAREHOUSES}
           mapItem={mapItem}
           aria-label="Bins"
@@ -155,7 +155,7 @@ describe("CheckboxTree", () => {
         const [value, setValue] = React.useState<string[] | undefined>(undefined);
         return (
           <>
-            <CheckboxTree<Node>
+            <Tree<Node>
               items={WAREHOUSES}
               mapItem={mapItem}
               aria-label="Bins"
@@ -180,7 +180,7 @@ describe("CheckboxTree", () => {
         const [value, setValue] = React.useState<string[]>([]);
         return (
           <>
-            <CheckboxTree<Node>
+            <Tree<Node>
               items={WAREHOUSES}
               mapItem={mapItem}
               aria-label="Bins"
@@ -203,7 +203,7 @@ describe("CheckboxTree", () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
       render(
-        <CheckboxTree<Node>
+        <Tree<Node>
           items={WAREHOUSES}
           mapItem={mapItem}
           aria-label="Bins"
@@ -228,7 +228,7 @@ describe("CheckboxTree", () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
       render(
-        <CheckboxTree<Node>
+        <Tree<Node>
           items={WAREHOUSES}
           mapItem={mapItem}
           aria-label="Bins"
@@ -250,9 +250,9 @@ describe("CheckboxTree", () => {
     it("keeps branches of the value that aren't in the tree", async () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
-      const initial: CheckboxTreeSelection = { "wh-z": { B9: true } };
+      const initial: TreeSelection = { "wh-z": { B9: true } };
       render(
-        <CheckboxTree<Node>
+        <Tree<Node>
           items={WAREHOUSES}
           mapItem={mapItem}
           aria-label="Bins"
@@ -287,7 +287,7 @@ describe("CheckboxTree", () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
       render(
-        <CheckboxTree<Node>
+        <Tree<Node>
           items={WITH_LOCKED}
           mapItem={mapItem}
           aria-label="Bins"
@@ -295,7 +295,7 @@ describe("CheckboxTree", () => {
         />,
       );
 
-      await user.click(rowFor("Warehouse X").querySelector("[data-slot=checkbox-tree-checkbox]")!);
+      await user.click(rowFor("Warehouse X").querySelector("[data-slot=tree-checkbox]")!);
 
       expect(onValueChange).toHaveBeenLastCalledWith(["A1"], expect.anything());
       expect(checkedOf("Warehouse X")).toBe("true");
@@ -305,7 +305,7 @@ describe("CheckboxTree", () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
       render(
-        <CheckboxTree<Node>
+        <Tree<Node>
           items={WITH_LOCKED}
           mapItem={mapItem}
           aria-label="Bins"
@@ -324,7 +324,7 @@ describe("CheckboxTree", () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
       render(
-        <CheckboxTree<Node>
+        <Tree<Node>
           items={WITH_LOCKED}
           mapItem={mapItem}
           aria-label="Bins"
@@ -333,7 +333,7 @@ describe("CheckboxTree", () => {
         />,
       );
 
-      await user.click(rowFor("Warehouse X").querySelector("[data-slot=checkbox-tree-checkbox]")!);
+      await user.click(rowFor("Warehouse X").querySelector("[data-slot=tree-checkbox]")!);
       expect(onValueChange).toHaveBeenLastCalledWith(["A2"], expect.anything());
     });
   });
@@ -343,12 +343,7 @@ describe("CheckboxTree", () => {
       const user = userEvent.setup();
       const onAction = vi.fn();
       render(
-        <CheckboxTree<Node>
-          items={WAREHOUSES}
-          mapItem={mapItem}
-          aria-label="Bins"
-          onAction={onAction}
-        />,
+        <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" onAction={onAction} />,
       );
 
       rowFor("Loose stock").focus();
@@ -361,7 +356,7 @@ describe("CheckboxTree", () => {
       const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
       render(
         <form onSubmit={onSubmit}>
-          <CheckboxTree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />
+          <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />
         </form>,
       );
 
@@ -376,7 +371,7 @@ describe("CheckboxTree", () => {
       const user = userEvent.setup();
       render(
         <form data-testid="form">
-          <CheckboxTree<Node>
+          <Tree<Node>
             items={WAREHOUSES}
             mapItem={mapItem}
             aria-label="Bins"
@@ -399,7 +394,7 @@ describe("CheckboxTree", () => {
       const user = userEvent.setup();
       render(
         <form data-testid="form">
-          <CheckboxTree<Node>
+          <Tree<Node>
             items={WAREHOUSES}
             mapItem={mapItem}
             aria-label="Bins"
@@ -422,13 +417,7 @@ describe("CheckboxTree", () => {
       const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
       render(
         <form onSubmit={onSubmit}>
-          <CheckboxTree<Node>
-            items={WAREHOUSES}
-            mapItem={mapItem}
-            aria-label="Bins"
-            name="bins"
-            required
-          />
+          <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" name="bins" required />
           <button type="submit">Save</button>
         </form>,
       );
@@ -446,7 +435,7 @@ describe("CheckboxTree", () => {
       const onValueChange = vi.fn();
       render(
         <form data-testid="form">
-          <CheckboxTree<Node>
+          <Tree<Node>
             items={WAREHOUSES}
             mapItem={mapItem}
             aria-label="Bins"
@@ -470,7 +459,7 @@ describe("CheckboxTree", () => {
         <form data-testid="form">
           <Field.Root name="scope">
             <Field.Label>Bins to count</Field.Label>
-            <CheckboxTree<Node> items={WAREHOUSES} mapItem={mapItem} name="ignored" />
+            <Tree<Node> items={WAREHOUSES} mapItem={mapItem} name="ignored" />
             <Field.Description>Pick at least one.</Field.Description>
           </Field.Root>
         </form>,
@@ -492,11 +481,11 @@ describe("CheckboxTree", () => {
     it("marks itself invalid inside an invalid Field.Root, and disabled from it", () => {
       render(
         <Field.Root name="scope" error={{ message: "Required" }} disabled>
-          <CheckboxTree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />
+          <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />
         </Field.Root>,
       );
 
-      const root = document.querySelector("[data-slot=checkbox-tree]")!;
+      const root = document.querySelector("[data-slot=tree]")!;
       expect(root.hasAttribute("data-invalid")).toBe(true);
       expect(root.hasAttribute("data-disabled")).toBe(true);
     });
@@ -508,7 +497,7 @@ describe("CheckboxTree", () => {
       render(
         <Form onFormSubmit={onFormSubmit}>
           <Field.Root name="bins" validate={validate} validationMode="onChange">
-            <CheckboxTree<Node>
+            <Tree<Node>
               items={WAREHOUSES}
               mapItem={mapItem}
               aria-label="Bins"
@@ -530,7 +519,7 @@ describe("CheckboxTree", () => {
       const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
       render(
         <form data-testid="form">
-          <CheckboxTree<Node>
+          <Tree<Node>
             items={WAREHOUSES}
             mapItem={mapItem}
             aria-label="Bins"
@@ -559,7 +548,7 @@ describe("CheckboxTree", () => {
     it("submits exact selections for items that aren't loaded yet", () => {
       render(
         <form data-testid="form">
-          <CheckboxTree<Node>
+          <Tree<Node>
             items={WAREHOUSES}
             mapItem={mapItem}
             aria-label="Bins"
@@ -577,7 +566,7 @@ describe("CheckboxTree", () => {
     it("marks the tree aria-invalid inside an invalid Field.Root", () => {
       render(
         <Field.Root name="scope" error={{ message: "Required" }}>
-          <CheckboxTree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />
+          <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" />
         </Field.Root>,
       );
       expect(screen.getByRole("tree").getAttribute("aria-invalid")).toBe("true");
@@ -586,7 +575,7 @@ describe("CheckboxTree", () => {
     it("reports a pre-filled selection to Field on mount", () => {
       render(
         <Field.Root name="scope">
-          <CheckboxTree<Node>
+          <Tree<Node>
             items={WAREHOUSES}
             mapItem={mapItem}
             aria-label="Bins"
@@ -604,12 +593,7 @@ describe("CheckboxTree", () => {
       const onBlur = vi.fn();
       render(
         <>
-          <CheckboxTree<Node>
-            items={WAREHOUSES}
-            mapItem={mapItem}
-            aria-label="Bins"
-            onBlur={onBlur}
-          />
+          <Tree<Node> items={WAREHOUSES} mapItem={mapItem} aria-label="Bins" onBlur={onBlur} />
           <button>Outside</button>
         </>,
       );

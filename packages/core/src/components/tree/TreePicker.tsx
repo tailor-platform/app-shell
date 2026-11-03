@@ -4,18 +4,14 @@ import { Button } from "@/components/button";
 import { Dialog } from "@/components/dialog";
 import { cn } from "@/lib/utils";
 
-import { CheckboxTree } from "./CheckboxTree";
-import { useCheckboxTreeT } from "./i18n";
-import type {
-  CheckboxTreeContentProps,
-  CheckboxTreePickerProps,
-  CheckboxTreeSelectedItem,
-} from "./types";
+import { Tree } from "./Tree";
+import { useTreeT } from "./i18n";
+import type { TreeContentProps, TreePickerProps, TreeSelectedItem } from "./types";
 
 /**
- * A {@link CheckboxTree} in a dialog, for picking many items out of a
+ * A {@link Tree} in a dialog, for picking many items out of a
  * hierarchical catalog and committing them in one go — products with variants,
- * accounts with sub-accounts, warehouses with bins. It wraps `CheckboxTree` the
+ * accounts with sub-accounts, warehouses with bins. It wraps `Tree` the
  * way `DatePicker` wraps `DateField`.
  *
  * The picker owns the dialog chrome, the search box, expand/collapse, and the
@@ -34,7 +30,7 @@ import type {
  * @example
  * ### Bulk-adding catalog items
  * ```tsx
- * <CheckboxTreePicker<Category | Product>
+ * <TreePicker<Category | Product>
  *   open={open}
  *   onOpenChange={setOpen}
  *   title="Add items"
@@ -53,10 +49,10 @@ import type {
  * />
  * ```
  */
-// Exported inline: a separate `export { CheckboxTreePicker }` makes the
+// Exported inline: a separate `export { TreePicker }` makes the
 // declaration bundler emit the displayName namespace twice (exported and
 // local), which breaks consumers compiling with skipLibCheck: false.
-export function CheckboxTreePicker<T>({
+export function TreePicker<T>({
   open,
   onOpenChange,
   title,
@@ -65,7 +61,7 @@ export function CheckboxTreePicker<T>({
   ctaLabel,
   className,
   ...treeProps
-}: CheckboxTreePickerProps<T>) {
+}: TreePickerProps<T>) {
   // Each open starts clean (no query, nothing expanded or ticked): the body is
   // keyed by an open counter, bumped while rendering so the fresh state is in
   // the very first frame rather than one effect later.
@@ -79,7 +75,7 @@ export function CheckboxTreePicker<T>({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Content
-        data-slot="checkbox-tree-picker"
+        data-slot="tree-picker"
         className={cn(
           // A fixed height: the list scrolls inside, so opening or closing a
           // group never resizes the dialog or shifts what is on screen.
@@ -87,7 +83,7 @@ export function CheckboxTreePicker<T>({
           className,
         )}
       >
-        <CheckboxTreePickerBody
+        <TreePickerBody
           key={session}
           title={title}
           valueShape={valueShape}
@@ -100,25 +96,22 @@ export function CheckboxTreePicker<T>({
     </Dialog.Root>
   );
 }
-CheckboxTreePicker.displayName = "CheckboxTreePicker";
+TreePicker.displayName = "TreePicker";
 
 /** One open of the picker: the title, the tree, and the commit footer. */
-function CheckboxTreePickerBody<T>({
+function TreePickerBody<T>({
   title,
   valueShape,
   onOpenChange,
   onCommit,
   ctaLabel,
   treeProps,
-}: Pick<
-  CheckboxTreePickerProps<T>,
-  "title" | "valueShape" | "onOpenChange" | "onCommit" | "ctaLabel"
-> & {
-  treeProps: CheckboxTreeContentProps<T>;
+}: Pick<TreePickerProps<T>, "title" | "valueShape" | "onOpenChange" | "onCommit" | "ctaLabel"> & {
+  treeProps: TreeContentProps<T>;
 }) {
   const titleId = React.useId();
-  const t = useCheckboxTreeT();
-  const [selected, setSelected] = React.useState<CheckboxTreeSelectedItem<T>[]>([]);
+  const t = useTreeT();
+  const [selected, setSelected] = React.useState<TreeSelectedItem<T>[]>([]);
   const count = selected.length;
   const defaultCta = count > 0 ? t("addCount", { count }) : t("addItems");
 
@@ -130,15 +123,12 @@ function CheckboxTreePickerBody<T>({
 
   return (
     <>
-      <Dialog.Header
-        data-slot="checkbox-tree-picker-header"
-        className="astw:px-6 astw:pt-6 astw:pr-12"
-      >
+      <Dialog.Header data-slot="tree-picker-header" className="astw:px-6 astw:pt-6 astw:pr-12">
         <Dialog.Title id={titleId}>{title ?? t("title")}</Dialog.Title>
       </Dialog.Header>
 
       {valueShape === "exact" ? (
-        <CheckboxTree<T>
+        <Tree<T>
           {...treeProps}
           aria-labelledby={titleId}
           className="astw:flex-1"
@@ -147,7 +137,7 @@ function CheckboxTreePickerBody<T>({
           onAction={commit}
         />
       ) : (
-        <CheckboxTree<T>
+        <Tree<T>
           {...treeProps}
           aria-labelledby={titleId}
           className="astw:flex-1"
@@ -157,7 +147,7 @@ function CheckboxTreePickerBody<T>({
       )}
 
       <Dialog.Footer
-        data-slot="checkbox-tree-picker-footer"
+        data-slot="tree-picker-footer"
         className="astw:border-border astw:border-t astw:px-6 astw:py-4"
       >
         <Button variant="outline" onClick={() => onOpenChange(false)}>

@@ -2,14 +2,14 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add `CheckboxTree` and `CheckboxTreePicker` for picking many items from a hierarchical catalog. `CheckboxTree` is the searchable multi-select tree on its own, for use inline and in forms; `CheckboxTreePicker` is the same tree in a fixed-height dialog with an "Add N items" commit, the way `DatePicker` wraps `DateField`.
+Add `Tree` and `TreePicker` for picking many items from a hierarchical catalog. `Tree` is the searchable multi-select tree on its own, for use inline and in forms; `TreePicker` is the same tree in a fixed-height dialog with an "Add N items" commit, the way `DatePicker` wraps `DateField`.
 
 Pass your own items with `mapItem`, as with `Select` and `Combobox`. A key only needs to be unique among its siblings. Selection is leaf-only: ticking a parent selects every enabled leaf beneath it, and a parent's checkbox is checked or indeterminate from its leaves.
 
 ```tsx
-import { CheckboxTree } from "@tailor-platform/app-shell";
+import { Tree } from "@tailor-platform/app-shell";
 
-<CheckboxTree<Category | Product>
+<Tree<Category | Product>
   aria-label="Products"
   items={categories}
   mapItem={(item) =>

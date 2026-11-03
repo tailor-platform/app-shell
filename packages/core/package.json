@@ -99,7 +99,7 @@
     "vite": "catalog:",
     "vite-plugin-dts": "5.1.2",
     "vitest": "catalog:",
-    "zod": "4.4.3"
+    "zod": "4.6.7"
   },
   "peerDependencies": {
     "react": ">=19.2.7",

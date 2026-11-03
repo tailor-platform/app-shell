@@ -474,9 +474,9 @@
       ],
       "hashes": {
         "typeSurface": "33eb2bdd6be1c774",
-        "outline": "eec5179512971f96",
+        "outline": "03d4f5078057807b",
         "snapshot": "a97e067c66e46ef6",
-        "outputMd": "7133811af89213ef",
+        "outputMd": "9411a4ee5c7c7fcc",
         "examples": "e7100d7517f72495"
       }
     },
@@ -640,6 +640,23 @@
         "examples": "934c52d4e8761404"
       }
     },
+    "document-collection": {
+      "slug": "document-collection",
+      "kind": "prose",
+      "outline": "docs-src/pages/document-collection.docs.outline.md",
+      "output": "docs/pages/document-collection.md",
+      "examples": "docs-src/pages/document-collection.docs.examples.tsx",
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "704f2a634290f0c5",
+        "snapshot": null,
+        "outputMd": "7c710c6978202b80",
+        "examples": "42919afa03e3d727"
+      }
+    },
     "document-detail": {
       "slug": "document-detail",
       "kind": "prose",
@@ -651,9 +668,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "026a063f3026c87a",
+        "outline": "d1e3a6f4aac00477",
         "snapshot": null,
-        "outputMd": "930db027a28bbe24",
+        "outputMd": "bf349957a733247b",
         "examples": null
       }
     },
@@ -755,8 +772,8 @@
         "typeSurface": null,
         "outline": "a39589955fe582c8",
         "snapshot": null,
-        "outputMd": "be00d1109761b7f1",
-        "examples": "7836309f2df327ee"
+        "outputMd": "1f69b6eb698a9b82",
+        "examples": "aba616c9e6db2fc8"
       }
     },
     "form-sectioned": {
@@ -838,9 +855,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "37eafa8a70959a4d",
+        "outline": "07eb2846eac75d0b",
         "snapshot": null,
-        "outputMd": "a59a10293fba053b",
+        "outputMd": "0acfb736bcf90eff",
         "examples": null
       }
     },
@@ -1063,23 +1080,6 @@
         "snapshot": "03dedb3cc14b1eaf",
         "outputMd": "6f956d57a15366a0",
         "examples": "3e841d9dcde141f6"
-      }
-    },
-    "list-dense-scan": {
-      "slug": "list-dense-scan",
-      "kind": "prose",
-      "outline": "docs-src/patterns/list-dense-scan.docs.outline.md",
-      "output": "docs/patterns/list-dense-scan.md",
-      "examples": "docs-src/patterns/list-dense-scan.docs.examples.tsx",
-      "sources": [],
-      "claims": [],
-      "symbols": [],
-      "hashes": {
-        "typeSurface": null,
-        "outline": "4ee60b9818472d4b",
-        "snapshot": null,
-        "outputMd": "59c93617dc135033",
-        "examples": "c0a2bd60e8a04474"
       }
     },
     "menu": {
@@ -1767,7 +1767,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "d9acfbe48ada274b",
     "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "18b8fc747d52455a",
     "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "e189f95dbe4b0286",
-    "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "a59a10293fba053b",
+    "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "0acfb736bcf90eff",
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "5f77dda61ce9abd4",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
@@ -1788,7 +1788,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "7133811af89213ef",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "9411a4ee5c7c7fcc",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "df6777c49ca5c7e2",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "8e24da61e95b6434",
@@ -1846,7 +1846,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "30c15545ab3c4954",
     "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "30983a761bc61593",
     "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "be00d1109761b7f1",
+    "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "1f69b6eb698a9b82",
     "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",
     "packages/core/skills/app-shell-patterns/references/patterns/form-single-page.md": "10a0f4d91a120752",
     "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "851afb4672da6673",
@@ -1854,9 +1854,9 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "253fcea1c4e5a42c",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
-    "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
-    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "930db027a28bbe24",
+    "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "7c710c6978202b80",
+    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "bf349957a733247b",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "e0286979718e2769",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "2c900e3b4d203b31"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "4402348d1f010da7"
   }
 }

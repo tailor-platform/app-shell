@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { checkboxBoxClasses } from "@/components/checkbox/checkbox";
 
 import { useTreeT } from "./i18n";
-import { checkState, type TreeNode } from "./tree-model";
+import type { TreeNode } from "./tree-model";
 import type { TreeColumn, TreeContentProps, TreeRowState } from "./types";
 
 /**
@@ -15,8 +15,8 @@ import type { TreeColumn, TreeContentProps, TreeRowState } from "./types";
  * their nesting through `aria-level`, which is the flattened form of the ARIA
  * tree pattern.
  *
- * Parent state (`checked` / `indeterminate`) is always **derived** from the
- * leaf-only selection; nothing about a parent is ever stored.
+ * The checkbox comes from `getCheckState`: with `"full"` propagation a parent's
+ * state is derived from its leaves, otherwise each row shows its own.
  */
 
 type TreeRowProps<T> = Pick<
@@ -27,7 +27,7 @@ type TreeRowProps<T> = Pick<
   depth: number;
   isExpanded(id: string): boolean;
   onToggleExpand(id: string): void;
-  isSelected(leaf: TreeNode<T>): boolean;
+  getCheckState(node: TreeNode<T>): { checked: boolean; indeterminate: boolean };
   onToggleNode(node: TreeNode<T>, next: boolean): void;
   activeRowId: string | null;
   registerRow(id: string, element: HTMLElement | null): void;
@@ -63,7 +63,7 @@ function TreeRow<T>(props: TreeRowProps<T>) {
     isExpanded,
     onToggleExpand,
     hasBranches,
-    isSelected,
+    getCheckState,
     onToggleNode,
     renderItem,
     leadingColumn,
@@ -77,7 +77,7 @@ function TreeRow<T>(props: TreeRowProps<T>) {
   const leaf = node.isLeaf;
   const expanded = !leaf && isExpanded(node.id);
   const disabled = treeDisabled || node.disabled;
-  const { checked, indeterminate } = checkState(node, isSelected);
+  const { checked, indeterminate } = getCheckState(node);
   const keepsCaretSpace = depth === 0 && hasBranches;
 
   const row: TreeRowState<T> = {

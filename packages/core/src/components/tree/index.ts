@@ -9,4 +9,7 @@ export type {
   TreeProps,
   TreeRowState,
   TreeSelectedItem,
+  TreeSelectionBehaviorProps,
+  TreeSelectionPropagation,
+  TreeValueStrategy,
 } from "./types";

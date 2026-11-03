@@ -1,4 +1,10 @@
-import type { TreeMapItemContext, TreeMappedItem, TreeSelectedItem } from "./types";
+import type {
+  TreeMapItemContext,
+  TreeMappedItem,
+  TreeSelectedItem,
+  TreeSelectionPropagation,
+  TreeValueStrategy,
+} from "./types";
 
 /**
  * @internal
@@ -140,58 +146,167 @@ export function flattenVisible<T>(
   return into;
 }
 
+/* -------------------------------------------------------------- selection */
+
+/** Lookups the selection helpers share, built once per tree. */
+export type TreeIndex<T> = {
+  tree: TreeNode<T>[];
+  /** Every node, in tree order (a parent before its children). */
+  nodes: TreeNode<T>[];
+  /** Every row a key appears on. */
+  byKey: Map<string, TreeNode<T>[]>;
+};
+
+export function indexTree<T>(tree: TreeNode<T>[]): TreeIndex<T> {
+  const nodes: TreeNode<T>[] = [];
+  const byKey = new Map<string, TreeNode<T>[]>();
+  const walk = (list: ReadonlyArray<TreeNode<T>>) => {
+    for (const node of list) {
+      nodes.push(node);
+      const rows = byKey.get(node.key);
+      if (rows) rows.push(node);
+      else byKey.set(node.key, [node]);
+      walk(node.children);
+    }
+  };
+  walk(tree);
+  return { tree, nodes, byKey };
+}
+
+/** The checked keys a value stands for, plus the keys that aren't in the tree. */
+export type CheckedState = { checked: ReadonlySet<string>; unknown: string[] };
+
 /**
- * A parent's checkbox state from its leaves. `checked` needs every **enabled**
- * leaf selected (disabled ones can't be changed, so they don't hold a parent
- * back); `indeterminate` shows when anything beneath is selected but the parent
- * isn't fully checked.
+ * Reads a value. With `"full"` propagation only leaves hold state, so a parent
+ * key stands for every leaf beneath it. With the others, each key is that item
+ * alone. Keys that aren't in the tree (e.g. not loaded yet) are kept as they are.
+ */
+export function readValue<T>(
+  index: TreeIndex<T>,
+  value: readonly string[],
+  propagation: TreeSelectionPropagation,
+): CheckedState {
+  const checked = new Set<string>();
+  const unknown: string[] = [];
+  for (const key of value) {
+    const rows = index.byKey.get(key);
+    if (rows === undefined) {
+      if (!unknown.includes(key)) unknown.push(key);
+    } else if (propagation === "full") {
+      for (const row of rows) for (const leaf of leavesOf(row)) checked.add(leaf.key);
+    } else {
+      checked.add(key);
+    }
+  }
+  return { checked, unknown };
+}
+
+/** Every leaf beneath `node` is checked, disabled ones included. */
+function fullyChecked<T>(node: TreeNode<T>, checked: ReadonlySet<string>): boolean {
+  return leavesOf(node).every((leaf) => checked.has(leaf.key));
+}
+
+/**
+ * A row's checkbox. With `"full"` propagation a parent shows its leaves: checked
+ * when every **enabled** leaf is (disabled ones can't be changed, so they don't
+ * hold a parent back), and indeterminate when only some are. With the others a
+ * row shows its own state.
  */
 export function checkState<T>(
   node: TreeNode<T>,
-  isSelected: (leaf: TreeNode<T>) => boolean,
+  checked: ReadonlySet<string>,
+  propagation: TreeSelectionPropagation,
 ): { checked: boolean; indeterminate: boolean } {
-  if (node.isLeaf) return { checked: isSelected(node), indeterminate: false };
+  if (node.isLeaf || propagation !== "full") {
+    return { checked: checked.has(node.key), indeterminate: false };
+  }
   const leaves = leavesOf(node);
   const enabled = leaves.filter((leaf) => !leaf.disabled);
   const pool = enabled.length > 0 ? enabled : leaves;
-  const checked = pool.length > 0 && pool.every(isSelected);
-  const indeterminate = !checked && leaves.some(isSelected);
-  return { checked, indeterminate };
+  const isChecked = (leaf: TreeNode<T>) => checked.has(leaf.key);
+  const all = pool.length > 0 && pool.every(isChecked);
+  return { checked: all, indeterminate: !all && leaves.some(isChecked) };
 }
 
-export function toSelectedItem<T>(leaf: TreeNode<T>): TreeSelectedItem<T> {
-  return { key: leaf.key, item: leaf.item, parents: leaf.parents };
-}
-
-/** Leaf ids selected by a list of keys: every leaf whose key is listed, wherever it sits. */
-export function idsFromKeys<T>(leaves: ReadonlyArray<TreeNode<T>>, keys: readonly string[]) {
-  const wanted = new Set(keys);
-  return new Set(leaves.filter((leaf) => wanted.has(leaf.key)).map((leaf) => leaf.id));
+/** The descendants of `node`, in tree order. */
+function descendantsOf<T>(node: TreeNode<T>, into: TreeNode<T>[] = []): TreeNode<T>[] {
+  for (const child of node.children) {
+    into.push(child);
+    descendantsOf(child, into);
+  }
+  return into;
 }
 
 /**
- * The keys value after a selection change. Keys present in the tree are listed
- * in tree order; keys that aren't in the tree (e.g. items not loaded yet) are
- * kept as they were, since nothing on screen could have changed them.
+ * Ticks or clears `node`. `"full"` changes every enabled leaf beneath it,
+ * `"down"` the node and every enabled item beneath it, and `"none"` the node
+ * alone. Disabled items never change. Returns the same set when nothing does.
  */
-export function keysFromIds<T>(
-  leaves: ReadonlyArray<TreeNode<T>>,
-  ids: ReadonlySet<string>,
-  previous: readonly string[],
-): string[] {
-  const known = new Set(leaves.map((leaf) => leaf.key));
-  const out: string[] = [];
+export function toggleChecked<T>(
+  node: TreeNode<T>,
+  next: boolean,
+  checked: ReadonlySet<string>,
+  propagation: TreeSelectionPropagation,
+): ReadonlySet<string> {
+  let targets: TreeNode<T>[];
+  if (propagation === "full") targets = leavesOf(node);
+  else if (propagation === "down") targets = [node, ...descendantsOf(node)];
+  else targets = [node];
+  targets = targets.filter((target) => !target.disabled);
+  if (targets.length === 0) return checked;
+
+  const updated = new Set(checked);
+  for (const target of targets) {
+    if (next) updated.add(target.key);
+    else updated.delete(target.key);
+  }
+  return updated;
+}
+
+/**
+ * The items a checked set's value lists, in tree order and one per key (the
+ * value is their keys, then `state.unknown`). `"topmost"` lists a parent once every leaf beneath it is
+ * checked (disabled ones included, since the parent key stands for all of them)
+ * and skips what's beneath it. `"all"` with `"full"` lists those parents and
+ * every checked leaf.
+ */
+export function writeValue<T>(
+  index: TreeIndex<T>,
+  state: CheckedState,
+  propagation: TreeSelectionPropagation,
+  strategy: TreeValueStrategy,
+): TreeNode<T>[] {
+  const { checked } = state;
+  const out: TreeNode<T>[] = [];
   const seen = new Set<string>();
-  for (const leaf of leaves) {
-    if (!ids.has(leaf.id) || seen.has(leaf.key)) continue;
-    seen.add(leaf.key);
-    out.push(leaf.key);
+  const push = (node: TreeNode<T>) => {
+    if (seen.has(node.key)) return;
+    seen.add(node.key);
+    out.push(node);
+  };
+
+  if (propagation !== "full") {
+    for (const node of index.nodes) if (checked.has(node.key)) push(node);
+    return out;
   }
-  for (const key of previous) {
-    if (!known.has(key) && !seen.has(key)) {
-      seen.add(key);
-      out.push(key);
+
+  const walk = (list: ReadonlyArray<TreeNode<T>>) => {
+    for (const node of list) {
+      if (node.isLeaf) {
+        if (checked.has(node.key)) push(node);
+        continue;
+      }
+      if (strategy !== "leaves" && fullyChecked(node, checked)) {
+        push(node);
+        if (strategy === "topmost") continue;
+      }
+      walk(node.children);
     }
-  }
+  };
+  walk(index.tree);
   return out;
+}
+
+export function toSelectedItem<T>(node: TreeNode<T>): TreeSelectedItem<T> {
+  return { key: node.key, item: node.item, parents: node.parents };
 }

@@ -1,16 +1,25 @@
 import * as React from "react";
 
 import {
-  allLeaves,
   buildTree,
+  checkState,
   filterTree,
-  idsFromKeys,
-  keysFromIds,
-  leavesOf,
+  indexTree,
+  readValue,
+  toggleChecked,
   toSelectedItem,
+  writeValue,
+  type CheckedState,
   type TreeNode,
 } from "./tree-model";
-import type { TreeMapItemContext, TreeMappedItem, TreeSelectedItem, TreeValueProps } from "./types";
+import type {
+  TreeMapItemContext,
+  TreeMappedItem,
+  TreeSelectedItem,
+  TreeSelectionPropagation,
+  TreeValueProps,
+  TreeValueStrategy,
+} from "./types";
 
 /**
  * @internal
@@ -32,6 +41,8 @@ type UseTreeSelectionOptions<T> = {
    * form reset) reads as an empty selection instead of stale internal state.
    */
   controlled?: boolean;
+  selectionPropagation: TreeSelectionPropagation;
+  valueStrategy: TreeValueStrategy;
 } & TreeValueProps<T>;
 
 export type UseTreeSelectionResult<T> = {
@@ -43,10 +54,11 @@ export type UseTreeSelectionResult<T> = {
   isExpanded(id: string): boolean;
   toggleExpand(id: string): void;
   setExpanded(id: string, next: boolean): void;
-  isSelected(leaf: TreeNode<T>): boolean;
-  /** Selects or clears every enabled leaf beneath `node` in one update. */
+  /** A row's checkbox, as `selectionPropagation` derives it. */
+  getCheckState(node: TreeNode<T>): { checked: boolean; indeterminate: boolean };
+  /** Ticks or clears `node`, spreading as `selectionPropagation` says, in one update. */
   toggleNode(node: TreeNode<T>, next: boolean): void;
-  /** Selected leaves in tree order, one per key. */
+  /** The value's items in tree order, one per key. */
   selected: TreeSelectedItem<T>[];
   /** Selected keys that aren't in the tree (e.g. not loaded yet), kept as they were. */
   unknown: string[];
@@ -57,10 +69,17 @@ const EMPTY_KEYS: readonly string[] = [];
 export function useTreeSelection<T>(
   options: UseTreeSelectionOptions<T>,
 ): UseTreeSelectionResult<T> {
-  const { items, mapItem, matchesSearch, disabled = false } = options;
+  const {
+    items,
+    mapItem,
+    matchesSearch,
+    disabled = false,
+    selectionPropagation,
+    valueStrategy,
+  } = options;
 
   const tree = React.useMemo(() => buildTree(items, mapItem), [items, mapItem]);
-  const leaves = React.useMemo(() => allLeaves(tree), [tree]);
+  const index = React.useMemo(() => indexTree(tree), [tree]);
 
   const [query, setQuery] = React.useState("");
   const [userExpanded, setUserExpanded] = React.useState<Set<string>>(() => new Set());
@@ -80,28 +99,18 @@ export function useTreeSelection<T>(
   // A controlled `undefined` is an empty selection, never stale internal state.
   const keysValue = controlled ? (options.value ?? EMPTY_KEYS) : keysState;
 
-  const selectedIds = React.useMemo(() => idsFromKeys(leaves, keysValue), [leaves, keysValue]);
-
-  const selectedFrom = React.useCallback(
-    (ids: ReadonlySet<string>): TreeSelectedItem<T>[] => {
-      const out: TreeSelectedItem<T>[] = [];
-      const seenKeys = new Set<string>();
-      for (const leaf of leaves) {
-        if (!ids.has(leaf.id) || seenKeys.has(leaf.key)) continue;
-        seenKeys.add(leaf.key);
-        out.push(toSelectedItem(leaf));
-      }
-      return out;
-    },
-    [leaves],
+  const state = React.useMemo(
+    () => readValue(index, keysValue, selectionPropagation),
+    [index, keysValue, selectionPropagation],
   );
 
-  const selected = React.useMemo(() => selectedFrom(selectedIds), [selectedFrom, selectedIds]);
+  const listed = React.useCallback(
+    (next: CheckedState) => writeValue(index, next, selectionPropagation, valueStrategy),
+    [index, selectionPropagation, valueStrategy],
+  );
 
-  const unknown = React.useMemo(() => {
-    const known = new Set(leaves.map((leaf) => leaf.key));
-    return keysValue.filter((key) => !known.has(key));
-  }, [leaves, keysValue]);
+  const selected = React.useMemo(() => listed(state).map(toSelectedItem), [listed, state]);
+  const { unknown } = state;
 
   const { kept, autoExpand } = React.useMemo(() => {
     const trimmed = query.trim();
@@ -147,33 +156,25 @@ export function useTreeSelection<T>(
     [isExpanded, setExpanded],
   );
 
-  const isSelected = React.useCallback(
-    (leaf: TreeNode<T>) => selectedIds.has(leaf.id),
-    [selectedIds],
+  const getCheckState = React.useCallback(
+    (node: TreeNode<T>) => checkState(node, state.checked, selectionPropagation),
+    [state, selectionPropagation],
   );
 
   const { onValueChange } = options;
   const toggleNode = React.useCallback(
     (node: TreeNode<T>, next: boolean) => {
       if (disabled) return;
-      // Disabled leaves can't be changed, so a parent toggle skips them.
-      const affected = leavesOf(node).filter((leaf) => !leaf.disabled);
-      if (affected.length === 0) return;
+      const checked = toggleChecked(node, next, state.checked, selectionPropagation);
+      if (checked === state.checked) return;
 
-      const updated = new Set(selectedIds);
-      // A key is the identity, so every leaf sharing a key follows it.
-      const keys = new Set(affected.map((leaf) => leaf.key));
-      for (const leaf of leaves) {
-        if (!keys.has(leaf.key)) continue;
-        if (next) updated.add(leaf.id);
-        else updated.delete(leaf.id);
-      }
-
-      const value = keysFromIds(leaves, updated, keysValue);
+      const nextState = { checked, unknown: state.unknown };
+      const nodes = listed(nextState);
+      const value = [...nodes.map((entry) => entry.key), ...state.unknown];
       if (!controlled) setKeysState(value);
-      onValueChange?.(value, { selected: selectedFrom(updated) });
+      onValueChange?.(value, { selected: nodes.map(toSelectedItem) });
     },
-    [controlled, disabled, keysValue, leaves, onValueChange, selectedFrom, selectedIds],
+    [controlled, disabled, listed, onValueChange, selectionPropagation, state],
   );
 
   return {
@@ -184,7 +185,7 @@ export function useTreeSelection<T>(
     isExpanded,
     toggleExpand,
     setExpanded,
-    isSelected,
+    getCheckState,
     toggleNode,
     selected,
     unknown,

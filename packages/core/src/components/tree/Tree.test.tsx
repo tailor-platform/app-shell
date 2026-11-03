@@ -254,6 +254,103 @@ describe("Tree", () => {
     });
   });
 
+  describe("selectionPropagation and valueStrategy", () => {
+    const tickBox = (user: ReturnType<typeof userEvent.setup>, label: string) =>
+      user.click(rowFor(label).querySelector("[data-slot=tree-checkbox]") as HTMLElement);
+
+    it('reports a fully ticked parent in place of its leaves with valueStrategy "topmost"', async () => {
+      const user = userEvent.setup();
+      const onValueChange = vi.fn();
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={scopedMapItem}
+          aria-label="Bins"
+          valueStrategy="topmost"
+          onValueChange={onValueChange}
+        />,
+      );
+
+      await tickBox(user, "Warehouse X");
+      expect(onValueChange).toHaveBeenLastCalledWith(["wh-x"], {
+        selected: [expect.objectContaining({ key: "wh-x" })],
+      });
+    });
+
+    it("reads a parent key in the value as every leaf beneath it", async () => {
+      const user = userEvent.setup();
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={scopedMapItem}
+          aria-label="Bins"
+          defaultValue={["wh-x"]}
+        />,
+      );
+
+      await expand(user, "Warehouse X");
+      expect(checkedOf("Warehouse X")).toBe("true");
+      expect(checkedOf("X · A2")).toBe("true");
+    });
+
+    it('treats parents as items with selectionPropagation "down"', async () => {
+      const user = userEvent.setup();
+      const onValueChange = vi.fn();
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={scopedMapItem}
+          aria-label="Bins"
+          selectionPropagation="down"
+          onValueChange={onValueChange}
+        />,
+      );
+
+      await tickBox(user, "Warehouse X");
+      expect(onValueChange).toHaveBeenLastCalledWith(
+        ["wh-x", "wh-x/A1", "wh-x/A2"],
+        expect.anything(),
+      );
+
+      await expand(user, "Warehouse X");
+      await user.click(screen.getByText("X · A1"));
+      // The parent keeps its own state.
+      expect(checkedOf("Warehouse X")).toBe("true");
+      expect(onValueChange).toHaveBeenLastCalledWith(["wh-x", "wh-x/A2"], expect.anything());
+    });
+
+    it('ticks only the row itself with selectionPropagation "none", and never shows mixed', async () => {
+      const user = userEvent.setup();
+      const onValueChange = vi.fn();
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={scopedMapItem}
+          aria-label="Bins"
+          selectionPropagation="none"
+          onValueChange={onValueChange}
+        />,
+      );
+
+      await expand(user, "Warehouse X");
+      await user.click(screen.getByText("X · A1"));
+      expect(checkedOf("Warehouse X")).toBe("false");
+      await tickBox(user, "Warehouse X");
+      expect(checkedOf("X · A2")).toBe("false");
+      expect(onValueChange).toHaveBeenLastCalledWith(["wh-x", "wh-x/A1"], expect.anything());
+    });
+
+    it("rules out combinations that would lose a parent's state", () => {
+      const base = { items: WAREHOUSES, mapItem, "aria-label": "Bins" };
+      // @ts-expect-error parents that are items need valueStrategy "all"
+      void (<Tree<Node> {...base} selectionPropagation="down" valueStrategy="leaves" />);
+      // @ts-expect-error parents that are items need valueStrategy "all"
+      void (<Tree<Node> {...base} selectionPropagation="none" valueStrategy="topmost" />);
+      void (<Tree<Node> {...base} selectionPropagation="none" valueStrategy="all" />);
+      void (<Tree<Node> {...base} valueStrategy="all" />);
+    });
+  });
+
   describe("disabled items", () => {
     const WITH_LOCKED: Node[] = [
       {

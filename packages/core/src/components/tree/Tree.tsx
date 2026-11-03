@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 import { TreeRow, columnCellProps } from "./TreeRow";
 import { useTreeT } from "./i18n";
-import { checkState, flattenVisible, type TreeNode } from "./tree-model";
+import { flattenVisible, type TreeNode } from "./tree-model";
 import type { TreeChangeDetails, TreeProps, TreeSelectedItem } from "./types";
 import { useTreeField } from "./use-tree-field";
 import { useTreeFocus } from "./use-tree-focus";
@@ -18,9 +18,10 @@ type SubmittedEntry = { id: string; value: string };
 /**
  * A searchable, multi-select checkbox tree for picking many items out of a
  * hierarchical catalog — products with variants, accounts with sub-accounts,
- * warehouses with bins. Selection is leaf-only: ticking a parent selects every
- * enabled leaf beneath it, and a parent's checkbox shows checked or
- * indeterminate from its leaves.
+ * warehouses with bins. By default parents are containers: ticking one ticks
+ * every enabled leaf beneath it, its checkbox shows checked or indeterminate from
+ * its leaves, and the value lists leaves. `selectionPropagation` makes parents
+ * items in their own right, and `valueStrategy` chooses what the value lists.
  *
  * Pass your own items with `mapItem` (as with `Select` / `Combobox`). The
  * selection is a list of keys, and the same key in two places is one item. When
@@ -81,6 +82,10 @@ export function Tree<T>(props: TreeProps<T>) {
     className,
   } = props;
   const t = useTreeT();
+  const selectionPropagation = props.selectionPropagation ?? "full";
+  // Only "all" keeps a parent's own state, so it's the only strategy when
+  // parents are items (the types already rule the others out).
+  const valueStrategy = selectionPropagation === "full" ? (props.valueStrategy ?? "leaves") : "all";
   const rootRef = React.useRef<HTMLDivElement>(null);
   const fieldRoot = useFieldRootContext();
   const treeDisabled = !!disabled || !!fieldRoot.disabled;
@@ -126,7 +131,7 @@ export function Tree<T>(props: TreeProps<T>) {
     isExpanded,
     toggleExpand,
     setExpanded,
-    isSelected,
+    getCheckState,
     toggleNode,
     selected,
     unknown,
@@ -138,6 +143,8 @@ export function Tree<T>(props: TreeProps<T>) {
     // A `value` prop that is present but `undefined` (e.g. a form reset) is
     // still controlled: it means "nothing selected".
     controlled: "value" in props,
+    selectionPropagation,
+    valueStrategy,
     value: props.value,
     defaultValue: props.defaultValue,
     onValueChange: handleValueChange,
@@ -164,8 +171,8 @@ export function Tree<T>(props: TreeProps<T>) {
   const hasBranches = tree.some((node) => !node.isLeaf);
 
   const isChecked = React.useCallback(
-    (node: TreeNode<T>) => checkState(node, isSelected).checked,
-    [isSelected],
+    (node: TreeNode<T>) => getCheckState(node).checked,
+    [getCheckState],
   );
 
   // With no `onAction`, Enter on a row submits the owning form — as Enter in a
@@ -323,7 +330,7 @@ export function Tree<T>(props: TreeProps<T>) {
               hasBranches={hasBranches}
               isExpanded={isExpanded}
               onToggleExpand={toggleExpand}
-              isSelected={isSelected}
+              getCheckState={getCheckState}
               onToggleNode={toggleNode}
               renderItem={renderItem}
               leadingColumn={leadingColumn}

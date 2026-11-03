@@ -6,11 +6,16 @@ import {
   checkState,
   filterTree,
   flattenVisible,
-  idsFromKeys,
-  keysFromIds,
+  indexTree,
   leavesOf,
   pathId,
+  readValue,
+  toggleChecked,
+  writeValue,
+  type CheckedState,
+  type TreeNode,
 } from "./tree-model";
+import type { TreeSelectionPropagation, TreeValueStrategy } from "./types";
 
 type Item = { key: string; name: string; children?: Item[]; disabled?: boolean };
 
@@ -37,6 +42,23 @@ const mapItem = (item: Item) => ({
 });
 
 const tree = () => buildTree(ITEMS, mapItem);
+const index = () => indexTree(tree());
+const rowOf = (path: string[]) =>
+  index().nodes.find((node) => node.id === pathId(path)) as TreeNode<Item>;
+const valueOf = (
+  state: CheckedState,
+  propagation: TreeSelectionPropagation,
+  strategy: TreeValueStrategy,
+) => [
+  ...writeValue(index(), state, propagation, strategy).map((node) => node.key),
+  ...state.unknown,
+];
+const roundTrip = (
+  value: string[],
+  propagation: TreeSelectionPropagation,
+  strategy: TreeValueStrategy,
+) => valueOf(readValue(index(), value, propagation), propagation, strategy);
+
 const byName = (q: string) => (node: { label: string }) =>
   node.label.toLowerCase().includes(q.toLowerCase());
 
@@ -108,8 +130,14 @@ describe("tree-model", () => {
     });
   });
 
-  describe("checkState", () => {
-    it("is checked when every enabled leaf is selected, ignoring disabled leaves", () => {
+  describe('selectionPropagation "full"', () => {
+    it("reads a leaf key wherever it appears, and a parent key as every leaf beneath it", () => {
+      const { checked, unknown } = readValue(index(), ["a", "c", "gone"], "full");
+      expect([...checked].sort()).toEqual(["a", "wide"]);
+      expect(unknown).toEqual(["gone"]);
+    });
+
+    it("is checked when every enabled leaf is, ignoring disabled leaves", () => {
       const nodes = buildTree(
         [
           {
@@ -123,32 +151,125 @@ describe("tree-model", () => {
         ],
         mapItem,
       );
-      const selected = new Set([pathId(["x", "x1"])]);
-      expect(checkState(nodes[0]!, (leaf) => selected.has(leaf.id))).toEqual({
+      expect(checkState(nodes[0]!, new Set(["x1"]), "full")).toEqual({
         checked: true,
         indeterminate: false,
       });
     });
 
-    it("is indeterminate when some leaves are selected", () => {
-      const selected = new Set([pathId(["p2", "a"])]);
-      expect(checkState(tree()[1]!, (leaf) => selected.has(leaf.id))).toEqual({
+    it("is indeterminate when some leaves are checked", () => {
+      expect(checkState(rowOf(["p2"]), new Set(["a"]), "full")).toEqual({
         checked: false,
         indeterminate: true,
       });
     });
-  });
 
-  describe("keys shape", () => {
-    it("selects every leaf with a listed key, wherever it sits", () => {
-      const ids = idsFromKeys(allLeaves(tree()), ["a"]);
-      expect([...ids]).toEqual([pathId(["p2", "a"]), pathId(["p3", "a"])]);
+    it("ticks every enabled leaf beneath a parent, and never the parent itself", () => {
+      const nodes = indexTree(
+        buildTree(
+          [
+            {
+              key: "x",
+              name: "X",
+              children: [
+                { key: "x1", name: "X1" },
+                { key: "x2", name: "X2", disabled: true },
+              ],
+            },
+          ],
+          mapItem,
+        ),
+      ).nodes;
+      expect([...toggleChecked(nodes[0]!, true, new Set(), "full")]).toEqual(["x1"]);
     });
 
-    it("reports keys in tree order, once each, and keeps keys not in the tree", () => {
-      const leaves = allLeaves(tree());
-      const ids = new Set([pathId(["p3", "a"]), pathId(["p2", "a"]), pathId(["p1"])]);
-      expect(keysFromIds(leaves, ids, ["gone"])).toEqual(["p1", "a", "gone"]);
+    it('lists checked leaves in tree order, once each, with "leaves"', () => {
+      const state = { checked: new Set(["wide", "a", "p1"]), unknown: ["gone"] };
+      expect(valueOf(state, "full", "leaves")).toEqual(["p1", "a", "wide", "gone"]);
+    });
+
+    it('lists a fully checked parent in place of its leaves with "topmost"', () => {
+      // p2 is partly checked, but its child c is complete, so c stands in for "wide".
+      const state = { checked: new Set(["a", "wide"]), unknown: [] };
+      expect(valueOf(state, "full", "topmost")).toEqual(["a", "c", "p3"]);
+    });
+
+    it('keeps a parent with an unchecked disabled leaf out of "topmost"', () => {
+      const nodes = buildTree(
+        [
+          {
+            key: "x",
+            name: "X",
+            children: [
+              { key: "x1", name: "X1" },
+              { key: "x2", name: "X2", disabled: true },
+            ],
+          },
+        ],
+        mapItem,
+      );
+      const state = { checked: new Set(["x1"]), unknown: [] };
+      expect(writeValue(indexTree(nodes), state, "full", "topmost").map((n) => n.key)).toEqual([
+        "x1",
+      ]);
+    });
+
+    it('lists fully checked parents and every checked leaf with "all"', () => {
+      const state = { checked: new Set(["a", "wide"]), unknown: [] };
+      expect(valueOf(state, "full", "all")).toEqual(["a", "c", "wide", "p3"]);
+    });
+
+    it("round-trips every strategy", () => {
+      expect(roundTrip(["a", "wide", "gone"], "full", "leaves")).toEqual(["a", "wide", "gone"]);
+      expect(roundTrip(["a", "c", "p3", "gone"], "full", "topmost")).toEqual([
+        "a",
+        "c",
+        "p3",
+        "gone",
+      ]);
+      expect(roundTrip(["a", "c", "wide", "p3"], "full", "all")).toEqual(["a", "c", "wide", "p3"]);
+    });
+  });
+
+  describe('selectionPropagation "down"', () => {
+    it("ticks a parent and every enabled item beneath it", () => {
+      const checked = toggleChecked(rowOf(["p2"]), true, new Set(), "down");
+      expect(valueOf({ checked, unknown: [] }, "down", "all")).toEqual([
+        "p2",
+        "a",
+        "b",
+        "c",
+        "wide",
+      ]);
+    });
+
+    it("leaves a parent ticked when a child is unticked, and shows its own state", () => {
+      const all = toggleChecked(rowOf(["p2"]), true, new Set(), "down");
+      const checked = toggleChecked(rowOf(["p2", "b"]), false, all, "down");
+      expect(checkState(rowOf(["p2"]), checked, "down")).toEqual({
+        checked: true,
+        indeterminate: false,
+      });
+      expect(checkState(rowOf(["p2", "b"]), checked, "down").checked).toBe(false);
+    });
+
+    it("reads a parent key as that parent alone, and round-trips", () => {
+      expect([...readValue(index(), ["p2"], "down").checked]).toEqual(["p2"]);
+      expect(roundTrip(["p2", "wide", "gone"], "down", "all")).toEqual(["p2", "wide", "gone"]);
+    });
+  });
+
+  describe('selectionPropagation "none"', () => {
+    it("ticks only the item itself, parents included", () => {
+      const checked = toggleChecked(rowOf(["p2"]), true, new Set(), "none");
+      expect([...checked]).toEqual(["p2"]);
+      expect(checkState(rowOf(["p2", "a"]), checked, "none").checked).toBe(false);
+    });
+
+    it("never changes a disabled item", () => {
+      const nodes = indexTree(buildTree([{ key: "x", name: "X", disabled: true }], mapItem)).nodes;
+      const checked = new Set<string>();
+      expect(toggleChecked(nodes[0]!, true, checked, "none")).toBe(checked);
     });
   });
 });

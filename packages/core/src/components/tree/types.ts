@@ -19,17 +19,17 @@ export type TreeMappedItem<T> = {
   disabled?: boolean;
 };
 
-/** One selected leaf, as reported by `onValueChange` and `TreePicker`'s `onCommit`. */
+/** One entry of the value, as reported by `onValueChange` and `TreePicker`'s `onCommit`. */
 export type TreeSelectedItem<T> = {
   key: string;
   /** Your original item. */
   item: T;
-  /** The leaf's ancestors, top level first. */
+  /** The item's ancestors, top level first. */
   parents: T[];
 };
 
 export type TreeChangeDetails<T> = {
-  /** The selected leaves in tree order, one entry per key. */
+  /** The value's items in tree order, one per key. Keys that aren't in the tree are left out. */
   selected: TreeSelectedItem<T>[];
 };
 
@@ -41,9 +41,9 @@ export type TreeRowState<T> = {
   /** 0 for top-level rows. */
   depth: number;
   isLeaf: boolean;
-  /** For a parent: every enabled leaf beneath it is selected. */
+  /** The row's checkbox is ticked. With `"full"` propagation, a parent is ticked when every enabled leaf beneath it is. */
   checked: boolean;
-  /** For a parent: some, but not all, enabled leaves beneath it are selected. */
+  /** With `"full"` propagation, a parent with some, but not all, enabled leaves ticked. */
   indeterminate: boolean;
   expanded: boolean;
   disabled: boolean;
@@ -92,9 +92,49 @@ export interface TreeContentProps<T> {
   searchPlaceholder?: string;
 }
 
-/** The selection: a list of leaf keys. */
+/**
+ * How ticking spreads through the tree.
+ *
+ * - `"full"`: parents are containers. Ticking one ticks every leaf beneath it,
+ *   and its checkbox is derived from its leaves (checked or indeterminate).
+ * - `"down"`: parents are items in their own right. Ticking one also ticks
+ *   everything beneath it, but unticking a child leaves it ticked.
+ * - `"none"`: every item is ticked on its own.
+ */
+export type TreeSelectionPropagation = "full" | "down" | "none";
+
+/**
+ * What the value lists.
+ *
+ * - `"leaves"`: the checked leaves.
+ * - `"topmost"`: a parent in place of its leaves once every leaf beneath it is
+ *   checked. A parent key then means "everything beneath it".
+ * - `"all"`: every checked item, parents included.
+ */
+export type TreeValueStrategy = "leaves" | "topmost" | "all";
+
+/**
+ * How ticking works and what the value lists. Only some combinations make
+ * sense: when parents are items in their own right, only `"all"` keeps their
+ * state, so it's the one value strategy they allow.
+ */
+export type TreeSelectionBehaviorProps =
+  | {
+      /** How ticking spreads through the tree. Default `"full"`. */
+      selectionPropagation?: "full";
+      /** What the value lists. Default `"leaves"`. */
+      valueStrategy?: TreeValueStrategy;
+    }
+  | {
+      /** How ticking spreads through the tree. Default `"full"`. */
+      selectionPropagation: "down" | "none";
+      /** What the value lists. `"all"` is the only strategy that keeps a parent's own state. */
+      valueStrategy?: "all";
+    };
+
+/** The selection: a list of keys. Which keys depends on `valueStrategy`. */
 export type TreeValueProps<T> = {
-  /** Controlled selection: the selected leaf keys. */
+  /** Controlled selection: the checked keys. */
   value?: readonly string[];
   /** Initial selection when uncontrolled. */
   defaultValue?: readonly string[];
@@ -103,7 +143,8 @@ export type TreeValueProps<T> = {
 
 /** Props for {@link Tree}. */
 export type TreeProps<T> = TreeContentProps<T> &
-  TreeValueProps<T> & {
+  TreeValueProps<T> &
+  TreeSelectionBehaviorProps & {
     /**
      * Enter on a row — the row's default action. When omitted and the tree is
      * inside a `<form>`, Enter submits the form (like Enter in a text input).
@@ -145,21 +186,22 @@ export type TreeProps<T> = TreeContentProps<T> &
   };
 
 /** Props for {@link TreePicker}. */
-export type TreePickerProps<T> = TreeContentProps<T> & {
-  /** Controls dialog visibility. */
-  open: boolean;
-  /**
-   * Fires on every user-driven open/close (Esc, backdrop, close button, Cancel,
-   * and after a successful commit). The picker closes itself after `onCommit`,
-   * so consumers should not also call this from their commit handler.
-   */
-  onOpenChange(open: boolean): void;
-  /** Dialog title. Also labels the tree for assistive tech. Default: `"Select items"`. */
-  title?: React.ReactNode;
-  /** Receives the selected leaves in tree order. */
-  onCommit(selected: TreeSelectedItem<T>[]): void;
-  /** Primary CTA label. Default: `"Add N items"`, or `"Add items"` when nothing is selected. */
-  ctaLabel?(count: number): React.ReactNode;
-  /** Merged onto the dialog panel. */
-  className?: string;
-};
+export type TreePickerProps<T> = TreeContentProps<T> &
+  TreeSelectionBehaviorProps & {
+    /** Controls dialog visibility. */
+    open: boolean;
+    /**
+     * Fires on every user-driven open/close (Esc, backdrop, close button, Cancel,
+     * and after a successful commit). The picker closes itself after `onCommit`,
+     * so consumers should not also call this from their commit handler.
+     */
+    onOpenChange(open: boolean): void;
+    /** Dialog title. Also labels the tree for assistive tech. Default: `"Select items"`. */
+    title?: React.ReactNode;
+    /** Receives the value's items in tree order (see `valueStrategy`). */
+    onCommit(selected: TreeSelectedItem<T>[]): void;
+    /** Primary CTA label. Default: `"Add N items"`, or `"Add items"` when nothing is selected. */
+    ctaLabel?(count: number): React.ReactNode;
+    /** Merged onto the dialog panel. */
+    className?: string;
+  };

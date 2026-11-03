@@ -6,7 +6,12 @@ import { cn } from "@/lib/utils";
 
 import { Tree } from "./Tree";
 import { useTreeT } from "./i18n";
-import type { TreeContentProps, TreePickerProps, TreeSelectedItem } from "./types";
+import type {
+  TreeContentProps,
+  TreePickerProps,
+  TreeSelectedItem,
+  TreeSelectionBehaviorProps,
+} from "./types";
 
 /**
  * A {@link Tree} in a dialog, for picking many items out of a
@@ -19,10 +24,11 @@ import type { TreeContentProps, TreePickerProps, TreeSelectedItem } from "./type
  * items are read (`mapItem`), how rows look (`renderItem`, `leadingColumn`,
  * `trailingColumn`) and what happens on commit (`onCommit`).
  *
- * Selection is **leaf-only**: ticking a parent selects every enabled leaf
- * beneath it, so `onCommit` always receives leaves, in tree order, with their
- * paths and parents. Enter on a row or the "Add N items" button commits, then
- * the picker closes itself.
+ * By default parents are containers: ticking one ticks every enabled leaf
+ * beneath it, and `onCommit` receives the ticked leaves in tree order with their
+ * parents. `selectionPropagation` and `valueStrategy` change that, as on `Tree`.
+ * Enter on a row or the "Add N items" button commits, then the picker closes
+ * itself.
  *
  * The dialog has a fixed height and the list scrolls inside it, so opening or
  * closing a group never shifts what is on screen.
@@ -104,7 +110,7 @@ function TreePickerBody<T>({
   ctaLabel,
   treeProps,
 }: Pick<TreePickerProps<T>, "title" | "onOpenChange" | "onCommit" | "ctaLabel"> & {
-  treeProps: TreeContentProps<T>;
+  treeProps: TreeContentProps<T> & TreeSelectionBehaviorProps;
 }) {
   const titleId = React.useId();
   const t = useTreeT();

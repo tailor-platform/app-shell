@@ -309,7 +309,7 @@ describe("SidebarLayout", () => {
       expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
       const expandHandle = screen.getByRole("button", { name: "Expand sidebar" });
       Object.defineProperty(expandHandle, "setPointerCapture", { value: vi.fn() });
-      await user.click(expandHandle);
+      await user.dblClick(expandHandle);
       expect(
         screen.getByRole("separator", { name: "Resize sidebar" }).getAttribute("aria-valuenow"),
       ).toBe("256");
@@ -347,7 +347,7 @@ describe("SidebarLayout", () => {
 
       const expandHandle = screen.getByRole("button", { name: "Expand sidebar" });
       expect(expandHandle).toBe(handle);
-      await userEvent.setup().click(expandHandle);
+      await userEvent.setup().dblClick(expandHandle);
       expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBeDefined();
       expect(sidebarWidth()).toBe("256px");
     });

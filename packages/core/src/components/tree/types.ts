@@ -5,7 +5,11 @@ import type * as React from "react";
  * `Select` / `Combobox`, plus the tree's `children` and `disabled`.
  */
 export type TreeMappedItem<T> = {
-  /** Identifies the item among its siblings. Only needs to be unique within its parent. */
+  /**
+   * Identifies the item across the whole tree. The same key in two places is
+   * one item: ticking one ticks both. When codes repeat with different meanings
+   * (bin `A1` in two warehouses), compose a unique key from `parents`.
+   */
   key: string;
   /** Plain text: the default row content, the default search text, and the accessible name. */
   label: string;
@@ -15,23 +19,9 @@ export type TreeMappedItem<T> = {
   disabled?: boolean;
 };
 
-/**
- * An exact selection: nested by key, from the top level down. `true` selects
- * that leaf, or every leaf beneath that parent. Anything not listed is
- * unselected. `onValueChange` always reports leaves explicitly.
- *
- * @example
- * // Bin A1 in Warehouse X, plus every bin in Warehouse Y
- * { "wh-x": { A1: true }, "wh-y": true }
- */
-export type TreeSelection = { [key: string]: true | TreeSelection };
-
 /** One selected leaf, as reported by `onValueChange` and `TreePicker`'s `onCommit`. */
 export type TreeSelectedItem<T> = {
-  /** The leaf's own `key`. */
   key: string;
-  /** Keys from the top level down to this leaf. */
-  path: string[];
   /** Your original item. */
   item: T;
   /** The leaf's ancestors, top level first. */
@@ -39,7 +29,7 @@ export type TreeSelectedItem<T> = {
 };
 
 export type TreeChangeDetails<T> = {
-  /** The selected leaves in tree order. In `"keys"` mode, one entry per key. */
+  /** The selected leaves in tree order, one entry per key. */
   selected: TreeSelectedItem<T>[];
 };
 
@@ -47,7 +37,6 @@ export type TreeChangeDetails<T> = {
 export type TreeRowState<T> = {
   item: T;
   key: string;
-  path: string[];
   parents: T[];
   /** 0 for top-level rows. */
   depth: number;
@@ -61,6 +50,12 @@ export type TreeRowState<T> = {
 };
 
 /** An extra column beside the main one. The tree lines it up across rows and gives it a header cell. */
+/** What `mapItem` receives alongside each item. */
+export type TreeMapItemContext<T> = {
+  /** The item's ancestors, top level first. Empty for top-level items. */
+  parents: T[];
+};
+
 export type TreeColumn<T> = {
   header?: React.ReactNode;
   render: (row: TreeRowState<T>) => React.ReactNode;
@@ -75,7 +70,7 @@ export interface TreeContentProps<T> {
   /** Your top-level items. Children come from `mapItem`. */
   items: ReadonlyArray<T>;
   /** Reads an item's key, label, children and disabled state. */
-  mapItem: (item: T) => TreeMappedItem<T>;
+  mapItem: (item: T, context: TreeMapItemContext<T>) => TreeMappedItem<T>;
   /** The main column's content. Defaults to the item's `label`. */
   renderItem?: (row: TreeRowState<T>) => React.ReactNode;
   /** Header above the main column. Default: `"Item"`. */
@@ -97,35 +92,14 @@ export interface TreeContentProps<T> {
   searchPlaceholder?: string;
 }
 
-/**
- * Selection by leaf key: a leaf is selected wherever its key appears, so the
- * same product under two categories is one selection. Use it when leaf keys
- * are unique, or when repeats really are the same item.
- */
-export type TreeKeysValueProps<T> = {
-  valueShape?: "keys";
+/** The selection: a list of leaf keys. */
+export type TreeValueProps<T> = {
   /** Controlled selection: the selected leaf keys. */
   value?: readonly string[];
   /** Initial selection when uncontrolled. */
   defaultValue?: readonly string[];
   onValueChange?: (value: string[], details: TreeChangeDetails<T>) => void;
 };
-
-/**
- * Selection by position: each leaf is selected on its own, so `A1` in two
- * warehouses are two separate selections. Use it when leaf keys repeat with
- * different meanings.
- */
-export type TreeExactValueProps<T> = {
-  valueShape: "exact";
-  /** Controlled selection. */
-  value?: TreeSelection;
-  /** Initial selection when uncontrolled. */
-  defaultValue?: TreeSelection;
-  onValueChange?: (value: TreeSelection, details: TreeChangeDetails<T>) => void;
-};
-
-export type TreeValueProps<T> = TreeKeysValueProps<T> | TreeExactValueProps<T>;
 
 /** Props for {@link Tree}. */
 export type TreeProps<T> = TreeContentProps<T> &
@@ -143,11 +117,8 @@ export type TreeProps<T> = TreeContentProps<T> &
     name?: string;
     /** `id` of the form that owns the hidden inputs, when the tree is rendered outside it. */
     form?: string;
-    /**
-     * The string written into each hidden input. Defaults to the leaf's key in
-     * `"keys"` mode and `path.join("/")` in `"exact"` mode.
-     */
-    itemToStringValue?: (item: T, context: { path: string[]; parents: T[] }) => string;
+    /** The string written into each hidden input. Defaults to the leaf's key. */
+    itemToStringValue?: (item: T, context: TreeMapItemContext<T>) => string;
     /** At least one leaf must be selected before the owning form can submit. */
     required?: boolean;
     /** Locks the whole tree and leaves it out of form submission. */
@@ -185,8 +156,6 @@ export type TreePickerProps<T> = TreeContentProps<T> & {
   onOpenChange(open: boolean): void;
   /** Dialog title. Also labels the tree for assistive tech. Default: `"Select items"`. */
   title?: React.ReactNode;
-  /** How selection works while picking. See `Tree`'s `valueShape`. Default `"keys"`. */
-  valueShape?: "keys" | "exact";
   /** Receives the selected leaves in tree order. */
   onCommit(selected: TreeSelectedItem<T>[]): void;
   /** Primary CTA label. Default: `"Add N items"`, or `"Add items"` when nothing is selected. */

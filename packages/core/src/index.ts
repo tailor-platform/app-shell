@@ -180,12 +180,12 @@ export {
   TreePicker,
   type TreeChangeDetails,
   type TreeColumn,
+  type TreeMapItemContext,
   type TreeMappedItem,
   type TreePickerProps,
   type TreeProps,
   type TreeRowState,
   type TreeSelectedItem,
-  type TreeSelection,
 } from "./components/tree";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export {

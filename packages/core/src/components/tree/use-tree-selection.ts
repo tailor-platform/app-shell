@@ -5,33 +5,24 @@ import {
   buildTree,
   filterTree,
   idsFromKeys,
-  idsFromSelection,
   keysFromIds,
   leavesOf,
-  selectionFromIds,
   toSelectedItem,
-  unknownSelectionPaths,
   type TreeNode,
 } from "./tree-model";
-import type {
-  TreeChangeDetails,
-  TreeMappedItem,
-  TreeSelectedItem,
-  TreeSelection,
-  TreeValueProps,
-} from "./types";
+import type { TreeMapItemContext, TreeMappedItem, TreeSelectedItem, TreeValueProps } from "./types";
 
 /**
  * @internal
  * Owns everything about *what is shown and what is ticked*: the normalized
  * tree, the search query and filtered forest, auto-expansion, the user's own
- * expand/collapse, and the selection in either value shape. To start over — as
+ * expand/collapse, and the selection. To start over — as
  * TreePicker does each time it opens — remount the owner.
  */
 
 type UseTreeSelectionOptions<T> = {
   items: ReadonlyArray<T>;
-  mapItem: (item: T) => TreeMappedItem<T>;
+  mapItem: (item: T, context: TreeMapItemContext<T>) => TreeMappedItem<T>;
   matchesSearch?: (item: T, query: string) => boolean;
   /** Ignores every toggle (the whole tree is disabled). */
   disabled?: boolean;
@@ -55,13 +46,10 @@ export type UseTreeSelectionResult<T> = {
   isSelected(leaf: TreeNode<T>): boolean;
   /** Selects or clears every enabled leaf beneath `node` in one update. */
   toggleNode(node: TreeNode<T>, next: boolean): void;
-  /** Selected leaves in tree order (one per key in the keys shape). */
+  /** Selected leaves in tree order, one per key. */
   selected: TreeSelectedItem<T>[];
-  /**
-   * Selected values that aren't in the tree, kept as they were: keys in the
-   * keys shape (`[["key"]]`), leaf paths in the exact shape.
-   */
-  unknown: string[][];
+  /** Selected keys that aren't in the tree (e.g. not loaded yet), kept as they were. */
+  unknown: string[];
 };
 
 const EMPTY_KEYS: readonly string[] = [];
@@ -70,7 +58,6 @@ export function useTreeSelection<T>(
   options: UseTreeSelectionOptions<T>,
 ): UseTreeSelectionResult<T> {
   const { items, mapItem, matchesSearch, disabled = false } = options;
-  const exact = options.valueShape === "exact";
 
   const tree = React.useMemo(() => buildTree(items, mapItem), [items, mapItem]);
   const leaves = React.useMemo(() => allLeaves(tree), [tree]);
@@ -85,55 +72,36 @@ export function useTreeSelection<T>(
     setSearchCollapsed((prev) => (prev.size === 0 ? prev : new Set()));
   }, [query]);
 
-  // Each shape keeps its own uncontrolled state; only the active one is read.
-  const [keysState, setKeysState] = React.useState<readonly string[]>(() =>
-    !exact ? ((options.defaultValue as readonly string[] | undefined) ?? EMPTY_KEYS) : EMPTY_KEYS,
-  );
-  const [exactState, setExactState] = React.useState<TreeSelection | undefined>(() =>
-    exact ? (options.defaultValue as TreeSelection | undefined) : undefined,
+  const [keysState, setKeysState] = React.useState<readonly string[]>(
+    () => options.defaultValue ?? EMPTY_KEYS,
   );
 
   const controlled = options.controlled ?? options.value !== undefined;
   // A controlled `undefined` is an empty selection, never stale internal state.
-  let keysValue: readonly string[] = EMPTY_KEYS;
-  let exactValue: TreeSelection | undefined;
-  if (exact) {
-    exactValue = controlled ? (options.value as TreeSelection | undefined) : exactState;
-  } else {
-    keysValue = controlled
-      ? ((options.value as readonly string[] | undefined) ?? EMPTY_KEYS)
-      : keysState;
-  }
+  const keysValue = controlled ? (options.value ?? EMPTY_KEYS) : keysState;
 
-  const selectedIds = React.useMemo(
-    () => (exact ? idsFromSelection(tree, exactValue) : idsFromKeys(leaves, keysValue)),
-    [exact, tree, leaves, exactValue, keysValue],
-  );
+  const selectedIds = React.useMemo(() => idsFromKeys(leaves, keysValue), [leaves, keysValue]);
 
   const selectedFrom = React.useCallback(
     (ids: ReadonlySet<string>): TreeSelectedItem<T>[] => {
       const out: TreeSelectedItem<T>[] = [];
       const seenKeys = new Set<string>();
       for (const leaf of leaves) {
-        if (!ids.has(leaf.id)) continue;
-        if (!exact) {
-          if (seenKeys.has(leaf.key)) continue;
-          seenKeys.add(leaf.key);
-        }
+        if (!ids.has(leaf.id) || seenKeys.has(leaf.key)) continue;
+        seenKeys.add(leaf.key);
         out.push(toSelectedItem(leaf));
       }
       return out;
     },
-    [exact, leaves],
+    [leaves],
   );
 
   const selected = React.useMemo(() => selectedFrom(selectedIds), [selectedFrom, selectedIds]);
 
-  const unknown = React.useMemo((): string[][] => {
-    if (exact) return unknownSelectionPaths(tree, exactValue);
+  const unknown = React.useMemo(() => {
     const known = new Set(leaves.map((leaf) => leaf.key));
-    return keysValue.filter((key) => !known.has(key)).map((key) => [key]);
-  }, [exact, tree, exactValue, leaves, keysValue]);
+    return keysValue.filter((key) => !known.has(key));
+  }, [leaves, keysValue]);
 
   const { kept, autoExpand } = React.useMemo(() => {
     const trimmed = query.trim();
@@ -184,9 +152,7 @@ export function useTreeSelection<T>(
     [selectedIds],
   );
 
-  const onValueChange = options.onValueChange as
-    | ((value: string[] | TreeSelection, details: TreeChangeDetails<T>) => void)
-    | undefined;
+  const { onValueChange } = options;
   const toggleNode = React.useCallback(
     (node: TreeNode<T>, next: boolean) => {
       if (disabled) return;
@@ -195,42 +161,19 @@ export function useTreeSelection<T>(
       if (affected.length === 0) return;
 
       const updated = new Set(selectedIds);
-      // In the keys shape a key is the identity, so every leaf sharing a key
-      // follows it.
-      const targets = exact
-        ? affected
-        : (() => {
-            const keys = new Set(affected.map((leaf) => leaf.key));
-            return leaves.filter((leaf) => keys.has(leaf.key));
-          })();
-      for (const leaf of targets) {
+      // A key is the identity, so every leaf sharing a key follows it.
+      const keys = new Set(affected.map((leaf) => leaf.key));
+      for (const leaf of leaves) {
+        if (!keys.has(leaf.key)) continue;
         if (next) updated.add(leaf.id);
         else updated.delete(leaf.id);
       }
 
-      const details = { selected: selectedFrom(updated) };
-      if (exact) {
-        const value = selectionFromIds(tree, updated, exactValue);
-        if (!controlled) setExactState(value);
-        onValueChange?.(value, details);
-      } else {
-        const value = keysFromIds(leaves, updated, keysValue);
-        if (!controlled) setKeysState(value);
-        onValueChange?.(value, details);
-      }
+      const value = keysFromIds(leaves, updated, keysValue);
+      if (!controlled) setKeysState(value);
+      onValueChange?.(value, { selected: selectedFrom(updated) });
     },
-    [
-      controlled,
-      disabled,
-      exact,
-      exactValue,
-      keysValue,
-      leaves,
-      onValueChange,
-      selectedFrom,
-      selectedIds,
-      tree,
-    ],
+    [controlled, disabled, keysValue, leaves, onValueChange, selectedFrom, selectedIds],
   );
 
   return {

@@ -6,7 +6,6 @@ import {
   Field,
   Layout,
   type AppShellPageProps,
-  type TreeSelection,
 } from "@tailor-platform/app-shell";
 import { useState } from "react";
 
@@ -32,7 +31,7 @@ const CATALOG: Category[] = [
   { id: "tees", name: "T-Shirts", products: pick("TEE") },
   { id: "outerwear", name: "Outerwear", products: pick("HOOD", "JKT") },
   { id: "accessories", name: "Accessories", products: pick("CAP", "TOTE") },
-  // The tote is also in the gift edit: in the default "keys" shape it's one selection.
+  // The tote is also in the gift edit: it has one key, so it's one selection.
   { id: "gifts", name: "Gift edit", products: pick("TOTE", "CAP") },
 ];
 
@@ -63,7 +62,7 @@ const TreeDemoPage = () => {
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<Product[]>([]);
   const [skus, setSkus] = useState<string[]>([]);
-  const [bins, setBins] = useState<TreeSelection>({});
+  const [bins, setBins] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState<string[] | null>(null);
 
   return (
@@ -123,11 +122,11 @@ const TreeDemoPage = () => {
           </Card.Content>
         </Card.Root>
 
-        {/* 🔽 Tree in a form, "exact" shape: A1 in Tokyo and A1 in Osaka are different bins */}
+        {/* 🔽 Tree in a form: A1 in Tokyo and A1 in Osaka are different bins, so keys include the warehouse */}
         <Card.Root>
           <Card.Header
-            title="Tree in a form (exact)"
-            description="Bin codes repeat across warehouses, so each bin is selected on its own. B1 is locked while it's being counted. Submit to see the form data."
+            title="Tree in a form"
+            description="Bin codes repeat across warehouses, so each bin's key includes its warehouse. B1 is locked while it's being counted. Submit to see the form data."
           />
           <Card.Content>
             <form
@@ -142,10 +141,14 @@ const TreeDemoPage = () => {
                 <Tree<StockNode>
                   className="h-72 rounded-md border"
                   items={WAREHOUSES}
-                  mapItem={(node) =>
+                  mapItem={(node, { parents }) =>
                     "bins" in node
                       ? { key: node.id, label: node.name, children: node.bins }
-                      : { key: node.code, label: node.code, disabled: node.counting }
+                      : {
+                          key: `${(parents[0] as Warehouse).id}/${node.code}`,
+                          label: node.code,
+                          disabled: node.counting,
+                        }
                   }
                   itemHeader="Location"
                   trailingColumn={{
@@ -153,7 +156,6 @@ const TreeDemoPage = () => {
                     render: ({ item, isLeaf }) =>
                       isLeaf && "code" in item && item.counting ? "Counting" : null,
                   }}
-                  valueShape="exact"
                   value={bins}
                   onValueChange={setBins}
                   required

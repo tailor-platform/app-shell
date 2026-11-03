@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { Field } from "../field";
 import { Form } from "../form";
 import { Tree } from "./Tree";
-import type { TreeSelection } from "./types";
+import type { TreeMapItemContext } from "./types";
 
 /** Warehouses with bins. Bin codes repeat across warehouses (A1 is in both). */
 type Node = { id: string; name: string; bins?: Node[]; locked?: boolean };
@@ -29,6 +29,12 @@ const mapItem = (item: Node) => ({
   label: item.name,
   children: item.bins,
   disabled: item.locked,
+});
+
+/** Keys bins by warehouse, so the repeated `A1` codes stay distinct. */
+const scopedMapItem = (item: Node, { parents }: TreeMapItemContext<Node>) => ({
+  ...mapItem(item),
+  key: parents.length > 0 ? `${parents.at(-1)!.id}/${item.id}` : item.id,
 });
 
 const rowFor = (label: string) => screen.getByText(label).closest("[role=treeitem]") as HTMLElement;
@@ -99,7 +105,7 @@ describe("Tree", () => {
     expect(wrapper.className).toContain("focus-within:ring-[3px]");
   });
 
-  describe('valueShape "keys" (default)', () => {
+  describe("value", () => {
     it("selects a key wherever it appears, and reports keys plus the selected leaves", async () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
@@ -120,9 +126,7 @@ describe("Tree", () => {
       expect(checkedOf("X · A1")).toBe("true");
       expect(checkedOf("Y · A1")).toBe("true");
       expect(onValueChange).toHaveBeenLastCalledWith(["A1"], {
-        selected: [
-          expect.objectContaining({ key: "A1", path: ["wh-x", "A1"], parents: [WAREHOUSES[0]] }),
-        ],
+        selected: [expect.objectContaining({ key: "A1", parents: [WAREHOUSES[0]] })],
       });
     });
 
@@ -198,16 +202,37 @@ describe("Tree", () => {
     });
   });
 
-  describe('valueShape "exact"', () => {
-    it("selects each leaf on its own, even when keys repeat", async () => {
+  describe("keys composed from parents", () => {
+    it("passes each item's ancestors to mapItem", () => {
+      const seen: Array<[string, string[]]> = [];
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={(item, { parents }) => {
+            seen.push([item.id, parents.map((parent) => parent.id)]);
+            return mapItem(item);
+          }}
+          aria-label="Bins"
+        />,
+      );
+
+      expect(seen).toEqual(
+        expect.arrayContaining([
+          ["wh-x", []],
+          ["A1", ["wh-x"]],
+          ["A1", ["wh-y"]],
+        ]),
+      );
+    });
+
+    it("keeps repeated codes separate when keys are composed from parents", async () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
       render(
         <Tree<Node>
           items={WAREHOUSES}
-          mapItem={mapItem}
+          mapItem={scopedMapItem}
           aria-label="Bins"
-          valueShape="exact"
           onValueChange={onValueChange}
         />,
       );
@@ -218,55 +243,14 @@ describe("Tree", () => {
 
       expect(checkedOf("X · A1")).toBe("true");
       expect(checkedOf("Y · A1")).toBe("false");
-      expect(onValueChange).toHaveBeenLastCalledWith(
-        { "wh-x": { A1: true } },
-        { selected: [expect.objectContaining({ key: "A1", path: ["wh-x", "A1"] })] },
-      );
-    });
-
-    it("treats `true` on a parent as every leaf beneath it, and reports leaves explicitly", async () => {
-      const user = userEvent.setup();
-      const onValueChange = vi.fn();
-      render(
-        <Tree<Node>
-          items={WAREHOUSES}
-          mapItem={mapItem}
-          aria-label="Bins"
-          valueShape="exact"
-          defaultValue={{ "wh-x": true }}
-          onValueChange={onValueChange}
-        />,
-      );
-
-      expect(checkedOf("Warehouse X")).toBe("true");
-      await user.click(screen.getByText("Loose stock"));
-
-      expect(onValueChange).toHaveBeenLastCalledWith(
-        { "wh-x": { A1: true, A2: true }, loose: true },
-        expect.anything(),
-      );
-    });
-
-    it("keeps branches of the value that aren't in the tree", async () => {
-      const user = userEvent.setup();
-      const onValueChange = vi.fn();
-      const initial: TreeSelection = { "wh-z": { B9: true } };
-      render(
-        <Tree<Node>
-          items={WAREHOUSES}
-          mapItem={mapItem}
-          aria-label="Bins"
-          valueShape="exact"
-          defaultValue={initial}
-          onValueChange={onValueChange}
-        />,
-      );
-
-      await user.click(screen.getByText("Loose stock"));
-      expect(onValueChange).toHaveBeenLastCalledWith(
-        { loose: true, "wh-z": { B9: true } },
-        expect.anything(),
-      );
+      expect(onValueChange).toHaveBeenLastCalledWith(["wh-x/A1"], {
+        selected: [
+          expect.objectContaining({
+            key: "wh-x/A1",
+            parents: [expect.objectContaining({ id: "wh-x" })],
+          }),
+        ],
+      });
     });
   });
 
@@ -371,13 +355,7 @@ describe("Tree", () => {
       const user = userEvent.setup();
       render(
         <form data-testid="form">
-          <Tree<Node>
-            items={WAREHOUSES}
-            mapItem={mapItem}
-            aria-label="Bins"
-            name="bins"
-            valueShape="exact"
-          />
+          <Tree<Node> items={WAREHOUSES} mapItem={scopedMapItem} aria-label="Bins" name="bins" />
         </form>,
       );
 
@@ -396,10 +374,9 @@ describe("Tree", () => {
         <form data-testid="form">
           <Tree<Node>
             items={WAREHOUSES}
-            mapItem={mapItem}
+            mapItem={scopedMapItem}
             aria-label="Bins"
             name="bins"
-            valueShape="exact"
             itemToStringValue={(bin, { parents }) => `${parents.at(-1)?.id ?? ""}:${bin.id}`}
           />
         </form>,
@@ -521,10 +498,9 @@ describe("Tree", () => {
         <form data-testid="form">
           <Tree<Node>
             items={WAREHOUSES}
-            mapItem={mapItem}
+            mapItem={scopedMapItem}
             aria-label="Bins"
             name="bins"
-            valueShape="exact"
             itemToStringValue={(bin) => bin.id}
           />
         </form>,
@@ -545,16 +521,15 @@ describe("Tree", () => {
       consoleError.mockRestore();
     });
 
-    it("submits exact selections for items that aren't loaded yet", () => {
+    it("submits keys for items that aren't loaded yet", () => {
       render(
         <form data-testid="form">
           <Tree<Node>
             items={WAREHOUSES}
-            mapItem={mapItem}
+            mapItem={scopedMapItem}
             aria-label="Bins"
             name="bins"
-            valueShape="exact"
-            defaultValue={{ "wh-z": { B1: true }, loose: true }}
+            defaultValue={["wh-z/B1", "loose"]}
           />
         </form>,
       );

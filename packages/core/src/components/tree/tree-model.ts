@@ -1,16 +1,17 @@
-import type { TreeMappedItem, TreeSelectedItem, TreeSelection } from "./types";
+import type { TreeMapItemContext, TreeMappedItem, TreeSelectedItem } from "./types";
 
 /**
  * @internal
  * Pure tree helpers, free of React so they can be unit tested directly.
  *
  * Consumers pass their own items plus `mapItem`; `buildTree` turns those into
- * normalized nodes once. Every node is identified by its **path** (the keys
- * from the top level down), so a key only has to be unique among its siblings.
+ * normalized nodes once. A node's `key` is its identity in the value: the same
+ * key in two places is one item. Each rendered row also gets an `id` from its
+ * path, since one key can appear in several places on screen.
  */
 
 export type TreeNode<T> = {
-  /** Internal identity: the encoded path. Unique across the whole tree. */
+  /** The row's identity on screen: its encoded path. Unique even when keys repeat. */
   id: string;
   key: string;
   label: string;
@@ -30,13 +31,13 @@ export function pathId(path: readonly string[]): string {
 
 export function buildTree<T>(
   items: ReadonlyArray<T>,
-  mapItem: (item: T) => TreeMappedItem<T>,
+  mapItem: (item: T, context: TreeMapItemContext<T>) => TreeMappedItem<T>,
   parentPath: string[] = [],
   parents: T[] = [],
   parentDisabled = false,
 ): TreeNode<T>[] {
   return items.map((item) => {
-    const mapped = mapItem(item);
+    const mapped = mapItem(item, { parents });
     const path = [...parentPath, mapped.key];
     const ownDisabled = parentDisabled || mapped.disabled === true;
     const children = buildTree(
@@ -159,10 +160,8 @@ export function checkState<T>(
 }
 
 export function toSelectedItem<T>(leaf: TreeNode<T>): TreeSelectedItem<T> {
-  return { key: leaf.key, path: leaf.path, item: leaf.item, parents: leaf.parents };
+  return { key: leaf.key, item: leaf.item, parents: leaf.parents };
 }
-
-/* ------------------------------------------------------------- keys shape */
 
 /** Leaf ids selected by a list of keys: every leaf whose key is listed, wherever it sits. */
 export function idsFromKeys<T>(leaves: ReadonlyArray<TreeNode<T>>, keys: readonly string[]) {
@@ -195,121 +194,4 @@ export function keysFromIds<T>(
     }
   }
   return out;
-}
-
-/* ------------------------------------------------------------ exact shape */
-
-/**
- * Selections are keyed by consumer data, so they're read and written as own
- * properties only: an inherited `constructor` / `__proto__` must never be
- * treated as a nested level, or a merge could write into `Object.prototype`.
- * A `__proto__` key can't be stored safely on a plain object, so it's skipped.
- */
-function ownEntry(level: TreeSelection, key: string): true | TreeSelection | undefined {
-  return Object.hasOwn(level, key) ? level[key] : undefined;
-}
-
-function isUnsafeKey(key: string): boolean {
-  return key === "__proto__";
-}
-
-/** Leaf ids selected by an exact selection. `true` on a parent selects every leaf beneath it. */
-export function idsFromSelection<T>(
-  nodes: ReadonlyArray<TreeNode<T>>,
-  selection: TreeSelection | undefined,
-): Set<string> {
-  const ids = new Set<string>();
-  const walk = (list: ReadonlyArray<TreeNode<T>>, level: TreeSelection) => {
-    for (const node of list) {
-      const entry = ownEntry(level, node.key);
-      if (entry === undefined) continue;
-      if (entry === true) {
-        for (const leaf of leavesOf(node)) ids.add(leaf.id);
-      } else if (!node.isLeaf) {
-        walk(node.children, entry);
-      }
-    }
-  };
-  if (selection) walk(nodes, selection);
-  return ids;
-}
-
-/**
- * The exact value after a selection change: every selected leaf listed
- * explicitly, plus any branches of the previous value that don't exist in the
- * tree (kept as they were, like unknown keys in the keys shape).
- */
-export function selectionFromIds<T>(
-  nodes: ReadonlyArray<TreeNode<T>>,
-  ids: ReadonlySet<string>,
-  previous: TreeSelection | undefined,
-): TreeSelection {
-  const out: TreeSelection = {};
-  for (const leaf of allLeaves(nodes)) {
-    if (!ids.has(leaf.id) || leaf.path.some(isUnsafeKey)) continue;
-    let level = out;
-    leaf.path.forEach((key, index) => {
-      if (index === leaf.path.length - 1) {
-        level[key] = true;
-        return;
-      }
-      const next = ownEntry(level, key);
-      if (next === undefined || next === true) level[key] = {};
-      level = level[key] as TreeSelection;
-    });
-  }
-  if (previous) mergeUnknown(out, previous, nodes);
-  return out;
-}
-
-/**
- * The leaf paths an exact selection lists that don't exist in the tree (e.g.
- * items not loaded yet). They're kept in the value, so they're submitted too.
- */
-export function unknownSelectionPaths<T>(
-  nodes: ReadonlyArray<TreeNode<T>>,
-  selection: TreeSelection | undefined,
-  prefix: string[] = [],
-): string[][] {
-  if (!selection) return [];
-  const out: string[][] = [];
-  for (const [key, entry] of Object.entries(selection)) {
-    const path = [...prefix, key];
-    const matching = nodes.filter((node) => node.key === key);
-    if (matching.length === 0) {
-      out.push(...selectionLeafPaths(entry, path));
-      continue;
-    }
-    if (entry === true) continue;
-    const children = matching.flatMap((node) => node.children);
-    if (children.length > 0) out.push(...unknownSelectionPaths(children, entry, path));
-  }
-  return out;
-}
-
-function selectionLeafPaths(entry: true | TreeSelection, path: string[]): string[][] {
-  if (entry === true) return [path];
-  return Object.entries(entry).flatMap(([key, child]) => selectionLeafPaths(child, [...path, key]));
-}
-
-function mergeUnknown<T>(
-  out: TreeSelection,
-  previous: TreeSelection,
-  nodes: ReadonlyArray<TreeNode<T>>,
-) {
-  for (const [key, entry] of Object.entries(previous)) {
-    if (isUnsafeKey(key)) continue;
-    const matching = nodes.filter((node) => node.key === key);
-    if (matching.length === 0) {
-      out[key] = entry;
-      continue;
-    }
-    if (entry === true) continue;
-    const children = matching.flatMap((node) => node.children);
-    if (children.length === 0) continue;
-    const target = ownEntry(out, key);
-    const level: TreeSelection = target && target !== true ? target : {};
-    mergeUnknown(level, entry, children);
-    if (Object.keys(level).length > 0 && target !== true) out[key] = level;
-  }
 }

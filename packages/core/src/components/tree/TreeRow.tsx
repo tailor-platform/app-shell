@@ -83,7 +83,6 @@ function TreeRow<T>(props: TreeRowProps<T>) {
   const row: TreeRowState<T> = {
     item: node.item,
     key: node.key,
-    path: node.path,
     parents: node.parents,
     depth,
     isLeaf: leaf,

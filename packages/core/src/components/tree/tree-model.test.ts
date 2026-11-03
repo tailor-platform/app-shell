@@ -7,13 +7,10 @@ import {
   filterTree,
   flattenVisible,
   idsFromKeys,
-  idsFromSelection,
   keysFromIds,
   leavesOf,
   pathId,
-  selectionFromIds,
 } from "./tree-model";
-import type { TreeSelection } from "./types";
 
 type Item = { key: string; name: string; children?: Item[]; disabled?: boolean };
 
@@ -42,11 +39,10 @@ const mapItem = (item: Item) => ({
 const tree = () => buildTree(ITEMS, mapItem);
 const byName = (q: string) => (node: { label: string }) =>
   node.label.toLowerCase().includes(q.toLowerCase());
-const find = (path: string[]) => allLeaves(tree()).find((leaf) => leaf.id === pathId(path))!;
 
 describe("tree-model", () => {
   describe("buildTree", () => {
-    it("identifies nodes by path, so repeated keys under different parents stay distinct", () => {
+    it("gives every row its own id, even where keys repeat", () => {
       const leaves = allLeaves(tree());
       const withKeyA = leaves.filter((leaf) => leaf.key === "a");
       expect(withKeyA.map((leaf) => leaf.path)).toEqual([
@@ -153,56 +149,6 @@ describe("tree-model", () => {
       const leaves = allLeaves(tree());
       const ids = new Set([pathId(["p3", "a"]), pathId(["p2", "a"]), pathId(["p1"])]);
       expect(keysFromIds(leaves, ids, ["gone"])).toEqual(["p1", "a", "gone"]);
-    });
-  });
-
-  describe("exact shape", () => {
-    it("selects exact leaves, and every leaf beneath a parent set to true", () => {
-      const ids = idsFromSelection(tree(), { p2: { a: true, c: true }, p3: { nope: true } });
-      expect([...ids]).toEqual([pathId(["p2", "a"]), pathId(["p2", "c", "wide"])]);
-    });
-
-    it("builds a nested selection listing every leaf explicitly", () => {
-      const ids = new Set([find(["p2", "c", "wide"]).id, find(["p3", "a"]).id]);
-      expect(selectionFromIds(tree(), ids, undefined)).toEqual({
-        p2: { c: { wide: true } },
-        p3: { a: true },
-      });
-    });
-
-    it("never writes through inherited properties when merging untrusted selections", () => {
-      const ids = new Set([find(["p1"]).id]);
-      const hostile = JSON.parse(
-        '{"__proto__":{"polluted":true},"constructor":{"prototype":{"polluted":true}}}',
-      );
-      const out = selectionFromIds(tree(), ids, hostile);
-
-      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
-      expect(Object.getPrototypeOf(out)).toBe(Object.prototype);
-      expect(out.constructor).toEqual({ prototype: { polluted: true } });
-      expect(Object.hasOwn(out, "__proto__")).toBe(false);
-    });
-
-    it("treats a node keyed `constructor` as an ordinary key", () => {
-      const nodes = buildTree(
-        [{ key: "constructor", name: "C", children: [{ key: "x", name: "X" }] }],
-        mapItem,
-      );
-      // Built from JSON, as untrusted data would be — a `constructor` key in an
-      // object literal fights TypeScript's Object members.
-      const selection = JSON.parse('{"constructor":{"x":true}}') as TreeSelection;
-      const ids = idsFromSelection(nodes, selection);
-      expect(selectionFromIds(nodes, ids, undefined)).toEqual({ constructor: { x: true } });
-      expect(idsFromSelection(nodes, {}).size).toBe(0);
-    });
-
-    it("keeps branches of the previous selection that aren't in the tree", () => {
-      const ids = new Set([find(["p1"]).id]);
-      expect(selectionFromIds(tree(), ids, { gone: true, p2: { missing: true } })).toEqual({
-        p1: true,
-        gone: true,
-        p2: { missing: true },
-      });
     });
   });
 });

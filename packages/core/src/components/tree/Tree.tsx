@@ -7,20 +7,8 @@ import { cn } from "@/lib/utils";
 
 import { TreeRow, columnCellProps } from "./TreeRow";
 import { useTreeT } from "./i18n";
-import {
-  checkState,
-  flattenVisible,
-  pathId,
-  unknownSelectionPaths,
-  type TreeNode,
-} from "./tree-model";
-import type {
-  TreeChangeDetails,
-  TreeProps,
-  TreeSelectedItem,
-  TreeSelection,
-  TreeValueProps,
-} from "./types";
+import { checkState, flattenVisible, type TreeNode } from "./tree-model";
+import type { TreeChangeDetails, TreeProps, TreeSelectedItem } from "./types";
 import { useTreeField } from "./use-tree-field";
 import { useTreeFocus } from "./use-tree-focus";
 import { useTreeSelection } from "./use-tree-selection";
@@ -34,11 +22,10 @@ type SubmittedEntry = { id: string; value: string };
  * enabled leaf beneath it, and a parent's checkbox shows checked or
  * indeterminate from its leaves.
  *
- * Pass your own items with `mapItem` (as with `Select` / `Combobox`). A key only
- * has to be unique among its siblings. The selection is either a list of leaf
- * keys (`valueShape: "keys"`, the default) or an exact nested selection
- * (`valueShape: "exact"`) when the same key means different things under
- * different parents.
+ * Pass your own items with `mapItem` (as with `Select` / `Combobox`). The
+ * selection is a list of keys, and the same key in two places is one item. When
+ * codes repeat with different meanings, compose a unique key from the `parents`
+ * that `mapItem` receives.
  *
  * It renders inline and works as a form control: `name` submits one hidden
  * input per selected leaf, and inside a `Field.Root` it picks up the label,
@@ -50,19 +37,18 @@ type SubmittedEntry = { id: string; value: string };
  *
  * @example
  * ```tsx
- * const [bins, setBins] = useState<TreeSelection>({});
+ * const [bins, setBins] = useState<string[]>([]);
  *
  * <Field.Root name="bins">
  *   <Field.Label>Bins to count</Field.Label>
  *   <Tree<Warehouse | Bin>
  *     className="astw:h-96"
  *     items={warehouses}
- *     mapItem={(item) =>
+ *     mapItem={(item, { parents }) =>
  *       "bins" in item
  *         ? { key: item.id, label: item.name, children: item.bins }
- *         : { key: item.code, label: item.code }
+ *         : { key: `${(parents[0] as Warehouse).id}/${item.code}`, label: item.code }
  *     }
- *     valueShape="exact"
  *     value={bins}
  *     onValueChange={setBins}
  *   />
@@ -95,61 +81,42 @@ export function Tree<T>(props: TreeProps<T>) {
     className,
   } = props;
   const t = useTreeT();
-  const exact = props.valueShape === "exact";
   const rootRef = React.useRef<HTMLDivElement>(null);
   const fieldRoot = useFieldRootContext();
   const treeDisabled = !!disabled || !!fieldRoot.disabled;
 
   /**
    * What the form submits for a selection: one entry per selected leaf, plus
-   * the kept values that aren't in the tree. `id` keys the hidden inputs, since
-   * two leaves can serialize to the same string.
+   * the kept values that aren't in the tree. `id` (the key) keys the hidden
+   * inputs, since two leaves can serialize to the same string.
    */
   const submittedEntries = React.useCallback(
-    (selected: TreeSelectedItem<T>[], unknown: string[][]): SubmittedEntry[] => {
-      const toString = (entry: TreeSelectedItem<T>) =>
-        itemToStringValue?.(entry.item, { path: entry.path, parents: entry.parents }) ??
-        (exact ? entry.path.join("/") : entry.key);
-      const idOf = (path: readonly string[]) => (exact ? pathId(path) : path.at(-1)!);
-      return [
-        ...selected.map((entry) => ({ id: idOf(entry.path), value: toString(entry) })),
-        ...unknown.map((path) => ({ id: idOf(path), value: path.join("/") })),
-      ];
-    },
-    [exact, itemToStringValue],
+    (selected: TreeSelectedItem<T>[], unknown: readonly string[]): SubmittedEntry[] => [
+      ...selected.map((entry) => ({
+        id: entry.key,
+        value: itemToStringValue?.(entry.item, { parents: entry.parents }) ?? entry.key,
+      })),
+      ...unknown.map((key) => ({ id: key, value: key })),
+    ],
+    [itemToStringValue],
   );
 
   // The field bridge is created after the selection hook (it needs the current
-  // value), so the change handler reaches it and the tree through refs.
+  // value), so the change handler reaches it through a ref.
   const fieldChangeRef = React.useRef<(values: readonly string[]) => void>(() => {});
-  const treeRef = React.useRef<TreeNode<T>[]>([]);
-  const consumerOnValueChange = props.onValueChange as
-    | ((value: string[] | TreeSelection, details: TreeChangeDetails<T>) => void)
-    | undefined;
+  const consumerOnValueChange = props.onValueChange;
 
   const handleValueChange = React.useCallback(
-    (value: string[] | TreeSelection, details: TreeChangeDetails<T>) => {
+    (value: string[], details: TreeChangeDetails<T>) => {
       consumerOnValueChange?.(value, details);
-      let unknown: string[][];
-      if (Array.isArray(value)) {
-        const selectedKeys = new Set(details.selected.map((entry) => entry.key));
-        unknown = value.filter((key) => !selectedKeys.has(key)).map((key) => [key]);
-      } else {
-        unknown = unknownSelectionPaths(treeRef.current, value);
-      }
+      const selectedKeys = new Set(details.selected.map((entry) => entry.key));
+      const unknown = value.filter((key) => !selectedKeys.has(key));
       fieldChangeRef.current(
         submittedEntries(details.selected, unknown).map((entry) => entry.value),
       );
     },
     [consumerOnValueChange, submittedEntries],
   );
-
-  const valueProps = {
-    valueShape: props.valueShape,
-    value: props.value,
-    defaultValue: props.defaultValue,
-    onValueChange: handleValueChange,
-  } as TreeValueProps<T>;
 
   const {
     tree,
@@ -171,9 +138,10 @@ export function Tree<T>(props: TreeProps<T>) {
     // A `value` prop that is present but `undefined` (e.g. a form reset) is
     // still controlled: it means "nothing selected".
     controlled: "value" in props,
-    ...valueProps,
+    value: props.value,
+    defaultValue: props.defaultValue,
+    onValueChange: handleValueChange,
   });
-  treeRef.current = tree;
 
   const entries = React.useMemo(
     () => submittedEntries(selected, unknown),

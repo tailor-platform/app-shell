@@ -3,10 +3,10 @@ export { TreePicker } from "./TreePicker";
 export type {
   TreeChangeDetails,
   TreeColumn,
+  TreeMapItemContext,
   TreeMappedItem,
   TreePickerProps,
   TreeProps,
   TreeRowState,
   TreeSelectedItem,
-  TreeSelection,
 } from "./types";

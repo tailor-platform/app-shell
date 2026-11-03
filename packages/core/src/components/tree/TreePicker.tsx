@@ -56,7 +56,6 @@ export function TreePicker<T>({
   open,
   onOpenChange,
   title,
-  valueShape,
   onCommit,
   ctaLabel,
   className,
@@ -86,7 +85,6 @@ export function TreePicker<T>({
         <TreePickerBody
           key={session}
           title={title}
-          valueShape={valueShape}
           onOpenChange={onOpenChange}
           onCommit={onCommit}
           ctaLabel={ctaLabel}
@@ -101,12 +99,11 @@ TreePicker.displayName = "TreePicker";
 /** One open of the picker: the title, the tree, and the commit footer. */
 function TreePickerBody<T>({
   title,
-  valueShape,
   onOpenChange,
   onCommit,
   ctaLabel,
   treeProps,
-}: Pick<TreePickerProps<T>, "title" | "valueShape" | "onOpenChange" | "onCommit" | "ctaLabel"> & {
+}: Pick<TreePickerProps<T>, "title" | "onOpenChange" | "onCommit" | "ctaLabel"> & {
   treeProps: TreeContentProps<T>;
 }) {
   const titleId = React.useId();
@@ -127,24 +124,13 @@ function TreePickerBody<T>({
         <Dialog.Title id={titleId}>{title ?? t("title")}</Dialog.Title>
       </Dialog.Header>
 
-      {valueShape === "exact" ? (
-        <Tree<T>
-          {...treeProps}
-          aria-labelledby={titleId}
-          className="astw:flex-1"
-          valueShape="exact"
-          onValueChange={(_, details) => setSelected(details.selected)}
-          onAction={commit}
-        />
-      ) : (
-        <Tree<T>
-          {...treeProps}
-          aria-labelledby={titleId}
-          className="astw:flex-1"
-          onValueChange={(_, details) => setSelected(details.selected)}
-          onAction={commit}
-        />
-      )}
+      <Tree<T>
+        {...treeProps}
+        aria-labelledby={titleId}
+        className="astw:flex-1"
+        onValueChange={(_, details) => setSelected(details.selected)}
+        onAction={commit}
+      />
 
       <Dialog.Footer
         data-slot="tree-picker-footer"

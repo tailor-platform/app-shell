@@ -47,6 +47,8 @@ A `key` is the item's identity across the whole tree. The same key in two places
 
 When codes repeat with different meanings, like bin `A1` in two warehouses, compose a unique key. `mapItem` receives the item's `parents` for exactly this.
 
+A key can't be a parent in one place and a leaf in another. One key is one item, and an item can't both have children and not, so those rows can't tick consistently. The tree logs a console warning naming any such keys.
+
 ```tsx
 mapItem={(item, { parents }) =>
   "bins" in item
@@ -65,7 +67,7 @@ mapItem={(item, { parents }) =>
 | `"single"`         | One row is selected at a time, parents included                           | `selectedKey`            |
 | `"checkbox"`       | Rows have checkboxes, and the tree is a multi-select form control         | `value` (a list of keys) |
 
-Enter runs `onAction(item, key)` on any row, in every mode. The props are a union on `selectionMode`, so `value` or `name` without `selectionMode="checkbox"` is a type error rather than silently ignored.
+Enter runs `onAction(item, key)` on any enabled row, in every mode. The props are a union on `selectionMode`, so `value` or `name` without `selectionMode="checkbox"` is a type error rather than silently ignored.
 
 ### Single
 
@@ -81,6 +83,8 @@ const [selected, setSelected] = useState<string | null>(null);
 ```
 
 Selecting a closed parent opens it. Its caret closes it again, so selecting an open parent never hides what you were looking at.
+
+The selected row is always revealed: when it starts out inside closed groups, or `selectedKey` changes from outside to a hidden row, its ancestors open. A group the user closes afterwards stays closed, and the tab stop then sits on its nearest visible ancestor. Pass `revealSelected={false}` to leave groups as they are.
 
 ### Checkbox
 
@@ -176,6 +180,8 @@ const filter = useMemo(
 
 Groups a filter opened can still be closed. They stay closed until the matches change, so an inline `filter` recreated on every render won't reopen them.
 
+In checkbox mode, ticking a group while filtering acts on what's visible: it ticks the group's matching leaves, not the hidden ones. The group's checkbox still reflects the whole group, so it shows as partly ticked until every leaf beneath it is. Press it again to clear the visible matches.
+
 ## Forms
 
 In checkbox mode, `Tree` works like `Select` and the other form controls: as a plain form field, inside `Field.Root`, and with React Hook Form.
@@ -202,15 +208,24 @@ Only checkbox mode is a form control. In `"none"` and `"single"` modes the tree 
 
 ## Disabled items
 
-Return `disabled: true` from `mapItem` to lock an item. A disabled parent locks everything beneath it. Ticking a parent skips its disabled leaves, and with `"full"` a parent counts as ticked once every _enabled_ leaf beneath it is. A disabled item that's already ticked stays ticked, and a disabled row can't be selected.
+Return `disabled: true` from `mapItem` to lock an item. A disabled parent locks everything beneath it, and `disabled` on the tree locks every row. A locked row can't be ticked or selected, and Enter doesn't run `onAction` on it. A disabled item that's already ticked stays ticked.
 
 ```tsx
 mapItem={(bin) => ({ key: bin.code, label: bin.code, disabled: bin.status === "counting" })}
 ```
 
+How a parent behaves next to disabled children depends on whether it's a container or an item:
+
+| Mode                                    | Ticking a parent                                                                    | A parent whose children are all disabled     |
+| --------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------- |
+| Checkbox, `"full"` propagation          | Skips disabled leaves. It counts as ticked once every _enabled_ leaf beneath it is. | Locked, since there's nothing it could tick. |
+| Checkbox, `"down"` propagation          | Ticks itself and every enabled item beneath it.                                     | Usable. Ticking it ticks only itself.        |
+| Checkbox, `"none"` propagation          | Ticks only itself.                                                                  | Usable.                                      |
+| `"single"` and `"none"` selection modes | –                                                                                   | Usable: it can be selected or run.           |
+
 ## TreePicker
 
-A checkbox tree in a dialog, with search. It takes the same item, row and ticking props as `Tree`, plus the search and commit props. Each open starts empty, and `onCommit` receives the value's items in tree order.
+A checkbox tree in a dialog, with search. It takes the same item, row and ticking props as `Tree`, plus the search and commit props. Each open starts empty, and `onCommit` receives the value's items in tree order. Ticking a group while searching ticks its matching items, as described under [Filtering](#filtering).
 
 ```tsx
 <TreePicker<Category | Product>
@@ -238,21 +253,22 @@ A checkbox tree in a dialog, with search. It takes the same item, row and tickin
 
 ### Tree
 
-| Prop                             | Type                                       | Default  | Description                                              |
-| -------------------------------- | ------------------------------------------ | -------- | -------------------------------------------------------- |
-| `selectionMode`                  | `"none" \| "single" \| "checkbox"`         | `"none"` | What clicking and Space do to a row.                     |
-| `onAction`                       | `(item: T, key: string) => void`           | –        | Enter on a row. In `"none"` mode, a click on a leaf too. |
-| `filter`                         | `(item: T, { label, parents }) => boolean` | –        | Shows only matches and their ancestors.                  |
-| `disabled`                       | `boolean`                                  | `false`  | Locks the whole tree.                                    |
-| `aria-label` / `aria-labelledby` | `string`                                   | –        | Names the tree, when there's no `Field.Label`.           |
-| `className`                      | `string`                                   | –        | Merged onto the root. Give it a height for long trees.   |
+| Prop                             | Type                                       | Default  | Description                                                             |
+| -------------------------------- | ------------------------------------------ | -------- | ----------------------------------------------------------------------- |
+| `selectionMode`                  | `"none" \| "single" \| "checkbox"`         | `"none"` | What clicking and Space do to a row.                                    |
+| `onAction`                       | `(item: T, key: string) => void`           | –        | Enter on a row. In `"none"` mode, a click on a leaf too.                |
+| `filter`                         | `(item: T, { label, parents }) => boolean` | –        | Shows only matches and their ancestors.                                 |
+| `disabled`                       | `boolean`                                  | `false`  | Locks every row, and in checkbox mode leaves it out of form submission. |
+| `aria-label` / `aria-labelledby` | `string`                                   | –        | Names the tree, when there's no `Field.Label`.                          |
+| `className`                      | `string`                                   | –        | Merged onto the root. Give it a height for long trees.                  |
 
 With `selectionMode="single"`:
 
-| Prop                                 | Type                             | Default | Description                        |
-| ------------------------------------ | -------------------------------- | ------- | ---------------------------------- |
-| `selectedKey` / `defaultSelectedKey` | `string \| null`                 | `null`  | Controlled / initial selected row. |
-| `onSelectedKeyChange`                | `(key: string, item: T) => void` | –       | Fires when the user selects a row. |
+| Prop                                 | Type                             | Default | Description                                            |
+| ------------------------------------ | -------------------------------- | ------- | ------------------------------------------------------ |
+| `selectedKey` / `defaultSelectedKey` | `string \| null`                 | `null`  | Controlled / initial selected row.                     |
+| `onSelectedKeyChange`                | `(key: string, item: T) => void` | –       | Fires when the user selects a row.                     |
+| `revealSelected`                     | `boolean`                        | `true`  | Opens the selected row\'s ancestors when it\'s hidden. |
 
 With `selectionMode="checkbox"`:
 

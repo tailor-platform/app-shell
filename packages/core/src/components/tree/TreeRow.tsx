@@ -26,7 +26,10 @@ type TreeRowProps<T> = Pick<TreeContentProps<T>, "renderItem"> & {
   isExpanded(id: string): boolean;
   onToggleExpand(id: string): void;
   getCheckState(node: TreeNode<T>): { checked: boolean; indeterminate: boolean };
-  onToggleNode(node: TreeNode<T>, next: boolean): void;
+  /** Ticks or clears the row (its checkbox was clicked). */
+  onToggleRow(node: TreeNode<T>): void;
+  /** Whether the row is locked, which depends on the mode and propagation. */
+  isNodeDisabled(node: TreeNode<T>): boolean;
   /** The selected row's key in `"single"` mode. */
   selectedKey: string | null;
   /** A click anywhere on the row except its own controls; the tree decides what it does. */
@@ -52,7 +55,8 @@ function TreeRow<T>(props: TreeRowProps<T>) {
     onToggleExpand,
     hasBranches,
     getCheckState,
-    onToggleNode,
+    onToggleRow,
+    isNodeDisabled,
     selectedKey,
     onRowClick,
     renderItem,
@@ -64,7 +68,7 @@ function TreeRow<T>(props: TreeRowProps<T>) {
   const t = useTreeT();
   const leaf = node.isLeaf;
   const expanded = !leaf && isExpanded(node.id);
-  const disabled = treeDisabled || node.disabled;
+  const disabled = treeDisabled || isNodeDisabled(node);
   const withCheckbox = selectionMode === "checkbox";
   const { checked, indeterminate } = withCheckbox
     ? getCheckState(node)
@@ -150,7 +154,7 @@ function TreeRow<T>(props: TreeRowProps<T>) {
             data-indeterminate={indeterminate || undefined}
             data-disabled={disabled || undefined}
             onClick={() => {
-              if (!disabled) onToggleNode(node, !checked);
+              if (!disabled) onToggleRow(node);
             }}
             className={cn(checkboxBoxClasses, "astw:data-disabled:opacity-50")}
           >

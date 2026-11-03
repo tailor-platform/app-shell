@@ -19,6 +19,8 @@ import type { TreeNode, VisibleRow } from "./tree-model";
 
 type UseTreeFocusOptions<T> = {
   rows: ReadonlyArray<VisibleRow<T>>;
+  /** The tab stop when no row has been focused yet (e.g. the selected row). */
+  preferredRowId?: string | null;
   setExpanded(id: string, next: boolean): void;
   /** Space on a tree row. */
   onSpace(node: TreeNode<T>): void;
@@ -39,6 +41,7 @@ const NODE_ID_ATTRIBUTE = "data-node-id";
 
 export function useTreeFocus<T>({
   rows,
+  preferredRowId = null,
   setExpanded,
   onSpace,
   onAction,
@@ -53,12 +56,13 @@ export function useTreeFocus<T>({
 
   const onRowFocus = React.useCallback((id: string) => setFocusedId(id), []);
 
-  // The remembered row may have been filtered away by the search query; fall
-  // back to the first visible row so the tree always has exactly one tab stop.
-  const activeRowId =
-    focusedId !== null && rows.some((row) => row.node.id === focusedId)
-      ? focusedId
-      : (rows[0]?.node.id ?? null);
+  // The remembered row may have been filtered away; fall back to the preferred
+  // row, then the first visible row, so the tree always has exactly one tab stop.
+  const isVisible = (id: string | null): id is string =>
+    id !== null && rows.some((row) => row.node.id === id);
+  let activeRowId: string | null = rows[0]?.node.id ?? null;
+  if (isVisible(focusedId)) activeRowId = focusedId;
+  else if (isVisible(preferredRowId)) activeRowId = preferredRowId;
 
   const focusRow = React.useCallback((id: string | undefined) => {
     if (id === undefined) return;

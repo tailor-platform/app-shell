@@ -84,7 +84,7 @@ describe("tree-model", () => {
       );
     });
 
-    it("cascades disabled downwards, and disables a parent whose leaves are all disabled", () => {
+    it("cascades disabled downwards, and flags a parent whose leaves are all disabled", () => {
       const nodes = buildTree(
         [
           { key: "x", name: "X", disabled: true, children: [{ key: "x1", name: "X1" }] },
@@ -93,7 +93,21 @@ describe("tree-model", () => {
         mapItem,
       );
       expect(nodes[0]!.children[0]!.disabled).toBe(true);
-      expect(nodes[1]!.disabled).toBe(true);
+      // Y isn't disabled itself: only "full" propagation, where it's a container, locks it.
+      expect(nodes[1]!.disabled).toBe(false);
+      expect(nodes[1]!.noEnabledLeaves).toBe(true);
+    });
+
+    it("lists keys that are a parent in one place and a leaf in another", () => {
+      const nodes = buildTree(
+        [
+          { key: "x", name: "X", children: [{ key: "a", name: "A" }] },
+          { key: "g", name: "G", children: [{ key: "x", name: "X as a leaf" }] },
+        ],
+        mapItem,
+      );
+      expect(indexTree(nodes).mixedKeys).toEqual(["x"]);
+      expect(index().mixedKeys).toEqual([]);
     });
 
     it("encodes paths unambiguously, even with separators in keys", () => {

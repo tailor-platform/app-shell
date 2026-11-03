@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 import { TreeRow } from "./TreeRow";
 import { useTreeT } from "./i18n";
-import { flattenVisible, type TreeNode } from "./tree-model";
+import { flattenVisible, pathId, type TreeNode } from "./tree-model";
 import type { TreeChangeDetails, TreeProps, TreeSelectedItem } from "./types";
 import { useTreeField } from "./use-tree-field";
 import { useTreeFocus } from "./use-tree-focus";
@@ -131,7 +131,7 @@ export function Tree<T>(props: TreeProps<T>) {
     toggleExpand,
     setExpanded,
     getCheckState,
-    toggleNode,
+    toggleRow,
     selected,
     unknown,
   } = useTreeSelection({
@@ -156,14 +156,60 @@ export function Tree<T>(props: TreeProps<T>) {
   const selectedKey =
     single && "selectedKey" in single ? (single.selectedKey ?? null) : selectedKeyState;
   const onSelectedKeyChange = single?.onSelectedKeyChange;
+
+  /**
+   * Whether a row is locked. An item's own or inherited `disabled` always
+   * counts. With `"full"` propagation a parent is only a container, so one with
+   * no enabled leaves is locked too; elsewhere a parent is an item in its own
+   * right and stays usable.
+   */
+  const fullPropagation = !!checkbox && selectionPropagation === "full";
+  const isNodeDisabled = React.useCallback(
+    (node: TreeNode<T>) => node.disabled || (fullPropagation && node.noEnabledLeaves),
+    [fullPropagation],
+  );
+
   const selectNode = React.useCallback(
     (node: TreeNode<T>) => {
-      if (treeDisabled || node.disabled || node.key === selectedKey) return;
+      if (treeDisabled || isNodeDisabled(node) || node.key === selectedKey) return;
       setSelectedKeyState(node.key);
       onSelectedKeyChange?.(node.key, node.item);
     },
-    [treeDisabled, selectedKey, onSelectedKeyChange],
+    [treeDisabled, isNodeDisabled, selectedKey, onSelectedKeyChange],
   );
+
+  // `"single"`: the selected key's first row, and its ancestors' row ids.
+  const selectedRow = React.useMemo(() => {
+    if (!single || selectedKey === null) return null;
+    const find = (list: ReadonlyArray<TreeNode<T>>): TreeNode<T> | null => {
+      for (const node of list) {
+        if (node.key === selectedKey) return node;
+        const found = find(node.children);
+        if (found) return found;
+      }
+      return null;
+    };
+    const node = find(tree);
+    if (!node) return null;
+    const ancestorIds = node.path.slice(0, -1).map((_, i) => pathId(node.path.slice(0, i + 1)));
+    return { id: node.id, ancestorIds };
+  }, [single, selectedKey, tree]);
+
+  // Opens the selected row's ancestors when the selection starts out hidden or
+  // is changed from outside (a click only ever selects a visible row). Keyed
+  // on the row, so a group the user closes later stays closed.
+  const revealSelected = single?.revealSelected ?? true;
+  const selectedRowId = selectedRow?.id;
+  // Read through a ref so the effect re-runs only when the selected row
+  // changes; re-running on every new `setExpanded` would reopen groups the user
+  // closed.
+  const revealRef = React.useRef({ selectedRow, setExpanded });
+  revealRef.current = { selectedRow, setExpanded };
+  React.useEffect(() => {
+    const { selectedRow: row, setExpanded: expand } = revealRef.current;
+    if (!revealSelected || !row || row.id !== selectedRowId) return;
+    for (const id of row.ancestorIds) expand(id, true);
+  }, [revealSelected, selectedRowId]);
 
   const entries = React.useMemo(
     () => (checkbox ? submittedEntries(selected, unknown) : []),
@@ -190,6 +236,7 @@ export function Tree<T>(props: TreeProps<T>) {
   // owning form — as Enter in a text input does.
   const runAction = React.useCallback(
     (node: TreeNode<T>) => {
+      if (treeDisabled || isNodeDisabled(node)) return;
       if (onAction) {
         onAction(node.item, node.key);
         return;
@@ -198,16 +245,16 @@ export function Tree<T>(props: TreeProps<T>) {
       const owner = form ? document.getElementById(form) : rootRef.current?.closest("form");
       if (owner instanceof HTMLFormElement) owner.requestSubmit();
     },
-    [checkbox, form, onAction],
+    [treeDisabled, isNodeDisabled, checkbox, form, onAction],
   );
 
   /** Space: selects in `"single"`, ticks in `"checkbox"`, and does nothing in `"none"`. */
   const pressNode = React.useCallback(
     (node: TreeNode<T>) => {
       if (selectionMode === "single") selectNode(node);
-      else if (selectionMode === "checkbox") toggleNode(node, !getCheckState(node).checked);
+      else if (selectionMode === "checkbox") toggleRow(node);
     },
-    [selectionMode, selectNode, toggleNode, getCheckState],
+    [selectionMode, selectNode, toggleRow],
   );
 
   /**
@@ -224,8 +271,8 @@ export function Tree<T>(props: TreeProps<T>) {
       } else if (!node.isLeaf) {
         toggleExpand(node.id);
       } else if (selectionMode === "checkbox") {
-        toggleNode(node, !getCheckState(node).checked);
-      } else if (!node.disabled) {
+        toggleRow(node);
+      } else if (!isNodeDisabled(node)) {
         onAction?.(node.item, node.key);
       }
     },
@@ -235,8 +282,8 @@ export function Tree<T>(props: TreeProps<T>) {
       isExpanded,
       setExpanded,
       toggleExpand,
-      toggleNode,
-      getCheckState,
+      toggleRow,
+      isNodeDisabled,
       onAction,
     ],
   );
@@ -245,8 +292,18 @@ export function Tree<T>(props: TreeProps<T>) {
   // order — both derive from the same `isExpanded` predicate, so they agree.
   const visibleRows = React.useMemo(() => flattenVisible(kept, isExpanded), [kept, isExpanded]);
 
+  // The tab stop starts on the selected row, or on its nearest visible
+  // ancestor while that's closed.
+  const preferredRowId = React.useMemo(() => {
+    if (!selectedRow) return null;
+    const visible = new Set(visibleRows.map((row) => row.node.id));
+    if (visible.has(selectedRow.id)) return selectedRow.id;
+    return selectedRow.ancestorIds.findLast((id) => visible.has(id)) ?? null;
+  }, [selectedRow, visibleRows]);
+
   const { activeRowId, registerRow, onRowFocus, handleKeyDown } = useTreeFocus({
     rows: visibleRows,
+    preferredRowId,
     setExpanded,
     onSpace: pressNode,
     onAction: runAction,
@@ -341,7 +398,8 @@ export function Tree<T>(props: TreeProps<T>) {
               isExpanded={isExpanded}
               onToggleExpand={toggleExpand}
               getCheckState={getCheckState}
-              onToggleNode={toggleNode}
+              onToggleRow={toggleRow}
+              isNodeDisabled={isNodeDisabled}
               selectedKey={selectedKey}
               onRowClick={clickNode}
               renderItem={renderItem}

@@ -342,6 +342,208 @@ describe("Tree", () => {
     });
   });
 
+  describe("review fixes", () => {
+    const LOCKED_CHILDREN: Node[] = [
+      {
+        id: "p",
+        name: "Parent",
+        bins: [
+          { id: "c1", name: "Child 1", locked: true },
+          { id: "c2", name: "Child 2", locked: true },
+        ],
+      },
+    ];
+
+    it('locks a parent with no enabled leaves under "full", but not when parents are items', async () => {
+      const user = userEvent.setup();
+      const onValueChange = vi.fn();
+      const { rerender } = render(
+        <Tree<Node>
+          items={LOCKED_CHILDREN}
+          mapItem={mapItem}
+          aria-label="Bins"
+          selectionMode="checkbox"
+        />,
+      );
+      expect(rowFor("Parent").getAttribute("aria-disabled")).toBe("true");
+
+      rerender(
+        <Tree<Node>
+          items={LOCKED_CHILDREN}
+          mapItem={mapItem}
+          aria-label="Bins"
+          selectionMode="checkbox"
+          selectionPropagation="down"
+          onValueChange={onValueChange}
+        />,
+      );
+      expect(rowFor("Parent").getAttribute("aria-disabled")).toBeNull();
+      rowFor("Parent").focus();
+      await user.keyboard(" ");
+      // The disabled children are skipped, so only the parent ticks.
+      expect(onValueChange).toHaveBeenLastCalledWith(["p"], expect.anything());
+    });
+
+    it("selects a parent with no enabled leaves in single mode", async () => {
+      const user = userEvent.setup();
+      const onSelectedKeyChange = vi.fn();
+      render(
+        <Tree<Node>
+          items={LOCKED_CHILDREN}
+          mapItem={mapItem}
+          aria-label="Bins"
+          selectionMode="single"
+          onSelectedKeyChange={onSelectedKeyChange}
+        />,
+      );
+
+      await user.click(screen.getByText("Parent"));
+      expect(onSelectedKeyChange).toHaveBeenCalledWith("p", expect.anything());
+    });
+
+    it("never runs onAction or submits for Enter on a disabled row or tree", async () => {
+      const user = userEvent.setup();
+      const onAction = vi.fn();
+      const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
+      const { rerender } = render(
+        <Tree<Node>
+          items={[
+            { id: "a", name: "Locked", locked: true },
+            { id: "b", name: "Open" },
+          ]}
+          mapItem={mapItem}
+          aria-label="Bins"
+          onAction={onAction}
+        />,
+      );
+      rowFor("Locked").focus();
+      await user.keyboard("{Enter}");
+      expect(onAction).not.toHaveBeenCalled();
+
+      rerender(
+        <Tree<Node>
+          items={[{ id: "b", name: "Open" }]}
+          mapItem={mapItem}
+          aria-label="Bins"
+          disabled
+          onAction={onAction}
+        />,
+      );
+      rowFor("Open").focus();
+      await user.keyboard("{Enter}");
+      expect(onAction).not.toHaveBeenCalled();
+
+      cleanup();
+      render(
+        <form onSubmit={onSubmit}>
+          <Tree<Node>
+            items={[{ id: "b", name: "Open" }]}
+            mapItem={mapItem}
+            aria-label="Bins"
+            selectionMode="checkbox"
+            disabled
+          />
+        </form>,
+      );
+      rowFor("Open").focus();
+      await user.keyboard("{Enter}");
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+
+    it("reveals a hidden selected row and puts the tab stop on it", () => {
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={scopedMapItem}
+          aria-label="Bins"
+          selectionMode="single"
+          defaultSelectedKey="wh-y/A1"
+        />,
+      );
+
+      expect(rowFor("Warehouse Y").getAttribute("aria-expanded")).toBe("true");
+      expect(rowFor("Y · A1").getAttribute("aria-selected")).toBe("true");
+      expect(rowFor("Y · A1").tabIndex).toBe(0);
+      expect(rowFor("Warehouse X").tabIndex).toBe(-1);
+    });
+
+    it("with revealSelected false, keeps the tab stop on the nearest visible ancestor", () => {
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={scopedMapItem}
+          aria-label="Bins"
+          selectionMode="single"
+          defaultSelectedKey="wh-y/A1"
+          revealSelected={false}
+        />,
+      );
+
+      expect(rowFor("Warehouse Y").getAttribute("aria-expanded")).toBe("false");
+      expect(rowFor("Warehouse Y").tabIndex).toBe(0);
+    });
+
+    it("leaves a group the user closed closed, and reveals again when selectedKey changes from outside", async () => {
+      const user = userEvent.setup();
+      const props = {
+        items: WAREHOUSES,
+        mapItem: scopedMapItem,
+        "aria-label": "Bins",
+        selectionMode: "single",
+      } as const;
+      const { rerender } = render(<Tree<Node> {...props} selectedKey="wh-y/A1" />);
+
+      await user.click(rowFor("Warehouse Y").querySelector("button[title]") as HTMLElement);
+      expect(rowFor("Warehouse Y").getAttribute("aria-expanded")).toBe("false");
+      rerender(<Tree<Node> {...props} selectedKey="wh-y/A1" />);
+      expect(rowFor("Warehouse Y").getAttribute("aria-expanded")).toBe("false");
+
+      rerender(<Tree<Node> {...props} selectedKey="wh-x/A2" />);
+      expect(rowFor("Warehouse X").getAttribute("aria-expanded")).toBe("true");
+    });
+
+    it("ticks only the visible matches of a filtered group, and shows the group as partly ticked", async () => {
+      const user = userEvent.setup();
+      const onValueChange = vi.fn();
+      render(
+        <Tree<Node>
+          items={WAREHOUSES}
+          mapItem={scopedMapItem}
+          aria-label="Bins"
+          selectionMode="checkbox"
+          valueStrategy="topmost"
+          filter={(_, { label }) => label === "X · A1"}
+          onValueChange={onValueChange}
+        />,
+      );
+
+      rowFor("Warehouse X").focus();
+      await user.keyboard(" ");
+      expect(onValueChange).toHaveBeenLastCalledWith(["wh-x/A1"], expect.anything());
+      expect(checkedOf("Warehouse X")).toBe("mixed");
+
+      // Space again clears the visible matches rather than getting stuck.
+      await user.keyboard(" ");
+      expect(onValueChange).toHaveBeenLastCalledWith([], expect.anything());
+    });
+
+    it("warns about a key that is a parent in one place and a leaf in another", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      render(
+        <Tree<Node>
+          items={[
+            { id: "x", name: "X", bins: [{ id: "a", name: "A" }] },
+            { id: "g", name: "G", bins: [{ id: "x", name: "X as a leaf" }] },
+          ]}
+          mapItem={mapItem}
+          aria-label="Bins"
+        />,
+      );
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('"x"'));
+      warn.mockRestore();
+    });
+  });
+
   describe("value", () => {
     it("selects a key wherever it appears, and reports keys plus the selected leaves", async () => {
       const user = userEvent.setup();

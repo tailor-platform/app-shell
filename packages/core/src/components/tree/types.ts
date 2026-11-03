@@ -164,6 +164,12 @@ type SingleSelectionOwnProps<T> = {
   defaultSelectedKey?: string | null;
   /** Fires when the user selects a row, with its key and your item. */
   onSelectedKeyChange?: (key: string, item: T) => void;
+  /**
+   * Opens the selected row's ancestors when it starts out hidden or
+   * `selectedKey` changes from outside, so the selection is always on screen.
+   * A group the user closes afterwards stays closed. Default `true`.
+   */
+  revealSelected?: boolean;
 };
 
 /** `"checkbox"` mode's own props. */

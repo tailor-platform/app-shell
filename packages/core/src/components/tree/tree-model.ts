@@ -26,8 +26,13 @@ export type TreeNode<T> = {
   parents: T[];
   children: TreeNode<T>[];
   isLeaf: boolean;
-  /** Own, inherited from an ancestor, or a parent whose every leaf is disabled. */
+  /** The item's own `disabled`, or one inherited from an ancestor. */
   disabled: boolean;
+  /**
+   * Every leaf beneath is disabled (a leaf: it is). With `"full"` propagation a
+   * parent is only a container, so such a parent is locked too.
+   */
+  noEnabledLeaves: boolean;
 };
 
 /** Encodes a path as a string. JSON keeps keys containing `/` or `,` unambiguous. */
@@ -55,6 +60,7 @@ export function buildTree<T>(
     );
     const isLeaf = children.length === 0;
     return {
+      noEnabledLeaves: isLeaf ? ownDisabled : children.every((child) => child.noEnabledLeaves),
       id: pathId(path),
       key: mapped.key,
       label: mapped.label,
@@ -63,7 +69,7 @@ export function buildTree<T>(
       parents,
       children,
       isLeaf,
-      disabled: ownDisabled || (!isLeaf && children.every((child) => child.disabled)),
+      disabled: ownDisabled,
     };
   });
 }
@@ -164,14 +170,24 @@ export type TreeIndex<T> = {
   nodes: TreeNode<T>[];
   /** Every row a key appears on. */
   byKey: Map<string, TreeNode<T>[]>;
+  /** Every row, by its id. */
+  byId: Map<string, TreeNode<T>>;
+  /**
+   * Keys that are a parent in one place and a leaf in another. One key is one
+   * item, and an item can't both have children and not, so these can't be
+   * ticked consistently.
+   */
+  mixedKeys: string[];
 };
 
 export function indexTree<T>(tree: TreeNode<T>[]): TreeIndex<T> {
   const nodes: TreeNode<T>[] = [];
   const byKey = new Map<string, TreeNode<T>[]>();
+  const byId = new Map<string, TreeNode<T>>();
   const walk = (list: ReadonlyArray<TreeNode<T>>) => {
     for (const node of list) {
       nodes.push(node);
+      byId.set(node.id, node);
       const rows = byKey.get(node.key);
       if (rows) rows.push(node);
       else byKey.set(node.key, [node]);
@@ -179,7 +195,10 @@ export function indexTree<T>(tree: TreeNode<T>[]): TreeIndex<T> {
     }
   };
   walk(tree);
-  return { tree, nodes, byKey };
+  const mixedKeys = [...byKey]
+    .filter(([, rows]) => rows.some((row) => row.isLeaf) && rows.some((row) => !row.isLeaf))
+    .map(([key]) => key);
+  return { tree, nodes, byKey, byId, mixedKeys };
 }
 
 /** The checked keys a value stands for, plus the keys that aren't in the tree. */

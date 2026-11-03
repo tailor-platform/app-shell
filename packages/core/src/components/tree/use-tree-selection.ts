@@ -53,10 +53,18 @@ export type UseTreeSelectionResult<T> = {
   isExpanded(id: string): boolean;
   toggleExpand(id: string): void;
   setExpanded(id: string, next: boolean): void;
-  /** A row's checkbox, as `selectionPropagation` derives it. */
+  /**
+   * A row's checkbox, as `selectionPropagation` derives it. While filtering,
+   * `node` holds only the matching children, but the checkbox still reflects
+   * the whole group.
+   */
   getCheckState(node: TreeNode<T>): { checked: boolean; indeterminate: boolean };
-  /** Ticks or clears `node`, spreading as `selectionPropagation` says, in one update. */
-  toggleNode(node: TreeNode<T>, next: boolean): void;
+  /**
+   * Ticks or clears a row, spreading as `selectionPropagation` says, in one
+   * update. While filtering it acts on what's visible: a group whose visible
+   * enabled leaves are all ticked clears them, otherwise it ticks them.
+   */
+  toggleRow(node: TreeNode<T>): void;
   /** The value's items in tree order, one per key. */
   selected: TreeSelectedItem<T>[];
   /** Selected keys that aren't in the tree (e.g. not loaded yet), kept as they were. */
@@ -146,9 +154,21 @@ export function useTreeSelection<T>(
     [isExpanded, setExpanded],
   );
 
+  React.useEffect(() => {
+    if (index.mixedKeys.length === 0) return;
+    console.warn(
+      `[Tree] These keys are a parent in one place and a leaf in another: ${index.mixedKeys
+        .map((key) => JSON.stringify(key))
+        .join(
+          ", ",
+        )}. A key is one item, so give each a unique key (mapItem receives the item's parents).`,
+    );
+  }, [index]);
+
   const getCheckState = React.useCallback(
-    (node: TreeNode<T>) => checkState(node, state.checked, selectionPropagation),
-    [state, selectionPropagation],
+    (node: TreeNode<T>) =>
+      checkState(index.byId.get(node.id) ?? node, state.checked, selectionPropagation),
+    [index, state, selectionPropagation],
   );
 
   const { onValueChange } = options;
@@ -167,6 +187,12 @@ export function useTreeSelection<T>(
     [controlled, disabled, listed, onValueChange, selectionPropagation, state],
   );
 
+  const toggleRow = React.useCallback(
+    (node: TreeNode<T>) =>
+      toggleNode(node, !checkState(node, state.checked, selectionPropagation).checked),
+    [toggleNode, state, selectionPropagation],
+  );
+
   return {
     tree,
     kept,
@@ -174,7 +200,7 @@ export function useTreeSelection<T>(
     toggleExpand,
     setExpanded,
     getCheckState,
-    toggleNode,
+    toggleRow,
     selected,
     unknown,
   };

@@ -133,7 +133,7 @@ describe("tree-model", () => {
   describe('selectionPropagation "full"', () => {
     it("reads a leaf key wherever it appears, and a parent key as every leaf beneath it", () => {
       const { checked, unknown } = readValue(index(), ["a", "c", "gone"], "full");
-      expect([...checked].sort()).toEqual(["a", "wide"]);
+      expect([...checked].toSorted()).toEqual(["a", "wide"]);
       expect(unknown).toEqual(["gone"]);
     });
 

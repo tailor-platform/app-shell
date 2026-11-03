@@ -70,6 +70,8 @@ function TreeRow<T>(props: TreeRowProps<T>) {
     ? getCheckState(node)
     : { checked: false, indeterminate: false };
   const selected = selectionMode === "single" && selectedKey === node.key;
+  let ariaChecked: boolean | "mixed" | undefined;
+  if (withCheckbox) ariaChecked = indeterminate ? "mixed" : checked;
   // A leaf keeps the caret's space so its label lines up with its siblings'.
   // Beside a checkbox, nested leaves don't need it: the indent already aligns
   // them, so the label sits right beside the checkbox.
@@ -98,7 +100,7 @@ function TreeRow<T>(props: TreeRowProps<T>) {
         role="treeitem"
         aria-level={depth + 1}
         aria-expanded={leaf ? undefined : expanded}
-        aria-checked={withCheckbox ? (indeterminate ? "mixed" : checked) : undefined}
+        aria-checked={ariaChecked}
         aria-selected={selectionMode === "single" ? selected : undefined}
         aria-disabled={disabled || undefined}
         tabIndex={!treeDisabled && activeRowId === node.id ? 0 : -1}

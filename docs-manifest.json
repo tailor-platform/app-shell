@@ -1554,9 +1554,9 @@
       ],
       "hashes": {
         "typeSurface": "343d595c9ce52cab",
-        "outline": "295c513825c3e266",
+        "outline": "0055a8429ac28376",
         "snapshot": "6db41d93e7a1d8f7",
-        "outputMd": "885649f5b2a07df8",
+        "outputMd": "f17b7321cad02a44",
         "examples": null
       }
     },
@@ -1854,7 +1854,7 @@
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
-    "packages/core/skills/app-shell-patterns/references/components/tree.md": "885649f5b2a07df8",
+    "packages/core/skills/app-shell-patterns/references/components/tree.md": "f17b7321cad02a44",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "d79aaf40cb97073f",
     "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "daf6c93e7285ee88",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",
@@ -1894,6 +1894,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "930db027a28bbe24",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "e0286979718e2769",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "5b40ebb53c0a2915"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "0e6c9be8c4ece7bc"
   }
 }

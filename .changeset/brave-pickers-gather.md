@@ -2,9 +2,9 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add `Tree` and `TreePicker` for picking many items from a hierarchical catalog. `Tree` is the searchable multi-select tree on its own, for use inline and in forms; `TreePicker` is the same tree in a fixed-height dialog with an "Add N items" commit, the way `DatePicker` wraps `DateField`.
+Add `Tree` and `TreePicker`. `Tree` shows your own hierarchical items as an ARIA tree, for browsing, picking one node, or ticking many as a form control. `TreePicker` is a checkbox tree in a fixed-height dialog with search and an "Add N items" commit, the way `DatePicker` wraps `DateField`.
 
-Pass your own items with `mapItem`, as with `Select` and `Combobox`. A key only needs to be unique among its siblings. Selection is leaf-only: ticking a parent selects every enabled leaf beneath it, and a parent's checkbox is checked or indeterminate from its leaves.
+Pass your own items with `mapItem`, as with `Select` and `Combobox`. A key is the item's identity across the whole tree, and `mapItem` receives the item's `parents` so you can compose a unique key when codes repeat.
 
 ```tsx
 import { Tree } from "@tailor-platform/app-shell";
@@ -17,19 +17,17 @@ import { Tree } from "@tailor-platform/app-shell";
       ? { key: item.id, label: item.name, children: item.products }
       : { key: item.sku, label: item.name }
   }
-  trailingColumn={{
-    header: "Unit price",
-    render: ({ item, isLeaf }) => (isLeaf ? money(item.price) : null),
-  }}
+  selectionMode="checkbox"
   value={skus}
   onValueChange={setSkus}
 />;
 ```
 
-- **Two value shapes:** a list of leaf keys (`valueShape: "keys"`, the default), or an exact nested selection (`valueShape: "exact"`) for when the same key means different things under different parents. `onValueChange` reports the same shape plus the selected leaves with their paths and parents.
-- **Rows:** `renderItem` for the main column, plus `leadingColumn` / `trailingColumn` with aligned header cells.
-- **Forms:** `name` submits one hidden input per selected leaf; `required`, `disabled`, `itemToStringValue`, and `Field.Root` integration (label, description, error, invalid state) work as on `Select`.
-- **Keyboard:** `role="tree"` with roving focus — arrows to move and expand, Space to toggle, Enter runs `onAction` (or submits the owning form; the picker commits).
+- **Selection modes:** `selectionMode` is `"none"` (the default, for browsing with `onAction`), `"single"` (one selected row through `selectedKey`), or `"checkbox"` (a multi-select `value`). Each mode's props are ruled out in the others, so a form prop without checkbox mode is a type error.
+- **How ticking works:** `selectionPropagation` is `"full"` (parents are containers, the default), `"down"` (parents are items, and ticking one ticks everything beneath it) or `"none"`. `valueStrategy` is `"leaves"` (the default), `"topmost"` (a fully ticked parent in place of its leaves) or `"all"`. Parents that are items only allow `"all"`.
+- **Filtering:** `filter` narrows the tree to matches and their ancestors and opens the groups they're in. The tree has no search box of its own; `TreePicker` adds one, with `matchesSearch` and `filterSlot`.
+- **Forms:** in checkbox mode, `name` submits one hidden input per value key; `required`, `disabled`, `itemToStringValue`, and `Field.Root` integration (label, description, error, invalid state) work as on `Select`.
+- **Keyboard:** `role="tree"` with roving focus. Arrows move and open, Space selects or ticks, and Enter runs `onAction` (or, in checkbox mode with no `onAction`, submits the owning form; the picker commits).
 - **Disabled items:** `disabled` from `mapItem`, cascading from a parent to its children.
 
-Built-in labels are localized (English and Japanese) through the app locale; any label prop overrides them.
+Built-in labels are localised (English and Japanese) through the app locale; any label prop overrides them.

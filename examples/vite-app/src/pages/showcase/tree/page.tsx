@@ -6,6 +6,8 @@ import {
   Field,
   Layout,
   type AppShellPageProps,
+  type TreeSelectionPropagation,
+  type TreeValueStrategy,
 } from "@tailor-platform/app-shell";
 import { useState } from "react";
 
@@ -58,6 +60,54 @@ const WAREHOUSES: Warehouse[] = [
 
 const money = (n: number) => `$${n.toFixed(2)}`;
 
+// 🧪 Dummy Data: Replace with real data later — a chart of accounts, for browsing and single selection
+type Account = { code: string; name: string; balance?: number; children?: Account[] };
+
+const ACCOUNTS: Account[] = [
+  {
+    code: "1000",
+    name: "Assets",
+    children: [
+      {
+        code: "1100",
+        name: "Current assets",
+        children: [
+          { code: "1110", name: "Cash at bank", balance: 182_400 },
+          { code: "1120", name: "Accounts receivable", balance: 64_250 },
+          { code: "1130", name: "Inventory", balance: 97_800 },
+        ],
+      },
+      { code: "1500", name: "Plant & equipment", balance: 410_000 },
+    ],
+  },
+  {
+    code: "2000",
+    name: "Liabilities",
+    children: [
+      { code: "2100", name: "Accounts payable", balance: 38_900 },
+      { code: "2200", name: "GST payable", balance: 7_420 },
+    ],
+  },
+];
+
+const mapAccount = (account: Account) => ({
+  key: account.code,
+  label: `${account.code} ${account.name}`,
+  children: account.children,
+});
+
+const findAccount = (accounts: Account[], code: string | null): Account | undefined => {
+  for (const account of accounts) {
+    if (account.code === code) return account;
+    const found = findAccount(account.children ?? [], code);
+    if (found) return found;
+  }
+  return undefined;
+};
+
+const PROPAGATIONS: TreeSelectionPropagation[] = ["full", "down", "none"];
+const STRATEGIES: TreeValueStrategy[] = ["leaves", "topmost", "all"];
+
 /** A product row with its price on the right; a category row is just its name. */
 const renderCatalogItem = ({ item }: { item: CatalogNode }) => (
   <span className="flex w-full items-center justify-between gap-3">
@@ -79,15 +129,149 @@ const TreeDemoPage = () => {
   const [skus, setSkus] = useState<string[]>([]);
   const [bins, setBins] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState<string[] | null>(null);
+  const [lastAction, setLastAction] = useState<string | null>(null);
+  const [accountCode, setAccountCode] = useState<string | null>("1110");
+  const [propagation, setPropagation] = useState<TreeSelectionPropagation>("full");
+  const [strategy, setStrategy] = useState<TreeValueStrategy>("leaves");
+  const [ticked, setTicked] = useState<string[]>([]);
+  const account = findAccount(ACCOUNTS, accountCode);
+  // Parents that are items only allow "all", which keeps their state.
+  const effectiveStrategy = propagation === "full" ? strategy : "all";
 
   return (
     <Layout>
       <Layout.Column>
+        {/* 🔽 Browse: selectionMode "none" (the default), clicking a leaf runs onAction */}
+        <Card.Root>
+          <Card.Header
+            title="Browse"
+            description={`The default mode: no selection. Clicking an account runs onAction. Last action: ${lastAction ?? "none"}.`}
+          />
+          <Card.Content padding="none">
+            <Tree<Account>
+              aria-label="Chart of accounts"
+              className="h-72"
+              items={ACCOUNTS}
+              mapItem={mapAccount}
+              onAction={(item) => setLastAction(`${item.code} ${item.name}`)}
+            />
+          </Card.Content>
+        </Card.Root>
+
+        {/* 🔽 Master–detail: selectionMode "single" */}
+        <Card.Root>
+          <Card.Header
+            title="Master–detail"
+            description='selectionMode="single" keeps one selected row, parents included. Selecting a closed parent opens it.'
+          />
+          <Card.Content padding="none">
+            <div className="grid grid-cols-1 sm:grid-cols-2">
+              <Tree<Account>
+                aria-label="Accounts"
+                className="h-72 sm:border-r"
+                items={ACCOUNTS}
+                mapItem={mapAccount}
+                selectionMode="single"
+                selectedKey={accountCode}
+                onSelectedKeyChange={(key) => setAccountCode(key)}
+              />
+              <div className="flex flex-col gap-1 p-6 text-sm">
+                {account ? (
+                  <>
+                    <span className="text-muted-foreground font-mono text-xs">{account.code}</span>
+                    <span className="text-base font-medium">{account.name}</span>
+                    <span className="text-muted-foreground">
+                      {account.balance === undefined
+                        ? `${account.children?.length ?? 0} sub-accounts`
+                        : `Balance ${money(account.balance)}`}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-muted-foreground">Select an account.</span>
+                )}
+              </div>
+            </div>
+          </Card.Content>
+        </Card.Root>
+
+        {/* 🔽 How ticking works: selectionPropagation × valueStrategy */}
+        <Card.Root>
+          <Card.Header
+            title="How ticking works"
+            description={`selectionPropagation decides whether a parent is data or a folder, and valueStrategy decides what comes back. Parents that are items only allow "all".`}
+          />
+          <Card.Content className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted-foreground w-36">selectionPropagation</span>
+              {PROPAGATIONS.map((option) => (
+                <Button
+                  key={option}
+                  size="sm"
+                  variant={propagation === option ? "default" : "outline"}
+                  onClick={() => {
+                    setPropagation(option);
+                    setTicked([]);
+                  }}
+                >
+                  {option}
+                </Button>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted-foreground w-36">valueStrategy</span>
+              {STRATEGIES.map((option) => (
+                <Button
+                  key={option}
+                  size="sm"
+                  variant={effectiveStrategy === option ? "default" : "outline"}
+                  disabled={propagation !== "full" && option !== "all"}
+                  onClick={() => {
+                    setStrategy(option);
+                    setTicked([]);
+                  }}
+                >
+                  {option}
+                </Button>
+              ))}
+            </div>
+            <div className="rounded-md border">
+              {propagation === "full" ? (
+                <Tree<Account>
+                  key={`full-${effectiveStrategy}`}
+                  aria-label="Accounts to export"
+                  className="h-72"
+                  items={ACCOUNTS}
+                  mapItem={mapAccount}
+                  selectionMode="checkbox"
+                  valueStrategy={effectiveStrategy}
+                  value={ticked}
+                  onValueChange={setTicked}
+                />
+              ) : (
+                <Tree<Account>
+                  key={propagation}
+                  aria-label="Accounts to export"
+                  className="h-72"
+                  items={ACCOUNTS}
+                  mapItem={mapAccount}
+                  selectionMode="checkbox"
+                  selectionPropagation={propagation}
+                  value={ticked}
+                  onValueChange={setTicked}
+                />
+              )}
+            </div>
+            <span className="text-muted-foreground font-mono text-xs">
+              value = {JSON.stringify(ticked)}
+            </span>
+          </Card.Content>
+        </Card.Root>
+
         {/* 🔽 TreePicker: pick, then add */}
         <Card.Root>
           <Card.Header
             title="TreePicker"
-            description="Pick many products from a grouped catalog and commit them in one batch."
+            description="Search and pick many products from a grouped catalogue, then commit them in one batch."
           >
             <div className="flex items-center justify-end gap-2">
               <Button onClick={() => setOpen(true)}>Add items</Button>
@@ -109,10 +293,10 @@ const TreeDemoPage = () => {
           </Card.Content>
         </Card.Root>
 
-        {/* 🔽 Tree inline, "keys" shape: a product in two categories is one selection */}
+        {/* 🔽 Checkbox tree inline: a product in two categories has one key, so it's one selection */}
         <Card.Root>
           <Card.Header
-            title="Tree (keys)"
+            title="Checkbox tree"
             description={`${skus.length} selected: ${skus.join(", ") || "none"}. The tote and cap are also in "Gift edit"; ticking either copy ticks both.`}
           />
           <Card.Content padding="none">
@@ -211,7 +395,7 @@ const TreeDemoPage = () => {
 
 TreeDemoPage.appShellPageProps = {
   meta: {
-    title: "Checkbox Tree",
+    title: "Tree",
   },
 } satisfies AppShellPageProps;
 

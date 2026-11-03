@@ -2,16 +2,18 @@
 kind: code-backed
 group: tree
 title: Tree
-description: Pick many items from a hierarchical catalog — inline with Tree, or in a dialog with TreePicker
+description: Browse, pick one, or tick many items in a hierarchy — inline with Tree, or in a search dialog with TreePicker
 sources:
   - packages/core/src/components/tree/**
 ---
 
 # Tree
 
-`Tree` is a searchable, multi-select tree for picking many items out of a hierarchical catalog — products with variants, warehouses with bins, accounts with sub-accounts. Ticking a parent selects every leaf beneath it, and searching auto-expands to the matches.
+`Tree` shows your own hierarchical items (accounts with sub-accounts, warehouses with bins, categories with products) as an ARIA tree. It can be a plain browser, a single-select for master–detail views, or a multi-select checkbox form control.
 
-It renders inline and works as a form control. For the common "pick, then add" flow, **`TreePicker`** is the same tree in a dialog with a title, Cancel, and an "Add N items" button — the same split as `DateField` and `DatePicker`.
+The tree is the primitive, so it has no search box of its own. For the common "search, pick, then add" flow, **`TreePicker`** is a checkbox tree in a dialog with search, Cancel, and an "Add N items" button, the same split as `DateField` and `DatePicker`.
+
+Trees are single-column. If you need a hierarchy with real columns (sorting, pinning, wide data), that's a tree grid, which belongs with the data table rather than here.
 
 ## Import
 
@@ -21,112 +23,186 @@ import { Tree, TreePicker } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-Pass your own items and say how to read them with `mapItem`, as with `Select` and `Combobox`. `children` points at your own child array; an item with no children is a leaf.
+Pass your own items and say how to read them with `mapItem`, as with `Select` and `Combobox`. `children` points at your own child array, and an item with no children is a leaf.
 
 ```tsx
-type Category = { id: string; name: string; products: Product[] };
-type Product = { sku: string; name: string; price: number };
+type Account = { code: string; name: string; children?: Account[] };
 
-const [selected, setSelected] = useState<string[]>([]);
-
-<Tree<Category | Product>
-  aria-label="Products"
+<Tree<Account>
+  aria-label="Chart of accounts"
   className="h-96"
-  items={categories}
-  mapItem={(item) =>
-    "products" in item
-      ? { key: item.id, label: item.name, children: item.products }
-      : { key: item.sku, label: item.name }
-  }
-  value={selected}
-  onValueChange={setSelected}
+  items={accounts}
+  mapItem={(account) => ({
+    key: account.code,
+    label: `${account.code} ${account.name}`,
+    children: account.children,
+  })}
+  onAction={(account) => navigate(`/accounts/${account.code}`)}
 />;
 ```
 
-A `key` only has to be unique **among its siblings**: the tree identifies each item by its path, so the same key under two parents is never confused.
+### Keys
 
-## Rows and columns
+A `key` is the item's identity across the whole tree. The same key in two places is one item, so a product listed in two collections ticks in both places at once.
 
-The row shows the item's `label` by default. `renderItem` replaces it, and `leadingColumn` / `trailingColumn` add aligned columns with their own header cells — the tree lines them up across rows, so you don't rebuild that alignment inside `renderItem`. Each `render` receives the row's state.
+When codes repeat with different meanings, like bin `A1` in two warehouses, compose a unique key. `mapItem` receives the item's `parents` for exactly this.
 
 ```tsx
+mapItem={(item, { parents }) =>
+  "bins" in item
+    ? { key: item.id, label: item.name, children: item.bins }
+    : { key: `${(parents[0] as Warehouse).id}/${item.code}`, label: item.code }
+}
+```
+
+## Selection modes
+
+`selectionMode` sets what clicking and Space do to a row.
+
+| Mode               | What a row does                                                           | State                    |
+| ------------------ | ------------------------------------------------------------------------- | ------------------------ |
+| `"none"` (default) | Clicking a leaf runs `onAction`, and clicking a parent opens or closes it | –                        |
+| `"single"`         | One row is selected at a time, parents included                           | `selectedKey`            |
+| `"checkbox"`       | Rows have checkboxes, and the tree is a multi-select form control         | `value` (a list of keys) |
+
+Enter runs `onAction(item, key)` on any row, in every mode. The props are a union on `selectionMode`, so `value` or `name` without `selectionMode="checkbox"` is a type error rather than silently ignored.
+
+### Single
+
+```tsx
+const [selected, setSelected] = useState<string | null>(null);
+
+<Tree<Account>
+  {...props}
+  selectionMode="single"
+  selectedKey={selected}
+  onSelectedKeyChange={(key) => setSelected(key)}
+/>;
+```
+
+Selecting a closed parent opens it. Its caret closes it again, so selecting an open parent never hides what you were looking at.
+
+### Checkbox
+
+```tsx
+const [skus, setSkus] = useState<string[]>([]);
+
 <Tree<Category | Product>
   {...props}
-  itemHeader="Product"
-  renderItem={({ item, isLeaf }) =>
-    isLeaf ? <ProductRow product={item as Product} /> : <strong>{item.name}</strong>
-  }
-  leadingColumn={{
-    width: 40,
-    render: ({ item, isLeaf }) => (isLeaf ? <Thumbnail sku={(item as Product).sku} /> : null),
-  }}
-  trailingColumn={{
-    header: "Unit price",
-    render: ({ item, isLeaf }) => (isLeaf ? money((item as Product).price) : null),
-  }}
-/>
+  selectionMode="checkbox"
+  value={skus}
+  onValueChange={setSkus}
+/>;
 ```
 
-| Row state       | Type                  | Description                                                      |
-| --------------- | --------------------- | ---------------------------------------------------------------- |
-| `item`          | `T`                   | Your original item.                                              |
-| `key` / `path`  | `string` / `string[]` | The item's key, and the keys from the top level down to it.      |
-| `parents`       | `T[]`                 | Ancestors, top level first.                                      |
-| `depth`         | `number`              | 0 for top-level rows.                                            |
-| `isLeaf`        | `boolean`             | Only leaves are selectable values.                               |
-| `checked`       | `boolean`             | For a parent: every enabled leaf beneath it is selected.         |
-| `indeterminate` | `boolean`             | For a parent: some, but not all, leaves beneath it are selected. |
-| `expanded`      | `boolean`             | The parent is open.                                              |
-| `disabled`      | `boolean`             | The item, an ancestor, or the whole tree is disabled.            |
+`onValueChange(value, { selected })` gives the new value plus the items it lists, as `{ key, item, parents }[]` in tree order. Keys in the value that aren't in `items` (not loaded yet, say) are kept as they were.
 
-## Selection: keys or exact
+## How ticking works
 
-Selection is **leaf-only**: only leaves are ever values. How a value identifies a leaf depends on `valueShape`.
+Two props decide how ticking spreads and what ends up in the value. Both default to the most common case: parents are just containers, and the value lists leaves.
 
-**`"keys"` (default)** — the value is a list of leaf keys, and a key is selected wherever it appears. Use it when leaf keys are unique (database ids, SKUs), or when a repeated key really is the same item, like one product listed in two collections — ticking it in one place ticks it in both.
+`selectionPropagation` answers "is a parent data, or just a folder?"
+
+| Value              | Parents are              | Ticking a parent                                                            |
+| ------------------ | ------------------------ | --------------------------------------------------------------------------- |
+| `"full"` (default) | containers               | Ticks every enabled leaf beneath it. Its checkbox is derived from them.     |
+| `"down"`           | items in their own right | Ticks itself and everything beneath it. Unticking a child leaves it ticked. |
+| `"none"`           | items in their own right | Ticks only itself.                                                          |
+
+`valueStrategy` answers "what do I get back?"
+
+| Value                | The value lists                                                      |
+| -------------------- | -------------------------------------------------------------------- |
+| `"leaves"` (default) | The ticked leaves.                                                   |
+| `"topmost"`          | A fully ticked parent in place of its leaves, plus any loose leaves. |
+| `"all"`              | Every ticked item, parents included.                                 |
+
+When parents are items in their own right (`"down"` or `"none"`), only `"all"` keeps their state, so it's the only strategy those modes allow, and it's their default. The types rule out the other combinations.
 
 ```tsx
-<Tree {...props} defaultValue={["TEE-1", "CAP-1"]} onValueChange={(keys) => setKeys(keys)} />
+// Everything in a warehouse comes back as the warehouse key, not every bin.
+<Tree {...props} selectionMode="checkbox" valueStrategy="topmost" />
+
+// A parent purchase order can be approved without its child orders.
+<Tree {...props} selectionMode="checkbox" selectionPropagation="none" />
 ```
 
-**`"exact"`** — the value is a nested selection by key, from the top level down. Use it when the same key means different things under different parents, like bin `A1` in two warehouses. `true` selects that leaf, or every leaf beneath that parent.
+Every combination round-trips: passing a value back in shows the same ticks. With `"full"`, a parent key in the value stands for every leaf beneath it, so `defaultValue={["wh-x"]}` ticks all of Warehouse X.
+
+## Rows
+
+The row shows the item's `label` by default. `renderItem` replaces it, and receives the row's state.
 
 ```tsx
-<Tree
-  {...props}
-  valueShape="exact"
-  // Bin A1 in Warehouse X, plus every bin in Warehouse Y
-  defaultValue={{ "wh-x": { A1: true }, "wh-y": true }}
-  onValueChange={(selection) => setSelection(selection)}
-/>
+renderItem={({ item, isLeaf }) =>
+  isLeaf ? (
+    <span className="flex w-full justify-between gap-3">
+      <span>{item.name}</span>
+      <span className="text-muted-foreground tabular-nums">{money(item.price)}</span>
+    </span>
+  ) : (
+    <strong>{item.name}</strong>
+  )
+}
 ```
 
-`onValueChange` reports the value in the same shape you pass in, so `value={value} onValueChange={setValue}` round-trips without conversion. Its second argument lists the selected leaves with their context: `details.selected` is `{ key, path, item, parents }[]` in tree order (one entry per key in the keys shape). Values that aren't in `items` — keys or branches for items not loaded yet — are kept as they were.
+| Row state       | Type      | Description                                                                        |
+| --------------- | --------- | ---------------------------------------------------------------------------------- |
+| `item`          | `T`       | Your original item.                                                                |
+| `key`           | `string`  | The item's key.                                                                    |
+| `parents`       | `T[]`     | Ancestors, top level first.                                                        |
+| `depth`         | `number`  | 0 for top-level rows.                                                              |
+| `isLeaf`        | `boolean` | The item has no children.                                                          |
+| `checked`       | `boolean` | Checkbox mode: the row is ticked. With `"full"`, every enabled leaf beneath it is. |
+| `indeterminate` | `boolean` | Checkbox mode with `"full"`: some, but not all, enabled leaves beneath it are.     |
+| `selected`      | `boolean` | Single mode: the row is the selected one.                                          |
+| `expanded`      | `boolean` | The parent is open.                                                                |
+| `disabled`      | `boolean` | The item, an ancestor, or the whole tree is disabled.                              |
+
+## Filtering
+
+`filter` narrows the tree to matching items plus their ancestors, and opens the groups they're in. It receives the item with its `label` and `parents`. A parent that matches with no matching children keeps all of them, so it can still be opened.
+
+```tsx
+const [query, setQuery] = useState("");
+const filter = useMemo(
+  () => (query ? (_: Account, { label }: { label: string }) => label.includes(query) : undefined),
+  [query],
+);
+
+<Input value={query} onChange={(event) => setQuery(event.target.value)} />
+<Tree<Account> {...props} filter={filter} />
+```
+
+Groups a filter opened can still be closed. They stay closed until the matches change, so an inline `filter` recreated on every render won't reopen them.
 
 ## Forms
 
-`Tree` works like `Select` and the other form controls: as a plain form field, inside `Field.Root`, and with React Hook Form.
+In checkbox mode, `Tree` works like `Select` and the other form controls: as a plain form field, inside `Field.Root`, and with React Hook Form.
 
 ```tsx
 <form action={saveCount}>
   <Field.Root name="bins">
     <Field.Label>Bins to count</Field.Label>
-    <Tree<Warehouse | Bin> {...props} valueShape="exact" required />
+    <Tree<Warehouse | Bin> {...props} selectionMode="checkbox" required />
     <Field.Description>Pick at least one bin.</Field.Description>
   </Field.Root>
   <Button type="submit">Start count</Button>
 </form>
 ```
 
-- **Submitting:** `name` (or the `Field.Root`'s name) renders one hidden input per selected leaf, so the server reads `formData.getAll("bins")`. The submitted string is the key in `"keys"` mode and `path.join("/")` in `"exact"` mode (`"wh-x/A1"`); `itemToStringValue(item, { path, parents })` overrides it.
-- **`required`** blocks submission until at least one leaf is selected.
+- **Submitting:** `name` (or the `Field.Root`'s name) renders one hidden input per value key, so the server reads `formData.getAll("bins")`. `itemToStringValue(item, { parents })` changes the submitted string.
+- **`required`** blocks submission until at least one item is ticked.
 - **Inside `Field.Root`**, `Field.Label` names the tree, `Field.Description` and `Field.Error` are announced with it, and an invalid field sets `data-invalid` on the root.
 - **`disabled`** (or a disabled `Field.Root`) locks the whole tree and leaves it out of submission.
-- **`onBlur`** fires once focus leaves the tree, not between rows — React Hook Form uses it to mark the field touched.
+- **`onBlur`** fires once focus leaves the tree, not between rows. React Hook Form uses it to mark the field touched.
+- **Enter** runs `onAction`, or submits the owning form when there's no `onAction`, like Enter in a text input.
+
+Only checkbox mode is a form control. In `"none"` and `"single"` modes the tree doesn't register with `Field`.
 
 ## Disabled items
 
-Return `disabled: true` from `mapItem` to lock an item. A disabled parent locks everything beneath it. Ticking a parent skips its disabled leaves, and a parent counts as checked once every _enabled_ leaf beneath it is selected. A disabled leaf that is already selected stays selected.
+Return `disabled: true` from `mapItem` to lock an item. A disabled parent locks everything beneath it. Ticking a parent skips its disabled leaves, and with `"full"` a parent counts as ticked once every _enabled_ leaf beneath it is. A disabled item that's already ticked stays ticked, and a disabled row can't be selected.
 
 ```tsx
 mapItem={(bin) => ({ key: bin.code, label: bin.code, disabled: bin.status === "counting" })}
@@ -134,20 +210,17 @@ mapItem={(bin) => ({ key: bin.code, label: bin.code, disabled: bin.status === "c
 
 ## TreePicker
 
-The same tree in a dialog. It takes the same item, row, and search props, plus a commit step. Each open starts empty, and `onCommit` receives the selected leaves with their paths and parents.
+A checkbox tree in a dialog, with search. It takes the same item, row and ticking props as `Tree`, plus the search and commit props. Each open starts empty, and `onCommit` receives the value's items in tree order.
 
 ```tsx
 <TreePicker<Category | Product>
   open={open}
   onOpenChange={setOpen}
-  title="Add items from catalog"
+  title="Add items from catalogue"
   items={categories}
   mapItem={mapCatalogItem}
-  itemHeader="Product"
-  trailingColumn={{
-    header: "Unit price",
-    render: ({ item, isLeaf }) => (isLeaf ? money((item as Product).price) : null),
-  }}
+  renderItem={renderCatalogItem}
+  matchesSearch={(item, query) => item.name.toLowerCase().includes(query.toLowerCase())}
   onCommit={(picked) => addToOrder(picked.map((entry) => entry.item as Product))}
 />
 ```
@@ -156,61 +229,74 @@ The same tree in a dialog. It takes the same item, row, and search props, plus a
 
 ### Shared (Tree and TreePicker)
 
-| Prop                | Type                                                | Default                | Description                                                         |
-| ------------------- | --------------------------------------------------- | ---------------------- | ------------------------------------------------------------------- |
-| `items`             | `ReadonlyArray<T>`                                  | required               | Your top-level items.                                               |
-| `mapItem`           | `(item: T) => { key, label, children?, disabled? }` | required               | Reads an item's key, label, children and disabled state.            |
-| `renderItem`        | `(row) => ReactNode`                                | the item's `label`     | The main column's content.                                          |
-| `itemHeader`        | `ReactNode`                                         | `"Item"`               | Header above the main column.                                       |
-| `leadingColumn`     | `{ header?, render(row), align?, width? }`          | –                      | A column between the expand caret and the main column.              |
-| `trailingColumn`    | `{ header?, render(row), align?, width? }`          | –                      | A right-aligned column after the main one.                          |
-| `matchesSearch`     | `(item: T, query: string) => boolean`               | match on `label`       | Search predicate. A node is kept when it or any descendant matches. |
-| `filterSlot`        | `ReactNode`                                         | –                      | Slot beside the search input, e.g. a category filter.               |
-| `emptyText`         | `ReactNode`                                         | `"No matching items."` | Shown when the filtered tree is empty.                              |
-| `searchPlaceholder` | `string`                                            | `"Search"`             | Search input placeholder.                                           |
+| Prop         | Type                                                             | Default            | Description                                                                |
+| ------------ | ---------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------- |
+| `items`      | `ReadonlyArray<T>`                                               | required           | Your top-level items.                                                      |
+| `mapItem`    | `(item: T, { parents }) => { key, label, children?, disabled? }` | required           | Reads an item's key, label, children and disabled state.                   |
+| `renderItem` | `(row) => ReactNode`                                             | the item's `label` | The row's content.                                                         |
+| `emptyText`  | `ReactNode`                                                      | "No items."        | Shown when there's nothing to show ("No matching items." while filtering). |
 
 ### Tree
 
-| Prop                             | Type                                  | Default     | Description                                                            |
-| -------------------------------- | ------------------------------------- | ----------- | ---------------------------------------------------------------------- |
-| `valueShape`                     | `"keys" \| "exact"`                   | `"keys"`    | How a value identifies a leaf.                                         |
-| `value` / `defaultValue`         | `string[]` or `TreeSelection`         | –           | Controlled / initial selection, in the shape `valueShape` names.       |
-| `onValueChange`                  | `(value, { selected }) => void`       | –           | Every change, in the same shape, plus the selected leaves.             |
-| `onAction`                       | `() => void`                          | submit form | Enter on a row. Without it, Enter submits the owning form.             |
-| `name` / `form`                  | `string`                              | –           | Hidden inputs for native form submission. `Field.Root`'s name wins.    |
-| `itemToStringValue`              | `(item, { path, parents }) => string` | key / path  | The string each hidden input carries.                                  |
-| `required` / `disabled`          | `boolean`                             | `false`     | At least one leaf required / lock the whole tree.                      |
-| `id` / `inputRef` / `onBlur`     | –                                     | –           | Form control id, the hidden proxy input, and blur from the whole tree. |
-| `aria-label` / `aria-labelledby` | `string`                              | –           | Names the tree, when there's no `Field.Label`.                         |
-| `className`                      | `string`                              | –           | Merged onto the root; give it a height for long trees.                 |
+| Prop                             | Type                                       | Default  | Description                                              |
+| -------------------------------- | ------------------------------------------ | -------- | -------------------------------------------------------- |
+| `selectionMode`                  | `"none" \| "single" \| "checkbox"`         | `"none"` | What clicking and Space do to a row.                     |
+| `onAction`                       | `(item: T, key: string) => void`           | –        | Enter on a row. In `"none"` mode, a click on a leaf too. |
+| `filter`                         | `(item: T, { label, parents }) => boolean` | –        | Shows only matches and their ancestors.                  |
+| `disabled`                       | `boolean`                                  | `false`  | Locks the whole tree.                                    |
+| `aria-label` / `aria-labelledby` | `string`                                   | –        | Names the tree, when there's no `Field.Label`.           |
+| `className`                      | `string`                                   | –        | Merged onto the root. Give it a height for long trees.   |
+
+With `selectionMode="single"`:
+
+| Prop                                 | Type                             | Default | Description                        |
+| ------------------------------------ | -------------------------------- | ------- | ---------------------------------- |
+| `selectedKey` / `defaultSelectedKey` | `string \| null`                 | `null`  | Controlled / initial selected row. |
+| `onSelectedKeyChange`                | `(key: string, item: T) => void` | –       | Fires when the user selects a row. |
+
+With `selectionMode="checkbox"`:
+
+| Prop                         | Type                             | Default                        | Description                                                            |
+| ---------------------------- | -------------------------------- | ------------------------------ | ---------------------------------------------------------------------- |
+| `value` / `defaultValue`     | `string[]`                       | –                              | Controlled / initial value: the ticked keys.                           |
+| `onValueChange`              | `(value, { selected }) => void`  | –                              | Every change, plus the items the value lists.                          |
+| `selectionPropagation`       | `"full" \| "down" \| "none"`     | `"full"`                       | How ticking spreads through the tree.                                  |
+| `valueStrategy`              | `"leaves" \| "topmost" \| "all"` | `"leaves"` (`"all"` for items) | What the value lists.                                                  |
+| `name` / `form`              | `string`                         | –                              | Hidden inputs for native form submission. `Field.Root`'s name wins.    |
+| `itemToStringValue`          | `(item, { parents }) => string`  | the key                        | The string each hidden input carries.                                  |
+| `required`                   | `boolean`                        | `false`                        | At least one item must be ticked.                                      |
+| `id` / `inputRef` / `onBlur` | –                                | –                              | Form control id, the hidden proxy input, and blur from the whole tree. |
 
 ### TreePicker
 
-| Prop           | Type                                        | Default          | Description                                                         |
-| -------------- | ------------------------------------------- | ---------------- | ------------------------------------------------------------------- |
-| `open`         | `boolean`                                   | required         | Controls dialog visibility.                                         |
-| `onOpenChange` | `(open: boolean) => void`                   | required         | Fires on every user-driven open or close, including after a commit. |
-| `onCommit`     | `(selected: TreeSelectedItem<T>[]) => void` | required         | Receives the selected leaves in tree order.                         |
-| `title`        | `ReactNode`                                 | `"Select items"` | Dialog title. Also labels the tree for assistive tech.              |
-| `valueShape`   | `"keys" \| "exact"`                         | `"keys"`         | How selection works while picking.                                  |
-| `ctaLabel`     | `(count: number) => ReactNode`              | `"Add N items"`  | Primary button label.                                               |
-| `className`    | `string`                                    | –                | Merged onto the dialog panel.                                       |
+| Prop                                     | Type                                        | Default          | Description                                                         |
+| ---------------------------------------- | ------------------------------------------- | ---------------- | ------------------------------------------------------------------- |
+| `open`                                   | `boolean`                                   | required         | Controls dialog visibility.                                         |
+| `onOpenChange`                           | `(open: boolean) => void`                   | required         | Fires on every user-driven open or close, including after a commit. |
+| `onCommit`                               | `(selected: TreeSelectedItem<T>[]) => void` | required         | Receives the value's items in tree order.                           |
+| `selectionPropagation` / `valueStrategy` | as on `Tree`                                | as on `Tree`     | How ticking works while picking.                                    |
+| `matchesSearch`                          | `(item: T, query: string) => boolean`       | match on `label` | Search predicate. An item is kept when it or a descendant matches.  |
+| `filterSlot`                             | `ReactNode`                                 | –                | Beside the search input, e.g. a category filter.                    |
+| `searchPlaceholder`                      | `string`                                    | `"Search"`       | Search input placeholder.                                           |
+| `title`                                  | `ReactNode`                                 | `"Select items"` | Dialog title. Also labels the tree for assistive tech.              |
+| `ctaLabel`                               | `(count: number) => ReactNode`              | `"Add N items"`  | Primary button label.                                               |
+| `className`                              | `string`                                    | –                | Merged onto the dialog panel.                                       |
 
-The default labels are localized (English and Japanese) through the app's locale, like DataTable's; passing a label prop overrides it.
+The default labels are localised (English and Japanese) through the app's locale, like DataTable's. Passing a label prop overrides it.
 
-## Behavior
+## Behaviour
 
-**Search auto-expands.** A node survives the filter if it matches or if any descendant does. Every ancestor of a match is expanded for the duration of the query, so matches are visible without clicking. Groups a search opened can still be closed and reopened, showing only their matches; manually expanded rows stay expanded once the query clears. Escape clears the search first; in the picker, a second Escape closes the dialog.
+**Keyboard.** The tree is a `role="tree"` with roving focus. Arrow Up / Down move between visible rows, Arrow Right opens a closed parent or steps into it, Arrow Left closes or steps out to the parent, and Home / End jump to the ends. Space selects or ticks the focused row, and Enter runs `onAction` (in the picker, it commits).
 
-**Mouse.** Clicking a group row opens or closes it; its checkbox selects everything inside. Clicking an item row ticks or unticks it.
+**Mouse.** In checkbox mode, clicking a group row opens or closes it and its checkbox ticks everything inside, while clicking an item row ticks it. In single mode, clicking selects. In `"none"` mode, clicking a leaf runs `onAction`.
 
-**Keyboard.** The tree is a `role="tree"` with roving focus: Arrow Up/Down move between visible rows, Arrow Right expands a collapsed parent or steps into it, Arrow Left collapses or steps out to the parent, Home/End jump to the ends, Space toggles the focused row, and Enter runs `onAction` (in the picker, it commits). Enter in the search box or in a `filterSlot` control (a menu or select) is left to that control.
+**Picker search.** Matches stay visible with their ancestors opened. Escape clears the search first, and a second Escape closes the dialog. Enter in the search box or in a `filterSlot` control (a menu or select) is left to that control.
 
-**Picker height.** The picker keeps one height; the list scrolls inside it, so opening or closing a group never resizes the dialog or moves what is on screen.
+**Picker height.** The picker keeps one height and the list scrolls inside it, so opening or closing a group never resizes the dialog or moves what's on screen.
 
-## Loading an async catalog
+## Loading an async catalogue
 
-There is deliberately no async variant: auto-expanding to matches needs the whole tree up front. Fetch once before or on open, and drive `emptyText` from your own loading flag. Keys in `value` for items that haven't loaded yet are kept, so a controlled selection survives the load.
+There's deliberately no async variant yet: filtering and auto-expanding need the whole tree up front. Fetch once before or on open, and drive `emptyText` from your own loading flag. Keys in `value` for items that haven't loaded yet are kept, so a controlled selection survives the load.
 
 ```tsx
 const { data, isLoading } = useCatalogQuery();
@@ -220,7 +306,7 @@ const { data, isLoading } = useCatalogQuery();
   onOpenChange={setOpen}
   items={data ?? []}
   mapItem={mapCatalogItem}
-  emptyText={isLoading ? "Loading catalog…" : "No matching items."}
+  emptyText={isLoading ? "Loading catalogue…" : undefined}
   onCommit={handleCommit}
 />;
 ```

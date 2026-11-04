@@ -60,7 +60,7 @@ const searchSuppliers = async (query: string | null, { signal }: { signal: Abort
   );
 };
 
-const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "JPY" });
+const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const amount = (line: Line) => (line.quantity ?? 0) * (line.unitPrice ?? 0);
 const { column } = createLineItemHelper<Line>();
 const columns = [
@@ -79,12 +79,13 @@ const columns = [
   }),
   column({
     accessorKey: "description",
-    label: "Description",
+    label: "Product name",
     type: "text",
     edit: { editorType: "text" },
     width: "flex",
     truncate: true,
-    validate: (value) => (value?.trim() ? null : "Enter a description."),
+    validate: (value) => (value?.trim() ? null : "Enter a product name."),
+    footer: ({ rows }) => `${rows.length} items`,
   }),
   column({
     accessorKey: "quantity",
@@ -99,7 +100,7 @@ const columns = [
     accessorKey: "unitPrice",
     label: "Unit price",
     type: "money",
-    typeOptions: { currency: "JPY", locale: "en-US" },
+    typeOptions: { currency: "USD", locale: "en-US" },
     edit: { editorType: "number" },
     width: 144,
     validate: (value) =>
@@ -279,7 +280,7 @@ const columns = [
     accessor: amount,
     pin: "right",
     type: "money",
-    typeOptions: { currency: "JPY", locale: "en-US" },
+    typeOptions: { currency: "USD", locale: "en-US" },
     width: 144,
     footer: ({ rows }) => money.format(rows.reduce((sum, line) => sum + amount(line), 0)),
   }),
@@ -307,7 +308,7 @@ const initialLines: Line[] = [
     sku: "SKU-4100",
     description: "Steel bracket, 40 mm",
     quantity: 12,
-    unitPrice: 480,
+    unitPrice: 4.8,
   },
   {
     ...lineDefaults,
@@ -315,7 +316,7 @@ const initialLines: Line[] = [
     sku: "SKU-4107",
     description: "Hex bolt M8 × 30",
     quantity: 40,
-    unitPrice: 85,
+    unitPrice: 0.85,
     supplier: "SUP-002",
     expedite: true,
     priority: 1,
@@ -331,7 +332,7 @@ const initialLines: Line[] = [
     sku: "SKU-4114",
     description: "Nylon washer, 8 mm",
     quantity: 80,
-    unitPrice: 24,
+    unitPrice: 0.24,
     location: "A-02-06",
     supplier: "SUP-003",
     priority: 3,
@@ -339,6 +340,37 @@ const initialLines: Line[] = [
     promisedDate: "2026-12-15",
     projectCode: "PRJ-2026-051",
     notes: "Pack separately from metal parts and label the storage location clearly.",
+  },
+  {
+    ...lineDefaults,
+    id: "line-4",
+    sku: "SKU-4121",
+    description: "Rubber gasket, 25 mm",
+    quantity: 24,
+    unitPrice: 1.6,
+    supplier: "SUP-002",
+    unitOfMeasure: "box",
+    packSize: { units: 12 },
+    warehouse: "Central warehouse",
+    location: "B-03-05",
+    notes: "Keep sealed until installation and store away from direct sunlight.",
+  },
+  {
+    ...lineDefaults,
+    id: "line-5",
+    sku: "SKU-4138",
+    description: "Aluminium spacer, 12 mm",
+    quantity: 30,
+    unitPrice: 2.1,
+    supplier: "SUP-003",
+    expedite: true,
+    priority: 1,
+    packSize: { units: 10 },
+    warehouse: "South warehouse",
+    location: "C-01-08",
+    requestedDate: "2026-12-14",
+    promisedDate: "2026-12-16",
+    notes: "Check dimensions before receiving and keep this batch together.",
   },
 ];
 
@@ -409,7 +441,7 @@ function LineItemsNextPage() {
       sku: `NEW-${String(nextSku.current++).padStart(3, "0")}`,
       description: "New item",
       quantity: 1,
-      unitPrice: 1000,
+      unitPrice: 10,
     });
   }
   async function save() {
@@ -535,7 +567,7 @@ function LineItemsNextPage() {
           snapshot.
         </Text>
         <Text variant="body-sm" className="text-muted-foreground">
-          Editors: Description uses text; Qty and Unit price use number inputs with number/money
+          Editors: Product name uses text; Qty and Unit price use number inputs with number/money
           display; Expedite uses boolean; Requested and Promised dates use date pickers; Unit uses
           fixed string choices; Priority uses numeric choices (1, 2, or 3); Supplier uses an async
           combobox backed by a mock catalogue; Pack size uses a custom object editor. Choice labels

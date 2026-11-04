@@ -9,15 +9,17 @@ sources:
 
 # LineItems
 
+`LineItems.Root` provides its own bordered, rounded table frame, like DataTable; it does not need a wrapping Card. `LineItems.Footer` is the built-in document-action footer, separate from column totals inside Table.
+
 `LineItems` edits the lines of one document. `useLineItems` owns the adopted rows, unconfirmed cell drafts, validation, and the saved baseline; `LineItems.Root` and `LineItems.Table` render that controller. The application owns transport, save status, and backend concurrency.
 
 ## Current scope
 
-This API supports all declared editor kinds: text, number, boolean, date, fixed/async comboboxes, and custom editors, including structured object values. It also provides read-only and computed columns, add/update/remove commands, explicit save and Discard, manual document ordering, column footers, and auto/px/flex widths with pinning. Every document row is rendered.
+This API supports all declared editor kinds: text, number, boolean, date, fixed/async comboboxes, and custom editors, including structured object values. It also provides read-only and computed columns, add/update/remove commands, explicit save and Discard, manual document ordering with standard drag handles, column footers, and auto/px/flex widths with pinning. Every document row is rendered.
 
-It does **not** yet provide controlled `lines`, independent metadata persistence, virtualization, clipboard/range/fill operations, presentation sorting, row selection, fullscreen, or grouped collections. `useLineItems` rejects controlled `lines` / `onLinesChange` and `commit: "metadata"` rather than silently ignoring them.
+It does **not** yet provide controlled `lines`, independent metadata persistence, virtualization, clipboard/range/fill operations, presentation sorting, fullscreen, or grouped collections. `useLineItems` rejects controlled `lines` / `onLinesChange` and `commit: "metadata"` rather than silently ignoring them.
 
-The example application’s Line items preview (`examples/vite-app/src/pages/showcase/line-items-next/page.tsx`) demonstrates every editor across 18 data columns, including money display with number input, fixed numeric choices, a mock async supplier catalogue, and an immutable object editor. It consumes only the public package entrypoint. Standard display types remain independent of the chosen editor.
+The example application’s Line items preview (`examples/vite-app/src/pages/showcase/line-items-next/page.tsx`) demonstrates every editor across 18 data columns, including decimal USD prices, fixed numeric choices, a mock async supplier catalogue, and an immutable object editor. It starts with five products, shows the document's item count in the Product name footer, uses standard row drag handles, and demonstrates example-owned checkbox selection and bulk deletion. It consumes only the public package entrypoint. Standard display types remain independent of the chosen editor.
 
 ## Import
 
@@ -30,6 +32,7 @@ import {
   type LineItemsChangeSet,
   type LineItemsRootProps,
   type LineItemsTableProps,
+  type LineItemsFooterProps,
   type UseLineItemsOptions,
   type UseLineItemsReturn,
 } from "@tailor-platform/app-shell";
@@ -123,7 +126,18 @@ function DocumentLines({
   return (
     <LineItems.Root value={editor}>
       <Toolbar.Root>
-        <Toolbar.Row justify="between" aria-label="Line item actions">
+        <Toolbar.Row justify="between" aria-label="Line item tools">
+          <Toolbar.Group>
+            <LineItems.Search />
+          </Toolbar.Group>
+          <Toolbar.Group>
+            <LineItems.ColumnSettings />
+          </Toolbar.Group>
+        </Toolbar.Row>
+      </Toolbar.Root>
+      <LineItems.Table aria-label="Document lines" />
+      <LineItems.Footer>
+        <Toolbar.Row justify="between" aria-label="Document actions" className="astw:w-full">
           <Toolbar.Group>
             <Button
               size="xs"
@@ -131,20 +145,17 @@ function DocumentLines({
             >
               Add line
             </Button>
+          </Toolbar.Group>
+          <Toolbar.Group>
             <Button size="xs" onClick={() => editor.revert()}>
               Discard
             </Button>
-            <Button size="xs" onClick={save}>
+            <Button size="xs" disabled={!editor.hasUnsavedChanges()} onClick={save}>
               Save
             </Button>
           </Toolbar.Group>
-          <Toolbar.Group>
-            <LineItems.Search />
-            <LineItems.ColumnSettings />
-          </Toolbar.Group>
         </Toolbar.Row>
-      </Toolbar.Root>
-      <LineItems.Table aria-label="Document lines" />
+      </LineItems.Footer>
     </LineItems.Root>
   );
 }
@@ -164,18 +175,43 @@ Treat input rows, returned rows, and nested values as immutable. Row and snapsho
 
 ### Hook options
 
-| Option         | Default  | Description                                                                                                                  |
-| -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `columns`      | required | Typed document/display columns.                                                                                              |
-| `defaultLines` | `[]`     | Initial editing rows, read once. Saved rows carry their server ID.                                                           |
-| `idKey`        | `"id"`   | Property holding the server ID; remount to change it.                                                                        |
-| `mode`         | `"edit"` | `"view"`, `"edit"`, or `"amend"`; controls cell editability, not validity.                                                   |
-| `ordering`     | `"sort"` | `"manual"` enables document reorder commands and final-order snapshots. Remount to change it.                                |
-| `rowActions`   | —        | `{ render(row, { lineKey, isNew, index }), width? }`; configures the trailing pinned action column. Width defaults to 128px. |
+| Option         | Default  | Description                                                                                                                               |
+| -------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`      | required | Typed document/display columns.                                                                                                           |
+| `defaultLines` | `[]`     | Initial editing rows, read once. Saved rows carry their server ID.                                                                        |
+| `idKey`        | `"id"`   | Property holding the server ID; remount to change it.                                                                                     |
+| `mode`         | `"edit"` | `"view"`, `"edit"`, or `"amend"`; controls cell editability, not validity.                                                                |
+| `ordering`     | `"sort"` | `"manual"` enables document reorder commands and final-order snapshots. Remount to change it.                                             |
+| `rowActions`   | —        | `{ render(row, { lineKey, isNew, index }), width? }`; configures the trailing pinned action column. Width defaults to 128px.              |
+| `rowSelection` | —        | DataTable-compatible `{ actions?, selectedIds, onChange }` or `{ actions?, defaultSelectedIds?, onChange? }`; omitted disables selection. |
 
 `tableId` optionally persists column order/pin preferences in browser storage. It does not change row ownership or document save behavior.
 
 `ordering: "sort"` currently means no persisted document reorder operations. It does not add a presentation-sorting UI in this slice.
+
+## Manual row reordering
+
+With `ordering: "manual"`, `LineItems.Table` automatically adds a fixed-left drag-handle column in `edit` and `amend` modes. No custom `rowActions`, movement buttons, or drag callbacks are required. View mode and sort ordering do not show handles. A single row has a disabled handle.
+
+Drag a handle and drop in the upper or lower half of another row to insert before or after it. Only the handle is draggable, so text selection and cell editing are not turned into row drags. Focus a handle and use ArrowUp/ArrowDown to move past the previous/next visible row; focus follows the moved handle and the new document position is announced. Native dragging is desktop-only; touch dragging is not provided in this slice.
+
+Search remains a presentation projection: a visible drop target is resolved against the full document, not a filtered numeric index. Hidden rows retain their relative order. Logical drafts stay attached to their line, and a save acknowledgment assigning a server ID does not invalidate that line's drag identity. Reordering changes document dirty state and the final `order` snapshot, so Save and Discard work exactly as for command-based reordering. `reorderLine(key, afterKey)` remains available for application-owned actions.
+
+## Row selection and bulk actions
+
+Configure `rowSelection` on `useLineItems`, not Root, Table, or Footer. It uses the same `RowSelectionOptions` and selection mechanics as DataTable. Omit it to disable selection, pass `{}` for uncontrolled selection, or provide `selectedIds` and `onChange` for controlled selection. `defaultSelectedIds` initializes uncontrolled selection once. The hook exposes `selectedIds`, `isRowSelected`, `toggleRowSelection`, `selectAllRows`, `deselectAllRows`, `clearSelection`, `isAllSelected`, and `isIndeterminate`; selecting rows does not make the document dirty.
+
+IDs are public `getLineKey(row)` references: server IDs or temporary creation keys. Commands and callbacks preserve DataTable's ownership rules, including composable uncontrolled commands and controlled commands deriving from the latest committed owner. Unknown/deleted document IDs are dropped. Document removal and replacement reconcile selection; `reset(..., { sent, idMap })` maps selected creations to their acknowledged IDs without guessing from row positions. Controlled owners receive reconciled keys through `onChange` and must commit them.
+
+Configure `rowSelection.actions` as an array of `{ id, label, icon?, variant?, onClick(ids, helpers) }`, exactly as DataTable. Actions receive a click-time copy of selected public IDs. The first three appear inline and the rest in More actions. Returning a promise, or handing a later request to `helpers.run`, disables actions and Clear while pending; `pendingActionId` survives footer unmounts. Neither success nor failure clears selection automatically. Consumers own confirmation and requests; deleting document rows prunes their selection, and `helpers.clearSelection()` can explicitly clear any survivors.
+
+The selection checkbox is **always the first, fixed-left utility column**, before the drag handle and every data column. It is not a document column, is not searched, and is excluded from Columns order/pin preferences. This position cannot be changed by a stored preference or a user pin action.
+
+The showcase's top Toolbar places Search on the left and Columns on the right. `LineItems.Footer` renders ordinary `children` without leading/trailing slots; compose a generic `Toolbar.Row` there to place Add line left and Discard/Save right. Footer gets bulk actions and selection from the hook's context, and renders a DataTable-style `N of M selected` bar with actions and Clear before the children. Its tint, sticky surface, announcements, overflow menu, pending controls, and focus handoff are shared mechanisms; operations remain application-owned. The example hides Add line while selected and keeps save controls right. Clear returns focus to the selection header, or an enabled footer control if that header is disabled.
+
+Start save is disabled when `hasUnsavedChanges()` is false, including before any confirmed edits or unfinished drafts exist. Applying an outstanding save receipt remains available even if the user has since discarded local edits. The showcase does not show Unsaved changes or Awaiting save response badges; the save label and application-owned status message communicate the mocked save lifecycle.
+
+The header checkbox selects or deselects only visible rows. **Delete selected** includes selected rows hidden by search, and its count reflects the full document's current selection. Deletions remain local document changes until Save and can be undone with Discard; deleting an unsaved creation cancels its addition. The example explicitly clears selection on Discard and save acknowledgment. The hook itself retains valid selections through edits and ordering changes and reconciles IDs on acknowledgment.
 
 ## Columns
 
@@ -213,6 +249,8 @@ Text/number inputs, choice searching/highlighting, and calendar UI use the same 
 | `"date"`          | `string \| null`                | Popover + Calendar; confirms date-only `"YYYY-MM-DD"` values, with optional inclusive `min` / `max`.   |
 | `"combobox"`      | `string \| number \| null`      | Fixed `options` or an async `fetcher`, never both. Retains the property’s numeric/literal value type.  |
 | `"custom"`        | The property’s exact value type | `renderEditor(ctx)` receives `value`, `onCommit`, `onCancel`, readonly `row`, `mode`, and `ariaLabel`. |
+
+Boolean cells retain their editable tint while the checkbox is focused; confirming a toggle does not switch the cell to an untinted background. The checkbox keeps its keyboard focus indicator. Other editors retain their existing focus styling.
 
 Display and editor types do not form a whitelist. For example, a nullable numeric property can use money display with a number input, or number display with numeric combobox choices. The renderer must accept the property value, and the editor’s possible output must fit that property; the library does not widen a nonnullable model to accommodate Clear.
 
@@ -350,7 +388,7 @@ Column `label` is meaningful text. `header(ctx)` replaces the default header con
 
 Observed auto widths can grow as longer content appears and do not shrink on ordinary renders. The observation cache resets for the document/schema sizing lifecycle; it is not a promise to measure arbitrary content before it is rendered. All matching rows render in this slice; there is no virtualization. Without flex columns, a trailing internal spacer absorbs unused space instead of stretching declared widths. Insufficient width produces horizontal scrolling, not automatic shrinking or unpinning.
 
-`pin: "left" | "right"` retains the column at that edge. Left/right pinned columns are grouped at their respective edges, and a configured row-action column is pinned right.
+`pin: "left" | "right"` retains the column at that edge. Left/right pinned columns are grouped at their respective edges. The controlled selection checkbox is always first and fixed left, followed by the standard reorder handle when present. A configured row-action column is pinned right.
 
 Rows use the same content-driven sizing as `Table` and `DataTable`. The action cell uses compact vertical padding so `xs` buttons do not increase an otherwise single-line row's height. Multiline content and larger controls can still make a row taller; no fixed row height is imposed.
 
@@ -381,9 +419,9 @@ Searching does not mutate, normalize, reorder, or discard document rows. Dirty s
 
 Place `LineItems.ColumnSettings` inside the same Root as Table, usually in a generic `Toolbar.Row`. It reads the Root's value, so there is no second `value` prop and no `LineItems.Toolbar` wrapper. Ordinary AppShell buttons join the toolbar's keyboard navigation automatically. No data-filter control is added.
 
-The Columns popup groups data columns into **Fixed left**, **Scrollable**, and **Fixed right**. Drag within a group to reorder, or between groups to change pinning. The popup retains DataTable's existing row layout, without added arrow buttons or an ellipsis menu. Focus the drag handle and use Up/Down to reorder or Left/Right to change pin sections. Actions is a fixed utility column and is not listed. This slice does not provide column visibility controls.
+The Columns popup groups data columns into **Fixed left**, **Scrollable**, and **Fixed right**. Drag within a group to reorder, or between groups to change pinning. The popup retains DataTable's existing row layout, without added arrow buttons or an ellipsis menu. Focus the drag handle and use Up/Down to reorder or Left/Right to change pin sections. Selection, reorder handles, and Actions are fixed utility columns and are not listed. This slice does not provide column visibility controls.
 
-Right-click a data-column header (or focus it and press Shift+F10) to open the same header context menu as DataTable: **Copy label** and **Pin column → Pin to left / Pin to right / Unpin**. The active pin is disabled in the submenu. No sort/filter actions are added, and Actions does not have a header menu.
+Right-click a data-column header (or focus it and press Shift+F10) to open the same header context menu as DataTable: **Copy label** and **Pin column → Pin to left / Pin to right / Unpin**. The active pin is disabled in the submenu. No sort/filter actions are added, and the selection/reorder/Actions utility columns do not have header menus.
 
 `columns` remains the full document schema. Layout uses column IDs, independent of property accessors. Column preference changes do not normalize rows, mark the document dirty, or enter the document change-set. `revert()` and save acknowledgment retain the column preferences and any logical cell drafts remain associated with the same row/column IDs.
 
@@ -455,18 +493,21 @@ Acknowledgment compares the submitted snapshot, current document, and accepted s
 
 ## Commands and parts
 
-| Member                                                  | Description                                                                                                                                                  |
-| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `lines` / `allLines`                                    | Search matches versus all adopted rows, both in document order.                                                                                              |
-| `searchQuery` / `setSearchQuery(query)`                 | In-memory incremental row search, independent of document saves.                                                                                             |
-| `addLine(line, options?)` / `addLines(lines, options?)` | Add complete editing models and return line keys. Passed IDs are dropped. `afterLineKey` omitted appends, `null` prepends, otherwise inserts after that key. |
-| `removeLine(key)` / `removeLines(keys)`                 | Remove document lines.                                                                                                                                       |
-| `updateField(key, property, value)`                     | Property-typed single-field update.                                                                                                                          |
-| `updateLines(patches)`                                  | Batched `{ lineKey, patch }` updates; rejects unowned properties and direct server-ID changes.                                                               |
-| `reorderLine(key, afterKey)`                            | Manual document ordering only.                                                                                                                               |
-| `getLineKey(line)` / `isNewLine(line)`                  | Public saved-ID/temp-key reference and whether a server ID is still absent.                                                                                  |
-| `getChangeSet()` / `commitEdits()`                      | Adopted snapshot read versus awaitable save preparation.                                                                                                     |
-| `reset(...)` / `revert()`                               | Successful-save acknowledgment or explicit replacement versus Discard.                                                                                       |
+| Member                                                                                   | Description                                                                                                                                                  |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `lines` / `allLines`                                                                     | Search matches versus all adopted rows, both in document order.                                                                                              |
+| `selectedIds` / `isRowSelected(row)`                                                     | Valid selected public line keys and a row predicate.                                                                                                         |
+| `toggleRowSelection(row)` / `selectAllRows()` / `deselectAllRows()` / `clearSelection()` | DataTable-compatible selection commands; select/deselect-all covers current matches while retaining hidden selections. Undefined when selection is disabled. |
+| `pendingActionId` / `runSelectionAction(action, request)`                                | Shared bulk-request tracking; pending state survives Footer remounts.                                                                                        |
+| `searchQuery` / `setSearchQuery(query)`                                                  | In-memory incremental row search, independent of document saves.                                                                                             |
+| `addLine(line, options?)` / `addLines(lines, options?)`                                  | Add complete editing models and return line keys. Passed IDs are dropped. `afterLineKey` omitted appends, `null` prepends, otherwise inserts after that key. |
+| `removeLine(key)` / `removeLines(keys)`                                                  | Remove document lines.                                                                                                                                       |
+| `updateField(key, property, value)`                                                      | Property-typed single-field update.                                                                                                                          |
+| `updateLines(patches)`                                                                   | Batched `{ lineKey, patch }` updates; rejects unowned properties and direct server-ID changes.                                                               |
+| `reorderLine(key, afterKey)`                                                             | Manual document ordering only.                                                                                                                               |
+| `getLineKey(line)` / `isNewLine(line)`                                                   | Public saved-ID/temp-key reference and whether a server ID is still absent.                                                                                  |
+| `getChangeSet()` / `commitEdits()`                                                       | Adopted snapshot read versus awaitable save preparation.                                                                                                     |
+| `reset(...)` / `revert()`                                                                | Successful-save acknowledgment or explicit replacement versus Discard.                                                                                       |
 
 Saved line keys are server IDs as strings; new line keys are client-only references until acknowledgment. Do not assign temporary values to the business ID property. Row-action renderers receive the current `lineKey`, `isNew`, and zero-based `index`, so they need no repository-only identity helper.
 
@@ -478,6 +519,8 @@ Saved line keys are server IDs as strings; new line keys are client-only referen
 | `children`  | Application-owned composition containing `LineItems.Table`. |
 | `className` | Root wrapper classes.                                       |
 
+Root renders the shared DataTable-style border, rounded corners, and `overflow-clip` frame. A direct generic `Toolbar.Root` retains its top corners but drops its bottom radius and outer borders, leaving only the divider beneath it. Table's scroll container can shrink when height is constrained; Toolbar and Footer remain outside that scroll region. The example's heading and status message live outside the frame, not in a wrapping Card.
+
 Root distributes the controller; it does not own another copy of the rows. Ordinary buttons calling the hook's methods can live outside Root. Table and ColumnSettings read its context and must share the Root, so placing the generic toolbar inside Root avoids passing the value twice. A fabricated value is not a replacement for calling the hook.
 
 ### `LineItems.Table`
@@ -488,7 +531,15 @@ Root distributes the controller; it does not own another copy of the rows. Ordin
 | `className`    | Classes applied to the table.                                              |
 | `emptyMessage` | Empty-document content; localized default when omitted.                    |
 
-Table requires Root. It renders matching lines, standard/computed display, all declared editor kinds, optional row actions, and document-wide column footers. Add/save/Discard controls remain application-owned.
+Table requires Root. It renders matching lines, standard/computed display, all declared editor kinds, optional controlled selection, automatic manual-order drag handles outside view mode, optional row actions, and document-wide column footers. Add/save/Discard controls remain application-owned.
+
+### `LineItems.Footer`
+
+Requires Root and accepts only `children` and `className`, like DataTable.Footer. Children render directly; compose their layout with generic Toolbar parts. Configure `rowSelection` and its `actions` on `useLineItems`, not any component.
+
+When valid selections and configured actions exist, Footer renders the shared selection bar before children. It reads count, actions, Clear, and pending state from context. The selection count covers the full document, including search-hidden rows. Clear calls the hook's `clearSelection`; it does not revert edits.
+
+The live region remains mounted so the first selection is announced. When a focused bulk control disappears, focus returns to the selection header; an empty/filtered table falls back to an enabled footer control, then the footer itself. Focus in consumer children is not stolen. Save callbacks, their disabled/pending state, new-line defaults, and action business logic remain application-owned.
 
 ### `LineItems.ColumnSettings`
 

@@ -21,7 +21,9 @@ function Fixture({
   onCancel = () => {},
   onRowClick,
   renderError,
+  clearTintOnFocus,
 }: {
+  clearTintOnFocus?: boolean;
   failure?: CellSurfaceFailure;
   cellProps?: ComponentProps<typeof Table.Cell>;
   onLeave?: () => void;
@@ -42,6 +44,7 @@ function Fixture({
             cellProps={cellProps}
             display="12 units"
             editing
+            clearTintOnFocus={clearTintOnFocus}
             confirming={false}
             callbackError={error}
             labels={labels}
@@ -91,6 +94,21 @@ describe("EditableCellSurface without a table adapter or AppShell provider", () 
     expect(blur).toHaveBeenCalledTimes(1);
     expect(leave).toHaveBeenCalledTimes(1);
   });
+
+  it.each([undefined, false])(
+    "keeps the tint while focused only when the adapter opts in (%s)",
+    (clearTintOnFocus) => {
+      render(<Fixture clearTintOnFocus={clearTintOnFocus} />);
+      const input = screen.getByRole("textbox", { name: "Quantity" });
+      input.focus();
+      const cell = input.closest("td")!;
+      expect(cell.className).toContain("background-image:linear-gradient");
+      expect(cell.className.includes("astw:focus-within:[background-image:none]")).toBe(
+        clearTintOnFocus !== false,
+      );
+      expect(document.activeElement).toBe(input);
+    },
+  );
 
   it("keeps localized error content and portaled controls in the same logical focus group", async () => {
     const leave = vi.fn();

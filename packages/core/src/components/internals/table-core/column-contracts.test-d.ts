@@ -9,8 +9,8 @@ import type {
   FooterRenderContext,
   HeaderRenderContext,
 } from "@/components/internals/table-core/column-types";
-import { createLineItemHelper } from "./column-helper";
-import type { LineItemsColumn, LineItemsOption } from "./types";
+import { createLineItemHelper } from "@/components/line-items/column-helper";
+import type { LineItemsColumn, LineItemsOption } from "@/components/line-items/types";
 
 type Row = {
   id?: string;

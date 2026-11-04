@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
+import type { RowSelectionOptions } from "@/components/internals/table-core/selection-types";
 import type {
   ColumnCellType,
   ColumnDisplay,
@@ -178,9 +179,11 @@ export type UseLineItemsOptions<TRow extends Record<string, unknown>> = {
   defaultLines?: readonly TRow[];
   idKey?: keyof TRow & string;
   mode?: LineItemsMode;
-  /** Read once; remount to change document ordering policy. */
+  /** Manual ordering adds Table drag handles outside view mode. Read once; remount to change. */
   ordering?: "sort" | "manual";
   rowActions?: LineItemsRowActions<TRow>;
+  /** DataTable-compatible controlled/uncontrolled selection and bulk actions. IDs are public line keys. */
+  rowSelection?: RowSelectionOptions;
   /** Browser-local column order/pin preferences, independent of document saves. */
   tableId?: string;
 };
@@ -201,6 +204,18 @@ export type UseLineItemsReturn<TRow extends Record<string, unknown>> = {
   readonly mode: LineItemsMode;
   readonly ordering: "sort" | "manual";
   readonly rowActions: LineItemsRowActions<TRow> | undefined;
+  rowSelection?: RowSelectionOptions;
+  selectedIds: string[];
+  isRowSelected: (row: TRow) => boolean;
+  toggleRowSelection?: (row: TRow) => void;
+  /** Select only the current search matches; retain hidden selections. */
+  selectAllRows?: () => void;
+  deselectAllRows?: () => void;
+  clearSelection?: () => void;
+  pendingActionId?: string | null;
+  runSelectionAction?: (action: { id: string }, request: PromiseLike<unknown>) => void;
+  isAllSelected: boolean;
+  isIndeterminate: boolean;
   readonly isDirty: boolean;
   readonly errors: readonly LineItemsCellError[];
   getCellError: (lineKey: string, columnId: string) => string | undefined;

@@ -135,7 +135,12 @@ describe("all LineItems editors adopt through the document controller", () => {
     const user = setup();
     const checkbox = screen.getByRole("checkbox", { name: "Enabled, line 1" });
     checkbox.focus();
+    const cell = checkbox.closest("td")!;
+    expect(cell.className).toContain("background-image:linear-gradient");
+    expect(cell.className).not.toContain("astw:focus-within:[background-image:none]");
     await user.keyboard(" ");
+    expect(document.activeElement).toBe(checkbox);
+    expect(cell.className).not.toContain("astw:focus-within:[background-image:none]");
     expect(current.allLines[0]!.enabled).toBe(true);
     expect(current.getChangeSet().lineChanges).toContainEqual({
       action: "update",

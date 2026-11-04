@@ -12,7 +12,7 @@ import {
   type AppShellPageProps,
   type LineItemsChangeSet,
 } from "@tailor-platform/app-shell";
-import { ChevronDown, ChevronUp, Minus, Plus, RotateCcw, Rows3, Save, Trash2 } from "lucide-react";
+import { Minus, Plus, RotateCcw, Rows3, Save, Trash2 } from "lucide-react";
 
 type Line = {
   id?: string;
@@ -388,42 +388,34 @@ function LineItemsNextPage() {
     defaultLines: initialLines,
     ordering: "manual",
     tableId: "showcase:line-items-next",
+    rowSelection: {
+      actions: [
+        {
+          id: "delete",
+          label: "Delete selected",
+          icon: <Trash2 />,
+          onClick: (ids, { clearSelection }) => {
+            lineItems.removeLines(ids);
+            clearSelection();
+            setMessage(
+              `Deleted ${ids.length} selected lines. Start save to persist the changes, or Discard to restore them.`,
+            );
+          },
+        },
+      ],
+    },
     rowActions: {
-      width: 128,
-      render: (line, { lineKey, index }): ReactNode => {
+      width: 64,
+      render: (line, { lineKey }): ReactNode => {
         return (
           <div className="flex justify-end gap-1">
             <Button
               variant="ghost"
               size="xs"
-              aria-label={`Move ${line.sku} up`}
-              disabled={index === 0}
-              onClick={() => {
-                const after = lineItems.allLines[index - 2];
-                lineItems.reorderLine(lineKey, after ? lineItems.getLineKey(after) : null);
-              }}
-            >
-              <ChevronUp />
-            </Button>
-            <Button
-              variant="ghost"
-              size="xs"
-              aria-label={`Move ${line.sku} down`}
-              disabled={index === lineItems.allLines.length - 1}
-              onClick={() => {
-                lineItems.reorderLine(
-                  lineKey,
-                  lineItems.getLineKey(lineItems.allLines[index + 1]!),
-                );
-              }}
-            >
-              <ChevronDown />
-            </Button>
-            <Button
-              variant="ghost"
-              size="xs"
               aria-label={`Remove ${line.sku}`}
-              onClick={() => lineItems.removeLine(lineKey)}
+              onClick={() => {
+                lineItems.removeLine(lineKey);
+              }}
             >
               <Trash2 />
             </Button>
@@ -434,7 +426,7 @@ function LineItemsNextPage() {
   });
   const changeSet = lineItems.getChangeSet();
   const unsaved = lineItems.hasUnsavedChanges();
-
+  const selecting = lineItems.selectedIds.length > 0;
   function addLine() {
     lineItems.addLine({
       ...lineDefaults,
@@ -467,6 +459,7 @@ function LineItemsNextPage() {
         if (change.action === "add") idMap[change.tempId] = `saved-${nextId.current++}`;
       }
       lineItems.reset({ idMap }, { sent: pending });
+      lineItems.clearSelection?.();
       setPending(null);
       setMessage(
         lineItems.hasUnsavedChanges()
@@ -490,72 +483,69 @@ function LineItemsNextPage() {
             A purchase order example using LineItems and useLineItems from the built package.
           </Text>
         </div>
+        <div className="flex flex-col gap-2">
+          <Text.h3>Purchase order lines</Text.h3>
+          <Text variant="body-sm" className="text-muted-foreground">
+            PO-2026-0042 · Saves are mocked locally. Reload to restore the initial data.
+          </Text>
+          {lineItems.errors.length > 0 && (
+            <Badge variant="outline-error">Errors: {lineItems.errors.length}</Badge>
+          )}
+        </div>
         <LineItems.Root value={lineItems}>
-          <Card.Root>
-            <Card.Header
-              title="Purchase order lines"
-              description="PO-2026-0042 · Saves are mocked locally. Reload to restore the initial data."
+          <Toolbar.Root>
+            <Toolbar.Row justify="between" aria-label="Line item tools">
+              <Toolbar.Group>
+                <LineItems.Search />
+              </Toolbar.Group>
+              <Toolbar.Group>
+                <LineItems.ColumnSettings />
+              </Toolbar.Group>
+            </Toolbar.Row>
+          </Toolbar.Root>
+          <LineItems.Table aria-label="Purchase order lines" />
+          <LineItems.Footer>
+            <Toolbar.Row
+              justify="between"
+              aria-label="Line item document actions"
+              className={selecting ? "astw:ml-auto" : "astw:w-full"}
             >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Badge variant={unsaved ? "outline-warning" : "neutral"}>
-                    {unsaved ? "Unsaved changes" : "No changes"}
-                  </Badge>
-                  {pending && <Badge variant="outline-info">Awaiting save response</Badge>}
-                  {lineItems.errors.length > 0 && (
-                    <Badge variant="outline-error">Errors: {lineItems.errors.length}</Badge>
-                  )}
-                </div>
-              </div>
-            </Card.Header>
-            <Card.Content padding="none">
-              <Toolbar.Root className="rounded-none border-x-0 border-t-0">
-                <Toolbar.Row justify="between" aria-label="Line item actions">
-                  <Toolbar.Group>
-                    <Button variant="outline" size="xs" onClick={addLine}>
-                      <Plus /> Add line
-                    </Button>
-                    <Toolbar.Separator />
-                    <Button
-                      variant="outline"
-                      size="xs"
-                      disabled={!unsaved}
-                      onClick={() => {
-                        lineItems.revert();
-                        setMessage("Document changes were restored to the saved state.");
-                      }}
-                    >
-                      <RotateCcw /> Discard
-                    </Button>
-                    <Button
-                      size="xs"
-                      disabled={preparing}
-                      onClick={() => {
-                        void save();
-                      }}
-                    >
-                      <Save /> {pending ? "Apply save response" : "Start save"}
-                    </Button>
-                  </Toolbar.Group>
-                  <Toolbar.Group>
-                    <LineItems.Search />
-                    <LineItems.ColumnSettings />
-                  </Toolbar.Group>
-                </Toolbar.Row>
-              </Toolbar.Root>
-              <LineItems.Table aria-label="Purchase order lines" />
-            </Card.Content>
-            <Card.Content>
-              <Text
-                variant="body-sm"
-                render={<output />}
-                className="block pt-4 text-muted-foreground"
-              >
-                {message}
-              </Text>
-            </Card.Content>
-          </Card.Root>
+              {!selecting && (
+                <Toolbar.Group>
+                  <Button variant="outline" size="xs" onClick={addLine}>
+                    <Plus /> Add line
+                  </Button>
+                </Toolbar.Group>
+              )}
+              <Toolbar.Group>
+                <Button
+                  variant="outline"
+                  size="xs"
+                  disabled={!unsaved}
+                  onClick={() => {
+                    lineItems.revert();
+                    lineItems.clearSelection?.();
+                    setMessage("Document changes were restored to the saved state.");
+                  }}
+                >
+                  <RotateCcw /> Discard
+                </Button>
+                <Button
+                  size="xs"
+                  disabled={preparing || (!pending && !unsaved)}
+                  onClick={() => {
+                    void save();
+                  }}
+                >
+                  <Save /> {pending ? "Apply save response" : "Start save"}
+                </Button>
+              </Toolbar.Group>
+            </Toolbar.Row>
+          </LineItems.Footer>
         </LineItems.Root>
+        <Text variant="body-sm" render={<output />} className="text-muted-foreground">
+          {message}
+        </Text>
         <Text variant="body-sm" className="text-muted-foreground">
           Change a quantity → Start save → edit it again → Apply save response to see how edits made
           during a save stay pending. Inputs remain drafts until confirmed, and invalid numbers
@@ -564,7 +554,10 @@ function LineItemsNextPage() {
           horizontally to inspect them while SKU, Amount, and Actions stay pinned. Use Columns to
           reorder columns or change their pinned edge; these preferences are saved locally. Search
           narrows the visible rows as you type without changing document totals or the save
-          snapshot.
+          snapshot. Drag the row handles to reorder lines, or focus a handle and use
+          ArrowUp/ArrowDown. Select all checks only visible lines; Delete selected also removes
+          selected lines hidden by search. Selection is configured through useLineItems, does not
+          make the document dirty, and the example clears it on Discard or applying a save response.
         </Text>
         <Text variant="body-sm" className="text-muted-foreground">
           Editors: Product name uses text; Qty and Unit price use number inputs with number/money

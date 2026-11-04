@@ -27,6 +27,8 @@ export interface EditableCellSurfaceProps {
   truncate?: boolean;
   tooltipLabel?: ReactNode;
   editing: boolean;
+  /** Immediate checkbox actions retain the tint while their control stays focused. */
+  clearTintOnFocus?: boolean;
   callbackError?: CellErrorUI;
   labels: CellSurfaceLabels;
   errorSlot?: string;
@@ -48,6 +50,7 @@ export function EditableCellSurface({
   icon,
   tooltipLabel,
   editing,
+  clearTintOnFocus = true,
   callbackError,
   labels,
   errorSlot = "table-cell-error",
@@ -88,6 +91,7 @@ export function EditableCellSurface({
         cellProps.className,
         "astw:relative astw:group/cell",
         EDITABLE_CELL_CLASS_NAME,
+        clearTintOnFocus && "astw:focus-within:[background-image:none]",
         callbackError && CELL_ERROR_CLASS_NAME,
       )}
       onBlur={(event) => {

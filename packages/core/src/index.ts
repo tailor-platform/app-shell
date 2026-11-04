@@ -217,6 +217,7 @@ export {
   type LineItemsChangeSet,
   type LineItemsRootProps,
   type LineItemsTableProps,
+  type LineItemsFooterProps,
   type LineItemsColumnSettingsProps,
   type LineItemsSearchProps,
   type UseLineItemsOptions,

@@ -86,7 +86,8 @@ describe("LineItems.Search", () => {
     expect(current.hasUnsavedChanges()).toBe(false);
     expect(current.getChangeSet().isEmpty).toBe(true);
     expect(view.container.querySelector("tfoot")?.textContent).toContain("6");
-    expect(screen.getByRole("status").textContent).toBe("1 of 3 lines shown.");
+    const searchControl = searchInput().closest<HTMLElement>('[data-slot="line-items-search"]')!;
+    expect(within(searchControl).getByRole("status").textContent).toBe("1 of 3 lines shown.");
     search("computed-c");
     expect(ids()).toEqual(["C"]);
     search("secret");

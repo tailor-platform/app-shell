@@ -1,7 +1,9 @@
 import { expectTypeOf, test } from "vitest";
 import { createLineItemHelper } from "./column-helper";
 import { useLineItems } from "./use-line-items";
-import { LineItems } from "./line-items";
+import { LineItems, type LineItemsTableProps, type LineItemsRootProps } from "./line-items";
+import type { LineItemsFooterProps } from "./footer";
+import type { RowSelectionOptions } from "@/components/internals/table-core/selection-types";
 import type { LineItemsSearchProps } from "./search";
 import type { LineItemsChangeSet, UseLineItemsOptions, UseLineItemsReturn } from "./types";
 
@@ -46,6 +48,54 @@ test("Search reads its value from Root and exposes only presentation props", () 
   // @ts-expect-error Search consumes Root context rather than a second value prop.
   const duplicate: LineItemsSearchProps = { value: "query" };
   void props;
+  void duplicate;
+});
+
+test("hook selection uses the shared DataTable contract and components only consume context", () => {
+  expectTypeOf<
+    NonNullable<UseLineItemsOptions<Row>["rowSelection"]>
+  >().toEqualTypeOf<RowSelectionOptions>();
+  const selection: RowSelectionOptions = {
+    selectedIds: ["A", "temporary-line"],
+    actions: [
+      {
+        id: "delete",
+        label: "Delete",
+        onClick: (ids, helpers) => {
+          expectTypeOf(ids).toEqualTypeOf<string[]>();
+          helpers.clearSelection();
+        },
+      },
+    ],
+    onChange: (keys) => {
+      expectTypeOf(keys).toEqualTypeOf<string[]>();
+    },
+  };
+  const uncontrolled: RowSelectionOptions = { defaultSelectedIds: ["A"] };
+  expectTypeOf(LineItems.Table).parameter(0).toEqualTypeOf<LineItemsTableProps>();
+  expectTypeOf(LineItems.Footer).parameter(0).toEqualTypeOf<LineItemsFooterProps>();
+  const footer: LineItemsFooterProps = { children: "Add / Save", className: "footer" };
+  expectTypeOf<keyof LineItemsFooterProps>().toEqualTypeOf<"children" | "className">();
+  const invalid: RowSelectionOptions = {
+    // @ts-expect-error Selection consumes public keys, not row objects.
+    selectedIds: [{ id: "A" }],
+    onChange: () => {},
+  };
+  const root: LineItemsRootProps<Row> = {
+    value: {} as UseLineItemsReturn<Row>,
+    children: null,
+    // @ts-expect-error Selection is configured on the hook, not Root.
+    rowSelection: selection,
+  };
+  const duplicate: LineItemsTableProps = {
+    // @ts-expect-error Selection is configured on the hook, not Table.
+    rowSelection: selection,
+  };
+  void selection;
+  void uncontrolled;
+  void root;
+  void footer;
+  void invalid;
   void duplicate;
 });
 

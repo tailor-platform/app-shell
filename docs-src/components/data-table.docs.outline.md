@@ -5,6 +5,7 @@ title: DataTable
 description: Compound data table component with sortable columns, filter chips, cursor-based pagination, row actions, and multi-row selection
 sources:
   - packages/core/src/components/data-table/**
+  - packages/core/src/components/internals/table-core/selection-types.ts
   - packages/core/src/hooks/use-collection-variables.ts
   - packages/core/src/lib/collection-url-state.ts
   - packages/core/src/contexts/collection-control-context.tsx

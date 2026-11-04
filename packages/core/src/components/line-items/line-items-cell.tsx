@@ -282,6 +282,7 @@ export function LineItemsCell<T extends Record<string, unknown>>({
       truncate={truncate}
       tooltipLabel={truncate ? tooltip : undefined}
       editing={state.status !== "idle"}
+      clearTintOnFocus={kind !== "boolean"}
       hideDisplay={hideDisplay}
       icon={icon}
       callbackError={error}

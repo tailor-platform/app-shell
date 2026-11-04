@@ -19,7 +19,6 @@ export const CELL_ERROR_CLASS_NAME =
 export const EDITABLE_CELL_CLASS_NAME = cn(
   "astw:[background-image:linear-gradient(color-mix(in_srgb,var(--foreground)_4%,transparent),color-mix(in_srgb,var(--foreground)_4%,transparent))]",
   "astw:hover:[background-image:linear-gradient(color-mix(in_srgb,var(--foreground)_7%,transparent),color-mix(in_srgb,var(--foreground)_7%,transparent))]",
-  "astw:focus-within:[background-image:none]",
 );
 
 export const INPUT_CLASS_NAME = cn(

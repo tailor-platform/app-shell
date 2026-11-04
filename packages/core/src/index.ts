@@ -72,15 +72,24 @@ export {
   type AIGatewayClient,
   type AIGatewayChatMessage,
   type AIGatewayChatRequest,
+  type AIGatewayToolCall,
+  type AIGatewayFunctionTool,
   type AIChatCompletionEvent,
 } from "./ai/client";
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
+export {
+  defineAIChatTool,
+  type AIChatToolContext,
+  type AIChatToolSchema,
+  type AILocalTool,
+} from "./ai/tools";
 export {
   AIChat,
   type AIChatProps,
   type AIChatHeaderProps,
   type AIChatConversationProps,
   type AIChatComposerProps,
+  type AIChatToolCallProps,
   type ToolState,
   type ChainOfThoughtStepStatus,
   type ChatHistoryGroupData,

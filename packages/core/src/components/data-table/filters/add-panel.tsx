@@ -364,9 +364,9 @@ function PanelDateTimeInput({
         />
       </div>
       <div className="astw:flex astw:flex-col astw:gap-1">
-        <Text variant="body-sm" className="astw:text-muted-foreground" render={<span />}>
+        <Text.span variant="body-sm" className="astw:text-muted-foreground">
           {t("chooseTime")}
-        </Text>
+        </Text.span>
         <Input
           type="time"
           aria-label={`${ariaLabel} (${t("chooseTime")})`}

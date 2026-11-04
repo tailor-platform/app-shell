@@ -89,7 +89,7 @@
     "@vitest/coverage-v8": "4.1.11",
     "happy-dom": "21.0.4",
     "playwright": "1.63.0",
-    "postcss": "8.5.31",
+    "postcss": "8.5.32",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "7.71.2",
@@ -98,7 +98,8 @@
     "typescript": "5.9.3",
     "vite": "catalog:",
     "vite-plugin-dts": "5.1.2",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "zod": "4.6.7"
   },
   "peerDependencies": {
     "react": ">=19.2.7",

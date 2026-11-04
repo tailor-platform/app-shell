@@ -19,6 +19,7 @@ import {
   type AIChatHeaderProps,
   type AIChatProps,
 } from "./ai-chat";
+import type { AIChatToolCallProps, useAIChat } from "../../index";
 
 describe("region ownership", () => {
   it("keeps the root to status (plus div props) — the regions own the rest", () => {
@@ -58,10 +59,18 @@ describe("callback names that collide with DOM handlers", () => {
   });
 });
 
-// These three wrap a Button or a Badge. They Pick what the part's job needs
+// These parts wrap a Button or a Badge. They expose what the part's job needs
 // rather than inheriting, so the wrapped component's surface cannot leak out
 // and become contract we did not intend to offer.
 describe("wrapper parts expose only picked props", () => {
+  it("accepts a call from useAIChat directly with only call and className", () => {
+    expectTypeOf<ComponentProps<typeof AIChat.ToolCall>>().toEqualTypeOf<AIChatToolCallProps>();
+    expectTypeOf<keyof AIChatToolCallProps>().toEqualTypeOf<"call" | "className">();
+    expectTypeOf<AIChatToolCallProps["call"]>().toEqualTypeOf<
+      ReturnType<typeof useAIChat>["toolCalls"][number]
+    >();
+  });
+
   it("keeps Suggestion to its own props plus className/disabled/children", () => {
     expectTypeOf<keyof ComponentProps<typeof AIChat.Suggestion>>().toEqualTypeOf<
       "className" | "disabled" | "children" | "suggestion" | "onSelect"

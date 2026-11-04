@@ -4,17 +4,8 @@ import { useTheme } from "@/contexts/theme-context";
 import { Toaster as Sonner, ToasterProps } from "sonner";
 
 /**
- * Sonner's `<Toaster />`, rendered through a portal to `document.body`.
- *
- * The Toaster mounts inside the content column (next to the route outlet), whose
- * scroll container creates a stacking context (`mask-image` for the scroll fade).
- * Dialogs, sheets and popups all portal to the end of `body`, so a toast that
- * stays in the column can never paint above them, whatever its z-index
- * (tailor-inc/platform-planning#2040). Portaling the Toaster to `body` puts it in
- * the same stacking context as the overlays; `--z-toast` then lifts it above the
- * portal band (tailor-inc/platform-planning#2349).
- *
- * The portal is created after mount so the component renders nothing on the server.
+ * Sonner's `<Toaster />`, portaled to `document.body` after mount so it shares
+ * a stacking context with the overlays. Why: decisions/floating-ui-stacking.md.
  */
 const Toaster = ({ style, ...props }: ToasterProps) => {
   const { resolvedTheme } = useTheme();

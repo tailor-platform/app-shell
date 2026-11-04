@@ -9,6 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuAction,
   SidebarMenuSub,
+  useSidebar,
 } from "./primitives";
 import { SidebarButtonIcon } from "./sidebar-button-icon";
 import { useHasHover } from "@/hooks/use-has-hover";
@@ -45,17 +46,18 @@ export type SidebarGroupProps = {
 };
 
 /**
- * Whether the sidebar is currently a narrow icon rail — the state where a group
- * swaps its inline collapsible submenu for a hover flyout.
+ * How a group behaves in the narrow icon rail, where its inline submenu has no
+ * room: `"flyout"` reveals the child pages in a hover flyout, `"drawer"` opens
+ * the full sidebar, and `null` means the sidebar is not a rail.
  */
-function useIsIconRail(): boolean {
+function useIconRailMode(): "flyout" | "drawer" | null {
   // `SidebarRailContext` is true wherever the sidebar renders as a collapsed
   // icon rail (any width). Gate the hover flyout on hover-capability so a narrow
-  // desktop window still gets it, while touch devices fall back to the
-  // toggle-driven slide-in drawer.
+  // desktop window still gets it, while touch devices open the slide-in drawer.
   const isRail = useContext(SidebarRailContext);
   const hasHover = useHasHover();
-  return isRail && hasHover;
+  if (!isRail) return null;
+  return hasHover ? "flyout" : "drawer";
 }
 
 /**
@@ -180,14 +182,37 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
   const resolve = buildLocaleResolver(configurations.locale);
   const t = useT();
 
-  const isIconRail = useIsIconRail();
+  const iconRailMode = useIconRailMode();
+  const { toggleSidebar } = useSidebar();
 
   const resolvedTitle = resolve(title, typeof title === "string" ? title : "");
   const isActive = to ? currentPath === to : false;
 
+  // Icon rail on a touch device: nothing can hover, and the inline submenu is
+  // hidden at icon width, so a tap opens the full sidebar (the same drawer the
+  // rail's toggle opens), where the group and its pages are listed.
+  if (iconRailMode === "drawer") {
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          render={<button type="button" aria-label={resolvedTitle} aria-haspopup="dialog" />}
+          isActive={isActive}
+          // Keep SidebarMenuButton from closing the drawer this tap just opened.
+          onClick={(e) => {
+            e.preventDefault();
+            toggleSidebar();
+          }}
+        >
+          <SidebarButtonIcon icon={icon} title={resolvedTitle} />
+          <span>{resolvedTitle}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
+
   // Icon rail: swap the inline collapsible submenu for a hover flyout. The group
   // icon is the trigger; hovering it reveals the child pages in a popover.
-  if (isIconRail) {
+  if (iconRailMode === "flyout") {
     // The label span is CSS-hidden at icon width, so give the trigger an
     // explicit accessible name (the hover flyout's aria-label only mounts on
     // hover).

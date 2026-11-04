@@ -414,6 +414,79 @@ describe("DefaultSidebar opt-in props", () => {
     expect(within(flyout).getByRole("link", { name: /products/i })).toBeDefined();
   });
 
+  /** Renders a collapsed icon rail on a touch device (no hover) at `width`. */
+  const renderTouchRail = (width: number, to?: string) => {
+    // A touch screen cannot hover, so the rail has no flyout to offer.
+    const matchMedia = window.matchMedia.bind(window);
+    vi.spyOn(window, "matchMedia").mockImplementation((query: string) =>
+      query === "(hover: hover)"
+        ? ({
+            matches: false,
+            media: query,
+            onchange: null,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+          } as MediaQueryList)
+        : matchMedia(query),
+    );
+    vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
+    window.dispatchEvent(new Event("resize"));
+    render(
+      <MemoryRouter initialEntries={["/dashboard/overview"]}>
+        <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
+          <CommandPaletteProvider>
+            <SidebarProvider defaultOpen={false}>
+              <DefaultSidebar iconRail hideHeader>
+                <SidebarGroup title="Main" icon={<Home />} to={to}>
+                  <SidebarItem to="/dashboard" />
+                  <SidebarItem to="/products" />
+                </SidebarGroup>
+              </DefaultSidebar>
+            </SidebarProvider>
+          </CommandPaletteProvider>
+        </AppShellConfigContext.Provider>
+      </MemoryRouter>,
+    );
+  };
+
+  it.each([
+    { name: "a group", to: undefined },
+    { name: "a group with its own page", to: "/main" },
+  ])(
+    "opens the slide-in drawer when $name is tapped in the tablet rail on a touch device",
+    async ({ to }) => {
+      const user = userEvent.setup();
+      renderTouchRail(1024, to);
+
+      expect(document.querySelector('[data-slot="sidebar-overlay"]')).toBeNull();
+
+      // A button rather than a link, so the tap opens the drawer instead of
+      // leaving the page.
+      await user.click(screen.getByRole("button", { name: "Main" }));
+
+      const drawer = document.querySelector('[data-slot="sidebar-overlay"]') as HTMLElement;
+      expect(drawer).not.toBeNull();
+      expect(within(drawer).getByRole("link", { name: /dashboard/i })).toBeDefined();
+      expect(within(drawer).getByRole("link", { name: /products/i })).toBeDefined();
+      expect(document.querySelector('[data-slot="sidebar-group-flyout"]')).toBeNull();
+    },
+  );
+
+  it("expands a collapsed desktop sidebar when a group is tapped on a touch device", async () => {
+    const user = userEvent.setup();
+    renderTouchRail(1280);
+
+    const sidebar = document.querySelector('[data-slot="sidebar"]');
+    expect(sidebar?.getAttribute("data-state")).toBe("collapsed");
+
+    await user.click(screen.getByRole("button", { name: "Main" }));
+
+    expect(sidebar?.getAttribute("data-state")).toBe("expanded");
+  });
+
   it("reveals the group flyout on the mobile-width icon rail when hover-capable", async () => {
     const user = userEvent.setup();
     // A narrow (mobile-width) window but a hover-capable pointer — e.g. a

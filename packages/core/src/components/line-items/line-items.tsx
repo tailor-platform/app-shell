@@ -11,6 +11,7 @@ import { useColumnSizing } from "./use-column-sizing";
 import type { UseLineItemsReturn } from "./types";
 import { LineItemsContext as Context, useLineItemsContext } from "./line-items-context";
 import { LineItemsColumnSettings } from "./column-settings";
+import { LineItemsSearch } from "./search";
 import {
   computePinPlacements,
   pinCellProps,
@@ -97,6 +98,10 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
   const sizing = useColumnSizing(tableRef, containerRef, sizingColumns, controller);
   const hasFooter = columns.some(({ column }) => column.footer !== undefined);
   const footerContext = { rows: value.allLines };
+  const rowIndexes = useMemo(
+    () => new Map(value.allLines.map((row, index) => [row, index])),
+    [value.allLines],
+  );
   const hasSpacer = sizing.spacerWidth > 0;
   const count = columns.length + (value.rowActions ? 1 : 0) + (hasSpacer ? 1 : 0);
   const placements = useMemo(
@@ -170,7 +175,8 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
         </Table.Row>
       </Table.Header>
       <Table.Body>
-        {value.lines.map((row, index) => {
+        {value.lines.map((row) => {
+          const index = rowIndexes.get(row)!;
           const lineKey = value.getLineKey(row);
           return (
             <Table.Row key={controller.getClientKey(row)} className="astw:group">
@@ -224,7 +230,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                 variant="body-sm"
                 className="astw:py-6 astw:text-center astw:text-muted-foreground"
               >
-                {emptyMessage ?? t("empty")}
+                {emptyMessage ?? t(value.allLines.length > 0 ? "noMatches" : "empty")}
               </Text>
             </Table.Cell>
           </Table.Row>
@@ -267,4 +273,9 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
 
 Root.displayName = "LineItems.Root";
 LineItemsTable.displayName = "LineItems.Table";
-export const LineItems = { Root, Table: LineItemsTable, ColumnSettings: LineItemsColumnSettings };
+export const LineItems = {
+  Root,
+  Table: LineItemsTable,
+  ColumnSettings: LineItemsColumnSettings,
+  Search: LineItemsSearch,
+};

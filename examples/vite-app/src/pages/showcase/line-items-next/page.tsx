@@ -110,6 +110,8 @@ const columns = [
     label: "Supplier (async)",
     type: "text",
     render: (line) => supplierLabel(line.supplier),
+    search: (line, query) =>
+      `${line.supplier ?? ""} ${supplierLabel(line.supplier)}`.toLowerCase().includes(query),
     edit: {
       editorType: "combobox",
       fetcher: searchSuppliers,
@@ -135,6 +137,10 @@ const columns = [
   column({
     accessorKey: "unitOfMeasure",
     label: "Unit (choices)",
+    search: (line, query) =>
+      `${line.unitOfMeasure ?? ""} ${unitOptions.find((option) => option.value === line.unitOfMeasure)?.label ?? ""}`
+        .toLowerCase()
+        .includes(query),
     type: "text",
     render: (line) =>
       unitOptions.find((option) => option.value === line.unitOfMeasure)?.label ??
@@ -170,6 +176,10 @@ const columns = [
   column({
     accessorKey: "priority",
     label: "Priority (numeric)",
+    search: (line, query) =>
+      `${line.priority ?? ""} ${priorityOptions.find((option) => option.value === line.priority)?.label ?? ""}`
+        .toLowerCase()
+        .includes(query),
     type: "number",
     render: (line) =>
       priorityOptions.find((option) => option.value === line.priority)?.label ?? "—",
@@ -180,6 +190,8 @@ const columns = [
     accessorKey: "packSize",
     label: "Pack size (custom)",
     render: (line) => (line.packSize ? `${line.packSize.units} units / pack` : "—"),
+    search: (line, query) =>
+      !!line.packSize && `${line.packSize.units} units / pack`.includes(query),
     edit: {
       editorType: "custom",
       renderEditor: ({ value, onCommit, onCancel, ariaLabel }) => (
@@ -494,6 +506,7 @@ function LineItemsNextPage() {
                     </Button>
                   </Toolbar.Group>
                   <Toolbar.Group>
+                    <LineItems.Search />
                     <LineItems.ColumnSettings />
                   </Toolbar.Group>
                 </Toolbar.Row>
@@ -517,7 +530,9 @@ function LineItemsNextPage() {
           block saving. Independent metadata saves, virtualization, and spreadsheet operations are
           not included yet. The 18 data columns intentionally overflow the viewport: scroll
           horizontally to inspect them while SKU, Amount, and Actions stay pinned. Use Columns to
-          reorder columns or change their pinned edge; these preferences are saved locally.
+          reorder columns or change their pinned edge; these preferences are saved locally. Search
+          narrows the visible rows as you type without changing document totals or the save
+          snapshot.
         </Text>
         <Text variant="body-sm" className="text-muted-foreground">
           Editors: Description uses text; Qty and Unit price use number inputs with number/money

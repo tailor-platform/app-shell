@@ -218,6 +218,7 @@ export {
   type LineItemsRootProps,
   type LineItemsTableProps,
   type LineItemsColumnSettingsProps,
+  type LineItemsSearchProps,
   type UseLineItemsOptions,
   type UseLineItemsReturn,
 } from "./components/line-items";

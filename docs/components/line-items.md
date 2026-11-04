@@ -13,7 +13,7 @@ description: Document-owned editable lines with typed columns, validation, expli
 
 This API supports all declared editor kinds: text, number, boolean, date, fixed/async comboboxes, and custom editors, including structured object values. It also provides read-only and computed columns, add/update/remove commands, explicit save and Discard, manual document ordering, column footers, and auto/px/flex widths with pinning. Every document row is rendered.
 
-It does **not** yet provide controlled `lines`, independent metadata persistence, virtualization, clipboard/range/fill operations, presentation sorting, search, row selection, fullscreen, or grouped collections. `useLineItems` rejects controlled `lines` / `onLinesChange` and `commit: "metadata"` rather than silently ignoring them.
+It does **not** yet provide controlled `lines`, independent metadata persistence, virtualization, clipboard/range/fill operations, presentation sorting, row selection, fullscreen, or grouped collections. `useLineItems` rejects controlled `lines` / `onLinesChange` and `commit: "metadata"` rather than silently ignoring them.
 
 The example application’s Line items preview (`examples/vite-app/src/pages/showcase/line-items-next/page.tsx`) demonstrates every editor across 18 data columns, including money display with number input, fixed numeric choices, a mock async supplier catalogue, and an immutable object editor. It consumes only the public package entrypoint. Standard display types remain independent of the chosen editor.
 
@@ -137,6 +137,7 @@ function DocumentLines({
             </Button>
           </Toolbar.Group>
           <Toolbar.Group>
+            <LineItems.Search />
             <LineItems.ColumnSettings />
           </Toolbar.Group>
         </Toolbar.Row>
@@ -345,7 +346,7 @@ Column `label` is meaningful text. `header(ctx)` replaces the default header con
 | omitted  | Intrinsic auto width observed from header, mounted body content, and footer. |
 | `"flex"` | Equal share of remaining space, with an internal control-safe minimum.       |
 
-Observed auto widths can grow as longer content appears and do not shrink on ordinary renders. The observation cache resets for the document/schema sizing lifecycle; it is not a promise to measure arbitrary content before it is rendered. All rows render in this slice. Without flex columns, a trailing internal spacer absorbs unused space instead of stretching declared widths. Insufficient width produces horizontal scrolling, not automatic shrinking or unpinning.
+Observed auto widths can grow as longer content appears and do not shrink on ordinary renders. The observation cache resets for the document/schema sizing lifecycle; it is not a promise to measure arbitrary content before it is rendered. All matching rows render in this slice; there is no virtualization. Without flex columns, a trailing internal spacer absorbs unused space instead of stretching declared widths. Insufficient width produces horizontal scrolling, not automatic shrinking or unpinning.
 
 `pin: "left" | "right"` retains the column at that edge. Left/right pinned columns are grouped at their respective edges, and a configured row-action column is pinned right.
 
@@ -354,6 +355,25 @@ Rows use the same content-driven sizing as `Table` and `DataTable`. The action c
 A visible column's `footer` can be a string, including an empty string, or `({ rows }) => ReactNode`. `rows` contains the adopted logical document rows, not editor drafts. Footer formatting belongs to that renderer; the body column's display type is not automatically applied. `footerProps` decorates the footer cell.
 
 `truncate: true` and `{}` use primitive formatted display for the default tooltip; raw values are not an implicit fallback for JSX. `{ tooltip: false }` requests ellipsis without a tooltip, and a tooltip callback receives `{ row, display }`. Editing/error inspection takes priority over a truncation tooltip.
+
+## Incremental row search
+
+Place `LineItems.Search` in a generic Toolbar inside the same Root as Table. It reads `searchQuery` and `setSearchQuery` from the hook's value, without a second value prop. Typing immediately filters the in-memory rows: no submit, debounce, network request, URL state, or persisted search preference is involved. Clearing the query shows every row again.
+
+`lines` contains matches in document order; `allLines` remains the complete adopted document. Search matches the whole query as a case-insensitive, NFKC/width-insensitive substring across any defined column's source value. Text, numbers, booleans, bigint, valid Date ISO values, and flat primitive arrays are supported. Nulls and arbitrary objects do not match by default. Unconfigured row properties, rendered JSX, and temporary editor drafts are not searched.
+
+Use `column.search(row, query)` to replace that column's default matcher for display labels or structured values. The callback receives the trimmed, NFKC/lowercase query and must be pure; empty queries bypass matchers.
+
+```tsx
+column({
+  accessorKey: "supplier",
+  label: "Supplier",
+  render: (line) => supplierLabel(line.supplier),
+  search: (line, query) => supplierLabel(line.supplier).toLowerCase().includes(query),
+});
+```
+
+Searching does not mutate, normalize, reorder, or discard document rows. Dirty state, validation, footer totals, and save snapshots still cover `allLines`, including hidden rows. Hidden logical drafts/failures remain tracked, and `commitEdits()` prepares them too. Search stays in place through Save/Discard and resets when the hook is remounted. Row action `index` and editor row labels retain their full-document positions while filtered. Additions or adopted edits update the matches automatically.
 
 ## Column settings
 
@@ -435,7 +455,8 @@ Acknowledgment compares the submitted snapshot, current document, and accepted s
 
 | Member                                                  | Description                                                                                                                                                  |
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `lines` / `allLines`                                    | Currently the same adopted rows in document order; no search or presentation-sort projection yet.                                                            |
+| `lines` / `allLines`                                    | Search matches versus all adopted rows, both in document order.                                                                                              |
+| `searchQuery` / `setSearchQuery(query)`                 | In-memory incremental row search, independent of document saves.                                                                                             |
 | `addLine(line, options?)` / `addLines(lines, options?)` | Add complete editing models and return line keys. Passed IDs are dropped. `afterLineKey` omitted appends, `null` prepends, otherwise inserts after that key. |
 | `removeLine(key)` / `removeLines(keys)`                 | Remove document lines.                                                                                                                                       |
 | `updateField(key, property, value)`                     | Property-typed single-field update.                                                                                                                          |
@@ -465,11 +486,15 @@ Root distributes the controller; it does not own another copy of the rows. Ordin
 | `className`    | Classes applied to the table.                                              |
 | `emptyMessage` | Empty-document content; localized default when omitted.                    |
 
-Table requires Root. It renders all lines, standard/computed display, all declared editor kinds, optional row actions, and column footers. Add/save/Discard controls remain application-owned.
+Table requires Root. It renders matching lines, standard/computed display, all declared editor kinds, optional row actions, and document-wide column footers. Add/save/Discard controls remain application-owned.
 
 ### `LineItems.ColumnSettings`
 
 Accepts optional `className`. Requires `LineItems.Root`, reads its layout state, and renders the shared Columns popup. Compose it with the generic `Toolbar`; no LineItems-specific toolbar or filter component is needed.
+
+### `LineItems.Search`
+
+Accepts optional `className`, `placeholder`, and `aria-label`. Requires Root. It renders a compact search input suitable for Toolbar and announces the shown/full row count. The input retains its caret/navigation keys inside Toolbar.
 
 ## Related
 

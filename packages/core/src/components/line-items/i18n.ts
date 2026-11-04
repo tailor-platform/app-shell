@@ -4,6 +4,11 @@ const labels = defineI18nLabels({
   en: {
     title: "Line items",
     empty: "No lines yet.",
+    noMatches: "No matching lines.",
+    search: "Search line items",
+    searchPlaceholder: "Search line items...",
+    searchResults: ({ count, total }: { count: number; total: number }) =>
+      `${count} of ${total} lines shown.`,
     actions: "Actions",
     row: ({ index }: { index: number }) => `line ${index}`,
     invalidNumber: "Enter a valid number.",
@@ -18,6 +23,11 @@ const labels = defineI18nLabels({
   ja: {
     title: "明細",
     empty: "明細がありません。",
+    noMatches: "一致する明細がありません。",
+    search: "明細を検索",
+    searchPlaceholder: "明細を検索...",
+    searchResults: ({ count, total }: { count: number; total: number }) =>
+      `${total}件中${count}件の明細を表示。`,
     actions: "行操作",
     row: ({ index }: { index: number }) => `行${index}`,
     invalidNumber: "有効な数値を入力してください。",

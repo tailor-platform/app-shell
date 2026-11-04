@@ -88,6 +88,7 @@ type NoDocumentRules = {
 
 type LineItemsColumnProps<TRow extends Record<string, unknown>> = ColumnDisplayProps<TRow> & {
   sort?: { comparator: (left: TRow, right: TRow) => number };
+  /** Overrides default value matching; receives the trimmed, NFKC/lowercase query. */
   search?: (row: TRow, query: string) => boolean;
   /** Collection filters belong to DataTable, not a document's local columns. */
   filter?: never;
@@ -185,8 +186,12 @@ export type UseLineItemsOptions<TRow extends Record<string, unknown>> = {
 };
 
 export type UseLineItemsReturn<TRow extends Record<string, unknown>> = {
+  /** Rows matching the current search, in document order. */
   readonly lines: readonly TRow[];
+  /** Complete document, independent of presentation search. */
   readonly allLines: readonly TRow[];
+  readonly searchQuery: string;
+  setSearchQuery: (query: string) => void;
   readonly columns: readonly LineItemsColumn<TRow>[];
   readonly columnOrder: readonly string[];
   readonly pinnedColumns: Readonly<Record<string, "left" | "right" | "none">>;

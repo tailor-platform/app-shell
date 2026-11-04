@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useColumnLayout } from "@/components/internals/table-core/use-column-state";
+import { filterRowsByQuery } from "@/components/internals/table-core/row-search";
 import { compileLineItemsColumns } from "./columns";
 import { bindLineItemsController, createLineItemsController } from "./controller";
 import type { UseLineItemsOptions, UseLineItemsReturn } from "./types";
@@ -9,6 +10,7 @@ export function useLineItems<T extends Record<string, unknown>>(
   options: UseLineItemsOptions<T>,
 ): UseLineItemsReturn<T> {
   const [controller] = useState(() => createLineItemsController(options));
+  const [searchQuery, setSearchQuery] = useState("");
   useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   const schema = useMemo(() => compileLineItemsColumns(options.columns), [options.columns]);
   const meta = useMemo(
@@ -22,9 +24,24 @@ export function useLineItems<T extends Record<string, unknown>>(
   );
   const layout = useColumnLayout(meta, { tableId: options.tableId, namespace: "line-items" });
   const rows = controller.document.getRows();
+  const searchColumns = useMemo(
+    () =>
+      options.columns.map((column) => ({
+        getValue: (row: T) =>
+          column.accessorKey !== undefined ? row[column.accessorKey] : column.accessor?.(row),
+        search: column.search,
+      })),
+    [options.columns],
+  );
+  const lines = useMemo(
+    () => filterRowsByQuery(rows, searchColumns, searchQuery),
+    [rows, searchColumns, searchQuery],
+  );
   const value: UseLineItemsReturn<T> = {
-    lines: rows,
+    lines,
     allLines: rows,
+    searchQuery,
+    setSearchQuery,
     columns: options.columns,
     columnOrder: layout.columnOrder,
     pinnedColumns: layout.pinnedColumns,

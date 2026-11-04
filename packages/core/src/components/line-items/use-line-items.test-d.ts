@@ -1,6 +1,8 @@
 import { expectTypeOf, test } from "vitest";
 import { createLineItemHelper } from "./column-helper";
 import { useLineItems } from "./use-line-items";
+import { LineItems } from "./line-items";
+import type { LineItemsSearchProps } from "./search";
 import type { LineItemsChangeSet, UseLineItemsOptions, UseLineItemsReturn } from "./types";
 
 type Row = { id?: string; quantity: number | null; name: string | null };
@@ -12,6 +14,11 @@ test("public commands retain row types without exposing controller/session plumb
     const value = useLineItems<Row>({ columns, defaultLines: [] });
     expectTypeOf(value).toEqualTypeOf<UseLineItemsReturn<Row>>();
     expectTypeOf(value.lines).toEqualTypeOf<readonly Row[]>();
+    expectTypeOf(value.allLines).toEqualTypeOf<readonly Row[]>();
+    expectTypeOf(value.searchQuery).toEqualTypeOf<string>();
+    value.setSearchQuery("query");
+    // @ts-expect-error Search accepts text, not collection-filter objects.
+    value.setSearchQuery({ query: "value" });
     expectTypeOf(value.commitEdits()).toEqualTypeOf<Promise<LineItemsChangeSet<Row> | null>>();
     value.updateField("A", "quantity", null);
     value.updateLines([{ lineKey: "A", patch: { quantity: 2 } }]);
@@ -27,6 +34,19 @@ test("public commands retain row types without exposing controller/session plumb
     return null;
   }
   void Contract;
+});
+
+test("Search reads its value from Root and exposes only presentation props", () => {
+  const props: LineItemsSearchProps = {
+    className: "search",
+    placeholder: "Find lines",
+    "aria-label": "Find document lines",
+  };
+  expectTypeOf(LineItems.Search).parameter(0).toEqualTypeOf<LineItemsSearchProps>();
+  // @ts-expect-error Search consumes Root context rather than a second value prop.
+  const duplicate: LineItemsSearchProps = { value: "query" };
+  void props;
+  void duplicate;
 });
 
 test("initial options expose uncontrolled ownership and typed arbitrary row actions", () => {

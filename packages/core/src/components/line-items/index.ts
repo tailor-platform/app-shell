@@ -1,6 +1,7 @@
 export { LineItems } from "./line-items";
 export type { LineItemsRootProps, LineItemsTableProps } from "./line-items";
 export type { LineItemsColumnSettingsProps } from "./column-settings";
+export type { LineItemsSearchProps } from "./search";
 export { useLineItems } from "./use-line-items";
 export { createLineItemHelper } from "./column-helper";
 export type {

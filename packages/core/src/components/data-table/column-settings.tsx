@@ -1,342 +1,37 @@
-import { type ReactNode, useCallback, useMemo, useState } from "react";
-import { Popover } from "@base-ui/react/popover";
-import { GripVertical, Search, SlidersHorizontal } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/button";
-import { Checkbox } from "@/components/checkbox";
-import { Input } from "@/components/input";
-import { Tooltip } from "@/components/tooltip";
+import { useMemo } from "react";
+import { ColumnSettings } from "@/components/internals/table-core/column-settings";
 import { useDataTableContext } from "./context";
-import { useDataTableT } from "./i18n";
 import { columnKeyAt } from "./column-layout";
 
-// Shared popup styling, matching DataTable's filter popover. The width cap lives
-// on the popup itself (not the inner fieldset) so base-ui measures the real width
-// and anchors it flush under the trigger.
-const POPUP_CLASS = cn(
-  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:max-w-[360px] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
-  "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
-);
-
-type Section = "left" | "scrollable" | "right";
-
-// Which pin value a section maps to. "none" explicitly unpins (overriding a
-// column's default `pin`) so dragging a pinned-by-default column into
-// "Scrollable" sticks.
-const SECTION_PIN: Record<Section, "left" | "right" | "none"> = {
-  left: "left",
-  scrollable: "none",
-  right: "right",
-};
-
-/** Resolve a column's effective pin (override wins; "none" is explicit unpin). */
-function effectiveSection(
-  stored: "left" | "right" | "none" | undefined,
-  defaultPin: "left" | "right" | undefined,
-): Section {
-  if (stored === "none") return "scrollable";
-  return stored ?? defaultPin ?? "scrollable";
-}
-
-// =============================================================================
-// DataTable.ColumnSettings — 3 droppable sections (fixed left / scrollable /
-// fixed right). Dragging a column between sections sets its pin; dragging
-// within a section reorders it.
-// =============================================================================
-
-/**
- * A "Columns" toolbar popover with three drop zones — **Fixed left**,
- * **Scrollable**, and **Fixed right**. Drag a column into a zone to pin it to
- * that edge (or unpin it), and drag within a zone to reorder. Each row has a
- * visibility checkbox. State persists when `useDataTable` has a `tableId`.
- *
- * Place inside any toolbar or other action layout within `DataTable.Root`.
- */
+/** DataTable's adapter retains visibility controls and its existing popup slot. */
 function DataTableColumnSettings({ className }: { className?: string }) {
-  const t = useDataTableT();
-  const {
-    columns,
-    columnOrder,
-    isColumnVisible,
-    toggleColumn,
-    showAllColumns,
-    hideAllColumns,
-    pinnedColumns,
-    setPin,
-    setColumnOrder,
-  } = useDataTableContext<Record<string, unknown>>();
-
-  const meta = useMemo(() => {
-    const label = new Map<string, string>();
-    const defaultPin = new Map<string, "left" | "right" | undefined>();
-    columns.forEach((col, i) => {
-      const key = columnKeyAt(col, i);
-      label.set(key, col.label ?? key);
-      defaultPin.set(key, col.pin);
-    });
-    return { label, defaultPin };
-  }, [columns]);
-
-  const sectionOf = useCallback(
-    (key: string): Section => effectiveSection(pinnedColumns[key], meta.defaultPin.get(key)),
-    [pinnedColumns, meta],
+  const value = useDataTableContext<Record<string, unknown>>();
+  const columns = useMemo(
+    () =>
+      value.columns.map((column, index) => ({
+        id: columnKeyAt(column, index),
+        label: column.label,
+        pin: column.pin,
+      })),
+    [value.columns],
   );
-
-  // A single toggle drives the footer button: when every column is visible it
-  // offers "Hide all", otherwise "Show all" (so a partially-hidden table gets
-  // everything back in one click).
-  const allVisible = useMemo(
-    () => columnOrder.every((key) => isColumnVisible(key)),
-    [columnOrder, isColumnVisible],
-  );
-
-  // Group the ordered columns into their sections (order preserved per section).
-  const buckets = useMemo(() => {
-    const grouped: Record<Section, string[]> = { left: [], scrollable: [], right: [] };
-    for (const key of columnOrder) grouped[sectionOf(key)].push(key);
-    return grouped;
-  }, [columnOrder, sectionOf]);
-
-  // Free-text filter over column labels. Only the Scrollable list narrows to
-  // matches (the pinned zones always show in full); drag-and-drop stays enabled
-  // because drop positions are keyed to each row's full-order index (renderRow).
-  const [query, setQuery] = useState("");
-  const q = query.trim().toLowerCase();
-  const isSearching = q.length > 0;
-  const matchKeys = useCallback(
-    (keys: string[]) =>
-      isSearching ? keys.filter((k) => (meta.label.get(k) ?? "").toLowerCase().includes(q)) : keys,
-    [isSearching, q, meta],
-  );
-
-  const [dragKey, setDragKey] = useState<string | null>(null);
-  const [dropTarget, setDropTarget] = useState<{ section: Section; index: number } | null>(null);
-
-  const resetDrag = () => {
-    setDragKey(null);
-    setDropTarget(null);
-  };
-
-  const handleDrop = () => {
-    if (dragKey && dropTarget) {
-      const { section, index } = dropTarget;
-      // Rebuild the buckets without the dragged key, then insert it at the drop
-      // position, and flatten back to a single order. Setting the order to the
-      // grouped layout keeps it consistent with how the table renders.
-      const next: Record<Section, string[]> = {
-        left: buckets.left.filter((k) => k !== dragKey),
-        scrollable: buckets.scrollable.filter((k) => k !== dragKey),
-        right: buckets.right.filter((k) => k !== dragKey),
-      };
-      const target = next[section];
-      // `index` was measured against the section's rows *including* dragKey. For
-      // a same-zone move, filtering dragKey out above shifts every slot at/after
-      // its original position down by one, so decrement to land where the
-      // indicator promised. Cross-zone drops (fromIdx === -1) are unaffected.
-      const fromIdx = buckets[section].indexOf(dragKey);
-      const insertAt = fromIdx > -1 && fromIdx < index ? index - 1 : index;
-      target.splice(Math.max(0, Math.min(insertAt, target.length)), 0, dragKey);
-      setColumnOrder([...next.left, ...next.scrollable, ...next.right]);
-      setPin(dragKey, SECTION_PIN[section]);
-    }
-    resetDrag();
-  };
-
-  const renderRow = (key: string, section: Section, isLast: boolean) => {
-    // Drop positions are keyed to the FULL bucket index (not the rendered
-    // position), so drag-and-drop stays correct even while the Scrollable list
-    // is filtered by search — a hovered row maps to its real slot in the order.
-    const fullIndex = buckets[section].indexOf(key);
-    // Insertion indicator: an absolutely-positioned line that sits in the gap
-    // between rows (straddling the shared border). Being absolute, it never
-    // shifts the rows under the cursor — a flow element there made the drop
-    // target recompute on every reflow and the line "jump".
-    const showBefore =
-      dragKey != null && dropTarget?.section === section && dropTarget.index === fullIndex;
-    const showAfter =
-      dragKey != null &&
-      dropTarget?.section === section &&
-      isLast &&
-      dropTarget.index === fullIndex + 1;
-    return (
-      <div
-        key={key}
-        draggable
-        onDragStart={() => setDragKey(key)}
-        onDragEnd={resetDrag}
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const rect = e.currentTarget.getBoundingClientRect();
-          const after = e.clientY > rect.top + rect.height / 2;
-          setDropTarget({ section, index: after ? fullIndex + 1 : fullIndex });
-        }}
-        className={cn(
-          "astw:relative astw:flex astw:items-center astw:gap-2 astw:rounded-sm astw:py-1 astw:pr-2 astw:pl-1.5 astw:hover:bg-accent",
-          dragKey === key && "astw:opacity-40",
-        )}
-      >
-        {showBefore && (
-          <span className="astw:pointer-events-none astw:absolute astw:inset-x-1 astw:-top-px astw:z-10 astw:h-0.5 astw:rounded-full astw:bg-primary" />
-        )}
-        {showAfter && (
-          <span className="astw:pointer-events-none astw:absolute astw:inset-x-1 astw:-bottom-px astw:z-10 astw:h-0.5 astw:rounded-full astw:bg-primary" />
-        )}
-        <span
-          aria-label={t("dragToReorder")}
-          className="astw:cursor-grab astw:text-muted-foreground"
-        >
-          <GripVertical className="astw:size-4" />
-        </span>
-        <button
-          type="button"
-          onClick={() => toggleColumn(key)}
-          title={meta.label.get(key) ?? key}
-          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-body-md"
-        >
-          {meta.label.get(key) ?? key}
-        </button>
-        <Tooltip.Root>
-          {/* The checkbox itself is the trigger (props, incl. ref in React 19,
-              forward to Checkbox.Root) so hover AND keyboard focus open the
-              tooltip and its text is wired to the control via aria-describedby. */}
-          <Tooltip.Trigger
-            render={
-              <Checkbox
-                checked={isColumnVisible(key)}
-                onCheckedChange={() => toggleColumn(key)}
-                aria-label={meta.label.get(key)}
-              />
-            }
-          />
-          <Tooltip.Content>{t(isColumnVisible(key) ? "hideColumn" : "showColumn")}</Tooltip.Content>
-        </Tooltip.Root>
-      </div>
-    );
-  };
-
-  const renderSection = (
-    section: Section,
-    title: string,
-    opts?: { scroll?: boolean; filter?: boolean },
-  ) => {
-    // Search only narrows the section that opts in (the Scrollable list); the
-    // pinned zones always show their full contents.
-    const filtered = !!opts?.filter && isSearching;
-    const keys = filtered ? matchKeys(buckets[section]) : buckets[section];
-    const active = dragKey != null && dropTarget?.section === section;
-    let rows: ReactNode;
-    if (keys.length === 0) {
-      rows = filtered ? (
-        // Filtered to nothing — show a search empty state, not the drop zone.
-        <div className="astw:px-1.5 astw:py-3 astw:text-center astw:text-body-sm astw:text-muted-foreground">
-          {t("noColumnsMatch")}
-        </div>
-      ) : (
-        <div
-          className={cn(
-            "astw:mx-1 astw:rounded-sm astw:border astw:border-dashed astw:border-border astw:px-1.5 astw:py-2 astw:text-body-sm astw:text-muted-foreground astw:italic",
-            active && "astw:border-primary astw:text-primary",
-          )}
-        >
-          {t("dropColumnsHere")}
-        </div>
-      );
-    } else {
-      rows = keys.map((key, i) => renderRow(key, section, i === keys.length - 1));
-    }
-    return (
-      <div
-        data-section={section}
-        onDragOver={(e) => {
-          e.preventDefault();
-          // Only fires for the header / padding / empty area (rows stop
-          // propagation) → drop at the end of the section. Use the full bucket
-          // length (not the filtered count) so a drop lands at the true end.
-          setDropTarget({ section, index: buckets[section].length });
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          handleDrop();
-        }}
-        className={cn(
-          // No gap between rows: a gap would be "section area" that re-triggers
-          // the end-of-section handler as the cursor passes between rows.
-          "astw:flex astw:flex-col astw:rounded-md astw:py-1.5",
-          active && "astw:bg-accent/40",
-        )}
-      >
-        <div className="astw:px-1.5 astw:pb-1 astw:text-label-sm astw:text-muted-foreground">
-          {title}
-        </div>
-        {/* Only the Scrollable section gets an internal scroll cap; the pinned
-            zones stay fully visible. */}
-        {opts?.scroll ? (
-          <div className="astw:flex astw:max-h-[min(50vh,20rem)] astw:flex-col astw:overflow-y-auto">
-            {rows}
-          </div>
-        ) : (
-          rows
-        )}
-      </div>
-    );
-  };
-
   return (
-    <Popover.Root>
-      <Popover.Trigger
-        render={
-          <Button variant="outline" size="xs" className={className}>
-            <SlidersHorizontal className="astw:size-3" />
-            {t("columns")}
-          </Button>
-        }
-      />
-      {/* Stacking context on the portal container so the popup renders above the
-          DataTable's sticky header row (z-index: 10). */}
-      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
-        <Popover.Positioner sideOffset={4} side="bottom" align="end">
-          <Popover.Popup data-slot="data-table-column-settings-popup" className={POPUP_CLASS}>
-            <fieldset
-              aria-label={t("columnSettings")}
-              className="astw:m-0 astw:flex astw:min-w-72 astw:flex-col astw:border-0 astw:p-2"
-            >
-              {/* Search sits above the pinned-left section; it filters only the
-                  Scrollable list — the Fixed left / right zones always show in
-                  full. */}
-              <div className="astw:relative astw:mb-1 astw:px-1">
-                <Search className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-3.5 astw:size-3.5 astw:-translate-y-1/2 astw:text-muted-foreground" />
-                <Input
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t("searchColumns")}
-                  aria-label={t("searchColumns")}
-                  className="astw:h-8 astw:pl-8 astw:text-body-md"
-                />
-              </div>
-              {renderSection("left", t("sectionPinnedLeft"))}
-              <div className="astw:mx-1 astw:border-t astw:border-border" />
-              {renderSection("scrollable", t("sectionScrollable"), { scroll: true, filter: true })}
-              <div className="astw:mx-1 astw:border-t astw:border-border" />
-              {renderSection("right", t("sectionPinnedRight"))}
-              <div className="astw:mx-1 astw:mt-1 astw:border-t astw:border-border" />
-              <div className="astw:mt-1.5 astw:flex astw:justify-end">
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  onClick={allVisible ? hideAllColumns : showAllColumns}
-                >
-                  {t(allVisible ? "hideAllColumns" : "showAllColumns")}
-                </Button>
-              </div>
-            </fieldset>
-          </Popover.Popup>
-        </Popover.Positioner>
-      </Popover.Portal>
-    </Popover.Root>
+    <ColumnSettings
+      columns={columns}
+      columnOrder={value.columnOrder}
+      pinnedColumns={value.pinnedColumns}
+      setColumnOrder={(ids) => value.setColumnOrder([...ids])}
+      setPin={value.setPin}
+      visibility={{
+        isColumnVisible: value.isColumnVisible,
+        toggleColumn: value.toggleColumn,
+        showAllColumns: value.showAllColumns,
+        hideAllColumns: value.hideAllColumns,
+      }}
+      className={className}
+      popupSlot="data-table-column-settings-popup"
+    />
   );
 }
 DataTableColumnSettings.displayName = "DataTable.ColumnSettings";
-
 export { DataTableColumnSettings };

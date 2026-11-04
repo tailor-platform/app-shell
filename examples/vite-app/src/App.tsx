@@ -31,7 +31,7 @@ const searchSources: SearchSource[] = [
 
 const AppInner = () => {
   return (
-    <AppShell title="File-Based Routing Demo" searchSources={searchSources}>
+    <AppShell title="File-Based Routing Demo" locale="en" searchSources={searchSources}>
       {/* GlobalHeaderLayout bundles the "global header + icon rail" mode: an
           app-wide top bar over the whole shell and a sidebar that collapses to a
           persistent icon rail (toggle at the bottom-left). */}
@@ -84,6 +84,7 @@ const AppInner = () => {
               <SidebarItem to="/showcase/data-table" />
               <SidebarItem to="/showcase/data-table-lab" />
               <SidebarItem to="/showcase/data-table-selection" />
+              <SidebarItem to="/showcase/line-items-next" />
               <SidebarItem to="/showcase/filter-rail" />
               <SidebarItem to="/showcase/alert-tokens" />
               <SidebarItem to="/showcase/spinner" />

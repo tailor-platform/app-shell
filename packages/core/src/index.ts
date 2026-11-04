@@ -209,6 +209,18 @@ export { Input, type InputProps } from "./components/input";
 export { Textarea, type TextareaProps } from "./components/textarea";
 export { Checkbox, type CheckboxProps } from "./components/checkbox";
 export { Table } from "./components/table";
+export {
+  LineItems,
+  useLineItems,
+  createLineItemHelper,
+  type LineItemsColumn,
+  type LineItemsChangeSet,
+  type LineItemsRootProps,
+  type LineItemsTableProps,
+  type LineItemsColumnSettingsProps,
+  type UseLineItemsOptions,
+  type UseLineItemsReturn,
+} from "./components/line-items";
 export { Card } from "./components/card";
 export { Dialog } from "./components/dialog";
 export { Field } from "./components/field";

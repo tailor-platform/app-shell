@@ -47,6 +47,7 @@ import {
 import { gql, useQuery } from "urql";
 import {
   DataTable,
+  Toolbar,
   useDataTable,
   useCollectionVariables,
   createColumnHelper,
@@ -139,9 +140,13 @@ function JournalsPage() {
 
   return (
     <DataTable.Root value={table}>
-      <DataTable.Toolbar>
-        <DataTable.Filters />
-      </DataTable.Toolbar>
+      <Toolbar.Root>
+        <Toolbar.Row aria-label="Journal table controls">
+          <Toolbar.Group>
+            <DataTable.Filters />
+          </Toolbar.Group>
+        </Toolbar.Row>
+      </Toolbar.Root>
       <DataTable.Table />
       <DataTable.Footer>
         <DataTable.Pagination pageSizeOptions={[10, 20, 50]} />
@@ -173,7 +178,7 @@ function JournalsPage() {
 | `children`  | `ReactNode`                | Sub-components to render inside the root.    |
 | `className` | `string`                   | Additional CSS class for the root container. |
 
-### `DataTable.Toolbar` Props
+### `DataTable.Toolbar` Props (deprecated)
 
 | Prop             | Type        | Default | Description                                                                                                                                 |
 | ---------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -181,7 +186,7 @@ function JournalsPage() {
 | `columnSettings` | `boolean`   | `false` | Render the built-in Columns control at the top-right. Use [`Toolbar`](./toolbar.md) with `DataTable.ColumnSettings` for new custom layouts. |
 | `className`      | `string`    | —       | Additional CSS class for the toolbar container.                                                                                             |
 
-For new layouts, use the generic [`Toolbar`](./toolbar.md).
+`DataTable.Toolbar` is deprecated but retains its existing behavior for compatibility. Use the generic [`Toolbar`](./toolbar.md) with `DataTable.ColumnSettings` for new layouts. No replacement DataTable-specific toolbar is introduced.
 
 ### `DataTable.Filters` Props
 
@@ -238,7 +243,7 @@ When pagination changes page or page size, `DataTable.Table` resets its own scro
 ## Column pinning, visibility & ordering
 
 - **Pin** a column with `pin: "left" | "right"`. Pinned columns stay visible during horizontal scroll; the selection and expand columns auto-pin left and the row-actions column auto-pins right. A subtle shadow appears at the frozen edge once the table is scrolled under it. Sticky offsets are measured from the rendered layout, so a `width` isn't required — but setting `width` on pinned columns is recommended so their size stays stable as content changes.
-- **Column settings.** `DataTable.ColumnSettings` renders a popover to show/hide columns, reorder them (drag), and change pinning by dragging a column between the **Fixed left**, **Scrollable**, and **Fixed right** zones. Place it in a generic [`Toolbar`](./toolbar.md), or pass `columnSettings` to `DataTable.Toolbar` for its fixed top-right placement.
+- **Column settings.** `DataTable.ColumnSettings` renders a popover to show/hide columns, reorder them (drag), and change pinning by dragging a column between the **Fixed left**, **Scrollable**, and **Fixed right** zones. The existing popup row layout is retained; keyboard users can focus the drag handle and use Up/Down to reorder or Left/Right to change pin sections. Place it in a generic [`Toolbar`](./toolbar.md), or keep the deprecated `DataTable.Toolbar columnSettings` form for existing layouts.
 - **Persistence.** Pass a stable, **unique** `tableId` to persist each user's column layout (visibility, order, pinning) to `localStorage` (key `as:data-table:v1:<tableId>`). This is a per-user preference — it is deliberately **not** stored in the URL like filters/sort/pagination, so it survives reloads and isn't reset by shared/filtered links. Omit `tableId` for in-memory-only layout (state simply isn't persisted). Two tables mounted with the same `tableId` share one storage key and overwrite each other — use a unique id per table (e.g. `<route>:<entity>`); a dev-mode warning fires on duplicates.
 
 ```tsx

@@ -1,5 +1,23 @@
 import type { ComponentProps, ReactNode } from "react";
-import type { BadgeOptions } from "@/components/badge-list";
+import type {
+  BadgeCellOptions,
+  DateCellOptions,
+  FooterRenderContext,
+  HeaderRenderContext,
+  LinkCellOptions,
+  MoneyCellOptions,
+  NumberCellOptions,
+} from "@/components/internals/table-core/column-types";
+export type {
+  BadgeCellOptions,
+  ColumnCellType,
+  DateCellOptions,
+  FooterRenderContext,
+  HeaderRenderContext,
+  LinkCellOptions,
+  MoneyCellOptions,
+  NumberCellOptions,
+} from "@/components/internals/table-core/column-types";
 import type {
   CollectionControl,
   Filter,
@@ -15,75 +33,7 @@ import type {
 // Column Definitions
 // =============================================================================
 
-/**
- * Built-in cell renderer types for `Column.type`.
- *
- * Each type produces a default render based on the value returned by
- * `accessor`. Pass `render` to override the built-in renderer.
- *
- * - `text` — `String(value)` with `—` placeholder for null/undefined.
- * - `number` — locale-formatted number with `—` for null/undefined.
- * - `money` — `Intl.NumberFormat` currency. See `MoneyOptions`.
- * - `date` — `Intl.DateTimeFormat`. Accepts `Date`, ISO string, or epoch ms.
- * - `badge` — `<Badge>` keyed off the value. See `BadgeOptions`.
- * - `link` — app-shell `<Link>` with `href` from `LinkOptions`.
- */
-export type ColumnCellType = "text" | "number" | "money" | "date" | "badge" | "link";
-
 export type { BadgeVariant } from "@/components/badge-list";
-
-/** Options for `type: "number"` cells. */
-export interface NumberCellOptions {
-  /** Minimum decimal places. Default: `0`. */
-  minDecimals?: number;
-  /** Maximum decimal places. Default: `minDecimals` (or `0`). */
-  maxDecimals?: number;
-  /** BCP 47 locale tag. Defaults to the runtime locale. */
-  locale?: string;
-}
-
-/** Options for `type: "money"` cells. */
-export interface MoneyCellOptions<TRow extends Record<string, unknown>> {
-  /**
-   * ISO 4217 currency code. Pass a string for a static currency or a function
-   * to read it from the row. Default: `"USD"`.
-   */
-  currency?: string | ((row: TRow) => string);
-  /**
-   * Maximum decimals. Raises the cap above the currency default while keeping
-   * the minimum at the currency default (e.g. USD stays at ≥2, but a price
-   * column can show up to 4).
-   */
-  maxDecimals?: number;
-  /** BCP 47 locale tag. Defaults to the runtime locale. */
-  locale?: string;
-}
-
-/** Options for `type: "date"` cells. */
-export interface DateCellOptions {
-  /**
-   * Format style. `"short"` → `Apr 9, 2026`; `"long"` → `April 9, 2026`;
-   * `"datetime"` → `Apr 9, 2026, 3:45 PM`. Default: `"short"`.
-   */
-  dateFormat?: "short" | "long" | "datetime";
-  /** BCP 47 locale tag. Defaults to the runtime locale. */
-  locale?: string;
-}
-
-/** Options for `type: "badge"` cells. */
-export interface BadgeCellOptions extends BadgeOptions {
-  /** Maximum number of badges to display before showing a "+N" overflow indicator */
-  maxVisible?: number;
-}
-
-/** Options for `type: "link"` cells. `href` is required. */
-export interface LinkCellOptions<TRow extends Record<string, unknown>> {
-  /**
-   * Extracts the link target. Returning `null` / `undefined` renders the cell
-   * value as plain text instead of a link.
-   */
-  href: (row: TRow) => string | null | undefined;
-}
 
 // =============================================================================
 // Inline editing
@@ -208,35 +158,6 @@ export type NumberCellEditOptions<TRow extends Record<string, unknown>> = CellEd
   number,
   string
 >;
-
-/**
- * Header render context for non-sortable columns.
- */
-interface NonSortableHeaderRenderContext {
-  label?: string;
-  sortable: false;
-}
-
-/**
- * Header render context for sortable columns.
- */
-interface SortableHeaderRenderContext {
-  label?: string;
-  sortable: true;
-  sortDirection: "Asc" | "Desc" | undefined;
-  activateSort: () => void;
-}
-
-/**
- * Context passed to custom `header` renderers and `headerProps` callbacks.
- */
-export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
-
-/** Context passed to custom column `footer` renderers and `footerProps` callbacks. */
-export interface FooterRenderContext<TRow extends Record<string, unknown>> {
-  /** Current `data.rows` (the current page, not all records or only selected rows). */
-  rows: readonly TRow[];
-}
 
 type DataTableStringFilterOperator = Extract<
   OperatorForFilterType["string"],

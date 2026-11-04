@@ -145,17 +145,17 @@ describe("SidebarLayout", () => {
       expect(trigger).toBeNull();
     });
 
-    it.each([375, 1024, 1280])(
-      "keeps public hook actions and shortcuts inert when disabled at %ipx",
-      (width) => {
-        vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
+    it.each(["none", "icon", "offcanvas"] as const)(
+      "keeps desktop hook actions and shortcuts inert when disabled (%s)",
+      (mode) => {
+        stubDesktopViewport();
         const onOpenChange = vi.fn();
         const { result } = renderHook(
           () => ({ sidebar: useAppShellSidebar(), context: useSidebar() }),
           {
             wrapper: ({ children }) => (
               <SidebarProvider collapsible={false} defaultOpen={false} onOpenChange={onOpenChange}>
-                <Sidebar collapsible="none">Fixed sidebar</Sidebar>
+                <Sidebar collapsible={mode}>Fixed sidebar</Sidebar>
                 <SidebarLayout.Trigger />
                 <SidebarRail />
                 {children}
@@ -184,6 +184,64 @@ describe("SidebarLayout", () => {
         expect(result.current.sidebar.open).toBe(true);
         expect(result.current.context.openMobile).toBe(false);
         expect(result.current.context.openIconMode).toBe(false);
+        expect(onOpenChange).not.toHaveBeenCalled();
+        expect(sidebarWidth()).toBe("256px");
+      },
+    );
+
+    it.each([
+      [375, "offcanvas"],
+      [375, "icon"],
+      [1024, "icon"],
+    ] as const)(
+      "preserves custom overlay controls when desktop collapsing is disabled at %ipx (%s)",
+      async (width, mode) => {
+        vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
+        const onOpenChange = vi.fn();
+        const { result } = renderHook(
+          () => ({ sidebar: useAppShellSidebar(), context: useSidebar() }),
+          {
+            wrapper: ({ children }) => (
+              <SidebarProvider collapsible={false} defaultOpen={false} onOpenChange={onOpenChange}>
+                <Sidebar collapsible={mode}>Full menu</Sidebar>
+                <SidebarLayout.Trigger />
+                <SidebarRail />
+                {children}
+              </SidebarProvider>
+            ),
+          },
+        );
+        const overlayOpen = () =>
+          width === 375 ? result.current.context.openMobile : result.current.context.openIconMode;
+        const triggers = screen.getAllByRole("button", { name: "Toggle Sidebar" });
+        expect(triggers).toHaveLength(2);
+        expect(overlayOpen()).toBe(false);
+        expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+
+        fireEvent.click(triggers[0]!);
+        expect(overlayOpen()).toBe(true);
+        expect(await screen.findByRole("dialog", { name: "Sidebar" })).toBeDefined();
+        act(() => result.current.sidebar.toggle());
+        expect(overlayOpen()).toBe(false);
+        await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+        fireEvent.click(triggers[1]!);
+        expect(overlayOpen()).toBe(true);
+        act(() => result.current.sidebar.toggle());
+        for (const modifier of ["ctrlKey", "metaKey"] as const) {
+          const shortcut = new KeyboardEvent("keydown", {
+            key: "b",
+            [modifier]: true,
+            cancelable: true,
+          });
+          fireEvent(window, shortcut);
+          expect(shortcut.defaultPrevented).toBe(true);
+          expect(overlayOpen()).toBe(true);
+          act(() => result.current.sidebar.toggle());
+          expect(overlayOpen()).toBe(false);
+        }
+        act(() => result.current.sidebar.setOpen(false));
+        expect(result.current.sidebar.open).toBe(true);
         expect(onOpenChange).not.toHaveBeenCalled();
         expect(sidebarWidth()).toBe("256px");
       },

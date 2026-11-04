@@ -22,7 +22,8 @@ export type AppShellSidebarState = {
   /**
    * Toggle the sidebar — the same action as `<SidebarLayout.Trigger />` and the
    * ⌘B / Ctrl+B shortcut, including the mobile and tablet overlay behaviour.
-   * Does nothing when `collapsible={false}`.
+   * Does nothing on desktop when `collapsible={false}`. Mobile/tablet toggling
+   * remains enabled regardless of `collapsible`.
    */
   toggle: () => void;
 };

@@ -28,7 +28,8 @@ type SidebarLayoutCommonProps = {
   /**
    * Whether the sidebar can be collapsed and resized.
    * When `false`, it stays expanded at a fixed width without collapse or resize
-   * controls. `defaultOpen` is ignored and sidebar state setters are inert.
+   * controls on desktop. `defaultOpen` is ignored and `setOpen` is inert.
+   * Custom mobile/tablet drawers can still be toggled.
    *
    * @default true
    */

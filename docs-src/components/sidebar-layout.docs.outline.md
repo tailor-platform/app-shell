@@ -50,12 +50,12 @@ This gives you:
 
 ### Common props
 
-| Prop          | Type              | Default                            | Description                                                                                                                                    |
-| ------------- | ----------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sidebar`     | `React.ReactNode` | `<SidebarLayout.DefaultSidebar />` | Replaces the entire sidebar region.                                                                                                            |
-| `defaultOpen` | `boolean`         | `true`                             | Whether the sidebar starts expanded on desktop.                                                                                                |
-| `collapsible` | `boolean`         | `true`                             | Whether the sidebar can be collapsed and resized. When `false`, it stays expanded at a fixed width without controls; `defaultOpen` is ignored. |
-| `topBar`      | `React.ReactNode` | -                                  | Full-width bar above both the sidebar and the content region.                                                                                  |
+| Prop          | Type              | Default                            | Description                                                                                                                                            |
+| ------------- | ----------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sidebar`     | `React.ReactNode` | `<SidebarLayout.DefaultSidebar />` | Replaces the entire sidebar region.                                                                                                                    |
+| `defaultOpen` | `boolean`         | `true`                             | Whether the sidebar starts expanded on desktop.                                                                                                        |
+| `collapsible` | `boolean`         | `true`                             | Whether the desktop sidebar can be collapsed and resized. When `false`, it stays expanded at a fixed width without controls; `defaultOpen` is ignored. |
+| `topBar`      | `React.ReactNode` | -                                  | Full-width bar above both the sidebar and the content region.                                                                                          |
 
 ### Default content mode
 
@@ -84,13 +84,13 @@ Desktop sidebars include collapse and resize controls when `collapsible` is enab
 <SidebarLayout />
 ```
 
-Disable both behaviors to keep the sidebar expanded at a fixed width:
+Disable both desktop behaviors to keep the sidebar expanded at a fixed width:
 
 ```tsx
 <SidebarLayout collapsible={false} />
 ```
 
-With `collapsible={false}`, `defaultOpen` is ignored, the keyboard shortcut is not intercepted, and `useAppShellSidebar()` reports `open: true` with inert `setOpen()` and `toggle()` actions.
+With `collapsible={false}`, `defaultOpen` is ignored and `useAppShellSidebar()` reports `open: true` with an inert `setOpen()` action. Desktop toggle controls are hidden and the keyboard shortcut is not intercepted. Mobile/tablet triggers, `toggle()`, and shortcuts retain their existing viewport-based behavior, allowing custom drawers to open even when desktop collapsing is disabled.
 
 The whole outer edge of the expanded desktop sidebar is a resize handle. Hovering it shows the resize cursor, thickens the border to 2px, and shows a small pill beside the border that follows the pointer. Drag anywhere along the edge to resize, or focus the handle and use Left/Right arrows (16px steps), Home (collapse), or End (480px). Double-click the edge to restore the default 256px width; double-click it again at 256px to collapse.
 

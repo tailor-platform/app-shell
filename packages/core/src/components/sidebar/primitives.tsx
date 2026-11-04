@@ -26,22 +26,52 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
+/**
+ * Internal sidebar state shared by SidebarProvider and its descendants.
+ * Viewport flags select which visibility state toggleSidebar updates; they do
+ * not determine whether it is open. Desktop expansion and responsive drawer
+ * visibility stay independent so neither interaction overwrites the other.
+ */
 type SidebarContextProps = {
+  /** Desktop presentation state derived from open, not responsive drawer visibility. */
   state: "expanded" | "collapsed";
+  /**
+   * Desktop inline expansion state. Keeping this separate from openMobile and
+   * openIconMode preserves desktop expansion across drawer interactions and
+   * avoids opening a drawer solely because desktop was expanded.
+   */
   open: boolean;
+  /** Change desktop expansion only; inert when collapsible is false. */
   setOpen: (open: boolean) => void;
+  /** Mobile drawer visibility, independent of desktop open and viewport width. */
   openMobile: boolean;
+  /** Change mobile drawer visibility without changing desktop expansion. */
   setOpenMobile: (open: boolean) => void;
+  /** Mobile viewport flag; toggleSidebar changes openMobile in this range. */
   isMobile: boolean;
+  /** Shared toggle action; updates the viewport-specific state only when canToggle permits it. */
   toggleSidebar: () => void;
+  /** Tablet viewport flag, not the Sidebar primitive's actual rendering mode. */
   isIconMode: boolean;
+  /** Tablet overlay visibility, independent of desktop open and mobile drawer visibility. */
   openIconMode: boolean;
+  /** Change tablet overlay visibility without changing desktop expansion. */
   setOpenIconMode: (open: boolean) => void;
+  /** Desktop collapse/resize setting; responsive toggle permission is derived separately as canToggle. */
   collapsible: boolean;
+  /**
+   * Derived from collapsible and viewport so disabling desktop collapse does
+   * not block mobile/tablet toggles. Shared by triggers and shortcuts; this
+   * permits the toggle action but does not prove a responsive drawer exists.
+   */
+  canToggle: boolean;
+  /** Committed desktop sidebar width in pixels; live drag geometry uses CSS properties. */
   sidebarWidth: number;
+  /** Commit desktop width without changing responsive drawer widths. */
   setSidebarWidth: (width: number) => void;
 };
 
+/** Provider-owned context for independent desktop/mobile/tablet state; null outside SidebarProvider. */
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
 /**
@@ -79,12 +109,17 @@ function SidebarProvider({
 }) {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
+  // Viewport width selects which state to use, not whether that state is open.
+  // Keep drawer visibility separate so desktop expansion alone does not open a
+  // drawer when the viewport narrows, and opening a drawer does not change the
+  // desktop expansion state remembered when returning to a wider viewport.
   const [openMobile, setOpenMobile] = React.useState(false);
   const [openIconMode, setOpenIconMode] = React.useState(false);
   const [sidebarWidth, setSidebarWidth] = React.useState(DEFAULT_SIDEBAR_WIDTH);
 
-  // This is the internal state of the sidebar.
-  // We use openProp and setOpenProp for control from outside the component.
+  // Desktop inline expansion is separate from openMobile/openIconMode drawer visibility.
+  // Disabling collapsible keeps desktop open and makes setOpen inert, but must not
+  // prevent drawer toggling. openProp/setOpenProp control only the desktop state.
   const [_open, _setOpen] = React.useState(defaultOpen);
   const open = collapsible ? (openProp ?? _open) : true;
 
@@ -102,25 +137,34 @@ function SidebarProvider({
     [setOpenProp, open, collapsible],
   );
 
-  // Determine if we're in icon mode (tablet range)
+  // Despite its name, isIconMode identifies the tablet viewport, not whether
+  // a custom Sidebar actually renders an icon rail or overlay.
   const isIconMode = isTablet && !isMobile;
 
-  // Helper to toggle the sidebar.
+  // Desktop toggling follows collapsible; mobile/tablet toggling stays enabled
+  // so desktop collapse restrictions do not block access to the full menu.
+  // This preserves viewport-based behavior without checking whether a drawer exists.
+  const canToggle = collapsible || isMobile || isIconMode;
+
+  // Shared by triggers, the public hook's toggle(), and the keyboard shortcut.
+  // The viewport selects an independent drawer state or desktop setOpen;
+  // drawer toggles must not use setOpen, which can be disabled by collapsible.
   const toggleSidebar = React.useCallback(() => {
-    if (!collapsible) return;
+    if (!canToggle) return;
     if (isMobile) {
       return setOpenMobile((prev) => !prev);
     } else if (isIconMode) {
-      // In icon mode, use overlay (similar to mobile)
+      // Tablet overlay visibility is independent of desktop inline expansion.
       return setOpenIconMode((prev) => !prev);
     } else {
       return setOpen((prev) => !prev);
     }
-  }, [collapsible, isMobile, isIconMode, setOpen, setOpenMobile]);
+  }, [canToggle, isMobile, isIconMode, setOpen, setOpenMobile]);
 
-  // Adds a keyboard shortcut to toggle the sidebar.
+  // Use the same permission as triggers and toggleSidebar, so disabled desktop
+  // shortcuts are not intercepted while mobile/tablet shortcuts remain available.
   React.useEffect(() => {
-    if (!collapsible) return;
+    if (!canToggle) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
@@ -130,7 +174,7 @@ function SidebarProvider({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [collapsible, toggleSidebar]);
+  }, [canToggle, toggleSidebar]);
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
@@ -149,6 +193,7 @@ function SidebarProvider({
       openIconMode,
       setOpenIconMode,
       collapsible,
+      canToggle,
       sidebarWidth,
       setSidebarWidth,
     }),
@@ -164,6 +209,7 @@ function SidebarProvider({
       openIconMode,
       setOpenIconMode,
       collapsible,
+      canToggle,
       sidebarWidth,
     ],
   );
@@ -466,8 +512,8 @@ function Sidebar({
 }
 
 function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar, collapsible } = useSidebar();
-  if (!collapsible) return null;
+  const { toggleSidebar, canToggle } = useSidebar();
+  if (!canToggle) return null;
 
   return (
     <Button
@@ -489,8 +535,8 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
-  const { toggleSidebar, collapsible } = useSidebar();
-  if (!collapsible) return null;
+  const { toggleSidebar, canToggle } = useSidebar();
+  if (!canToggle) return null;
 
   return (
     <button

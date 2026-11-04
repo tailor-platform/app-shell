@@ -7,7 +7,7 @@ import { Toolbar } from "@/components/toolbar";
 import { LineItems } from "./line-items";
 import { createLineItemHelper } from "./column-helper";
 import { useLineItems } from "./use-line-items";
-import type { UseLineItemsReturn } from "./types";
+import type { UseLineItemsOptions, UseLineItemsReturn } from "./types";
 
 afterEach(cleanup);
 type Row = { id: string; name: string | null; quantity: number | null; hidden?: string };
@@ -19,7 +19,6 @@ const columns = [
     label: "Qty",
     type: "number",
     edit: { editorType: "number" },
-    validate: (value) => (value !== null && value > 0 ? null : "Positive quantity required"),
     footer: ({ rows }) => rows.reduce((sum, row) => sum + (row.quantity ?? 0), 0),
   }),
   column({ id: "computed", label: "Code", accessor: (row) => `computed-${row.id}` }),
@@ -30,9 +29,19 @@ const rows: Row[] = [
   { id: "C", name: "Three", quantity: 3 },
 ];
 let current: UseLineItemsReturn<Row>;
+const validate: NonNullable<UseLineItemsOptions<Row>["validate"]> = (lines, { getLineKey }) =>
+  lines
+    .filter((line) => line.quantity === null || line.quantity <= 0)
+    .map((line) => ({
+      scope: "cell",
+      lineKey: getLineKey(line),
+      columnId: "quantity",
+      message: "Positive quantity required",
+    }));
 function Harness({ initial = rows }: { initial?: readonly Row[] }) {
   const value = useLineItems<Row>({
     columns,
+    validate,
     defaultLines: initial,
     ordering: "manual",
     rowActions: {
@@ -134,10 +143,13 @@ describe("LineItems.Search", () => {
       ]);
     });
     act(() => current.updateField("C", "quantity", -1));
-    expect(current.errors.some((error) => error.lineKey === "C")).toBe(true);
+    expect(current.errors).toHaveLength(0);
     await act(async () => {
       expect(await current.commitEdits()).toBeNull();
     });
+    expect(current.errors.some((error) => error.scope === "cell" && error.lineKey === "C")).toBe(
+      true,
+    );
   });
   it("preserves failed hidden drafts until the search is cleared", async () => {
     render(<Harness />, { wrapper });

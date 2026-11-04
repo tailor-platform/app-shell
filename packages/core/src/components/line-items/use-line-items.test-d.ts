@@ -121,3 +121,90 @@ test("initial options expose uncontrolled ownership and typed arbitrary row acti
   void options;
   void controlled;
 });
+
+test("document validation returns scoped issues and supports asynchronous preparation", () => {
+  const options: UseLineItemsOptions<Row> = {
+    columns,
+    validate: async (lines, { getLineKey }) => {
+      expectTypeOf(lines).toEqualTypeOf<readonly Readonly<Row>[]>();
+      // @ts-expect-error Validators cannot mutate adopted document rows.
+      lines[0]!.quantity = 2;
+      return [
+        { scope: "document", message: "Document limit exceeded" },
+        { scope: "cell", lineKey: getLineKey(lines[0]!), columnId: "quantity", message: "Invalid" },
+      ];
+    },
+  };
+  const invalid: UseLineItemsOptions<Row> = {
+    columns,
+    // @ts-expect-error Validators return issues, not booleans or nullable strings.
+    validate: () => false,
+  };
+  const incomplete: UseLineItemsOptions<Row> = {
+    columns,
+    // @ts-expect-error A cell issue must identify both line and column.
+    validate: () => [{ scope: "cell", message: "Invalid" }],
+  };
+  void options;
+  void invalid;
+  void incomplete;
+});
+
+test("cell callbacks follow editor output types, not display or optional-property input types", () => {
+  type Model = {
+    id: string;
+    optional?: number | null;
+    enabled: boolean;
+    choice: 1 | 2 | null;
+    detail: { units: number } | null;
+  };
+  const helper = createLineItemHelper<Model>();
+  helper.column({
+    accessorKey: "optional",
+    type: "text",
+    edit: {
+      editorType: "number",
+      onValueCommitted: async (row, value) => {
+        expectTypeOf(row).toEqualTypeOf<Readonly<Model>>();
+        expectTypeOf(value).toEqualTypeOf<number | null>();
+      },
+    },
+  });
+  helper.column({
+    accessorKey: "enabled",
+    edit: {
+      editorType: "boolean",
+      onValueCommitted: (_row, value) => {
+        expectTypeOf(value).toEqualTypeOf<boolean>();
+      },
+    },
+  });
+  helper.column({
+    accessorKey: "choice",
+    edit: {
+      editorType: "combobox",
+      options: [{ value: 1, label: "One" }],
+      onValueCommitted: (_row, value) => {
+        expectTypeOf(value).toEqualTypeOf<1 | 2 | null>();
+      },
+    },
+  });
+  helper.column({
+    accessorKey: "detail",
+    edit: {
+      editorType: "custom",
+      renderEditor: () => null,
+      onValueCommitted: (_row, value) => {
+        expectTypeOf(value).toEqualTypeOf<{ units: number } | null>();
+      },
+    },
+  });
+  helper.column({
+    accessorKey: "optional",
+    edit: {
+      editorType: "number",
+      // @ts-expect-error Callback values include a cleared null, and are not strings.
+      onValueCommitted: (_row, _value: string) => {},
+    },
+  });
+});

@@ -12,6 +12,7 @@ import { Table } from "@/components/table";
 import { Text } from "@/components/text";
 import { Tooltip } from "@/components/tooltip";
 import { useCellError } from "@/components/internals/table-core/cell-error";
+import { CellEditError } from "@/components/internals/table-core/cell-edit-error";
 import { EditableCellSurface } from "@/components/internals/table-core/cell-surface";
 import { BooleanEditor } from "@/components/internals/table-core/editors/boolean";
 import {
@@ -123,7 +124,7 @@ export function LineItemsCell<T extends Record<string, unknown>>({
     }
     return session.confirm(() => {
       if (!Object.is(parsed.value, raw()))
-        controller.commitField(clientKey, columnId, parsed.value);
+        return controller.commitField(clientKey, columnId, parsed.value);
     });
   };
   const choose = (value: unknown) => {
@@ -142,7 +143,11 @@ export function LineItemsCell<T extends Record<string, unknown>>({
   const validation = useMemo(() => (message ? { source: "validation" } : undefined), [message]);
   const failure = session.getFailure();
   let errorMessage = message ?? "";
-  if (failure) errorMessage = t("commitError");
+  if (failure)
+    errorMessage =
+      failure.error instanceof CellEditError && failure.error.message
+        ? failure.error.message
+        : t("commitError");
   if (failure?.source === "parse") {
     let key: "invalidNumber" | "invalidDate" | "invalidValue" = "invalidValue";
     if (kind === "number") key = "invalidNumber";

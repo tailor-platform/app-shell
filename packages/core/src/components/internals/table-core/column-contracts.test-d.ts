@@ -35,18 +35,19 @@ test("property sources correlate values, rules and readonly row contexts", () =>
     accessorKey: "quantity",
     id: "qty",
     type: "number",
-    edit: { editorType: "number" },
+    edit: {
+      editorType: "number",
+      onValueCommitted: (row, value) => {
+        expectTypeOf(value).toEqualTypeOf<number | null>();
+        expectTypeOf(row).toEqualTypeOf<Readonly<Row>>();
+      },
+    },
     normalize: (value, row) => {
       expectTypeOf(value).toEqualTypeOf<number | null>();
       expectTypeOf(row).toEqualTypeOf<Readonly<Row>>();
       // @ts-expect-error Rule contexts cannot mutate consumer rows.
       row.price = 1;
       return value === null ? null : Math.round(value);
-    },
-    validate: (value, row) => {
-      expectTypeOf(value).toEqualTypeOf<number | null>();
-      expectTypeOf(row).toEqualTypeOf<Readonly<Row>>();
-      return value === null ? "Required" : undefined;
     },
     equals: (left, right, row) => {
       expectTypeOf(left).toEqualTypeOf<number | null>();
@@ -81,7 +82,7 @@ test("property sources correlate values, rules and readonly row contexts", () =>
   });
   // @ts-expect-error Even an explicitly widened helper argument retains property/rule correlation.
   column<LineItemsColumn<Row>>({ accessorKey: "quantity", normalize: () => "wrong" });
-  // @ts-expect-error Validation returns a message, null or undefined, not boolean.
+  // @ts-expect-error Column-level validate is replaced by hook document validation.
   column({ accessorKey: "quantity", validate: () => false });
   // @ts-expect-error Equality values remain correlated with the property.
   column({ accessorKey: "name", equals: (left: number, right: number) => left === right });
@@ -291,7 +292,7 @@ test("custom editors receive the exact property and cannot widen their writes", 
 });
 
 test("rules and editability are independent and mode declarations exclude view", () => {
-  column({ accessorKey: "quantity", validate: (value) => (value === null ? "Required" : null) });
+  column({ accessorKey: "quantity", normalize: (value) => value });
   column({
     accessorKey: "name",
     commit: "metadata",

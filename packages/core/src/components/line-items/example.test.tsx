@@ -24,6 +24,36 @@ function search(query: string) {
 }
 
 describe("LineItems showcase bulk deletion", () => {
+  it.each([
+    ["Product name", "", "Enter a product name."],
+    ["Qty", "0", "Quantity must be greater than zero."],
+    ["Unit price", "-1", "Unit price must be zero or greater."],
+    ["Received qty", "-1", "Received quantity must be zero or greater."],
+  ])(
+    "rejects %s at the cell boundary, without adopting it for document validation",
+    (label, value, message) => {
+      render(<LineItemsExample />, { wrapper: createAppShellWrapper("en") });
+      const input = screen.getByRole("textbox", { name: `${label}, line 1` });
+      fireEvent.focus(input);
+      fireEvent.change(input, { target: { value } });
+      fireEvent.keyDown(input, { key: "Enter" });
+      expect(input.getAttribute("aria-invalid")).toBe("true");
+      expect(screen.getAllByText(message).length).toBeGreaterThan(0);
+      expect(changes().isEmpty).toBe(true);
+      expect(screen.queryByText(/^Errors:/)).toBeNull();
+    },
+  );
+  it("shows application-owned document errors after asynchronous validation", async () => {
+    render(<LineItemsExample />, { wrapper: createAppShellWrapper("en") });
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all visible lines" }));
+    await userEvent.click(deleteButton());
+    await userEvent.click(screen.getByRole("button", { name: "Start save" }));
+    expect(await screen.findByText("Add at least one line before saving.")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Apply save response" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+    expect(screen.queryByText("Add at least one line before saving.")).toBeNull();
+  });
+
   it("places tools above the table, actions in the footer, and enables saving unfinished drafts without status badges", async () => {
     render(<LineItemsExample />, { wrapper: createAppShellWrapper("en") });
     const table = screen.getByRole("table", { name: "Purchase order lines" });

@@ -215,6 +215,7 @@ export {
   createLineItemHelper,
   type LineItemsColumn,
   type LineItemsChangeSet,
+  type LineItemsValidationIssue,
   type LineItemsRootProps,
   type LineItemsTableProps,
   type LineItemsFooterProps,

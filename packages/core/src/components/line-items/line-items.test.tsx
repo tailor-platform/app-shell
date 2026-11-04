@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { CellEditError } from "@/components/internals/table-core/cell-edit-error";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { LineItems } from "./line-items";
 import { createLineItemHelper } from "./column-helper";
@@ -11,6 +12,7 @@ import type {
   LineItemsColumn,
   LineItemsMode,
   UseLineItemsReturn,
+  UseLineItemsOptions,
 } from "./types";
 
 afterEach(cleanup);
@@ -29,21 +31,35 @@ const columns = [
     label: "Quantity",
     type: "number",
     edit: { editorType: "number" },
-    validate: (value) => (value !== null && value > 0 ? null : "Positive quantity required"),
     footer: ({ rows }) => rows.reduce((sum, row) => sum + (row.quantity ?? 0), 0),
   }),
 ];
 let current: UseLineItemsReturn<Row>;
+const validateQuantity: NonNullable<UseLineItemsOptions<Row>["validate"]> = (
+  lines,
+  { getLineKey },
+) =>
+  lines
+    .filter((line) => line.quantity === null || line.quantity <= 0)
+    .map((line) => ({
+      scope: "cell",
+      lineKey: getLineKey(line),
+      columnId: "quantity",
+      message: "Positive quantity required",
+    }));
 
 function Harness({
   mode = "edit",
   schema = columns,
+  validate = validateQuantity,
 }: {
   mode?: LineItemsMode;
   schema?: readonly LineItemsColumn<Row>[];
+  validate?: UseLineItemsOptions<Row>["validate"];
 }) {
   const value = useLineItems<Row>({
     columns: schema,
+    validate,
     defaultLines: [{ id: "A", quantity: 1, name: "One" }],
     mode,
   });
@@ -83,6 +99,89 @@ function edit(label: string, value: string) {
 }
 
 describe("LineItems public composition", () => {
+  it("uses onValueCommitted to reject adoption, display a safe message, and retain the correctable draft", () => {
+    const check = vi.fn((_row: Readonly<Row>, value: number | null) => {
+      if (value === 0) throw new CellEditError("Enter a positive quantity.");
+    });
+    const schema = [
+      columns[0]!,
+      column({
+        accessorKey: "quantity",
+        label: "Quantity",
+        edit: {
+          editorType: "number",
+          onValueCommitted: check,
+        },
+      }),
+    ];
+    render(<Harness schema={schema} />, { wrapper: createAppShellWrapper("en") });
+    const input = edit("Quantity, line 1", "0") as HTMLInputElement;
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(check).toHaveBeenCalledWith(current.allLines[0], 0);
+    expect(current.allLines[0]!.quantity).toBe(1);
+    expect(input.value).toBe("0");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getAllByText("Enter a positive quantity.").length).toBeGreaterThan(0);
+    expect(current.errors).toHaveLength(0);
+    fireEvent.change(input, { target: { value: "3" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(current.allLines[0]!.quantity).toBe(3);
+    expect(input.getAttribute("aria-invalid")).toBeNull();
+  });
+
+  it("does not leak unexpected callback error messages through the standard cell UI", () => {
+    const schema = [
+      columns[0]!,
+      column({
+        accessorKey: "quantity",
+        label: "Quantity",
+        edit: {
+          editorType: "number",
+          onValueCommitted: () => {
+            throw new Error("Private backend details");
+          },
+        },
+      }),
+    ];
+    render(<Harness schema={schema} />, { wrapper: createAppShellWrapper("en") });
+    const input = edit("Quantity, line 1", "3");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.queryByText("Private backend details")).toBeNull();
+    expect(current.allLines[0]!.quantity).toBe(1);
+  });
+
+  it("does not adopt an async cell result after Discard through the mounted editor", async () => {
+    let resolve!: () => void;
+    const request = new Promise<void>((success) => {
+      resolve = success;
+    });
+    const check = vi.fn(() => request);
+    const schema = [
+      columns[0]!,
+      column({
+        accessorKey: "quantity",
+        label: "Quantity",
+        edit: {
+          editorType: "number",
+          onValueCommitted: check,
+        },
+      }),
+    ];
+    render(<Harness schema={schema} />, { wrapper: createAppShellWrapper("en") });
+    const input = edit("Quantity, line 1", "9");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(current.allLines[0]!.quantity).toBe(1);
+    fireEvent.click(screen.getByRole("button", { name: "Discard" }));
+    await act(async () => {
+      resolve();
+      await request;
+    });
+    expect(check).toHaveBeenCalledTimes(1);
+    expect(current.allLines[0]!.quantity).toBe(1);
+    expect(current.hasUnsavedChanges()).toBe(false);
+  });
+
   it("renders real columns/footer and holds raw input until confirmation", async () => {
     render(<Harness />, { wrapper: createAppShellWrapper("en") });
     expect(screen.getByRole("table", { name: "Document lines" })).toBeDefined();
@@ -158,10 +257,11 @@ describe("LineItems public composition", () => {
     const input = edit("Quantity, line 1", "-2");
     fireEvent.keyDown(input, { key: "Enter" });
     expect(current.allLines[0]!.quantity).toBe(-2);
-    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(input.getAttribute("aria-invalid")).toBeNull();
     await act(async () => {
       expect(await current.commitEdits()).toBeNull();
     });
+    expect(input.getAttribute("aria-invalid")).toBe("true");
     fireEvent.change(input, { target: { value: "3" } });
     fireEvent.keyDown(input, { key: "Enter" });
     await act(async () => {
@@ -249,19 +349,21 @@ describe("LineItems public composition", () => {
     expect(screen.queryAllByRole("textbox")).toHaveLength(0);
   });
 
-  it("renders validation from the current rule snapshot without another user edit", () => {
+  it("uses the current document validator only when preparation is requested", async () => {
     const view = render(<Harness />, { wrapper: createAppShellWrapper("en") });
-    const changed = [
-      columns[0]!,
-      column({
-        accessorKey: "quantity",
-        label: "Quantity",
-        type: "number",
-        edit: { editorType: "number" },
-        validate: () => "New validation error",
-      }),
-    ];
-    view.rerender(<Harness schema={changed} />);
+    const message = "New validation error";
+    const changed: NonNullable<UseLineItemsOptions<Row>["validate"]> = (lines, { getLineKey }) =>
+      lines.map((line) => ({
+        scope: "cell",
+        lineKey: getLineKey(line),
+        columnId: "quantity",
+        message,
+      }));
+    view.rerender(<Harness validate={changed} />);
+    expect(current.errors).toHaveLength(0);
+    await act(async () => {
+      await current.commitEdits();
+    });
     const input = screen.getByRole("textbox", { name: "Quantity, line 1" });
     expect(input.getAttribute("aria-invalid")).toBe("true");
     expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toContain(
@@ -295,10 +397,14 @@ describe("LineItems public composition", () => {
     expect(current.allLines[0]!.name).toBe("One");
   });
 
-  it("view mode is read-only while keeping validation results", () => {
+  it("view mode is read-only but document validation still covers command writes", async () => {
     render(<Harness mode="view" />, { wrapper: createAppShellWrapper("en") });
     expect(screen.queryAllByRole("textbox")).toHaveLength(0);
     act(() => current.updateField("A", "quantity", -1));
+    expect(current.errors).toHaveLength(0);
+    await act(async () => {
+      await current.commitEdits();
+    });
     expect(screen.getByText("Positive quantity required")).toBeDefined();
     expect(current.errors).toHaveLength(1);
   });

@@ -405,6 +405,7 @@
       "sources": [
         "packages/core/src/components/data-table/**",
         "packages/core/src/components/internals/table-core/selection-types.ts",
+        "packages/core/src/components/internals/table-core/cell-edit-error.ts",
         "packages/core/src/hooks/use-collection-variables.ts",
         "packages/core/src/lib/collection-url-state.ts",
         "packages/core/src/contexts/collection-control-context.tsx",
@@ -473,7 +474,7 @@
       ],
       "hashes": {
         "typeSurface": "357e1e35848ed238",
-        "outline": "f8470c4db017da68",
+        "outline": "391d35e48a9ef6b0",
         "snapshot": "a97e067c66e46ef6",
         "outputMd": "58aeb9716d392d87",
         "examples": "e7100d7517f72495"
@@ -1081,16 +1082,17 @@
         "LineItemsRootProps",
         "LineItemsSearchProps",
         "LineItemsTableProps",
+        "LineItemsValidationIssue",
         "UseLineItemsOptions",
         "UseLineItemsReturn",
         "createLineItemHelper",
         "useLineItems"
       ],
       "hashes": {
-        "typeSurface": "68421624e545ac19",
-        "outline": "945ea5f1cc56ea17",
+        "typeSurface": "5fed01d1889476ef",
+        "outline": "357a058a8c1fc62f",
         "snapshot": null,
-        "outputMd": "cf0a2c8ac94bd99a",
+        "outputMd": "787745d871be0d16",
         "examples": null
       }
     },
@@ -1831,7 +1833,7 @@
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "6f956d57a15366a0",
-    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "cf0a2c8ac94bd99a",
+    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "787745d871be0d16",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "b3dd3b9a58a9d290",

@@ -68,6 +68,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
   const errors = useMemo(() => {
     const byRow = new Map<string, Map<string, string>>();
     for (const error of value.errors) {
+      if (error.scope !== "cell") continue;
       let row = byRow.get(error.lineKey);
       if (!row) {
         row = new Map();

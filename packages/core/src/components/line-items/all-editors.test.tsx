@@ -169,10 +169,13 @@ describe("all LineItems editors adopt through the document controller", () => {
     setup();
     for (const day of ["bad", "2026-11-30", "2027-01-01"]) {
       act(() => current.updateField("A", "day", day));
-      expect(current.errors.some((error) => error.columnId === "day")).toBe(true);
+      expect(current.errors).toHaveLength(0);
       await act(async () => {
         expect(await current.commitEdits()).toBeNull();
       });
+      expect(
+        current.errors.some((error) => error.scope === "cell" && error.columnId === "day"),
+      ).toBe(true);
     }
     act(() => current.updateField("A", "day", "2026-12-31"));
     expect(current.errors).toHaveLength(0);

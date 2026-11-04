@@ -3,6 +3,7 @@ import {
   Badge,
   Button,
   Card,
+  CellEditError,
   Layout,
   LineItems,
   Text,
@@ -11,6 +12,7 @@ import {
   useLineItems,
   type AppShellPageProps,
   type LineItemsChangeSet,
+  type UseLineItemsOptions,
 } from "@tailor-platform/app-shell";
 import { Minus, Plus, RotateCcw, Rows3, Save, Trash2 } from "lucide-react";
 
@@ -81,30 +83,42 @@ const columns = [
     accessorKey: "description",
     label: "Product name",
     type: "text",
-    edit: { editorType: "text" },
+    edit: {
+      editorType: "text",
+      onValueCommitted: (_line, value) => {
+        if (!value?.trim()) throw new CellEditError("Enter a product name.");
+      },
+    },
     width: "flex",
     truncate: true,
-    validate: (value) => (value?.trim() ? null : "Enter a product name."),
     footer: ({ rows }) => `${rows.length} items`,
   }),
   column({
     accessorKey: "quantity",
     label: "Qty",
     type: "number",
-    edit: { editorType: "number" },
+    edit: {
+      editorType: "number",
+      onValueCommitted: (_line, value) => {
+        if (value === null || value <= 0)
+          throw new CellEditError("Quantity must be greater than zero.");
+      },
+    },
     width: 112,
-    validate: (value) =>
-      value !== null && value > 0 ? null : "Quantity must be greater than zero.",
   }),
   column({
     accessorKey: "unitPrice",
     label: "Unit price",
     type: "money",
     typeOptions: { currency: "USD", locale: "en-US" },
-    edit: { editorType: "number" },
+    edit: {
+      editorType: "number",
+      onValueCommitted: (_line, value) => {
+        if (value === null || value < 0)
+          throw new CellEditError("Unit price must be zero or greater.");
+      },
+    },
     width: 144,
-    validate: (value) =>
-      value !== null && value >= 0 ? null : "Unit price must be zero or greater.",
   }),
   column({
     accessorKey: "supplier",
@@ -195,6 +209,10 @@ const columns = [
       !!line.packSize && `${line.packSize.units} units / pack`.includes(query),
     edit: {
       editorType: "custom",
+      onValueCommitted: (_line, value) => {
+        if (value !== null && (!Number.isInteger(value.units) || value.units <= 0))
+          throw new CellEditError("Pack size must be a positive whole number.");
+      },
       renderEditor: ({ value, onCommit, onCancel, ariaLabel }) => (
         <fieldset
           aria-label={ariaLabel}
@@ -237,20 +255,20 @@ const columns = [
         </fieldset>
       ),
     },
-    validate: (value) =>
-      value === null || (Number.isInteger(value.units) && value.units > 0)
-        ? null
-        : "Pack size must be a positive whole number.",
     width: 208,
   }),
   column({
     accessorKey: "receivedQuantity",
     label: "Received qty",
     type: "number",
-    edit: { editorType: "number" },
+    edit: {
+      editorType: "number",
+      onValueCommitted: (_line, value) => {
+        if (value === null || value < 0)
+          throw new CellEditError("Received quantity must be zero or greater.");
+      },
+    },
     width: 144,
-    validate: (value) =>
-      value !== null && value >= 0 ? null : "Received quantity must be zero or greater.",
   }),
   column({
     accessorKey: "projectCode",
@@ -374,6 +392,12 @@ const initialLines: Line[] = [
   },
 ];
 
+// Async business validation is independent of option lookup and the save transport.
+const validateLines: NonNullable<UseLineItemsOptions<Line>["validate"]> = async (lines) =>
+  lines.length === 0
+    ? [{ scope: "document", message: "Add at least one line before saving." }]
+    : [];
+
 function LineItemsNextPage() {
   const [pending, setPending] = useState<LineItemsChangeSet<Line> | null>(null);
   const [lastSent, setLastSent] = useState<LineItemsChangeSet<Line> | null>(null);
@@ -385,6 +409,7 @@ function LineItemsNextPage() {
   const nextId = useRef(1);
   const lineItems = useLineItems<Line>({
     columns,
+    validate: validateLines,
     defaultLines: initialLines,
     ordering: "manual",
     tableId: "showcase:line-items-next",
@@ -491,6 +516,13 @@ function LineItemsNextPage() {
           {lineItems.errors.length > 0 && (
             <Badge variant="outline-error">Errors: {lineItems.errors.length}</Badge>
           )}
+          {lineItems.errors
+            .filter((issue) => issue.scope === "document")
+            .map((issue) => (
+              <Text key={issue.message} variant="body-sm" className="text-danger-text">
+                {issue.message}
+              </Text>
+            ))}
         </div>
         <LineItems.Root value={lineItems}>
           <Toolbar.Root>

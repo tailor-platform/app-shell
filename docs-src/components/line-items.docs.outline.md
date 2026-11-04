@@ -30,6 +30,7 @@ import {
   createLineItemHelper,
   type LineItemsColumn,
   type LineItemsChangeSet,
+  type LineItemsValidationIssue,
   type LineItemsRootProps,
   type LineItemsTableProps,
   type LineItemsFooterProps,
@@ -42,17 +43,19 @@ Use the package entrypoint. Consumer applications do not import `components/inte
 
 ## Basic usage
 
-The editing model must permit the values its editor can emit. Text, number, date, and combobox editors can clear to `null`; make those properties nullable and express requiredness through `validate`. Boolean editors emit booleans. A custom editor’s value and `onCommit` output retain the exact property type.
+The editing model must permit the values its editor can emit. Text, number, date, and combobox editors can clear to `null`; make those properties nullable and reject disallowed cell outputs in `edit.onValueCommitted`. Reserve hook `validate` for whole-document rules. Boolean editors emit booleans. A custom editor’s value and `onCommit` output retain the exact property type.
 
 ```tsx
 import {
   Button,
+  CellEditError,
   LineItems,
   Toolbar,
   createLineItemHelper,
   useLineItems,
   type LineItemsChangeSet,
   type UseLineItemsReturn,
+  type UseLineItemsOptions,
 } from "@tailor-platform/app-shell";
 
 type Line = {
@@ -72,8 +75,12 @@ const columns = [
     label: "Quantity",
     type: "number",
     width: 112,
-    edit: { editorType: "number" },
-    validate: (value) => (value !== null && value > 0 ? null : "Enter a positive quantity"),
+    edit: {
+      editorType: "number",
+      onValueCommitted: (_row, value) => {
+        if (value === null || value <= 0) throw new CellEditError("Enter a positive quantity");
+      },
+    },
   }),
   column({
     accessorKey: "unitPrice",
@@ -94,6 +101,9 @@ const columns = [
   }),
 ];
 
+const validateLines: NonNullable<UseLineItemsOptions<Line>["validate"]> = (rows) =>
+  rows.length === 0 ? [{ scope: "document", message: "Add at least one line before saving." }] : [];
+
 type SaveResult = { lines: Line[]; idMap: Record<string, string> };
 
 function DocumentLines({
@@ -105,6 +115,7 @@ function DocumentLines({
 }) {
   const editor: UseLineItemsReturn<Line> = useLineItems<Line>({
     columns,
+    validate: validateLines,
     defaultLines: lines,
     ordering: "manual",
     tableId: "document-lines",
@@ -215,7 +226,7 @@ The header checkbox selects or deselects only visible rows. **Delete selected** 
 
 ## Columns
 
-`createLineItemHelper<T>().column()` binds the row type while retaining each concrete definition. A property column's `normalize`, `validate`, `equals`, and editor output are connected to that property's type rather than a union of every row value.
+`createLineItemHelper<T>().column()` binds the row type while retaining each concrete definition. A property column's `normalize`, `equals`, and editor output are connected to that property's type rather than a union of every row value.
 
 | Source        | Identity                                     | Built-in document editing                             |
 | ------------- | -------------------------------------------- | ----------------------------------------------------- |
@@ -229,10 +240,11 @@ The header checkbox selects or deselects only visible rows. **Delete selected** 
 
 - `type` / `typeOptions` describe display. Standard renderers cover text, number, money, date, badge, and link values. `render(row)` overrides the display without changing the source property or write target.
 - `edit.editorType` selects the input. Omitted `edit.modes` permits `"edit"` only; opt into `"amend"` explicitly. `"view"` is never editable. Omitting `edit` makes the column read-only.
-- `normalize`, `validate`, and `equals` belong directly on the property-owning column, not under `edit`. Display precision does not round stored values or change equality.
+- `normalize` and `equals` belong directly on the property-owning column, not under `edit`. Business validation belongs in `edit.onValueCommitted` or the hook's `validate`, not a column-level `validate`. Display precision does not round stored values or change equality.
 - `normalize(value, row)` runs at adoption boundaries: initialization, additions, updates/editor confirmation, and accepted save results. It does not run during display or diff. Initial normalized saved data is also the baseline, so normalization alone does not make it dirty. A batch normalizer sees the same merged pre-normalization row context, not another column's partially normalized result.
 - Default normalization is identity. Add trimming, rounding, or other pure, idempotent business corrections explicitly.
-- `validate(value, row)` returns a message, `null`, or `undefined`. Validation visits every adopted row, including unchanged saved rows and read-only values, in every mode. Business-invalid typed values remain adopted for correction; malformed number text remains a draft rather than replacing the stored value.
+- Optional `edit.onValueCommitted(row, value)` checks a changed, parsed editor output before LineItems adopts it. The row is read-only and the value follows the editor's output type. A normal return or fulfilled Promise permits adoption; throw/rejection retains the draft and failure for explicit correction/retry. It does not update rows or save to the backend for you. Direct mutation commands and initial values do not invoke this callback; document-wide requirements belong in hook validation.
+- Throw `CellEditError` from the package entrypoint for a translated message safe to display. Other failures use generic feedback; `edit.error.render` receives the original error for application-owned rendering. Like DataTable, `edit.error: false` opts out of interception and waiting: the value is adopted eagerly and callback failures are consumer-owned. This does not disable document validation.
 - Default equality is `Object.is`, without implicit trimming, null/undefined equivalence, or a numeric epsilon. Supply `equals` for a property's intentional alternative equality.
 
 Text and number edits confirm on Enter, Tab, leaving the cell, or `commitEdits()`. Escape cancels the draft. IME composition is not an Enter confirmation. A malformed number blocks preparation; correct or cancel it instead of saving the previously adopted value as though the draft had succeeded. Numeric input uses `.` as its decimal separator independently of display locale; full-width digits and valid comma grouping are normalized by the parser.
@@ -318,7 +330,7 @@ const choiceColumns = [
 
 A fetcher receives `query: string | null` and `{ signal: AbortSignal }`; `null` requests the initial result window. It can be a plain function or `{ fn, debounceMs }`, using the existing async-items contract. Fixed choices use case/width-insensitive filtering; async results retain backend order and are not filtered or ranked again in the browser. Label synchronization does not issue a search query.
 
-Typing a query or moving the highlight does not confirm a value. Clearing the query only resets search; **Clear value** explicitly confirms `null`. Escape cancels rather than confirming or clearing. A current value outside the candidates remains intact and is not injected as a selectable option. Its absence alone is not a validation error; use `validate` for business rules about allowed values.
+Typing a query or moving the highlight does not confirm a value. Clearing the query only resets search; **Clear value** explicitly confirms `null`. Escape cancels rather than confirming or clearing. A current value outside the candidates remains intact and is not injected as a selectable option. Its absence alone is not a validation error; use `edit.onValueCommitted` for cell-local rules about allowed values. Reserve hook `validate` for relationships across lines or document-wide constraints.
 
 Loading, failure, and explicit retry are search states, separate from document confirmation/validation. They remain visible even when the editor has a current fallback label. A failed search does not by itself invalidate the existing document value or make option loading a document-save request.
 
@@ -328,7 +340,7 @@ Keep the fetcher reference stable for one lookup source. Replacing it invalidate
 
 A date editor uses a `string | null` editing property (optionally also `undefined`) and a portaled Calendar, not a datetime or segmented-input conversion. Read-only date renderers can also display Date/epoch values; map those explicitly to a date-only editing model before enabling the date editor. Selecting a day confirms its `"YYYY-MM-DD"` string without converting it through an instant/timezone. **Clear date** confirms `null`; closing the popup or pressing Escape leaves the adopted value unchanged. If confirmation fails, the attempted date remains visible beside its error rather than showing the older adopted date as though it succeeded.
 
-Set `min` and `max` under `edit` as date-only strings. Bounds are inclusive and apply both to calendar selection/input confirmation and full-document validation of dates written through commands or received as data. Malformed or out-of-range adopted dates block preparation, including on unchanged rows. Null is an empty value, not an automatically generated requiredness error; add `validate` when a date is mandatory. Invalid bound configuration is an error rather than a silently ignored setting.
+Set `min` and `max` under `edit` as date-only strings. Bounds are inclusive and apply both to calendar selection/input confirmation and full-document validation of dates written through commands or received as data. Malformed or out-of-range adopted dates block preparation, including on unchanged rows. Null is an empty value, not an automatically generated requiredness error; reject `null` in `edit.onValueCommitted` when a date is mandatory. Invalid bound configuration is an error rather than a silently ignored setting.
 
 ### Custom structured values
 
@@ -438,6 +450,36 @@ Pass a stable `tableId` for browser-local persistence under `as:line-items:v1:<t
 | `setPin(id, null)`              | Clear the override and use the definition's `pin`.                                   |
 
 `pin: "right"` on Amount makes it fixed by default, directly before the rightmost Actions utility column. Users can override that preference; pinning is not a lock. Multiple right-fixed columns retain the UI's order in header, body, and footer.
+
+## Document validation
+
+Pass `validate(lines, { getLineKey })` to `useLineItems` for whole-document rules, such as a minimum line count, duplicate products, or a total exceeding the document budget. Keep cell-local input checks in `edit.onValueCommitted`, rather than repeating them here. A whole-document violation may still identify particular cells for correction.
+
+It runs only during `commitEdits()`, after every required cell confirmation completes, and receives all adopted document lines, including unchanged, read-only, and search-hidden rows. It is not called during rendering, typing, or ordinary commands. There is no initial or live business-validation display.
+
+Return an array of `LineItemsValidationIssue`, directly or through a Promise. Return `[]` for success. Business failures are results, not exceptions; an unexpected throw/rejection rejects `commitEdits()` rather than becoming a validation issue. Keep validators pure with respect to the document and keep their references stable during preparation.
+
+```tsx
+const editor = useLineItems({
+  columns,
+  defaultLines,
+  validate: validateDocument,
+});
+
+// A validator may return both shapes together:
+const issues: LineItemsValidationIssue[] = [
+  { scope: "document", message: "The document total exceeds the budget." },
+  { scope: "cell", lineKey, columnId: "quantity", message: "Check this line's quantity." },
+];
+```
+
+Use the callback's `getLineKey(line)` for cell targets: new lines have client keys rather than server IDs, and the callback's key lookup belongs to its validation snapshot. Return both `lineKey` and `columnId` for a cell issue. There is no separate row-only issue kind.
+
+Current issues are exposed through `errors`; `getCellError(key, columnId)` and Table use the same stored results. Table routes cell issues to its existing cell UI. Render document issues in application-owned content, for example beside the document heading or inside Footer; no document-error component is inserted automatically. Issues do not dirty the document or enter save snapshots.
+
+Changing adopted data, resetting, or Discard clears prior results. Editing, replacing validation rules, disposal, or document commands during an async attempt retire that attempt with `null`; late success and failure cannot replace current results or emit an unvalidated snapshot. New preparation can start without waiting for the retired request. Requests are not automatically aborted. Search and column layout alone do not invalidate validation.
+
+Intrinsic date parsing/bounds checks remain in force for initial data and command writes, even without a business validator and with `error: false`.
 
 ## Saving and Discard
 

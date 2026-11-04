@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useColumnLayout } from "@/components/internals/table-core/use-column-state";
 import { filterRowsByQuery } from "@/components/internals/table-core/row-search";
-import { compileLineItemsColumns } from "./columns";
 import { bindLineItemsController, createLineItemsController } from "./controller";
 import { useRowSelection } from "./use-row-selection";
 import type { UseLineItemsOptions, UseLineItemsReturn } from "./types";
@@ -13,7 +12,6 @@ export function useLineItems<T extends Record<string, unknown>>(
   const [controller] = useState(() => createLineItemsController(options));
   const [searchQuery, setSearchQuery] = useState("");
   useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
-  const schema = useMemo(() => compileLineItemsColumns(options.columns), [options.columns]);
   const meta = useMemo(
     () =>
       options.columns.map((column) => ({
@@ -56,7 +54,7 @@ export function useLineItems<T extends Record<string, unknown>>(
     rowSelection: options.rowSelection,
     ...selection,
     isDirty: controller.document.isDirty(),
-    errors: schema.validate(rows, controller.document.getLineKey),
+    errors: controller.getErrors(),
     ...controller.commands,
     reset: (saved, resetOptions) =>
       reconcileAfter(() => controller.commands.reset(saved, resetOptions)),

@@ -38,7 +38,7 @@ describe("compileLineItemsColumns", () => {
     expect(() =>
       compileLineItemsColumns<Row>([
         column({ id: "first", accessorKey: "quantity", normalize: (value) => value }),
-        column({ id: "second", accessorKey: "quantity", validate: () => null }),
+        column({ id: "second", accessorKey: "quantity", edit: { editorType: "number" } }),
       ]),
     ).toThrow(/multiple rule\/edit owners/);
   });
@@ -83,20 +83,20 @@ describe("compileLineItemsColumns", () => {
     expect(compiled.equals("name", null, undefined, row)).toBe(false);
   });
 
-  it("validates every row and read-only property with the owning column ID", () => {
-    const validate = vi.fn((value: number | null) =>
-      value === null || value < 0 ? "Invalid quantity" : null,
-    );
+  it("retains intrinsic date checks across all adopted rows", () => {
     const compiled = compileLineItemsColumns<Row>([
-      column({ id: "qty", accessorKey: "quantity", validate }),
+      column({ id: "date", accessorKey: "memo", edit: { editorType: "date", min: "2026-01-01" } }),
     ]);
-    const rows: Row[] = [
-      { id: "A", quantity: -1, price: 1, memo: null },
-      { id: "B", quantity: 1, price: 1, memo: null },
-    ];
-    expect(compiled.validate(rows, (row) => row.id!)).toEqual([
-      { lineKey: "A", columnId: "qty", message: "Invalid quantity" },
+    expect(
+      compiled.validate(
+        [
+          { id: "A", quantity: 1, price: 1, memo: "2025-12-31" },
+          { id: "B", quantity: 1, price: 1, memo: null },
+        ],
+        (row) => row.id!,
+      ),
+    ).toEqual([
+      { lineKey: "A", columnId: "date", message: "Enter a valid date within the allowed range." },
     ]);
-    expect(validate).toHaveBeenCalledTimes(2);
   });
 });

@@ -11,7 +11,9 @@ import type {
 
 export type LineItemsMode = "view" | "edit" | "amend";
 
-type EditorBase<TRow extends Record<string, unknown>> = {
+type EditorBase<TRow extends Record<string, unknown>, TValue> = {
+  /** Optional check before internal adoption. Throw/reject retains the draft; normal completion adopts it. */
+  onValueCommitted?: (row: Readonly<TRow>, value: TValue) => void | Promise<void>;
   /** Omitted means edit only; view is never an editable mode. */
   modes?: readonly Exclude<LineItemsMode, "view">[];
   error?: false | { render: (ctx: { row: TRow; error: unknown }) => ReactNode };
@@ -51,30 +53,31 @@ type ChoiceEditor<TRow extends Record<string, unknown>, TValue extends string | 
       placeholder?: string;
     };
 
-export type LineItemsEditor<TRow extends Record<string, unknown>, TValue> = EditorBase<TRow> &
-  (
-    | Adoptable<string | null, TValue, { editorType: "text" }>
-    | Adoptable<number | null, TValue, { editorType: "number" }>
-    | Adoptable<boolean, TValue, { editorType: "boolean" }>
-    | ([TValue] extends [string | null | undefined]
-        ? Adoptable<string | null, TValue, { editorType: "date"; min?: string; max?: string }>
-        : never)
-    | (null extends TValue
-        ? [Extract<TValue, string | number>] extends [never]
-          ? never
-          : ChoiceEditor<TRow, Extract<TValue, string | number>>
-        : never)
-    | {
-        editorType: "custom";
-        renderEditor: (ctx: LineItemsCustomEditorContext<TRow, TValue>) => ReactNode;
-      }
-  );
+export type LineItemsEditor<TRow extends Record<string, unknown>, TValue> =
+  | Adoptable<string | null, TValue, EditorBase<TRow, string | null> & { editorType: "text" }>
+  | Adoptable<number | null, TValue, EditorBase<TRow, number | null> & { editorType: "number" }>
+  | Adoptable<boolean, TValue, EditorBase<TRow, boolean> & { editorType: "boolean" }>
+  | ([TValue] extends [string | null | undefined]
+      ? Adoptable<
+          string | null,
+          TValue,
+          EditorBase<TRow, string | null> & { editorType: "date"; min?: string; max?: string }
+        >
+      : never)
+  | (null extends TValue
+      ? [Extract<TValue, string | number>] extends [never]
+        ? never
+        : EditorBase<TRow, Extract<TValue, string | number> | null> &
+            ChoiceEditor<TRow, Extract<TValue, string | number>>
+      : never)
+  | (EditorBase<TRow, TValue> & {
+      editorType: "custom";
+      renderEditor: (ctx: LineItemsCustomEditorContext<TRow, TValue>) => ReactNode;
+    });
 
 type DocumentRules<TRow extends Record<string, unknown>, TValue> = {
   /** Adopted at every data boundary, not during display or diff calculation. */
   normalize?: (value: TValue, row: Readonly<TRow>) => TValue;
-  /** Runs on every adopted row, including unchanged and read-only values. */
-  validate?: (value: TValue, row: Readonly<TRow>) => string | null | undefined;
   equals?: (left: TValue, right: TValue, row: Readonly<TRow>) => boolean;
   commit?: "document" | "metadata";
 };
@@ -82,7 +85,6 @@ type DocumentRules<TRow extends Record<string, unknown>, TValue> = {
 type NoDocumentRules = {
   edit?: never;
   normalize?: never;
-  validate?: never;
   equals?: never;
   commit?: never;
 };
@@ -157,6 +159,11 @@ export type LineItemsCellError = {
   readonly message: string;
 };
 
+/** Business validation can target the document as a whole or one cell. */
+export type LineItemsValidationIssue =
+  | { readonly scope: "document"; readonly message: string }
+  | ({ readonly scope: "cell" } & LineItemsCellError);
+
 export type LineItemsResetInput<T extends Record<string, unknown>> =
   | readonly T[]
   | { readonly idMap: Readonly<Record<string, string | number>> };
@@ -175,6 +182,11 @@ export type LineItemsRowActions<TRow extends Record<string, unknown>> = {
 /** Initial document-owned API. Controlled rows and metadata persistence are not yet supported. */
 export type UseLineItemsOptions<TRow extends Record<string, unknown>> = {
   columns: readonly LineItemsColumn<TRow>[];
+  /** Runs after cell confirmation, on all document lines. Validation failures return issues; unexpected errors throw. */
+  validate?: (
+    lines: readonly Readonly<TRow>[],
+    context: { getLineKey: (line: Readonly<TRow>) => string },
+  ) => readonly LineItemsValidationIssue[] | Promise<readonly LineItemsValidationIssue[]>;
   /** Read once. Remount with a different React key to edit another document. */
   defaultLines?: readonly TRow[];
   idKey?: keyof TRow & string;
@@ -217,7 +229,8 @@ export type UseLineItemsReturn<TRow extends Record<string, unknown>> = {
   isAllSelected: boolean;
   isIndeterminate: boolean;
   readonly isDirty: boolean;
-  readonly errors: readonly LineItemsCellError[];
+  /** Results from the last current save preparation; document changes discard them. */
+  readonly errors: readonly LineItemsValidationIssue[];
   getCellError: (lineKey: string, columnId: string) => string | undefined;
   hasUnsavedChanges: () => boolean;
   getChangeSet: () => LineItemsChangeSet<TRow>;

@@ -88,21 +88,21 @@ describe("LineItems document adoption and identity", () => {
     expect(normalize).toHaveBeenCalledTimes(5);
   });
 
-  it("stores normalized values but keeps all-row validation independent from editability", () => {
+  it("retains business values for hook-owned document validation", () => {
     const doc = createLineItemsDocument({
       columns: [
         column({
           accessorKey: "quantity",
-          validate: (value) => (value === null || value < 0 ? "Invalid" : null),
         }),
       ],
       lines: [row("A", -1), row("B")],
     });
     expect(doc.isDirty()).toBe(false);
-    expect(doc.getErrors()).toEqual([{ lineKey: "A", columnId: "quantity", message: "Invalid" }]);
+    expect(doc.getRows()[0]!.quantity).toBe(-1);
+    expect(doc.getErrors()).toEqual([]);
     doc.updateLines([{ lineKey: "B", patch: { quantity: -2 } }]);
     expect(doc.getRows()[1]!.quantity).toBe(-2);
-    expect(doc.getErrors()).toHaveLength(2);
+    expect(doc.getErrors()).toEqual([]);
   });
 
   it("does not trim text or apply an epsilon implicitly", () => {

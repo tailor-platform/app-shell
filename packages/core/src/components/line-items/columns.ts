@@ -6,7 +6,6 @@ type PropertyRule<T> = {
   columnId: string;
   commit: "document" | "metadata";
   normalize?: (value: unknown, row: Readonly<T>) => unknown;
-  validate?: (value: unknown, row: Readonly<T>) => string | null | undefined;
   equals?: (left: unknown, right: unknown, row: Readonly<T>) => boolean;
   dateBounds?: { min?: string; max?: string };
 };
@@ -33,7 +32,6 @@ export function compileLineItemsColumns<T extends Record<string, unknown>>(
       (column) =>
         column.edit !== undefined ||
         column.normalize !== undefined ||
-        column.validate !== undefined ||
         column.equals !== undefined ||
         column.commit !== undefined,
     );
@@ -45,7 +43,6 @@ export function compileLineItemsColumns<T extends Record<string, unknown>>(
       columnId: owner.id ?? key,
       commit: owner.commit ?? "document",
       normalize: rule.normalize,
-      validate: rule.validate,
       equals: rule.equals,
       dateBounds:
         owner.edit?.editorType === "date"
@@ -86,9 +83,7 @@ export function compileLineItemsColumns<T extends Record<string, unknown>>(
             rule.dateBounds &&
             value !== undefined &&
             parseDateValue(value, rule.dateBounds) === undefined;
-          const message = invalidDate
-            ? "Enter a valid date within the allowed range."
-            : rule.validate?.(value, row);
+          const message = invalidDate ? "Enter a valid date within the allowed range." : undefined;
           if (message) errors.push({ lineKey: getLineKey(row), columnId: rule.columnId, message });
         }
       }

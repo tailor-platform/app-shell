@@ -13,6 +13,7 @@ export type {
   LineItemsOption,
   LineItemsChangeSet,
   LineItemsCellError,
+  LineItemsValidationIssue,
   LineItemsResetInput,
   LineItemsResetOptions,
   UseLineItemsOptions,

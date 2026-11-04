@@ -8,6 +8,7 @@ import type {
   LineItemsColumn,
   LineItemsResetInput,
   LineItemsResetOptions,
+  LineItemsValidationIssue,
   UseLineItemsOptions,
   UseLineItemsReturn,
 } from "./types";
@@ -29,7 +30,7 @@ type Preparation<T extends Record<string, unknown>> = {
   promise: Promise<LineItemsChangeSet<T> | null>;
   version: number;
   sessions: Map<Cell, number>;
-  invalid: boolean;
+  resolve: (value: LineItemsChangeSet<T> | null) => void;
 };
 
 const controllers = new WeakMap<object, unknown>();
@@ -46,7 +47,7 @@ function ruleBindings<T extends Record<string, unknown>>(columns: readonly LineI
     column.id ?? column.accessorKey,
     column.accessorKey,
     column.normalize,
-    column.validate,
+    column.edit?.onValueCommitted,
     column.equals,
     column.commit,
     column.edit?.editorType === "date" ? column.edit.min : undefined,
@@ -82,6 +83,13 @@ export function createLineItemsController<T extends Record<string, unknown>>(
   let active = true;
   let preparing: Preparation<T> | null = null;
   let lastUnsaved = document.isDirty();
+  let errors: readonly LineItemsValidationIssue[] = [];
+
+  function invalidatePreparation() {
+    const previous = preparing;
+    preparing = null;
+    previous?.resolve(null);
+  }
 
   function getCurrentRow(clientKey: string): T | undefined {
     return document.getRows().find((row) => document.getClientKey(row) === clientKey);
@@ -103,8 +111,20 @@ export function createLineItemsController<T extends Record<string, unknown>>(
   }
   function sessionChanged(cell: Cell) {
     const expected = preparing?.sessions.get(cell);
-    if (expected !== undefined && expected !== cell.session.getRevision())
-      preparing!.invalid = true;
+    if (
+      preparing &&
+      expected !== undefined &&
+      cell.session.getState().status === "idle" &&
+      columnFor(cell.columnId)?.edit?.error === false
+    ) {
+      // Eager confirmation discards its draft before adopting the value.
+      preparing.sessions.set(cell, cell.session.getRevision());
+    } else if (
+      preparing &&
+      ((expected !== undefined && expected !== cell.session.getRevision()) ||
+        (expected === undefined && cell.editor?.isChanged()))
+    )
+      invalidatePreparation();
     if (hasUnsavedChanges() !== lastUnsaved) emit();
   }
   function getCell(row: T, columnId: string): Cell {
@@ -146,6 +166,8 @@ export function createLineItemsController<T extends Record<string, unknown>>(
   }
   function changed() {
     version++;
+    errors = [];
+    invalidatePreparation();
     purgeRemoved();
     emit();
   }
@@ -192,15 +214,43 @@ export function createLineItemsController<T extends Record<string, unknown>>(
     if (!row || column?.accessorKey === undefined)
       throw new Error("The edited cell no longer exists");
     const source = cells.get(clientKey)?.get(columnId);
-    const ownPreparation =
-      source !== undefined && preparing?.sessions.get(source) === source.session.getRevision();
-    const before = document.getRows();
-    document.updateLines([
-      { lineKey: document.getLineKey(row), patch: { [column.accessorKey]: value } as Partial<T> },
-    ]);
-    invalidateWrites(before, new Map(), source);
-    if (!ownPreparation) version++;
-    emit();
+    const revision = source?.session.getRevision();
+    const check = column.edit?.onValueCommitted as
+      | ((row: Readonly<T>, value: unknown) => void | Promise<void>)
+      | undefined;
+    const adopt = () => {
+      if (
+        !active ||
+        source?.session.getRevision() !== revision ||
+        columnFor(columnId)?.edit?.onValueCommitted !== check
+      )
+        return;
+      const current = getCurrentRow(clientKey);
+      if (!current) return;
+      const ownPreparation = source !== undefined && preparing?.sessions.get(source) === revision;
+      const before = document.getRows();
+      document.updateLines([
+        {
+          lineKey: document.getLineKey(current),
+          patch: { [column.accessorKey!]: value } as Partial<T>,
+        },
+      ]);
+      invalidateWrites(before, new Map(), source);
+      errors = [];
+      if (!ownPreparation) {
+        version++;
+        invalidatePreparation();
+      }
+      emit();
+    };
+    if (column.edit?.error === false) {
+      // Match DataTable's eager opt-out: adoption does not wait for or intercept the callback.
+      adopt();
+      return check?.(row, value);
+    }
+    const result = check?.(row, value);
+    if (result && typeof result.then === "function") return Promise.resolve(result).then(adopt);
+    adopt();
   }
   function commitEdits(): Promise<LineItemsChangeSet<T> | null> {
     if (!active) return Promise.resolve(null);
@@ -215,8 +265,8 @@ export function createLineItemsController<T extends Record<string, unknown>>(
     const attempt: Preparation<T> = {
       promise,
       version,
-      sessions: new Map(candidates.map((cell) => [cell, cell.session.getRevision()])),
-      invalid: false,
+      sessions: new Map(records().map((cell) => [cell, cell.session.getRevision()])),
+      resolve,
     };
     preparing = attempt;
     async function prepare() {
@@ -227,14 +277,38 @@ export function createLineItemsController<T extends Record<string, unknown>>(
           return cell.editor.commit();
         }),
       );
-      if (!active || attempt.invalid || attempt.version !== version || results.some((ok) => !ok))
-        return null;
-      for (const cell of records()) {
-        const state = cell.session.getState();
-        if (state.status === "failed" || state.status === "confirming" || cell.editor?.isChanged())
-          return null;
-      }
-      if (document.getErrors().length > 0) return null;
+      const isCurrent = () =>
+        active &&
+        preparing === attempt &&
+        attempt.version === version &&
+        records().every((cell) => {
+          const state = cell.session.getState();
+          return (
+            state.status !== "failed" && state.status !== "confirming" && !cell.editor?.isChanged()
+          );
+        });
+      if (!isCurrent() || results.some((ok) => !ok)) return null;
+      const lines = document.getRows();
+      const keys = new Map(lines.map((line) => [line, document.getLineKey(line)]));
+      const intrinsic: LineItemsValidationIssue[] = document.getErrors().map((issue) => ({
+        scope: "cell",
+        ...issue,
+      }));
+      const issues =
+        intrinsic.length > 0
+          ? intrinsic
+          : ((await options.validate?.(lines, {
+              getLineKey(line) {
+                const key = keys.get(line as T);
+                if (key === undefined)
+                  throw new Error("Validation line does not belong to this snapshot");
+                return key;
+              },
+            })) ?? []);
+      if (!isCurrent()) return null;
+      errors = Object.freeze(issues.map((issue) => Object.freeze({ ...issue })));
+      emit();
+      if (!isCurrent() || errors.length > 0) return null;
       return document.getChangeSet();
     }
     void prepare().then(
@@ -243,7 +317,11 @@ export function createLineItemsController<T extends Record<string, unknown>>(
         resolve(result);
       },
       (error: unknown) => {
-        if (preparing === attempt) preparing = null;
+        if (preparing !== attempt) {
+          resolve(null);
+          return;
+        }
+        preparing = null;
         reject(error);
       },
     );
@@ -279,6 +357,7 @@ export function createLineItemsController<T extends Record<string, unknown>>(
       };
     },
     getSnapshot: () => snapshot,
+    getErrors: () => errors,
     configure(next: UseLineItemsOptions<T>) {
       assertSupported(next);
       if ((next.idKey ?? "id") !== idKey || (next.ordering ?? "sort") !== ordering)
@@ -311,9 +390,24 @@ export function createLineItemsController<T extends Record<string, unknown>>(
           );
       }
       document.setColumns(next.columns);
-      if (rulesChanged || (options.mode ?? "edit") !== (next.mode ?? "edit")) {
+      if (
+        rulesChanged ||
+        options.validate !== next.validate ||
+        (options.mode ?? "edit") !== (next.mode ?? "edit")
+      ) {
         version++;
-        if (preparing) preparing.invalid = true;
+        invalidatePreparation();
+      }
+      for (const cell of records()) {
+        const state = cell.session.getState();
+        const replacement = next.columns.find(
+          (column) => (column.id ?? column.accessorKey) === cell.columnId,
+        );
+        if (
+          state.status !== "idle" &&
+          columnFor(cell.columnId)?.edit?.onValueCommitted !== replacement?.edit?.onValueCommitted
+        )
+          cell.session.change(state.draft);
       }
       bindings = nextBindings;
       options = next;
@@ -346,14 +440,15 @@ export function createLineItemsController<T extends Record<string, unknown>>(
     deactivate() {
       active = false;
       version++;
-      if (preparing) preparing.invalid = true;
+      invalidatePreparation();
       for (const cell of records()) cell.session.deactivate();
     },
     commands: {
       getCellError: (lineKey: string, columnId: string) =>
-        document
-          .getErrors()
-          .find((error) => error.lineKey === lineKey && error.columnId === columnId)?.message,
+        errors.find(
+          (error) =>
+            error.scope === "cell" && error.lineKey === lineKey && error.columnId === columnId,
+        )?.message,
       hasUnsavedChanges,
       getChangeSet: document.getChangeSet,
       commitEdits,

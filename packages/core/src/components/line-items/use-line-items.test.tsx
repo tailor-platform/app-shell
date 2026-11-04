@@ -19,14 +19,26 @@ const columns = [
     accessorKey: "quantity",
     type: "number",
     edit: { editorType: "number" },
-    validate: (value) => (value === null || value <= 0 ? "Positive quantity required" : null),
   }),
   column({ accessorKey: "name", edit: { editorType: "text" } }),
 ];
 const initial: Row[] = [{ id: "A", quantity: 1, name: "One" }];
+const validate: NonNullable<UseLineItemsOptions<Row>["validate"]> = (lines, { getLineKey }) =>
+  lines.flatMap((line) =>
+    line.quantity === null || line.quantity <= 0
+      ? [
+          {
+            scope: "cell" as const,
+            lineKey: getLineKey(line),
+            columnId: "quantity",
+            message: "Positive quantity required",
+          },
+        ]
+      : [],
+  );
 
 function setup(options: UseLineItemsOptions<Row> = { columns, defaultLines: initial }) {
-  return renderHook((props) => useLineItems<Row>(props), {
+  return renderHook((props) => useLineItems<Row>({ validate, ...props }), {
     initialProps: options,
     wrapper: Wrapper,
   });
@@ -109,12 +121,15 @@ describe("useLineItems document ownership", () => {
     expect(view.result.current.mode).toBe("view");
     expect(view.result.current.rowActions).toEqual({ render, width: 120 });
     expect(render).not.toHaveBeenCalled();
+    expect(view.result.current.errors).toEqual([]);
+    expect(view.result.current.hasUnsavedChanges()).toBe(false);
+    await act(async () => {
+      await expect(view.result.current.commitEdits()).resolves.toBeNull();
+    });
     expect(view.result.current.errors).toEqual([
-      { lineKey: "A", columnId: "quantity", message: "Positive quantity required" },
+      { scope: "cell", lineKey: "A", columnId: "quantity", message: "Positive quantity required" },
     ]);
     expect(view.result.current.getCellError("A", "quantity")).toBe("Positive quantity required");
-    expect(view.result.current.hasUnsavedChanges()).toBe(false);
-    await expect(view.result.current.commitEdits()).resolves.toBeNull();
   });
 
   it("adds, removes and reorders lines under one save/discard boundary", () => {
@@ -135,7 +150,7 @@ describe("useLineItems document ownership", () => {
     expect(result.current.lines).toHaveLength(1);
   });
 
-  it("uses newly committed rules without reinitializing or normalizing on ordinary renders", () => {
+  it("uses newly committed rules without reinitializing or normalizing on ordinary renders", async () => {
     const normalizer = vi.fn((value: number | null) => value);
     const starting = [column({ accessorKey: "quantity", normalize: normalizer })];
     const view = setup({ columns: starting, defaultLines: initial });
@@ -147,10 +162,25 @@ describe("useLineItems document ownership", () => {
       column({
         accessorKey: "quantity",
         normalize: (value) => (value === null ? null : Math.floor(value)),
-        validate: (value) => (value === 1 ? "New rule" : null),
       }),
     ];
-    view.rerender({ columns: next, defaultLines: initial });
+    view.rerender({
+      columns: next,
+      defaultLines: initial,
+      validate: (lines, { getLineKey }) =>
+        lines
+          .filter((line) => line.quantity === 1)
+          .map((line) => ({
+            scope: "cell",
+            lineKey: getLineKey(line),
+            columnId: "quantity",
+            message: "New rule",
+          })),
+    });
+    expect(view.result.current.errors).toEqual([]);
+    await act(async () => {
+      await view.result.current.commitEdits();
+    });
     expect(view.result.current.errors[0]!.message).toBe("New rule");
     expect(view.result.current.getCellError("A", "quantity")).toBe("New rule");
     act(() => view.result.current.updateField("A", "quantity", 2.9));

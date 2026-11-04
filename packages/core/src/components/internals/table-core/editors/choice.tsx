@@ -1,4 +1,13 @@
-import { useLayoutEffect, useMemo, useRef, useState, type ComponentProps } from "react";
+import {
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+  type KeyboardEvent,
+  type ReactNode,
+  type Ref,
+} from "react";
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
 import { ComboboxParts } from "@/components/combobox";
 import { Button } from "@/components/button";
@@ -36,7 +45,7 @@ export type ChoiceEditorProps<TRow> = {
   ariaLabel: string;
   invalid?: boolean;
   describedBy?: string;
-  onCommit: (value: string | number | null) => void;
+  onCommit: (value: string | number | null) => void | Promise<boolean>;
   onCancel: () => void;
   onBegin?: () => void;
   onActiveChange?: (active: boolean) => void;
@@ -44,7 +53,22 @@ export type ChoiceEditorProps<TRow> = {
   /** Keep a retained failed/confirming value visible after focus leaves. */
   showValue?: boolean;
   containsErrorTarget?: (target: EventTarget | null) => boolean;
+  inputRef?: Ref<HTMLInputElement>;
+  inputClassName?: string;
+  /** Optional owner-controlled editing, for resting read-only inputs. */
+  editing?: boolean;
+  onFocus?: () => void;
+  onLeave?: () => void;
+  onQueryChange?: () => void;
+  confirmOnTab?: boolean;
+  onTab?: (event: KeyboardEvent<HTMLInputElement>) => void;
+  retry?: () => Promise<boolean>;
+  nullOptionLabel?: string;
+  emptyLabel?: string;
+  renderOption?: (option: ChoiceCandidate) => ReactNode;
 };
+
+type ChoiceCandidate = { value: string | number | null; label: string; description?: string };
 
 type Source = {
   options: readonly ChoiceOption[];
@@ -75,8 +99,9 @@ const labels = defineI18nLabels({
 });
 
 const searchable = (text: string) => text.normalize("NFKC").toLocaleLowerCase().trim();
-const equalOption = (left: ChoiceOption, right: ChoiceOption) => Object.is(left.value, right.value);
-const optionLabel = (option: ChoiceOption) => option.label;
+const equalOption = (left: ChoiceCandidate, right: ChoiceCandidate) =>
+  Object.is(left.value, right.value);
+const optionLabel = (option: ChoiceCandidate) => option.label;
 
 /** Values are separate from search text, highlight, and the current result window. */
 export function ChoiceEditor<TRow>(props: ChoiceEditorProps<TRow>) {
@@ -183,6 +208,18 @@ function ChoiceControl<TRow>({
   cancelToken,
   showValue,
   containsErrorTarget,
+  inputRef,
+  inputClassName,
+  editing,
+  onFocus,
+  onLeave,
+  onQueryChange,
+  confirmOnTab,
+  onTab,
+  retry,
+  nullOptionLabel,
+  emptyLabel,
+  renderOption,
   source,
 }: ChoiceEditorProps<TRow> & { source: Source }) {
   const t = labels.useT();
@@ -190,17 +227,28 @@ function ChoiceControl<TRow>({
   const openRef = useRef(false);
   const [focused, setFocused] = useState(false);
   const [query, setQuery] = useState<string | null>(null);
+  const [listQuery, setListQuery] = useState<string | null>(null);
   const previousCancel = useRef(cancelToken);
   const previousSource = useRef(source.revision);
-  useLayoutEffect(() => () => onActiveChange?.(false), [onActiveChange]);
+  const operation = useRef(0);
+  const mounted = useRef(false);
+  useLayoutEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      onActiveChange?.(false);
+    };
+  }, [onActiveChange]);
   const composing = useRef(false);
-  const highlighted = useRef<ChoiceOption | undefined>(undefined);
-  const explicitHighlight = useRef<ChoiceOption | undefined>(undefined);
+  const highlighted = useRef<ChoiceCandidate | undefined>(undefined);
+  const explicitHighlight = useRef<ChoiceCandidate | undefined>(undefined);
+  const selectOnMouseUp = useRef(false);
   useLayoutEffect(() => {
     if (previousCancel.current === cancelToken && previousSource.current === source.revision)
       return;
     previousCancel.current = cancelToken;
     previousSource.current = source.revision;
+    operation.current++;
     openRef.current = false;
     setOpen(false);
     setQuery(null);
@@ -209,33 +257,44 @@ function ChoiceControl<TRow>({
     onActiveChange?.(focused);
   }, [cancelToken, source.revision, focused, onActiveChange]);
   const blocked = !!source.loading || !!source.failed;
+  const items = useMemo<readonly ChoiceCandidate[]>(
+    () =>
+      nullOptionLabel !== undefined
+        ? [{ value: null, label: nullOptionLabel }, ...source.options]
+        : source.options,
+    [nullOptionLabel, source.options],
+  );
   const selected =
     value === null
-      ? null
-      : (source.options.find((item) => Object.is(item.value, value)) ?? {
+      ? (items.find((item) => item.value === null) ?? null)
+      : (items.find((item) => Object.is(item.value, value)) ?? {
           value,
           label: config.getOptionLabel?.(value, row) ?? String(value),
         });
   const filtered = useMemo(() => {
     if (source.loading || source.failed) return [];
     if (source.remote) return source.options;
-    const search = searchable(query ?? "");
-    if (!search) return source.options;
-    const rank = (option: ChoiceOption) => {
+    const search = searchable(listQuery ?? "");
+    if (!search) return items;
+    const rank = (option: ChoiceCandidate) => {
       const label = searchable(option.label);
       if (label === search) return 0;
       return label.startsWith(search) ? 1 : 2;
     };
-    return source.options
-      .filter((option) => searchable(option.label).includes(search))
+    return items
+      .filter((option) => option.value !== null && searchable(option.label).includes(search))
       .toSorted((left, right) => rank(left) - rank(right));
-  }, [source.options, source.remote, source.loading, source.failed, query]);
+  }, [items, source.options, source.remote, source.loading, source.failed, listQuery]);
 
   function start(fromInput = false) {
     if (openRef.current) return;
+    operation.current++;
     openRef.current = true;
     setOpen(true);
-    if (!fromInput) setQuery(null);
+    if (!fromInput) {
+      setQuery(null);
+      setListQuery(null);
+    }
     highlighted.current = undefined;
     explicitHighlight.current = undefined;
     onBegin?.();
@@ -243,6 +302,7 @@ function ChoiceControl<TRow>({
     if (!fromInput) source.onOpen?.();
   }
   function close(cancel: boolean) {
+    operation.current++;
     openRef.current = false;
     setOpen(false);
     setQuery(null);
@@ -251,10 +311,24 @@ function ChoiceControl<TRow>({
     onActiveChange?.(focused);
     if (cancel) onCancel();
   }
-  function pick(option: ChoiceOption) {
-    if (blocked || !filtered.includes(option)) return;
-    onCommit(option.value);
+  function leave() {
     close(false);
+    if (onLeave) onLeave();
+    else if (!invalid) onCancel();
+  }
+  function finish(result: void | Promise<boolean>) {
+    if (!result) {
+      close(false);
+      return;
+    }
+    const attempt = operation.current;
+    void result.then((ok) => {
+      if (ok && mounted.current && attempt === operation.current) close(false);
+    });
+  }
+  function pick(option: ChoiceCandidate) {
+    if (blocked || !filtered.includes(option)) return;
+    finish(onCommit(option.value));
   }
   const keyDown: NonNullable<ComponentProps<typeof ComboboxParts.Input>["onKeyDown"]> = (event) => {
     if (isComposing(event.nativeEvent, composing.current)) {
@@ -270,7 +344,8 @@ function ChoiceControl<TRow>({
       event.preventDefault();
       event.preventBaseUIHandler();
       if (!openRef.current) {
-        start();
+        if (retry) finish(retry());
+        else start();
         return;
       }
       if (blocked) return;
@@ -281,12 +356,19 @@ function ChoiceControl<TRow>({
       if (candidate) pick(candidate);
     } else if (event.key === "Tab") {
       event.preventBaseUIHandler();
-      close(!invalid);
+      const explicit = explicitHighlight.current;
+      let candidate = explicit && filtered.includes(explicit) ? explicit : undefined;
+      if (!candidate && searchable(listQuery ?? ""))
+        candidate =
+          [highlighted.current].find((item) => item && filtered.includes(item)) ?? filtered[0];
+      if (confirmOnTab && openRef.current && candidate && !blocked) pick(candidate);
+      else leave();
+      onTab?.(event);
     }
   };
   return (
-    <BaseCombobox.Root<ChoiceOption>
-      items={source.options}
+    <BaseCombobox.Root<ChoiceCandidate>
+      items={items}
       filteredItems={filtered}
       filter={null}
       value={selected}
@@ -300,9 +382,12 @@ function ChoiceControl<TRow>({
       }}
       onInputValueChange={(next, details) => {
         if (details.reason !== "input-change" && details.reason !== "input-clear") return;
+        operation.current++;
         setQuery(next);
+        setListQuery(next);
         highlighted.current = undefined;
         explicitHighlight.current = undefined;
+        onQueryChange?.();
         source.onSearch?.(next);
       }}
       onOpenChange={(next, details) => {
@@ -319,7 +404,12 @@ function ChoiceControl<TRow>({
           return;
         }
         if (details.reason === "input-clear") return;
-        close(details.reason === "escape-key" || (details.reason !== "item-press" && !invalid));
+        if (details.reason === "escape-key") close(true);
+        else if (details.reason === "item-press") close(false);
+        else leave();
+      }}
+      onOpenChangeComplete={(isOpen) => {
+        if (!isOpen) setListQuery(null);
       }}
       onItemHighlighted={(item, details) => {
         if (details.reason === "pointer") return;
@@ -328,26 +418,58 @@ function ChoiceControl<TRow>({
       }}
     >
       <ComboboxParts.Input
+        ref={inputRef}
+        readOnly={editing === false}
         aria-label={ariaLabel}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
+        aria-keyshortcuts={invalid ? "Alt+ArrowDown" : undefined}
+        enterKeyHint="done"
         placeholder={config.placeholder}
         autoComplete="off"
         style={{ textAlign: "inherit" }}
         className={cn(
           INPUT_CLASS_NAME,
           ICON_INPUT_CLASS_NAME,
-          !focused && !open && !showValue && "astw:text-transparent",
+          (editing === false || (editing === undefined && !focused && !open && !showValue)) &&
+            "astw:text-transparent",
+          editing === false && "astw:cursor-pointer",
           invalid && CELL_ERROR_CLASS_NAME,
+          inputClassName,
         )}
         onFocus={(event) => {
+          const withinCell = focused || containsErrorTarget?.(event.relatedTarget);
           setFocused(true);
           onActiveChange?.(true);
-          event.currentTarget.select();
+          if (!withinCell) {
+            onFocus?.();
+            event.currentTarget.select();
+          }
         }}
         onBlur={() => {
           setFocused(false);
           onActiveChange?.(openRef.current);
+          if (!openRef.current) onLeave?.();
+        }}
+        onMouseDown={(event) => {
+          if (event.button === 2 && editing === false) {
+            event.preventDefault();
+            return;
+          }
+          if (editing === false) start();
+          if (!focused && editing !== undefined) selectOnMouseUp.current = true;
+        }}
+        onMouseUp={(event) => {
+          if (selectOnMouseUp.current) {
+            selectOnMouseUp.current = false;
+            event.preventDefault();
+          }
+        }}
+        onContextMenu={(event) => {
+          if (editing) event.stopPropagation();
+        }}
+        onTouchStart={(event) => {
+          if (editing) event.stopPropagation();
         }}
         onKeyDown={keyDown}
         onCompositionStart={() => {
@@ -377,30 +499,37 @@ function ChoiceControl<TRow>({
             </Button>
           </div>
         )}
-        {!blocked && <ComboboxParts.Empty>{t("empty")}</ComboboxParts.Empty>}
+        {!blocked && <ComboboxParts.Empty>{emptyLabel ?? t("empty")}</ComboboxParts.Empty>}
         <ComboboxParts.List>
-          {(item: ChoiceOption) => (
+          {(item: ChoiceCandidate) => (
             <ComboboxParts.Item key={`${typeof item.value}:${item.value}`} value={item}>
-              <span>{item.label}</span>
-              {item.description && (
-                <span className="astw:text-muted-foreground">{item.description}</span>
+              {renderOption ? (
+                renderOption(item)
+              ) : (
+                <>
+                  <span>{item.label}</span>
+                  {item.description && (
+                    <span className="astw:text-muted-foreground">{item.description}</span>
+                  )}
+                </>
               )}
             </ComboboxParts.Item>
           )}
         </ComboboxParts.List>
-        <div className="astw:border-t astw:border-border astw:p-1">
-          <Button
-            type="button"
-            size="xs"
-            variant="ghost"
-            onClick={() => {
-              onCommit(null);
-              close(false);
-            }}
-          >
-            {t("clear")}
-          </Button>
-        </div>
+        {nullOptionLabel === undefined && (
+          <div className="astw:border-t astw:border-border astw:p-1">
+            <Button
+              type="button"
+              size="xs"
+              variant="ghost"
+              onClick={() => {
+                finish(onCommit(null));
+              }}
+            >
+              {t("clear")}
+            </Button>
+          </div>
+        )}
       </ComboboxParts.Content>
     </BaseCombobox.Root>
   );

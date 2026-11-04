@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { CalendarDays, ChevronDown } from "lucide-react";
-import { Input } from "@/components/input";
+import { TypingEditor } from "@/components/internals/table-core/editors/typing";
 import { Table } from "@/components/table";
 import { Text } from "@/components/text";
 import { Tooltip } from "@/components/tooltip";
@@ -20,12 +20,7 @@ import {
 } from "@/components/internals/table-core/editors/choice";
 import { DateEditor } from "@/components/internals/table-core/editors/date";
 import { parseDateValue } from "@/components/internals/table-core/date-values";
-import {
-  CELL_ERROR_CLASS_NAME,
-  INPUT_CLASS_NAME,
-  ICON_INPUT_CLASS_NAME,
-  OVERLAY_CLASS_NAME,
-} from "@/components/internals/table-core/cell-styles";
+import { OVERLAY_CLASS_NAME } from "@/components/internals/table-core/cell-styles";
 import {
   normalizeNumberText,
   parseNumberText,
@@ -33,7 +28,6 @@ import {
   toNumberValue,
   toTextValue,
 } from "@/components/internals/table-core/input-values";
-import { isComposing } from "@/lib/is-composing";
 import { cn } from "@/lib/utils";
 import type { LineItemsController } from "./controller";
 import { useLineItemsT } from "./i18n";
@@ -207,43 +201,27 @@ export function LineItemsCell<T extends Record<string, unknown>>({
   if (typed) {
     if (state.status !== "idle") hideDisplay = "focused";
     editor = (
-      <Input
-        type="text"
-        inputMode={kind === "number" ? "decimal" : undefined}
-        autoComplete="off"
-        spellCheck={kind === "number" ? false : undefined}
-        aria-label={label}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error?.id}
-        aria-keyshortcuts={error ? "Alt+ArrowDown" : undefined}
+      <TypingEditor
+        {...a11y}
         value={String(state.status === "idle" ? baseline() : state.draft)}
-        className={cn(
-          INPUT_CLASS_NAME,
-          state.status === "idle" && "astw:text-transparent",
-          cellProps.align === "right" && "astw:text-right",
-          kind === "number" && "astw:tabular-nums",
-          error && CELL_ERROR_CLASS_NAME,
-          error && ICON_INPUT_CLASS_NAME,
-        )}
-        onFocus={(event) => {
+        editing={state.status !== "idle"}
+        numeric={kind === "number"}
+        align={cellProps.align}
+        inputMode={kind === "number" ? "decimal" : undefined}
+        iconSpace={!!error}
+        containsErrorTarget={containsTarget}
+        onBegin={() => {
           if (session.getState().status === "idle") session.begin(baseline());
-          event.currentTarget.select();
         }}
-        onChange={(event) => session.change(event.currentTarget.value)}
-        onKeyDown={(event) => {
-          if (isComposing(event.nativeEvent)) return;
-          if (event.key === "Escape") {
-            event.preventDefault();
-            event.stopPropagation();
-            session.cancel();
-          } else if (event.key === "Enter") {
-            event.preventDefault();
-            void commit();
-          } else if (event.key === "Tab") {
-            const current = session.getState();
-            if (current.status !== "idle" && !parse(current.draft).valid) event.preventDefault();
-            void commit();
-          }
+        onChange={(text) => session.change(text)}
+        onCommit={() => {
+          void commit();
+        }}
+        onCancel={() => session.cancel()}
+        onTab={(event) => {
+          const current = session.getState();
+          if (current.status !== "idle" && !parse(current.draft).valid) event.preventDefault();
+          void commit();
         }}
       />
     );

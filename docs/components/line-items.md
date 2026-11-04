@@ -200,6 +200,8 @@ Text and number edits confirm on Enter, Tab, leaving the cell, or `commitEdits()
 
 ### Editor types
 
+Text/number inputs, choice searching/highlighting, and calendar UI use the same controls as DataTable. Their owners retain distinct adoption contracts: DataTable keeps its draft callbacks, Tab confirmation/navigation, and datetime conversion; LineItems keeps document-owned drafts, validation, and explicit save preparation. Sharing controls does not make a cell selection a backend save.
+
 | `edit.editorType` | Confirmed value                 | Behavior                                                                                               |
 | ----------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `"text"`          | `string \| null`                | Text input with document-owned drafts. Empty input confirms `null`.                                    |

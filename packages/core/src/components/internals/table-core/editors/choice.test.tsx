@@ -161,6 +161,70 @@ describe("ChoiceEditor fixed options", () => {
   });
 });
 
+describe("ChoiceEditor owner policies", () => {
+  it.each([false, true])(
+    "confirms a searched candidate on Tab only when enabled: %s",
+    async (confirmOnTab) => {
+      const user = userEvent.setup();
+      const onCommit = vi.fn();
+      const onCancel = vi.fn();
+      render(
+        <ChoiceEditor
+          value={10}
+          row={row}
+          config={{ options }}
+          ariaLabel="Choice"
+          onCommit={onCommit}
+          onCancel={onCancel}
+          confirmOnTab={confirmOnTab}
+        />,
+        { wrapper: createAppShellWrapper("en") },
+      );
+      const input = screen.getByRole("combobox", { name: "Choice" });
+      await user.click(input);
+      fireEvent.change(input, { target: { value: "Twenty" } });
+      await user.keyboard("{Tab}");
+      if (confirmOnTab) expect(onCommit).toHaveBeenCalledExactlyOnceWith(20);
+      else {
+        expect(onCommit).not.toHaveBeenCalled();
+        expect(onCancel).toHaveBeenCalledTimes(1);
+      }
+    },
+  );
+  it("does not let an old confirmation close a reopened search", async () => {
+    const user = userEvent.setup();
+    let resolve!: (ok: boolean) => void;
+    const pending = new Promise<boolean>((done) => {
+      resolve = done;
+    });
+    const onCommit = vi.fn(() => pending);
+    render(
+      <ChoiceEditor
+        value={10}
+        row={row}
+        config={{ options }}
+        ariaLabel="Choice"
+        onCommit={onCommit}
+        onCancel={() => {}}
+      />,
+      { wrapper: createAppShellWrapper("en") },
+    );
+    const input = screen.getByRole("combobox", { name: "Choice" });
+    await user.click(input);
+    await user.click(screen.getByRole("option", { name: "Twenty" }));
+    expect(onCommit).toHaveBeenCalledTimes(1);
+    await user.keyboard("{Escape}");
+    await user.click(input);
+    fireEvent.change(input, { target: { value: "Ten" } });
+    await act(async () => {
+      resolve(true);
+      await pending;
+    });
+    expect(input.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("option", { name: "Ten" })).toBeDefined();
+  });
+});
+
 describe("ChoiceEditor remote options", () => {
   it("does not fetch for initial or synchronized labels and uses getOptionLabel only in its input", async () => {
     const request = deferred();

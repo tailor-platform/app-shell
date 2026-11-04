@@ -14,9 +14,9 @@ export function useCellEditSession<TDraft>(enabled: boolean) {
     session.activate(enabled);
     return session.deactivate;
   }, [enabled, session]);
-  // Preserve DT's void callback contract; only document owners await preparation.
+  // Retain the void adapter contract; shared controls can explicitly await completion.
   const confirm = (callback: () => unknown, onSuccess?: () => void) => {
     void session.confirm(callback, onSuccess);
   };
-  return { ...session, state, confirm };
+  return { ...session, state, confirm, confirmAsync: session.confirm };
 }

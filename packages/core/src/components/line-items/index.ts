@@ -9,7 +9,6 @@ export type {
   LineItemsColumn,
   LineItemsCustomEditorContext,
   LineItemsEditor,
-  LineItemsMode,
   LineItemsOption,
   LineItemsChangeSet,
   LineItemsCellError,

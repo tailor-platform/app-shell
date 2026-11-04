@@ -32,7 +32,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { LineItemsController } from "./controller";
 import { useLineItemsT } from "./i18n";
-import type { LineItemsColumn, LineItemsCustomEditorContext, LineItemsMode } from "./types";
+import type { LineItemsColumn, LineItemsCustomEditorContext } from "./types";
 
 type ParsedDraft =
   | { valid: true; value: unknown }
@@ -42,7 +42,7 @@ export function LineItemsCell<T extends Record<string, unknown>>({
   row,
   column,
   index,
-  mode,
+  selected,
   controller,
   display,
   cellProps,
@@ -51,7 +51,7 @@ export function LineItemsCell<T extends Record<string, unknown>>({
   row: T;
   column: LineItemsColumn<T>;
   index: number;
-  mode: LineItemsMode;
+  selected: boolean;
   controller: LineItemsController<T>;
   display: ReactNode;
   cellProps: ComponentProps<typeof Table.Cell>;
@@ -66,7 +66,7 @@ export function LineItemsCell<T extends Record<string, unknown>>({
   const config = column.edit;
   const kind = config?.editorType ?? "text";
   const typed = kind === "text" || kind === "number";
-  const editable = mode !== "view" && !!config && (config.modes ?? ["edit"]).includes(mode);
+  const editable = !!config && (config.canEdit?.(row, { selected }) ?? true);
   const label = `${column.label ?? columnId}, ${t("row", { index: index + 1 })}`;
   const raw = () => {
     const current = controller.getCurrentRow(clientKey);
@@ -274,7 +274,6 @@ export function LineItemsCell<T extends Record<string, unknown>>({
           onCommit: choose,
           onCancel: () => session.cancel(),
           row,
-          mode,
           ariaLabel: label,
         })}
       </div>

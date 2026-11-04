@@ -46,10 +46,10 @@ function Harness({
       </Toolbar.Root>
       <LineItems.Table />
       <LineItems.Footer>
-        <Toolbar.Row aria-label="Document actions">
-          {(!actions || model.selectedIds.length === 0) && <Button>Add line</Button>}
-          <Button onClick={() => model.clearSelection?.()}>Save</Button>
-        </Toolbar.Row>
+        <div className="document-actions">
+          <Button>Add line</Button>
+          <Button>Save</Button>
+        </div>
       </LineItems.Footer>
     </LineItems.Root>
   );
@@ -64,7 +64,9 @@ describe("LineItems.Footer", () => {
 
   it("shares Root selection, ignores stale keys, and provides count/Clear without changing the document", async () => {
     const { container } = render(<Harness />, { wrapper: createAppShellWrapper("en") });
-    const bar = screen.getByRole("toolbar", { name: "Bulk actions" });
+    const bar = screen.getByRole("group", { name: "Bulk actions" });
+    expect(screen.queryByRole("button", { name: "Add line" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
     expect(within(bar).getByText("1 of 2 selected")).toBeDefined();
     expect(
       screen.getByRole("checkbox", { name: "Select line 1" }).getAttribute("aria-checked"),
@@ -90,12 +92,15 @@ describe("LineItems.Footer", () => {
     expect(model.searchQuery).toBe("No matches");
   });
 
-  it("keeps focus on right-side actions when they clear selection", async () => {
-    render(<Harness />, { wrapper: createAppShellWrapper("en") });
-    const save = screen.getByRole("button", { name: "Save" });
-    await userEvent.click(save);
-    expect(document.activeElement).toBe(save);
-    expect(screen.queryByRole("toolbar", { name: "Bulk actions" })).toBeNull();
+  it("uses plain div layout for the exclusive bulk bar and ordinary children", async () => {
+    const { container } = render(<Harness />, { wrapper: createAppShellWrapper("en") });
+    const footer = container.querySelector('[data-slot="line-items-footer"]')!;
+    expect(footer.querySelector('[data-slot^="toolbar"]')).toBeNull();
+    expect(footer.querySelector(".document-actions")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+    expect(footer.querySelector(".document-actions")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDefined();
+    expect(footer.querySelector('[data-slot^="toolbar"]')).toBeNull();
   });
 
   it("leaves ordinary footer controls visible when there are no bulk action nodes", () => {
@@ -139,7 +144,7 @@ describe("LineItems.Footer", () => {
   it("localizes the selection controls", () => {
     render(<Harness />, { wrapper: createAppShellWrapper("ja") });
     expect(
-      within(screen.getByRole("toolbar", { name: "一括操作" })).getByText("2 行中 1 行を選択中"),
+      within(screen.getByRole("group", { name: "一括操作" })).getByText("2 行中 1 行を選択中"),
     ).toBeDefined();
     expect(screen.getByRole("button", { name: "選択を解除" })).toBeDefined();
   });

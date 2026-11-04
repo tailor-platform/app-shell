@@ -110,15 +110,15 @@ describe("useLineItems document ownership", () => {
     expect(view.result.current.isDirty).toBe(true);
   });
 
-  it("provides mode and row actions without coupling document validity to editability", async () => {
+  it("provides orderer and row actions without coupling document validity to editability", async () => {
     const render = vi.fn(() => null);
     const view = setup({
       columns,
       defaultLines: [{ id: "A", quantity: -1, name: "Invalid legacy row" }],
-      mode: "view",
+      orderer: "readonly",
       rowActions: { render, width: 120 },
     });
-    expect(view.result.current.mode).toBe("view");
+    expect(view.result.current.orderer).toBe("readonly");
     expect(view.result.current.rowActions).toEqual({ render, width: 120 });
     expect(render).not.toHaveBeenCalled();
     expect(view.result.current.errors).toEqual([]);
@@ -133,7 +133,7 @@ describe("useLineItems document ownership", () => {
   });
 
   it("adds, removes and reorders lines under one save/discard boundary", () => {
-    const { result } = setup({ columns, defaultLines: initial, ordering: "manual" });
+    const { result } = setup({ columns, defaultLines: initial });
     let key!: string;
     act(() => {
       key = result.current.addLine({ name: "New", quantity: 2 }, { afterLineKey: null });
@@ -215,7 +215,8 @@ describe("useLineItems document ownership", () => {
       createLineItemsController({ columns, lines: initial } as unknown as UseLineItemsOptions<Row>),
     ).toThrow(/owns its rows/);
     const controller = createLineItemsController<Row>({ columns });
-    expect(() => controller.configure({ columns, ordering: "manual" })).toThrow(/Remount/);
+    expect(() => controller.configure({ columns, orderer: "readonly" })).not.toThrow();
+    expect(() => controller.commands.reorderLine("A", null)).toThrow(/disabled/);
     expect(() => controller.configure({ columns, idKey: "name" })).toThrow(/Remount/);
     expect(() => controller.configure({ columns: columns.slice(0, 1) })).toThrow(
       /property ownership/,

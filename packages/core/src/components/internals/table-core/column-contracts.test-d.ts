@@ -296,11 +296,11 @@ test("rules and editability are independent and mode declarations exclude view",
   column({
     accessorKey: "name",
     commit: "metadata",
-    edit: { editorType: "text", modes: ["edit", "amend"] },
+    edit: { editorType: "text", canEdit: (_row, { selected }) => selected },
   });
+  column({ accessorKey: "name", edit: { editorType: "text", canEdit: () => false } });
+  // @ts-expect-error Business modes belong to consumers, not editor configuration.
   column({ accessorKey: "name", edit: { editorType: "text", modes: ["amend"] } });
-  // @ts-expect-error View is never an editable mode.
-  column({ accessorKey: "name", edit: { editorType: "text", modes: ["view"] } });
   column({
     accessorKey: "quantity",
     // @ts-expect-error Normalization belongs to the property owner, not the editor.

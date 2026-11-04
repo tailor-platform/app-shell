@@ -20,7 +20,7 @@ function setup(rowSelection?: RowSelectionOptions, schema = columns) {
       useLineItems<Row>({
         columns: schema,
         defaultLines: rows,
-        ordering: "manual",
+        orderer: "manual",
         rowSelection: options,
       }),
     { initialProps: rowSelection, wrapper },

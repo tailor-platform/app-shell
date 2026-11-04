@@ -27,10 +27,8 @@ const row = (id?: string | number, quantity = 1): Row => ({
   memo: "memo",
   detail: null,
 });
-const document = (
-  lines: readonly Row[] = [row("A"), row("B")],
-  ordering: "sort" | "manual" = "sort",
-) => createLineItemsDocument({ columns, lines, ordering });
+const document = (lines: readonly Row[] = [row("A"), row("B")]) =>
+  createLineItemsDocument({ columns, lines });
 function added(sent: LineItemsChangeSet<Row>) {
   return sent.lineChanges.filter((change) => change.action === "add");
 }
@@ -229,7 +227,7 @@ describe("LineItems changes and ordering", () => {
   });
 
   it("represents a middle insertion with complete final order and acknowledges it in place", () => {
-    const doc = document(undefined, "manual");
+    const doc = document();
     const [tempId] = doc.addLines([row()], { afterLineKey: "A" });
     const sent = doc.getChangeSet();
     expect(sent.order).toEqual([{ lineId: "A" }, { tempId }, { lineId: "B" }]);
@@ -238,8 +236,8 @@ describe("LineItems changes and ordering", () => {
     expect(doc.getChangeSet().isEmpty).toBe(true);
   });
 
-  it("expresses reorder/remove/new rows together, with no order for presentation sorting", () => {
-    const doc = document([row("A"), row("B"), row("C")], "manual");
+  it("expresses reorder/remove/new rows together with complete final order", () => {
+    const doc = document([row("A"), row("B"), row("C")]);
     const [tempId] = doc.addLines([row()], { afterLineKey: null });
     doc.removeLines(["B"]);
     doc.reorder("C", "A");
@@ -251,12 +249,25 @@ describe("LineItems changes and ordering", () => {
       if (change.action === "add") ids.add(change.tempId);
     }
     expect(new Set(sent.order!.map((ref) => ref.lineId ?? ref.tempId))).toEqual(ids);
-    expect(() => document().reorder("A", "B")).toThrow(/manual/);
     expect(document().getChangeSet()).not.toHaveProperty("order");
   });
 
+  it("rejects incomplete or duplicate sorted source orders without changing the document", () => {
+    const doc = document([row("A"), row("B"), row("C")]);
+    const before = doc.getRows();
+    for (const source of [
+      ["A", "B"],
+      ["A", "A", "C"],
+      ["A", "B", "unknown"],
+    ]) {
+      expect(() => doc.reorder("C", null, source)).toThrow();
+      expect(doc.getRows()).toBe(before);
+      expect(doc.isDirty()).toBe(false);
+    }
+  });
+
   it("restores the original order to clean and ignores dropping a row on itself", () => {
-    const doc = document(undefined, "manual");
+    const doc = document();
     const revision = doc.getRevision();
     doc.reorder("A", "A");
     expect(doc.getRevision()).toBe(revision);
@@ -347,7 +358,7 @@ describe("LineItems save receipts and rebasing", () => {
   });
 
   it("preserves later additions/removals/order changes while acknowledging submitted updates", () => {
-    const doc = document(undefined, "manual");
+    const doc = document();
     doc.updateLines([{ lineKey: "A", patch: { quantity: 2 } }]);
     const sent = doc.getChangeSet();
     const [newKey] = doc.addLines([row()], { afterLineKey: null });
@@ -360,7 +371,7 @@ describe("LineItems save receipts and rebasing", () => {
   });
 
   it("preserves order changed during a save while accepting canonical server order otherwise", () => {
-    const doc = document(undefined, "manual");
+    const doc = document();
     const sent = doc.getChangeSet();
     doc.reorder("B", null);
     doc.reset([row("A"), row("B")], { sent });

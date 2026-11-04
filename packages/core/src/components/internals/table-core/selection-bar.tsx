@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Menu } from "@/components/menu";
 import { Spinner } from "@/components/spinner";
-import { Toolbar } from "@/components/toolbar";
 import type { SelectionAction, SelectionActionHelpers } from "./selection-types";
 
 function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
@@ -56,69 +55,76 @@ export function TableSelectionBar({
   };
 
   return (
-    <Toolbar.Row
+    // oxlint-disable jsx-a11y/prefer-tag-over-role -- A group of action buttons is not a form fieldset.
+    <div
+      role="group"
       ref={ref}
       aria-label={labels.bulkActions}
       aria-busy={busy || undefined}
-      className="astw:max-w-full astw:shrink-0"
+      className="astw:flex astw:min-w-0 astw:max-w-full astw:shrink-0 astw:flex-wrap astw:items-center astw:gap-1.5"
     >
-      <Toolbar.Group>
-        <span className="astw:text-label-md astw:whitespace-nowrap astw:tabular-nums">
-          {countText}
-        </span>
-        <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />
-        {inline.map((action) => (
-          <Button
-            key={action.id}
-            size={buttonSize}
-            variant={action.variant === "destructive" ? "destructive" : "outline"}
-            disabled={busy}
-            onClick={() => run(action)}
-          >
-            {pendingActionId === action.id ? <Spinner /> : action.icon}
-            {action.label}
-          </Button>
-        ))}
-        {overflow.length > 0 && (
-          <Menu.Root>
-            <Menu.Trigger
-              disabled={busy}
-              render={
-                <Button variant="ghost" size={buttonSize} aria-label={labels.moreActions}>
-                  {overflow.some((action) => action.id === pendingActionId) ? (
-                    <Spinner />
-                  ) : (
-                    <Ellipsis className="astw:size-4" />
-                  )}
-                </Button>
-              }
-            />
-            <Menu.Content position={{ side: "top", align: "end" }}>
-              {overflow.map((action) => (
-                <Menu.Item
-                  key={action.id}
-                  disabled={busy}
-                  onClick={() => run(action)}
-                  className={cn(action.variant === "destructive" && "astw:text-danger-text")}
-                >
-                  {action.icon}
-                  {action.label}
-                </Menu.Item>
-              ))}
-            </Menu.Content>
-          </Menu.Root>
-        )}
-        <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />
+      <span className="astw:text-label-md astw:whitespace-nowrap astw:tabular-nums">
+        {countText}
+      </span>
+      <span
+        aria-hidden="true"
+        className="astw:mx-0.5 astw:h-4 astw:w-px astw:shrink-0 astw:bg-border"
+      />
+      {inline.map((action) => (
         <Button
+          key={action.id}
           size={buttonSize}
-          variant="ghost"
-          aria-label={labels.clearSelection}
+          variant={action.variant === "destructive" ? "destructive" : "outline"}
           disabled={busy}
-          onClick={clearSelection}
+          onClick={() => run(action)}
         >
-          {labels.clear}
+          {pendingActionId === action.id ? <Spinner /> : action.icon}
+          {action.label}
         </Button>
-      </Toolbar.Group>
-    </Toolbar.Row>
+      ))}
+      {overflow.length > 0 && (
+        <Menu.Root>
+          <Menu.Trigger
+            disabled={busy}
+            render={
+              <Button variant="ghost" size={buttonSize} aria-label={labels.moreActions}>
+                {overflow.some((action) => action.id === pendingActionId) ? (
+                  <Spinner />
+                ) : (
+                  <Ellipsis className="astw:size-4" />
+                )}
+              </Button>
+            }
+          />
+          <Menu.Content position={{ side: "top", align: "end" }}>
+            {overflow.map((action) => (
+              <Menu.Item
+                key={action.id}
+                disabled={busy}
+                onClick={() => run(action)}
+                className={cn(action.variant === "destructive" && "astw:text-danger-text")}
+              >
+                {action.icon}
+                {action.label}
+              </Menu.Item>
+            ))}
+          </Menu.Content>
+        </Menu.Root>
+      )}
+      <span
+        aria-hidden="true"
+        className="astw:mx-0.5 astw:h-4 astw:w-px astw:shrink-0 astw:bg-border"
+      />
+      <Button
+        size={buttonSize}
+        variant="ghost"
+        aria-label={labels.clearSelection}
+        disabled={busy}
+        onClick={clearSelection}
+      >
+        {labels.clear}
+      </Button>
+    </div>
+    // oxlint-enable jsx-a11y/prefer-tag-over-role
   );
 }

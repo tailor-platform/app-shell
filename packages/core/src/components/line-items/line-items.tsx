@@ -1,5 +1,6 @@
 import { useMemo, useRef, type ReactNode } from "react";
-import { GripVertical } from "lucide-react";
+import { ArrowDown, ArrowUp, GripVertical } from "lucide-react";
+import type { HeaderRenderContext } from "@/components/internals/table-core/column-types";
 import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Table } from "@/components/table";
@@ -44,11 +45,7 @@ function Root<T extends Record<string, unknown>>({
   getLineItemsController(value);
   return (
     <Context.Provider value={value}>
-      <TableFrame
-        data-slot="line-items"
-        data-mode={value.mode}
-        className={cn("astw:min-w-0", className)}
-      >
+      <TableFrame data-slot="line-items" className={cn("astw:min-w-0", className)}>
         {children}
       </TableFrame>
     </Context.Provider>
@@ -64,6 +61,7 @@ export type LineItemsTableProps = {
 function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineItemsTableProps) {
   const value = useLineItemsContext<Record<string, unknown>>("LineItems.Table");
   const controller = getLineItemsController(value);
+  const sort = controller.getSortState();
   const reorder = useRowReorder(value, controller);
   const errors = useMemo(() => {
     const byRow = new Map<string, Map<string, string>>();
@@ -213,7 +211,37 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
               </Table.Head>
             )}
             {columns.map(({ column, id }) => {
-              const context = { label: column.label, sortable: false as const };
+              const direction = sort?.columnId === id ? sort.direction : undefined;
+              const context: HeaderRenderContext = column.sort
+                ? {
+                    label: column.label,
+                    sortable: true,
+                    sortDirection: direction,
+                    activateSort: () => {
+                      if (!direction) controller.setSort(id, "Asc");
+                      else controller.setSort(id, direction === "Asc" ? "Desc" : undefined);
+                    },
+                  }
+                : { label: column.label, sortable: false };
+              let content: ReactNode = column.label;
+              if (column.header) content = column.header(context);
+              else if (context.sortable)
+                content = (
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={context.activateSort}
+                    className={cn("astw:w-full", {
+                      "astw:justify-end": align(column) === "right",
+                      "astw:justify-center": align(column) === "center",
+                      "astw:justify-start": align(column) === "left",
+                    })}
+                  >
+                    {column.label}
+                    {direction === "Asc" && <ArrowUp aria-hidden="true" />}
+                    {direction === "Desc" && <ArrowDown aria-hidden="true" />}
+                  </Button>
+                );
               const props = column.headerProps?.(context);
               const pinned = pinCellProps(
                 placements.get(id),
@@ -224,6 +252,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                 <Table.Head
                   key={id}
                   align={align(column)}
+                  aria-sort={direction && (direction === "Asc" ? "ascending" : "descending")}
                   className={pinned.className}
                   title={props?.title}
                   style={pinned.style}
@@ -234,9 +263,13 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                     columnKey={id}
                     pinnedColumns={value.pinnedColumns}
                     setPin={value.setPin}
+                    sortDirection={direction}
+                    onSortDirectionChange={
+                      column.sort ? (next) => controller.setSort(id, next) : undefined
+                    }
                     slotPrefix="line-items"
                   >
-                    {column.header ? column.header(context) : column.label}
+                    {content}
                   </TableHeaderContextMenu>
                 </Table.Head>
               );
@@ -312,7 +345,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                       row={row}
                       column={column}
                       index={index}
-                      mode={value.mode}
+                      selected={selected.has(lineKey)}
                       controller={controller}
                       display={display}
                       message={errors.get(lineKey)?.get(id)}

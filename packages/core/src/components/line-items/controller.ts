@@ -48,6 +48,7 @@ function ruleBindings<T extends Record<string, unknown>>(columns: readonly LineI
     column.accessorKey,
     column.normalize,
     column.edit?.onValueCommitted,
+    column.edit?.canEdit,
     column.equals,
     column.commit,
     column.edit?.editorType === "date" ? column.edit.min : undefined,
@@ -69,12 +70,10 @@ export function createLineItemsController<T extends Record<string, unknown>>(
   let options = initial;
   let bindings = ruleBindings(initial.columns);
   const idKey = initial.idKey ?? "id";
-  const ordering = initial.ordering ?? "sort";
   const document = createLineItemsDocument<T>({
     columns: initial.columns,
     lines: initial.defaultLines,
     idKey: idKey as keyof T & string,
-    ordering,
   });
   const cells = new Map<string, Map<string, Cell>>();
   const listeners = new Set<() => void>();
@@ -84,6 +83,32 @@ export function createLineItemsController<T extends Record<string, unknown>>(
   let preparing: Preparation<T> | null = null;
   let lastUnsaved = document.isDirty();
   let errors: readonly LineItemsValidationIssue[] = [];
+  let selectedIds = new Set<string>();
+  let sortState: { columnId: string; direction: "Asc" | "Desc" } | undefined;
+  let sortedCache:
+    | {
+        rows: readonly T[];
+        comparator: (left: T, right: T) => number;
+        state: typeof sortState;
+        result: readonly T[];
+      }
+    | undefined;
+
+  function getRows(): readonly T[] {
+    const rows = document.getRows();
+    const comparator = sortState && columnFor(sortState.columnId)?.sort?.comparator;
+    if (!sortState || !comparator) return rows;
+    if (
+      sortedCache?.rows === rows &&
+      sortedCache.comparator === comparator &&
+      sortedCache.state === sortState
+    )
+      return sortedCache.result;
+    const direction = sortState.direction === "Asc" ? 1 : -1;
+    const result = Object.freeze(rows.toSorted((a, b) => direction * comparator(a, b)));
+    sortedCache = { rows, comparator, state: sortState, result };
+    return result;
+  }
 
   function invalidatePreparation() {
     const previous = preparing;
@@ -358,10 +383,40 @@ export function createLineItemsController<T extends Record<string, unknown>>(
     },
     getSnapshot: () => snapshot,
     getErrors: () => errors,
-    configure(next: UseLineItemsOptions<T>) {
+    getRows,
+    getSortState: () => sortState,
+    setSort(columnId: string, direction: "Asc" | "Desc" | undefined) {
+      if (direction && !columnFor(columnId)?.sort)
+        throw new Error(`Column "${columnId}" does not support sorting`);
+      if (sortState?.columnId === columnId && sortState.direction === direction) return;
+      const previous = sortState;
+      sortState = direction ? { columnId, direction } : undefined;
+      try {
+        getRows();
+      } catch (error) {
+        sortState = previous;
+        throw error;
+      }
+      emit();
+    },
+    configure(next: UseLineItemsOptions<T>, selectedKeys: readonly string[] = []) {
       assertSupported(next);
-      if ((next.idKey ?? "id") !== idKey || (next.ordering ?? "sort") !== ordering)
-        throw new Error("Remount LineItems to change idKey or ordering");
+      if ((next.idKey ?? "id") !== idKey) throw new Error("Remount LineItems to change idKey");
+      const previousComparator = sortState && columnFor(sortState.columnId)?.sort?.comparator;
+      const nextSelected = new Set(selectedKeys);
+      const permissionsChanged = records().some((cell) => {
+        const row = getCurrentRow(cell.clientKey);
+        if (!row) return false;
+        const key = document.getLineKey(row);
+        const replacement = next.columns.find(
+          (column) => (column.id ?? column.accessorKey) === cell.columnId,
+        );
+        return (
+          (columnFor(cell.columnId)?.edit?.canEdit?.(row, { selected: selectedIds.has(key) }) ??
+            true) !==
+          (replacement?.edit?.canEdit?.(row, { selected: nextSelected.has(key) }) ?? true)
+        );
+      });
       const nextBindings = ruleBindings(next.columns);
       const rulesChanged = !sameBindings(bindings, nextBindings);
       const ids = new Set(next.columns.map((column) => column.id ?? column.accessorKey));
@@ -393,7 +448,8 @@ export function createLineItemsController<T extends Record<string, unknown>>(
       if (
         rulesChanged ||
         options.validate !== next.validate ||
-        (options.mode ?? "edit") !== (next.mode ?? "edit")
+        permissionsChanged ||
+        (options.orderer ?? "manual") !== (next.orderer ?? "manual")
       ) {
         version++;
         invalidatePreparation();
@@ -411,15 +467,21 @@ export function createLineItemsController<T extends Record<string, unknown>>(
       }
       bindings = nextBindings;
       options = next;
+      selectedIds = nextSelected;
+      const comparator = sortState && columnFor(sortState.columnId)?.sort?.comparator;
+      if (sortState && !comparator) sortState = undefined;
       for (const cell of records()) {
         const column = columnFor(cell.columnId);
-        const mode = next.mode ?? "edit";
+        const row = getCurrentRow(cell.clientKey);
         const editable =
-          mode !== "view" && column?.edit && (column.edit.modes ?? ["edit"]).includes(mode);
+          row &&
+          column?.edit &&
+          (column.edit.canEdit?.(row, { selected: selectedIds.has(document.getLineKey(row)) }) ??
+            true);
         if (column && !editable && cell.session.getState().status === "editing")
           void cell.editor?.commit();
       }
-      if (hasUnsavedChanges() !== lastUnsaved) emit();
+      if (hasUnsavedChanges() !== lastUnsaved || previousComparator !== comparator) emit();
       for (const rowCells of cells.values()) {
         for (const [id, cell] of rowCells) {
           if (ids.has(id)) {
@@ -488,9 +550,19 @@ export function createLineItemsController<T extends Record<string, unknown>>(
         updateLines([{ lineKey, patch }]);
       },
       reorderLine(lineKey: string, afterLineKey: string | null) {
+        if (options.orderer === "readonly")
+          throw new Error("Manual reordering is disabled by orderer: readonly");
         const before = document.getRows();
-        document.reorder(lineKey, afterLineKey);
-        if (document.getRows() !== before) changed();
+        // The first manual move adopts the complete sorted order, including search-hidden lines.
+        document.reorder(
+          lineKey,
+          afterLineKey,
+          sortState ? getRows().map(document.getLineKey) : undefined,
+        );
+        if (document.getRows() !== before || (sortState && lineKey !== afterLineKey)) {
+          sortState = undefined;
+          changed();
+        }
       },
       getLineKey: document.getLineKey,
       isNewLine: document.isNewLine,

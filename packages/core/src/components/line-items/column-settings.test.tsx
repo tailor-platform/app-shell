@@ -132,7 +132,7 @@ describe("LineItems column preferences", () => {
     fireEvent.keyDown(within(panel).getByRole("button", { name: "Reorder Qty" }), {
       key: "ArrowDown",
     });
-    expect(headings(container)).toEqual(["SKU", "Price", "Qty", "Amount", "Actions"]);
+    expect(headings(container)).toEqual(["Reorder", "SKU", "Price", "Qty", "Amount", "Actions"]);
     expect(current.allLines).toBe(original);
     expect(current.isDirty).toBe(false);
     expect(current.getChangeSet().isEmpty).toBe(true);
@@ -158,7 +158,7 @@ describe("LineItems column preferences", () => {
     fireEvent.dragStart(price);
     fireEvent.dragOver(right);
     fireEvent.drop(right);
-    expect(headings(container)).toEqual(["SKU", "Qty", "Amount", "Price", "Actions"]);
+    expect(headings(container)).toEqual(["Reorder", "SKU", "Qty", "Amount", "Price", "Actions"]);
     expect(header(container, "Price").style.right).toBe("128px");
     expect(header(container, "Amount").style.right).toBe("272px");
     expect(current.isDirty).toBe(false);

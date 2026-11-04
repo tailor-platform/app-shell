@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Badge,
   Button,
@@ -15,6 +15,8 @@ import {
   type UseLineItemsOptions,
 } from "@tailor-platform/app-shell";
 import { Minus, Plus, RotateCcw, Rows3, Save, Trash2 } from "lucide-react";
+
+type Mode = "readonly" | "edit" | "amend";
 
 type Line = {
   id?: string;
@@ -65,11 +67,12 @@ const searchSuppliers = async (query: string | null, { signal }: { signal: Abort
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const amount = (line: Line) => (line.quantity ?? 0) * (line.unitPrice ?? 0);
 const { column } = createLineItemHelper<Line>();
-const columns = [
+const createColumns = (canEdit: () => boolean, canAmend: () => boolean) => [
   column({
     accessorKey: "sku",
     label: "SKU",
     type: "text",
+    sort: { comparator: (a, b) => a.sku.localeCompare(b.sku) },
     pin: "left",
     footer: "Total",
     render: (line) => (
@@ -83,8 +86,10 @@ const columns = [
     accessorKey: "description",
     label: "Product name",
     type: "text",
+    sort: { comparator: (a, b) => (a.description ?? "").localeCompare(b.description ?? "") },
     edit: {
       editorType: "text",
+      canEdit,
       onValueCommitted: (_line, value) => {
         if (!value?.trim()) throw new CellEditError("Enter a product name.");
       },
@@ -97,8 +102,10 @@ const columns = [
     accessorKey: "quantity",
     label: "Qty",
     type: "number",
+    sort: { comparator: (a, b) => (a.quantity ?? 0) - (b.quantity ?? 0) },
     edit: {
       editorType: "number",
+      canEdit,
       onValueCommitted: (_line, value) => {
         if (value === null || value <= 0)
           throw new CellEditError("Quantity must be greater than zero.");
@@ -113,6 +120,7 @@ const columns = [
     typeOptions: { currency: "USD", locale: "en-US" },
     edit: {
       editorType: "number",
+      canEdit,
       onValueCommitted: (_line, value) => {
         if (value === null || value < 0)
           throw new CellEditError("Unit price must be zero or greater.");
@@ -130,6 +138,7 @@ const columns = [
     edit: {
       editorType: "combobox",
       fetcher: searchSuppliers,
+      canEdit,
       getOptionLabel: supplierLabel,
       placeholder: "Search suppliers",
     },
@@ -139,14 +148,14 @@ const columns = [
     accessorKey: "warehouse",
     label: "Warehouse",
     type: "text",
-    edit: { editorType: "text" },
+    edit: { editorType: "text", canEdit },
     width: 160,
   }),
   column({
     accessorKey: "location",
     label: "Bin / location",
     type: "text",
-    edit: { editorType: "text" },
+    edit: { editorType: "text", canEdit },
     width: 136,
   }),
   column({
@@ -161,7 +170,7 @@ const columns = [
       unitOptions.find((option) => option.value === line.unitOfMeasure)?.label ??
       line.unitOfMeasure ??
       "—",
-    edit: { editorType: "combobox", options: unitOptions },
+    edit: { editorType: "combobox", options: unitOptions, canEdit },
     width: 144,
   }),
   column({
@@ -169,7 +178,7 @@ const columns = [
     label: "Requested date",
     type: "date",
     typeOptions: { locale: "en-US" },
-    edit: { editorType: "date", min: "2026-12-01", max: "2027-12-31" },
+    edit: { editorType: "date", min: "2026-12-01", max: "2027-12-31", canEdit },
     width: 160,
   }),
   column({
@@ -177,14 +186,14 @@ const columns = [
     label: "Promised date",
     type: "date",
     typeOptions: { locale: "en-US" },
-    edit: { editorType: "date", min: "2026-12-01", max: "2027-12-31" },
+    edit: { editorType: "date", min: "2026-12-01", max: "2027-12-31", canEdit: canAmend },
     width: 160,
   }),
   column({
     accessorKey: "expedite",
     label: "Expedite",
     type: "text",
-    edit: { editorType: "boolean" },
+    edit: { editorType: "boolean", canEdit },
     align: "center",
     width: 112,
   }),
@@ -198,7 +207,7 @@ const columns = [
     type: "number",
     render: (line) =>
       priorityOptions.find((option) => option.value === line.priority)?.label ?? "—",
-    edit: { editorType: "combobox", options: priorityOptions },
+    edit: { editorType: "combobox", options: priorityOptions, canEdit },
     width: 168,
   }),
   column({
@@ -209,6 +218,7 @@ const columns = [
       !!line.packSize && `${line.packSize.units} units / pack`.includes(query),
     edit: {
       editorType: "custom",
+      canEdit,
       onValueCommitted: (_line, value) => {
         if (value !== null && (!Number.isInteger(value.units) || value.units <= 0))
           throw new CellEditError("Pack size must be a positive whole number.");
@@ -263,6 +273,7 @@ const columns = [
     type: "number",
     edit: {
       editorType: "number",
+      canEdit: canAmend,
       onValueCommitted: (_line, value) => {
         if (value === null || value < 0)
           throw new CellEditError("Received quantity must be zero or greater.");
@@ -274,21 +285,21 @@ const columns = [
     accessorKey: "projectCode",
     label: "Project",
     type: "text",
-    edit: { editorType: "text" },
+    edit: { editorType: "text", canEdit },
     width: 160,
   }),
   column({
     accessorKey: "costCenter",
     label: "Cost center",
     type: "text",
-    edit: { editorType: "text" },
+    edit: { editorType: "text", canEdit },
     width: 160,
   }),
   column({
     accessorKey: "notes",
     label: "Notes",
     type: "text",
-    edit: { editorType: "text" },
+    edit: { editorType: "text", canEdit: canAmend },
     width: 320,
     truncate: true,
   }),
@@ -296,6 +307,7 @@ const columns = [
     id: "amount",
     label: "Amount",
     accessor: amount,
+    sort: { comparator: (a, b) => amount(a) - amount(b) },
     pin: "right",
     type: "money",
     typeOptions: { currency: "USD", locale: "en-US" },
@@ -399,6 +411,15 @@ const validateLines: NonNullable<UseLineItemsOptions<Line>["validate"]> = async 
     : [];
 
 function LineItemsNextPage() {
+  const [mode, setMode] = useState<Mode>("edit");
+  const columns = useMemo(
+    () =>
+      createColumns(
+        () => mode === "edit",
+        () => mode !== "readonly",
+      ),
+    [mode],
+  );
   const [pending, setPending] = useState<LineItemsChangeSet<Line> | null>(null);
   const [lastSent, setLastSent] = useState<LineItemsChangeSet<Line> | null>(null);
   const [preparing, setPreparing] = useState(false);
@@ -411,47 +432,52 @@ function LineItemsNextPage() {
     columns,
     validate: validateLines,
     defaultLines: initialLines,
-    ordering: "manual",
+    orderer: mode === "edit" ? "manual" : "readonly",
     tableId: "showcase:line-items-next",
-    rowSelection: {
-      actions: [
-        {
-          id: "delete",
-          label: "Delete selected",
-          icon: <Trash2 />,
-          onClick: (ids, { clearSelection }) => {
-            lineItems.removeLines(ids);
-            clearSelection();
-            setMessage(
-              `Deleted ${ids.length} selected lines. Start save to persist the changes, or Discard to restore them.`,
-            );
-          },
-        },
-      ],
-    },
-    rowActions: {
-      width: 64,
-      render: (line, { lineKey }): ReactNode => {
-        return (
-          <div className="flex justify-end gap-1">
-            <Button
-              variant="ghost"
-              size="xs"
-              aria-label={`Remove ${line.sku}`}
-              onClick={() => {
-                lineItems.removeLine(lineKey);
-              }}
-            >
-              <Trash2 />
-            </Button>
-          </div>
-        );
-      },
-    },
+    rowSelection:
+      mode === "edit"
+        ? {
+            actions: [
+              {
+                id: "delete",
+                label: "Delete selected",
+                icon: <Trash2 />,
+                onClick: (ids, { clearSelection }) => {
+                  lineItems.removeLines(ids);
+                  clearSelection();
+                  setMessage(
+                    `Deleted ${ids.length} selected lines. Start save to persist the changes, or Discard to restore them.`,
+                  );
+                },
+              },
+            ],
+          }
+        : undefined,
+    rowActions:
+      mode === "edit"
+        ? {
+            width: 64,
+            render: (line, { lineKey }): ReactNode => {
+              return (
+                <div className="flex justify-end gap-1">
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    aria-label={`Remove ${line.sku}`}
+                    onClick={() => {
+                      lineItems.removeLine(lineKey);
+                    }}
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
+              );
+            },
+          }
+        : undefined,
   });
   const changeSet = lineItems.getChangeSet();
   const unsaved = lineItems.hasUnsavedChanges();
-  const selecting = lineItems.selectedIds.length > 0;
   function addLine() {
     lineItems.addLine({
       ...lineDefaults,
@@ -460,6 +486,11 @@ function LineItemsNextPage() {
       quantity: 1,
       unitPrice: 10,
     });
+  }
+  function discard() {
+    lineItems.revert();
+    lineItems.clearSelection?.();
+    setMessage("Document changes were restored to the saved state.");
   }
   async function save() {
     setPreparing(true);
@@ -513,6 +544,26 @@ function LineItemsNextPage() {
           <Text variant="body-sm" className="text-muted-foreground">
             PO-2026-0042 · Saves are mocked locally. Reload to restore the initial data.
           </Text>
+          <fieldset aria-label="Editing mode" className="m-0 flex gap-2 border-0 p-0">
+            {(["readonly", "edit", "amend"] as const).map((value) => (
+              <Button
+                key={value}
+                size="xs"
+                variant={mode === value ? "secondary" : "outline"}
+                aria-pressed={mode === value}
+                onClick={() => setMode(value)}
+              >
+                {value === "readonly" ? "Readonly" : value === "edit" ? "Edit" : "Amend"}
+              </Button>
+            ))}
+          </fieldset>
+          <Text variant="body-sm" className="text-muted-foreground">
+            {mode === "readonly"
+              ? "Readonly: browse, search, and sort without editing lines."
+              : mode === "amend"
+                ? "Amend: edit Promised date, Received qty, and Notes only. Manual reordering and adding/removing lines are disabled."
+                : "Edit: edit values, add/remove lines, sort columns, and manually reorder lines."}
+          </Text>
           {lineItems.errors.length > 0 && (
             <Badge variant="outline-error">Errors: {lineItems.errors.length}</Badge>
           )}
@@ -537,42 +588,36 @@ function LineItemsNextPage() {
           </Toolbar.Root>
           <LineItems.Table aria-label="Purchase order lines" />
           <LineItems.Footer>
-            <Toolbar.Row
-              justify="between"
-              aria-label="Line item document actions"
-              className={selecting ? "astw:ml-auto" : "astw:w-full"}
-            >
-              {!selecting && (
-                <Toolbar.Group>
-                  <Button variant="outline" size="xs" onClick={addLine}>
+            {mode !== "readonly" && (
+              <div className="flex w-full flex-wrap items-center gap-2">
+                {mode === "edit" && (
+                  <Button type="button" size="xs" variant="outline" onClick={addLine}>
                     <Plus /> Add line
                   </Button>
-                </Toolbar.Group>
-              )}
-              <Toolbar.Group>
-                <Button
-                  variant="outline"
-                  size="xs"
-                  disabled={!unsaved}
-                  onClick={() => {
-                    lineItems.revert();
-                    lineItems.clearSelection?.();
-                    setMessage("Document changes were restored to the saved state.");
-                  }}
-                >
-                  <RotateCcw /> Discard
-                </Button>
-                <Button
-                  size="xs"
-                  disabled={preparing || (!pending && !unsaved)}
-                  onClick={() => {
-                    void save();
-                  }}
-                >
-                  <Save /> {pending ? "Apply save response" : "Start save"}
-                </Button>
-              </Toolbar.Group>
-            </Toolbar.Row>
+                )}
+                <div className="ml-auto flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="xs"
+                    variant="outline"
+                    disabled={!unsaved}
+                    onClick={discard}
+                  >
+                    <RotateCcw /> Discard
+                  </Button>
+                  <Button
+                    type="button"
+                    size="xs"
+                    disabled={preparing || (!pending && !unsaved)}
+                    onClick={() => {
+                      void save();
+                    }}
+                  >
+                    <Save /> {pending ? "Apply save response" : "Start save"}
+                  </Button>
+                </div>
+              </div>
+            )}
           </LineItems.Footer>
         </LineItems.Root>
         <Text variant="body-sm" render={<output />} className="text-muted-foreground">
@@ -586,8 +631,9 @@ function LineItemsNextPage() {
           horizontally to inspect them while SKU, Amount, and Actions stay pinned. Use Columns to
           reorder columns or change their pinned edge; these preferences are saved locally. Search
           narrows the visible rows as you type without changing document totals or the save
-          snapshot. Drag the row handles to reorder lines, or focus a handle and use
-          ArrowUp/ArrowDown. Select all checks only visible lines; Delete selected also removes
+          snapshot. Click SKU, Product name, Qty, or Amount to sort. In Edit mode, moving a row
+          clears column sorting and keeps that manual order. Drag the row handles, or focus one and
+          use ArrowUp/ArrowDown. Select all checks only visible lines; Delete selected also removes
           selected lines hidden by search. Selection is configured through useLineItems, does not
           make the document dirty, and the example clears it on Discard or applying a save response.
         </Text>

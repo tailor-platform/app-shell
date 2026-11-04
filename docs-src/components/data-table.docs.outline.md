@@ -5,7 +5,9 @@ title: DataTable
 description: Compound data table component with sortable columns, filter chips, cursor-based pagination, row actions, and multi-row selection
 sources:
   - packages/core/src/components/data-table/**
+  - packages/core/src/components/internals/table-core/column-types.ts
   - packages/core/src/components/internals/table-core/selection-types.ts
+  - packages/core/src/components/internals/table-core/selection-bar.tsx
   - packages/core/src/components/internals/table-core/cell-edit-error.ts
   - packages/core/src/hooks/use-collection-variables.ts
   - packages/core/src/lib/collection-url-state.ts
@@ -753,7 +755,7 @@ return (
 
 ### Accessibility
 
-The bar is a `role="toolbar"` named "Bulk actions", so Arrow, Home, and End move between its controls (see [`Toolbar`](./toolbar.md)) while Tab still reaches each one. The selection count is announced through a polite live region from the first selection on. When the bar closes while focus is inside it — after **Clear**, or an action that clears — focus returns to the header checkbox instead of dropping to `<body>`.
+The footer's bulk controls are a plain div-based `role="group"` named "Bulk actions", not a Toolbar. Native Tab navigation reaches each enabled control; the overflow menu retains its own keyboard navigation. Pagination remains available beside the bulk group. The selection count is announced through a polite live region from the first selection on. When the bar closes while focus is inside it — after **Clear**, or an action that clears — focus returns to the header checkbox instead of dropping to `<body>`.
 
 ## `useDataTable`
 

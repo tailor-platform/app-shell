@@ -47,7 +47,7 @@ export function LineItemsFooter({ children, className }: LineItemsFooterProps) {
       selectionEnabled={selectionEnabled}
       selecting={selecting}
     >
-      {selecting && (
+      {selecting ? (
         <TableSelectionBar
           countText={count}
           actions={actions}
@@ -64,8 +64,9 @@ export function LineItemsFooter({ children, className }: LineItemsFooterProps) {
           }}
           onFocusedUnmount={onFocusedUnmount}
         />
+      ) : (
+        children
       )}
-      {children}
       {selectionEnabled && (
         <Text.span className="astw:sr-only" aria-live="polite" aria-atomic="true">
           {selecting ? count : ""}

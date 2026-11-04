@@ -1167,7 +1167,7 @@ return (
 
 ### Accessibility
 
-The bar is a `role="toolbar"` named "Bulk actions", so Arrow, Home, and End move between its controls (see [`Toolbar`](./toolbar.md)) while Tab still reaches each one. The selection count is announced through a polite live region from the first selection on. When the bar closes while focus is inside it — after **Clear**, or an action that clears — focus returns to the header checkbox instead of dropping to `<body>`.
+The footer's bulk controls are a plain div-based `role="group"` named "Bulk actions", not a Toolbar. Native Tab navigation reaches each enabled control; the overflow menu retains its own keyboard navigation. Pagination remains available beside the bulk group. The selection count is announced through a polite live region from the first selection on. When the bar closes while focus is inside it — after **Clear**, or an action that clears — focus returns to the header checkbox instead of dropping to `<body>`.
 
 ## `useDataTable`
 

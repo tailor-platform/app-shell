@@ -22,7 +22,7 @@ export function useRowReorder<T extends Record<string, unknown>>(
 ) {
   const t = useLineItemsT();
   const hintId = useId();
-  const enabled = value.ordering === "manual" && value.mode !== "view";
+  const enabled = value.orderer === "manual";
   const source = useRef<string | null>(null);
   const focusAfterMove = useRef<string | null>(null);
   const handles = useRef(new Map<string, HTMLButtonElement>());

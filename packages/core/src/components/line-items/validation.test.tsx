@@ -42,7 +42,7 @@ function setup(
         ]
       : columns,
     defaultLines: rows,
-    ordering: "manual",
+    orderer: "manual",
     validate,
   };
   const controller = createLineItemsController(options);
@@ -93,7 +93,7 @@ describe("save-boundary document validation", () => {
     expect(commands.getCellError("B", "quantity")).toBe("Reduce the combined quantity");
   });
 
-  it("does not run on render, search, or adoption, then checks unchanged/hidden/new rows in view mode", async () => {
+  it("does not run on render, search, or adoption, then checks unchanged/hidden/new rows with readonly orderer", async () => {
     const validate = vi.fn<NonNullable<UseLineItemsOptions<Row>["validate"]>>(
       (lines, { getLineKey }) => [
         issue,
@@ -106,7 +106,7 @@ describe("save-boundary document validation", () => {
       ],
     );
     const view = renderHook(() =>
-      useLineItems<Row>({ columns, defaultLines: rows, mode: "view", validate }),
+      useLineItems<Row>({ columns, defaultLines: rows, orderer: "readonly", validate }),
     );
     let key!: string;
     act(() => {
@@ -157,6 +157,7 @@ describe("save-boundary document validation", () => {
     "remove",
     "reorder",
     "validator",
+    "orderer",
     "unmount",
   ] as const)(
     "retires pending validation immediately on %s and permits another attempt before it settles",
@@ -179,6 +180,7 @@ describe("save-boundary document validation", () => {
       if (action === "remove") commands.removeLine("A");
       if (action === "reorder") commands.reorderLine("B", null);
       if (action === "validator") controller.configure({ ...options, validate: () => [] });
+      if (action === "orderer") controller.configure({ ...options, orderer: "readonly" });
       if (action === "unmount") controller.deactivate();
       expect(await pending).toBeNull();
       if (action !== "unmount") expect(await commands.commitEdits()).not.toBeNull();

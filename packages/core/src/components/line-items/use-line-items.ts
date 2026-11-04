@@ -22,7 +22,7 @@ export function useLineItems<T extends Record<string, unknown>>(
     [options.columns],
   );
   const layout = useColumnLayout(meta, { tableId: options.tableId, namespace: "line-items" });
-  const rows = controller.document.getRows();
+  const rows = controller.getRows();
   const searchColumns = useMemo(
     () =>
       options.columns.map((column) => ({
@@ -48,8 +48,7 @@ export function useLineItems<T extends Record<string, unknown>>(
     moveColumn: layout.moveColumn,
     setColumnOrder: layout.setColumnOrder,
     setPin: layout.setPin,
-    mode: options.mode ?? "edit",
-    ordering: options.ordering ?? "sort",
+    orderer: options.orderer ?? "manual",
     rowActions: options.rowActions,
     rowSelection: options.rowSelection,
     ...selection,
@@ -65,7 +64,7 @@ export function useLineItems<T extends Record<string, unknown>>(
   bindLineItemsController(value, controller);
 
   // Commands and retained editors consult only the latest committed owner/rules.
-  useLayoutEffect(() => controller.configure(options));
+  useLayoutEffect(() => controller.configure(options, selection.selectedIds));
   useEffect(() => {
     controller.activate();
     return controller.deactivate;

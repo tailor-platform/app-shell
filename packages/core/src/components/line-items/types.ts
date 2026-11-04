@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { AsyncFetcher } from "@/hooks/use-async-items";
 import type { RowSelectionOptions } from "@/components/internals/table-core/selection-types";
 import type {
+  CellEditState,
   ColumnCellType,
   ColumnDisplay,
   ColumnDisplayProps,
@@ -9,13 +10,11 @@ import type {
   TypedColumnDisplay,
 } from "@/components/internals/table-core/column-types";
 
-export type LineItemsMode = "view" | "edit" | "amend";
-
 type EditorBase<TRow extends Record<string, unknown>, TValue> = {
   /** Optional check before internal adoption. Throw/reject retains the draft; normal completion adopts it. */
   onValueCommitted?: (row: Readonly<TRow>, value: TValue) => void | Promise<void>;
-  /** Omitted means edit only; view is never an editable mode. */
-  modes?: readonly Exclude<LineItemsMode, "view">[];
+  /** Per-row edit permission. Defaults to true; receives the same selection state as DataTable. */
+  canEdit?: (row: TRow, state: CellEditState) => boolean;
   error?: false | { render: (ctx: { row: TRow; error: unknown }) => ReactNode };
 };
 
@@ -30,7 +29,6 @@ export interface LineItemsCustomEditorContext<TRow extends Record<string, unknow
   onCommit: (next: TValue) => void;
   onCancel: () => void;
   row: Readonly<TRow>;
-  mode: LineItemsMode;
   ariaLabel: string;
 }
 
@@ -90,6 +88,7 @@ type NoDocumentRules = {
 };
 
 type LineItemsColumnProps<TRow extends Record<string, unknown>> = ColumnDisplayProps<TRow> & {
+  /** Enables local column sorting; a manual move adopts the sorted order and clears sorting. */
   sort?: { comparator: (left: TRow, right: TRow) => number };
   /** Overrides default value matching; receives the trimmed, NFKC/lowercase query. */
   search?: (row: TRow, query: string) => boolean;
@@ -149,7 +148,7 @@ export type LineItemsLineChange<T extends Record<string, unknown>> =
 export type LineItemsChangeSet<T extends Record<string, unknown>> = {
   readonly isEmpty: boolean;
   readonly lineChanges: readonly LineItemsLineChange<T>[];
-  /** Authoritative final order, including new rows; only present for changed manual order. */
+  /** Authoritative final order, including new rows; present for changed adopted order or membership. */
   readonly order?: readonly LineItemsLineRef[];
 };
 
@@ -190,9 +189,8 @@ export type UseLineItemsOptions<TRow extends Record<string, unknown>> = {
   /** Read once. Remount with a different React key to edit another document. */
   defaultLines?: readonly TRow[];
   idKey?: keyof TRow & string;
-  mode?: LineItemsMode;
-  /** Manual ordering adds Table drag handles outside view mode. Read once; remount to change. */
-  ordering?: "sort" | "manual";
+  /** Defaults to manual. Readonly disables manual movement, not column sorting or cell editing. */
+  orderer?: "manual" | "readonly";
   rowActions?: LineItemsRowActions<TRow>;
   /** DataTable-compatible controlled/uncontrolled selection and bulk actions. IDs are public line keys. */
   rowSelection?: RowSelectionOptions;
@@ -201,9 +199,9 @@ export type UseLineItemsOptions<TRow extends Record<string, unknown>> = {
 };
 
 export type UseLineItemsReturn<TRow extends Record<string, unknown>> = {
-  /** Rows matching the current search, in document order. */
+  /** Rows matching the current search, in the current display order. */
   readonly lines: readonly TRow[];
-  /** Complete document, independent of presentation search. */
+  /** Complete document in the current display order, independent of search. */
   readonly allLines: readonly TRow[];
   readonly searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -213,8 +211,7 @@ export type UseLineItemsReturn<TRow extends Record<string, unknown>> = {
   moveColumn: (columnId: string, toIndex: number) => void;
   setColumnOrder: (columnIds: readonly string[]) => void;
   setPin: (columnId: string, side: "left" | "right" | "none" | null) => void;
-  readonly mode: LineItemsMode;
-  readonly ordering: "sort" | "manual";
+  readonly orderer: "manual" | "readonly";
   readonly rowActions: LineItemsRowActions<TRow> | undefined;
   rowSelection?: RowSelectionOptions;
   selectedIds: string[];

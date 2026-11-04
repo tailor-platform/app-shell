@@ -10,7 +10,6 @@ import { useLineItems } from "./use-line-items";
 import type {
   LineItemsChangeSet,
   LineItemsColumn,
-  LineItemsMode,
   UseLineItemsReturn,
   UseLineItemsOptions,
 } from "./types";
@@ -49,11 +48,11 @@ const validateQuantity: NonNullable<UseLineItemsOptions<Row>["validate"]> = (
     }));
 
 function Harness({
-  mode = "edit",
   schema = columns,
   validate = validateQuantity,
+  rowSelection,
 }: {
-  mode?: LineItemsMode;
+  rowSelection?: UseLineItemsOptions<Row>["rowSelection"];
   schema?: readonly LineItemsColumn<Row>[];
   validate?: UseLineItemsOptions<Row>["validate"];
 }) {
@@ -61,7 +60,7 @@ function Harness({
     columns: schema,
     validate,
     defaultLines: [{ id: "A", quantity: 1, name: "One" }],
-    mode,
+    rowSelection,
   });
   current = value;
   const [saved, setSaved] = useState<LineItemsChangeSet<Row> | null>(null);
@@ -99,6 +98,71 @@ function edit(label: string, value: string) {
 }
 
 describe("LineItems public composition", () => {
+  it("uses row and selection predicates, confirming a draft when permission is revoked", async () => {
+    const canEdit = vi.fn(
+      (row: Row, { selected }: { selected: boolean }) => row.id === "A" && selected,
+    );
+    render(
+      <Harness
+        rowSelection={{}}
+        schema={[
+          columns[0]!,
+          column({
+            accessorKey: "quantity",
+            label: "Quantity",
+            edit: { editorType: "number", canEdit },
+          }),
+        ]}
+      />,
+      { wrapper: createAppShellWrapper("en") },
+    );
+    expect(screen.queryByRole("textbox", { name: "Quantity, line 1" })).toBeNull();
+    expect(canEdit).toHaveBeenCalledWith(expect.objectContaining({ id: "A" }), { selected: false });
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select line 1" }));
+    edit("Quantity, line 1", "7");
+    act(() => current.clearSelection?.());
+    expect(current.allLines[0]!.quantity).toBe(7);
+    expect(screen.queryByRole("textbox", { name: "Quantity, line 1" })).toBeNull();
+    expect(current.getChangeSet().lineChanges).toEqual([
+      { action: "update", lineId: "A", patch: { quantity: 7 } },
+    ]);
+    expect(canEdit).toHaveBeenCalledWith(expect.objectContaining({ id: "A" }), { selected: true });
+  });
+
+  it("keeps a failed draft recoverable while canEdit is false", async () => {
+    const schema = (allowed: boolean) => [
+      columns[0]!,
+      column({
+        accessorKey: "quantity",
+        label: "Quantity",
+        edit: { editorType: "number", canEdit: () => allowed },
+      }),
+    ];
+    const view = render(<Harness schema={schema(true)} />, {
+      wrapper: createAppShellWrapper("en"),
+    });
+    const input = edit("Quantity, line 1", "-");
+    view.rerender(<Harness schema={schema(false)} />);
+    expect(current.allLines[0]!.quantity).toBe(1);
+    expect(current.hasUnsavedChanges()).toBe(true);
+    expect(screen.getByText("Enter a valid number.")).toBeDefined();
+    await act(async () => {
+      expect(await current.commitEdits()).toBeNull();
+    });
+    view.rerender(<Harness schema={schema(true)} />);
+    expect(
+      (screen.getByRole("textbox", { name: "Quantity, line 1" }) as HTMLInputElement).value,
+    ).toBe("-");
+    fireEvent.change(screen.getByRole("textbox", { name: "Quantity, line 1" }), {
+      target: { value: "3" },
+    });
+    await act(async () => {
+      expect(await current.commitEdits()).not.toBeNull();
+    });
+    expect(current.allLines[0]!.quantity).toBe(3);
+    expect(input.isConnected).toBe(false);
+  });
+
   it("uses onValueCommitted to reject adoption, display a safe message, and retain the correctable draft", () => {
     const check = vi.fn((_row: Readonly<Row>, value: number | null) => {
       if (value === 0) throw new CellEditError("Enter a positive quantity.");
@@ -323,7 +387,7 @@ describe("LineItems public composition", () => {
     expect(typeof current.allLines[0]!.quantity).toBe("number");
   });
 
-  it("flushes mode-locked drafts only after the new normalizer is committed", () => {
+  it("flushes canEdit-locked drafts only after the new normalizer is committed", () => {
     const initial = [
       columns[0]!,
       column({
@@ -338,15 +402,15 @@ describe("LineItems public composition", () => {
       column({
         accessorKey: "quantity",
         label: "Quantity",
-        edit: { editorType: "number" },
+        edit: { editorType: "number", canEdit: () => false },
         normalize: (value) => (value === null ? null : Math.max(10, value)),
       }),
     ];
     const view = render(<Harness schema={initial} />, { wrapper: createAppShellWrapper("en") });
     edit("Quantity, line 1", "9");
-    view.rerender(<Harness mode="view" schema={changed} />);
+    view.rerender(<Harness schema={changed} />);
     expect(current.allLines[0]!.quantity).toBe(10);
-    expect(screen.queryAllByRole("textbox")).toHaveLength(0);
+    expect(screen.queryByRole("textbox", { name: "Quantity, line 1" })).toBeNull();
   });
 
   it("uses the current document validator only when preparation is requested", async () => {
@@ -397,8 +461,20 @@ describe("LineItems public composition", () => {
     expect(current.allLines[0]!.name).toBe("One");
   });
 
-  it("view mode is read-only but document validation still covers command writes", async () => {
-    render(<Harness mode="view" />, { wrapper: createAppShellWrapper("en") });
+  it("canEdit restricts editors, not validation of direct command writes", async () => {
+    render(
+      <Harness
+        schema={[
+          column({ accessorKey: "name", label: "Name" }),
+          column({
+            accessorKey: "quantity",
+            label: "Quantity",
+            edit: { editorType: "number", canEdit: () => false },
+          }),
+        ]}
+      />,
+      { wrapper: createAppShellWrapper("en") },
+    );
     expect(screen.queryAllByRole("textbox")).toHaveLength(0);
     act(() => current.updateField("A", "quantity", -1));
     expect(current.errors).toHaveLength(0);

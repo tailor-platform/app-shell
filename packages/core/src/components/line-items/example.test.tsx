@@ -14,7 +14,7 @@ function changes() {
 const selected = (sku: string) =>
   within(screen.getByText(sku).closest("tr")!).getByRole("checkbox", { name: /Select line/ });
 const deleteButton = () =>
-  within(screen.getByRole("toolbar", { name: "Bulk actions" })).getByRole("button", {
+  within(screen.getByRole("group", { name: "Bulk actions" })).getByRole("button", {
     name: "Delete selected",
   });
 function search(query: string) {
@@ -24,6 +24,59 @@ function search(query: string) {
 }
 
 describe("LineItems showcase bulk deletion", () => {
+  it("switches consumer modes without resetting edits, limiting amend to three columns", async () => {
+    render(<LineItemsExample />, { wrapper: createAppShellWrapper("en") });
+    await userEvent.click(selected("SKU-4100"));
+    const quantity = screen.getByRole("textbox", { name: "Qty, line 1" });
+    fireEvent.focus(quantity);
+    fireEvent.change(quantity, { target: { value: "13" } });
+    await userEvent.click(screen.getByRole("button", { name: "Readonly" }));
+    const table = screen.getByRole("table", { name: "Purchase order lines" });
+    expect(within(table).queryAllByRole("textbox")).toHaveLength(0);
+    expect(screen.queryAllByRole("button", { name: /Reorder line/ })).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "Add line" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Start save" })).toBeNull();
+    const footer = table
+      .closest('[data-slot="line-items"]')!
+      .querySelector<HTMLElement>('[data-slot="line-items-footer"]')!;
+    expect(within(footer).queryAllByRole("button")).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: /Remove SKU/ })).toBeNull();
+    expect(changes().lineChanges).toContainEqual({
+      action: "update",
+      lineId: "line-1",
+      patch: { quantity: 13 },
+    });
+    expect(within(table).queryAllByRole("checkbox", { name: /^Select/ })).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "Delete selected" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Qty" }));
+    expect(changes().lineChanges).toHaveLength(1);
+    await userEvent.click(screen.getByRole("button", { name: "Amend" }));
+    expect(within(table).queryAllByRole("checkbox", { name: /^Select/ })).toHaveLength(0);
+    const first = screen.getByText("SKU-4100").closest("tr")!;
+    expect(within(first).queryByRole("textbox", { name: /^Qty,/ })).toBeNull();
+    expect(within(first).queryByRole("textbox", { name: /^Product name,/ })).toBeNull();
+    expect(within(first).queryByRole("textbox", { name: /^Requested date,/ })).toBeNull();
+    expect(within(first).getByRole("button", { name: /^Promised date,/ })).toBeDefined();
+    for (const label of ["Received qty", "Notes"])
+      expect(within(first).getByRole("textbox", { name: new RegExp(`^${label},`) })).toBeDefined();
+    expect(screen.queryAllByRole("button", { name: /Reorder line/ })).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "Delete selected" })).toBeNull();
+    const received = within(first).getByRole("textbox", { name: /^Received qty,/ });
+    fireEvent.focus(received);
+    fireEvent.change(received, { target: { value: "4" } });
+    fireEvent.keyDown(received, { key: "Enter" });
+    expect(changes().lineChanges).toContainEqual({
+      action: "update",
+      lineId: "line-1",
+      patch: { quantity: 13, receivedQuantity: 4 },
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+    expect(screen.getAllByRole("button", { name: /Reorder line/ })).toHaveLength(5);
+    expect(screen.getByRole("textbox", { name: /^Qty, line 1$/ })).toBeDefined();
+    expect(selected("SKU-4100").getAttribute("aria-checked")).toBe("true");
+    expect(changes().lineChanges).toHaveLength(1);
+  });
+
   it.each([
     ["Product name", "", "Enter a product name."],
     ["Qty", "0", "Quantity must be greater than zero."],
@@ -69,10 +122,12 @@ describe("LineItems showcase bulk deletion", () => {
     ).toBeDefined();
     expect(within(toolGroups[1]!).getByRole("button", { name: "Columns" })).toBeDefined();
     expect(within(tools).queryByRole("button", { name: "Add line" })).toBeNull();
-    const footer = screen.getByRole("toolbar", { name: "Line item document actions" });
-    const groups = footer.querySelectorAll<HTMLElement>('[data-slot="toolbar-group"]');
-    expect(within(groups[0]!).getByRole("button", { name: "Add line" })).toBeDefined();
-    const save = within(groups[1]!).getByRole("button", {
+    const footer = frame.querySelector<HTMLElement>('[data-slot="line-items-footer"]')!;
+    for (const button of within(footer).getAllByRole("button"))
+      expect(button.getAttribute("type")).toBe("button");
+    expect(footer.querySelector('[data-slot^="toolbar"]')).toBeNull();
+    expect(within(footer).getByRole("button", { name: "Add line" })).toBeDefined();
+    const save = within(footer).getByRole("button", {
       name: "Start save",
     }) as HTMLButtonElement;
     expect(save.disabled).toBe(true);
@@ -107,21 +162,20 @@ describe("LineItems showcase bulk deletion", () => {
     expect(changes().lineChanges).toEqual([{ action: "remove", lineId: "saved-1" }]);
   });
 
-  it("switches the footer's left side to a DataTable-style selection bar and returns focus on Clear", async () => {
+  it("replaces all operations with the bulk bar and returns focus on Clear", async () => {
     render(<LineItemsExample />, { wrapper: createAppShellWrapper("en") });
     await userEvent.click(selected("SKU-4100"));
-    const bar = screen.getByRole("toolbar", { name: "Bulk actions" });
+    const bar = screen.getByRole("group", { name: "Bulk actions" });
     expect(within(bar).getByText("1 of 5 selected")).toBeDefined();
     expect(deleteButton()).toBeDefined();
     expect(screen.queryByRole("button", { name: "Add line" })).toBeNull();
-    expect((screen.getByRole("button", { name: "Start save" }) as HTMLButtonElement).disabled).toBe(
-      true,
-    );
+    expect(screen.queryByRole("button", { name: "Start save" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Discard" })).toBeNull();
     expect(changes().isEmpty).toBe(true);
     const header = screen.getByRole("checkbox", { name: "Select all visible lines" });
     await userEvent.click(within(bar).getByRole("button", { name: "Clear selection" }));
     expect(document.activeElement).toBe(header);
-    expect(screen.queryByRole("toolbar", { name: "Bulk actions" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "Bulk actions" })).toBeNull();
     expect(screen.getByRole("button", { name: "Add line" })).toBeDefined();
     expect(changes().isEmpty).toBe(true);
   });
@@ -130,7 +184,7 @@ describe("LineItems showcase bulk deletion", () => {
     render(<LineItemsExample />, { wrapper: createAppShellWrapper("en") });
     await userEvent.click(screen.getByRole("checkbox", { name: "Select all visible lines" }));
     expect(
-      within(screen.getByRole("toolbar", { name: "Bulk actions" })).getByText("5 of 5 selected"),
+      within(screen.getByRole("group", { name: "Bulk actions" })).getByText("5 of 5 selected"),
     ).toBeDefined();
     await userEvent.click(deleteButton());
     expect(changes().lineChanges).toHaveLength(5);
@@ -176,7 +230,7 @@ describe("LineItems showcase bulk deletion", () => {
     search("gasket");
     await userEvent.click(screen.getByRole("checkbox", { name: "Select all visible lines" }));
     expect(
-      within(screen.getByRole("toolbar", { name: "Bulk actions" })).getByText("2 of 5 selected"),
+      within(screen.getByRole("group", { name: "Bulk actions" })).getByText("2 of 5 selected"),
     ).toBeDefined();
     expect(selected("SKU-4121").getAttribute("aria-checked")).toBe("true");
     search("");
@@ -199,7 +253,7 @@ describe("LineItems showcase bulk deletion", () => {
     expect(selected("SKU-4138")).toBeDefined();
   });
 
-  it("cancels an unsaved creation and clears selection on save acknowledgment", async () => {
+  it("cancels an unsaved creation and retains a pending receipt while operations are hidden", async () => {
     render(<LineItemsExample />, { wrapper: createAppShellWrapper("en") });
     await userEvent.click(screen.getByRole("button", { name: "Add line" }));
     await userEvent.click(selected("NEW-001"));
@@ -207,9 +261,16 @@ describe("LineItems showcase bulk deletion", () => {
     expect(changes().isEmpty).toBe(true);
     expect(screen.getByText("5 items")).toBeDefined();
     await userEvent.click(screen.getByRole("button", { name: "Add line" }));
-    await userEvent.click(selected("NEW-002"));
     await userEvent.click(screen.getByRole("button", { name: "Start save" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Apply save response" }));
+    await screen.findByRole("button", { name: "Apply save response" });
+    await userEvent.click(selected("NEW-002"));
+    expect(screen.queryByRole("button", { name: "Apply save response" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Discard" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+    await userEvent.click(screen.getByRole("button", { name: "Readonly" }));
+    expect(screen.queryByRole("button", { name: "Apply save response" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Edit" }));
+    await userEvent.click(screen.getByRole("button", { name: "Apply save response" }));
     expect(changes().isEmpty).toBe(true);
     expect(selected("NEW-002").getAttribute("aria-checked")).toBe("false");
     expect(screen.queryByRole("button", { name: "Delete selected" })).toBeNull();

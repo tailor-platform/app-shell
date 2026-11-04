@@ -11,6 +11,7 @@ export type {
 } from "@/components/internals/table-core/selection-types";
 import type {
   BadgeCellOptions,
+  CellEditState,
   DateCellOptions,
   FooterRenderContext,
   HeaderRenderContext,
@@ -20,6 +21,7 @@ import type {
 } from "@/components/internals/table-core/column-types";
 export type {
   BadgeCellOptions,
+  CellEditState,
   ColumnCellType,
   DateCellOptions,
   FooterRenderContext,
@@ -48,12 +50,6 @@ export type { BadgeVariant } from "@/components/badge-list";
 // =============================================================================
 // Inline editing
 // =============================================================================
-
-/** Row state passed to `edit.canEdit` alongside the row. */
-export interface CellEditState {
-  /** Whether the row is selected. Always `false` when row selection is off. */
-  selected: boolean;
-}
 
 /** Incomplete date-time editor state, interpreted in the AppShell timezone. */
 export interface DateTimeDraft {

@@ -6,7 +6,7 @@ import { createAppShellWrapper } from "../../../tests/test-utils";
 import { createLineItemHelper } from "./column-helper";
 import { LineItems } from "./line-items";
 import { useLineItems } from "./use-line-items";
-import type { LineItemsMode, UseLineItemsReturn } from "./types";
+import type { UseLineItemsReturn } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -30,13 +30,11 @@ const initial = [
 ];
 let current: UseLineItemsReturn<Row>;
 function Harness({
-  mode = "edit",
-  ordering = "manual",
+  orderer,
   lines = initial,
   selection = false,
 }: {
-  mode?: LineItemsMode;
-  ordering?: "manual" | "sort";
+  orderer?: "manual" | "readonly";
   lines?: Row[];
   selection?: boolean;
 }) {
@@ -44,8 +42,7 @@ function Harness({
   current = useLineItems<Row>({
     columns,
     defaultLines: lines,
-    mode,
-    ordering,
+    orderer,
     rowSelection: selection ? { selectedIds, onChange } : undefined,
   });
   return (
@@ -91,10 +88,10 @@ describe("LineItems standard row reordering", () => {
     expect(container.querySelectorAll("tfoot td")).toHaveLength(2);
   });
 
-  it.each(["edit", "amend"] as const)(
-    "supports keyboard reordering and focus in %s mode",
-    async (mode) => {
-      render(<Harness mode={mode} />, { wrapper: createAppShellWrapper("en") });
+  it.each([undefined, "manual"] as const)(
+    "supports keyboard reordering and focus with orderer=%s",
+    async (orderer) => {
+      render(<Harness orderer={orderer} />, { wrapper: createAppShellWrapper("en") });
       const button = handle(2);
       await userEvent.click(button);
       await userEvent.keyboard("{ArrowUp}");
@@ -187,18 +184,15 @@ describe("LineItems standard row reordering", () => {
     expect(current.getChangeSet().order).toEqual([{ lineId: "A" }, { lineId: "B" }]);
   });
 
-  it("hides handles in view/sort mode, cancels an interrupted drag, and disables a single row", () => {
+  it("hides handles with readonly orderer, cancels an interrupted drag, and disables a single row", () => {
     const view = render(<Harness />, { wrapper: createAppShellWrapper("en") });
     const transfer = startDrag(handle(3));
-    view.rerender(<Harness mode="view" />);
+    view.rerender(<Harness orderer="readonly" />);
     expect(screen.queryAllByRole("button", { name: /Reorder line/ })).toHaveLength(0);
     view.rerender(<Harness />);
     dropOn(handle(1), true, transfer);
     expect(current.isDirty).toBe(false);
     view.unmount();
-    const sorted = render(<Harness ordering="sort" />, { wrapper: createAppShellWrapper("en") });
-    expect(screen.queryAllByRole("button", { name: /Reorder line/ })).toHaveLength(0);
-    sorted.unmount();
     render(<Harness lines={[initial[0]!]} />, { wrapper: createAppShellWrapper("en") });
     expect((handle(1) as HTMLButtonElement).disabled).toBe(true);
     expect(handle(1).getAttribute("draggable")).toBe("false");
@@ -222,7 +216,7 @@ describe("LineItems standard row reordering", () => {
     act(() => current.setPin("name", "left"));
     const name = screen.getByRole("textbox", { name: "Name, line 1" }).closest("td")!;
     expect(name.style.left).toBe("88px");
-    view.rerender(<Harness selection mode="view" />);
+    view.rerender(<Harness selection orderer="readonly" />);
     expect(screen.getByRole("checkbox", { name: "Select all visible lines" })).toBeDefined();
     expect((view.container.querySelector("thead th") as HTMLElement).style.left).toBe("0px");
   });

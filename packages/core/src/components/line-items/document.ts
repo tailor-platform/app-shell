@@ -24,7 +24,6 @@ type DocumentOptions<T extends Record<string, unknown>> = {
   columns: readonly LineItemsColumn<T>[];
   lines?: readonly T[];
   idKey?: keyof T & string;
-  ordering?: "sort" | "manual";
 };
 
 function serverId(value: unknown): string | undefined {
@@ -52,7 +51,6 @@ export function createLineItemsDocument<T extends Record<string, unknown>>({
   columns,
   lines = [],
   idKey = "id" as keyof T & string,
-  ordering = "sort",
 }: DocumentOptions<T>) {
   let schema = compileLineItemsColumns(columns);
   let propertyKeys = new Set([...schema.documentKeys, ...schema.metadataKeys]);
@@ -189,14 +187,13 @@ export function createLineItemsDocument<T extends Record<string, unknown>>({
           Object.freeze({ action: "update", lineId: publicKey(key), patch: Object.freeze(patch) }),
         );
     }
-    const order: readonly LineItemsLineRef[] | undefined =
-      ordering === "manual" && !sameOrder(current.order, baseline.order)
-        ? Object.freeze(
-            current.order.map((key) =>
-              Object.freeze(baseline.rows.has(key) ? { lineId: publicKey(key) } : { tempId: key }),
-            ),
-          )
-        : undefined;
+    const order: readonly LineItemsLineRef[] | undefined = !sameOrder(current.order, baseline.order)
+      ? Object.freeze(
+          current.order.map((key) =>
+            Object.freeze(baseline.rows.has(key) ? { lineId: publicKey(key) } : { tempId: key }),
+          ),
+        )
+      : undefined;
     const result = Object.freeze({
       isEmpty: lineChanges.length === 0 && order === undefined,
       lineChanges: Object.freeze(lineChanges),
@@ -415,12 +412,14 @@ export function createLineItemsDocument<T extends Record<string, unknown>>({
       });
       adopt(snapshot(next));
     },
-    reorder(lineKey: string, afterLineKey: string | null) {
-      if (ordering !== "manual") throw new Error("Document reordering requires manual ordering");
+    reorder(lineKey: string, afterLineKey: string | null, fromOrder?: readonly string[]) {
       const key = findKey(lineKey);
       const after = afterLineKey === null ? null : findKey(afterLineKey);
       if (key === after) return;
-      const order = current.order.filter((candidate) => candidate !== key);
+      const source = fromOrder ? fromOrder.map(findKey) : current.order;
+      if (source.length !== current.order.length || new Set(source).size !== source.length)
+        throw new Error("Reordering requires every current line exactly once");
+      const order = source.filter((candidate) => candidate !== key);
       order.splice(after === null ? 0 : order.indexOf(after) + 1, 0, key);
       if (!sameOrder(order, current.order))
         adopt(snapshot(order.map((candidate) => current.rows.get(candidate)!)));

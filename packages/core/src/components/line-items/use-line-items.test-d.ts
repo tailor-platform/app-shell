@@ -99,11 +99,48 @@ test("hook selection uses the shared DataTable contract and components only cons
   void duplicate;
 });
 
+test("editing and ordering are independent of consumer business modes", () => {
+  column({
+    accessorKey: "quantity",
+    edit: {
+      editorType: "number",
+      canEdit: (row, state) => {
+        expectTypeOf(row).toEqualTypeOf<Row>();
+        expectTypeOf(state).toEqualTypeOf<{ selected: boolean }>();
+        return state.selected;
+      },
+    },
+  });
+  const readonly: UseLineItemsOptions<Row> = { columns, orderer: "readonly" };
+  const manual: UseLineItemsOptions<Row> = { columns, orderer: "manual" };
+  // @ts-expect-error Orderer is a policy, not a boolean or root-level comparator.
+  const invalid: UseLineItemsOptions<Row> = { columns, orderer: true };
+  // @ts-expect-error Application modes do not belong to useLineItems.
+  const mode: UseLineItemsOptions<Row> = { columns, mode: "amend" };
+  // @ts-expect-error Ordering was replaced by the dynamically configurable orderer.
+  const legacy: UseLineItemsOptions<Row> = { columns, ordering: "manual" };
+  column({
+    accessorKey: "quantity",
+    edit: {
+      editorType: "custom",
+      renderEditor: (context) => {
+        // @ts-expect-error Custom editors use consumer closures, not a library business mode.
+        void context.mode;
+        return null;
+      },
+    },
+  });
+  void readonly;
+  void manual;
+  void invalid;
+  void mode;
+  void legacy;
+});
+
 test("initial options expose uncontrolled ownership and typed arbitrary row actions", () => {
   const options: UseLineItemsOptions<Row> = {
     columns,
-    mode: "amend",
-    ordering: "manual",
+    orderer: "readonly",
     rowActions: {
       width: 120,
       render: (row, context) => {

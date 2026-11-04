@@ -15,9 +15,9 @@ description: Document-owned editable lines with typed columns, validation, expli
 
 This API supports all declared editor kinds: text, number, boolean, date, fixed/async comboboxes, and custom editors, including structured object values. It also provides read-only and computed columns, add/update/remove commands, explicit save and Discard, manual document ordering with standard drag handles, column footers, and auto/px/flex widths with pinning. Every document row is rendered.
 
-It does **not** yet provide controlled `lines`, independent metadata persistence, virtualization, clipboard/range/fill operations, presentation sorting, fullscreen, or grouped collections. `useLineItems` rejects controlled `lines` / `onLinesChange` and `commit: "metadata"` rather than silently ignoring them.
+It does **not** yet provide controlled `lines`, independent metadata persistence, virtualization, clipboard/range/fill operations, fullscreen, or grouped collections. `useLineItems` rejects controlled `lines` / `onLinesChange` and `commit: "metadata"` rather than silently ignoring them.
 
-The example application’s Line items preview (`examples/vite-app/src/pages/showcase/line-items-next/page.tsx`) demonstrates every editor across 18 data columns, including decimal USD prices, fixed numeric choices, a mock async supplier catalogue, and an immutable object editor. It starts with five products, shows the document's item count in the Product name footer, uses standard row drag handles, and demonstrates example-owned checkbox selection and bulk deletion. It consumes only the public package entrypoint. Standard display types remain independent of the chosen editor.
+The example application’s Line items preview (`examples/vite-app/src/pages/showcase/line-items-next/page.tsx`) demonstrates every editor across 18 data columns, including decimal USD prices, fixed numeric choices, a mock async supplier catalogue, and an immutable object editor. It starts with five products, shows the document's item count in the Product name footer, uses standard row drag handles and column sorting, and demonstrates example-owned readonly/edit/amend modes, checkbox selection, and bulk deletion. It consumes only the public package entrypoint. Standard display types remain independent of the chosen editor.
 
 ## Import
 
@@ -115,7 +115,6 @@ function DocumentLines({
     columns,
     validate: validateLines,
     defaultLines: lines,
-    ordering: "manual",
     tableId: "document-lines",
     rowActions: {
       width: 100,
@@ -146,24 +145,30 @@ function DocumentLines({
       </Toolbar.Root>
       <LineItems.Table aria-label="Document lines" />
       <LineItems.Footer>
-        <Toolbar.Row justify="between" aria-label="Document actions" className="astw:w-full">
-          <Toolbar.Group>
+        <div className="flex w-full flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="xs"
+            variant="outline"
+            onClick={() => editor.addLine({ sku: "NEW", quantity: 1, unitPrice: 10 })}
+          >
+            Add line
+          </Button>
+          <div className="ml-auto flex items-center gap-2">
             <Button
+              type="button"
               size="xs"
-              onClick={() => editor.addLine({ sku: "NEW", quantity: 1, unitPrice: 10 })}
+              variant="outline"
+              disabled={!editor.hasUnsavedChanges()}
+              onClick={() => editor.revert()}
             >
-              Add line
-            </Button>
-          </Toolbar.Group>
-          <Toolbar.Group>
-            <Button size="xs" onClick={() => editor.revert()}>
               Discard
             </Button>
-            <Button size="xs" disabled={!editor.hasUnsavedChanges()} onClick={save}>
+            <Button type="button" size="xs" disabled={!editor.hasUnsavedChanges()} onClick={save}>
               Save
             </Button>
-          </Toolbar.Group>
-        </Toolbar.Row>
+          </div>
+        </div>
       </LineItems.Footer>
     </LineItems.Root>
   );
@@ -176,31 +181,40 @@ Provide save pending/failure feedback in the application and disable or serializ
 
 `defaultLines` is read once. Changing that prop does not replace the current document or move its baseline. Mount the editor with a different React `key` to edit another document.
 
-`idKey` defaults to `"id"`; `ordering` defaults to `"sort"`. Both are initialization policies: remount to change them. Changing the set of properties owned by columns also requires a remount. Rebuilding an equivalent columns array does not reset rows, repeat initialization normalization, or mark the document clean. Newly committed rule callbacks replace the rules used for validation and subsequent adoption without renormalizing existing rows merely because a render occurred.
+`idKey` defaults to `"id"` and requires a remount to change. `orderer` defaults to `"manual"` and can change without remounting or discarding edits. Changing the set of properties owned by columns also requires a remount. Rebuilding an equivalent columns array does not reset rows, repeat initialization normalization, or mark the document clean. Newly committed rule callbacks replace the rules used for validation and subsequent adoption without renormalizing existing rows merely because a render occurred.
 
-Keep column definitions and rule callbacks stable during asynchronous preparation. A changed rule binding or mode invalidates an in-progress preparation. Commit or discard changed/failed drafts before removing their column identities.
+Keep column definitions and rule callbacks stable during asynchronous preparation. A changed rule binding, edit permission, or `orderer` invalidates an in-progress preparation. Commit or discard changed/failed drafts before removing their column identities.
 
 Treat input rows, returned rows, and nested values as immutable. Row and snapshot containers are shallow frozen; object-valued leaves retain their references so default `Object.is` equality remains meaningful. Replace an object value instead of mutating it in place.
 
 ### Hook options
 
-| Option         | Default  | Description                                                                                                                               |
-| -------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `columns`      | required | Typed document/display columns.                                                                                                           |
-| `defaultLines` | `[]`     | Initial editing rows, read once. Saved rows carry their server ID.                                                                        |
-| `idKey`        | `"id"`   | Property holding the server ID; remount to change it.                                                                                     |
-| `mode`         | `"edit"` | `"view"`, `"edit"`, or `"amend"`; controls cell editability, not validity.                                                                |
-| `ordering`     | `"sort"` | `"manual"` enables document reorder commands and final-order snapshots. Remount to change it.                                             |
-| `rowActions`   | —        | `{ render(row, { lineKey, isNew, index }), width? }`; configures the trailing pinned action column. Width defaults to 128px.              |
-| `rowSelection` | —        | DataTable-compatible `{ actions?, selectedIds, onChange }` or `{ actions?, defaultSelectedIds?, onChange? }`; omitted disables selection. |
+| Option         | Default    | Description                                                                                                                                             |
+| -------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`      | required   | Typed document/display columns.                                                                                                                         |
+| `defaultLines` | `[]`       | Initial editing rows, read once. Saved rows carry their server ID.                                                                                      |
+| `idKey`        | `"id"`     | Property holding the server ID; remount to change it.                                                                                                   |
+| `orderer`      | `"manual"` | `"manual"` enables drag/keyboard/command reordering; `"readonly"` disables manual movement, not column sorting or cell editing. Can change dynamically. |
+| `rowActions`   | —          | `{ render(row, { lineKey, isNew, index }), width? }`; configures the trailing pinned action column. Width defaults to 128px.                            |
+| `rowSelection` | —          | DataTable-compatible `{ actions?, selectedIds, onChange }` or `{ actions?, defaultSelectedIds?, onChange? }`; omitted disables selection.               |
 
 `tableId` optionally persists column order/pin preferences in browser storage. It does not change row ownership or document save behavior.
 
-`ordering: "sort"` currently means no persisted document reorder operations. It does not add a presentation-sorting UI in this slice.
+### Consumer-owned editing modes
 
-## Manual row reordering
+LineItems does not define business modes. Omitting `edit` makes a column read-only; providing `edit` makes it editable unless `edit.canEdit(row, { selected })` returns false. This has the same row/selection contract as DataTable. Selection is false when row selection is disabled. A custom editor reads application modes from its consumer closure rather than an editor-context `mode`.
 
-With `ordering: "manual"`, `LineItems.Table` automatically adds a fixed-left drag-handle column in `edit` and `amend` modes. No custom `rowActions`, movement buttons, or drag callbacks are required. View mode and sort ordering do not show handles. A single row has a disabled handle.
+The showcase owns three modes. Edit permits all configured editors, Add/Delete, and manual movement. It is the only mode that provides `rowSelection`; readonly and amend omit selection controls entirely. Readonly uses `orderer: "readonly"` and false cell predicates. Amend also uses `orderer: "readonly"`, but enables only Promised date, Received qty, and Notes. Readonly omits the footer's document buttons entirely. A pending save receipt remains in consumer state and can be acknowledged after returning to an editable mode. The application owns the visibility/eligibility of Add/Delete/Save and other actions.
+
+`orderer: "readonly"` does not discard pending manual order or prevent direct add/update/remove commands. Likewise, `canEdit` only controls the cell UI, not direct commands or server authorization. When a cell becomes non-editable, its existing draft is confirmed using the latest rules; malformed or rejected drafts remain recoverable and continue blocking preparation.
+
+## Column sorting and manual row reordering
+
+Set `column.sort.comparator(left, right)` to enable local single-column sorting. Default headers cycle ascending → descending → reset; custom headers receive `sortable`, `sortDirection`, and `activateSort`. The header menu offers the same ascending/descending/reset actions. Equal comparisons retain the existing order. There is no hook-level comparator or comparator precedence/combination.
+
+Column sorting is available with either `orderer` and does not by itself dirty the document or change its save snapshot. `lines` and `allLines` expose the current sorted order, with search still filtering only `lines`. The first manual move starts from that complete sorted order, including hidden lines, adopts the resulting order into the document, and clears column sorting. Subsequent edits do not automatically sort it again; choosing a column sort explicitly arranges the rows again. Resetting column sorting shows the current adopted document order.
+
+`LineItems.Table` adds a fixed-left drag-handle column by default (`orderer: "manual"`). No custom `rowActions`, movement buttons, or drag callbacks are required. `orderer: "readonly"` hides handles and rejects `reorderLine`; changing back to manual keeps edits and the current sorted order. A single row has a disabled handle.
 
 Drag a handle and drop in the upper or lower half of another row to insert before or after it. Only the handle is draggable, so text selection and cell editing are not turned into row drags. Focus a handle and use ArrowUp/ArrowDown to move past the previous/next visible row; focus follows the moved handle and the new document position is announced. Native dragging is desktop-only; touch dragging is not provided in this slice.
 
@@ -216,9 +230,9 @@ Configure `rowSelection.actions` as an array of `{ id, label, icon?, variant?, o
 
 The selection checkbox is **always the first, fixed-left utility column**, before the drag handle and every data column. It is not a document column, is not searched, and is excluded from Columns order/pin preferences. This position cannot be changed by a stored preference or a user pin action.
 
-The showcase's top Toolbar places Search on the left and Columns on the right. `LineItems.Footer` renders ordinary `children` without leading/trailing slots; compose a generic `Toolbar.Row` there to place Add line left and Discard/Save right. Footer gets bulk actions and selection from the hook's context, and renders a DataTable-style `N of M selected` bar with actions and Clear before the children. Its tint, sticky surface, announcements, overflow menu, pending controls, and focus handoff are shared mechanisms; operations remain application-owned. The example hides Add line while selected and keeps save controls right. Clear returns focus to the selection header, or an enabled footer control if that header is disabled.
+The showcase's top Toolbar places Search on the left and Columns on the right. Footer composition uses plain divs, not Toolbar. Place consumer-owned Button elements inside `LineItems.Footer`, using a full-width flex div and a trailing `ml-auto` group for Add on the left and Discard/Save on the right. Footer reads bulk actions and selection from context and renders either the `N of M selected` action bar **or** its children, never both. This also hides pending save acknowledgment controls while bulk actions are shown, without discarding the consumer's pending receipt. Tint, stickiness, announcements, overflow, and pending-action tracking are shared with DataTable. Clear returns focus to the selection header, or an enabled footer control if the header is disabled.
 
-Start save is disabled when `hasUnsavedChanges()` is false, including before any confirmed edits or unfinished drafts exist. Applying an outstanding save receipt remains available even if the user has since discarded local edits. The showcase does not show Unsaved changes or Awaiting save response badges; the save label and application-owned status message communicate the mocked save lifecycle.
+Start save is disabled when `hasUnsavedChanges()` is false, including before any confirmed edits or unfinished drafts exist. Applying an outstanding save receipt remains enabled even after Discard clears local edits, once the document buttons are visible again (editable mode, no bulk action bar). The showcase does not show Unsaved changes or Awaiting save response badges; the save label and application-owned status message communicate the mocked save lifecycle.
 
 The header checkbox selects or deselects only visible rows. **Delete selected** includes selected rows hidden by search, and its count reflects the full document's current selection. Deletions remain local document changes until Save and can be undone with Discard; deleting an unsaved creation cancels its addition. The example explicitly clears selection on Discard and save acknowledgment. The hook itself retains valid selections through edits and ordering changes and reconciles IDs on acknowledgment.
 
@@ -237,7 +251,7 @@ The header checkbox selects or deselects only visible rows. **Delete selected** 
 ### Display, editing, and rules
 
 - `type` / `typeOptions` describe display. Standard renderers cover text, number, money, date, badge, and link values. `render(row)` overrides the display without changing the source property or write target.
-- `edit.editorType` selects the input. Omitted `edit.modes` permits `"edit"` only; opt into `"amend"` explicitly. `"view"` is never editable. Omitting `edit` makes the column read-only.
+- `edit.editorType` selects the input. `edit.canEdit(row, { selected })` defaults to true; omit `edit` for a permanently read-only column. Business readonly/edit/amend policies belong to the consumer, not a library mode.
 - `normalize` and `equals` belong directly on the property-owning column, not under `edit`. Business validation belongs in `edit.onValueCommitted` or the hook's `validate`, not a column-level `validate`. Display precision does not round stored values or change equality.
 - `normalize(value, row)` runs at adoption boundaries: initialization, additions, updates/editor confirmation, and accepted save results. It does not run during display or diff. Initial normalized saved data is also the baseline, so normalization alone does not make it dirty. A batch normalizer sees the same merged pre-normalization row context, not another column's partially normalized result.
 - Default normalization is identity. Add trimming, rounding, or other pure, idempotent business corrections explicitly.
@@ -251,14 +265,14 @@ Text and number edits confirm on Enter, Tab, leaving the cell, or `commitEdits()
 
 Text/number inputs, choice searching/highlighting, and calendar UI use the same controls as DataTable. Their owners retain distinct adoption contracts: DataTable keeps its draft callbacks, Tab confirmation/navigation, and datetime conversion; LineItems keeps document-owned drafts, validation, and explicit save preparation. Sharing controls does not make a cell selection a backend save.
 
-| `edit.editorType` | Confirmed value                 | Behavior                                                                                               |
-| ----------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `"text"`          | `string \| null`                | Text input with document-owned drafts. Empty input confirms `null`.                                    |
-| `"number"`        | `number \| null`                | Numeric parsing is independent of display locale and precision. Malformed input stays a draft.         |
-| `"boolean"`       | `boolean`                       | Keyboard-accessible checkbox; no null or indeterminate value is introduced.                            |
-| `"date"`          | `string \| null`                | Popover + Calendar; confirms date-only `"YYYY-MM-DD"` values, with optional inclusive `min` / `max`.   |
-| `"combobox"`      | `string \| number \| null`      | Fixed `options` or an async `fetcher`, never both. Retains the property’s numeric/literal value type.  |
-| `"custom"`        | The property’s exact value type | `renderEditor(ctx)` receives `value`, `onCommit`, `onCancel`, readonly `row`, `mode`, and `ariaLabel`. |
+| `edit.editorType` | Confirmed value                 | Behavior                                                                                              |
+| ----------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `"text"`          | `string \| null`                | Text input with document-owned drafts. Empty input confirms `null`.                                   |
+| `"number"`        | `number \| null`                | Numeric parsing is independent of display locale and precision. Malformed input stays a draft.        |
+| `"boolean"`       | `boolean`                       | Keyboard-accessible checkbox; no null or indeterminate value is introduced.                           |
+| `"date"`          | `string \| null`                | Popover + Calendar; confirms date-only `"YYYY-MM-DD"` values, with optional inclusive `min` / `max`.  |
+| `"combobox"`      | `string \| number \| null`      | Fixed `options` or an async `fetcher`, never both. Retains the property’s numeric/literal value type. |
+| `"custom"`        | The property’s exact value type | `renderEditor(ctx)` receives `value`, `onCommit`, `onCancel`, readonly `row`, and `ariaLabel`.        |
 
 Boolean cells retain their editable tint while the checkbox is focused; confirming a toggle does not switch the cell to an untinted background. The checkbox keeps its keyboard focus indicator. Other editors retain their existing focus styling.
 
@@ -431,7 +445,7 @@ Place `LineItems.ColumnSettings` inside the same Root as Table, usually in a gen
 
 The Columns popup groups data columns into **Fixed left**, **Scrollable**, and **Fixed right**. Drag within a group to reorder, or between groups to change pinning. The popup retains DataTable's existing row layout, without added arrow buttons or an ellipsis menu. Focus the drag handle and use Up/Down to reorder or Left/Right to change pin sections. Selection, reorder handles, and Actions are fixed utility columns and are not listed. This slice does not provide column visibility controls.
 
-Right-click a data-column header (or focus it and press Shift+F10) to open the same header context menu as DataTable: **Copy label** and **Pin column → Pin to left / Pin to right / Unpin**. The active pin is disabled in the submenu. No sort/filter actions are added, and the selection/reorder/Actions utility columns do not have header menus.
+Right-click a data-column header (or focus it and press Shift+F10) to open the same header context menu as DataTable: **Copy label** and **Pin column → Pin to left / Pin to right / Unpin**. The active pin is disabled in the submenu. Columns with `sort.comparator` also offer **Sort column → Ascending / Descending / Reset**. No collection filters are added, and the selection/reorder/Actions utility columns do not have header menus.
 
 `columns` remains the full document schema. Layout uses column IDs, independent of property accessors. Column preference changes do not normalize rows, mark the document dirty, or enter the document change-set. `revert()` and save acknowledgment retain the column preferences and any logical cell drafts remain associated with the same row/column IDs.
 
@@ -499,7 +513,7 @@ type LineChange<T> =
 
 Create `data` contains the raw creation row except its server-ID property and internal identity, so read-only business identifiers are not lost. Updates contain changed document-owned properties only. A line added and removed before saving cancels out; restoring the original value removes its update.
 
-With `ordering: "manual"`, changed order or membership also emits an authoritative `order` array containing `{ lineId }` and `{ tempId }` references. This represents the final order including new middle insertions; it is not a list of positions among saved survivors. Use `reorderLine(lineKey, afterLineKey)` to move a line after another, or pass `null` to move it to the beginning.
+Changed adopted order or membership also emits an authoritative `order` array containing `{ lineId }` and `{ tempId }` references. This represents the final order including new middle insertions; it is not a list of positions among saved survivors. Use `reorderLine(lineKey, afterLineKey)` to move a line after another, or pass `null` to move it to the beginning.
 
 ### Acknowledge the exact submitted snapshot
 
@@ -544,7 +558,7 @@ Acknowledgment compares the submitted snapshot, current document, and accepted s
 | `removeLine(key)` / `removeLines(keys)`                                                  | Remove document lines.                                                                                                                                       |
 | `updateField(key, property, value)`                                                      | Property-typed single-field update.                                                                                                                          |
 | `updateLines(patches)`                                                                   | Batched `{ lineKey, patch }` updates; rejects unowned properties and direct server-ID changes.                                                               |
-| `reorderLine(key, afterKey)`                                                             | Manual document ordering only.                                                                                                                               |
+| `reorderLine(key, afterKey)`                                                             | Manual document movement; rejects when `orderer` is `"readonly"`.                                                                                            |
 | `getLineKey(line)` / `isNewLine(line)`                                                   | Public saved-ID/temp-key reference and whether a server ID is still absent.                                                                                  |
 | `getChangeSet()` / `commitEdits()`                                                       | Adopted snapshot read versus awaitable save preparation.                                                                                                     |
 | `reset(...)` / `revert()`                                                                | Successful-save acknowledgment or explicit replacement versus Discard.                                                                                       |
@@ -571,15 +585,17 @@ Root distributes the controller; it does not own another copy of the rows. Ordin
 | `className`    | Classes applied to the table.                                              |
 | `emptyMessage` | Empty-document content; localized default when omitted.                    |
 
-Table requires Root. It renders matching lines, standard/computed display, all declared editor kinds, optional controlled selection, automatic manual-order drag handles outside view mode, optional row actions, and document-wide column footers. Add/save/Discard controls remain application-owned.
+Table requires Root. It renders matching lines, standard/computed display, all declared editor kinds, optional controlled selection, column sorting, default manual-order drag handles unless `orderer` is `"readonly"`, optional row actions, and document-wide column footers. Add/save/Discard controls remain application-owned.
 
 ### `LineItems.Footer`
 
-Requires Root and accepts only `children` and `className`, like DataTable.Footer. Children render directly; compose their layout with generic Toolbar parts. Configure `rowSelection` and its `actions` on `useLineItems`, not any component.
+Requires Root and accepts only `children` and `className`. It is a plain div-based presentation surface; compose ordinary children directly with divs and Button, without Toolbar. Configure `rowSelection` and its `actions` on `useLineItems`, not any component.
 
-When valid selections and configured actions exist, Footer renders the shared selection bar before children. It reads count, actions, Clear, and pending state from context. The selection count covers the full document, including search-hidden rows. Clear calls the hook's `clearSelection`; it does not revert edits.
+When valid selections and configured actions exist, Footer renders only the shared bulk-action group and unmounts its children. When the bar closes, children render again. Count, actions, Clear, and pending state come from context; counts include search-hidden rows. Clear calls `clearSelection`, not Discard. Keep transport and pending receipts in the consumer outside the conditionally mounted footer content.
 
-The live region remains mounted so the first selection is announced. When a focused bulk control disappears, focus returns to the selection header; an empty/filtered table falls back to an enabled footer control, then the footer itself. Focus in consumer children is not stolen. Save callbacks, their disabled/pending state, new-line defaults, and action business logic remain application-owned.
+The live region remains mounted so the first selection is announced. When a focused bulk control disappears, focus returns to the selection header; an empty/filtered table falls back to an enabled footer control, then the footer itself. Bulk controls use native Tab navigation rather than Toolbar's directional-key navigation.
+
+The application owns button visibility, labels/icons, disabled conditions, and handlers. The showcase uses `size="xs"`, non-submit buttons, and disables Discard until adopted changes or unfinished drafts exist. Readonly hides the whole document-action area; amend hides Add while retaining Discard/Save. Save calls `commitEdits()` and owns transport and acknowledgment. Footer itself has no operation-specific props or automatic save behavior.
 
 ### `LineItems.ColumnSettings`
 

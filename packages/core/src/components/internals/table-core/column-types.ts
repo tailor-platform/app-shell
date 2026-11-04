@@ -1,6 +1,12 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { BadgeOptions } from "@/components/badge-list";
 
+/** Row state passed to `edit.canEdit` alongside the row. */
+export interface CellEditState {
+  /** Whether the row is selected. Always false when row selection is off. */
+  selected: boolean;
+}
+
 /** Built-in display renderers, independent of the editor used for the cell. */
 export type ColumnCellType = "text" | "number" | "money" | "date" | "badge" | "link";
 

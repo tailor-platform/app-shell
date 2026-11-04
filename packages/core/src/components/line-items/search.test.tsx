@@ -43,7 +43,7 @@ function Harness({ initial = rows }: { initial?: readonly Row[] }) {
     columns,
     validate,
     defaultLines: initial,
-    ordering: "manual",
+    orderer: "manual",
     rowActions: {
       render: (_row, { lineKey, index }) => (
         <Button

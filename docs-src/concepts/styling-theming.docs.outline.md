@@ -204,7 +204,7 @@ The hue roles have the same values in every shipped palette. `cream` and `bloom`
 
 **Contrast.** AppShell's thresholds are 4.5:1 for text (WCAG 1.4.3) and 3:1 for non-text (WCAG 1.4.11). In every shipped palette (`default`, `cream`, `bloom`), in light and dark mode, on `--card` and `--background`, `text` on `surface` and `contrast` on `solid` and `solid-hover` are at least 4.5:1 for the four hue intents, and `danger` `solid` (the invalid-input border) is at least 3:1. A browser test checks this in Chromium against the built stylesheet. Known exceptions:
 
-- `text` on `surface-hover` is below 4.5:1 for `danger` and `success` in light mode. The test holds it at 4.2:1 or more.
+- `text` on `surface-hover` is below 4.5:1 for `danger` and `success` in light mode. This is on purpose: a lighter step would make the tinted background hard to tell apart from the page, and the hover harder to see. The test holds it at 4.2:1 or more.
 - In `cream` and `bloom`, the main content area is transparent over the shell gradient. At the top of the `bloom` light gradient, `text` on `surface` is 4.49:1 for `success` and 4.48:1 for `danger`. Put status content on a card when it needs to pass.
 - `warning` `solid` and `indicator` are 2.15:1 against a light card. Use them with a label, not as the only sign of a state.
 - The `neutral` intent reads the system tokens and is not checked.

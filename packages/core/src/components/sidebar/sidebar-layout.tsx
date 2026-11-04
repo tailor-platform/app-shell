@@ -5,8 +5,9 @@ import { DefaultSidebar } from "./default-sidebar";
 import { DefaultHeader } from "./default-header";
 import { ContentContainer } from "./content-container";
 import { Trigger } from "./sidebar-trigger";
+import type { SidebarBehaviourProps } from "./sidebar-behaviour";
 
-type SidebarLayoutCommonProps = {
+type SidebarLayoutCommonProps = SidebarBehaviourProps & {
   /**
    * Custom sidebar content. Replaces the whole sidebar region.
    *
@@ -24,16 +25,6 @@ type SidebarLayoutCommonProps = {
    * @default true
    */
   defaultOpen?: boolean;
-
-  /**
-   * Whether the sidebar can be collapsed and resized.
-   * When `false`, it stays expanded at a fixed width without collapse or resize
-   * controls on desktop. `defaultOpen` is ignored and `setOpen` is inert.
-   * Custom mobile/tablet drawers can still be toggled.
-   *
-   * @default true
-   */
-  collapsible?: boolean;
 
   /**
    * A global top bar rendered above **everything** — spanning the full width
@@ -166,12 +157,18 @@ type SidebarLayoutBodyProps = SidebarLayoutCommonProps & {
 export type SidebarLayoutProps = SidebarLayoutDefaultProps | SidebarLayoutBodyProps;
 
 export function SidebarLayout(props: SidebarLayoutProps) {
-  const { sidebar, header, children, body, defaultOpen, collapsible, topBar } = props;
+  const { sidebar, header, children, body, defaultOpen, collapsible, sidebarBehaviour, topBar } =
+    props;
+  // Normalize the deprecated input once; descendants only use the effective mode.
+  let behaviour = sidebarBehaviour ?? "collapse-and-resize";
+  if (sidebarBehaviour === undefined && collapsible !== undefined) {
+    behaviour = collapsible ? "collapse" : "fixed";
+  }
 
   return (
     <SidebarProvider
       defaultOpen={defaultOpen}
-      collapsible={collapsible}
+      sidebarBehaviour={behaviour}
       // When a global top bar is present, publish its height so the fixed sidebar
       // starts below it (see --appshell-topbar-h in sidebar.tsx) instead of
       // overlapping it.

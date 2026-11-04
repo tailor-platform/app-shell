@@ -43,7 +43,7 @@ export function SidebarResizeHandle({
   width: number;
   onWidthChange: (width: number) => void;
   sidebarRef: React.RefObject<HTMLDivElement | null>;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange?: (open: boolean) => void;
   collapsed?: boolean;
   side: "left" | "right";
 }) {
@@ -63,12 +63,15 @@ export function SidebarResizeHandle({
   // Pointer-down focuses the handle so the arrow keys work afterwards, and browsers treat that as
   // :focus-visible; track the source so the indicator shows for keyboard focus only.
   const [focusSource, setFocusSource] = React.useState<"keyboard" | "pointer" | null>(null);
+  // Omitting the collapse callback makes this a resize-only handle, including its geometry.
+  const canCollapse = onOpenChange !== undefined;
+  const doubleClickAction = canCollapse ? "reset or collapse" : "reset";
   const resizing = dragOrigin !== null;
   const insetHandle = (dragOrigin ?? (collapsed ? "collapsed" : "expanded")) === "collapsed";
   const direction = side === "left" ? 1 : -1;
   const resize = (next: number) => {
     onWidthChange(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, next)));
-    if (next <= MIN_WIDTH) onOpenChange(false);
+    if (next <= MIN_WIDTH) onOpenChange?.(false);
   };
   const clearDrag = () => {
     drag.current?.sidebar.style.removeProperty(DRAG_WIDTH_PROPERTY);
@@ -108,7 +111,7 @@ export function SidebarResizeHandle({
       title={
         collapsed
           ? "Drag or double-click to expand sidebar"
-          : "Drag or use arrow keys to resize sidebar; double-click to reset or collapse"
+          : `Drag or use arrow keys to resize sidebar; double-click to ${doubleClickAction}`
       }
       data-slot="sidebar-resize-handle"
       data-resizing={resizing}
@@ -127,12 +130,13 @@ export function SidebarResizeHandle({
       )}
       onClick={(event) => {
         // Double-click toggles through the default width: collapsed → 256px, any other width →
-        // 256px, 256px → collapsed. Enter/Space (detail 0) still expands the collapsed handle.
+        // 256px, 256px → collapsed. Resize-only handles always reset, never collapse.
+        // Enter/Space (detail 0) still expands the collapsed handle.
         const doubleClick = event.detail === 2 && !moved.current;
         if (collapsed) {
-          if (event.detail === 0 || doubleClick) onOpenChange(true);
+          if (event.detail === 0 || doubleClick) onOpenChange?.(true);
         } else if (doubleClick) {
-          if (width === DEFAULT_SIDEBAR_WIDTH) onOpenChange(false);
+          if (width === DEFAULT_SIDEBAR_WIDTH && onOpenChange) onOpenChange(false);
           else onWidthChange(DEFAULT_SIDEBAR_WIDTH);
         }
       }}
@@ -180,25 +184,27 @@ export function SidebarResizeHandle({
           start.collapsedWidth + (MIN_WIDTH - start.collapsedWidth) * COLLAPSE_EARLY_RATIO;
         const nextWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, pointerWidth));
         let nextCollapsed = collapsed;
-        if (collapsed && pointerWidth >= MIN_WIDTH) {
+        if (canCollapse && collapsed && pointerWidth >= MIN_WIDTH) {
           nextCollapsed = false;
-          onOpenChange(true);
+          onOpenChange?.(true);
           onWidthChange(nextWidth);
         }
-        if (!collapsed && pointerWidth <= collapseAt) {
+        if (canCollapse && !collapsed && pointerWidth <= collapseAt) {
           nextCollapsed = true;
           moved.current = true;
           start.collapseAt = collapseAt;
-          onOpenChange(false);
+          onOpenChange?.(false);
           onWidthChange(nextWidth);
         }
         start.nextWidth = nextWidth;
-        const visualWidth = getSidebarDragWidth(
-          pointerWidth,
-          start.collapsedWidth,
-          collapsed,
-          collapsed ? start.collapseAt : collapseAt,
-        );
+        const visualWidth = canCollapse
+          ? getSidebarDragWidth(
+              pointerWidth,
+              start.collapsedWidth,
+              collapsed,
+              collapsed ? start.collapseAt : collapseAt,
+            )
+          : nextWidth;
         // Transient pixels bypass React; commit only mode changes and the final width.
         start.sidebar.style.setProperty(DRAG_WIDTH_PROPERTY, `${visualWidth}px`);
         if (!nextCollapsed) {

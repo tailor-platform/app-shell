@@ -16,7 +16,7 @@ function ResizableSidebar({
 }: {
   side?: "left" | "right";
   collapsed?: boolean;
-  onOpenChange: (open: boolean) => void;
+  onOpenChange?: (open: boolean) => void;
   onWidthCommit: (width: number) => void;
 }) {
   const [width, setWidth] = useState(256);
@@ -44,14 +44,19 @@ function ResizableSidebar({
 }
 
 const pointer = { pointerId: 1, isPrimary: true, button: 0 };
-const renderHandle = (side: "left" | "right" = "left", collapsed = false, collapsedWidth = 0) => {
+const renderHandle = (
+  side: "left" | "right" = "left",
+  collapsed = false,
+  collapsedWidth = 0,
+  canCollapse = true,
+) => {
   const onOpenChange = vi.fn();
   const onWidthCommit = vi.fn();
   const view = render(
     <ResizableSidebar
       side={side}
       collapsed={collapsed}
-      onOpenChange={onOpenChange}
+      onOpenChange={canCollapse ? onOpenChange : undefined}
       onWidthCommit={onWidthCommit}
     />,
   );
@@ -124,6 +129,47 @@ describe("getSidebarDragWidth", () => {
 });
 
 describe("SidebarResizeHandle", () => {
+  it.each(["left", "right"] as const)(
+    "clamps resize-only %s geometry without resistance or collapse",
+    (side) => {
+      const { handle, root, onOpenChange, onWidthCommit } = renderHandle(side, false, 0, false);
+      const direction = side === "left" ? 1 : -1;
+      fireEvent.pointerDown(handle, { ...pointer, clientX: 256 });
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 256 - 160 * direction });
+      expect(root.style.getPropertyValue("--sidebar-drag-width")).toBe("192px");
+      expect(width(handle)).toBe(192);
+      expect(onWidthCommit).not.toHaveBeenCalled();
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 256 + 44 * direction });
+      expect(root.style.getPropertyValue("--sidebar-drag-width")).toBe("300px");
+      expect(handle.getAttribute("aria-valuetext")).toBe("300 pixels");
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 256 + 1000 * direction });
+      expect(root.style.getPropertyValue("--sidebar-drag-width")).toBe("480px");
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 256 - 1000 * direction });
+      expect(root.style.getPropertyValue("--sidebar-drag-width")).toBe("192px");
+      fireEvent.pointerUp(handle, pointer);
+      expect(onWidthCommit).toHaveBeenCalledExactlyOnceWith(192);
+      expect(root.style.getPropertyValue("--sidebar-drag-width")).toBe("");
+      fireEvent.keyDown(handle, { key: "Home" });
+      fireEvent.keyDown(handle, { key: side === "left" ? "ArrowLeft" : "ArrowRight" });
+      expect(width(handle)).toBe(192);
+      expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBe(handle);
+      expect(onOpenChange).not.toHaveBeenCalled();
+    },
+  );
+
+  it("double-click resets resize-only width but never collapses from the default", () => {
+    const { handle, onOpenChange } = renderHandle("left", false, 0, false);
+    expect(handle.getAttribute("title")).not.toContain("collapse");
+    fireEvent.keyDown(handle, { key: "End" });
+    expect(width(handle)).toBe(480);
+    fireEvent.click(handle, { detail: 2 });
+    expect(width(handle)).toBe(256);
+    fireEvent.click(handle, { detail: 2 });
+    expect(width(handle)).toBe(256);
+    expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBe(handle);
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
   it("captures the pointer and uses drag distance without jumping to the pointer position", () => {
     const { handle, root, capture, onWidthCommit } = renderHandle();
     fireEvent.pointerDown(handle, { ...pointer, clientX: 250 });

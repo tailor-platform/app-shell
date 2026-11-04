@@ -21,15 +21,15 @@ afterEach(() => {
   window.history.replaceState({}, "", originalUrl);
 });
 
-it.each(["rail", "offcanvas", "fixed"] as const)(
-  "uses live CSS geometry only when collapsing is enabled (%s)",
+it.each(["rail", "offcanvas", "fixed", "resize"] as const)(
+  "uses live CSS geometry according to sidebarBehaviour (%s)",
   async (mode) => {
     const Layout = mode === "rail" ? GlobalHeaderLayout : SidebarLayout;
     const view = render(
       <AppShell title="Resize test" modules={modules}>
         <Layout
           defaultOpen={false}
-          collapsible={mode !== "fixed"}
+          sidebarBehaviour={mode === "rail" || mode === "offcanvas" ? "collapse-and-resize" : mode}
           body={<div data-testid="layout-content" />}
         />
       </AppShell>,
@@ -43,6 +43,19 @@ it.each(["rail", "offcanvas", "fixed"] as const)(
       root.style.setProperty("--sidebar-drag-width", "320px");
       expect(root.getBoundingClientRect().width).toBe(256);
       root.style.removeProperty("--sidebar-drag-width");
+      return;
+    }
+    if (mode === "resize") {
+      const handle = await view.findByRole("separator", { name: "Resize sidebar" });
+      expect(view.queryByRole("button", { name: "Toggle Sidebar" })).toBeNull();
+      expect(root.getBoundingClientRect().width).toBe(256);
+      root.style.setProperty("--sidebar-drag-width", "320px");
+      handle.dataset.resizing = "true";
+      expect(root.style.width).toBe("");
+      expect(root.getBoundingClientRect().width).toBe(320);
+      handle.dataset.resizing = "false";
+      root.style.removeProperty("--sidebar-drag-width");
+      expect(root.getBoundingClientRect().width).toBe(256);
       return;
     }
     const handle = await view.findByRole("button", { name: "Expand sidebar" });

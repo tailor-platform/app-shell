@@ -4,6 +4,7 @@ import { GlobalHeaderLayout } from "./global-header-layout";
 import { GlobalHeader } from "./global-header";
 import { ContentContainer } from "./content-container";
 import { DynamicBreadcrumb } from "@/components/sidebar/dynamic-breadcrumb";
+import { useAppShellSidebar } from "./use-app-shell-sidebar";
 import { AppShell } from "@/components/appshell";
 import { defineModule } from "@/resource";
 import { Home } from "lucide-react";
@@ -38,6 +39,11 @@ const renderLayout = (props: Parameters<typeof GlobalHeaderLayout>[0] = {}) => {
     </AppShell>,
   );
 };
+
+function SidebarStateProbe() {
+  const { sidebarBehaviour, open } = useAppShellSidebar();
+  return <output data-testid="sidebar-state">{`${sidebarBehaviour}:${open}`}</output>;
+}
 
 describe("GlobalHeaderLayout", () => {
   it("renders a global top bar with the app title and the route breadcrumb", async () => {
@@ -77,8 +83,76 @@ describe("GlobalHeaderLayout", () => {
     expect(handle.getAttribute("aria-valuenow")).toBe("272");
   });
 
-  it("does not expose a separate resizable prop", () => {
+  it("does not expose a separate resizable prop or permit simultaneous legacy and new props", () => {
     expectTypeOf<Parameters<typeof GlobalHeaderLayout>[0]>().not.toHaveProperty("resizable");
+    expectTypeOf<{ sidebarBehaviour: "resize"; collapsible: false }>().not.toExtend<
+      Parameters<typeof GlobalHeaderLayout>[0]
+    >();
+  });
+
+  it.each([
+    { props: {}, expected: "collapse-and-resize" },
+    { props: { collapsible: true }, expected: "collapse" },
+    { props: { collapsible: false }, expected: "fixed" },
+    { props: { sidebarBehaviour: "fixed" }, expected: "fixed" },
+    { props: { sidebarBehaviour: "collapse" }, expected: "collapse" },
+    { props: { sidebarBehaviour: "resize" }, expected: "resize" },
+    { props: { sidebarBehaviour: "collapse-and-resize" }, expected: "collapse-and-resize" },
+  ] as const)(
+    "forwards normalized $expected configuration from $props",
+    async ({ props, expected }) => {
+      stubDesktopViewport();
+      renderLayout({ ...props, header: <SidebarStateProbe /> });
+      expect((await screen.findByTestId("sidebar-state")).textContent).toBe(`${expected}:true`);
+      expect(screen.queryByRole("separator", { name: "Resize sidebar" }) !== null).toBe(
+        expected === "resize" || expected === "collapse-and-resize",
+      );
+    },
+  );
+
+  it.each([
+    ["fixed", false, false],
+    ["collapse", true, false],
+    ["resize", false, true],
+    ["collapse-and-resize", true, true],
+  ] as const)(
+    "renders only the permitted desktop controls (%s)",
+    async (sidebarBehaviour, canCollapse, canResize) => {
+      stubDesktopViewport();
+      renderLayout({ sidebarBehaviour });
+      await waitFor(() => expect(document.querySelector('[data-slot="sidebar"]')).not.toBeNull());
+      expect(screen.queryAllByRole("button", { name: "Toggle Sidebar" }).length > 0).toBe(
+        canCollapse,
+      );
+      expect(screen.queryByRole("separator", { name: "Resize sidebar" }) !== null).toBe(canResize);
+      if (canCollapse) {
+        fireEvent.click(screen.getByRole("button", { name: "Toggle Sidebar" }));
+        expect(
+          document.querySelector('[data-slot="sidebar"]')?.getAttribute("data-collapsible"),
+        ).toBe("icon");
+        expect(screen.queryByRole("button", { name: "Expand sidebar" }) !== null).toBe(canResize);
+      }
+    },
+  );
+
+  describe.each([375, 1024])("responsive menu at %ipx", (width) => {
+    it.each(["fixed", "collapse", "resize", "collapse-and-resize"] as const)(
+      "keeps the stock full menu accessible in %s mode",
+      async (sidebarBehaviour) => {
+        vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
+        renderLayout({ sidebarBehaviour });
+        fireEvent.click(await screen.findByRole("button", { name: "Toggle Sidebar" }));
+        expect(await screen.findByRole("dialog", { name: "Sidebar" })).toBeDefined();
+        expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+      },
+    );
+
+    it("uses a responsive menu for legacy collapsible=false", async () => {
+      vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
+      renderLayout({ collapsible: false });
+      fireEvent.click(await screen.findByRole("button", { name: "Toggle Sidebar" }));
+      expect(await screen.findByRole("dialog", { name: "Sidebar" })).toBeDefined();
+    });
   });
 
   it("hides resize and collapse controls when collapsing is disabled", async () => {

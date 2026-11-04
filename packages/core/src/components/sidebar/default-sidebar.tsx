@@ -26,15 +26,15 @@ import { cn } from "@/lib/utils";
 import { Text } from "../text";
 
 function resolveCollapsibleMode(
-  collapsible: boolean | undefined,
-  isIconMode: boolean,
+  canCollapse: boolean,
+  isMobile: boolean,
+  isTablet: boolean,
   iconRail: boolean | undefined,
 ): "none" | "icon" | "offcanvas" {
-  if (!collapsible) return "none";
-  // Tablet always uses the icon rail (there is no room to slide fully away).
-  // On desktop the icon rail is opt-in via `iconRail`; otherwise the sidebar
-  // collapses off-canvas as before.
-  if (isIconMode || iconRail) return "icon";
+  // Desktop permissions must not turn responsive drawers into fixed columns.
+  if (!isMobile && !isTablet && !canCollapse) return "none";
+  // Tablet always uses the rail; elsewhere it is opt-in via iconRail.
+  if (isTablet || iconRail) return "icon";
   return "offcanvas";
 }
 
@@ -156,14 +156,14 @@ export type DefaultSidebarProps = {
 export const DefaultSidebar = (props: DefaultSidebarProps) => {
   const { title, icon } = useAppShellConfig();
   const { pathname: currentPath } = useLocation();
-  const { isIconMode, collapsible } = useSidebar();
+  const { isMobile, isTablet, canCollapse } = useSidebar();
 
   const DefaultHeader = (
     <SidebarHeader>
       {icon}
       <Text
         variant="heading-sm"
-        className={cn("astw:mb-2 astw:mt-2 astw:px-2", isIconMode && "astw:hidden")}
+        className={cn("astw:mb-2 astw:mt-2 astw:px-2", isTablet && "astw:hidden")}
         // eslint-disable-next-line jsx-a11y/heading-has-content
         render={<h1 />}
       >
@@ -173,14 +173,14 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
   );
   const DefaultFooter = null;
 
-  const collapsibleMode = resolveCollapsibleMode(collapsible, isIconMode, props.iconRail);
+  const collapsibleMode = resolveCollapsibleMode(canCollapse, isMobile, isTablet, props.iconRail);
 
   return (
     <Sidebar variant="inset" collapsible={collapsibleMode}>
-      {!props.hideHeader && !isIconMode && (
+      {!props.hideHeader && !isTablet && (
         <div className="astw:flex astw:justify-between astw:items-center">
           {props.header ?? DefaultHeader}
-          {collapsible && (
+          {canCollapse && (
             <div className="astw:hidden astw:md:block">
               <SidebarTrigger className="astw:-ml-1" />
             </div>

@@ -58,34 +58,39 @@ function App() {
 
 ## Props
 
-| Prop          | Type                                                            | Default                                 | Description                                                                                                                  |
-| ------------- | --------------------------------------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `header`      | `React.ReactNode`                                               | `<GlobalHeaderLayout.DefaultHeader />`  | Replaces the full-width app header.                                                                                          |
-| `sidebar`     | `React.ReactNode`                                               | `<GlobalHeaderLayout.DefaultSidebar />` | Replaces the primary sidebar.                                                                                                |
-| `defaultOpen` | `boolean`                                                       | `true`                                  | Whether the sidebar starts expanded on desktop.                                                                              |
-| `collapsible` | `boolean`                                                       | `true`                                  | Whether the desktop sidebar can be collapsed and resized. When `false`, it stays expanded at a fixed width without controls. |
-| `children`    | `(props: { Outlet: () => React.ReactNode }) => React.ReactNode` | current route outlet                    | Custom content renderer for the stock content container.                                                                     |
-| `body`        | `React.ReactNode`                                               | -                                       | Escape hatch that replaces the entire region beside the sidebar.                                                             |
+| Prop               | Type                                                            | Default                                 | Description                                                                                                                                        |
+| ------------------ | --------------------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `header`           | `React.ReactNode`                                               | `<GlobalHeaderLayout.DefaultHeader />`  | Replaces the full-width app header.                                                                                                                |
+| `sidebar`          | `React.ReactNode`                                               | `<GlobalHeaderLayout.DefaultSidebar />` | Replaces the primary sidebar.                                                                                                                      |
+| `defaultOpen`      | `boolean`                                                       | `true`                                  | Whether the sidebar starts expanded on desktop. Ignored in `"fixed"` and `"resize"` modes.                                                         |
+| `sidebarBehaviour` | `"fixed" \| "collapse" \| "resize" \| "collapse-and-resize"`    | `"collapse-and-resize"`                 | Selects the permitted desktop operations without restricting mobile/tablet drawer access.                                                          |
+| `collapsible`      | `boolean`                                                       | -                                       | Deprecated compatibility prop: explicit `false` maps to `"fixed"` and explicit `true` to `"collapse"`. Cannot be combined with `sidebarBehaviour`. |
+| `children`         | `(props: { Outlet: () => React.ReactNode }) => React.ReactNode` | current route outlet                    | Custom content renderer for the stock content container.                                                                                           |
+| `body`             | `React.ReactNode`                                               | -                                       | Escape hatch that replaces the entire region beside the sidebar.                                                                                   |
 
 `children` and `body` are mutually exclusive. Use `body` when you need to add your own side columns around the main content.
 
 ## Resizing the sidebar
 
-Desktop sidebars include collapse and resize controls when `collapsible` is enabled (the default):
+`sidebarBehaviour` selects the desktop operations and defaults to `"collapse-and-resize"`. The four modes are shared with [`SidebarLayout`](./sidebar-layout.md#resizing-the-sidebar):
 
 ```tsx
-<GlobalHeaderLayout />
+<GlobalHeaderLayout />; // Both operations are enabled by default
+<GlobalHeaderLayout sidebarBehaviour="fixed" />; // Neither operation
+<GlobalHeaderLayout sidebarBehaviour="collapse" />; // Collapse only
+<GlobalHeaderLayout sidebarBehaviour="resize" />; // Resize only
+<GlobalHeaderLayout sidebarBehaviour="collapse-and-resize" />; // Both
 ```
 
-Set `collapsible={false}` to keep the desktop sidebar expanded at a fixed width, without handles or toggle controls:
+`"fixed"` and `"resize"` keep desktop expanded, ignore `defaultOpen`, and make the hook's `setOpen()` action inert. `"fixed"` has no desktop interaction controls; `"resize"` has a resize handle but no collapse controls. `"collapse"` has collapse controls but no resize handle. Desktop toggle shortcuts are not intercepted when collapsing is disabled.
 
-```tsx
-<GlobalHeaderLayout collapsible={false} />
-```
+Every mode keeps the layout's normal responsive icon rail and mobile/tablet overlay, so the trigger, `toggle()`, and shortcut can still open the full menu. Desktop expansion and responsive drawer visibility are independent.
 
-When disabled, `defaultOpen` is ignored and `useAppShellSidebar()` reports `open: true` with an inert `setOpen()` action. Desktop toggle controls are hidden and the keyboard shortcut is not intercepted. Mobile/tablet triggers, `toggle()`, and shortcuts retain their existing viewport-based behavior, allowing custom drawers to open even when desktop collapsing is disabled.
+`collapsible` remains supported but deprecated. Explicit `false` maps to `"fixed"`, explicit `true` maps to `"collapse"`, and omitting both props uses the new default. TypeScript rejects specifying both props. Replace legacy `collapsible={false}` with `sidebarBehaviour="fixed"`; it keeps desktop fixed but intentionally no longer forces a fixed sidebar on mobile/tablet.
 
-The edge resize handle and keyboard resizing match [`SidebarLayout`](./sidebar-layout.md#resizing-the-sidebar). Between the icon rail and 192px, dragging uses a resistance curve; closing finishes slightly early, in the final 20% near the rail. At 192px and above, resizing follows the pointer 1:1. One gesture can open, resize, and collapse without releasing or jumping to 256px. Double-clicking or using the keyboard to expand still restores the default 256px width. Width is not saved across reloads. Mobile/tablet overlays and the collapsed rail width are unchanged.
+The edge resize handle and keyboard resizing match [`SidebarLayout`](./sidebar-layout.md#resizing-the-sidebar). Resize-only mode clamps pointer and keyboard widths to 192–480px without collapse resistance, and double-click only resets to 256px. With `"collapse-and-resize"`, dragging uses resistance near the rail and can open, resize, and collapse in one gesture; double-clicking at 256px collapses, and double-click or keyboard expansion restores 256px. Width is not saved across reloads. Responsive overlay widths and the collapsed rail width are unchanged.
+
+Custom sidebars can read the effective, normalized `sidebarBehaviour` through [`useAppShellSidebar()`](./sidebar-layout.md#reading-and-controlling-the-sidebar). Its existing state and actions remain available; arbitrary custom markup still owns its presentation and sizing.
 
 ## Built-in parts
 

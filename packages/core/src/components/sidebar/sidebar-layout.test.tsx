@@ -1,8 +1,20 @@
-import { render, cleanup, waitFor } from "@testing-library/react";
-import { describe, it, expect, afterEach, vi } from "vitest";
+import { Profiler, type ReactNode } from "react";
+import {
+  act,
+  render,
+  renderHook,
+  cleanup,
+  waitFor,
+  screen,
+  fireEvent,
+} from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, it, expect, expectTypeOf, afterEach, vi } from "vitest";
 import { SidebarLayout } from "./sidebar-layout";
 import { DefaultHeader } from "./default-header";
 import { DefaultSidebar } from "./default-sidebar";
+import { Sidebar, SidebarProvider, SidebarRail, useSidebar } from "./primitives";
+import { useAppShellSidebar } from "./use-app-shell-sidebar";
 import { AppearanceSwitcher } from "@/components/appearance-switcher";
 import { AppShell } from "@/components/appshell";
 import { defineModule } from "@/resource";
@@ -48,6 +60,35 @@ const renderSidebarLayout = (props: Parameters<typeof SidebarLayout>[0] = {}) =>
   );
 };
 
+function SidebarStateProbe() {
+  const { sidebarBehaviour, open } = useAppShellSidebar();
+  return <output data-testid="sidebar-state">{`${sidebarBehaviour}:${open}`}</output>;
+}
+
+const sidebarWidth = () =>
+  (document.querySelector('[data-slot="sidebar-wrapper"]') as HTMLElement).style.getPropertyValue(
+    "--sidebar-width",
+  );
+
+const dragWidth = () =>
+  (document.querySelector('[data-slot="sidebar"]') as HTMLElement).style.getPropertyValue(
+    "--sidebar-drag-width",
+  );
+
+function PrimitiveSidebarLayout({
+  className,
+  children,
+}: {
+  className?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <SidebarProvider className={className}>
+      <Sidebar>{children}</Sidebar>
+    </SidebarProvider>
+  );
+}
+
 describe("SidebarLayout", () => {
   describe("defaultOpen", () => {
     it("renders sidebar in expanded state by default", async () => {
@@ -85,7 +126,8 @@ describe("SidebarLayout", () => {
   });
 
   describe("collapsible", () => {
-    it("renders sidebar with collapsible=none when collapsible is false", async () => {
+    it("renders desktop sidebar with collapsible=none when legacy collapsible is false", async () => {
+      stubDesktopViewport();
       renderSidebarLayout({ collapsible: false });
 
       await waitFor(() => {
@@ -97,7 +139,8 @@ describe("SidebarLayout", () => {
       });
     });
 
-    it("does not render sidebar trigger when collapsible is false", async () => {
+    it("does not render desktop sidebar trigger when legacy collapsible is false", async () => {
+      stubDesktopViewport();
       renderSidebarLayout({ collapsible: false });
 
       await waitFor(() => {
@@ -109,6 +152,181 @@ describe("SidebarLayout", () => {
       expect(trigger).toBeNull();
     });
 
+    it.each(["none", "icon", "offcanvas"] as const)(
+      "keeps desktop hook actions and shortcuts inert when disabled (%s)",
+      (mode) => {
+        stubDesktopViewport();
+        const onOpenChange = vi.fn();
+        const { result } = renderHook(
+          () => ({ sidebar: useAppShellSidebar(), context: useSidebar() }),
+          {
+            wrapper: ({ children }) => (
+              <SidebarProvider
+                sidebarBehaviour="fixed"
+                defaultOpen={false}
+                onOpenChange={onOpenChange}
+              >
+                <Sidebar collapsible={mode}>Fixed sidebar</Sidebar>
+                <SidebarLayout.Trigger />
+                <SidebarRail />
+                {children}
+              </SidebarProvider>
+            ),
+          },
+        );
+        expect(result.current.sidebar.open).toBe(true);
+        expect(screen.queryByRole("button", { name: "Toggle Sidebar" })).toBeNull();
+        expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+        expect(screen.queryByRole("button", { name: "Expand sidebar" })).toBeNull();
+        act(() => {
+          result.current.sidebar.setOpen(false);
+          result.current.sidebar.setOpen(true);
+          result.current.sidebar.toggle();
+        });
+        for (const modifier of ["ctrlKey", "metaKey"] as const) {
+          const shortcut = new KeyboardEvent("keydown", {
+            key: "b",
+            [modifier]: true,
+            cancelable: true,
+          });
+          fireEvent(window, shortcut);
+          expect(shortcut.defaultPrevented).toBe(false);
+        }
+        expect(result.current.sidebar.open).toBe(true);
+        expect(result.current.context.openMobile).toBe(false);
+        expect(result.current.context.openIconMode).toBe(false);
+        expect(onOpenChange).not.toHaveBeenCalled();
+        expect(sidebarWidth()).toBe("256px");
+      },
+    );
+
+    it.each([
+      [375, "offcanvas"],
+      [375, "icon"],
+      [1024, "icon"],
+    ] as const)(
+      "preserves custom overlay controls when desktop collapsing is disabled at %ipx (%s)",
+      async (width, mode) => {
+        vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
+        const onOpenChange = vi.fn();
+        const { result } = renderHook(
+          () => ({ sidebar: useAppShellSidebar(), context: useSidebar() }),
+          {
+            wrapper: ({ children }) => (
+              <SidebarProvider
+                sidebarBehaviour="fixed"
+                defaultOpen={false}
+                onOpenChange={onOpenChange}
+              >
+                <Sidebar collapsible={mode}>Full menu</Sidebar>
+                <SidebarLayout.Trigger />
+                <SidebarRail />
+                {children}
+              </SidebarProvider>
+            ),
+          },
+        );
+        const overlayOpen = () =>
+          width === 375 ? result.current.context.openMobile : result.current.context.openIconMode;
+        const triggers = screen.getAllByRole("button", { name: "Toggle Sidebar" });
+        expect(triggers).toHaveLength(2);
+        expect(overlayOpen()).toBe(false);
+        expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+
+        fireEvent.click(triggers[0]!);
+        expect(overlayOpen()).toBe(true);
+        expect(await screen.findByRole("dialog", { name: "Sidebar" })).toBeDefined();
+        act(() => result.current.sidebar.toggle());
+        expect(overlayOpen()).toBe(false);
+        await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+
+        fireEvent.click(triggers[1]!);
+        expect(overlayOpen()).toBe(true);
+        act(() => result.current.sidebar.toggle());
+        for (const modifier of ["ctrlKey", "metaKey"] as const) {
+          const shortcut = new KeyboardEvent("keydown", {
+            key: "b",
+            [modifier]: true,
+            cancelable: true,
+          });
+          fireEvent(window, shortcut);
+          expect(shortcut.defaultPrevented).toBe(true);
+          expect(overlayOpen()).toBe(true);
+          act(() => result.current.sidebar.toggle());
+          expect(overlayOpen()).toBe(false);
+        }
+        act(() => result.current.sidebar.setOpen(false));
+        expect(result.current.sidebar.open).toBe(true);
+        expect(onOpenChange).not.toHaveBeenCalled();
+        expect(sidebarWidth()).toBe("256px");
+      },
+    );
+
+    it.each(["fixed", "resize"] as const)(
+      "ignores a controlled closed state without collapse support (%s)",
+      (sidebarBehaviour) => {
+        stubDesktopViewport();
+        const onOpenChange = vi.fn();
+        const { result } = renderHook(() => useAppShellSidebar(), {
+          wrapper: ({ children }) => (
+            <SidebarProvider
+              sidebarBehaviour={sidebarBehaviour}
+              open={false}
+              onOpenChange={onOpenChange}
+            >
+              {children}
+            </SidebarProvider>
+          ),
+        });
+        expect(result.current.open).toBe(true);
+        act(() => {
+          result.current.setOpen(false);
+          result.current.setOpen(true);
+          result.current.toggle();
+        });
+        expect(result.current.open).toBe(true);
+        expect(onOpenChange).not.toHaveBeenCalled();
+      },
+    );
+
+    it("removes disabled shortcuts and restores enabled hook controls when the capability changes", () => {
+      stubDesktopViewport();
+      let sidebarBehaviour: "collapse" | "fixed" = "collapse";
+      const view = renderHook(() => useAppShellSidebar(), {
+        wrapper: ({ children }) => (
+          <SidebarProvider sidebarBehaviour={sidebarBehaviour}>{children}</SidebarProvider>
+        ),
+      });
+      act(() => view.result.current.setOpen(false));
+      expect(view.result.current.open).toBe(false);
+      sidebarBehaviour = "fixed";
+      view.rerender();
+      expect(view.result.current.open).toBe(true);
+      const disabledShortcut = new KeyboardEvent("keydown", {
+        key: "b",
+        ctrlKey: true,
+        cancelable: true,
+      });
+      fireEvent(window, disabledShortcut);
+      expect(disabledShortcut.defaultPrevented).toBe(false);
+      sidebarBehaviour = "collapse";
+      view.rerender();
+      act(() => view.result.current.setOpen(true));
+      for (const modifier of ["ctrlKey", "metaKey"] as const) {
+        const shortcut = new KeyboardEvent("keydown", {
+          key: "b",
+          [modifier]: true,
+          cancelable: true,
+        });
+        const wasOpen = view.result.current.open;
+        fireEvent(window, shortcut);
+        expect(shortcut.defaultPrevented).toBe(true);
+        expect(view.result.current.open).toBe(!wasOpen);
+      }
+      act(() => view.result.current.toggle());
+      expect(view.result.current.open).toBe(false);
+    });
+
     it("renders sidebar trigger when collapsible is true (default)", async () => {
       stubDesktopViewport();
       renderSidebarLayout();
@@ -117,6 +335,446 @@ describe("SidebarLayout", () => {
         const triggers = document.querySelectorAll('[data-slot="sidebar-trigger"]');
         expect(triggers.length).toBeGreaterThan(0);
       });
+    });
+  });
+
+  describe("sidebarBehaviour", () => {
+    it("rejects specifying both the new and deprecated props", () => {
+      expectTypeOf<{ sidebarBehaviour: "resize"; collapsible: false }>().not.toExtend<
+        Parameters<typeof SidebarLayout>[0]
+      >();
+    });
+
+    it.each([
+      { props: {}, expected: "collapse-and-resize" },
+      { props: { collapsible: true }, expected: "collapse" },
+      { props: { collapsible: false }, expected: "fixed" },
+      { props: { sidebarBehaviour: "fixed" }, expected: "fixed" },
+      { props: { sidebarBehaviour: "collapse" }, expected: "collapse" },
+      { props: { sidebarBehaviour: "resize" }, expected: "resize" },
+      { props: { sidebarBehaviour: "collapse-and-resize" }, expected: "collapse-and-resize" },
+    ] as const)(
+      "exposes normalized $expected configuration from $props",
+      async ({ props, expected }) => {
+        stubDesktopViewport();
+        renderSidebarLayout({ ...props, header: <SidebarStateProbe /> });
+        expect((await screen.findByTestId("sidebar-state")).textContent).toBe(`${expected}:true`);
+        expect(screen.queryByRole("separator", { name: "Resize sidebar" }) !== null).toBe(
+          expected === "resize" || expected === "collapse-and-resize",
+        );
+      },
+    );
+
+    it.each([
+      ["fixed", false, false],
+      ["collapse", true, false],
+      ["resize", false, true],
+      ["collapse-and-resize", true, true],
+    ] as const)(
+      "renders only the permitted desktop controls (%s)",
+      async (sidebarBehaviour, canCollapse, canResize) => {
+        stubDesktopViewport();
+        renderSidebarLayout({ sidebarBehaviour });
+        await waitFor(() => expect(document.querySelector('[data-slot="sidebar"]')).not.toBeNull());
+        expect(screen.queryAllByRole("button", { name: "Toggle Sidebar" }).length > 0).toBe(
+          canCollapse,
+        );
+        expect(screen.queryByRole("separator", { name: "Resize sidebar" }) !== null).toBe(
+          canResize,
+        );
+        if (canCollapse) {
+          fireEvent.click(screen.getAllByRole("button", { name: "Toggle Sidebar" })[0]!);
+          expect(document.querySelector('[data-slot="sidebar"]')?.getAttribute("data-state")).toBe(
+            "collapsed",
+          );
+          expect(screen.queryByRole("button", { name: "Expand sidebar" }) !== null).toBe(canResize);
+        }
+      },
+    );
+
+    it("keeps resize-only desktop expansion and clamps pointer and keyboard resizing", async () => {
+      stubDesktopViewport();
+      renderSidebarLayout({
+        sidebarBehaviour: "resize",
+        defaultOpen: false,
+        header: <SidebarStateProbe />,
+      });
+      const handle = await screen.findByRole("separator", { name: "Resize sidebar" });
+      Object.defineProperty(handle, "setPointerCapture", { value: vi.fn() });
+      const pointer = { pointerId: 1, isPrimary: true, button: 0 };
+      fireEvent.pointerDown(handle, { ...pointer, clientX: 256 });
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 300 });
+      expect(dragWidth()).toBe("300px");
+      expect(handle.getAttribute("aria-valuenow")).toBe("300");
+      fireEvent.pointerMove(handle, { ...pointer, clientX: -100 });
+      expect(dragWidth()).toBe("192px");
+      fireEvent.pointerUp(handle, pointer);
+      expect(sidebarWidth()).toBe("192px");
+      fireEvent.keyDown(handle, { key: "Home" });
+      fireEvent.keyDown(handle, { key: "ArrowLeft" });
+      expect(sidebarWidth()).toBe("192px");
+      expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBe(handle);
+      const user = userEvent.setup();
+      await user.dblClick(handle);
+      await user.dblClick(handle);
+      expect(sidebarWidth()).toBe("256px");
+      expect(screen.getByTestId("sidebar-state").textContent).toBe("resize:true");
+      expect(screen.queryByRole("button", { name: "Expand sidebar" })).toBeNull();
+    });
+
+    describe.each([375, 1024])("responsive menu at %ipx", (width) => {
+      it.each(["fixed", "collapse", "resize", "collapse-and-resize"] as const)(
+        "keeps the stock full menu accessible in %s mode",
+        async (sidebarBehaviour) => {
+          vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
+          renderSidebarLayout({ sidebarBehaviour });
+          fireEvent.click(await screen.findByRole("button", { name: "Toggle Sidebar" }));
+          expect(await screen.findByRole("dialog", { name: "Sidebar" })).toBeDefined();
+          expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+        },
+      );
+
+      it("uses a responsive menu for legacy collapsible=false", async () => {
+        vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
+        renderSidebarLayout({ collapsible: false });
+        fireEvent.click(await screen.findByRole("button", { name: "Toggle Sidebar" }));
+        expect(await screen.findByRole("dialog", { name: "Sidebar" })).toBeDefined();
+      });
+    });
+
+    it("keeps desktop expansion independent from mobile drawer visibility", () => {
+      const viewport = vi.spyOn(window, "innerWidth", "get").mockReturnValue(375);
+      const view = renderHook(() => ({ sidebar: useAppShellSidebar(), context: useSidebar() }), {
+        wrapper: ({ children }) => (
+          <SidebarProvider defaultOpen={false}>{children}</SidebarProvider>
+        ),
+      });
+      act(() => view.result.current.sidebar.toggle());
+      expect(view.result.current.context.openMobile).toBe(true);
+      expect(view.result.current.sidebar.open).toBe(false);
+      viewport.mockReturnValue(1280);
+      view.rerender();
+      expect(view.result.current.sidebar.isMobile).toBe(false);
+      expect(view.result.current.sidebar.open).toBe(false);
+      expect(view.result.current.context.openMobile).toBe(true);
+    });
+
+    it("reports a fixed inert fallback outside a sidebar provider", () => {
+      const { result } = renderHook(() => useAppShellSidebar());
+      expect(result.current).toMatchObject({
+        sidebarBehaviour: "fixed",
+        open: true,
+        isMobile: false,
+      });
+      act(() => {
+        result.current.setOpen(false);
+        result.current.toggle();
+      });
+      expect(result.current.open).toBe(true);
+    });
+  });
+
+  describe("sidebar resizing", () => {
+    it("provides a desktop resize handle when collapsing is enabled", async () => {
+      stubDesktopViewport();
+      renderSidebarLayout();
+
+      const handle = await screen.findByRole("separator", { name: "Resize sidebar" });
+      expect(handle.getAttribute("aria-valuenow")).toBe("256");
+      expect(sidebarWidth()).toBe("256px");
+    });
+
+    it("does not expose a separate resizable prop", () => {
+      expectTypeOf<Parameters<typeof SidebarLayout>[0]>().not.toHaveProperty("resizable");
+    });
+
+    it("exposes an accessible handle and supports keyboard resizing when enabled", async () => {
+      stubDesktopViewport();
+      renderSidebarLayout();
+      const handle = await screen.findByRole("separator", { name: "Resize sidebar" });
+      const user = userEvent.setup();
+      expect(handle.getAttribute("aria-orientation")).toBe("vertical");
+      expect(handle.getAttribute("aria-valuemin")).toBe("192");
+      expect(handle.getAttribute("aria-valuemax")).toBe("480");
+      expect(handle.getAttribute("aria-valuenow")).toBe("256");
+      expect(sidebarWidth()).toBe("256px");
+
+      handle.focus();
+      await user.keyboard("{ArrowRight}");
+      expect(sidebarWidth()).toBe("272px");
+      expect(handle.getAttribute("aria-valuenow")).toBe("272");
+      await user.keyboard("{ArrowLeft}");
+      expect(sidebarWidth()).toBe("256px");
+      await user.keyboard("{End}{ArrowRight}");
+      expect(sidebarWidth()).toBe("480px");
+      await user.keyboard("{Home}");
+      expect(sidebarWidth()).toBe("192px");
+      expect(screen.getByRole("button", { name: "Expand sidebar" })).toBe(handle);
+    });
+
+    it("keeps an expand handle on collapse and restores the default width on expand", async () => {
+      stubDesktopViewport();
+      renderSidebarLayout();
+      const handle = await screen.findByRole("separator", { name: "Resize sidebar" });
+      fireEvent.keyDown(handle, { key: "ArrowRight" });
+      expect(sidebarWidth()).toBe("272px");
+      const user = userEvent.setup();
+      const trigger = screen.getAllByRole("button", { name: "Toggle Sidebar" })[0]!;
+
+      await user.click(trigger);
+      expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+      const expandHandle = screen.getByRole("button", { name: "Expand sidebar" });
+      Object.defineProperty(expandHandle, "setPointerCapture", { value: vi.fn() });
+      await user.dblClick(expandHandle);
+      expect(
+        screen.getByRole("separator", { name: "Resize sidebar" }).getAttribute("aria-valuenow"),
+      ).toBe("256");
+      expect(sidebarWidth()).toBe("256px");
+    });
+
+    it("resists below the minimum width and collapses only at the offcanvas boundary", async () => {
+      stubDesktopViewport();
+      renderSidebarLayout();
+      const handle = await screen.findByRole("separator", { name: "Resize sidebar" });
+      Object.defineProperty(handle, "setPointerCapture", { value: vi.fn() });
+      const pointer = { pointerId: 1, isPrimary: true, button: 0 };
+      fireEvent.pointerDown(handle, { ...pointer, clientX: 256 });
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 192 });
+      expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBe(handle);
+      expect(handle.getAttribute("aria-valuenow")).toBe("192");
+      expect(sidebarWidth()).toBe("256px");
+      expect(dragWidth()).toBe("192px");
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 96 });
+      expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBe(handle);
+      expect(dragWidth()).toBe("168px");
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 39 });
+      expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBe(handle);
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 38.4 });
+      expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+      expect(document.querySelector('[data-slot="sidebar"]')?.getAttribute("data-state")).toBe(
+        "collapsed",
+      );
+      expect(sidebarWidth()).toBe("192px");
+      fireEvent.pointerUp(handle, pointer);
+      fireEvent.click(handle, { detail: 1 });
+      expect(document.querySelector('[data-slot="sidebar"]')?.getAttribute("data-state")).toBe(
+        "collapsed",
+      );
+
+      const expandHandle = screen.getByRole("button", { name: "Expand sidebar" });
+      expect(expandHandle).toBe(handle);
+      await userEvent.setup().dblClick(expandHandle);
+      expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBeDefined();
+      expect(sidebarWidth()).toBe("256px");
+    });
+
+    it("continues resizing with the same captured handle after dragging open", async () => {
+      stubDesktopViewport();
+      renderSidebarLayout({ defaultOpen: false });
+      const handle = await screen.findByRole("button", { name: "Expand sidebar" });
+      Object.defineProperty(handle, "setPointerCapture", { value: vi.fn() });
+      const pointer = { pointerId: 1, isPrimary: true, button: 0 };
+      fireEvent.pointerDown(handle, { ...pointer, clientX: 10 });
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 14 });
+      expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+      const gap = document.querySelector('[data-slot="sidebar-gap"]') as HTMLElement;
+      const pane = document.querySelector('[data-slot="sidebar-container"]') as HTMLElement;
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 106 });
+      expect(screen.getByRole("button", { name: "Expand sidebar" })).toBe(handle);
+      expect(dragWidth()).toBe("24px");
+      const sidebar = document.querySelector('[data-slot="sidebar"]') as HTMLElement;
+      expect(sidebar.style.getPropertyValue("--sidebar-min-width")).toBe("192px");
+      expect(sidebar.style.getPropertyValue("--sidebar-drag-pane-width")).toBe(
+        "max(var(--sidebar-min-width), var(--sidebar-drag-width))",
+      );
+      expect(sidebar.style.getPropertyValue("--sidebar-drag-offset")).toBe(
+        "calc(var(--sidebar-drag-width) - var(--sidebar-drag-pane-width))",
+      );
+      expect(gap.style.width).toBe("");
+      expect(pane.style.width).toBe("");
+      expect(pane.style.left).toBe("");
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 202 });
+      expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBe(handle);
+      expect(handle.getAttribute("data-resizing")).toBe("true");
+      expect(sidebarWidth()).toBe("192px");
+      expect(dragWidth()).toBe("192px");
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 250 });
+      expect(dragWidth()).toBe("240px");
+      expect(handle.getAttribute("aria-valuenow")).toBe("240");
+      expect(sidebarWidth()).toBe("192px");
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 1000 });
+      expect(dragWidth()).toBe("480px");
+      expect(handle.getAttribute("aria-valuenow")).toBe("480");
+      expect(sidebarWidth()).toBe("192px");
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 106 });
+      expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBe(handle);
+      expect(dragWidth()).toBe("168px");
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 10 });
+      expect(screen.getByRole("button", { name: "Expand sidebar" })).toBe(handle);
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 106 });
+      expect(screen.getByRole("button", { name: "Expand sidebar" })).toBe(handle);
+      expect(parseFloat(dragWidth())).toBeCloseTo(14.4);
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 250 });
+      expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBe(handle);
+      expect(sidebarWidth()).toBe("240px");
+      fireEvent.pointerUp(handle, pointer);
+      expect(handle.getAttribute("data-resizing")).toBe("false");
+      expect(dragWidth()).toBe("");
+      expect(gap.style.width).toBe("");
+      expect(pane.style.width).toBe("");
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 150 });
+      expect(sidebarWidth()).toBe("240px");
+    });
+
+    it.each([
+      { defaultOpen: false, startX: 10, endX: 106, visualWidth: "24px", state: "collapsed" },
+      { defaultOpen: true, startX: 256, endX: 96, visualWidth: "168px", state: "expanded" },
+    ])(
+      "settles a partial drag back to the $state boundary on release",
+      async ({ defaultOpen, startX, endX, visualWidth, state }) => {
+        stubDesktopViewport();
+        renderSidebarLayout({ defaultOpen });
+        const handle = defaultOpen
+          ? await screen.findByRole("separator", { name: "Resize sidebar" })
+          : await screen.findByRole("button", { name: "Expand sidebar" });
+        Object.defineProperty(handle, "setPointerCapture", { value: vi.fn() });
+        const pointer = { pointerId: 1, isPrimary: true, button: 0 };
+        const gap = document.querySelector('[data-slot="sidebar-gap"]') as HTMLElement;
+        const pane = document.querySelector('[data-slot="sidebar-container"]') as HTMLElement;
+        fireEvent.pointerDown(handle, { ...pointer, clientX: startX });
+        fireEvent.pointerMove(handle, { ...pointer, clientX: endX });
+        expect(dragWidth()).toBe(visualWidth);
+        expect(sidebarWidth()).toBe("256px");
+        expect(document.querySelector('[data-slot="sidebar"]')?.getAttribute("data-state")).toBe(
+          state,
+        );
+        fireEvent.pointerUp(handle, pointer);
+        expect(dragWidth()).toBe("");
+        expect(gap.style.width).toBe("");
+        expect(pane.style.width).toBe("");
+        expect(pane.style.left).toBe("");
+        expect(sidebarWidth()).toBe("192px");
+        expect(document.querySelector('[data-slot="sidebar"]')?.getAttribute("data-state")).toBe(
+          state,
+        );
+      },
+    );
+
+    it("updates live CSS and ARIA without React renders or context updates during ordinary moves", () => {
+      stubDesktopViewport();
+      const commits = vi.fn();
+      const contextRenders = vi.fn();
+      function WidthProbe() {
+        const { sidebarWidth: storedWidth } = useSidebar();
+        contextRenders(storedWidth);
+        return <output data-testid="stored-width">{storedWidth}</output>;
+      }
+      render(
+        <Profiler id="sidebar" onRender={commits}>
+          <PrimitiveSidebarLayout>
+            <WidthProbe />
+          </PrimitiveSidebarLayout>
+        </Profiler>,
+      );
+      const handle = screen.getByRole("separator", { name: "Resize sidebar" });
+      Object.defineProperty(handle, "setPointerCapture", { value: vi.fn() });
+      const pointer = { pointerId: 1, isPrimary: true, button: 0 };
+      fireEvent.pointerDown(handle, { ...pointer, clientX: 256 });
+      commits.mockClear();
+      contextRenders.mockClear();
+      for (const clientX of [280, 300, 320]) {
+        fireEvent.pointerMove(handle, { ...pointer, clientX });
+      }
+      expect(commits).not.toHaveBeenCalled();
+      expect(contextRenders).not.toHaveBeenCalled();
+      expect(dragWidth()).toBe("320px");
+      expect(handle.getAttribute("aria-valuenow")).toBe("320");
+      expect(handle.getAttribute("aria-valuetext")).toBe("320 pixels");
+      expect(sidebarWidth()).toBe("256px");
+      expect(screen.getByTestId("stored-width").textContent).toBe("256");
+      fireEvent.pointerUp(handle, pointer);
+      expect(contextRenders).toHaveBeenLastCalledWith(320);
+      expect(commits).toHaveBeenCalledTimes(1);
+      expect(sidebarWidth()).toBe("320px");
+      expect(screen.getByTestId("stored-width").textContent).toBe("320");
+      expect(dragWidth()).toBe("");
+    });
+
+    it("preserves live CSS and ARIA through an unrelated parent rerender", () => {
+      stubDesktopViewport();
+      const view = render(<PrimitiveSidebarLayout className="before" />);
+      const handle = screen.getByRole("separator", { name: "Resize sidebar" });
+      Object.defineProperty(handle, "setPointerCapture", { value: vi.fn() });
+      const pointer = { pointerId: 1, isPrimary: true, button: 0 };
+      fireEvent.pointerDown(handle, { ...pointer, clientX: 256 });
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 300 });
+      view.rerender(<PrimitiveSidebarLayout className="after" />);
+      expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBe(handle);
+      expect(handle.getAttribute("data-resizing")).toBe("true");
+      expect(handle.getAttribute("aria-valuenow")).toBe("300");
+      expect(handle.getAttribute("aria-valuetext")).toBe("300 pixels");
+      expect(dragWidth()).toBe("300px");
+      expect(sidebarWidth()).toBe("256px");
+      fireEvent.pointerMove(handle, { ...pointer, clientX: 320 });
+      expect(dragWidth()).toBe("320px");
+      fireEvent.pointerUp(handle, pointer);
+      expect(sidebarWidth()).toBe("320px");
+      expect(dragWidth()).toBe("");
+    });
+
+    it("collapses when the keyboard reaches the minimum width", async () => {
+      stubDesktopViewport();
+      renderSidebarLayout();
+      const handle = await screen.findByRole("separator", { name: "Resize sidebar" });
+      fireEvent.keyDown(handle, { key: "Home" });
+      expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+      expect(document.querySelector('[data-slot="sidebar"]')?.getAttribute("data-state")).toBe(
+        "collapsed",
+      );
+    });
+
+    it.each(["{Enter}", " "])("expands from the collapsed handle using %s", async (key) => {
+      stubDesktopViewport();
+      renderSidebarLayout({ defaultOpen: false });
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-slot="sidebar"]')?.getAttribute("data-state")).toBe(
+          "collapsed",
+        );
+      });
+      expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+      const handle = screen.getByRole("button", { name: "Expand sidebar" });
+      expect(handle.getAttribute("aria-expanded")).toBe("false");
+      handle.focus();
+      await userEvent.setup().keyboard(key);
+      expect(screen.getByRole("separator", { name: "Resize sidebar" })).toBeDefined();
+      expect(sidebarWidth()).toBe("256px");
+    });
+
+    it.each([375, 1024])(
+      "does not add resize handles to overlays or icon rails at %ipx",
+      async (width) => {
+        vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
+        renderSidebarLayout();
+        const user = userEvent.setup();
+        const trigger = await screen.findByRole("button", { name: "Toggle Sidebar" });
+        expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+
+        await user.click(trigger);
+        await screen.findByRole("dialog");
+        expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+      },
+    );
+
+    it("keeps the disabled sidebar expanded at a fixed width without controls", async () => {
+      stubDesktopViewport();
+      renderSidebarLayout({ collapsible: false, defaultOpen: false });
+      await waitFor(() => expect(document.querySelector('[data-slot="sidebar"]')).not.toBeNull());
+      expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Expand sidebar" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Toggle Sidebar" })).toBeNull();
+      expect(sidebarWidth()).toBe("256px");
+      expect(document.querySelector('[data-slot="sidebar"]')?.className).toContain("astw:shrink-0");
     });
   });
 

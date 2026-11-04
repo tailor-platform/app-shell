@@ -5,12 +5,15 @@ import { useRender } from "@base-ui/react/use-render";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
+import { DEFAULT_SIDEBAR_WIDTH, MIN_WIDTH, SidebarResizeHandle } from "./sidebar-resize-handle";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Separator } from "@/components/internals/separator";
 import { Sheet } from "@/components/sheet";
 import { Tooltip } from "@/components/tooltip";
+import { mergeRefs } from "@/components/toolbar/toolbar";
+import type { SidebarBehaviour } from "./sidebar-behaviour";
 import {
   ListRoot,
   ListItem,
@@ -25,20 +28,56 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
+/**
+ * Internal sidebar state shared by SidebarProvider and its descendants.
+ * Viewport flags select which visibility state toggleSidebar updates; they do
+ * not determine whether it is open. Desktop expansion and responsive drawer
+ * visibility stay independent so neither interaction overwrites the other.
+ */
 type SidebarContextProps = {
+  /** Desktop presentation state derived from open, not responsive drawer visibility. */
   state: "expanded" | "collapsed";
+  /**
+   * Desktop inline expansion state. Keeping this separate from openMobile and
+   * openIconMode preserves desktop expansion across drawer interactions and
+   * avoids opening a drawer solely because desktop was expanded.
+   */
   open: boolean;
+  /** Change desktop expansion only; inert when canCollapse is false. */
   setOpen: (open: boolean) => void;
+  /** Mobile drawer visibility, independent of desktop open and viewport width. */
   openMobile: boolean;
+  /** Change mobile drawer visibility without changing desktop expansion. */
   setOpenMobile: (open: boolean) => void;
+  /** Mobile viewport flag; toggleSidebar changes openMobile in this range. */
   isMobile: boolean;
+  /** Shared toggle action; updates the viewport-specific state only when canToggle permits it. */
   toggleSidebar: () => void;
-  isIconMode: boolean;
+  /** Tablet viewport flag, not the Sidebar primitive's actual rendering mode. */
+  isTablet: boolean;
+  /** Tablet overlay visibility, independent of desktop open and mobile drawer visibility. */
   openIconMode: boolean;
+  /** Change tablet overlay visibility without changing desktop expansion. */
   setOpenIconMode: (open: boolean) => void;
-  collapsible: boolean;
+  /** Effective desktop operations, normalized from the public new/deprecated props. */
+  sidebarBehaviour: SidebarBehaviour;
+  /** Desktop collapse permission derived from sidebarBehaviour, not drawer visibility. */
+  canCollapse: boolean;
+  /** Desktop width-change permission derived from sidebarBehaviour. */
+  canResize: boolean;
+  /**
+   * Derived from canCollapse and viewport so disabling desktop collapse does
+   * not block mobile/tablet toggles. Shared by triggers and shortcuts; this
+   * permits the toggle action but does not prove a responsive drawer exists.
+   */
+  canToggle: boolean;
+  /** Committed desktop sidebar width in pixels; live drag geometry uses CSS properties. */
+  sidebarWidth: number;
+  /** Commit desktop width without changing responsive drawer widths. */
+  setSidebarWidth: (width: number) => void;
 };
 
+/** Provider-owned context for independent desktop/mobile/tablet state; null outside SidebarProvider. */
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
 /**
@@ -63,7 +102,7 @@ function SidebarProvider({
   defaultOpen = true,
   open: openProp,
   onOpenChange: setOpenProp,
-  collapsible = true,
+  sidebarBehaviour = "collapse-and-resize",
   className,
   style,
   children,
@@ -72,47 +111,63 @@ function SidebarProvider({
   defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  collapsible?: boolean;
+  sidebarBehaviour?: SidebarBehaviour;
 }) {
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
+  const canCollapse = sidebarBehaviour === "collapse" || sidebarBehaviour === "collapse-and-resize";
+  const canResize = sidebarBehaviour === "resize" || sidebarBehaviour === "collapse-and-resize";
+  // Viewport width selects which state to use, not whether that state is open.
+  // Keep drawer visibility separate so desktop expansion alone does not open a
+  // drawer when the viewport narrows, and opening a drawer does not change the
+  // desktop expansion state remembered when returning to a wider viewport.
   const [openMobile, setOpenMobile] = React.useState(false);
   const [openIconMode, setOpenIconMode] = React.useState(false);
+  const [sidebarWidth, setSidebarWidth] = React.useState(DEFAULT_SIDEBAR_WIDTH);
 
-  // This is the internal state of the sidebar.
-  // We use openProp and setOpenProp for control from outside the component.
+  // Desktop inline expansion is separate from openMobile/openIconMode drawer visibility.
+  // Disabling canCollapse keeps desktop open and makes setOpen inert, but must not
+  // prevent drawer toggling. openProp/setOpenProp control only the desktop state.
   const [_open, _setOpen] = React.useState(defaultOpen);
-  const open = openProp ?? _open;
+  const open = canCollapse ? (openProp ?? _open) : true;
 
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
+      if (!canCollapse) return;
       const openState = typeof value === "function" ? value(open) : value;
+      if (openState && !open) setSidebarWidth(DEFAULT_SIDEBAR_WIDTH);
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
         _setOpen(openState);
       }
     },
-    [setOpenProp, open],
+    [setOpenProp, open, canCollapse],
   );
 
-  // Determine if we're in icon mode (tablet range)
-  const isIconMode = isTablet && !isMobile;
+  // Desktop toggling follows canCollapse; mobile/tablet toggling stays enabled
+  // so desktop restrictions do not block access to the full menu.
+  // These viewport flags do not inspect a custom Sidebar's actual rendering mode.
+  const canToggle = canCollapse || isMobile || isTablet;
 
-  // Helper to toggle the sidebar.
+  // Shared by triggers, the public hook's toggle(), and the keyboard shortcut.
+  // The viewport selects an independent drawer state; the desktop branch delegates
+  // its permission check to setOpen instead of checking canToggle again here.
   const toggleSidebar = React.useCallback(() => {
     if (isMobile) {
       return setOpenMobile((prev) => !prev);
-    } else if (isIconMode) {
-      // In icon mode, use overlay (similar to mobile)
+    } else if (isTablet) {
+      // Tablet overlay visibility is independent of desktop inline expansion.
       return setOpenIconMode((prev) => !prev);
     } else {
       return setOpen((prev) => !prev);
     }
-  }, [isMobile, isIconMode, setOpen, setOpenMobile]);
+  }, [isMobile, isTablet, setOpen]);
 
-  // Adds a keyboard shortcut to toggle the sidebar.
+  // Use the same permission as triggers and toggleSidebar, so disabled desktop
+  // shortcuts are not intercepted while mobile/tablet shortcuts remain available.
   React.useEffect(() => {
+    if (!canToggle) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
@@ -122,7 +177,7 @@ function SidebarProvider({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSidebar]);
+  }, [canToggle, toggleSidebar]);
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
@@ -137,10 +192,15 @@ function SidebarProvider({
       openMobile,
       setOpenMobile,
       toggleSidebar,
-      isIconMode,
+      isTablet,
       openIconMode,
       setOpenIconMode,
-      collapsible,
+      sidebarBehaviour,
+      canCollapse,
+      canResize,
+      canToggle,
+      sidebarWidth,
+      setSidebarWidth,
     }),
     [
       state,
@@ -150,10 +210,14 @@ function SidebarProvider({
       openMobile,
       setOpenMobile,
       toggleSidebar,
-      isIconMode,
+      isTablet,
       openIconMode,
       setOpenIconMode,
-      collapsible,
+      sidebarBehaviour,
+      canCollapse,
+      canResize,
+      canToggle,
+      sidebarWidth,
     ],
   );
 
@@ -164,7 +228,7 @@ function SidebarProvider({
           data-slot="sidebar-wrapper"
           style={
             {
-              "--sidebar-width": SIDEBAR_WIDTH,
+              "--sidebar-width": `${canResize ? sidebarWidth : DEFAULT_SIDEBAR_WIDTH}px`,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
               ...style,
             } as React.CSSProperties
@@ -197,21 +261,54 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset";
   collapsible?: "offcanvas" | "icon" | "none";
 }) {
-  const { isMobile, state, openMobile, setOpenMobile, isIconMode, openIconMode, setOpenIconMode } =
-    useSidebar();
+  const {
+    isMobile,
+    state,
+    openMobile,
+    setOpenMobile,
+    isTablet,
+    openIconMode,
+    setOpenIconMode,
+    sidebarWidth,
+    setSidebarWidth,
+    setOpen,
+    canCollapse,
+    canResize,
+  } = useSidebar();
+  const sidebarRef = React.useRef<HTMLDivElement>(null);
+  let collapsedWidth = "0px";
+  if (collapsible === "icon") {
+    collapsedWidth =
+      variant === "sidebar"
+        ? "var(--sidebar-width-icon)"
+        : "calc(var(--sidebar-width-icon) + var(--astw-spacing) * 4)";
+  }
+  const resizeHandle = canResize && !isMobile && !isTablet && (
+    <SidebarResizeHandle
+      width={sidebarWidth}
+      onWidthChange={setSidebarWidth}
+      sidebarRef={sidebarRef}
+      onOpenChange={canCollapse && collapsible !== "none" ? setOpen : undefined}
+      collapsed={canCollapse && collapsible !== "none" && state === "collapsed"}
+      side={side}
+    />
+  );
 
   if (collapsible === "none") {
     return (
       <div
         data-slot="sidebar"
         className={cn(
-          "astw:bg-sidebar astw:text-sidebar-foreground astw:flex astw:w-(--sidebar-width) astw:flex-col",
+          "astw:bg-sidebar astw:text-sidebar-foreground astw:flex astw:shrink-0 astw:w-(--sidebar-width) astw:flex-col",
+          canResize && "astw:relative astw:has-[[data-resizing=true]]:w-(--sidebar-drag-width)!",
           variant === "inset" && "astw:border-x astw:border-x-border",
           className,
         )}
         {...props}
+        ref={mergeRefs(sidebarRef, props.ref)}
       >
         {children}
+        {resizeHandle}
       </div>
     );
   }
@@ -243,7 +340,7 @@ function Sidebar({
   }
 
   // In icon mode, show overlay when opened (similar to mobile)
-  if (isIconMode && collapsible === "icon") {
+  if (isTablet && collapsible === "icon") {
     return (
       <>
         {/* Icon-only sidebar (always visible) - use same structure as normal sidebar */}
@@ -320,12 +417,26 @@ function Sidebar({
   return (
     <>
       <div
+        ref={sidebarRef}
         className={cn(
           "astw:group astw:peer astw:text-sidebar-foreground",
           // The icon rail is visible at every width; other modes stay desktop-only
           // (mobile uses the Sheet above).
           collapsible === "icon" ? "astw:block" : "astw:hidden astw:md:block",
         )}
+        style={
+          {
+            "--sidebar-collapsed-width": collapsedWidth,
+            "--sidebar-min-width": `${MIN_WIDTH}px`,
+            "--sidebar-drag-pane-width":
+              collapsible === "offcanvas"
+                ? "max(var(--sidebar-min-width), var(--sidebar-drag-width))"
+                : "var(--sidebar-drag-width)",
+            "--sidebar-drag-offset":
+              "calc(var(--sidebar-drag-width) - var(--sidebar-drag-pane-width))",
+          } as React.CSSProperties
+        }
+        data-resize-mode={collapsible}
         data-state={state}
         data-collapsible={dataCollapsible}
         data-variant={variant}
@@ -336,7 +447,8 @@ function Sidebar({
         <div
           data-slot="sidebar-gap"
           className={cn(
-            "astw:relative astw:w-(--sidebar-width) astw:bg-transparent astw:transition-[width] astw:duration-200 astw:ease-linear",
+            "astw:relative astw:w-(--sidebar-width) astw:bg-transparent astw:transition-[width] astw:duration-200 astw:ease-linear astw:group-has-[[data-resizing=true]]:transition-none",
+            "astw:group-has-[[data-resizing=true]]:w-(--sidebar-drag-width)!",
             "astw:group-data-[collapsible=offcanvas]:w-0",
             "astw:group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
@@ -347,7 +459,11 @@ function Sidebar({
         <div
           data-slot="sidebar-container"
           className={cn(
-            "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear",
+            "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:group-has-[[data-resizing=true]]:transition-none",
+            "astw:group-has-[[data-resizing=true]]:w-(--sidebar-drag-pane-width)!",
+            side === "left"
+              ? "astw:group-has-[[data-resizing=true]]:left-(--sidebar-drag-offset)!"
+              : "astw:group-has-[[data-resizing=true]]:right-(--sidebar-drag-offset)!",
             // Visible at every width for the icon rail; desktop-only otherwise.
             collapsible === "icon" ? "astw:flex" : "astw:hidden astw:md:flex",
             side === "left"
@@ -358,6 +474,12 @@ function Sidebar({
               ? "astw:p-2 astw:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
               : "astw:group-data-[collapsible=icon]:w-(--sidebar-width-icon) astw:group-data-[side=left]:border-r astw:group-data-[side=right]:border-l",
             variant === "inset" && "astw:border-x astw:border-x-border",
+            // Thicken the edge to 2px while its resize handle is hovered, keyboard-focused or
+            // dragged. A shadow rather than a wider border, so neither content nor handle shifts.
+            variant !== "floating" &&
+              (side === "left"
+                ? "astw:has-[[data-slot=sidebar-resize-handle]:hover]:shadow-[1px_0_0_var(--border)] astw:has-[[data-slot=sidebar-resize-handle][data-focus=keyboard]]:shadow-[1px_0_0_var(--border)] astw:has-[[data-resizing=true]]:shadow-[1px_0_0_var(--border)]"
+                : "astw:has-[[data-slot=sidebar-resize-handle]:hover]:shadow-[-1px_0_0_var(--border)] astw:has-[[data-slot=sidebar-resize-handle][data-focus=keyboard]]:shadow-[-1px_0_0_var(--border)] astw:has-[[data-resizing=true]]:shadow-[-1px_0_0_var(--border)]"),
             className,
           )}
           {...props}
@@ -365,12 +487,16 @@ function Sidebar({
           <div
             data-sidebar="sidebar"
             data-slot="sidebar-inner"
-            className="astw:bg-sidebar astw:group-data-[variant=floating]:border-sidebar-border astw:flex astw:h-full astw:w-full astw:flex-col astw:group-data-[variant=floating]:rounded-lg astw:group-data-[variant=floating]:border astw:group-data-[variant=floating]:shadow-sm"
+            className={cn(
+              "astw:bg-sidebar astw:group-data-[variant=floating]:border-sidebar-border astw:flex astw:h-full astw:w-full astw:flex-col astw:group-data-[variant=floating]:rounded-lg astw:group-data-[variant=floating]:border astw:group-data-[variant=floating]:shadow-sm",
+              "astw:group-has-[[data-resizing=true]]:overflow-hidden",
+            )}
           >
             <SidebarRailContext.Provider value={dataCollapsible === "icon"}>
               {children}
             </SidebarRailContext.Provider>
           </div>
+          {resizeHandle}
         </div>
       </div>
       {/* Mobile: the toggle opens the full sidebar as a slide-in overlay on top
@@ -397,7 +523,8 @@ function Sidebar({
 }
 
 function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, canToggle } = useSidebar();
+  if (!canToggle) return null;
 
   return (
     <Button
@@ -419,7 +546,8 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
 }
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, canToggle } = useSidebar();
+  if (!canToggle) return null;
 
   return (
     <button

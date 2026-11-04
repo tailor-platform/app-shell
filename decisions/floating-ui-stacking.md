@@ -37,7 +37,7 @@ The value is set as an inline style on Sonner's `[data-sonner-toaster]`, not as 
 
 ### The Toaster renders after mount
 
-`Toaster` creates the portal in an effect and renders nothing before. `AppShell` already returns `null` on the server, so this is a second guard rather than a fix; `tests/.../sonner.ssr.test.tsx` renders it with `react-dom/server` in a Node environment and expects an empty string.
+`Toaster` creates the portal in an effect and renders nothing before. AppShell does not support server rendering, so there is no server-side test for this.
 
 ## What changes for consumers
 

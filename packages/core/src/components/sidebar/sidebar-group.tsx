@@ -183,7 +183,7 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
   const t = useT();
 
   const iconRailMode = useIconRailMode();
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, isMobile, isIconMode } = useSidebar();
 
   const resolvedTitle = resolve(title, typeof title === "string" ? title : "");
   const isActive = to ? currentPath === to : false;
@@ -195,7 +195,15 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
     return (
       <SidebarMenuItem>
         <SidebarMenuButton
-          render={<button type="button" aria-label={resolvedTitle} aria-haspopup="dialog" />}
+          render={
+            <button
+              type="button"
+              aria-label={resolvedTitle}
+              // A drawer opens at phone and tablet widths; on desktop widths the
+              // sidebar expands in place instead.
+              aria-haspopup={isMobile || isIconMode ? "dialog" : undefined}
+            />
+          }
           isActive={isActive}
           // Keep SidebarMenuButton from closing the drawer this tap just opened.
           onClick={(e) => {

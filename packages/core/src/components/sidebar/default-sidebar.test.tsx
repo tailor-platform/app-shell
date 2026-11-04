@@ -465,7 +465,9 @@ describe("DefaultSidebar opt-in props", () => {
 
       // A button rather than a link, so the tap opens the drawer instead of
       // leaving the page.
-      await user.click(screen.getByRole("button", { name: "Main" }));
+      const trigger = screen.getByRole("button", { name: "Main" });
+      expect(trigger.getAttribute("aria-haspopup")).toBe("dialog");
+      await user.click(trigger);
 
       const drawer = document.querySelector('[data-slot="sidebar-overlay"]') as HTMLElement;
       expect(drawer).not.toBeNull();
@@ -481,6 +483,8 @@ describe("DefaultSidebar opt-in props", () => {
 
     const sidebar = document.querySelector('[data-slot="sidebar"]');
     expect(sidebar?.getAttribute("data-state")).toBe("collapsed");
+    // No drawer opens here, so the button does not announce a dialog.
+    expect(screen.getByRole("button", { name: "Main" }).getAttribute("aria-haspopup")).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Main" }));
 

@@ -260,6 +260,80 @@ describe("LineItems cell editing", () => {
     expect(combo.value).toBe("Each");
   });
 
+  it("preserves active choice UI across row updates and restores the display on leave", async () => {
+    const { user } = setup();
+    const combo = screen.getByRole("combobox", { name: "Unit, line 1" }) as HTMLInputElement;
+    const display = screen.getByText("Display each");
+    expect(display.classList.contains("astw:invisible")).toBe(false);
+    await user.click(combo);
+    fireEvent.change(combo, { target: { value: "Box" } });
+    expect(display.classList.contains("astw:invisible")).toBe(true);
+    act(() => current.updateField("A", "name", "Updated elsewhere"));
+    expect(screen.getByRole("combobox", { name: "Unit, line 1" })).toBe(combo);
+    expect(document.activeElement).toBe(combo);
+    expect(combo.value).toBe("Box");
+    expect(screen.getByRole("option", { name: "Box" })).toBeDefined();
+    expect(display.classList.contains("astw:invisible")).toBe(true);
+    expect(current.lines[0].unit).toBe("pcs");
+    await user.keyboard("{Escape}");
+    expect(display.classList.contains("astw:invisible")).toBe(true);
+    await user.click(screen.getByRole("button", { name: "Outside" }));
+    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(display.classList.contains("astw:invisible")).toBe(false);
+    expect(combo.value).toBe("Each");
+  });
+
+  it("retains failed choice drafts without retaining transient UI across table detachment", async () => {
+    const request = deferred();
+    const check = vi.fn().mockReturnValueOnce(request.promise).mockReturnValue(undefined);
+    const schema: LineItemsColumn<Row>[] = [
+      {
+        accessorKey: "unit",
+        label: "Unit",
+        render: columns[4].render,
+        edit: {
+          editorType: "combobox",
+          options: [
+            { value: "pcs", label: "Each" },
+            { value: "box", label: "Box" },
+          ],
+          onValueCommitted: check,
+        },
+      },
+    ];
+    const { user, rerender } = setup(schema);
+    await user.click(screen.getByRole("combobox", { name: "Unit, line 1" }));
+    await user.click(screen.getByRole("option", { name: "Box" }));
+    expect(check).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("cell").getAttribute("aria-busy")).toBe("true");
+    expect(current.lines[0].unit).toBe("pcs");
+    expect(current.isDirty).toBe(false);
+    rerender(
+      <StrictMode>
+        <Harness schema={schema} visible={false} />
+      </StrictMode>,
+    );
+    await act(async () => {
+      request.reject(new Error("Rejected choice"));
+      await request.promise.catch(() => undefined);
+    });
+    rerender(
+      <StrictMode>
+        <Harness schema={schema} />
+      </StrictMode>,
+    );
+    const combo = screen.getByRole("combobox", { name: "Unit, line 1" }) as HTMLInputElement;
+    expect(combo.value).toBe("Box");
+    expect(combo.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(screen.getByText("Display each").classList.contains("astw:invisible")).toBe(true);
+    expect(current.lines[0].unit).toBe("pcs");
+    await user.click(combo);
+    await user.click(screen.getByRole("option", { name: "Box" }));
+    expect(current.lines[0].unit).toBe("box");
+    expect(check).toHaveBeenCalledTimes(2);
+  });
+
   it("loads remote choices only on demand and never adopts their query/fallback label", async () => {
     const { user } = setup();
     const combo = screen.getByRole("combobox", { name: "Supplier, line 1" });

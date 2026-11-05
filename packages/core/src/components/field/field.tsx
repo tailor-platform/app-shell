@@ -11,6 +11,7 @@ import { Combobox } from "../combobox";
 import { DateField, DatePicker, DateRangePicker } from "../date-field";
 import { Select } from "../select";
 import { Textarea } from "../textarea";
+import { InsideFieldControlContext } from "./inside-field-control";
 
 // Only the props relevant to the Field abstraction are picked from BaseField.Root.
 // Base UI-internal props (e.g. actionsRef) are intentionally excluded
@@ -169,21 +170,23 @@ function renderMisuseWarnings(render: unknown): string[] {
  * `Checkbox`, `Textarea`, `DateField`, `DatePicker` and `DateRangePicker` go
  * directly under `Field.Root` instead: each draws its own frame and registers
  * with the Field context itself. Passing one to `render` draws a second frame
- * and logs a warning. `Input` does not connect to `Field.Root` — use
- * `Field.Control` in its place inside a field.
+ * and logs a warning. `Input` connects to `Field.Root` by itself too, so
+ * `render={<Input />}` is redundant: it still works, but is deprecated.
  */
 function Control({ className, ...props }: React.ComponentProps<typeof BaseField.Control>) {
   useOnceWarnings(renderMisuseWarnings(props.render));
   return (
-    <BaseField.Control
-      data-slot="field-control"
-      className={cn(
-        inputBaseClasses,
-        "astw:data-invalid:ring-danger-solid/20 astw:dark:data-invalid:ring-danger-solid/40 astw:data-invalid:border-danger-solid",
-        className,
-      )}
-      {...props}
-    />
+    <InsideFieldControlContext.Provider value={true}>
+      <BaseField.Control
+        data-slot="field-control"
+        className={cn(
+          inputBaseClasses,
+          "astw:data-invalid:ring-danger-solid/20 astw:dark:data-invalid:ring-danger-solid/40 astw:data-invalid:border-danger-solid",
+          className,
+        )}
+        {...props}
+      />
+    </InsideFieldControlContext.Provider>
   );
 }
 Control.displayName = "Field.Control";

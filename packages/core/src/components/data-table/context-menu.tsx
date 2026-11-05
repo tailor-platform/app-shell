@@ -123,6 +123,7 @@ function DataTableHeaderContextMenu<TRow extends Record<string, unknown>>({
   setPin,
   sortDirection,
   onSortDirectionChange,
+  pinLocked = false,
 }: {
   align: "left" | "right";
   children: ReactNode;
@@ -132,6 +133,8 @@ function DataTableHeaderContextMenu<TRow extends Record<string, unknown>>({
   setPin: (key: string, side: "left" | "right" | "none" | null) => void;
   sortDirection?: "Asc" | "Desc";
   onSortDirectionChange?: (direction: "Asc" | "Desc" | undefined) => void;
+  /** The column's pin can't change (the sub-rows hierarchy column). */
+  pinLocked?: boolean;
 }) {
   const t = useDataTableT();
   const label = column.label ?? columnKey;
@@ -178,21 +181,21 @@ function DataTableHeaderContextMenu<TRow extends Record<string, unknown>>({
                   <ContextMenu.Popup className={HEADER_CONTEXT_MENU_POPUP_CLASS}>
                     <ContextMenu.Item
                       className={HEADER_CONTEXT_MENU_ITEM_CLASS}
-                      disabled={pin === "left"}
+                      disabled={pinLocked || pin === "left"}
                       onClick={() => setPin(columnKey, "left")}
                     >
                       {t("pinColumnLeft")}
                     </ContextMenu.Item>
                     <ContextMenu.Item
                       className={HEADER_CONTEXT_MENU_ITEM_CLASS}
-                      disabled={pin === "right"}
+                      disabled={pinLocked || pin === "right"}
                       onClick={() => setPin(columnKey, "right")}
                     >
                       {t("pinColumnRight")}
                     </ContextMenu.Item>
                     <ContextMenu.Item
                       className={HEADER_CONTEXT_MENU_ITEM_CLASS}
-                      disabled={pin == null}
+                      disabled={pinLocked || pin == null}
                       onClick={() => setPin(columnKey, "none")}
                     >
                       {t("unpinColumn")}

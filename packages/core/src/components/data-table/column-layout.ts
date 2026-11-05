@@ -16,6 +16,9 @@ function resolveAlign<TRow extends Record<string, unknown>>(col: Column<TRow>): 
 const SELECTION_WIDTH = 52;
 const ACTIONS_WIDTH = 50;
 const EXPAND_WIDTH = 44;
+// Beside the hierarchy column the selection column drops its trailing space,
+// so a checkbox sits as close to its row's caret as in the tree column itself.
+const SELECTION_WIDTH_BESIDE_TREE = 36;
 // Keys for the built-in selection / row-actions columns in the measured-width map.
 const SELECTION_KEY = "__datatable_selection__";
 const ACTIONS_KEY = "__datatable_actions__";
@@ -59,6 +62,23 @@ function columnKeyAt<TRow extends Record<string, unknown>>(
 function resolveWidth(key: string, declared: number | undefined, widths: ColumnWidths): number {
   const measured = widths[key];
   return measured && measured > 0 ? measured : (declared ?? 0);
+}
+
+/** Base props of the selection column's cells, in every section. */
+function selectionCellBase(besideTree: boolean): { style: CSSProperties; className: string } {
+  return {
+    style: { width: besideTree ? SELECTION_WIDTH_BESIDE_TREE : SELECTION_WIDTH },
+    className: "astw:pl-3!",
+  };
+}
+
+/**
+ * The hierarchy column's leading padding. First in the row, it takes the
+ * selection column's inset, so its carets line up with checkboxes elsewhere;
+ * after the selection column, none, so the caret follows the checkbox closely.
+ */
+function treeCellPadding(first: boolean): string {
+  return first ? "astw:pl-3!" : "astw:pl-0!";
 }
 
 /**
@@ -228,6 +248,8 @@ export {
   EXPAND_KEY,
   columnKeyAt,
   resolvePin,
+  selectionCellBase,
+  treeCellPadding,
   buildColumnKeys,
   computePinLayout,
   pinCellProps,

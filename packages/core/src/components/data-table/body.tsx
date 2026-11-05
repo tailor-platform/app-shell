@@ -1,6 +1,11 @@
 import { useContext, useMemo } from "react";
 import { Table } from "@/components/table";
-import { DataTableContext, PinMeasureContext } from "./context";
+import {
+  DataTableContext,
+  PinMeasureContext,
+  hasTreeColumn,
+  selectionInTreeColumn,
+} from "./context";
 import { buildColumnKeys, computePinLayout } from "./column-layout";
 import { DataTableLoaderRows, DataTableStatusRow } from "./status-rows";
 import { DataTableRows } from "./rows";
@@ -30,11 +35,17 @@ function DataTableBody({ className }: { className?: string }) {
     rowExpansion,
     isRowExpanded,
     toggleRowExpansion,
+    visibleRows,
+    treeColumnKey,
+    toggleSubRows,
+    getRowCheckState,
   } = ctx;
   const t = useDataTableT();
   const widths = useContext(PinMeasureContext);
   const hasRowActions = !!(rowActions && rowActions.length > 0);
-  const hasSelection = !!toggleRowSelection;
+  // The selection column; with propagating sub-rows the checkboxes move into the tree column.
+  const hasSelection = !!toggleRowSelection && !selectionInTreeColumn(ctx);
+  const besideTree = hasTreeColumn(ctx);
   const hasExpand = !!rowExpansion;
   const totalColSpan =
     (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0) + (hasExpand ? 1 : 0);
@@ -62,6 +73,7 @@ function DataTableBody({ className }: { className?: string }) {
           rowCount={rowCount}
           pinLayout={pinLayout}
           hasSelection={hasSelection}
+          besideTree={besideTree}
           hasExpand={hasExpand}
           hasRowActions={hasRowActions}
         />
@@ -106,6 +118,11 @@ function DataTableBody({ className }: { className?: string }) {
         rowExpansion={rowExpansion}
         isRowExpanded={isRowExpanded}
         toggleRowExpansion={toggleRowExpansion}
+        treeRows={besideTree ? visibleRows : undefined}
+        treeColumnKey={treeColumnKey}
+        toggleSubRows={toggleSubRows}
+        selectionInTree={selectionInTreeColumn(ctx)}
+        getRowCheckState={getRowCheckState}
       />
     </Table.Body>
   );

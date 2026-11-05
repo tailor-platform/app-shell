@@ -1,9 +1,14 @@
 import { useContext, useMemo, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Table } from "@/components/table";
-import { DataTableContext, PinMeasureContext } from "./context";
 import {
-  SELECTION_WIDTH,
+  DataTableContext,
+  PinMeasureContext,
+  hasTreeColumn,
+  selectionInTreeColumn,
+} from "./context";
+import {
+  selectionCellBase,
   SELECTION_KEY,
   EXPAND_WIDTH,
   EXPAND_KEY,
@@ -32,7 +37,8 @@ function DataTableColumnFooter() {
     rowActions,
   } = ctx;
   const widths = useContext(PinMeasureContext);
-  const hasSelection = !!toggleRowSelection;
+  const hasSelection = !!toggleRowSelection && !selectionInTreeColumn(ctx);
+  const besideTree = hasTreeColumn(ctx);
   const hasExpand = !!rowExpansion;
   const hasRowActions = !!rowActions?.length;
   const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
@@ -63,11 +69,7 @@ function DataTableColumnFooter() {
           <Table.Cell
             data-slot="data-table-column-footer-cell"
             data-col-key={SELECTION_KEY}
-            {...pinCellProps(
-              selection,
-              { style: { width: SELECTION_WIDTH }, className: "astw:pl-3!" },
-              "footer",
-            )}
+            {...pinCellProps(selection, selectionCellBase(besideTree), "footer")}
           />
         )}
         {hasExpand && (

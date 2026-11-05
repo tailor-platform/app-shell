@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
+import type { TreeSelectionBehaviorProps } from "@/lib/tree/types";
 import type { BadgeOptions } from "@/components/badge-list";
 import type {
   CollectionControl,
@@ -595,8 +596,16 @@ export type RowExpansionOptions<TRow extends Record<string, unknown>> = {
     }
 );
 
-/** Controlled or uncontrolled row-selection configuration. Keep the mode stable while mounted. */
-export type RowSelectionOptions = {
+/**
+ * Controlled or uncontrolled row-selection configuration. Keep the mode stable while mounted.
+ *
+ * With `subRows`, `selectionPropagation` and `valueStrategy` say how ticking
+ * spreads through the hierarchy and what the selected ids list, exactly as on
+ * `Tree`. They default to `"full"` and `"leaves"`: a parent row is a container,
+ * its checkbox is derived from the rows beneath it, and the selection lists the
+ * leaf rows. Without `subRows` every row is independent and they have no effect.
+ */
+export type RowSelectionOptions = TreeSelectionBehaviorProps & {
   /**
    * Bulk actions for the selected IDs, shown in `DataTable.Footer` while at
    * least one row is selected. The bar includes the selection count, these
@@ -606,23 +615,75 @@ export type RowSelectionOptions = {
    */
   actions?: SelectionAction[];
 } & (
+    | {
+        /**
+         * Controlled selected ids. Update this array from `onChange`.
+         * Commands issued before the owner commits each derive from this value.
+         */
+        selectedIds: string[];
+        onChange: (ids: string[]) => void;
+        defaultSelectedIds?: never;
+      }
+    | {
+        selectedIds?: never;
+        /** Initial selected ids in uncontrolled mode; subsequent changes are ignored. */
+        defaultSelectedIds?: string[];
+        /** Notification of user-driven selection changes, including under StrictMode. */
+        onChange?: (ids: string[]) => void;
+      }
+  );
+
+/**
+ * Nested rows, shown under their parent when it's opened. The page's rows are
+ * the top level, so pagination counts them, and each parent's sub-rows stay on
+ * its page.
+ *
+ * The hierarchy column (`column`) is locked: it's always first, pinned left,
+ * and can't be hidden or moved. It carries the indent, the open / close caret,
+ * and the selection checkbox when `rowSelection` propagates.
+ *
+ * **Requirement:** Each row must have a string or number `id`, unique across
+ * the whole tree. Expansion and selection are keyed by it; a row without one
+ * shows its sub-rows nowhere and can't be selected.
+ */
+export type SubRowsOptions<TRow extends Record<string, unknown>> = {
+  /** A row's sub-rows. Omitted, `null` or empty means a leaf. */
+  getSubRows: (row: TRow) => readonly TRow[] | null | undefined;
+  /**
+   * The key of the column that carries the hierarchy: its `id`, or its
+   * `label` when it has no `id`. Defaults to the first column in `columns`.
+   * Wherever it's defined, it's shown first and pinned left.
+   */
+  column?: string;
+} & (
   | {
-      /**
-       * Controlled selected ids. Update this array from `onChange`.
-       * Commands issued before the owner commits each derive from this value.
-       */
-      selectedIds: string[];
-      onChange: (ids: string[]) => void;
-      defaultSelectedIds?: never;
+      /** Controlled: ids of the rows whose sub-rows are open. Update it from `onExpandedChange`. */
+      expandedIds: string[];
+      /** Called with every open id after the user opens or closes a row. */
+      onExpandedChange: (ids: string[]) => void;
+      defaultExpandedIds?: never;
     }
   | {
-      selectedIds?: never;
-      /** Initial selected ids in uncontrolled mode; subsequent changes are ignored. */
-      defaultSelectedIds?: string[];
-      /** Notification of user-driven selection changes, including under StrictMode. */
-      onChange?: (ids: string[]) => void;
+      expandedIds?: never;
+      /** Ids open at first, when uncontrolled. */
+      defaultExpandedIds?: string[];
+      /** Notification in uncontrolled mode, with every open id. */
+      onExpandedChange?: (ids: string[]) => void;
     }
 );
+
+/** One rendered row of a table with `subRows`. */
+export interface DataTableTreeRow<TRow extends Record<string, unknown>> {
+  row: TRow;
+  /** 0 for the page's own rows. */
+  depth: number;
+  /** The row has sub-rows (and an id, so it can open). */
+  hasSubRows: boolean;
+  /** Its sub-rows are shown. */
+  expanded: boolean;
+  /** Unique render key, from the row's position in the tree. */
+  key: string;
+}
 
 /**
  * Options for `useDataTable` hook.
@@ -685,6 +746,14 @@ export type UseDataTableOptions<
    */
   onSelectionChange?: (ids: string[]) => void;
   /**
+   * Sort behaviour configuration.
+   *
+   * - `false` — disables sorting entirely (headers become non-clickable).
+   * - `{ multiple: true }` — allows sorting by multiple columns at once.
+   * - Omitted or `{}` — single-column sort (default).
+   */
+  sort?: false | { multiple?: boolean };
+  /**
    * Expandable detail rows. Providing this enables the whole feature: a chevron
    * column is added at the left edge (auto-pinned left, after the selection
    * column) and `render`'s output appears in a full-width row beneath its parent.
@@ -701,13 +770,12 @@ export type UseDataTableOptions<
    */
   rowExpansion?: RowExpansionOptions<TRow>;
   /**
-   * Sort behaviour configuration.
-   *
-   * - `false` — disables sorting entirely (headers become non-clickable).
-   * - `{ multiple: true }` — allows sorting by multiple columns at once.
-   * - Omitted or `{}` — single-column sort (default).
+   * Nested rows under each row, opened from a caret in the hierarchy column.
+   * See {@link SubRowsOptions}. Can't be combined with `rowExpansion`: a row
+   * shows either its sub-rows or a detail panel. When both are passed,
+   * `subRows` wins and a console warning names the conflict.
    */
-  sort?: false | { multiple?: boolean };
+  subRows?: SubRowsOptions<TRow>;
 };
 
 // =============================================================================
@@ -881,6 +949,23 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   collapseAllRows?: () => void;
   /** Expansion config (passthrough for `DataTable.Root`). */
   rowExpansion?: RowExpansionOptions<TRow>;
+
+  // Sub-rows (present only with `subRows`)
+  /** Sub-rows config (passthrough for `DataTable.Root`). */
+  subRows?: SubRowsOptions<TRow>;
+  /** The rows to render: each page row followed by its open sub-rows, with depth. */
+  visibleRows?: DataTableTreeRow<TRow>[];
+  /** Key of the hierarchy column, which is locked first, pinned left, and always shown. */
+  treeColumnKey?: string;
+  /** Ids of the rows whose sub-rows are open. */
+  expandedSubRowIds?: string[];
+  /** Opens or closes `row`'s sub-rows. */
+  toggleSubRows?: (row: TRow) => void;
+  /**
+   * A row's checkbox. With propagation a parent's state is derived from the rows
+   * beneath it, so it can be indeterminate.
+   */
+  getRowCheckState?: (row: TRow) => { checked: boolean; indeterminate: boolean };
 }
 
 // =============================================================================

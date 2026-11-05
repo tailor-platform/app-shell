@@ -56,21 +56,21 @@ outline produces is a blocking `docs:check` failure.
 
 ### Core Package Structure (`packages/core/src/`)
 
-| Path                    | Description                                                                                                                              |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `components/<name>/`    | One directory per public component family (e.g. `sidebar/` with `SidebarLayout`, `command-palette/`, `button/`), entrypoint `index.ts`   |
-| `components/appshell/`  | Main `AppShell` component - root provider that wires everything together                                                                 |
-| `components/internals/` | Non-exported UI building blocks shared by several component families (e.g. `breadcrumb`, `separator`, `sonner`, `item-list-base`)        |
-| `contexts/`             | Context providers - app state, authentication, theming, breadcrumbs, command palette                                                     |
-| `routing/`              | React Router integration - router setup, route generation, navigation, path utilities, document head                                     |
-| `fs-routes/`            | Internal file-based routing (route conversion, typed paths)                                                                              |
-| `hooks/`                | Custom hooks - i18n (`defineI18nLabels`), responsive/mobile detection, toast, collection variables, pagination, page meta                |
-| `lib/`                  | Helpers and logic, exported or not - `cn` (`utils`), i18n locale resolution, `aggregations`, `collection-url-state`, input classes, etc. |
-| `ai/`                   | AI chat client, tool execution, and `useAIChat`                                                                                          |
-| `testing/`              | Test-only `@tailor-platform/app-shell/testing` entrypoint (memory routing)                                                               |
-| `assets/`               | Static assets (CSS themes, fonts)                                                                                                        |
-| `index.ts`              | Public API exports                                                                                                                       |
-| `resource.tsx`          | Types and interfaces (Module, Resource, etc.)                                                                                            |
+| Path                    | Description                                                                                                                                                                                   |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `components/<name>/`    | One directory per public component family (e.g. `sidebar/` with `SidebarLayout`, `command-palette/`, `button/`), entrypoint `index.ts`                                                        |
+| `components/appshell/`  | Main `AppShell` component - root provider that wires everything together                                                                                                                      |
+| `components/internals/` | Non-exported UI building blocks shared by several component families (e.g. `breadcrumb`, `separator`, `sonner`, `item-list-base`)                                                             |
+| `contexts/`             | Context providers - app state, authentication, theming, breadcrumbs, command palette                                                                                                          |
+| `routing/`              | React Router integration - router setup, route generation, navigation, path utilities, document head                                                                                          |
+| `fs-routes/`            | Internal file-based routing (route conversion, typed paths)                                                                                                                                   |
+| `hooks/`                | Custom hooks - i18n (`defineI18nLabels`), responsive/mobile detection, toast, collection variables, pagination, page meta                                                                     |
+| `lib/`                  | Helpers and logic, exported or not - `cn` (`utils`), i18n locale resolution, `aggregations`, `collection-url-state`, input classes, etc.                                                      |
+| `ai/`                   | AI chat client, tool execution, and `useAIChat`                                                                                                                                               |
+| `testing/`              | Test-only `@tailor-platform/app-shell/testing` entrypoint (memory routing)                                                                                                                    |
+| `assets/`               | Static assets (CSS themes, fonts), copied wholesale to `dist/` via Vite's `publicDir` and included in the npm package even when unreferenced. Keep internal/development-only files elsewhere. |
+| `index.ts`              | Public API exports                                                                                                                                                                            |
+| `resource.tsx`          | Types and interfaces (Module, Resource, etc.)                                                                                                                                                 |
 
 **Where shared, non-exported code goes:** `components/internals/<name>/` holds UI building blocks
 reused by several component families (keep a piece with its narrower owner, such as `sidebar/` or

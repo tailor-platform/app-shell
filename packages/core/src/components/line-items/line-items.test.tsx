@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import { LineItems } from "./line-items";
 import { useLineItems } from "./use-line-items";
-import type { LineItemsColumn } from "./types";
+import type { LineItemsColumn, UseLineItemsReturn } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -187,15 +187,51 @@ describe("readonly LineItems display", () => {
     ).toEqual(["America/New_York", "UTC"]);
   });
 
-  it("renders an empty message spanning every column, including with no columns", () => {
-    const { rerender } = render(
-      <Harness data={[]} cols={columns.slice(0, 2)} emptyMessage="No order lines" />,
-    );
-    expect(screen.getByRole("cell").getAttribute("colspan")).toBe("2");
-    expect(screen.getByText("No order lines")).toBeDefined();
-    rerender(<Harness data={[]} cols={[]} />);
-    expect(screen.getByRole("cell").getAttribute("colspan")).toBe("1");
-    expect(screen.getByText("No lines yet.")).toBeDefined();
+  it.each([
+    { count: 2, message: "No order lines" },
+    { count: 0, message: undefined },
+  ])("renders an empty message spanning $count columns", ({ count, message }) => {
+    render(<Harness data={[]} cols={columns.slice(0, count)} emptyMessage={message} />);
+    expect(screen.getByRole("cell").getAttribute("colspan")).toBe(String(Math.max(1, count)));
+    expect(screen.getByText(message ?? "No lines yet.")).toBeDefined();
+  });
+
+  it("reflects row commands without remounting existing rows or adding editor UI", () => {
+    let value!: UseLineItemsReturn<Row>;
+    function DocumentTable() {
+      value = useLineItems({ columns, defaultLines: rows });
+      return (
+        <MemoryRouter>
+          <LineItems.Root value={value}>
+            <LineItems.Table aria-label="Order lines" />
+          </LineItems.Root>
+        </MemoryRouter>
+      );
+    }
+    render(<DocumentTable />);
+    const firstRow = screen.getAllByRole("row")[1];
+    act(() => value.updateField("A", "quantity", 3));
+    expect(screen.getByText("$37.50")).toBeDefined();
+    expect(screen.getAllByRole("row")[1]).toBe(firstRow);
+    let key = "";
+    act(() => {
+      key = value.addLine({ ...rows[0], name: "New line" });
+    });
+    const creationRow = screen.getAllByRole("row")[2];
+    act(() => value.updateField(key, "quantity", 4));
+    expect(screen.getAllByRole("row")[2]).toBe(creationRow);
+    act(() => value.reorderLine("A", key));
+    expect(screen.getAllByRole("row")[1]).toBe(creationRow);
+    expect(screen.getAllByRole("row")[2]).toBe(firstRow);
+    expect(value.isDirty).toBe(true);
+    act(() => {
+      value.removeLine("A");
+      value.revert();
+    });
+    expect(screen.getAllByRole("row")).toHaveLength(2);
+    expect(screen.getByText("$25.00")).toBeDefined();
+    expect(value.isDirty).toBe(false);
+    expect(screen.queryByRole("textbox")).toBeNull();
   });
 
   it("localizes the default table name and empty state", () => {

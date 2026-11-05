@@ -204,7 +204,7 @@ The hue roles have the same values in every shipped palette. `cream` and `bloom`
 
 **Contrast.** AppShell's thresholds are 4.5:1 for text (WCAG 1.4.3) and 3:1 for non-text (WCAG 1.4.11). In every shipped palette (`default`, `cream`, `bloom`), in light and dark mode, on `--card` and `--background`, `text` on `surface` and `contrast` on `solid` and `solid-hover` are at least 4.5:1 for all five intents, `text` on `surface-hover` is at least 4.5:1 for `neutral`, and `danger` `solid` (the invalid-input border) is at least 3:1. A browser test checks this in Chromium against the built stylesheet. Known exceptions:
 
-- `text` on `surface-hover` is below 4.5:1 for `danger` and `success` in light mode. The test holds it at 4.2:1 or more.
+- `text` on `surface-hover` is below 4.5:1 for `danger` and `success` in light mode. This is on purpose: a lighter step would make the tinted background hard to tell apart from the page, and the hover harder to see. The test holds it at 4.2:1 or more.
 - In `cream` and `bloom`, the main content area is transparent over the shell gradient. At the top of the `bloom` light gradient, `text` on `surface` is 4.49:1 for `success` and 4.48:1 for `danger`. Put status content on a card when it needs to pass.
 - `warning` `solid` and `indicator` are 2.15:1 against a light card. Use them with a label, not as the only sign of a state.
 
@@ -422,13 +422,14 @@ These exist as raw `:root` variables in the shipped base layer, but are **not** 
 | `--z-sidebar-rail` | 20    | sidebar collapsed rail        |
 | `--z-popup`        | 50    | menu, tooltip, popover        |
 | `--z-overlay`      | 50    | modal, sheet, dialog backdrop |
+| `--z-toast`        | 100   | toast, always above overlays  |
 
 ```tsx
 <div className="z-50" />
 <div className="z-[var(--z-popup)]" />
 ```
 
-Never invent a z value — `z-index: 9999` is always wrong. Popups and overlays share `50` intentionally: sequencing comes from DOM order, not z escalation.
+Never invent a z value — `z-index: 9999` is always wrong. Popups and overlays share `50` intentionally: sequencing comes from DOM order, not z escalation. Every floating AppShell component (dialog, sheet, menu, select, combobox, tooltip, toast) renders through a portal to the end of `body`, and the layout root is `isolation: isolate`, so a z-index inside the page never reaches them. The toast is the one layer above the band: it is always visible over an open dialog or sheet.
 
 ### Icons
 

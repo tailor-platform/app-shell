@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 import { TreeRow } from "./TreeRow";
 import { useTreeT } from "./i18n";
-import { flattenVisible, pathId, type TreeNode } from "./tree-model";
+import { flattenVisible, pathId, type TreeNode } from "@/lib/tree/model";
 import type { TreeChangeDetails, TreeProps, TreeSelectedItem } from "./types";
 import { useTreeField } from "./use-tree-field";
 import { useTreeFocus } from "./use-tree-focus";

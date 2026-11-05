@@ -1530,7 +1530,7 @@
       "outline": "docs-src/components/tree.docs.outline.md",
       "output": "docs/components/tree.md",
       "examples": null,
-      "sources": ["packages/core/src/components/tree/**"],
+      "sources": ["packages/core/src/components/tree/**", "packages/core/src/lib/tree/**"],
       "claims": [],
       "symbols": [
         "Tree",
@@ -1554,7 +1554,7 @@
       ],
       "hashes": {
         "typeSurface": "343d595c9ce52cab",
-        "outline": "634bdb51563ffa95",
+        "outline": "225a4dbb28f1ffa5",
         "snapshot": "6db41d93e7a1d8f7",
         "outputMd": "3f212fcb98e620b2",
         "examples": null

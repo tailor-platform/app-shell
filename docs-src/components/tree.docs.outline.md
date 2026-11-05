@@ -5,6 +5,7 @@ title: Tree
 description: Browse, pick one, or tick many items in a hierarchy — inline with Tree, or in a search dialog with TreePicker
 sources:
   - packages/core/src/components/tree/**
+  - packages/core/src/lib/tree/**
 ---
 
 # Tree

@@ -1,10 +1,9 @@
-/** A failure belongs to its draft, not to the control displaying it. @internal */
+/** Callback/parse failure belongs to the logical edit, not its mounted control. */
 export interface CellEditFailure {
   error: unknown;
   source: "parse" | "change" | "commit";
 }
 
-/** The cached view of one logical edit; committed row values remain owned by the caller. */
 export type CellEditSessionState<TDraft> =
   | { status: "idle" }
   | { status: "editing"; draft: TDraft }
@@ -16,32 +15,37 @@ function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
 }
 
 /**
- * Owns one edit's draft, failure, and in-flight callback checks without React or row state.
- * getState returns a cached snapshot suitable for useSyncExternalStore. A transition adopts
- * that snapshot before notifying subscribers synchronously; reads do not notify.
+ * Owns one logical edit without React or committed row state. getState is a cached
+ * useSyncExternalStore snapshot, adopted before synchronous listener notification.
+ * Detaching a view does not cancel its draft or callbacks; the owner explicitly
+ * activates/deactivates the session at its own lifetime boundary.
  *
- * The caller owns the lifetime: detaching a subscriber leaves the edit intact, whereas
- * deactivate invalidates pending callbacks and blocks commands. activate resumes the same
- * draft with the caller's error-interception policy. Returned methods do not depend on this.
- *
+ * confirm preserves synchronous callback timing while returning an awaitable result.
+ * False means failure or invalidation, not callback return values. Private revisions
+ * reject stale completions; cancellation tokens also dismiss portaled editor UI.
  * @internal
  */
 export function createCellEditSession<TDraft>(interceptErrors = true) {
   let state: CellEditSessionState<TDraft> = { status: "idle" };
   let revision = 0;
+  let cancellationRevision = 0;
   let active = true;
   let enabled = interceptErrors;
   let pendingChange: Promise<boolean> | null = null;
+  let confirmation: { promise: Promise<boolean>; resolve: (success: boolean) => void } | null =
+    null;
   const listeners = new Set<() => void>();
 
   function transition(next: CellEditSessionState<TDraft>) {
     state = next;
-    // oxlint-disable-next-line unicorn/no-useless-spread -- Subscriptions can change during notification.
+    // oxlint-disable-next-line unicorn/no-useless-spread -- Subscribers can detach or resubscribe during notification.
     for (const listener of [...listeners]) listener();
   }
   function invalidate() {
     revision++;
     pendingChange = null;
+    confirmation?.resolve(false);
+    confirmation = null;
   }
   const isCurrent = (candidate: number) => active && revision === candidate;
 
@@ -86,38 +90,50 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
   }
 
   function discard() {
+    cancellationRevision++;
     invalidate();
     transition({ status: "idle" });
   }
 
-  /** Waits for an outstanding change check; repeated confirmation does not repeat callbacks. */
-  function confirm(callback: () => unknown, onSuccess?: () => void) {
+  function confirm(callback: () => unknown, onSuccess?: () => void): Promise<boolean> {
+    if (!active) return Promise.resolve(false);
     const current = state;
-    if (
-      !active ||
-      current.status === "idle" ||
-      current.status === "confirming" ||
-      (current.status === "failed" && current.source !== "commit")
-    )
-      return;
+    if (current.status === "idle") return Promise.resolve(true);
+    if (current.status === "confirming") return confirmation?.promise ?? Promise.resolve(false);
+    if (current.status === "failed" && current.source !== "commit") return Promise.resolve(false);
     if (!enabled) {
       discard();
       onSuccess?.();
       callback();
-      return;
+      return Promise.resolve(true);
     }
+
     const { draft } = current;
     const candidate = revision;
     const waiting = pendingChange;
+    let resolve!: (success: boolean) => void;
+    const promise = new Promise<boolean>((done) => {
+      resolve = done;
+    });
+    const attempt = { promise, resolve };
+    confirmation = attempt;
     transition({ status: "confirming", draft });
-    const isConfirming = () => isCurrent(candidate) && state.status === "confirming";
+    const isConfirming = () =>
+      isCurrent(candidate) && state.status === "confirming" && confirmation === attempt;
+    function finish(success: boolean) {
+      if (confirmation === attempt) confirmation = null;
+      resolve(success);
+    }
     function complete() {
       if (!isConfirming()) return;
       transition({ status: "idle" });
+      finish(true);
       onSuccess?.();
     }
     function reject(error: unknown) {
-      if (isConfirming()) transition({ status: "failed", draft, error, source: "commit" });
+      if (!isConfirming()) return;
+      transition({ status: "failed", draft, error, source: "commit" });
+      finish(false);
     }
     function run() {
       if (!isConfirming()) return;
@@ -136,8 +152,10 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
     if (waiting) {
       void waiting.then((valid) => {
         if (valid) run();
+        else finish(false);
       });
     } else run();
+    return promise;
   }
 
   function fail(error: unknown, source: "parse") {
@@ -155,7 +173,7 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
       callback();
       return;
     }
-    // Restoration failures cannot recreate an error for a draft that has been discarded.
+    // Restoration cannot create a failure for the draft that was just discarded.
     try {
       const result = callback();
       if (isPromiseLike(result)) void Promise.resolve(result).catch(() => {});
@@ -167,8 +185,11 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
   return {
     getState: () => state,
     getFailure: () => (state.status === "failed" ? state : undefined),
-    /** Registers a listener without invoking it; cleanup is idempotent and does not cancel. */
-    subscribe(listener: () => void) {
+    /** Token for checking whether an asynchronous adoption still belongs to this edit. */
+    getRevision: () => revision,
+    /** Changes only on discard, so views can close stale popups without losing newer edits. */
+    getCancellationRevision: () => cancellationRevision,
+    subscribe: (listener: () => void) => {
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
@@ -179,18 +200,17 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
     confirm,
     fail,
     cancel,
-    /** Resumes the retained draft; an invalidated confirmation requires an explicit retry. */
-    activate(intercept: boolean) {
-      const resuming = !active;
+    activate: (intercept: boolean) => {
       enabled = intercept;
       active = true;
-      if (resuming && state.status === "confirming")
+      if (state.status === "confirming" && confirmation === null)
         transition({ status: "editing", draft: state.draft });
     },
-    /** Invalidates async work without changing the retained draft or notifying subscribers. */
-    deactivate() {
+    deactivate: () => {
       active = false;
       invalidate();
     },
   };
 }
+
+export type CellEditSession<TDraft> = ReturnType<typeof createCellEditSession<TDraft>>;

@@ -1,5 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createLineItemsDocumentStore } from "./document-store";
+import { bindLineItemsEditing, createLineItemsEditing } from "./editing";
 import type { UseLineItemsOptions, UseLineItemsReturn } from "./types";
 
 /** Owns one document; changing the document identity requires remounting the hook's owner. */
@@ -19,10 +20,20 @@ export function useLineItems<T extends Record<string, unknown>>(
       idKey: options.idKey,
     }),
   );
+  const [editing] = useState(() => createLineItemsEditing(store, options.columns));
   if ((options.idKey ?? "id") !== store.idKey) throw new Error("Remount LineItems to change idKey");
+  editing.assertColumns(options.columns);
   // This checks ownership only; abandoned renders cannot modify the document.
   store.setColumns(options.columns);
   const lines = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  // Only the document owner, not an individual cell view, owns session disposal.
+  useLayoutEffect(() => {
+    editing.activate();
+    return editing.deactivate;
+  }, [editing]);
+  useLayoutEffect(() => {
+    editing.setColumns(options.columns);
+  }, [editing, options.columns, lines]);
   // Retained commands must not observe a movement policy from an abandoned render.
   useLayoutEffect(() => {
     committedOrderer.current = orderer;
@@ -34,16 +45,18 @@ export function useLineItems<T extends Record<string, unknown>>(
     },
     [store],
   );
-  return {
+  const value = {
     columns: options.columns,
     lines,
     orderer,
     isDirty: store.isDirty(),
     getLineKey: store.getLineKey,
-    updateField: store.updateField,
+    updateField: editing.updateField,
     addLine: store.addLine,
-    removeLine: store.removeLine,
+    removeLine: editing.removeLine,
     reorderLine,
-    revert: store.revert,
+    revert: editing.revert,
   };
+  bindLineItemsEditing(value, editing);
+  return value;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { createCellEditSession } from "@/components/internals/table-core/cell-session";
 
 export type {
@@ -20,13 +20,22 @@ export function useCellEditSession<TDraft>(enabled: boolean) {
     session.activate(enabled);
     return session.deactivate;
   }, [enabled, session]);
+  // Preserve the existing void callback contract; shared dropdowns await confirmation.
+  const confirm = useCallback(
+    (callback: () => unknown, onSuccess?: () => void) => {
+      void session.confirm(callback, onSuccess);
+    },
+    [session],
+  );
   return {
     state,
     getState: session.getState,
     getFailure: session.getFailure,
     begin: session.begin,
     change: session.change,
-    confirm: session.confirm,
+    confirm,
+    confirmAsync: session.confirm,
+    getCancellationRevision: session.getCancellationRevision,
     fail: session.fail,
     cancel: session.cancel,
   };

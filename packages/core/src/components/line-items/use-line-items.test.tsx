@@ -1,8 +1,8 @@
-import { StrictMode, type ReactNode } from "react";
+import { StrictMode, Suspense, type ReactNode } from "react";
 import { afterEach, expect, it } from "vitest";
-import { cleanup, renderHook } from "@testing-library/react";
+import { act, cleanup, render, renderHook } from "@testing-library/react";
 import { useLineItems } from "./use-line-items";
-import type { LineItemsColumn, UseLineItemsOptions } from "./types";
+import type { LineItemsColumn, UseLineItemsOptions, UseLineItemsReturn } from "./types";
 
 afterEach(cleanup);
 type Row = { id?: string | number; name: string };
@@ -81,6 +81,138 @@ it("rejects cell editors instead of silently ignoring them", () => {
   expect(() => renderHook(() => useLineItems<Row>({ columns: [editable] }))).toThrow(
     "cell editors are not supported yet",
   );
+});
+
+it("reflects sequential commands and dirty state under StrictMode", () => {
+  const { result } = renderHook(
+    () => useLineItems<Row>({ columns, defaultLines: [{ id: "A", name: "Existing" }] }),
+    { wrapper: Wrapper },
+  );
+  const commands = result.current;
+  expect(result.current.isDirty).toBe(false);
+  let key = "";
+  act(() => {
+    commands.updateField("A", "name", "Changed");
+    key = commands.addLine({ name: "Added" });
+    commands.updateField(key, "name", "Updated creation");
+  });
+  expect(result.current.lines.map((row) => row.name)).toEqual(["Changed", "Updated creation"]);
+  expect(result.current.isDirty).toBe(true);
+  act(() => {
+    commands.removeLine(key);
+    commands.revert();
+  });
+  expect(result.current.lines.map((row) => row.name)).toEqual(["Existing"]);
+  expect(result.current.isDirty).toBe(false);
+});
+
+it("discards ID-less initial rows without accepting replacement defaultLines", () => {
+  const initialProps: UseLineItemsOptions<Row> = { columns, defaultLines: [{ name: "Unsaved" }] };
+  const { result, rerender } = renderHook(
+    (options: UseLineItemsOptions<Row>) => useLineItems(options),
+    { initialProps, wrapper: Wrapper },
+  );
+  expect(result.current.isDirty).toBe(true);
+  act(() => result.current.revert());
+  rerender({ columns, defaultLines: [{ id: "B", name: "Replacement" }] });
+  expect(result.current.lines).toEqual([]);
+  expect(result.current.isDirty).toBe(false);
+});
+
+it("requires remounting to change idKey or document property ownership", () => {
+  const initialProps: UseLineItemsOptions<Row> = {
+    columns,
+    defaultLines: [{ id: "A", name: "Existing" }],
+  };
+  const first = renderHook((options: UseLineItemsOptions<Row>) => useLineItems(options), {
+    initialProps,
+  });
+  expect(() => first.rerender({ columns, idKey: "name" })).toThrow(
+    "Remount LineItems to change idKey",
+  );
+  const second = renderHook((options: UseLineItemsOptions<Row>) => useLineItems(options), {
+    initialProps: { columns },
+  });
+  expect(() => second.rerender({ columns: [] })).toThrow("change document property ownership");
+});
+
+it("defaults to manual ordering and applies boolean changes to retained commands", () => {
+  const initialProps: UseLineItemsOptions<Row> = {
+    columns,
+    defaultLines: [
+      { id: "A", name: "First" },
+      { id: "B", name: "Second" },
+    ],
+  };
+  const { result, rerender } = renderHook(
+    (options: UseLineItemsOptions<Row>) => useLineItems(options),
+    { initialProps, wrapper: Wrapper },
+  );
+  const reorder = result.current.reorderLine;
+  expect(result.current.orderer).toBe(true);
+  act(() => reorder("A", "B"));
+  expect(result.current.lines.map(result.current.getLineKey)).toEqual(["B", "A"]);
+  expect(result.current.isDirty).toBe(true);
+  rerender({ ...initialProps, orderer: false });
+  const moved = result.current.lines;
+  expect(result.current.orderer).toBe(false);
+  expect(() => reorder("A", null)).toThrow("Manual reordering is disabled");
+  expect(result.current.lines).toBe(moved);
+  expect(result.current.isDirty).toBe(true);
+  act(() => {
+    result.current.updateField("B", "name", "Updated");
+    const key = result.current.addLine({ name: "Added" });
+    result.current.removeLine(key);
+  });
+  expect(result.current.lines[0].name).toBe("Updated");
+  act(() => result.current.revert());
+  expect(result.current.lines.map(result.current.getLineKey)).toEqual(["A", "B"]);
+  expect(result.current.isDirty).toBe(false);
+  rerender({ ...initialProps, orderer: true });
+  act(() => reorder("B", null));
+  expect(result.current.lines.map(result.current.getLineKey)).toEqual(["B", "A"]);
+});
+
+it("does not adopt an orderer policy from a suspended render", () => {
+  const pending = new Promise<never>(() => {});
+  let value!: UseLineItemsReturn<Row>;
+  function Owner({ orderer, suspend }: { orderer: boolean; suspend: boolean }) {
+    value = useLineItems<Row>({
+      columns,
+      defaultLines: [
+        { id: "A", name: "First" },
+        { id: "B", name: "Second" },
+      ],
+      orderer,
+    });
+    if (suspend) throw pending;
+    return null;
+  }
+  const { rerender } = render(
+    <Suspense fallback={null}>
+      <Owner orderer={true} suspend={false} />
+    </Suspense>,
+  );
+  const reorder = value.reorderLine;
+  rerender(
+    <Suspense fallback={null}>
+      <Owner orderer={false} suspend={true} />
+    </Suspense>,
+  );
+  act(() => reorder("B", null));
+  rerender(
+    <Suspense fallback={null}>
+      <Owner orderer={false} suspend={false} />
+    </Suspense>,
+  );
+  expect(value.lines.map(value.getLineKey)).toEqual(["B", "A"]);
+  expect(() => reorder("A", null)).toThrow("Manual reordering is disabled");
+});
+
+it("rejects non-boolean orderer configuration", () => {
+  const options: UseLineItemsOptions<Row> = { columns };
+  Object.assign(options, { orderer: "manual" });
+  expect(() => renderHook(() => useLineItems(options))).toThrow("orderer must be a boolean");
 });
 
 it("rejects controlled rows instead of silently ignoring them", () => {

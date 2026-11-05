@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
-import { createLineItemsDocument } from "./document";
+import { createLineItemsDocumentStore } from "./document-store";
 import type { UseLineItemsOptions, UseLineItemsReturn } from "./types";
 
 /** Owns one document; changing the document identity requires remounting the hook's owner. */
@@ -12,18 +12,17 @@ export function useLineItems<T extends Record<string, unknown>>(
     throw new Error("LineItems orderer must be a boolean");
   const orderer = options.orderer ?? true;
   const committedOrderer = useRef(orderer);
-  const [document] = useState(() =>
-    createLineItemsDocument<T>({
+  const [store] = useState(() =>
+    createLineItemsDocumentStore<T>({
       columns: options.columns,
       lines: options.defaultLines,
       idKey: options.idKey,
     }),
   );
-  if ((options.idKey ?? "id") !== document.idKey)
-    throw new Error("Remount LineItems to change idKey");
+  if ((options.idKey ?? "id") !== store.idKey) throw new Error("Remount LineItems to change idKey");
   // This checks ownership only; abandoned renders cannot modify the document.
-  document.setColumns(options.columns);
-  const lines = useSyncExternalStore(document.subscribe, document.getRows, document.getRows);
+  store.setColumns(options.columns);
+  const lines = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   // Retained commands must not observe a movement policy from an abandoned render.
   useLayoutEffect(() => {
     committedOrderer.current = orderer;
@@ -31,20 +30,20 @@ export function useLineItems<T extends Record<string, unknown>>(
   const reorderLine = useCallback(
     (lineKey: string, afterLineKey: string | null) => {
       if (!committedOrderer.current) throw new Error("Manual reordering is disabled");
-      document.reorderLine(lineKey, afterLineKey);
+      store.reorderLine(lineKey, afterLineKey);
     },
-    [document],
+    [store],
   );
   return {
     columns: options.columns,
     lines,
     orderer,
-    isDirty: document.isDirty(),
-    getLineKey: document.getLineKey,
-    updateField: document.updateField,
-    addLine: document.addLine,
-    removeLine: document.removeLine,
+    isDirty: store.isDirty(),
+    getLineKey: store.getLineKey,
+    updateField: store.updateField,
+    addLine: store.addLine,
+    removeLine: store.removeLine,
     reorderLine,
-    revert: document.revert,
+    revert: store.revert,
   };
 }

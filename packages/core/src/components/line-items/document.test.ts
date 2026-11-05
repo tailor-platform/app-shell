@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createLineItemsDocument } from "./document";
 import type { LineItemsColumn } from "./types";
 
@@ -134,11 +134,9 @@ describe("LineItems document rows and identity", () => {
     expect(doc.isDirty()).toBe(false);
   });
 
-  it("rejects invalid moves and does not notify for no-op moves", () => {
+  it("rejects invalid moves and preserves the row view for no-op moves", () => {
     const doc = document();
     const initial = doc.getRows();
-    const listener = vi.fn();
-    doc.subscribe(listener);
     doc.reorderLine("A", "A");
     doc.reorderLine("A", null);
     doc.reorderLine("B", "A");
@@ -146,7 +144,6 @@ describe("LineItems document rows and identity", () => {
     expect(() => doc.reorderLine("A", "missing")).toThrow("Unknown line");
     expect(doc.getRows()).toBe(initial);
     expect(doc.isDirty()).toBe(false);
-    expect(listener).not.toHaveBeenCalled();
   });
 
   it("restores persisted values, membership and order on revert", () => {
@@ -165,8 +162,6 @@ describe("LineItems document rows and identity", () => {
   it("rejects unknown rows, unowned properties and identity changes before adoption", () => {
     const doc = document();
     const initial = doc.getRows();
-    const listener = vi.fn();
-    doc.subscribe(listener);
     expect(() => doc.updateField("A", "id", "C")).toThrow("save acknowledgment");
     expect(() => doc.updateField("A", "hidden", "hidden change")).toThrow("no document owner");
     expect(() => doc.updateField("missing", "quantity", 2)).toThrow("Unknown line");
@@ -174,7 +169,6 @@ describe("LineItems document rows and identity", () => {
     doc.updateField("A", "id", "A");
     expect(doc.getRows()).toBe(initial);
     expect(doc.isDirty()).toBe(false);
-    expect(listener).not.toHaveBeenCalled();
   });
 
   it("accepts display-only reconfiguration but rejects changing property ownership", () => {
@@ -190,16 +184,5 @@ describe("LineItems document rows and identity", () => {
     doc.updateField("A", "quantity", 2);
     expect(doc.getRows()[0].quantity).toBe(2);
     expect(doc.isDirty()).toBe(true);
-  });
-
-  it("notifies subscribers after adoption and removes detached listeners", () => {
-    const doc = document([row("A")]);
-    const listener = vi.fn(() => expect(doc.getRows()[0].quantity).toBe(2));
-    const detach = doc.subscribe(listener);
-    doc.updateField("A", "quantity", 2);
-    expect(listener).toHaveBeenCalledTimes(1);
-    detach();
-    doc.revert();
-    expect(listener).toHaveBeenCalledTimes(1);
   });
 });

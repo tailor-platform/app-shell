@@ -1,32 +1,18 @@
 import { splitVariants } from "../class-tokens";
 
-type Node = {
-  type: string;
-  name?: unknown;
-  value?: unknown;
-  expression?: Node | null;
-  quasis?: { value: { cooked: string | null; raw: string } }[];
-  consequent?: Node;
-  alternate?: Node;
-  operator?: string;
-  left?: Node;
-  right?: Node;
-  callee?: Node;
-  arguments?: Node[];
-  argument?: Node;
-  elements?: (Node | null)[];
-  properties?: Node[];
-  key?: Node;
-  computed?: boolean;
-};
-
-/** Kept apart from the recursive `Node` so the exported rule type can be named in the build. */
 type JSXName = { type: string; name?: unknown };
+
+type StringNode = {
+  type: string;
+  value?: unknown;
+  expressions?: unknown[];
+  quasis?: { value: { cooked: string | null; raw: string } }[];
+};
 
 type JSXAttribute = {
   type: string;
   name: JSXName;
-  value: unknown;
+  value: (StringNode & { expression?: StringNode }) | null;
 };
 
 type JSXOpeningElement = {
@@ -54,17 +40,6 @@ const DEFAULT_ROLES: Record<string, string> = {
   span: "label-md",
 };
 
-/** Functions that join class names. Their string arguments are read like a `className` string. */
-const CLASS_HELPERS = new Set([
-  "cn",
-  "clsx",
-  "cx",
-  "classNames",
-  "classnames",
-  "twMerge",
-  "twJoin",
-]);
-
 /**
  * Stock Tailwind font sizes, and arbitrary sizes in a length unit or with a `length:` hint.
  * `text-[#fff]` and `text-[var(--x)]` are colours, so they do not match.
@@ -80,49 +55,18 @@ function findSizes(text: string): string[] {
   });
 }
 
-/** Every string a `className` value can produce: literals, ternary branches and class helper arguments. */
-function collectStrings(node: Node | null | undefined, out: string[]): void {
-  if (!node) return;
-  switch (node.type) {
-    case "Literal":
-      if (typeof node.value === "string") out.push(node.value);
-      return;
-    case "TemplateLiteral":
-      for (const quasi of node.quasis ?? []) out.push(quasi.value.cooked ?? quasi.value.raw);
-      return;
-    case "JSXExpressionContainer":
-    case "TSAsExpression":
-    case "TSSatisfiesExpression":
-    case "TSNonNullExpression":
-      collectStrings(node.expression, out);
-      return;
-    case "ConditionalExpression":
-      collectStrings(node.consequent, out);
-      collectStrings(node.alternate, out);
-      return;
-    case "LogicalExpression":
-      // The left side of `&&` is the condition, not a class name.
-      if (node.operator !== "&&") collectStrings(node.left, out);
-      collectStrings(node.right, out);
-      return;
-    case "CallExpression":
-      if (node.callee?.type === "Identifier" && CLASS_HELPERS.has(node.callee.name as string)) {
-        for (const argument of node.arguments ?? []) collectStrings(argument, out);
-      }
-      return;
-    case "SpreadElement":
-      collectStrings(node.argument, out);
-      return;
-    case "ArrayExpression":
-      for (const element of node.elements ?? []) collectStrings(element, out);
-      return;
-    case "ObjectExpression":
-      // `clsx({ "text-sm": compact })`
-      for (const property of node.properties ?? []) {
-        if (property.type === "Property" && !property.computed) collectStrings(property.key, out);
-      }
-      return;
+/**
+ * The class string written directly in `className`: `"..."`, `{"..."}`, or a template literal
+ * without interpolation. `cn(...)`, ternaries, variables and interpolated templates are not read.
+ */
+function classNameString(value: JSXAttribute["value"]): string | undefined {
+  const node = value?.type === "JSXExpressionContainer" ? value.expression : value;
+  if (node?.type === "Literal" && typeof node.value === "string") return node.value;
+  if (node?.type === "TemplateLiteral" && node.expressions?.length === 0) {
+    const quasi = node.quasis?.[0];
+    return quasi && (quasi.value.cooked ?? quasi.value.raw);
   }
+  return undefined;
 }
 
 export const preferTextComponents = {
@@ -154,11 +98,9 @@ export const preferTextComponents = {
             attribute.name.type === "JSXIdentifier" &&
             attribute.name.name === "className",
         );
-        if (!className) return;
-
-        const strings: string[] = [];
-        collectStrings(className.value as Node | null, strings);
-        const sizes = strings.flatMap(findSizes);
+        const text = className && classNameString(className.value);
+        if (!text) return;
+        const sizes = findSizes(text);
         if (sizes.length === 0) return;
 
         context.report({

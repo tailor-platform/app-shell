@@ -37,9 +37,12 @@ ruleTester.run("prefer-text-components", preferTextComponents, {
     'const view = <Paragraph.p className="text-sm">Note</Paragraph.p>;',
     // Only className is read.
     'const view = <p data-size="text-sm" title="text-xs">Note</p>;',
-    // The condition of `&&` and unknown functions are not read.
-    'const view = <p className={cn("text-text-sm" === mode && "text-body-sm")}>Note</p>;',
-    'const view = <p className={format("text-sm")}>Note</p>;',
+    // Only a class string written directly in className is read. Expressions are out of scope.
+    'const view = <p className={cn("text-sm", muted && "text-muted-foreground")}>Note</p>;',
+    'const view = <p className={clsx(compact ? "text-xs" : "text-sm")}>Note</p>;',
+    'const view = <p className={compact ? "text-xs" : "text-sm"}>Note</p>;',
+    "const view = <p className={noteClass}>Note</p>;",
+    "const view = <p className={`text-xs ${tone}`}>Note</p>;",
     // A size outside a className.
     'const size = "text-sm";',
   ],
@@ -88,32 +91,8 @@ ruleTester.run("prefer-text-components", preferTextComponents, {
       errors: [element("p", "text-xs", "body-md")],
     },
     {
-      code: "const view = <p className={`text-xs ${tone}`}>Note</p>;",
+      code: "const view = <p className={`text-xs text-muted-foreground`}>Note</p>;",
       errors: [element("p", "text-xs", "body-md")],
-    },
-    {
-      code: 'const view = <p className={cn("text-sm", muted && "text-muted-foreground")}>Note</p>;',
-      errors: [element("p", "text-sm", "body-md")],
-    },
-    {
-      code: 'const view = <p className={clsx(compact ? "text-xs" : "text-sm")}>Note</p>;',
-      errors: [element("p", "text-xs text-sm", "body-md")],
-    },
-    {
-      code: 'const view = <span className={cn(["flex", { "text-xs": compact }])}>Draft</span>;',
-      errors: [span("text-xs")],
-    },
-    {
-      code: 'const view = <p className={classNames("text-sm", { "font-semibold": active })}>Note</p>;',
-      errors: [element("p", "text-sm", "body-md")],
-    },
-    {
-      code: 'const view = <p className={"text-sm" as string}>Note</p>;',
-      errors: [element("p", "text-sm", "body-md")],
-    },
-    {
-      code: 'const view = <p className={label || "text-sm"}>Note</p>;',
-      errors: [element("p", "text-sm", "body-md")],
     },
     {
       // Each element is reported once, at its own name.

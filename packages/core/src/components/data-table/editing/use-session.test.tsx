@@ -54,7 +54,7 @@ describe("useCellEditSession", () => {
     });
     act(() => {
       result.current.change("Changed", () => 42);
-      result.current.confirm(() => false, onSuccess);
+      expect(result.current.confirm(() => false, onSuccess)).toBeUndefined();
       expect(result.current.getState()).toEqual({ status: "idle" });
     });
     expect(onSuccess).toHaveBeenCalledTimes(1);
@@ -290,6 +290,62 @@ describe("useCellEditSession", () => {
     await settle(request);
     expect(commit).not.toHaveBeenCalled();
   });
+
+  it.each(["resolve", "reject"] as const)(
+    "ignores a late commit %s after unmount without requiring cancellation",
+    async (outcome) => {
+      const request = deferred();
+      const onSuccess = vi.fn();
+      const view = setup();
+      act(() => {
+        view.result.current.change("Candidate");
+        view.result.current.confirm(() => request.promise, onSuccess);
+      });
+      const commands = view.result.current;
+      const retained = commands.getState();
+      view.unmount();
+      await settle(request, outcome === "reject" ? { error: new Error("Old failure") } : undefined);
+      commands.change("Detached");
+      commands.cancel();
+      expect(commands.getState()).toBe(retained);
+      expect(onSuccess).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["check", "commit"] as const)(
+    "invalidates an outstanding %s on policy changes and updates retained commands",
+    async (phase) => {
+      const request = deferred();
+      const view = renderHook((enabled: boolean) => useCellEditSession<string>(enabled), {
+        initialProps: true,
+        wrapper: Wrapper,
+      });
+      const commands = view.result.current;
+      const commit = vi.fn(() => (phase === "commit" ? request.promise : undefined));
+      const onSuccess = vi.fn();
+      act(() => {
+        commands.change("Candidate", phase === "check" ? () => request.promise : undefined);
+        commands.confirm(commit, onSuccess);
+      });
+      view.rerender(false);
+      expect(view.result.current.state).toEqual({ status: "editing", draft: "Candidate" });
+      expect(view.result.current.change).toBe(commands.change);
+      expect(view.result.current.confirm).toBe(commands.confirm);
+      await settle(request);
+      expect(commit).toHaveBeenCalledTimes(phase === "commit" ? 1 : 0);
+      expect(onSuccess).not.toHaveBeenCalled();
+      expect(view.result.current.state).toEqual({ status: "editing", draft: "Candidate" });
+      const error = new Error("Consumer-owned failure");
+      act(() => {
+        expect(() =>
+          commands.confirm(() => {
+            throw error;
+          }),
+        ).toThrow(error);
+      });
+      expect(view.result.current.state).toEqual({ status: "idle" });
+    },
+  );
 
   it("supports thenables without making synchronous callbacks asynchronous", async () => {
     const { result } = setup();

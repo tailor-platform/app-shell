@@ -65,3 +65,27 @@ export type ValueDisplayDescriptor<TRow extends Record<string, unknown>> =
   | { type: "date"; typeOptions?: DateCellOptions }
   | { type: "badge"; typeOptions?: BadgeCellOptions }
   | { type: "link"; typeOptions: LinkCellOptions<TRow> };
+
+/** Values accepted by each built-in display renderer. */
+export interface ColumnDisplayValues {
+  text: string | number | boolean | bigint | null | undefined;
+  number: number | null | undefined;
+  money: number | null | undefined;
+  date: Date | string | number | null | undefined;
+  badge: string | string[] | number | boolean | null | undefined;
+  link: string | number | boolean | null | undefined;
+}
+
+export type TypedColumnDisplay<
+  TRow extends Record<string, unknown>,
+  K extends ColumnCellType,
+> = Extract<ValueDisplayDescriptor<TRow>, { type: K }>;
+
+/** A display type must accept the value produced by its column's source. */
+export type ColumnDisplay<TRow extends Record<string, unknown>, TValue> =
+  | { type?: undefined; typeOptions?: never }
+  | {
+      [K in ColumnCellType]: [TValue] extends [ColumnDisplayValues[K]]
+        ? TypedColumnDisplay<TRow, K>
+        : never;
+    }[ColumnCellType];

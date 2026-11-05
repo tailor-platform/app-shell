@@ -7,13 +7,15 @@ import {
   toCalendarDate,
   toIsoDateTime,
   toTimeText,
+} from "./cell-values";
+import {
   normalizeNumberText,
   parseNumberText,
   sameNumber,
   toNumberEditText,
   toNumberValue,
   toTextValue,
-} from "./cell-values";
+} from "@/components/internals/table-core/input-values";
 
 describe("typed text that isn't a number", () => {
   it("is reported as not a number, not silently accepted", () => {

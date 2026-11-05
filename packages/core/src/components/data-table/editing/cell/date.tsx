@@ -4,13 +4,13 @@ import type { CalendarDate } from "@internationalized/date";
 import { CalendarDays } from "lucide-react";
 import { useTimeZone } from "@/contexts/appshell-context";
 import { CalendarControl } from "@/components/internals/table-core/editors/calendar-control";
+import { CELL_ERROR_CLASS_NAME } from "@/components/internals/table-core/cell-styles";
 import type { DateTimeDraft } from "../../types";
 import { sameDate, toCalendarDate, toIsoDateTime, toTimeText } from "../../cell-values";
 import { useDataTableT } from "../../i18n";
 import type { CellEditNavigation } from "../use-navigation";
 import { useCellEditSession } from "../use-session";
 import {
-  CELL_ERROR_CLASS_NAME,
   EditableCellFrame,
   useCellValue,
   useNavigationRef,

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { ChevronDown } from "lucide-react";
 import { BadgeList } from "@/components/badge-list";
 import { ChoiceEditor } from "@/components/internals/table-core/editors/choice";
-import { toTextValue } from "../../cell-values";
+import { toTextValue } from "@/components/internals/table-core/input-values";
 import { useDataTableT } from "../../i18n";
 import { useCellEditSession } from "../use-session";
 import {

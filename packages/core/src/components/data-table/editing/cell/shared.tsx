@@ -2,27 +2,17 @@ import { useCallback, useRef, type ComponentProps, type ReactNode } from "react"
 import { useTimeZone } from "@/contexts/appshell-context";
 import type { Table } from "@/components/table";
 import { useCellError } from "@/components/internals/table-core/cell-error";
+import { CellEditError } from "@/components/internals/table-core/cell-edit-error";
+import type { CellEditFailure } from "@/components/internals/table-core/cell-session";
 import {
   EditableCellSurface,
   type EditableCellSurfaceProps,
 } from "@/components/internals/table-core/cell-surface";
 import type { Column } from "../../types";
 import { getCellValue, renderTypedValue } from "../../cell-renderers";
-import { CellEditError } from "../../cell-edit-error";
 import { resolveBadgeOptions } from "../../cell-values";
 import type { CellEditNavigation } from "../use-navigation";
 import { useDataTableT } from "../../i18n";
-import type { CellEditFailure } from "../use-session";
-
-export {
-  ICON_SPACE_CLASS_NAME,
-  OVERLAY_CLASS_NAME,
-  CELL_FOCUS_CLASS_NAME,
-  CELL_ERROR_CLASS_NAME,
-  INPUT_CLASS_NAME,
-  ICON_INPUT_CLASS_NAME,
-  POPUP_CLASS_NAME,
-} from "@/components/internals/table-core/cell-styles";
 
 /** A typed column whose cells can be edited in place. @internal */
 export type EditableColumn<TRow extends Record<string, unknown>> = Extract<

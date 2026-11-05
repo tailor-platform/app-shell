@@ -1,7 +1,6 @@
 /**
- * Pure helpers behind DataTable's inline cell editing: how typed or pasted text
- * becomes a value and whether a draft is a real change or a cosmetic one
- * (`10` vs `10.00`). Business validation belongs to the consumer.
+ * Pure helpers for DataTable's choice labels and date/time conversion.
+ * Business validation belongs to the consumer.
  *
  * @internal
  */
@@ -15,16 +14,8 @@ import {
 } from "@internationalized/date";
 import { localDateTimeParts, normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type { SelectOption } from "@/types/collection";
-import type { BadgeCellOptions, DataTableFilterConfig } from "./types";
-
-export {
-  normalizeNumberText,
-  parseNumberText,
-  toNumberValue,
-  toTextValue,
-  sameNumber,
-  toNumberEditText,
-} from "@/components/internals/table-core/input-values";
+import type { BadgeCellOptions } from "@/components/internals/table-core/column-types";
+import type { DataTableFilterConfig } from "./types";
 
 // ── Choices (dropdown and badge editors) ─────────────────────────────────────
 

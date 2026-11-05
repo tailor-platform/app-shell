@@ -4,6 +4,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { CellEditError, type TextCellEditOptions } from "@/index";
+import { CellEditError as SharedCellEditError } from "@/components/internals/table-core/cell-edit-error";
 import { createAppShellWrapper } from "../../../../../tests/test-utils";
 import { DataTable } from "../../data-table";
 import { useDataTable } from "../../use-data-table";
@@ -107,6 +108,7 @@ const queryErrorTrigger = () => screen.queryByRole("button", { name: "Show error
 
 describe("DataTable callback error presentation", () => {
   it("exports CellEditError as a named native error", () => {
+    expect(CellEditError).toBe(SharedCellEditError);
     const error = new CellEditError("Enter a quantity");
     expect(error).toBeInstanceOf(Error);
     expect(error.name).toBe("CellEditError");

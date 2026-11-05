@@ -7,7 +7,7 @@ import {
   toNumberEditText,
   toNumberValue,
   toTextValue,
-} from "../../cell-values";
+} from "@/components/internals/table-core/input-values";
 import { useDataTableT } from "../../i18n";
 import { useCellEditSession } from "../use-session";
 import {

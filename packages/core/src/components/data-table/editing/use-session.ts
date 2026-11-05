@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { createCellEditSession } from "@/components/internals/table-core/cell-session";
 
-export type {
-  CellEditFailure,
-  CellEditSessionState,
-} from "@/components/internals/table-core/cell-session";
-
 /**
  * Adapts one mounted DataTable cell to the React-independent edit session.
  * Lazy initialization fixes its owner; useSyncExternalStore observes its cached state.

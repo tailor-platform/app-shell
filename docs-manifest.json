@@ -404,6 +404,7 @@
       "examples": "docs-src/components/data-table.docs.examples.tsx",
       "sources": [
         "packages/core/src/components/data-table/**",
+        "packages/core/src/components/internals/table-core/column-types.ts",
         "packages/core/src/hooks/use-collection-variables.ts",
         "packages/core/src/lib/collection-url-state.ts",
         "packages/core/src/contexts/collection-control-context.tsx",
@@ -474,7 +475,7 @@
       ],
       "hashes": {
         "typeSurface": "33eb2bdd6be1c774",
-        "outline": "eec5179512971f96",
+        "outline": "3543772d5bd1ec9a",
         "snapshot": "a97e067c66e46ef6",
         "outputMd": "7133811af89213ef",
         "examples": "e7100d7517f72495"

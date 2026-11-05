@@ -5,10 +5,13 @@ import { useTimeZone } from "@/contexts/appshell-context";
 import { createValueRenderer } from "@/components/internals/table-core";
 import { cn } from "@/lib/utils";
 import { LineItemsContext, useLineItemsContext } from "./line-items-context";
+import { LineItemsCell } from "./line-items-cell";
+import { getLineItemsEditing } from "./editing";
 import { useLineItemsT } from "./i18n";
 import type { UseLineItemsReturn } from "./types";
 
 export type LineItemsRootProps<T extends Record<string, unknown>> = {
+  /** Pass the hook result directly; editable cells use the document owner bound to that record. */
   value: UseLineItemsReturn<T>;
   children: ReactNode;
   className?: string;
@@ -54,7 +57,12 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
           (column.type === "number" || column.type === "money"
             ? ("right" as const)
             : ("left" as const)),
-        renderValue: column.render ? undefined : createValueRenderer(column, timeZone),
+        renderValue: column.render
+          ? undefined
+          : createValueRenderer(
+              column.edit && column.type === "link" ? { type: "text" } : column,
+              timeZone,
+            ),
       })),
     [value.columns, timeZone],
   );
@@ -71,20 +79,33 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
         </Table.Row>
       </Table.Header>
       <Table.Body>
-        {value.lines.map((row) => (
+        {value.lines.map((row, index) => (
           <Table.Row key={value.getLineKey(row)}>
-            {columns.map(({ column, id, align, renderValue }) => (
-              <Table.Cell key={id} align={align}>
-                {column.render
-                  ? column.render(row)
-                  : renderValue!(
-                      column.accessorKey !== undefined
-                        ? row[column.accessorKey]
-                        : column.accessor?.(row),
-                      row,
-                    )}
-              </Table.Cell>
-            ))}
+            {columns.map(({ column, id, align, renderValue }) => {
+              const display = column.render
+                ? column.render(row)
+                : renderValue!(
+                    column.accessorKey !== undefined
+                      ? row[column.accessorKey]
+                      : column.accessor?.(row),
+                    row,
+                  );
+              return column.edit ? (
+                <LineItemsCell
+                  key={id}
+                  row={row}
+                  column={column}
+                  index={index}
+                  editing={getLineItemsEditing<Record<string, unknown>>(value)}
+                  display={display}
+                  cellProps={{ align }}
+                />
+              ) : (
+                <Table.Cell key={id} align={align}>
+                  {display}
+                </Table.Cell>
+              );
+            })}
           </Table.Row>
         ))}
         {value.lines.length === 0 && (

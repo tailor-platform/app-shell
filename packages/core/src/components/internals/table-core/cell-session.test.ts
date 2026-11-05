@@ -19,7 +19,7 @@ async function settle(request: ReturnType<typeof deferred>, failure?: { error: u
 }
 
 describe("React-independent cell edit sessions", () => {
-  it("caches its state and publishes adopted snapshots, not reads or no-ops", () => {
+  it("caches its state and publishes adopted snapshots, not reads or no-ops", async () => {
     const session = createCellEditSession<string>();
     const initial = session.getState();
     const listener = vi.fn(() => {
@@ -30,7 +30,7 @@ describe("React-independent cell edit sessions", () => {
     expect(session.getFailure()).toBeUndefined();
     session.fail("No draft", "parse");
     const commit = vi.fn();
-    expect(session.confirm(commit)).toBeUndefined();
+    await expect(session.confirm(commit)).resolves.toBe(true);
     expect(commit).not.toHaveBeenCalled();
     expect(listener).not.toHaveBeenCalled();
     const begin = session.begin;
@@ -112,13 +112,14 @@ describe("React-independent cell edit sessions", () => {
     },
   );
 
-  it("keeps synchronous confirmation synchronous and preserves its void result", () => {
+  it("keeps synchronous confirmation synchronous while returning its awaitable result", async () => {
     const session = createCellEditSession<string>();
     session.begin("Memo");
     const complete = vi.fn(() => expect(session.getState()).toEqual({ status: "idle" }));
-    expect(session.confirm(() => false, complete)).toBeUndefined();
+    const result = session.confirm(() => false, complete);
     expect(complete).toHaveBeenCalledTimes(1);
     expect(session.getState()).toEqual({ status: "idle" });
+    await expect(result).resolves.toBe(true);
   });
 
   it("waits for a change check before committing and deduplicates confirmation", async () => {

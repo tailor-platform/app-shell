@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { useNavItems, buildCurrentPathAwareRoutes } from "./navigation";
 import { useLocation, useNavigate } from "react-router";
-import { defineModule, defineResource, hidden, pass } from "@/resource";
+import { defineModule, defineResource, hidden, pass, redirectTo } from "@/resource";
 import {
   AppShellConfigContext,
   AppShellDataContext,
@@ -98,6 +98,112 @@ describe("useNavItems", () => {
       url: "dashboard/overview",
     });
   });
+
+  it.each([true, false])(
+    "keeps redirecting parents and visible descendants (has component: %s)",
+    async (hasComponent) => {
+      const component = hasComponent ? () => <div>Parent</div> : undefined;
+      const modules = [
+        defineModule({
+          path: "workspace",
+          meta: { title: "Workspace" },
+          component,
+          guards: [() => redirectTo("/workspace/section/list")],
+          resources: [
+            defineResource({
+              path: "section",
+              component,
+              guards: [() => redirectTo("/workspace/section/list")],
+              subResources: [
+                defineResource({
+                  path: "list",
+                  component: () => <div>List</div>,
+                }),
+                defineResource({
+                  path: "secret",
+                  guards: [() => hidden()],
+                  subResources: [
+                    defineResource({
+                      path: "details",
+                      component: () => <div>Secret Details</div>,
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+      ];
+
+      const { result } = renderNavItems(modules, "/workspace/section/list");
+
+      await waitFor(async () => {
+        expect(await result.current!).toEqual([
+          {
+            title: "Workspace",
+            url: "workspace",
+            icon: expect.anything(),
+            items: [
+              {
+                title: "Section",
+                url: "workspace/section",
+                items: [{ title: "List", url: "workspace/section/list" }],
+              },
+            ],
+          },
+        ]);
+      });
+    },
+  );
+
+  it.each([
+    { result: "pass", guard: pass },
+    { result: "redirect", guard: () => redirectTo("/app") },
+    { result: "hidden", guard: hidden },
+  ])(
+    "handles componentless leaf navigation when guards return $result",
+    async ({ result, guard }) => {
+      const modules = [
+        defineModule({
+          path: "",
+          meta: { title: "Home" },
+          guards: [guard],
+          resources: [],
+        }),
+        defineModule({
+          path: "legacy",
+          meta: { title: "Legacy" },
+          guards: [guard],
+          resources: [],
+        }),
+        defineModule({
+          path: "app",
+          meta: { title: "App" },
+          component: () => <div>App</div>,
+          resources: [defineResource({ path: "alias", guards: [guard] })],
+        }),
+      ];
+
+      const { result: navItems } = renderNavItems(modules, "/app");
+
+      await waitFor(async () => {
+        expect(await navItems.current!).toEqual([
+          ...(result === "redirect"
+            ? [
+                { title: "Home", url: "/", icon: expect.anything(), items: [] },
+                { title: "Legacy", url: "legacy", icon: expect.anything(), items: [] },
+              ]
+            : []),
+          {
+            title: "App",
+            url: "app",
+            icon: expect.anything(),
+            items: result === "redirect" ? [{ title: "Alias", url: "app/alias" }] : [],
+          },
+        ]);
+      });
+    },
+  );
 
   it("filters out modules hidden by guards", async () => {
     const modules = [
@@ -649,6 +755,98 @@ describe("useCommandPaletteRoutes", () => {
       ]);
     });
   });
+
+  it.each([true, false])(
+    "keeps descendants of redirecting dynamic and static parents (has component: %s)",
+    async (hasComponent) => {
+      const component = hasComponent ? () => <div>Parent</div> : undefined;
+      const modules = [
+        defineModule({
+          path: "users",
+          meta: { title: "Users" },
+          resources: [
+            defineResource({
+              path: ":id",
+              component,
+              guards: [() => redirectTo("/users/42/section/list")],
+              subResources: [
+                defineResource({
+                  path: "section",
+                  component,
+                  guards: [() => redirectTo("/users/42/section/list")],
+                  subResources: [
+                    defineResource({
+                      path: "list",
+                      component: () => <div>List</div>,
+                    }),
+                    defineResource({
+                      path: "secret",
+                      guards: [() => hidden()],
+                      subResources: [
+                        defineResource({
+                          path: "details",
+                          component: () => <div>Secret Details</div>,
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+      ];
+
+      const { result } = renderWithNavigationLoader(
+        () => useCommandPaletteRoutes(),
+        modules,
+        "/users/42/section/list",
+      );
+
+      await waitFor(async () => {
+        const routes = await result.current!;
+        expect(routes.map(({ path }) => path)).toEqual([
+          "users/42",
+          "users/42/section",
+          "users/42/section/list",
+        ]);
+      });
+    },
+  );
+
+  it.each([
+    { result: "pass", guard: pass },
+    { result: "redirect", guard: () => redirectTo("/users/42/profile") },
+    { result: "hidden", guard: hidden },
+  ])(
+    "handles a componentless dynamic module when guards return $result",
+    async ({ result, guard }) => {
+      const modules = [
+        defineModule({
+          path: "users/:id",
+          meta: { title: "User" },
+          guards: [guard],
+          resources: [
+            defineResource({ path: "profile", component: () => <div>Profile</div> }),
+            defineResource({ path: "alias", guards: [() => redirectTo("/users/42/profile")] }),
+            defineResource({ path: "namespace", guards: [pass] }),
+          ],
+        }),
+      ];
+
+      const routes = await buildCurrentPathAwareRoutes({
+        modules,
+        locale: "en",
+        pathname: "/users/42/profile",
+      });
+
+      expect(routes.map(({ path }) => path)).toEqual(
+        result === "hidden"
+          ? []
+          : [...(result === "redirect" ? ["users/42"] : []), "users/42/profile", "users/42/alias"],
+      );
+    },
+  );
 
   it("keeps traversing through a non-navigable dynamic namespace", async () => {
     const modules = [

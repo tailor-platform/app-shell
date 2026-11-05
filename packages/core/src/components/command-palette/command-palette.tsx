@@ -59,7 +59,7 @@ export function navItemsToRoutes(navItems: Array<NavItem>): Array<NavigatableRou
     items.forEach((item) => {
       const breadcrumb = [...parentBreadcrumb, item.title];
 
-      // Only add navigable routes (componentless resources have no url)
+      // Only add navigable routes
       if (item.url) {
         routes.push({
           path: item.url,

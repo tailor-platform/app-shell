@@ -7,7 +7,16 @@ name: Document Collection Page
 category: page
 description: The index screen for a document type — a table of records, filtered and sorted, from which one record is opened
 requiredImports:
-  [DataTable, Layout, Toolbar, useDataTable, useURLCollectionVariables, createColumnHelper]
+  [
+    DataTable,
+    Layout,
+    Toolbar,
+    Menu,
+    Button,
+    useDataTable,
+    useURLCollectionVariables,
+    createColumnHelper,
+  ]
 tags: [list, collection, index, datatable, filter, bulk-action]
 do:
   - The landing screen for an area of the app built around one document type — purchase orders, invoices, shipments
@@ -54,7 +63,7 @@ Layout fill
   |  DataTable.Root                                            |
   |   Toolbar.Root                                             |
   |    Toolbar.Row                                             |
-  |     DataTable.Filters    DataTable.ColumnSettings          |
+  |     DataTable.Filters   Download  DataTable.ColumnSettings |
   |  DataTable.Table                                           |
   |  DataTable.Footer                                          |
   |    DataTable.Pagination      bulk-action bar              |
@@ -139,9 +148,31 @@ Each row should also carry a per-row action menu, declared as [`rowActions`](../
 
 When the records have actions that make sense processing multiple records at a time, the DataTable should enable row selection, with these actions available via bulk action API.
 
-Such actions might include: Updating document status, progressing the document through its lifecycle, workflow actions like reject or accept, marking as viewed, download PDF.
+Such actions might include: Updating document status, progressing the document through its lifecycle, workflow actions like reject or accept, marking as viewed.
 
-A specific note: Downloading a PDF, CSV or other export should be done via the 'Select all' and then choosing: "Download PDF" which would appear in the bulk-action bar that appears after one or more records are selected; NOT through a specific "Download PDF" button.
+Exports are the exception. When someone wants to download a copy of the data, they'll commonly want the whole set they've filtered down to, without selecting anything. So exports sit in the toolbar as permanent buttons, and export every record matching the current filter and sort. When rows are selected, the same buttons export only that selection.
+
+If the requirements only call for one format, use a single "Download XLS" button. Where several formats are available, use one "Download" button that opens a menu of the formats:
+
+```tsx
+<Toolbar.Group>
+  <Menu.Root>
+    <Menu.Trigger render={<Button variant="outline" />}>
+      Download
+      <ChevronDownIcon />
+    </Menu.Trigger>
+    <Menu.Content position={{ align: "end" }}>
+      <Menu.Item onClick={() => download("pdf")}>PDF</Menu.Item>
+      <Menu.Item onClick={() => download("csv")}>CSV</Menu.Item>
+      <Menu.Item onClick={() => download("xlsx")}>XLS</Menu.Item>
+    </Menu.Content>
+  </Menu.Root>
+</Toolbar.Group>
+```
+
+Here `download` sends the selected ids when there are any, and otherwise the current `variables.query` and `variables.order` from `useURLCollectionVariables`, so the backend exports the full filtered set rather than the loaded page.
+
+Actions that change records, like cancelling or confirming orders or creating an invoice from them, never make sense across every record. They only run on a set the user has selected, so they belong in the bulk-action bar and not the toolbar.
 
 Some actions will not be appropriate as bulk actions, though would still be available on the [individual document detail page](./document-detail.md). E.g. Creating sub-document, Amend/edit. These are inappropriate because the action requires further follow-up activity, per-document.
 
@@ -177,7 +208,7 @@ Where the page adds custom filtering UI, beyond `DataTable.Filters`, this consum
 
 See [Combining an external predicate](../components/data-table.md#combining-an-external-predicate).
 
-Where the page offers an action over every matching record rather than the visible page — an export, or a bulk action across the whole filter — the action takes the current filter and sort, not the loaded rows. The set matching a filter is almost always larger than a page.
+With nothing selected, a toolbar export runs over every matching record, not just the visible page, so it takes the current filter and sort rather than the loaded rows. The set matching a filter is almost always larger than a page.
 
 Reference data for filter dropdowns, such as a list of sites or suppliers, should be a separate query rather than joined into the list query.
 
@@ -220,8 +251,6 @@ Should there ever be elements placed in a right-hand column on one of these page
 
 Do we want to encourage/allow inline editing on pages such as these
 
-How do we want to deal with Download PDF / Download CSV. Bulk actions, or permanently present buttons on top. If so, does the multi-select get confusing, as there's now two places you can execute on the selected rows
-
 ## Constraints
 
 - **Size the list query for the dataset it will grow into.** Joins, conditionals and aggregations in the query get slow as the dataset grows, and a development or UAT environment with sample data won't show it.
@@ -234,7 +263,7 @@ How do we want to deal with Download PDF / Download CSV. Bulk actions, or perman
 
 - A per-row "View" or "Open" button. The whole row is clickable via `onClickRow`, and the primary identifier is a `type: "link"` column so the same navigation is reachable by keyboard and screen reader.
 
-- _{A standalone "Download PDF" button rather than a bulk action (per the Row actions section). ??}_
+- Record-changing actions, such as Cancel or Confirm, as toolbar buttons. They need a selection, so they belong in the bulk-action bar.
 
 - Promoting every schema field to a column in the table.
 

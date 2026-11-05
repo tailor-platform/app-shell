@@ -651,9 +651,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "704f2a634290f0c5",
+        "outline": "bdfee291c3a222a8",
         "snapshot": null,
-        "outputMd": "7c710c6978202b80",
+        "outputMd": "31664c9491f33470",
         "examples": "42919afa03e3d727"
       }
     },
@@ -1854,7 +1854,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "253fcea1c4e5a42c",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
-    "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "7c710c6978202b80",
+    "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "31664c9491f33470",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "bf349957a733247b",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "e0286979718e2769",
     "packages/core/skills/app-shell-patterns/SKILL.md": "4402348d1f010da7"

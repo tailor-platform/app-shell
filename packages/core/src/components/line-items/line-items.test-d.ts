@@ -2,6 +2,7 @@ import { expectTypeOf, test } from "vitest";
 import type { LineItemsColumn, UseLineItemsOptions, UseLineItemsReturn } from "./types";
 import type { LineItemsRootProps, LineItemsTableProps } from "./line-items";
 import { useLineItems } from "./use-line-items";
+import { createLineItemsDocumentStore } from "./document-store";
 
 type Row = { id?: string; name: string; quantity: number; detail: { nested: string } };
 
@@ -48,6 +49,13 @@ test("row commands retain row types without exposing unfinished save APIs", () =
   expectTypeOf<keyof LineItemsTableProps>().toEqualTypeOf<
     "className" | "emptyMessage" | "aria-label"
   >();
+});
+
+test("the store adapter preserves property-specific command typing", () => {
+  const store = createLineItemsDocumentStore<Row>({ columns: [{ accessorKey: "quantity" }] });
+  store.updateField("A", "quantity", 2);
+  // @ts-expect-error Notification wrappers must not widen the field's value type.
+  store.updateField("A", "quantity", "2");
 });
 
 test("property, computed and value-less columns keep source and display contracts", () => {

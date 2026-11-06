@@ -250,6 +250,19 @@ describe("SidebarLayout", () => {
     });
   });
 
+  describe("stacking", () => {
+    it("isolates the layout root so in-page z-index never reaches the portal band", async () => {
+      renderSidebarLayout();
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-slot="sidebar-wrapper"]')).not.toBeNull();
+      });
+
+      const wrapper = document.querySelector('[data-slot="sidebar-wrapper"]');
+      expect(wrapper?.className.split(" ")).toContain("astw:isolate");
+    });
+  });
+
   describe("namespace", () => {
     it("exposes DefaultSidebar and DefaultHeader on SidebarLayout", () => {
       expect(SidebarLayout.DefaultSidebar).toBe(DefaultSidebar);

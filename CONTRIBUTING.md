@@ -10,12 +10,12 @@ agents (the architecture map — where things live in the code); it links here f
 
 ## The core idea: one source of truth, many executors
 
-This repo codifies its conventions **once** — as **skills** and **agents** under
-`.agents/skills/` and `.github/` — and runs those same conventions through every actor that
-touches the code (you, Claude Code, Copilot, and the gh-aw bots). **When a convention changes,
-change the skill/agent — not just the code**, and not this document: rules, commands, and
-trigger mechanics live in exactly one place (the skill or workflow file), and this guide only
-points at them. That keeps this file from drifting out of sync with what actually runs.
+This repo codifies its conventions **once** — as **skills** under `.agents/skills/` — and
+runs those same conventions through every actor that touches the code (you, Claude Code,
+and Copilot). **When a convention changes, change the skill — not just the code**, and not
+this document: rules, commands, and trigger mechanics live in exactly one place (the skill
+or workflow file), and this guide only points at them. That keeps this file from drifting
+out of sync with what actually runs.
 
 ---
 
@@ -32,11 +32,11 @@ points at them. That keeps this file from drifting out of sync with what actuall
   │
   ├─ 5. Add a changeset ........... .agents/skills/create-changeset  (user-facing changes only)
   │
-  ├─ 6. Open a PR ................. CI runs automatically; comment `/review` for the API Design Review bot
+  ├─ 6. Open a PR ................. CI runs automatically; request a code review
   │
-  ├─ 7. Address review → merge .... resolve High/Medium findings; CI green
+  ├─ 7. Address review → merge .... address review findings; CI green
   │
-  └─ 8. After merge (automated) ... docs-update bot + release workflow (see .github/workflows/)
+  └─ 8. After merge (automated) ... release workflow (see .github/workflows/)
 ```
 
 ---
@@ -74,7 +74,7 @@ repo publishes via changesets (§6) — you won't run `changeset:publish` by han
 | `docs/`                | **Generated** user-facing documentation — never hand-edited (`pnpm docs:sync`)                    |
 | `docs-browser/`        | AppShell app that renders `docs/` with live examples                                              |
 | `.agents/skills/`      | **Contributor procedures** — the source of truth for how to do the work                           |
-| `.github/`             | Agents, prompts, and workflows (CI + agentic bots)                                                |
+| `.github/`             | CI workflows and repository configuration                                                         |
 
 ---
 
@@ -129,7 +129,6 @@ commands and order — it's the source of truth for what "clean" means and stays
 tooling changes.
 
 For `packages/**` changes, use `.agents/skills/code-review/SKILL.md` for review guidance locally.
-You can also use `.github/prompts/api-design-review.prompt.md` in Copilot-style flows.
 
 ---
 
@@ -153,28 +152,18 @@ internal-only refactors, dev/build tooling, test-only, and formatting changes.
 ## 7. Open a PR — what runs automatically
 
 Opening a PR triggers CI (format/lint/test/type-check, e2e where relevant, doc link-checking,
-license checks) and, on comment, the agentic API Design Review. **Exact triggers, paths, and
-labels live in `.github/workflows/` and change over time — check those files rather than
-trusting a copy here.**
-
-Commenting **`/review`** on a PR runs the **API Design Review** bot
-(`.github/agents/api-design-reviewer.md` + `.github/agents/impact-analyzer.md`): it classifies
-changed `packages/**` files as public/internal, reviews only changed public code, and posts a
-severity-sorted verdict. It's multi-round aware — re-runs won't re-flag resolved findings.
+license checks). **Exact triggers, paths, and labels live in `.github/workflows/` and change
+over time — check those files rather than trusting a copy here.**
 
 ---
 
 ## 8. Review, merge, and what happens after
 
-- Address the `/review` bot's **High/Medium** findings until it returns **Approve**; ensure all
-  CI checks are green. Low-severity suggestions are non-blocking.
-- After merge to `main`, automation takes over: a **Documentation Updater** bot opens a
-  `[docs-update]` PR from pending changesets, and the **Release** workflow opens/updates a
-  "Version Packages" PR that publishes to NPM when merged. See `.github/workflows/` for the
-  exact triggers.
-
-So a normal feature lands as **two or three PRs**: your change, an automatic `[docs-update]`
-PR, and eventually inclusion in a "Version Packages" release PR.
+- Address review findings and obtain approval; ensure all CI checks are green.
+- Include required documentation updates in the same PR as the code change (see §4).
+  CI checks for documentation drift before merge.
+- After merge to `main`, the **Release** workflow opens/updates a "Version Packages" PR
+  that publishes to NPM when merged. See `.github/workflows/` for the exact triggers.
 
 ---
 
@@ -188,9 +177,7 @@ Rather than duplicate file-by-file details here (they go stale — see `.agents/
 - **`docs-src/`** — authored source for `docs/` and for the `app-shell-patterns` skill shipped to
   consumers; both generated via `pnpm docs:sync` (the skill into `packages/core/skills/`,
   gitignored).
-- **`.github/agents/`** and **`.github/prompts/`** — reviewer personas and IDE-agent prompts.
-- **`.github/workflows/`** — CI and gh-aw agentic workflows (source `.md` files are compiled to
-  `*.lock.yml` via `gh aw compile`; never hand-edit `*.lock.yml`).
+- **`.github/workflows/`** — CI and release workflows.
 - **`CLAUDE.md`** — architecture orientation for coding agents.
 - **`README.md`** — quickstart and development commands.
 

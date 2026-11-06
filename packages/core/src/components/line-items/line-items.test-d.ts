@@ -2,10 +2,11 @@ import { expectTypeOf, test } from "vitest";
 import type { LineItemsColumn, UseLineItemsOptions, UseLineItemsReturn } from "./types";
 import type { LineItemsRootProps, LineItemsTableProps } from "./line-items";
 import { useLineItems } from "./use-line-items";
+import { createLineItemsDocumentStore } from "./document-store";
 
 type Row = { id?: string; name: string; quantity: number; detail: { nested: string } };
 
-test("readonly display retains row types and does not expose unfinished document APIs", () => {
+test("row commands retain row types without exposing unfinished save APIs", () => {
   function Contract() {
     const value = useLineItems<Row>({
       columns: [{ accessorKey: "quantity", type: "number" }],
@@ -15,7 +16,30 @@ test("readonly display retains row types and does not expose unfinished document
     expectTypeOf(value.lines).toEqualTypeOf<readonly Row[]>();
     expectTypeOf(value.getLineKey).toEqualTypeOf<(row: Row) => string>();
     expectTypeOf<LineItemsRootProps<Row>["value"]>().toEqualTypeOf<UseLineItemsReturn<Row>>();
-    // @ts-expect-error This slice does not implement cell editing or persistence.
+    expectTypeOf(value.isDirty).toEqualTypeOf<boolean>();
+    expectTypeOf(value.orderer).toEqualTypeOf<boolean>();
+    expectTypeOf<UseLineItemsOptions<Row>["orderer"]>().toEqualTypeOf<boolean | undefined>();
+    value.reorderLine("A", "B");
+    value.reorderLine("A", null);
+    const ordering: UseLineItemsOptions<Row> = { columns: [], orderer: true };
+    ordering.orderer = false;
+    // @ts-expect-error The orderer option accepts booleans, not named policies.
+    ordering.orderer = "manual";
+    // @ts-expect-error A movement anchor must be a current key or null.
+    value.reorderLine("A", 1);
+    value.updateField("A", "quantity", 2);
+    expectTypeOf(
+      value.addLine({ name: "New", quantity: 1, detail: { nested: "value" } }),
+    ).toEqualTypeOf<string>();
+    value.removeLine("A");
+    value.revert();
+    // @ts-expect-error A numeric property cannot receive text.
+    value.updateField("A", "quantity", "2");
+    // @ts-expect-error A field must exist on the row.
+    value.updateField("A", "missing", 2);
+    // @ts-expect-error A new line must supply the complete editing model.
+    value.addLine({ name: "Incomplete" });
+    // @ts-expect-error This slice does not implement cell confirmation or persistence.
     value.commitEdits();
     // @ts-expect-error Controlled rows are not supported.
     const controlled: UseLineItemsOptions<Row> = { columns: [], lines: [] };
@@ -25,6 +49,13 @@ test("readonly display retains row types and does not expose unfinished document
   expectTypeOf<keyof LineItemsTableProps>().toEqualTypeOf<
     "className" | "emptyMessage" | "aria-label"
   >();
+});
+
+test("the store adapter preserves property-specific command typing", () => {
+  const store = createLineItemsDocumentStore<Row>({ columns: [{ accessorKey: "quantity" }] });
+  store.updateField("A", "quantity", 2);
+  // @ts-expect-error Notification wrappers must not widen the field's value type.
+  store.updateField("A", "quantity", "2");
 });
 
 test("property, computed and value-less columns keep source and display contracts", () => {

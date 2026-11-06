@@ -404,6 +404,10 @@
       "examples": "docs-src/components/data-table.docs.examples.tsx",
       "sources": [
         "packages/core/src/components/data-table/**",
+        "packages/core/src/components/internals/table-core/column-types.ts",
+        "packages/core/src/components/internals/table-core/selection-types.ts",
+        "packages/core/src/components/internals/table-core/selection-bar.tsx",
+        "packages/core/src/components/internals/table-core/cell-edit-error.ts",
         "packages/core/src/hooks/use-collection-variables.ts",
         "packages/core/src/lib/collection-url-state.ts",
         "packages/core/src/contexts/collection-control-context.tsx",
@@ -473,10 +477,10 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "33eb2bdd6be1c774",
-        "outline": "eec5179512971f96",
+        "typeSurface": "cc6db2b055ae23fb",
+        "outline": "43b64da12476e1de",
         "snapshot": "a97e067c66e46ef6",
-        "outputMd": "7133811af89213ef",
+        "outputMd": "3ee6c4bfba4444a2",
         "examples": "e7100d7517f72495"
       }
     },
@@ -1063,6 +1067,40 @@
         "snapshot": "03dedb3cc14b1eaf",
         "outputMd": "6f956d57a15366a0",
         "examples": "3e841d9dcde141f6"
+      }
+    },
+    "line-items": {
+      "slug": "line-items",
+      "kind": "code-backed",
+      "outline": "docs-src/components/line-items.docs.outline.md",
+      "output": "docs/components/line-items.md",
+      "examples": null,
+      "sources": [
+        "packages/core/src/components/line-items/**",
+        "packages/core/src/components/internals/table-core/selection-bar.tsx"
+      ],
+      "claims": [],
+      "symbols": [
+        "LineItems",
+        "LineItemsChangeSet",
+        "LineItemsColumn",
+        "LineItemsColumnSettingsProps",
+        "LineItemsFooterProps",
+        "LineItemsRootProps",
+        "LineItemsSearchProps",
+        "LineItemsTableProps",
+        "LineItemsValidationIssue",
+        "UseLineItemsOptions",
+        "UseLineItemsReturn",
+        "createLineItemHelper",
+        "useLineItems"
+      ],
+      "hashes": {
+        "typeSurface": "efe922b4f2bdcb98",
+        "outline": "9b9126a46f931734",
+        "snapshot": null,
+        "outputMd": "878ea53728af4c1b",
+        "examples": null
       }
     },
     "list-dense-scan": {
@@ -1788,7 +1826,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "7133811af89213ef",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "3ee6c4bfba4444a2",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "df6777c49ca5c7e2",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "8e24da61e95b6434",
@@ -1802,6 +1840,7 @@
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "6f956d57a15366a0",
+    "packages/core/skills/app-shell-patterns/references/components/line-items.md": "878ea53728af4c1b",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "b3dd3b9a58a9d290",
@@ -1857,6 +1896,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "930db027a28bbe24",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "e0286979718e2769",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "2c900e3b4d203b31"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "d2633e4add8ea85c"
   }
 }

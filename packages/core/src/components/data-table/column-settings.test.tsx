@@ -94,6 +94,14 @@ describe("DataTable.Toolbar columnSettings", () => {
     )!;
     expect(panel).toBeTruthy();
 
+    // Keep the original grip + label + visibility checkbox row, without extra controls.
+    const bravoRow = within(panel).getByText("Bravo").closest('[draggable="true"]')!;
+    expect(within(bravoRow as HTMLElement).getAllByRole("checkbox")).toHaveLength(1);
+    expect(within(bravoRow as HTMLElement).getAllByRole("button")).toHaveLength(2);
+    expect(
+      within(panel).queryByRole("button", { name: /Column actions|Move .* (up|down)/ }),
+    ).toBeNull();
+
     // Uncheck "Bravo".
     const bravoCheckbox = within(panel).getByRole("checkbox", { name: "Bravo" });
     fireEvent.click(bravoCheckbox);

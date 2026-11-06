@@ -42,6 +42,7 @@ export type GeneratedRouteParams = {
   "/showcase/grid": {};
   "/showcase/item-list": {};
   "/showcase/layouts": {};
+  "/showcase/line-items-next": {};
   "/showcase/metric-card": {};
   "/showcase/primitives": {};
   "/showcase/spinner": {};

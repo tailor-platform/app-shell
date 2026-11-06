@@ -483,7 +483,7 @@ describe("rowSelection", () => {
     expect(screen.getAllByLabelText("Select row")[0].getAttribute("aria-checked")).toBe("false");
     expect(screen.getAllByLabelText("Select row")[1].getAttribute("aria-checked")).toBe("true");
     expect(
-      within(screen.getByRole("toolbar", { name: "Bulk actions" })).getByText("2 selected"),
+      within(screen.getByRole("group", { name: "Bulk actions" })).getByText("2 selected"),
     ).toBeDefined();
   });
 

@@ -19,6 +19,7 @@ export const DataTable = {
    * Container for toolbar content (filters, search, etc.). Place inside
    * `DataTable.Root`, before `DataTable.Table`. Pass `columnSettings` to render
    * the built-in "Columns" control (show/hide, reorder, pin) at the top-right.
+   * @deprecated Compose Toolbar.Root/Row/Group with DataTable.ColumnSettings instead.
    */
   Toolbar: DataTableToolbar,
   /**

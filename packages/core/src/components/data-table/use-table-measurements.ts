@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useState, type RefObject } from "react";
 import type { Column } from "./types";
 import type { ColumnWidths } from "./column-layout";
+import { usePinShadows } from "@/components/internals/table-core/use-pin-shadows";
 
 // `useLayoutEffect` warns during SSR; the measurement it drives is client-only,
 // so fall back to `useEffect` on the server.
@@ -84,30 +85,7 @@ export function useTableMeasurements<TRow extends Record<string, unknown>>(
     return () => observer.disconnect();
   }, [containerRef, visibleColumns, pinnedColumns, hasSelection, hasExpand, hasRowActions]);
 
-  // Reflect horizontal scroll position onto the container as data attributes so
-  // the pinned-column freeze shadows show only while there is content scrolled
-  // under that edge (left once scrolled from the start; right while more remains
-  // to the right). Re-runs when the column set changes and observes size changes.
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const update = () => {
-      const maxScroll = el.scrollWidth - el.clientWidth;
-      el.toggleAttribute("data-pin-shadow-left", el.scrollLeft > 0);
-      el.toggleAttribute("data-pin-shadow-right", el.scrollLeft < maxScroll - 1);
-    };
-    update();
-    el.addEventListener("scroll", update, { passive: true });
-    if (typeof ResizeObserver === "undefined") {
-      return () => el.removeEventListener("scroll", update);
-    }
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => {
-      el.removeEventListener("scroll", update);
-      observer.disconnect();
-    };
-  }, [containerRef, visibleColumns, pinnedColumns]);
+  usePinShadows(containerRef, visibleColumns);
 
   return widths;
 }

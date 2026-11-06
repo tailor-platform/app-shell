@@ -34,9 +34,9 @@ out of sync with what actually runs.
   │
   ├─ 6. Open a PR ................. CI runs automatically; request a code review
   │
-  ├─ 7. Address review → merge .... resolve High/Medium findings; CI green
+  ├─ 7. Address review → merge .... address review findings; CI green
   │
-  └─ 8. After merge (automated) ... docs-update bot + release workflow (see .github/workflows/)
+  └─ 8. After merge (automated) ... release workflow (see .github/workflows/)
 ```
 
 ---
@@ -159,15 +159,11 @@ over time — check those files rather than trusting a copy here.**
 
 ## 8. Review, merge, and what happens after
 
-- Address reviewers' **High/Medium** findings and obtain approval; ensure all CI checks are
-  green. Low-severity suggestions are non-blocking.
-- After merge to `main`, automation takes over: a **Documentation Updater** bot opens a
-  `[docs-update]` PR from pending changesets, and the **Release** workflow opens/updates a
-  "Version Packages" PR that publishes to NPM when merged. See `.github/workflows/` for the
-  exact triggers.
-
-So a normal feature lands as **two or three PRs**: your change, an automatic `[docs-update]`
-PR, and eventually inclusion in a "Version Packages" release PR.
+- Address review findings and obtain approval; ensure all CI checks are green.
+- Include required documentation updates in the same PR as the code change (see §4).
+  CI checks for documentation drift before merge.
+- After merge to `main`, the **Release** workflow opens/updates a "Version Packages" PR
+  that publishes to NPM when merged. See `.github/workflows/` for the exact triggers.
 
 ---
 

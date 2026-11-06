@@ -5,6 +5,7 @@ import { BadgeList, toValueArray } from "@/components/badge-list";
 import { normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type {
   BadgeCellOptions,
+  ColumnCellType,
   DateCellOptions,
   LinkCellOptions,
   MoneyCellOptions,
@@ -15,6 +16,8 @@ import type {
 export interface ValueRendererOptions {
   /** Optional, already-resolved display label policy for individual badge values. */
   resolveBadgeLabel?: (value: string) => string;
+  /** Keep an editable link's value visible without creating a navigation target. */
+  linkAsText?: boolean;
 }
 
 const PLACEHOLDER = (
@@ -164,24 +167,86 @@ function renderLink<TRow extends Record<string, unknown>>(
   );
 }
 
+function withAlignment<TFactory extends (...args: never[]) => unknown>(
+  align: "left" | "right",
+  factory: TFactory,
+) {
+  return Object.assign(factory, { align });
+}
+
+/** Factory signatures define display options and accepted values; metadata owns defaults. */
+export function createDisplayFactories<TRow extends Record<string, unknown>>() {
+  return {
+    text: withAlignment("left", (_config: { typeOptions?: never }) => {
+      return (value: string | number | boolean | bigint | null | undefined, _row: TRow) =>
+        renderText(value);
+    }),
+    number: withAlignment("right", (config: { typeOptions?: NumberCellOptions }) => {
+      return (value: number | null | undefined, _row: TRow) =>
+        renderNumber(value, config.typeOptions);
+    }),
+    money: withAlignment("right", (config: { typeOptions?: MoneyCellOptions<TRow> }) => {
+      return (value: number | null | undefined, row: TRow) =>
+        renderMoney(value, row, config.typeOptions);
+    }),
+    date: withAlignment("left", (config: { typeOptions?: DateCellOptions }, timeZone: string) => {
+      const renderDate = createDateRenderer(config.typeOptions, timeZone);
+      return (value: Date | string | number | null | undefined, _row: TRow) => renderDate(value);
+    }),
+    badge: withAlignment(
+      "left",
+      (
+        config: { typeOptions?: BadgeCellOptions },
+        _timeZone: string,
+        options: ValueRendererOptions,
+      ) => {
+        return (value: string | string[] | number | boolean | null | undefined, _row: TRow) =>
+          renderBadge(value, config.typeOptions, options.resolveBadgeLabel);
+      },
+    ),
+    link: withAlignment(
+      "left",
+      (
+        config: { typeOptions: LinkCellOptions<TRow> },
+        _timeZone: string,
+        options: ValueRendererOptions,
+      ) => {
+        return (value: string | number | boolean | null | undefined, row: TRow) =>
+          options.linkAsText ? renderText(value) : renderLink(value, row, config.typeOptions);
+      },
+    ),
+  } satisfies Record<string, (...args: never[]) => unknown>;
+}
+
+type RuntimeDisplayFactory = {
+  (
+    config: Record<string, unknown>,
+    timeZone: string,
+    options: ValueRendererOptions,
+  ): (value: unknown, row: Record<string, unknown>) => ReactNode;
+  align: "left" | "right";
+};
+
+// Only runtime dispatch erases the field-dependent factory signatures.
+const displayFactories = createDisplayFactories<Record<string, unknown>>() as unknown as Record<
+  ColumnCellType,
+  RuntimeDisplayFactory
+>;
+
+/** Read layout defaults from the same definitions used to construct display renderers. */
+export function getDefaultAlignment(type: ColumnCellType | undefined): "left" | "right" {
+  return type !== undefined && Object.hasOwn(displayFactories, type)
+    ? displayFactories[type].align
+    : "left";
+}
+
 /** Build once per display/timezone definition so date formatters are shared across rows. */
 export function createValueRenderer<TRow extends Record<string, unknown>>(
   descriptor: ValueDisplayDescriptor<TRow>,
   timeZone: string,
   options: ValueRendererOptions = {},
 ): (value: unknown, row: TRow) => ReactNode {
-  switch (descriptor.type) {
-    case "number":
-      return (value) => renderNumber(value, descriptor.typeOptions);
-    case "money":
-      return (value, row) => renderMoney(value, row, descriptor.typeOptions);
-    case "date":
-      return createDateRenderer(descriptor.typeOptions, timeZone);
-    case "badge":
-      return (value) => renderBadge(value, descriptor.typeOptions, options.resolveBadgeLabel);
-    case "link":
-      return (value, row) => renderLink(value, row, descriptor.typeOptions);
-    default:
-      return renderText;
-  }
+  const type = descriptor.type;
+  if (type === undefined || !Object.hasOwn(displayFactories, type)) return renderText;
+  return displayFactories[type](descriptor, timeZone, options);
 }

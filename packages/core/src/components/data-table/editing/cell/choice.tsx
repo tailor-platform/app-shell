@@ -1,23 +1,20 @@
-import { useMemo } from "react";
-import { ChevronDown } from "lucide-react";
-import { BadgeList } from "@/components/badge-list";
+import { useMemo, type ReactNode } from "react";
+import type { SelectOption } from "@/types/collection";
 import { ChoiceEditor } from "@/components/internals/table-core/editors/choice";
 import { toTextValue } from "@/components/internals/table-core/input-values";
 import { useDataTableT } from "../../i18n";
 import { useCellEditSession } from "../use-session";
 import {
   EditableCellFrame,
-  columnChoices,
   useCellValue,
   useNavigationRef,
-  type EditableColumn,
   type DataTableEditableCellProps,
 } from "./shared";
 
-type ChoiceColumn<TRow extends Record<string, unknown>> = Extract<
-  EditableColumn<TRow>,
-  { type: "text" | "link" | "badge" }
->;
+export type ChoiceEditPolicy = {
+  options: readonly SelectOption[];
+  renderOption: (item: { value: string; label: string }) => ReactNode;
+};
 type ChoiceDraft = { value: string | null; label: string; notified?: boolean };
 
 /** DataTable owns callback ordering/rollback; the core owns search and dropdown interaction. */
@@ -31,7 +28,11 @@ export function ChoiceEditCell<TRow extends Record<string, unknown>>({
   navigation,
   cellProps,
   tooltipLabel,
-}: DataTableEditableCellProps<TRow, ChoiceColumn<TRow>>) {
+  display: displayValue,
+  icon,
+  options: choices,
+  renderOption,
+}: DataTableEditableCellProps<TRow> & ChoiceEditPolicy) {
   const t = useDataTableT();
   const session = useCellEditSession<ChoiceDraft>(col.edit?.error !== false);
   const { state } = session;
@@ -39,11 +40,11 @@ export function ChoiceEditCell<TRow extends Record<string, unknown>>({
     row,
     col,
     state.status === "failed" ? state : undefined,
+    displayValue,
   );
   const register = useNavigationRef<HTMLInputElement>(navigation, rowKey, colKey);
   const value = toTextValue(current);
   const noneLabel = t("editNone");
-  const choices = columnChoices(col);
   const choicesKey = (choices ?? []).map((c) => `${c.value}\u0000${c.label}`).join("\u0001");
   // A consumer rebuilding definitions must not invalidate an active search/highlight.
   const options = useMemo(
@@ -93,7 +94,7 @@ export function ChoiceEditCell<TRow extends Record<string, unknown>>({
       display={display}
       truncate={col.truncate}
       hideDisplay={editing ? "focused" : "forced-colors"}
-      icon={<ChevronDown />}
+      icon={icon}
       tooltipLabel={tooltipLabel}
       editing={editing}
       callbackError={callbackError}
@@ -142,15 +143,7 @@ export function ChoiceEditCell<TRow extends Record<string, unknown>>({
         renderOption={(item) => {
           if (item.value === null)
             return <span className="astw:text-muted-foreground">{item.label}</span>;
-          if (col.type === "badge")
-            return (
-              <BadgeList
-                value={item.value}
-                options={col.typeOptions}
-                resolveLabel={() => item.label}
-              />
-            );
-          return item.label;
+          return renderOption({ value: String(item.value), label: item.label });
         }}
       />
     </EditableCellFrame>

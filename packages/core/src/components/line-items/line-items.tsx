@@ -2,10 +2,10 @@ import { useMemo, type ReactNode } from "react";
 import { Table } from "@/components/table";
 import { Text } from "@/components/text";
 import { useTimeZone } from "@/contexts/appshell-context";
-import { createValueRenderer } from "@/components/internals/table-core";
 import { cn } from "@/lib/utils";
 import { LineItemsContext, useLineItemsContext } from "./line-items-context";
 import { LineItemsCell } from "./line-items-cell";
+import { resolveLineItemsColumn } from "./column-adapter";
 import { getLineItemsEditing } from "./editing";
 import { useLineItemsT } from "./i18n";
 import type { UseLineItemsReturn } from "./types";
@@ -52,17 +52,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
       value.columns.map((column) => ({
         column,
         id: column.id ?? column.accessorKey!,
-        align:
-          column.align ??
-          (column.type === "number" || column.type === "money"
-            ? ("right" as const)
-            : ("left" as const)),
-        renderValue: column.render
-          ? undefined
-          : createValueRenderer(
-              column.edit && column.type === "link" ? { type: "text" } : column,
-              timeZone,
-            ),
+        adapter: resolveLineItemsColumn(column, timeZone),
       })),
     [value.columns, timeZone],
   );
@@ -71,8 +61,8 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
       <Table.Caption className="astw:sr-only">{label ?? t("title")}</Table.Caption>
       <Table.Header>
         <Table.Row>
-          {columns.map(({ column, id, align }) => (
-            <Table.Head key={id} scope="col" align={align}>
+          {columns.map(({ column, id, adapter }) => (
+            <Table.Head key={id} scope="col" align={adapter.align}>
               {column.label}
             </Table.Head>
           ))}
@@ -81,15 +71,9 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
       <Table.Body>
         {value.lines.map((row, index) => (
           <Table.Row key={value.getLineKey(row)}>
-            {columns.map(({ column, id, align, renderValue }) => {
-              const display = column.render
-                ? column.render(row)
-                : renderValue!(
-                    column.accessorKey !== undefined
-                      ? row[column.accessorKey]
-                      : column.accessor?.(row),
-                    row,
-                  );
+            {columns.map(({ column, id, adapter }) => {
+              const display = adapter.renderDisplay(row);
+              const align = adapter.align;
               return column.edit ? (
                 <LineItemsCell
                   key={id}
@@ -98,6 +82,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                   index={index}
                   editing={getLineItemsEditing<Record<string, unknown>>(value)}
                   display={display}
+                  adapter={adapter.editor}
                   cellProps={{ align }}
                 />
               ) : (

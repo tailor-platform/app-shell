@@ -2,8 +2,7 @@ import { useSyncExternalStore, type ComponentProps, type ReactNode } from "react
 import { Table } from "@/components/table";
 import { useCellError } from "@/components/internals/table-core/cell-error";
 import { CellEditError } from "@/components/internals/table-core/cell-edit-error";
-import type { LineItemsEditorRenderContext } from "./editor-adapter";
-import { resolveLineItemsEditor } from "./editors";
+import type { LineItemsEditorAdapter, LineItemsEditorRenderContext } from "./editor-adapter";
 import type { LineItemsEditing } from "./editing";
 import { useLineItemsT } from "./i18n";
 import type { LineItemsColumn } from "./types";
@@ -14,6 +13,7 @@ type LineItemsCellProps<T extends Record<string, unknown>> = {
   index: number;
   editing: LineItemsEditing<T>;
   display: ReactNode;
+  adapter?: LineItemsEditorAdapter;
   cellProps: ComponentProps<typeof Table.Cell>;
 };
 
@@ -24,12 +24,11 @@ export function LineItemsCell<T extends Record<string, unknown>>({
   index,
   editing,
   display,
+  adapter,
   cellProps,
 }: LineItemsCellProps<T>) {
   const t = useLineItemsT();
   const config = column.edit;
-  const editor = config?.editor;
-  const adapter = editor && resolveLineItemsEditor(editor);
   const session = editing.getSession(row, column);
   const snapshot = useSyncExternalStore(session.subscribe, session.getState, session.getState);
   // A replacement editor must never receive its predecessor's draft, even before commit.

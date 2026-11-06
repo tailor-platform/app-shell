@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { Table } from "@/components/table";
+import { resolveDataTableColumn } from "./column-adapter";
 import {
   ACTIONS_WIDTH,
   EXPAND_WIDTH,
@@ -37,6 +38,9 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
   hasRowActions,
 }: DataTableLoaderRowsProps<TRow>) {
   const { ordered: columns, keys, placements, selection, expand, actions } = pinLayout;
+  const skeletonClasses = new Map(
+    columns.map((col) => [col, resolveDataTableColumn(col, "UTC").skeletonClassName]),
+  );
   // No fixed row height: each cell's placeholder matches the height of the
   // real content it stands in for (text line, badge, icon button), so the
   // skeleton rows resolve to exactly the same row height as loaded rows and
@@ -78,7 +82,6 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
           {columns?.map((col, colIndex) => {
             const key = keys.get(col) as string;
             const skeletonWidth = SKELETON_WIDTHS[(rowIndex + colIndex) % SKELETON_WIDTHS.length];
-            const isBadge = col.type === "badge";
             const { style, className } = pinCellProps(
               placements.get(col),
               { style: col.width ? { width: col.width } : undefined },
@@ -89,10 +92,7 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
                 <div
                   className={cn(
                     "astw:bg-muted astw:animate-pulse",
-                    // badge cells render 22px pills; text cells occupy one
-                    // 20px line box (bar inset by my-0.5 to keep the lighter
-                    // 16px placeholder look)
-                    isBadge ? "astw:h-5.5 astw:rounded-full" : "astw:h-4 astw:my-0.5 astw:rounded",
+                    skeletonClasses.get(col) ?? "astw:h-4 astw:my-0.5 astw:rounded",
                     resolveAlign(col) === "right" && "astw:ml-auto",
                   )}
                   style={{ width: `${skeletonWidth}%` }}

@@ -277,37 +277,9 @@
       "hashes": {
         "typeSurface": "3886bf7012f24283",
         "outline": "916645fe8e5baf10",
-        "snapshot": "e3b47e55f4057b17",
+        "snapshot": "8d4d6148a3df5d61",
         "outputMd": "14f7ba23f441df38",
         "examples": "e8f09fba5acb116f"
-      }
-    },
-    "checkbox-tree": {
-      "slug": "checkbox-tree",
-      "kind": "code-backed",
-      "outline": "docs-src/components/checkbox-tree.docs.outline.md",
-      "output": "docs/components/checkbox-tree.md",
-      "examples": null,
-      "sources": ["packages/core/src/components/checkbox-tree/**"],
-      "claims": [],
-      "symbols": [
-        "CheckboxTree",
-        "CheckboxTreeChangeDetails",
-        "CheckboxTreeColumn",
-        "CheckboxTreeMappedItem",
-        "CheckboxTreePicker",
-        "CheckboxTreePickerProps",
-        "CheckboxTreeProps",
-        "CheckboxTreeRowState",
-        "CheckboxTreeSelectedItem",
-        "CheckboxTreeSelection"
-      ],
-      "hashes": {
-        "typeSurface": "46982caa890231c7",
-        "outline": "5a2710b3ff87013c",
-        "snapshot": "3962a3069fae5077",
-        "outputMd": "831406068cc2213e",
-        "examples": null
       }
     },
     "combobox": {
@@ -1552,6 +1524,42 @@
         "examples": "87b93974e65d3a07"
       }
     },
+    "tree": {
+      "slug": "tree",
+      "kind": "code-backed",
+      "outline": "docs-src/components/tree.docs.outline.md",
+      "output": "docs/components/tree.md",
+      "examples": null,
+      "sources": ["packages/core/src/components/tree/**"],
+      "claims": [],
+      "symbols": [
+        "Tree",
+        "TreeChangeDetails",
+        "TreeCheckboxSelectionProps",
+        "TreeFilterContext",
+        "TreeFilterProps",
+        "TreeMapItemContext",
+        "TreeMappedItem",
+        "TreeNoSelectionProps",
+        "TreePicker",
+        "TreePickerProps",
+        "TreeProps",
+        "TreeRowState",
+        "TreeSelectedItem",
+        "TreeSelectionBehaviorProps",
+        "TreeSelectionMode",
+        "TreeSelectionPropagation",
+        "TreeSingleSelectionProps",
+        "TreeValueStrategy"
+      ],
+      "hashes": {
+        "typeSurface": "343d595c9ce52cab",
+        "outline": "634bdb51563ffa95",
+        "snapshot": "6db41d93e7a1d8f7",
+        "outputMd": "3f212fcb98e620b2",
+        "examples": null
+      }
+    },
     "use-ai-chat": {
       "slug": "use-ai-chat",
       "kind": "prose",
@@ -1813,7 +1821,6 @@
     "packages/core/skills/app-shell-patterns/references/components/button.md": "bce0e2fada1d1638",
     "packages/core/skills/app-shell-patterns/references/components/card.md": "6e18faeb676654b4",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
-    "packages/core/skills/app-shell-patterns/references/components/checkbox-tree.md": "831406068cc2213e",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
@@ -1847,6 +1854,7 @@
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
+    "packages/core/skills/app-shell-patterns/references/components/tree.md": "3f212fcb98e620b2",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "8d4fc931339d9a3f",
     "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "daf6c93e7285ee88",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",
@@ -1886,6 +1894,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "930db027a28bbe24",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "e0286979718e2769",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "bc64b64e63690362"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "0e6c9be8c4ece7bc"
   }
 }

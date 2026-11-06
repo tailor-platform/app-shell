@@ -4,10 +4,10 @@
 import "@/contexts/appshell-context";
 import { defineI18nLabels } from "@/hooks/i18n";
 
-export const checkboxTreeLabels = defineI18nLabels({
+export const treeLabels = defineI18nLabels({
   en: {
     title: "Select items",
-    itemHeader: "Item",
+    noItems: "No items.",
     emptyText: "No matching items.",
     searchPlaceholder: "Search",
     searchLabel: "Search items",
@@ -20,7 +20,7 @@ export const checkboxTreeLabels = defineI18nLabels({
   },
   ja: {
     title: "項目を選択",
-    itemHeader: "項目",
+    noItems: "項目がありません。",
     emptyText: "一致する項目がありません。",
     searchPlaceholder: "検索",
     searchLabel: "項目を検索",
@@ -32,4 +32,4 @@ export const checkboxTreeLabels = defineI18nLabels({
   },
 });
 
-export const useCheckboxTreeT = checkboxTreeLabels.useT;
+export const useTreeT = treeLabels.useT;

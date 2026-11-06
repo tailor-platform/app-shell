@@ -78,7 +78,7 @@ it("rejects duplicate and empty column identities", () => {
 
 it("rejects editors on computed columns instead of pretending to own their values", () => {
   const editable: LineItemsColumn<Row> = { id: "computed", accessor: (row) => row.name };
-  Object.assign(editable, { edit: { editorType: "text" } });
+  Object.assign(editable, { edit: { editor: { type: "text" } } });
   expect(() => renderHook(() => useLineItems<Row>({ columns: [editable] }))).toThrow(
     "Only accessorKey properties may have cell editors",
   );

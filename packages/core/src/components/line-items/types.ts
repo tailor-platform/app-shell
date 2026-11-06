@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { AsyncFetcher } from "@/hooks/use-async-items";
+import type { createEditorFactories } from "./editors";
 import type {
   ColumnCellType,
   ColumnDisplay,
@@ -21,53 +21,41 @@ export type LineItemsOption<TValue extends string | number> = {
   description?: string;
 };
 
-export interface LineItemsCustomEditorContext<TRow extends Record<string, unknown>, TValue> {
+export interface LineItemsCustomEditorContext<
+  TRow extends Record<string, unknown>,
+  TValue,
+  TDraft,
+> {
+  /** Current adopted value; draft changes do not update the document. */
   value: TValue;
-  onCommit: (next: TValue) => void;
+  /** An immutable input snapshot, which may be incomplete or invalid. */
+  draft: TDraft;
+  onBegin: () => void;
+  onChange: (draft: TDraft) => void;
+  /** Parse and confirm the session's latest draft, never a supplied value. */
+  onCommit: () => Promise<boolean>;
   onCancel: () => void;
   row: Readonly<TRow>;
+  status: "idle" | "editing" | "confirming" | "failed";
+  error: Readonly<{ source: "parse" | "change" | "commit"; error: unknown }> | undefined;
   ariaLabel: string;
+  invalid: boolean;
+  describedBy?: string;
 }
 
-type Adoptable<TOutput, TValue, TEditor> = [TOutput] extends [TValue] ? TEditor : never;
-type ChoiceEditor<TRow extends Record<string, unknown>, TValue extends string | number> =
-  | {
-      editorType: "combobox";
-      options: readonly LineItemsOption<TValue>[];
-      fetcher?: never;
-      getOptionLabel?: never;
-      placeholder?: string;
-    }
-  | {
-      editorType: "combobox";
-      options?: never;
-      fetcher: AsyncFetcher<LineItemsOption<TValue>>;
-      getOptionLabel: (value: TValue, row: TRow) => string;
-      placeholder?: string;
-    };
+type EditorFactories<TRow extends Record<string, unknown>, TValue> = ReturnType<
+  typeof createEditorFactories<TRow, TValue>
+>;
+type EditorTypeMap<TRow extends Record<string, unknown>, TValue> = {
+  [K in keyof EditorFactories<TRow, TValue>]: Parameters<EditorFactories<TRow, TValue>[K]>[0];
+};
+
+export type LineItemsEditorType = keyof EditorFactories<Record<string, unknown>, unknown>;
 
 /** Editor output must fit its property, including the null emitted by an explicit clear. */
-export type LineItemsEditor<TRow extends Record<string, unknown>, TValue> =
-  | Adoptable<string | null, TValue, EditorBase<TRow, string | null> & { editorType: "text" }>
-  | Adoptable<number | null, TValue, EditorBase<TRow, number | null> & { editorType: "number" }>
-  | Adoptable<boolean, TValue, EditorBase<TRow, boolean> & { editorType: "boolean" }>
-  | ([TValue] extends [string | null | undefined]
-      ? Adoptable<
-          string | null,
-          TValue,
-          EditorBase<TRow, string | null> & { editorType: "date"; min?: string; max?: string }
-        >
-      : never)
-  | (null extends TValue
-      ? [Extract<TValue, string | number>] extends [never]
-        ? never
-        : EditorBase<TRow, Extract<TValue, string | number> | null> &
-            ChoiceEditor<TRow, Extract<TValue, string | number>>
-      : never)
-  | (EditorBase<TRow, TValue> & {
-      editorType: "custom";
-      renderEditor: (ctx: LineItemsCustomEditorContext<TRow, TValue>) => ReactNode;
-    });
+export type LineItemsEditor<TRow extends Record<string, unknown>, TValue> = {
+  [K in LineItemsEditorType]: { type: K } & EditorTypeMap<TRow, TValue>[K];
+}[LineItemsEditorType];
 
 type DisplayProps<TRow extends Record<string, unknown>> = {
   label?: string;
@@ -82,7 +70,7 @@ type PropertyColumn<TRow extends Record<string, unknown>> = {
       accessorKey: K;
       accessor?: never;
       id?: string;
-      edit?: LineItemsEditor<TRow, TRow[K]>;
+      edit?: EditorBase<TRow, TRow[K]> & { editor: LineItemsEditor<TRow, TRow[K]> };
     };
 }[keyof TRow & string];
 

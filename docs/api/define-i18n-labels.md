@@ -165,7 +165,7 @@ These checks validate structure and call sites, not translation quality or langu
 ## Exports
 
 - `I18nLabels` — type
-- `defineI18nLabels` — const
+- `defineI18nLabels` — function
 
 ## Related
 

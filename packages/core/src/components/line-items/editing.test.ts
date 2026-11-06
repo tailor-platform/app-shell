@@ -21,7 +21,7 @@ function setup(
     {
       accessorKey: "name",
       label: "Name",
-      edit: { editorType: "text", onValueCommitted: check, error },
+      edit: { editor: { type: "text" }, onValueCommitted: check, error },
     },
     { accessorKey: "quantity" },
   ];
@@ -80,7 +80,7 @@ describe("document-owned cell editing", () => {
         {
           accessorKey: "name",
           edit: {
-            editorType: "text",
+            editor: { type: "text" },
             onValueCommitted: action === "callback" ? () => {} : () => request.promise,
             canEdit: action === "permission" ? () => false : undefined,
           },
@@ -148,7 +148,7 @@ describe("document-owned cell editing", () => {
 
   it("rejects editors on the server identity property", () => {
     const columns: LineItemsColumn<{ id: string | null }>[] = [
-      { accessorKey: "id", edit: { editorType: "text" } },
+      { accessorKey: "id", edit: { editor: { type: "text" } } },
     ];
     const store = createLineItemsDocumentStore({ columns });
     expect(() => createLineItemsEditing(store, columns)).toThrow(

@@ -88,7 +88,7 @@ test("property, computed and value-less columns keep source and display contract
   // @ts-expect-error A link still requires href options.
   const link: LineItemsColumn<Row> = { accessorKey: "name", type: "link" };
   // @ts-expect-error A text editor may clear to null, so the property must accept null.
-  const editing: LineItemsColumn<Row> = { accessorKey: "name", edit: { editorType: "text" } };
+  const editing: LineItemsColumn<Row> = { accessorKey: "name", edit: { editor: { type: "text" } } };
   void property;
   void computed;
   void custom;

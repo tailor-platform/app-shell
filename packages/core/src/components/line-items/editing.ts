@@ -1,35 +1,42 @@
 import { createCellEditSession } from "@/components/internals/table-core/cell-session";
 import type { createLineItemsDocumentStore } from "./document-store";
+import {
+  sameEditorContract,
+  type LineItemsEditorAdapter,
+  type LineItemsParseResult,
+} from "./editor-adapter";
+import { resolveLineItemsEditor } from "./editors";
+import type { useLineItemsT } from "./i18n";
 import type { LineItemsColumn } from "./types";
 
 type Store<T extends Record<string, unknown>> = ReturnType<typeof createLineItemsDocumentStore<T>>;
 type Session = ReturnType<typeof createCellEditSession<unknown>>;
-type Cell = { lineKey: string; columnId: string; property: string; session: Session };
+type Cell = {
+  lineKey: string;
+  columnId: string;
+  property: string;
+  session: Session;
+  changed: boolean;
+};
 
 function sameEditor<T extends Record<string, unknown>>(
   before: LineItemsColumn<T> | undefined,
   after: LineItemsColumn<T> | undefined,
+  leftAdapter: LineItemsEditorAdapter | undefined,
+  rightAdapter: LineItemsEditorAdapter | undefined,
 ) {
   const left = before?.edit;
   const right = after?.edit;
   return (
     !!left &&
     !!right &&
+    !!leftAdapter &&
+    !!rightAdapter &&
     before?.accessorKey === after?.accessorKey &&
-    left.editorType === right.editorType &&
+    sameEditorContract(leftAdapter, rightAdapter) &&
     left.onValueCommitted === right.onValueCommitted &&
     left.canEdit === right.canEdit &&
-    left.error === right.error &&
-    !(
-      left.editorType === "date" &&
-      right.editorType === "date" &&
-      (left.min !== right.min || left.max !== right.max)
-    ) &&
-    !(
-      left.editorType === "combobox" &&
-      right.editorType === "combobox" &&
-      left.fetcher !== right.fetcher
-    )
+    left.error === right.error
   );
 }
 
@@ -68,34 +75,121 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
   function assertColumns(next: readonly LineItemsColumn<T>[]) {
     if (next.some((column) => column.edit && column.accessorKey === store.idKey))
       throw new Error("Line IDs cannot have cell editors");
+    const resolved = new Map<string, LineItemsEditorAdapter>();
+    for (const column of next) {
+      if (column.edit)
+        resolved.set(
+          (column.id ?? column.accessorKey)!,
+          resolveLineItemsEditor(column.edit.editor),
+        );
+    }
+    return resolved;
   }
-  assertColumns(initialColumns);
+  let adapters = assertColumns(initialColumns);
 
-  return {
+  function isCurrentEditor(column: LineItemsColumn<T>, adapter?: LineItemsEditorAdapter) {
+    const id = (column.id ?? column.accessorKey)!;
+    return sameEditor(
+      columnFor(id),
+      column,
+      adapters.get(id),
+      adapter ?? (column.edit && resolveLineItemsEditor(column.edit.editor)),
+    );
+  }
+  function getCell(row: T, column: LineItemsColumn<T>): Cell {
+    const lineKey = store.getLineKey(row);
+    const columnId = (column.id ?? column.accessorKey)!;
+    let rowCells = cells.get(lineKey);
+    if (!rowCells) {
+      rowCells = new Map();
+      cells.set(lineKey, rowCells);
+    }
+    let cell = rowCells.get(columnId);
+    if (!cell) {
+      const session = createCellEditSession<unknown>(column.edit?.error !== false);
+      if (!active) session.deactivate();
+      cell = { lineKey, columnId, property: column.accessorKey!, session, changed: false };
+      const created = cell;
+      session.subscribe(() => {
+        if (session.getState().status === "idle") created.changed = false;
+      });
+      rowCells.set(columnId, cell);
+    }
+    return cell;
+  }
+  function begin(row: T, column: LineItemsColumn<T>, adapter: LineItemsEditorAdapter) {
+    const current = getCurrentRow(store.getLineKey(row));
+    if (
+      !active ||
+      !current ||
+      !isCurrentEditor(column, adapter) ||
+      !(column.edit?.canEdit?.(current) ?? true)
+    )
+      return;
+    const cell = getCell(row, column);
+    if (cell.session.getState().status !== "idle") return;
+    cell.changed = false;
+    cell.session.begin(adapter.toDraft(current[cell.property]));
+  }
+
+  const editing = {
     assertColumns,
     getLineKey: store.getLineKey,
     getCurrentRow,
-    /** A new render must not feed an old draft contract into a replacement editor before commit. */
-    isCurrentEditor(column: LineItemsColumn<T>) {
-      return sameEditor(columnFor((column.id ?? column.accessorKey)!), column);
-    },
+    isCurrentEditor,
     /** Creating/reading a session does not adopt rows; views subscribe directly to its state. */
-    getSession(row: T, column: LineItemsColumn<T>): Session {
-      const lineKey = store.getLineKey(row);
-      const columnId = (column.id ?? column.accessorKey)!;
-      let rowCells = cells.get(lineKey);
-      if (!rowCells) {
-        rowCells = new Map();
-        cells.set(lineKey, rowCells);
+    getSession: (row: T, column: LineItemsColumn<T>): Session => getCell(row, column).session,
+    begin,
+    change(row: T, column: LineItemsColumn<T>, adapter: LineItemsEditorAdapter, draft: unknown) {
+      const current = getCurrentRow(store.getLineKey(row));
+      if (
+        !active ||
+        !current ||
+        !isCurrentEditor(column, adapter) ||
+        !(column.edit?.canEdit?.(current) ?? true)
+      )
+        return;
+      begin(row, column, adapter);
+      const cell = getCell(row, column);
+      cell.changed = true;
+      cell.session.change(draft);
+    },
+    commit(
+      row: T,
+      column: LineItemsColumn<T>,
+      adapter: LineItemsEditorAdapter,
+      t: ReturnType<typeof useLineItemsT>,
+    ): Promise<boolean> {
+      if (!active || !getCurrentRow(store.getLineKey(row)) || !isCurrentEditor(column, adapter))
+        return Promise.resolve(false);
+      const cell = getCell(row, column);
+      const current = cell.session.getState();
+      if (current.status === "idle") return Promise.resolve(true);
+      if (current.status === "confirming" || !cell.changed)
+        return cell.session.confirm(() => undefined);
+      let parsed: LineItemsParseResult<unknown>;
+      try {
+        parsed = adapter.parse(current.draft, t);
+        if (
+          !parsed ||
+          typeof parsed !== "object" ||
+          (parsed.ok !== true && parsed.ok !== false) ||
+          (parsed.ok === true && !("value" in parsed)) ||
+          (parsed.ok === false && typeof parsed.message !== "string")
+        )
+          throw new Error("Invalid editor parse result");
+      } catch (error) {
+        cell.session.fail(new Error("Editor parsing failed", { cause: error }), "parse");
+        return Promise.resolve(false);
       }
-      let cell = rowCells.get(columnId);
-      if (!cell) {
-        const session = createCellEditSession<unknown>(column.edit?.error !== false);
-        if (!active) session.deactivate();
-        cell = { lineKey, columnId, property: column.accessorKey!, session };
-        rowCells.set(columnId, cell);
+      if (!parsed.ok) {
+        cell.session.fail(parsed.message, "parse");
+        return Promise.resolve(false);
       }
-      return cell.session;
+      return cell.session.confirm(() => {
+        if (!Object.is(parsed.value, getCurrentRow(cell.lineKey)?.[cell.property]))
+          return editing.commitField(cell.lineKey, cell.columnId, parsed.value);
+      });
     },
     /** The session confirms first; only its still-current successful check may adopt a value. */
     commitField(lineKey: string, columnId: string, value: unknown) {
@@ -147,9 +241,11 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
     },
     /** Called only after React commits; display-only changes do not discard a draft. */
     setColumns(next: readonly LineItemsColumn<T>[]) {
-      assertColumns(next);
+      const nextAdapters = assertColumns(next);
       const previous = columns;
+      const previousAdapters = adapters;
       columns = next;
+      adapters = nextAdapters;
       for (const [key, rowCells] of cells) {
         for (const [id, cell] of rowCells) {
           const before = previous.find((column) => (column.id ?? column.accessorKey) === id);
@@ -161,7 +257,8 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
             cell.session.deactivate();
             continue;
           }
-          if (!sameEditor(before, after)) cell.session.cancel();
+          if (!sameEditor(before, after, previousAdapters.get(id), adapters.get(id)))
+            cell.session.cancel();
           const row = getCurrentRow(key);
           if (row && !(right.canEdit?.(row) ?? true)) cell.session.cancel();
           if (active) cell.session.activate(right.error !== false);
@@ -180,6 +277,7 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
         cell.session.activate(columnFor(cell.columnId)?.edit?.error !== false);
     },
   };
+  return editing;
 }
 
 export type LineItemsEditing<T extends Record<string, unknown>> = ReturnType<

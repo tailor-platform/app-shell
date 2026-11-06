@@ -1,5 +1,6 @@
 import { expectTypeOf, test } from "vitest";
 import type { LineItemsColumn, LineItemsCustomEditorContext, LineItemsEditor } from "./types";
+import { defineLineItemsEditor } from "./editor-adapter";
 
 type Row = {
   name: string | null;
@@ -17,7 +18,7 @@ test("property editors retain output and callback types, including explicit clea
     {
       accessorKey: "name",
       edit: {
-        editorType: "text",
+        editor: { type: "text" },
         onValueCommitted: (row, value) => {
           expectTypeOf(row).toEqualTypeOf<Readonly<Row>>();
           expectTypeOf(value).toEqualTypeOf<string | null>();
@@ -27,22 +28,26 @@ test("property editors retain output and callback types, including explicit clea
     {
       accessorKey: "count",
       edit: {
-        editorType: "number",
+        editor: { type: "number" },
         onValueCommitted: (_row, value) => {
           expectTypeOf(value).toEqualTypeOf<number | null>();
         },
       },
     },
-    { accessorKey: "enabled", edit: { editorType: "boolean" } },
-    { accessorKey: "day", edit: { editorType: "date", min: "2026-12-01" } },
+    { accessorKey: "enabled", edit: { editor: { type: "boolean" } } },
+    { accessorKey: "day", edit: { editor: { type: "date", options: { min: "2026-12-01" } } } },
     {
       accessorKey: "priority",
       edit: {
-        editorType: "combobox",
-        options: [
-          { value: 1, label: "Low" },
-          { value: 2, label: "High" },
-        ],
+        editor: {
+          type: "combobox",
+          options: {
+            options: [
+              { value: 1, label: "Low" },
+              { value: 2, label: "High" },
+            ],
+          },
+        },
         onValueCommitted: (_row, value) => {
           expectTypeOf(value).toEqualTypeOf<1 | 2 | null>();
         },
@@ -51,49 +56,58 @@ test("property editors retain output and callback types, including explicit clea
     {
       accessorKey: "pack",
       edit: {
-        editorType: "custom",
-        renderEditor: (context) => {
-          expectTypeOf(context).toEqualTypeOf<LineItemsCustomEditorContext<Row, Row["pack"]>>();
-          context.onCommit({ units: 1 });
-          context.onCommit(null);
-          return null;
-        },
+        editor: defineLineItemsEditor<Row, Row["pack"], Row["pack"]>({
+          toDraft: (value) => value,
+          parse: (draft) => ({ ok: true, value: draft }),
+          render: (context) => {
+            expectTypeOf(context).toEqualTypeOf<
+              LineItemsCustomEditorContext<Row, Row["pack"], Row["pack"]>
+            >();
+            context.onChange({ units: 1 });
+            context.onChange(null);
+            void context.onCommit();
+            return null;
+          },
+        }),
       },
     },
   ];
   void columns;
   // @ts-expect-error Numeric editors cannot adopt into a string property.
-  const wrongOutput: LineItemsColumn<Row> = { accessorKey: "name", edit: { editorType: "number" } };
+  const wrongOutput: LineItemsColumn<Row> = {
+    accessorKey: "name",
+    edit: { editor: { type: "number" } },
+  };
   // @ts-expect-error An explicit clear emits null, which a required number cannot represent.
   const required: LineItemsColumn<Row> = {
     accessorKey: "required",
-    edit: { editorType: "number" },
+    edit: { editor: { type: "number" } },
   };
   // @ts-expect-error Date-only editors do not convert Date objects into implicit calendar days.
   const timestamp: LineItemsColumn<Row> = {
     accessorKey: "timestamp",
-    edit: { editorType: "date" },
+    edit: { editor: { type: "date" } },
   };
   // @ts-expect-error Computed values do not have a document write owner.
   const computed: LineItemsColumn<Row> = {
     id: "computed",
     accessor: (row) => row.count,
-    edit: { editorType: "number" as const },
+    edit: { editor: { type: "number" as const } },
   };
   // @ts-expect-error Source-less columns cannot adopt editor output.
-  const sourceLess: LineItemsColumn<Row> = { id: "empty", edit: { editorType: "text" } };
+  const sourceLess: LineItemsColumn<Row> = { id: "empty", edit: { editor: { type: "text" } } };
   // @ts-expect-error A numeric choice must fit the property's literal union.
   const choice: LineItemsColumn<Row> = {
     accessorKey: "priority",
-    edit: { editorType: "combobox", options: [{ value: 3, label: "Invalid" }] },
+    edit: { editor: { type: "combobox", options: { options: [{ value: 3, label: "Invalid" }] } } },
   };
-  // @ts-expect-error Remote choices require a label resolver for values outside the current results.
   const remote: LineItemsEditor<Row, string | null> = {
-    editorType: "combobox",
-    fetcher: async () => [],
+    type: "combobox",
+    // @ts-expect-error Remote choices require a label resolver for values outside the current results.
+    options: { fetcher: async () => [] },
   };
-  const callback: LineItemsEditor<Row, number | null> = {
-    editorType: "number",
+  const callback: NonNullable<Extract<LineItemsColumn<Row>, { accessorKey: "count" }>["edit"]> = {
+    editor: { type: "number" },
     // @ts-expect-error A callback cannot narrow away an explicit clear.
     onValueCommitted: (_row, value: number) => {
       void value;

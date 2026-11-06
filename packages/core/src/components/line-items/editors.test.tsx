@@ -5,6 +5,7 @@ import { StrictMode } from "react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { LineItems } from "./line-items";
 import { useLineItems } from "./use-line-items";
+import { defineLineItemsEditor } from "./editor-adapter";
 import type { LineItemsColumn, UseLineItemsReturn } from "./types";
 
 afterEach(cleanup);
@@ -20,25 +21,34 @@ type Row = {
   pack: { units: number } | null;
 };
 const columns: LineItemsColumn<Row>[] = [
-  { accessorKey: "name", label: "Name", type: "text", edit: { editorType: "text" } },
-  { accessorKey: "quantity", label: "Quantity", type: "number", edit: { editorType: "number" } },
-  { accessorKey: "enabled", label: "Enabled", type: "text", edit: { editorType: "boolean" } },
+  { accessorKey: "name", label: "Name", type: "text", edit: { editor: { type: "text" } } },
+  {
+    accessorKey: "quantity",
+    label: "Quantity",
+    type: "number",
+    edit: { editor: { type: "number" } },
+  },
+  { accessorKey: "enabled", label: "Enabled", type: "text", edit: { editor: { type: "boolean" } } },
   {
     accessorKey: "day",
     label: "Date",
     type: "date",
-    edit: { editorType: "date", min: "2026-12-01", max: "2026-12-31" },
+    edit: { editor: { type: "date", options: { min: "2026-12-01", max: "2026-12-31" } } },
   },
   {
     accessorKey: "unit",
     label: "Unit",
     render: (row) => (row.unit === "box" ? "Display box" : "Display each"),
     edit: {
-      editorType: "combobox",
-      options: [
-        { value: "pcs", label: "Each" },
-        { value: "box", label: "Box" },
-      ],
+      editor: {
+        type: "combobox",
+        options: {
+          options: [
+            { value: "pcs", label: "Each" },
+            { value: "box", label: "Box" },
+          ],
+        },
+      },
     },
   },
   {
@@ -46,11 +56,15 @@ const columns: LineItemsColumn<Row>[] = [
     label: "Priority",
     type: "number",
     edit: {
-      editorType: "combobox",
-      options: [
-        { value: 1, label: "Normal" },
-        { value: 2, label: "High" },
-      ],
+      editor: {
+        type: "combobox",
+        options: {
+          options: [
+            { value: 1, label: "Normal" },
+            { value: 2, label: "High" },
+          ],
+        },
+      },
     },
   },
   {
@@ -58,9 +72,13 @@ const columns: LineItemsColumn<Row>[] = [
     label: "Supplier",
     type: "text",
     edit: {
-      editorType: "combobox",
-      fetcher: { fn: async () => [{ value: "S2", label: "Second supplier" }], debounceMs: 0 },
-      getOptionLabel: (value) => (value === "S1" ? "Current supplier" : "Second supplier"),
+      editor: {
+        type: "combobox",
+        options: {
+          fetcher: { fn: async () => [{ value: "S2", label: "Second supplier" }], debounceMs: 0 },
+          getOptionLabel: (value) => (value === "S1" ? "Current supplier" : "Second supplier"),
+        },
+      },
     },
   },
   {
@@ -68,18 +86,24 @@ const columns: LineItemsColumn<Row>[] = [
     label: "Pack",
     render: (row) => `${row.pack?.units ?? 0} units`,
     edit: {
-      editorType: "custom",
-      renderEditor: ({ value, onCommit, onCancel, ariaLabel }) => (
-        <button
-          aria-label={`Increase ${ariaLabel}`}
-          onClick={() => onCommit({ units: (value?.units ?? 0) + 1 })}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") onCancel();
-          }}
-        >
-          Increase
-        </button>
-      ),
+      editor: defineLineItemsEditor<Row, Row["pack"], Row["pack"]>({
+        toDraft: (value) => value,
+        parse: (draft) => ({ ok: true, value: draft }),
+        render: ({ draft, onChange, onCommit, onCancel, ariaLabel }) => (
+          <button
+            aria-label={`Increase ${ariaLabel}`}
+            onClick={() => {
+              onChange({ units: (draft?.units ?? 0) + 1 });
+              void onCommit();
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") onCancel();
+            }}
+          >
+            Increase
+          </button>
+        ),
+      }),
     },
   },
 ];
@@ -292,11 +316,15 @@ describe("LineItems cell editing", () => {
         label: "Unit",
         render: columns[4].render,
         edit: {
-          editorType: "combobox",
-          options: [
-            { value: "pcs", label: "Each" },
-            { value: "box", label: "Box" },
-          ],
+          editor: {
+            type: "combobox",
+            options: {
+              options: [
+                { value: "pcs", label: "Each" },
+                { value: "box", label: "Box" },
+              ],
+            },
+          },
           onValueCommitted: check,
         },
       },
@@ -358,7 +386,11 @@ describe("LineItems cell editing", () => {
     const request = deferred();
     const check = vi.fn().mockReturnValueOnce(request.promise).mockReturnValue(undefined);
     const schema: LineItemsColumn<Row>[] = [
-      { accessorKey: "name", label: "Name", edit: { editorType: "text", onValueCommitted: check } },
+      {
+        accessorKey: "name",
+        label: "Name",
+        edit: { editor: { type: "text" }, onValueCommitted: check },
+      },
     ];
     const { user } = setup(schema);
     const input = screen.getByRole("textbox", { name: "Name, line 1" }) as HTMLInputElement;
@@ -384,7 +416,7 @@ describe("LineItems cell editing", () => {
       {
         accessorKey: "name",
         label: "Name",
-        edit: { editorType: "text", canEdit: (row) => !row.enabled },
+        edit: { editor: { type: "text" }, canEdit: (row) => !row.enabled },
       },
       { accessorKey: "enabled", label: "Enabled" },
     ];
@@ -414,7 +446,7 @@ describe("LineItems cell editing", () => {
       {
         accessorKey: "name",
         label: "Name",
-        edit: { editorType: "text", onValueCommitted: () => request.promise },
+        edit: { editor: { type: "text" }, onValueCommitted: () => request.promise },
       },
     ];
     const { user, rerender } = setup(schema);
@@ -442,11 +474,16 @@ describe("LineItems cell editing", () => {
 
   it("rebinds a reused column ID to its new property without retaining the previous draft", () => {
     const before: LineItemsColumn<Row>[] = [
-      { id: "editor", accessorKey: "name", label: "Name", edit: { editorType: "text" } },
+      { id: "editor", accessorKey: "name", label: "Name", edit: { editor: { type: "text" } } },
       { id: "other", accessorKey: "quantity" },
     ];
     const after: LineItemsColumn<Row>[] = [
-      { id: "editor", accessorKey: "quantity", label: "Quantity", edit: { editorType: "number" } },
+      {
+        id: "editor",
+        accessorKey: "quantity",
+        label: "Quantity",
+        edit: { editor: { type: "number" } },
+      },
       { id: "other", accessorKey: "name" },
     ];
     const { rerender } = setup(before);
@@ -467,17 +504,27 @@ describe("LineItems cell editing", () => {
 
   it("does not pass an old numeric text draft into a newly configured custom editor", () => {
     const before: LineItemsColumn<Row>[] = [
-      { accessorKey: "quantity", label: "Quantity", edit: { editorType: "number" } },
+      { accessorKey: "quantity", label: "Quantity", edit: { editor: { type: "number" } } },
     ];
     const after: LineItemsColumn<Row>[] = [
       {
         accessorKey: "quantity",
         label: "Quantity",
         edit: {
-          editorType: "custom",
-          renderEditor: ({ value, onCommit }) => (
-            <button onClick={() => onCommit(4)}>Custom {value?.toFixed(1)}</button>
-          ),
+          editor: defineLineItemsEditor<Row, Row["quantity"], Row["quantity"]>({
+            toDraft: (value) => value,
+            parse: (draft) => ({ ok: true, value: draft }),
+            render: ({ draft, onChange, onCommit }) => (
+              <button
+                onClick={() => {
+                  onChange(4);
+                  void onCommit();
+                }}
+              >
+                Custom {draft?.toFixed(1)}
+              </button>
+            ),
+          }),
         },
       },
     ];

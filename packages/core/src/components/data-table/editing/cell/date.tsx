@@ -1,7 +1,6 @@
 import { useState, type KeyboardEvent } from "react";
 import type { Popover } from "@base-ui/react/popover";
 import type { CalendarDate } from "@internationalized/date";
-import { CalendarDays } from "lucide-react";
 import { useTimeZone } from "@/contexts/appshell-context";
 import { CalendarControl } from "@/components/internals/table-core/editors/calendar-control";
 import { CELL_ERROR_CLASS_NAME } from "@/components/internals/table-core/cell-styles";
@@ -14,14 +13,8 @@ import {
   EditableCellFrame,
   useCellValue,
   useNavigationRef,
-  type EditableColumn,
   type DataTableEditableCellProps,
 } from "./shared";
-
-type DateColumn<TRow extends Record<string, unknown>> = Extract<
-  EditableColumn<TRow>,
-  { type: "date" }
->;
 
 function tabBetweenCells(
   event: KeyboardEvent<HTMLElement>,
@@ -43,18 +36,19 @@ export function DateEditCell<TRow extends Record<string, unknown>>({
   navigation,
   cellProps,
   tooltipLabel,
-  dateRenderer,
-}: DataTableEditableCellProps<TRow, DateColumn<TRow>>) {
+  display: displayValue,
+  icon,
+  withTime,
+}: DataTableEditableCellProps<TRow> & { withTime: boolean }) {
   const t = useDataTableT();
   const { value: timeZone } = useTimeZone();
-  const withTime = col.typeOptions?.dateFormat === "datetime";
   const session = useCellEditSession<DateTimeDraft>(col.edit?.error !== false);
   const { state } = session;
   const { current, display, change, commit, callbackError, containsErrorTarget } = useCellValue(
     row,
     col,
     state.status === "failed" ? state : undefined,
-    dateRenderer,
+    displayValue,
   );
   const register = useNavigationRef<HTMLButtonElement>(navigation, rowKey, colKey);
   const baseline: DateTimeDraft = {
@@ -134,7 +128,7 @@ export function DateEditCell<TRow extends Record<string, unknown>>({
       cellProps={cellProps}
       display={visibleDisplay}
       truncate={col.truncate}
-      icon={<CalendarDays />}
+      icon={icon}
       tooltipLabel={tooltipLabel}
       editing={open}
       callbackError={callbackError}

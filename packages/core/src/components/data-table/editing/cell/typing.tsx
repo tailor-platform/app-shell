@@ -1,13 +1,5 @@
 import { useId } from "react";
 import { TypingEditor } from "@/components/internals/table-core/editors/typing";
-import {
-  normalizeNumberText,
-  parseNumberText,
-  sameNumber,
-  toNumberEditText,
-  toNumberValue,
-  toTextValue,
-} from "@/components/internals/table-core/input-values";
 import { useDataTableT } from "../../i18n";
 import { useCellEditSession } from "../use-session";
 import {
@@ -16,6 +8,13 @@ import {
   useNavigationRef,
   type DataTableEditableCellProps,
 } from "./shared";
+
+export type TypingEditPolicy = {
+  numeric: boolean;
+  toDraft: (value: unknown) => string;
+  parse: (draft: string) => unknown;
+  unchanged: (value: unknown, current: unknown) => boolean;
+};
 
 /** DataTable owns raw draft notifications, equality and callback confirmation. */
 export function TypingEditCell<TRow extends Record<string, unknown>>({
@@ -28,7 +27,12 @@ export function TypingEditCell<TRow extends Record<string, unknown>>({
   navigation,
   cellProps,
   tooltipLabel,
-}: DataTableEditableCellProps<TRow>) {
+  display: displayValue,
+  numeric,
+  toDraft,
+  parse,
+  unchanged: isUnchanged,
+}: DataTableEditableCellProps<TRow> & TypingEditPolicy) {
   const t = useDataTableT();
   const errorId = useId();
   const session = useCellEditSession<string>(col.edit?.error !== false);
@@ -38,13 +42,11 @@ export function TypingEditCell<TRow extends Record<string, unknown>>({
     row,
     col,
     failure,
+    displayValue,
   );
   const register = useNavigationRef<HTMLInputElement>(navigation, rowKey, colKey);
   const editing = state.status !== "idle";
-  const numeric = col.type === "number" || col.type === "money";
-  const baselineText = numeric
-    ? toNumberEditText(toNumberValue(current))
-    : (toTextValue(current) ?? "");
+  const baselineText = toDraft(current);
   const text = state.status === "idle" ? baselineText : state.draft;
   const message = failure?.source === "parse" ? t("editNotANumber") : undefined;
   const revert = (notify = false) => {
@@ -59,18 +61,12 @@ export function TypingEditCell<TRow extends Record<string, unknown>>({
     const active = session.getState();
     if (active.status === "idle" || active.status === "confirming") return true;
     const draftText = active.draft;
-    const value = numeric
-      ? parseNumberText(normalizeNumberText(draftText))
-      : toTextValue(draftText);
+    const value = parse(draftText);
     if (value === undefined) {
       session.fail(undefined, "parse");
       return false;
     }
-    const unchanged =
-      draftText === baselineText ||
-      (numeric
-        ? sameNumber(value as number | null, toNumberValue(current))
-        : value === toTextValue(current));
+    const unchanged = draftText === baselineText || isUnchanged(value, current);
     session.confirm(() => (unchanged ? undefined : commit(value)));
     return true;
   };

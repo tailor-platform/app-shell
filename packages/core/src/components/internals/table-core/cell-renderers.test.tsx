@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { createValueRenderer } from "./cell-renderers";
+import { createDisplayFactories, createValueRenderer, getDefaultAlignment } from "./cell-renderers";
+import type { ColumnCellType, ValueDisplayDescriptor } from "./column-types";
 
 afterEach(() => {
   cleanup();
@@ -9,6 +10,26 @@ afterEach(() => {
 });
 
 describe("neutral value rendering", () => {
+  it("keeps default alignment with each display factory", () => {
+    const factories = createDisplayFactories<Record<string, unknown>>();
+    for (const [type, factory] of Object.entries(factories)) {
+      expect(getDefaultAlignment(type as ColumnCellType)).toBe(factory.align);
+    }
+    expect(getDefaultAlignment("number")).toBe("right");
+    expect(getDefaultAlignment("money")).toBe("right");
+    expect(getDefaultAlignment("text")).toBe("left");
+    expect(getDefaultAlignment(undefined)).toBe("left");
+  });
+
+  it.each(["toString", "constructor", "__proto__", "hasOwnProperty", "unknown"])(
+    "retains the text fallback for unknown runtime kind %s",
+    (type) => {
+      const descriptor = { type } as ValueDisplayDescriptor<Record<string, unknown>>;
+      expect(createValueRenderer(descriptor, "UTC")("Value", {})).toBe("Value");
+      expect(getDefaultAlignment(type as ColumnCellType)).toBe("left");
+    },
+  );
+
   it("renders the supplied value without looking up row properties or edit choices", () => {
     const descriptor = {
       type: "text" as const,
@@ -68,6 +89,19 @@ describe("neutral value rendering", () => {
     view.rerender(<MemoryRouter>{renderer("Resolved label", {})}</MemoryRouter>);
     expect(screen.queryByRole("link")).toBeNull();
     expect(screen.getByText("Resolved label")).toBeDefined();
+  });
+
+  it("suppresses only link interactivity without consulting its href", () => {
+    const href = vi.fn(() => "/rows/A");
+    const renderer = createValueRenderer({ type: "link", typeOptions: { href } }, "UTC", {
+      linkAsText: true,
+    });
+    render(<>{renderer("Resolved label", {})}</>);
+    expect(screen.queryByRole("link")).toBeNull();
+    expect(screen.getByText("Resolved label")).toBeDefined();
+    expect(renderer(false, {})).toBe("✗");
+    expect(href).not.toHaveBeenCalled();
+    expect(createValueRenderer({ type: "text" }, "UTC", { linkAsText: true })(false, {})).toBe("✗");
   });
 
   it("keeps independent date-only and zoned formatter caches across rows", () => {

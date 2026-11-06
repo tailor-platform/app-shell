@@ -15,7 +15,17 @@ import {
 import { localDateTimeParts, normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type { SelectOption } from "@/types/collection";
 import type { BadgeCellOptions } from "@/components/internals/table-core/column-types";
-import type { DataTableFilterConfig } from "./types";
+import type { Column, DataTableFilterConfig } from "./types";
+
+/** Raw lookup shared by rendering, editing and context menus; never reads render output. */
+export function getCellValue<TRow extends Record<string, unknown>>(
+  row: TRow,
+  col: Column<TRow>,
+): unknown {
+  if (col.accessor) return col.accessor(row);
+  if (col.id) return row[col.id];
+  return undefined;
+}
 
 // ── Choices (dropdown and badge editors) ─────────────────────────────────────
 

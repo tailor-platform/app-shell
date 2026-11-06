@@ -1,5 +1,4 @@
 import { useCallback, useRef, type ComponentProps, type ReactNode } from "react";
-import { useTimeZone } from "@/contexts/appshell-context";
 import type { Table } from "@/components/table";
 import { useCellError } from "@/components/internals/table-core/cell-error";
 import { CellEditError } from "@/components/internals/table-core/cell-edit-error";
@@ -9,36 +8,17 @@ import {
   type EditableCellSurfaceProps,
 } from "@/components/internals/table-core/cell-surface";
 import type { Column } from "../../types";
-import { getCellValue, renderTypedValue } from "../../cell-renderers";
-import { resolveBadgeOptions } from "../../cell-values";
+import { getCellValue } from "../../cell-values";
 import type { CellEditNavigation } from "../use-navigation";
 import { useDataTableT } from "../../i18n";
 
-/** A typed column whose cells can be edited in place. @internal */
-export type EditableColumn<TRow extends Record<string, unknown>> = Extract<
-  Column<TRow>,
-  { type: "text" | "number" | "money" | "date" | "badge" | "link" }
->;
-
-export function columnChoices<TRow extends Record<string, unknown>>(col: Column<TRow>) {
-  if (col.type === "badge")
-    return resolveBadgeOptions(col.edit?.options, col.typeOptions, col.filter);
-  if (col.type === "text" || col.type === "link") return col.edit?.options;
-  return undefined;
-}
-
 export function useCellValue<TRow extends Record<string, unknown>>(
   row: TRow,
-  col: EditableColumn<TRow>,
+  col: Column<TRow>,
   failure: CellEditFailure | undefined,
-  dateRenderer?: (row: TRow) => ReactNode,
+  display: ReactNode,
 ) {
-  const { value: timeZone } = useTimeZone();
   const current = getCellValue(row, col);
-  const render = col.render ?? dateRenderer;
-  const display = render
-    ? render(row)
-    : renderTypedValue(row, col, current, { linkAsText: true, timeZone });
   const t = useDataTableT();
   const change = (value: unknown) =>
     (col.edit?.onValueChange as ((row: TRow, value: unknown) => unknown) | undefined)?.(row, value);
@@ -98,12 +78,9 @@ export function EditableCellFrame({
   );
 }
 
-export interface DataTableEditableCellProps<
-  TRow extends Record<string, unknown>,
-  TColumn extends EditableColumn<TRow> = EditableColumn<TRow>,
-> {
+export interface DataTableEditableCellProps<TRow extends Record<string, unknown>> {
   row: TRow;
-  col: TColumn;
+  col: Column<TRow>;
   rowKey: string;
   colKey: string;
   /** Accessible name for the editor — the column's label. */
@@ -111,8 +88,9 @@ export interface DataTableEditableCellProps<
   align: "left" | "right";
   tooltipLabel?: string;
   navigation: CellEditNavigation;
-  /** Reuses the table's column-level date formatter cache. */
-  dateRenderer?: (row: TRow) => ReactNode;
+  /** Display and icon policy are resolved once by the column adapter. */
+  display: ReactNode;
+  icon?: ReactNode;
   /** data-slot, style, class and context-menu handlers shared with static cells. */
   cellProps: ComponentProps<typeof Table.Cell>;
 }

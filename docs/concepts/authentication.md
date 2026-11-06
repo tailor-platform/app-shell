@@ -250,7 +250,7 @@ const AuthGate = () => {
   if (error) {
     return (
       <div>
-        <p>Sign-in failed: {error}</p>
+        <Text.p>Sign-in failed: {error}</Text.p>
         <button onClick={() => void login()}>Try again</button>
       </div>
     );

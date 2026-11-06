@@ -1,7 +1,12 @@
 import type { BadgeOptions } from "@/components/badge-list";
+import type { createDisplayFactories } from "./cell-renderers";
 
-/** Built-in display renderers, independent of how a component obtains or edits a value. */
-export type ColumnCellType = "text" | "number" | "money" | "date" | "badge" | "link";
+type DisplayFactories<TRow extends Record<string, unknown>> = ReturnType<
+  typeof createDisplayFactories<TRow>
+>;
+
+/** Built-in display kinds come from their factory definitions. */
+export type ColumnCellType = keyof DisplayFactories<Record<string, unknown>>;
 
 /** Options for `type: "number"` cells. */
 export interface NumberCellOptions {
@@ -59,22 +64,14 @@ export interface LinkCellOptions<TRow extends Record<string, unknown>> {
 /** Resolved presentation only: no accessor, edit choices, filters, or table state. */
 export type ValueDisplayDescriptor<TRow extends Record<string, unknown>> =
   | { type?: undefined; typeOptions?: never }
-  | { type: "text"; typeOptions?: never }
-  | { type: "number"; typeOptions?: NumberCellOptions }
-  | { type: "money"; typeOptions?: MoneyCellOptions<TRow> }
-  | { type: "date"; typeOptions?: DateCellOptions }
-  | { type: "badge"; typeOptions?: BadgeCellOptions }
-  | { type: "link"; typeOptions: LinkCellOptions<TRow> };
+  | {
+      [K in ColumnCellType]: { type: K } & Parameters<DisplayFactories<TRow>[K]>[0];
+    }[ColumnCellType];
 
-/** Values accepted by each built-in display renderer. */
-export interface ColumnDisplayValues {
-  text: string | number | boolean | bigint | null | undefined;
-  number: number | null | undefined;
-  money: number | null | undefined;
-  date: Date | string | number | null | undefined;
-  badge: string | string[] | number | boolean | null | undefined;
-  link: string | number | boolean | null | undefined;
-}
+/** Accepted values are derived from each specialized factory's renderer signature. */
+export type ColumnDisplayValues = {
+  [K in ColumnCellType]: Parameters<ReturnType<DisplayFactories<Record<string, unknown>>[K]>>[0];
+};
 
 export type TypedColumnDisplay<
   TRow extends Record<string, unknown>,

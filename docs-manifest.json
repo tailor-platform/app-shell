@@ -405,6 +405,7 @@
       "sources": [
         "packages/core/src/components/data-table/**",
         "packages/core/src/components/internals/table-core/column-types.ts",
+        "packages/core/src/components/internals/table-core/cell-edit-error.ts",
         "packages/core/src/hooks/use-collection-variables.ts",
         "packages/core/src/lib/collection-url-state.ts",
         "packages/core/src/contexts/collection-control-context.tsx",
@@ -475,7 +476,7 @@
       ],
       "hashes": {
         "typeSurface": "33eb2bdd6be1c774",
-        "outline": "3543772d5bd1ec9a",
+        "outline": "36328fa06e4b4612",
         "snapshot": "a97e067c66e46ef6",
         "outputMd": "7133811af89213ef",
         "examples": "e7100d7517f72495"
@@ -549,10 +550,10 @@
       "claims": [],
       "symbols": ["I18nLabels", "defineI18nLabels"],
       "hashes": {
-        "typeSurface": "38a1d271bf54751a",
+        "typeSurface": "cd254008bb9d09a5",
         "outline": "9a2fa5d9f1b2af3f",
         "snapshot": null,
-        "outputMd": "3035dea9ac31b7f5",
+        "outputMd": "d5e44472b7a0d2ff",
         "examples": "e477bcbfa866cfda"
       }
     },
@@ -1823,7 +1824,7 @@
     "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "daf6c93e7285ee88",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",
-    "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "3035dea9ac31b7f5",
+    "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "d5e44472b7a0d2ff",
     "packages/core/skills/app-shell-patterns/references/api/define-module.md": "75361d7687b43878",
     "packages/core/skills/app-shell-patterns/references/api/define-resource.md": "27e4d84b41cf40e0",
     "packages/core/skills/app-shell-patterns/references/api/guards/hidden.md": "dda25877f7e40b82",

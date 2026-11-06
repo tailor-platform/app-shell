@@ -3,9 +3,10 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
+import type { DateCellOptions } from "@/components/internals/table-core/column-types";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import type { Column, DateCellOptions } from "./types";
+import type { Column } from "./types";
 
 afterEach(() => {
   cleanup();

@@ -7,12 +7,13 @@ import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Menu } from "@/components/menu";
 import { Tooltip } from "@/components/tooltip";
+import { ICON_SPACE_CLASS_NAME } from "@/components/internals/table-core/cell-styles";
 import type { RowAction, RowExpansionOptions } from "./types";
-import { getCellValue, createTypedCellRenderer } from "./cell-renderers";
+import { getCellValue } from "./cell-values";
+import { resolveDataTableColumn } from "./column-adapter";
 import { DataTableCellContextMenu, getCellContextValue } from "./context-menu";
 import { useCellContextMenu } from "./use-cell-context-menu";
-import { DataTableEditableCell, hasEditorIcon, isEditableColumn } from "./editing/cell/root";
-import { ICON_SPACE_CLASS_NAME } from "./editing/cell/shared";
+import { DataTableEditableCell } from "./editing/cell/root";
 import { useCellEditNavigation } from "./editing/use-navigation";
 import { RowExpandToggle, DataTableExpandedRow } from "./expanded-row";
 import { useDataTableT } from "./i18n";
@@ -62,13 +63,8 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   const hasExpand = !!rowExpansion;
   const { ordered, keys, placements, selection, expand, actions } = pinLayout;
   // Intl formatter construction is costly; avoid repeating it for every cell render.
-  const cellRenderers = useMemo(
-    () =>
-      new Map(
-        ordered
-          .filter((col) => !col.render)
-          .map((col) => [col, createTypedCellRenderer(col, timeZone)]),
-      ),
+  const columnAdapters = useMemo(
+    () => new Map(ordered.map((col) => [col, resolveDataTableColumn(col, timeZone)])),
     [ordered, timeZone],
   );
   const {
@@ -91,7 +87,8 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   // In a table people edit, every data cell says what a click does: editors
   // show a text or pointer cursor, and the rest show "not allowed". Skipped when
   // rows are clickable, where the row click is what the cursor should promise.
-  const blockReadOnlyCells = !onClickRow && (ordered?.some(isEditableColumn) ?? false);
+  const blockReadOnlyCells =
+    !onClickRow && ordered.some((col) => !!columnAdapters.get(col)?.editor);
   const warnedMissingIdRef = useRef(false);
 
   return (
@@ -176,7 +173,9 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               })()}
             {ordered?.map((col) => {
               const key = keys.get(col) as string;
-              const editableColumn = isEditableColumn(col);
+              const adapter = columnAdapters.get(col)!;
+              const editor = adapter.editor;
+              const editableColumn = !!editor;
               if (editableColumn && rowId == null && !warnedMissingIdRef.current) {
                 warnedMissingIdRef.current = true;
                 console.warn(
@@ -186,13 +185,12 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               const editable =
                 editableColumn &&
                 rowId != null &&
-                // A badge dropdown picks one value; a cell holding several stays
-                // read-only rather than have its list replaced by a single pick.
-                !(col.type === "badge" && Array.isArray(getCellValue(row, col))) &&
+                editor.canEditValue(getCellValue(row, col)) &&
                 (col.edit?.canEdit?.(row, { selected }) ?? true);
-              // An editable cell renders its own display; skip rendering it twice.
-              let content: ReactNode;
-              if (!editable) content = col.render ? col.render(row) : cellRenderers.get(col)?.(row);
+              const display = col.render
+                ? col.render(row)
+                : adapter.renderValue(getCellValue(row, col), row, { linkAsText: editable });
+              const content: ReactNode = editable ? undefined : display;
 
               const customCellProps = col.cellProps?.(row);
               const { style: cellStyle, className: cellClassName } = pinCellProps(
@@ -216,7 +214,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               // Truncate via an inner element so the cell's overflow stays visible.
               // A read-only cell of a dropdown / date column keeps the icon's
               // space like its editable neighbours, so the column's width never shifts.
-              const iconSpace = editableColumn && hasEditorIcon(col);
+              const iconSpace = !!editor?.icon;
               const cellBody =
                 col.truncate || iconSpace ? (
                   <span
@@ -276,7 +274,8 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                     label={headerLabel}
                     align={resolveAlign(col)}
                     navigation={navigation}
-                    dateRenderer={col.type === "date" ? cellRenderers.get(col) : undefined}
+                    editor={editor!}
+                    display={display}
                     tooltipLabel={tooltipLabel}
                     cellProps={cellProps}
                   />

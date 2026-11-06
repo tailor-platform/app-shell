@@ -76,10 +76,11 @@ it("rejects duplicate and empty column identities", () => {
   ).toThrow("column IDs must be non-empty and unique");
 });
 
-it("rejects cell editors instead of silently ignoring them", () => {
-  const editable = { accessorKey: "name" as const, edit: { editorType: "text" } };
+it("rejects editors on computed columns instead of pretending to own their values", () => {
+  const editable: LineItemsColumn<Row> = { id: "computed", accessor: (row) => row.name };
+  Object.assign(editable, { edit: { editor: { type: "text" } } });
   expect(() => renderHook(() => useLineItems<Row>({ columns: [editable] }))).toThrow(
-    "cell editors are not supported yet",
+    "Only accessorKey properties may have cell editors",
   );
 });
 

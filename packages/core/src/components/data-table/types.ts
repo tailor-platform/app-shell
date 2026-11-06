@@ -6,14 +6,6 @@ import type {
   MoneyCellOptions,
   NumberCellOptions,
 } from "@/components/internals/table-core/column-types";
-export type {
-  BadgeCellOptions,
-  ColumnCellType,
-  DateCellOptions,
-  LinkCellOptions,
-  MoneyCellOptions,
-  NumberCellOptions,
-} from "@/components/internals/table-core/column-types";
 import type {
   CollectionControl,
   Filter,

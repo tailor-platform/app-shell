@@ -61,8 +61,8 @@ A page is the shape of a whole screen — the outer choice, made before picking 
 
 ## Rules
 
-- ALWAYS cite the entry slug in a comment at the top of the file:
-  `/* pattern: list/dense-scan */`. Cite the pattern you implemented, even when a page entry sent you to it.
+- ALWAYS cite the entry slugs in a comment at the top of the file: the page entry when the file is a whole screen, then each pattern it implements, one per line —
+  `/* page: document-collection */`, `/* pattern: interaction/confirm */`. Cite a pattern even when a page entry sent you to it.
 - NEVER mix two patterns that solve the same problem in one component — one part, one recipe. Composing patterns for _different_ parts of a screen is expected, and the screen's page entry says which.
 - ALWAYS use AppShell components — do NOT use raw HTML or third-party UI libraries
 - If no entry matches, compose directly from the concept references and component docs
@@ -77,8 +77,8 @@ Full rationale in [`styling-theming`](references/concepts/styling-theming.md) �
 - **Status and feedback color by semantic role:** use a component variant first (`Badge`, `Alert`, `Button variant="destructive"`). On your own element, use the roles `{info|success|warning|danger|neutral}-{surface|border|solid|text|contrast|indicator}`, for example `bg-warning-surface text-warning-text border-warning-border`. Error text is `text-danger-text`. Never write the deprecated `--status-*`, `--alert-*` or `--destructive` tokens or their utilities (`bg-status-*`, `text-alert-*`, `bg-destructive`, `text-destructive`) in new code; the next major removes them. When you edit a screen that still uses them, replace them: `text-destructive` → `text-danger-text`, `bg-status-completed` → `bg-success-solid`, `bg-alert-warning-background` → `bg-warning-surface`. Full mapping: [`styling-theming`](references/concepts/styling-theming.md) → Semantic color roles.
 - **No duplicate actions:** an action lives in exactly one place — never repeat the same action in both `Layout.Header` and `ActionPanel`.
 - **Action placement:** primary CTA + status in `Layout.Header`; workflow actions in `ActionPanel`; back/navigation in the breadcrumb — never in `ActionPanel`.
-- **Metric tiles always go in a `Grid`** (`columns={{ initial: 1, md: 2, xl: 4 }}`) — never one-per-row.
-- **Forms default to `form/modal`** — only build a routed full-page form when the design explicitly calls for one.
+- **Metric tiles go in a `Grid`** (`columns={{ initial: 1, md: 2, xl: 4 }}`) — never one-per-row. The exception is tiles above a collection table under `Layout fill`, which go in a single row that scrolls sideways; see `page/document-collection`.
+- **Creating or editing a document is a routed full-page form** (`form/single-page`, `form/sectioned`, or `form/wizard`). Documents carry line items and several field groups, and a dialog has nowhere to put them. `form/modal` is for sub-elements and small entities instead — a product's variants, a user's or warehouse location's properties, an item's BOM rules — where the whole form is a handful of fields.
 - **Forms use AppShell `Form` + `Field`**, submitting via `onFormSubmit` — never a bare `<form onSubmit>` with `FormData`. `onFormSubmit` reads registered `Field.Root`s, so every control (dropdowns included) just needs a wrapping `Field.Root name="…"` — no `name` on the control, no `useState`. React Hook Form is optional, consumer-installed, and only warranted for cross-field validation, field arrays, or a Zod resolver. Details in [`Form`](references/components/form.md) and the `form/*` patterns.
 - **Handle every state:** loading (skeleton), empty (labelled empty state), and error (inline + retry) — never ship only the happy path.
 - **Keep UI language consistent:** apply the chosen language to navigation, component text, accessibility labels, and feedback. Use the catalog's `useT()` for rendered strings and `labels.t()` for `LocalizedString` metadata; keep server codes and comparison values untranslated. See [`i18n/labels`](references/patterns/i18n-labels.md).

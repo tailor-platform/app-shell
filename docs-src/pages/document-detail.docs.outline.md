@@ -286,7 +286,7 @@ page.
 > alternative is letting them carry enough columns to answer a question without
 > leaving the page, at the cost of a second place that reports on the same data.
 > Where a related collection genuinely needs filtering and paging, the fallback
-> is `pattern/list/dense-scan` on its own route, linked from here.
+> is a `page/document-collection` on its own route, linked from here.
 >
 > - [ ] Decide how far a related-records table goes before it becomes its own screen
 
@@ -569,7 +569,7 @@ The page decides the frame; these build what sits in it.
 
 | Need                                               | Pattern                                 |
 | -------------------------------------------------- | --------------------------------------- |
-| A related collection big enough for its own screen | `pattern/list/dense-scan`               |
+| A related collection big enough for its own screen | `page/document-collection`              |
 | Editing a coherent group of header fields          | `pattern/form/modal`                    |
 | A full edit of the record and its line items       | `pattern/form/sectioned` on a sub-route |
 | Confirming a destructive transition                | `pattern/interaction/confirm`           |
@@ -584,7 +584,7 @@ a total that legitimately sums, a related-records card, and a right-hand column
 of actions, external-system link and history.
 
 ```tsx
-/* page: detail */
+/* page: document-detail */
 import {
   ActionPanel,
   ActivityCard,

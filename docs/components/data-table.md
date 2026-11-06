@@ -1755,19 +1755,19 @@ const [result] = useQuery({
 
 ### Combining an external predicate
 
-Where a screen narrows the list outside the filter chips — a bucket/tab control, or a forced scope such as "only my records" — combine that predicate with `variables.query` using `and` rather than spreading the two objects together:
+Where a screen narrows the list outside the filter chips — preset filter buttons, or a forced scope such as "only my records" — combine that predicate with `variables.query` using `and` rather than spreading the two objects together:
 
 ```tsx
-const query = tabPredicate ? { and: [tabPredicate, variables.query] } : variables.query;
+const query = presetPredicate ? { and: [presetPredicate, variables.query] } : variables.query;
 ```
 
-A spread silently drops one side whenever both name the same field (a "Posted" tab plus a Status filter chip). Going through `and` also leaves `control.filters` untouched, so the external predicate does not appear as a removable filter chip.
+A spread silently drops one side whenever both name the same field (a "Posted" preset plus a Status filter chip). Going through `and` also leaves `control.filters` untouched, so the external predicate does not appear as a removable filter chip.
 
 Changing the external predicate must reset pagination in the **same event** that changes it, not from a following effect — otherwise the query dispatches first and sends the previous cursor against the new predicate.
 
 ```tsx
-const selectTab = (id: string) => {
-  setTabId(id);
+const selectPreset = (id: string) => {
+  setPresetId(id);
   control.resetPage();
 };
 ```

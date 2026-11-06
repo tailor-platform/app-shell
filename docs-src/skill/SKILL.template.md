@@ -61,8 +61,8 @@ A page is the shape of a whole screen — the outer choice, made before picking 
 
 ## Rules
 
-- ALWAYS cite the entry slug in a comment at the top of the file:
-  `/* pattern: form/modal */`. Cite the pattern you implemented, even when a page entry sent you to it.
+- ALWAYS cite the entry slugs in a comment at the top of the file: the page entry when the file is a whole screen, then each pattern it implements, one per line —
+  `/* page: document-collection */`, `/* pattern: interaction/confirm */`. Cite a pattern even when a page entry sent you to it.
 - NEVER mix two patterns that solve the same problem in one component — one part, one recipe. Composing patterns for _different_ parts of a screen is expected, and the screen's page entry says which.
 - ALWAYS use AppShell components — do NOT use raw HTML or third-party UI libraries
 - If no entry matches, compose directly from the concept references and component docs

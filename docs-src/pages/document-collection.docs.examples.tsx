@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import {
   Button,
   DataTable,
+  Dialog,
   Layout,
   Link,
   Toolbar,
@@ -11,7 +12,12 @@ import {
   useToast,
   useURLCollectionVariables,
 } from "@tailor-platform/app-shell";
-import type { DataTableData, PageInfo, TableMetadata } from "@tailor-platform/app-shell";
+import type {
+  DataTableData,
+  PageInfo,
+  SelectionActionHelpers,
+  TableMetadata,
+} from "@tailor-platform/app-shell";
 
 // --- Stand-ins for the app-local modules a real screen imports. ------------
 // In a consuming app these are:
@@ -116,8 +122,9 @@ function useQuery({ variables }: { query: string; variables: Record<string, unkn
   ] as const;
 }
 
-async function cancelPurchaseOrders(ids: string[]): Promise<{ cancelled: number }> {
-  return { cancelled: ids.length };
+// Resolves with the ids it actually cancelled, which may be fewer than asked for.
+async function cancelPurchaseOrders(ids: string[]): Promise<{ cancelledIds: string[] }> {
+  return { cancelledIds: ids };
 }
 
 // --- The screen ------------------------------------------------------------
@@ -168,13 +175,6 @@ const PurchaseOrdersQuery = graphql`
 
 const { column, inferColumns } = createColumnHelper<PurchaseOrder>();
 
-/**
- * A hook only because real screens close over something data-driven: i18n
- * labels, or the current user's permissions deciding which columns exist. If
- * yours closes over nothing — as the dependency array below admits — drop the
- * hook and declare `columns` as a module-scope `const`. A hook with no
- * dependencies is just a slower const.
- */
 function usePurchaseOrderColumns() {
   return useMemo(() => {
     // `inferColumns` derives label, sort and filter config from the generated
@@ -265,8 +265,29 @@ export function DocumentCollection() {
     },
   });
 
+  // Column definitions follow DataTable's "Adding a typed column" and
+  // `inferColumns`; nothing about them is specific to this page.
   const columns = usePurchaseOrderColumns();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [pendingCancel, setPendingCancel] = useState<{
+    ids: string[];
+    run: SelectionActionHelpers["run"];
+  } | null>(null);
+
+  const confirmCancel = async () => {
+    if (!pendingCancel) return;
+    const { ids, run } = pendingCancel;
+    setPendingCancel(null);
+    // `run` keeps the bulk-action bar's pending state on the request the
+    // dialog started.
+    const { cancelledIds } = await run(cancelPurchaseOrders(ids));
+    // Report what the server did, not what was asked for.
+    toast.success(`Cancelled ${cancelledIds.length} of ${ids.length} orders`);
+    // Remove only what was cancelled, against the current selection, so rows
+    // selected since the click stay selected.
+    const done = new Set(cancelledIds);
+    setSelectedIds((current) => current.filter((id) => !done.has(id)));
+  };
 
   // `undefined` while the first page is in flight is meaningful — it is what
   // makes the table render its skeleton rather than an empty state.
@@ -303,50 +324,66 @@ export function DocumentCollection() {
           label: "Cancel orders",
           variant: "destructive",
           // `ids` is a click-time copy of the whole selection, including rows
-          // on pages that were never loaded.
-          onClick: async (ids) => {
-            const { cancelled } = await cancelPurchaseOrders(ids);
-            // Report what the server did, not what was asked for.
-            toast.success(`Cancelled ${cancelled} of ${ids.length} orders`);
-            // Selection is never cleared automatically: keep whatever the
-            // action did not apply to.
-            setSelectedIds(ids.slice(cancelled));
-          },
+          // on pages that were never loaded. Destructive, so it only opens the
+          // confirm.
+          onClick: (ids, { run }) => setPendingCancel({ ids, run }),
         },
       ],
     },
   });
 
   return (
-    // `fill` pins the header, toolbar, column headers and pagination footer,
-    // leaving only the rows region to scroll.
-    <Layout fill>
-      <Layout.Header
-        title="Purchase Orders"
-        actions={[
-          <Button key="create" render={<Link to="create" />}>
-            Create Purchase Order
-          </Button>,
-        ]}
-      />
-      <Layout.Column>
-        <DataTable.Root value={table}>
-          <Toolbar.Root>
-            <Toolbar.Row justify="between" aria-label="Purchase order table controls">
-              <Toolbar.Group>
-                <DataTable.Filters />
-              </Toolbar.Group>
-              <Toolbar.Group>
-                <DataTable.ColumnSettings />
-              </Toolbar.Group>
-            </Toolbar.Row>
-          </Toolbar.Root>
-          <DataTable.Table />
-          <DataTable.Footer>
-            <DataTable.Pagination pageSizeOptions={[10, 25, 50, 100]} />
-          </DataTable.Footer>
-        </DataTable.Root>
-      </Layout.Column>
-    </Layout>
+    <>
+      {/* `fill` pins the header, toolbar, column headers and pagination footer,
+          leaving only the rows region to scroll. */}
+      <Layout fill>
+        <Layout.Header
+          title="Purchase Orders"
+          actions={[
+            <Button key="create" render={<Link to="create" />}>
+              Create Purchase Order
+            </Button>,
+          ]}
+        />
+        <Layout.Column>
+          <DataTable.Root value={table}>
+            <Toolbar.Root>
+              <Toolbar.Row justify="between" aria-label="Purchase order table controls">
+                <Toolbar.Group>
+                  <DataTable.Filters />
+                </Toolbar.Group>
+                <Toolbar.Group>
+                  <DataTable.ColumnSettings />
+                </Toolbar.Group>
+              </Toolbar.Row>
+            </Toolbar.Root>
+            <DataTable.Table />
+            <DataTable.Footer>
+              <DataTable.Pagination pageSizeOptions={[10, 25, 50, 100]} />
+            </DataTable.Footer>
+          </DataTable.Root>
+        </Layout.Column>
+      </Layout>
+
+      <Dialog.Root
+        open={pendingCancel !== null}
+        onOpenChange={(open) => !open && setPendingCancel(null)}
+      >
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Title>Cancel {pendingCancel?.ids.length} purchase orders?</Dialog.Title>
+            <Dialog.Description>
+              Suppliers will no longer fulfil these orders. Cancelled orders can't be reopened.
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Dialog.Close render={<Button variant="outline" />}>Keep orders</Dialog.Close>
+            <Button variant="destructive" onClick={() => void confirmCancel()}>
+              Cancel orders
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
+    </>
   );
 }

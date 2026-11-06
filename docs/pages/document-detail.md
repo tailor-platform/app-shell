@@ -558,7 +558,7 @@ a total that legitimately sums, a related-records card, and a right-hand column
 of actions, external-system link and history.
 
 ```tsx
-/* page: detail */
+/* page: document-detail */
 import {
   ActionPanel,
   ActivityCard,

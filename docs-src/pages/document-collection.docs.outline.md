@@ -74,7 +74,7 @@ The Layout component should be given the `fill` prop, which sets styles so the b
 
 ## Column selection
 
-Placing `DataTable.ColumnSettings` in the toolbar shows a "Columns" button so the user can customize which columns are shown. Only Columns that are defined in the data passed to `useDataTable` as `TRow` are available to be shown.
+Placing `DataTable.ColumnSettings` in the toolbar shows a "Columns" button so the user can customize which columns are shown. Only the columns you define in `columns` can be shown; a field on the row with no column definition never appears in the menu.
 
 Pass a stable, unique `tableId` to `useDataTable` so each user's column layout persists across visits (see [Column pinning, visibility & ordering](../components/data-table.md#column-pinning-visibility--ordering)). Maintain consistency in convention for the `tableId`s across document collection in the app.
 
@@ -108,6 +108,8 @@ Primary identifiers, E.g. Document Number, or Product SKU should show first, and
 
 There may be situations where it is useful for the user to switch between different related datasets on the same page. Both/all of which need to make sense to be found on this page where it sits in the navigation structure.
 
+Tabs here are only for genuinely different datasets, each with its own columns. They are not for preset views of the same records — "Open", "Overdue", "Paid" — which are filters on one table and belong in its toolbar (see [Preset filters](#preset-filters)).
+
 ```
 Layout fill
   +------------------------------------------------------------+
@@ -139,6 +141,14 @@ The main variance in document collection pages across different record types wil
 As a default recommendation, the toolbar should include `DataTable.ColumnSettings` and `DataTable.Filters`. Additional filtering and search options should be based on the end-user's workflows within the dataset, and the common needs to drill-down to effectively complete their workflow.
 
 Default sort order is often a key date field, descending (most recent first). For records that are not a related to time, alphabetical on a key human-readable identifier such as Product Name is common
+
+#### Preset filters
+
+Where users repeatedly narrow the same records to a few named views — "Open", "Overdue", "Paid" — offer them as buttons in a `Toolbar.Group`, not as tabs above the table. They are filters on this one table, so they sit with its other filters.
+
+- Mark the active preset with `aria-pressed` and a distinct button variant, and keep it in the URL, e.g. `?view=overdue`.
+- Combine the preset's predicate with `variables.query` using `and`, so it stacks with any `DataTable.Filters` chips rather than replacing them. See [Combining an external predicate](../components/data-table.md#combining-an-external-predicate).
+- Changing preset resets the page cursor in the same event.
 
 ### Row actions and bulk actions
 
@@ -216,7 +226,7 @@ Reference data for filter dropdowns, such as a list of sites or suppliers, shoul
 
 Empty, loading and error states have a natural interface through DataTable. The page should typically be able to load immediately, with the loading state and feedback occurring at the DataTable row level, and at the filtering level where record data is required to be fetched to build filter option values.
 
-If you are adding `MetricCard`s above the DataTable, these should be skeleton-rendered immediately, with the loading of their data happening in the background. Whether each `MetricCard`'s data is fetched separately, or all `MetricCards`'s data fetched in one call is up to the implementation as to what is most appropriate, balancing simulataneous requests vs speed of loading for each number. The decision for this will be informed by the specific metrics to be shown and the nature of the data.
+If you are adding `MetricCard`s above the DataTable, these should render immediately, with a [`Spinner`](../components/spinner.md) in place of each value while its data loads in the background. Whether each `MetricCard`'s data is fetched separately, or all `MetricCards`'s data fetched in one call is up to the implementation as to what is most appropriate, balancing simulataneous requests vs speed of loading for each number. The decision for this will be informed by the specific metrics to be shown and the nature of the data.
 
 ## Patterns for the parts
 
@@ -243,6 +253,8 @@ Report the outcome with a [toast](../patterns/interaction-toast.md), and report 
 
 ## Reference implementation
 
+The column definitions are left out below, since nothing about them is specific to this page. See [Adding a typed column](../components/data-table.md#adding-a-typed-column) and [Combining `type` with `inferColumns`](../components/data-table.md#combining-type-with-infercolumns) in the DataTable docs.
+
 <!-- example: document-collection -->
 
 ## Open questions
@@ -255,7 +267,7 @@ Do we want to encourage/allow inline editing on pages such as these
 
 - **Size the list query for the dataset it will grow into.** Joins, conditionals and aggregations in the query get slow as the dataset grows, and a development or UAT environment with sample data won't show it.
 - **Fetching child records to total them in the table is sometimes the only option.** Tailor's built-in `<entities>` queries return a connection and no aggregates, so an at-a-glance figure that isn't stored on the document — received quantity across a purchase order's lines, say — can only be summed client-side. That is acceptable when the number of children per record is bounded. Where it isn't, store the figure on the document or add a custom resolver rather than fetching more.
-- **A tab or filter change resets the page cursor in the same event**, not in a following effect.
+- **A preset, tab or filter change resets the page cursor in the same event**, not in a following effect.
 
 ## Anti-patterns
 
@@ -273,7 +285,9 @@ Do we want to encourage/allow inline editing on pages such as these
 
 - Hand-rolled `max-height` / `overflow` wrappers around the table to contain scrolling — `Layout fill` already does this.
 
-- Tabs that only change local UI state while the query still returns the full set. A tab is a filter on the query, the same as any other.
+- Tabs above the table for preset views of the same records. Those are [preset filters](#preset-filters) in the toolbar.
+
+- A preset or tab that only changes local UI state while the query still returns the full set. It has to reach the query.
 
 - Client-side filtering. A collection is paginated on the server, so the client only holds one page and filtering it hides matches on the other pages. It's only acceptable on a list small and bounded enough not to be paginated at all.
 

@@ -571,8 +571,8 @@ To customize the body, provide `error.render`. Its `error` is the original throw
 error: {
   render: ({ row, error }) => (
     <div>
-      <p>Could not update row {row.id}</p>
-      <p>{error instanceof CellEditError ? error.message : "Please try again later"}</p>
+      <Text.p>Could not update row {row.id}</Text.p>
+      <Text.p>{error instanceof CellEditError ? error.message : "Please try again later"}</Text.p>
     </div>
   ),
 }

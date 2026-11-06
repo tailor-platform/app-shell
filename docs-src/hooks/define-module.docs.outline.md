@@ -100,11 +100,11 @@ A module object that can be passed to the `modules` prop of `AppShell`.
 ### Basic Module
 
 ```typescript
-import { defineModule } from "@tailor-platform/app-shell";
+import { defineModule, Text } from "@tailor-platform/app-shell";
 
 const dashboardModule = defineModule({
   path: "dashboard",
-  component: () => <h1>Dashboard</h1>,
+  component: () => <Text.h1>Dashboard</Text.h1>,
   resources: [],
 });
 ```
@@ -183,14 +183,14 @@ const adminModule = defineModule({
 ### Module with Error Boundary
 
 ```typescript
-import { useRouteError } from "@tailor-platform/app-shell";
+import { Text, useRouteError } from "@tailor-platform/app-shell";
 
 const ErrorBoundary = () => {
   const error = useRouteError() as Error;
   return (
     <div>
-      <h1>Module Error</h1>
-      <p>{error.message}</p>
+      <Text.h1>Module Error</Text.h1>
+      <Text.p>{error.message}</Text.p>
     </div>
   );
 };

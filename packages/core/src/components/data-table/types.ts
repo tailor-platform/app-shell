@@ -753,30 +753,41 @@ export type UseDataTableOptions<
    * - Omitted or `{}` — single-column sort (default).
    */
   sort?: false | { multiple?: boolean };
-  /**
-   * Expandable detail rows. Providing this enables the whole feature: a chevron
-   * column is added at the left edge (auto-pinned left, after the selection
-   * column) and `render`'s output appears in a full-width row beneath its parent.
-   *
-   * Grouped rather than flat so the parts can't be configured in a broken
-   * combination — a label or predicate without a renderer, or `expandedIds`
-   * without `onChange`, are all compile errors.
-   *
-   * **Requirement:** Each row must have a string or number `id` field.
-   * Expansion is keyed by `id`, so rows without one render no chevron.
-   *
-   * **Note:** Expansion is **not** cleared on page change — ids of rows no
-   * longer on the page simply do not render. Call `collapseAllRows()` to reset.
-   */
-  rowExpansion?: RowExpansionOptions<TRow>;
-  /**
-   * Nested rows under each row, opened from a caret in the hierarchy column.
-   * See {@link SubRowsOptions}. Can't be combined with `rowExpansion`: a row
-   * shows either its sub-rows or a detail panel. When both are passed,
-   * `subRows` wins and a console warning names the conflict.
-   */
-  subRows?: SubRowsOptions<TRow>;
-};
+} & DataTableExpansionOptions<TRow>;
+
+/**
+ * `rowExpansion` and `subRows` are mutually exclusive. The `never` members reject
+ * both even when options come from a typed variable or a spread.
+ */
+type DataTableExpansionOptions<TRow extends Record<string, unknown>> =
+  | {
+      /**
+       * Expandable detail rows. Providing this enables the whole feature: a chevron
+       * column is added at the left edge (auto-pinned left, after the selection
+       * column) and `render`'s output appears in a full-width row beneath its parent.
+       *
+       * Grouped rather than flat so the parts can't be configured in a broken
+       * combination — a label or predicate without a renderer, or `expandedIds`
+       * without `onChange`, are all compile errors.
+       *
+       * **Requirement:** Each row must have a string or number `id` field.
+       * Expansion is keyed by `id`, so rows without one render no chevron.
+       *
+       * **Note:** Expansion is **not** cleared on page change — ids of rows no
+       * longer on the page simply do not render. Call `collapseAllRows()` to reset.
+       */
+      rowExpansion?: RowExpansionOptions<TRow>;
+      subRows?: never;
+    }
+  | {
+      rowExpansion?: never;
+      /**
+       * Nested rows under each row, opened from a caret in the hierarchy column.
+       * See {@link SubRowsOptions}. Can't be combined with `rowExpansion`: a row
+       * shows either its sub-rows or a detail panel, so passing both is a type error.
+       */
+      subRows: SubRowsOptions<TRow>;
+    };
 
 // =============================================================================
 // Row Actions

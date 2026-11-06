@@ -722,7 +722,7 @@ const table = useDataTable<Account>({
 - **Rows need an `id`, unique across the tree.** Expansion and selection are keyed by it. A row without one can't open or be selected.
 - **Sub-rows come with the data.** `getSubRows` reads them synchronously from each row. Loading children on demand isn't supported yet.
 - **The hierarchy cell stays read-only** under inline editing, since it also holds the indent and caret.
-- **Not combined with `rowExpansion`.** A row shows either its sub-rows or a detail panel. If both are passed, `subRows` wins and a console warning names the conflict.
+- **Not combined with `rowExpansion`.** A row shows either its sub-rows or a detail panel, so passing both is a type error. Untyped callers that pass both get `subRows` and a console warning.
 - **Open rows** can be controlled with `expandedIds` + `onExpandedChange`, or started with `defaultExpandedIds`. `useDataTable` returns `expandedSubRowIds` and `toggleSubRows(row)`.
 
 The caret is a native `<button>` with `aria-expanded`, named from the hierarchy column's value ("Expand row Assets"), so it's reached with Tab and worked with Enter / Space. Full tree-grid arrow-key navigation isn't implemented yet.

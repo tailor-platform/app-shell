@@ -14,7 +14,7 @@ import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
 import { SELECTION_KEY } from "./column-layout";
-import type { Column, UseDataTableOptions } from "./types";
+import type { Column, RowExpansionOptions, SubRowsOptions, UseDataTableOptions } from "./types";
 
 type Account = {
   id: string;
@@ -49,7 +49,13 @@ afterEach(() => {
   localStorage.clear();
 });
 
-type Options = Partial<Omit<UseDataTableOptions<Account>, "columns" | "data">>;
+// Loose on purpose: some tests pass `rowExpansion` with `subRows`, as untyped callers can.
+type Options = Partial<
+  Omit<UseDataTableOptions<Account>, "columns" | "data" | "rowExpansion" | "subRows">
+> & {
+  rowExpansion?: RowExpansionOptions<Account>;
+  subRows?: SubRowsOptions<Account>;
+};
 
 function Harness({
   options,
@@ -67,7 +73,7 @@ function Harness({
     data: { rows },
     subRows: { getSubRows: (row) => row.children },
     ...options,
-  });
+  } as UseDataTableOptions<Account>);
   return (
     <DataTable.Root value={table}>
       {toolbar}
@@ -151,6 +157,20 @@ describe("DataTable subRows", () => {
 
     await user.click(caretFor("Assets"));
     expect(onClickRow).not.toHaveBeenCalled();
+  });
+
+  it("rejects rowExpansion with subRows at the type level", () => {
+    const subRows: SubRowsOptions<Account> = { getSubRows: (row) => row.children };
+    const rowExpansion: RowExpansionOptions<Account> = { render: () => "details" };
+    const base = { columns, data: { rows: ACCOUNTS } };
+    const ok: UseDataTableOptions<Account>[] = [
+      base,
+      { ...base, subRows },
+      { ...base, rowExpansion },
+    ];
+    // @ts-expect-error -- a row shows sub-rows or a detail panel, not both
+    const both: UseDataTableOptions<Account> = { ...base, subRows, rowExpansion };
+    expect([ok, both]).toBeDefined();
   });
 
   it("ignores rowExpansion alongside subRows, with a warning", () => {

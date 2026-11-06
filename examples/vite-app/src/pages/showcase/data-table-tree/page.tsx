@@ -64,7 +64,8 @@ const ACCOUNTS: Account[] = [
 
 const columns: Column<Account>[] = [
   { id: "code", label: "Code", accessor: (row) => row.code, width: 90 },
-  // Defined second, but `subRows.column` makes it the hierarchy column, so it's shown first.
+  // Defined second. `subRows.column` makes it the hierarchy column, and
+  // `lockColumn` moves it first and pins it there.
   { id: "name", label: "Account", accessor: (row) => row.name },
   { id: "kind", label: "Kind", accessor: (row) => row.kind },
   { id: "balance", label: "Balance", type: "money", accessor: (row) => row.balance },
@@ -76,9 +77,11 @@ const STRATEGIES: TreeValueStrategy[] = ["leaves", "topmost", "all"];
 function AccountsTable({
   propagation,
   strategy,
+  lockColumn,
 }: {
   propagation: TreeSelectionPropagation;
   strategy: TreeValueStrategy;
+  lockColumn: boolean;
 }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastExport, setLastExport] = useState<string[] | null>(null);
@@ -99,6 +102,7 @@ function AccountsTable({
     subRows: {
       getSubRows: (row) => row.children,
       column: "name",
+      lockColumn,
       defaultExpandedIds: ["1000"],
     },
     rowSelection: {
@@ -134,6 +138,7 @@ function AccountsTable({
 const DataTableTreePage = () => {
   const [propagation, setPropagation] = useState<TreeSelectionPropagation>("full");
   const [strategy, setStrategy] = useState<TreeValueStrategy>("leaves");
+  const [lockColumn, setLockColumn] = useState(true);
   const effectiveStrategy = propagation === "full" ? strategy : "all";
 
   return (
@@ -142,7 +147,7 @@ const DataTableTreePage = () => {
         <Card.Root>
           <Card.Header
             title="Sub-rows"
-            description='A chart of accounts with nested sub-accounts. "Account" is the hierarchy column: it is defined second, but is locked first and pinned. Open Columns to see it locked.'
+            description='A chart of accounts with nested sub-accounts. "Account" is the hierarchy column, defined second. Locked, it moves first and pins there. Unlocked, it stays second and the checkboxes stay flat on the left until you drag it first in Columns.'
           />
           <Card.Content className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -172,11 +177,25 @@ const DataTableTreePage = () => {
                 </Button>
               ))}
             </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted-foreground w-40">lockColumn</span>
+              {[true, false].map((option) => (
+                <Button
+                  key={String(option)}
+                  size="sm"
+                  variant={lockColumn === option ? "default" : "outline"}
+                  onClick={() => setLockColumn(option)}
+                >
+                  {String(option)}
+                </Button>
+              ))}
+            </div>
             {/* Remount on a mode change, so the selection starts empty in each mode. */}
             <AccountsTable
-              key={`${propagation}-${effectiveStrategy}`}
+              key={`${propagation}-${effectiveStrategy}-${lockColumn}`}
               propagation={propagation}
               strategy={effectiveStrategy}
+              lockColumn={lockColumn}
             />
           </Card.Content>
         </Card.Root>

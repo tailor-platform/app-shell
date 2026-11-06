@@ -65,7 +65,11 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     setPin,
     setColumnOrder,
     treeColumnKey,
+    subRows,
   } = useDataTableContext<Record<string, unknown>>();
+  // The sub-rows hierarchy column is always shown; with `lockColumn` it's also
+  // first and pinned left, so it can't be dragged or have anything dropped above it.
+  const lockedKey = subRows?.lockColumn ? treeColumnKey : undefined;
 
   const meta = useMemo(() => {
     const label = new Map<string, string>();
@@ -119,7 +123,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
   };
 
   const handleDrop = () => {
-    if (dragKey && dropTarget && dragKey !== treeColumnKey) {
+    if (dragKey && dropTarget && dragKey !== lockedKey) {
       const { section, index } = dropTarget;
       // Rebuild the buckets without the dragged key, then insert it at the drop
       // position, and flatten back to a single order. Setting the order to the
@@ -159,9 +163,12 @@ function DataTableColumnSettings({ className }: { className?: string }) {
       dropTarget?.section === section &&
       isLast &&
       dropTarget.index === fullIndex + 1;
-    // The sub-rows hierarchy column is locked: always first, pinned left and
-    // shown. It can't be dragged, hidden, or have anything dropped above it.
-    const locked = key === treeColumnKey;
+    const locked = key === lockedKey;
+    const alwaysShown = key === treeColumnKey;
+    let visibilityHint: "columnLocked" | "columnAlwaysShown" | "hideColumn" | "showColumn" =
+      isColumnVisible(key) ? "hideColumn" : "showColumn";
+    if (locked) visibilityHint = "columnLocked";
+    else if (alwaysShown) visibilityHint = "columnAlwaysShown";
     return (
       <div
         key={key}
@@ -201,7 +208,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         )}
         <button
           type="button"
-          disabled={locked}
+          disabled={alwaysShown}
           onClick={() => toggleColumn(key)}
           title={meta.label.get(key) ?? key}
           className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-body-md astw:disabled:cursor-default"
@@ -216,15 +223,13 @@ function DataTableColumnSettings({ className }: { className?: string }) {
             render={
               <Checkbox
                 checked={isColumnVisible(key)}
-                disabled={locked}
+                disabled={alwaysShown}
                 onCheckedChange={() => toggleColumn(key)}
                 aria-label={meta.label.get(key)}
               />
             }
           />
-          <Tooltip.Content>
-            {locked ? t("columnLocked") : t(isColumnVisible(key) ? "hideColumn" : "showColumn")}
-          </Tooltip.Content>
+          <Tooltip.Content>{t(visibilityHint)}</Tooltip.Content>
         </Tooltip.Root>
       </div>
     );

@@ -4,7 +4,7 @@ import { Table } from "@/components/table";
 import {
   DataTableContext,
   PinMeasureContext,
-  hasTreeColumn,
+  treeColumnFirst,
   selectionInTreeColumn,
 } from "./context";
 import {
@@ -38,7 +38,7 @@ function DataTableColumnFooter() {
   } = ctx;
   const widths = useContext(PinMeasureContext);
   const hasSelection = !!toggleRowSelection && !selectionInTreeColumn(ctx);
-  const besideTree = hasTreeColumn(ctx);
+  const besideTree = treeColumnFirst(ctx);
   const hasExpand = !!rowExpansion;
   const hasRowActions = !!rowActions?.length;
   const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);

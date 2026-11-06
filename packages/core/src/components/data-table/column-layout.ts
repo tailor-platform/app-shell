@@ -112,6 +112,31 @@ function buildColumnKeys<TRow extends Record<string, unknown>>(
 }
 
 /**
+ * The key of the column that renders first: the first left-pinned column, else
+ * the first unpinned one, else the first right-pinned one — the order
+ * {@link computePinLayout} lays them out in.
+ */
+function firstRenderedKey<TRow extends Record<string, unknown>>(
+  columns: Column<TRow>[],
+  visibleColumns: Column<TRow>[],
+  pinnedColumns: Record<string, "left" | "right" | "none">,
+): string | undefined {
+  const keys = buildColumnKeys(columns);
+  let first: { key: string; rank: number } | undefined;
+  for (const col of visibleColumns) {
+    const key = keys.get(col);
+    if (key === undefined) continue;
+    const pin = resolvePin(pinnedColumns[key], col.pin);
+    let rank = 1;
+    if (pin === "left") rank = 0;
+    else if (pin === "right") rank = 2;
+    if (first === undefined || rank < first.rank) first = { key, rank };
+    if (rank === 0) break;
+  }
+  return first?.key;
+}
+
+/**
  * Group the visible columns by pin side and compute cumulative sticky offsets.
  * The selection and expand columns (when present) auto-pin to the left edge and
  * row-actions (if present) auto-pins to the right edge, with user-pinned columns
@@ -251,6 +276,7 @@ export {
   selectionCellBase,
   treeCellPadding,
   buildColumnKeys,
+  firstRenderedKey,
   computePinLayout,
   pinCellProps,
   type ColumnWidths,

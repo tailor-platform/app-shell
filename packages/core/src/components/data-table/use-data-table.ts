@@ -92,7 +92,8 @@ export function useDataTable<
 
   // ---------------------------------------------------------------------------
   // Column visibility / order / pinning (persisted per-user when tableId is set).
-  // With sub-rows, the hierarchy column is locked first, pinned and shown.
+  // With sub-rows, the hierarchy column is always shown, and `lockColumn` locks
+  // it first and pinned.
   // ---------------------------------------------------------------------------
   const { key: treeColumnKey, warning: treeColumnWarning } = useMemo(
     () => resolveTreeColumnKey(allColumns, subRows),
@@ -109,7 +110,7 @@ export function useDataTable<
     setColumnOrder,
     pinnedColumns,
     setPin,
-  } = useColumns(allColumns, tableId, treeColumnKey);
+  } = useColumns(allColumns, tableId, treeColumnKey, subRows?.lockColumn ?? false);
 
   // ---------------------------------------------------------------------------
   // Pagination actions (delegated to control + page counter sync)

@@ -38,11 +38,15 @@ export function useColumns<TRow extends Record<string, unknown>>(
   allColumns: Column<TRow>[],
   tableId: string | undefined,
   /**
-   * A column that is always first, pinned left, and shown (the sub-rows
-   * hierarchy column). Changes that would move, hide or unpin it are ignored.
+   * The sub-rows hierarchy column. It's always shown, and with `lockColumn`
+   * also first and pinned left. Changes that would hide it (or, locked, move or
+   * unpin it) are ignored.
    */
-  lockedKey?: string,
+  treeColumnKey?: string,
+  lockColumn = false,
 ) {
+  const shownKey = treeColumnKey;
+  const lockedKey = lockColumn ? treeColumnKey : undefined;
   // Stable key list + key→column map derived from the current column defs.
   const columnKeys = useMemo(() => allColumns.map((col, i) => columnKeyAt(col, i)), [allColumns]);
   const columnByKey = useMemo(() => {
@@ -68,9 +72,9 @@ export function useColumns<TRow extends Record<string, unknown>>(
 
   const hiddenColumns = useMemo(() => {
     const hidden = new Set(persisted.hidden);
-    if (lockedKey !== undefined) hidden.delete(lockedKey);
+    if (shownKey !== undefined) hidden.delete(shownKey);
     return hidden;
-  }, [persisted.hidden, lockedKey]);
+  }, [persisted.hidden, shownKey]);
   const pinnedColumns = useMemo(
     () =>
       lockedKey === undefined
@@ -88,7 +92,7 @@ export function useColumns<TRow extends Record<string, unknown>>(
 
   const toggleColumn = useCallback(
     (fieldOrId: string) => {
-      if (fieldOrId === lockedKey) return;
+      if (fieldOrId === shownKey) return;
       setPersisted((prev) => {
         const hidden = new Set(prev.hidden);
         if (hidden.has(fieldOrId)) {
@@ -99,7 +103,7 @@ export function useColumns<TRow extends Record<string, unknown>>(
         return { ...prev, hidden: [...hidden] };
       });
     },
-    [setPersisted, lockedKey],
+    [setPersisted, shownKey],
   );
 
   const showAllColumns = useCallback(() => {
@@ -107,8 +111,8 @@ export function useColumns<TRow extends Record<string, unknown>>(
   }, [setPersisted]);
 
   const hideAllColumns = useCallback(() => {
-    setPersisted((prev) => ({ ...prev, hidden: columnKeys.filter((key) => key !== lockedKey) }));
-  }, [setPersisted, columnKeys, lockedKey]);
+    setPersisted((prev) => ({ ...prev, hidden: columnKeys.filter((key) => key !== shownKey) }));
+  }, [setPersisted, columnKeys, shownKey]);
 
   const isColumnVisible = useCallback(
     (fieldOrId: string) => !hiddenColumns.has(fieldOrId),

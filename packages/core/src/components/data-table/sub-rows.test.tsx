@@ -14,7 +14,7 @@ import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
 import { SELECTION_KEY } from "./column-layout";
-import type { Column, UseDataTableOptions } from "./types";
+import type { Column, SubRowsOptions, UseDataTableOptions } from "./types";
 
 type Account = {
   id: string;
@@ -203,91 +203,132 @@ describe("DataTable subRows", () => {
   });
 
   describe("the hierarchy column", () => {
-    it("is the first defined column by default, and is pinned left", () => {
-      const { result } = renderHook(
+    const hook = (subRows: Pick<SubRowsOptions<Account>, "column" | "lockColumn"> = {}) =>
+      renderHook(
         () =>
           useDataTable<Account>({
             columns,
             data: { rows: ACCOUNTS },
-            subRows: { getSubRows: (row) => row.children },
+            subRows: { getSubRows: (row) => row.children, ...subRows },
           }),
         { wrapper },
       );
+
+    it("is the first defined column by default, and isn't pinned", () => {
+      const { result } = hook();
       expect(result.current.treeColumnKey).toBe("name");
-      expect(result.current.pinnedColumns.name).toBe("left");
+      expect(result.current.pinnedColumns.name).toBeUndefined();
     });
 
-    it("is forced first when `column` names a later one", () => {
+    it("stays where `column` is defined, carrying the indent and caret there", () => {
       render(
         <Harness options={{ subRows: { getSubRows: (row) => row.children, column: "code" } }} />,
         { wrapper },
       );
-      expect(headerKeys()).toEqual(["code", "name"]);
-      expect(rowFor("1000").querySelector("[data-slot=data-table-sub-rows-cell]")).not.toBeNull();
+      expect(headerKeys()).toEqual(["name", "code"]);
+      const treeCell = rowFor("1000").querySelector("[data-slot=data-table-sub-rows-cell]");
+      expect(treeCell?.textContent).toContain("1000");
     });
 
     it("falls back to the first column for an unknown `column`, with a warning", () => {
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-      const { result } = renderHook(
-        () =>
-          useDataTable<Account>({
-            columns,
-            data: { rows: ACCOUNTS },
-            subRows: { getSubRows: (row) => row.children, column: "nope" },
-          }),
-        { wrapper },
-      );
+      const { result } = hook({ column: "nope" });
       expect(result.current.treeColumnKey).toBe("name");
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('"nope"'));
       warn.mockRestore();
     });
 
-    it("can't be hidden, unpinned or moved, and nothing moves in front of it", () => {
-      const { result } = renderHook(
-        () =>
-          useDataTable<Account>({
-            columns,
-            data: { rows: ACCOUNTS },
-            subRows: { getSubRows: (row) => row.children },
-          }),
-        { wrapper },
-      );
+    it("can be moved and pinned, but never hidden", () => {
+      const { result } = hook();
 
       act(() => {
         result.current.toggleColumn("name");
-        result.current.setPin("name", "none");
         result.current.moveColumn("name", 1);
-        result.current.moveColumn("code", 0);
-        result.current.hideAllColumns();
+        result.current.setPin("name", "right");
       });
       expect(result.current.isColumnVisible("name")).toBe(true);
-      expect(result.current.pinnedColumns.name).toBe("left");
-      expect(result.current.columnOrder).toEqual(["name", "code"]);
-      expect(result.current.isColumnVisible("code")).toBe(false);
+      expect(result.current.columnOrder).toEqual(["code", "name"]);
+      expect(result.current.pinnedColumns.name).toBe("right");
 
-      act(() => result.current.setColumnOrder(["code", "name"]));
-      expect(result.current.columnOrder).toEqual(["name", "code"]);
+      act(() => result.current.hideAllColumns());
+      expect(result.current.isColumnVisible("name")).toBe(true);
+      expect(result.current.isColumnVisible("code")).toBe(false);
     });
 
-    it("shows as locked in column settings: no drag handle, visibility can't change", async () => {
+    it("is draggable in column settings, but its visibility can't change", async () => {
       const user = userEvent.setup();
       render(<Harness toolbar={<DataTable.ColumnSettings />} />, { wrapper });
 
       await user.click(screen.getByRole("button", { name: /columns/i }));
       const popup = await screen.findByRole("group", { name: /column settings/i });
-      const locked = popup.querySelector("[data-locked]") as HTMLElement;
-      expect(locked.textContent).toContain("Account");
-      expect(locked.getAttribute("draggable")).toBe("false");
-      const checkbox = within(locked).getByRole("checkbox", { name: "Account" });
+      expect(popup.querySelector("[data-locked]")).toBeNull();
+      const checkbox = within(popup).getByRole("checkbox", { name: "Account" });
       expect(checkbox.hasAttribute("data-disabled")).toBe(true);
+      expect(checkbox.closest("[draggable]")?.getAttribute("draggable")).toBe("true");
+    });
+
+    describe("with lockColumn", () => {
+      it("is pinned left, and forced first when `column` names a later one", () => {
+        render(
+          <Harness
+            options={{
+              subRows: { getSubRows: (row) => row.children, column: "code", lockColumn: true },
+            }}
+          />,
+          { wrapper },
+        );
+        expect(headerKeys()).toEqual(["code", "name"]);
+        expect(rowFor("1000").querySelector("[data-slot=data-table-sub-rows-cell]")).not.toBeNull();
+        expect(hook({ lockColumn: true }).result.current.pinnedColumns.name).toBe("left");
+      });
+
+      it("can't be hidden, unpinned or moved, and nothing moves in front of it", () => {
+        const { result } = hook({ lockColumn: true });
+
+        act(() => {
+          result.current.toggleColumn("name");
+          result.current.setPin("name", "none");
+          result.current.moveColumn("name", 1);
+          result.current.moveColumn("code", 0);
+          result.current.hideAllColumns();
+        });
+        expect(result.current.isColumnVisible("name")).toBe(true);
+        expect(result.current.pinnedColumns.name).toBe("left");
+        expect(result.current.columnOrder).toEqual(["name", "code"]);
+        expect(result.current.isColumnVisible("code")).toBe(false);
+
+        act(() => result.current.setColumnOrder(["code", "name"]));
+        expect(result.current.columnOrder).toEqual(["name", "code"]);
+      });
+
+      it("shows as locked in column settings: no drag handle, visibility can't change", async () => {
+        const user = userEvent.setup();
+        render(
+          <Harness
+            options={{ subRows: { getSubRows: (row) => row.children, lockColumn: true } }}
+            toolbar={<DataTable.ColumnSettings />}
+          />,
+          { wrapper },
+        );
+
+        await user.click(screen.getByRole("button", { name: /columns/i }));
+        const popup = await screen.findByRole("group", { name: /column settings/i });
+        const locked = popup.querySelector("[data-locked]") as HTMLElement;
+        expect(locked.textContent).toContain("Account");
+        expect(locked.getAttribute("draggable")).toBe("false");
+        const checkbox = within(locked).getByRole("checkbox", { name: "Account" });
+        expect(checkbox.hasAttribute("data-disabled")).toBe(true);
+      });
     });
   });
 
   describe("selection", () => {
     function Selecting({
       selection,
+      column,
     }: {
       selection?: Partial<NonNullable<UseDataTableOptions<Account>["rowSelection"]>>;
+      column?: string;
     }) {
       const [ids, setIds] = useState<string[]>(["elsewhere"]);
       const table = useDataTable<Account>({
@@ -296,6 +337,7 @@ describe("DataTable subRows", () => {
         subRows: {
           getSubRows: (row) => row.children,
           defaultExpandedIds: ["assets"],
+          column,
         },
         rowSelection: { ...selection, selectedIds: ids, onChange: setIds } as NonNullable<
           UseDataTableOptions<Account>["rowSelection"]
@@ -344,6 +386,19 @@ describe("DataTable subRows", () => {
       expect(
         rowFor("Assets").querySelector("[data-slot=data-table-sub-rows-cell] [role=checkbox]"),
       ).toBeNull();
+    });
+
+    it("keeps the checkboxes flat in the selection column when the tree column isn't first, still propagating", async () => {
+      const user = userEvent.setup();
+      render(<Selecting column="code" />, { wrapper });
+
+      expect(headerKeys()).toEqual([SELECTION_KEY, "name", "code"]);
+      expect(
+        rowFor("Assets").querySelector("[data-slot=data-table-sub-rows-cell] [role=checkbox]"),
+      ).toBeNull();
+      await user.click(checkboxFor("Cash"));
+      expect(ids()).toEqual(["cash", "elsewhere"]);
+      expect(checkboxFor("Assets").hasAttribute("data-indeterminate")).toBe(true);
     });
 
     it("selects the page's leaves from the tree column's header, keeping other pages' ids", () => {

@@ -713,12 +713,14 @@ const table = useDataTable<Account>({
   subRows: {
     getSubRows: (account) => account.children,
     column: "name", // optional: defaults to the first column
+    lockColumn: true, // optional: keep it first and pinned
   },
   rowSelection: { actions: [exportAccounts] },
 });
 ```
 
-- **The hierarchy column is locked.** It carries the indent, the open / close caret, and (when selection propagates) the checkbox. It's always first and pinned left, even if `column` names a column defined later, and column settings won't let anyone hide it, unpin it, or move it or anything in front of it. It's marked with a lock.
+- **The hierarchy column** carries the indent and the open / close caret. It's always shown, so column settings won't let anyone hide it, but otherwise it sits wherever it's defined and can be moved and pinned like any other column.
+- **Set `lockColumn: true` when that column's value is what nests**, like a folder or file name in a directory tree, or an account name in a chart of accounts. It's then always first and pinned left, even if `column` names a column defined later, and column settings won't let anyone unpin it, or move it or anything in front of it. It's marked with a lock. Leave it off when the hierarchy is incidental to the column, so people can arrange the table their own way.
 - **Rows need an `id`, unique across the tree.** Expansion and selection are keyed by it. A row without one can't open or be selected.
 - **Sub-rows come with the data.** `getSubRows` reads them synchronously from each row. Loading children on demand isn't supported yet.
 - **The hierarchy cell stays read-only** under inline editing, since it also holds the indent and caret.
@@ -731,11 +733,13 @@ The caret is a native `<button>` with `aria-expanded`, named from the hierarchy 
 
 `rowSelection` takes the same `selectionPropagation` and `valueStrategy` as [`Tree`](./tree.md), and works the same way, so a tree and a tree-shaped table behave alike.
 
-| `selectionPropagation` | A parent row is                                                                                         | Checkboxes sit                                 |
-| ---------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `"full"` (default)     | A container. Ticking it ticks every row beneath it, and its checkbox is derived from them.              | In the hierarchy column, indented with the row |
-| `"down"`               | A row in its own right. Ticking it also ticks every row beneath it; unticking a child leaves it ticked. | In the hierarchy column, indented with the row |
-| `"none"`               | A row in its own right, ticked on its own.                                                              | In the usual left-hand selection column        |
+| `selectionPropagation` | A parent row is                                                                                         | Checkboxes sit                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `"full"` (default)     | A container. Ticking it ticks every row beneath it, and its checkbox is derived from them.              | In the hierarchy column, indented with the row\* |
+| `"down"`               | A row in its own right. Ticking it also ticks every row beneath it; unticking a child leaves it ticked. | In the hierarchy column, indented with the row\* |
+| `"none"`               | A row in its own right, ticked on its own.                                                              | In the usual left-hand selection column          |
+
+\* Only while the hierarchy column is the first column. When it's further along, the checkboxes stay flat in the left-hand selection column and still propagate, so a parent's checkbox still shows when its rows are partly ticked. `lockColumn` keeps the column first.
 
 `valueStrategy` decides what `selectedIds` lists: `"leaves"` (the default), `"topmost"` (a fully ticked parent's id in place of its rows), or `"all"`. `"down"` and `"none"` only allow `"all"`. Ids from other pages pass through untouched, and the header checkbox ticks the current page's rows, sitting in the hierarchy column's header when the checkboxes do. Selection actions receive the ids `valueStrategy` lists.
 
@@ -1229,7 +1233,7 @@ const table = useDataTable({
 | `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`, with optional `actions`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection). |
 | `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                                          |
 | `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows).                          |
-| `subRows`           | `SubRowsOptions<TRow>`             | Nested rows: `getSubRows`, optional `column`, and `expandedIds` + `onExpandedChange` or `defaultExpandedIds`. Can't be combined with `rowExpansion`. See [Sub-rows](#sub-rows).                          |
+| `subRows`           | `SubRowsOptions<TRow>`             | Nested rows: `getSubRows`, optional `column` and `lockColumn`, and `expandedIds` + `onExpandedChange` or `defaultExpandedIds`. Can't be combined with `rowExpansion`. See [Sub-rows](#sub-rows).         |
 | `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                                                |
 
 ### `DataTableData`

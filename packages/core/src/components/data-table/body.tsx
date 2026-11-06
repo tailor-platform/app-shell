@@ -4,6 +4,7 @@ import {
   DataTableContext,
   PinMeasureContext,
   hasTreeColumn,
+  treeColumnFirst,
   selectionInTreeColumn,
 } from "./context";
 import { buildColumnKeys, computePinLayout } from "./column-layout";
@@ -45,7 +46,7 @@ function DataTableBody({ className }: { className?: string }) {
   const hasRowActions = !!(rowActions && rowActions.length > 0);
   // The selection column; with propagating sub-rows the checkboxes move into the tree column.
   const hasSelection = !!toggleRowSelection && !selectionInTreeColumn(ctx);
-  const besideTree = hasTreeColumn(ctx);
+  const treeFirst = treeColumnFirst(ctx);
   const hasExpand = !!rowExpansion;
   const totalColSpan =
     (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0) + (hasExpand ? 1 : 0);
@@ -73,7 +74,7 @@ function DataTableBody({ className }: { className?: string }) {
           rowCount={rowCount}
           pinLayout={pinLayout}
           hasSelection={hasSelection}
-          besideTree={besideTree}
+          besideTree={treeFirst}
           hasExpand={hasExpand}
           hasRowActions={hasRowActions}
         />
@@ -118,7 +119,8 @@ function DataTableBody({ className }: { className?: string }) {
         rowExpansion={rowExpansion}
         isRowExpanded={isRowExpanded}
         toggleRowExpansion={toggleRowExpansion}
-        treeRows={besideTree ? visibleRows : undefined}
+        treeRows={hasTreeColumn(ctx) ? visibleRows : undefined}
+        treeFirst={treeFirst}
         treeColumnKey={treeColumnKey}
         toggleSubRows={toggleSubRows}
         selectionInTree={selectionInTreeColumn(ctx)}

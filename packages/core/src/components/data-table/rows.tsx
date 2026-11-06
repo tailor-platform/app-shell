@@ -46,6 +46,8 @@ interface DataTableRowsProps<TRow extends Record<string, unknown>> {
   /** With sub-rows: the column that carries the indent and caret. */
   treeColumnKey?: string;
   toggleSubRows?: (row: TRow) => void;
+  /** The tree column renders first, so it takes the selection column's inset. */
+  treeFirst?: boolean;
   /** With propagating selection: the checkbox sits in the tree column. */
   selectionInTree?: boolean;
   getRowCheckState?: (row: TRow) => { checked: boolean; indeterminate: boolean };
@@ -68,12 +70,12 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   treeRows,
   treeColumnKey,
   toggleSubRows,
+  treeFirst = false,
   selectionInTree = false,
   getRowCheckState,
 }: DataTableRowsProps<TRow>) {
   const t = useDataTableT();
   const baseId = useId();
-  const besideTree = treeRows !== undefined;
   const { value: timeZone } = useTimeZone();
   const hasExpand = !!rowExpansion;
   const { ordered, keys, placements, selection, expand, actions } = pinLayout;
@@ -154,7 +156,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               (() => {
                 const { style, className } = pinCellProps(
                   selection,
-                  selectionCellBase(besideTree),
+                  selectionCellBase(treeFirst),
                   "body",
                 );
                 return (
@@ -165,6 +167,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                   >
                     <Checkbox
                       checked={selected}
+                      indeterminate={checkState?.indeterminate ?? false}
                       onCheckedChange={() => toggleRowSelection(row)}
                       aria-label={t("selectRow")}
                     />
@@ -233,7 +236,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                   },
                   className: cn(
                     resolveAlign(col) === "right" && "astw:text-right",
-                    isTreeColumn && treeCellPadding(!hasSelection),
+                    isTreeColumn && treeFirst && treeCellPadding(!hasSelection),
                     // Keep the width constraint on the cell, but move the
                     // `overflow: hidden` truncation to an inner span (below) — a
                     // truncating cell would otherwise clip the freeze-shadow

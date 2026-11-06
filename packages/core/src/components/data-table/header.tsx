@@ -7,6 +7,7 @@ import {
   DataTableContext,
   PinMeasureContext,
   hasTreeColumn,
+  treeColumnFirst,
   selectionInTreeColumn,
 } from "./context";
 import { DataTableHeaderContextMenu } from "./context-menu";
@@ -82,7 +83,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
   const t = useDataTableT();
   const widths = useContext(PinMeasureContext);
   const hasSelection = !!toggleRowSelection && !selectionInTreeColumn(ctx);
-  const besideTree = hasTreeColumn(ctx);
+  const besideTree = treeColumnFirst(ctx);
   const hasExpand = !!rowExpansion;
   const hasRowActions = !!(rowActions && rowActions.length > 0);
   // With propagating sub-rows, select-all sits in the tree column's header,
@@ -159,7 +160,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           })()}
         {ordered?.map((col, index) => {
           const key = keys.get(col) as string;
-          const isTreeColumn = besideTree && key === treeColumnKey;
+          const isTreeColumn = hasTreeColumn(ctx) && key === treeColumnKey;
           const label = col.label;
           const sortField = col.sort?.field;
           const currentSort = sortField
@@ -199,7 +200,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               },
               className: cn(
                 align === "right" && "astw:text-right",
-                isTreeColumn && treeCellPadding(!hasSelection),
+                isTreeColumn && besideTree && treeCellPadding(!hasSelection),
               ),
             },
             "header",
@@ -229,7 +230,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                       onSortDirectionChange={
                         isSortable ? (direction) => onSort(sortField, direction) : undefined
                       }
-                      pinLocked={isTreeColumn}
+                      pinLocked={isTreeColumn && !!ctx.subRows?.lockColumn}
                     >
                       {content}
                     </DataTableHeaderContextMenu>

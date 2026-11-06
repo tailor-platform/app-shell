@@ -638,9 +638,10 @@ export type RowSelectionOptions = TreeSelectionBehaviorProps & {
  * the top level, so pagination counts them, and each parent's sub-rows stay on
  * its page.
  *
- * The hierarchy column (`column`) is locked: it's always first, pinned left,
- * and can't be hidden or moved. It carries the indent, the open / close caret,
- * and the selection checkbox when `rowSelection` propagates.
+ * The hierarchy column (`column`) carries the indent and the open / close
+ * caret, and can't be hidden. While it's the first column, it also holds the
+ * selection checkbox when `rowSelection` propagates; anywhere else, the
+ * checkboxes stay in the selection column. `lockColumn` keeps it first.
  *
  * **Requirement:** Each row must have a string or number `id`, unique across
  * the whole tree. Expansion and selection are keyed by it; a row without one
@@ -652,9 +653,14 @@ export type SubRowsOptions<TRow extends Record<string, unknown>> = {
   /**
    * The key of the column that carries the hierarchy: its `id`, or its
    * `label` when it has no `id`. Defaults to the first column in `columns`.
-   * Wherever it's defined, it's shown first and pinned left.
    */
   column?: string;
+  /**
+   * Locks the hierarchy column first and pinned left, wherever it's defined,
+   * so it can't be moved or unpinned. Use it when that column's value is what
+   * nests, like a folder name in a directory tree. Default `false`.
+   */
+  lockColumn?: boolean;
 } & (
   | {
       /** Controlled: ids of the rows whose sub-rows are open. Update it from `onExpandedChange`. */
@@ -955,7 +961,7 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   subRows?: SubRowsOptions<TRow>;
   /** The rows to render: each page row followed by its open sub-rows, with depth. */
   visibleRows?: DataTableTreeRow<TRow>[];
-  /** Key of the hierarchy column, which is locked first, pinned left, and always shown. */
+  /** Key of the hierarchy column, which is always shown (and, with `lockColumn`, locked first). */
   treeColumnKey?: string;
   /** Ids of the rows whose sub-rows are open. */
   expandedSubRowIds?: string[];

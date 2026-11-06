@@ -8,7 +8,7 @@ import type {
   SubRowsOptions,
 } from "./types";
 import type { PageInfo, SortState } from "@/types/collection";
-import type { ColumnWidths } from "./column-layout";
+import { firstRenderedKey, type ColumnWidths } from "./column-layout";
 
 /**
  * Context value provided by `DataTable.Root`.
@@ -116,7 +116,7 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   subRows?: SubRowsOptions<TRow>;
   /** The rows to render with sub-rows: each page row followed by its open sub-rows. */
   visibleRows?: DataTableTreeRow<TRow>[];
-  /** Key of the hierarchy column: locked first, pinned left, always shown. */
+  /** Key of the hierarchy column: always shown (and, with `lockColumn`, locked first). */
   treeColumnKey?: string;
   /** Ids of the rows whose sub-rows are open. */
   expandedSubRowIds?: string[];
@@ -140,19 +140,43 @@ export function hasTreeColumn(
 }
 
 /**
- * Where a tree's selection checkboxes go. When selection propagates ("full" or
- * "down"), they sit in the hierarchy column, indented with the row, so a parent
- * and the rows it ticks line up. With "none", or without sub-rows, every row is
- * independent and they stay in the left-hand selection column.
+ * Whether the hierarchy column renders first, where the selection column's
+ * checkboxes can move into it and line up with the indent.
  */
-export function selectionInTreeColumn(
+export function treeColumnFirst(
   ctx: Pick<
     DataTableContextValue<Record<string, unknown>>,
-    "subRows" | "visibleRows" | "treeColumnKey" | "toggleRowSelection" | "rowSelection"
+    "subRows" | "visibleRows" | "treeColumnKey" | "columns" | "visibleColumns" | "pinnedColumns"
   >,
 ): boolean {
   return (
     hasTreeColumn(ctx) &&
+    firstRenderedKey(ctx.columns, ctx.visibleColumns, ctx.pinnedColumns) === ctx.treeColumnKey
+  );
+}
+
+/**
+ * Where a tree's selection checkboxes go. When selection propagates ("full" or
+ * "down") and the hierarchy column renders first, they sit in it, indented with
+ * the row, so a parent and the rows it ticks line up. With "none", with the
+ * hierarchy column further along, or without sub-rows, they stay flat in the
+ * left-hand selection column.
+ */
+export function selectionInTreeColumn(
+  ctx: Pick<
+    DataTableContextValue<Record<string, unknown>>,
+    | "subRows"
+    | "visibleRows"
+    | "treeColumnKey"
+    | "columns"
+    | "visibleColumns"
+    | "pinnedColumns"
+    | "toggleRowSelection"
+    | "rowSelection"
+  >,
+): boolean {
+  return (
+    treeColumnFirst(ctx) &&
     !!ctx.toggleRowSelection &&
     (ctx.rowSelection?.selectionPropagation ?? "full") !== "none"
   );

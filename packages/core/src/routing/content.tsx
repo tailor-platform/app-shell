@@ -13,7 +13,7 @@ export const EmptyOutlet = () => {
       <p className="astw:font-semibold astw:leading-none astw:tracking-tight">
         {t("welcomeTitle")}
       </p>
-      <p className="pt-4">{t("welcomeBody")}</p>
+      <p>{t("welcomeBody")}</p>
     </>
   );
 };

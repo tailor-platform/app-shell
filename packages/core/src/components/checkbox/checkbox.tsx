@@ -26,7 +26,8 @@ type CheckboxProps = Omit<React.ComponentProps<typeof BaseCheckbox.Root>, "child
 // `aria-invalid` so the box turns destructive whether it's inside a Base UI
 // `Field.Root` (which sets `data-invalid`, like `Field.Control`) or a
 // shadcn-style `FormControl` (which sets `aria-invalid`, like `Input`).
-const checkboxBoxClasses = cn(
+// Shared with CheckboxTree, which draws a visual-only box per row (not public API).
+export const checkboxBoxClasses = cn(
   "astw:peer astw:flex astw:size-4 astw:shrink-0 astw:cursor-pointer astw:items-center astw:justify-center astw:rounded-xs astw:border astw:border-input astw:shadow-xs astw:outline-none astw:transition-[color,box-shadow]",
   "astw:data-checked:bg-primary astw:data-checked:border-primary astw:data-checked:text-primary-foreground",
   "astw:data-indeterminate:bg-primary astw:data-indeterminate:border-primary astw:data-indeterminate:text-primary-foreground",

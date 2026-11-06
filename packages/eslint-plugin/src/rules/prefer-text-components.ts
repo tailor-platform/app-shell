@@ -23,7 +23,7 @@ type JSXOpeningElement = {
 type RuleContext = {
   report(problem: {
     node: JSXName;
-    messageId: "useTextElement" | "useTextSpan";
+    messageId: "useTextElement" | "useTextSpan" | "styledHeading" | "styledText";
     data: { element: string; found: string; role: string };
   }): void;
 };
@@ -47,12 +47,38 @@ const DEFAULT_ROLES: Record<string, string> = {
 const SIZE_UTILITY =
   /^text-(?:xs|sm|base|lg|xl|[2-9]xl|\[(?:(?:\d+(?:\.\d+)?|\.\d+)(?:px|rem|em)|length:[^\]]+)\]|\(length:[^)]+\))(?:\/\S+)?$/;
 
-function findSizes(text: string): string[] {
-  return text.split(/\s+/).filter((token) => {
-    const { utility } = splitVariants(token);
-    // Tailwind v4 puts `!` at the end; v3 put it at the start.
-    return SIZE_UTILITY.test(utility.replace(/^!|!$/, ""));
-  });
+/** A typography role utility such as `text-heading-md` or `text-body-sm`. */
+const ROLE_UTILITY = /^text-(?:heading|body|label|code)-/;
+
+const WEIGHT_UTILITY =
+  /^font-(?:thin|extralight|light|normal|medium|semibold|bold|extrabold|black)$/;
+
+const LINE_UTILITY = /^(?:leading|tracking)-/;
+
+/** A class as written, and its utility without the variant prefix and `!`. */
+type ParsedClass = { token: string; utility: string };
+
+function parseClasses(text: string): ParsedClass[] {
+  return text
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((token) => {
+      const { utility } = splitVariants(token);
+      // Tailwind v4 puts `!` at the end; v3 put it at the start.
+      return { token, utility: utility.replace(/^!|!$/, "") };
+    });
+}
+
+/**
+ * Weight, line height and letter spacing set without a role. On `p` and `span`, `font-semibold`
+ * is allowed for emphasis inside a sentence. A heading has no such use, so any weight counts.
+ */
+function findHandStyles(classes: ParsedClass[], heading: boolean): ParsedClass[] {
+  return classes.filter(
+    ({ utility }) =>
+      LINE_UTILITY.test(utility) ||
+      (WEIGHT_UTILITY.test(utility) && (heading || utility !== "font-semibold")),
+  );
 }
 
 /**
@@ -74,7 +100,7 @@ export const preferTextComponents = {
     type: "suggestion" as const,
     docs: {
       description:
-        "Report a Tailwind font size on a plain p, h1 to h6, or span element, and name the AppShell Text element component to use.",
+        "Report a Tailwind font size, or a weight, line height or letter spacing without a typography role, on a plain p, h1 to h6, or span element, and name the AppShell Text element component to use.",
     },
     schema: [],
     messages: {
@@ -82,6 +108,10 @@ export const preferTextComponents = {
         "`<{{element}}>` sets its text size with `{{found}}`. Use `<Text.{{element}}>` from `@tailor-platform/app-shell` (default role `{{role}}`), and set another typography role with `variant` if needed. `Text.{{element}}` is available from AppShell 1.19.0.",
       useTextSpan:
         "`<span>` sets its text size with `{{found}}`. Use `<Text.span>` from `@tailor-platform/app-shell` (default role `{{role}}`), or replace the size with a typography role utility such as `text-label-md` or `text-body-sm` when you style the element yourself. `Text.span` is available from AppShell 1.19.0.",
+      styledHeading:
+        "`<{{element}}>` styles its text with `{{found}}` and no typography role. Use `<Text.{{element}}>` from `@tailor-platform/app-shell` (default role `{{role}}`), and set another typography role with `variant` if needed. `Text.{{element}}` is available from AppShell 1.19.0.",
+      styledText:
+        "`<{{element}}>` styles its text with `{{found}}` and no typography role. Use `<Text.{{element}}>` from `@tailor-platform/app-shell` (default role `{{role}}`) or a typography role utility such as `text-label-md`. For emphasis inside a sentence, use `font-semibold` only. `Text.{{element}}` is available from AppShell 1.19.0.",
     },
   },
   create(context: RuleContext) {
@@ -100,13 +130,26 @@ export const preferTextComponents = {
         );
         const text = className && classNameString(className.value);
         if (!text) return;
-        const sizes = findSizes(text);
-        if (sizes.length === 0) return;
+        const classes = parseClasses(text);
+        const sizes = classes.filter(({ utility }) => SIZE_UTILITY.test(utility));
+        if (sizes.length > 0) {
+          context.report({
+            node: node.name,
+            messageId: element === "span" ? "useTextSpan" : "useTextElement",
+            data: { element, found: sizes.map(({ token }) => token).join(" "), role },
+          });
+          return;
+        }
+
+        if (classes.some(({ utility }) => ROLE_UTILITY.test(utility))) return;
+        const heading = element !== "p" && element !== "span";
+        const styles = findHandStyles(classes, heading);
+        if (styles.length === 0) return;
 
         context.report({
           node: node.name,
-          messageId: element === "span" ? "useTextSpan" : "useTextElement",
-          data: { element, found: sizes.join(" "), role },
+          messageId: heading ? "styledHeading" : "styledText",
+          data: { element, found: styles.map(({ token }) => token).join(" "), role },
         });
       },
     };

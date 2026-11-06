@@ -13,6 +13,14 @@ function element(name: string, found: string, role: string) {
   return { messageId: "useTextElement" as const, data: { element: name, found, role } };
 }
 
+function styled(name: string, found: string, role: string) {
+  const heading = name !== "p" && name !== "span";
+  return {
+    messageId: heading ? ("styledHeading" as const) : ("styledText" as const),
+    data: { element: name, found, role },
+  };
+}
+
 function span(found: string) {
   return { messageId: "useTextSpan" as const, data: { element: "span", found, role: "label-md" } };
 }
@@ -25,8 +33,15 @@ ruleTester.run("prefer-text-components", preferTextComponents, {
     // Role utilities and the allowed modifiers.
     'const view = <p className="text-body-sm text-muted-foreground">Note</p>;',
     'const view = <span className="text-label-md tabular-nums uppercase">Total</span>;',
+    'const view = <h3 className="text-heading-md leading-none">Title</h3>;',
+    'const view = <h2 className="text-heading-sm font-bold tracking-tight">Title</h2>;',
+    'const view = <p className="text-body-md font-medium">Note</p>;',
+    // `font-semibold` is emphasis inside a sentence on p and span.
     'const view = <span className="font-semibold">Overdue</span>;',
-    'const view = <h3 className="font-medium leading-none tracking-tight">Title</h3>;',
+    'const view = <p className="font-semibold text-muted-foreground">Note</p>;',
+    // Classes that do not style the text, and the font family.
+    'const view = <h2 className="mb-4 truncate text-muted-foreground">Title</h2>;',
+    'const view = <span className="font-mono tabular-nums">SKU-1</span>;',
     // Other elements are out of scope.
     'const view = <div className="text-sm">Note</div>;',
     'const view = <label className="text-sm">Name</label>;',
@@ -93,6 +108,41 @@ ruleTester.run("prefer-text-components", preferTextComponents, {
     {
       code: "const view = <p className={`text-xs text-muted-foreground`}>Note</p>;",
       errors: [element("p", "text-xs", "body-md")],
+    },
+    {
+      // A heading with a weight, line height or letter spacing and no role.
+      code: 'const view = <h3 className="font-semibold">Addresses</h3>;',
+      errors: [styled("h3", "font-semibold", "heading-sm")],
+    },
+    {
+      code: 'const view = <h3 className="font-medium leading-none tracking-tight">Title</h3>;',
+      errors: [styled("h3", "font-medium leading-none tracking-tight", "heading-sm")],
+    },
+    {
+      code: 'const view = <h1 className="md:font-bold">Orders</h1>;',
+      errors: [styled("h1", "md:font-bold", "heading-lg")],
+    },
+    {
+      // p and span: any weight except font-semibold, and line height or letter spacing.
+      code: 'const view = <p className="font-medium">Main office</p>;',
+      errors: [styled("p", "font-medium", "body-md")],
+    },
+    {
+      code: 'const view = <span className="mr-2 font-bold text-foreground">Author</span>;',
+      errors: [styled("span", "font-bold", "label-md")],
+    },
+    {
+      code: 'const view = <span className="font-semibold uppercase tracking-wide">EN</span>;',
+      errors: [styled("span", "tracking-wide", "label-md")],
+    },
+    {
+      code: 'const view = <p className="leading-none">Note</p>;',
+      errors: [styled("p", "leading-none", "body-md")],
+    },
+    {
+      // A size takes the size message only.
+      code: 'const view = <h3 className="text-lg font-semibold leading-none">Title</h3>;',
+      errors: [element("h3", "text-lg", "heading-sm")],
     },
     {
       // Each element is reported once, at its own name.

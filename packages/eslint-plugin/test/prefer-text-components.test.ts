@@ -42,6 +42,8 @@ ruleTester.run("prefer-text-components", preferTextComponents, {
     // Classes that do not style the text, and the font family.
     'const view = <h2 className="mb-4 truncate text-muted-foreground">Title</h2>;',
     'const view = <span className="font-mono tabular-nums">SKU-1</span>;',
+    'const view = <span className="uppercase text-muted-foreground">Draft</span>;',
+    'const view = <p className="font-[Inter]">Note</p>;',
     // Other elements are out of scope.
     'const view = <div className="text-sm">Note</div>;',
     'const view = <label className="text-sm">Name</label>;',
@@ -134,6 +136,14 @@ ruleTester.run("prefer-text-components", preferTextComponents, {
     {
       code: 'const view = <span className="font-semibold uppercase tracking-wide">EN</span>;',
       errors: [styled("span", "tracking-wide", "label-md")],
+    },
+    {
+      code: 'const view = <h2 className="font-[600]">Title</h2>;',
+      errors: [styled("h2", "font-[600]", "heading-md")],
+    },
+    {
+      code: 'const view = <span className="font-normal text-muted-foreground">(optional)</span>;',
+      errors: [styled("span", "font-normal", "label-md")],
     },
     {
       code: 'const view = <p className="leading-none">Note</p>;',

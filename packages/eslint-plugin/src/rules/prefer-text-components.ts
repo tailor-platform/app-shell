@@ -50,8 +50,9 @@ const SIZE_UTILITY =
 /** A typography role utility such as `text-heading-md` or `text-body-sm`. */
 const ROLE_UTILITY = /^text-(?:heading|body|label|code)-/;
 
+/** Named weights, and arbitrary numeric weights such as `font-[600]`. */
 const WEIGHT_UTILITY =
-  /^font-(?:thin|extralight|light|normal|medium|semibold|bold|extrabold|black)$/;
+  /^font-(?:thin|extralight|light|normal|medium|semibold|bold|extrabold|black|\[\d+\])$/;
 
 const LINE_UTILITY = /^(?:leading|tracking)-/;
 
@@ -111,7 +112,7 @@ export const preferTextComponents = {
       styledHeading:
         "`<{{element}}>` styles its text with `{{found}}` and no typography role. Use `<Text.{{element}}>` from `@tailor-platform/app-shell` (default role `{{role}}`), and set another typography role with `variant` if needed. `Text.{{element}}` is available from AppShell 1.19.0.",
       styledText:
-        "`<{{element}}>` styles its text with `{{found}}` and no typography role. Use `<Text.{{element}}>` from `@tailor-platform/app-shell` (default role `{{role}}`) or a typography role utility such as `text-label-md`. For emphasis inside a sentence, use `font-semibold` only. `Text.{{element}}` is available from AppShell 1.19.0.",
+        "`<{{element}}>` styles its text with `{{found}}` and no typography role. Use `<Text.{{element}}>` from `@tailor-platform/app-shell` (default role `{{role}}`) or a typography role utility such as `text-label-md`. `font-semibold` alone is allowed for emphasis inside a sentence. `Text.{{element}}` is available from AppShell 1.19.0.",
     },
   },
   create(context: RuleContext) {
@@ -142,7 +143,7 @@ export const preferTextComponents = {
         }
 
         if (classes.some(({ utility }) => ROLE_UTILITY.test(utility))) return;
-        const heading = element !== "p" && element !== "span";
+        const heading = /^h[1-6]$/.test(element);
         const styles = findHandStyles(classes, heading);
         if (styles.length === 0) return;
 

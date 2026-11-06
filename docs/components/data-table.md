@@ -1755,7 +1755,7 @@ const [result] = useQuery({
 
 ### Combining an external predicate
 
-Where a screen narrows the list outside the filter chips — preset filter buttons, or a forced scope such as "only my records" — combine that predicate with `variables.query` using `and` rather than spreading the two objects together:
+Where a screen narrows the list outside the filter chips — a preset that a single filter can't express, or a forced scope such as "only my records" — combine that predicate with `variables.query` using `and` rather than spreading the two objects together:
 
 ```tsx
 const query = presetPredicate ? { and: [presetPredicate, variables.query] } : variables.query;

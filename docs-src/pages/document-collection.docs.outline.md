@@ -11,6 +11,7 @@ requiredImports:
     DataTable,
     Layout,
     Toolbar,
+    Tabs,
     Menu,
     Button,
     useDataTable,
@@ -63,12 +64,14 @@ Layout fill
   |  DataTable.Root                                            |
   |   Toolbar.Root                                             |
   |    Toolbar.Row                                             |
-  |     DataTable.Filters   Download  DataTable.ColumnSettings |
+  |     DataTable.Filters  Download?  DataTable.ColumnSettings |
   |  DataTable.Table                                           |
   |  DataTable.Footer                                          |
   |    DataTable.Pagination      bulk-action bar              |
   +------------------------------------------------------------+
 ```
+
+Parts marked `?` are only there when the use case needs them.
 
 The Layout component should be given the `fill` prop, which sets styles so the browser scrolling occurs internal to the table row area, so title, filters, footer stay visible.
 
@@ -144,11 +147,99 @@ Default sort order is often a key date field, descending (most recent first). Fo
 
 #### Preset filters
 
-Where users repeatedly narrow the same records to a few named views — "Open", "Overdue", "Paid" — offer them as buttons in a `Toolbar.Group`, not as tabs above the table. They are filters on this one table, so they sit with its other filters.
+Where users repeatedly narrow the same records to a few named views — "Open", "Overdue", "Paid" — offer them as a capsule [`Tabs`](../components/tabs.md) control in the toolbar, straight after the filter button, not as tabs above the table. They are filters on this one table, so they sit with its other filters.
 
-- Mark the active preset with `aria-pressed` and a distinct button variant, and keep it in the URL, e.g. `?view=overdue`.
-- Combine the preset's predicate with `variables.query` using `and`, so it stacks with any `DataTable.Filters` chips rather than replacing them. See [Combining an external predicate](../components/data-table.md#combining-an-external-predicate).
-- Changing preset resets the page cursor in the same event.
+Each preset sets an ordinary filter through `control`, and "All" removes it. The preset then shows as a filter chip the user can see and edit, persists to the URL with the rest of the filters, and resets the page cursor, all without extra wiring. A field holds one filter, so picking a preset replaces any chip on that field.
+
+```tsx
+const statusFilter = control.filters.find((f) => f.field === "status");
+const active =
+  Array.isArray(statusFilter?.value) && statusFilter.value.length === 1
+    ? String(statusFilter.value[0])
+    : statusFilter
+      ? null
+      : "all";
+
+<Toolbar.Group>
+  <DataTable.Filters slot="add" />
+  <Tabs.Root
+    variant="capsule"
+    size="sm"
+    value={active}
+    onValueChange={(key) =>
+      key === "all" ? control.removeFilter("status") : control.addFilter("status", "in", [key])
+    }
+  >
+    <Tabs.List aria-label="Invoice status">
+      <Tabs.Tab value="all">All</Tabs.Tab>
+      <Tabs.Tab value="overdue">Overdue</Tabs.Tab>
+      <Tabs.Tab value="paid">Paid</Tabs.Tab>
+    </Tabs.List>
+  </Tabs.Root>
+</Toolbar.Group>;
+```
+
+The active preset is read back from `control.filters`. If the user edits the chip into something no preset matches, show no preset as active rather than "All", which would claim the list is unfiltered.
+
+Where a preset needs more than one filter chip can express, such as "Open" meaning sent or overdue across two fields, combine it with the query as an external predicate instead. See [Combining an external predicate](../components/data-table.md#combining-an-external-predicate).
+
+#### Filter rail
+
+The default is `DataTable.Filters` in the toolbar, which suits most collections. A [`FilterRail`](../components/filter-rail.md) instead shows the filterable fields beside the table, with their options visible up front. Don't choose it on your own: ask what the filtering requirement is, and explicitly whether a filter rail or standard filtering is wanted. Without a clear answer, use standard filtering.
+
+When the rail is used, it is the page's only filter surface. Don't add `DataTable.Filters` or [preset filters](#preset-filters) alongside it, so every filter lives in one place.
+
+```
+Layout fill
+  +------------------------------------------------------------+
+  | Layout.Header                                              |
+  |  (as above)                                                |
+  +------------------+-----------------------------------------+
+  | Layout.Column    | Layout.Column area="main"               |
+  |  area="left"     |  DataTable.Root                         |
+  |  FilterRail.Root |   Toolbar.Root                          |
+  |   Header         |    Toolbar.Row                          |
+  |    ClearAll      |     FilterRail.Trigger  ColumnSettings  |
+  |    Settings      |  DataTable.Table                        |
+  |   Sections       |  DataTable.Footer                       |
+  +------------------+-----------------------------------------+
+```
+
+- The rail writes the same `control` from `useURLCollectionVariables` that the table reads, so its filters persist to the URL like any other.
+- Include `FilterRail.ClearAll` and `FilterRail.Settings` in its header. Settings lets each user hide and reorder sections; pass `useFilterRailLayout` a stable key so their layout persists.
+- Only small, fixed sets of values belong in checkbox or radio sections. Fields whose values keep growing, such as customers or suppliers, get a search. See [Choosing a control](../components/filter-rail.md#choosing-a-control).
+- Below `lg` the rail becomes a sheet behind a **Filters** button. Wrap the page in `FilterRail.Provider` and place `FilterRail.Trigger` at the left of the table toolbar, where the filter button sits otherwise.
+
+With [summary metric cards](#summary-metric-cards), the rail sits beside the table only, not the cards. `Layout` columns run the full height of the page, so lay this out inside a single column with Tailwind utilities. This is pending simplification once more primitive layout building blocks are available.
+
+```tsx
+<FilterRail.Provider control={control} sections={sections} layout={railLayout}>
+  <Layout fill>
+    <Layout.Header title="Invoices" />
+    <Layout.Column>
+      <div className="flex shrink-0 gap-4 overflow-x-auto pb-1">
+        {/* MetricCards, as in Summary metric cards */}
+      </div>
+      <div className="flex min-h-0 flex-1 lg:gap-4">
+        {/* Below lg the rail renders only its sheet, so this collapses to nothing. */}
+        {/* 320px, the same as Layout.Column area="left": wide enough for a date range field. */}
+        <div className="lg:w-80 lg:shrink-0 lg:overflow-y-auto">
+          <FilterRail.Root>
+            <FilterRail.Header>
+              <FilterRail.ClearAll />
+              <FilterRail.Settings />
+            </FilterRail.Header>
+            <FilterRail.Sections />
+          </FilterRail.Root>
+        </div>
+        <DataTable.Root value={table} className="min-w-0 flex-1">
+          {/* Toolbar with FilterRail.Trigger at the left, as above */}
+        </DataTable.Root>
+      </div>
+    </Layout.Column>
+  </Layout>
+</FilterRail.Provider>
+```
 
 ### Row actions and bulk actions
 
@@ -160,7 +251,9 @@ When the records have actions that make sense processing multiple records at a t
 
 Such actions might include: Updating document status, progressing the document through its lifecycle, workflow actions like reject or accept, marking as viewed.
 
-Exports are the exception. When someone wants to download a copy of the data, they'll commonly want the whole set they've filtered down to, without selecting anything. So exports sit in the toolbar as permanent buttons, and export every record matching the current filter and sort. When rows are selected, the same buttons export only that selection.
+Exports are the exception. Add one only when the use case needs people to download the data. Whether an example on this page shows a Download button says nothing about whether yours should have one; the examples show how to build it when it's wanted.
+
+When someone wants to download a copy of the data, they'll commonly want the whole set they've filtered down to, without selecting anything. So exports sit in the toolbar as permanent buttons, and export every record matching the current filter and sort. When rows are selected, the same buttons export only that selection.
 
 If the requirements only call for one format, use a single "Download XLS" button. Where several formats are available, use one "Download" button that opens a menu of the formats:
 
@@ -196,14 +289,28 @@ Layout fill
   | Layout.Header                                              |
   |  (as above)                                                |
   +------------------------------------------------------------+
-  | Layout.Column
-  |  MetricCard   MetricCard   MetricCard   ...                |
+  | Layout.Column                                              |
+  |  MetricCard   MetricCard   MetricCard   ...  (scrolls x)   |
   |  DataTable.Root                                            |
   |   (as above)                                               |
   +------------------------------------------------------------+
 ```
 
 As the default landing page for the document-type's section of the app, there may be aggregate or performance data that is useful to show in conjunction with the collection table. These metrics should either be specified by business requirements, or be standard metrics in ERP software for this area of business.
+
+Keep the cards to a single row that scrolls sideways when it runs out of room, rather than a grid that wraps. Under `Layout fill`, every row of cards comes out of the table's height, and on a narrow screen a wrapping grid can leave the table no rows at all.
+
+```tsx
+<div className="flex shrink-0 gap-4 overflow-x-auto pb-1">
+  <MetricCard className="min-w-56! flex-1" title="Open invoices" value={openCount} />
+  <MetricCard className="min-w-56! flex-1" title="Overdue" value={overdueCount} />
+  {/* … */}
+</div>
+```
+
+- `flex-1` lets the cards share the row when they fit; `min-w-56!` stops them shrinking below 14rem, after which the row scrolls. The `!` is needed because `MetricCard` sets its own width.
+- The scrollbar only shows when the row actually overflows.
+- This is an exception to the hand-rolled `overflow` wrapper anti-pattern below, pending a layout building block for it.
 
 ## Data-fetching
 
@@ -283,7 +390,7 @@ Do we want to encourage/allow inline editing on pages such as these
 
 - A bespoke table with its own pagination, rather than DataTable with `useURLCollectionVariables`.
 
-- Hand-rolled `max-height` / `overflow` wrappers around the table to contain scrolling — `Layout fill` already does this.
+- Hand-rolled `max-height` / `overflow` wrappers around the table to contain scrolling — `Layout fill` already does this. The metric card row and the filter rail layout above are exceptions for now, pending layout building blocks for them.
 
 - Tabs above the table for preset views of the same records. Those are [preset filters](#preset-filters) in the toolbar.
 

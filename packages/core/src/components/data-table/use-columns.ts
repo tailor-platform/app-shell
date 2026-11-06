@@ -28,9 +28,20 @@ function reconcileColumnOrder(order: string[], columnKeys: string[]): string[] {
   return result;
 }
 
+/** Puts `locked` first, if it's in the order. */
+function lockFirst(order: string[], locked: string | undefined): string[] {
+  if (locked === undefined || order[0] === locked || !order.includes(locked)) return order;
+  return [locked, ...order.filter((key) => key !== locked)];
+}
+
 export function useColumns<TRow extends Record<string, unknown>>(
   allColumns: Column<TRow>[],
   tableId: string | undefined,
+  /**
+   * A column that is always first, pinned left, and shown (the sub-rows
+   * hierarchy column). Changes that would move, hide or unpin it are ignored.
+   */
+  lockedKey?: string,
 ) {
   // Stable key list + key→column map derived from the current column defs.
   const columnKeys = useMemo(() => allColumns.map((col, i) => columnKeyAt(col, i)), [allColumns]);
@@ -51,12 +62,22 @@ export function useColumns<TRow extends Record<string, unknown>>(
   // keys that still exist (in their saved order), then append any new columns in
   // definition order. Self-healing across columns added/removed between sessions.
   const columnOrder = useMemo<string[]>(
-    () => reconcileColumnOrder(persisted.order, columnKeys),
-    [persisted.order, columnKeys],
+    () => lockFirst(reconcileColumnOrder(persisted.order, columnKeys), lockedKey),
+    [persisted.order, columnKeys, lockedKey],
   );
 
-  const hiddenColumns = useMemo(() => new Set(persisted.hidden), [persisted.hidden]);
-  const pinnedColumns = persisted.pinned;
+  const hiddenColumns = useMemo(() => {
+    const hidden = new Set(persisted.hidden);
+    if (lockedKey !== undefined) hidden.delete(lockedKey);
+    return hidden;
+  }, [persisted.hidden, lockedKey]);
+  const pinnedColumns = useMemo(
+    () =>
+      lockedKey === undefined
+        ? persisted.pinned
+        : { ...persisted.pinned, [lockedKey]: "left" as const },
+    [persisted.pinned, lockedKey],
+  );
 
   const visibleColumns = useMemo<Column<TRow>[]>(() => {
     return columnOrder
@@ -67,6 +88,7 @@ export function useColumns<TRow extends Record<string, unknown>>(
 
   const toggleColumn = useCallback(
     (fieldOrId: string) => {
+      if (fieldOrId === lockedKey) return;
       setPersisted((prev) => {
         const hidden = new Set(prev.hidden);
         if (hidden.has(fieldOrId)) {
@@ -77,7 +99,7 @@ export function useColumns<TRow extends Record<string, unknown>>(
         return { ...prev, hidden: [...hidden] };
       });
     },
-    [setPersisted],
+    [setPersisted, lockedKey],
   );
 
   const showAllColumns = useCallback(() => {
@@ -85,8 +107,8 @@ export function useColumns<TRow extends Record<string, unknown>>(
   }, [setPersisted]);
 
   const hideAllColumns = useCallback(() => {
-    setPersisted((prev) => ({ ...prev, hidden: [...columnKeys] }));
-  }, [setPersisted, columnKeys]);
+    setPersisted((prev) => ({ ...prev, hidden: columnKeys.filter((key) => key !== lockedKey) }));
+  }, [setPersisted, columnKeys, lockedKey]);
 
   const isColumnVisible = useCallback(
     (fieldOrId: string) => !hiddenColumns.has(fieldOrId),
@@ -95,30 +117,34 @@ export function useColumns<TRow extends Record<string, unknown>>(
 
   const moveColumn = useCallback(
     (key: string, toIndex: number) => {
+      if (key === lockedKey) return;
       // Reconcile from `prev` (not the captured `columnOrder`) so several moves
       // batched before a re-render compose correctly instead of clobbering.
       setPersisted((prev) => {
-        const order = reconcileColumnOrder(prev.order, columnKeys);
+        const order = lockFirst(reconcileColumnOrder(prev.order, columnKeys), lockedKey);
         const from = order.indexOf(key);
         if (from === -1) return prev;
-        const clamped = Math.max(0, Math.min(toIndex, order.length - 1));
+        // Nothing moves in front of the locked column.
+        const first = lockedKey !== undefined && order[0] === lockedKey ? 1 : 0;
+        const clamped = Math.max(first, Math.min(toIndex, order.length - 1));
         order.splice(from, 1);
         order.splice(clamped, 0, key);
         return { ...prev, order };
       });
     },
-    [setPersisted, columnKeys],
+    [setPersisted, columnKeys, lockedKey],
   );
 
   const setColumnOrder = useCallback(
     (keys: string[]) => {
-      setPersisted((prev) => ({ ...prev, order: keys }));
+      setPersisted((prev) => ({ ...prev, order: lockFirst(keys, lockedKey) }));
     },
-    [setPersisted],
+    [setPersisted, lockedKey],
   );
 
   const setPin = useCallback(
     (key: string, side: "left" | "right" | "none" | null) => {
+      if (key === lockedKey) return;
       setPersisted((prev) => {
         const pinned = { ...prev.pinned };
         // `null` clears the override (reverts to the column's default `pin`);
@@ -131,7 +157,7 @@ export function useColumns<TRow extends Record<string, unknown>>(
         return { ...prev, pinned };
       });
     },
-    [setPersisted],
+    [setPersisted, lockedKey],
   );
 
   return {

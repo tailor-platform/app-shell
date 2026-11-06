@@ -3,11 +3,17 @@ import { cn } from "@/lib/utils";
 import { Table } from "@/components/table";
 import { Checkbox } from "@/components/checkbox";
 import type { HeaderRenderContext } from "./types";
-import { DataTableContext, PinMeasureContext } from "./context";
+import {
+  DataTableContext,
+  PinMeasureContext,
+  hasTreeColumn,
+  selectionInTreeColumn,
+} from "./context";
 import { DataTableHeaderContextMenu } from "./context-menu";
 import { useDataTableT } from "./i18n";
 import {
-  SELECTION_WIDTH,
+  selectionCellBase,
+  treeCellPadding,
   SELECTION_KEY,
   EXPAND_WIDTH,
   EXPAND_KEY,
@@ -71,12 +77,33 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     isAllSelected,
     isIndeterminate,
     rowExpansion,
+    treeColumnKey,
   } = ctx;
   const t = useDataTableT();
   const widths = useContext(PinMeasureContext);
-  const hasSelection = !!toggleRowSelection;
+  const hasSelection = !!toggleRowSelection && !selectionInTreeColumn(ctx);
+  const besideTree = hasTreeColumn(ctx);
   const hasExpand = !!rowExpansion;
   const hasRowActions = !!(rowActions && rowActions.length > 0);
+  // With propagating sub-rows, select-all sits in the tree column's header,
+  // lined up with the rows' checkboxes.
+  const selectAllInTree = selectionInTreeColumn(ctx);
+  const selectAllCheckbox = (
+    <Checkbox
+      checked={isAllSelected}
+      indeterminate={isIndeterminate}
+      onCheckedChange={(checked) => {
+        if (checked) {
+          selectAllRows?.();
+        } else {
+          // Page-scoped, so rows selected on other pages survive.
+          // Hand-built contexts that predate it fall back to clearing.
+          (deselectAllRows ?? clearSelection)?.();
+        }
+      }}
+      aria-label={t("selectAll")}
+    />
+  );
   const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
   const { ordered, keys, placements, selection, expand, actions } = useMemo(
     () =>
@@ -108,25 +135,12 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           (() => {
             const { style, className } = pinCellProps(
               selection,
-              { style: { width: SELECTION_WIDTH }, className: "astw:pl-3!" },
+              selectionCellBase(besideTree),
               "header",
             );
             return (
               <Table.Head data-col-key={SELECTION_KEY} style={style} className={className}>
-                <Checkbox
-                  checked={isAllSelected}
-                  indeterminate={isIndeterminate}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      selectAllRows?.();
-                    } else {
-                      // Page-scoped, so rows selected on other pages survive.
-                      // Hand-built contexts that predate it fall back to clearing.
-                      (deselectAllRows ?? clearSelection)?.();
-                    }
-                  }}
-                  aria-label={t("selectAll")}
-                />
+                {selectAllCheckbox}
               </Table.Head>
             );
           })()}
@@ -145,6 +159,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           })()}
         {ordered?.map((col, index) => {
           const key = keys.get(col) as string;
+          const isTreeColumn = besideTree && key === treeColumnKey;
           const label = col.label;
           const sortField = col.sort?.field;
           const currentSort = sortField
@@ -171,7 +186,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           const content = col.header
             ? col.header(headerContext)
             : renderDefaultHeader(label, headerContext, align, {
-                bleedLeft: !hasSelection && !hasExpand && index === 0,
+                bleedLeft: !hasSelection && !hasExpand && !isTreeColumn && index === 0,
                 bleedRight: !hasRowActions && index === ordered.length - 1,
               });
 
@@ -182,7 +197,10 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                 ...customHeaderProps?.style,
                 ...(col.width ? { width: col.width } : {}),
               },
-              className: cn(align === "right" && "astw:text-right"),
+              className: cn(
+                align === "right" && "astw:text-right",
+                isTreeColumn && treeCellPadding(!hasSelection),
+              ),
             },
             "header",
           );
@@ -194,19 +212,44 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               style={style}
               className={cn(className, customHeaderProps?.className)}
             >
-              <DataTableHeaderContextMenu
-                align={align}
-                column={col}
-                columnKey={key}
-                pinnedColumns={pinnedColumns}
-                setPin={setPin}
-                sortDirection={currentSort?.direction}
-                onSortDirectionChange={
-                  isSortable ? (direction) => onSort(sortField, direction) : undefined
-                }
-              >
-                {content}
-              </DataTableHeaderContextMenu>
+              {isTreeColumn ? (
+                // The caret's space, then select-all, line up with the rows'
+                // carets and checkboxes beneath.
+                <div className="astw:flex astw:items-center astw:gap-2">
+                  <span className="astw:size-5 astw:shrink-0" aria-hidden />
+                  {selectAllInTree ? selectAllCheckbox : null}
+                  <div className="astw:min-w-0 astw:flex-1">
+                    <DataTableHeaderContextMenu
+                      align={align}
+                      column={col}
+                      columnKey={key}
+                      pinnedColumns={pinnedColumns}
+                      setPin={setPin}
+                      sortDirection={currentSort?.direction}
+                      onSortDirectionChange={
+                        isSortable ? (direction) => onSort(sortField, direction) : undefined
+                      }
+                      pinLocked={isTreeColumn}
+                    >
+                      {content}
+                    </DataTableHeaderContextMenu>
+                  </div>
+                </div>
+              ) : (
+                <DataTableHeaderContextMenu
+                  align={align}
+                  column={col}
+                  columnKey={key}
+                  pinnedColumns={pinnedColumns}
+                  setPin={setPin}
+                  sortDirection={currentSort?.direction}
+                  onSortDirectionChange={
+                    isSortable ? (direction) => onSort(sortField, direction) : undefined
+                  }
+                >
+                  {content}
+                </DataTableHeaderContextMenu>
+              )}
             </Table.Head>
           );
         })}

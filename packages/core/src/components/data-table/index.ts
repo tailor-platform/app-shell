@@ -22,6 +22,7 @@ export type {
   FooterRenderContext,
   DataTableData,
   DataTableFilterConfig,
+  DataTableTreeRow,
   DateCellEditOptions,
   DateTimeDraft,
   DateCellOptions,
@@ -36,6 +37,7 @@ export type {
   TextCellEditOptions,
   SelectionAction,
   SelectionActionHelpers,
+  SubRowsOptions,
   UseDataTableOptions,
   UseDataTableReturn,
 } from "./types";

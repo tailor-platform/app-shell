@@ -1,6 +1,6 @@
 import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { Popover } from "@base-ui/react/popover";
-import { GripVertical, Search, SlidersHorizontal } from "lucide-react";
+import { GripVertical, Lock, Search, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
@@ -64,6 +64,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     pinnedColumns,
     setPin,
     setColumnOrder,
+    treeColumnKey,
   } = useDataTableContext<Record<string, unknown>>();
 
   const meta = useMemo(() => {
@@ -118,7 +119,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
   };
 
   const handleDrop = () => {
-    if (dragKey && dropTarget) {
+    if (dragKey && dropTarget && dragKey !== treeColumnKey) {
       const { section, index } = dropTarget;
       // Rebuild the buckets without the dragged key, then insert it at the drop
       // position, and flatten back to a single order. Setting the order to the
@@ -158,17 +159,21 @@ function DataTableColumnSettings({ className }: { className?: string }) {
       dropTarget?.section === section &&
       isLast &&
       dropTarget.index === fullIndex + 1;
+    // The sub-rows hierarchy column is locked: always first, pinned left and
+    // shown. It can't be dragged, hidden, or have anything dropped above it.
+    const locked = key === treeColumnKey;
     return (
       <div
         key={key}
-        draggable
+        draggable={!locked}
+        data-locked={locked || undefined}
         onDragStart={() => setDragKey(key)}
         onDragEnd={resetDrag}
         onDragOver={(e) => {
           e.preventDefault();
           e.stopPropagation();
           const rect = e.currentTarget.getBoundingClientRect();
-          const after = e.clientY > rect.top + rect.height / 2;
+          const after = locked || e.clientY > rect.top + rect.height / 2;
           setDropTarget({ section, index: after ? fullIndex + 1 : fullIndex });
         }}
         className={cn(
@@ -182,17 +187,24 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         {showAfter && (
           <span className="astw:pointer-events-none astw:absolute astw:inset-x-1 astw:-bottom-px astw:z-10 astw:h-0.5 astw:rounded-full astw:bg-primary" />
         )}
-        <span
-          aria-label={t("dragToReorder")}
-          className="astw:cursor-grab astw:text-muted-foreground"
-        >
-          <GripVertical className="astw:size-4" />
-        </span>
+        {locked ? (
+          <span title={t("columnLocked")} className="astw:text-muted-foreground">
+            <Lock className="astw:size-4" aria-label={t("columnLocked")} />
+          </span>
+        ) : (
+          <span
+            aria-label={t("dragToReorder")}
+            className="astw:cursor-grab astw:text-muted-foreground"
+          >
+            <GripVertical className="astw:size-4" />
+          </span>
+        )}
         <button
           type="button"
+          disabled={locked}
           onClick={() => toggleColumn(key)}
           title={meta.label.get(key) ?? key}
-          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-body-md"
+          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-body-md astw:disabled:cursor-default"
         >
           {meta.label.get(key) ?? key}
         </button>
@@ -204,12 +216,15 @@ function DataTableColumnSettings({ className }: { className?: string }) {
             render={
               <Checkbox
                 checked={isColumnVisible(key)}
+                disabled={locked}
                 onCheckedChange={() => toggleColumn(key)}
                 aria-label={meta.label.get(key)}
               />
             }
           />
-          <Tooltip.Content>{t(isColumnVisible(key) ? "hideColumn" : "showColumn")}</Tooltip.Content>
+          <Tooltip.Content>
+            {locked ? t("columnLocked") : t(isColumnVisible(key) ? "hideColumn" : "showColumn")}
+          </Tooltip.Content>
         </Tooltip.Root>
       </div>
     );

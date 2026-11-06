@@ -1,9 +1,11 @@
 import { useCallback, useMemo } from "react";
 import type { CollectionControl, Filter, PageInfo, SortState } from "@/types/collection";
+import { useOnceWarnings } from "@/hooks/use-once-warnings";
 import { useColumns } from "./use-columns";
 import { usePageCounter } from "./use-page-counter";
 import { useRowExpansion } from "./use-row-expansion";
 import { useRowSelection } from "./use-row-selection";
+import { resolveTreeColumnKey, useSubRows } from "./use-sub-rows";
 import type { UseDataTableOptions, UseDataTableReturn } from "./types";
 
 /**
@@ -53,9 +55,12 @@ export function useDataTable<
     rowActions,
     onSelectionChange,
     rowSelection,
-    rowExpansion,
+    rowExpansion: rowExpansionOption,
+    subRows,
     sort: sortOption,
   } = options;
+  // Sub-rows and detail panels can't be combined; `useSubRows` warns about it.
+  const rowExpansion = subRows ? undefined : rowExpansionOption;
 
   // ---------------------------------------------------------------------------
   // Data extraction
@@ -86,8 +91,13 @@ export function useDataTable<
   const hasNextPage = control?.getHasNextPage(pageInfo) ?? pageInfo.hasNextPage;
 
   // ---------------------------------------------------------------------------
-  // Column visibility / order / pinning (persisted per-user when tableId is set)
+  // Column visibility / order / pinning (persisted per-user when tableId is set).
+  // With sub-rows, the hierarchy column is locked first, pinned and shown.
   // ---------------------------------------------------------------------------
+  const { key: treeColumnKey, warning: treeColumnWarning } = useMemo(
+    () => resolveTreeColumnKey(allColumns, subRows),
+    [allColumns, subRows],
+  );
   const {
     visibleColumns,
     toggleColumn,
@@ -99,7 +109,7 @@ export function useDataTable<
     setColumnOrder,
     pinnedColumns,
     setPin,
-  } = useColumns(allColumns, tableId);
+  } = useColumns(allColumns, tableId, treeColumnKey);
 
   // ---------------------------------------------------------------------------
   // Pagination actions (delegated to control + page counter sync)
@@ -168,7 +178,17 @@ export function useDataTable<
   }, []);
 
   const {
+    index: treeIndex,
+    visibleRows,
+    expandedSubRowIds,
+    toggleSubRows,
+    warnings: subRowsWarnings,
+  } = useSubRows(rows, subRows, rowExpansionOption, getRowId);
+  useOnceWarnings(treeColumnWarning ? [treeColumnWarning, ...subRowsWarnings] : subRowsWarnings);
+
+  const {
     selectedIds,
+    getRowCheckState,
     isRowSelected,
     toggleRowSelection,
     selectAllRows,
@@ -178,7 +198,7 @@ export function useDataTable<
     runSelectionAction,
     isAllSelected,
     isIndeterminate,
-  } = useRowSelection(rows, rowSelection, onSelectionChange, getRowId);
+  } = useRowSelection(rows, rowSelection, onSelectionChange, getRowId, treeIndex);
 
   const {
     expandedIds: expandedIdsList,
@@ -238,5 +258,11 @@ export function useDataTable<
     toggleRowExpansion,
     collapseAllRows,
     rowExpansion,
+    subRows,
+    visibleRows,
+    treeColumnKey,
+    expandedSubRowIds,
+    toggleSubRows,
+    getRowCheckState,
   };
 }

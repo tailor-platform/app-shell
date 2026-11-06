@@ -64,6 +64,12 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     toggleRowExpansion: value.toggleRowExpansion,
     collapseAllRows: value.collapseAllRows,
     rowExpansion: value.rowExpansion,
+    subRows: value.subRows,
+    visibleRows: value.visibleRows,
+    treeColumnKey: value.treeColumnKey,
+    expandedSubRowIds: value.expandedSubRowIds,
+    toggleSubRows: value.toggleSubRows,
+    getRowCheckState: value.getRowCheckState,
   };
 
   const controlValue = value.control ?? null;

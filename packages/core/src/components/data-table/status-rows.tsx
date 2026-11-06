@@ -4,7 +4,7 @@ import { Table } from "@/components/table";
 import {
   ACTIONS_WIDTH,
   EXPAND_WIDTH,
-  SELECTION_WIDTH,
+  selectionCellBase,
   pinCellProps,
   resolveAlign,
   type PinLayout,
@@ -21,6 +21,8 @@ interface DataTableLoaderRowsProps<TRow extends Record<string, unknown>> {
   rowCount: number;
   pinLayout: PinLayout<TRow>;
   hasSelection: boolean;
+  /** The hierarchy column follows the selection column, which narrows to match. */
+  besideTree?: boolean;
   hasExpand: boolean;
   hasRowActions: boolean;
 }
@@ -33,6 +35,7 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
   rowCount,
   pinLayout,
   hasSelection,
+  besideTree = false,
   hasExpand,
   hasRowActions,
 }: DataTableLoaderRowsProps<TRow>) {
@@ -49,7 +52,7 @@ function DataTableLoaderRows<TRow extends Record<string, unknown>>({
             (() => {
               const { style, className } = pinCellProps(
                 selection,
-                { style: { width: SELECTION_WIDTH }, className: "astw:pl-3!" },
+                selectionCellBase(besideTree),
                 "body",
               );
               return (

@@ -151,8 +151,8 @@ export function defineLineItemsEditor<
   render: ComponentType<LineItemsCustomEditorContext<TRow, TValue, TDraft>>;
 }): DefinedLineItemsEditor<TRow, TValue> {
   const { toDraft, parse, render } = definition;
-  if (typeof toDraft !== "function" || typeof parse !== "function" || !isEditorComponent(render))
-    throw new Error("Custom editors require toDraft, parse, and a render component");
+  if (typeof toDraft !== "function" || typeof parse !== "function")
+    throw new Error("Custom editors require toDraft and parse functions");
   return Object.freeze({
     type: "custom",
     [LINE_ITEMS_EDITOR_ADAPTER]: packLineItemsEditor<
@@ -162,14 +162,4 @@ export function defineLineItemsEditor<
       { Render: typeof render }
     >({ toDraft, parse, render: CustomEditor<TRow, TValue, TDraft> }, { Render: render }, [{}]),
   });
-}
-
-function isEditorComponent(value: unknown): boolean {
-  if (typeof value === "function") return true;
-  if (!value || typeof value !== "object" || !("$$typeof" in value)) return false;
-  return (
-    value.$$typeof === Symbol.for("react.memo") ||
-    value.$$typeof === Symbol.for("react.forward_ref") ||
-    value.$$typeof === Symbol.for("react.lazy")
-  );
 }

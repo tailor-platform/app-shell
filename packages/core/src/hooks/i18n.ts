@@ -70,14 +70,15 @@ export type I18nLabels<
  * t("welcome", { name: "John" });    // "Welcome, John!"
  * ```
  */
-export const defineI18nLabels = <
+// Hoist the factory so configuration/label import cycles can initialize safely.
+export function defineI18nLabels<
   const L extends Exclude<string, "en">,
   const Def extends Record<string, LabelValue>,
 >(
   labels: { en: Def } & {
     [K in L]: LabelDefinition<Def>;
   } & DynamicLocales<Def>,
-) => {
+) {
   type T = keyof Def & string;
 
   const resolveLabel = (locale: string) => (key: T) =>
@@ -188,4 +189,4 @@ export const defineI18nLabels = <
         { [LOCALIZED_LABEL]: true },
       ),
   };
-};
+}

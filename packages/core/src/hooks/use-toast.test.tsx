@@ -90,6 +90,24 @@ describe("useToast", () => {
     });
   });
 
+  it("resets the sticky defaults when a later call updates the toast by id", async () => {
+    vi.useFakeTimers();
+    renderToaster();
+    await act(async () => {
+      toast.success("Saved", { id: toast.error("Save failed") });
+      toast.success("Kept", { id: toast.error("Other failure"), duration: 8000 });
+    });
+    expect(activeToast("Saved")).toMatchObject({ type: "success" });
+    expect(activeToast("Saved")?.duration).toBeUndefined();
+    expect(activeToast("Saved")?.closeButton).toBeUndefined();
+    expect(activeToast("Kept")).toMatchObject({ type: "success", duration: 8000 });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    expect(document.body.textContent).not.toContain("Saved");
+    expect(document.body.textContent).toContain("Kept");
+  });
+
   it("only the error toast outlives Sonner's 4 s timer", async () => {
     vi.useFakeTimers();
     renderToaster();

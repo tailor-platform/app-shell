@@ -19,8 +19,14 @@ const stayUntilClosed = (data?: ExternalToast): ExternalToast => ({
   closeButton: data?.closeButton ?? true,
 });
 
-const withActionDefaults = (data?: ExternalToast): ExternalToast | undefined =>
-  data?.action ? stayUntilClosed(data) : data;
+const withActionDefaults = (data?: ExternalToast): ExternalToast | undefined => {
+  if (data?.action) return stayUntilClosed(data);
+  if (data?.id === undefined) return data;
+  // Sonner updates a toast by `id` by merging into the stored one, so the sticky defaults of
+  // an earlier error or action toast would survive into this one. An explicit `undefined`
+  // resets them; a `duration` or `closeButton` the caller passes stays.
+  return { ...data, duration: data.duration, closeButton: data.closeButton };
+};
 
 const isErrorOptions = (result: PromiseErrorResult): result is PromiseErrorOptions =>
   typeof result === "object" && result !== null && "message" in result;

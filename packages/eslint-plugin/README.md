@@ -20,3 +20,26 @@ export default defineConfig({ extends: [recommended] });
 - `@tailor-platform/app-shell/no-react-router-imports` — requires routing APIs to be imported from `@tailor-platform/app-shell` rather than `react-router` or `react-router-dom`.
 - `@tailor-platform/app-shell/no-astw-prefix` — prevents applications from depending on AppShell's internal `astw:` CSS prefix.
 - `@tailor-platform/app-shell/no-deprecated-tokens` (warning) — reports deprecated colour and typography tokens and names the replacement. It covers the `--status-*`, `--alert-*` and `--destructive` tokens and their Tailwind utilities (for example `text-destructive` → `text-danger-text`), and `--app-shell-type-*` (→ `--type-*`). These still work but will be removed in the next major version. The rule reads string and template literals in JS and TS files, so it does not check CSS files; search theme CSS for `--status-`, `--alert-` and `--destructive` as the migration guide describes.
+
+## Rules not in `recommended`
+
+Enable these rules in your own config:
+
+```ts
+import { recommended } from "@tailor-platform/eslint-plugin-app-shell";
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  extends: [recommended],
+  rules: { "@tailor-platform/app-shell/prefer-text-components": "warn" },
+});
+```
+
+- `@tailor-platform/app-shell/prefer-text-components` — reports a Tailwind font size (`text-xs` to `text-9xl`, and arbitrary sizes such as `text-[11px]`) on a plain `p`, `h1` to `h6`, or `span` element, and names the `Text` element component to use. For example, `<p className="text-sm">` → `<Text.p>` (default role `body-md`), and `<h3 className="text-lg font-semibold">` → `<Text.h3>` (default role `heading-sm`; set another role with `variant`). For `span`, it names `Text.span` (default role `label-md`), or a role utility such as `text-label-md` or `text-body-sm` when you style the element yourself.
+  - It reads only a class string written directly in `className`: `className="..."`, `className={"..."}`, or a template literal without interpolation. It splits the string on whitespace, so `text-sm` is found among other classes. `cn(...)` and other class helpers, ternaries, variables and constants, and template literals with interpolation are not checked for now.
+  - It also reports text styled by hand without a role utility such as `text-heading-md`:
+    - On `h1` to `h6`: any weight (`font-semibold`, `font-medium`, ...), `leading-*` or `tracking-*`. For example, `<h3 className="font-semibold">` → `<Text.h3>`.
+    - On `p` and `span`: `leading-*`, `tracking-*`, or a weight other than `font-semibold`. `font-semibold` alone is allowed, because it is the emphasis for text inside a sentence. For example, `<p className="font-medium">` → `<Text.p variant="label-md">`.
+  - When the class string has a role utility, the rule does not check the other classes.
+  - It has no autofix. A size does not decide the role: `text-sm` can be `body-md`, `label-md` or `heading-sm`.
+  - `Text.p` and the other element components are available from `@tailor-platform/app-shell` 1.19.0. In an app on an earlier version, the rule names components that do not exist yet, so upgrade AppShell before you enable it.

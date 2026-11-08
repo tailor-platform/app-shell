@@ -1,6 +1,6 @@
 # Decision: typography role tokens
 
-> Status: **Decided — add 10 typography role tokens as CSS variables with Tailwind `text-*` utilities, a `Text` component on top of them, and use them in AppShell's own components (see "Third change"). "Fourth change" adds element components such as `Text.h1`.**
+> Status: **Decided — add 10 typography role tokens as CSS variables with Tailwind `text-*` utilities, a `Text` component on top of them, and use them in AppShell's own components (see "Third change"). "Fourth change" adds element components such as `Text.h1`, and "Fifth change" adds a lint rule that points plain text elements to them.**
 > Scope: role names and values, how they reach Tailwind, the rules for combining them, and the `Text` component (see "Second change" at the end). "Third change" covers applying the roles to AppShell components and moving sizes below 12px to 12px.
 
 ## Context
@@ -124,3 +124,17 @@ Limit: this does not let a role replace a size that core sets on its own element
 - **Implementation.** The element components render the element directly, without Base UI's `useRender`, because they take no `render` prop. They set `data-slot="text"` and the same classes as `Text`.
 - **Documentation.** The heading examples in the quickstart, the styling guide, and the `app-shell-patterns` skill use the element components.
 - **AppShell's own components.** A follow-up change replaced the 43 places where a component passed a plain `h1` to `h6`, `p`, `span`, or `div` to `render` with the element components, and removed the 13 `heading-has-content` disable comments. Each place keeps its role: it writes `variant` only where the role differs from the element's default (36 places), so the rendered element and classes do not change. A `data-slot` or other attribute on the render element moves to the element component, where it still wins over `data-slot="text"`. `render` stays for Base UI parts and other components (`Dialog.Title`, `Field.Error`, `Link`) and for other elements (`dt`, `dd`, `code`, `pre`, `caption`, `address`, `a`). The document detail page example changed in the same way.
+
+## Fifth change: a lint rule for plain text elements
+
+> Status: **Decided.** Umbrella: tailor-inc/platform-planning#2214. Decided by the maintainer on 2026-10-26.
+
+- **Rule.** `@tailor-platform/eslint-plugin-app-shell` adds `prefer-text-components`. It reports a Tailwind font size on a plain `p`, `h1` to `h6`, or `span` element in consumer code, and names the element component (`Text.p`, `Text.h3`, ...) with its default role. For `span`, it also names a role utility such as `text-body-sm`, for an element that the app styles itself. Other elements, such as `div`, `label`, and `th`, are not reported. The rule follows the elements that the styling guide names.
+- **What it reports.** Two kinds of classes:
+  - A size, on any of these elements: `text-xs` to `text-9xl`, arbitrary sizes in `px`, `rem`, or `em`, and `text-[length:...]`.
+  - Text styled by hand, when the class string has no role utility. On `h1` to `h6`, any weight, `leading-*`, or `tracking-*`: a heading has no use for inline emphasis. On `p` and `span`, `leading-*`, `tracking-*`, or a weight other than `font-semibold`. `font-semibold` alone stays allowed, because it is the emphasis for text inside a sentence (see "Modifiers"). `font-medium` is not an emphasis weight, so it is reported.
+  - When the class string has a role utility, the other classes are not checked.
+  - The first version reported sizes only. The second kind was added in review, on a proposal from a maintainer.
+- **What it reads.** Only a class string written directly in `className`: a string literal, a string literal in braces, or a template literal without interpolation. `cn(...)` and other class helpers, ternaries, variables, and interpolated template literals are out of scope for now, to keep the rule small; they can be added when needed. The first plan also read ternaries and class helper arguments, and was narrowed in review. In the erp-kit scaffold, 355 of 356 `className` values on these elements are plain strings, and the other one holds only colours, so the narrower scope finds the same places.
+- **No autofix.** A size and a role are not one-to-one. `text-sm` is `body-md` on body text, `label-md` on a label, and `heading-sm` on a small heading.
+- **Not in `recommended`.** Apps enable the rule themselves. It reports many places in existing apps (292 in 97 files of the erp-kit scaffold, `3bcf8782`: 264 sizes, 12 headings, and 16 `p` and `span` elements styled by hand), and `Text.*` exists only from AppShell 1.19.0, so an app on an earlier version would get warnings with nothing to switch to. The README states the version.

@@ -207,6 +207,12 @@ function FilterPanel() {
 </Sheet.Root>
 ```
 
+## Stacking
+
+`Sheet` renders through a portal to the end of `body`, in the portal band (`--z-portal`). A modal sheet is an overlay: a scrim covers the page and page scrolling is locked. A non-modal sheet (`modal={false}`) does not block the page. A menu or select opened inside the sheet renders above it, because it was opened later. A toast is always above the sheet. See [Styling and Theming → Z-index](../concepts/styling-theming.md#z-index).
+
+A dialog may open on top of a sheet, for example a confirmation before discarding an edit made in the sheet. The same limits apply as for a dialog on a dialog: two levels at most, the second level for a confirmation or a warning only, rendered inside the sheet content. See [Dialog → Stacking](./dialog.md#stacking).
+
 ## Accessibility
 
 - Sheet title is announced by screen readers via `Sheet.Title`

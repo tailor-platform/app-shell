@@ -151,6 +151,74 @@ function EditDialog({ item }: { item: Item }) {
 }
 ```
 
+## Stacking
+
+`Dialog` renders through a portal to the end of `body`, in the portal band (`--z-portal`). A menu, select or combobox opened inside the dialog renders above it, because it was opened later. A toast is always above the dialog. See [Styling and Theming → Z-index](../concepts/styling-theming.md#z-index).
+
+A dialog may open on top of another dialog, or on top of a sheet. Keep to these limits:
+
+- **Two levels at most.** The second dialog is for a confirmation or a warning only: a confirm before discarding changes, or a picker opened from a form dialog.
+- **A third level is a step inside the dialog.** A screen that needs one changes the content of the second dialog instead of opening another.
+- **Render the second dialog inside the first one's content.** The first dialog then knows that a dialog is open above it. `Escape` and a press outside close only the top dialog, and the dialog below stays open.
+- When the second dialog closes and the first stays open, focus returns to the element that opened the second one.
+
+The limits are a guideline. The component does not enforce them.
+
+### Confirmation on top of a form dialog
+
+```tsx
+function EditDialog({ item }: { item: Item }) {
+  const [open, setOpen] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const close = () => {
+    setConfirmOpen(false);
+    setDirty(false);
+    setOpen(false);
+  };
+
+  const requestClose = () => (dirty ? setConfirmOpen(true) : close());
+
+  return (
+    // Escape, the close button and a press on the scrim all arrive as `onOpenChange(false)`.
+    <Dialog.Root open={open} onOpenChange={(next) => (next ? setOpen(true) : requestClose())}>
+      <Dialog.Trigger render={<Button variant="outline" />}>Edit</Dialog.Trigger>
+      <Dialog.Content>
+        <Dialog.Header>
+          <Dialog.Title>Edit Item</Dialog.Title>
+        </Dialog.Header>
+        <div onInput={() => setDirty(true)}>
+          <Input defaultValue={item.name} />
+        </div>
+        <Dialog.Footer>
+          <Button variant="outline" onClick={requestClose}>
+            Cancel
+          </Button>
+          <Button onClick={close}>Save</Button>
+        </Dialog.Footer>
+
+        {/* The second level, rendered inside the first dialog's content. */}
+        <Dialog.Root open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Discard changes?</Dialog.Title>
+              <Dialog.Description>The changes to this item will be lost.</Dialog.Description>
+            </Dialog.Header>
+            <Dialog.Footer>
+              <Dialog.Close render={<Button variant="outline" />}>Keep editing</Dialog.Close>
+              <Button variant="destructive" onClick={close}>
+                Discard
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>
+      </Dialog.Content>
+    </Dialog.Root>
+  );
+}
+```
+
 ## Accessibility
 
 - Dialog title is announced by screen readers via `Dialog.Title`

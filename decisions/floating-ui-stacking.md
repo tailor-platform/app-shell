@@ -1,7 +1,7 @@
 # Decision: one stacking rule for floating UI
 
-> Status: **Decided for the first step. The Toaster portals to `body`, `--z-toast` (100) is added, the layout root is isolated, and two guard tests hold the rule.**
-> Scope: the stacking order of dialogs, sheets, menus, selects, comboboxes, tooltips and toasts in `packages/core`; the `--z-*` tokens in `globals.css`. Token renames and the toast position on narrow screens are later steps.
+> Status: **Decided for steps 1 and 2. Step 1 (tailor-platform/app-shell#668): the Toaster portals to `body`, `--z-toast` (100) is added, the layout root is isolated, and two guard tests hold the rule. Step 2: the docs state the rule, the stacked-modal guideline and the three tokens; see [Decided on 2026-11-08](#decided-on-2026-11-08-step-2).**
+> Scope: the stacking order of dialogs, sheets, menus, selects, comboboxes, tooltips and toasts in `packages/core`; the `--z-*` tokens in `globals.css`. The token rename (step 3) and the toast position on narrow screens (step 4) are later steps.
 
 ## Context
 
@@ -52,9 +52,36 @@ The value is set as an inline style on Sonner's `[data-sonner-toaster]`, not as 
 - The Toaster does not get `aria-hidden` or `inert` while a modal is open, for the same reason. The browser test covers it.
 - AppShell and Base UI 1.8.0 do not use the native `<dialog>` or the Popover API. If a later version adopts the top layer, z-index stops applying to those layers, because the top layer is ordered by insertion.
 
+## Decided on 2026-11-08 (step 2)
+
+Decided by the design owner in tailor-inc/platform-planning#2349 (comment of 2026-11-08). Step 2 writes these into the docs (`docs-src/concepts/styling-theming`, `components/dialog`, `components/sheet`, `patterns/form-modal`). It changes no component.
+
+### Stacked modals: two levels at most
+
+- A second modal is for a confirmation or a warning only: a confirm before discarding changes, or a picker opened from a form modal (tailor-inc/platform-planning#786).
+- `Escape` and an outside press close only the top modal. When the second modal closes, focus returns to the element that opened it.
+- A screen that needs a third level uses a step inside the dialog instead.
+- This is a docs guideline. The components do not enforce it.
+
+Checked in Base UI 1.8.0 (`dialog/root/useDialogRoot`): `escapeKey` and the outside-press check are gated on `isTopmost`, which counts nested open dialogs through the React context of the parent `Dialog.Root`. The docs therefore say to render the second dialog inside the first one's content. `DialogPopup` passes `finalFocus` as `returnFocus`, so focus returns to the trigger or the previously focused element. Not verified in a browser test; the regression test in `tests/browser/stacking.test.tsx` checks only the paint order.
+
+### Three tokens, named by layer
+
+| Token        | Value | Use                                                       | Old names, kept as aliases |
+| ------------ | ----- | --------------------------------------------------------- | -------------------------- |
+| `--z-nav`    | 10    | persistent navigation that never blocks the page          | `--z-sidebar`              |
+| `--z-portal` | 50    | everything rendered through a portal: popups and overlays | `--z-popup`, `--z-overlay` |
+| `--z-toast`  | 100   | toast                                                     | —                          |
+
+- One token for the portal band, because popups and overlays already share one value and the order inside the band comes from the open order. Two names suggest that one is above the other. If someone raises `overlay` above `popup`, a Select opened inside a Dialog goes behind the Dialog, the same failure as tailor-inc/platform-planning#1967. The difference between a popup and an overlay is a behaviour contract (an overlay blocks the page), and the docs table keeps that distinction.
+- `--z-sidebar-rail` becomes a value inside the sidebar and leaves the docs table.
+- A skip link needs no fourth token. It is in the nav layer.
+- The aliases are removed in the next major (tailor-inc/platform-planning#2084).
+- The rename is step 3, a separate PR. The docs in step 2 use the new names, so the docs PR merges after the rename.
+
 ## Not in this step
 
-- Renaming the tokens to `--z-nav` / `--z-portal` with the old names kept as aliases (step 3 in #2349).
+- Renaming the tokens to `--z-nav` / `--z-portal` with the old names kept as aliases (step 3 in #2349, decided above).
 - The toast's bottom inset on narrow screens, which must clear the bottom bar, the keyboard and the safe area (step 4, under tailor-inc/platform-planning#2207).
 - A different value for `--z-toast`; 100 is the proposed value in #2349.
 

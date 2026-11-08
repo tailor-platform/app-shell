@@ -634,9 +634,9 @@
       "symbols": ["Dialog"],
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
-        "outline": "bda40376d6e3e008",
+        "outline": "fa1ae263934afe61",
         "snapshot": "81a29fe2495df98d",
-        "outputMd": "ec6a0ac098d1d87a",
+        "outputMd": "3df9560acc473813",
         "examples": "934c52d4e8761404"
       }
     },
@@ -753,10 +753,10 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "a39589955fe582c8",
+        "outline": "8adb1ebff87dda10",
         "snapshot": null,
-        "outputMd": "be00d1109761b7f1",
-        "examples": "7836309f2df327ee"
+        "outputMd": "9064e79fc5220110",
+        "examples": "01be3a9446ebb8cd"
       }
     },
     "form-sectioned": {
@@ -1263,9 +1263,9 @@
       "symbols": ["Sheet"],
       "hashes": {
         "typeSurface": "e760949efcbe4c38",
-        "outline": "464d91acc48f7c9d",
+        "outline": "5f1594d8bb39e0a5",
         "snapshot": "429bdb8c86bb2ad6",
-        "outputMd": "1f81ebd562c50371",
+        "outputMd": "0f16983ba71be0bf",
         "examples": "b0eebb8c5e2219dc"
       }
     },
@@ -1382,9 +1382,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "c2eb7f34e5e8e139",
+        "outline": "10622112b275a0dc",
         "snapshot": null,
-        "outputMd": "2fff85ff0697def2",
+        "outputMd": "4675ae56219d8ced",
         "examples": "4d19f4f688e0f0ac"
       }
     },
@@ -1771,7 +1771,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "5f77dda61ce9abd4",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "2fff85ff0697def2",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "4675ae56219d8ced",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "03362008aa77d4cf",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "1a2bb081c3e34482",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "82313d5b6fe140d2",
@@ -1793,7 +1793,7 @@
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "8e24da61e95b6434",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",
-    "packages/core/skills/app-shell-patterns/references/components/dialog.md": "ec6a0ac098d1d87a",
+    "packages/core/skills/app-shell-patterns/references/components/dialog.md": "3df9560acc473813",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "c6a48c4d8e8b0078",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "e4a66f7b1ee4aa98",
@@ -1805,7 +1805,7 @@
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "b3dd3b9a58a9d290",
-    "packages/core/skills/app-shell-patterns/references/components/sheet.md": "1f81ebd562c50371",
+    "packages/core/skills/app-shell-patterns/references/components/sheet.md": "0f16983ba71be0bf",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "a36192df64f16adc",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "e50b2d649289d772",
@@ -1846,7 +1846,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "30c15545ab3c4954",
     "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "30983a761bc61593",
     "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "be00d1109761b7f1",
+    "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "9064e79fc5220110",
     "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",
     "packages/core/skills/app-shell-patterns/references/patterns/form-single-page.md": "10a0f4d91a120752",
     "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "851afb4672da6673",

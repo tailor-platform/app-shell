@@ -53,6 +53,7 @@ import {
 import { gql, useQuery } from "urql";
 import {
   DataTable,
+  Toolbar,
   useDataTable,
   useCollectionVariables,
   createColumnHelper,
@@ -145,9 +146,13 @@ function JournalsPage() {
 
   return (
     <DataTable.Root value={table}>
-      <DataTable.Toolbar>
-        <DataTable.Filters />
-      </DataTable.Toolbar>
+      <Toolbar.Root>
+        <Toolbar.Row aria-label="Journal table controls">
+          <Toolbar.Group>
+            <DataTable.Filters />
+          </Toolbar.Group>
+        </Toolbar.Row>
+      </Toolbar.Root>
       <DataTable.Table />
       <DataTable.Footer>
         <DataTable.Pagination pageSizeOptions={[10, 20, 50]} />

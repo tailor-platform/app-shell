@@ -231,9 +231,13 @@ By default, `<Layout>` grows with its content and the AppShell content area scro
   <Layout.Header title="Products" />
   <Layout.Column>
     <DataTable.Root value={table}>
-      <DataTable.Toolbar>
-        <DataTable.Filters />
-      </DataTable.Toolbar>
+      <Toolbar.Root>
+        <Toolbar.Row aria-label="Product table controls">
+          <Toolbar.Group>
+            <DataTable.Filters />
+          </Toolbar.Group>
+        </Toolbar.Row>
+      </Toolbar.Root>
       <DataTable.Table />
       <DataTable.Footer>
         <DataTable.Pagination />

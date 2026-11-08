@@ -474,9 +474,9 @@
       ],
       "hashes": {
         "typeSurface": "33eb2bdd6be1c774",
-        "outline": "eec5179512971f96",
+        "outline": "acef7f52638d4c19",
         "snapshot": "a97e067c66e46ef6",
-        "outputMd": "7133811af89213ef",
+        "outputMd": "885eb2a3e5892499",
         "examples": "e7100d7517f72495"
       }
     },
@@ -702,9 +702,9 @@
       "symbols": ["FilterRail", "FilterRailRootProps", "FilterRailSection", "useFilterRailLayout"],
       "hashes": {
         "typeSurface": "b795ce4e10be0653",
-        "outline": "d9e8930edd2a191c",
+        "outline": "43ac7806d7adf4e4",
         "snapshot": "ddebbf9718587cff",
-        "outputMd": "c6a48c4d8e8b0078",
+        "outputMd": "23e567609a9ea821",
         "examples": null
       }
     },
@@ -1059,9 +1059,9 @@
       "symbols": ["Layout", "LayoutProps"],
       "hashes": {
         "typeSurface": "c7e8fec79020d657",
-        "outline": "4fe2b74f186d792a",
+        "outline": "6da802b7a22d941a",
         "snapshot": "03dedb3cc14b1eaf",
-        "outputMd": "6f956d57a15366a0",
+        "outputMd": "890685be96e6d008",
         "examples": "3e841d9dcde141f6"
       }
     },
@@ -1788,20 +1788,20 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "7133811af89213ef",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "885eb2a3e5892499",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "df6777c49ca5c7e2",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "8e24da61e95b6434",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "ec6a0ac098d1d87a",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
-    "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "c6a48c4d8e8b0078",
+    "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "23e567609a9ea821",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "e4a66f7b1ee4aa98",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",
-    "packages/core/skills/app-shell-patterns/references/components/layout.md": "6f956d57a15366a0",
+    "packages/core/skills/app-shell-patterns/references/components/layout.md": "890685be96e6d008",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "b3dd3b9a58a9d290",

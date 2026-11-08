@@ -6,8 +6,7 @@ import {
   Field,
   Layout,
   type AppShellPageProps,
-  type TreeSelectionPropagation,
-  type TreeValueStrategy,
+  type TreeSelectionStrategy,
 } from "@tailor-platform/app-shell";
 import { useState } from "react";
 
@@ -105,8 +104,7 @@ const findAccount = (accounts: Account[], code: string | null): Account | undefi
   return undefined;
 };
 
-const PROPAGATIONS: TreeSelectionPropagation[] = ["full", "down", "none"];
-const STRATEGIES: TreeValueStrategy[] = ["leaves", "topmost", "all"];
+const STRATEGIES: TreeSelectionStrategy[] = ["leaves", "topmost", "all", "cascade", "independent"];
 
 /** A product row with its price on the right; a category row is just its name. */
 const renderCatalogItem = ({ item }: { item: CatalogNode }) => (
@@ -131,12 +129,9 @@ const TreeDemoPage = () => {
   const [submitted, setSubmitted] = useState<string[] | null>(null);
   const [lastAction, setLastAction] = useState<string | null>(null);
   const [accountCode, setAccountCode] = useState<string | null>("1110");
-  const [propagation, setPropagation] = useState<TreeSelectionPropagation>("full");
-  const [strategy, setStrategy] = useState<TreeValueStrategy>("leaves");
+  const [strategy, setStrategy] = useState<TreeSelectionStrategy>("leaves");
   const [ticked, setTicked] = useState<string[]>([]);
   const account = findAccount(ACCOUNTS, accountCode);
-  // Parents that are items only allow "all", which keeps their state.
-  const effectiveStrategy = propagation === "full" ? strategy : "all";
 
   return (
     <Layout>
@@ -194,37 +189,20 @@ const TreeDemoPage = () => {
           </Card.Content>
         </Card.Root>
 
-        {/* 🔽 How ticking works: selectionPropagation × valueStrategy */}
+        {/* 🔽 How ticking works: selectionStrategy */}
         <Card.Root>
           <Card.Header
             title="How ticking works"
-            description={`selectionPropagation decides whether a parent is data or a folder, and valueStrategy decides what comes back. Parents that are items only allow "all".`}
+            description='selectionStrategy decides whether a parent is data or a folder, and what comes back. "leaves", "topmost" and "all" treat parents as folders; "cascade" and "independent" let a parent be ticked on its own.'
           />
           <Card.Content className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-muted-foreground w-36">selectionPropagation</span>
-              {PROPAGATIONS.map((option) => (
-                <Button
-                  key={option}
-                  size="sm"
-                  variant={propagation === option ? "default" : "outline"}
-                  onClick={() => {
-                    setPropagation(option);
-                    setTicked([]);
-                  }}
-                >
-                  {option}
-                </Button>
-              ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-muted-foreground w-36">valueStrategy</span>
+              <span className="text-muted-foreground w-36">selectionStrategy</span>
               {STRATEGIES.map((option) => (
                 <Button
                   key={option}
                   size="sm"
-                  variant={effectiveStrategy === option ? "default" : "outline"}
-                  disabled={propagation !== "full" && option !== "all"}
+                  variant={strategy === option ? "default" : "outline"}
                   onClick={() => {
                     setStrategy(option);
                     setTicked([]);
@@ -235,31 +213,17 @@ const TreeDemoPage = () => {
               ))}
             </div>
             <div className="rounded-md border">
-              {propagation === "full" ? (
-                <Tree<Account>
-                  key={`full-${effectiveStrategy}`}
-                  aria-label="Accounts to export"
-                  className="h-72"
-                  items={ACCOUNTS}
-                  mapItem={mapAccount}
-                  selectionMode="checkbox"
-                  valueStrategy={effectiveStrategy}
-                  value={ticked}
-                  onValueChange={setTicked}
-                />
-              ) : (
-                <Tree<Account>
-                  key={propagation}
-                  aria-label="Accounts to export"
-                  className="h-72"
-                  items={ACCOUNTS}
-                  mapItem={mapAccount}
-                  selectionMode="checkbox"
-                  selectionPropagation={propagation}
-                  value={ticked}
-                  onValueChange={setTicked}
-                />
-              )}
+              <Tree<Account>
+                key={strategy}
+                aria-label="Accounts to export"
+                className="h-72"
+                items={ACCOUNTS}
+                mapItem={mapAccount}
+                selectionMode="checkbox"
+                selectionStrategy={strategy}
+                value={ticked}
+                onValueChange={setTicked}
+              />
             </div>
             <span className="text-muted-foreground font-mono text-xs">
               value = {JSON.stringify(ticked)}

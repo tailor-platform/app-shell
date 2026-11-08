@@ -14,7 +14,6 @@ export type {
   TreeSelectedItem,
   TreeSelectionBehaviorProps,
   TreeSelectionMode,
-  TreeSelectionPropagation,
+  TreeSelectionStrategy,
   TreeSingleSelectionProps,
-  TreeValueStrategy,
 } from "./types";

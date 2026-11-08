@@ -88,46 +88,38 @@ export type TreeFilterProps<T> = {
 };
 
 /**
- * How ticking spreads through the tree.
+ * How ticking works and what the value lists. Take a parent P with leaves A and B:
  *
- * - `"full"`: parents are containers. Ticking one ticks every leaf beneath it,
- *   and its checkbox is derived from its leaves (checked or indeterminate).
- * - `"down"`: parents are items in their own right. Ticking one also ticks
- *   everything beneath it, but unticking a child leaves it ticked.
- * - `"none"`: every item is ticked on its own.
+ * | Strategy               | Tick P       | Tick A and B | P ticked on its own? |
+ * | ---------------------- | ------------ | ------------ | -------------------- |
+ * | `"leaves"` (default)   | `[A, B]`     | `[A, B]`     | No                   |
+ * | `"topmost"`            | `[P]`        | `[P]`        | No                   |
+ * | `"all"`                | `[P, A, B]`  | `[P, A, B]`  | No                   |
+ * | `"cascade"`            | `[P, A, B]`  | `[A, B]`     | Yes                  |
+ * | `"independent"`        | `[P]`        | `[A, B]`     | Yes                  |
+ *
+ * - `"leaves"`, `"topmost"` and `"all"` treat parents as containers: a parent's
+ *   checkbox comes from its leaves, so unticking A after ticking P leaves P
+ *   indeterminate. With `"topmost"`, `P` stands for everything beneath it.
+ * - `"cascade"` makes parents items in their own right. Ticking one also ticks
+ *   everything beneath it, but unticking A leaves `[P, B]`, with P still ticked.
+ * - `"independent"` ticks every item on its own.
  */
+export type TreeSelectionStrategy = "leaves" | "topmost" | "all" | "cascade" | "independent";
+
+/** How ticking works and what the value lists. */
+export type TreeSelectionBehaviorProps = {
+  /** How ticking works and what the value lists. Default `"leaves"`. */
+  selectionStrategy?: TreeSelectionStrategy;
+};
+
+/** Internal: how ticking spreads through the tree. */
 export type TreeSelectionPropagation = "full" | "down" | "none";
 
-/**
- * What the value lists.
- *
- * - `"leaves"`: the checked leaves.
- * - `"topmost"`: a parent in place of its leaves once every leaf beneath it is
- *   checked. A parent key then means "everything beneath it".
- * - `"all"`: every checked item, parents included.
- */
+/** Internal: what the value lists. */
 export type TreeValueStrategy = "leaves" | "topmost" | "all";
 
-/**
- * How ticking works and what the value lists. Only some combinations make
- * sense: when parents are items in their own right, only `"all"` keeps their
- * state, so it's the one value strategy they allow.
- */
-export type TreeSelectionBehaviorProps =
-  | {
-      /** How ticking spreads through the tree. Default `"full"`. */
-      selectionPropagation?: "full";
-      /** What the value lists. Default `"leaves"`. */
-      valueStrategy?: TreeValueStrategy;
-    }
-  | {
-      /** How ticking spreads through the tree. Default `"full"`. */
-      selectionPropagation: "down" | "none";
-      /** What the value lists. `"all"` is the only strategy that keeps a parent's own state. */
-      valueStrategy?: "all";
-    };
-
-/** The selection: a list of keys. Which keys depends on `valueStrategy`. */
+/** The selection: a list of keys. Which keys depends on `selectionStrategy`. */
 export type TreeValueProps<T> = {
   /** Controlled selection: the checked keys. */
   value?: readonly string[];
@@ -260,7 +252,7 @@ export type TreePickerProps<T> = TreeContentProps<T> &
     searchPlaceholder?: string;
     /** Dialog title. Also labels the tree for assistive tech. Default: `"Select items"`. */
     title?: React.ReactNode;
-    /** Receives the value's items in tree order (see `valueStrategy`). */
+    /** Receives the value's items in tree order (see `selectionStrategy`). */
     onCommit(selected: TreeSelectedItem<T>[]): void;
     /** Primary CTA label. Default: `"Add N items"`, or `"Add items"` when nothing is selected. */
     ctaLabel?(count: number): React.ReactNode;

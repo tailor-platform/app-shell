@@ -28,7 +28,7 @@ import type {
  *
  * By default parents are containers: ticking one ticks every enabled leaf
  * beneath it, and `onCommit` receives the ticked leaves in tree order with their
- * parents. `selectionPropagation` and `valueStrategy` change that, as on `Tree`.
+ * parents. `selectionStrategy` changes that, as on `Tree`.
  * Enter on a row or the "Add N items" button commits, then the picker closes
  * itself.
  *

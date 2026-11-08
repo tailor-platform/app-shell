@@ -1548,15 +1548,14 @@
         "TreeSelectedItem",
         "TreeSelectionBehaviorProps",
         "TreeSelectionMode",
-        "TreeSelectionPropagation",
-        "TreeSingleSelectionProps",
-        "TreeValueStrategy"
+        "TreeSelectionStrategy",
+        "TreeSingleSelectionProps"
       ],
       "hashes": {
-        "typeSurface": "343d595c9ce52cab",
-        "outline": "634bdb51563ffa95",
+        "typeSurface": "bb787a7a7830040d",
+        "outline": "b30d67681d0953b4",
         "snapshot": "6db41d93e7a1d8f7",
-        "outputMd": "3f212fcb98e620b2",
+        "outputMd": "cc205ed4aca6327c",
         "examples": null
       }
     },
@@ -1854,7 +1853,7 @@
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
-    "packages/core/skills/app-shell-patterns/references/components/tree.md": "3f212fcb98e620b2",
+    "packages/core/skills/app-shell-patterns/references/components/tree.md": "cc205ed4aca6327c",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "8d4fc931339d9a3f",
     "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "daf6c93e7285ee88",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",

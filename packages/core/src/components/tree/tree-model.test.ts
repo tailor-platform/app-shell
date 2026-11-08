@@ -14,6 +14,7 @@ import {
   writeValue,
   type CheckedState,
   type TreeNode,
+  resolveSelectionStrategy,
 } from "./tree-model";
 import type { TreeSelectionPropagation, TreeValueStrategy } from "./types";
 
@@ -144,7 +145,7 @@ describe("tree-model", () => {
     });
   });
 
-  describe('selectionPropagation "full"', () => {
+  describe('propagation "full"', () => {
     it("reads a leaf key wherever it appears, and a parent key as every leaf beneath it", () => {
       const { checked, unknown } = readValue(index(), ["a", "c", "gone"], "full");
       expect([...checked].toSorted()).toEqual(["a", "wide"]);
@@ -245,7 +246,7 @@ describe("tree-model", () => {
     });
   });
 
-  describe('selectionPropagation "down"', () => {
+  describe('propagation "down" (cascade)', () => {
     it("ticks a parent and every enabled item beneath it", () => {
       const checked = toggleChecked(rowOf(["p2"]), true, new Set(), "down");
       expect(valueOf({ checked, unknown: [] }, "down", "all")).toEqual([
@@ -273,7 +274,7 @@ describe("tree-model", () => {
     });
   });
 
-  describe('selectionPropagation "none"', () => {
+  describe('propagation "none" (independent)', () => {
     it("ticks only the item itself, parents included", () => {
       const checked = toggleChecked(rowOf(["p2"]), true, new Set(), "none");
       expect([...checked]).toEqual(["p2"]);
@@ -285,5 +286,18 @@ describe("tree-model", () => {
       const checked = new Set<string>();
       expect(toggleChecked(nodes[0]!, true, checked, "none")).toBe(checked);
     });
+  });
+});
+
+describe("resolveSelectionStrategy", () => {
+  it.each([
+    [undefined, "full", "leaves"],
+    ["leaves", "full", "leaves"],
+    ["topmost", "full", "topmost"],
+    ["all", "full", "all"],
+    ["cascade", "down", "all"],
+    ["independent", "none", "all"],
+  ] as const)("maps %s to %s / %s", (strategy, propagation, valueStrategy) => {
+    expect(resolveSelectionStrategy(strategy)).toEqual({ propagation, valueStrategy });
   });
 });

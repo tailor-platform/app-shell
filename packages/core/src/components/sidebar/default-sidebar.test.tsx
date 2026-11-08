@@ -453,13 +453,14 @@ describe("DefaultSidebar opt-in props", () => {
   };
 
   it.each([
-    { name: "a group", to: undefined },
-    { name: "a group with its own page", to: "/main" },
+    { name: "a group", width: 1024, to: undefined },
+    { name: "a group with its own page", width: 1024, to: "/main" },
+    { name: "a group", width: 375, to: undefined },
   ])(
-    "opens the slide-in drawer when $name is tapped in the tablet rail on a touch device",
-    async ({ to }) => {
+    "opens the slide-in drawer when $name is tapped in the rail at $width px on a touch device",
+    async ({ width, to }) => {
       const user = userEvent.setup();
-      renderTouchRail(1024, to);
+      renderTouchRail(width, to);
 
       expect(document.querySelector('[data-slot="sidebar-overlay"]')).toBeNull();
 

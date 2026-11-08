@@ -476,9 +476,9 @@
       ],
       "hashes": {
         "typeSurface": "ce20393ebd50d8df",
-        "outline": "a66970fa34ae544e",
+        "outline": "d8251189e2c7b247",
         "snapshot": "a97e067c66e46ef6",
-        "outputMd": "dab62b5416ce694d",
+        "outputMd": "7764268b2984651e",
         "examples": "e7100d7517f72495"
       }
     },
@@ -1550,15 +1550,14 @@
         "TreeSelectedItem",
         "TreeSelectionBehaviorProps",
         "TreeSelectionMode",
-        "TreeSelectionPropagation",
-        "TreeSingleSelectionProps",
-        "TreeValueStrategy"
+        "TreeSelectionStrategy",
+        "TreeSingleSelectionProps"
       ],
       "hashes": {
-        "typeSurface": "343d595c9ce52cab",
-        "outline": "225a4dbb28f1ffa5",
+        "typeSurface": "bb787a7a7830040d",
+        "outline": "f7d059c64673e5ac",
         "snapshot": "6db41d93e7a1d8f7",
-        "outputMd": "3f212fcb98e620b2",
+        "outputMd": "cc205ed4aca6327c",
         "examples": null
       }
     },
@@ -1826,7 +1825,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "dab62b5416ce694d",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "7764268b2984651e",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "df6777c49ca5c7e2",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "8e24da61e95b6434",
@@ -1856,7 +1855,7 @@
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
-    "packages/core/skills/app-shell-patterns/references/components/tree.md": "3f212fcb98e620b2",
+    "packages/core/skills/app-shell-patterns/references/components/tree.md": "cc205ed4aca6327c",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "8d4fc931339d9a3f",
     "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "daf6c93e7285ee88",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",

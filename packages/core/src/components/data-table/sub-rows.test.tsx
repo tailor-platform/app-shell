@@ -332,7 +332,7 @@ describe("DataTable subRows", () => {
     const checkboxFor = (text: string) =>
       within(rowFor(text)).getByRole("checkbox", { name: "Select row" });
 
-    it('defaults to "full" / "leaves": the checkboxes sit in the tree column, a parent ticks its leaves', async () => {
+    it('defaults to "leaves": the checkboxes sit in the tree column, a parent ticks its leaves', async () => {
       const user = userEvent.setup();
       render(<Selecting />, { wrapper });
 
@@ -346,17 +346,17 @@ describe("DataTable subRows", () => {
       expect(checkboxFor("Assets").getAttribute("aria-checked")).toBe("mixed");
     });
 
-    it('lists a fully ticked parent with valueStrategy "topmost"', async () => {
+    it('lists a fully ticked parent with "topmost"', async () => {
       const user = userEvent.setup();
-      render(<Selecting selection={{ valueStrategy: "topmost" }} />, { wrapper });
+      render(<Selecting selection={{ selectionStrategy: "topmost" }} />, { wrapper });
 
       await user.click(checkboxFor("Assets"));
       expect(ids()).toEqual(["assets", "elsewhere"]);
     });
 
-    it('keeps the selection column, and ticks rows on their own, with selectionPropagation "none"', async () => {
+    it('keeps the selection column, and ticks rows on their own, with "independent"', async () => {
       const user = userEvent.setup();
-      render(<Selecting selection={{ selectionPropagation: "none" }} />, { wrapper });
+      render(<Selecting selection={{ selectionStrategy: "independent" }} />, { wrapper });
 
       expect(headerKeys()[0]).toBe(SELECTION_KEY);
       await user.click(checkboxFor("Assets"));

@@ -18,10 +18,9 @@ import type {
   TreeMapItemContext,
   TreeMappedItem,
   TreeSelectedItem,
-  TreeSelectionPropagation,
   TreeValueProps,
-  TreeValueStrategy,
 } from "./types";
+import type { TreeSelectionPropagation, TreeValueStrategy } from "@/lib/tree/types";
 
 /**
  * @internal

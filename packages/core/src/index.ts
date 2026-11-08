@@ -191,9 +191,8 @@ export {
   type TreeSelectedItem,
   type TreeSelectionBehaviorProps,
   type TreeSelectionMode,
-  type TreeSelectionPropagation,
+  type TreeSelectionStrategy,
   type TreeSingleSelectionProps,
-  type TreeValueStrategy,
 } from "./components/tree";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export {

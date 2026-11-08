@@ -373,7 +373,7 @@ describe("Tree", () => {
           mapItem={mapItem}
           aria-label="Bins"
           selectionMode="checkbox"
-          selectionPropagation="down"
+          selectionStrategy="cascade"
           onValueChange={onValueChange}
         />,
       );
@@ -511,7 +511,7 @@ describe("Tree", () => {
           mapItem={scopedMapItem}
           aria-label="Bins"
           selectionMode="checkbox"
-          valueStrategy="topmost"
+          selectionStrategy="topmost"
           filter={(_, { label }) => label === "X · A1"}
           onValueChange={onValueChange}
         />,
@@ -699,11 +699,11 @@ describe("Tree", () => {
     });
   });
 
-  describe("selectionPropagation and valueStrategy", () => {
+  describe("selectionStrategy", () => {
     const tickBox = (user: ReturnType<typeof userEvent.setup>, label: string) =>
       user.click(rowFor(label).querySelector("[data-slot=tree-checkbox]") as HTMLElement);
 
-    it('reports a fully ticked parent in place of its leaves with valueStrategy "topmost"', async () => {
+    it('reports a fully ticked parent in place of its leaves with "topmost"', async () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
       render(
@@ -712,7 +712,7 @@ describe("Tree", () => {
           items={WAREHOUSES}
           mapItem={scopedMapItem}
           aria-label="Bins"
-          valueStrategy="topmost"
+          selectionStrategy="topmost"
           onValueChange={onValueChange}
         />,
       );
@@ -740,7 +740,7 @@ describe("Tree", () => {
       expect(checkedOf("X · A2")).toBe("true");
     });
 
-    it('treats parents as items with selectionPropagation "down"', async () => {
+    it('treats parents as items with "cascade"', async () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
       render(
@@ -749,7 +749,7 @@ describe("Tree", () => {
           items={WAREHOUSES}
           mapItem={scopedMapItem}
           aria-label="Bins"
-          selectionPropagation="down"
+          selectionStrategy="cascade"
           onValueChange={onValueChange}
         />,
       );
@@ -767,7 +767,7 @@ describe("Tree", () => {
       expect(onValueChange).toHaveBeenLastCalledWith(["wh-x", "wh-x/A2"], expect.anything());
     });
 
-    it('ticks only the row itself with selectionPropagation "none", and never shows mixed', async () => {
+    it('ticks only the row itself with "independent", and never shows mixed', async () => {
       const user = userEvent.setup();
       const onValueChange = vi.fn();
       render(
@@ -776,7 +776,7 @@ describe("Tree", () => {
           items={WAREHOUSES}
           mapItem={scopedMapItem}
           aria-label="Bins"
-          selectionPropagation="none"
+          selectionStrategy="independent"
           onValueChange={onValueChange}
         />,
       );
@@ -789,18 +789,25 @@ describe("Tree", () => {
       expect(onValueChange).toHaveBeenLastCalledWith(["wh-x", "wh-x/A1"], expect.anything());
     });
 
-    it("rules out combinations that would lose a parent's state", () => {
-      const base = { items: WAREHOUSES, mapItem, "aria-label": "Bins" };
-      const checkbox = { selectionMode: "checkbox" } as const;
-      const downLeaves = { selectionPropagation: "down", valueStrategy: "leaves" } as const;
-      const noneTopmost = { selectionPropagation: "none", valueStrategy: "topmost" } as const;
-      const noneAll = { selectionPropagation: "none", valueStrategy: "all" } as const;
-      // @ts-expect-error parents that are items need valueStrategy "all"
-      void (<Tree<Node> {...base} {...checkbox} {...downLeaves} />);
-      // @ts-expect-error parents that are items need valueStrategy "all"
-      void (<Tree<Node> {...base} {...checkbox} {...noneTopmost} />);
-      void (<Tree<Node> {...base} {...checkbox} {...noneAll} />);
-      void (<Tree<Node> {...base} {...checkbox} valueStrategy="all" />);
+    it('ticks everything beneath a parent with "all", and lists the parent too', async () => {
+      const user = userEvent.setup();
+      const onValueChange = vi.fn();
+      render(
+        <Tree<Node>
+          selectionMode="checkbox"
+          items={WAREHOUSES}
+          mapItem={scopedMapItem}
+          aria-label="Bins"
+          selectionStrategy="all"
+          onValueChange={onValueChange}
+        />,
+      );
+
+      await tickBox(user, "Warehouse X");
+      expect(onValueChange).toHaveBeenLastCalledWith(
+        ["wh-x", "wh-x/A1", "wh-x/A2"],
+        expect.anything(),
+      );
     });
   });
 

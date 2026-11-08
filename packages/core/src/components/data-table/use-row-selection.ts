@@ -2,12 +2,12 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   checkState,
   readValue,
+  resolveSelectionStrategy,
   toggleChecked,
   writeValue,
   type TreeIndex,
   type TreeNode,
 } from "@/lib/tree/model";
-import type { TreeSelectionPropagation, TreeValueStrategy } from "@/lib/tree/types";
 import type { RowSelectionOptions } from "./types";
 
 const NOT_CHECKED = { checked: false, indeterminate: false };
@@ -43,9 +43,9 @@ export function useRowSelection<TRow extends Record<string, unknown>>(
   // into ticked keys, change those, and write the ids back, so propagation and
   // the value strategy work exactly as on `Tree`. Ids that aren't on this page
   // pass through untouched.
-  const propagation: TreeSelectionPropagation = rowSelection?.selectionPropagation ?? "full";
-  const strategy: TreeValueStrategy =
-    propagation === "full" ? (rowSelection?.valueStrategy ?? "leaves") : "all";
+  const { propagation, valueStrategy: strategy } = resolveSelectionStrategy(
+    rowSelection?.selectionStrategy,
+  );
   const treeState = useMemo(
     () => (treeIndex ? readValue(treeIndex, [...selection], propagation) : null),
     [treeIndex, selection, propagation],

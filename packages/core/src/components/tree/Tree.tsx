@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 import { TreeRow } from "./TreeRow";
 import { useTreeT } from "./i18n";
-import { flattenVisible, pathId, type TreeNode } from "@/lib/tree/model";
+import { flattenVisible, pathId, resolveSelectionStrategy, type TreeNode } from "@/lib/tree/model";
 import type { TreeChangeDetails, TreeProps, TreeSelectedItem } from "./types";
 import { useTreeField } from "./use-tree-field";
 import { useTreeFocus } from "./use-tree-focus";
@@ -30,7 +30,7 @@ type SubmittedEntry = { id: string; value: string };
  * - `"single"`: one selected row (`selectedKey`), for master–detail views.
  * - `"checkbox"`: a multi-select form control (`value`). By default parents are
  *   containers: ticking one ticks every enabled leaf beneath it, and the value
- *   lists leaves. `selectionPropagation` and `valueStrategy` change that. `name`
+ *   lists leaves. `selectionStrategy` changes that. `name`
  *   submits one hidden input per value key, and inside a `Field.Root` it picks
  *   up the label, description, error, `required` and invalid state.
  *
@@ -79,11 +79,9 @@ export function Tree<T>(props: TreeProps<T>) {
   const selectionMode = props.selectionMode ?? "none";
   const checkbox = props.selectionMode === "checkbox" ? props : null;
   const single = props.selectionMode === "single" ? props : null;
-  const selectionPropagation = checkbox?.selectionPropagation ?? "full";
-  // Only "all" keeps a parent's own state, so it's the only strategy when
-  // parents are items (the types already rule the others out).
-  const valueStrategy =
-    selectionPropagation === "full" ? (checkbox?.valueStrategy ?? "leaves") : "all";
+  const { propagation: selectionPropagation, valueStrategy } = resolveSelectionStrategy(
+    checkbox?.selectionStrategy,
+  );
   const itemToStringValue = checkbox?.itemToStringValue;
   const form = checkbox?.form;
   const required = checkbox?.required;

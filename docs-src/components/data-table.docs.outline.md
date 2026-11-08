@@ -488,15 +488,17 @@ The caret is a native `<button>` with `aria-expanded`, named from the hierarchy 
 
 ### Selecting sub-rows
 
-`rowSelection` takes the same `selectionPropagation` and `valueStrategy` as [`Tree`](./tree.md), and works the same way, so a tree and a tree-shaped table behave alike.
+`rowSelection` takes the same `selectionStrategy` as [`Tree`](./tree.md), and works the same way, so a tree and a tree-shaped table behave alike. Take a parent row P with two rows beneath it, A and B:
 
-| `selectionPropagation` | A parent row is                                                                                         | Checkboxes sit                                 |
-| ---------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `"full"` (default)     | A container. Ticking it ticks every row beneath it, and its checkbox is derived from them.              | In the hierarchy column, indented with the row |
-| `"down"`               | A row in its own right. Ticking it also ticks every row beneath it; unticking a child leaves it ticked. | In the hierarchy column, indented with the row |
-| `"none"`               | A row in its own right, ticked on its own.                                                              | In the usual left-hand selection column        |
+| `selectionStrategy`  | Tick P      | Tick A and B | P ticked on its own? | Checkboxes sit                                 |
+| -------------------- | ----------- | ------------ | -------------------- | ---------------------------------------------- |
+| `"leaves"` (default) | `[A, B]`    | `[A, B]`     | No                   | In the hierarchy column, indented with the row |
+| `"topmost"`          | `[P]`       | `[P]`        | No                   | In the hierarchy column, indented with the row |
+| `"all"`              | `[P, A, B]` | `[P, A, B]`  | No                   | In the hierarchy column, indented with the row |
+| `"cascade"`          | `[P, A, B]` | `[A, B]`     | Yes                  | In the hierarchy column, indented with the row |
+| `"independent"`      | `[P]`       | `[A, B]`     | Yes                  | In the usual left-hand selection column        |
 
-`valueStrategy` decides what `selectedIds` lists: `"leaves"` (the default), `"topmost"` (a fully ticked parent's id in place of its rows), or `"all"`. `"down"` and `"none"` only allow `"all"`. Ids from other pages pass through untouched, and the header checkbox ticks the current page's rows, sitting in the hierarchy column's header when the checkboxes do. Selection actions receive the ids `valueStrategy` lists.
+With `"leaves"`, `"topmost"` and `"all"`, a parent is a container: its checkbox comes from the rows beneath it. With `"cascade"`, ticking a parent ticks its rows too, but unticking one leaves the parent ticked. Ids from other pages pass through untouched, and the header checkbox ticks the current page's rows, sitting in the hierarchy column's header when the checkboxes do. Selection actions receive the ids `selectedIds` lists.
 
 ## Inline editing
 
@@ -681,14 +683,13 @@ Pass `rowSelection` to `useDataTable` to enable the checkbox column. Rows must h
 
 ### `RowSelectionOptions`
 
-| Property               | Type                             | Description                                                                                                    |
-| ---------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `selectedIds`          | `string[]`                       | Controlled selected ids. Requires `onChange` and cannot be combined with `defaultSelectedIds`.                 |
-| `defaultSelectedIds`   | `string[]`                       | Initial selected ids in uncontrolled mode. Later changes are ignored.                                          |
-| `onChange`             | `(ids: string[]) => void`        | Notifies user-driven selection changes; required in controlled mode and optional in uncontrolled mode.         |
-| `actions`              | `SelectionAction[]`              | Optional bulk actions shown in `DataTable.Footer` while ids are selected. Omitted or empty arrays show no bar. |
-| `selectionPropagation` | `"full" \| "down" \| "none"`     | With `subRows`: how ticking spreads. Default `"full"`. See [Selecting sub-rows](#selecting-sub-rows).          |
-| `valueStrategy`        | `"leaves" \| "topmost" \| "all"` | With `subRows`: what `selectedIds` lists. Default `"leaves"`; `"down"` and `"none"` allow only `"all"`.        |
+| Property             | Type                                                           | Description                                                                                                                          |
+| -------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `selectedIds`        | `string[]`                                                     | Controlled selected ids. Requires `onChange` and cannot be combined with `defaultSelectedIds`.                                       |
+| `defaultSelectedIds` | `string[]`                                                     | Initial selected ids in uncontrolled mode. Later changes are ignored.                                                                |
+| `onChange`           | `(ids: string[]) => void`                                      | Notifies user-driven selection changes; required in controlled mode and optional in uncontrolled mode.                               |
+| `actions`            | `SelectionAction[]`                                            | Optional bulk actions shown in `DataTable.Footer` while ids are selected. Omitted or empty arrays show no bar.                       |
+| `selectionStrategy`  | `"leaves" \| "topmost" \| "all" \| "cascade" \| "independent"` | With `subRows`: how ticking spreads and what `selectedIds` lists. Default `"leaves"`. See [Selecting sub-rows](#selecting-sub-rows). |
 
 ### Controlled selection
 

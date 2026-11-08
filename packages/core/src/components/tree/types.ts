@@ -90,13 +90,9 @@ export type TreeFilterProps<T> = {
 
 // Shared with any tree-shaped selection (e.g. DataTable sub-rows), so they live
 // with the model and are re-exported here as part of Tree's API.
-export type {
-  TreeSelectionBehaviorProps,
-  TreeSelectionPropagation,
-  TreeValueStrategy,
-} from "@/lib/tree/types";
+export type { TreeSelectionBehaviorProps, TreeSelectionStrategy } from "@/lib/tree/types";
 
-/** The selection: a list of keys. Which keys depends on `valueStrategy`. */
+/** The selection: a list of keys. Which keys depends on `selectionStrategy`. */
 export type TreeValueProps<T> = {
   /** Controlled selection: the checked keys. */
   value?: readonly string[];
@@ -229,7 +225,7 @@ export type TreePickerProps<T> = TreeContentProps<T> &
     searchPlaceholder?: string;
     /** Dialog title. Also labels the tree for assistive tech. Default: `"Select items"`. */
     title?: React.ReactNode;
-    /** Receives the value's items in tree order (see `valueStrategy`). */
+    /** Receives the value's items in tree order (see `selectionStrategy`). */
     onCommit(selected: TreeSelectedItem<T>[]): void;
     /** Primary CTA label. Default: `"Add N items"`, or `"Add items"` when nothing is selected. */
     ctaLabel?(count: number): React.ReactNode;

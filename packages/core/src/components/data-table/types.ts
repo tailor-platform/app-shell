@@ -599,11 +599,11 @@ export type RowExpansionOptions<TRow extends Record<string, unknown>> = {
 /**
  * Controlled or uncontrolled row-selection configuration. Keep the mode stable while mounted.
  *
- * With `subRows`, `selectionPropagation` and `valueStrategy` say how ticking
- * spreads through the hierarchy and what the selected ids list, exactly as on
- * `Tree`. They default to `"full"` and `"leaves"`: a parent row is a container,
- * its checkbox is derived from the rows beneath it, and the selection lists the
- * leaf rows. Without `subRows` every row is independent and they have no effect.
+ * With `subRows`, `selectionStrategy` says how ticking spreads through the
+ * hierarchy and what the selected ids list, exactly as on `Tree`. It defaults to
+ * `"leaves"`: a parent row is a container, its checkbox is derived from the rows
+ * beneath it, and the selection lists the leaf rows. Without `subRows` every row
+ * is independent and it has no effect.
  */
 export type RowSelectionOptions = TreeSelectionBehaviorProps & {
   /**

@@ -2,6 +2,7 @@ import type {
   TreeEntry,
   TreeNodeInput,
   TreeSelectionPropagation,
+  TreeSelectionStrategy,
   TreeValueStrategy,
 } from "./types";
 
@@ -336,4 +337,14 @@ export function writeValue<T>(
 
 export function toSelectedItem<T>(node: TreeNode<T>): TreeEntry<T> {
   return { key: node.key, item: node.item, parents: node.parents };
+}
+
+/** Splits a public selection strategy into how ticking spreads and what the value lists. */
+export function resolveSelectionStrategy(strategy: TreeSelectionStrategy = "leaves"): {
+  propagation: TreeSelectionPropagation;
+  valueStrategy: TreeValueStrategy;
+} {
+  if (strategy === "cascade") return { propagation: "down", valueStrategy: "all" };
+  if (strategy === "independent") return { propagation: "none", valueStrategy: "all" };
+  return { propagation: "full", valueStrategy: strategy };
 }

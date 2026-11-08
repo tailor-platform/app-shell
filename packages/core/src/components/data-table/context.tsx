@@ -122,7 +122,7 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   expandedSubRowIds?: string[];
   /** Opens or closes `row`'s sub-rows. */
   toggleSubRows?: (row: TRow) => void;
-  /** A row's checkbox, derived as `rowSelection.selectionPropagation` says. */
+  /** A row's checkbox, derived as `rowSelection.selectionStrategy` says. */
   getRowCheckState?: (row: TRow) => { checked: boolean; indeterminate: boolean };
 }
 
@@ -154,7 +154,7 @@ export function selectionInTreeColumn(
   return (
     hasTreeColumn(ctx) &&
     !!ctx.toggleRowSelection &&
-    (ctx.rowSelection?.selectionPropagation ?? "full") !== "none"
+    ctx.rowSelection?.selectionStrategy !== "independent"
   );
 }
 

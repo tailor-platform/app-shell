@@ -9,8 +9,7 @@ import {
   type AppShellPageProps,
   type Column,
   type SelectionAction,
-  type TreeSelectionPropagation,
-  type TreeValueStrategy,
+  type TreeSelectionStrategy,
 } from "@tailor-platform/app-shell";
 
 // 🧪 Dummy Data: Replace with real data later — a chart of accounts with sub-accounts.
@@ -70,16 +69,9 @@ const columns: Column<Account>[] = [
   { id: "balance", label: "Balance", type: "money", accessor: (row) => row.balance },
 ];
 
-const PROPAGATIONS: TreeSelectionPropagation[] = ["full", "down", "none"];
-const STRATEGIES: TreeValueStrategy[] = ["leaves", "topmost", "all"];
+const STRATEGIES: TreeSelectionStrategy[] = ["leaves", "topmost", "all", "cascade", "independent"];
 
-function AccountsTable({
-  propagation,
-  strategy,
-}: {
-  propagation: TreeSelectionPropagation;
-  strategy: TreeValueStrategy;
-}) {
+function AccountsTable({ strategy }: { strategy: TreeSelectionStrategy }) {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [lastExport, setLastExport] = useState<string[] | null>(null);
   const exportAction: SelectionAction = {
@@ -87,10 +79,6 @@ function AccountsTable({
     label: "Export",
     onClick: (ids) => setLastExport(ids),
   };
-  const selectionBehaviour =
-    propagation === "full"
-      ? { selectionPropagation: propagation, valueStrategy: strategy }
-      : { selectionPropagation: propagation };
 
   const table = useDataTable<Account>({
     columns,
@@ -102,7 +90,7 @@ function AccountsTable({
       defaultExpandedIds: ["1000"],
     },
     rowSelection: {
-      ...selectionBehaviour,
+      selectionStrategy: strategy,
       selectedIds,
       onChange: setSelectedIds,
       actions: [exportAction],
@@ -132,9 +120,7 @@ function AccountsTable({
 }
 
 const DataTableTreePage = () => {
-  const [propagation, setPropagation] = useState<TreeSelectionPropagation>("full");
-  const [strategy, setStrategy] = useState<TreeValueStrategy>("leaves");
-  const effectiveStrategy = propagation === "full" ? strategy : "all";
+  const [strategy, setStrategy] = useState<TreeSelectionStrategy>("leaves");
 
   return (
     <Layout>
@@ -146,26 +132,12 @@ const DataTableTreePage = () => {
           />
           <Card.Content className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-muted-foreground w-40">selectionPropagation</span>
-              {PROPAGATIONS.map((option) => (
-                <Button
-                  key={option}
-                  size="sm"
-                  variant={propagation === option ? "default" : "outline"}
-                  onClick={() => setPropagation(option)}
-                >
-                  {option}
-                </Button>
-              ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-muted-foreground w-40">valueStrategy</span>
+              <span className="text-muted-foreground w-40">selectionStrategy</span>
               {STRATEGIES.map((option) => (
                 <Button
                   key={option}
                   size="sm"
-                  variant={effectiveStrategy === option ? "default" : "outline"}
-                  disabled={propagation !== "full" && option !== "all"}
+                  variant={strategy === option ? "default" : "outline"}
                   onClick={() => setStrategy(option)}
                 >
                   {option}
@@ -173,11 +145,7 @@ const DataTableTreePage = () => {
               ))}
             </div>
             {/* Remount on a mode change, so the selection starts empty in each mode. */}
-            <AccountsTable
-              key={`${propagation}-${effectiveStrategy}`}
-              propagation={propagation}
-              strategy={effectiveStrategy}
-            />
+            <AccountsTable key={strategy} strategy={strategy} />
           </Card.Content>
         </Card.Root>
       </Layout.Column>

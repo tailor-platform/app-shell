@@ -24,7 +24,7 @@ import { Tree } from "@tailor-platform/app-shell";
 ```
 
 - **Selection modes:** `selectionMode` is `"none"` (the default, for browsing with `onAction`), `"single"` (one selected row through `selectedKey`), or `"checkbox"` (a multi-select `value`). Each mode's props are ruled out in the others, so a form prop without checkbox mode is a type error.
-- **How ticking works:** `selectionPropagation` is `"full"` (parents are containers, the default), `"down"` (parents are items, and ticking one ticks everything beneath it) or `"none"`. `valueStrategy` is `"leaves"` (the default), `"topmost"` (a fully ticked parent in place of its leaves) or `"all"`. Parents that are items only allow `"all"`.
+- **How ticking works:** `selectionStrategy` is `"leaves"` (the default), `"topmost"` or `"all"`, where parents are containers and the value lists leaves, a fully ticked parent in place of its leaves, or everything ticked; or `"cascade"` or `"independent"`, where a parent can be ticked on its own, with or without ticking everything beneath it.
 - **Filtering:** `filter` narrows the tree to matches and their ancestors and opens the groups they're in. The tree has no search box of its own; `TreePicker` adds one, with `matchesSearch` and `filterSlot`.
 - **Forms:** in checkbox mode, `name` submits one hidden input per value key; `required`, `disabled`, `itemToStringValue`, and `Field.Root` integration (label, description, error, invalid state) work as on `Select`.
 - **Keyboard:** `role="tree"` with roving focus. Arrows move and open, Space selects or ticks, and Enter runs `onAction` (or, in checkbox mode with no `onAction`, submits the owning form; the picker commits).

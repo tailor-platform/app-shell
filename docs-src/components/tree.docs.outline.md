@@ -104,35 +104,31 @@ const [skus, setSkus] = useState<string[]>([]);
 
 ## How ticking works
 
-Two props decide how ticking spreads and what ends up in the value. Both default to the most common case: parents are just containers, and the value lists leaves.
+`selectionStrategy` decides how ticking spreads and what ends up in the value. The default covers the most common case: parents are just containers, and the value lists leaves.
 
-`selectionPropagation` answers "is a parent data, or just a folder?"
+Take a parent P with two leaves, A and B, starting from nothing ticked:
 
-| Value              | Parents are              | Ticking a parent                                                            |
-| ------------------ | ------------------------ | --------------------------------------------------------------------------- |
-| `"full"` (default) | containers               | Ticks every enabled leaf beneath it. Its checkbox is derived from them.     |
-| `"down"`           | items in their own right | Ticks itself and everything beneath it. Unticking a child leaves it ticked. |
-| `"none"`           | items in their own right | Ticks only itself.                                                          |
+| Value                | Tick P      | Tick A and B | Can P be ticked on its own? |
+| -------------------- | ----------- | ------------ | --------------------------- |
+| `"leaves"` (default) | `[A, B]`    | `[A, B]`     | No                          |
+| `"topmost"`          | `[P]`       | `[P]`        | No                          |
+| `"all"`              | `[P, A, B]` | `[P, A, B]`  | No                          |
+| `"cascade"`          | `[P, A, B]` | `[A, B]`     | Yes                         |
+| `"independent"`      | `[P]`       | `[A, B]`     | Yes                         |
 
-`valueStrategy` answers "what do I get back?"
-
-| Value                | The value lists                                                      |
-| -------------------- | -------------------------------------------------------------------- |
-| `"leaves"` (default) | The ticked leaves.                                                   |
-| `"topmost"`          | A fully ticked parent in place of its leaves, plus any loose leaves. |
-| `"all"`              | Every ticked item, parents included.                                 |
-
-When parents are items in their own right (`"down"` or `"none"`), only `"all"` keeps their state, so it's the only strategy those modes allow, and it's their default. The types rule out the other combinations.
+- **`"leaves"`, `"topmost"` and `"all"`** treat parents as containers. A parent's checkbox comes from its leaves, so unticking A after ticking P leaves P indeterminate. With `"topmost"`, `P` stands for everything beneath it.
+- **`"cascade"`** makes parents items in their own right. Ticking one ticks everything beneath it too, but unticking A leaves `[P, B]`, with P still ticked.
+- **`"independent"`** ticks every item on its own.
 
 ```tsx
 // Everything in a warehouse comes back as the warehouse key, not every bin.
-<Tree {...props} selectionMode="checkbox" valueStrategy="topmost" />
+<Tree {...props} selectionMode="checkbox" selectionStrategy="topmost" />
 
 // A parent purchase order can be approved without its child orders.
-<Tree {...props} selectionMode="checkbox" selectionPropagation="none" />
+<Tree {...props} selectionMode="checkbox" selectionStrategy="independent" />
 ```
 
-Every combination round-trips: passing a value back in shows the same ticks. With `"full"`, a parent key in the value stands for every leaf beneath it, so `defaultValue={["wh-x"]}` ticks all of Warehouse X.
+Every combination round-trips: passing a value back in shows the same ticks. With `"leaves"`, `"topmost"` or `"all"`, a parent key in the value stands for every leaf beneath it, so `defaultValue={["wh-x"]}` ticks all of Warehouse X.
 
 ## Rows
 
@@ -217,12 +213,12 @@ mapItem={(bin) => ({ key: bin.code, label: bin.code, disabled: bin.status === "c
 
 How a parent behaves next to disabled children depends on whether it's a container or an item:
 
-| Mode                                    | Ticking a parent                                                                    | A parent whose children are all disabled     |
-| --------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------- |
-| Checkbox, `"full"` propagation          | Skips disabled leaves. It counts as ticked once every _enabled_ leaf beneath it is. | Locked, since there's nothing it could tick. |
-| Checkbox, `"down"` propagation          | Ticks itself and every enabled item beneath it.                                     | Usable. Ticking it ticks only itself.        |
-| Checkbox, `"none"` propagation          | Ticks only itself.                                                                  | Usable.                                      |
-| `"single"` and `"none"` selection modes | –                                                                                   | Usable: it can be selected or run.           |
+| Mode                                         | Ticking a parent                                                                    | A parent whose children are all disabled     |
+| -------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------- |
+| Checkbox, `"leaves"` / `"topmost"` / `"all"` | Skips disabled leaves. It counts as ticked once every _enabled_ leaf beneath it is. | Locked, since there's nothing it could tick. |
+| Checkbox, `"cascade"`                        | Ticks itself and every enabled item beneath it.                                     | Usable. Ticking it ticks only itself.        |
+| Checkbox, `"independent"`                    | Ticks only itself.                                                                  | Usable.                                      |
+| `"single"` and `"none"` selection modes      | –                                                                                   | Usable: it can be selected or run.           |
 
 ## TreePicker
 
@@ -273,31 +269,30 @@ With `selectionMode="single"`:
 
 With `selectionMode="checkbox"`:
 
-| Prop                         | Type                             | Default                        | Description                                                            |
-| ---------------------------- | -------------------------------- | ------------------------------ | ---------------------------------------------------------------------- |
-| `value` / `defaultValue`     | `string[]`                       | –                              | Controlled / initial value: the ticked keys.                           |
-| `onValueChange`              | `(value, { selected }) => void`  | –                              | Every change, plus the items the value lists.                          |
-| `selectionPropagation`       | `"full" \| "down" \| "none"`     | `"full"`                       | How ticking spreads through the tree.                                  |
-| `valueStrategy`              | `"leaves" \| "topmost" \| "all"` | `"leaves"` (`"all"` for items) | What the value lists.                                                  |
-| `name` / `form`              | `string`                         | –                              | Hidden inputs for native form submission. `Field.Root`'s name wins.    |
-| `itemToStringValue`          | `(item, { parents }) => string`  | the key                        | The string each hidden input carries.                                  |
-| `required`                   | `boolean`                        | `false`                        | At least one item must be ticked.                                      |
-| `id` / `inputRef` / `onBlur` | –                                | –                              | Form control id, the hidden proxy input, and blur from the whole tree. |
+| Prop                         | Type                                                           | Default    | Description                                                                              |
+| ---------------------------- | -------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------- |
+| `value` / `defaultValue`     | `string[]`                                                     | –          | Controlled / initial value: the ticked keys.                                             |
+| `onValueChange`              | `(value, { selected }) => void`                                | –          | Every change, plus the items the value lists.                                            |
+| `selectionStrategy`          | `"leaves" \| "topmost" \| "all" \| "cascade" \| "independent"` | `"leaves"` | How ticking works and what the value lists. See [How ticking works](#how-ticking-works). |
+| `name` / `form`              | `string`                                                       | –          | Hidden inputs for native form submission. `Field.Root`'s name wins.                      |
+| `itemToStringValue`          | `(item, { parents }) => string`                                | the key    | The string each hidden input carries.                                                    |
+| `required`                   | `boolean`                                                      | `false`    | At least one item must be ticked.                                                        |
+| `id` / `inputRef` / `onBlur` | –                                                              | –          | Form control id, the hidden proxy input, and blur from the whole tree.                   |
 
 ### TreePicker
 
-| Prop                                     | Type                                        | Default          | Description                                                         |
-| ---------------------------------------- | ------------------------------------------- | ---------------- | ------------------------------------------------------------------- |
-| `open`                                   | `boolean`                                   | required         | Controls dialog visibility.                                         |
-| `onOpenChange`                           | `(open: boolean) => void`                   | required         | Fires on every user-driven open or close, including after a commit. |
-| `onCommit`                               | `(selected: TreeSelectedItem<T>[]) => void` | required         | Receives the value's items in tree order.                           |
-| `selectionPropagation` / `valueStrategy` | as on `Tree`                                | as on `Tree`     | How ticking works while picking.                                    |
-| `matchesSearch`                          | `(item: T, query: string) => boolean`       | match on `label` | Search predicate. An item is kept when it or a descendant matches.  |
-| `filterSlot`                             | `ReactNode`                                 | –                | Beside the search input, e.g. a category filter.                    |
-| `searchPlaceholder`                      | `string`                                    | `"Search"`       | Search input placeholder.                                           |
-| `title`                                  | `ReactNode`                                 | `"Select items"` | Dialog title. Also labels the tree for assistive tech.              |
-| `ctaLabel`                               | `(count: number) => ReactNode`              | `"Add N items"`  | Primary button label.                                               |
-| `className`                              | `string`                                    | –                | Merged onto the dialog panel.                                       |
+| Prop                | Type                                        | Default          | Description                                                         |
+| ------------------- | ------------------------------------------- | ---------------- | ------------------------------------------------------------------- |
+| `open`              | `boolean`                                   | required         | Controls dialog visibility.                                         |
+| `onOpenChange`      | `(open: boolean) => void`                   | required         | Fires on every user-driven open or close, including after a commit. |
+| `onCommit`          | `(selected: TreeSelectedItem<T>[]) => void` | required         | Receives the value's items in tree order.                           |
+| `selectionStrategy` | as on `Tree`                                | `"leaves"`       | How ticking works while picking.                                    |
+| `matchesSearch`     | `(item: T, query: string) => boolean`       | match on `label` | Search predicate. An item is kept when it or a descendant matches.  |
+| `filterSlot`        | `ReactNode`                                 | –                | Beside the search input, e.g. a category filter.                    |
+| `searchPlaceholder` | `string`                                    | `"Search"`       | Search input placeholder.                                           |
+| `title`             | `ReactNode`                                 | `"Select items"` | Dialog title. Also labels the tree for assistive tech.              |
+| `ctaLabel`          | `(count: number) => ReactNode`              | `"Add N items"`  | Primary button label.                                               |
+| `className`         | `string`                                    | –                | Merged onto the dialog panel.                                       |
 
 The default labels are localised (English and Japanese) through the app's locale, like DataTable's. Passing a label prop overrides it.
 

@@ -166,7 +166,13 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
             <Menu.Trigger
               disabled={busy}
               render={
-                <Button variant="ghost" size="sm" aria-label={t("selectionMoreActions")}>
+                // When narrow, the menu holds every action, so it takes the
+                // inline actions' outline and stands out from Clear.
+                <Button
+                  variant={narrow ? "outline" : "ghost"}
+                  size="sm"
+                  aria-label={t("selectionMoreActions")}
+                >
                   {overflow.some((action) => action.id === pendingId) ? (
                     <Spinner />
                   ) : (

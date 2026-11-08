@@ -1,6 +1,7 @@
 import { noAstwPrefix } from "./rules/no-astw-prefix";
 import { noDeprecatedTokens } from "./rules/no-deprecated-tokens";
 import { noReactRouterImports } from "./rules/no-react-router-imports";
+import { preferTextComponents } from "./rules/prefer-text-components";
 
 export const plugin = {
   meta: { name: "@tailor-platform/app-shell" },
@@ -8,6 +9,7 @@ export const plugin = {
     "no-astw-prefix": noAstwPrefix,
     "no-deprecated-tokens": noDeprecatedTokens,
     "no-react-router-imports": noReactRouterImports,
+    "prefer-text-components": preferTextComponents,
   },
 };
 
@@ -23,4 +25,5 @@ export const recommended = {
 export { noAstwPrefix } from "./rules/no-astw-prefix";
 export { noDeprecatedTokens } from "./rules/no-deprecated-tokens";
 export { noReactRouterImports } from "./rules/no-react-router-imports";
+export { preferTextComponents } from "./rules/prefer-text-components";
 export default plugin;

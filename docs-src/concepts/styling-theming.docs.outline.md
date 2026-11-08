@@ -295,7 +295,7 @@ Pair a role with a color token from the Color section above. These pairings are 
 
 <!-- example: typography-roles -->
 
-For headings, body copy, labels, and captions, use the [`Text`](../components/text.md) component. Do not style a bare `p`, `h1` to `h6`, or `span` with `text-sm`, `text-xs`, or `font-*`. A form field label is [`Field.Label`](../components/form.md), which already has the `label-md` role. `Text` applies the same roles with a `variant` prop. It renders a default element for each role (`h2` for headings, `p` for body text, `span` for the others). To set the element, such as the heading level, use an element component (`Text.h1` to `Text.h6`, `Text.p`, `Text.span`, `Text.div`):
+For headings, body copy, labels, and captions, use the [`Text`](../components/text.md) component. Do not style a bare `p`, `h1` to `h6`, or `span` with `text-sm`, `text-xs`, or `font-*`. The `prefer-text-components` rule in `@tailor-platform/eslint-plugin-app-shell` reports a size on these elements, and a weight, line height, or letter spacing that is set without a role. It is not in `recommended`, so enable it in your `oxlint.config.ts`. A form field label is [`Field.Label`](../components/form.md), which already has the `label-md` role. `Text` applies the same roles with a `variant` prop. It renders a default element for each role (`h2` for headings, `p` for body text, `span` for the others). To set the element, such as the heading level, use an element component (`Text.h1` to `Text.h6`, `Text.p`, `Text.span`, `Text.div`):
 
 ```tsx
 <Text.h3 variant="heading-md">Line items</Text.h3>

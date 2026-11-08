@@ -77,6 +77,11 @@ If a piece has a narrower owner than `components/` — for example routing-owned
 UI like document head helpers, or sidebar-owned UI like a dynamic breadcrumb —
 keep it with that owner instead of putting it under `components/internals/`.
 
+Helpers and logic that are not UI building blocks go in `lib/` (for example
+`cn`, i18n locale resolution, `aggregations`, `collection-url-state`), whether
+or not they are publicly exported. React code is fine in either place; the
+split is UI building block (`components/internals/`) versus helper (`lib/`).
+
 ```text
 components/
   component-name/

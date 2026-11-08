@@ -415,19 +415,19 @@ Always give motion a reduced-motion escape (`motion-reduce:transition-none`, or 
 
 ### Z-index
 
-These exist as raw `:root` variables in the shipped base layer, but are **not** bridged into Tailwind — `z-sidebar` is not a class. Use the stock numeric utility, or reference the variable when you need it to track AppShell's layering:
+These exist as raw `:root` variables in the shipped base layer, but are **not** bridged into Tailwind — `z-nav` is not a class. Use the stock numeric utility, or reference the variable when you need it to track AppShell's layering:
 
-| Token              | Value | Use                           |
-| ------------------ | ----- | ----------------------------- |
-| `--z-sidebar`      | 10    | persistent sidebar            |
-| `--z-sidebar-rail` | 20    | sidebar collapsed rail        |
-| `--z-popup`        | 50    | menu, tooltip, popover        |
-| `--z-overlay`      | 50    | modal, sheet, dialog backdrop |
-| `--z-toast`        | 100   | toast, always above overlays  |
+| Token        | Value | Use                                                   |
+| ------------ | ----- | ----------------------------------------------------- |
+| `--z-nav`    | 10    | persistent sidebar                                    |
+| `--z-portal` | 50    | menu, tooltip, popover, modal, sheet, dialog backdrop |
+| `--z-toast`  | 100   | toast, always above overlays                          |
+
+The old names still resolve: `--z-sidebar` is an alias of `--z-nav`, and `--z-popup` and `--z-overlay` are aliases of `--z-portal`. They are deprecated and will be removed in the next major. `--z-sidebar-rail` (20) is a value inside the sidebar, not a layer.
 
 ```tsx
 <div className="z-50" />
-<div className="z-[var(--z-popup)]" />
+<div className="z-[var(--z-portal)]" />
 ```
 
 Never invent a z value — `z-index: 9999` is always wrong. Popups and overlays share `50` intentionally: sequencing comes from DOM order, not z escalation. Every floating AppShell component (dialog, sheet, menu, select, combobox, tooltip, toast) renders through a portal to the end of `body`, and the layout root is `isolation: isolate`, so a z-index inside the page never reaches them. The toast is the one layer above the band: it is always visible over an open dialog or sheet.

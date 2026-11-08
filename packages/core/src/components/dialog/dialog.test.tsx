@@ -247,4 +247,51 @@ describe("Dialog", () => {
       expect(screen.queryByText("Dialog Title")).toBeNull();
     });
   });
+  // jsdom has no layout, so these check the classes that keep a tall dialog
+  // inside the viewport, and that a consumer className still replaces them.
+  describe("height", () => {
+    it("caps the height to the viewport and scrolls the content", async () => {
+      render(
+        <Dialog.Root defaultOpen>
+          <Dialog.Content>
+            <Dialog.Title>Tall</Dialog.Title>
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+
+      const content = await screen.findByRole("dialog");
+      expect(content.className).toContain("astw:max-h-[calc(100dvh-2rem)]");
+      expect(content.className).toContain("astw:overflow-y-auto");
+    });
+
+    it("lets className replace the max height and overflow", async () => {
+      render(
+        <Dialog.Root defaultOpen>
+          <Dialog.Content className="astw:max-h-[85vh] astw:overflow-hidden">
+            <Dialog.Title>Custom</Dialog.Title>
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+
+      const content = await screen.findByRole("dialog");
+      expect(content.className).toContain("astw:max-h-[85vh]");
+      expect(content.className).toContain("astw:overflow-hidden");
+      expect(content.className).not.toContain("astw:max-h-[calc(100dvh-2rem)]");
+      expect(content.className).not.toContain("astw:overflow-y-auto");
+    });
+
+    it("lets className switch to a flex column for a pinned header and footer", async () => {
+      render(
+        <Dialog.Root defaultOpen>
+          <Dialog.Content className="astw:flex astw:flex-col">
+            <Dialog.Title>Pinned</Dialog.Title>
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+
+      const content = await screen.findByRole("dialog");
+      expect(content.className).toContain("astw:flex");
+      expect(content.className).not.toMatch(/(^|\s)astw:grid(\s|$)/);
+    });
+  });
 });

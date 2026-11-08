@@ -80,8 +80,12 @@ function Content({ className, children, ...props }: React.ComponentProps<typeof 
       <Overlay />
       <BaseDialog.Popup
         data-slot="dialog-content"
+        // max-h + overflow-y-auto: content taller than the viewport scrolls
+        // inside the dialog instead of running off both edges, where the page
+        // behind it cannot scroll. 2rem matches the horizontal margin, and dvh
+        // follows the mobile browser bar as it shows and hides.
         className={cn(
-          "astw:bg-card astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:fill-mode-forwards astw:fixed astw:top-[50%] astw:left-[50%] astw:z-(--z-overlay) astw:grid astw:w-full astw:max-w-[calc(100%-2rem)] astw:translate-x-[-50%] astw:translate-y-[-50%] astw:gap-4 astw:rounded-lg astw:border astw:border-border astw:p-6 astw:shadow-lg astw:duration-200 astw:sm:max-w-lg",
+          "astw:bg-card astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:fill-mode-forwards astw:fixed astw:top-[50%] astw:left-[50%] astw:z-(--z-overlay) astw:grid astw:w-full astw:max-w-[calc(100%-2rem)] astw:max-h-[calc(100dvh-2rem)] astw:overflow-y-auto astw:translate-x-[-50%] astw:translate-y-[-50%] astw:gap-4 astw:rounded-lg astw:border astw:border-border astw:p-6 astw:shadow-lg astw:duration-200 astw:sm:max-w-lg",
           className,
         )}
         {...props}

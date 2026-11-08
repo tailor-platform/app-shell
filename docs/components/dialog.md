@@ -68,6 +68,12 @@ function BasicUsage() {
 
 Accepts `className` and all standard HTML `<div>` props.
 
+## Tall Content
+
+`Dialog.Content` is never taller than the viewport minus 2rem (16px above and below, the same margin as on the sides). When the content is taller, the whole dialog scrolls, including the title and the close button. `Escape` and a click on the backdrop still close it.
+
+To keep a header or footer in view while only the body scrolls, make `Dialog.Content` a flex column and give the body `min-h-0 flex-1 overflow-y-auto`. A `className` with its own `max-h-*` or `overflow-*` replaces the defaults.
+
 ### Dialog.Trigger / Dialog.Close Props
 
 Accept a `render` prop for custom element rendering (Base UI render pattern), plus standard button props.

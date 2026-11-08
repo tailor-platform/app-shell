@@ -1,3 +1,4 @@
+import * as React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -6,6 +7,8 @@ import { Dialog } from "./dialog";
 afterEach(() => {
   cleanup();
 });
+
+const isPopup = (el: HTMLElement) => el.getAttribute("data-slot") === "dialog-content";
 
 describe("Dialog", () => {
   // ==========================================================================
@@ -292,6 +295,106 @@ describe("Dialog", () => {
       const content = await screen.findByRole("dialog");
       expect(content.className).toContain("astw:flex");
       expect(content.className).not.toMatch(/(^|\s)astw:grid(\s|$)/);
+    });
+  });
+  // jsdom has no layout, so overflow is simulated by stubbing the popup's
+  // scrollHeight and clientHeight, and the first control's position by
+  // stubbing its rect: `firstControlTop` is relative to the popup's box.
+  describe("initial focus", () => {
+    const stubOverflow = (firstControlTop: number) => {
+      vi.spyOn(HTMLElement.prototype, "scrollHeight", "get").mockImplementation(
+        function (this: HTMLElement) {
+          return isPopup(this) ? 1000 : 0;
+        },
+      );
+      vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(
+        function (this: HTMLElement) {
+          return isPopup(this) ? 500 : 0;
+        },
+      );
+      vi.spyOn(HTMLElement.prototype, "getClientRects").mockImplementation(
+        () => [{}] as unknown as DOMRectList,
+      );
+      vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+        function (this: HTMLElement) {
+          const top = isPopup(this) ? 0 : firstControlTop;
+          const height = isPopup(this) ? 500 : 40;
+          return { top, bottom: top + height } as DOMRect;
+        },
+      );
+    };
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("focuses the first control when the content fits", async () => {
+      render(
+        <Dialog.Root defaultOpen>
+          <Dialog.Content>
+            <Dialog.Title>Fits</Dialog.Title>
+            <button>First</button>
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+
+      await waitFor(() => {
+        expect(document.activeElement).toBe(screen.getByText("First"));
+      });
+    });
+
+    it("focuses the first control when the content overflows but the control is in view", async () => {
+      stubOverflow(100);
+      render(
+        <Dialog.Root defaultOpen>
+          <Dialog.Content>
+            <Dialog.Title>Tall form</Dialog.Title>
+            <input aria-label="Name" />
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+
+      await waitFor(() => {
+        expect(document.activeElement).toBe(screen.getByLabelText("Name"));
+      });
+    });
+
+    it("focuses the dialog itself when the first control is below the fold, so it opens at the top", async () => {
+      stubOverflow(900);
+      render(
+        <Dialog.Root defaultOpen>
+          <Dialog.Content>
+            <Dialog.Title>Tall</Dialog.Title>
+            <button>First</button>
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+
+      const content = await screen.findByRole("dialog");
+      await waitFor(() => {
+        expect(document.activeElement).toBe(content);
+      });
+    });
+
+    it("lets initialFocus override the default", async () => {
+      stubOverflow(900);
+      function Example() {
+        const ref = React.useRef<HTMLButtonElement>(null);
+        return (
+          <Dialog.Root defaultOpen>
+            <Dialog.Content initialFocus={ref}>
+              <Dialog.Title>Tall</Dialog.Title>
+              <button>First</button>
+              <button ref={ref}>Second</button>
+            </Dialog.Content>
+          </Dialog.Root>
+        );
+      }
+      render(<Example />);
+
+      await waitFor(() => {
+        expect(document.activeElement).toBe(screen.getByText("Second"));
+      });
     });
   });
 });

@@ -54,6 +54,8 @@ Accepts `className` and all standard HTML `<div>` props.
 
 `Dialog.Content` is never taller than the viewport minus 2rem (16px above and below, the same margin as on the sides). When the content is taller, the whole dialog scrolls, including the title and the close button. `Escape` and a click on the backdrop still close it.
 
+On open, focus moves to the first control in the dialog. In a dialog that scrolls, this happens only when that control is in view at the top. When it is below the fold (for example, a footer button after a long body), the dialog itself takes focus instead, so it opens at the top rather than scrolled to that control. `Tab` then moves to the control. Pass `initialFocus` to choose the element yourself.
+
 To keep a header or footer in view while only the body scrolls, make `Dialog.Content` a flex column and give the body `min-h-0 flex-1 overflow-y-auto`. A `className` with its own `max-h-*` or `overflow-*` replaces the defaults.
 
 ### Dialog.Trigger / Dialog.Close Props

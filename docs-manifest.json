@@ -1008,9 +1008,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "45b23abe90e466b2",
+        "outline": "c1802da0be69c18a",
         "snapshot": null,
-        "outputMd": "f68bdab855730f48",
+        "outputMd": "4191e757cf7c58cb",
         "examples": "7089e7331b95df31"
       }
     },
@@ -1739,9 +1739,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "6b730cf39dcfa154",
+        "outline": "36e4faca6e84a9cb",
         "snapshot": null,
-        "outputMd": "30983a761bc61593",
+        "outputMd": "158878508bc367ce",
         "examples": null
       }
     },
@@ -1844,7 +1844,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-route-error.md": "1a44180ec84ce4b9",
     "packages/core/skills/app-shell-patterns/references/api/use-theme.md": "c338022de386d5e4",
     "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "30c15545ab3c4954",
-    "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "30983a761bc61593",
+    "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "158878508bc367ce",
     "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
     "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "be00d1109761b7f1",
     "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",
@@ -1853,7 +1853,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/i18n-labels.md": "d9f0851d9c98ecfe",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "253fcea1c4e5a42c",
-    "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
+    "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "4191e757cf7c58cb",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "930db027a28bbe24",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "e0286979718e2769",

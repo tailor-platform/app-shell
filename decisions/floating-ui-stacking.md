@@ -54,7 +54,7 @@ The value is set as an inline style on Sonner's `[data-sonner-toaster]`, not as 
 
 ## Decided on 2026-11-08 (step 2)
 
-Decided by the design owner in tailor-inc/platform-planning#2349 (comment of 2026-11-08). Step 2 writes these into the docs (`docs-src/concepts/styling-theming`, `components/dialog`, `components/sheet`, `patterns/form-modal`). It changes no component.
+Decided in tailor-inc/platform-planning#2349 (comment of 2026-11-08). Step 2 writes these into the docs (`docs-src/concepts/styling-theming`, `components/dialog`, `components/sheet`, `patterns/form-modal`). It changes no component.
 
 ### Stacked modals: two levels at most
 

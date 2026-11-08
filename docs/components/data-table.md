@@ -141,9 +141,12 @@ function JournalsPage() {
   return (
     <DataTable.Root value={table}>
       <Toolbar.Root>
-        <Toolbar.Row aria-label="Journal table controls">
+        <Toolbar.Row justify="between" aria-label="Journal table controls">
           <Toolbar.Group>
             <DataTable.Filters />
+          </Toolbar.Group>
+          <Toolbar.Group>
+            <DataTable.ColumnSettings />
           </Toolbar.Group>
         </Toolbar.Row>
       </Toolbar.Root>

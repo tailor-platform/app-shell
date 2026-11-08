@@ -232,9 +232,12 @@ By default, `<Layout>` grows with its content and the AppShell content area scro
   <Layout.Column>
     <DataTable.Root value={table}>
       <Toolbar.Root>
-        <Toolbar.Row aria-label="Product table controls">
+        <Toolbar.Row justify="between" aria-label="Product table controls">
           <Toolbar.Group>
             <DataTable.Filters />
+          </Toolbar.Group>
+          <Toolbar.Group>
+            <DataTable.ColumnSettings />
           </Toolbar.Group>
         </Toolbar.Row>
       </Toolbar.Root>

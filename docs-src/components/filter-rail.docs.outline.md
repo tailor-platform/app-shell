@@ -157,9 +157,12 @@ By default the button appears where the rail would have been. To put it somewher
     <Layout.Column area="main">
       <DataTable.Root value={table}>
         <Toolbar.Root>
-          <Toolbar.Row aria-label="Table controls">
+          <Toolbar.Row justify="between" aria-label="Table controls">
             <Toolbar.Group>
               <FilterRail.Trigger />
+            </Toolbar.Group>
+            <Toolbar.Group>
+              <DataTable.ColumnSettings />
             </Toolbar.Group>
           </Toolbar.Row>
         </Toolbar.Root>

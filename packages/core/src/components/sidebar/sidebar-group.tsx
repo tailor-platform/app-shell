@@ -1,4 +1,13 @@
-import { type ReactNode, useContext, useLayoutEffect, useRef, useState } from "react";
+import {
+  type MouseEvent,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { useLocation, Link } from "react-router";
 import { ChevronRight } from "lucide-react";
@@ -9,10 +18,10 @@ import {
   SidebarMenuButton,
   SidebarMenuAction,
   SidebarMenuSub,
-  useSidebar,
 } from "./primitives";
 import { SidebarButtonIcon } from "./sidebar-button-icon";
 import { useHasHover } from "@/hooks/use-has-hover";
+import { cn } from "@/lib/utils";
 import { useT } from "@/i18n-labels";
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
@@ -46,38 +55,42 @@ export type SidebarGroupProps = {
 };
 
 /**
- * How a group behaves in the narrow icon rail, where its inline submenu has no
- * room: `"flyout"` reveals the child pages in a hover flyout, `"drawer"` opens
- * the full sidebar, and `null` means the sidebar is not a rail.
+ * Whether the sidebar is currently a narrow icon rail — the state where a group
+ * swaps its inline collapsible submenu for a flyout. `SidebarRailContext` is
+ * true wherever the sidebar renders as a collapsed icon rail, at any width.
  */
-function useIconRailMode(): "flyout" | "drawer" | null {
-  // `SidebarRailContext` is true wherever the sidebar renders as a collapsed
-  // icon rail (any width). Gate the hover flyout on hover-capability so a narrow
-  // desktop window still gets it, while touch devices open the slide-in drawer.
-  const isRail = useContext(SidebarRailContext);
-  const hasHover = useHasHover();
-  if (!isRail) return null;
-  return hasHover ? "flyout" : "drawer";
+function useIsIconRail(): boolean {
+  return useContext(SidebarRailContext);
 }
 
 /**
- * Hover flyout for a group in the icon rail: hovering the group icon reveals its
- * child pages in a portaled popover. It is portaled to `document.body` so it
- * escapes the rail's `overflow-hidden`, and its content runs under an
- * `expanded` sidebar context so the child items show labels and drop their own
- * icon-rail tooltips.
+ * Flyout for a group in the icon rail: the group icon reveals its child pages
+ * in a portaled popover. With a mouse it opens on hover. On a device that
+ * cannot hover (touch), the icon is a button that opens and closes it on tap;
+ * the flyout also closes on a tap outside, on Escape, and when a page in it is
+ * opened. The popover is portaled to `document.body` so it escapes the rail's
+ * `overflow-hidden`, and its content runs under an `expanded` sidebar context
+ * so the child items show labels and drop their own icon-rail tooltips.
  */
 const IconRailFlyout = ({
-  trigger,
+  icon,
   title,
+  to,
+  isActive,
   children,
 }: {
-  trigger: ReactNode;
+  icon: ReactNode;
   title: string;
+  to?: string;
+  isActive: boolean;
   children: ReactNode;
 }) => {
+  const hasHover = useHasHover();
+  const flyoutId = useId();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
+  const itemRef = useRef<HTMLLIElement>(null);
   const flyoutRef = useRef<HTMLElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -100,6 +113,69 @@ const IconRailFlyout = ({
     cancelClose();
     closeTimer.current = setTimeout(() => setOpen(false), 150);
   };
+  const toggle = () => {
+    if (open) setOpen(false);
+    else if (itemRef.current) openFrom(itemRef.current);
+  };
+
+  // Opening a page from the flyout closes it. Only a navigation after mount
+  // counts, so this is a no-op on first render.
+  const lastPathname = useRef(pathname);
+  useEffect(() => {
+    if (pathname !== lastPathname.current) {
+      lastPathname.current = pathname;
+      setOpen(false);
+    }
+  }, [pathname]);
+
+  // While open: a pointer down outside the group and its flyout closes it (so a
+  // tap on another group's icon closes this one as it opens that one), and
+  // Escape closes it and returns focus to the group icon.
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (itemRef.current?.contains(target) || flyoutRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      itemRef.current?.querySelector<HTMLElement>('[data-slot="sidebar-menu-button"]')?.focus();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  // The label span is CSS-hidden at icon width, so the trigger gets an explicit
+  // accessible name (the flyout's aria-label only mounts while it is open).
+  // With a mouse the trigger is the group's link when it has one; without hover
+  // it is always a button, because the tap is needed to open the flyout.
+  const triggerAria = {
+    "aria-label": title,
+    "aria-expanded": open,
+    "aria-controls": open ? flyoutId : undefined,
+  };
+  const trigger = (
+    <SidebarMenuButton
+      render={
+        hasHover && to ? (
+          <Link to={to} aria-current={isActive ? "page" : undefined} {...triggerAria} />
+        ) : (
+          <button type="button" {...triggerAria} />
+        )
+      }
+      isActive={isActive}
+      onClick={hasHover ? undefined : toggle}
+    >
+      <SidebarButtonIcon icon={icon} title={title} />
+      <span>{title}</span>
+    </SidebarMenuButton>
+  );
 
   // Keep the flyout on screen: if a long menu (or one anchored low in the rail)
   // would spill past the viewport bottom, shift it up to fit. A menu taller than
@@ -118,23 +194,48 @@ const IconRailFlyout = ({
     });
   }, [open]);
 
+  // Hover handlers only on a hover device: a touch tap also fires mouseenter,
+  // which would open the flyout a moment before the tap's click toggles it shut.
+  const hoverProps = hasHover
+    ? {
+        onMouseEnter: (e: MouseEvent<HTMLElement>) => openFrom(e.currentTarget),
+        onMouseLeave: scheduleClose,
+      }
+    : {};
+  const headingClass =
+    "astw:block astw:px-2 astw:py-1.5 astw:text-label-sm astw:text-muted-foreground";
+
   return (
-    <SidebarMenuItem onMouseEnter={(e) => openFrom(e.currentTarget)} onMouseLeave={scheduleClose}>
+    <SidebarMenuItem ref={itemRef} {...hoverProps}>
       {trigger}
       {open &&
         createPortal(
           <nav
             ref={flyoutRef}
+            id={flyoutId}
             data-slot="sidebar-group-flyout"
             aria-label={title}
-            onMouseEnter={cancelClose}
-            onMouseLeave={scheduleClose}
+            onMouseEnter={hasHover ? cancelClose : undefined}
+            onMouseLeave={hasHover ? scheduleClose : undefined}
             style={{ top: pos.top, left: pos.left }}
             className="astw:fixed astw:z-(--z-popup) astw:max-h-[calc(100dvh-1rem)] astw:min-w-48 astw:overflow-y-auto astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-1 astw:text-popover-foreground astw:shadow-md"
           >
-            <div className="astw:px-2 astw:py-1.5 astw:text-label-sm astw:text-muted-foreground">
-              {title}
-            </div>
+            {/* A group with its own page links to it from the heading, so the
+                page is reachable from the flyout on every device. */}
+            {to ? (
+              <Link
+                to={to}
+                aria-current={isActive ? "page" : undefined}
+                className={cn(
+                  headingClass,
+                  "astw:rounded-sm astw:hover:text-foreground astw:focus-visible:outline-2 astw:focus-visible:outline-ring",
+                )}
+              >
+                {title}
+              </Link>
+            ) : (
+              <div className={headingClass}>{title}</div>
+            )}
             {/* Inside the flyout the items are no longer in the icon rail: they
                 show their labels (the portal escapes the rail's icon-collapse
                 styling) and drop their own redundant icon-rail tooltips. */}
@@ -182,67 +283,17 @@ export const SidebarGroup = (props: SidebarGroupProps) => {
   const resolve = buildLocaleResolver(configurations.locale);
   const t = useT();
 
-  const iconRailMode = useIconRailMode();
-  const { toggleSidebar, isMobile, isIconMode } = useSidebar();
+  const isIconRail = useIsIconRail();
 
   const resolvedTitle = resolve(title, typeof title === "string" ? title : "");
   const isActive = to ? currentPath === to : false;
 
-  // Icon rail on a touch device: nothing can hover, and the inline submenu is
-  // hidden at icon width, so a tap opens the full sidebar (the same drawer the
-  // rail's toggle opens), where the group and its pages are listed.
-  if (iconRailMode === "drawer") {
+  // Icon rail: swap the inline collapsible submenu for a flyout. The group icon
+  // is the trigger; hovering it (or tapping it on a touch device) reveals the
+  // child pages in a popover.
+  if (isIconRail) {
     return (
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          render={
-            <button
-              type="button"
-              aria-label={resolvedTitle}
-              // A drawer opens at phone and tablet widths; on desktop widths the
-              // sidebar expands in place instead.
-              aria-haspopup={isMobile || isIconMode ? "dialog" : undefined}
-            />
-          }
-          isActive={isActive}
-          // Keep SidebarMenuButton from closing the drawer this tap just opened.
-          onClick={(e) => {
-            e.preventDefault();
-            toggleSidebar();
-          }}
-        >
-          <SidebarButtonIcon icon={icon} title={resolvedTitle} />
-          <span>{resolvedTitle}</span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    );
-  }
-
-  // Icon rail: swap the inline collapsible submenu for a hover flyout. The group
-  // icon is the trigger; hovering it reveals the child pages in a popover.
-  if (iconRailMode === "flyout") {
-    // The label span is CSS-hidden at icon width, so give the trigger an
-    // explicit accessible name (the hover flyout's aria-label only mounts on
-    // hover).
-    const trigger = to ? (
-      <SidebarMenuButton
-        render={
-          <Link to={to} aria-label={resolvedTitle} aria-current={isActive ? "page" : undefined} />
-        }
-        isActive={isActive}
-      >
-        <SidebarButtonIcon icon={icon} title={resolvedTitle} />
-        <span>{resolvedTitle}</span>
-      </SidebarMenuButton>
-    ) : (
-      <SidebarMenuButton render={<button type="button" aria-label={resolvedTitle} />}>
-        <SidebarButtonIcon icon={icon} title={resolvedTitle} />
-        <span>{resolvedTitle}</span>
-      </SidebarMenuButton>
-    );
-
-    return (
-      <IconRailFlyout trigger={trigger} title={resolvedTitle}>
+      <IconRailFlyout icon={icon} title={resolvedTitle} to={to} isActive={isActive}>
         {children}
       </IconRailFlyout>
     );

@@ -7,13 +7,18 @@ import * as React from "react";
  * devices. Used to gate hover-only affordances (like the icon-rail flyout) so a
  * narrow desktop window still gets them while touch devices don't.
  */
+const QUERY = "(hover: hover)";
+
 export function useHasHover(): boolean {
-  // Assume hover until proven otherwise so the first paint favours desktop; the
-  // effect corrects it on touch devices.
-  const [hasHover, setHasHover] = React.useState(true);
+  // Read the media query on the first render where a window exists, so a touch
+  // device never gets a hover-only first paint (a tap in that frame would hit
+  // the hover affordance). Without a window, assume hover; the effect corrects it.
+  const [hasHover, setHasHover] = React.useState(
+    () => typeof window === "undefined" || window.matchMedia(QUERY).matches,
+  );
 
   React.useEffect(() => {
-    const mql = window.matchMedia("(hover: hover)");
+    const mql = window.matchMedia(QUERY);
     const update = () => setHasHover(mql.matches);
     update();
     mql.addEventListener("change", update);

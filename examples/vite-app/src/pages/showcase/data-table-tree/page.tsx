@@ -8,6 +8,7 @@ import {
   useDataTable,
   type AppShellPageProps,
   type Column,
+  type HierarchyColumn,
   type SelectionAction,
   type TreeSelectionStrategy,
 } from "@tailor-platform/app-shell";
@@ -63,11 +64,25 @@ const ACCOUNTS: Account[] = [
 
 const columns: Column<Account>[] = [
   { id: "code", label: "Code", accessor: (row) => row.code, width: 90 },
-  // Defined second, but `subRows.column` makes it the hierarchy column, so it's shown first.
-  { id: "name", label: "Account", accessor: (row) => row.name },
   { id: "kind", label: "Kind", accessor: (row) => row.kind },
-  { id: "balance", label: "Balance", type: "money", accessor: (row) => row.balance },
+  {
+    id: "balance",
+    label: "Balance",
+    type: "money",
+    accessor: (row) => row.balance,
+    pin: "right",
+  },
 ];
+
+// The hierarchy column belongs to `subRows`, not `columns`: it's always first and pinned left.
+const hierarchyColumn: HierarchyColumn<Account> = {
+  label: "Account",
+  accessor: (row) => row.name,
+  width: 260,
+  truncate: true,
+  cellProps: (row) => ({ className: row.children ? "font-medium" : undefined }),
+  footer: ({ rows }) => `${rows.length} top-level accounts`,
+};
 
 const STRATEGIES: TreeSelectionStrategy[] = ["leaves", "topmost", "all", "cascade", "independent"];
 
@@ -86,7 +101,7 @@ function AccountsTable({ strategy }: { strategy: TreeSelectionStrategy }) {
     tableId: "showcase-data-table-tree",
     subRows: {
       getSubRows: (row) => row.children,
-      column: "name",
+      hierarchyColumn,
       defaultExpandedIds: ["1000"],
     },
     rowSelection: {
@@ -128,7 +143,7 @@ const DataTableTreePage = () => {
         <Card.Root>
           <Card.Header
             title="Sub-rows"
-            description='A chart of accounts with nested sub-accounts. "Account" is the hierarchy column: it is defined second, but is locked first and pinned. Open Columns to see it locked.'
+            description='A chart of accounts with nested sub-accounts. "Account" is the hierarchy column, defined by subRows.hierarchyColumn: always first and pinned left, and not in Columns. Balance keeps its own pin on the right.'
           />
           <Card.Content className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-2 text-sm">

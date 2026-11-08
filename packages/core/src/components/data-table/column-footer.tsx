@@ -28,6 +28,7 @@ function DataTableColumnFooter() {
   const {
     columns: allColumns,
     visibleColumns: columns,
+    hierarchyColumn,
     pinnedColumns,
     rows,
     loading,
@@ -41,7 +42,10 @@ function DataTableColumnFooter() {
   const besideTree = hasTreeColumn(ctx);
   const hasExpand = !!rowExpansion;
   const hasRowActions = !!rowActions?.length;
-  const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
+  const columnKeys = useMemo(
+    () => buildColumnKeys(allColumns, hierarchyColumn),
+    [allColumns, hierarchyColumn],
+  );
   const { ordered, keys, placements, selection, expand, actions } = useMemo(
     () =>
       computePinLayout(columns, pinnedColumns, {

@@ -467,24 +467,29 @@ Pass `subRows` to show nested rows under each row, like a chart of accounts or a
 
 ```tsx
 const table = useDataTable<Account>({
-  columns,
+  columns, // the other columns: code, balance…
   data, // the page's top-level accounts
   subRows: {
     getSubRows: (account) => account.children,
-    column: "name", // optional: defaults to the first column
+    hierarchyColumn: {
+      label: "Account",
+      accessor: (account) => account.name,
+      width: 280,
+      truncate: true,
+    },
   },
   rowSelection: { actions: [exportAccounts] },
 });
 ```
 
-- **The hierarchy column is locked.** It carries the indent, the open / close caret, and (when selection propagates) the checkbox. It's always first and pinned left, even if `column` names a column defined later, and column settings won't let anyone hide it, unpin it, or move it or anything in front of it. It's marked with a lock.
+- **`subRows` brings its own column.** `hierarchyColumn` defines the column that carries the indent, the open / close caret, the checkbox (except under `"independent"`) and the row's label. Like the row-actions column, the feature owns its place: it's always first and pinned left, it isn't in column settings or saved layout, and it leaves your other columns exactly as you defined them.
+- **It's a column for display.** It takes `label` and `accessor` (both required), `render`, `type` and `typeOptions`, `width` and `truncate`, `header` and `footer`, and `headerProps`, `footerProps` and `cellProps`, typed as on any column. `truncate` cuts the label only, never the indent or caret. Its `footer` gets the page's top-level rows. It has no `id`, `pin`, `align`, `edit`, `sort` or `filter`.
 - **Rows need an `id`, unique across the tree.** Expansion and selection are keyed by it. A row without one can't open or be selected.
 - **Sub-rows come with the data.** `getSubRows` reads them synchronously from each row. Loading children on demand isn't supported yet.
-- **The hierarchy cell stays read-only** under inline editing, since it also holds the indent and caret.
 - **Not combined with `rowExpansion`.** A row shows either its sub-rows or a detail panel, so passing both is a type error. Untyped callers that pass both get `subRows` and a console warning.
 - **Open rows** can be controlled with `expandedIds` + `onExpandedChange`, or started with `defaultExpandedIds`. `useDataTable` returns `expandedSubRowIds` and `toggleSubRows(row)`.
 
-The caret is a native `<button>` with `aria-expanded`, named from the hierarchy column's value ("Expand row Assets"), so it's reached with Tab and worked with Enter / Space. Full tree-grid arrow-key navigation isn't implemented yet.
+The caret is a native `<button>` with `aria-expanded`, named from the hierarchy column's `accessor` ("Expand row Assets"), so it's reached with Tab and worked with Enter / Space. Full tree-grid arrow-key navigation isn't implemented yet.
 
 ### Selecting sub-rows
 
@@ -803,21 +808,21 @@ const table = useDataTable({
 
 ### Options
 
-| Option              | Type                               | Description                                                                                                                                                                                              |
-| ------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                                            |
-| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                                            |
-| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                                                 |
-| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                                                    |
-| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                                         |
-| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                                                        |
-| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.                                     |
-| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                                                  |
-| `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`, with optional `actions`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection). |
-| `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                                          |
-| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows).                          |
-| `subRows`           | `SubRowsOptions<TRow>`             | Nested rows: `getSubRows`, optional `column`, and `expandedIds` + `onExpandedChange` or `defaultExpandedIds`. Can't be combined with `rowExpansion`. See [Sub-rows](#sub-rows).                          |
-| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                                                |
+| Option              | Type                               | Description                                                                                                                                                                                                 |
+| ------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                                               |
+| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                                               |
+| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                                                    |
+| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                                                       |
+| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                                            |
+| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                                                           |
+| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.                                        |
+| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                                                     |
+| `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`, with optional `actions`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection).    |
+| `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                                             |
+| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows).                             |
+| `subRows`           | `SubRowsOptions<TRow>`             | Nested rows: `getSubRows`, `hierarchyColumn` (a `HierarchyColumn<TRow>`), and `expandedIds` + `onExpandedChange` or `defaultExpandedIds`. Can't be combined with `rowExpansion`. See [Sub-rows](#sub-rows). |
+| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                                                   |
 
 ### `DataTableData`
 

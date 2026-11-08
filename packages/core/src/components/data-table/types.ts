@@ -634,13 +634,48 @@ export type RowSelectionOptions = TreeSelectionBehaviorProps & {
   );
 
 /**
+ * The column that carries the sub-rows hierarchy: the indent, the open / close
+ * caret, the selection checkbox (except under `"independent"`), and the row's
+ * label. It takes the display options of a regular {@link Column}, typed the
+ * same way per `type`, but its layout belongs to `subRows`: it's always first
+ * and pinned left, and it stays out of column settings and saved layout.
+ *
+ * `id`, `pin`, `align`, `edit`, `sort` and `filter` aren't available. `label`
+ * and `accessor` are required: `accessor` also names each row's caret for
+ * assistive tech ("Expand row Assets").
+ */
+export type HierarchyColumn<TRow extends Record<string, unknown>> = Pick<
+  ColumnBase<TRow>,
+  | "render"
+  | "cellProps"
+  | "header"
+  | "headerProps"
+  | "footer"
+  | "footerProps"
+  | "width"
+  | "truncate"
+> & {
+  /** Header text, and the caret's name prefix. */
+  label: string;
+} & HierarchyColumnTypeBranch<TRow>;
+
+/** Each `ColumnTypeBranch`, without `edit` and with `accessor` required. */
+type HierarchyColumnTypeBranch<TRow extends Record<string, unknown>> =
+  ColumnTypeBranch<TRow> extends infer Branch
+    ? Branch extends { accessor?: infer Accessor }
+      ? Omit<Branch, "edit" | "accessor"> & { accessor: NonNullable<Accessor> }
+      : never
+    : never;
+
+/**
  * Nested rows, shown under their parent when it's opened. The page's rows are
  * the top level, so pagination counts them, and each parent's sub-rows stay on
  * its page.
  *
- * The hierarchy column (`column`) is locked: it's always first, pinned left,
- * and can't be hidden or moved. It carries the indent, the open / close caret,
- * and the selection checkbox when `rowSelection` propagates.
+ * `hierarchyColumn` defines the column that carries the hierarchy. Like the
+ * row-actions column, it's added by the feature rather than taken from
+ * `columns`: it's always first and pinned left, can't be hidden or moved, and
+ * leaves your other columns as you defined them.
  *
  * **Requirement:** Each row must have a string or number `id`, unique across
  * the whole tree. Expansion and selection are keyed by it; a row without one
@@ -649,12 +684,8 @@ export type RowSelectionOptions = TreeSelectionBehaviorProps & {
 export type SubRowsOptions<TRow extends Record<string, unknown>> = {
   /** A row's sub-rows. Omitted, `null` or empty means a leaf. */
   getSubRows: (row: TRow) => readonly TRow[] | null | undefined;
-  /**
-   * The key of the column that carries the hierarchy: its `id`, or its
-   * `label` when it has no `id`. Defaults to the first column in `columns`.
-   * Wherever it's defined, it's shown first and pinned left.
-   */
-  column?: string;
+  /** The column that shows the hierarchy. See {@link HierarchyColumn}. */
+  hierarchyColumn: HierarchyColumn<TRow>;
 } & (
   | {
       /** Controlled: ids of the rows whose sub-rows are open. Update it from `onExpandedChange`. */
@@ -966,8 +997,10 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   subRows?: SubRowsOptions<TRow>;
   /** The rows to render: each page row followed by its open sub-rows, with depth. */
   visibleRows?: DataTableTreeRow<TRow>[];
-  /** Key of the hierarchy column, which is locked first, pinned left, and always shown. */
+  /** Key of the hierarchy column. */
   treeColumnKey?: string;
+  /** The hierarchy column, built from `subRows.hierarchyColumn`. Rendered first, pinned left. */
+  hierarchyColumn?: Column<TRow>;
   /** Ids of the rows whose sub-rows are open. */
   expandedSubRowIds?: string[];
   /** Opens or closes `row`'s sub-rows. */

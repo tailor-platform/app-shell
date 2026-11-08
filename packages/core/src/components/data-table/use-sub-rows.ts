@@ -1,29 +1,23 @@
 import { useCallback, useMemo } from "react";
 import { buildTree, flattenVisible, indexTree, type TreeIndex } from "@/lib/tree/model";
 import { useTreeExpansion } from "@/lib/tree/use-tree-expansion";
-import { columnKeyAt } from "./column-layout";
-import type { Column, DataTableTreeRow, RowExpansionOptions, SubRowsOptions } from "./types";
+import { HIERARCHY_KEY } from "./column-layout";
+import type {
+  Column,
+  DataTableTreeRow,
+  HierarchyColumn,
+  RowExpansionOptions,
+  SubRowsOptions,
+} from "./types";
 
 /**
- * The hierarchy column's key: `subRows.column` when it names a column's key
- * (its `id`, else its `label`), else the first column. Resolved from the
- * definition order, never the visible order, so reordering or hiding columns
- * can't move the hierarchy. `warning` is set when `subRows.column` matches
- * nothing.
+ * The hierarchy column as a regular column, so it renders like one. It takes
+ * a reserved key and is pinned left; the feature owns its place.
  */
-export function resolveTreeColumnKey<TRow extends Record<string, unknown>>(
-  columns: Column<TRow>[],
-  subRows: SubRowsOptions<TRow> | undefined,
-): { key: string | undefined; warning?: string } {
-  if (!subRows || columns.length === 0) return { key: undefined };
-  const keys = columns.map((col, index) => columnKeyAt(col, index));
-  if (subRows.column === undefined || keys.includes(subRows.column)) {
-    return { key: subRows.column ?? keys[0] };
-  }
-  return {
-    key: keys[0],
-    warning: `[DataTable] \`subRows.column\` is "${subRows.column}", but no column has that key. The first column carries the hierarchy instead.`,
-  };
+export function buildHierarchyColumn<TRow extends Record<string, unknown>>(
+  hierarchyColumn: HierarchyColumn<TRow>,
+): Column<TRow> {
+  return { ...hierarchyColumn, id: HIERARCHY_KEY, pin: "left" } as Column<TRow>;
 }
 
 export type SubRowsState<TRow extends Record<string, unknown>> = {

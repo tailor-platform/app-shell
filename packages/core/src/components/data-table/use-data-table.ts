@@ -5,7 +5,8 @@ import { useColumns } from "./use-columns";
 import { usePageCounter } from "./use-page-counter";
 import { useRowExpansion } from "./use-row-expansion";
 import { useRowSelection } from "./use-row-selection";
-import { resolveTreeColumnKey, useSubRows } from "./use-sub-rows";
+import { buildHierarchyColumn, useSubRows } from "./use-sub-rows";
+import { HIERARCHY_KEY } from "./column-layout";
 import type { UseDataTableOptions, UseDataTableReturn } from "./types";
 
 /**
@@ -92,12 +93,14 @@ export function useDataTable<
 
   // ---------------------------------------------------------------------------
   // Column visibility / order / pinning (persisted per-user when tableId is set).
-  // With sub-rows, the hierarchy column is locked first, pinned and shown.
+  // The sub-rows hierarchy column is the feature's own, outside all of this.
   // ---------------------------------------------------------------------------
-  const { key: treeColumnKey, warning: treeColumnWarning } = useMemo(
-    () => resolveTreeColumnKey(allColumns, subRows),
-    [allColumns, subRows],
+  const hierarchyColumnOption = subRows?.hierarchyColumn;
+  const hierarchyColumn = useMemo(
+    () => (hierarchyColumnOption ? buildHierarchyColumn(hierarchyColumnOption) : undefined),
+    [hierarchyColumnOption],
   );
+  const treeColumnKey = hierarchyColumn ? HIERARCHY_KEY : undefined;
   const {
     visibleColumns,
     toggleColumn,
@@ -109,7 +112,7 @@ export function useDataTable<
     setColumnOrder,
     pinnedColumns,
     setPin,
-  } = useColumns(allColumns, tableId, treeColumnKey);
+  } = useColumns(allColumns, tableId);
 
   // ---------------------------------------------------------------------------
   // Pagination actions (delegated to control + page counter sync)
@@ -184,7 +187,7 @@ export function useDataTable<
     toggleSubRows,
     warnings: subRowsWarnings,
   } = useSubRows(rows, subRows, rowExpansionOption, getRowId);
-  useOnceWarnings(treeColumnWarning ? [treeColumnWarning, ...subRowsWarnings] : subRowsWarnings);
+  useOnceWarnings(subRowsWarnings);
 
   const {
     selectedIds,
@@ -261,6 +264,7 @@ export function useDataTable<
     subRows,
     visibleRows,
     treeColumnKey,
+    hierarchyColumn,
     expandedSubRowIds,
     toggleSubRows,
     getRowCheckState,

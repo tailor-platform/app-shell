@@ -38,6 +38,7 @@ export type {
   SelectionAction,
   SelectionActionHelpers,
   SubRowsOptions,
+  HierarchyColumn,
   UseDataTableOptions,
   UseDataTableReturn,
 } from "./types";

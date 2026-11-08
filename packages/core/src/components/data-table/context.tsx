@@ -116,8 +116,13 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   subRows?: SubRowsOptions<TRow>;
   /** The rows to render with sub-rows: each page row followed by its open sub-rows. */
   visibleRows?: DataTableTreeRow<TRow>[];
-  /** Key of the hierarchy column: locked first, pinned left, always shown. */
+  /** Key of the hierarchy column. */
   treeColumnKey?: string;
+  /**
+   * The hierarchy column. It's owned by `subRows`, so it's not in `columns`,
+   * but it leads `visibleColumns`.
+   */
+  hierarchyColumn?: Column<TRow>;
   /** Ids of the rows whose sub-rows are open. */
   expandedSubRowIds?: string[];
   /** Opens or closes `row`'s sub-rows. */

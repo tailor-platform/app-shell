@@ -13,8 +13,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
-import { SELECTION_KEY } from "./column-layout";
-import type { Column, RowExpansionOptions, SubRowsOptions, UseDataTableOptions } from "./types";
+import { HIERARCHY_KEY, SELECTION_KEY } from "./column-layout";
+import type {
+  Column,
+  HierarchyColumn,
+  RowExpansionOptions,
+  SubRowsOptions,
+  UseDataTableOptions,
+} from "./types";
 
 type Account = {
   id: string;
@@ -37,10 +43,10 @@ const ACCOUNTS: Account[] = [
   { id: "equity", name: "Equity", code: "3000" },
 ];
 
-const columns: Column<Account>[] = [
-  { id: "name", label: "Account", render: (row) => row.name },
-  { id: "code", label: "Code", render: (row) => row.code },
-];
+const columns: Column<Account>[] = [{ id: "code", label: "Code", accessor: (row) => row.code }];
+
+const hierarchyColumn: HierarchyColumn<Account> = { label: "Account", accessor: (row) => row.name };
+const getSubRows = (row: Account) => row.children;
 
 const wrapper = createAppShellWrapper("en");
 
@@ -71,7 +77,7 @@ function Harness({
   const table = useDataTable<Account>({
     columns: tableColumns,
     data: { rows },
-    subRows: { getSubRows: (row) => row.children },
+    subRows: { getSubRows, hierarchyColumn },
     ...options,
   } as UseDataTableOptions<Account>);
   return (
@@ -108,15 +114,7 @@ describe("DataTable subRows", () => {
   });
 
   it("names the caret from the hierarchy column's value", () => {
-    render(
-      <Harness
-        tableColumns={[
-          { id: "name", label: "Account", accessor: (row) => row.name },
-          { id: "code", label: "Code", render: (row) => row.code },
-        ]}
-      />,
-      { wrapper },
-    );
+    render(<Harness />, { wrapper });
     expect(screen.getByRole("button", { name: "Expand row Assets" })).toBeDefined();
   });
 
@@ -126,7 +124,7 @@ describe("DataTable subRows", () => {
     const { rerender } = render(
       <Harness
         options={{
-          subRows: { getSubRows: (row) => row.children, expandedIds: [], onExpandedChange },
+          subRows: { getSubRows, hierarchyColumn, expandedIds: [], onExpandedChange },
         }}
       />,
       { wrapper },
@@ -140,7 +138,8 @@ describe("DataTable subRows", () => {
       <Harness
         options={{
           subRows: {
-            getSubRows: (row) => row.children,
+            getSubRows,
+            hierarchyColumn,
             expandedIds: ["assets"],
             onExpandedChange,
           },
@@ -160,7 +159,7 @@ describe("DataTable subRows", () => {
   });
 
   it("rejects rowExpansion with subRows at the type level", () => {
-    const subRows: SubRowsOptions<Account> = { getSubRows: (row) => row.children };
+    const subRows: SubRowsOptions<Account> = { getSubRows, hierarchyColumn };
     const rowExpansion: RowExpansionOptions<Account> = { render: () => "details" };
     const base = { columns, data: { rows: ACCOUNTS } };
     const ok: UseDataTableOptions<Account>[] = [
@@ -209,7 +208,10 @@ describe("DataTable subRows", () => {
       <Harness
         rows={[flat[0]]}
         options={{
-          subRows: { getSubRows: (row) => flat.filter((r) => r.parentId === row.id) },
+          subRows: {
+            getSubRows: (row) => flat.filter((r) => r.parentId === row.id),
+            hierarchyColumn,
+          },
         }}
       />,
       { wrapper },
@@ -223,83 +225,110 @@ describe("DataTable subRows", () => {
   });
 
   describe("the hierarchy column", () => {
-    it("is the first defined column by default, and is pinned left", () => {
-      const { result } = renderHook(
-        () =>
-          useDataTable<Account>({
-            columns,
-            data: { rows: ACCOUNTS },
-            subRows: { getSubRows: (row) => row.children },
-          }),
-        { wrapper },
-      );
-      expect(result.current.treeColumnKey).toBe("name");
-      expect(result.current.pinnedColumns.name).toBe("left");
-    });
-
-    it("is forced first when `column` names a later one", () => {
+    it("comes first and pinned left, and leaves the other columns as defined", () => {
       render(
-        <Harness options={{ subRows: { getSubRows: (row) => row.children, column: "code" } }} />,
+        <Harness
+          tableColumns={[
+            { id: "code", label: "Code", accessor: (row) => row.code },
+            { id: "kind", label: "Kind", accessor: () => "Asset", pin: "right" },
+          ]}
+        />,
         { wrapper },
       );
-      expect(headerKeys()).toEqual(["code", "name"]);
-      expect(rowFor("1000").querySelector("[data-slot=data-table-sub-rows-cell]")).not.toBeNull();
-    });
-
-    it("falls back to the first column for an unknown `column`, with a warning", () => {
-      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-      const { result } = renderHook(
-        () =>
-          useDataTable<Account>({
-            columns,
-            data: { rows: ACCOUNTS },
-            subRows: { getSubRows: (row) => row.children, column: "nope" },
-          }),
-        { wrapper },
+      expect(headerKeys()).toEqual([HIERARCHY_KEY, "code", "kind"]);
+      const hierarchyHeader = document.querySelector<HTMLElement>(
+        `thead th[data-col-key=${HIERARCHY_KEY}]`,
       );
-      expect(result.current.treeColumnKey).toBe("name");
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('"nope"'));
-      warn.mockRestore();
-    });
-
-    it("can't be hidden, unpinned or moved, and nothing moves in front of it", () => {
-      const { result } = renderHook(
-        () =>
-          useDataTable<Account>({
-            columns,
-            data: { rows: ACCOUNTS },
-            subRows: { getSubRows: (row) => row.children },
-          }),
-        { wrapper },
+      expect(hierarchyHeader?.style.position).toBe("sticky");
+      expect(hierarchyHeader?.style.left).toBe("0px");
+      expect(document.querySelector<HTMLElement>("thead th[data-col-key=kind]")?.style.right).toBe(
+        "0px",
       );
-
-      act(() => {
-        result.current.toggleColumn("name");
-        result.current.setPin("name", "none");
-        result.current.moveColumn("name", 1);
-        result.current.moveColumn("code", 0);
-        result.current.hideAllColumns();
-      });
-      expect(result.current.isColumnVisible("name")).toBe(true);
-      expect(result.current.pinnedColumns.name).toBe("left");
-      expect(result.current.columnOrder).toEqual(["name", "code"]);
-      expect(result.current.isColumnVisible("code")).toBe(false);
-
-      act(() => result.current.setColumnOrder(["code", "name"]));
-      expect(result.current.columnOrder).toEqual(["name", "code"]);
     });
 
-    it("shows as locked in column settings: no drag handle, visibility can't change", async () => {
+    it("stays out of the column state and column settings", async () => {
       const user = userEvent.setup();
-      render(<Harness toolbar={<DataTable.ColumnSettings />} />, { wrapper });
+      const { result } = renderHook(
+        () =>
+          useDataTable<Account>({
+            columns,
+            data: { rows: ACCOUNTS },
+            subRows: { getSubRows, hierarchyColumn },
+          }),
+        { wrapper },
+      );
+      expect(result.current.columnOrder).toEqual(["code"]);
+      expect(result.current.visibleColumns.map((col) => col.id)).toEqual(["code"]);
+      act(() => result.current.hideAllColumns());
+      expect(result.current.isColumnVisible(HIERARCHY_KEY)).toBe(true);
 
+      render(<Harness toolbar={<DataTable.ColumnSettings />} />, { wrapper });
       await user.click(screen.getByRole("button", { name: /columns/i }));
       const popup = await screen.findByRole("group", { name: /column settings/i });
-      const locked = popup.querySelector("[data-locked]") as HTMLElement;
-      expect(locked.textContent).toContain("Account");
-      expect(locked.getAttribute("draggable")).toBe("false");
-      const checkbox = within(locked).getByRole("checkbox", { name: "Account" });
-      expect(checkbox.hasAttribute("data-disabled")).toBe(true);
+      expect(within(popup).queryByText("Account")).toBeNull();
+      expect(within(popup).getByText("Code")).toBeDefined();
+    });
+
+    it("renders its own header, footer, cell props and type, keeping select-all", () => {
+      render(
+        <Harness
+          options={{
+            rowSelection: {},
+            subRows: {
+              getSubRows,
+              hierarchyColumn: {
+                label: "Account",
+                type: "badge",
+                typeOptions: { badgeLabelMap: { Assets: "Assets (group)" } },
+                accessor: (row) => row.name,
+                header: ({ label }) => <em>{label} tree</em>,
+                headerProps: () => ({ title: "Account hierarchy" }),
+                cellProps: (row) => ({ className: row.children ? "parent-row" : undefined }),
+                footer: ({ rows }) => `${rows.length} top-level`,
+              },
+            },
+          }}
+        />,
+        { wrapper },
+      );
+      const header = document.querySelector(`thead th[data-col-key=${HIERARCHY_KEY}]`);
+      expect(header?.getAttribute("title")).toBe("Account hierarchy");
+      expect(within(header as HTMLElement).getByText("Account tree")).toBeDefined();
+      expect(within(header as HTMLElement).getByRole("checkbox", { name: "Select all rows" }));
+      expect(screen.getByText("Assets (group)")).toBeDefined();
+      expect(rowFor("Assets (group)").querySelector("td.parent-row")).not.toBeNull();
+      // The page's own rows, not the open sub-rows.
+      expect(screen.getByText("2 top-level")).toBeDefined();
+    });
+
+    it("truncates the label only, not the indent or caret", () => {
+      render(
+        <Harness
+          options={{
+            subRows: { getSubRows, hierarchyColumn: { ...hierarchyColumn, truncate: true } },
+          }}
+        />,
+        { wrapper },
+      );
+      const cell = rowFor("Assets").querySelector("[data-slot=data-table-sub-rows-cell]");
+      expect(cell?.classList.contains("astw:truncate")).toBe(false);
+      expect(screen.getByText("Assets").classList.contains("astw:truncate")).toBe(true);
+    });
+
+    it("takes only display options, with label and accessor required", () => {
+      const ok: HierarchyColumn<Account>[] = [
+        hierarchyColumn,
+        { label: "Code", type: "number", accessor: (row) => Number(row.code), width: 120 },
+      ];
+      // @ts-expect-error -- the feature owns the column's key
+      const withId: HierarchyColumn<Account> = { ...hierarchyColumn, id: "name" };
+      // @ts-expect-error -- and its pin
+      const withPin: HierarchyColumn<Account> = { ...hierarchyColumn, pin: "right" };
+      // @ts-expect-error -- accessor names each row's caret
+      const noAccessor: HierarchyColumn<Account> = { label: "Account" };
+      // @ts-expect-error -- a link still needs its href
+      const linkNoHref: HierarchyColumn<Account> = { ...hierarchyColumn, type: "link" };
+      expect([ok, withId, withPin, noAccessor, linkNoHref]).toBeDefined();
     });
   });
 
@@ -314,7 +343,8 @@ describe("DataTable subRows", () => {
         columns,
         data: { rows: ACCOUNTS },
         subRows: {
-          getSubRows: (row) => row.children,
+          getSubRows,
+          hierarchyColumn,
           defaultExpandedIds: ["assets"],
         },
         rowSelection: { ...selection, selectedIds: ids, onChange: setIds } as NonNullable<
@@ -370,7 +400,7 @@ describe("DataTable subRows", () => {
       render(<Selecting />, { wrapper });
 
       const selectAll = screen.getByRole("checkbox", { name: "Select all rows" });
-      expect(selectAll.closest("th")?.getAttribute("data-col-key")).toBe("name");
+      expect(selectAll.closest("th")?.getAttribute("data-col-key")).toBe(HIERARCHY_KEY);
       fireEvent.click(selectAll);
       expect(ids()).toEqual(["cash", "receivables", "equity", "elsewhere"]);
 

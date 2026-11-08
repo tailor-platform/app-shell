@@ -23,6 +23,8 @@ const SELECTION_WIDTH_BESIDE_TREE = 36;
 const SELECTION_KEY = "__datatable_selection__";
 const ACTIONS_KEY = "__datatable_actions__";
 const EXPAND_KEY = "__datatable_expand__";
+// Key of the sub-rows hierarchy column, which `subRows.hierarchyColumn` defines.
+const HIERARCHY_KEY = "__datatable_hierarchy__";
 
 type PinSide = "left" | "right";
 type ColumnWidths = Record<string, number>;
@@ -105,8 +107,11 @@ function resolvePin(
  */
 function buildColumnKeys<TRow extends Record<string, unknown>>(
   columns: Column<TRow>[],
+  /** The sub-rows hierarchy column: owned by the feature, so it's not in `columns`. */
+  hierarchyColumn?: Column<TRow>,
 ): Map<Column<TRow>, string> {
   const keys = new Map<Column<TRow>, string>();
+  if (hierarchyColumn) keys.set(hierarchyColumn, HIERARCHY_KEY);
   columns.forEach((col, index) => keys.set(col, columnKeyAt(col, index)));
   return keys;
 }
@@ -246,6 +251,7 @@ export {
   SELECTION_KEY,
   ACTIONS_KEY,
   EXPAND_KEY,
+  HIERARCHY_KEY,
   columnKeyAt,
   resolvePin,
   selectionCellBase,

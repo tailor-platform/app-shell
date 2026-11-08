@@ -350,6 +350,7 @@ export {
   type SelectionAction,
   type SelectionActionHelpers,
   type SubRowsOptions,
+  type HierarchyColumn,
   type UseDataTableOptions,
   type UseDataTableReturn,
   type MetadataFieldOptions,

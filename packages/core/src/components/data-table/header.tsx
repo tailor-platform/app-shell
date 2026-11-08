@@ -65,6 +65,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
   const {
     columns: allColumns,
     visibleColumns: columns,
+    hierarchyColumn,
     pinnedColumns,
     sortStates,
     onSort,
@@ -104,7 +105,10 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
       aria-label={t("selectAll")}
     />
   );
-  const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
+  const columnKeys = useMemo(
+    () => buildColumnKeys(allColumns, hierarchyColumn),
+    [allColumns, hierarchyColumn],
+  );
   const { ordered, keys, placements, selection, expand, actions } = useMemo(
     () =>
       computePinLayout(columns, pinnedColumns, {
@@ -218,22 +222,8 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                 <div className="astw:flex astw:items-center astw:gap-2">
                   <span className="astw:size-5 astw:shrink-0" aria-hidden />
                   {selectAllInTree ? selectAllCheckbox : null}
-                  <div className="astw:min-w-0 astw:flex-1">
-                    <DataTableHeaderContextMenu
-                      align={align}
-                      column={col}
-                      columnKey={key}
-                      pinnedColumns={pinnedColumns}
-                      setPin={setPin}
-                      sortDirection={currentSort?.direction}
-                      onSortDirectionChange={
-                        isSortable ? (direction) => onSort(sortField, direction) : undefined
-                      }
-                      pinLocked={isTreeColumn}
-                    >
-                      {content}
-                    </DataTableHeaderContextMenu>
-                  </div>
+                  {/* No pin or sort menu: the feature owns this column's place. */}
+                  <div className="astw:min-w-0 astw:flex-1">{content}</div>
                 </div>
               ) : (
                 <DataTableHeaderContextMenu

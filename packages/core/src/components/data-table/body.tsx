@@ -23,6 +23,7 @@ function DataTableBody({ className }: { className?: string }) {
   const {
     columns: allColumns,
     visibleColumns: columns,
+    hierarchyColumn,
     pinnedColumns,
     rows,
     loading,
@@ -50,7 +51,10 @@ function DataTableBody({ className }: { className?: string }) {
   const totalColSpan =
     (columns?.length ?? 1) + (hasRowActions ? 1 : 0) + (hasSelection ? 1 : 0) + (hasExpand ? 1 : 0);
   const rowCount = pageSize > 0 ? pageSize : DEFAULT_ROWS;
-  const columnKeys = useMemo(() => buildColumnKeys(allColumns), [allColumns]);
+  const columnKeys = useMemo(
+    () => buildColumnKeys(allColumns, hierarchyColumn),
+    [allColumns, hierarchyColumn],
+  );
   const pinLayout = useMemo(
     () =>
       computePinLayout(columns, pinnedColumns, {

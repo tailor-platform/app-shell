@@ -1416,9 +1416,9 @@
       "symbols": ["Tabs"],
       "hashes": {
         "typeSurface": "f6795191b952e110",
-        "outline": "b73ba87ed529e09d",
-        "snapshot": "655d96c1394a3ace",
-        "outputMd": "30bb32e57fc78bd9",
+        "outline": "26fe666faab1df73",
+        "snapshot": "1b59e5784b7450d2",
+        "outputMd": "1eeed53c1f0ab9b7",
         "examples": "b07f258088e81cac"
       }
     },
@@ -1812,7 +1812,7 @@
     "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "8ab89452180de4e1",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",
-    "packages/core/skills/app-shell-patterns/references/components/tabs.md": "30bb32e57fc78bd9",
+    "packages/core/skills/app-shell-patterns/references/components/tabs.md": "1eeed53c1f0ab9b7",
     "packages/core/skills/app-shell-patterns/references/components/text.md": "24262ae6cb49a138",
     "packages/core/skills/app-shell-patterns/references/components/textarea.md": "c940bc01cd573334",
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",

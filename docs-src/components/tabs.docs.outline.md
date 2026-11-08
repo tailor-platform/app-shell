@@ -26,7 +26,7 @@ import { Tabs } from "@tailor-platform/app-shell";
 | Sub-component | Description                                                    |
 | ------------- | -------------------------------------------------------------- |
 | `Tabs.Root`   | Manages tab selection state                                    |
-| `Tabs.List`   | Groups the individual tab buttons                              |
+| `Tabs.List`   | Groups the individual tab buttons on one scrolling row         |
 | `Tabs.Tab`    | An interactive tab button that toggles the corresponding panel |
 | `Tabs.Panel`  | A panel displayed when the corresponding tab is active         |
 
@@ -46,7 +46,9 @@ import { Tabs } from "@tailor-platform/app-shell";
 
 ### Tabs.List Props
 
-Accepts `className` and all standard HTML `<div>` props.
+Accepts `className` and all standard HTML `<div>` props. They apply to the
+`tablist` element itself, not to the scroll container that wraps it (see
+[Overflow](#overflow)).
 
 ### Tabs.Tab Props
 
@@ -80,6 +82,26 @@ const [activeTab, setActiveTab] = useState("overview");
   <Tabs.Panel value="details">Details content</Tabs.Panel>
 </Tabs.Root>;
 ```
+
+## Overflow
+
+Tabs stay on one row. When they are wider than the space available, the list
+scrolls sideways instead of wrapping or growing the page. The scrollbar is
+hidden: touch, a trackpad, Shift + mouse wheel, and the arrow keys scroll it,
+and the tab cut off at the edge shows that there is more. The active tab is
+scrolled into view when the tabs mount and whenever it changes, and a tab that
+receives focus is scrolled into view, so arrow-key navigation never lands on a
+hidden tab. Nothing changes while the tabs fit.
+
+To make this work, `Tabs.List` renders inside a block-level scroll container
+(`data-slot="tabs-list-container"`). The container has 4px of padding and a
+matching negative margin, so the tabs' focus ring is not clipped and the list
+keeps its footprint. A `Tabs.List` placed next to inline content starts on its
+own line.
+
+Scrolling keeps every tab reachable, but it does not shorten the list. If a
+list regularly overflows at the widths your users have, prefer fewer tabs or
+another control, such as a `Select`, over relying on the scroll.
 
 ## Examples
 

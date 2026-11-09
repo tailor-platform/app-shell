@@ -61,9 +61,9 @@ function BasicUsage() {
 
 ### Tabs.List Props
 
-Accepts `className` and all standard HTML `<div>` props. They apply to the
-`tablist` element itself, not to the scroll container that wraps it (see
-[Overflow](#overflow)).
+Accepts `className` and all standard HTML `<div>` props except `render`. The
+HTML props apply to the `tablist` element, which is also the scroll container;
+`className` applies to the visual track inside it (see [Overflow](#overflow)).
 
 ### Tabs.Tab Props
 
@@ -103,16 +103,24 @@ const [activeTab, setActiveTab] = useState("overview");
 Tabs stay on one row. When they are wider than the space available, the list
 scrolls sideways instead of wrapping or growing the page. The scrollbar is
 hidden: touch, a trackpad, Shift + mouse wheel, and the arrow keys scroll it,
-and the tab cut off at the edge shows that there is more. The active tab is
-scrolled into view when the tabs mount and whenever it changes, and a tab that
-receives focus is scrolled into view, so arrow-key navigation never lands on a
-hidden tab. Nothing changes while the tabs fit.
+and the tab cut off at the edge shows that there is more. Base UI scrolls the
+active tab into view when the tabs mount, and scrolls the tab that the arrow
+keys, Home or End move focus to into view, so keyboard navigation never lands
+on a hidden tab. Nothing changes while the tabs fit.
 
-To make this work, `Tabs.List` renders inside a block-level scroll container
-(`data-slot="tabs-list-container"`). The container has 4px of padding and a
-matching negative margin, so the tabs' focus ring is not clipped and the list
-keeps its footprint. A `Tabs.List` placed next to inline content starts on its
-own line.
+To make this work, the `tablist` element (`data-slot="tabs-list"`) is the
+scroll container, and the tabs sit in a visual track inside it
+(`data-slot="tabs-list-track"`) that carries the variant styles and your
+`className`. The scroll container has 4px of padding, a matching negative
+margin and the same `scroll-padding`, so the tabs' focus ring is not clipped
+and the list keeps its footprint. A `Tabs.List` placed next to inline content
+starts on its own line.
+
+Two cases are not scrolled into view automatically: a tab selected by changing
+a controlled `value` from outside (a deep link, for example), and a list that
+mounts while hidden, such as inside a closed dialog. Call
+`scrollIntoView({ inline: "nearest", block: "nearest" })` on the tab if you
+need either.
 
 Scrolling keeps every tab reachable, but it does not shorten the list. If a
 list regularly overflows at the widths your users have, prefer fewer tabs or

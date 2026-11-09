@@ -85,97 +85,48 @@ function Root({ className, children, variant = "default", size = "default", ...p
 }
 Root.displayName = "Tabs.Root";
 
-// The list sits in a scroll container so that tabs wider than the available
-// width scroll sideways instead of growing the page. The scrollbar is hidden:
-// touch, trackpad, and the arrow keys scroll it, and the tab cut off at the edge
-// shows there is more. The container's padding / negative margin pair gives the
-// 3px focus ring room inside the clip box without changing the list's footprint,
-// and the max-width lets the border box extend by that same margin. The values
-// are in px so that `LIST_CONTAINER_PADDING` and the classes cannot drift apart.
-const LIST_CONTAINER_PADDING = 4;
+// The tablist element is the scroll container, so that tabs wider than the
+// available width scroll sideways instead of growing the page. Base UI's
+// composite root scrolls its own element to reveal the tab that the arrow keys
+// move focus to, and the active tab on mount, and it honours `scroll-padding`,
+// so the 4px of padding that keeps the focus ring inside the clip box is also
+// kept clear when it scrolls. The negative margin keeps the list's footprint,
+// and the max-width lets the border box extend by that same margin. The
+// scrollbar is hidden: touch, trackpad and the arrow keys scroll it, and the tab
+// cut off at the edge shows there is more. The visual list (the track) is a
+// plain child so the variant styles and the consumer's `className` stay on it.
 const LIST_CONTAINER_CLASSES =
-  "astw:-m-[4px] astw:flex astw:max-w-[calc(100%+8px)] astw:overflow-x-auto astw:overflow-y-hidden astw:overscroll-x-contain astw:p-[4px] astw:[scrollbar-width:none] astw:[&::-webkit-scrollbar]:hidden";
-
-// Scrolls the list container, and only the container, so that `tab` is fully
-// visible with the ring's room on both sides. `scrollIntoView` is not used
-// because it would also scroll the page when the tabs are below the fold, and
-// Base UI moves focus between tabs without scrolling.
-function revealTab(container: HTMLElement, tab: HTMLElement) {
-  const c = container.getBoundingClientRect();
-  // A hidden list (`display: none`, a closed dialog) has no geometry yet; the
-  // resize observer reveals the tab once it has one.
-  if (c.width === 0) return;
-  const t = tab.getBoundingClientRect();
-  const left = c.left + LIST_CONTAINER_PADDING;
-  const right = c.right - LIST_CONTAINER_PADDING;
-  // A tab wider than the container shows its start, where reading begins.
-  if (t.left < left || t.width > right - left) {
-    container.scrollLeft -= left - t.left;
-  } else if (t.right > right) {
-    container.scrollLeft += t.right - right;
-  }
-}
+  "astw:-m-[4px] astw:flex astw:max-w-[calc(100%+8px)] astw:overflow-x-auto astw:overflow-y-hidden astw:overscroll-x-contain astw:p-[4px] astw:[scroll-padding-inline:4px] astw:[scrollbar-width:none] astw:[&::-webkit-scrollbar]:hidden";
 
 /**
  * Groups the individual tab buttons. Tabs stay on one row; when they are wider
- * than the container, the list scrolls sideways (scrollbar hidden) and the
- * active tab is scrolled into view on mount.
+ * than the container, the list scrolls sideways (scrollbar hidden), and the
+ * active tab on mount and the tab focused with the arrow keys are scrolled into
+ * view. `className` applies to the visual track inside the scroll container.
  */
-function List({ className, children, ...props }: React.ComponentProps<typeof BaseTabs.List>) {
+function List({
+  className,
+  children,
+  ...props
+}: Omit<React.ComponentProps<typeof BaseTabs.List>, "render">) {
   const variant = React.useContext(TabsVariantContext);
-  const containerRef = React.useRef<HTMLDivElement>(null);
-
-  // Keep the active tab in view: on mount, whenever `data-active` moves (a
-  // click, or a controlled `value` change from outside), and whenever the
-  // container is resized — which is also how a list that mounted hidden
-  // (a closed dialog, `display: none`) gets its first real measurement.
-  React.useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const reveal = () => {
-      const active = container.querySelector<HTMLElement>("[data-slot=tabs-tab][data-active]");
-      if (active) revealTab(container, active);
-    };
-    reveal();
-    const mutations = new MutationObserver(reveal);
-    mutations.observe(container, {
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["data-active"],
-    });
-    const resizes = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(reveal);
-    resizes?.observe(container);
-    return () => {
-      mutations.disconnect();
-      resizes?.disconnect();
-    };
-  }, []);
-
   return (
-    <div
-      ref={containerRef}
-      data-slot="tabs-list-container"
-      className={LIST_CONTAINER_CLASSES}
-      // Arrow keys move focus between tabs without activating or scrolling, so
-      // the tab that receives focus is scrolled into view here. React's
-      // `onFocus` bubbles, so one handler covers every tab in the list.
-      onFocus={(event) => {
-        const tab = (event.target as HTMLElement).closest<HTMLElement>("[data-slot=tabs-tab]");
-        if (tab && event.currentTarget.contains(tab)) revealTab(event.currentTarget, tab);
-      }}
+    <BaseTabs.List
+      data-slot="tabs-list"
+      {...props}
+      render={<div className={LIST_CONTAINER_CLASSES} />}
     >
-      <BaseTabs.List
-        data-slot="tabs-list"
+      <div
+        data-slot="tabs-list-track"
         className={cn(
           "astw:relative astw:inline-flex astw:items-center astw:justify-center",
           LIST_VARIANT_CLASSES[variant],
           className,
         )}
-        {...props}
       >
         {children}
-      </BaseTabs.List>
-    </div>
+      </div>
+    </BaseTabs.List>
   );
 }
 List.displayName = "Tabs.List";

@@ -1,4 +1,5 @@
 import { useMemo, type ReactNode } from "react";
+import { GripVerticalIcon } from "lucide-react";
 import { Table } from "@/components/table";
 import { Text } from "@/components/text";
 import { useTimeZone } from "@/contexts/appshell-context";
@@ -6,6 +7,7 @@ import { createValueRenderer } from "@/components/internals/table-core";
 import { cn } from "@/lib/utils";
 import { LineItemsContext, useLineItemsContext } from "./line-items-context";
 import { useLineItemsT } from "./i18n";
+import { useLineItemsReorder } from "./use-line-items-reorder";
 import type { UseLineItemsReturn } from "./types";
 
 export type LineItemsRootProps<T extends Record<string, unknown>> = {
@@ -44,6 +46,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
   const value = useLineItemsContext<Record<string, unknown>>("LineItems.Table");
   const { value: timeZone } = useTimeZone();
   const t = useLineItemsT();
+  const reorder = useLineItemsReorder(value);
   const columns = useMemo(
     () =>
       value.columns.map((column) => ({
@@ -59,48 +62,79 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
     [value.columns, timeZone],
   );
   return (
-    <Table.Root data-slot="line-items-table" className={className}>
-      <Table.Caption className="astw:sr-only">{label ?? t("title")}</Table.Caption>
-      <Table.Header>
-        <Table.Row>
-          {columns.map(({ column, id, align }) => (
-            <Table.Head key={id} scope="col" align={align}>
-              {column.label}
-            </Table.Head>
-          ))}
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {value.lines.map((row) => (
-          <Table.Row key={value.getLineKey(row)}>
-            {columns.map(({ column, id, align, renderValue }) => (
-              <Table.Cell key={id} align={align}>
-                {column.render
-                  ? column.render(row)
-                  : renderValue!(
-                      column.accessorKey !== undefined
-                        ? row[column.accessorKey]
-                        : column.accessor?.(row),
-                      row,
-                    )}
-              </Table.Cell>
+    <>
+      <Table.Root data-slot="line-items-table" className={className}>
+        <Table.Caption className="astw:sr-only">{label ?? t("title")}</Table.Caption>
+        <Table.Header>
+          <Table.Row>
+            {value.orderer && (
+              <Table.Head scope="col" className="astw:w-0">
+                <Text.span className="astw:sr-only">{t("order")}</Text.span>
+              </Table.Head>
+            )}
+            {columns.map(({ column, id, align }) => (
+              <Table.Head key={id} scope="col" align={align}>
+                {column.label}
+              </Table.Head>
             ))}
           </Table.Row>
-        ))}
-        {value.lines.length === 0 && (
-          <Table.Row>
-            <Table.Cell colSpan={Math.max(1, columns.length)}>
-              <Text
-                variant="body-sm"
-                className="astw:py-6 astw:text-center astw:text-muted-foreground"
-              >
-                {emptyMessage ?? t("empty")}
-              </Text>
-            </Table.Cell>
-          </Table.Row>
-        )}
-      </Table.Body>
-    </Table.Root>
+        </Table.Header>
+        <Table.Body {...reorder.bodyProps}>
+          {value.lines.map((row, index) => (
+            <Table.Row
+              key={value.getLineKey(row)}
+              {...reorder.getRowProps(index)}
+              className="astw:data-dragging:opacity-40 astw:data-[drop-position=before]:[&>td]:shadow-[inset_0_2px_0_var(--primary)] astw:data-[drop-position=after]:[&>td]:shadow-[inset_0_-2px_0_var(--primary)]"
+            >
+              {value.orderer && (
+                <Table.Cell className="astw:w-0 astw:py-1.5 astw:pr-0">
+                  {/* shortcut: native dragging is desktop-only, add pointer dragging if touch dragging is required. */}
+                  <button
+                    type="button"
+                    data-slot="line-items-orderer"
+                    aria-label={t("reorder", { line: index + 1 })}
+                    title={t("dragToReorder")}
+                    {...reorder.getHandleProps(index)}
+                    className="astw:flex astw:size-6 astw:items-center astw:justify-center astw:rounded-sm astw:border-0 astw:bg-transparent astw:p-0 astw:cursor-grab astw:active:cursor-grabbing astw:text-muted-foreground astw:focus-visible:outline-2 astw:focus-visible:outline-ring astw:aria-disabled:cursor-default astw:aria-disabled:opacity-50"
+                  >
+                    <GripVerticalIcon className="astw:size-4" aria-hidden="true" />
+                  </button>
+                </Table.Cell>
+              )}
+              {columns.map(({ column, id, align, renderValue }) => (
+                <Table.Cell key={id} align={align}>
+                  {column.render
+                    ? column.render(row)
+                    : renderValue!(
+                        column.accessorKey !== undefined
+                          ? row[column.accessorKey]
+                          : column.accessor?.(row),
+                        row,
+                      )}
+                </Table.Cell>
+              ))}
+            </Table.Row>
+          ))}
+          {value.lines.length === 0 && (
+            <Table.Row>
+              <Table.Cell colSpan={Math.max(1, columns.length + (value.orderer ? 1 : 0))}>
+                <Text
+                  variant="body-sm"
+                  className="astw:py-6 astw:text-center astw:text-muted-foreground"
+                >
+                  {emptyMessage ?? t("empty")}
+                </Text>
+              </Table.Cell>
+            </Table.Row>
+          )}
+        </Table.Body>
+      </Table.Root>
+      {value.orderer && (
+        <Text render={<output />} className="astw:sr-only" aria-live="polite" aria-atomic="true">
+          {reorder.announcement}
+        </Text>
+      )}
+    </>
   );
 }
 

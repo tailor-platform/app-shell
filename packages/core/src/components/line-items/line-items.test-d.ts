@@ -1,7 +1,13 @@
 import { expectTypeOf, test } from "vitest";
-import type { LineItemsColumn, UseLineItemsOptions, UseLineItemsReturn } from "./types";
-import type { LineItemsRootProps, LineItemsTableProps } from "./line-items";
-import { useLineItems } from "./use-line-items";
+import {
+  LineItems,
+  useLineItems,
+  type LineItemsColumn,
+  type UseLineItemsOptions,
+  type UseLineItemsReturn,
+  type LineItemsRootProps,
+  type LineItemsTableProps,
+} from "@/index";
 import { createLineItemsDocumentStore } from "./document-store";
 
 type Row = { id?: string; name: string; quantity: number; detail: { nested: string } };
@@ -46,6 +52,7 @@ test("row commands retain row types without exposing unfinished save APIs", () =
     void controlled;
   }
   void Contract;
+  expectTypeOf<Parameters<typeof LineItems.Table>[0]>().toEqualTypeOf<LineItemsTableProps>();
   expectTypeOf<keyof LineItemsTableProps>().toEqualTypeOf<
     "className" | "emptyMessage" | "aria-label"
   >();

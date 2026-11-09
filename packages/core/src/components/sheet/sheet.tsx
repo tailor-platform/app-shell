@@ -189,7 +189,7 @@ function CloseButton() {
   return (
     <Drawer.Close
       data-slot="sheet-close"
-      className="astw:ring-offset-bg astw:focus:ring-ring astw:flex astw:size-8 astw:shrink-0 astw:items-center astw:justify-center astw:rounded-xs astw:text-muted-foreground astw:transition-colors astw:hover:bg-accent astw:hover:text-accent-foreground astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none"
+      className="astw:ring-offset-card astw:focus:ring-ring astw:flex astw:size-8 astw:shrink-0 astw:items-center astw:justify-center astw:rounded-xs astw:text-muted-foreground astw:transition-colors astw:hover:bg-accent astw:hover:text-accent-foreground astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none"
     >
       <Icon className="astw:size-4" />
       <span className="astw:sr-only">Close</span>

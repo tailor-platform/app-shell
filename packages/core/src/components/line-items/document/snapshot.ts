@@ -1,11 +1,5 @@
-import { serverId, type LineItemsIdentity } from "./identity";
-
-/** A validated row view, adopted order, and key index constructed together. */
-export type LineItemsSnapshot<T> = {
-  readonly lines: readonly T[];
-  readonly order: readonly string[];
-  readonly byKey: ReadonlyMap<string, T>;
-};
+import { serverId } from "./identity";
+import type { LineItemsIdentity, LineItemsSnapshot } from "./types";
 
 /**
  * Binds one document's identity registry and server-ID property to snapshot construction.

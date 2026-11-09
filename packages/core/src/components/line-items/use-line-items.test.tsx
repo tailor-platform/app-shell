@@ -2,7 +2,8 @@ import { StrictMode, Suspense, type ReactNode } from "react";
 import { afterEach, expect, it } from "vitest";
 import { act, cleanup, render, renderHook } from "@testing-library/react";
 import { useLineItems } from "./use-line-items";
-import type { LineItemsColumn, UseLineItemsOptions, UseLineItemsReturn } from "./types";
+import type { LineItemsColumn } from "./document";
+import type { UseLineItemsOptions, UseLineItemsReturn } from "./types";
 
 afterEach(cleanup);
 type Row = { id?: string | number; name: string };

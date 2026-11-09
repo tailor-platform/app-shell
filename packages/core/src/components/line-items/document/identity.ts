@@ -65,7 +65,3 @@ export function createLineItemsIdentity<T extends Record<string, unknown>>(
     },
   };
 }
-
-export type LineItemsIdentity<T extends Record<string, unknown>> = ReturnType<
-  typeof createLineItemsIdentity<T>
->;

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createLineItemsDocumentStore } from "./document-store";
+import { createLineItemsDocumentStore } from "./store";
 import type { LineItemsColumn } from "./types";
 
 type Row = { id?: string; name: string; quantity: number; hidden?: string };

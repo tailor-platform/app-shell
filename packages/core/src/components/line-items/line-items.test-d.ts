@@ -8,7 +8,7 @@ import {
   type LineItemsRootProps,
   type LineItemsTableProps,
 } from "@/index";
-import { createLineItemsDocumentStore } from "./document-store";
+import { createLineItemsDocumentStore } from "./document/store";
 
 type Row = { id?: string; name: string; quantity: number; detail: { nested: string } };
 

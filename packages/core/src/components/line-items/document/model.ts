@@ -1,16 +1,7 @@
 import { compileLineItemsColumns } from "./columns";
 import { createLineItemsIdentity, serverId } from "./identity";
 import { createLineItemsSnapshots } from "./snapshot";
-import type { LineItemsColumn } from "./types";
-
-export type DocumentOptions<T extends Record<string, unknown>> = {
-  /** Initial definitions whose accessorKey fields establish document property ownership. */
-  columns: readonly LineItemsColumn<T>[];
-  /** Initial rows, read once; only rows with server IDs establish the persisted baseline. */
-  lines?: readonly T[];
-  /** Server identity property, fixed for the document's lifetime. Defaults to id. */
-  idKey?: keyof T & string;
-};
+import type { DocumentOptions, LineItemsColumn } from "./types";
 
 /**
  * Creates the domain model for one document's rows, identities, baseline, and adopted order.

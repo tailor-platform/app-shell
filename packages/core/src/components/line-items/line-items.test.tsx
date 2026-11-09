@@ -6,7 +6,8 @@ import { MemoryRouter } from "react-router";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import { LineItems } from "./line-items";
 import { useLineItems } from "./use-line-items";
-import type { LineItemsColumn, UseLineItemsReturn } from "./types";
+import type { LineItemsColumn } from "./document";
+import type { UseLineItemsReturn } from "./types";
 
 afterEach(() => {
   cleanup();

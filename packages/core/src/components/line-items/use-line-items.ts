@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
-import { createLineItemsDocumentStore } from "./document-store";
+import { createLineItemsDocumentStore } from "./document/store";
 import type { UseLineItemsOptions, UseLineItemsReturn } from "./types";
 
 /** Owns one document; changing the document identity requires remounting the hook's owner. */

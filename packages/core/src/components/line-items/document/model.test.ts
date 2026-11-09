@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createLineItemsDocument } from "./document";
+import { createLineItemsDocument } from "./model";
 import type { LineItemsColumn } from "./types";
 
 type Row = {

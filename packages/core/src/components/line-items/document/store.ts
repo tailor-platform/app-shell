@@ -1,4 +1,5 @@
-import { createLineItemsDocument, type DocumentOptions } from "./document";
+import { createLineItemsDocument } from "./model";
+import type { DocumentOptions } from "./types";
 
 /**
  * Makes one document model observable without duplicating its row state or domain rules.

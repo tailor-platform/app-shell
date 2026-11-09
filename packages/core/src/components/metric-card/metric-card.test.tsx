@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { MetricCard } from "./MetricCard";
+import { MetricCard } from "./metric-card";
 
 const MockIcon = () => <span data-testid="mock-icon">icon</span>;
 

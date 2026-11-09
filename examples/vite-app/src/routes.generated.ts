@@ -28,7 +28,6 @@ export type GeneratedRouteParams = {
   "/showcase/ai-chat": {};
   "/showcase/alert-tokens": {};
   "/showcase/card": {};
-  "/showcase/checkbox-tree": {};
   "/showcase/colors": {};
   "/showcase/csv-importer": {};
   "/showcase/data-table": {};
@@ -48,6 +47,7 @@ export type GeneratedRouteParams = {
   "/showcase/spinner": {};
   "/showcase/timeline": {};
   "/showcase/toolbar": {};
+  "/showcase/tree": {};
 };
 
 /**

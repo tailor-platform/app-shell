@@ -6,7 +6,7 @@ import { useLabelableContext, useLabelableId } from "@base-ui/react/internals/la
 
 /**
  * @internal
- * Bridges CheckboxTree into Base UI's `Field` / `Form`, the way the date
+ * Bridges Tree into Base UI's `Field` / `Form`, the way the date
  * widgets do (see `use-date-field-bridge.ts`): a hidden, nameless proxy
  * `<input>` is registered as the field control, so `required`, `Field.Error`,
  * dirty/filled/touched state and `Form` submit-blocking all work. The field's
@@ -16,7 +16,9 @@ import { useLabelableContext, useLabelableId } from "@base-ui/react/internals/la
  * through separate hidden inputs (one per value), rendered by the component.
  */
 
-type UseCheckboxTreeFieldOptions = {
+type UseTreeFieldOptions = {
+  /** Only a checkbox tree is a form control; otherwise nothing registers with `Field`. */
+  enabled: boolean;
   id?: string;
   name?: string;
   disabled?: boolean;
@@ -43,7 +45,8 @@ export function serializeValues(values: readonly string[]): string {
   return values.length === 0 ? "" : JSON.stringify(values);
 }
 
-export function useCheckboxTreeField({
+export function useTreeField({
+  enabled,
   id,
   name,
   disabled,
@@ -52,7 +55,7 @@ export function useCheckboxTreeField({
   onBlur,
   rootRef,
   inputRef,
-}: UseCheckboxTreeFieldOptions) {
+}: UseTreeFieldOptions) {
   const fieldRoot = useFieldRootContext();
   const { clearErrors } = useFormContext();
   const { labelId, messageIds } = useLabelableContext();
@@ -61,8 +64,8 @@ export function useCheckboxTreeField({
   const valueKey = serializeValues(values);
 
   const proxyRef = React.useRef<HTMLInputElement | null>(null);
-  const latest = React.useRef({ fieldRoot, name, onBlur, values });
-  latest.current = { fieldRoot, name, onBlur, values };
+  const latest = React.useRef({ enabled, fieldRoot, name, onBlur, values });
+  latest.current = { enabled, fieldRoot, name, onBlur, values };
   // Base UI only records an initial value for its own controls, so dirty
   // tracking compares against the selection the tree mounted with.
   const initialKey = React.useRef(valueKey);
@@ -77,15 +80,16 @@ export function useCheckboxTreeField({
   );
 
   const getValue = React.useCallback(() => [...latest.current.values], []);
-  useRegisterFieldControl(proxyRef, controlId, valueKey, getValue, !isDisabled);
+  useRegisterFieldControl(proxyRef, controlId, valueKey, getValue, enabled && !isDisabled);
 
   // Keep filled/dirty in step with every value — on mount, after user changes,
   // and when a controlled value changes from outside (e.g. a form reset).
   const { setFilled, setDirty } = fieldRoot;
   React.useLayoutEffect(() => {
+    if (!enabled) return;
     setFilled(valueKey !== "");
     setDirty(valueKey !== initialKey.current);
-  }, [setFilled, setDirty, valueKey]);
+  }, [enabled, setFilled, setDirty, valueKey]);
 
   /** Call after every user change, with the new submitted values. */
   const handleChange = React.useCallback(
@@ -103,7 +107,7 @@ export function useCheckboxTreeField({
   );
 
   const handleFocus = React.useCallback(() => {
-    latest.current.fieldRoot.setFocused(true);
+    if (latest.current.enabled) latest.current.fieldRoot.setFocused(true);
   }, []);
 
   /** Treats the tree as one control: only fires once focus leaves it entirely. */
@@ -111,6 +115,7 @@ export function useCheckboxTreeField({
     (event: React.FocusEvent) => {
       const next = event.relatedTarget;
       if (next instanceof Node && rootRef.current?.contains(next)) return;
+      if (!latest.current.enabled) return;
       const root = latest.current.fieldRoot;
       root.setTouched(true);
       root.setFocused(false);
@@ -125,7 +130,7 @@ export function useCheckboxTreeField({
     /** Inside `Field.Root`, the field's name wins. */
     name: fieldRoot.name ?? name,
     isDisabled,
-    isInvalid: fieldRoot.state.valid === false,
+    isInvalid: enabled && fieldRoot.state.valid === false,
     labelledBy: joinIds(ariaLabelledBy, labelId),
     describedBy: joinIds(...messageIds),
     /** The proxy's DOM value: non-empty exactly when something is selected. */

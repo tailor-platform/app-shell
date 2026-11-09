@@ -563,7 +563,7 @@ These exist as raw `:root` variables in the shipped base layer, but are **not** 
 **What this means for your app:**
 
 - Never invent a z value. `z-index: 9999` is always wrong, and from inside the page it cannot reach the portal band anyway. A raw `z-10` for local layering inside the page (a sticky table header) is fine.
-- A floating component you build yourself stacks by open order only if it does what the AppShell components do: its portal is appended to the end of `body` when it opens and unmounted (or moved to the end of `body`) when it closes, it is a direct child of `body` so that it shares the parent stacking context with the AppShell portals, and it uses `--z-portal`. A portal that stays mounted and only toggles visibility keeps its old DOM position and can reopen behind a layer that opened later.
+- A floating component you build yourself stacks by open order only if it does what the AppShell components do: each time it opens, its portal is appended to the end of `body` (or moved there, if it stays mounted), it is a direct child of `body` so that it shares the parent stacking context with the AppShell portals, and it uses `--z-portal`. A portal that stays mounted and only toggles visibility keeps its old DOM position, so when it reopens it can be behind a layer that is already open.
 - Fixed UI that you place outside the layout root with a z-index above 100 covers toasts.
 - A dialog may open on top of a dialog or a sheet, two levels at most. See [`Dialog`](../components/dialog.md#stacking).
 

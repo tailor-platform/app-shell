@@ -13,11 +13,17 @@ type PromiseErrorOptions = Extract<PromiseErrorResult, { message: unknown }>;
  * closes them, and they get a close button. Options the caller passes win.
  * Why: docs-src/patterns/interaction-toast.docs.outline.md (Constraints).
  */
-const stayUntilClosed = (data?: ExternalToast): ExternalToast => ({
-  ...data,
-  duration: data?.duration ?? Infinity,
-  closeButton: data?.closeButton ?? true,
-});
+const stayUntilClosed = (data?: ExternalToast): ExternalToast | undefined => {
+  // A toast the user cannot dismiss gets no close button from Sonner (it draws one that does
+  // nothing) and must not stay open by default either, or nothing but `toast.dismiss(id)` ends
+  // it. It keeps Sonner's defaults; a caller that closes it in code passes `duration: Infinity`.
+  if (data?.dismissible === false) return data;
+  return {
+    ...data,
+    duration: data?.duration ?? Infinity,
+    closeButton: data?.closeButton ?? true,
+  };
+};
 
 const withActionDefaults = (data?: ExternalToast): ExternalToast | undefined => {
   if (data?.action) return stayUntilClosed(data);
@@ -41,6 +47,9 @@ const withPromiseErrorDefaults = <T>(data: PromiseData<T>): PromiseData<T> => {
   if (error === undefined) return data;
   const apply = (result: PromiseErrorResult): PromiseErrorOptions => {
     const options = isErrorOptions(result) ? result : { message: result };
+    // Only the error state's own `dismissible` counts: Sonner resets `dismissible` to true when
+    // it turns the loading toast into the error toast, so a call-level `false` ends there.
+    if (options.dismissible === false) return options;
     return {
       ...options,
       duration: options.duration ?? data.duration ?? Infinity,

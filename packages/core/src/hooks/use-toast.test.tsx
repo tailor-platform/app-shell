@@ -108,6 +108,60 @@ describe("useToast", () => {
     expect(document.body.textContent).toContain("Kept");
   });
 
+  it("leaves a toast with dismissible: false on Sonner's defaults", async () => {
+    vi.useFakeTimers();
+    renderToaster();
+    await act(async () => {
+      toast.error("Locked", { dismissible: false });
+      toast("Pinned", { dismissible: false, action: { label: "Undo", onClick: () => {} } });
+      toast.error("Kept open", { dismissible: false, duration: Infinity });
+    });
+    for (const title of ["Locked", "Pinned"]) {
+      const t = activeToast(title);
+      expect(t).toMatchObject({ dismissible: false });
+      expect(t).not.toHaveProperty("duration");
+      expect(t).not.toHaveProperty("closeButton");
+    }
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+    expect(closeButtonOf("Locked")).toBeNull();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    expect(document.body.textContent).not.toContain("Locked");
+    expect(document.body.textContent).not.toContain("Pinned");
+    expect(document.body.textContent).toContain("Kept open");
+  });
+
+  it("leaves a non-dismissible error state of toast.promise on Sonner's defaults", async () => {
+    const ownState = toast.promise(Promise.reject(new Error("boom")), {
+      loading: "Saving A",
+      error: { message: "A failed", dismissible: false },
+    });
+    // Sonner resets `dismissible` to true when the loading toast becomes the error toast, so a
+    // call-level `dismissible: false` does not reach the error state and the defaults apply.
+    const callLevel = toast.promise(Promise.reject(new Error("boom")), {
+      loading: "Saving B",
+      error: "B failed",
+      dismissible: false,
+    });
+    await expect(ownState.unwrap()).rejects.toThrow();
+    await expect(callLevel.unwrap()).rejects.toThrow();
+    await waitFor(() => {
+      const a = activeToast("A failed");
+      expect(a).toMatchObject({ type: "error", dismissible: false });
+      expect(a).not.toHaveProperty("closeButton");
+      expect(a?.duration).toBeUndefined();
+      expect(activeToast("B failed")).toMatchObject({
+        type: "error",
+        dismissible: true,
+        duration: Infinity,
+        closeButton: true,
+      });
+    });
+  });
+
   it("only the error toast outlives Sonner's 4 s timer", async () => {
     vi.useFakeTimers();
     renderToaster();

@@ -44,7 +44,7 @@ toast.error("Failed to save", { closeButton: false }); // stays; swipe, or Escap
 
 For `toast.promise`, a `duration` or `closeButton` on the call applies to the error state, and an `error` result object (`{ message, duration, closeButton, ... }`) wins over both.
 
-An error toast with `dismissible: false` now stays until the caller calls `toast.dismiss(id)`; give it a `duration` if it should close on its own.
+A toast with `dismissible: false` keeps sonner's defaults (no close button, closes after 4 seconds): the user cannot close it, so `useToast` does not keep it open. If the caller closes it with `toast.dismiss(id)`, pass `duration: Infinity`.
 
 A call without an `action` that updates an existing toast by `id`, such as `toast.success("Saved", { id })` after `toast.error`, resets `duration` and `closeButton` to sonner's defaults unless it passes its own, so the updated toast closes by itself.
 

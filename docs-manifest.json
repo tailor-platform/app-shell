@@ -1739,9 +1739,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "16c98cfd7a812782",
+        "outline": "5f91ce781349ee1c",
         "snapshot": null,
-        "outputMd": "79a26c46ef5aa965",
+        "outputMd": "0928302d47bcf194",
         "examples": null
       }
     },
@@ -1844,7 +1844,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-route-error.md": "1a44180ec84ce4b9",
     "packages/core/skills/app-shell-patterns/references/api/use-theme.md": "c338022de386d5e4",
     "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "30c15545ab3c4954",
-    "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "79a26c46ef5aa965",
+    "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "0928302d47bcf194",
     "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
     "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "be00d1109761b7f1",
     "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",

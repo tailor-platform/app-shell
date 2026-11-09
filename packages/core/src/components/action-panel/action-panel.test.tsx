@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { ActionPanel } from "./ActionPanel";
+import { ActionPanel } from "./action-panel";
 import { AppShellConfigContext, buildConfigurations } from "../../contexts/appshell-context";
 import {
   CommandPaletteProvider,

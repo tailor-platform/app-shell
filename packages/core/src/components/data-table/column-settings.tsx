@@ -14,7 +14,7 @@ import { columnKeyAt } from "./column-layout";
 // on the popup itself (not the inner fieldset) so base-ui measures the real width
 // and anchors it flush under the trigger.
 const POPUP_CLASS = cn(
-  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:max-w-[360px] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-portal) astw:origin-(--transform-origin) astw:max-w-[360px] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
 
@@ -294,7 +294,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
       />
       {/* Stacking context on the portal container so the popup renders above the
           DataTable's sticky header row (z-index: 10). */}
-      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
         <Popover.Positioner sideOffset={4} side="bottom" align="end">
           <Popover.Popup data-slot="data-table-column-settings-popup" className={POPUP_CLASS}>
             <fieldset

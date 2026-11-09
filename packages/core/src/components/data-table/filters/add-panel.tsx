@@ -150,7 +150,7 @@ function AddFilterPanel({
           </Button>
         }
       />
-      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
         {/* align="start" anchors the panel's left edge to the (left-aligned) trigger
             so it grows/shrinks toward the right as columns appear/disappear. We keep
             anchor tracking on (no disableAnchorTracking) so the positioner re-aligns
@@ -167,7 +167,7 @@ function AddFilterPanel({
               // rightward (it's anchored left) instead of squeezing the value editor.
               // Fixed height fits the tallest editor (datetime range: From/To tabs +
               // calendar + "Choose time").
-              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:h-[28rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+              "astw:bg-popover astw:text-popover-foreground astw:z-(--z-portal) astw:flex astw:h-[28rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
           >

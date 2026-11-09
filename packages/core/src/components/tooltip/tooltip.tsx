@@ -91,12 +91,12 @@ function Content({
   };
   const { side = "top", align = "center", sideOffset = 5 } = resolved;
   return (
-    <BaseTooltip.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+    <BaseTooltip.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
       <BaseTooltip.Positioner sideOffset={sideOffset} side={side} align={align}>
         <BaseTooltip.Popup
           data-slot="tooltip-content"
           className={cn(
-            "astw:bg-primary astw:text-primary-foreground astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95 astw:data-[side=bottom]:slide-in-from-top-2 astw:data-[side=left]:slide-in-from-right-2 astw:data-[side=right]:slide-in-from-left-2 astw:data-[side=top]:slide-in-from-bottom-2 astw:z-(--z-popup) astw:w-fit astw:overflow-visible astw:origin-(--transform-origin) astw:rounded-md astw:px-3 astw:py-1.5 astw:text-body-sm astw:text-balance",
+            "astw:bg-primary astw:text-primary-foreground astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95 astw:data-[side=bottom]:slide-in-from-top-2 astw:data-[side=left]:slide-in-from-right-2 astw:data-[side=right]:slide-in-from-left-2 astw:data-[side=top]:slide-in-from-bottom-2 astw:z-(--z-portal) astw:w-fit astw:overflow-visible astw:origin-(--transform-origin) astw:rounded-md astw:px-3 astw:py-1.5 astw:text-body-sm astw:text-balance",
             className,
           )}
           {...restProps}

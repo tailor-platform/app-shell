@@ -72,7 +72,7 @@ function useIsIconRail(): boolean {
  * own icon-rail tooltips.
  */
 const FLYOUT_POPUP_CLASS =
-  "astw:z-(--z-popup) astw:max-h-[calc(100dvh-1rem)] astw:min-w-48 astw:overflow-y-auto astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-1 astw:text-popover-foreground astw:shadow-md astw:outline-none";
+  "astw:z-(--z-portal) astw:max-h-[calc(100dvh-1rem)] astw:min-w-48 astw:overflow-y-auto astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-1 astw:text-popover-foreground astw:shadow-md astw:outline-none";
 const FLYOUT_HEADING_CLASS =
   "astw:block astw:px-2 astw:py-1.5 astw:text-label-sm astw:text-muted-foreground";
 
@@ -159,7 +159,7 @@ const IconRailFlyout = ({
       </SidebarMenuItem>
       {/* Same stacking recipe as BadgeList: the portal container forms the
           stacking context above the app, the popup carries the token. */}
-      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
         {/* Fixed, like the rail itself: an absolute popup would be laid out at
             the end of the document until positioned, so focusing it on a
             keyboard open scrolled the page down and back, and while open it

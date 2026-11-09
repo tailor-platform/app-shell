@@ -1,20 +1,6 @@
 import type { SelectOption } from "@/types/collection";
 import type { BadgeCellOptions, DataTableFilterConfig } from "./types";
 
-export {
-  normalizeNumberText,
-  parseNumberText,
-  toNumberValue,
-  toTextValue,
-  sameNumber,
-  toNumberEditText,
-  isIsoDate,
-  toCalendarDate,
-  toTimeText,
-  toIsoDateTime,
-  sameDate,
-} from "@/components/internals/table-core/input-values";
-
 /** The label a choice shows, or the raw value when it isn't one of the choices. */
 export function optionLabel(options: readonly SelectOption[] | undefined, value: unknown): unknown {
   if (!options || value == null || value === "") return value;

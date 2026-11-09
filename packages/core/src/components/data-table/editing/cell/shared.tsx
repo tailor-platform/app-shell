@@ -8,8 +8,6 @@ import { resolveBadgeOptions } from "../../cell-values";
 import { useDataTableT } from "../../i18n";
 import type { CellEditNavigation } from "../use-navigation";
 
-export { ICON_SPACE_CLASS_NAME } from "@/components/internals/table-core/editing/shared";
-
 export type EditableColumn<TRow extends Record<string, unknown>> = Extract<
   Column<TRow>,
   { type: "text" | "number" | "money" | "date" | "badge" | "link" }

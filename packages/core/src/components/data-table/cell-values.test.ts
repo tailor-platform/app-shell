@@ -1,8 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   isIsoDate,
-  optionLabel,
-  resolveBadgeOptions,
   sameDate,
   toCalendarDate,
   toIsoDateTime,
@@ -13,7 +11,8 @@ import {
   toNumberEditText,
   toNumberValue,
   toTextValue,
-} from "./cell-values";
+} from "@/components/internals/table-core/input-values";
+import { optionLabel, resolveBadgeOptions } from "./cell-values";
 
 describe("typed text that isn't a number", () => {
   it("is reported as not a number, not silently accepted", () => {

@@ -178,19 +178,11 @@ export type { BadgeVariant, BadgeOptions } from "./components/badge-list";
 export {
   Tree,
   type TreeChangeDetails,
-  type TreeCheckboxSelectionProps,
-  type TreeFilterContext,
-  type TreeFilterProps,
-  type TreeMapItemContext,
   type TreeMappedItem,
-  type TreeNoSelectionProps,
   type TreeProps,
   type TreeRowState,
   type TreeSelectedItem,
-  type TreeSelectionBehaviorProps,
-  type TreeSelectionMode,
   type TreeSelectionStrategy,
-  type TreeSingleSelectionProps,
 } from "./components/tree";
 export { TreePicker, type TreePickerProps } from "./components/tree-picker";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";

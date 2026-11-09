@@ -48,6 +48,8 @@ type Bin = { code: string; counting?: boolean };
 type Warehouse = { id: string; name: string; bins: Bin[] };
 type StockNode = Warehouse | Bin;
 
+const isWarehouse = (node: StockNode): node is Warehouse => "bins" in node;
+
 const STOCK_NODES: StockNode[] = [
   {
     id: "wh-tokyo",
@@ -298,10 +300,13 @@ const TreeDemoPage = () => {
                   className="h-72 rounded-md border"
                   items={STOCK_NODES}
                   mapItem={(node, { parents }) =>
-                    "bins" in node
+                    isWarehouse(node)
                       ? { key: node.id, label: node.name, children: node.bins }
                       : {
-                          key: `${(parents[0] as Warehouse).id}/${node.code}`,
+                          // `parents` has the union type too. A type guard, unlike
+                          // `parents[0] as Warehouse`, has TypeScript check there's
+                          // a warehouse above (hence `?.`).
+                          key: `${parents.find(isWarehouse)?.id}/${node.code}`,
                           label: node.code,
                           disabled: node.counting,
                         }

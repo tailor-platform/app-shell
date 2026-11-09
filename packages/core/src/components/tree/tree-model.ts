@@ -2,10 +2,18 @@ import type {
   TreeMapItemContext,
   TreeMappedItem,
   TreeSelectedItem,
-  TreeSelectionPropagation,
   TreeSelectionStrategy,
-  TreeValueStrategy,
 } from "./types";
+
+/**
+ * How ticking spreads, one half of a `TreeSelectionStrategy` (see
+ * `resolveSelectionStrategy`): `"full"` up and down (parents are containers),
+ * `"down"` only, or `"none"`.
+ */
+export type TreeSelectionPropagation = "full" | "down" | "none";
+
+/** What the value lists, the other half of a `TreeSelectionStrategy`. */
+export type TreeValueStrategy = "leaves" | "topmost" | "all";
 
 /**
  * @internal

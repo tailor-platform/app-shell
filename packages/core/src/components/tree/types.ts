@@ -113,12 +113,6 @@ export type TreeSelectionBehaviorProps = {
   selectionStrategy?: TreeSelectionStrategy;
 };
 
-/** Internal: how ticking spreads through the tree. */
-export type TreeSelectionPropagation = "full" | "down" | "none";
-
-/** Internal: what the value lists. */
-export type TreeValueStrategy = "leaves" | "topmost" | "all";
-
 /** The selection: a list of keys. Which keys depends on `selectionStrategy`. */
 export type TreeValueProps<T> = {
   /** Controlled selection: the checked keys. */

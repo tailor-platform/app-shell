@@ -11,6 +11,7 @@ import { Combobox } from "../combobox";
 import { DateField, DatePicker, DateRangePicker } from "../date-field";
 import { Select } from "../select";
 import { Textarea } from "../textarea";
+import { Tree } from "../tree";
 
 // Only the props relevant to the Field abstraction are picked from BaseField.Root.
 // Base UI-internal props (e.g. actionsRef) are intentionally excluded
@@ -150,6 +151,7 @@ const selfWiredControls = new Map<unknown, string>([
   [DateField, "DateField"],
   [DatePicker, "DatePicker"],
   [DateRangePicker, "DateRangePicker"],
+  [Tree, "Tree"],
 ]);
 
 function renderMisuseWarnings(render: unknown): string[] {
@@ -166,9 +168,9 @@ function renderMisuseWarnings(render: unknown): string[] {
  *
  * Use it for plain text-like inputs, or pass a native element to `render`
  * (e.g. `render={<textarea />}`). `Select`, `Combobox`, `Autocomplete`,
- * `Checkbox`, `Textarea`, `DateField`, `DatePicker` and `DateRangePicker` go
- * directly under `Field.Root` instead: each draws its own frame and registers
- * with the Field context itself. Passing one to `render` draws a second frame
+ * `Checkbox`, `Textarea`, `DateField`, `DatePicker`, `DateRangePicker` and
+ * `Tree` go directly under `Field.Root` instead: each draws its own frame and
+ * registers with the Field context itself. Passing one to `render` draws a second frame
  * and logs a warning. `Input` does not connect to `Field.Root` — use
  * `Field.Control` in its place inside a field.
  */

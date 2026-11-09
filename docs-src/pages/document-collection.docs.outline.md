@@ -214,12 +214,12 @@ With [summary metric cards](#summary-metric-cards), the rail sits beside the tab
 
 ```tsx
 <FilterRail.Provider control={control} sections={sections} layout={railLayout}>
-  <Layout fill>
+  <Layout fill={isTabletUp}>
     <Layout.Header title="Invoices" />
     <Layout.Column>
-      <div className="flex shrink-0 gap-4 overflow-x-auto pb-1">
-        {/* MetricCards, as in Summary metric cards */}
-      </div>
+      <Grid columns={{ initial: 1, md: 2, xl: 4 }} gap={4}>
+        {/* MetricCards; turn fill off below md, as in Summary metric cards */}
+      </Grid>
       <div className="flex min-h-0 flex-1 lg:gap-4">
         {/* Below lg the rail renders only its sheet, so this collapses to nothing. */}
         {/* 320px, the same as Layout.Column area="left": wide enough for a date range field. */}
@@ -232,7 +232,10 @@ With [summary metric cards](#summary-metric-cards), the rail sits beside the tab
             <FilterRail.Sections />
           </FilterRail.Root>
         </div>
-        <DataTable.Root value={table} className="min-w-0 flex-1">
+        <DataTable.Root
+          value={table}
+          className={isTabletUp ? "min-w-0 flex-1" : "h-[calc(100svh-8rem)] min-w-0 flex-1"}
+        >
           {/* Toolbar with FilterRail.Trigger at the left, as above */}
         </DataTable.Root>
       </div>
@@ -290,7 +293,7 @@ Layout fill
   |  (as above)                                                |
   +------------------------------------------------------------+
   | Layout.Column                                              |
-  |  MetricCard   MetricCard   MetricCard   ...  (scrolls x)   |
+  |  Grid: MetricCard  MetricCard  MetricCard  MetricCard      |
   |  DataTable.Root                                            |
   |   (as above)                                               |
   +------------------------------------------------------------+
@@ -298,19 +301,40 @@ Layout fill
 
 As the default landing page for the document-type's section of the app, there may be aggregate or performance data that is useful to show in conjunction with the collection table. These metrics should either be specified by business requirements, or be standard metrics in ERP software for this area of business.
 
-Keep the cards to a single row that scrolls sideways when it runs out of room, rather than a grid that wraps. Under `Layout fill`, every row of cards comes out of the table's height, and on a narrow screen a wrapping grid can leave the table no rows at all.
+Lay the cards out in a [`Grid`](../components/grid.md) that reflows as the screen narrows. How many cards there are, and so how many columns suit them, depends on the business case: it may be two or three, or nine. The examples here use four cards in `columns={{ initial: 1, md: 2, xl: 4 }}`, which gives one row on wide screens, two on tablets, and four stacked on phones.
+
+Under `Layout fill`, the cards' height comes out of the table's. **Once the cards reflow past two rows, turn `fill` off** at that width. The page then scrolls normally, and the table takes roughly the viewport's height once scrolled to. For the four cards above that means below `md`; nine cards in the same grid would be three rows even at `xl`, so that page would not use `fill` at all.
 
 ```tsx
-<div className="flex shrink-0 gap-4 overflow-x-auto pb-1">
-  <MetricCard className="min-w-56! flex-1" title="Open invoices" value={openCount} />
-  <MetricCard className="min-w-56! flex-1" title="Overdue" value={overdueCount} />
-  {/* … */}
-</div>
+// No exported hook for this yet, so match the breakpoint directly. For these four
+// cards, two rows or fewer means `md` and up.
+const tabletQuery = window.matchMedia("(min-width: 768px)");
+const useIsTabletUp = () =>
+  useSyncExternalStore(
+    (onChange) => {
+      tabletQuery.addEventListener("change", onChange);
+      return () => tabletQuery.removeEventListener("change", onChange);
+    },
+    () => tabletQuery.matches,
+  );
+
+const isTabletUp = useIsTabletUp();
+
+<Layout fill={isTabletUp}>
+  <Layout.Header title="Invoices" />
+  <Layout.Column>
+    <Grid columns={{ initial: 1, md: 2, xl: 4 }} gap={4}>
+      {/* MetricCards */}
+    </Grid>
+    {/* 8rem allows for the shell header and page padding; adjust to your layout. */}
+    <DataTable.Root value={table} className={isTabletUp ? undefined : "h-[calc(100svh-8rem)]"}>
+      {/* … */}
+    </DataTable.Root>
+  </Layout.Column>
+</Layout>;
 ```
 
-- `flex-1` lets the cards share the row when they fit; `min-w-56!` stops them shrinking below 14rem, after which the row scrolls. The `!` is needed because `MetricCard` sets its own width.
-- The scrollbar only shows when the row actually overflows.
-- This is an exception to the hand-rolled `overflow` wrapper anti-pattern below, pending a layout building block for it.
+The same applies to anything else stacked above the table: when it would leave the table too little height, bail out of `fill` at that width. This is pending a `Layout` option that does it for you.
 
 ## Data-fetching
 
@@ -390,7 +414,7 @@ Do we want to encourage/allow inline editing on pages such as these
 
 - A bespoke table with its own pagination, rather than DataTable with `useURLCollectionVariables`.
 
-- Hand-rolled `max-height` / `overflow` wrappers around the table to contain scrolling — `Layout fill` already does this. The metric card row and the filter rail layout above are exceptions for now, pending layout building blocks for them.
+- Hand-rolled `max-height` / `overflow` wrappers around the table to contain scrolling — `Layout fill` already does this. The filter rail layout above is an exception for now, pending layout building blocks for it.
 
 - Tabs above the table for preset views of the same records. Those are [preset filters](#preset-filters) in the toolbar.
 

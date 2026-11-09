@@ -6,24 +6,22 @@ import * as React from "react";
  * True on desktop (a mouse hovers, at any window width), false on touch-only
  * devices. Used to gate hover-only affordances (like the icon-rail flyout) so a
  * narrow desktop window still gets them while touch devices don't.
+ *
+ * Read through an external-store snapshot like `useIsMobile`, so a client-only
+ * mount sees the media query on its first render (a touch device never gets a
+ * hover-only first paint) while a hydrating render matches the server fallback.
  */
 const QUERY = "(hover: hover)";
 
+const subscribe = (onChange: () => void) => {
+  const media = window.matchMedia(QUERY);
+  media.addEventListener("change", onChange);
+  return () => media.removeEventListener("change", onChange);
+};
+const getSnapshot = () => window.matchMedia(QUERY).matches;
+// Without a window, assume a mouse; the client snapshot corrects it.
+const getServerSnapshot = () => true;
+
 export function useHasHover(): boolean {
-  // Read the media query on the first render where a window exists, so a touch
-  // device never gets a hover-only first paint (a tap in that frame would hit
-  // the hover affordance). Without a window, assume hover; the effect corrects it.
-  const [hasHover, setHasHover] = React.useState(
-    () => typeof window === "undefined" || window.matchMedia(QUERY).matches,
-  );
-
-  React.useEffect(() => {
-    const mql = window.matchMedia(QUERY);
-    const update = () => setHasHover(mql.matches);
-    update();
-    mql.addEventListener("change", update);
-    return () => mql.removeEventListener("change", update);
-  }, []);
-
-  return hasHover;
+  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

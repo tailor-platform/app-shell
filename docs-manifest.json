@@ -635,7 +635,7 @@
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
         "outline": "b265fed115996728",
-        "snapshot": "db7d26786cde5cfc",
+        "snapshot": "a0c8071024eb2e72",
         "outputMd": "e862d97903e8f596",
         "examples": "934c52d4e8761404"
       }
@@ -1264,7 +1264,7 @@
       "hashes": {
         "typeSurface": "e760949efcbe4c38",
         "outline": "464d91acc48f7c9d",
-        "snapshot": "429bdb8c86bb2ad6",
+        "snapshot": "41f7a2d2d8035a74",
         "outputMd": "1f81ebd562c50371",
         "examples": "b0eebb8c5e2219dc"
       }
@@ -1280,9 +1280,9 @@
       "symbols": ["SidebarGroup", "SidebarGroupProps"],
       "hashes": {
         "typeSurface": "cc25e488e6896569",
-        "outline": "e79fb25ae1150e98",
+        "outline": "3034121b99170a52",
         "snapshot": null,
-        "outputMd": "a36192df64f16adc",
+        "outputMd": "370eccb532278bd1",
         "examples": null
       }
     },
@@ -1806,7 +1806,7 @@
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "b3dd3b9a58a9d290",
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "1f81ebd562c50371",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "a36192df64f16adc",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "370eccb532278bd1",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "e50b2d649289d772",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "281cfa2dcbff14be",

@@ -688,16 +688,14 @@ function SidebarMenuButton({
   }
 
   return (
-    <Tooltip.Root>
+    // Only inside the collapsed icon rail, where the label is hidden. Disabled
+    // (not just hidden) elsewhere, so that a focused item in a group flyout does
+    // not open an invisible tooltip that would swallow the first Escape meant for
+    // the flyout. (Base UI only opens the tooltip on hover, so touch devices
+    // never see it.)
+    <Tooltip.Root disabled={!isIconRail}>
       <Tooltip.Trigger render={button} />
-      <Tooltip.Content
-        position={{ side: "right", align: "center" }}
-        // Shown only inside the collapsed icon rail, where the label is hidden.
-        // (Base UI only opens the tooltip on hover, so touch devices never see
-        // it.)
-        hidden={!isIconRail}
-        {...tooltip}
-      />
+      <Tooltip.Content position={{ side: "right", align: "center" }} {...tooltip} />
     </Tooltip.Root>
   );
 }

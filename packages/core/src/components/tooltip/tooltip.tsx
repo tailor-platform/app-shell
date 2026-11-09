@@ -29,7 +29,7 @@ Provider.displayName = "Tooltip.Provider";
 // so that upstream changes don't leak as breaking changes to consumers.
 type TooltipRootProps = Pick<
   React.ComponentProps<typeof BaseTooltip.Root>,
-  "open" | "defaultOpen" | "onOpenChange"
+  "open" | "defaultOpen" | "onOpenChange" | "disabled"
 > & {
   children: React.ReactNode;
 };

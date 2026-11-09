@@ -5,20 +5,60 @@ import {
   SidebarLayout,
   defineModule,
 } from "@tailor-platform/app-shell";
-import { afterEach, beforeEach, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 
 const originalUrl = window.location.href;
-const modules = [defineModule({ path: "", component: () => null, resources: [] })];
+const modules = [
+  defineModule({
+    path: "dashboard",
+    meta: { title: "Dashboard" },
+    component: () => null,
+    resources: [],
+  }),
+];
 
 beforeEach(async () => {
   await page.viewport(1440, 1000);
-  window.history.replaceState({}, "", "/");
+  window.history.replaceState({}, "", "/dashboard");
 });
 
 afterEach(() => {
   cleanup();
   window.history.replaceState({}, "", originalUrl);
+});
+
+describe.each([
+  ["SidebarLayout", SidebarLayout],
+  ["GlobalHeaderLayout", GlobalHeaderLayout],
+] as const)("%s", (_name, Layout) => {
+  describe.each([375, 1024])("responsive navigation at %ipx", (width) => {
+    it.each([
+      { sidebarBehaviour: "fixed" },
+      { sidebarBehaviour: "collapse" },
+      { sidebarBehaviour: "resize" },
+      { sidebarBehaviour: "collapse-and-resize" },
+      { collapsible: false },
+    ] as const)("opens the full menu with %j", async (props) => {
+      await page.viewport(width, 1000);
+      render(
+        <AppShell title="Responsive test" modules={modules}>
+          <Layout {...props} />
+        </AppShell>,
+      );
+
+      await page.getByRole("button", { name: "Toggle Sidebar" }).click();
+      const dialog = page.getByRole("dialog", { name: "Sidebar" });
+      const link = dialog.getByRole("link", { name: "Dashboard" });
+      await expect.element(dialog).toBeVisible();
+      await expect.element(link.getByText("Dashboard")).toBeVisible();
+      await expect
+        .element(page.getByRole("separator", { name: "Resize sidebar" }))
+        .not.toBeInTheDocument();
+      await link.click();
+      await expect.element(dialog).not.toBeInTheDocument();
+    });
+  });
 });
 
 it.each(["rail", "offcanvas", "fixed", "resize"] as const)(

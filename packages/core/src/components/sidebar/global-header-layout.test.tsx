@@ -1,4 +1,4 @@
-import { render, cleanup, waitFor, screen, fireEvent } from "@testing-library/react";
+import { render, cleanup, waitFor, screen, fireEvent, within } from "@testing-library/react";
 import { describe, it, expect, expectTypeOf, afterEach, vi } from "vitest";
 import { GlobalHeaderLayout } from "./global-header-layout";
 import { GlobalHeader } from "./global-header";
@@ -142,7 +142,8 @@ describe("GlobalHeaderLayout", () => {
         vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
         renderLayout({ sidebarBehaviour });
         fireEvent.click(await screen.findByRole("button", { name: "Toggle Sidebar" }));
-        expect(await screen.findByRole("dialog", { name: "Sidebar" })).toBeDefined();
+        const dialog = await screen.findByRole("dialog", { name: "Sidebar" });
+        expect(await within(dialog).findByRole("link", { name: "Dashboard" })).toBeDefined();
         expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
       },
     );
@@ -151,7 +152,9 @@ describe("GlobalHeaderLayout", () => {
       vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
       renderLayout({ collapsible: false });
       fireEvent.click(await screen.findByRole("button", { name: "Toggle Sidebar" }));
-      expect(await screen.findByRole("dialog", { name: "Sidebar" })).toBeDefined();
+      const dialog = await screen.findByRole("dialog", { name: "Sidebar" });
+      expect(await within(dialog).findByRole("link", { name: "Dashboard" })).toBeDefined();
+      expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
     });
   });
 

@@ -7,6 +7,7 @@ import {
   waitFor,
   screen,
   fireEvent,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, expectTypeOf, afterEach, vi } from "vitest";
@@ -429,7 +430,8 @@ describe("SidebarLayout", () => {
           vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
           renderSidebarLayout({ sidebarBehaviour });
           fireEvent.click(await screen.findByRole("button", { name: "Toggle Sidebar" }));
-          expect(await screen.findByRole("dialog", { name: "Sidebar" })).toBeDefined();
+          const dialog = await screen.findByRole("dialog", { name: "Sidebar" });
+          expect(await within(dialog).findByRole("link", { name: "Dashboard" })).toBeDefined();
           expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
         },
       );
@@ -438,7 +440,9 @@ describe("SidebarLayout", () => {
         vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
         renderSidebarLayout({ collapsible: false });
         fireEvent.click(await screen.findByRole("button", { name: "Toggle Sidebar" }));
-        expect(await screen.findByRole("dialog", { name: "Sidebar" })).toBeDefined();
+        const dialog = await screen.findByRole("dialog", { name: "Sidebar" });
+        expect(await within(dialog).findByRole("link", { name: "Dashboard" })).toBeDefined();
+        expect(screen.queryByRole("separator", { name: "Resize sidebar" })).toBeNull();
       });
     });
 

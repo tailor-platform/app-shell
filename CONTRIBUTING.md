@@ -187,6 +187,9 @@ Rather than duplicate file-by-file details here (they go stale — see `.agents/
 - **oxfmt** (format) + **oxlint** (lint), versions pinned via the pnpm **catalog** in
   `pnpm-workspace.yaml`. **lefthook** runs `oxfmt` on staged files pre-commit.
 - **changesets** drives versioning and publishing.
+- **File naming**: files and directories under `packages/core/src/components/` are kebab-case
+  (`date-field/date-field.tsx`); component identifiers stay PascalCase. See
+  [component-design.md](./.agents/references/component-design.md#file-naming).
 - **Supply-chain hygiene**: GitHub Actions are **pinned by commit SHA**. pnpm enforces
   `minimumReleaseAge`, exotic-subdep blocking, and lockfile trust (`pnpm-workspace.yaml`). When
   adding a dependency or editing a workflow, preserve these (pin SHAs; commit `pnpm-lock.yaml`).

@@ -1,5 +1,5 @@
 // Main component and exports
-export { DescriptionCard, default } from "./DescriptionCard";
+export { DescriptionCard, default } from "./description-card";
 
 // Type guards
 export { isDivider, isFieldDefinition } from "./types";

@@ -102,6 +102,14 @@ components/
     component-name.test.tsx
 ```
 
+#### File naming
+
+Directories and files under `components/` are **kebab-case**: `date-field/`,
+`date-field.tsx`, `use-date-field-state.ts`, `types.ts`, `date-field.test.tsx`.
+Exported identifiers stay PascalCase (`export function DateField`), so the file
+name and the component name differ in case by design. The same rule applies
+under `components/internals/`.
+
 ```tsx
 // index.ts
 export * from "./component-name";

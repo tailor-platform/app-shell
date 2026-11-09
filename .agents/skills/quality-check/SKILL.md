@@ -5,7 +5,7 @@ description: "Runs type-check, lint, test, check-dts, and formatting for the App
 
 # Quality Check
 
-Run type-check, lint, test, `check-dts`, and formatting in sequence. Fix errors where possible and re-run until clean. Formatting runs last so that any code changes from fixing errors are also formatted.
+Run type-check, lint, test, `check-dts`, browser style tests, and formatting in sequence. Fix errors where possible and re-run until clean. Formatting runs last so that any code changes from fixing errors are also formatted.
 
 These are the same tasks CI runs in `.github/actions/ci`. Keep this list in step with that file — a task that runs there but not here passes locally and fails on the PR.
 
@@ -53,7 +53,19 @@ Step 1 cannot catch what this catches: `type-check` sets `skipLibCheck: true` an
 the emitted declarations, while `check-dts` packs a tarball and type-checks it with
 `skipLibCheck: false`. A declaration that only breaks for consumers fails here and nowhere else.
 
-### Step 5: Format
+### Step 5: Browser style contracts
+
+Run the shipped CSS contracts in Chromium (the script builds the package first):
+
+```sh
+pnpm --filter @tailor-platform/app-shell test:browser
+```
+
+On first use, install Chromium with `pnpm --filter @tailor-platform/app-shell exec playwright install chromium`.
+Linux CI uses `playwright install --with-deps chromium` to install system libraries too.
+Keep these tests enabled in CI when replacing Node-based style checks; `pnpm test` alone does not run them.
+
+### Step 6: Format
 
 Run formatting:
 
@@ -76,4 +88,5 @@ Provide a summary of:
 2. Lint errors found and fixed (if any)
 3. Test failures found and fixed (if any)
 4. Declaration (`check-dts`) errors found and fixed (if any)
-5. Formatting changes (if any)
+5. Browser style test failures found and fixed (if any)
+6. Formatting changes (if any)

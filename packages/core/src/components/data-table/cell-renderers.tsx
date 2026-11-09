@@ -3,7 +3,7 @@ import { parseDate } from "@internationalized/date";
 import { Link } from "react-router";
 import { BadgeList, toValueArray } from "@/components/badge-list";
 import type { SelectOption } from "@/types/collection";
-import { optionLabel, resolveBadgeOptions } from "./cell-edit";
+import { optionLabel, resolveBadgeOptions } from "./cell-values";
 import { normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type {
   BadgeCellOptions,

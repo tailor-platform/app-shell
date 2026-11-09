@@ -12,6 +12,7 @@ export function BasicUsage() {
       <Badge variant="subtle-warning">Subtle Warning</Badge>
       <Badge variant="subtle-error">Subtle Error</Badge>
       <Badge variant="subtle-info">Subtle Info</Badge>
+      <Badge variant="subtle-neutral">Subtle Neutral</Badge>
     </div>
   );
 }

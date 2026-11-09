@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useLocation, Link } from "react-router";
 import { ExternalLink } from "lucide-react";
 import { SidebarMenuItem, SidebarMenuButton } from "./primitives";
+import { SidebarButtonIcon } from "./sidebar-button-icon";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { useAppShellConfig } from "@/contexts/appshell-context";
 import { buildLocaleResolver, type LocalizedString } from "@/lib/i18n";
@@ -157,7 +158,7 @@ export const SidebarItem = (props: SidebarItemProps) => {
           render(renderProps)
         ) : (
           <>
-            {icon}
+            <SidebarButtonIcon icon={icon} title={title} />
             <span>{title}</span>
           </>
         )}

@@ -19,6 +19,7 @@ import { createAppShellWrapper } from "../../../tests/test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
 import type { Column, DataTableData, UseDataTableOptions } from "./types";
+import { TestDataTable, testColumns, testData, strictWrapper, type TestRow } from "./test-utils";
 
 type Row = { id: string; name: string };
 const columns: Column<Row>[] = [{ label: "Name", render: (row) => row.name }];
@@ -75,6 +76,150 @@ function ControlledTable({
     </DataTable.Root>
   );
 }
+
+describe("DataTable", () => {
+  describe("row selection", () => {
+    it("renders checkboxes when onSelectionChange is provided", () => {
+      render(<TestDataTable onSelectionChange={vi.fn()} />, { wrapper });
+
+      const checkboxes = screen.getAllByRole("checkbox");
+      // 1 header checkbox + 2 row checkboxes
+      expect(checkboxes).toHaveLength(3);
+    });
+
+    it("does not render checkboxes when onSelectionChange is not provided", () => {
+      render(<TestDataTable />, { wrapper });
+
+      expect(screen.queryByLabelText("Select all rows")).toBeNull();
+      expect(screen.queryByLabelText("Select row")).toBeNull();
+    });
+
+    it("clicking a row checkbox calls onSelectionChange with the row id", () => {
+      const onSelectionChange = vi.fn();
+      render(<TestDataTable onSelectionChange={onSelectionChange} />, {
+        wrapper,
+      });
+
+      const checkboxes = screen.getAllByRole("checkbox");
+      // checkboxes[0] = header, checkboxes[1] = Alice (id "1")
+      fireEvent.click(checkboxes[1]);
+
+      expect(onSelectionChange).toHaveBeenCalledWith(["1"]);
+    });
+
+    it("calls onSelectionChange once per toggle under StrictMode", () => {
+      const onSelectionChange = vi.fn();
+      render(<TestDataTable onSelectionChange={onSelectionChange} />, {
+        wrapper: strictWrapper,
+      });
+
+      fireEvent.click(screen.getAllByRole("checkbox")[1]);
+
+      expect(onSelectionChange).toHaveBeenCalledTimes(1);
+      expect(onSelectionChange).toHaveBeenCalledWith(["1"]);
+    });
+
+    it("clicking the header checkbox selects all rows", () => {
+      const onSelectionChange = vi.fn();
+      render(<TestDataTable onSelectionChange={onSelectionChange} />, {
+        wrapper,
+      });
+
+      const checkboxes = screen.getAllByRole("checkbox");
+      fireEvent.click(checkboxes[0]);
+
+      expect(onSelectionChange).toHaveBeenCalledWith(["1", "2"]);
+    });
+
+    it("composes several toggles dispatched in one commit", () => {
+      // Consumer code like `overdue.forEach((r) => toggleRowSelection(r))`.
+      // Every built-in affordance fires exactly one toggle per commit, so this
+      // is only reachable through the public API.
+      const onSelectionChange = vi.fn();
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
+          columns: testColumns,
+          data: testData,
+          onSelectionChange,
+        }),
+      );
+
+      act(() => {
+        result.current.toggleRowSelection?.(testData.rows[0]);
+        result.current.toggleRowSelection?.(testData.rows[1]);
+      });
+
+      expect(result.current.selectedIds).toEqual(["1", "2"]);
+      expect(onSelectionChange).toHaveBeenLastCalledWith(["1", "2"]);
+    });
+
+    it("applies clearSelection before a toggle in the same commit", () => {
+      const onSelectionChange = vi.fn();
+      const { result } = renderHook(() =>
+        useDataTable<TestRow>({
+          columns: testColumns,
+          data: testData,
+          onSelectionChange,
+        }),
+      );
+
+      act(() => result.current.selectAllRows?.());
+      expect(result.current.selectedIds).toEqual(["1", "2"]);
+
+      // "replace the selection with just this row"
+      act(() => {
+        result.current.clearSelection?.();
+        result.current.toggleRowSelection?.(testData.rows[1]);
+      });
+
+      expect(result.current.selectedIds).toEqual(["2"]);
+      expect(onSelectionChange).toHaveBeenLastCalledWith(["2"]);
+    });
+
+    it("marks the selected row with data-state='selected' so the whole row highlights", () => {
+      const { container } = render(<TestDataTable onSelectionChange={vi.fn()} />, { wrapper });
+
+      // Nothing selected initially.
+      expect(
+        container.querySelector('[data-slot="data-table-row"][data-state="selected"]'),
+      ).toBeNull();
+
+      // checkboxes[0] = header, checkboxes[1] = first data row.
+      fireEvent.click(screen.getAllByRole("checkbox")[1]);
+
+      // The row (not just the pinned cells) must carry data-state="selected",
+      // which is what `Table.Row` keys its selected background off of.
+      expect(
+        container.querySelectorAll('[data-slot="data-table-row"][data-state="selected"]'),
+      ).toHaveLength(1);
+    });
+
+    it("the header checkbox adds and removes only the current page's rows", () => {
+      const onSelectionChange = vi.fn();
+      const nextPage: DataTableData<TestRow> = {
+        rows: [
+          { id: "3", name: "Carol", status: "Active" },
+          { id: "4", name: "Dave", status: "Inactive" },
+        ],
+      };
+      const { rerender } = render(<TestDataTable onSelectionChange={onSelectionChange} />, {
+        wrapper,
+      });
+
+      // Pick Alice on the first page, then move to the second.
+      fireEvent.click(screen.getAllByRole("checkbox")[1]);
+      rerender(<TestDataTable data={nextPage} onSelectionChange={onSelectionChange} />);
+
+      // Checking the header adds this page without dropping Alice…
+      fireEvent.click(screen.getByLabelText("Select all rows"));
+      expect(onSelectionChange).toHaveBeenLastCalledWith(["1", "3", "4"]);
+
+      // …and unchecking it removes only this page's rows.
+      fireEvent.click(screen.getByLabelText("Select all rows"));
+      expect(onSelectionChange).toHaveBeenLastCalledWith(["1"]);
+    });
+  });
+});
 
 describe("rowSelection", () => {
   it("initializes uncontrolled selection once and composes changes in one commit", () => {

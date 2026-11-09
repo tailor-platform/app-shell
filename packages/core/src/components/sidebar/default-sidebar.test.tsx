@@ -356,6 +356,37 @@ describe("DefaultSidebar opt-in props", () => {
     expect(heading?.className).toContain("astw:group-data-[collapsible=icon]:opacity-0");
   });
 
+  it("falls back to the title's initial for icon-less items and groups in the rail", () => {
+    renderWithProps(
+      {
+        iconRail: true,
+        hideHeader: true,
+        children: (
+          <>
+            <SidebarItem to="/features" title="features" />
+            <SidebarItem to="/invoices-ja" title="請求書" />
+            <SidebarGroup title="Billing">
+              <SidebarItem to="/invoices" title="Invoices" />
+            </SidebarGroup>
+            <SidebarItem to="/home" title="Home" icon={<Home data-testid="home-icon" />} />
+          </>
+        ),
+      },
+      { defaultOpen: false },
+    );
+
+    const fallbacks = document.querySelectorAll('[data-slot="sidebar-icon-fallback"]');
+    expect(Array.from(fallbacks, (el) => el.textContent)).toEqual(["F", "請", "B"]);
+    expect(fallbacks[0]?.getAttribute("class")).toContain(
+      "astw:group-data-[collapsible=icon]:block",
+    );
+    // Hairline frame: 0.5px at 20% of the text color
+    const frame = fallbacks[0]?.querySelector("rect");
+    expect(frame?.getAttribute("stroke-width")).toBe("0.5");
+    expect(frame?.getAttribute("stroke-opacity")).toBe("0.2");
+    expect(screen.getByTestId("home-icon")).toBeDefined();
+  });
+
   it("reveals a group's children in a hover flyout in the icon rail", async () => {
     const user = userEvent.setup();
     renderWithProps(

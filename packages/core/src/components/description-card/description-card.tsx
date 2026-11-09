@@ -1,0 +1,255 @@
+import * as React from "react";
+import { Tooltip } from "../tooltip";
+import { Card } from "../card";
+import { cn } from "../../lib/utils";
+
+import type { DescriptionCardProps, FieldConfig, FieldDefinition, ResolvedField } from "./types";
+import { isDivider, isFieldDefinition } from "./types";
+import { renderField, shouldHideField, isFullWidthField, getNestedValue } from "./field-renderers";
+import { Text } from "../text";
+
+// ============================================================================
+// FIELD RESOLVER
+// ============================================================================
+
+/**
+ * Resolve an inline field definition to a complete resolved field with value
+ */
+function resolveField<TData extends object>(
+  fieldDef: FieldDefinition<TData>,
+  data: TData,
+  index: number,
+): ResolvedField {
+  // Get value from data using the key path
+  const value = getNestedValue(data as Record<string, unknown>, fieldDef.key);
+  const { render } = fieldDef;
+
+  return {
+    id: `${fieldDef.key}-${index}`,
+    label: fieldDef.label,
+    type: fieldDef.type ?? "text",
+    value,
+    emptyBehavior: fieldDef.emptyBehavior ?? "dash",
+    meta: fieldDef.meta,
+    data: data as Record<string, unknown>,
+    // Bind while `data` is still typed as TData - see ResolvedField.render
+    render: render ? () => render(data) : undefined,
+  };
+}
+
+/**
+ * A section of fields separated by dividers
+ */
+interface FieldSection {
+  id: string;
+  fields: ResolvedField[];
+}
+
+/**
+ * Resolve all fields and group them into sections based on dividers
+ */
+function resolveFieldsWithSections<TData extends object>(
+  fieldConfigs: FieldConfig<TData>[],
+  data: TData,
+): FieldSection[] {
+  const sections: FieldSection[] = [];
+  let currentSection: ResolvedField[] = [];
+  let sectionIndex = 0;
+  let fieldIndex = 0;
+
+  for (const config of fieldConfigs) {
+    if (isDivider(config)) {
+      // Push current section if it has fields
+      if (currentSection.length > 0) {
+        sections.push({
+          id: `section-${sectionIndex}`,
+          fields: currentSection,
+        });
+        sectionIndex++;
+        currentSection = [];
+      }
+    } else if (isFieldDefinition(config)) {
+      const resolved = resolveField(config, data, fieldIndex);
+      fieldIndex++;
+      if (!shouldHideField(resolved)) {
+        currentSection.push(resolved);
+      }
+    }
+  }
+
+  // Push final section
+  if (currentSection.length > 0) {
+    sections.push({ id: `section-${sectionIndex}`, fields: currentSection });
+  }
+
+  return sections;
+}
+
+// ============================================================================
+// DESCRIPTION ITEM
+// ============================================================================
+
+interface DescriptionItemProps {
+  label: string;
+  children: React.ReactNode;
+  fullWidth?: boolean;
+}
+
+function DescriptionItem({ label, children, fullWidth }: DescriptionItemProps) {
+  return (
+    <div
+      className={cn(
+        "astw:flex astw:flex-col astw:gap-1 astw:min-w-0 astw:py-2",
+        fullWidth && "astw:col-span-full",
+      )}
+    >
+      <Text.p variant="label-md" className="astw:text-muted-foreground astw:leading-none">
+        {label}
+      </Text.p>
+      <div className="astw:min-w-0">{children}</div>
+    </div>
+  );
+}
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+
+/**
+ * DescriptionCard - ERP document display component
+ *
+ * Renders structured key-value information with automatic layout.
+ * Use { type: "divider" } in the fields array to add dividers between sections.
+ *
+ * Pass `render` on a field to draw it yourself when no built-in `type` fits.
+ *
+ * @example
+ * ```tsx
+ * <DescriptionCard
+ *   data={order}
+ *   title="Order Summary"
+ *   fields={[
+ *     { key: "status", label: "Status", type: "badge", meta: { badgeVariantMap: { CONFIRMED: "success" } } },
+ *     { key: "orderNumber", label: "Order #", meta: { copyable: true } },
+ *     { type: "divider" },
+ *     { key: "total", label: "Total", type: "money" },
+ *     { key: "deliveryBreakdown", label: "Delivery", render: (d) => <PieChart data={d.deliveryBreakdown} /> },
+ *   ]}
+ * />
+ * ```
+ */
+export function DescriptionCard<TData extends object = Record<string, unknown>>({
+  data,
+  title,
+  fields,
+  columns = 3,
+  className,
+  style,
+  headerAction,
+}: DescriptionCardProps<TData>) {
+  // Resolve fields into sections (split by dividers)
+  const sections = resolveFieldsWithSections(fields, data);
+
+  // Check if we have content
+  const hasContent = sections.some((s) => s.fields.length > 0);
+
+  // Grid classes - responsive breakpoints using CSS container queries (4 → 3 → 2 → 1)
+  const gridClasses = cn(
+    "astw:grid astw:gap-x-6 astw:gap-y-4",
+    // Default: 1 column
+    "astw:grid-cols-1",
+    // Container queries for responsive columns
+    columns === 4
+      ? // 4-column mode: 1 → 2 → 3 → 4 columns
+        "astw:@[400px]:grid-cols-2 astw:@[600px]:grid-cols-3 astw:@[800px]:grid-cols-4"
+      : // 3-column mode: 1 → 2 → 3 columns
+        "astw:@[400px]:grid-cols-2 astw:@[600px]:grid-cols-3",
+  );
+
+  // Render a single section
+  const renderSection = (section: FieldSection) => {
+    const regularFields = section.fields.filter((f) => !isFullWidthField(f));
+    const fullWidthFields = section.fields.filter((f) => isFullWidthField(f));
+
+    return (
+      <div key={section.id} className="astw:space-y-4">
+        {/* Regular fields in responsive grid */}
+        {regularFields.length > 0 && (
+          <div className={gridClasses}>
+            {regularFields.map((field) => (
+              <DescriptionItem key={field.id} label={field.label}>
+                {renderField(field)}
+              </DescriptionItem>
+            ))}
+          </div>
+        )}
+
+        {/* Full-width fields (addresses) */}
+        {fullWidthFields.length > 0 && (
+          <div className={gridClasses}>
+            {fullWidthFields.map((field) => (
+              <DescriptionItem key={field.id} label={field.label} fullWidth>
+                {renderField(field)}
+              </DescriptionItem>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <Tooltip.Provider delay={300}>
+      <Card.Root className={cn("astw:@container", className)} style={style}>
+        {/* Header */}
+        <div className="astw:flex astw:items-center astw:justify-between astw:px-6 astw:py-6">
+          <Text.h3 variant="heading-md" className="astw:leading-none">
+            {title}
+          </Text.h3>
+          {headerAction && <div>{headerAction}</div>}
+        </div>
+
+        {/* Content */}
+        <Card.Content className="astw:pb-4">
+          {!hasContent ? (
+            <Text variant="body-md" className="astw:text-muted-foreground">
+              No information available
+            </Text>
+          ) : (
+            <div className="astw:space-y-4">
+              {sections.map((section, index) => (
+                <React.Fragment key={section.id}>
+                  {/* Divider between sections (except before first) */}
+                  {index > 0 && <hr className="astw:h-px astw:bg-border astw:border-none" />}
+                  {renderSection(section)}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+        </Card.Content>
+      </Card.Root>
+    </Tooltip.Provider>
+  );
+}
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
+
+export type {
+  DescriptionCardProps,
+  FieldConfig,
+  FieldDefinition,
+  FieldDivider,
+  FieldRender,
+  FieldType,
+  FieldMeta,
+  Columns,
+  EmptyBehavior,
+  DateFormat,
+  BadgeVariantType,
+} from "./types";
+
+export { isDivider, isFieldDefinition } from "./types";
+
+export default DescriptionCard;

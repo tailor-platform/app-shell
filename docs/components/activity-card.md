@@ -105,7 +105,7 @@ import { ActivityCard, type ActivityCardBaseItem } from "@tailor-platform/app-sh
 ### Example
 
 ```tsx
-import { ActivityCard, type ActivityCardBaseItem } from "@tailor-platform/app-shell";
+import { ActivityCard, Text, type ActivityCardBaseItem } from "@tailor-platform/app-shell";
 
 interface MyItem extends ActivityCardBaseItem {
   kind: "approval" | "update";
@@ -123,11 +123,11 @@ const items: MyItem[] = [
     {(item) =>
       item.kind === "approval" ? (
         <ActivityCard.Item indicator={<ApprovedIcon />}>
-          <p>{item.label}</p>
+          <Text.p>{item.label}</Text.p>
         </ActivityCard.Item>
       ) : (
         <ActivityCard.Item>
-          <p>{item.message}</p>
+          <Text.p>{item.message}</Text.p>
         </ActivityCard.Item>
       )
     }

@@ -15,6 +15,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.20.0        | [z-index tokens renamed; old names are aliases](#1200-z-index-tokens-renamed-old-names-are-aliases)                          |
 | 1.18.0        | [Destructive colours now resolve to the danger roles](#1180-destructive-colours-now-resolve-to-the-danger-roles)             |
 | 1.17.0        | [Status and alert tokens now resolve to the colour roles](#1170-status-and-alert-tokens-now-resolve-to-the-colour-roles)     |
 | 1.15.0        | [Base UI 1.8.0 breaks closed-`Select` and dialog-click tests](#1150-base-ui-180-breaks-closed-select-and-dialog-click-tests) |
@@ -28,6 +29,25 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
 
+## 1.20.0: z-index tokens renamed; old names are aliases
+
+**Applies to:** apps whose theme overrides `--z-sidebar`, `--z-sidebar-rail`, `--z-popup` or `--z-overlay`, and apps that reference those names on their own elements.
+
+1.20.0 names the z-index tokens by layer: `--z-nav` (10), `--z-portal` (50) and `--z-toast` (100). The old names keep working: `--z-sidebar` is now `var(--z-nav)`, and `--z-popup` and `--z-overlay` are both `var(--z-portal)`. They are deprecated and will be removed in the next major. Nothing errors, and nothing moves. Two things change silently:
+
+- **Themes that override an old name no longer reach the components.** The sidebar reads `--z-nav`; dialogs, sheets, menus, selects, comboboxes and tooltips read `--z-portal`. An override of `--z-popup` or `--z-overlay` still changes `z-[var(--z-popup)]` on your own elements, but not AppShell's layers. There is one token for the whole portal band because popups and overlays share the value on purpose: the order inside the band is the order of opening, so a `Select` inside a `Dialog` is above it. Raising one above the other puts a `Select` or `Menu` opened inside a `Dialog` behind the dialog.
+- **`--z-sidebar-rail` is no longer read by AppShell.** The sidebar rail orders itself inside the sidebar. The variable is still declared (20) for elements of your own that reference it, and it leaves the documented table.
+
+How to detect it: search the app for `--z-sidebar`, `--z-popup` and `--z-overlay` in class names and in theme CSS. Open a `Dialog` with a `Select` inside it, a `Dialog` over a `Sheet`, and fire a toast over each after upgrading; the order should not change.
+
+What to change:
+
+- Replace `--z-sidebar` with `--z-nav`, and `--z-popup` and `--z-overlay` with `--z-portal`, in class names such as `z-[var(--z-portal)]` and in theme CSS.
+- In a theme that moves AppShell's layers, set `--z-nav`, `--z-portal` or `--z-toast` instead of the old names. Remove the old names from the theme.
+- Do not set `--z-sidebar-rail`; it no longer affects the rail.
+
+The tokens are documented in [Styling & theming](./concepts/styling-theming.md#z-index). The decision record is `decisions/floating-ui-stacking.md`.
+
 ## 1.18.0: destructive colours now resolve to the danger roles
 
 **Applies to:** apps that show `Button variant="destructive"` in dark mode, apps that use `text-destructive`, `border-destructive` or `bg-destructive` on their own elements, and apps whose theme overrides `--destructive` or `--destructive-foreground`.
@@ -38,7 +58,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 - **`text-destructive` resolves to the solid.** In dark mode it changes from `#f87171` to `#dc2626`, which is 3.71:1 on the dark card, below 4.5:1 for text. Components shipped with AppShell now use `text-danger-text` for error text, and invalid borders and focus rings read `--danger-solid`. In dark mode the invalid border changes from `#f87171` to `#dc2626`.
 - **Themes that override `--destructive` no longer reach the components.** `Button`, invalid `Input`, `Textarea`, `Checkbox`, `Field` and `DateField` borders and rings, error text and the `CsvImporter` error cells read `--danger-*`. An override of `--destructive` still changes `bg-destructive` and `text-destructive` on your own elements, so the two reds can drift apart. The `cream` and `bloom` palettes no longer set `--destructive`; their values were the same as the default.
 
-How to detect it: search the app for `destructive` in class names and in theme CSS, including Theme Generator output that sets `--destructive`. Compare `Button variant="destructive"`, an invalid `Input` and an error message in light and dark mode after upgrading.
+How to detect it: search the app for `destructive` in class names and in theme CSS, including Theme Generator output that sets `--destructive`. In JS and TS files, the `no-deprecated-tokens` rule in `@tailor-platform/eslint-plugin-app-shell` reports these names and the role to use instead. The rule is available from version 0.2.0 of the plugin, and it does not read CSS files. Compare `Button variant="destructive"`, an invalid `Input` and an error message in light and dark mode after upgrading.
 
 What to change:
 
@@ -58,7 +78,7 @@ The roles are documented in [Styling & theming](./concepts/styling-theming.md#br
 - **Component recolouring moves to the roles.** `Badge`, `Alert`, `CsvImporter` and `MetricCard` read the roles directly. A theme that overrides `--status-*` or `--alert-*` no longer changes these components; override `--{intent}-*` instead. `Badge` `error` / `subtle-error` and `Alert` `error` read `--danger-*`, so overriding `--destructive` no longer reaches them either. `Button variant="destructive"` and `text-destructive` still follow `--destructive`.
 - **`text-status-*` loses contrast in dark mode.** The `--status-*` values are now the step-9 fills, which are below 4.5:1 as text on the dark card.
 
-How to detect it: search the app for `status-`, `alert-` and theme overrides of `--status-`, `--alert-` and `--destructive`. Compare `Badge` and `Alert` in light and dark mode after upgrading.
+How to detect it: search the app for `status-`, `alert-` and theme overrides of `--status-`, `--alert-` and `--destructive`. In JS and TS files, the `no-deprecated-tokens` rule in `@tailor-platform/eslint-plugin-app-shell` reports these names and the role to use instead. The rule is available from version 0.2.0 of the plugin, and it does not read CSS files. Compare `Badge` and `Alert` in light and dark mode after upgrading.
 
 What to change:
 

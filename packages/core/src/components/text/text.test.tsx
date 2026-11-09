@@ -50,6 +50,11 @@ describe("Text", () => {
       );
       expect(container.innerHTML).toMatchSnapshot();
     });
+
+    it("element component", () => {
+      const { container } = render(<Text.h1>Purchase orders</Text.h1>);
+      expect(container.innerHTML).toMatchSnapshot();
+    });
   });
 
   it("has a variant for every role in the default palette", () => {
@@ -143,6 +148,101 @@ describe("Text", () => {
       </Text>,
     );
     expect(ref.current?.tagName).toBe("H2");
+  });
+
+  describe("element components", () => {
+    it.each([
+      [Text.h1, "H1", "heading-lg"],
+      [Text.h2, "H2", "heading-md"],
+      [Text.h3, "H3", "heading-sm"],
+      [Text.h4, "H4", "heading-sm"],
+      [Text.h5, "H5", "heading-sm"],
+      [Text.h6, "H6", "heading-sm"],
+      [Text.p, "P", "body-md"],
+      [Text.span, "SPAN", "label-md"],
+      [Text.div, "DIV", "body-md"],
+    ] as const)("%o renders %s with %s by default", (Component, tagName, role) => {
+      const { container } = render(<Component>x</Component>);
+      const element = container.firstElementChild;
+      expect(element?.tagName).toBe(tagName);
+      expect(element?.className).toBe(`astw:text-${role}`);
+      expect(element?.getAttribute("data-slot")).toBe("text");
+    });
+
+    it("renders the heading level of the element, not of the role", () => {
+      render(
+        <>
+          <Text.h1 variant="heading-sm">A compact page title</Text.h1>
+          <Text.h3 variant="heading-lg">A visually prominent subsection</Text.h3>
+        </>,
+      );
+      const h1 = screen.getByRole("heading", { level: 1 });
+      const h3 = screen.getByRole("heading", { level: 3 });
+      expect(h1.className).toBe("astw:text-heading-sm");
+      expect(h3.className).toBe("astw:text-heading-lg");
+    });
+
+    it("treats a null variant as the default role of the element", () => {
+      const { container } = render(<Text.span variant={null}>x</Text.span>);
+      expect(container.firstElementChild?.className).toBe("astw:text-label-md");
+    });
+
+    it("adds font-mono to code-sm", () => {
+      const { container } = render(<Text.span variant="code-sm">PO-0001</Text.span>);
+      expect(container.firstElementChild?.className).toContain("astw:font-mono");
+    });
+
+    it("keeps the role next to color and modifier classes", () => {
+      const { container } = render(
+        <Text.p variant="body-sm" className="text-muted-foreground tabular-nums">
+          Updated recently
+        </Text.p>,
+      );
+      expect(container.firstElementChild?.className.split(" ")).toEqual([
+        "astw:text-body-sm",
+        "text-muted-foreground",
+        "tabular-nums",
+      ]);
+    });
+
+    it("passes the element's own attributes through", () => {
+      render(
+        <Text.span id="status" title="Sent on 27 October" aria-live="polite">
+          Sent
+        </Text.span>,
+      );
+      const element = document.getElementById("status");
+      expect(element?.getAttribute("title")).toBe("Sent on 27 October");
+      expect(element?.getAttribute("aria-live")).toBe("polite");
+    });
+
+    it("forwards a ref typed for the element", () => {
+      const heading = React.createRef<HTMLHeadingElement>();
+      const paragraph = React.createRef<HTMLParagraphElement>();
+      render(
+        <>
+          <Text.h2 ref={heading}>Line items</Text.h2>
+          <Text.p ref={paragraph}>Orders sent this month.</Text.p>
+        </>,
+      );
+      expect(heading.current?.tagName).toBe("H2");
+      expect(paragraph.current?.tagName).toBe("P");
+    });
+
+    it("names each component after its element", () => {
+      expect(Text.displayName).toBe("Text");
+      expect(Text.h1.displayName).toBe("Text.h1");
+      expect(Text.div.displayName).toBe("Text.div");
+    });
+
+    it("does not accept render or as", () => {
+      // @ts-expect-error -- the element component always renders its own element
+      const withRender = <Text.h1 render={<span />}>x</Text.h1>;
+      // @ts-expect-error -- the element component always renders its own element
+      const withAs = <Text.h1 as="h2">x</Text.h1>;
+      expect(withRender).toBeDefined();
+      expect(withAs).toBeDefined();
+    });
   });
 
   it("keeps the message a Base UI part supplies when no children are given", async () => {

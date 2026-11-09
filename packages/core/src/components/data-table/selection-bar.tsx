@@ -5,7 +5,7 @@ import { Button } from "@/components/button";
 import { Menu } from "@/components/menu";
 import { Spinner } from "@/components/spinner";
 import { Toolbar } from "@/components/toolbar";
-import { useDataTableContext, type DataTableContextValue } from "./data-table-context";
+import { useDataTableContext, type DataTableContextValue } from "./context";
 import { useDataTableT } from "./i18n";
 import type { SelectionAction, SelectionActionHelpers } from "./types";
 

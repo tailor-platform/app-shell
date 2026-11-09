@@ -2,7 +2,7 @@ import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-r
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Select } from "@/components/select";
-import { useDataTableContext } from "./data-table-context";
+import { useDataTableContext } from "./context";
 import { useDataTableT } from "./i18n";
 import { isSelectionBarOpen } from "./selection-bar";
 

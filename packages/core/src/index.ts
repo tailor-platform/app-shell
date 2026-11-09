@@ -72,15 +72,24 @@ export {
   type AIGatewayClient,
   type AIGatewayChatMessage,
   type AIGatewayChatRequest,
+  type AIGatewayToolCall,
+  type AIGatewayFunctionTool,
   type AIChatCompletionEvent,
 } from "./ai/client";
 export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
+export {
+  defineAIChatTool,
+  type AIChatToolContext,
+  type AIChatToolSchema,
+  type AILocalTool,
+} from "./ai/tools";
 export {
   AIChat,
   type AIChatProps,
   type AIChatHeaderProps,
   type AIChatConversationProps,
   type AIChatComposerProps,
+  type AIChatToolCallProps,
   type ToolState,
   type ChainOfThoughtStepStatus,
   type ChatHistoryGroupData,
@@ -166,6 +175,16 @@ export { useOverrideBreadcrumb } from "./hooks/use-override-breadcrumb";
 export { Alert, alertVariants, type AlertProps } from "./components/alert";
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export type { BadgeVariant, BadgeOptions } from "./components/badge-list";
+export {
+  Tree,
+  type TreeChangeDetails,
+  type TreeMappedItem,
+  type TreeProps,
+  type TreeRowState,
+  type TreeSelectedItem,
+  type TreeSelectionStrategy,
+} from "./components/tree";
+export { TreePicker, type TreePickerProps } from "./components/tree-picker";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export {
   ActivityCard,
@@ -304,6 +323,7 @@ export { aggregations, type Aggregation } from "./lib/aggregations";
 
 // DataTable
 export {
+  CellEditError,
   DataTable,
   useDataTable,
   useDataTableContext,

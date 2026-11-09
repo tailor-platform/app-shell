@@ -50,7 +50,8 @@
       "outDir": "packages/core/skills/app-shell-patterns",
       "templatePath": "docs-src/skill/SKILL.template.md",
       "migrationsSource": "docs/migrations.md",
-      "repoBlobUrl": "https://github.com/tailor-platform/app-shell/blob/main"
+      "repoBlobUrl": "https://github.com/tailor-platform/app-shell/blob/main",
+      "versionSource": "packages/core/package.json"
     }
   },
   "policy": {

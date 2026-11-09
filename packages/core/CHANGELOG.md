@@ -1,5 +1,197 @@
 # @tailor-platform/app-shell
 
+## 1.19.0
+
+### Minor Changes
+
+- 1411958: Add the `subtle-neutral` Badge variant, for low-emphasis tags with no status. It reads the neutral roles (`bg-neutral-surface`, `text-neutral-text`, `hover:bg-neutral-surface-hover`), as the other subtle variants read their intent roles.
+  
+  ```tsx
+  <Badge variant="subtle-neutral">Archived</Badge>
+  ```
+  
+  In the default palette it has the same background as `neutral`, because `--muted` and `--secondary` have the same value (gray 100 in light mode, gray 800 in dark mode). In `bloom`, and in `cream` light mode, `--muted` is closer to the page background than `--secondary`, so `subtle-neutral` is quieter than `neutral`.
+- b8ead52: Add `cellProps(row)`, `headerProps(ctx)`, and `footerProps(ctx)` callbacks to DataTable columns to set `className`, `style`, and `title` on the entire data/header/footer cell, including padding. Each can return `undefined` to keep the defaults; `headerProps` receives the same label and sort context as `header`, and `footerProps` receives the same current-page `rows` as `footer`.
+  Inline body-cell backgrounds remain visible on hover and selection, including in pinned columns. Footer styling is skipped during loading and errors and for hidden columns; it does not create a footer row by itself. Content, sorting, and context menus keep their existing behavior; existing tables are unchanged.
+  
+  ```tsx
+  column({
+    id: "hours",
+    type: "number",
+    headerProps: () => ({
+      style: { backgroundColor: "var(--muted)" },
+      title: "Monthly overtime hours",
+    }),
+    footer: ({ rows }) => rows.reduce((sum, row) => sum + row.hours, 0),
+    footerProps: ({ rows }) => ({
+      style: { backgroundColor: "var(--muted)" },
+      title: `Total overtime for ${rows.length} rows on this page`,
+    }),
+    cellProps: (row) =>
+      row.hours >= 60
+        ? {
+            style: { backgroundColor: "var(--danger-solid)", color: "var(--danger-contrast)" },
+            title: "Overtime threshold exceeded",
+          }
+        : undefined,
+  });
+  ```
+- 3cce13f: Add `Column.footer` for static labels and rendered summaries in a sticky row that follows column layout without adding synthetic data rows.
+  Footer renderers receive the current page's read-only rows through the exported `FooterRenderContext<TRow>`, mirroring the named `HeaderRenderContext` API.
+  During loading and page changes, the footer row stays mounted with skeletons instead of displaying stale totals or evaluating footer renderers.
+  The existing `DataTable.Footer` pagination and bulk-action container is unchanged.
+  
+  ```tsx
+  import type { Column } from "@tailor-platform/app-shell";
+  
+  const columns: Column<{ quantity: number | null }>[] = [
+    {
+      id: "quantity",
+      label: "Quantity",
+      type: "number",
+      footer: ({ rows }) => rows.reduce((sum, row) => sum + (row.quantity ?? 0), 0),
+    },
+  ];
+  ```
+- 4e7f81b: Add selector-based `aggregations.sum(selector)`, `avg(selector)`, `min(selector)`, `max(selector)`, and `count(selector)` helpers. Each requires a row selector and accepts an optional second, result-only transformer, returning a reusable callback over `{ rows }` without depending on React or DataTable.
+  
+  Use the callback as an ordinary `Column.footer` renderer to summarize the current page. Numeric selectors are type-checked and selected values are also validated at runtime, without changing the existing column helper or footer context API. The selector determines the source independently of the column's ID or accessor.
+  
+  ```tsx
+  import { aggregations, createColumnHelper } from "@tailor-platform/app-shell";
+  
+  const { column } = createColumnHelper<Order>();
+  column({ id: "quantity", type: "number", footer: aggregations.sum((row) => row.quantity) });
+  ```
+- 4bc2834: Add `ItemList` for compact icon-and-label navigation and actions with collapsible groups, flat sections, and separators. Items require `onClick` or `render`; groups accept rich `ReactNode` titles, heading-only `onClick`, and an explicit `expandOnClick` setting (default `true`).
+  
+  Use AppShell's `Link` or `NavLink` through `render` for page navigation. ItemList also emphasizes `aria-current="page"`, so `NavLink` can supply both current-page semantics and the active appearance without a separate `isActive` prop. Sidebar behavior remains unchanged.
+  
+  ```tsx
+  import { ItemList } from "@tailor-platform/app-shell";
+  
+  <ItemList.Root>
+    <ItemList.Group
+      title="Getting started"
+      render={<a href="#getting-started" />}
+      expandOnClick={false}
+    >
+      <ItemList.Item render={<a href="#installation" aria-label="Installation" />}>
+        Installation
+      </ItemList.Item>
+    </ItemList.Group>
+  </ItemList.Root>;
+  ```
+- eb44189: AppShell components now use the typography roles. Titles, descriptions, captions, messages, error text, and key and value display render with `Text`; controls such as buttons, inputs, menu items, badges, and table cells use the role classes. Most text looks the same. These values change:
+  
+  - Text below 12px moves to 12px: chat history group titles, tool status and section labels, tool JSON, command palette paths and descriptions, chain-of-thought search result badges, and `xs` and `sm` Avatar initials.
+  - Line heights outside the roles move to the role: chat messages (`body-md-relaxed`, 22.75 to 24px), attachment file names and upload text, the ActivityCard activity line, Appearance switcher options, and paragraphs in `Alert.Description`.
+  - Section labels use weight 500: the filter rail section legend, the ActivityCard day label, and `Menu.GroupLabel` (600 to 500).
+  - Key and value pairs use a 500 key and a 400 value: DescriptionCard values (500 to 400), and the AppInfo, DocumentProgressCard, and CsvImporter summary keys (400 to 500).
+  - The chat empty state title and the default sidebar app title use `heading-sm` (600).
+  - `Alert.Title` drops its letter spacing (-0.025em to 0).
+  - A selected item uses weight 600 (500 before): sidebar items, chat history, and the DataTable filter panel.
+  - Inline code and code blocks use `code-sm`, with an 18px line height.
+  
+  Element types do not change. Elements rendered with `Text` and no `data-slot` of their own get `data-slot="text"`.
+- 2413432: Add an optional `emptyContent` prop to `ActionPanel` for localized strings or custom React nodes.
+  Align the title, action icons, and empty content while preserving horizontal padding around action hover backgrounds and focus rings.
+  Omitting `emptyContent` shows the default message in the AppShell locale (English or Japanese); custom strings use the same muted body styling. Passing `null` hides the content and its additional spacing while keeping the card and title.
+  
+  ```tsx
+  <ActionPanel title="操作" actions={[]} emptyContent={<p>利用可能な操作はありません</p>} />
+  ```
+- bb54644: Add built-in error popovers to DataTable inline editing. When `onValueChange` or `onValueCommitted` throws or returns a rejected Promise, the affected cell shows an error. Throw the exported `CellEditError` with a translated, user-facing message to display that text; other failures display the localized message “Could not confirm this change”.
+  
+  Alongside this feedback, the editor now retains pending and failed drafts for correction or retry. Confirmation waits for any pending `onValueChange` check to succeed, and the draft clears only after confirmation succeeds. Drafts remain editable without trapping cell navigation. For direct inputs, Tab and Shift+Tab retain an already failed commit without retrying it; press Enter to retry. Data adoption, persistence, and rollback remain consumer-owned.
+  
+  Each new failure automatically opens its popover without moving focus. Closing the details retains the draft and error, which can be inspected again with the error icon or Alt+ArrowDown. Tab or Shift+Tab to another cell or out of the table dismisses the details without trapping focus; Tab within interactive error content remains available. Esc closes open details first; a subsequent Esc discards the draft and error together. The standard popover adds no reset action.
+  
+  For example, reject negative quantities with a user-facing message. Invalid drafts remain editable; successful confirmation updates the consumer-owned rows:
+  
+  ```tsx
+  import { useState } from "react";
+  import {
+    CellEditError,
+    DataTable,
+    createColumnHelper,
+    useDataTable,
+  } from "@tailor-platform/app-shell";
+  
+  type Item = { id: string; quantity: number | null };
+  const { column } = createColumnHelper<Item>();
+  
+  function EditableItems() {
+    const [rows, setRows] = useState<Item[]>([{ id: "item-1", quantity: 5 }]);
+    const columns = [
+      column({
+        id: "quantity",
+        label: "Quantity",
+        type: "number",
+        edit: {
+          onValueCommitted: (row, value) => {
+            if (value !== null && value < 0) {
+              throw new CellEditError("Quantity must be zero or greater");
+            }
+            setRows((current) =>
+              current.map((item) => (item.id === row.id ? { ...item, quantity: value } : item)),
+            );
+          },
+        },
+      }),
+    ];
+    const table = useDataTable({ columns, data: { rows } });
+  
+    return (
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    );
+  }
+  ```
+  
+  The standard error popover needs no configuration. To customize its body or include consumer-owned actions, add `error.render` to the column's `edit` config. The renderer receives the current row and the original thrown value:
+  
+  ```tsx
+  error: {
+    render: ({ row, error }) => (
+      <div>
+        <p>Could not update item {row.id}</p>
+        <p>{error instanceof CellEditError ? error.message : "Please try again later"}</p>
+      </div>
+    ),
+  },
+  ```
+  
+  If the callback handles its own failures and feedback instead, set `edit.error: false` to disable callback interception and retain eager edit completion.
+- 5db7473: Add element components to `Text`: `Text.h1` to `Text.h6`, `Text.p`, `Text.span`, and `Text.div`. Each one always renders its named HTML element with a default typography role, and takes `variant`, `className`, the element's own attributes, and a ref.
+  
+  ```tsx
+  <Text.h1>Purchase orders</Text.h1>
+  <Text.h3 variant="heading-lg">Line items</Text.h3>
+  <Text.p className="text-muted-foreground">Orders sent this month.</Text.p>
+  <Text.span variant="body-sm">Updated recently</Text.span>
+  ```
+  
+  The defaults are `heading-lg` for `Text.h1`, `heading-md` for `Text.h2`, `heading-sm` for `Text.h3` to `Text.h6`, `body-md` for `Text.p` and `Text.div`, and `label-md` for `Text.span`. Headings written this way do not need a `jsx-a11y/heading-has-content` disable comment. `Text` and its `render` prop do not change; use `render` for other elements and to compose with another component.
+
+### Patch Changes
+
+- aaa4c6a: Mark active internal sidebar links with `aria-current="page"` in custom, grouped, and generated navigation. Screen readers can identify the current page without application code editing the link element.
+- cc749d5: `Field.Control` now logs a console warning when it is given an AppShell control that draws its own frame through `render`, such as `<Field.Control render={<Select />} />`. That composition renders a double border. The warning logs in every build, not only in development, because it only fires for UI that is already broken. `Select`, `Combobox`, `Autocomplete`, `Checkbox`, `Textarea`, `DateField`, `DatePicker`, and `DateRangePicker` go directly under `Field.Root` instead. The Form, Select, and form-modal docs now say which controls go where.
+- eee5b85: The published package no longer includes `dist/semantic-contrast.test.ts` and `dist/theme-bridge.test.ts`. These internal test files were copied into `dist/` by mistake. No public API or CSS changes.
+- b0fd352: Prevent IME confirmation Enter from applying DataTable filters or closing their value editors mid-input.
+  Use consistent IME detection, including the keyCode 229 fallback, in filters, cell editors, the command palette, and AI chat.
+- 1bd0ecf: `SidebarItem` and `SidebarGroup` without an `icon` now show the first letter of their title in the collapsed icon rail, instead of an empty button.
+- 6b6e21c: Document the contrast thresholds for the semantic colour roles: 4.5:1 for text and 3:1 for non-text. The styling guide now states that the hue roles have the same values in every shipped palette, and lists the known exceptions: hover text, status content directly on the `bloom` light shell gradient, and the `warning` solid and indicator against a light card. The contrast test now checks the `cream` and `bloom` palettes as well as `default`. No colour values change.
+- 04ca43c: The `app-shell-patterns` skill has two new rules. Text uses `Text` and typography roles, not a bare `<p>`, `<h*>`, or `<span>` with `text-sm` or `text-lg font-semibold`. Status and feedback colors use the semantic color roles, not the deprecated `--status-*`, `--alert-*`, or `--destructive` tokens.
+  The document detail page example, the typography guide, and the quickstart now use `Text`. The example's `Value` helper now uses `body-md`, the same role as the built-in `DescriptionCard` values.
+- 0d9d449: The bundled `app-shell-patterns` skill now records the `@tailor-platform/app-shell` version it was generated from, in its `metadata.app-shell-version` frontmatter and in a new "Version" section. The skill tells the agent to compare it with the installed package and to suggest re-syncing a vendored copy that has fallen behind.
+- 704fd0f: `Select`'s dropdown now has a 4px inner gap, like `Menu`, `Combobox` and `Autocomplete`, so the highlighted option no longer touches the dropdown's edges.
+- eb44189: `Text` passes `children` only when you give them. A `render` element that supplies its own content now keeps it, for example `<Text variant="label-md" render={<Field.Error />} />` shows the validation message.
+- 7f27830: Fix vertical alignment of alert text with its icon and dismiss button, including alerts using only `Alert.Root` and `Alert.Description`.
+  Center items within each grid row while preserving the title, description, and action layout.
+
 ## 1.18.0
 
 ### Minor Changes

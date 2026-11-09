@@ -1,14 +1,13 @@
-export { Tree } from "./Tree";
-export { TreePicker } from "./TreePicker";
+export { Tree } from "./tree";
 export type {
   TreeChangeDetails,
+  TreeContentProps,
   TreeCheckboxSelectionProps,
   TreeFilterContext,
   TreeFilterProps,
   TreeMapItemContext,
   TreeMappedItem,
   TreeNoSelectionProps,
-  TreePickerProps,
   TreeProps,
   TreeRowState,
   TreeSelectedItem,

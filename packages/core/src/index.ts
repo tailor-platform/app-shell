@@ -177,7 +177,6 @@ export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export type { BadgeVariant, BadgeOptions } from "./components/badge-list";
 export {
   Tree,
-  TreePicker,
   type TreeChangeDetails,
   type TreeCheckboxSelectionProps,
   type TreeFilterContext,
@@ -185,7 +184,6 @@ export {
   type TreeMapItemContext,
   type TreeMappedItem,
   type TreeNoSelectionProps,
-  type TreePickerProps,
   type TreeProps,
   type TreeRowState,
   type TreeSelectedItem,
@@ -194,6 +192,7 @@ export {
   type TreeSelectionStrategy,
   type TreeSingleSelectionProps,
 } from "./components/tree";
+export { TreePicker, type TreePickerProps } from "./components/tree-picker";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export {
   ActivityCard,

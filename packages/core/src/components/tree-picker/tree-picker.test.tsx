@@ -3,8 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { TreePicker } from "./TreePicker";
-import type { TreeSelectedItem } from "./types";
+import { TreePicker } from "./tree-picker";
+import type { TreeSelectedItem } from "@/components/tree";
 
 afterEach(() => {
   cleanup();
@@ -47,7 +47,7 @@ function Harness({
   return (
     <>
       <button onClick={() => setOpen(true)}>Reopen</button>
-      <TreePicker<Item>
+      <TreePicker
         open={open}
         onOpenChange={setOpen}
         title="Bulk picker"

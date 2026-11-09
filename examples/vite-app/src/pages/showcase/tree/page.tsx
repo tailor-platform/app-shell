@@ -28,7 +28,7 @@ const PRODUCTS: Product[] = [
 const pick = (...codes: string[]) =>
   PRODUCTS.filter((p) => codes.some((code) => p.sku.includes(code)));
 
-const CATALOG: Category[] = [
+const CATALOG: CatalogNode[] = [
   { id: "tees", name: "T-Shirts", products: pick("TEE") },
   { id: "outerwear", name: "Outerwear", products: pick("HOOD", "JKT") },
   { id: "accessories", name: "Accessories", products: pick("CAP", "TOTE") },
@@ -48,7 +48,7 @@ type Bin = { code: string; counting?: boolean };
 type Warehouse = { id: string; name: string; bins: Bin[] };
 type StockNode = Warehouse | Bin;
 
-const WAREHOUSES: Warehouse[] = [
+const STOCK_NODES: StockNode[] = [
   {
     id: "wh-tokyo",
     name: "Tokyo",
@@ -143,7 +143,7 @@ const TreeDemoPage = () => {
             description={`The default mode: no selection. Clicking an account runs onAction. Last action: ${lastAction ?? "none"}.`}
           />
           <Card.Content padding="none">
-            <Tree<Account>
+            <Tree
               aria-label="Chart of accounts"
               className="h-72"
               items={ACCOUNTS}
@@ -161,7 +161,7 @@ const TreeDemoPage = () => {
           />
           <Card.Content padding="none">
             <div className="grid grid-cols-1 sm:grid-cols-2">
-              <Tree<Account>
+              <Tree
                 aria-label="Accounts"
                 className="h-72 sm:border-r"
                 items={ACCOUNTS}
@@ -213,7 +213,7 @@ const TreeDemoPage = () => {
               ))}
             </div>
             <div className="rounded-md border">
-              <Tree<Account>
+              <Tree
                 key={strategy}
                 aria-label="Accounts to export"
                 className="h-72"
@@ -264,7 +264,7 @@ const TreeDemoPage = () => {
             description={`${skus.length} selected: ${skus.join(", ") || "none"}. The tote and cap are also in "Gift edit"; ticking either copy ticks both.`}
           />
           <Card.Content padding="none">
-            <Tree<CatalogNode>
+            <Tree
               selectionMode="checkbox"
               aria-label="Catalog"
               className="h-80"
@@ -293,10 +293,10 @@ const TreeDemoPage = () => {
             >
               <Field.Root name="bins">
                 <Field.Label>Bins to count</Field.Label>
-                <Tree<StockNode>
+                <Tree
                   selectionMode="checkbox"
                   className="h-72 rounded-md border"
-                  items={WAREHOUSES}
+                  items={STOCK_NODES}
                   mapItem={(node, { parents }) =>
                     "bins" in node
                       ? { key: node.id, label: node.name, children: node.bins }
@@ -334,7 +334,7 @@ const TreeDemoPage = () => {
           </Card.Content>
         </Card.Root>
 
-        <TreePicker<CatalogNode>
+        <TreePicker
           open={open}
           onOpenChange={setOpen}
           title="Add products"

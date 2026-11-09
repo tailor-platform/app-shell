@@ -5,6 +5,7 @@ import { useFieldRootContext } from "@base-ui/react/internals/field-root-context
 import { useRegisterFieldControl } from "@base-ui/react/internals/field-register-control";
 import { useFormContext } from "@base-ui/react/internals/form-context";
 import { useLabelableContext, useLabelableId } from "@base-ui/react/internals/labelable-provider";
+import { assignRef, joinIds } from "@/lib/dom-utils";
 import { useDateFieldT } from "./i18n";
 import type { DateFieldInvalidReason, DateFieldStateChange } from "./use-date-field-state";
 
@@ -27,20 +28,6 @@ export function invalidMessageKey(
   if (reason === "unavailable") return "dateUnavailable";
   if (reason === "range") return "dateOutOfRange";
   return null;
-}
-
-export function joinIds(...ids: Array<string | null | undefined | false>) {
-  const joined = ids.filter(Boolean).join(" ");
-  return joined || undefined;
-}
-
-export function assignRef<T>(ref: Ref<T | null> | undefined, value: T | null) {
-  if (!ref) return;
-  if (typeof ref === "function") {
-    ref(value);
-    return;
-  }
-  ref.current = value;
 }
 
 export function isTargetWithin(

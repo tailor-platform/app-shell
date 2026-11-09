@@ -3,6 +3,7 @@ import { useFieldRootContext } from "@base-ui/react/internals/field-root-context
 import { useRegisterFieldControl } from "@base-ui/react/internals/field-register-control";
 import { useFormContext } from "@base-ui/react/internals/form-context";
 import { useLabelableContext, useLabelableId } from "@base-ui/react/internals/labelable-provider";
+import { assignRef, joinIds } from "@/lib/dom-utils";
 
 /**
  * @internal
@@ -29,16 +30,6 @@ type UseTreeFieldOptions = {
   rootRef: React.RefObject<HTMLElement | null>;
   inputRef?: React.Ref<HTMLInputElement>;
 };
-
-function joinIds(...ids: Array<string | null | undefined>) {
-  return ids.filter(Boolean).join(" ") || undefined;
-}
-
-function assignRef<V>(ref: React.Ref<V | null> | undefined, value: V | null) {
-  if (!ref) return;
-  if (typeof ref === "function") ref(value);
-  else ref.current = value;
-}
 
 /** A stable string for comparing selections. JSON keeps values containing separators distinct. */
 export function serializeValues(values: readonly string[]): string {

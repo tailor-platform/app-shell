@@ -1,5 +1,5 @@
 import { Avatar } from "../avatar";
-import { Root, Items, Item, formatTimestamp, getInitials } from "./ActivityCard";
+import { Root, Items, Item, formatTimestamp, getInitials } from "./activity-card";
 
 import type { ActivityCardProps, ActivityCardItem } from "./types";
 import { Text } from "../text";

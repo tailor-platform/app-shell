@@ -8,7 +8,9 @@ import { cn } from "@/lib/utils";
 
 import {
   Tree,
+  type TreeChangeDetails,
   type TreeContentProps,
+  type TreeFilterContext,
   type TreeSelectedItem,
   type TreeSelectionBehaviorProps,
 } from "@/components/tree";
@@ -40,6 +42,8 @@ import type { TreePickerProps } from "./types";
  * ### Bulk-adding catalog items
  * ```tsx
  * // catalog: (Category | Product)[], so `mapItem` can return either level.
+ * const isProduct = (item: Category | Product): item is Product => "sku" in item;
+ *
  * <TreePicker
  *   open={open}
  *   onOpenChange={setOpen}
@@ -56,7 +60,9 @@ import type { TreePickerProps } from "./types";
  *       {"price" in item ? <span>{money(item.price)}</span> : null}
  *     </span>
  *   )}
- *   onCommit={(picked) => addToOrder(picked.map((entry) => entry.item as Product))}
+ *   // Items have the union type; a guard (not a cast) keeps categories out if
+ *   // the selection strategy ever returns parents.
+ *   onCommit={(picked) => addToOrder(picked.flatMap(({ item }) => (isProduct(item) ? [item] : [])))}
  * />
  * ```
  */
@@ -144,10 +150,35 @@ function TreePickerBody<T>({
     const trimmed = query.trim();
     if (trimmed === "") return undefined;
     const needle = trimmed.toLowerCase();
-    return (item: T, { label }: { label: string }) =>
-      matchesSearch ? matchesSearch(item, trimmed) : label.toLowerCase().includes(needle);
+    return (item: T, context: TreeFilterContext<T>) =>
+      matchesSearch
+        ? matchesSearch(item, trimmed, context)
+        : context.label.toLowerCase().includes(needle);
   }, [query, matchesSearch]);
-  const [selected, setSelected] = React.useState<TreeSelectedItem<T>[]>([]);
+  // The selection is held as keys, with each key's item remembered from when it
+  // was ticked: `items` can change while the picker is open (a category toggle
+  // in `filterSlot`, say), and a ticked item that's not in the current `items`
+  // must still be counted and committed.
+  const [value, setValue] = React.useState<string[]>([]);
+  const [ticked, setTicked] = React.useState<ReadonlyMap<string, TreeSelectedItem<T>>>(
+    () => new Map(),
+  );
+  const handleValueChange = (next: string[], details: TreeChangeDetails<T>) => {
+    setValue(next);
+    setTicked((prev) => {
+      const map = new Map<string, TreeSelectedItem<T>>();
+      for (const key of next) {
+        const entry = prev.get(key);
+        if (entry) map.set(key, entry);
+      }
+      for (const entry of details.selected) map.set(entry.key, entry);
+      return map;
+    });
+  };
+  const selected = value.flatMap((key) => {
+    const entry = ticked.get(key);
+    return entry ? [entry] : [];
+  });
   const count = selected.length;
   const defaultCta = count > 0 ? t("addCount", { count }) : t("addItems");
 
@@ -207,7 +238,8 @@ function TreePickerBody<T>({
         filter={filter}
         aria-labelledby={titleId}
         className="astw:border-border astw:flex-1 astw:border-t"
-        onValueChange={(_, details) => setSelected(details.selected)}
+        value={value}
+        onValueChange={handleValueChange}
         onAction={commit}
       />
 

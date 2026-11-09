@@ -607,4 +607,62 @@ describe("TreePicker", () => {
     expect(onCommit).not.toHaveBeenCalled();
     expect(screen.getByText("Nike Vomero 18")).toBeDefined();
   });
+
+  it("keeps ticks made before `items` changed, and commits what's ticked", async () => {
+    const user = userEvent.setup();
+    const onCommit = vi.fn();
+    // A category toggle in `filterSlot` that narrows `items`.
+    function Narrowing() {
+      const [only, setOnly] = React.useState<"p1" | "p3">("p1");
+      return (
+        <Harness
+          onCommit={onCommit}
+          items={TREE.filter((item) => item.key === only)}
+          filterSlot={
+            <button onClick={() => setOnly((prev) => (prev === "p1" ? "p3" : "p1"))}>Switch</button>
+          }
+        />
+      );
+    }
+    render(<Narrowing />);
+
+    await user.click(rowFor("Nike Vomero 18"));
+    await user.click(screen.getByText("Switch"));
+    await user.click(rowFor("Hoka One One Bondi 8"));
+    await user.click(screen.getByText("Switch"));
+
+    expect(rowFor("Nike Vomero 18").getAttribute("aria-checked")).toBe("true");
+    await user.click(screen.getByRole("button", { name: "Add 2 items" }));
+    // The order across different `items` is undefined, so compare as a set.
+    const keys = onCommit.mock.calls[0][0].map((entry: TreeSelectedItem<Item>) => entry.key);
+    expect([...keys].sort()).toEqual(["p1", "p3"]);
+  });
+
+  it("passes matchesSearch the item's label and parents", async () => {
+    const user = userEvent.setup();
+    const matchesSearch = vi.fn(
+      (_item: Item, query: string, { parents }: { label: string; parents: Item[] }) =>
+        parents.some((parent) => parent.name.includes(query)),
+    );
+    render(
+      <TreePicker
+        open
+        onOpenChange={() => {}}
+        items={TREE}
+        mapItem={mapItem}
+        onCommit={() => {}}
+        matchesSearch={matchesSearch}
+      />,
+    );
+
+    await user.type(screen.getByRole("searchbox"), "Adidas");
+
+    expect(matchesSearch).toHaveBeenCalledWith(TREE[1].children![0], "Adidas", {
+      label: "UK 8 / Black / Women",
+      parents: [TREE[1]],
+    });
+    // Matched through its parent's name, not its own label.
+    expect(screen.getByText("UK 8 / Black / Women")).toBeDefined();
+    expect(screen.queryByText("Nike Vomero 18")).toBeNull();
+  });
 });

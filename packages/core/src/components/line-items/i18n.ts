@@ -7,7 +7,6 @@ const labels = defineI18nLabels({
     order: "Order",
     reorder: ({ line }: { line: number }) => `Reorder line ${line}`,
     dragToReorder: "Drag to reorder, or use the Up and Down arrow keys",
-    moved: ({ from, to }: { from: number; to: number }) => `Moved line ${from} to position ${to}.`,
   },
   ja: {
     title: "明細",
@@ -15,7 +14,6 @@ const labels = defineI18nLabels({
     order: "並び順",
     reorder: ({ line }) => `${line}行目の並び替え`,
     dragToReorder: "ドラッグ、または上下の矢印キーで並び替え",
-    moved: ({ from, to }) => `${from}行目を${to}行目へ移動しました。`,
   },
 });
 

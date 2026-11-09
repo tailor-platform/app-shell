@@ -129,7 +129,6 @@ it("moves by arrow keys by default, retaining focus and dirty state without cros
   expect(keys()).toEqual(["B", "A", "C"]);
   expect(document.activeElement).toBe(handle);
   expect(result.current.value.isDirty).toBe(true);
-  expect(result.current.reorder.announcement).toBe("Moved line 1 to position 2.");
   act(() => result.current.reorder.getHandleProps(1).onKeyDown(down));
   act(() => result.current.reorder.getHandleProps(2).onKeyDown(down));
   expect(keys()).toEqual(["B", "C", "A"]);

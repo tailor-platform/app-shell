@@ -1,5 +1,4 @@
 import { useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
-import { useLineItemsT } from "./i18n";
 import type { UseLineItemsReturn } from "./types";
 
 function isAfter(event: DragEvent<HTMLTableRowElement>) {
@@ -11,9 +10,7 @@ function isAfter(event: DragEvent<HTMLTableRowElement>) {
 export function useLineItemsReorder<T extends Record<string, unknown>>(
   value: UseLineItemsReturn<T>,
 ) {
-  const t = useLineItemsT();
   const { orderer, lines, getLineKey } = value;
-  const [announcement, setAnnouncement] = useState("");
   const [drag, setDrag] = useState<{ key: string; handle: HTMLButtonElement } | null>(null);
   const [dropTarget, setDropTarget] = useState<{ key: string; after: boolean } | null>(null);
   const movedHandle = useRef<HTMLButtonElement | null>(null);
@@ -51,12 +48,10 @@ export function useLineItemsReorder<T extends Record<string, unknown>>(
       value.getLineKey(value.lines[index]),
       anchor ? value.getLineKey(anchor) : null,
     );
-    setAnnouncement(t("moved", { from: index + 1, to: destination + 1 }));
   };
   const dropPosition = dropTarget?.after ? "after" : "before";
 
   return {
-    announcement,
     bodyProps: {
       onDragLeave: (event: DragEvent<HTMLTableSectionElement>) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropTarget(null);

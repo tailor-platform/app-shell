@@ -70,7 +70,7 @@ const columns: LineItemsColumn<Row>[] = [
   },
 ];
 
-// Happy DOM lacks DragEvent; the browser tests cover native dragging.
+// Happy DOM lacks DragEvent.
 function dispatchDrag(type: string, target: Element, init: MouseEventInit = {}) {
   const event = Object.assign(new MouseEvent(type, { bubbles: true, cancelable: true, ...init }), {
     dataTransfer: { effectAllowed: "", dropEffect: "", setData: vi.fn() },
@@ -245,7 +245,6 @@ describe("LineItems table", () => {
     expect(within(originalRows[2]).getAllByRole("cell")[0].contains(handle)).toBe(true);
     expect(handle.getAttribute("draggable")).toBe("true");
     expect(screen.getAllByRole("button")).toHaveLength(5);
-    expect(screen.getByRole("status").textContent).toBe("");
 
     await user.click(handle);
     await user.keyboard("{ArrowUp}");
@@ -253,7 +252,6 @@ describe("LineItems table", () => {
     expect(document.activeElement).toBe(handle);
     await user.keyboard("{ArrowUp}");
     expect(names()).toEqual(["Unsaved", "Widget", "Second", "Fourth", "Fifth"]);
-    expect(screen.getByRole("status").textContent).toBe("Moved line 2 to position 1.");
     await user.keyboard("{ArrowUp}");
     expect(names()).toEqual(["Unsaved", "Widget", "Second", "Fourth", "Fifth"]);
     expect(document.activeElement).toBe(handle);
@@ -262,7 +260,6 @@ describe("LineItems table", () => {
     expect(names()).toEqual(["Widget", "Second", "Unsaved", "Fourth", "Fifth"]);
     await user.keyboard("{ArrowDown}{ArrowDown}");
     expect(names()).toEqual(["Widget", "Second", "Fourth", "Fifth", "Unsaved"]);
-    expect(screen.getByRole("status").textContent).toBe("Moved line 4 to position 5.");
     await user.keyboard("{ArrowDown}{Enter}");
     expect(names()).toEqual(["Widget", "Second", "Fourth", "Fifth", "Unsaved"]);
     expect(document.activeElement).toBe(handle);
@@ -348,7 +345,6 @@ describe("LineItems table", () => {
     const hover = dispatchDrag("dragover", bodyRows[target], drop);
     expect(bodyRows[target].getAttribute("data-drop-position")).toBe(after ? "after" : "before");
     expect(hover.dataTransfer.dropEffect).toBe("move");
-    expect(screen.getByRole("status").textContent).toBe("");
     dispatchDrag("drop", bodyRows[target], drop);
     expect(
       screen
@@ -410,7 +406,6 @@ describe("LineItems table", () => {
     const { rerender } = render(<Harness data={data} orderer={false} />);
     expect(screen.queryByRole("button")).toBeNull();
     expect(screen.queryByRole("columnheader", { name: "Order" })).toBeNull();
-    expect(screen.queryByRole("status")).toBeNull();
     rerender(<Harness data={data} orderer={true} />);
     dispatchDrag("dragstart", screen.getByRole("button", { name: "Reorder line 1" }));
     dispatchDrag("dragover", screen.getAllByRole("row")[2], { clientY: 1 });
@@ -441,7 +436,6 @@ describe("LineItems table", () => {
     await user.click(handle);
     await user.keyboard("{ArrowUp}{ArrowDown}");
     expect(screen.getAllByRole("row")).toHaveLength(2);
-    expect(screen.getByRole("status").textContent).toBe("");
   });
 
   it("reflects row commands without remounting existing rows or adding editor UI", () => {

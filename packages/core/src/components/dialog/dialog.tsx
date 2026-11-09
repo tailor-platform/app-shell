@@ -4,6 +4,7 @@ import { XIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Text } from "../text";
+import { mergeRefs } from "../toolbar/toolbar";
 
 // Only the props relevant to the Dialog abstraction are picked from BaseDialog.Root.
 // Base UI-internal props (e.g. dismissible, animated) are intentionally excluded
@@ -73,21 +74,65 @@ function Overlay({ className, ...props }: React.ComponentProps<typeof BaseDialog
 }
 Overlay.displayName = "Dialog.Overlay";
 
+type DialogContentProps = React.ComponentProps<typeof BaseDialog.Popup>;
+
+const TABBABLE_SELECTOR =
+  'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable=""], [contenteditable="true"]';
+
+/** The first element in `root` that the Tab key would reach, in DOM order. */
+function firstTabbable(root: HTMLElement): HTMLElement | null {
+  const candidates = Array.from(root.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR));
+  return (
+    candidates.find(
+      (el) =>
+        el.tabIndex >= 0 && !(el as HTMLButtonElement).disabled && el.getClientRects().length > 0,
+    ) ?? null
+  );
+}
+
 /** The main dialog panel that contains the dialog content. Automatically includes a close button and overlay. */
-function Content({ className, children, ...props }: React.ComponentProps<typeof BaseDialog.Popup>) {
+function Content({ className, children, ref, initialFocus, ...props }: DialogContentProps) {
+  const popupRef = React.useRef<HTMLDivElement>(null);
+
+  // Base UI focuses the first tabbable element on open (the popup itself on
+  // touch). In a dialog that scrolls, that element is often a footer button,
+  // and focusing it scrolls the dialog to the bottom before the user sees the
+  // title. So when the content overflows and the first control is below the
+  // fold, focus the popup instead: it opens at the top, and Tab still reaches
+  // the control. A control that is already in view (an input at the top of a
+  // long form) keeps focus. Base UI calls this after the popup is in the DOM,
+  // so it can be measured here.
+  const defaultInitialFocus: DialogContentProps["initialFocus"] = (openType) => {
+    const popup = popupRef.current;
+    if (!popup) return true;
+    if (openType === "touch") return popup;
+    if (popup.scrollHeight <= popup.clientHeight) return true;
+    const first = firstTabbable(popup);
+    if (!first) return popup;
+    const box = popup.getBoundingClientRect();
+    const rect = first.getBoundingClientRect();
+    return rect.top >= box.top && rect.bottom <= box.bottom ? first : popup;
+  };
+
   return (
     <Portal data-slot="dialog-portal">
       <Overlay />
       <BaseDialog.Popup
         data-slot="dialog-content"
+        ref={mergeRefs(popupRef, ref)}
+        initialFocus={initialFocus ?? defaultInitialFocus}
+        // max-h + overflow-y-auto: content taller than the viewport scrolls
+        // inside the dialog instead of running off both edges, where the page
+        // behind it cannot scroll. 2rem matches the horizontal margin, and dvh
+        // follows the mobile browser bar as it shows and hides.
         className={cn(
-          "astw:bg-card astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:fill-mode-forwards astw:fixed astw:top-[50%] astw:left-[50%] astw:z-(--z-overlay) astw:grid astw:w-full astw:max-w-[calc(100%-2rem)] astw:translate-x-[-50%] astw:translate-y-[-50%] astw:gap-4 astw:rounded-lg astw:border astw:border-border astw:p-6 astw:shadow-lg astw:duration-200 astw:sm:max-w-lg",
+          "astw:bg-card astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:fill-mode-forwards astw:fixed astw:top-[50%] astw:left-[50%] astw:z-(--z-overlay) astw:grid astw:w-full astw:max-w-[calc(100%-2rem)] astw:max-h-[calc(100dvh-2rem)] astw:overflow-y-auto astw:translate-x-[-50%] astw:translate-y-[-50%] astw:gap-4 astw:rounded-lg astw:border astw:border-border astw:p-6 astw:shadow-lg astw:duration-200 astw:sm:max-w-lg",
           className,
         )}
         {...props}
       >
         {children}
-        <BaseDialog.Close className="astw:ring-offset-bg astw:focus:ring-ring astw:data-open:bg-accent astw:data-open:text-muted-foreground astw:absolute astw:top-4 astw:right-4 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none astw:[&_svg]:pointer-events-none astw:[&_svg]:shrink-0 astw:[&_svg:not([class*='size-'])]:size-4">
+        <BaseDialog.Close className="astw:ring-offset-card astw:focus:ring-ring astw:data-open:bg-accent astw:data-open:text-muted-foreground astw:absolute astw:top-4 astw:right-4 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none astw:[&_svg]:pointer-events-none astw:[&_svg]:shrink-0 astw:[&_svg:not([class*='size-'])]:size-4">
           <XIcon />
           <span className="astw:sr-only">Close</span>
         </BaseDialog.Close>

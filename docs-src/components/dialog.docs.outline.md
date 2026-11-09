@@ -131,60 +131,7 @@ A dialog may open on top of another dialog, or on top of a sheet. Keep to these 
 
 The limits are a guideline. The component does not enforce them.
 
-### Confirmation on top of a form dialog
-
-```tsx
-function EditDialog({ item }: { item: Item }) {
-  const [open, setOpen] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
-  const close = () => {
-    setConfirmOpen(false);
-    setDirty(false);
-    setOpen(false);
-  };
-
-  const requestClose = () => (dirty ? setConfirmOpen(true) : close());
-
-  return (
-    // Escape, the close button and a press on the scrim all arrive as `onOpenChange(false)`.
-    <Dialog.Root open={open} onOpenChange={(next) => (next ? setOpen(true) : requestClose())}>
-      <Dialog.Trigger render={<Button variant="outline" />}>Edit</Dialog.Trigger>
-      <Dialog.Content>
-        <Dialog.Header>
-          <Dialog.Title>Edit Item</Dialog.Title>
-        </Dialog.Header>
-        <div onInput={() => setDirty(true)}>
-          <Input defaultValue={item.name} />
-        </div>
-        <Dialog.Footer>
-          <Button variant="outline" onClick={requestClose}>
-            Cancel
-          </Button>
-          <Button onClick={close}>Save</Button>
-        </Dialog.Footer>
-
-        {/* The second level, rendered inside the first dialog's content. */}
-        <Dialog.Root open={confirmOpen} onOpenChange={setConfirmOpen}>
-          <Dialog.Content>
-            <Dialog.Header>
-              <Dialog.Title>Discard changes?</Dialog.Title>
-              <Dialog.Description>The changes to this item will be lost.</Dialog.Description>
-            </Dialog.Header>
-            <Dialog.Footer>
-              <Dialog.Close render={<Button variant="outline" />}>Keep editing</Dialog.Close>
-              <Button variant="destructive" onClick={close}>
-                Discard
-              </Button>
-            </Dialog.Footer>
-          </Dialog.Content>
-        </Dialog.Root>
-      </Dialog.Content>
-    </Dialog.Root>
-  );
-}
-```
+A runnable example of a confirm dialog on top of a form dialog is in [Modal Form → Second Level](../patterns/form-modal.md#second-level-confirm-or-pick).
 
 ## Accessibility
 

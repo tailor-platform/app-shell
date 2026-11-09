@@ -634,9 +634,9 @@
       "symbols": ["Dialog"],
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
-        "outline": "4e5ab749c8219063",
+        "outline": "39c82f8a5f9a57d5",
         "snapshot": "86c672f1c58f27fd",
-        "outputMd": "b72b832b12bb0723",
+        "outputMd": "5ff9a70e8eea88dd",
         "examples": "934c52d4e8761404"
       }
     },
@@ -1382,9 +1382,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "028898727d32fd26",
+        "outline": "a0105d63baa169dd",
         "snapshot": null,
-        "outputMd": "e90b6f745fb3c122",
+        "outputMd": "d78beaf5f850819a",
         "examples": "4d19f4f688e0f0ac"
       }
     },
@@ -1771,7 +1771,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "5f77dda61ce9abd4",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "e90b6f745fb3c122",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "d78beaf5f850819a",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "03362008aa77d4cf",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "1a2bb081c3e34482",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "82313d5b6fe140d2",
@@ -1793,7 +1793,7 @@
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "8e24da61e95b6434",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",
-    "packages/core/skills/app-shell-patterns/references/components/dialog.md": "b72b832b12bb0723",
+    "packages/core/skills/app-shell-patterns/references/components/dialog.md": "5ff9a70e8eea88dd",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "c6a48c4d8e8b0078",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "e4a66f7b1ee4aa98",

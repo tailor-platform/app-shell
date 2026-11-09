@@ -28,6 +28,7 @@
     --z-sidebar-rail: 20;
     --z-popup: 50;
     --z-overlay: 50;
+    --z-toast: 100;
   }
 
   * {

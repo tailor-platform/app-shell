@@ -36,18 +36,11 @@ jobs:
 
       # Both linters should only check the hand-authored files in this repo.
       # Collect workflows and local action metadata into one source of truth.
-      #
-      # Exclude gh-aw generated *.lock.yml files and agentics-maintenance.yml:
-      # those generated workflows currently use syntax and permission keys these
-      # linters do not consistently understand yet, which creates noisy false
-      # positives and hides real issues in the authored workflows.
       - name: Collect lint targets
         run: |
           set -euo pipefail
           {
-            find .github/workflows -type f \( -name '*.yml' -o -name '*.yaml' \) \
-              ! -name '*.lock.yml' \
-              ! -name 'agentics-maintenance.yml'
+            find .github/workflows -type f \( -name '*.yml' -o -name '*.yaml' \)
             find .github/actions -type f \( -name 'action.yml' -o -name 'action.yaml' \)
           } | sort > targets.txt
 

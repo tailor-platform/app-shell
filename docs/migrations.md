@@ -15,6 +15,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.20.0        | [z-index tokens renamed; old names are aliases](#1200-z-index-tokens-renamed-old-names-are-aliases)                          |
 | 1.18.0        | [Destructive colours now resolve to the danger roles](#1180-destructive-colours-now-resolve-to-the-danger-roles)             |
 | 1.17.0        | [Status and alert tokens now resolve to the colour roles](#1170-status-and-alert-tokens-now-resolve-to-the-colour-roles)     |
 | 1.15.0        | [Base UI 1.8.0 breaks closed-`Select` and dialog-click tests](#1150-base-ui-180-breaks-closed-select-and-dialog-click-tests) |
@@ -27,6 +28,25 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
+
+## 1.20.0: z-index tokens renamed; old names are aliases
+
+**Applies to:** apps whose theme overrides `--z-sidebar`, `--z-sidebar-rail`, `--z-popup` or `--z-overlay`, and apps that reference those names on their own elements.
+
+1.20.0 names the z-index tokens by layer: `--z-nav` (10), `--z-portal` (50) and `--z-toast` (100). The old names keep working: `--z-sidebar` is now `var(--z-nav)`, and `--z-popup` and `--z-overlay` are both `var(--z-portal)`. They are deprecated and will be removed in the next major. Nothing errors, and nothing moves. Two things change silently:
+
+- **Themes that override an old name no longer reach the components.** The sidebar reads `--z-nav`; dialogs, sheets, menus, selects, comboboxes and tooltips read `--z-portal`. An override of `--z-popup` or `--z-overlay` still changes `z-[var(--z-popup)]` on your own elements, but not AppShell's layers. There is one token for the whole portal band because popups and overlays share the value on purpose: the order inside the band is the order of opening, so a `Select` inside a `Dialog` is above it. Raising one above the other puts a `Select` or `Menu` opened inside a `Dialog` behind the dialog.
+- **`--z-sidebar-rail` is no longer read by AppShell.** The sidebar rail orders itself inside the sidebar. The variable is still declared (20) for elements of your own that reference it, and it leaves the documented table.
+
+How to detect it: search the app for `--z-sidebar`, `--z-popup` and `--z-overlay` in class names and in theme CSS. Open a `Dialog` with a `Select` inside it, a `Dialog` over a `Sheet`, and fire a toast over each after upgrading; the order should not change.
+
+What to change:
+
+- Replace `--z-sidebar` with `--z-nav`, and `--z-popup` and `--z-overlay` with `--z-portal`, in class names such as `z-[var(--z-portal)]` and in theme CSS.
+- In a theme that moves AppShell's layers, set `--z-nav`, `--z-portal` or `--z-toast` instead of the old names. Remove the old names from the theme.
+- Do not set `--z-sidebar-rail`; it no longer affects the rail.
+
+The tokens are documented in [Styling & theming](./concepts/styling-theming.md#z-index). The decision record is `decisions/floating-ui-stacking.md`.
 
 ## 1.18.0: destructive colours now resolve to the danger roles
 

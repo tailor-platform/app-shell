@@ -214,11 +214,11 @@ With [summary metric cards](#summary-metric-cards), the rail sits beside the tab
 
 ```tsx
 <FilterRail.Provider control={control} sections={sections} layout={railLayout}>
-  <Layout fill={isTabletUp}>
+  <Layout fill={canFill}>
     <Layout.Header title="Invoices" />
     <Layout.Column>
       <Grid columns={{ initial: 1, md: 2, xl: 4 }} gap={4}>
-        {/* MetricCards; turn fill off below md, as in Summary metric cards */}
+        {/* MetricCards; canFill is false where they pass two rows, as in Summary metric cards */}
       </Grid>
       <div className="flex min-h-0 flex-1 lg:gap-4">
         {/* Below lg the rail renders only its sheet, so this collapses to nothing. */}
@@ -234,7 +234,7 @@ With [summary metric cards](#summary-metric-cards), the rail sits beside the tab
         </div>
         <DataTable.Root
           value={table}
-          className={isTabletUp ? "min-w-0 flex-1" : "h-[calc(100svh-8rem)] min-w-0 flex-1"}
+          className={canFill ? "min-w-0 flex-1" : "h-[calc(100svh-8rem)] min-w-0 flex-1"}
         >
           {/* Toolbar with FilterRail.Trigger at the left, as above */}
         </DataTable.Root>
@@ -301,33 +301,33 @@ Layout fill
 
 As the default landing page for the document-type's section of the app, there may be aggregate or performance data that is useful to show in conjunction with the collection table. These metrics should either be specified by business requirements, or be standard metrics in ERP software for this area of business.
 
-Lay the cards out in a [`Grid`](../components/grid.md) that reflows as the screen narrows. How many cards there are, and so how many columns suit them, depends on the business case: it may be two or three, or nine. The examples here use four cards in `columns={{ initial: 1, md: 2, xl: 4 }}`, which gives one row on wide screens, two on tablets, and four stacked on phones.
+Lay the cards out in a [`Grid`](../components/grid.md) that reflows as the screen narrows. How many cards there are, and so how many columns suit them, depends on the business case. The examples here use four cards in `columns={{ initial: 1, md: 2, xl: 4 }}`, which gives one row on wide screens, two on tablets, and four stacked on phones.
 
 Under `Layout fill`, the cards' height comes out of the table's. **Once the cards reflow past two rows, turn `fill` off** at that width. The page then scrolls normally, and the table takes roughly the viewport's height once scrolled to. For the four cards above that means below `md`; nine cards in the same grid would be three rows even at `xl`, so that page would not use `fill` at all.
 
 ```tsx
-// No exported hook for this yet, so match the breakpoint directly. For these four
-// cards, two rows or fewer means `md` and up.
-const tabletQuery = window.matchMedia("(min-width: 768px)");
-const useIsTabletUp = () =>
+// No exported hook for this yet, so match the width directly: the width from
+// which the cards fit in two rows. For these four cards that is `md` (768px).
+const twoRowsQuery = window.matchMedia("(min-width: 768px)");
+const useCardsFitTwoRows = () =>
   useSyncExternalStore(
     (onChange) => {
-      tabletQuery.addEventListener("change", onChange);
-      return () => tabletQuery.removeEventListener("change", onChange);
+      twoRowsQuery.addEventListener("change", onChange);
+      return () => twoRowsQuery.removeEventListener("change", onChange);
     },
-    () => tabletQuery.matches,
+    () => twoRowsQuery.matches,
   );
 
-const isTabletUp = useIsTabletUp();
+const canFill = useCardsFitTwoRows();
 
-<Layout fill={isTabletUp}>
+<Layout fill={canFill}>
   <Layout.Header title="Invoices" />
   <Layout.Column>
     <Grid columns={{ initial: 1, md: 2, xl: 4 }} gap={4}>
       {/* MetricCards */}
     </Grid>
     {/* 8rem allows for the shell header and page padding; adjust to your layout. */}
-    <DataTable.Root value={table} className={isTabletUp ? undefined : "h-[calc(100svh-8rem)]"}>
+    <DataTable.Root value={table} className={canFill ? undefined : "h-[calc(100svh-8rem)]"}>
       {/* … */}
     </DataTable.Root>
   </Layout.Column>

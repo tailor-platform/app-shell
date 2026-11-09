@@ -634,9 +634,9 @@
       "symbols": ["Dialog"],
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
-        "outline": "bda40376d6e3e008",
-        "snapshot": "81a29fe2495df98d",
-        "outputMd": "ec6a0ac098d1d87a",
+        "outline": "b265fed115996728",
+        "snapshot": "db7d26786cde5cfc",
+        "outputMd": "e862d97903e8f596",
         "examples": "934c52d4e8761404"
       }
     },
@@ -1793,7 +1793,7 @@
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "8e24da61e95b6434",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",
-    "packages/core/skills/app-shell-patterns/references/components/dialog.md": "ec6a0ac098d1d87a",
+    "packages/core/skills/app-shell-patterns/references/components/dialog.md": "e862d97903e8f596",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "c6a48c4d8e8b0078",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "e4a66f7b1ee4aa98",

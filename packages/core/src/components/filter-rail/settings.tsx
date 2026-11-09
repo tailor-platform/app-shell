@@ -12,7 +12,7 @@ import type { UserOptionSort } from "./types";
 import { Text } from "../text";
 
 const POPUP_CLASS = cn(
-  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:origin-(--transform-origin) astw:w-[24rem] astw:max-w-[calc(100vw-2rem)] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-portal) astw:origin-(--transform-origin) astw:w-[24rem] astw:max-w-[calc(100vw-2rem)] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
 
@@ -95,7 +95,7 @@ function Settings({ className }: SettingsProps) {
           </Button>
         }
       />
-      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
         <Popover.Positioner sideOffset={4} side="bottom" align="start">
           <Popover.Popup data-slot="filter-rail-settings" className={POPUP_CLASS}>
             <div className="astw:border-b astw:border-border astw:px-3 astw:py-2">

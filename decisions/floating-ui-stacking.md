@@ -1,7 +1,7 @@
 # Decision: one stacking rule for floating UI
 
-> Status: **Decided for steps 1 and 2. Step 1 (tailor-platform/app-shell#668): the Toaster portals to `body`, `--z-toast` (100) is added, the layout root is isolated, and two guard tests hold the rule. Step 2: the docs state the rule, the stacked-modal guideline and the three tokens; see [Decided on 2026-11-08](#decided-on-2026-11-08-step-2).**
-> Scope: the stacking order of dialogs, sheets, menus, selects, comboboxes, tooltips and toasts in `packages/core`; the `--z-*` tokens in `globals.css`. The token rename (step 3) and the toast position on narrow screens (step 4) are later steps.
+> Status: **Decided for steps 1 and 2, step 3 implemented. Step 1 (tailor-platform/app-shell#668): the Toaster portals to `body`, `--z-toast` (100) is added, the layout root is isolated, and two guard tests hold the rule. Step 2: the docs state the rule, the stacked-modal guideline and the three tokens; see [Decided on 2026-11-08](#decided-on-2026-11-08-step-2). Step 3 (tailor-platform/app-shell#689): the tokens are `--z-nav` (10), `--z-portal` (50) and `--z-toast` (100); `--z-sidebar`, `--z-popup` and `--z-overlay` are aliases until the next major (tailor-inc/platform-planning#2084), and `--z-sidebar-rail` is a value inside the sidebar.**
+> Scope: the stacking order of dialogs, sheets, menus, selects, comboboxes, tooltips and toasts in `packages/core`; the `--z-*` tokens in `globals.css`. The toast position on narrow screens (step 4) is a later step.
 
 ## Context
 
@@ -77,11 +77,11 @@ Checked in Base UI 1.8.0 (`dialog/root/useDialogRoot`): `escapeKey` and the outs
 - `--z-sidebar-rail` becomes a value inside the sidebar and leaves the docs table.
 - A skip link needs no fourth token. It is in the nav layer.
 - The aliases are removed in the next major (tailor-inc/platform-planning#2084).
-- The rename is step 3, a separate PR. The docs in step 2 use the new names, so the docs PR merges after the rename.
+- The rename landed as step 3 in tailor-platform/app-shell#689.
 
 ## Not in this step
 
-- Renaming the tokens to `--z-nav` / `--z-portal` with the old names kept as aliases (step 3 in #2349, decided above).
+- ~~Renaming the tokens to `--z-nav` / `--z-portal` with the old names kept as aliases (step 3 in #2349).~~ Done; see the status line.
 - The toast's bottom inset on narrow screens, which must clear the bottom bar, the keyboard and the safe area (step 4, under tailor-inc/platform-planning#2207).
 - A different value for `--z-toast`; 100 is the proposed value in #2349.
 

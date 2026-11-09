@@ -138,11 +138,11 @@ A compound component that groups all parts of a form field and manages its valid
 
 `Field.Control` is a text input. It is the control for plain text-like fields, and you can pass it a native element such as `render={<textarea />}`. The controls in the last row of the table below go **directly under `Field.Root`**, as a sibling of `Field.Label`. Each one registers itself with the `Field` context, so it gets label association, `aria-describedby`, `disabled`, and validation state without `Field.Control`.
 
-| Control                                                                                                                         | Where it goes                                     |
-| ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| Plain text, email, number, password, … input                                                                                    | `<Field.Control type="…" />`                      |
-| Native element (`<textarea>`, `<input type="…">`)                                                                               | `<Field.Control render={<textarea />} />`         |
-| `Select`, `Combobox`, `Autocomplete`, `Checkbox`, `Textarea`, `DateField`, `DatePicker`, `DateRangePicker` (and their `.Async`) | Directly under `Field.Root` — not `Field.Control` |
+| Control                                                                                                                                                 | Where it goes                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Plain text, email, number, password, … input                                                                                                            | `<Field.Control type="…" />`                      |
+| Native element (`<textarea>`, `<input type="…">`)                                                                                                       | `<Field.Control render={<textarea />} />`         |
+| `Select`, `Combobox`, `Autocomplete`, `Checkbox`, `Textarea`, `DateField`, `DatePicker`, `DateRangePicker` (and their `.Async`), `Tree` (checkbox mode) | Directly under `Field.Root` — not `Field.Control` |
 
 `Input` is the exception. It is a plain `<input>` that does not connect to `Field.Root`, so inside a field use `<Field.Control />` in its place.
 

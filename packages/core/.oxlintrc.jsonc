@@ -1,6 +1,7 @@
 {
   "$schema": "../../node_modules/oxlint/configuration_schema.json",
   "plugins": ["react", "jsx-a11y", "typescript", "unicorn", "oxc"],
+  "jsPlugins": ["@tailor-platform/eslint-plugin-app-shell"],
   "categories": {
     "correctness": "error",
     "suspicious": "error",
@@ -9,6 +10,10 @@
     // React 19's JSX Transform handles React imports automatically
     "react/react-in-jsx-scope": "off",
     "no-nested-ternary": "error",
+    // Consumers get this rule as a warning, because the old names still work
+    // until the next major. Components read the semantic colour roles, so core
+    // must not use the old names again (decisions/semantic-color-roles.md).
+    "@tailor-platform/app-shell/no-deprecated-tokens": "error",
   },
   "overrides": [
     {
@@ -25,6 +30,14 @@
         // focus within the popover (prev → next → grid) — a focus-management
         // concern, not a clickable control.
         "jsx-a11y/no-static-element-interactions": "off",
+      },
+    },
+    {
+      // Tests name the old tokens on purpose: they check that the aliases still
+      // resolve for consumers, and that components no longer render them.
+      "files": ["**/*.test.ts", "**/*.test.tsx"],
+      "rules": {
+        "@tailor-platform/app-shell/no-deprecated-tokens": "off",
       },
     },
   ],

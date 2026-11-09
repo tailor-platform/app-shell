@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { createAppShellWrapper } from "../../../tests/test-utils";
-import { DescriptionCard } from "./DescriptionCard";
+import { DescriptionCard } from "./description-card";
 
 const wrapper = createAppShellWrapper();
 

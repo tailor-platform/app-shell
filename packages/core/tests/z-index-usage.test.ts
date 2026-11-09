@@ -23,11 +23,19 @@ const sources = sourceFiles(srcDir).map((path) => ({
   text: readFileSync(path, "utf8"),
 }));
 
-const tokens = new Set(
+// Every `--z-*` declaration in `globals.css`, name to value. A token holds a
+// number; an old name holds `var(--z-*)` and is kept only for consumers until
+// the next major (tailor-inc/platform-planning#2084). `--z-sidebar-rail` is the
+// one old name with a number: the rail orders itself inside the sidebar with a
+// raw `z-20` now, and the variable stays for consumers who referenced it.
+const declarations = Object.fromEntries(
   [
-    ...readFileSync(join(srcDir, "globals.css"), "utf8").matchAll(/^\s*--z-([a-z-]+):\s*\d+;/gm),
-  ].map((m) => m[1]),
+    ...readFileSync(join(srcDir, "globals.css"), "utf8").matchAll(
+      /^\s*--z-([a-z-]+):\s*([^;]+);/gm,
+    ),
+  ].map((m) => [m[1], m[2]]),
 );
+const tokens = new Set(["nav", "portal", "toast"]);
 
 const findAll = (pattern: RegExp) =>
   sources.flatMap(({ file, text }) => [...text.matchAll(pattern)].map((m) => `${file}: ${m[0]}`));
@@ -43,14 +51,16 @@ const classLists = sources.flatMap(({ file, text }) =>
 const rawZ = /astw:(?:[a-z0-9-]+:)*z-(?:\d+|\[(?!var\(--z-)[^\]]+\])(?![\w-])/g;
 
 describe("z-index usage", () => {
-  it("declares the z tokens", () => {
-    expect([...tokens].toSorted()).toEqual([
-      "overlay",
-      "popup",
-      "sidebar",
-      "sidebar-rail",
-      "toast",
-    ]);
+  it("declares the z tokens and keeps the old names as aliases", () => {
+    expect(declarations).toEqual({
+      nav: "10",
+      portal: "50",
+      toast: "100",
+      sidebar: "var(--z-nav)",
+      "sidebar-rail": "20",
+      popup: "var(--z-portal)",
+      overlay: "var(--z-portal)",
+    });
   });
 
   it("uses no raw z utility on a viewport-fixed element", () => {
@@ -73,7 +83,7 @@ describe("z-index usage", () => {
     expect(hits).toEqual([]);
   });
 
-  it("references only declared tokens", () => {
+  it("references only the tokens, never an old name", () => {
     const used = findAll(/(?:z-\(|var\()--z-([a-z-]+)\)/g);
     expect(used.filter((hit) => !tokens.has(hit.match(/--z-([a-z-]+)/)?.[1] ?? ""))).toEqual([]);
   });

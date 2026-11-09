@@ -17,6 +17,9 @@
       "dependsOn": ["build"]
     },
     "lint": {},
+    "@tailor-platform/app-shell#lint": {
+      "dependsOn": ["@tailor-platform/eslint-plugin-app-shell#build"]
+    },
     "test": {
       "dependsOn": ["build", "^build"]
     },

@@ -172,7 +172,14 @@ export function SidebarLayout(props: SidebarLayoutProps) {
       // When a global top bar is present, publish its height so the fixed sidebar
       // starts below it (see --appshell-topbar-h in sidebar.tsx) instead of
       // overlapping it.
-      className={cn("astw:flex astw:flex-col", topBar && "astw:[--appshell-topbar-h:3.5rem]")}
+      // `isolate` makes the layout root its own stacking context, so a z-index set
+      // inside the page (by AppShell or a consumer) is ordered within the page and
+      // can never reach the portal band at the end of body, where dialogs, sheets,
+      // popups and the toaster render (tailor-inc/platform-planning#2349).
+      className={cn(
+        "astw:isolate astw:flex astw:flex-col",
+        topBar && "astw:[--appshell-topbar-h:3.5rem]",
+      )}
     >
       {topBar}
       <div className="astw:flex astw:flex-1 astw:min-h-0">

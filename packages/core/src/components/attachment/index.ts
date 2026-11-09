@@ -1,4 +1,4 @@
-export { Attachment } from "./Attachment";
+export { Attachment } from "./attachment";
 export { useAttachment } from "./use-attachment";
 export type {
   AttachmentProps,

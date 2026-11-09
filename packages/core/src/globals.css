@@ -24,10 +24,14 @@
 
 @layer base {
   :root {
-    --z-sidebar: 10;
+    --z-nav: 10;
+    --z-portal: 50;
+    --z-toast: 100;
+    /* Old names, kept as aliases until the next major (tailor-inc/platform-planning#2084). */
+    --z-sidebar: var(--z-nav);
     --z-sidebar-rail: 20;
-    --z-popup: 50;
-    --z-overlay: 50;
+    --z-popup: var(--z-portal);
+    --z-overlay: var(--z-portal);
   }
 
   * {

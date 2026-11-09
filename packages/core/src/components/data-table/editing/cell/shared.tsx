@@ -103,7 +103,7 @@ const CELL_ICON_CLASS_NAME = cn(
 );
 
 export const POPUP_CLASS_NAME = cn(
-  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:flex astw:flex-col astw:gap-3 astw:rounded-md astw:border astw:border-border astw:p-3 astw:shadow-md",
+  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-portal) astw:flex astw:flex-col astw:gap-3 astw:rounded-md astw:border astw:border-border astw:p-3 astw:shadow-md",
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
 
@@ -360,7 +360,7 @@ export function EditableCellFrame({
             >
               <CircleAlert aria-hidden="true" strokeWidth={2.5} className="astw:size-3.5" />
             </Popover.Trigger>
-            <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+            <Popover.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
               {/* Opens directly under the cell, not under the small icon trigger. */}
               <Popover.Positioner
                 anchor={() => callbackError.triggerRef.current?.closest("td") ?? null}

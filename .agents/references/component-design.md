@@ -77,6 +77,11 @@ If a piece has a narrower owner than `components/` — for example routing-owned
 UI like document head helpers, or sidebar-owned UI like a dynamic breadcrumb —
 keep it with that owner instead of putting it under `components/internals/`.
 
+Helpers and logic that are not UI building blocks go in `lib/` (for example
+`cn`, i18n locale resolution, `aggregations`, `collection-url-state`), whether
+or not they are publicly exported. React code is fine in either place; the
+split is UI building block (`components/internals/`) versus helper (`lib/`).
+
 ```text
 components/
   component-name/
@@ -96,6 +101,14 @@ components/
     use-component-name.ts
     component-name.test.tsx
 ```
+
+#### File naming
+
+Directories and files under `components/` are **kebab-case**: `date-field/`,
+`date-field.tsx`, `use-date-field-state.ts`, `types.ts`, `date-field.test.tsx`.
+Exported identifiers stay PascalCase (`export function DateField`), so the file
+name and the component name differ in case by design. The same rule applies
+under `components/internals/`.
 
 ```tsx
 // index.ts

@@ -186,7 +186,7 @@ export function DateEditCell<TRow extends Record<string, unknown>>({
             tabBetweenCells(event, open, navigation, { rowKey, colKey });
           }}
         />
-        <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+        <Popover.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
           <Popover.Positioner sideOffset={4} side="bottom" align="start">
             <Popover.Popup
               data-slot="data-table-cell-calendar"

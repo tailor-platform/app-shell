@@ -364,7 +364,7 @@ function Sidebar({
           <div
             data-slot="sidebar-container"
             className={cn(
-              "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:hidden astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:md:flex",
+              "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-nav) astw:hidden astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:md:flex",
               side === "left" ? "astw:left-0" : "astw:right-0",
               variant === "floating" || variant === "inset"
                 ? "astw:p-2 astw:group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
@@ -459,7 +459,7 @@ function Sidebar({
         <div
           data-slot="sidebar-container"
           className={cn(
-            "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-sidebar) astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:group-has-[[data-resizing=true]]:transition-none",
+            "astw:fixed astw:top-[var(--appshell-topbar-h,0px)] astw:bottom-0 astw:z-(--z-nav) astw:w-(--sidebar-width) astw:transition-[left,right,width] astw:duration-200 astw:ease-linear astw:group-has-[[data-resizing=true]]:transition-none",
             "astw:group-has-[[data-resizing=true]]:w-(--sidebar-drag-pane-width)!",
             side === "left"
               ? "astw:group-has-[[data-resizing=true]]:left-(--sidebar-drag-offset)!"
@@ -558,7 +558,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
       onClick={toggleSidebar}
       title="Toggle Sidebar"
       className={cn(
-        "astw:hover:after:bg-sidebar-border astw:absolute astw:inset-y-0 astw:z-(--z-sidebar-rail) astw:hidden astw:w-4 astw:-translate-x-1/2 astw:transition-all astw:ease-linear astw:group-data-[side=left]:-right-4 astw:group-data-[side=right]:left-0 astw:after:absolute astw:after:inset-y-0 astw:after:left-1/2 astw:after:w-0.5 astw:sm:flex",
+        "astw:hover:after:bg-sidebar-border astw:absolute astw:inset-y-0 astw:z-20 astw:hidden astw:w-4 astw:-translate-x-1/2 astw:transition-all astw:ease-linear astw:group-data-[side=left]:-right-4 astw:group-data-[side=right]:left-0 astw:after:absolute astw:after:inset-y-0 astw:after:left-1/2 astw:after:w-0.5 astw:sm:flex",
         "astw:in-data-[side=left]:cursor-w-resize astw:in-data-[side=right]:cursor-e-resize",
         "astw:[[data-side=left][data-state=collapsed]_&]:cursor-e-resize astw:[[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
         "astw:hover:group-data-[collapsible=offcanvas]:bg-sidebar astw:group-data-[collapsible=offcanvas]:translate-x-0 astw:group-data-[collapsible=offcanvas]:after:left-full",

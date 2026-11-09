@@ -4,12 +4,12 @@
 
 Add `Tree` and `TreePicker`. `Tree` shows your own hierarchical items as an ARIA tree, for browsing, picking one node, or ticking many as a form control. `TreePicker` is a checkbox tree in a fixed-height dialog with search and an "Add N items" commit, the way `DatePicker` wraps `DateField`.
 
-Pass your own items with `mapItem`, as with `Select` and `Combobox`. A key is the item's identity across the whole tree, and `mapItem` receives the item's `parents` so you can compose a unique key when codes repeat.
+Pass your own items with `mapItem`, as with `Select` and `Combobox`. A key is the item's identity across the whole tree, and `mapItem` receives the item's `parents` so you can compose a unique key when codes repeat. The item type comes from `items`; when levels are different types, type `items` as their union (here `categories: (Category | Product)[]`).
 
 ```tsx
 import { Tree } from "@tailor-platform/app-shell";
 
-<Tree<Category | Product>
+<Tree
   aria-label="Products"
   items={categories}
   mapItem={(item) =>

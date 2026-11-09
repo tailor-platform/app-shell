@@ -6,6 +6,7 @@ import {
   filterTree,
   indexTree,
   readValue,
+  resolveSelectionStrategy,
   toggleChecked,
   toSelectedItem,
   writeValue,
@@ -17,9 +18,8 @@ import type {
   TreeMapItemContext,
   TreeMappedItem,
   TreeSelectedItem,
-  TreeSelectionPropagation,
+  TreeSelectionStrategy,
   TreeValueProps,
-  TreeValueStrategy,
 } from "./types";
 
 /**
@@ -42,8 +42,8 @@ type UseTreeSelectionOptions<T> = {
    * form reset) reads as an empty selection instead of stale internal state.
    */
   controlled?: boolean;
-  selectionPropagation: TreeSelectionPropagation;
-  valueStrategy: TreeValueStrategy;
+  /** How ticking works and what the value lists. Default `"leaves"`. */
+  selectionStrategy?: TreeSelectionStrategy;
 } & TreeValueProps<T>;
 
 export type UseTreeSelectionResult<T> = {
@@ -54,19 +54,24 @@ export type UseTreeSelectionResult<T> = {
   toggleExpand(id: string): void;
   setExpanded(id: string, next: boolean): void;
   /**
-   * A row's checkbox, as `selectionPropagation` derives it. While filtering,
+   * A row's checkbox, as `selectionStrategy` derives it. While filtering,
    * `node` holds only the matching children, but the checkbox still reflects
    * the whole group.
    */
   getCheckState(node: TreeNode<T>): { checked: boolean; indeterminate: boolean };
   /**
-   * Ticks or clears a row, spreading as `selectionPropagation` says, in one
+   * Ticks or clears a row, spreading as `selectionStrategy` says, in one
    * update. While filtering it acts on what's visible: a group whose visible
    * enabled leaves are all ticked clears them, otherwise it ticks them.
    */
   toggleRow(node: TreeNode<T>): void;
   /** The value's items in tree order, one per key. */
   selected: TreeSelectedItem<T>[];
+  /**
+   * Whether parents are containers (`"leaves"`, `"topmost"`, `"all"`): their
+   * checkbox comes from their leaves, rather than being an item of their own.
+   */
+  parentsAreContainers: boolean;
   /** Selected keys that aren't in the tree (e.g. not loaded yet), kept as they were. */
   unknown: string[];
 };
@@ -76,7 +81,10 @@ const EMPTY_KEYS: readonly string[] = [];
 export function useTreeSelection<T>(
   options: UseTreeSelectionOptions<T>,
 ): UseTreeSelectionResult<T> {
-  const { items, mapItem, filter, disabled = false, selectionPropagation, valueStrategy } = options;
+  const { items, mapItem, filter, disabled = false } = options;
+  const { propagation: selectionPropagation, valueStrategy } = resolveSelectionStrategy(
+    options.selectionStrategy,
+  );
 
   const tree = React.useMemo(() => buildTree(items, mapItem), [items, mapItem]);
   const index = React.useMemo(() => indexTree(tree), [tree]);
@@ -203,5 +211,6 @@ export function useTreeSelection<T>(
     toggleRow,
     selected,
     unknown,
+    parentsAreContainers: selectionPropagation === "full",
   };
 }

@@ -3,9 +3,9 @@ import { useFieldRootContext } from "@base-ui/react/internals/field-root-context
 
 import { cn } from "@/lib/utils";
 
-import { TreeRow } from "./TreeRow";
+import { TreeRow } from "./tree-row";
 import { useTreeT } from "./i18n";
-import { flattenVisible, pathId, resolveSelectionStrategy, type TreeNode } from "./tree-model";
+import { flattenVisible, pathId, type TreeNode } from "./tree-model";
 import type { TreeChangeDetails, TreeProps, TreeSelectedItem } from "./types";
 import { useTreeField } from "./use-tree-field";
 import { useTreeFocus } from "./use-tree-focus";
@@ -43,11 +43,12 @@ type SubmittedEntry = { id: string; value: string };
  *
  * @example
  * ```tsx
+ * // warehouses: (Warehouse | Bin)[], so `mapItem` can return either level.
  * const [bins, setBins] = useState<string[]>([]);
  *
  * <Field.Root name="bins">
  *   <Field.Label>Bins to count</Field.Label>
- *   <Tree<Warehouse | Bin>
+ *   <Tree
  *     className="astw:h-96"
  *     items={warehouses}
  *     mapItem={(item, { parents }) =>
@@ -79,9 +80,6 @@ export function Tree<T>(props: TreeProps<T>) {
   const selectionMode = props.selectionMode ?? "none";
   const checkbox = props.selectionMode === "checkbox" ? props : null;
   const single = props.selectionMode === "single" ? props : null;
-  const { propagation: selectionPropagation, valueStrategy } = resolveSelectionStrategy(
-    checkbox?.selectionStrategy,
-  );
   const itemToStringValue = checkbox?.itemToStringValue;
   const form = checkbox?.form;
   const required = checkbox?.required;
@@ -132,6 +130,7 @@ export function Tree<T>(props: TreeProps<T>) {
     toggleRow,
     selected,
     unknown,
+    parentsAreContainers,
   } = useTreeSelection({
     items,
     mapItem,
@@ -140,8 +139,7 @@ export function Tree<T>(props: TreeProps<T>) {
     // A `value` prop that is present but `undefined` (e.g. a form reset) is
     // still controlled: it means "nothing selected".
     controlled: !!checkbox && "value" in checkbox,
-    selectionPropagation,
-    valueStrategy,
+    selectionStrategy: checkbox?.selectionStrategy,
     value: checkbox?.value,
     defaultValue: checkbox?.defaultValue,
     onValueChange: handleValueChange,
@@ -157,11 +155,10 @@ export function Tree<T>(props: TreeProps<T>) {
 
   /**
    * Whether a row is locked. An item's own or inherited `disabled` always
-   * counts. With `"full"` propagation a parent is only a container, so one with
-   * no enabled leaves is locked too; elsewhere a parent is an item in its own
-   * right and stays usable.
+   * counts. Where parents are containers, one with no enabled leaves is locked
+   * too; elsewhere a parent is an item in its own right and stays usable.
    */
-  const fullPropagation = !!checkbox && selectionPropagation === "full";
+  const fullPropagation = !!checkbox && parentsAreContainers;
   const isNodeDisabled = React.useCallback(
     (node: TreeNode<T>) => node.disabled || (fullPropagation && node.noEnabledLeaves),
     [fullPropagation],

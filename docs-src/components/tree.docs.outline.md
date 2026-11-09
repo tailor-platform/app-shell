@@ -5,6 +5,7 @@ title: Tree
 description: Browse, pick one, or tick many items in a hierarchy — inline with Tree, or in a search dialog with TreePicker
 sources:
   - packages/core/src/components/tree/**
+  - packages/core/src/components/tree-picker/**
 ---
 
 # Tree
@@ -28,7 +29,7 @@ Pass your own items and say how to read them with `mapItem`, as with `Select` an
 ```tsx
 type Account = { code: string; name: string; children?: Account[] };
 
-<Tree<Account>
+<Tree
   aria-label="Chart of accounts"
   className="h-96"
   items={accounts}
@@ -40,6 +41,18 @@ type Account = { code: string; name: string; children?: Account[] };
   onAction={(account) => navigate(`/accounts/${account.code}`)}
 />;
 ```
+
+### Item types
+
+`Tree` takes its item type from `items`, so you don't pass one. The case that needs a type is a tree whose levels are different types, like categories holding products: type `items` as the union of every level, so `mapItem` can hand back either level's children.
+
+```tsx
+type CatalogNode = Category | Product;
+
+const categories: CatalogNode[] = loadCategories();
+```
+
+Typed as `Category[]`, the item type is just `Category`, and `children: category.products` is a type error. Annotating `mapItem`'s parameter as the union works too.
 
 ### Keys
 
@@ -74,7 +87,7 @@ Enter runs `onAction(item, key)` on any enabled row, in every mode. The props ar
 ```tsx
 const [selected, setSelected] = useState<string | null>(null);
 
-<Tree<Account>
+<Tree
   {...props}
   selectionMode="single"
   selectedKey={selected}
@@ -91,12 +104,7 @@ The selected row is always revealed: when it starts out inside closed groups, or
 ```tsx
 const [skus, setSkus] = useState<string[]>([]);
 
-<Tree<Category | Product>
-  {...props}
-  selectionMode="checkbox"
-  value={skus}
-  onValueChange={setSkus}
-/>;
+<Tree {...props} selectionMode="checkbox" value={skus} onValueChange={setSkus} />;
 ```
 
 `onValueChange(value, { selected })` gives the new value plus the items it lists, as `{ key, item, parents }[]` in tree order. Keys in the value that aren't in `items` (not loaded yet, say) are kept as they were.
@@ -146,18 +154,18 @@ renderItem={({ item, isLeaf }) =>
 }
 ```
 
-| Row state       | Type      | Description                                                                        |
-| --------------- | --------- | ---------------------------------------------------------------------------------- |
-| `item`          | `T`       | Your original item.                                                                |
-| `key`           | `string`  | The item's key.                                                                    |
-| `parents`       | `T[]`     | Ancestors, top level first.                                                        |
-| `depth`         | `number`  | 0 for top-level rows.                                                              |
-| `isLeaf`        | `boolean` | The item has no children.                                                          |
-| `checked`       | `boolean` | Checkbox mode: the row is ticked. With `"full"`, every enabled leaf beneath it is. |
-| `indeterminate` | `boolean` | Checkbox mode with `"full"`: some, but not all, enabled leaves beneath it are.     |
-| `selected`      | `boolean` | Single mode: the row is the selected one.                                          |
-| `expanded`      | `boolean` | The parent is open.                                                                |
-| `disabled`      | `boolean` | The item, an ancestor, or the whole tree is disabled.                              |
+| Row state       | Type      | Description                                                                                       |
+| --------------- | --------- | ------------------------------------------------------------------------------------------------- |
+| `item`          | `T`       | Your original item.                                                                               |
+| `key`           | `string`  | The item's key.                                                                                   |
+| `parents`       | `T[]`     | Ancestors, top level first.                                                                       |
+| `depth`         | `number`  | 0 for top-level rows.                                                                             |
+| `isLeaf`        | `boolean` | The item has no children.                                                                         |
+| `checked`       | `boolean` | Checkbox mode: the row is ticked. Where parents are containers, every enabled leaf beneath it is. |
+| `indeterminate` | `boolean` | Checkbox mode, where parents are containers: some, but not all, enabled leaves beneath it are.    |
+| `selected`      | `boolean` | Single mode: the row is the selected one.                                                         |
+| `expanded`      | `boolean` | The parent is open.                                                                               |
+| `disabled`      | `boolean` | The item, an ancestor, or the whole tree is disabled.                                             |
 
 ## Filtering
 
@@ -171,7 +179,7 @@ const filter = useMemo(
 );
 
 <Input value={query} onChange={(event) => setQuery(event.target.value)} />
-<Tree<Account> {...props} filter={filter} />
+<Tree {...props} filter={filter} />
 ```
 
 Groups a filter opened can still be closed. They stay closed until the matches change, so an inline `filter` recreated on every render won't reopen them.
@@ -186,7 +194,7 @@ In checkbox mode, `Tree` works like `Select` and the other form controls: as a p
 <form action={saveCount}>
   <Field.Root name="bins">
     <Field.Label>Bins to count</Field.Label>
-    <Tree<Warehouse | Bin> {...props} selectionMode="checkbox" required />
+    <Tree {...props} selectionMode="checkbox" required />
     <Field.Description>Pick at least one bin.</Field.Description>
   </Field.Root>
   <Button type="submit">Start count</Button>
@@ -224,7 +232,7 @@ How a parent behaves next to disabled children depends on whether it's a contain
 A checkbox tree in a dialog, with search. It takes the same item, row and ticking props as `Tree`, plus the search and commit props. Each open starts empty, and `onCommit` receives the value's items in tree order. Ticking a group while searching ticks its matching items, as described under [Filtering](#filtering).
 
 ```tsx
-<TreePicker<Category | Product>
+<TreePicker
   open={open}
   onOpenChange={setOpen}
   title="Add items from catalogue"

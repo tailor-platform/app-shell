@@ -6,14 +6,15 @@ import { Dialog } from "@/components/dialog";
 import { Input } from "@/components/input";
 import { cn } from "@/lib/utils";
 
-import { Tree } from "./Tree";
-import { useTreeT } from "./i18n";
-import type {
-  TreeContentProps,
-  TreePickerProps,
-  TreeSelectedItem,
-  TreeSelectionBehaviorProps,
-} from "./types";
+import {
+  Tree,
+  type TreeContentProps,
+  type TreeSelectedItem,
+  type TreeSelectionBehaviorProps,
+} from "@/components/tree";
+
+import { useTreePickerT } from "./i18n";
+import type { TreePickerProps } from "./types";
 
 /**
  * A {@link Tree} in a dialog, for picking many items out of a
@@ -38,7 +39,8 @@ import type {
  * @example
  * ### Bulk-adding catalog items
  * ```tsx
- * <TreePicker<Category | Product>
+ * // catalog: (Category | Product)[], so `mapItem` can return either level.
+ * <TreePicker
  *   open={open}
  *   onOpenChange={setOpen}
  *   title="Add items"
@@ -134,7 +136,7 @@ function TreePickerBody<T>({
   treeProps: TreeContentProps<T> & TreeSelectionBehaviorProps;
 }) {
   const titleId = React.useId();
-  const t = useTreeT();
+  const t = useTreePickerT();
   const [query, setQuery] = React.useState("");
 
   // Memoized on the query, so the tree sees a new filter only when it changes.
@@ -199,7 +201,7 @@ function TreePickerBody<T>({
         {filterSlot}
       </div>
 
-      <Tree<T>
+      <Tree
         {...treeProps}
         selectionMode="checkbox"
         filter={filter}

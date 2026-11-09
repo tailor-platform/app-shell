@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { Attachment } from "./Attachment";
+import { Attachment } from "./attachment";
 import type { AttachmentItem } from "./types";
 
 afterEach(() => {

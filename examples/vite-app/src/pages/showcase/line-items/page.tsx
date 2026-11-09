@@ -43,31 +43,27 @@ const LineItemsPage = () => {
 
   return (
     <Layout>
-      <Layout.Header
-        title="Line Items"
-        actions={[
+      <Layout.Header title="Line Items" />
+      <Layout.Column>
+        <LineItems.Root value={lineItems}>
+          <LineItems.Table aria-label="Order line items" />
+        </LineItems.Root>
+        <div className="astw:flex astw:gap-2">
           <Button
-            key="add"
             type="button"
             onClick={() => lineItems.addLine({ item: "New item", quantity: 1, unitPrice: 1 })}
           >
             Add line
-          </Button>,
+          </Button>
           <Button
-            key="revert"
             type="button"
             variant="outline"
             disabled={!lineItems.isDirty}
             onClick={lineItems.revert}
           >
             Discard changes
-          </Button>,
-        ]}
-      />
-      <Layout.Column>
-        <LineItems.Root value={lineItems}>
-          <LineItems.Table aria-label="Order line items" />
-        </LineItems.Root>
+          </Button>
+        </div>
       </Layout.Column>
     </Layout>
   );

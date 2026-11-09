@@ -85,24 +85,15 @@ function Root({ className, children, variant = "default", size = "default", ...p
 }
 Root.displayName = "Tabs.Root";
 
-// The tablist element is the scroll container, so that tabs wider than the
-// available width scroll sideways instead of growing the page. Base UI's
-// composite root scrolls its own element to reveal the tab that the arrow keys
-// move focus to, and the active tab on mount, and it honours `scroll-padding`,
-// so the 4px of padding that keeps the focus ring inside the clip box is also
-// kept clear when it scrolls. The negative margin keeps the list's footprint,
-// and the max-width lets the border box extend by that same margin. The
-// scrollbar is hidden: touch, trackpad and the arrow keys scroll it, and the tab
-// cut off at the edge shows there is more. The visual list (the track) is a
-// plain child so the variant styles and the consumer's `className` stay on it.
+// The tablist itself scrolls, because Base UI scrolls that element to reveal
+// the focused or active tab. The 4px padding (also the scroll-padding) keeps the
+// focus ring from being clipped; the negative margin and wider max-width cancel it.
 const LIST_CONTAINER_CLASSES =
   "astw:-m-[4px] astw:flex astw:max-w-[calc(100%+8px)] astw:overflow-x-auto astw:overflow-y-hidden astw:overscroll-x-contain astw:p-[4px] astw:[scroll-padding-inline:4px] astw:[scrollbar-width:none] astw:[&::-webkit-scrollbar]:hidden";
 
 /**
- * Groups the individual tab buttons. Tabs stay on one row; when they are wider
- * than the container, the list scrolls sideways (scrollbar hidden), and the
- * active tab on mount and the tab focused with the arrow keys are scrolled into
- * view. `className` applies to the visual track inside the scroll container.
+ * Groups the individual tab buttons. Tabs stay on one row and scroll sideways
+ * when they do not fit. `className` applies to the inner track.
  */
 function List({
   className,

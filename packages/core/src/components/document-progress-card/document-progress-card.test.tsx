@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { DocumentProgressCard } from "./DocumentProgressCard";
+import { DocumentProgressCard } from "./document-progress-card";
 
 afterEach(() => {
   cleanup();

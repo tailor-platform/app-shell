@@ -279,7 +279,7 @@ function LayoutRoot({
 
 /**
  * Typed explicitly rather than assigning onto a `function Layout`: that form emits
- * `var Header: typeof import("./Layout").Header`, which the declaration rollup
+ * `var Header: typeof import("./layout").Header`, which the declaration rollup
  * rewrites to a bare `Header` — a namespace, not a type (TS2709). See `check-dts`.
  */
 type LayoutComponent = typeof LayoutRoot & {

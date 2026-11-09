@@ -14,7 +14,7 @@ import { useDataTableT } from "./i18n";
 import type { CellContextMenuState } from "./use-cell-context-menu";
 
 const HEADER_CONTEXT_MENU_POPUP_CLASS = cn(
-  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:min-w-[10rem] astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:p-1 astw:shadow-md",
+  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-portal) astw:min-w-[10rem] astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:p-1 astw:shadow-md",
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
 const HEADER_CONTEXT_MENU_ITEM_CLASS = cn(
@@ -148,7 +148,7 @@ function DataTableHeaderContextMenu<TRow extends Record<string, unknown>>({
       >
         {children}
       </ContextMenu.Trigger>
-      <ContextMenu.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+      <ContextMenu.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
         <ContextMenu.Positioner className="astw:outline-hidden">
           <ContextMenu.Popup
             data-slot="data-table-header-context-menu"
@@ -282,7 +282,7 @@ function DataTableCellContextMenu({
       onOpenChange={onOpenChange}
       onOpenChangeComplete={(nextOpen) => !nextOpen && onCloseComplete()}
     >
-      <ContextMenu.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+      <ContextMenu.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
         <ContextMenu.Positioner className="astw:outline-hidden" anchor={context?.anchor ?? null}>
           <ContextMenu.Popup className={HEADER_CONTEXT_MENU_POPUP_CLASS}>
             <ContextMenu.Item

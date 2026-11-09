@@ -117,7 +117,7 @@ function Overlay({ className, ...props }: React.ComponentProps<typeof Drawer.Bac
     <Drawer.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-(--z-overlay) astw:bg-backdrop",
+        "astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:fill-mode-forwards astw:fixed astw:inset-0 astw:z-(--z-portal) astw:bg-backdrop",
         className,
       )}
       {...props}
@@ -145,7 +145,7 @@ function Content({ className, children, size = "sm", ...props }: SheetContentPro
       <Drawer.Viewport
         data-slot="sheet-viewport"
         className={cn(
-          "astw:fixed astw:inset-0 astw:z-(--z-overlay) astw:flex",
+          "astw:fixed astw:inset-0 astw:z-(--z-portal) astw:flex",
           side === "right" && "astw:items-stretch astw:justify-end",
           side === "left" && "astw:items-stretch astw:justify-start",
           side === "top" && "astw:items-start astw:justify-stretch",
@@ -189,7 +189,7 @@ function CloseButton() {
   return (
     <Drawer.Close
       data-slot="sheet-close"
-      className="astw:ring-offset-bg astw:focus:ring-ring astw:flex astw:size-8 astw:shrink-0 astw:items-center astw:justify-center astw:rounded-xs astw:text-muted-foreground astw:transition-colors astw:hover:bg-accent astw:hover:text-accent-foreground astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none"
+      className="astw:ring-offset-card astw:focus:ring-ring astw:flex astw:size-8 astw:shrink-0 astw:items-center astw:justify-center astw:rounded-xs astw:text-muted-foreground astw:transition-colors astw:hover:bg-accent astw:hover:text-accent-foreground astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none"
     >
       <Icon className="astw:size-4" />
       <span className="astw:sr-only">Close</span>

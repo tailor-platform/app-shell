@@ -142,13 +142,21 @@ test("the store adapter preserves property-specific command typing", () => {
 });
 
 test("property, computed and value-less columns keep source and display contracts", () => {
-  const property: LineItemsColumn<Row> = { accessorKey: "quantity", type: "number" };
+  expectTypeOf<LineItemsColumn<Row>["width"]>().toEqualTypeOf<number | undefined>();
+  const property: LineItemsColumn<Row> = { accessorKey: "quantity", type: "number", width: 120 };
   const computed: LineItemsColumn<Row> = {
     id: "double",
+    width: 160,
     type: "number",
     accessor: (row) => row.quantity * 2,
   };
-  const custom: LineItemsColumn<Row> = { id: "custom", render: (row) => row.detail.nested };
+  const custom: LineItemsColumn<Row> = {
+    id: "custom",
+    width: 96,
+    render: (row) => row.detail.nested,
+  };
+  // @ts-expect-error Widths are pixel numbers, not CSS strings.
+  const cssWidth: LineItemsColumn<Row> = { id: "custom", width: "96px" };
   // @ts-expect-error Property sources must exist on the row.
   const missing: LineItemsColumn<Row> = { accessorKey: "missing" };
   // @ts-expect-error A string property cannot use a number renderer.
@@ -175,6 +183,7 @@ test("property, computed and value-less columns keep source and display contract
   void property;
   void computed;
   void custom;
+  void cssWidth;
   void missing;
   void wrongProperty;
   void structured;

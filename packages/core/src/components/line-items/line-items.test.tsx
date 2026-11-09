@@ -145,6 +145,21 @@ describe("LineItems table", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
+  it("applies pixel widths to all column kinds and restores automatic sizing when omitted", () => {
+    const cols = [columns[0], columns[5], columns[7]].map((column, index) => ({
+      ...column,
+      width: [200, 120, 0][index],
+    }));
+    const { rerender } = render(<Harness cols={cols} />);
+    const headers = screen.getAllByRole("columnheader") as HTMLTableCellElement[];
+    const row = screen.getAllByRole("row")[1];
+    expect(headers.slice(1).map((header) => header.style.width)).toEqual(["200px", "120px", "0px"]);
+    expect(screen.getByRole("table").style.tableLayout).toBe("");
+    rerender(<Harness cols={[columns[0], columns[5], { ...columns[7], width: 96 }]} />);
+    expect(headers.slice(1).map((header) => header.style.width)).toEqual(["", "", "96px"]);
+    expect(screen.getAllByRole("row")[1]).toBe(row);
+  });
+
   it("does not infer a value from a source-less column's ID", () => {
     render(<Harness orderer={false} cols={[{ id: "name", label: "No source", type: "text" }]} />);
     expect(screen.getByRole("cell").textContent).toBe("—");

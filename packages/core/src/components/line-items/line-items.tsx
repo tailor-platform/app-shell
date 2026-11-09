@@ -88,7 +88,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
             </Table.Head>
           )}
           {columns.map(({ column, id, align }) => (
-            <Table.Head key={id} scope="col" align={align}>
+            <Table.Head key={id} scope="col" align={align} style={{ width: column.width }}>
               {column.label}
             </Table.Head>
           ))}

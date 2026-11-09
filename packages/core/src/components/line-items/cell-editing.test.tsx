@@ -167,6 +167,19 @@ describe("LineItems cell editing integration", () => {
     expect(editor.value.lines[0].quantity).toBeNull();
   });
 
+  it("updates column widths without discarding an unconfirmed cell draft", () => {
+    const editor = setup([nameColumn]);
+    const input = textbox();
+    draft(input, "Changed");
+    editor.update([{ ...nameColumn, width: 240 }]);
+    expect((screen.getByRole("columnheader") as HTMLTableCellElement).style.width).toBe("240px");
+    expect(textbox()).toBe(input);
+    expect(input.value).toBe("Changed");
+    expect(editor.value.isDirty).toBe(false);
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(editor.value.lines[0].name).toBe("Changed");
+  });
+
   it("does not confirm an IME conversion as an editor commit", () => {
     const editor = setup([nameColumn]);
     const input = textbox();

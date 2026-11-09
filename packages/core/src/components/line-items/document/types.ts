@@ -41,6 +41,8 @@ type DisplayProps<TRow extends Record<string, unknown>> = {
   /** Overrides the built-in renderer, including when it returns null. */
   render?: (row: TRow) => ReactNode;
   align?: "left" | "center" | "right";
+  /** Preferred column width in pixels; omitted widths are automatic and content may require more space. */
+  width?: number;
 };
 
 type PropertyColumn<TRow extends Record<string, unknown>> = {

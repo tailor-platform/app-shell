@@ -483,7 +483,7 @@ export function DatePopover({
       {field}
       {/* The Positioner's transform makes it a stacking context, so a z-index
           on the Popup alone can't lift it above a Dialog. Same pattern as Select/Menu. */}
-      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
         <Popover.Positioner anchor={anchor} sideOffset={4} side="bottom" align="start">
           {/* APG date-picker dialog pattern — the popup is a labelled dialog. */}
           <Popover.Popup
@@ -493,7 +493,7 @@ export function DatePopover({
             aria-label={ariaLabelledby ? undefined : (ariaLabel ?? t("chooseDate"))}
             data-slot="date-picker-popover"
             className={cn(
-              "astw:z-(--z-popup) astw:origin-(--transform-origin) astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-3 astw:text-popover-foreground astw:shadow-md",
+              "astw:z-(--z-portal) astw:origin-(--transform-origin) astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-3 astw:text-popover-foreground astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95",
               "astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}

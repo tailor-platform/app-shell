@@ -976,7 +976,7 @@ describe("DatePicker", () => {
 
     const portal = popup.parentElement?.parentElement;
     expect(portal?.style.position).toBe("relative");
-    expect(portal?.getAttribute("style")).toContain("z-index: var(--z-popup)");
+    expect(portal?.getAttribute("style")).toContain("z-index: var(--z-portal)");
   });
 
   it("fires onChange when a calendar date cell is clicked", async () => {

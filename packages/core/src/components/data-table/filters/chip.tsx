@@ -148,12 +148,12 @@ function FilterChip({
               </button>
             }
           />
-          <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+          <Popover.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
             <Popover.Positioner sideOffset={4} side="bottom" align="start">
               <Popover.Popup
                 data-slot="data-table-filter-operator-popup"
                 className={cn(
-                  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:w-56 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+                  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-portal) astw:w-56 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
                   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
                 )}
               >
@@ -194,12 +194,12 @@ function FilterChip({
           }
         />
         {/* Stacking context on the portal so the popup clears the sticky table header. */}
-        <Popover.Portal style={{ position: "relative", zIndex: "var(--z-popup)" }}>
+        <Popover.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
           <Popover.Positioner sideOffset={4} side="bottom" align="start">
             <Popover.Popup
               data-slot="data-table-filter-popup"
               className={cn(
-                "astw:bg-popover astw:text-popover-foreground astw:z-(--z-popup) astw:min-w-45 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+                "astw:bg-popover astw:text-popover-foreground astw:z-(--z-portal) astw:min-w-45 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
                 "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
               )}
             >

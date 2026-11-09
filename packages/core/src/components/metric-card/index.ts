@@ -1,2 +1,2 @@
-export { MetricCard, default } from "./MetricCard";
+export { MetricCard, default } from "./metric-card";
 export type { MetricCardProps } from "./types";

@@ -12,8 +12,20 @@ function compileLineItemsColumns<T extends Record<string, unknown>>(
     const id = column.id ?? column.accessorKey;
     if (typeof id !== "string" || id === "" || ids.has(id))
       throw new Error("LineItems column IDs must be non-empty and unique");
-    if ("edit" in column && column.edit !== undefined)
-      throw new Error("This LineItems slice is readonly; cell editors are not supported yet");
+    if (column.edit !== undefined) {
+      if (column.accessorKey === undefined)
+        throw new Error("Cell editors require an accessorKey property");
+      if (!["text", "number", "date", "combobox"].includes(column.edit.editorType))
+        throw new Error("Unsupported LineItems editor type");
+      if (
+        column.edit.editorType === "combobox" &&
+        (!Array.isArray(column.edit.options) ||
+          column.edit.options.some(
+            (option) => typeof option.value !== "string" || typeof option.label !== "string",
+          ))
+      )
+        throw new Error("Combobox editors require fixed string options");
+    }
     ids.add(id);
     if (column.accessorKey !== undefined) properties.add(column.accessorKey);
   }

@@ -45,7 +45,7 @@ test("row commands retain row types without exposing unfinished save APIs", () =
     value.updateField("A", "missing", 2);
     // @ts-expect-error A new line must supply the complete editing model.
     value.addLine({ name: "Incomplete" });
-    // @ts-expect-error This slice does not implement cell confirmation or persistence.
+    // @ts-expect-error This slice does not implement document-wide confirmation or persistence.
     value.commitEdits();
     // @ts-expect-error Controlled rows are not supported.
     const controlled: UseLineItemsOptions<Row> = { columns: [], lines: [] };
@@ -170,7 +170,7 @@ test("property, computed and value-less columns keep source and display contract
   };
   // @ts-expect-error A link still requires href options.
   const link: LineItemsColumn<Row> = { accessorKey: "name", type: "link" };
-  // @ts-expect-error No cell editor is implemented in the readonly slice.
+  // @ts-expect-error Clearing a text editor emits null, which this required field cannot adopt.
   const editing: LineItemsColumn<Row> = { accessorKey: "name", edit: { editorType: "text" } };
   void property;
   void computed;

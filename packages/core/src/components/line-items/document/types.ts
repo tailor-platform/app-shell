@@ -7,6 +7,35 @@ import type {
 } from "@/components/internals/table-core/column-types";
 import type { createLineItemsIdentity } from "./identity";
 
+type EditorBase<TRow extends Record<string, unknown>, TValue> = {
+  /** A check before adoption; throw/rejection retains the draft. Not a persistence callback. */
+  onValueCommitted?: (row: Readonly<TRow>, value: TValue) => void | Promise<void>;
+  /** UI policy only; direct row commands remain available. */
+  canEdit?: (row: TRow) => boolean;
+  /** Adopt eagerly without intercepting callback failures, or replace the error content. */
+  error?: false | { render: (ctx: { row: TRow; error: unknown }) => ReactNode };
+};
+
+type Adoptable<TOutput, TValue, TEditor> = [TOutput] extends [TValue] ? TEditor : never;
+
+/** Built-in editors emit null on clear; their complete output must fit the property. */
+export type LineItemsEditor<TRow extends Record<string, unknown>, TValue> =
+  | Adoptable<string | null, TValue, EditorBase<TRow, string | null> & { editorType: "text" }>
+  | Adoptable<number | null, TValue, EditorBase<TRow, number | null> & { editorType: "number" }>
+  | Adoptable<
+      string | null,
+      TValue,
+      EditorBase<TRow, string | null> & { editorType: "date"; withTime?: boolean }
+    >
+  | Adoptable<
+      string | null,
+      TValue,
+      EditorBase<TRow, string | null> & {
+        editorType: "combobox";
+        options: readonly { value: string; label: string }[];
+      }
+    >;
+
 type DisplayProps<TRow extends Record<string, unknown>> = {
   label?: string;
   /** Overrides the built-in renderer, including when it returns null. */
@@ -20,12 +49,14 @@ type PropertyColumn<TRow extends Record<string, unknown>> = {
       accessorKey: K;
       accessor?: never;
       id?: string;
+      edit?: LineItemsEditor<TRow, TRow[K]>;
     };
 }[keyof TRow & string];
 
 type ComputedColumn<TRow extends Record<string, unknown>> = DisplayProps<TRow> & {
   id: string;
   accessorKey?: never;
+  edit?: never;
 } & (
     | { type?: undefined; typeOptions?: never; accessor: (row: TRow) => unknown }
     | {
@@ -40,6 +71,7 @@ type SourceLessColumn<TRow extends Record<string, unknown>> = DisplayProps<TRow>
     id: string;
     accessorKey?: never;
     accessor?: never;
+    edit?: never;
   };
 
 /** A property, computed value, or explicitly value-less display column. */

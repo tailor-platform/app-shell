@@ -9,6 +9,8 @@ import { LineItemsContext, useLineItemsContext } from "./line-items-context";
 import { useLineItemsT } from "./i18n";
 import { useLineItemsReorder } from "./use-line-items-reorder";
 import { clientKeyOf } from "./document/identity";
+import { getLineItemsEditing } from "./editing";
+import { LineItemsCell } from "./line-items-cell";
 import type { UseLineItemsReturn } from "./types";
 
 export type LineItemsRootProps<T extends Record<string, unknown>> = {
@@ -50,16 +52,29 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
   const reorder = useLineItemsReorder(value);
   const columns = useMemo(
     () =>
-      value.columns.map((column) => ({
-        column,
-        id: column.id ?? column.accessorKey!,
-        align:
-          column.align ??
-          (column.type === "number" || column.type === "money"
-            ? ("right" as const)
-            : ("left" as const)),
-        renderValue: column.render ? undefined : createValueRenderer(column, timeZone),
-      })),
+      value.columns.map((column) => {
+        const choices = column.edit?.editorType === "combobox" ? column.edit.options : undefined;
+        return {
+          column,
+          id: column.id ?? column.accessorKey!,
+          align:
+            column.align ??
+            (column.type === "number" || column.type === "money"
+              ? ("right" as const)
+              : ("left" as const)),
+          renderValue: column.render
+            ? undefined
+            : createValueRenderer(
+                column.type === "link" && column.edit ? { type: "text" } : column,
+                timeZone,
+                {
+                  resolveBadgeLabel: choices
+                    ? (raw) => choices.find((option) => option.value === raw)?.label ?? raw
+                    : undefined,
+                },
+              ),
+        };
+      }),
     [value.columns, timeZone],
   );
   return (
@@ -101,18 +116,37 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                 </button>
               </Table.Cell>
             )}
-            {columns.map(({ column, id, align, renderValue }) => (
-              <Table.Cell key={id} align={align}>
-                {column.render
-                  ? column.render(row)
-                  : renderValue!(
-                      column.accessorKey !== undefined
-                        ? row[column.accessorKey]
-                        : column.accessor?.(row),
-                      row,
-                    )}
-              </Table.Cell>
-            ))}
+            {columns.map(({ column, id, align, renderValue }) => {
+              let current: unknown;
+              if (!column.render)
+                current =
+                  column.accessorKey !== undefined
+                    ? row[column.accessorKey]
+                    : column.accessor?.(row);
+              const choiceLabel =
+                column.edit?.editorType === "combobox" && column.type !== "badge"
+                  ? column.edit.options.find((option) => option.value === current)?.label
+                  : undefined;
+              const display = column.render
+                ? column.render(row)
+                : renderValue!(choiceLabel ?? current, row);
+              return column.edit ? (
+                <LineItemsCell
+                  key={id}
+                  row={row}
+                  column={column}
+                  index={index}
+                  editing={getLineItemsEditing(value)}
+                  display={display}
+                  timeZone={timeZone}
+                  cellProps={{ align }}
+                />
+              ) : (
+                <Table.Cell key={id} align={align}>
+                  {display}
+                </Table.Cell>
+              );
+            })}
           </Table.Row>
         ))}
         {value.lines.length === 0 && (

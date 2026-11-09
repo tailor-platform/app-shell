@@ -80,11 +80,11 @@ it("rejects duplicate and empty column identities", () => {
   ).toThrow("column IDs must be non-empty and unique");
 });
 
-it("rejects cell editors instead of silently ignoring them", () => {
-  const editable = { accessorKey: "name" as const, edit: { editorType: "text" } };
-  expect(() => renderHook(() => useLineItems<Row>({ columns: [editable] }))).toThrow(
-    "cell editors are not supported yet",
-  );
+it("rejects unsupported editors instead of silently ignoring them", () => {
+  const unsupported = [{ accessorKey: "name", edit: { editorType: "custom" } }];
+  expect(() =>
+    renderHook(() => useLineItems({ columns: unsupported } as unknown as UseLineItemsOptions<Row>)),
+  ).toThrow("Unsupported LineItems editor type");
 });
 
 it("reflects sequential commands and dirty state under StrictMode", () => {

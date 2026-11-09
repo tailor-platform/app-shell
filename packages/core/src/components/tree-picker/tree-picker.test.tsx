@@ -635,7 +635,7 @@ describe("TreePicker", () => {
     await user.click(screen.getByRole("button", { name: "Add 2 items" }));
     // The order across different `items` is undefined, so compare as a set.
     const keys = onCommit.mock.calls[0][0].map((entry: TreeSelectedItem<Item>) => entry.key);
-    expect([...keys].sort()).toEqual(["p1", "p3"]);
+    expect(keys.toSorted()).toEqual(["p1", "p3"]);
   });
 
   it("passes matchesSearch the item's label and parents", async () => {

@@ -1,5 +1,35 @@
 import type { ComponentProps, ReactNode } from "react";
-import type { BadgeOptions } from "@/components/badge-list";
+import type {
+  RowSelectionOptions,
+  TableAction as DataTableAction,
+} from "@/components/internals/table-core/selection-types";
+export type {
+  RowSelectionOptions,
+  SelectionAction,
+  SelectionActionHelpers,
+  TableAction as DataTableAction,
+} from "@/components/internals/table-core/selection-types";
+import type {
+  BadgeCellOptions,
+  CellEditState,
+  DateCellOptions,
+  FooterRenderContext,
+  HeaderRenderContext,
+  LinkCellOptions,
+  MoneyCellOptions,
+  NumberCellOptions,
+} from "@/components/internals/table-core/column-types";
+export type {
+  BadgeCellOptions,
+  CellEditState,
+  ColumnCellType,
+  DateCellOptions,
+  FooterRenderContext,
+  HeaderRenderContext,
+  LinkCellOptions,
+  MoneyCellOptions,
+  NumberCellOptions,
+} from "@/components/internals/table-core/column-types";
 import type {
   CollectionControl,
   Filter,
@@ -15,85 +45,11 @@ import type {
 // Column Definitions
 // =============================================================================
 
-/**
- * Built-in cell renderer types for `Column.type`.
- *
- * Each type produces a default render based on the value returned by
- * `accessor`. Pass `render` to override the built-in renderer.
- *
- * - `text` — `String(value)` with `—` placeholder for null/undefined.
- * - `number` — locale-formatted number with `—` for null/undefined.
- * - `money` — `Intl.NumberFormat` currency. See `MoneyOptions`.
- * - `date` — `Intl.DateTimeFormat`. Accepts `Date`, ISO string, or epoch ms.
- * - `badge` — `<Badge>` keyed off the value. See `BadgeOptions`.
- * - `link` — app-shell `<Link>` with `href` from `LinkOptions`.
- */
-export type ColumnCellType = "text" | "number" | "money" | "date" | "badge" | "link";
-
 export type { BadgeVariant } from "@/components/badge-list";
-
-/** Options for `type: "number"` cells. */
-export interface NumberCellOptions {
-  /** Minimum decimal places. Default: `0`. */
-  minDecimals?: number;
-  /** Maximum decimal places. Default: `minDecimals` (or `0`). */
-  maxDecimals?: number;
-  /** BCP 47 locale tag. Defaults to the runtime locale. */
-  locale?: string;
-}
-
-/** Options for `type: "money"` cells. */
-export interface MoneyCellOptions<TRow extends Record<string, unknown>> {
-  /**
-   * ISO 4217 currency code. Pass a string for a static currency or a function
-   * to read it from the row. Default: `"USD"`.
-   */
-  currency?: string | ((row: TRow) => string);
-  /**
-   * Maximum decimals. Raises the cap above the currency default while keeping
-   * the minimum at the currency default (e.g. USD stays at ≥2, but a price
-   * column can show up to 4).
-   */
-  maxDecimals?: number;
-  /** BCP 47 locale tag. Defaults to the runtime locale. */
-  locale?: string;
-}
-
-/** Options for `type: "date"` cells. */
-export interface DateCellOptions {
-  /**
-   * Format style. `"short"` → `Apr 9, 2026`; `"long"` → `April 9, 2026`;
-   * `"datetime"` → `Apr 9, 2026, 3:45 PM`. Default: `"short"`.
-   */
-  dateFormat?: "short" | "long" | "datetime";
-  /** BCP 47 locale tag. Defaults to the runtime locale. */
-  locale?: string;
-}
-
-/** Options for `type: "badge"` cells. */
-export interface BadgeCellOptions extends BadgeOptions {
-  /** Maximum number of badges to display before showing a "+N" overflow indicator */
-  maxVisible?: number;
-}
-
-/** Options for `type: "link"` cells. `href` is required. */
-export interface LinkCellOptions<TRow extends Record<string, unknown>> {
-  /**
-   * Extracts the link target. Returning `null` / `undefined` renders the cell
-   * value as plain text instead of a link.
-   */
-  href: (row: TRow) => string | null | undefined;
-}
 
 // =============================================================================
 // Inline editing
 // =============================================================================
-
-/** Row state passed to `edit.canEdit` alongside the row. */
-export interface CellEditState {
-  /** Whether the row is selected. Always `false` when row selection is off. */
-  selected: boolean;
-}
 
 /** Incomplete date-time editor state, interpreted in the AppShell timezone. */
 export interface DateTimeDraft {
@@ -208,35 +164,6 @@ export type NumberCellEditOptions<TRow extends Record<string, unknown>> = CellEd
   number,
   string
 >;
-
-/**
- * Header render context for non-sortable columns.
- */
-interface NonSortableHeaderRenderContext {
-  label?: string;
-  sortable: false;
-}
-
-/**
- * Header render context for sortable columns.
- */
-interface SortableHeaderRenderContext {
-  label?: string;
-  sortable: true;
-  sortDirection: "Asc" | "Desc" | undefined;
-  activateSort: () => void;
-}
-
-/**
- * Context passed to custom `header` renderers and `headerProps` callbacks.
- */
-export type HeaderRenderContext = NonSortableHeaderRenderContext | SortableHeaderRenderContext;
-
-/** Context passed to custom column `footer` renderers and `footerProps` callbacks. */
-export interface FooterRenderContext<TRow extends Record<string, unknown>> {
-  /** Current `data.rows` (the current page, not all records or only selected rows). */
-  rows: readonly TRow[];
-}
 
 type DataTableStringFilterOperator = Extract<
   OperatorForFilterType["string"],
@@ -595,35 +522,6 @@ export type RowExpansionOptions<TRow extends Record<string, unknown>> = {
     }
 );
 
-/** Controlled or uncontrolled row-selection configuration. Keep the mode stable while mounted. */
-export type RowSelectionOptions = {
-  /**
-   * Bulk actions for the selected IDs, shown in `DataTable.Footer` while at
-   * least one row is selected. The bar includes the selection count, these
-   * actions, and Clear, with pagination kept alongside. The first three actions
-   * render as buttons; the rest collapse into a "More actions" menu.
-   * Omit or pass an empty array to enable selection without an action bar.
-   */
-  actions?: SelectionAction[];
-} & (
-  | {
-      /**
-       * Controlled selected ids. Update this array from `onChange`.
-       * Commands issued before the owner commits each derive from this value.
-       */
-      selectedIds: string[];
-      onChange: (ids: string[]) => void;
-      defaultSelectedIds?: never;
-    }
-  | {
-      selectedIds?: never;
-      /** Initial selected ids in uncontrolled mode; subsequent changes are ignored. */
-      defaultSelectedIds?: string[];
-      /** Notification of user-driven selection changes, including under StrictMode. */
-      onChange?: (ids: string[]) => void;
-    }
-);
-
 /**
  * Options for `useDataTable` hook.
  */
@@ -714,14 +612,6 @@ export type UseDataTableOptions<
 // Row Actions
 // =============================================================================
 
-/** Presentation shared by row actions and selection actions. */
-export interface DataTableAction {
-  id: string;
-  label: string;
-  icon?: ReactNode;
-  variant?: "default" | "destructive";
-}
-
 /**
  * A single row action definition for the actions column.
  */
@@ -737,38 +627,6 @@ export interface RowAction<TRow extends Record<string, unknown>> extends DataTab
    */
   isDisabled?: (row: TRow) => boolean;
   onClick: (row: TRow) => void;
-}
-
-/** The second argument to `SelectionAction.onClick`. */
-export interface SelectionActionHelpers {
-  /** Empty the selection across all pages. */
-  clearSelection: () => void;
-  /**
-   * Hand the bar a request it should track — for one that starts after
-   * `onClick` has returned, typically from a confirm dialog's confirm button.
-   * The bar then behaves as if `onClick` had returned it: actions (and Clear)
-   * are disabled while it is pending. It never changes selection. Returns the
-   * request, so it can be awaited too.
-   */
-  run: <T>(request: PromiseLike<T>) => PromiseLike<T>;
-}
-
-/**
- * An ID-based bulk action shown in `DataTable.Footer` while a selection is open.
- * Configure through `UseDataTableOptions.rowSelection.actions`.
- */
-export interface SelectionAction extends DataTableAction {
-  /**
-   * Called with a click-time copy of all selected IDs, including unloaded rows.
-   * Consumers own eligibility checks, fetching, confirmation, and execution.
-   * Selection is never automatically cleared: update controlled selection based
-   * on the actual result, preserving ineligible IDs and any new selections.
-   *
-   * Return a promise to disable the bar and show a spinner while it is pending.
-   * For work started later by a confirmation dialog, pass the request to
-   * `helpers.run` instead. Neither success nor failure changes selection.
-   */
-  onClick: (ids: string[], helpers: SelectionActionHelpers) => void | Promise<unknown>;
 }
 
 /**

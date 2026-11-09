@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@tailor-platform/app-shell": ["./src/index.ts"]
     },
     "target": "ES2023",
     "lib": ["ES2023", "DOM"],
@@ -23,5 +24,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["."],
-  "exclude": ["tests/browser"]
+  "exclude": ["tests/browser", "dist"]
 }

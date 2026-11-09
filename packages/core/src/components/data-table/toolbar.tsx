@@ -6,7 +6,7 @@ import { DataTableColumnSettings } from "./column-settings";
 // DataTable.Toolbar
 // =============================================================================
 
-/** Use `DataTable.Toolbar` instead of calling this directly. */
+/** @deprecated Compose Toolbar.Root/Row/Group with DataTable.ColumnSettings instead. */
 function DataTableToolbar({
   children,
   columnSettings = false,

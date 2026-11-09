@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import { TableFrame } from "@/components/internals/table-core/frame";
 import { CollectionControlProvider } from "@/contexts/collection-control-context";
 import { Tooltip } from "@/components/tooltip";
 import type { UseDataTableReturn } from "./types";
@@ -73,26 +73,9 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
   const inner = (
     <Tooltip.Provider delay={300}>
       <DataTableContext.Provider value={dataTableValue}>
-        {/* flex-col + min-h-0 (no flex-1): natural height when content fits,
-            but able to shrink when the parent chain constrains height (e.g.
-            <Layout fill>). When shrunk, the Table region scrolls internally
-            while the Toolbar and Footer (shrink-0) stay visible.
-            overflow-clip, not overflow-hidden: both clip children to the
-            rounded frame, but `hidden` also makes this a scroll container,
-            which would pin the sticky selection-actions footer to the table
-            instead of letting it ride the page's scroll container. */}
-        <div
-          data-slot="data-table"
-          className={cn(
-            "astw:flex astw:flex-col astw:min-h-0 astw:overflow-clip astw:border astw:border-border astw:rounded-md astw:bg-card",
-            // A generic Toolbar becomes the table's top edge: preserve its top
-            // corners, but retain only the divider beneath it.
-            "astw:[&>[data-slot=toolbar]]:rounded-b-none astw:[&>[data-slot=toolbar]]:border-x-0 astw:[&>[data-slot=toolbar]]:border-t-0",
-            className,
-          )}
-        >
+        <TableFrame data-slot="data-table" className={className}>
           {children}
-        </div>
+        </TableFrame>
       </DataTableContext.Provider>
     </Tooltip.Provider>
   );

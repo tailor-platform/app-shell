@@ -80,8 +80,8 @@ function Harness({
 
 const wrapper = createAppShellWrapper("en");
 const rowCheckbox = (index: number) => screen.getAllByLabelText("Select row")[index];
-const queryBar = () => screen.queryByRole("toolbar", { name: "Bulk actions" });
-const getBar = () => screen.getByRole("toolbar", { name: "Bulk actions" });
+const queryBar = () => screen.queryByRole("group", { name: "Bulk actions" });
+const getBar = () => screen.getByRole("group", { name: "Bulk actions" });
 const actionButton = () => within(getBar()).getByRole("button", { name: "Archive" });
 const footerOf = (container: HTMLElement) =>
   container.querySelector<HTMLElement>('[data-slot="data-table-footer"]')!;
@@ -220,7 +220,7 @@ describe("DataTable selection actions", () => {
     expect(document.activeElement).toBe(screen.getByLabelText("Select all rows"));
   });
 
-  it("supports arrow-key navigation between the bar's controls", async () => {
+  it("keeps controls reachable with native Tab navigation without a Toolbar", async () => {
     const user = userEvent.setup();
     render(
       <Harness
@@ -230,8 +230,9 @@ describe("DataTable selection actions", () => {
     );
     await user.click(rowCheckbox(0));
     actionButton().focus();
-    await user.keyboard("{ArrowRight}");
+    await user.keyboard("{Tab}");
     expect(document.activeElement).toBe(within(getBar()).getByRole("button", { name: "Export" }));
+    expect(getBar().querySelector('[data-slot="toolbar-row"]')).toBeNull();
   });
 
   it("announces the count politely from the first selection on", () => {

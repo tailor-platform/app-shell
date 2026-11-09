@@ -102,6 +102,27 @@ components/
     component-name.test.tsx
 ```
 
+#### File naming
+
+Directories and files under `components/` are **kebab-case**: `date-field/`,
+`date-field.tsx`, `use-date-field-state.ts`, `types.ts`, `date-field.test.tsx`.
+Exported identifiers stay PascalCase (`export function DateField`), so the file
+name and the component name differ in case by design. The same rule applies
+under `components/internals/`.
+
+A few older composite components have a PascalCase main file. They are legacy,
+not precedent; do not copy them in new code:
+
+- `action-panel/ActionPanel.tsx`
+- `activity-card/ActivityCard.tsx`
+- `attachment/Attachment.tsx`
+- `csv-importer/CsvImporter.tsx`
+- `description-card/DescriptionCard.tsx`
+- `document-progress-card/DocumentProgressCard.tsx`
+- `grid/Grid.tsx`
+- `layout/Layout.tsx`
+- `metric-card/MetricCard.tsx`
+
 ```tsx
 // index.ts
 export * from "./component-name";

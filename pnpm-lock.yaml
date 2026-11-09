@@ -442,6 +442,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.60.1
         version: 7.60.1(@types/node@25.9.8)
+      '@tailor-platform/eslint-plugin-app-shell':
+        specifier: workspace:*
+        version: link:../eslint-plugin
       '@tailwindcss/postcss':
         specifier: 'catalog:'
         version: 4.3.3

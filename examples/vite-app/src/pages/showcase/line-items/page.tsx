@@ -1,5 +1,6 @@
 import {
   Button,
+  CellEditError,
   Layout,
   LineItems,
   Tabs,
@@ -17,6 +18,12 @@ type OrderLine = {
   unitPrice: number | null;
   status: string | null;
   dueDate: string | null;
+};
+
+const validateQuantity = (_row: Readonly<OrderLine>, value: number | null) => {
+  if (value === null || value <= 0) {
+    throw new CellEditError("Quantity must be greater than zero.");
+  }
 };
 
 const LineItemsPage = () => {
@@ -72,13 +79,19 @@ const LineItemsPage = () => {
         accessorKey: "quantity",
         label: "Quantity",
         type: "number",
-        edit: { editorType: "number", canEdit },
+        edit: { editorType: "number", canEdit, onValueCommitted: validateQuantity },
       },
       {
         accessorKey: "unitPrice",
         label: "Unit price",
         type: "money",
         edit: { editorType: "number", canEdit },
+      },
+      {
+        id: "total",
+        label: "Total",
+        type: "money",
+        accessor: (line) => (line.quantity ?? 0) * (line.unitPrice ?? 0),
       },
       {
         accessorKey: "status",
@@ -135,6 +148,12 @@ const LineItemsPage = () => {
             <Tabs.Tab value="readonly">Readonly</Tabs.Tab>
           </Tabs.List>
         </Tabs.Root>
+        {editable && (
+          <p className="astw:text-sm astw:text-muted-foreground">
+            Clear Quantity or enter zero or a negative number, then press Enter to see a validation
+            error.
+          </p>
+        )}
         <LineItems.Root value={lineItems}>
           <LineItems.Table aria-label="Order line items" />
         </LineItems.Root>

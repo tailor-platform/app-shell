@@ -13,10 +13,11 @@ import {
   toggleChecked,
   writeValue,
   type CheckedState,
-  type TreeNode,
   resolveSelectionStrategy,
+  type TreeNode,
+  type TreeSelectionPropagation,
+  type TreeValueStrategy,
 } from "./model";
-import type { TreeSelectionPropagation, TreeValueStrategy } from "./types";
 
 type Item = { key: string; name: string; children?: Item[]; disabled?: boolean };
 

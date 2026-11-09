@@ -64,12 +64,16 @@ When codes repeat with different meanings, like bin `A1` in two warehouses, comp
 A key can't be a parent in one place and a leaf in another. One key is one item, and an item can't both have children and not, so those rows can't tick consistently. The tree logs a console warning naming any such keys.
 
 ```tsx
+const isWarehouse = (node: Warehouse | Bin): node is Warehouse => "bins" in node;
+
 mapItem={(item, { parents }) =>
-  "bins" in item
+  isWarehouse(item)
     ? { key: item.id, label: item.name, children: item.bins }
-    : { key: `${(parents[0] as Warehouse).id}/${item.code}`, label: item.code }
+    : { key: `${parents.find(isWarehouse)?.id}/${item.code}`, label: item.code }
 }
 ```
+
+`parents` has the same union type as `items`, so the example narrows it with a type guard rather than a cast (`parents[0] as Warehouse`). A cast tells TypeScript to trust you, and throws at runtime if there's no warehouse above. The guard has TypeScript check it, so that case stays visible (`?.id`) and you decide how to handle it.
 
 ## Selection modes
 
@@ -233,6 +237,8 @@ How a parent behaves next to disabled children depends on whether it's a contain
 A checkbox tree in a dialog, with search. It takes the same item, row and ticking props as `Tree`, plus the search and commit props. Each open starts empty, and `onCommit` receives the value's items in tree order. Ticking a group while searching ticks its matching items, as described under [Filtering](#filtering).
 
 ```tsx
+const isProduct = (item: Category | Product): item is Product => "sku" in item;
+
 <TreePicker
   open={open}
   onOpenChange={setOpen}
@@ -241,9 +247,11 @@ A checkbox tree in a dialog, with search. It takes the same item, row and tickin
   mapItem={mapCatalogItem}
   renderItem={renderCatalogItem}
   matchesSearch={(item, query) => item.name.toLowerCase().includes(query.toLowerCase())}
-  onCommit={(picked) => addToOrder(picked.map((entry) => entry.item as Product))}
-/>
+  onCommit={(picked) => addToOrder(picked.flatMap(({ item }) => (isProduct(item) ? [item] : [])))}
+/>;
 ```
+
+`onCommit`'s items have the union type too, so narrow them with a type guard rather than casting to `Product`. With the default `"leaves"` only products come back, but a guard keeps that true if you later switch to `"topmost"` or `"all"`, which can return categories.
 
 ## Props
 
@@ -289,18 +297,18 @@ With `selectionMode="checkbox"`:
 
 ### TreePicker
 
-| Prop                | Type                                        | Default          | Description                                                         |
-| ------------------- | ------------------------------------------- | ---------------- | ------------------------------------------------------------------- |
-| `open`              | `boolean`                                   | required         | Controls dialog visibility.                                         |
-| `onOpenChange`      | `(open: boolean) => void`                   | required         | Fires on every user-driven open or close, including after a commit. |
-| `onCommit`          | `(selected: TreeSelectedItem<T>[]) => void` | required         | Receives the value's items in tree order.                           |
-| `selectionStrategy` | as on `Tree`                                | `"leaves"`       | How ticking works while picking.                                    |
-| `matchesSearch`     | `(item: T, query: string) => boolean`       | match on `label` | Search predicate. An item is kept when it or a descendant matches.  |
-| `filterSlot`        | `ReactNode`                                 | –                | Beside the search input, e.g. a category filter.                    |
-| `searchPlaceholder` | `string`                                    | `"Search"`       | Search input placeholder.                                           |
-| `title`             | `ReactNode`                                 | `"Select items"` | Dialog title. Also labels the tree for assistive tech.              |
-| `ctaLabel`          | `(count: number) => ReactNode`              | `"Add N items"`  | Primary button label.                                               |
-| `className`         | `string`                                    | –                | Merged onto the dialog panel.                                       |
+| Prop                | Type                                                               | Default          | Description                                                         |
+| ------------------- | ------------------------------------------------------------------ | ---------------- | ------------------------------------------------------------------- |
+| `open`              | `boolean`                                                          | required         | Controls dialog visibility.                                         |
+| `onOpenChange`      | `(open: boolean) => void`                                          | required         | Fires on every user-driven open or close, including after a commit. |
+| `onCommit`          | `(selected: TreeSelectedItem<T>[]) => void`                        | required         | Receives the value's items in tree order.                           |
+| `selectionStrategy` | as on `Tree`                                                       | `"leaves"`       | How ticking works while picking.                                    |
+| `matchesSearch`     | `(item: T, query: string, context: { label, parents }) => boolean` | match on `label` | Search predicate. An item is kept when it or a descendant matches.  |
+| `filterSlot`        | `ReactNode`                                                        | –                | Beside the search input, e.g. a category filter.                    |
+| `searchPlaceholder` | `string`                                                           | `"Search"`       | Search input placeholder.                                           |
+| `title`             | `ReactNode`                                                        | `"Select items"` | Dialog title. Also labels the tree for assistive tech.              |
+| `ctaLabel`          | `(count: number) => ReactNode`                                     | `"Add N items"`  | Primary button label.                                               |
+| `className`         | `string`                                                           | –                | Merged onto the dialog panel.                                       |
 
 The default labels are localised (English and Japanese) through the app's locale, like DataTable's. Passing a label prop overrides it.
 

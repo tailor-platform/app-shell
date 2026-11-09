@@ -15,8 +15,8 @@ import type { TreeContentProps, TreeRowState, TreeSelectionMode } from "./types"
  * their nesting through `aria-level`, which is the flattened form of the ARIA
  * tree pattern.
  *
- * The checkbox comes from `getCheckState`: with `"full"` propagation a parent's
- * state is derived from its leaves, otherwise each row shows its own.
+ * The checkbox comes from `getCheckState`: where parents are containers, a
+ * parent's state is derived from its leaves; otherwise each row shows its own.
  */
 
 type TreeRowProps<T> = Pick<TreeContentProps<T>, "renderItem"> & {

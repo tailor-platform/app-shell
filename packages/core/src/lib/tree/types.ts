@@ -24,12 +24,6 @@ export type TreeSelectionBehaviorProps = {
   selectionStrategy?: TreeSelectionStrategy;
 };
 
-/** Internal: how ticking spreads through the tree. */
-export type TreeSelectionPropagation = "full" | "down" | "none";
-
-/** Internal: what the value lists. */
-export type TreeValueStrategy = "leaves" | "topmost" | "all";
-
 /** How the model reads one of your items: its identity, text, children and lock. */
 export type TreeNodeInput<T> = {
   key: string;

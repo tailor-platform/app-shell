@@ -44,6 +44,7 @@ type SubmittedEntry = { id: string; value: string };
  * @example
  * ```tsx
  * // warehouses: (Warehouse | Bin)[], so `mapItem` can return either level.
+ * const isWarehouse = (node: Warehouse | Bin): node is Warehouse => "bins" in node;
  * const [bins, setBins] = useState<string[]>([]);
  *
  * <Field.Root name="bins">
@@ -52,9 +53,11 @@ type SubmittedEntry = { id: string; value: string };
  *     className="astw:h-96"
  *     items={warehouses}
  *     mapItem={(item, { parents }) =>
- *       "bins" in item
+ *       isWarehouse(item)
  *         ? { key: item.id, label: item.name, children: item.bins }
- *         : { key: `${(parents[0] as Warehouse).id}/${item.code}`, label: item.code }
+ *         : // `parents` is the union too. A guard, unlike a cast, has TypeScript
+ *           // check there's a warehouse above (hence `?.`).
+ *           { key: `${parents.find(isWarehouse)?.id}/${item.code}`, label: item.code }
  *     }
  *     selectionMode="checkbox"
  *     value={bins}
@@ -158,10 +161,10 @@ export function Tree<T>(props: TreeProps<T>) {
    * counts. Where parents are containers, one with no enabled leaves is locked
    * too; elsewhere a parent is an item in its own right and stays usable.
    */
-  const fullPropagation = !!checkbox && parentsAreContainers;
+  const lockEmptyParents = !!checkbox && parentsAreContainers;
   const isNodeDisabled = React.useCallback(
-    (node: TreeNode<T>) => node.disabled || (fullPropagation && node.noEnabledLeaves),
-    [fullPropagation],
+    (node: TreeNode<T>) => node.disabled || (lockEmptyParents && node.noEnabledLeaves),
+    [lockEmptyParents],
   );
 
   const selectNode = React.useCallback(

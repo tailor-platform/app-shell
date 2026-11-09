@@ -1,4 +1,5 @@
 import {
+  Button,
   Layout,
   LineItems,
   useLineItems,
@@ -6,8 +7,10 @@ import {
 } from "@tailor-platform/app-shell";
 import { ListIcon } from "lucide-react";
 
+type OrderLine = { id?: string; item: string; quantity: number; unitPrice: number };
+
 const LineItemsPage = () => {
-  const lineItems = useLineItems({
+  const lineItems = useLineItems<OrderLine>({
     defaultLines: [
       { id: "line-1", item: "Notebook", quantity: 2, unitPrice: 5 },
       { id: "line-2", item: "Pen", quantity: 3, unitPrice: 1.5 },
@@ -19,12 +22,48 @@ const LineItemsPage = () => {
       { accessorKey: "item", label: "Item" },
       { accessorKey: "quantity", label: "Quantity", type: "number" },
       { accessorKey: "unitPrice", label: "Unit price", type: "money" },
+      {
+        id: "actions",
+        label: "Actions",
+        align: "right",
+        render: (line) => (
+          <Button
+            type="button"
+            variant="link"
+            className="astw:h-auto astw:p-0"
+            aria-label={`Delete ${line.item}`}
+            onClick={() => lineItems.removeLine(lineItems.getLineKey(line))}
+          >
+            Delete
+          </Button>
+        ),
+      },
     ],
   });
 
   return (
     <Layout>
-      <Layout.Header title="Line Items" />
+      <Layout.Header
+        title="Line Items"
+        actions={[
+          <Button
+            key="add"
+            type="button"
+            onClick={() => lineItems.addLine({ item: "New item", quantity: 1, unitPrice: 1 })}
+          >
+            Add line
+          </Button>,
+          <Button
+            key="revert"
+            type="button"
+            variant="outline"
+            disabled={!lineItems.isDirty}
+            onClick={lineItems.revert}
+          >
+            Discard changes
+          </Button>,
+        ]}
+      />
       <Layout.Column>
         <LineItems.Root value={lineItems}>
           <LineItems.Table aria-label="Order line items" />

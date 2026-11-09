@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { DataTable, LineItems, useDataTable, useLineItems } from "@tailor-platform/app-shell";
 import { expect, it } from "vitest";
 import { page } from "vitest/browser";
+import LineItemsPage from "../../../../examples/vite-app/src/pages/showcase/line-items/page";
 
 function OrderLines() {
   const value = useLineItems({
@@ -37,6 +38,56 @@ function StandardTable() {
     </DataTable.Root>
   );
 }
+
+it("demonstrates adding, removing and reverting lines in the example without taller rows", async () => {
+  const user = userEvent.setup();
+  render(
+    <>
+      <LineItemsPage />
+      <StandardTable />
+    </>,
+  );
+  const table = screen.getByRole("table", { name: "Order line items" });
+  const names = () =>
+    within(table)
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => within(row).getAllByRole("cell")[1].textContent);
+  const initial = ["Notebook", "Pen", "Pencil", "Eraser", "Ruler"];
+  const discard = screen.getByRole("button", { name: "Discard changes" });
+  expect(names()).toEqual(initial);
+  expect(discard.hasAttribute("disabled")).toBe(true);
+  const standard = screen.getAllByRole("table")[1];
+  expect(within(table).getAllByRole("row")[1].getBoundingClientRect().height).toBe(
+    within(standard).getAllByRole("row")[1].getBoundingClientRect().height,
+  );
+
+  await user.click(screen.getByRole("button", { name: "Add line" }));
+  expect(names()).toEqual([...initial, "New item"]);
+  expect(discard.hasAttribute("disabled")).toBe(false);
+  await user.click(screen.getByRole("button", { name: "Delete New item" }));
+  expect(names()).toEqual(initial);
+  expect(discard.hasAttribute("disabled")).toBe(true);
+
+  await user.click(screen.getByRole("button", { name: "Add line" }));
+  await user.click(screen.getByRole("button", { name: "Delete Notebook" }));
+  await user.click(screen.getByRole("button", { name: "Reorder line 2" }));
+  await user.keyboard("{ArrowUp}");
+  expect(names()).toEqual(["Pencil", "Pen", "Eraser", "Ruler", "New item"]);
+  await user.click(discard);
+  expect(names()).toEqual(initial);
+  expect(discard.hasAttribute("disabled")).toBe(true);
+
+  for (const item of initial) {
+    await user.click(screen.getByRole("button", { name: `Delete ${item}` }));
+  }
+  expect(within(table).getByText("No lines yet.")).toBeDefined();
+  await user.click(screen.getByRole("button", { name: "Add line" }));
+  expect(names()).toEqual(["New item"]);
+  await user.click(discard);
+  expect(names()).toEqual(initial);
+  expect(discard.hasAttribute("disabled")).toBe(true);
+});
 
 it("matches DataTable row height without a button hover highlight or shifting drop guides", async () => {
   render(

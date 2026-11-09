@@ -1,3 +1,5 @@
+import { splitVariants } from "../class-tokens";
+
 type Node = {
   value?: unknown;
 };
@@ -122,19 +124,6 @@ function replaceVariable(name: string): string {
   const [, alertIntent, part] = /^--alert-([a-z]+)-(.+)$/.exec(name) ?? [];
   if (alertIntent === "neutral" && part === "foreground-muted") return "--muted-foreground";
   return `--${ALERT_INTENTS[alertIntent]}-${ALERT_ROLES[part]}`;
-}
-
-/** Split a class token into its variant prefix (`hover:`, `dark:`, ...) and the utility. */
-function splitVariants(token: string): { variants: string; utility: string } {
-  let depth = 0;
-  let cut = -1;
-  for (let i = 0; i < token.length; i++) {
-    const char = token[i];
-    if (char === "[" || char === "(") depth++;
-    else if (char === "]" || char === ")") depth--;
-    else if (char === ":" && depth === 0) cut = i;
-  }
-  return { variants: token.slice(0, cut + 1), utility: token.slice(cut + 1) };
 }
 
 function findDeprecated(text: string): { found: string; replacement: string }[] {

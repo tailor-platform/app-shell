@@ -1,4 +1,4 @@
-export { CsvImporter } from "./CsvImporter";
+export { CsvImporter } from "./csv-importer";
 export { useCsvImporter } from "./use-csv-importer";
 export { csv } from "./validators";
 export type {

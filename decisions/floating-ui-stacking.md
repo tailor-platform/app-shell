@@ -1,6 +1,6 @@
 # Decision: one stacking rule for floating UI
 
-> Status: **Decided for the first step. The Toaster portals to `body`, `--z-toast` (100) is added, the layout root is isolated, and two guard tests hold the rule.**
+> Status: **Decided for the first step. The Toaster portals to `body`, `--z-toast` (100) is added, the layout root is isolated, and two guard tests hold the rule. Step 3 implemented: the tokens are `--z-nav` (10), `--z-portal` (50) and `--z-toast` (100); `--z-sidebar`, `--z-popup` and `--z-overlay` are aliases until the next major (tailor-inc/platform-planning#2084), and `--z-sidebar-rail` is a value inside the sidebar.**
 > Scope: the stacking order of dialogs, sheets, menus, selects, comboboxes, tooltips and toasts in `packages/core`; the `--z-*` tokens in `globals.css`. Token renames and the toast position on narrow screens are later steps.
 
 ## Context
@@ -54,7 +54,7 @@ The value is set as an inline style on Sonner's `[data-sonner-toaster]`, not as 
 
 ## Not in this step
 
-- Renaming the tokens to `--z-nav` / `--z-portal` with the old names kept as aliases (step 3 in #2349).
+- ~~Renaming the tokens to `--z-nav` / `--z-portal` with the old names kept as aliases (step 3 in #2349).~~ Done; see the status line.
 - The toast's bottom inset on narrow screens, which must clear the bottom bar, the keyboard and the safe area (step 4, under tailor-inc/platform-planning#2207).
 - A different value for `--z-toast`; 100 is the proposed value in #2349.
 

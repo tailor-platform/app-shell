@@ -86,7 +86,7 @@ This step is the status part of a two-axis palette. The rest is planned as follo
 | Danger action      | red                                                                            | `--destructive` becomes an alias of `--danger-solid` once its text and border uses move to `--danger-text` / `--danger-border` | done (2026-10-06)              |
 | Brand              | an accent scale per theme (bloom and cream read blue, theme-tailor reads cyan) | `--primary`, `--ring` and brand tints read accent steps                                                                        | with the Theme Generator       |
 
-`--status-*` and `--alert-*` stay as aliases for consumer code and are deprecated: the docs and changeset say so, and they are removed in the next major. Shipped components read the roles. An ESLint rule in `@tailor-platform/eslint-plugin-app-shell` that flags the old utilities and offers the role as a fix is a separate change. Update 2026-10-26: that rule is `no-deprecated-tokens`. It is in `recommended` as a warning, because the old names still work until the next major. It names the replacement in the message but does not fix the code, because a tint such as `bg-destructive/10` maps to `bg-danger-surface` only approximately and the result should be checked in light and dark mode.
+`--status-*` and `--alert-*` stay as aliases for consumer code and are deprecated: the docs and changeset say so, and they are removed in the next major. Shipped components read the roles. An ESLint rule in `@tailor-platform/eslint-plugin-app-shell` that flags the old utilities and offers the role as a fix is a separate change. Update 2026-10-26: that rule is `no-deprecated-tokens`. It is in `recommended` as a warning, because the old names still work until the next major. It names the replacement in the message but does not fix the code, because a tint such as `bg-destructive/10` maps to `bg-danger-surface` only approximately and the result should be checked in light and dark mode. Update 2026-11-05: core's own `.oxlintrc.jsonc` enables the rule as an error, so core cannot use the old names again. A lint rule is used instead of a test that matches the source text, because it reads strings rather than comments and reports in the editor.
 
 The component variant names (`Badge` and `Alert` `error`, Badge `neutral`) are public API and are not renamed here. Aligning them with the intent names (`error` → `danger`) is a breaking change; it is a candidate for the next major, together with removing `--status-*` and `--alert-*`.
 
@@ -158,7 +158,7 @@ AppShell's thresholds are 4.5:1 for text (WCAG 1.4.3) and 3:1 for non-text (WCAG
 
 - In `cream` and `bloom`, the main content area is transparent over the shell gradient. At the top of the bloom light gradient (55% of `--shell-gradient-base`), `text` on `surface` is 4.49:1 for success and 4.48:1 for danger. cream light is 4.68:1 or more. The figure under "Not guaranteed" (4.16:1 over `#efe8ff`) used `--shell-gradient-base` itself, which the gradient covers.
 - `warning` `solid` and `indicator` are 2.15:1 against a light card. They are used with a label.
-- The neutral intent is not checked.
+- The neutral intent is not checked. Update 2026-10-30: the test now checks it in every palette and mode. `text` on `surface` and `surface-hover`, and `contrast` on `solid` and `solid-hover`, are at least 4.5:1, so it is no longer an exception.
 
 This supersedes "The `cream` and `bloom` palettes and their tinted shell backgrounds" under "Not guaranteed".
 

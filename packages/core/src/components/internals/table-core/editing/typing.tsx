@@ -25,32 +25,27 @@ import {
   CELL_ERROR_CLASS_NAME,
   ICON_INPUT_CLASS_NAME,
   INPUT_CLASS_NAME,
-  EditableCellFrame,
   useCellError,
   useNavigationRef,
 } from "./shared";
-import type { CellEditorConfig, CellEditorProps } from "./props";
+import type { CellEditorProps } from "./props";
 
-export function TypingEditCell({
+export function TypingEditor({
   config,
   current,
-  display,
   change = () => undefined,
   commit,
   renderError,
   labels,
-  slotPrefix,
   interceptErrors = true,
   session: external,
-  truncate,
   rowKey,
   colKey,
   label,
   align,
   navigation,
-  cellProps,
-  tooltipLabel,
-}: CellEditorProps & { config: Extract<CellEditorConfig, { type: "text" | "number" }> }) {
+  children,
+}: CellEditorProps<{ type: "text" | "number" }>) {
   const errorId = useId();
   const session = useCellEditSession<string>(interceptErrors, external);
   const { state } = session;
@@ -193,74 +188,68 @@ export function TypingEditCell({
 
   const hint = labels.revertHint;
 
-  return (
-    <EditableCellFrame
-      labels={labels}
-      slotPrefix={slotPrefix}
-      cellProps={cellProps}
-      display={display}
-      truncate={truncate}
-      hideDisplay={editing ? "focused" : "forced-colors"}
-      tooltipLabel={tooltipLabel}
-      editing={editing}
-      callbackError={callbackError}
-      onEditorLeave={handleBlur}
-      onEditorCancel={() => revert(true)}
-      getFailure={session.getFailure}
-      confirming={state.status === "confirming"}
-    >
-      {message !== undefined && (
-        <span id={errorId} className="astw:sr-only">
-          {message}. {hint}
-        </span>
-      )}
-      <Tooltip.Root open={message !== undefined && (focused || hovered)}>
-        <Tooltip.Trigger
-          render={
-            <Input
-              ref={register}
-              type="text"
-              value={text}
-              readOnly={!editing}
-              aria-label={label}
-              aria-invalid={message !== undefined || callbackError ? true : undefined}
-              aria-describedby={message !== undefined ? errorId : callbackError?.id}
-              aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
-              inputMode={numeric ? "text" : undefined}
-              enterKeyHint="done"
-              autoComplete="off"
-              spellCheck={numeric ? false : undefined}
-              className={cn(
-                INPUT_CLASS_NAME,
-                !editing && "astw:text-transparent",
-                numeric && "astw:tabular-nums",
-                align === "right" && "astw:text-right",
-                align === "center" && "astw:text-center",
-                (message !== undefined || callbackError) && CELL_ERROR_CLASS_NAME,
-                callbackError && ICON_INPUT_CLASS_NAME,
-              )}
-              style={editing ? { WebkitTouchCallout: "default" } : undefined}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              onFocus={handleFocus}
-              onCompositionStart={() => {
-                composingRef.current = true;
-              }}
-              onCompositionEnd={handleCompositionEnd}
-              onMouseDown={handleMouseDown}
-              onMouseUp={handleMouseUp}
-              onPointerEnter={() => setHovered(true)}
-              onPointerLeave={() => setHovered(false)}
-              onContextMenu={stopWhileEditing}
-              onTouchStart={stopWhileEditing}
-            />
-          }
-        />
-        <Tooltip.Content>
-          {message}
-          <span className="astw:block astw:opacity-70">{hint}</span>
-        </Tooltip.Content>
-      </Tooltip.Root>
-    </EditableCellFrame>
-  );
+  return children({
+    editing,
+    callbackError,
+    onEditorLeave: handleBlur,
+    onEditorCancel: () => revert(true),
+    getFailure: session.getFailure,
+    confirming: state.status === "confirming",
+    input: (
+      <>
+        {message !== undefined && (
+          <span id={errorId} className="astw:sr-only">
+            {message}. {hint}
+          </span>
+        )}
+        <Tooltip.Root open={message !== undefined && (focused || hovered)}>
+          <Tooltip.Trigger
+            render={
+              <Input
+                ref={register}
+                type="text"
+                value={text}
+                readOnly={!editing}
+                aria-label={label}
+                aria-invalid={message !== undefined || callbackError ? true : undefined}
+                aria-describedby={message !== undefined ? errorId : callbackError?.id}
+                aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
+                inputMode={numeric ? "text" : undefined}
+                enterKeyHint="done"
+                autoComplete="off"
+                spellCheck={numeric ? false : undefined}
+                className={cn(
+                  INPUT_CLASS_NAME,
+                  !editing && "astw:text-transparent",
+                  numeric && "astw:tabular-nums",
+                  align === "right" && "astw:text-right",
+                  align === "center" && "astw:text-center",
+                  (message !== undefined || callbackError) && CELL_ERROR_CLASS_NAME,
+                  callbackError && ICON_INPUT_CLASS_NAME,
+                )}
+                style={editing ? { WebkitTouchCallout: "default" } : undefined}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                onFocus={handleFocus}
+                onCompositionStart={() => {
+                  composingRef.current = true;
+                }}
+                onCompositionEnd={handleCompositionEnd}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onPointerEnter={() => setHovered(true)}
+                onPointerLeave={() => setHovered(false)}
+                onContextMenu={stopWhileEditing}
+                onTouchStart={stopWhileEditing}
+              />
+            }
+          />
+          <Tooltip.Content>
+            {message}
+            <span className="astw:block astw:opacity-70">{hint}</span>
+          </Tooltip.Content>
+        </Tooltip.Root>
+      </>
+    ),
+  });
 }

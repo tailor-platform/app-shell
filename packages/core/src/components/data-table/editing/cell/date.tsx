@@ -1,4 +1,4 @@
-import { DateEditCell as CoreDateEditCell } from "@/components/internals/table-core/editing/date";
+import { EditableCell } from "@/components/internals/table-core/editing/cell";
 import { useEditorProps, type EditableColumn, type DataTableEditableCellProps } from "./shared";
 
 type DateColumn<TRow extends Record<string, unknown>> = Extract<
@@ -11,7 +11,7 @@ export function DateEditCell<TRow extends Record<string, unknown>>(
 ) {
   const coreProps = useEditorProps(props);
   return (
-    <CoreDateEditCell
+    <EditableCell
       {...coreProps}
       config={{ type: "date", withTime: props.col.typeOptions?.dateFormat === "datetime" }}
     />

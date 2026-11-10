@@ -10,7 +10,7 @@ import { useLineItemsT } from "./i18n";
 import { useLineItemsReorder } from "./use-line-items-reorder";
 import { clientKeyOf } from "./document/identity";
 import { getLineItemsEditing } from "./editing";
-import { LineItemsCell } from "./line-items-cell";
+import { LineItemsDisplayCell, LineItemsEditableCell } from "./line-items-cell";
 import type { UseLineItemsReturn } from "./types";
 
 export type LineItemsRootProps<T extends Record<string, unknown>> = {
@@ -53,19 +53,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
   const columns = useMemo(
     () =>
       value.columns.map((column) => {
-        const choices = column.edit?.editorType === "combobox" ? column.edit.options : undefined;
-        const renderValue = column.render
-          ? undefined
-          : createValueRenderer(column, timeZone, {
-              resolveBadgeLabel: choices
-                ? (raw) => choices.find((option) => option.value === raw)?.label ?? raw
-                : undefined,
-            });
-        const renderEditableValue =
-          !column.render && column.type === "link" && column.edit
-            ? createValueRenderer({ type: "text" }, timeZone)
-            : renderValue;
-        return {
+        const cell = {
           column,
           id: column.id ?? column.accessorKey!,
           align:
@@ -73,8 +61,30 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
             (column.type === "number" || column.type === "money"
               ? ("right" as const)
               : ("left" as const)),
-          renderValue,
-          renderEditableValue,
+        };
+        if (column.render) return { ...cell, renderDisplay: column.render };
+        const choices = column.edit?.editorType === "combobox" ? column.edit.options : undefined;
+        const renderValue = createValueRenderer(column, timeZone, {
+          resolveBadgeLabel: choices
+            ? (raw) => choices.find((option) => option.value === raw)?.label ?? raw
+            : undefined,
+        });
+        const renderEditableValue =
+          column.type === "link" && column.edit
+            ? createValueRenderer({ type: "text" }, timeZone)
+            : renderValue;
+        return {
+          ...cell,
+          renderDisplay: (row: Record<string, unknown>, editable: boolean) => {
+            const current =
+              column.accessorKey !== undefined ? row[column.accessorKey] : column.accessor?.(row);
+            const render = editable ? renderEditableValue : renderValue;
+            if (!choices || column.type === "badge") return render(current, row);
+            return render(
+              choices.find((option) => option.value === current)?.label ?? current,
+              row,
+            );
+          },
         };
       }),
     [value.columns, timeZone],
@@ -118,36 +128,26 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                 </button>
               </Table.Cell>
             )}
-            {columns.map(({ column, id, align, renderValue, renderEditableValue }) => {
-              let current: unknown;
-              if (!column.render)
-                current =
-                  column.accessorKey !== undefined
-                    ? row[column.accessorKey]
-                    : column.accessor?.(row);
-              const choiceLabel =
-                column.edit?.editorType === "combobox" && column.type !== "badge"
-                  ? column.edit.options.find((option) => option.value === current)?.label
-                  : undefined;
-              const renderDisplay = (editable: boolean) =>
-                column.render
-                  ? column.render(row)
-                  : (editable ? renderEditableValue! : renderValue!)(choiceLabel ?? current, row);
-              return column.edit ? (
-                <LineItemsCell
+            {columns.map(({ column, id, align, renderDisplay }) => {
+              const edit = column.edit;
+              if (!edit || !(edit.canEdit?.(row) ?? true))
+                return (
+                  <LineItemsDisplayCell key={id} align={align}>
+                    {renderDisplay(row, false)}
+                  </LineItemsDisplayCell>
+                );
+              return (
+                <LineItemsEditableCell
                   key={id}
                   row={row}
                   column={column}
+                  edit={edit}
                   index={index}
                   editing={getLineItemsEditing(value)}
-                  renderDisplay={renderDisplay}
+                  display={renderDisplay(row, true)}
                   timeZone={timeZone}
                   cellProps={{ align }}
                 />
-              ) : (
-                <Table.Cell key={id} align={align}>
-                  {renderDisplay(false)}
-                </Table.Cell>
               );
             })}
           </Table.Row>

@@ -239,12 +239,16 @@ describe("LineItems cell editing integration", () => {
       edit: { ...nameColumn.edit, canEdit },
     };
     const editor = setup([column, { accessorKey: "allowed" }]);
+    const input = textbox();
+    draft(input, "Discarded");
     expect(screen.queryByRole("link")).toBeNull();
     act(() => editor.value.updateField("A", "allowed", false));
     expect(screen.queryByRole("textbox")).toBeNull();
     expect(screen.getByRole("link", { name: "Widget" }).getAttribute("href")).toBe("/products/A");
     act(() => editor.value.updateField("A", "allowed", true));
     expect(screen.queryByRole("link")).toBeNull();
+    expect(textbox()).not.toBe(input);
+    expect(textbox().value).toBe("Widget");
     draft(textbox(), "Changed");
     fireEvent.keyDown(textbox(), { key: "Enter" });
     expect(editor.value.lines[0].name).toBe("Changed");
@@ -282,6 +286,20 @@ describe("LineItems cell editing integration", () => {
       expect(href).not.toHaveBeenCalled();
     },
   );
+
+  it("skips choice-label lookup for custom-rendered readonly cells", () => {
+    const options = [...statusColumn.edit.options];
+    const find = vi.spyOn(options, "find");
+    setup([
+      {
+        ...statusColumn,
+        render: () => null,
+        edit: { ...statusColumn.edit, options, canEdit: () => false },
+      },
+    ]);
+    expect(screen.getByRole("cell").textContent).toBe("");
+    expect(find).not.toHaveBeenCalled();
+  });
 
   it("uses the same badges for fixed-choice display and menu labels", async () => {
     const column: LineItemsColumn<Row> = {

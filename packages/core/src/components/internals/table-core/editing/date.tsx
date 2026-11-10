@@ -1,25 +1,18 @@
 import { useState, type KeyboardEvent } from "react";
 import { Popover } from "@base-ui/react/popover";
 import type { CalendarDate } from "@internationalized/date";
-import { CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Calendar } from "@/components/calendar";
 import { Input } from "@/components/input";
 import { sameDate, toCalendarDate, toIsoDateTime, toTimeText } from "../input-values";
-import type {
-  CellEditorConfig,
-  CellEditorNavigation,
-  CellEditorProps,
-  DateTimeDraft,
-} from "./props";
+import type { CellEditorNavigation, CellEditorProps, DateTimeDraft } from "./props";
 import { useCellEditSession } from "./use-session";
 import {
   OVERLAY_CLASS_NAME,
   CELL_FOCUS_CLASS_NAME,
   CELL_ERROR_CLASS_NAME,
   POPUP_CLASS_NAME,
-  EditableCellFrame,
   useCellError,
   useNavigationRef,
 } from "./shared";
@@ -44,10 +37,10 @@ function tabBetweenCells(
   if (navigation?.move(from, event.shiftKey ? "prev" : "next")) event.preventDefault();
 }
 
-export function DateEditCell({
+export function DateEditor({
   config,
   current,
-  display,
+  valueLabel,
   change = () => undefined,
   commit,
   renderError,
@@ -55,15 +48,13 @@ export function DateEditCell({
   slotPrefix,
   interceptErrors = true,
   session: external,
-  truncate,
   timeZone,
   rowKey,
   colKey,
   label,
   navigation,
-  cellProps,
-  tooltipLabel,
-}: CellEditorProps & { config: Extract<CellEditorConfig, { type: "date" }> }) {
+  children,
+}: CellEditorProps<{ type: "date"; withTime?: boolean }> & { valueLabel?: string }) {
   const withTime = config.withTime ?? false;
   const session = useCellEditSession<DateTimeDraft>(interceptErrors, external);
   const { state } = session;
@@ -119,9 +110,10 @@ export function DateEditCell({
   const draftDisplay = withTime
     ? `${activeDraft.day ?? "—"} ${activeDraft.time ?? "—"}`
     : (activeDraft.day ?? "—");
-  const visibleDisplay = state.status === "idle" ? display : draftDisplay;
-  // The trigger's accessible name carries the date hidden in the visual display.
-  const accessibleName = typeof visibleDisplay === "string" ? `${label}, ${visibleDisplay}` : label;
+  const draftPreview = state.status === "idle" ? undefined : draftDisplay;
+  // The trigger names the date hidden in the cell's visual preview.
+  const accessibleValue = draftPreview ?? valueLabel;
+  const accessibleName = accessibleValue !== undefined ? `${label}, ${accessibleValue}` : label;
 
   const handleOpenChange = (next: boolean, details?: Popover.Root.ChangeEventDetails) => {
     if (
@@ -155,21 +147,14 @@ export function DateEditCell({
     if (!withTime) finish(day.toString());
   };
 
-  return (
-    <EditableCellFrame
-      labels={labels}
-      slotPrefix={slotPrefix}
-      cellProps={cellProps}
-      display={visibleDisplay}
-      truncate={truncate}
-      icon={<CalendarDays />}
-      tooltipLabel={tooltipLabel}
-      editing={open}
-      callbackError={callbackError}
-      onEditorCancel={cancelEditing}
-      getFailure={session.getFailure}
-      confirming={state.status === "confirming"}
-    >
+  return children({
+    editing: open,
+    callbackError,
+    onEditorCancel: cancelEditing,
+    getFailure: session.getFailure,
+    confirming: state.status === "confirming",
+    draftPreview,
+    input: (
       <Popover.Root open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger
           ref={register}
@@ -248,6 +233,6 @@ export function DateEditCell({
           </Popover.Positioner>
         </Popover.Portal>
       </Popover.Root>
-    </EditableCellFrame>
-  );
+    ),
+  });
 }

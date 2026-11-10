@@ -5,10 +5,10 @@ import {
   type ComponentProps,
   type FocusEvent,
   type MouseEvent,
+  type ReactNode,
   type TouchEvent,
 } from "react";
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
-import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isComposing } from "@/lib/is-composing";
 import { ComboboxParts } from "@/components/combobox";
@@ -18,11 +18,10 @@ import {
   CELL_ERROR_CLASS_NAME,
   ICON_INPUT_CLASS_NAME,
   INPUT_CLASS_NAME,
-  EditableCellFrame,
   useCellError,
   useNavigationRef,
 } from "./shared";
-import type { CellEditorConfig, CellEditorProps } from "./props";
+import type { CellEditorProps } from "./props";
 
 /** One dropdown choice; `value: null` is "None". */
 interface Choice {
@@ -40,26 +39,26 @@ const isChoiceEqual = (a: Choice, b: Choice) => a.value === b.value;
 
 const choiceLabel = (choice: Choice) => choice.label;
 
-export function ChoiceEditCell({
+export function ChoiceEditor({
   config,
   current,
-  display,
   change = () => undefined,
   commit,
   renderError,
   labels,
-  slotPrefix,
   interceptErrors = true,
   session: external,
-  truncate,
   rowKey,
   colKey,
   label,
   align,
   navigation,
-  cellProps,
-  tooltipLabel,
-}: CellEditorProps & { config: Extract<CellEditorConfig, { type: "choice" }> }) {
+  children,
+}: CellEditorProps<{
+  type: "choice";
+  options: readonly { value: string; label: string }[];
+  renderOption?: (value: string, label: string) => ReactNode;
+}>) {
   const session = useCellEditSession<ChoiceDraft>(interceptErrors, external);
   const { state } = session;
   const { callbackError, containsErrorTarget } = useCellError(
@@ -269,23 +268,14 @@ export function ChoiceEditCell({
     return config.renderOption ? config.renderOption(item.value, item.label) : item.label;
   };
 
-  return (
-    <EditableCellFrame
-      labels={labels}
-      slotPrefix={slotPrefix}
-      cellProps={cellProps}
-      display={display}
-      truncate={truncate}
-      hideDisplay={editing ? "focused" : "forced-colors"}
-      icon={<ChevronDown />}
-      tooltipLabel={tooltipLabel}
-      editing={editing}
-      callbackError={callbackError}
-      onEditorLeave={handleBlur}
-      onEditorCancel={cancelEditing}
-      getFailure={session.getFailure}
-      confirming={state.status === "confirming"}
-    >
+  return children({
+    editing,
+    callbackError,
+    onEditorLeave: handleBlur,
+    onEditorCancel: cancelEditing,
+    getFailure: session.getFailure,
+    confirming: state.status === "confirming",
+    input: (
       <BaseCombobox.Root<Choice>
         items={items}
         filteredItems={filtered}
@@ -387,6 +377,6 @@ export function ChoiceEditCell({
           </ComboboxParts.List>
         </ComboboxParts.Content>
       </BaseCombobox.Root>
-    </EditableCellFrame>
-  );
+    ),
+  });
 }

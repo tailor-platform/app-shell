@@ -6,7 +6,6 @@ import {
   useState,
   type ComponentProps,
   type ReactNode,
-  type RefObject,
 } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { CircleAlert, X } from "lucide-react";
@@ -16,7 +15,7 @@ import { Table } from "@/components/table";
 import { Tooltip } from "@/components/tooltip";
 import { CellEditError } from "../cell-edit-error";
 import type { CellEditFailure } from "../cell-session";
-import type { CellEditorLabels, CellEditorNavigation, CellEditorProps } from "./props";
+import type { CellEditorLabels, CellEditorNavigation, CellEditorProps, CellErrorUI } from "./props";
 
 /**
  * Room for the icon a dropdown or date cell shows at its right edge (a chevron
@@ -84,16 +83,6 @@ export const POPUP_CLASS_NAME = cn(
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
 
-interface CellErrorUI {
-  failure: CellEditFailure;
-  id: string;
-  message: string;
-  content: ReactNode;
-  triggerRef: RefObject<HTMLButtonElement | null>;
-  popupRef: RefObject<HTMLDivElement | null>;
-  containsTarget: (target: EventTarget | null) => boolean;
-}
-
 // The standard popover body: the alert icon makes it read as an error rather
 // than a tooltip.
 function DefaultCellErrorContent({ message }: { message: string }) {
@@ -113,7 +102,7 @@ function DefaultCellErrorContent({ message }: { message: string }) {
 }
 
 export function useCellError(
-  { labels, renderError }: Pick<CellEditorProps, "labels" | "renderError">,
+  { labels, renderError }: Pick<CellEditorProps<unknown>, "labels" | "renderError">,
   failure: CellEditFailure | undefined,
 ) {
   const errorId = useId();

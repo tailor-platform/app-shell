@@ -1,44 +1,43 @@
 import type { ComponentProps, ReactNode } from "react";
 import { BadgeList } from "@/components/badge-list";
 import { Table } from "@/components/table";
-import { TypingEditCell } from "@/components/internals/table-core/editing/typing";
-import { ChoiceEditCell } from "@/components/internals/table-core/editing/choice";
-import { DateEditCell } from "@/components/internals/table-core/editing/date";
-import type { CellEditorProps } from "@/components/internals/table-core/editing/props";
+import {
+  EditableCell,
+  type EditableCellProps,
+} from "@/components/internals/table-core/editing/cell";
 import type { LineItemsEditing } from "./editing";
 import { useLineItemsT } from "./i18n";
 import type { LineItemsColumn } from "./types";
 
 /** Adapts property-owned confirmation to the same cell controls used by DataTable. */
-export function LineItemsCell<T extends Record<string, unknown>>({
+export function LineItemsEditableCell<T extends Record<string, unknown>>({
   row,
   column,
+  edit,
   index,
   editing,
-  renderDisplay,
+  display,
   timeZone,
   cellProps,
 }: {
   row: T;
   column: LineItemsColumn<T>;
+  edit: NonNullable<LineItemsColumn<T>["edit"]>;
   index: number;
   editing: LineItemsEditing<T>;
-  renderDisplay: (editable: boolean) => ReactNode;
+  display: ReactNode;
   timeZone: string;
   cellProps: ComponentProps<typeof Table.Cell>;
 }) {
   const t = useLineItemsT();
-  const edit = column.edit;
-  if (!edit || !(edit.canEdit?.(row) ?? true))
-    return <Table.Cell {...cellProps}>{renderDisplay(false)}</Table.Cell>;
   const session = editing.getSession(row, column);
   const id = (column.id ?? column.accessorKey)!;
   const key = editing.getLineKey(row);
   const label = `${column.label ?? id}, ${t("row", { index: index + 1 })}`;
   const renderError = edit.error && edit.error.render;
-  const props: Omit<CellEditorProps, "config"> = {
+  const props: Omit<EditableCellProps, "config"> = {
     current: row[column.accessorKey!],
-    display: renderDisplay(true),
+    display,
     timeZone,
     cellProps,
     session,
@@ -66,10 +65,10 @@ export function LineItemsCell<T extends Record<string, unknown>>({
     },
   };
   if (edit.editorType === "date")
-    return <DateEditCell {...props} config={{ type: "date", withTime: edit.withTime }} />;
+    return <EditableCell {...props} config={{ type: "date", withTime: edit.withTime }} />;
   if (edit.editorType === "combobox")
     return (
-      <ChoiceEditCell
+      <EditableCell
         {...props}
         config={{
           type: "choice",
@@ -87,5 +86,9 @@ export function LineItemsCell<T extends Record<string, unknown>>({
         }}
       />
     );
-  return <TypingEditCell {...props} config={{ type: edit.editorType }} />;
+  return <EditableCell {...props} config={{ type: edit.editorType }} />;
+}
+
+export function LineItemsDisplayCell(props: ComponentProps<typeof Table.Cell>) {
+  return <Table.Cell {...props} />;
 }

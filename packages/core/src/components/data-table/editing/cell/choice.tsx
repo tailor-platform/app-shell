@@ -1,5 +1,5 @@
 import { BadgeList } from "@/components/badge-list";
-import { ChoiceEditCell as CoreChoiceEditCell } from "@/components/internals/table-core/editing/choice";
+import { EditableCell } from "@/components/internals/table-core/editing/cell";
 import {
   columnChoices,
   useEditorProps,
@@ -18,7 +18,7 @@ export function ChoiceEditCell<TRow extends Record<string, unknown>>(
   const coreProps = useEditorProps(props);
   const { col } = props;
   return (
-    <CoreChoiceEditCell
+    <EditableCell
       {...coreProps}
       config={{
         type: "choice",

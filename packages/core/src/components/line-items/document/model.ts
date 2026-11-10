@@ -79,14 +79,13 @@ export function createLineItemsDocument<T extends Record<string, unknown>>(
      */
     getLineKey: identity.getLineKey,
     /**
-     * Validates replacement display definitions against the original property ownership.
-     * Despite its name, this only checks configuration: it does not store the new definitions
-     * or mutate rows. This check is safe without committing any configuration changes.
+     * Validates display definitions against the original property ownership without
+     * storing configuration or mutating rows.
      * Reordering/renaming columns and adding duplicate displays of an owned property are
      * allowed; changing the accessorKey property set requires a new document instance.
      * @throws If column definitions are invalid or document property ownership changes.
      */
-    setColumns(nextColumns: readonly LineItemsColumn<T>[]) {
+    assertColumns(nextColumns: readonly LineItemsColumn<T>[]) {
       const next = compileLineItemsColumns(nextColumns);
       if (next.size !== properties.size || [...next].some((key) => !properties.has(key)))
         throw new Error("Remount LineItems to change document property ownership");

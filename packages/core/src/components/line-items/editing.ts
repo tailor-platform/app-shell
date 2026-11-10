@@ -40,12 +40,14 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
     }
   }
   function assertColumns(next: readonly LineItemsColumn<T>[]) {
+    store.assertColumns(next);
     if (next.some((column) => column.edit && column.accessorKey === store.idKey))
       throw new Error("Line IDs cannot have cell editors");
   }
   assertColumns(initialColumns);
 
   return {
+    /** Validates proposed columns without changing committed configuration or drafts. */
     assertColumns,
     getLineKey: store.getLineKey,
     /**
@@ -124,8 +126,8 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
         for (const cell of rowCells.values()) cell.session.cancel();
       purgeRemoved();
     },
-    /** Retire removed cells and denied drafts only after their configuration is committed. */
-    setColumns(next: readonly LineItemsColumn<T>[]) {
+    /** Adopts committed columns and retires removed cells or denied drafts. */
+    reconcileColumns(next: readonly LineItemsColumn<T>[]) {
       assertColumns(next);
       columns = next;
       for (const [key, rowCells] of cells) {

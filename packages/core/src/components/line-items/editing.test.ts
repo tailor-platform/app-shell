@@ -59,16 +59,16 @@ describe("document-owned cell editing", () => {
       for (const column of columns) editing.getSession(row, column);
     getLineKey.mockClear();
 
-    editing.setColumns(columns);
+    editing.reconcileColumns(columns);
     expect(getLineKey).toHaveBeenCalledTimes(1_000);
     getLineKey.mockClear();
-    editing.setColumns(columns);
+    editing.reconcileColumns(columns);
     expect(getLineKey).not.toHaveBeenCalled();
 
     editing.removeLine("999");
     expect(getLineKey).toHaveBeenCalledTimes(999);
     getLineKey.mockClear();
-    editing.setColumns(columns);
+    editing.reconcileColumns(columns);
     expect(getLineKey).not.toHaveBeenCalled();
   });
 
@@ -83,7 +83,7 @@ describe("document-owned cell editing", () => {
       ];
       const addedKey = store.addLine({ name: "Added", quantity: 2 });
       editing.getSession(store.getSnapshot()[1], editable[0]);
-      editing.setColumns(editable);
+      editing.reconcileColumns(editable);
       canEdit.mockClear();
 
       if (action === "update") store.updateField("A", "quantity", 3);
@@ -94,7 +94,7 @@ describe("document-owned cell editing", () => {
       if (action === "reorder") store.reorderLine(addedKey, null);
       if (action === "remove") editing.removeLine(addedKey);
       if (action === "revert") editing.revert();
-      editing.setColumns(editable);
+      editing.reconcileColumns(editable);
 
       expect(canEdit).toHaveBeenCalledTimes(store.getSnapshot().length);
       for (const row of store.getSnapshot()) {
@@ -146,7 +146,7 @@ describe("document-owned cell editing", () => {
     if (action === "revert") editing.revert();
     if (action === "dispose") editing.deactivate();
     if (action === "permission" || action === "editor-removed") {
-      editing.setColumns([
+      editing.reconcileColumns([
         {
           accessorKey: "name",
           edit:
@@ -176,7 +176,7 @@ describe("document-owned cell editing", () => {
     const { columns, editing, store, session, confirm } = setup(before);
     confirm("Pending");
     const pending = session.getState();
-    editing.setColumns([
+    editing.reconcileColumns([
       { accessorKey: "name", edit: { editorType: "text", onValueCommitted: after } },
       columns[1],
     ]);
@@ -216,11 +216,44 @@ describe("document-owned cell editing", () => {
     expect(session.getState()).toBe(draft);
   });
 
+  it("validates proposed columns without changing drafts or committed callbacks", () => {
+    const before = vi.fn();
+    const after = vi.fn();
+    const { columns, editing, store, session, confirm } = setup(before);
+    session.begin("Retained");
+    const draft = session.getState();
+    const snapshot = store.getSnapshot();
+    editing.assertColumns([{ accessorKey: "name" }, columns[1]]);
+    editing.assertColumns([
+      { accessorKey: "name", edit: { editorType: "text", onValueCommitted: after } },
+      columns[1],
+    ]);
+    expect(() => editing.assertColumns([])).toThrow("change document property ownership");
+    expect(session.getState()).toBe(draft);
+    expect(store.getSnapshot()).toBe(snapshot);
+    confirm("Confirmed");
+    expect(before).toHaveBeenCalledWith(snapshot[0], "Confirmed");
+    expect(after).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid reconciliation without changing drafts or committed callbacks", () => {
+    const check = vi.fn();
+    const { editing, store, session, confirm } = setup(check);
+    session.begin("Retained");
+    const draft = session.getState();
+    const snapshot = store.getSnapshot();
+    expect(() => editing.reconcileColumns([])).toThrow("change document property ownership");
+    expect(session.getState()).toBe(draft);
+    expect(store.getSnapshot()).toBe(snapshot);
+    confirm("Confirmed");
+    expect(check).toHaveBeenCalledWith(snapshot[0], "Confirmed");
+  });
+
   it("preserves a draft on display-only configuration changes", () => {
     const { columns, editing, session } = setup();
     session.begin("Retained");
     const draft = session.getState();
-    editing.setColumns([
+    editing.reconcileColumns([
       { ...columns[0], label: "Renamed", render: (row) => row.name },
       columns[1],
     ]);
@@ -230,7 +263,7 @@ describe("document-owned cell editing", () => {
   it("clears sibling drafts for duplicate columns owning the same property", () => {
     const { columns, editing, store, confirm } = setup();
     const duplicate = { ...columns[0], id: "duplicate" };
-    editing.setColumns([...columns, duplicate]);
+    editing.reconcileColumns([...columns, duplicate]);
     const sibling = editing.getSession(store.getSnapshot()[0], duplicate);
     sibling.begin("Other draft");
     confirm("Confirmed");

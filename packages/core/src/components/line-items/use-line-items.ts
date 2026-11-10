@@ -18,8 +18,7 @@ export function useLineItems<T extends Record<string, unknown>>(
   );
   const [editing] = useState(() => createLineItemsEditing(store, options.columns));
   if ((options.idKey ?? "id") !== store.idKey) throw new Error("Remount LineItems to change idKey");
-  // These check ownership only; abandoned renders cannot modify the document or its drafts.
-  store.setColumns(options.columns);
+  // Validate without changing configuration or drafts from an abandoned render.
   editing.assertColumns(options.columns);
   const lines = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   // Retained commands must not observe a movement policy from an abandoned render.
@@ -32,7 +31,7 @@ export function useLineItems<T extends Record<string, unknown>>(
   }, [editing]);
   // Stable permission predicates may read external state; check each committed render.
   useLayoutEffect(() => {
-    editing.setColumns(options.columns);
+    editing.reconcileColumns(options.columns);
   });
   const reorderLine = useCallback(
     (lineKey: string, afterLineKey: string | null) => {

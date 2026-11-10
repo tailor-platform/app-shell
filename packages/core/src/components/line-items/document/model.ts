@@ -1,4 +1,4 @@
-import { createLineItemsIdentity, serverId } from "./identity";
+import { createLineItemsIdentity, persistedId } from "./identity";
 import { createLineItemsSnapshots } from "./snapshot";
 import type { DocumentOptions, LineItemsColumn } from "./types";
 
@@ -26,7 +26,7 @@ function compileLineItemsColumns<T extends Record<string, unknown>>(
  * its commands when callers need observable snapshots.
  *
  * Initial rows and subsequent row copies are shallow-frozen. Nested values are not
- * cloned and must also be treated as immutable. Only initial rows with server IDs form
+ * cloned and must also be treated as immutable. Only initial rows with persisted IDs form
  * the persisted baseline; ID-less initial rows are unsaved creations, start dirty,
  * and are discarded by revert. This model does not advance the baseline or implement
  * draft editing, business validation, normalization, or persistence.
@@ -37,18 +37,18 @@ function compileLineItemsColumns<T extends Record<string, unknown>>(
  *
  * @internal
  */
-export function createLineItemsDocument<T extends Record<string, unknown>>({
-  columns,
-  lines = [],
-  idKey = "id" as keyof T & string,
-}: DocumentOptions<T>) {
+export function createLineItemsDocument<T extends Record<string, unknown>>(
+  options: DocumentOptions<T>,
+) {
+  const { columns, lines = [] } = options;
+  const idKey = (options.idKey ?? "id") as keyof T & string;
   const properties = compileLineItemsColumns(columns);
   const identity = createLineItemsIdentity<T>(idKey);
   const snapshots = createLineItemsSnapshots(identity, idKey);
-  let current = snapshots.adopt(lines.map((row) => identity.tag(row, identity.newKey())));
+  let current = snapshots.adopt(lines.map((row) => identity.tag(row, identity.newClientKey())));
   // ID-less initial rows are unsaved creations, not part of the persisted baseline.
   const baseline = snapshots.create(
-    current.lines.filter((row) => serverId(row[idKey]) !== undefined),
+    current.lines.filter((row) => persistedId(row[idKey]) !== undefined),
   );
 
   return {
@@ -60,10 +60,10 @@ export function createLineItemsDocument<T extends Record<string, unknown>>({
      */
     getRows: () => current.lines,
     /**
-     * Resolves a row's stable identity to a string server ID or a client-only key.
-     * Accepts owned rows, previously returned rows, and spreads retaining private identity;
+     * Resolves a row's line key: its persisted ID, or its client key for an unsaved creation.
+     * Accepts owned rows, previously returned rows, and spreads retaining the client tag;
      * rejects untagged or foreign rows. This is not a current-membership check: a removed
-     * row still resolves, but its key cannot be used by commands until it is restored.
+     * row still resolves, but its line key cannot be used by commands until it is restored.
      */
     getLineKey: identity.getLineKey,
     /**
@@ -87,13 +87,13 @@ export function createLineItemsDocument<T extends Record<string, unknown>>({
      */
     isDirty() {
       if (
-        current.order.length !== baseline.order.length ||
-        current.order.some((key, index) => key !== baseline.order[index])
+        current.clientKeys.length !== baseline.clientKeys.length ||
+        current.clientKeys.some((clientKey, index) => clientKey !== baseline.clientKeys[index])
       )
         return true;
-      for (const key of current.order) {
-        const row = current.byKey.get(key)!;
-        const base = baseline.byKey.get(key)!;
+      for (const clientKey of current.clientKeys) {
+        const row = current.byClientKey.get(clientKey)!;
+        const base = baseline.byClientKey.get(clientKey)!;
         for (const property of properties) {
           if (property !== idKey && !Object.is(row[property], base[property])) return true;
         }
@@ -102,34 +102,34 @@ export function createLineItemsDocument<T extends Record<string, unknown>>({
     },
     /**
      * Replaces one current row with a copy containing an updated accessorKey-owned property,
-     * preserving its private identity and reusing all other rows. Values are adopted as-is,
+     * preserving its client key and reusing all other rows. Values are adopted as-is,
      * without normalization or business validation. A valid Object.is-equal write is a no-op.
-     * @throws If the key is not current, the property is unowned, or the server ID changes.
+     * @throws If the line key is not current, the property is unowned, or the persisted ID changes.
      */
     updateField<K extends keyof T & string>(lineKey: string, property: K, value: T[K]) {
-      const key = identity.resolveKey(lineKey, current.order);
-      const row = current.byKey.get(key)!;
+      const clientKey = identity.resolveClientKey(lineKey, current.clientKeys);
+      const row = current.byClientKey.get(clientKey)!;
       if (property === idKey && !Object.is(row[property], value))
         throw new Error("Line IDs may only change through save acknowledgment");
       if (property !== idKey && !properties.has(property))
         throw new Error(`Property "${property}" has no document owner`);
       if (Object.is(row[property], value)) return;
-      const updated = identity.tag({ ...row, [property]: value }, key);
+      const updated = identity.tag({ ...row, [property]: value }, clientKey);
       current = snapshots.adopt(
-        current.lines.map((line) => (identity.keyOf(line) === key ? updated : line)),
+        current.lines.map((line) => (identity.clientKeyOf(line) === clientKey ? updated : line)),
       );
     },
     /**
      * Appends an unsaved creation from a shallow copy of input.
-     * Drops the configured server ID and assigns fresh identity even when copying an owned
+     * Drops the configured persisted ID and assigns a fresh client key even for an owned
      * row. The input is not mutated, nested values are reused, and the baseline is unchanged.
-     * Returns the client-only key accepted by the row commands; the creation makes the
+     * Returns the line key accepted by the row commands; the creation makes the
      * document dirty until it is removed or discarded by revert.
      */
     addLine(input: T): string {
       const raw = { ...input };
       delete raw[idKey];
-      const added = identity.tag(raw, identity.newKey());
+      const added = identity.tag(raw, identity.newClientKey());
       current = snapshots.adopt([...current.lines, added]);
       return identity.getLineKey(added);
     },
@@ -137,11 +137,13 @@ export function createLineItemsDocument<T extends Record<string, unknown>>({
      * Removes one current row without changing the baseline.
      * Removing an unsaved creation can cancel its dirty contribution; removing a persisted
      * row stays dirty until restored by revert. Remaining rows retain their objects and keys.
-     * @throws If the key does not identify a current row.
+     * @throws If the line key does not identify a current row.
      */
     removeLine(lineKey: string) {
-      const key = identity.resolveKey(lineKey, current.order);
-      current = snapshots.adopt(current.lines.filter((row) => identity.keyOf(row) !== key));
+      const clientKey = identity.resolveClientKey(lineKey, current.clientKeys);
+      current = snapshots.adopt(
+        current.lines.filter((row) => identity.clientKeyOf(row) !== clientKey),
+      );
     },
     /**
      * Moves a current row immediately after another current row; null moves it to the front.
@@ -151,13 +153,20 @@ export function createLineItemsDocument<T extends Record<string, unknown>>({
      * @throws If the moved row or a non-null anchor is not in the current document.
      */
     reorderLine(lineKey: string, afterLineKey: string | null) {
-      const key = identity.resolveKey(lineKey, current.order);
-      const after = afterLineKey === null ? null : identity.resolveKey(afterLineKey, current.order);
-      if (key === after) return;
-      const order = current.order.filter((candidate) => candidate !== key);
-      order.splice(after === null ? 0 : order.indexOf(after) + 1, 0, key);
-      if (order.some((candidate, index) => candidate !== current.order[index]))
-        current = snapshots.adopt(order.map((candidate) => current.byKey.get(candidate)!));
+      const clientKey = identity.resolveClientKey(lineKey, current.clientKeys);
+      const afterClientKey =
+        afterLineKey === null ? null : identity.resolveClientKey(afterLineKey, current.clientKeys);
+      if (clientKey === afterClientKey) return;
+      const clientKeys = current.clientKeys.filter((candidate) => candidate !== clientKey);
+      clientKeys.splice(
+        afterClientKey === null ? 0 : clientKeys.indexOf(afterClientKey) + 1,
+        0,
+        clientKey,
+      );
+      if (clientKeys.some((candidate, index) => candidate !== current.clientKeys[index]))
+        current = snapshots.adopt(
+          clientKeys.map((candidate) => current.byClientKey.get(candidate)!),
+        );
     },
     /**
      * Restores the persisted initial rows, values, and order without advancing the baseline.

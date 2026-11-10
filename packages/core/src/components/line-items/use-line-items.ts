@@ -13,11 +13,7 @@ export function useLineItems<T extends Record<string, unknown>>(
   const orderer = options.orderer ?? true;
   const committedOrderer = useRef(orderer);
   const [store] = useState(() =>
-    createLineItemsDocumentStore<T>({
-      columns: options.columns,
-      lines: options.defaultLines,
-      idKey: options.idKey,
-    }),
+    createLineItemsDocumentStore<T>({ ...options, lines: options.defaultLines }),
   );
   if ((options.idKey ?? "id") !== store.idKey) throw new Error("Remount LineItems to change idKey");
   // This checks ownership only; abandoned renders cannot modify the document.

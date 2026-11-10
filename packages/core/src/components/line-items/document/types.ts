@@ -48,22 +48,37 @@ export type LineItemsColumn<TRow extends Record<string, unknown>> =
   | ComputedColumn<TRow>
   | SourceLessColumn<TRow>;
 
+type UnsafeIdentityKey<T> = T extends unknown
+  ? string extends keyof T
+    ? string // Index signatures cannot prove that a named identity property is optional.
+    : {
+        [K in keyof T]-?: {} extends Pick<T, K> ? never : K;
+      }[keyof T] &
+        string
+  : never;
+
+type OptionalStringKey<T> = Exclude<keyof T & string, UnsafeIdentityKey<T>>;
+
+/** Persisted identity property, defaulting to id; it must be optional in every row variant. */
+export type LineItemsIdentityOptions<T extends Record<string, unknown>> =
+  Extract<T, { id: unknown }> extends never
+    ? { idKey?: OptionalStringKey<T> }
+    : { idKey: OptionalStringKey<T> };
+
 export type DocumentOptions<T extends Record<string, unknown>> = {
   /** Initial definitions whose accessorKey fields establish document property ownership. */
   columns: readonly LineItemsColumn<T>[];
-  /** Initial rows, read once; only rows with server IDs establish the persisted baseline. */
+  /** Initial rows, read once; only rows with persisted IDs establish the baseline. */
   lines?: readonly T[];
-  /** Server identity property, fixed for the document's lifetime. Defaults to id. */
-  idKey?: keyof T & string;
-};
+} & LineItemsIdentityOptions<T>;
 
 export type LineItemsIdentity<T extends Record<string, unknown>> = ReturnType<
   typeof createLineItemsIdentity<T>
 >;
 
-/** A validated row view, adopted order, and key index constructed together. */
+/** A validated row view, ordered client keys, and client-key index constructed together. */
 export type LineItemsSnapshot<T> = {
   readonly lines: readonly T[];
-  readonly order: readonly string[];
-  readonly byKey: ReadonlyMap<string, T>;
+  readonly clientKeys: readonly string[];
+  readonly byClientKey: ReadonlyMap<string, T>;
 };

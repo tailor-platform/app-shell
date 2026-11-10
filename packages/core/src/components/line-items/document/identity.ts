@@ -1,9 +1,16 @@
 const IDENTITY = Symbol("LineItems.identity");
-type Identity = { owner: object; key: string };
+type Identity = { owner: object; clientKey: string };
 type Tagged = { [IDENTITY]?: Identity };
 
-/** Normalize a server identity without trimming strings or conflating zero with absence. */
-export function serverId(value: unknown): string | undefined {
+/** Reads stable UI identity without exposing it through the public command API. */
+export function clientKeyOf(row: Record<string, unknown>): string {
+  const identity = (row as Tagged)[IDENTITY];
+  if (!identity) throw new Error("The line does not belong to a document");
+  return identity.clientKey;
+}
+
+/** Normalize a persisted ID without trimming strings or conflating zero with absence. */
+export function persistedId(value: unknown): string | undefined {
   if (value === undefined || value === null) return undefined;
   if (
     (typeof value !== "string" && typeof value !== "number") ||
@@ -15,8 +22,8 @@ export function serverId(value: unknown): string | undefined {
 }
 
 /**
- * Owns private row identity and registered server IDs for one document lifetime.
- * Candidate keys/tags do not register server IDs. The document validates a complete
+ * Owns client keys and registered persisted IDs for one document lifetime.
+ * Candidate tags do not register persisted IDs. The document validates a complete
  * snapshot first, then calls remember during adoption. Retired identities remain
  * resolvable; current membership and duplicate-ID checks belong to the document.
  *
@@ -28,40 +35,40 @@ export function createLineItemsIdentity<T extends Record<string, unknown>>(
   const owner = {};
   const prefix = crypto.randomUUID();
   let serial = 0;
-  const identities = new Map<string, string | undefined>();
-  const keyOf = (row: T): string => {
+  const persistedIds = new Map<string, string | undefined>();
+  const ownedClientKeyOf = (row: T): string => {
     const identity = (row as Tagged)[IDENTITY];
     if (identity?.owner !== owner) throw new Error("The line does not belong to this document");
-    return identity.key;
+    return identity.clientKey;
   };
-  const publicKey = (key: string): string => identities.get(key) ?? key;
+  const toLineKey = (clientKey: string): string => persistedIds.get(clientKey) ?? clientKey;
 
   return {
-    /** Resolves private identity, rejecting rows from outside this document owner. */
-    keyOf,
-    /** Copies and shallow-freezes a row with the supplied private key; spreads retain it. */
-    tag: (row: T, key: string): T =>
-      Object.freeze({ ...row, [IDENTITY]: Object.freeze({ owner, key }) }) as T,
-    /** Allocates a fresh client-only key without registering a row or server ID. */
-    newKey: () => `line:${prefix}:${++serial}`,
-    /** Resolves a row through its private tag, not through potentially replaced row fields. */
-    getLineKey: (row: T): string => publicKey(keyOf(row)),
+    /** Reads the client key, rejecting rows from outside this document owner. */
+    clientKeyOf: ownedClientKeyOf,
+    /** Copies and shallow-freezes a row with its client key; spreads retain the tag. */
+    tag: (row: T, clientKey: string): T =>
+      Object.freeze({ ...row, [IDENTITY]: Object.freeze({ owner, clientKey }) }) as T,
+    /** Allocates a fresh client key without registering a row or persisted ID. */
+    newClientKey: () => `line:${prefix}:${++serial}`,
+    /** Resolves a line key through the client tag, not potentially replaced row fields. */
+    getLineKey: (row: T): string => toLineKey(ownedClientKeyOf(row)),
     /**
-     * Resolves a public key within the caller's current candidate keys only.
+     * Resolves a line key within the caller's current client keys only.
      * The registry may retain retired identities, but candidates define allowed membership.
-     * @throws If no candidate resolves to the requested public key.
+     * @throws If no candidate resolves to the requested line key.
      */
-    resolveKey(lineKey: string, currentKeys: readonly string[]): string {
-      const key = currentKeys.find((candidate) => publicKey(candidate) === lineKey);
-      if (key === undefined) throw new Error(`Unknown line "${lineKey}"`);
-      return key;
+    resolveClientKey(lineKey: string, currentClientKeys: readonly string[]): string {
+      const clientKey = currentClientKeys.find((candidate) => toLineKey(candidate) === lineKey);
+      if (clientKey === undefined) throw new Error(`Unknown line "${lineKey}"`);
+      return clientKey;
     },
     /**
      * Registers IDs for already-validated, adopted rows. Does not forget retired rows.
      * The caller owns snapshot validation and decides when adoption is allowed.
      */
     remember(rows: readonly T[]) {
-      for (const row of rows) identities.set(keyOf(row), serverId(row[idKey]));
+      for (const row of rows) persistedIds.set(ownedClientKeyOf(row), persistedId(row[idKey]));
     },
   };
 }

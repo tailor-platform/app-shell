@@ -58,6 +58,82 @@ test("row commands retain row types without exposing unfinished save APIs", () =
   >();
 });
 
+test("identity properties must be optional while other row fields stay required", () => {
+  type Custom = { code?: number; name: string };
+  type RequiredCustom = { code: number; name: string };
+  type RequiredDefault = { id: string; name: string };
+  type Alternative = RequiredDefault & { code?: number };
+
+  function Contract() {
+    const value = useLineItems<Custom>({
+      idKey: "code",
+      columns: [
+        {
+          accessorKey: "code",
+          render: (row) => {
+            expectTypeOf(row.code).toEqualTypeOf<number | undefined>();
+            // @ts-expect-error A creation has no persisted ID until it is saved.
+            row.code.toFixed();
+            return row.code?.toFixed() ?? "New";
+          },
+        },
+      ],
+    });
+    expectTypeOf(value.lines).toEqualTypeOf<readonly Custom[]>();
+    expectTypeOf(value.addLine({ name: "New" })).toEqualTypeOf<string>();
+    // @ts-expect-error Non-identity properties remain required.
+    value.addLine({});
+    // @ts-expect-error Removing a required identity would violate the declared row type.
+    useLineItems<RequiredCustom>({ columns: [], idKey: "code" });
+    // @ts-expect-error A required default ID cannot be removed from a creation.
+    useLineItems<RequiredDefault>({ columns: [] });
+    // @ts-expect-error Explicitly selecting a required default ID is also unsafe.
+    useLineItems<RequiredDefault>({ columns: [], idKey: "id" });
+    // @ts-expect-error Explicit undefined must not bypass the required-default-ID guard.
+    useLineItems<RequiredDefault>({ columns: [], idKey: undefined });
+
+    const alternative = useLineItems<Alternative>({ columns: [], idKey: "code" });
+    alternative.addLine({ id: "Required non-identity value", name: "New" });
+    // @ts-expect-error The required id is not the selected identity and must remain present.
+    alternative.addLine({ name: "Missing required field" });
+
+    const withoutId = useLineItems<{ name: string }>({ columns: [] });
+    withoutId.addLine({ name: "No identity property" });
+  }
+  void Contract;
+});
+
+test("the document store enforces the same optional identity contract", () => {
+  type Custom = { code?: number; name: string };
+  type RequiredDefault = { id: string; name: string };
+  const store = createLineItemsDocumentStore<Custom>({ columns: [], idKey: "code" });
+  expectTypeOf(store.addLine({ name: "New" })).toEqualTypeOf<string>();
+  // @ts-expect-error Direct store callers cannot select a required identity property.
+  createLineItemsDocumentStore<{ code: number; name: string }>({ columns: [], idKey: "code" });
+  // @ts-expect-error Direct store callers cannot use a required default identity either.
+  createLineItemsDocumentStore<RequiredDefault>({ columns: [] });
+});
+
+test("identity optionality must hold across row variants and indexed records", () => {
+  type Variant =
+    | { kind: "persisted"; id: string; code: number; name: string; reference?: number }
+    | { kind: "draft"; id?: string; code?: number; name: string; reference?: number };
+  // @ts-expect-error The default identity is required by one row variant.
+  createLineItemsDocumentStore<Variant>({ columns: [] });
+  // @ts-expect-error Explicit selection must also be optional in every variant.
+  createLineItemsDocumentStore<Variant>({ columns: [], idKey: "id" });
+  // @ts-expect-error A custom identity cannot be required by even one variant.
+  createLineItemsDocumentStore<Variant>({ columns: [], idKey: "code" });
+  createLineItemsDocumentStore<Variant>({ columns: [], idKey: "reference" });
+
+  type Indexed = Record<string, unknown> & { code: number; name: string };
+  // @ts-expect-error An index signature must not hide a required named identity.
+  createLineItemsDocumentStore<Indexed>({ columns: [], idKey: "code" });
+  type IndexedVariant = Indexed | { code?: number; name: string };
+  // @ts-expect-error Indexed members cannot hide required identities in a row union either.
+  createLineItemsDocumentStore<IndexedVariant>({ columns: [], idKey: "code" });
+});
+
 test("the store adapter preserves property-specific command typing", () => {
   const store = createLineItemsDocumentStore<Row>({ columns: [{ accessorKey: "quantity" }] });
   store.updateField("A", "quantity", 2);

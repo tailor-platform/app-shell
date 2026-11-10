@@ -67,21 +67,21 @@ describe("LineItems document rows and identity", () => {
     expect(() => doc.updateField(keys[1], "quantity", 3)).toThrow("Unknown line");
   });
 
-  it("retains server and client keys across row copies and sequential updates", () => {
+  it("retains line keys across row copies and sequential updates", () => {
     const doc = document([row("A"), row()]);
-    const [oldServer, oldClient] = doc.getRows();
-    const clientKey = doc.getLineKey(oldClient);
+    const [oldPersisted, oldCreation] = doc.getRows();
+    const lineKey = doc.getLineKey(oldCreation);
     const update = doc.updateField;
     update("A", "name", "Updated");
     update("A", "quantity", 2);
-    update(clientKey, "quantity", 3);
+    update(lineKey, "quantity", 3);
     expect(doc.getRows()[0]).toMatchObject({ id: "A", name: "Updated", quantity: 2 });
-    expect(doc.getRows()[0]).not.toBe(oldServer);
-    expect(doc.getLineKey(oldServer)).toBe("A");
-    expect(doc.getLineKey(doc.getRows()[1])).toBe(clientKey);
-    expect(doc.getLineKey({ ...doc.getRows()[1] })).toBe(clientKey);
-    expect(oldServer.quantity).toBe(1);
-    expect(oldClient.quantity).toBe(1);
+    expect(doc.getRows()[0]).not.toBe(oldPersisted);
+    expect(doc.getLineKey(oldPersisted)).toBe("A");
+    expect(doc.getLineKey(doc.getRows()[1])).toBe(lineKey);
+    expect(doc.getLineKey({ ...doc.getRows()[1] })).toBe(lineKey);
+    expect(oldPersisted.quantity).toBe(1);
+    expect(oldCreation.quantity).toBe(1);
     const foreign = document([row("A")]);
     expect(() => doc.getLineKey(foreign.getRows()[0])).toThrow("does not belong");
     expect(() => doc.getLineKey(row("A"))).toThrow("does not belong");
@@ -103,7 +103,7 @@ describe("LineItems document rows and identity", () => {
     expect(doc.isDirty()).toBe(false);
   });
 
-  it("appends fresh creations without copied server IDs and cancels add/remove pairs", () => {
+  it("appends fresh creations without copied persisted IDs and cancels add/remove pairs", () => {
     const source = Object.freeze(row("A"));
     const doc = document([source]);
     const added = doc.addLine(source);

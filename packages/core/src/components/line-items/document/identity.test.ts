@@ -1,34 +1,36 @@
 import { describe, expect, it } from "vitest";
-import { createLineItemsIdentity, serverId } from "./identity";
+import { clientKeyOf, createLineItemsIdentity, persistedId } from "./identity";
 
 type Row = { id?: string | number; value: string };
 
 describe("document-scoped line identity", () => {
-  it("normalizes valid server IDs and rejects invalid identities", () => {
-    expect(serverId(undefined)).toBeUndefined();
-    expect(serverId(null)).toBeUndefined();
-    expect(serverId(0)).toBe("0");
-    expect(serverId(1)).toBe(serverId("1"));
-    expect(serverId(" A ")).toBe(" A ");
+  it("normalizes valid persisted IDs and rejects invalid identities", () => {
+    expect(persistedId(undefined)).toBeUndefined();
+    expect(persistedId(null)).toBeUndefined();
+    expect(persistedId(0)).toBe("0");
+    expect(persistedId(1)).toBe(persistedId("1"));
+    expect(persistedId(" A ")).toBe(" A ");
     for (const value of ["", Number.NaN, Number.POSITIVE_INFINITY, true, {}]) {
-      expect(() => serverId(value)).toThrow("non-empty strings or finite numbers");
+      expect(() => persistedId(value)).toThrow("non-empty strings or finite numbers");
     }
   });
 
-  it("tags immutable copies with fresh keys without registering server IDs", () => {
+  it("tags immutable copies with fresh client keys without registering persisted IDs", () => {
     const identity = createLineItemsIdentity<Row>("id");
     const source = Object.freeze({ id: 0, value: "Initial" });
-    const key = identity.newKey();
-    const tagged = identity.tag(source, key);
+    const clientKey = identity.newClientKey();
+    const tagged = identity.tag(source, clientKey);
     expect(tagged).not.toBe(source);
     expect(Object.isFrozen(tagged)).toBe(true);
     expect(Object.getOwnPropertySymbols(source)).toHaveLength(0);
-    expect(identity.newKey()).not.toBe(key);
-    expect(identity.getLineKey(tagged)).toBe(key);
+    expect(identity.newClientKey()).not.toBe(clientKey);
+    expect(identity.getLineKey(tagged)).toBe(clientKey);
+    expect(clientKeyOf(tagged)).toBe(clientKey);
     identity.remember([tagged]);
     expect(identity.getLineKey({ ...tagged })).toBe("0");
-    const updated = identity.tag({ ...tagged, value: "Updated" }, key);
-    expect(identity.keyOf(updated)).toBe(identity.keyOf(tagged));
+    const updated = identity.tag({ ...tagged, value: "Updated" }, clientKey);
+    expect(identity.clientKeyOf(updated)).toBe(identity.clientKeyOf(tagged));
+    expect(clientKeyOf({ ...updated })).toBe(clientKey);
     expect(identity.getLineKey(updated)).toBe("0");
     expect(source.value).toBe("Initial");
   });
@@ -37,34 +39,40 @@ describe("document-scoped line identity", () => {
     const identity = createLineItemsIdentity<Row>("id");
     const other = createLineItemsIdentity<Row>("id");
     const source: Row = { id: "A", value: "Initial" };
-    expect(() => identity.keyOf(source)).toThrow("does not belong");
-    const foreign = other.tag(source, other.newKey());
+    expect(() => identity.clientKeyOf(source)).toThrow("does not belong");
+    expect(() => clientKeyOf(source)).toThrow("does not belong");
+    const foreign = other.tag(source, other.newClientKey());
     expect(() => identity.getLineKey(foreign)).toThrow("does not belong");
   });
 
-  it("resolves registered and client keys only within the supplied current candidates", () => {
+  it("resolves line keys only within the supplied current client keys", () => {
     const identity = createLineItemsIdentity<Row>("id");
-    const serverKey = identity.newKey();
-    const clientKey = identity.newKey();
-    const persisted = identity.tag({ id: 0, value: "Persisted" }, serverKey);
-    const creation = identity.tag({ value: "Creation" }, clientKey);
+    const persistedClientKey = identity.newClientKey();
+    const creationClientKey = identity.newClientKey();
+    const persisted = identity.tag({ id: 0, value: "Persisted" }, persistedClientKey);
+    const creation = identity.tag({ value: "Creation" }, creationClientKey);
     identity.remember([persisted, creation]);
-    const currentKeys = Object.freeze([serverKey, clientKey]);
-    expect(identity.resolveKey("0", currentKeys)).toBe(serverKey);
-    expect(identity.resolveKey(clientKey, currentKeys)).toBe(clientKey);
-    expect(() => identity.resolveKey("missing", currentKeys)).toThrow('Unknown line "missing"');
-    expect(() => identity.resolveKey("0", [clientKey])).toThrow('Unknown line "0"');
-    expect(() => identity.resolveKey(clientKey, [])).toThrow("Unknown line");
+    const currentClientKeys = Object.freeze([persistedClientKey, creationClientKey]);
+    expect(identity.resolveClientKey("0", currentClientKeys)).toBe(persistedClientKey);
+    expect(identity.resolveClientKey(creationClientKey, currentClientKeys)).toBe(creationClientKey);
+    expect(() => identity.resolveClientKey("missing", currentClientKeys)).toThrow(
+      'Unknown line "missing"',
+    );
+    expect(() => identity.resolveClientKey("0", [creationClientKey])).toThrow('Unknown line "0"');
+    expect(() => identity.resolveClientKey(creationClientKey, [])).toThrow("Unknown line");
+    expect(() => identity.resolveClientKey(persistedClientKey, currentClientKeys)).toThrow(
+      "Unknown line",
+    );
     expect(identity.getLineKey(persisted)).toBe("0");
-    expect(currentKeys).toEqual([serverKey, clientKey]);
+    expect(currentClientKeys).toEqual([persistedClientKey, creationClientKey]);
   });
 
   it("retains registered IDs until adoption, including identities for retired rows", () => {
     const identity = createLineItemsIdentity<Row>("id");
-    const key = identity.newKey();
-    const adopted = identity.tag({ id: "A", value: "Initial" }, key);
+    const clientKey = identity.newClientKey();
+    const adopted = identity.tag({ id: "A", value: "Initial" }, clientKey);
     identity.remember([adopted]);
-    const unadopted = identity.tag({ id: "Changed", value: "Candidate" }, key);
+    const unadopted = identity.tag({ id: "Changed", value: "Candidate" }, clientKey);
     expect(identity.getLineKey(unadopted)).toBe("A");
     identity.remember([]);
     expect(identity.getLineKey(adopted)).toBe("A");

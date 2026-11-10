@@ -12,7 +12,7 @@ function Wrapper({ children }: { children: ReactNode }) {
   return <StrictMode>{children}</StrictMode>;
 }
 
-it("owns a shallow-frozen initial snapshot with stable server and client keys", () => {
+it("owns a shallow-frozen initial snapshot with stable line keys", () => {
   const input: Row[] = [{ id: 1, name: "Existing" }, { name: "New" }, { name: "New" }];
   const { result, rerender } = renderHook(
     (props: UseLineItemsOptions<Row>) => useLineItems(props),
@@ -34,7 +34,7 @@ it("owns a shallow-frozen initial snapshot with stable server and client keys", 
 });
 
 it("supports an alternative identity property", () => {
-  type Alternative = { code: number; name: string };
+  type Alternative = { code?: number; name: string };
   const { result } = renderHook(() =>
     useLineItems<Alternative>({
       columns: [{ accessorKey: "name" }],
@@ -43,10 +43,13 @@ it("supports an alternative identity property", () => {
     }),
   );
   expect(result.current.getLineKey(result.current.lines[0])).toBe("42");
+  act(() => result.current.addLine({ name: "New" }));
+  expect(result.current.lines[1].code).toBeUndefined();
+  expect(result.current.getLineKey(result.current.lines[1])).toMatch(/^line:/);
 });
 
 it.each(["", Number.NaN, Number.POSITIVE_INFINITY, true, {}])(
-  "rejects an invalid server identity %s",
+  "rejects an invalid persisted ID %s",
   (id) => {
     expect(() =>
       renderHook(() => useLineItems({ columns, defaultLines: [{ id, name: "Invalid" }] as Row[] })),
@@ -57,7 +60,7 @@ it.each(["", Number.NaN, Number.POSITIVE_INFINITY, true, {}])(
 it("rejects duplicate identities after string normalization", () => {
   expect(() =>
     renderHook(() =>
-      useLineItems({
+      useLineItems<Row>({
         columns,
         defaultLines: [
           { id: 1, name: "One" },
@@ -121,14 +124,15 @@ it("discards ID-less initial rows without accepting replacement defaultLines", (
 });
 
 it("requires remounting to change idKey or document property ownership", () => {
-  const initialProps: UseLineItemsOptions<Row> = {
+  const initialProps: UseLineItemsOptions<Row & { code?: number }> = {
     columns,
     defaultLines: [{ id: "A", name: "Existing" }],
   };
-  const first = renderHook((options: UseLineItemsOptions<Row>) => useLineItems(options), {
-    initialProps,
-  });
-  expect(() => first.rerender({ columns, idKey: "name" })).toThrow(
+  const first = renderHook(
+    (options: UseLineItemsOptions<Row & { code?: number }>) => useLineItems(options),
+    { initialProps },
+  );
+  expect(() => first.rerender({ columns, idKey: "code" })).toThrow(
     "Remount LineItems to change idKey",
   );
   const second = renderHook((options: UseLineItemsOptions<Row>) => useLineItems(options), {

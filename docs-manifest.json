@@ -807,10 +807,10 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "fbc09ef9994494cb",
+        "outline": "6f44fa0ce14bc031",
         "snapshot": null,
-        "outputMd": "851afb4672da6673",
-        "examples": "157ff03dc999d3d3"
+        "outputMd": "e86dd12f9aaa196f",
+        "examples": "f0c771090062761d"
       }
     },
     "global-header-layout": {
@@ -1374,6 +1374,23 @@
         "examples": "19131f441efe232f"
       }
     },
+    "stepper": {
+      "slug": "stepper",
+      "kind": "code-backed",
+      "outline": "docs-src/components/stepper.docs.outline.md",
+      "output": "docs/components/stepper.md",
+      "examples": "docs-src/components/stepper.docs.examples.tsx",
+      "sources": ["packages/core/src/components/stepper/**"],
+      "claims": [],
+      "symbols": ["Stepper", "StepperProps", "StepperStep"],
+      "hashes": {
+        "typeSurface": "03575b3ae95ff031",
+        "outline": "620afc4168680aa7",
+        "snapshot": "62a67309416ceed7",
+        "outputMd": "dfd07cfec2f84d5b",
+        "examples": "9a0f9bf7c9b8fb95"
+      }
+    },
     "styling-theming": {
       "slug": "styling-theming",
       "kind": "prose",
@@ -1845,6 +1862,7 @@
     "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "e50b2d649289d772",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "8ab89452180de4e1",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
+    "packages/core/skills/app-shell-patterns/references/components/stepper.md": "dfd07cfec2f84d5b",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "30bb32e57fc78bd9",
     "packages/core/skills/app-shell-patterns/references/components/text.md": "24262ae6cb49a138",
@@ -1884,7 +1902,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "be00d1109761b7f1",
     "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",
     "packages/core/skills/app-shell-patterns/references/patterns/form-single-page.md": "10a0f4d91a120752",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "851afb4672da6673",
+    "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "e86dd12f9aaa196f",
     "packages/core/skills/app-shell-patterns/references/patterns/i18n-labels.md": "d9f0851d9c98ecfe",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "253fcea1c4e5a42c",
@@ -1892,6 +1910,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "930db027a28bbe24",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "fe8232d31b24aed0",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "0e6c9be8c4ece7bc"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "d1d9cfad4853edcf"
   }
 }

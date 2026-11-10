@@ -430,6 +430,7 @@
         "DataTableFilterConfig",
         "DataTablePaginationProps",
         "DataTableRootProps",
+        "DataTableTreeRow",
         "DateCellEditOptions",
         "DateTimeDraft",
         "FieldMetadata",
@@ -439,6 +440,7 @@
         "FilterOperator",
         "FooterRenderContext",
         "HeaderRenderContext",
+        "HierarchyColumn",
         "MetadataFieldOptions",
         "NodeType",
         "NumberCellEditOptions",
@@ -452,6 +454,7 @@
         "SelectionActionHelpers",
         "SortConfig",
         "SortState",
+        "SubRowsOptions",
         "TableFieldName",
         "TableMetadata",
         "TableMetadataFilter",
@@ -473,10 +476,10 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "33eb2bdd6be1c774",
-        "outline": "15eb8aa0e17aad9f",
+        "typeSurface": "413c66caec0a0bf8",
+        "outline": "805f72909150e1ef",
         "snapshot": "a97e067c66e46ef6",
-        "outputMd": "1daeb6e099c0dee8",
+        "outputMd": "271daa4be7bc9373",
         "examples": "e7100d7517f72495"
       }
     },
@@ -1532,6 +1535,7 @@
       "examples": null,
       "sources": [
         "packages/core/src/components/tree/**",
+        "packages/core/src/lib/tree/**",
         "packages/core/src/components/tree-picker/**"
       ],
       "claims": [],
@@ -1548,7 +1552,7 @@
       ],
       "hashes": {
         "typeSurface": "95d4d96e2c7cad05",
-        "outline": "8e9e111b417abc16",
+        "outline": "6bf693a08fb6db9f",
         "snapshot": "e63b60420ec5113f",
         "outputMd": "11c3358163ce9216",
         "examples": null
@@ -1818,7 +1822,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "1daeb6e099c0dee8",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "271daa4be7bc9373",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "df6777c49ca5c7e2",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "8e24da61e95b6434",

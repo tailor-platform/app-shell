@@ -33,6 +33,7 @@ export type GeneratedRouteParams = {
   "/showcase/data-table": {};
   "/showcase/data-table-lab": {};
   "/showcase/data-table-selection": {};
+  "/showcase/data-table-tree": {};
   "/showcase/date-picker": {};
   "/showcase/document-progress": {};
   "/showcase/dropdown": {};

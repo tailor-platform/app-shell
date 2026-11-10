@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { MemoryRouter } from "react-router";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import { LineItems } from "./line-items";
 import { useLineItems } from "./use-line-items";
+import { createLineItemsIdentity } from "./document/identity";
 import type { LineItemsColumn } from "./document";
 import type { UseLineItemsReturn } from "./types";
 
@@ -474,6 +475,63 @@ describe("LineItems table", () => {
     expect(screen.getByText("$25.00")).toBeDefined();
     expect(value.isDirty).toBe(false);
     expect(screen.queryByRole("textbox")).toBeNull();
+  });
+
+  it("preserves the row, focus and cell draft when a creation receives a persisted ID", () => {
+    function DraftCell() {
+      const [draft, setDraft] = useState("");
+      return (
+        <input
+          aria-label="Draft name"
+          value={draft}
+          onChange={(event) => setDraft(event.currentTarget.value)}
+        />
+      );
+    }
+    const identity = createLineItemsIdentity<Row>("id");
+    const clientKey = identity.newClientKey();
+    const creation = identity.tag({ ...rows[0], id: undefined }, clientKey);
+    identity.remember([creation]);
+    const value: UseLineItemsReturn<Row> = {
+      columns: [{ id: "draft", render: () => <DraftCell /> }],
+      lines: [creation],
+      orderer: true,
+      isDirty: true,
+      getLineKey: identity.getLineKey,
+      updateField: vi.fn(),
+      addLine: vi.fn(() => ""),
+      removeLine: vi.fn(),
+      reorderLine: vi.fn(),
+      revert: vi.fn(),
+    };
+    const { rerender } = render(
+      <MemoryRouter>
+        <LineItems.Root value={value}>
+          <LineItems.Table aria-label="Order lines" />
+        </LineItems.Root>
+      </MemoryRouter>,
+    );
+    const row = screen.getAllByRole("row")[1];
+    const editor = screen.getByRole<HTMLInputElement>("textbox", { name: "Draft name" });
+    fireEvent.change(editor, { target: { value: "Unsaved draft" } });
+    editor.focus();
+    expect(value.getLineKey(creation)).toBe(clientKey);
+
+    const persisted = identity.tag({ ...creation, id: "A" }, clientKey);
+    identity.remember([persisted]);
+    rerender(
+      <MemoryRouter>
+        <LineItems.Root value={{ ...value, lines: [persisted], isDirty: false }}>
+          <LineItems.Table aria-label="Order lines" />
+        </LineItems.Root>
+      </MemoryRouter>,
+    );
+
+    expect(value.getLineKey(persisted)).toBe("A");
+    expect(screen.getAllByRole("row")[1]).toBe(row);
+    expect(screen.getByRole("textbox", { name: "Draft name" })).toBe(editor);
+    expect(document.activeElement).toBe(editor);
+    expect(editor.value).toBe("Unsaved draft");
   });
 
   it("localizes the default table name and empty state", () => {

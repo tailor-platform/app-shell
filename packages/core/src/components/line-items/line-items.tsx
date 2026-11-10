@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { LineItemsContext, useLineItemsContext } from "./line-items-context";
 import { useLineItemsT } from "./i18n";
 import { useLineItemsReorder } from "./use-line-items-reorder";
+import { clientKeyOf } from "./document/identity";
 import type { UseLineItemsReturn } from "./types";
 
 export type LineItemsRootProps<T extends Record<string, unknown>> = {
@@ -81,7 +82,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
       <Table.Body {...reorder.bodyProps}>
         {value.lines.map((row, index) => (
           <Table.Row
-            key={value.getLineKey(row)}
+            key={clientKeyOf(row)}
             {...reorder.getRowProps(index)}
             className="astw:data-dragging:opacity-40 astw:data-[drop-position=before]:[&>td]:shadow-[inset_0_2px_0_var(--primary)] astw:data-[drop-position=after]:[&>td]:shadow-[inset_0_-2px_0_var(--primary)]"
           >

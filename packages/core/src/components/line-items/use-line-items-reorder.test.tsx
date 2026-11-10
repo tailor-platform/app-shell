@@ -4,6 +4,8 @@ import { afterEach, expect, it, vi } from "vitest";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import { useLineItems } from "./use-line-items";
 import { useLineItemsReorder } from "./use-line-items-reorder";
+import { createLineItemsIdentity } from "./document/identity";
+import type { UseLineItemsReturn } from "./types";
 
 type Row = { id?: string; name: string };
 const handles = new Set<HTMLButtonElement>();
@@ -115,6 +117,45 @@ it.each([
     expect(result.current.reorder.getRowProps(target)["data-drop-position"]).toBeUndefined();
   },
 );
+
+it("retains drag identities across persisted ID assignment and dispatches current line keys", () => {
+  const identity = createLineItemsIdentity<Row>("id");
+  const lines = ["First", "Second"].map((name) => identity.tag({ name }, identity.newClientKey()));
+  identity.remember(lines);
+  const value: UseLineItemsReturn<Row> = {
+    columns: [{ accessorKey: "name" }],
+    lines,
+    orderer: true,
+    isDirty: true,
+    getLineKey: identity.getLineKey,
+    updateField: vi.fn(),
+    addLine: vi.fn(() => ""),
+    removeLine: vi.fn(),
+    reorderLine: vi.fn(),
+    revert: vi.fn(),
+  };
+  const { result, rerender } = renderHook(
+    (current: UseLineItemsReturn<Row>) => useLineItemsReorder(current),
+    { initialProps: value },
+  );
+  const handle = mountedHandle();
+  const drop = dragEvent(targetRow(), 130);
+  act(() => result.current.getHandleProps(0).onDragStart(dragEvent(handle)));
+  act(() => result.current.getRowProps(1).onDragOver(drop));
+
+  const persisted = lines.map((line, index) =>
+    identity.tag({ ...line, id: index === 0 ? "A" : "B" }, identity.clientKeyOf(line)),
+  );
+  identity.remember(persisted);
+  rerender({ ...value, lines: persisted, isDirty: false });
+
+  expect(result.current.getRowProps(0)["data-dragging"]).toBe("");
+  expect(result.current.getRowProps(1)["data-drop-position"]).toBe("after");
+  act(() => result.current.getRowProps(1).onDrop(drop));
+  expect(value.reorderLine).toHaveBeenCalledExactlyOnceWith("A", "B");
+  expect(result.current.getRowProps(0)["data-dragging"]).toBeUndefined();
+  expect(result.current.getRowProps(1)["data-drop-position"]).toBeUndefined();
+});
 
 it("moves by arrow keys by default, retaining focus and dirty state without crossing boundaries", () => {
   const { result, keys } = setup();

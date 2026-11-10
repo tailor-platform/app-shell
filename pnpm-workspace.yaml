@@ -58,6 +58,8 @@ minimumReleaseAgeExclude:
   - zod@4.6.6
   # Renovate security update: happy-dom@21.0.4
   - happy-dom@21.0.4
+  # Renovate security update: vite@7.3.8
+  - vite@7.3.8
 
 overrides:
   # API Extractor's TSDoc and Rushstack Ajv dependencies resolve the vulnerable

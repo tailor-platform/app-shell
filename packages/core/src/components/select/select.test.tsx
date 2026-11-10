@@ -324,15 +324,14 @@ describe("Select", () => {
       const content = await openPopup();
       expect(content.className).toContain("astw:max-h-[min(var(--available-height),15rem)]");
       expect(content.className).toContain("astw:overflow-y-auto");
+      expect(content.className).toContain("astw:overflow-x-hidden");
       expect(content.className).not.toContain("astw:overflow-hidden");
     });
 
-    it("lets className replace the max height and overflow", async () => {
-      const content = await openPopup("astw:max-h-96 astw:overflow-hidden");
-      expect(content.className).toContain("astw:max-h-96");
-      expect(content.className).toContain("astw:overflow-hidden");
-      expect(content.className).not.toContain("astw:max-h-[min(var(--available-height),15rem)]");
-      expect(content.className).not.toContain("astw:overflow-y-auto");
+    it("applies a consumer className alongside the defaults", async () => {
+      // Consumers can't emit `astw:` utilities, so they override with plain `!` classes.
+      const content = await openPopup("max-h-96!");
+      expect(content.className).toContain("max-h-96!");
     });
   });
 });

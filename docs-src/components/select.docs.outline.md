@@ -153,11 +153,11 @@ If the fetcher throws or rejects, `Select.Async` renders a built-in inline error
 
 ## Long Lists
 
-When the list opens below or above the trigger, it is at most 15rem tall and scrolls. It opens on the side with more room, so a trigger near the bottom of the screen opens the list upward. When neither side has 15rem, the list shrinks to the space that is left. This is the same as `Combobox`.
+When the list opens below or above the trigger, it is at most 15rem tall (the same cap as `Combobox`) and scrolls. It opens on the side with more room, so a trigger near the bottom of the screen opens the list upward. When neither side has 15rem, the list shrinks to the space that is left.
 
 When a mouse or keyboard user opens a `Select` with the selected item laid over the trigger (the default for `Select`, not `Select.Async`), the list can be as tall as the viewport and scrolls the same way.
 
-With `Select.Parts`, a `className` on `Content` with its own `max-h-*` or `overflow-*` replaces these defaults.
+With `Select.Parts`, override the cap with a plain class and a trailing `!` on `Content`, for example `className="max-h-96!"`.
 
 ## Low-level Primitives
 

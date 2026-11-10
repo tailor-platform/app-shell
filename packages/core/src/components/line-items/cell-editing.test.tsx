@@ -14,7 +14,7 @@ import { MemoryRouter } from "react-router";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import { CellEditError } from "@/components/internals/table-core/cell-edit-error";
 import { LineItems } from "./line-items";
-import { useLineItemsCellRenderersByColumn } from "./line-items-cell";
+import { useLineItemsCellRenderersByColumn, type lineItemsEditors } from "./line-items-cell";
 import { useLineItems } from "./use-line-items";
 import type { LineItemsColumn, UseLineItemsReturn } from "./types";
 
@@ -64,6 +64,12 @@ const dateColumn = {
   type: "date",
   edit: { editorType: "date" },
 } satisfies LineItemsColumn<Row>;
+const editorColumns = {
+  text: nameColumn,
+  number: quantityColumn,
+  combobox: statusColumn,
+  date: dateColumn,
+} satisfies Record<keyof typeof lineItemsEditors, LineItemsColumn<Row>>;
 const canEdit = (row: Row) => row.allowed;
 const configurations = buildConfigurations({ modules: [], locale: "en", timeZone: "Asia/Tokyo" });
 
@@ -470,25 +476,19 @@ describe("LineItems cell editing integration", () => {
     expect(editor.value.isDirty).toBe(true);
   });
 
-  it.each(["text", "number", "choice", "date"] as const)(
+  it.each(Object.entries(editorColumns))(
     "keeps the %s input and local state when column preparation is recreated",
-    async (kind) => {
-      const column = {
-        text: nameColumn,
-        number: quantityColumn,
-        choice: statusColumn,
-        date: dateColumn,
-      }[kind];
+    async (kind, column) => {
       const editor = setup([column]);
       const getControl = () => {
         if (kind === "date") return dateTrigger();
-        if (kind === "choice") return combobox();
+        if (kind === "combobox") return combobox();
         return textbox(kind === "number" ? "Quantity" : "Name");
       };
       const control = getControl();
-      if (kind === "date" || kind === "choice") await editor.user.click(control);
-      if (kind === "choice") await editor.user.type(control, "Clos");
-      if (control instanceof HTMLInputElement && kind !== "choice")
+      if (kind === "date" || kind === "combobox") await editor.user.click(control);
+      if (kind === "combobox") await editor.user.type(control, "Clos");
+      if (control instanceof HTMLInputElement && kind !== "combobox")
         draft(control, kind === "number" ? "3." : "Retained");
       const focused = document.activeElement;
       const popup = kind === "date" ? calendar() : null;
@@ -500,7 +500,7 @@ describe("LineItems cell editing integration", () => {
       expect(document.activeElement).toBe(focused);
       if (kind === "date") expect(calendar()).toBe(popup);
       if (control instanceof HTMLInputElement) expect(control.value).toBe(inputValue);
-      if (kind === "choice") expect(combobox().getAttribute("aria-expanded")).toBe("true");
+      if (kind === "combobox") expect(combobox().getAttribute("aria-expanded")).toBe("true");
       expect(editor.value.isDirty).toBe(false);
     },
   );

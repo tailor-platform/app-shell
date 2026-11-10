@@ -48,9 +48,19 @@ describe("editor composition", () => {
     expect(container.querySelector("section > input")).not.toBeNull();
     const input = screen.getByRole("textbox", { name: "Value" });
     fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "12.50" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(commit).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: "1,5" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(commit).not.toHaveBeenCalled();
     fireEvent.change(input, { target: { value: "14.5" } });
     fireEvent.keyDown(input, { key: "Enter" });
     expect(commit).toHaveBeenCalledWith(14.5);
+    fireEvent.change(input, { target: { value: "" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(commit).toHaveBeenCalledWith(null);
   });
 
   it("uses the injected choice editor's icon and preview visibility", () => {
@@ -90,7 +100,7 @@ describe("editor composition", () => {
 
   it("renders an injected editor without a registry entry", () => {
     const commit = vi.fn();
-    const editor: CellEditor<{ confirmed: string }> = {
+    const editor: CellEditor<{ confirmed: string }, string> = {
       Editor: ({ children, options, label, valueLabel, commit: confirm }) =>
         children({
           input: (

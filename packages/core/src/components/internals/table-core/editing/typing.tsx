@@ -31,8 +31,11 @@ import {
 } from "./shared";
 import type { CellEditor, CellEditorProps } from "./props";
 
-function TypingEditor({
+function TypingEditor<TOutput>({
   numeric,
+  format,
+  parse,
+  isUnchanged,
   current,
   change = () => undefined,
   commit,
@@ -46,7 +49,12 @@ function TypingEditor({
   align,
   navigation,
   children,
-}: CellEditorProps<Record<string, never>> & { numeric: boolean }) {
+}: CellEditorProps<Record<string, never>, TOutput> & {
+  numeric: boolean;
+  format: (current: unknown) => string;
+  parse: (draft: string) => TOutput | undefined;
+  isUnchanged: (value: TOutput, current: unknown) => boolean;
+}) {
   const errorId = useId();
   const session = useCellEditSession<string>(interceptErrors, external);
   const { state } = session;
@@ -59,9 +67,7 @@ function TypingEditor({
   const composingRef = useRef(false);
   const selectOnMouseUpRef = useRef(false);
 
-  const baselineText = numeric
-    ? toNumberEditText(toNumberValue(current))
-    : (toTextValue(current) ?? "");
+  const baselineText = format(current);
   const text = state.status === "idle" ? baselineText : state.draft;
   const message = failure?.source === "parse" ? labels.notANumber : undefined;
 
@@ -78,18 +84,12 @@ function TypingEditor({
     const active = session.getState();
     if (active.status === "idle" || active.status === "confirming") return true;
     const draftText = active.draft;
-    const value = numeric
-      ? parseNumberText(normalizeNumberText(draftText))
-      : toTextValue(draftText);
+    const value = parse(draftText);
     if (value === undefined) {
       session.fail(undefined, "parse");
       return false;
     }
-    const unchanged =
-      draftText === baselineText ||
-      (numeric
-        ? sameNumber(value as number | null, toNumberValue(current))
-        : value === toTextValue(current));
+    const unchanged = draftText === baselineText || isUnchanged(value, current);
     session.confirm(() => (unchanged ? undefined : commit(value)));
     return true;
   };
@@ -254,12 +254,28 @@ function TypingEditor({
   });
 }
 
-export const textEditor: CellEditor<Record<string, never>> = {
-  Editor: (props) => <TypingEditor {...props} numeric={false} />,
+export const textEditor: CellEditor<Record<string, never>, string | null> = {
+  Editor: (props) => (
+    <TypingEditor
+      {...props}
+      numeric={false}
+      format={(current) => toTextValue(current) ?? ""}
+      parse={toTextValue}
+      isUnchanged={(value, current) => value === toTextValue(current)}
+    />
+  ),
   hideDisplay: INPUT_DISPLAY,
 };
 
-export const numberEditor: CellEditor<Record<string, never>> = {
-  Editor: (props) => <TypingEditor {...props} numeric />,
+export const numberEditor: CellEditor<Record<string, never>, number | null> = {
+  Editor: (props) => (
+    <TypingEditor
+      {...props}
+      numeric
+      format={(current) => toNumberEditText(toNumberValue(current))}
+      parse={(draft) => parseNumberText(normalizeNumberText(draft))}
+      isUnchanged={(value, current) => sameNumber(value, toNumberValue(current))}
+    />
+  ),
   hideDisplay: INPUT_DISPLAY,
 };

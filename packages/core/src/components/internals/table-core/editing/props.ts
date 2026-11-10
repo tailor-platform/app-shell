@@ -47,8 +47,8 @@ export interface CellEditorView {
 }
 
 /** Input behavior and presentation policy injected into a cell, independent of editor kinds. */
-export interface CellEditor<TOptions> {
-  Editor: (props: CellEditorProps<TOptions>) => ReactNode;
+export interface CellEditor<TOptions, TOutput> {
+  Editor: (props: CellEditorProps<TOptions, TOutput>) => ReactNode;
   icon?: ReactNode;
   hideDisplay?: {
     idle?: "focused" | "forced-colors";
@@ -56,12 +56,18 @@ export interface CellEditor<TOptions> {
   };
 }
 
+/** Infer the contract from its implementation rather than maintaining a separate editor map. */
+export type CellEditorOptions<TEditor> =
+  TEditor extends CellEditor<infer TOptions, infer _TOutput> ? TOptions : never;
+export type CellEditorOutput<TEditor> =
+  TEditor extends CellEditor<infer _TOptions, infer TOutput> ? TOutput : never;
+
 /** Input and draft behavior only; cell presentation and row adoption belong to their owners. */
-export interface CellEditorProps<TOptions> {
+export interface CellEditorProps<TOptions, TOutput = unknown> {
   options: TOptions;
   current: unknown;
   change?: (draft: unknown) => unknown;
-  commit: (value: unknown) => unknown;
+  commit: (value: TOutput) => unknown;
   renderError?: (error: unknown) => ReactNode;
   interceptErrors?: boolean;
   /** External sessions outlive controls; their owner handles activation and disposal. */

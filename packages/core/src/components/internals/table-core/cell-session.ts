@@ -1,4 +1,5 @@
-/** A failure belongs to its draft, not to the control displaying it. @internal */
+// Retain reachable session declarations in the bundle; package entrypoints do not export them.
+/** A failure belongs to its draft, not to the control displaying it. */
 export interface CellEditFailure {
   error: unknown;
   source: "parse" | "change" | "commit";
@@ -23,8 +24,6 @@ function isPromiseLike(value: unknown): value is PromiseLike<unknown> {
  * The caller owns the lifetime: detaching a subscriber leaves the edit intact, whereas
  * deactivate invalidates pending callbacks and blocks commands. activate resumes the same
  * draft with the caller's error-interception policy. Returned methods do not depend on this.
- *
- * @internal
  */
 export function createCellEditSession<TDraft>(interceptErrors = true) {
   let state: CellEditSessionState<TDraft> = { status: "idle" };

@@ -7,5 +7,9 @@ export function TypingEditCell<TRow extends Record<string, unknown>>(
 ) {
   const coreProps = useEditorProps(props);
   const numeric = props.col.type === "number" || props.col.type === "money";
-  return <EditableCell {...coreProps} editor={numeric ? numberEditor : textEditor} options={{}} />;
+  return numeric ? (
+    <EditableCell {...coreProps} editor={numberEditor} options={{}} />
+  ) : (
+    <EditableCell {...coreProps} editor={textEditor} options={{}} />
+  );
 }

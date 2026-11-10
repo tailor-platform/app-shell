@@ -1,4 +1,12 @@
 import { expectTypeOf, test } from "vitest";
+import type {
+  CellEditorOptions,
+  CellEditorOutput,
+} from "@/components/internals/table-core/editing/props";
+import type { choiceEditor } from "@/components/internals/table-core/editing/choice";
+import type { dateEditor } from "@/components/internals/table-core/editing/date";
+import type { numberEditor, textEditor } from "@/components/internals/table-core/editing/typing";
+import type { lineItemsEditors } from "./line-items-cell";
 import type { LineItemsColumn, LineItemsEditor } from "./types";
 
 type Row = {
@@ -43,6 +51,7 @@ test("cell editors retain property-specific nullable output and row callback typ
     edit: { editorType: "combobox", options: [{ value: "open", label: "Open" }] },
   };
   expectTypeOf<LineItemsEditor<Row, string>>().toEqualTypeOf<never>();
+  expectTypeOf<LineItemsEditor<Row, number>>().toEqualTypeOf<never>();
   expectTypeOf<LineItemsEditor<Row, { code: string }>>().toEqualTypeOf<never>();
   expectTypeOf<
     Extract<LineItemsColumn<Row>, { accessorKey?: never }>["edit"]
@@ -69,4 +78,36 @@ test("cell editors retain property-specific nullable output and row callback typ
   void numericChoice;
   void custom;
   void asyncChoice;
+});
+
+test("public editor settings and confirmation values follow the concrete editors", () => {
+  expectTypeOf<LineItemsEditor<Row, unknown>["editorType"]>().toEqualTypeOf<
+    keyof typeof lineItemsEditors
+  >();
+  type PublicEditor<K extends LineItemsEditor<Row, unknown>["editorType"]> = Extract<
+    LineItemsEditor<Row, unknown>,
+    { editorType: K }
+  >;
+  type ConfirmedValue<K extends LineItemsEditor<Row, unknown>["editorType"]> = Parameters<
+    NonNullable<PublicEditor<K>["onValueCommitted"]>
+  >[1];
+
+  expectTypeOf<ConfirmedValue<"text">>().toEqualTypeOf<CellEditorOutput<typeof textEditor>>();
+  expectTypeOf<ConfirmedValue<"number">>().toEqualTypeOf<CellEditorOutput<typeof numberEditor>>();
+  expectTypeOf<ConfirmedValue<"date">>().toEqualTypeOf<CellEditorOutput<typeof dateEditor>>();
+  expectTypeOf<ConfirmedValue<"combobox">>().toEqualTypeOf<CellEditorOutput<typeof choiceEditor>>();
+  expectTypeOf<PublicEditor<"date">["withTime"]>().toEqualTypeOf<
+    CellEditorOptions<typeof dateEditor>["withTime"]
+  >();
+  expectTypeOf<PublicEditor<"combobox">["options"]>().toEqualTypeOf<
+    CellEditorOptions<typeof choiceEditor>["choices"]
+  >();
+
+  const choice: PublicEditor<"combobox"> = {
+    editorType: "combobox",
+    options: [],
+    // @ts-expect-error Internal menu rendering is not a public editor setting.
+    renderOption: () => null,
+  };
+  void choice;
 });

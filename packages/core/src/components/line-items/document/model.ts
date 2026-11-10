@@ -1,6 +1,31 @@
 import { createLineItemsIdentity, persistedId } from "./identity";
 import { createLineItemsSnapshots } from "./snapshot";
-import type { DocumentOptions, LineItemsColumn } from "./types";
+import type { DocumentOptions, LineItemsColumn, LineItemsEditor } from "./types";
+
+type EditorKind = LineItemsEditor<Record<string, unknown>, unknown>["editorType"];
+type EditorSettings = { editorType: EditorKind; options?: unknown };
+
+// Keep document checks headless, while requiring a validator for every adapter kind.
+const editorValidators: Record<EditorKind, (settings: EditorSettings) => void> = {
+  text: () => {},
+  number: () => {},
+  date: () => {},
+  combobox: ({ options }) => {
+    if (
+      !Array.isArray(options) ||
+      options.some(
+        (option: unknown) =>
+          typeof option !== "object" ||
+          option === null ||
+          !("value" in option) ||
+          typeof option.value !== "string" ||
+          !("label" in option) ||
+          typeof option.label !== "string",
+      )
+    )
+      throw new Error("Combobox editors require fixed string options");
+  },
+};
 
 /** Resolve document property ownership independently of display column identities. */
 function compileLineItemsColumns<T extends Record<string, unknown>>(
@@ -15,16 +40,10 @@ function compileLineItemsColumns<T extends Record<string, unknown>>(
     if (column.edit !== undefined) {
       if (column.accessorKey === undefined)
         throw new Error("Cell editors require an accessorKey property");
-      if (!["text", "number", "date", "combobox"].includes(column.edit.editorType))
+      const kind = column.edit.editorType;
+      if (typeof kind !== "string" || !Object.hasOwn(editorValidators, kind))
         throw new Error("Unsupported LineItems editor type");
-      if (
-        column.edit.editorType === "combobox" &&
-        (!Array.isArray(column.edit.options) ||
-          column.edit.options.some(
-            (option) => typeof option.value !== "string" || typeof option.label !== "string",
-          ))
-      )
-        throw new Error("Combobox editors require fixed string options");
+      editorValidators[kind](column.edit);
     }
     ids.add(id);
     if (column.accessorKey !== undefined) properties.add(column.accessorKey);

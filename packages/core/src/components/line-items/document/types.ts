@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import type { CellEditorOutput } from "@/components/internals/table-core/editing/props";
+import type { lineItemsEditors } from "../line-items-cell";
 import type {
   ColumnCellType,
   ColumnDisplay,
@@ -16,25 +18,17 @@ type EditorBase<TRow extends Record<string, unknown>, TValue> = {
   error?: false | { render: (ctx: { row: TRow; error: unknown }) => ReactNode };
 };
 
-type Adoptable<TOutput, TValue, TEditor> = [TOutput] extends [TValue] ? TEditor : never;
+type EditorCatalog = typeof lineItemsEditors;
+type EditorOutput<K extends keyof EditorCatalog> = CellEditorOutput<EditorCatalog[K]["editor"]>;
 
-/** Built-in editors emit null on clear; their complete output must fit the property. */
-export type LineItemsEditor<TRow extends Record<string, unknown>, TValue> =
-  | Adoptable<string | null, TValue, EditorBase<TRow, string | null> & { editorType: "text" }>
-  | Adoptable<number | null, TValue, EditorBase<TRow, number | null> & { editorType: "number" }>
-  | Adoptable<
-      string | null,
-      TValue,
-      EditorBase<TRow, string | null> & { editorType: "date"; withTime?: boolean }
-    >
-  | Adoptable<
-      string | null,
-      TValue,
-      EditorBase<TRow, string | null> & {
-        editorType: "combobox";
-        options: readonly { value: string; label: string }[];
-      }
-    >;
+/** Derive supported kinds, settings and outputs from the adapters; outputs must fit the property. */
+export type LineItemsEditor<TRow extends Record<string, unknown>, TValue> = {
+  [K in keyof EditorCatalog]: [EditorOutput<K>] extends [TValue]
+    ? EditorBase<TRow, EditorOutput<K>> & { editorType: K } & Parameters<
+          EditorCatalog[K]["prepare"]
+        >[0]
+    : never;
+}[keyof EditorCatalog];
 
 type DisplayProps<TRow extends Record<string, unknown>> = {
   label?: string;

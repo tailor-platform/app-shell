@@ -57,7 +57,7 @@ function DateEditor({
   label,
   navigation,
   children,
-}: CellEditorProps<DateEditorOptions>) {
+}: CellEditorProps<DateEditorOptions, string | null>) {
   const withTime = options.withTime ?? false;
   const session = useCellEditSession<DateTimeDraft>(interceptErrors, external);
   const { state } = session;
@@ -240,7 +240,7 @@ function DateEditor({
   });
 }
 
-export const dateEditor: CellEditor<DateEditorOptions> = {
+export const dateEditor: CellEditor<DateEditorOptions, string | null> = {
   Editor: DateEditor,
   icon: <CalendarDays />,
 };

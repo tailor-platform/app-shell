@@ -61,7 +61,7 @@ function ChoiceEditor({
   align,
   navigation,
   children,
-}: CellEditorProps<ChoiceEditorOptions>) {
+}: CellEditorProps<ChoiceEditorOptions, string | null>) {
   const session = useCellEditSession<ChoiceDraft>(interceptErrors, external);
   const { state } = session;
   const { callbackError, containsErrorTarget } = useCellError(
@@ -383,7 +383,7 @@ function ChoiceEditor({
   });
 }
 
-export const choiceEditor: CellEditor<ChoiceEditorOptions> = {
+export const choiceEditor: CellEditor<ChoiceEditorOptions, string | null> = {
   Editor: ChoiceEditor,
   icon: <ChevronDown />,
   hideDisplay: INPUT_DISPLAY,

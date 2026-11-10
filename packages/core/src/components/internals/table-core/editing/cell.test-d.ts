@@ -4,12 +4,13 @@ import { EditableCell, type EditableCellOwnerProps } from "./cell";
 import { choiceEditor } from "./choice";
 import { dateEditor } from "./date";
 import { numberEditor, textEditor } from "./typing";
+import type { CellEditorOptions, CellEditorOutput } from "./props";
 
 declare const ownerProps: EditableCellOwnerProps;
 
 test("injected editors retain required options without a kind discriminator", () => {
-  type ChoiceOptions = ComponentProps<typeof choiceEditor.Editor>["options"];
-  type DateOptions = ComponentProps<typeof dateEditor.Editor>["options"];
+  type ChoiceOptions = CellEditorOptions<typeof choiceEditor>;
+  type DateOptions = CellEditorOptions<typeof dateEditor>;
   expectTypeOf<ChoiceOptions["choices"]>().toEqualTypeOf<
     readonly { value: string; label: string }[]
   >();
@@ -32,6 +33,71 @@ test("injected editors retain required options without a kind discriminator", ()
   EditableCell({ ...ownerProps, editor: dateEditor, options: { withTime: true } });
   EditableCell({ ...ownerProps, editor: textEditor, options: {} });
   EditableCell({ ...ownerProps, editor: numberEditor, options: {} });
+});
+
+test("editor implementations expose their confirmed output types", () => {
+  expectTypeOf<CellEditorOutput<typeof textEditor>>().toEqualTypeOf<string | null>();
+  expectTypeOf<CellEditorOutput<typeof numberEditor>>().toEqualTypeOf<number | null>();
+  expectTypeOf<CellEditorOutput<typeof choiceEditor>>().toEqualTypeOf<string | null>();
+  expectTypeOf<CellEditorOutput<typeof dateEditor>>().toEqualTypeOf<string | null>();
+  expectTypeOf<CellEditorOptions<typeof numberEditor>>().toEqualTypeOf<Record<string, never>>();
+  expectTypeOf<CellEditorOutput<object>>().toEqualTypeOf<never>();
+
+  const commitNumber: ComponentProps<typeof numberEditor.Editor>["commit"] = (value) => {
+    expectTypeOf(value).toEqualTypeOf<number | null>();
+  };
+  commitNumber(12.5);
+  commitNumber(null);
+  // @ts-expect-error The numeric input cannot confirm text.
+  commitNumber("12.5");
+
+  const commitText: ComponentProps<typeof textEditor.Editor>["commit"] = (value) => {
+    expectTypeOf(value).toEqualTypeOf<string | null>();
+  };
+  commitText("text");
+  commitText(null);
+  // @ts-expect-error The text input cannot confirm a numeric value.
+  commitText(12.5);
+});
+
+test("cell confirmation types are inferred only from the selected editor", () => {
+  EditableCell({
+    ...ownerProps,
+    editor: numberEditor,
+    options: {},
+    commit: (value) => {
+      expectTypeOf(value).toEqualTypeOf<number | null>();
+    },
+  });
+  EditableCell({
+    ...ownerProps,
+    editor: choiceEditor,
+    options: { choices: [] },
+    commit: (value) => {
+      expectTypeOf(value).toEqualTypeOf<string | null>();
+    },
+  });
+  EditableCell({
+    ...ownerProps,
+    editor: numberEditor,
+    options: {},
+    // @ts-expect-error A callback cannot widen a number editor's output to text.
+    commit: (_value: string | null) => {},
+  });
+  EditableCell({
+    ...ownerProps,
+    editor: numberEditor,
+    options: {},
+    // @ts-expect-error A number editor can confirm null on clear.
+    commit: (_value: number) => {},
+  });
+  EditableCell({
+    ...ownerProps,
+    editor: dateEditor,
+    options: {},
+    // @ts-expect-error A callback cannot change the confirmed output of a date editor.
+    commit: (_value: number | null) => {},
+  });
 });
 
 test("options cannot widen or disagree with the injected editor", () => {

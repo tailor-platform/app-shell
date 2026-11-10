@@ -3,8 +3,8 @@ import type { Table } from "@/components/table";
 import { EditableCellFrame } from "./shared";
 import type { CellEditor, CellEditorProps, CellEditorView } from "./props";
 
-export type EditableCellOwnerProps = Omit<
-  CellEditorProps<unknown>,
+export type EditableCellOwnerProps<TOutput = unknown> = Omit<
+  CellEditorProps<unknown, TOutput>,
   "children" | "options" | "valueLabel"
 > & {
   display: ReactNode;
@@ -13,13 +13,13 @@ export type EditableCellOwnerProps = Omit<
   tooltipLabel?: string;
 };
 
-export type EditableCellProps<TOptions> = EditableCellOwnerProps & {
-  editor: CellEditor<TOptions>;
+export type EditableCellProps<TOptions, TOutput> = EditableCellOwnerProps<NoInfer<TOutput>> & {
+  editor: CellEditor<TOptions, TOutput>;
   options: NoInfer<TOptions>;
 };
 
 /** Owns cell presentation; the injected editor supplies input behavior without mirrored state. */
-export function EditableCell<TOptions>({
+export function EditableCell<TOptions, TOutput>({
   editor,
   options,
   display,
@@ -27,7 +27,7 @@ export function EditableCell<TOptions>({
   truncate,
   tooltipLabel,
   ...props
-}: EditableCellProps<TOptions>) {
+}: EditableCellProps<TOptions, TOutput>) {
   const { labels, slotPrefix } = props;
   const { Editor, icon, hideDisplay } = editor;
   const renderEditor = ({ input, draftPreview, ...interaction }: CellEditorView) => (

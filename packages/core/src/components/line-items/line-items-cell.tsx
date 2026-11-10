@@ -2,6 +2,14 @@ import { useMemo, type ComponentProps, type ReactNode } from "react";
 import { BadgeList } from "@/components/badge-list";
 import { Table } from "@/components/table";
 import { createValueRenderer } from "@/components/internals/table-core";
+import type {
+  ColumnCellType,
+  TypedColumnDisplay,
+} from "@/components/internals/table-core/column-types";
+import type {
+  CellEditor,
+  CellEditorOptions,
+} from "@/components/internals/table-core/editing/props";
 import {
   EditableCell,
   type EditableCellOwnerProps,
@@ -21,51 +29,80 @@ interface LineItemsChoiceCellEditor extends LineItemsCellEditor {
   choices: ComponentProps<typeof choiceEditor.Editor>["options"]["choices"];
 }
 
-/** Resolve the public editor once, keeping its options paired with its concrete input. */
-function resolveEditor<T extends Record<string, unknown>>(
-  column: LineItemsColumn<T>,
+type EditorDisplay =
+  | TypedColumnDisplay<Record<string, unknown>, "badge">
+  | { type?: Exclude<ColumnCellType, "badge"> };
+
+/** Bind the implementation used for type derivation to the same input used for rendering. */
+function defineLineItemsEditor<
+  TOptions,
+  TOutput,
+  TSettings,
+  TPrepared extends { options: NoInfer<TOptions> },
+>(
+  editor: CellEditor<TOptions, TOutput>,
+  prepare: (settings: TSettings, display: EditorDisplay) => TPrepared,
+) {
+  return {
+    editor,
+    prepare(settings: TSettings, display: EditorDisplay) {
+      const { options, ...metadata } = prepare(settings, display);
+      return {
+        ...metadata,
+        renderCell: (props: EditableCellOwnerProps) => (
+          <EditableCell {...props} editor={editor} options={options} />
+        ),
+      };
+    },
+  };
+}
+
+/** The single LineItems public-name, settings and implementation mapping. */
+export const lineItemsEditors = {
+  text: defineLineItemsEditor(textEditor, (_settings: Record<never, never>) => ({ options: {} })),
+  number: defineLineItemsEditor(numberEditor, (_settings: Record<never, never>) => ({
+    options: {},
+  })),
+  date: defineLineItemsEditor(dateEditor, (settings: CellEditorOptions<typeof dateEditor>) => ({
+    options: { withTime: settings.withTime },
+  })),
+  combobox: defineLineItemsEditor(
+    choiceEditor,
+    (settings: { options: CellEditorOptions<typeof choiceEditor>["choices"] }, display) => ({
+      choices: settings.options,
+      options: {
+        choices: settings.options,
+        renderOption:
+          display.type === "badge"
+            ? (value, label) => (
+                <BadgeList value={value} options={display.typeOptions} resolveLabel={() => label} />
+              )
+            : undefined,
+      },
+    }),
+  ),
+};
+
+type EditorSettingsByKind = {
+  [K in keyof typeof lineItemsEditors]: Parameters<(typeof lineItemsEditors)[K]["prepare"]>[0];
+};
+type EditorPreparers = {
+  [K in keyof EditorSettingsByKind]: {
+    prepare: (
+      settings: EditorSettingsByKind[K],
+      display: EditorDisplay,
+    ) => LineItemsCellEditor | LineItemsChoiceCellEditor;
+  };
+};
+
+/** Keep keyed selection correlated with its settings without another editor-kind switch. */
+function resolveEditor<K extends keyof EditorSettingsByKind>(
+  edit: (EditorSettingsByKind[K] & { editorType: K }) | undefined,
+  display: EditorDisplay,
 ): LineItemsCellEditor | LineItemsChoiceCellEditor | undefined {
-  const edit = column.edit;
   if (!edit) return undefined;
-  switch (edit.editorType) {
-    case "text":
-      return {
-        renderCell: (props) => <EditableCell {...props} editor={textEditor} options={{}} />,
-      };
-    case "number":
-      return {
-        renderCell: (props) => <EditableCell {...props} editor={numberEditor} options={{}} />,
-      };
-    case "date":
-      return {
-        renderCell: (props) => (
-          <EditableCell {...props} editor={dateEditor} options={{ withTime: edit.withTime }} />
-        ),
-      };
-    case "combobox":
-      return {
-        choices: edit.options,
-        renderCell: (props) => (
-          <EditableCell
-            {...props}
-            editor={choiceEditor}
-            options={{
-              choices: edit.options,
-              renderOption:
-                column.type === "badge"
-                  ? (value, label) => (
-                      <BadgeList
-                        value={value}
-                        options={column.typeOptions}
-                        resolveLabel={() => label}
-                      />
-                    )
-                  : undefined,
-            }}
-          />
-        ),
-      };
-  }
+  const adapter: EditorPreparers[K] = lineItemsEditors[edit.editorType];
+  return adapter.prepare(edit, display);
 }
 
 /** Prepare and memoize cell renderers per column; row permissions choose the display mode later. */
@@ -76,7 +113,7 @@ export function useLineItemsCellRenderersByColumn<T extends Record<string, unkno
   return useMemo(
     () =>
       columns.map((column) => {
-        const editor = resolveEditor(column);
+        const editor = resolveEditor(column.edit, column);
         const cell = {
           column,
           editor,

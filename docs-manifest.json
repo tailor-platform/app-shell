@@ -260,7 +260,7 @@
       "hashes": {
         "typeSurface": "6ce6f0fdf2450cec",
         "outline": "f76c947799dd3c05",
-        "snapshot": "e6783ef54e17e11e",
+        "snapshot": "80883059666ed1da",
         "outputMd": "6e18faeb676654b4",
         "examples": "58da87a258128f71"
       }
@@ -677,6 +677,23 @@
         "examples": "6962c6f28d09eb0a"
       }
     },
+    "editable-card": {
+      "slug": "editable-card",
+      "kind": "code-backed",
+      "outline": "docs-src/components/editable-card.docs.outline.md",
+      "output": "docs/components/editable-card.md",
+      "examples": "docs-src/components/editable-card.docs.examples.tsx",
+      "sources": ["packages/core/src/components/editable-card/**"],
+      "claims": [],
+      "symbols": ["EditableCard", "EditableCardFieldProps", "EditableCardProps"],
+      "hashes": {
+        "typeSurface": "445fdd51e74d0c1a",
+        "outline": "2f6a7fe2b7b8b8b7",
+        "snapshot": "bf52f8784d046f0b",
+        "outputMd": "d1efabe746318c10",
+        "examples": "b72a3c39c3ca18e2"
+      }
+    },
     "file-based-routing": {
       "slug": "file-based-routing",
       "kind": "prose",
@@ -762,9 +779,9 @@
       ],
       "hashes": {
         "typeSurface": "6210ea28649026a8",
-        "outline": "3885e81af183d636",
+        "outline": "811e2ecfd6590e96",
         "snapshot": "b222cdafb62c9883",
-        "outputMd": "3ef8db15cebc4671",
+        "outputMd": "cea506829c18fe8b",
         "examples": "56c8f6cc9667bb78"
       }
     },
@@ -1443,7 +1460,7 @@
       "hashes": {
         "typeSurface": "bc60676f880b485b",
         "outline": "9381eff2f7987a0e",
-        "snapshot": "c788f8a131677ada",
+        "snapshot": "62f4437fd845fdf5",
         "outputMd": "f85ec64ceb7f4acf",
         "examples": "2b9d94065f2f77b7"
       }
@@ -1869,9 +1886,10 @@
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "993a1983f05a35e9",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
+    "packages/core/skills/app-shell-patterns/references/components/editable-card.md": "d1efabe746318c10",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "224745760083ee35",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "1c66f15802f5bb2d",
-    "packages/core/skills/app-shell-patterns/references/components/form-layout.md": "3ef8db15cebc4671",
+    "packages/core/skills/app-shell-patterns/references/components/form-layout.md": "cea506829c18fe8b",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
@@ -1934,6 +1952,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "930db027a28bbe24",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "fe8232d31b24aed0",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "c71ad3415b0e8f8e"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "a9a3105d6818aa88"
   }
 }

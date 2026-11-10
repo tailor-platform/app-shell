@@ -185,13 +185,14 @@ Mark required fields with `Field.Label required` and put `required` on the contr
 
 `FormLayout` handles the fields; the container depends on the form:
 
-| If the form…                                     | Use                                                                                                  |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| Has header fields plus line items                | `Layout maxWidth="xl"`, `FormLayout columns={4}` for the header, sections in the view's order        |
-| Has ordered steps that depend on earlier answers | A [wizard](../patterns/form-wizard.md): one `Form` per step, progress in a [`Stepper`](./stepper.md) |
-| Needs its own URL, or is long enough to scroll   | `Layout maxWidth="lg"` with card sections; add a section nav column if it helps (see below)          |
-| Edits part of a record shown beside it           | `Sheet` (`size="lg"`) with `FormLayout columns={2}`                                                  |
-| Anything else                                    | `Dialog` sized to the form (`sm`–`xl`); plain sections once it has groups                            |
+| If the form…                                        | Use                                                                                                  |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Has header fields plus line items                   | `Layout maxWidth="xl"`, `FormLayout columns={4}` for the header, sections in the view's order        |
+| Has ordered steps that depend on earlier answers    | A [wizard](../patterns/form-wizard.md): one `Form` per step, progress in a [`Stepper`](./stepper.md) |
+| Edits one card of a record that's already on screen | [`EditableCard`](./editable-card.md) — edit in place, saved per card                                 |
+| Needs its own URL, or is long enough to scroll      | `Layout maxWidth="lg"` with card sections; add a section nav column if it helps (see below)          |
+| Edits part of a record shown beside it              | `Sheet` (`size="lg"`) with `FormLayout columns={2}`                                                  |
+| Anything else                                       | `Dialog` sized to the form (`sm`–`xl`); plain sections once it has groups                            |
 
 A section nav is optional. It usually earns its column from about three sections; when you add one, widen the page to `Layout maxWidth="xl"` so the form keeps its width.
 

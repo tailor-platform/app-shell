@@ -201,6 +201,7 @@ export function FormTemplatesOverview() {
                 {[
                   ["Has line items (a document with header and lines)", "T4 Document form"],
                   ["Has ordered steps that depend on earlier answers", "T5 Wizard"],
+                  ["Edits one card of a record that's already on screen", "Edit in place (E6)"],
                   ["Needs its own URL, or is long enough to scroll a page", "T3 Page form"],
                   ["Edits part of a record shown beside it", "T2 Side sheet"],
                   ["Everything else", "T1 Modal form, sized to fit"],

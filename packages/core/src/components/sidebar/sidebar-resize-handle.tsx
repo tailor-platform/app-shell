@@ -117,7 +117,7 @@ export function SidebarResizeHandle({
       data-resizing={resizing}
       data-focus={focusSource ?? undefined}
       className={cn(
-        "astw:group/resize astw:absolute astw:inset-y-0 astw:z-(--z-sidebar-rail) astw:w-5 astw:touch-none astw:select-none astw:outline-none",
+        "astw:group/resize astw:absolute astw:inset-y-0 astw:z-20 astw:w-5 astw:touch-none astw:select-none astw:outline-none",
         // 6px over the sidebar, 14px over the content so the pill beside the border stays hoverable.
         side === "left" ? "astw:-right-3.5" : "astw:-left-3.5",
         !collapsed && "astw:cursor-ew-resize",

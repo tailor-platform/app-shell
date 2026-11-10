@@ -22,7 +22,7 @@ function FormSinglePage() {
   const onCancel = () => {};
 
   return (
-    <Layout>
+    <Layout maxWidth="lg">
       {/*
        * Save/Cancel live in the page header and reach the form through the
        * native `form` attribute, matching `Form`'s `id`. No state plumbing.
@@ -39,44 +39,47 @@ function FormSinglePage() {
         ]}
       />
       <Layout.Column>
-        <Form<ProductDraft>
-          id="product-form"
-          noValidate
-          className="max-w-2xl space-y-4"
-          onFormSubmit={(values) => onSave(values)}
-        >
-          <Field.Root name="name">
-            <Field.Label>Name</Field.Label>
-            <Field.Control required />
-            <Field.Error match="valueMissing">Name is required.</Field.Error>
-          </Field.Root>
-          <Field.Root name="sku">
-            <Field.Label>SKU</Field.Label>
-            <Field.Control required pattern="[A-Z]{3}-[0-9]{4}" />
-            <Field.Description>Format: ABC-1234</Field.Description>
-            <Field.Error match="patternMismatch">Use the format ABC-1234.</Field.Error>
-            <Field.Error match="valueMissing">SKU is required.</Field.Error>
-          </Field.Root>
+        <Form<ProductDraft> id="product-form" noValidate onFormSubmit={(values) => onSave(values)}>
           {/*
-           * Dropdowns need no `name` and no React state: `Field.Root` registers
-           * the control, so its value arrives in `onFormSubmit` under the
-           * field's name like any other input.
+           * FormLayout puts the fields in two columns (one on narrow screens);
+           * `span="full"` gives the description the whole row.
            */}
-          <Field.Root name="category">
-            <Field.Label>Category</Field.Label>
-            <Select items={CATEGORIES} placeholder="Select category" />
-            <Field.Error />
-          </Field.Root>
-          <Field.Root name="price">
-            <Field.Label>Price</Field.Label>
-            <Field.Control type="number" required min={0} step="0.01" />
-            <Field.Error match="rangeUnderflow">Price cannot be negative.</Field.Error>
-            <Field.Error match="valueMissing">Price is required.</Field.Error>
-          </Field.Root>
-          <Field.Root name="description">
-            <Field.Label>Description</Field.Label>
-            <Textarea rows={4} />
-          </Field.Root>
+          <FormLayout columns={2}>
+            <FormLayout.Section>
+              <Field.Root name="name">
+                <Field.Label required>Name</Field.Label>
+                <Field.Control required />
+                <Field.Error match="valueMissing">Name is required.</Field.Error>
+              </Field.Root>
+              <Field.Root name="sku">
+                <Field.Label required>SKU</Field.Label>
+                <Field.Control required pattern="[A-Z]{3}-[0-9]{4}" />
+                <Field.Description>Format: ABC-1234</Field.Description>
+                <Field.Error match="patternMismatch">Use the format ABC-1234.</Field.Error>
+                <Field.Error match="valueMissing">SKU is required.</Field.Error>
+              </Field.Root>
+              {/*
+               * Dropdowns need no `name` and no React state: `Field.Root` registers
+               * the control, so its value arrives in `onFormSubmit` under the
+               * field's name like any other input.
+               */}
+              <Field.Root name="category">
+                <Field.Label>Category</Field.Label>
+                <Select items={CATEGORIES} placeholder="Select category" />
+                <Field.Error />
+              </Field.Root>
+              <Field.Root name="price">
+                <Field.Label required>Price</Field.Label>
+                <Field.Control type="number" required min={0} step="0.01" />
+                <Field.Error match="rangeUnderflow">Price cannot be negative.</Field.Error>
+                <Field.Error match="valueMissing">Price is required.</Field.Error>
+              </Field.Root>
+              <Field.Root name="description" span="full">
+                <Field.Label>Description</Field.Label>
+                <Textarea rows={4} />
+              </Field.Root>
+            </FormLayout.Section>
+          </FormLayout>
         </Form>
       </Layout.Column>
     </Layout>
@@ -88,7 +91,7 @@ function FormSinglePage() {
 
 ## Constraints
 
-- Single column full width below 1024px; single column max-w constrained at 1024–1280px
+- `Layout maxWidth="lg"` centres the page at 64rem; fields sit in one `FormLayout.Section` card with `FormLayout columns={2}`, collapsing to one column on narrow screens
 - Without an explicit routed-page requirement, the answer is `form/modal`
 - A `/create` or `/edit` route in the screen spec does NOT require a full-page replacement
 - Save/Cancel belong in `Layout.Header`, wired with `<Button type="submit" form="…">` matching the
@@ -98,7 +101,7 @@ function FormSinglePage() {
 
 ## Form state
 
-Rules that apply to every `form/*` pattern are in **`components.md`** → Forms, with a worked example
+Rules that apply to every `form/*` pattern are in [Form, Field, and Fieldset](../components/form.md) and [FormLayout](../components/form-layout.md), with a worked example
 in **`form/modal`** → Form state: `Form` + `Field` is the default stack, submit via `onFormSubmit`,
 dropdowns need only a wrapping `Field.Root` (no `name`, no state), server errors route through
 `errors`, and React Hook Form is an optional escape hatch.

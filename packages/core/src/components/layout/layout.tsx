@@ -1,6 +1,12 @@
 import * as React from "react";
 import { cn } from "../../lib/utils";
-import type { LayoutProps, ColumnProps, LayoutHeaderProps, ColumnArea } from "./types";
+import type {
+  LayoutProps,
+  ColumnProps,
+  LayoutHeaderProps,
+  ColumnArea,
+  LayoutMaxWidth,
+} from "./types";
 import { Text } from "../text";
 
 /**
@@ -139,6 +145,12 @@ const AREA_WIDTHS: Record<ColumnArea, string> = {
   right: "280px",
 };
 
+const MAX_WIDTH_CLASSES: Record<LayoutMaxWidth, string> = {
+  md: "astw:mx-auto astw:max-w-3xl",
+  lg: "astw:mx-auto astw:max-w-5xl",
+  xl: "astw:mx-auto astw:max-w-7xl",
+};
+
 const POSITION_TEMPLATES: Record<number, string> = {
   2: "1fr 280px",
   3: "320px 1fr 280px",
@@ -153,6 +165,7 @@ function LayoutRoot({
   title,
   actions,
   fill,
+  maxWidth,
   children,
 }: LayoutProps) {
   const areas: (ColumnArea | undefined)[] = [];
@@ -217,6 +230,7 @@ function LayoutRoot({
       {...(fill ? { "data-layout-fill": fillFrom } : {})}
       className={cn(
         "astw:grid astw:grid-cols-1 astw:w-full",
+        maxWidth && MAX_WIDTH_CLASSES[maxWidth],
         hasAnyHeader ? "astw:pb-4" : "astw:py-4",
         gapClass,
         "astw:[&>[data-layout-header]]:col-span-full",

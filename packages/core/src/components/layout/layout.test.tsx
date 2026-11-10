@@ -253,6 +253,29 @@ describe("Layout", () => {
     expect(grid.hasAttribute("data-layout-fill")).toBe(false);
   });
 
+  it("centres and caps the page width with maxWidth", () => {
+    const { container } = render(
+      <Layout maxWidth="lg">
+        <Layout.Header title="New order" />
+        <Layout.Column>Form</Layout.Column>
+      </Layout>,
+    );
+    const grid = container.firstElementChild as HTMLElement;
+    expect(grid.className).toContain("astw:mx-auto");
+    expect(grid.className).toContain("astw:max-w-5xl");
+  });
+
+  it("is full width without maxWidth", () => {
+    const { container } = render(
+      <Layout>
+        <Layout.Column>Content</Layout.Column>
+      </Layout>,
+    );
+    const grid = container.firstElementChild as HTMLElement;
+    expect(grid.className).not.toContain("astw:mx-auto");
+    expect(grid.className).not.toContain("astw:max-w-");
+  });
+
   it("warns when deprecated columns prop doesn't match child count", () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     render(

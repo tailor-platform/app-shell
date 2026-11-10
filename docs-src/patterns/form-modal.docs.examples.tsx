@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Button, Dialog, Field, Form, Layout } from "@tailor-platform/app-shell";
+import { Button, Dialog, Field, Form, FormLayout, Layout } from "@tailor-platform/app-shell";
 
 type AddressDraft = {
   label: string;
@@ -12,41 +12,48 @@ export function ModalForm() {
   return (
     <Dialog.Root>
       <Dialog.Trigger render={<Button />}>Add address</Dialog.Trigger>
-      <Dialog.Content>
+      <Dialog.Content size="md">
         <Dialog.Header>
           <Dialog.Title>Add address</Dialog.Title>
           <Dialog.Description>Add a shipping address to this order.</Dialog.Description>
         </Dialog.Header>
         {/*
+         * The form sits in `Dialog.Body`, which scrolls when the form is long;
+         * the footer stays put and submits through `form="address-form"`.
          * `onFormSubmit` fires only after validation passes and receives the
          * registered field values — no `<form onSubmit>` + `new FormData(...)`.
          */}
-        <Form<AddressDraft>
-          noValidate
-          onFormSubmit={(values) => window.alert(`Saving ${values.label}`)}
-        >
-          <div className="flex flex-col gap-4 py-4">
-            <Field.Root name="label">
-              <Field.Label>Label</Field.Label>
-              <Field.Control required />
-              <Field.Error match="valueMissing">Label is required.</Field.Error>
-            </Field.Root>
-            <Field.Root name="street">
-              <Field.Label>Street</Field.Label>
-              <Field.Control required />
-              <Field.Error match="valueMissing">Street is required.</Field.Error>
-            </Field.Root>
-            <Field.Root name="city">
-              <Field.Label>City</Field.Label>
-              <Field.Control required />
-              <Field.Error match="valueMissing">City is required.</Field.Error>
-            </Field.Root>
-          </div>
-          <Dialog.Footer>
-            <Dialog.Close render={<Button type="button" variant="ghost" />}>Cancel</Dialog.Close>
-            <Button type="submit">Save</Button>
-          </Dialog.Footer>
-        </Form>
+        <Dialog.Body>
+          <Form<AddressDraft>
+            id="address-form"
+            noValidate
+            onFormSubmit={(values) => window.alert(`Saving ${values.label}`)}
+          >
+            <FormLayout columns={2}>
+              <Field.Root name="label" span="full">
+                <Field.Label required>Label</Field.Label>
+                <Field.Control required />
+                <Field.Error match="valueMissing">Label is required.</Field.Error>
+              </Field.Root>
+              <Field.Root name="street">
+                <Field.Label required>Street</Field.Label>
+                <Field.Control required />
+                <Field.Error match="valueMissing">Street is required.</Field.Error>
+              </Field.Root>
+              <Field.Root name="city">
+                <Field.Label required>City</Field.Label>
+                <Field.Control required />
+                <Field.Error match="valueMissing">City is required.</Field.Error>
+              </Field.Root>
+            </FormLayout>
+          </Form>
+        </Dialog.Body>
+        <Dialog.Footer>
+          <Dialog.Close render={<Button type="button" variant="ghost" />}>Cancel</Dialog.Close>
+          <Button type="submit" form="address-form">
+            Save
+          </Button>
+        </Dialog.Footer>
       </Dialog.Content>
     </Dialog.Root>
   );

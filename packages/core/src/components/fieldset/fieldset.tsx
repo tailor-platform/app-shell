@@ -3,6 +3,7 @@ import { Fieldset as BaseFieldset } from "@base-ui/react/fieldset";
 
 import { cn } from "@/lib/utils";
 import { Text } from "../text";
+import type { FormSpan } from "@/lib/form-span";
 
 /**
  * Groups related fields with a shared legend for accessible form sectioning.
@@ -25,10 +26,19 @@ import { Text } from "../text";
 type FieldsetRootProps = Pick<
   React.ComponentProps<typeof BaseFieldset.Root>,
   "disabled" | "className" | "style"
-> & { children: React.ReactNode };
+> & {
+  children: React.ReactNode;
+  /**
+   * How many columns the fieldset covers inside a `FormLayout` grid (`2`,
+   * `3` or `"full"`). Ignored outside `FormLayout`.
+   */
+  span?: FormSpan;
+};
 
-function Root({ className, ...props }: FieldsetRootProps) {
-  return <BaseFieldset.Root data-slot="fieldset" className={className} {...props} />;
+function Root({ className, span, ...props }: FieldsetRootProps) {
+  return (
+    <BaseFieldset.Root data-slot="fieldset" data-span={span} className={className} {...props} />
+  );
 }
 Root.displayName = "Fieldset.Root";
 

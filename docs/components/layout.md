@@ -42,16 +42,17 @@ function BasicUsage() {
 
 ### Layout Props
 
-| Prop        | Type                | Default      | Description                                                                             |
-| ----------- | ------------------- | ------------ | --------------------------------------------------------------------------------------- |
-| `className` | `string`            | -            | Additional CSS classes for container                                                    |
-| `style`     | `CSSProperties`     | -            | Inline styles for the layout container                                                  |
-| `children`  | `Layout.Column[]`   | **Required** | `Layout.Header` and/or `Layout.Column` components                                       |
-| `fill`      | `boolean`           | `false`      | Fill the available height instead of growing with content (see [Fill Mode](#fill-mode)) |
-| `columns`   | `1 \| 2 \| 3`       | -            | **(Deprecated)** Auto-detected from `Layout.Column` children count when omitted         |
-| `title`     | `string`            | -            | **(Deprecated)** Use `<Layout.Header title="...">` instead                              |
-| `actions`   | `React.ReactNode[]` | -            | **(Deprecated)** Use `<Layout.Header actions={[...]}>` instead                          |
-| `gap`       | `number`            | `4`          | **(Deprecated)** Use `className` (e.g. `className="gap-6"`) instead                     |
+| Prop        | Type                   | Default      | Description                                                                             |
+| ----------- | ---------------------- | ------------ | --------------------------------------------------------------------------------------- |
+| `className` | `string`               | -            | Additional CSS classes for container                                                    |
+| `style`     | `CSSProperties`        | -            | Inline styles for the layout container                                                  |
+| `children`  | `Layout.Column[]`      | **Required** | `Layout.Header` and/or `Layout.Column` components                                       |
+| `fill`      | `boolean`              | `false`      | Fill the available height instead of growing with content (see [Fill Mode](#fill-mode)) |
+| `maxWidth`  | `"md" \| "lg" \| "xl"` | -            | Centre the page and cap its width (see [Max Width](#max-width))                         |
+| `columns`   | `1 \| 2 \| 3`          | -            | **(Deprecated)** Auto-detected from `Layout.Column` children count when omitted         |
+| `title`     | `string`               | -            | **(Deprecated)** Use `<Layout.Header title="...">` instead                              |
+| `actions`   | `React.ReactNode[]`    | -            | **(Deprecated)** Use `<Layout.Header actions={[...]}>` instead                          |
+| `gap`       | `number`               | `4`          | **(Deprecated)** Use `className` (e.g. `className="gap-6"`) instead                     |
 
 ### Layout.Header Props
 
@@ -271,6 +272,36 @@ Use `fill` for pages whose main content manages its own scrolling (typically a `
 
 > Because the shell is viewport-bounded, page content scrolls inside the content area rather than on the document. If you have code that read `window`/document scroll, reach for the content scroll container instead — see [Accessing the content scroll container](./sidebar-layout.md#accessing-the-content-scroll-container).
 
+## Max Width
+
+By default a layout spans the whole content area. On wide screens a form stretched that far leaves long empty rows and puts Save far from the fields. Set `maxWidth` to centre the page and cap its width — the header and the columns together, so the title and actions line up with the content:
+
+| Value  | Width          | Use for                                                                                       |
+| ------ | -------------- | --------------------------------------------------------------------------------------------- |
+| `"md"` | 48rem (768px)  | Single-column forms, settings pages                                                           |
+| `"lg"` | 64rem (1024px) | Two-column forms                                                                              |
+| `"xl"` | 80rem (1280px) | Document forms with line items (PO, invoice), and forms with a section nav column beside them |
+
+```tsx
+<Layout maxWidth="lg">
+  <Layout.Header
+    title="New purchase order"
+    actions={[
+      <Button key="save" type="submit" form="po-form">
+        Create
+      </Button>,
+    ]}
+  />
+  <Layout.Column>
+    <Form id="po-form" onFormSubmit={save}>
+      <FormLayout>{/* … */}</FormLayout>
+    </Form>
+  </Layout.Column>
+</Layout>
+```
+
+Leave it off for lists and dashboards, which use the full width. Document forms with line items use `"xl"`: wide enough for the line-item table, without stretching the header fields across a wide screen.
+
 ## Gap Spacing
 
 Use the `gap` prop to control the space between columns. Supported steps are `4`, `6` and `8`:
@@ -373,8 +404,6 @@ function Dashboard() {
 
 ```tsx
 function ProductEditor() {
-  const [product, setProduct] = useState(initialProduct);
-
   return (
     <Layout>
       <Layout.Header
@@ -383,35 +412,38 @@ function ProductEditor() {
           <Button key="cancel" variant="outline">
             Cancel
           </Button>,
-          <Button key="save">Save Changes</Button>,
+          <Button key="save" type="submit" form="product-form">
+            Save Changes
+          </Button>,
         ]}
       />
       <Layout.Column>
-        <Card>
-          <Text.h3>Product Details</Text.h3>
-          <Input
-            label="Name"
-            value={product.name}
-            onChange={(e) => setProduct({ ...product, name: e.target.value })}
-          />
-          <Input
-            label="Price"
-            type="number"
-            value={product.price}
-            onChange={(e) => setProduct({ ...product, price: e.target.value })}
-          />
-          <Textarea
-            label="Description"
-            value={product.description}
-            onChange={(e) => setProduct({ ...product, description: e.target.value })}
-          />
-        </Card>
+        <Form id="product-form" onFormSubmit={saveProduct}>
+          <FormLayout>
+            <FormLayout.Section title="Product details">
+              <Field.Root name="name">
+                <Field.Label required>Name</Field.Label>
+                <Field.Control required />
+              </Field.Root>
+              <Field.Root name="price">
+                <Field.Label>Price</Field.Label>
+                <Field.Control type="number" />
+              </Field.Root>
+              <Field.Root name="description" span="full">
+                <Field.Label>Description</Field.Label>
+                <Textarea />
+              </Field.Root>
+            </FormLayout.Section>
+          </FormLayout>
+        </Form>
       </Layout.Column>
       <Layout.Column>
-        <Card>
-          <Text.h3>Preview</Text.h3>
-          <ProductCard product={product} />
-        </Card>
+        <Card.Root>
+          <Card.Header title="Preview" />
+          <Card.Content>
+            <ProductCard />
+          </Card.Content>
+        </Card.Root>
       </Layout.Column>
     </Layout>
   );

@@ -243,7 +243,8 @@ function Footer({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sheet-footer"
       className={cn(
-        "astw:mt-auto astw:flex astw:flex-col astw:gap-2 astw:border-t astw:border-border astw:p-4",
+        // Buttons keep their own width, right-aligned — never stretched across the panel.
+        "astw:mt-auto astw:flex astw:flex-wrap astw:items-center astw:justify-end astw:gap-2 astw:border-t astw:border-border astw:p-4",
         className,
       )}
       {...props}

@@ -35,17 +35,19 @@ dont:
 
 - Max ~6 sections — more than that is too hard to scan; promote to `form/wizard`
 - Required-marker convention must be consistent across all sections
-- One `Card.Root` per section, titled via `Card.Header title` + `description`; `Fieldset.Root`
-  inside supplies the field grouping and the responsive grid
+- One `FormLayout.Section` per section (`title` + `description`); it renders the card, the
+  `<fieldset>` grouping and the responsive grid
+- The section nav column is optional. It usually earns its space from about three sections; with
+  it, use `Layout maxWidth="xl"` so the form keeps its width, without it `Layout maxWidth="lg"`
 - Save/Cancel belong in `Layout.Header`, wired with `<Button type="submit" form="…">` matching the
   `Form`'s `id` (requires 1.13.0+)
-- Section headings must match anchor-nav labels — derive both from one `SECTIONS` array so they
+- When there is a section nav, its labels must match the section headings — derive both from one `SECTIONS` array so they
   cannot drift
 - A single `<Form>` wraps every section — do not nest a `Form` per section
 
 ## Form state
 
-Rules that apply to every `form/*` pattern are in **`components.md`** → Forms, with a worked example
+Rules that apply to every `form/*` pattern are in [Form, Field, and Fieldset](../components/form.md) and [FormLayout](../components/form-layout.md), with a worked example
 in **`form/modal`** → Form state: `Form` + `Field` is the default stack, submit via `onFormSubmit`,
 dropdowns need only a wrapping `Field.Root` (no `name`, no state), server errors route through
 `errors`, and React Hook Form is an optional escape hatch.

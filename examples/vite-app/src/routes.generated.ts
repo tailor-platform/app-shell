@@ -38,6 +38,10 @@ export type GeneratedRouteParams = {
   "/showcase/document-progress": {};
   "/showcase/dropdown": {};
   "/showcase/filter-rail": {};
+  "/showcase/form-templates": {};
+  "/showcase/form-templates/document": {};
+  "/showcase/form-templates/page": {};
+  "/showcase/form-templates/wizard": {};
   "/showcase/forms": {};
   "/showcase/forms/zod-rhf": {};
   "/showcase/grid": {};

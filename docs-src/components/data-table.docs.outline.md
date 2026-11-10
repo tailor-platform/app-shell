@@ -469,6 +469,50 @@ The trigger is a native `<button>`, so Enter/Space activation and the focus ring
 
 **Known limitation — row count.** Detail rows are real `<tr>` elements, so a screen reader counts them: ten records with two expanded announces as twelve rows. Fixing this needs `aria-rowcount` plus explicit `aria-rowindex` on every row (with detail rows sharing their parent's index) and correct interaction with pagination; `role="presentation"` on the detail row would fix the count but remove the panel from screen-reader table navigation. Neither is implemented.
 
+## Sub-rows
+
+Pass `subRows` to show nested rows under each row, like a chart of accounts or a bill of materials. The page's rows are the top level: pagination counts them, and each parent's sub-rows stay on its page, so a family is never split across pages.
+
+```tsx
+const table = useDataTable<Account>({
+  columns, // the other columns: code, balance…
+  data, // the page's top-level accounts
+  subRows: {
+    getSubRows: (account) => account.children,
+    hierarchyColumn: {
+      label: "Account",
+      accessor: (account) => account.name,
+      width: 280,
+      truncate: true,
+    },
+  },
+  rowSelection: { actions: [exportAccounts] },
+});
+```
+
+- **`subRows` brings its own column.** `hierarchyColumn` defines the column that carries the indent, the open / close caret, the checkbox (except under `"independent"`) and the row's label. Like the row-actions column, the feature owns its place: it's always first and pinned left, it isn't in column settings or saved layout, and it leaves your other columns exactly as you defined them.
+- **It's a column for display.** It takes `label` and `accessor` (both required), `render`, `type` and `typeOptions`, `width` and `truncate`, `header` and `footer`, and `headerProps`, `footerProps` and `cellProps`, typed as on any column. `truncate` cuts the label only, never the indent or caret. Its `footer` gets the page's top-level rows. It has no `id`, `pin`, `align`, `edit`, `sort` or `filter`.
+- **Rows need an `id`, unique across the tree.** Expansion and selection are keyed by it. A row without one can't open or be selected.
+- **Sub-rows come with the data.** `getSubRows` reads them synchronously from each row. Loading children on demand isn't supported yet.
+- **Not combined with `rowExpansion`.** A row shows either its sub-rows or a detail panel, so passing both is a type error. Untyped callers that pass both get `subRows` and a console warning.
+- **Open rows** can be controlled with `expandedIds` + `onExpandedChange`, or started with `defaultExpandedIds`. `useDataTable` returns `expandedSubRowIds` and `toggleSubRows(row)`.
+
+The caret is a native `<button>` with `aria-expanded`, named from the hierarchy column's `accessor` ("Expand row Assets"), so it's reached with Tab and worked with Enter / Space. Full tree-grid arrow-key navigation isn't implemented yet.
+
+### Selecting sub-rows
+
+`rowSelection` takes the same `selectionStrategy` as [`Tree`](./tree.md), and works the same way, so a tree and a tree-shaped table behave alike. Take a parent row P with two rows beneath it, A and B:
+
+| `selectionStrategy`  | Tick P      | Tick A and B | P ticked on its own? | Checkboxes sit                                 |
+| -------------------- | ----------- | ------------ | -------------------- | ---------------------------------------------- |
+| `"leaves"` (default) | `[A, B]`    | `[A, B]`     | No                   | In the hierarchy column, indented with the row |
+| `"topmost"`          | `[P]`       | `[P]`        | No                   | In the hierarchy column, indented with the row |
+| `"all"`              | `[P, A, B]` | `[P, A, B]`  | No                   | In the hierarchy column, indented with the row |
+| `"cascade"`          | `[P, A, B]` | `[A, B]`     | Yes                  | In the hierarchy column, indented with the row |
+| `"independent"`      | `[P]`       | `[A, B]`     | Yes                  | In the usual left-hand selection column        |
+
+With `"leaves"`, `"topmost"` and `"all"`, a parent is a container: its checkbox comes from the rows beneath it. With `"cascade"`, ticking a parent ticks its rows too, but unticking one leaves the parent ticked. Ids from other pages pass through untouched, and the header checkbox ticks the current page's rows, sitting in the hierarchy column's header when the checkboxes do. Selection actions receive the ids `selectedIds` lists.
+
 ## Inline editing
 
 Give a typed column an `edit` config to use its built-in editor. This standardizes the editing UI — draft input, IME, keyboard movement, confirmation, and callback-error presentation. Validation rules and persistence remain consumer-owned; by default, the editor retains a draft until its callbacks complete successfully. Columns without `edit` keep their existing behavior.
@@ -652,12 +696,13 @@ Pass `rowSelection` to `useDataTable` to enable the checkbox column. Rows must h
 
 ### `RowSelectionOptions`
 
-| Property             | Type                      | Description                                                                                                    |
-| -------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `selectedIds`        | `string[]`                | Controlled selected ids. Requires `onChange` and cannot be combined with `defaultSelectedIds`.                 |
-| `defaultSelectedIds` | `string[]`                | Initial selected ids in uncontrolled mode. Later changes are ignored.                                          |
-| `onChange`           | `(ids: string[]) => void` | Notifies user-driven selection changes; required in controlled mode and optional in uncontrolled mode.         |
-| `actions`            | `SelectionAction[]`       | Optional bulk actions shown in `DataTable.Footer` while ids are selected. Omitted or empty arrays show no bar. |
+| Property             | Type                                                           | Description                                                                                                                          |
+| -------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `selectedIds`        | `string[]`                                                     | Controlled selected ids. Requires `onChange` and cannot be combined with `defaultSelectedIds`.                                       |
+| `defaultSelectedIds` | `string[]`                                                     | Initial selected ids in uncontrolled mode. Later changes are ignored.                                                                |
+| `onChange`           | `(ids: string[]) => void`                                      | Notifies user-driven selection changes; required in controlled mode and optional in uncontrolled mode.                               |
+| `actions`            | `SelectionAction[]`                                            | Optional bulk actions shown in `DataTable.Footer` while ids are selected. Omitted or empty arrays show no bar.                       |
+| `selectionStrategy`  | `"leaves" \| "topmost" \| "all" \| "cascade" \| "independent"` | With `subRows`: how ticking spreads and what `selectedIds` lists. Default `"leaves"`. See [Selecting sub-rows](#selecting-sub-rows). |
 
 ### Controlled selection
 
@@ -771,20 +816,21 @@ const table = useDataTable({
 
 ### Options
 
-| Option              | Type                               | Description                                                                                                                                                                                              |
-| ------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                                            |
-| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                                            |
-| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                                                 |
-| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                                                    |
-| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                                         |
-| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                                                        |
-| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.                                     |
-| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                                                  |
-| `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`, with optional `actions`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection). |
-| `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                                          |
-| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows).                          |
-| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                                                |
+| Option              | Type                               | Description                                                                                                                                                                                                 |
+| ------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                                               |
+| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                                               |
+| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                                                    |
+| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                                                       |
+| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                                            |
+| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                                                           |
+| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.                                        |
+| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                                                     |
+| `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`, with optional `actions`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection).    |
+| `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                                             |
+| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows).                             |
+| `subRows`           | `SubRowsOptions<TRow>`             | Nested rows: `getSubRows`, `hierarchyColumn` (a `HierarchyColumn<TRow>`), and `expandedIds` + `onExpandedChange` or `defaultExpandedIds`. Can't be combined with `rowExpansion`. See [Sub-rows](#sub-rows). |
+| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                                                   |
 
 ### `DataTableData`
 

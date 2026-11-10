@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import type { TreeNode, VisibleRow } from "./tree-model";
+import type { TreeNode, VisibleRow } from "@/lib/tree/model";
 
 /**
  * @internal

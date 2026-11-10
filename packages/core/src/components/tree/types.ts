@@ -1,4 +1,5 @@
 import type * as React from "react";
+import type { TreeSelectionBehaviorProps } from "@/lib/tree/types";
 
 /**
  * How {@link Tree} reads one of your items. Mirrors `MappedItem` from
@@ -87,31 +88,9 @@ export type TreeFilterProps<T> = {
   filter?: (item: T, context: TreeFilterContext<T>) => boolean;
 };
 
-/**
- * How ticking works and what the value lists. Take a parent P with leaves A and B:
- *
- * | Strategy               | Tick P       | Tick A and B | P ticked on its own? |
- * | ---------------------- | ------------ | ------------ | -------------------- |
- * | `"leaves"` (default)   | `[A, B]`     | `[A, B]`     | No                   |
- * | `"topmost"`            | `[P]`        | `[P]`        | No                   |
- * | `"all"`                | `[P, A, B]`  | `[P, A, B]`  | No                   |
- * | `"cascade"`            | `[P, A, B]`  | `[A, B]`     | Yes                  |
- * | `"independent"`        | `[P]`        | `[A, B]`     | Yes                  |
- *
- * - `"leaves"`, `"topmost"` and `"all"` treat parents as containers: a parent's
- *   checkbox comes from its leaves, so unticking A after ticking P leaves P
- *   indeterminate. With `"topmost"`, `P` stands for everything beneath it.
- * - `"cascade"` makes parents items in their own right. Ticking one also ticks
- *   everything beneath it, but unticking A leaves `[P, B]`, with P still ticked.
- * - `"independent"` ticks every item on its own.
- */
-export type TreeSelectionStrategy = "leaves" | "topmost" | "all" | "cascade" | "independent";
-
-/** How ticking works and what the value lists. */
-export type TreeSelectionBehaviorProps = {
-  /** How ticking works and what the value lists. Default `"leaves"`. */
-  selectionStrategy?: TreeSelectionStrategy;
-};
+// Shared with any tree-shaped selection (e.g. DataTable sub-rows), so they live
+// with the model and are re-exported here as part of Tree's API.
+export type { TreeSelectionBehaviorProps, TreeSelectionStrategy } from "@/lib/tree/types";
 
 /** The selection: a list of keys. Which keys depends on `selectionStrategy`. */
 export type TreeValueProps<T> = {

@@ -44,8 +44,16 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
   let active = true;
   const cells = new Map<string, Map<string, Cell>>();
   const columnFor = (id: string) => columns.find((column) => columnId(column) === id);
-  const getCurrentRow = (key: string) =>
-    store.getSnapshot().find((row) => store.getLineKey(row) === key);
+  let indexedSnapshot: readonly T[] | undefined;
+  let rowsByKey = new Map<string, T>();
+  function getCurrentRow(key: string) {
+    const snapshot = store.getSnapshot();
+    if (snapshot !== indexedSnapshot) {
+      rowsByKey = new Map(snapshot.map((row) => [store.getLineKey(row), row]));
+      indexedSnapshot = snapshot;
+    }
+    return rowsByKey.get(key);
+  }
 
   function cancelProperty(key: string, property: string, source?: Session) {
     for (const cell of cells.get(key)?.values() ?? [])

@@ -39,6 +39,73 @@ function setup(
 }
 
 describe("document-owned cell editing", () => {
+  it("indexes each snapshot once when reconciling retained cells and purging removed rows", () => {
+    const columns: LineItemsColumn<Row>[] = Array.from({ length: 5 }, (_, index) => ({
+      id: `name-${index}`,
+      accessorKey: "name",
+      edit: { editorType: "text" },
+    }));
+    const store = createLineItemsDocumentStore({
+      columns,
+      lines: Array.from({ length: 1_000 }, (_, index) => ({
+        id: String(index),
+        name: "Item",
+        quantity: 1,
+      })),
+    });
+    const getLineKey = vi.spyOn(store, "getLineKey");
+    const editing = createLineItemsEditing(store, columns);
+    for (const row of store.getSnapshot())
+      for (const column of columns) editing.getSession(row, column);
+    getLineKey.mockClear();
+
+    editing.setColumns(columns);
+    expect(getLineKey).toHaveBeenCalledTimes(1_000);
+    getLineKey.mockClear();
+    editing.setColumns(columns);
+    expect(getLineKey).not.toHaveBeenCalled();
+
+    editing.removeLine("999");
+    expect(getLineKey).toHaveBeenCalledTimes(999);
+    getLineKey.mockClear();
+    editing.setColumns(columns);
+    expect(getLineKey).not.toHaveBeenCalled();
+  });
+
+  it.each(["update", "add", "reorder", "remove", "revert"] as const)(
+    "reads current rows after a document %s changes the snapshot",
+    (action) => {
+      const { columns, store, editing } = setup();
+      const canEdit = vi.fn((_row: Row) => true);
+      const editable: LineItemsColumn<Row>[] = [
+        { accessorKey: "name", edit: { editorType: "text", canEdit } },
+        columns[1],
+      ];
+      const addedKey = store.addLine({ name: "Added", quantity: 2 });
+      editing.getSession(store.getSnapshot()[1], editable[0]);
+      editing.setColumns(editable);
+      canEdit.mockClear();
+
+      if (action === "update") store.updateField("A", "quantity", 3);
+      if (action === "add") {
+        store.addLine({ name: "Another", quantity: 4 });
+        editing.getSession(store.getSnapshot()[2], editable[0]);
+      }
+      if (action === "reorder") store.reorderLine(addedKey, null);
+      if (action === "remove") editing.removeLine(addedKey);
+      if (action === "revert") editing.revert();
+      editing.setColumns(editable);
+
+      expect(canEdit).toHaveBeenCalledTimes(store.getSnapshot().length);
+      for (const row of store.getSnapshot()) {
+        const checked = canEdit.mock.calls.find(
+          ([candidate]) => store.getLineKey(candidate) === store.getLineKey(row),
+        );
+        expect(checked?.[0]).toBe(row);
+      }
+    },
+  );
+
   it("adopts a successful check into the current row without overwriting unrelated changes", async () => {
     const request = deferred();
     const check = vi.fn(() => request.promise);

@@ -207,6 +207,82 @@ describe("LineItems cell editing integration", () => {
     expect(editor.value.isDirty).toBe(true);
   });
 
+  it("retains link navigation and keyboard focus for readonly rows of an editable link column", async () => {
+    const href = vi.fn((row: Row) => `/products/${row.id}`);
+    const column: LineItemsColumn<Row> = {
+      ...nameColumn,
+      type: "link",
+      typeOptions: { href },
+      edit: { ...nameColumn.edit, canEdit },
+    };
+    const editor = setup(
+      [column],
+      [rows[0], { ...rows[0], id: "B", name: "Second", allowed: false }],
+    );
+    const link = screen.getByRole("link", { name: "Second" });
+    expect(link.getAttribute("href")).toBe("/products/B");
+    expect(screen.getAllByRole("link")).toHaveLength(1);
+    expect(screen.getAllByRole("textbox")).toHaveLength(1);
+    expect(href.mock.calls.every(([row]) => !row.allowed)).toBe(true);
+
+    await editor.user.tab();
+    expect(document.activeElement).toBe(textbox());
+    await editor.user.tab();
+    expect(document.activeElement).toBe(link);
+  });
+
+  it("switches between a link and an editor when row permissions change", () => {
+    const column: LineItemsColumn<Row> = {
+      ...nameColumn,
+      type: "link",
+      typeOptions: { href: (row) => `/products/${row.id}` },
+      edit: { ...nameColumn.edit, canEdit },
+    };
+    const editor = setup([column, { accessorKey: "allowed" }]);
+    expect(screen.queryByRole("link")).toBeNull();
+    act(() => editor.value.updateField("A", "allowed", false));
+    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(screen.getByRole("link", { name: "Widget" }).getAttribute("href")).toBe("/products/A");
+    act(() => editor.value.updateField("A", "allowed", true));
+    expect(screen.queryByRole("link")).toBeNull();
+    draft(textbox(), "Changed");
+    fireEvent.keyDown(textbox(), { key: "Enter" });
+    expect(editor.value.lines[0].name).toBe("Changed");
+  });
+
+  it("retains choice labels for both editable and readonly link cells", () => {
+    const column: LineItemsColumn<Row> = {
+      ...statusColumn,
+      type: "link",
+      typeOptions: { href: (row) => `/products/${row.id}` },
+      edit: { ...statusColumn.edit, canEdit },
+    };
+    setup([column], [rows[0], { ...rows[0], id: "B", allowed: false }]);
+    expect(screen.getAllByRole("cell").map((cell) => cell.textContent)).toEqual(["Open", "Open"]);
+    expect(screen.getAllByRole("combobox")).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "Open" }).getAttribute("href")).toBe("/products/B");
+  });
+
+  it.each(["content", "null"] as const)(
+    "preserves custom %s rendering for editable and readonly link cells",
+    (kind) => {
+      const href = vi.fn((row: Row) => `/products/${row.id}`);
+      const column: LineItemsColumn<Row> = {
+        ...nameColumn,
+        type: "link",
+        typeOptions: { href },
+        render: () => (kind === "content" ? <strong>Custom label</strong> : null),
+        edit: { ...nameColumn.edit, canEdit },
+      };
+      setup([column], [rows[0], { ...rows[0], id: "B", name: "Second", allowed: false }]);
+      expect(screen.queryByRole("link")).toBeNull();
+      expect(screen.queryByText("Widget")).toBeNull();
+      expect(screen.queryByText("Second")).toBeNull();
+      expect(screen.queryAllByText("Custom label")).toHaveLength(kind === "content" ? 2 : 0);
+      expect(href).not.toHaveBeenCalled();
+    },
+  );
+
   it("uses the same badges for fixed-choice display and menu labels", async () => {
     const column: LineItemsColumn<Row> = {
       ...statusColumn,

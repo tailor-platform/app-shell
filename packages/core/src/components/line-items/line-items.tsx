@@ -54,6 +54,17 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
     () =>
       value.columns.map((column) => {
         const choices = column.edit?.editorType === "combobox" ? column.edit.options : undefined;
+        const renderValue = column.render
+          ? undefined
+          : createValueRenderer(column, timeZone, {
+              resolveBadgeLabel: choices
+                ? (raw) => choices.find((option) => option.value === raw)?.label ?? raw
+                : undefined,
+            });
+        const renderEditableValue =
+          !column.render && column.type === "link" && column.edit
+            ? createValueRenderer({ type: "text" }, timeZone)
+            : renderValue;
         return {
           column,
           id: column.id ?? column.accessorKey!,
@@ -62,17 +73,8 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
             (column.type === "number" || column.type === "money"
               ? ("right" as const)
               : ("left" as const)),
-          renderValue: column.render
-            ? undefined
-            : createValueRenderer(
-                column.type === "link" && column.edit ? { type: "text" } : column,
-                timeZone,
-                {
-                  resolveBadgeLabel: choices
-                    ? (raw) => choices.find((option) => option.value === raw)?.label ?? raw
-                    : undefined,
-                },
-              ),
+          renderValue,
+          renderEditableValue,
         };
       }),
     [value.columns, timeZone],
@@ -116,7 +118,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                 </button>
               </Table.Cell>
             )}
-            {columns.map(({ column, id, align, renderValue }) => {
+            {columns.map(({ column, id, align, renderValue, renderEditableValue }) => {
               let current: unknown;
               if (!column.render)
                 current =
@@ -127,9 +129,10 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                 column.edit?.editorType === "combobox" && column.type !== "badge"
                   ? column.edit.options.find((option) => option.value === current)?.label
                   : undefined;
-              const display = column.render
-                ? column.render(row)
-                : renderValue!(choiceLabel ?? current, row);
+              const renderDisplay = (editable: boolean) =>
+                column.render
+                  ? column.render(row)
+                  : (editable ? renderEditableValue! : renderValue!)(choiceLabel ?? current, row);
               return column.edit ? (
                 <LineItemsCell
                   key={id}
@@ -137,13 +140,13 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                   column={column}
                   index={index}
                   editing={getLineItemsEditing(value)}
-                  display={display}
+                  renderDisplay={renderDisplay}
                   timeZone={timeZone}
                   cellProps={{ align }}
                 />
               ) : (
                 <Table.Cell key={id} align={align}>
-                  {display}
+                  {renderDisplay(false)}
                 </Table.Cell>
               );
             })}

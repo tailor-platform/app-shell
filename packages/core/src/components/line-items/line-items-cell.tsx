@@ -15,7 +15,7 @@ export function LineItemsCell<T extends Record<string, unknown>>({
   column,
   index,
   editing,
-  display,
+  renderDisplay,
   timeZone,
   cellProps,
 }: {
@@ -23,7 +23,7 @@ export function LineItemsCell<T extends Record<string, unknown>>({
   column: LineItemsColumn<T>;
   index: number;
   editing: LineItemsEditing<T>;
-  display: ReactNode;
+  renderDisplay: (editable: boolean) => ReactNode;
   timeZone: string;
   cellProps: ComponentProps<typeof Table.Cell>;
 }) {
@@ -31,15 +31,16 @@ export function LineItemsCell<T extends Record<string, unknown>>({
   const edit = column.edit;
   const session = editing.getSession(row, column);
   useSyncExternalStore(session.subscribe, session.getState, session.getState);
-  if (!edit || !(edit.canEdit?.(row) ?? true))
-    return <Table.Cell {...cellProps}>{display}</Table.Cell>;
+  // A replacement editor gets a fresh view after commit, rather than interpreting an old draft.
+  if (!edit || !(edit.canEdit?.(row) ?? true) || !editing.isCurrentEditor(column))
+    return <Table.Cell {...cellProps}>{renderDisplay(false)}</Table.Cell>;
   const id = (column.id ?? column.accessorKey)!;
   const key = editing.getLineKey(row);
   const label = `${column.label ?? id}, ${t("row", { index: index + 1 })}`;
   const renderError = edit.error && edit.error.render;
   const props: Omit<CellEditorProps, "config"> = {
     current: row[column.accessorKey!],
-    display,
+    display: renderDisplay(true),
     timeZone,
     cellProps,
     session,
@@ -66,8 +67,6 @@ export function LineItemsCell<T extends Record<string, unknown>>({
       done: t("done"),
     },
   };
-  // A replacement editor gets a fresh view after commit, rather than interpreting an old draft.
-  if (!editing.isCurrentEditor(column)) return <Table.Cell {...cellProps}>{display}</Table.Cell>;
   if (edit.editorType === "date")
     return <DateEditCell {...props} config={{ type: "date", withTime: edit.withTime }} />;
   if (edit.editorType === "combobox")

@@ -1,44 +1,50 @@
+import type { ComponentProps } from "react";
 import { expectTypeOf, test } from "vitest";
-import type { CellEditorConfig, EditableCellProps } from "./cell";
+import { EditableCell, type EditableCellOwnerProps } from "./cell";
+import { choiceEditor } from "./choice";
+import { dateEditor } from "./date";
+import { numberEditor, textEditor } from "./typing";
 
-test("registered editor configs retain their discriminators and required fields", () => {
-  expectTypeOf<CellEditorConfig["type"]>().toEqualTypeOf<"text" | "number" | "choice" | "date">();
-  expectTypeOf<EditableCellProps<"text">["config"]["type"]>().toEqualTypeOf<"text">();
-  expectTypeOf<EditableCellProps<"number">["config"]["type"]>().toEqualTypeOf<"number">();
-  expectTypeOf<Extract<CellEditorConfig, { type: "choice" }>["options"]>().toEqualTypeOf<
+declare const ownerProps: EditableCellOwnerProps;
+
+test("injected editors retain required options without a kind discriminator", () => {
+  type ChoiceOptions = ComponentProps<typeof choiceEditor.Editor>["options"];
+  type DateOptions = ComponentProps<typeof dateEditor.Editor>["options"];
+  expectTypeOf<ChoiceOptions["choices"]>().toEqualTypeOf<
     readonly { value: string; label: string }[]
   >();
-  expectTypeOf<Extract<CellEditorConfig, { type: "date" }>["withTime"]>().toEqualTypeOf<
-    boolean | undefined
-  >();
+  expectTypeOf<DateOptions["withTime"]>().toEqualTypeOf<boolean | undefined>();
+  expectTypeOf<keyof ChoiceOptions>().toEqualTypeOf<"choices" | "renderOption">();
+  expectTypeOf<keyof DateOptions>().toEqualTypeOf<"withTime">();
+
+  EditableCell({
+    ...ownerProps,
+    editor: choiceEditor,
+    options: {
+      choices: [{ value: "open", label: "Open" }],
+      renderOption: (value, label) => {
+        expectTypeOf(value).toEqualTypeOf<string>();
+        expectTypeOf(label).toEqualTypeOf<string>();
+        return label;
+      },
+    },
+  });
+  EditableCell({ ...ownerProps, editor: dateEditor, options: { withTime: true } });
+  EditableCell({ ...ownerProps, editor: textEditor, options: {} });
+  EditableCell({ ...ownerProps, editor: numberEditor, options: {} });
 });
 
-test("registry-derived configs reject missing or mismatched editor options", () => {
-  const choice: CellEditorConfig = {
-    type: "choice",
-    options: [{ value: "open", label: "Open" }],
-    renderOption: (value, label) => {
-      expectTypeOf(value).toEqualTypeOf<string>();
-      expectTypeOf(label).toEqualTypeOf<string>();
-      return label;
-    },
-  };
-  const date: CellEditorConfig = { type: "date", withTime: true };
+test("options cannot widen or disagree with the injected editor", () => {
   // @ts-expect-error Choice options remain required.
-  const missingOptions: CellEditorConfig = { type: "choice" };
-  // @ts-expect-error Date configs do not accept choice options.
-  const dateOptions: CellEditorConfig = { type: "date", options: [] };
-  // @ts-expect-error Number configs do not accept date options.
-  const numberOptions: CellEditorConfig = { type: "number", withTime: true };
-  // @ts-expect-error Only registered editor kinds are supported.
-  const unknownKind: CellEditorConfig = { type: "boolean" };
-  // @ts-expect-error A date cell cannot receive a choice config.
-  const mismatched: EditableCellProps<"date">["config"] = { type: "choice", options: [] };
-  void choice;
-  void date;
-  void missingOptions;
-  void dateOptions;
-  void numberOptions;
-  void unknownKind;
-  void mismatched;
+  EditableCell({ ...ownerProps, editor: choiceEditor });
+  // @ts-expect-error A choice editor requires its fixed choices.
+  EditableCell({ ...ownerProps, editor: choiceEditor, options: {} });
+  // @ts-expect-error Date options cannot substitute for choice options.
+  EditableCell({ ...ownerProps, editor: choiceEditor, options: { withTime: true } });
+  // @ts-expect-error A date editor cannot receive choice options.
+  EditableCell({ ...ownerProps, editor: dateEditor, options: { choices: [] } });
+  // @ts-expect-error A number editor has no date options.
+  EditableCell({ ...ownerProps, editor: numberEditor, options: { withTime: true } });
+  // @ts-expect-error Options describe the selected editor, not another kind.
+  EditableCell({ ...ownerProps, editor: textEditor, options: { type: "number" } });
 });

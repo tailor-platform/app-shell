@@ -1,12 +1,13 @@
 import { useState, type KeyboardEvent } from "react";
 import { Popover } from "@base-ui/react/popover";
+import { CalendarDays } from "lucide-react";
 import type { CalendarDate } from "@internationalized/date";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Calendar } from "@/components/calendar";
 import { Input } from "@/components/input";
 import { sameDate, toCalendarDate, toIsoDateTime, toTimeText } from "../input-values";
-import type { CellEditorNavigation, CellEditorProps, DateTimeDraft } from "./props";
+import type { CellEditor, CellEditorNavigation, CellEditorProps, DateTimeDraft } from "./props";
 import { useCellEditSession } from "./use-session";
 import {
   OVERLAY_CLASS_NAME,
@@ -37,8 +38,10 @@ function tabBetweenCells(
   if (navigation?.move(from, event.shiftKey ? "prev" : "next")) event.preventDefault();
 }
 
-export function DateEditor({
-  config,
+type DateEditorOptions = { withTime?: boolean };
+
+function DateEditor({
+  options,
   current,
   valueLabel,
   change = () => undefined,
@@ -54,8 +57,8 @@ export function DateEditor({
   label,
   navigation,
   children,
-}: CellEditorProps<{ type: "date"; withTime?: boolean }> & { valueLabel?: string }) {
-  const withTime = config.withTime ?? false;
+}: CellEditorProps<DateEditorOptions>) {
+  const withTime = options.withTime ?? false;
   const session = useCellEditSession<DateTimeDraft>(interceptErrors, external);
   const { state } = session;
   const { callbackError, containsErrorTarget } = useCellError(
@@ -236,3 +239,8 @@ export function DateEditor({
     ),
   });
 }
+
+export const dateEditor: CellEditor<DateEditorOptions> = {
+  Editor: DateEditor,
+  icon: <CalendarDays />,
+};

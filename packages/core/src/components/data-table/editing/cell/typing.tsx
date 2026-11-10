@@ -1,4 +1,5 @@
 import { EditableCell } from "@/components/internals/table-core/editing/cell";
+import { numberEditor, textEditor } from "@/components/internals/table-core/editing/typing";
 import { useEditorProps, type DataTableEditableCellProps } from "./shared";
 
 export function TypingEditCell<TRow extends Record<string, unknown>>(
@@ -6,5 +7,5 @@ export function TypingEditCell<TRow extends Record<string, unknown>>(
 ) {
   const coreProps = useEditorProps(props);
   const numeric = props.col.type === "number" || props.col.type === "money";
-  return <EditableCell {...coreProps} config={{ type: numeric ? "number" : "text" }} />;
+  return <EditableCell {...coreProps} editor={numeric ? numberEditor : textEditor} options={{}} />;
 }

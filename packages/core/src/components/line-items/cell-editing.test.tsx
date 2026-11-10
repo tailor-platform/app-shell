@@ -1,11 +1,20 @@
 import { StrictMode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import { CellEditError } from "@/components/internals/table-core/cell-edit-error";
 import { LineItems } from "./line-items";
+import { useLineItemsCellRenderersByColumn } from "./line-items-cell";
 import { useLineItems } from "./use-line-items";
 import type { LineItemsColumn, UseLineItemsReturn } from "./types";
 
@@ -119,6 +128,27 @@ async function resolveRequest(request: ReturnType<typeof deferred>) {
 }
 
 describe("LineItems cell editing integration", () => {
+  it("memoizes cell renderers by columns and time zone", () => {
+    const columns: LineItemsColumn<Row>[] = [nameColumn];
+    const { result, rerender } = renderHook(
+      (props: { columns: LineItemsColumn<Row>[]; timeZone: string }) =>
+        useLineItemsCellRenderersByColumn(props.columns, props.timeZone),
+      { initialProps: { columns, timeZone: "UTC" } },
+    );
+    const initial = result.current;
+    rerender({ columns, timeZone: "UTC" });
+    expect(result.current).toBe(initial);
+    rerender({ columns, timeZone: "Asia/Tokyo" });
+    expect(result.current).not.toBe(initial);
+    const timeZoneChanged = result.current;
+    rerender({
+      columns: [{ ...nameColumn, render: () => "Custom label" }],
+      timeZone: "Asia/Tokyo",
+    });
+    expect(result.current).not.toBe(timeZoneChanged);
+    expect(result.current[0].renderDisplay(rows[0], false)).toBe("Custom label");
+  });
+
   it("preserves a cell draft and its row identity through keyboard reordering", () => {
     const editor = setup([nameColumn], [rows[0], { ...rows[0], id: "B", name: "Second" }], true);
     draft(textbox(), "Changed");
@@ -439,6 +469,41 @@ describe("LineItems cell editing integration", () => {
     expect(editor.value.lines[0].name).toBe("Retained");
     expect(editor.value.isDirty).toBe(true);
   });
+
+  it.each(["text", "number", "choice", "date"] as const)(
+    "keeps the %s input and local state when column preparation is recreated",
+    async (kind) => {
+      const column = {
+        text: nameColumn,
+        number: quantityColumn,
+        choice: statusColumn,
+        date: dateColumn,
+      }[kind];
+      const editor = setup([column]);
+      const getControl = () => {
+        if (kind === "date") return dateTrigger();
+        if (kind === "choice") return combobox();
+        return textbox(kind === "number" ? "Quantity" : "Name");
+      };
+      const control = getControl();
+      if (kind === "date" || kind === "choice") await editor.user.click(control);
+      if (kind === "choice") await editor.user.type(control, "Clos");
+      if (control instanceof HTMLInputElement && kind !== "choice")
+        draft(control, kind === "number" ? "3." : "Retained");
+      const focused = document.activeElement;
+      const popup = kind === "date" ? calendar() : null;
+      const inputValue = control instanceof HTMLInputElement ? control.value : undefined;
+
+      editor.update([{ ...column }]);
+
+      expect(getControl()).toBe(control);
+      expect(document.activeElement).toBe(focused);
+      if (kind === "date") expect(calendar()).toBe(popup);
+      if (control instanceof HTMLInputElement) expect(control.value).toBe(inputValue);
+      if (kind === "choice") expect(combobox().getAttribute("aria-expanded")).toBe("true");
+      expect(editor.value.isDirty).toBe(false);
+    },
+  );
 
   it("preserves a focused draft when editor callbacks are recreated and uses the latest callback", () => {
     const before = vi.fn();

@@ -3,8 +3,10 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { Table } from "@/components/table";
 import { createCellEditSession } from "../cell-session";
 import { EditableCell } from "./cell";
-import { TypingEditor } from "./typing";
-import type { CellEditorLabels } from "./props";
+import { numberEditor } from "./typing";
+import { choiceEditor } from "./choice";
+import { dateEditor } from "./date";
+import type { CellEditor, CellEditorLabels } from "./props";
 
 afterEach(cleanup);
 
@@ -27,8 +29,8 @@ describe("editor composition", () => {
   it("renders and confirms a typing control without cell display or table props", () => {
     const commit = vi.fn();
     const { container } = render(
-      <TypingEditor
-        config={{ type: "number" }}
+      <numberEditor.Editor
+        options={{}}
         current={12.5}
         commit={commit}
         labels={labels}
@@ -40,7 +42,7 @@ describe("editor composition", () => {
         timeZone="UTC"
       >
         {({ input }) => <section>{input}</section>}
-      </TypingEditor>,
+      </numberEditor.Editor>,
     );
     expect(container.querySelector("td")).toBeNull();
     expect(container.querySelector("section > input")).not.toBeNull();
@@ -51,13 +53,14 @@ describe("editor composition", () => {
     expect(commit).toHaveBeenCalledWith(14.5);
   });
 
-  it("uses the choice entry's editor, icon and preview visibility", () => {
+  it("uses the injected choice editor's icon and preview visibility", () => {
     render(
       <Table.Root>
         <Table.Body>
           <Table.Row>
             <EditableCell
-              config={{ type: "choice", options: [{ value: "open", label: "Open" }] }}
+              editor={choiceEditor}
+              options={{ choices: [{ value: "open", label: "Open" }] }}
               current="open"
               display="Formatted choice"
               cellProps={{ align: "left" }}
@@ -85,6 +88,52 @@ describe("editor composition", () => {
     expect(preview.className.split(" ")).toContain("astw:invisible");
   });
 
+  it("renders an injected editor without a registry entry", () => {
+    const commit = vi.fn();
+    const editor: CellEditor<{ confirmed: string }> = {
+      Editor: ({ children, options, label, valueLabel, commit: confirm }) =>
+        children({
+          input: (
+            <button type="button" aria-label={label} onClick={() => confirm(options.confirmed)}>
+              {valueLabel}: {options.confirmed}
+            </button>
+          ),
+          editing: false,
+          confirming: false,
+          onEditorCancel: () => {},
+          getFailure: () => undefined,
+        }),
+    };
+    render(
+      <Table.Root>
+        <Table.Body>
+          <Table.Row>
+            <EditableCell
+              editor={editor}
+              options={{ confirmed: "Changed" }}
+              current="Initial"
+              display="Formatted"
+              cellProps={{}}
+              commit={commit}
+              labels={labels}
+              slotPrefix="test"
+              rowKey="A"
+              colKey="custom"
+              label="Injected"
+              align="left"
+              timeZone="UTC"
+            />
+          </Table.Row>
+        </Table.Body>
+      </Table.Root>,
+    );
+    const button = screen.getByRole("button", { name: "Injected" });
+    expect(button.textContent).toBe("Formatted: Changed");
+    fireEvent.click(button);
+    expect(commit).toHaveBeenCalledWith("Changed");
+    expect(screen.getByRole("cell").hasAttribute("data-editable")).toBe(true);
+  });
+
   it.each(["confirming", "failed"] as const)(
     "keeps a retained %s date preview visible with the calendar closed",
     (status) => {
@@ -94,7 +143,8 @@ describe("editor composition", () => {
           <Table.Body>
             <Table.Row>
               <EditableCell
-                config={{ type: "date" }}
+                editor={dateEditor}
+                options={{}}
                 current="2026-10-02"
                 display="Formatted date"
                 cellProps={{ align: "left" }}

@@ -25,13 +25,14 @@ import {
   CELL_ERROR_CLASS_NAME,
   ICON_INPUT_CLASS_NAME,
   INPUT_CLASS_NAME,
+  INPUT_DISPLAY,
   useCellError,
   useNavigationRef,
 } from "./shared";
-import type { CellEditorProps } from "./props";
+import type { CellEditor, CellEditorProps } from "./props";
 
-export function TypingEditor({
-  config,
+function TypingEditor({
+  numeric,
   current,
   change = () => undefined,
   commit,
@@ -45,7 +46,7 @@ export function TypingEditor({
   align,
   navigation,
   children,
-}: CellEditorProps<{ type: "text" | "number" }>) {
+}: CellEditorProps<Record<string, never>> & { numeric: boolean }) {
   const errorId = useId();
   const session = useCellEditSession<string>(interceptErrors, external);
   const { state } = session;
@@ -58,7 +59,6 @@ export function TypingEditor({
   const composingRef = useRef(false);
   const selectOnMouseUpRef = useRef(false);
 
-  const numeric = config.type === "number";
   const baselineText = numeric
     ? toNumberEditText(toNumberValue(current))
     : (toTextValue(current) ?? "");
@@ -253,3 +253,13 @@ export function TypingEditor({
     ),
   });
 }
+
+export const textEditor: CellEditor<Record<string, never>> = {
+  Editor: (props) => <TypingEditor {...props} numeric={false} />,
+  hideDisplay: INPUT_DISPLAY,
+};
+
+export const numberEditor: CellEditor<Record<string, never>> = {
+  Editor: (props) => <TypingEditor {...props} numeric />,
+  hideDisplay: INPUT_DISPLAY,
+};

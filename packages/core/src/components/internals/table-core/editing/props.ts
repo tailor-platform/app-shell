@@ -46,9 +46,19 @@ export interface CellEditorView {
   draftPreview?: string;
 }
 
+/** Input behavior and presentation policy injected into a cell, independent of editor kinds. */
+export interface CellEditor<TOptions> {
+  Editor: (props: CellEditorProps<TOptions>) => ReactNode;
+  icon?: ReactNode;
+  hideDisplay?: {
+    idle?: "focused" | "forced-colors";
+    editing?: "focused" | "forced-colors";
+  };
+}
+
 /** Input and draft behavior only; cell presentation and row adoption belong to their owners. */
-export interface CellEditorProps<TConfig> {
-  config: TConfig;
+export interface CellEditorProps<TOptions> {
+  options: TOptions;
   current: unknown;
   change?: (draft: unknown) => unknown;
   commit: (value: unknown) => unknown;
@@ -64,6 +74,8 @@ export interface CellEditorProps<TConfig> {
   align: "left" | "center" | "right";
   timeZone: string;
   navigation?: CellEditorNavigation;
+  /** Formatted value used to name input controls whose value is visually hidden. */
+  valueLabel?: string;
   children: (view: CellEditorView) => ReactNode;
 }
 

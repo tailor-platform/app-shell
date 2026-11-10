@@ -27,6 +27,13 @@ import type { CellEditorLabels, CellEditorNavigation, CellEditorProps, CellError
  */
 export const ICON_SPACE_CLASS_NAME = "astw:pr-5";
 
+export const INPUT_DISPLAY = {
+  /** Hide the preview only where forced colors make resting input text visible. */
+  idle: "forced-colors",
+  /** Retain the preview's layout space while the input shows its draft. */
+  editing: "focused",
+} as const;
+
 // Editors cover the whole cell, end to end, instead of taking part in layout,
 // so a cell becoming editable — or being edited — never changes row height or
 // column width. They inherit the cell's padding (they're its direct children),

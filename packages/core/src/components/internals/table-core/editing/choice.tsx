@@ -9,6 +9,7 @@ import {
   type TouchEvent,
 } from "react";
 import { Combobox as BaseCombobox } from "@base-ui/react/combobox";
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isComposing } from "@/lib/is-composing";
 import { ComboboxParts } from "@/components/combobox";
@@ -18,10 +19,11 @@ import {
   CELL_ERROR_CLASS_NAME,
   ICON_INPUT_CLASS_NAME,
   INPUT_CLASS_NAME,
+  INPUT_DISPLAY,
   useCellError,
   useNavigationRef,
 } from "./shared";
-import type { CellEditorProps } from "./props";
+import type { CellEditor, CellEditorProps } from "./props";
 
 /** One dropdown choice; `value: null` is "None". */
 interface Choice {
@@ -39,8 +41,13 @@ const isChoiceEqual = (a: Choice, b: Choice) => a.value === b.value;
 
 const choiceLabel = (choice: Choice) => choice.label;
 
-export function ChoiceEditor({
-  config,
+type ChoiceEditorOptions = {
+  choices: readonly { value: string; label: string }[];
+  renderOption?: (value: string, label: string) => ReactNode;
+};
+
+function ChoiceEditor({
+  options: { choices, renderOption },
   current,
   change = () => undefined,
   commit,
@@ -54,11 +61,7 @@ export function ChoiceEditor({
   align,
   navigation,
   children,
-}: CellEditorProps<{
-  type: "choice";
-  options: readonly { value: string; label: string }[];
-  renderOption?: (value: string, label: string) => ReactNode;
-}>) {
+}: CellEditorProps<ChoiceEditorOptions>) {
   const session = useCellEditSession<ChoiceDraft>(interceptErrors, external);
   const { state } = session;
   const { callbackError, containsErrorTarget } = useCellError(
@@ -68,7 +71,6 @@ export function ChoiceEditor({
   const register = useNavigationRef<HTMLInputElement>(navigation, rowKey, colKey);
   const value = toTextValue(current);
   const noneLabel = labels.none;
-  const choices = config.options;
   // Keyed on content: rebuilding columns must not reset the highlight mid-search.
   const choicesKey = (choices ?? []).map((c) => `${c.value}\u0000${c.label}`).join("\u0001");
   const items = useMemo<Choice[]>(
@@ -265,7 +267,7 @@ export function ChoiceEditor({
   const renderChoice = (item: Choice) => {
     if (item.value === null)
       return <span className="astw:text-muted-foreground">{item.label}</span>;
-    return config.renderOption ? config.renderOption(item.value, item.label) : item.label;
+    return renderOption ? renderOption(item.value, item.label) : item.label;
   };
 
   return children({
@@ -380,3 +382,9 @@ export function ChoiceEditor({
     ),
   });
 }
+
+export const choiceEditor: CellEditor<ChoiceEditorOptions> = {
+  Editor: ChoiceEditor,
+  icon: <ChevronDown />,
+  hideDisplay: INPUT_DISPLAY,
+};

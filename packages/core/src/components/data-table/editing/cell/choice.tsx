@@ -1,5 +1,6 @@
 import { BadgeList } from "@/components/badge-list";
 import { EditableCell } from "@/components/internals/table-core/editing/cell";
+import { choiceEditor } from "@/components/internals/table-core/editing/choice";
 import {
   columnChoices,
   useEditorProps,
@@ -20,9 +21,9 @@ export function ChoiceEditCell<TRow extends Record<string, unknown>>(
   return (
     <EditableCell
       {...coreProps}
-      config={{
-        type: "choice",
-        options: columnChoices(col) ?? [],
+      editor={choiceEditor}
+      options={{
+        choices: columnChoices(col) ?? [],
         renderOption:
           col.type === "badge"
             ? (value, label) => (

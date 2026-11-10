@@ -1,7 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import { useTimeZone } from "@/contexts/appshell-context";
 import type { Table } from "@/components/table";
-import type { EditableCellProps } from "@/components/internals/table-core/editing/cell";
+import type { EditableCellOwnerProps } from "@/components/internals/table-core/editing/cell";
 import type { Column } from "../../types";
 import { getCellValue, renderTypedValue } from "../../cell-renderers";
 import { resolveBadgeOptions } from "../../cell-values";
@@ -26,7 +26,7 @@ export function useEditorProps<TRow extends Record<string, unknown>>({
   col,
   dateRenderer,
   ...props
-}: DataTableEditableCellProps<TRow>): Omit<EditableCellProps, "config"> {
+}: DataTableEditableCellProps<TRow>): EditableCellOwnerProps {
   const { value: timeZone } = useTimeZone();
   const t = useDataTableT();
   const current = getCellValue(row, col);

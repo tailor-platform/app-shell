@@ -67,6 +67,10 @@ export const ContentContainer = ({ header, className, children }: ContentContain
           data-appshell-scroll-container=""
           className={cn(
             "astw:flex astw:flex-col astw:gap-4 astw:flex-1 astw:min-h-0 astw:overflow-y-auto",
+            // The positioning box for absolutely positioned descendants (such
+            // as the hidden inputs Select and Combobox render), so they scroll
+            // with the content instead of stretching the shell frame.
+            "astw:relative",
             // Full-bleed: break out of SidebarInset's right padding so the
             // scrollbar sits at the window edge, then restore the padding
             // inside so content stays aligned with the header. Mirrors

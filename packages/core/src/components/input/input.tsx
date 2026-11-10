@@ -3,7 +3,7 @@ import { Field as BaseField } from "@base-ui/react/field";
 
 import { cn } from "@/lib/utils";
 import { inputBaseClasses } from "@/lib/input-classes";
-import { useInsideFieldControl } from "../field/inside-field-control";
+import { useInputWiring } from "./input-wiring";
 import { mergeRefs, useToolbarItem } from "../toolbar/toolbar";
 
 type InputProps = React.ComponentProps<"input">;
@@ -38,9 +38,8 @@ const RENDERED_BY_FIELD_CONTROL_WARNING =
 function Input({ className, type, ref: forwardedRef, ...props }: InputProps) {
   const ref = React.useRef<HTMLInputElement>(null);
   useToolbarItem(ref, { handlesDirectionalKeys: true });
-  // Rendered by `Field.Control`, which already wires the field: keep the old
-  // native element so the field doesn't get a second control.
-  const renderedByFieldControl = useInsideFieldControl();
+  const wiring = useInputWiring();
+  const renderedByFieldControl = wiring === "field-control";
   React.useEffect(() => {
     if (!renderedByFieldControl || warnedRenderedByFieldControl) return;
     warnedRenderedByFieldControl = true;
@@ -61,7 +60,7 @@ function Input({ className, type, ref: forwardedRef, ...props }: InputProps) {
     ...props,
   };
 
-  if (renderedByFieldControl) return <input {...inputProps} />;
+  if (wiring !== "field") return <input {...inputProps} />;
   return <BaseField.Control {...inputProps} />;
 }
 

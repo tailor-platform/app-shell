@@ -3,7 +3,7 @@ import { SearchIcon } from "lucide-react";
 
 import { Button } from "@/components/button";
 import { Dialog } from "@/components/dialog";
-import { Input } from "@/components/input";
+import { StandaloneInput } from "@/components/input/standalone-input";
 import { cn } from "@/lib/utils";
 
 import {
@@ -207,7 +207,7 @@ function TreePickerBody<T>({
           )}
         >
           <SearchIcon className="astw:text-muted-foreground astw:size-4 astw:shrink-0" />
-          <Input
+          <StandaloneInput
             // `search` gives the browser's clear (✕) button, as in DataTable's
             // field search.
             type="search"

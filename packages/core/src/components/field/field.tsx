@@ -11,7 +11,7 @@ import { Combobox } from "../combobox";
 import { DateField, DatePicker, DateRangePicker } from "../date-field";
 import { Select } from "../select";
 import { Textarea } from "../textarea";
-import { InsideFieldControlContext } from "./inside-field-control";
+import { InputWiringContext } from "../input/input-wiring";
 import { Tree } from "../tree";
 
 // Only the props relevant to the Field abstraction are picked from BaseField.Root.
@@ -178,7 +178,7 @@ function renderMisuseWarnings(render: unknown): string[] {
 function Control({ className, ...props }: React.ComponentProps<typeof BaseField.Control>) {
   useOnceWarnings(renderMisuseWarnings(props.render));
   return (
-    <InsideFieldControlContext.Provider value={true}>
+    <InputWiringContext.Provider value="field-control">
       <BaseField.Control
         data-slot="field-control"
         className={cn(
@@ -188,7 +188,7 @@ function Control({ className, ...props }: React.ComponentProps<typeof BaseField.
         )}
         {...props}
       />
-    </InsideFieldControlContext.Provider>
+    </InputWiringContext.Provider>
   );
 }
 Control.displayName = "Field.Control";

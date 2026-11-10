@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import * as React from "react";
 import { Field } from "../field";
 import { Form } from "../form";
+import { TreePicker } from "../tree-picker";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { Input } from "./input";
 
@@ -218,5 +219,29 @@ describe("Input outside Field.Root", () => {
     const input = screen.getByTestId("input") as HTMLInputElement;
     expect(input.name).toBe("search");
     expect(input.disabled).toBe(false);
+  });
+});
+
+describe("AppShell components that use Input internally", () => {
+  it("keep their own input out of a surrounding Field.Root", () => {
+    const { baseElement } = render(
+      <Field.Root name="products">
+        <Field.Label>Products</Field.Label>
+        <TreePicker
+          open
+          onOpenChange={() => {}}
+          title="Pick"
+          items={[{ key: "a", name: "A" }]}
+          mapItem={(item: { key: string; name: string }) => ({ key: item.key, label: item.name })}
+          renderItem={({ item }) => <span>{item.name}</span>}
+          onCommit={() => {}}
+        />
+      </Field.Root>,
+    );
+    const search = baseElement.querySelector(
+      "[data-slot=tree-picker-search] input",
+    ) as HTMLInputElement;
+    expect(search.name).toBe("");
+    expect(screen.getByText("Products").getAttribute("for")).not.toBe(search.id || null);
   });
 });

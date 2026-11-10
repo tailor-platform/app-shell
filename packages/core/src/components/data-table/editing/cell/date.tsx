@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useTimeZone } from "@/contexts/appshell-context";
 import { Button } from "@/components/button";
 import { Calendar } from "@/components/calendar";
-import { Input } from "@/components/input";
+import { StandaloneInput } from "@/components/input/standalone-input";
 import type { DateTimeDraft } from "../../types";
 import { sameDate, toCalendarDate, toIsoDateTime, toTimeText } from "../../cell-values";
 import { useDataTableT } from "../../i18n";
@@ -201,7 +201,7 @@ export function DateEditCell<TRow extends Record<string, unknown>>({
                 onChange={handlePick}
               />
               {withTime && (
-                <Input
+                <StandaloneInput
                   type="time"
                   aria-label={`${label} (${t("chooseTime")})`}
                   value={activeDraft.time ?? ""}

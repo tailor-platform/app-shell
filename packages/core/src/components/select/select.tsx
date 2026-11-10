@@ -100,7 +100,7 @@ function SelectContent({
         <BaseSelect.Popup
           data-slot="select-content"
           className={cn(
-            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-(--z-portal) astw:w-[var(--anchor-width)] astw:min-w-32 astw:origin-(--transform-origin) astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:p-1 astw:shadow-md",
+            "astw:bg-popover astw:text-popover-foreground astw:data-open:animate-in astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-open:fade-in-0 astw:data-ending-style:zoom-out-95 astw:data-open:zoom-in-95 astw:z-(--z-portal) astw:w-[var(--anchor-width)] astw:min-w-32 astw:origin-(--transform-origin) astw:max-h-[min(var(--available-height),15rem)] astw:overflow-y-auto astw:rounded-md astw:border astw:border-border astw:p-1 astw:shadow-md",
             className,
           )}
           {...props}

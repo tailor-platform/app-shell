@@ -299,4 +299,40 @@ describe("Select", () => {
 
     expect(screen.getByTestId("trigger").classList.contains("custom-class")).toBe(true);
   });
+
+  describe("popup height", () => {
+    async function openPopup(contentClassName?: string) {
+      const user = userEvent.setup();
+      render(
+        <Select.Root>
+          <Select.Trigger data-testid="trigger">
+            <Select.Value placeholder="Pick one" />
+          </Select.Trigger>
+          <Select.Content className={contentClassName}>
+            <Select.Item value="a">Apple</Select.Item>
+          </Select.Content>
+        </Select.Root>,
+      );
+      await user.click(screen.getByTestId("trigger"));
+      await waitFor(() => {
+        expect(screen.getByText("Apple")).toBeDefined();
+      });
+      return document.querySelector<HTMLElement>('[data-slot="select-content"]')!;
+    }
+
+    it("caps the height to the available space and scrolls", async () => {
+      const content = await openPopup();
+      expect(content.className).toContain("astw:max-h-[min(var(--available-height),15rem)]");
+      expect(content.className).toContain("astw:overflow-y-auto");
+      expect(content.className).not.toContain("astw:overflow-hidden");
+    });
+
+    it("lets className replace the max height and overflow", async () => {
+      const content = await openPopup("astw:max-h-96 astw:overflow-hidden");
+      expect(content.className).toContain("astw:max-h-96");
+      expect(content.className).toContain("astw:overflow-hidden");
+      expect(content.className).not.toContain("astw:max-h-[min(var(--available-height),15rem)]");
+      expect(content.className).not.toContain("astw:overflow-y-auto");
+    });
+  });
 });

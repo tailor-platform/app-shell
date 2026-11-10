@@ -8,33 +8,6 @@ type Cell = { property: string; session: Session };
 const columnId = <T extends Record<string, unknown>>(column: LineItemsColumn<T>) =>
   (column.id ?? column.accessorKey)!;
 
-function sameEditor<T extends Record<string, unknown>>(
-  before: LineItemsColumn<T> | undefined,
-  after: LineItemsColumn<T> | undefined,
-) {
-  const left = before?.edit;
-  const right = after?.edit;
-  return (
-    !!left &&
-    !!right &&
-    before?.accessorKey === after?.accessorKey &&
-    left.editorType === right.editorType &&
-    left.onValueCommitted === right.onValueCommitted &&
-    left.canEdit === right.canEdit &&
-    left.error === right.error &&
-    !(
-      left.editorType === "date" &&
-      right.editorType === "date" &&
-      left.withTime !== right.withTime
-    ) &&
-    !(
-      left.editorType === "combobox" &&
-      right.editorType === "combobox" &&
-      JSON.stringify(left.options) !== JSON.stringify(right.options)
-    )
-  );
-}
-
 /** Binds logical cell drafts to a document, without owning another copy of its rows. @internal */
 export function createLineItemsEditing<T extends Record<string, unknown>>(
   store: Store<T>,
@@ -75,9 +48,15 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
   return {
     assertColumns,
     getLineKey: store.getLineKey,
-    isCurrentEditor(column: LineItemsColumn<T>) {
-      return sameEditor(columnFor(columnId(column)), column);
-    },
+    /**
+     * A cell deliberately reuses its session across rerenders and view remounts.
+     * On-the-fly editor replacement (type or options) during an active draft is not
+     * a targeted LineItems use case, so we do not compare editor contracts or migrate
+     * drafts between editor-specific shapes. Keep that configuration stable mid-draft;
+     * ordinary callback recreation and canEdit changes are supported independently.
+     *
+     * shortcut: Live editor replacement is unsupported, add session versioning if a concrete use case requires it.
+     */
     getSession(row: T, column: LineItemsColumn<T>): Session {
       const key = store.getLineKey(row);
       let rowCells = cells.get(key);
@@ -109,12 +88,14 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
         | undefined;
       const adopt = () => {
         const current = getCurrentRow(key);
+        const currentColumn = columnFor(id);
         if (
           !active ||
           !current ||
           source.getRevision() !== revision ||
-          !sameEditor(column, columnFor(id)) ||
-          !(columnFor(id)?.edit?.canEdit?.(current) ?? true)
+          !currentColumn?.edit ||
+          currentColumn.accessorKey !== column.accessorKey ||
+          !(currentColumn.edit.canEdit?.(current) ?? true)
         )
           return;
         store.updateField(key, column.accessorKey!, value as T[keyof T & string]);
@@ -143,14 +124,12 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
         for (const cell of rowCells.values()) cell.session.cancel();
       purgeRemoved();
     },
-    /** Only committed editor policies may retire drafts; presentation changes preserve them. */
+    /** Retire removed cells and denied drafts only after their configuration is committed. */
     setColumns(next: readonly LineItemsColumn<T>[]) {
       assertColumns(next);
-      const previous = columns;
       columns = next;
       for (const [key, rowCells] of cells) {
         for (const [id, cell] of rowCells) {
-          const before = previous.find((column) => columnId(column) === id);
           const after = columnFor(id);
           if (!after?.edit || after.accessorKey !== cell.property) {
             cell.session.cancel();
@@ -159,8 +138,7 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
             continue;
           }
           const row = getCurrentRow(key);
-          if (!sameEditor(before, after) || (row && !(after.edit.canEdit?.(row) ?? true)))
-            cell.session.cancel();
+          if (row && !(after.edit.canEdit?.(row) ?? true)) cell.session.cancel();
           if (active) cell.session.activate(after.edit.error !== false);
         }
         if (rowCells.size === 0) cells.delete(key);

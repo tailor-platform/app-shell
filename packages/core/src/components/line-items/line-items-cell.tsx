@@ -1,4 +1,4 @@
-import { useSyncExternalStore, type ComponentProps, type ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { BadgeList } from "@/components/badge-list";
 import { Table } from "@/components/table";
 import { TypingEditCell } from "@/components/internals/table-core/editing/typing";
@@ -29,11 +29,9 @@ export function LineItemsCell<T extends Record<string, unknown>>({
 }) {
   const t = useLineItemsT();
   const edit = column.edit;
-  const session = editing.getSession(row, column);
-  useSyncExternalStore(session.subscribe, session.getState, session.getState);
-  // A replacement editor gets a fresh view after commit, rather than interpreting an old draft.
-  if (!edit || !(edit.canEdit?.(row) ?? true) || !editing.isCurrentEditor(column))
+  if (!edit || !(edit.canEdit?.(row) ?? true))
     return <Table.Cell {...cellProps}>{renderDisplay(false)}</Table.Cell>;
+  const session = editing.getSession(row, column);
   const id = (column.id ?? column.accessorKey)!;
   const key = editing.getLineKey(row);
   const label = `${column.label ?? id}, ${t("row", { index: index + 1 })}`;

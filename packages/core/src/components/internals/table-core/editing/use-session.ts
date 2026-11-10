@@ -7,7 +7,7 @@ export function useCellEditSession<TDraft>(
   external?: ReturnType<typeof createCellEditSession<unknown>>,
 ) {
   const [local] = useState(() => external ?? createCellEditSession<TDraft>(enabled));
-  // Each editor fixes its draft shape; external owners retire sessions when that contract changes.
+  // External sessions must retain one editor's draft shape while a draft is active.
   const session = (external ?? local) as ReturnType<typeof createCellEditSession<TDraft>>;
   const state = useSyncExternalStore(session.subscribe, session.getState, session.getState);
   useEffect(() => {

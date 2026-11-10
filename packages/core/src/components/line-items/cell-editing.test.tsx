@@ -422,20 +422,30 @@ describe("LineItems cell editing integration", () => {
     expect(editor.value.isDirty).toBe(true);
   });
 
-  it("retires an old draft before rendering a replacement editor contract", async () => {
-    const editor = setup([nameColumn]);
-    draft(textbox(), "Old draft");
-    const column: LineItemsColumn<Row> = {
+  it("preserves a focused draft when editor callbacks are recreated and uses the latest callback", () => {
+    const before = vi.fn();
+    const after = vi.fn();
+    const column = (onValueCommitted: () => void): LineItemsColumn<Row> => ({
       ...nameColumn,
-      edit: { editorType: "combobox" as const, options: [{ value: "next", label: "Next" }] },
-    };
-    editor.update([column]);
-    expect(screen.queryByRole("textbox")).toBeNull();
-    const input = screen.getByRole("combobox", { name: "Name, Row 1" }) as HTMLInputElement;
-    expect(input.value).not.toBe("Old draft");
-    await editor.user.click(input);
-    await editor.user.click(screen.getByRole("option", { name: "Next" }));
-    expect(editor.value.lines[0].name).toBe("next");
+      edit: {
+        ...nameColumn.edit,
+        onValueCommitted,
+        canEdit: (row: Row) => row.allowed,
+        error: { render: () => null },
+      },
+    });
+    const editor = setup([column(before)]);
+    const input = textbox();
+    draft(input, "Retained");
+    editor.update([column(after)]);
+    expect(textbox()).toBe(input);
+    expect(document.activeElement).toBe(input);
+    expect(input.value).toBe("Retained");
+    expect(editor.value.isDirty).toBe(false);
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(editor.value.lines[0].name).toBe("Retained");
+    expect(before).not.toHaveBeenCalled();
+    expect(after).toHaveBeenCalledWith(expect.objectContaining({ id: "A" }), "Retained");
   });
 
   it("applies changed row permissions without losing document state or adopting a pending edit", async () => {

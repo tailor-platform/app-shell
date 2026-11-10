@@ -133,9 +133,8 @@ describe("document-owned cell editing", () => {
     "remove",
     "revert",
     "dispose",
-    "callback",
     "permission",
-    "options",
+    "editor-removed",
   ] as const)("prevents late adoption after %s invalidates the logical edit", async (action) => {
     const request = deferred();
     const check = () => request.promise;
@@ -146,22 +145,14 @@ describe("document-owned cell editing", () => {
     if (action === "remove") editing.removeLine("A");
     if (action === "revert") editing.revert();
     if (action === "dispose") editing.deactivate();
-    if (action === "callback" || action === "permission" || action === "options") {
+    if (action === "permission" || action === "editor-removed") {
       editing.setColumns([
         {
           accessorKey: "name",
           edit:
-            action === "options"
-              ? {
-                  editorType: "combobox",
-                  options: [{ value: "New", label: "New" }],
-                  onValueCommitted: check,
-                }
-              : {
-                  editorType: "text",
-                  onValueCommitted: action === "callback" ? () => {} : check,
-                  canEdit: action === "permission" ? () => false : undefined,
-                },
+            action === "editor-removed"
+              ? undefined
+              : { editorType: "text", onValueCommitted: check, canEdit: () => false },
         },
         columns[1],
       ]);
@@ -176,6 +167,29 @@ describe("document-owned cell editing", () => {
     expect(store.getSnapshot().map((row) => row.name)).toEqual(
       action === "remove" ? [] : [action === "update" ? "Command" : "First"],
     );
+  });
+
+  it("retains an in-flight check when callbacks are recreated and uses the latest callback next time", async () => {
+    const request = deferred();
+    const before = vi.fn(() => request.promise);
+    const after = vi.fn();
+    const { columns, editing, store, session, confirm } = setup(before);
+    confirm("Pending");
+    const pending = session.getState();
+    editing.setColumns([
+      { accessorKey: "name", edit: { editorType: "text", onValueCommitted: after } },
+      columns[1],
+    ]);
+    expect(session.getState()).toBe(pending);
+    request.resolve();
+    await request.promise;
+    await Promise.resolve();
+    expect(store.getSnapshot()[0].name).toBe("Pending");
+    expect(before).toHaveBeenCalledTimes(1);
+    expect(after).not.toHaveBeenCalled();
+    confirm("Next");
+    expect(store.getSnapshot()[0].name).toBe("Next");
+    expect(after).toHaveBeenCalledWith(expect.objectContaining({ name: "Pending" }), "Next");
   });
 
   it("retains a rejected callback draft without adopting data or publishing a row snapshot", async () => {

@@ -17,7 +17,7 @@ import {
   type TreeNode,
   type TreeSelectionPropagation,
   type TreeValueStrategy,
-} from "./tree-model";
+} from "./model";
 
 type Item = { key: string; name: string; children?: Item[]; disabled?: boolean };
 
@@ -64,7 +64,7 @@ const roundTrip = (
 const byName = (q: string) => (node: { label: string }) =>
   node.label.toLowerCase().includes(q.toLowerCase());
 
-describe("tree-model", () => {
+describe("tree model", () => {
   describe("buildTree", () => {
     it("gives every row its own id, even where keys repeat", () => {
       const leaves = allLeaves(tree());

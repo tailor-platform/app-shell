@@ -12,15 +12,16 @@ import {
   writeValue,
   type CheckedState,
   type TreeNode,
-} from "./tree-model";
+} from "@/lib/tree/model";
+import { useTreeExpansion } from "@/lib/tree/use-tree-expansion";
 import type {
   TreeFilterContext,
   TreeMapItemContext,
   TreeMappedItem,
   TreeSelectedItem,
-  TreeSelectionStrategy,
   TreeValueProps,
 } from "./types";
+import type { TreeSelectionStrategy } from "@/lib/tree/types";
 
 /**
  * @internal
@@ -89,12 +90,6 @@ export function useTreeSelection<T>(
   const tree = React.useMemo(() => buildTree(items, mapItem), [items, mapItem]);
   const index = React.useMemo(() => indexTree(tree), [tree]);
 
-  const [userExpanded, setUserExpanded] = React.useState<Set<string>>(() => new Set());
-  // Groups the user closed while a filter had them auto-expanded. Cleared when
-  // the matches change, so a new search opens its matches again — but not when
-  // an inline `filter` is merely recreated with the same matches.
-  const [searchCollapsed, setSearchCollapsed] = React.useState<Set<string>>(() => new Set());
-
   const [keysState, setKeysState] = React.useState<readonly string[]>(
     () => options.defaultValue ?? EMPTY_KEYS,
   );
@@ -123,44 +118,7 @@ export function useTreeSelection<T>(
     );
   }, [tree, filter]);
 
-  React.useEffect(() => {
-    setSearchCollapsed((prev) => (prev.size === 0 ? prev : new Set()));
-  }, [matchKey]);
-
-  const isExpanded = React.useCallback(
-    (id: string) => (autoExpand.has(id) && !searchCollapsed.has(id)) || userExpanded.has(id),
-    [autoExpand, searchCollapsed, userExpanded],
-  );
-
-  /**
-   * Opens or closes a group. While filtering, a group the filter opened can
-   * still be closed (and reopened) — it keeps showing only the matching items.
-   */
-  const setExpanded = React.useCallback(
-    (id: string, next: boolean) => {
-      setUserExpanded((prev) => {
-        if (next === prev.has(id)) return prev;
-        const updated = new Set(prev);
-        if (next) updated.add(id);
-        else updated.delete(id);
-        return updated;
-      });
-      if (!autoExpand.has(id)) return;
-      setSearchCollapsed((prev) => {
-        if (next !== prev.has(id)) return prev;
-        const updated = new Set(prev);
-        if (next) updated.delete(id);
-        else updated.add(id);
-        return updated;
-      });
-    },
-    [autoExpand],
-  );
-
-  const toggleExpand = React.useCallback(
-    (id: string) => setExpanded(id, !isExpanded(id)),
-    [isExpanded, setExpanded],
-  );
+  const { isExpanded, setExpanded, toggleExpand } = useTreeExpansion({ autoExpand, matchKey });
 
   React.useEffect(() => {
     if (index.mixedKeys.length === 0) return;

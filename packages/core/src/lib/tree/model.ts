@@ -1,9 +1,4 @@
-import type {
-  TreeMapItemContext,
-  TreeMappedItem,
-  TreeSelectedItem,
-  TreeSelectionStrategy,
-} from "./types";
+import type { TreeEntry, TreeNodeInput, TreeSelectionStrategy } from "./types";
 
 /**
  * How ticking spreads, one half of a `TreeSelectionStrategy` (see
@@ -51,7 +46,7 @@ export function pathId(path: readonly string[]): string {
 
 export function buildTree<T>(
   items: ReadonlyArray<T>,
-  mapItem: (item: T, context: TreeMapItemContext<T>) => TreeMappedItem<T>,
+  mapItem: (item: T, context: { parents: T[] }) => TreeNodeInput<T>,
   parentPath: string[] = [],
   parents: T[] = [],
   parentDisabled = false,
@@ -344,7 +339,7 @@ export function writeValue<T>(
   return out;
 }
 
-export function toSelectedItem<T>(node: TreeNode<T>): TreeSelectedItem<T> {
+export function toSelectedItem<T>(node: TreeNode<T>): TreeEntry<T> {
   return { key: node.key, item: node.item, parents: node.parents };
 }
 

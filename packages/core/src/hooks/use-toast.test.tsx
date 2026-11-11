@@ -2,6 +2,11 @@ import { act, cleanup, render, renderHook, waitFor } from "@testing-library/reac
 import { type ToastT, toast as sonnerToast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ThemeProvider } from "@/contexts/theme-context";
+import {
+  AppShellConfigContext,
+  buildConfigurations,
+  type ToastDefaults,
+} from "@/contexts/appshell-context";
 import { Toaster } from "@/components/internals/sonner";
 import { useToast } from "./use-toast";
 
@@ -21,6 +26,17 @@ const closeButtonOf = (title: string) =>
     ?.querySelector("[data-close-button]");
 
 let toast: ReturnType<typeof useToast>;
+
+/** `useToast` under an AppShell whose `toastDefaults` prop is `toastDefaults`. */
+const useToastWith = (toastDefaults: ToastDefaults | undefined) => {
+  const configurations = buildConfigurations({ modules: [], toastDefaults });
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <AppShellConfigContext.Provider value={{ configurations }}>
+      {children}
+    </AppShellConfigContext.Provider>
+  );
+  return renderHook(() => useToast(), { wrapper }).result.current;
+};
 
 beforeEach(() => {
   toast = renderHook(() => useToast()).result.current;
@@ -231,5 +247,79 @@ describe("useToast", () => {
       expect(t).toMatchObject({ type: "success" });
       expect(t).not.toHaveProperty("closeButton");
     });
+  });
+});
+
+describe("useToast with <AppShell toastDefaults>", () => {
+  it("passes toastDefaults through buildConfigurations unchanged", () => {
+    const toastDefaults = { error: { duration: 10_000 } };
+    expect(buildConfigurations({ modules: [], toastDefaults }).toastDefaults).toBe(toastDefaults);
+    expect(buildConfigurations({ modules: [] }).toastDefaults).toBeUndefined();
+  });
+
+  it("uses the built-in defaults when the prop is not set", async () => {
+    const t = useToastWith(undefined);
+    await act(async () => {
+      t.error("Failed");
+    });
+    expect(activeToast("Failed")).toMatchObject({ duration: Infinity, closeButton: true });
+  });
+
+  it("replaces one kind with sonner's defaults and keeps the other", async () => {
+    vi.useFakeTimers();
+    renderToaster();
+    const t = useToastWith({ error: {} });
+    await act(async () => {
+      t.error("Failed");
+      t("Archived", { action: { label: "Undo", onClick: () => {} } });
+    });
+    expect(activeToast("Failed")?.duration).toBeUndefined();
+    expect(activeToast("Failed")?.closeButton).toBeUndefined();
+    expect(activeToast("Archived")).toMatchObject({ duration: Infinity, closeButton: true });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    expect(document.body.textContent).not.toContain("Failed");
+    expect(document.body.textContent).toContain("Archived");
+  });
+
+  it("applies a configured default as a whole, and the caller still wins", async () => {
+    const t = useToastWith({ error: { duration: 10_000 }, action: { closeButton: true } });
+    await act(async () => {
+      t.error("Slow");
+      t.error("Quick", { duration: 1000, closeButton: true });
+      t.success("Done", { action: { label: "View", onClick: () => {} } });
+    });
+    expect(activeToast("Slow")).toMatchObject({ duration: 10_000 });
+    expect(activeToast("Slow")?.closeButton).toBeUndefined();
+    expect(activeToast("Quick")).toMatchObject({ duration: 1000, closeButton: true });
+    expect(activeToast("Done")).toMatchObject({ closeButton: true });
+    expect(activeToast("Done")?.duration).toBeUndefined();
+  });
+
+  it("applies the configured error default to the error state of toast.promise", async () => {
+    const t = useToastWith({ error: { duration: 7000 } });
+    const failing = t.promise(Promise.reject(new Error("boom")), {
+      loading: "Saving",
+      error: "Failed to save",
+    });
+    await expect(failing.unwrap()).rejects.toThrow("boom");
+    await waitFor(() => {
+      expect(activeToast("Failed to save")).toMatchObject({ type: "error", duration: 7000 });
+      expect(activeToast("Failed to save")?.closeButton).toBeUndefined();
+    });
+  });
+
+  it("returns the same toast object while the config does not change", () => {
+    const configurations = buildConfigurations({ modules: [], toastDefaults: { error: {} } });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <AppShellConfigContext.Provider value={{ configurations }}>
+        {children}
+      </AppShellConfigContext.Provider>
+    );
+    const { result, rerender } = renderHook(() => useToast(), { wrapper });
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
   });
 });

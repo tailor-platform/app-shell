@@ -115,10 +115,10 @@
       "claims": [],
       "symbols": ["AppShell", "AppShellProps"],
       "hashes": {
-        "typeSurface": "51313066e142afc2",
-        "outline": "feea161ef91395db",
+        "typeSurface": "5214717584b72041",
+        "outline": "65915c80077a66c4",
         "snapshot": null,
-        "outputMd": "e6447700166b7952",
+        "outputMd": "fe53248b2e3fb3f8",
         "examples": null
       }
     },
@@ -635,7 +635,7 @@
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
         "outline": "b265fed115996728",
-        "snapshot": "db7d26786cde5cfc",
+        "snapshot": "a0c8071024eb2e72",
         "outputMd": "e862d97903e8f596",
         "examples": "934c52d4e8761404"
       }
@@ -1264,7 +1264,7 @@
       "hashes": {
         "typeSurface": "e760949efcbe4c38",
         "outline": "464d91acc48f7c9d",
-        "snapshot": "429bdb8c86bb2ad6",
+        "snapshot": "41f7a2d2d8035a74",
         "outputMd": "1f81ebd562c50371",
         "examples": "b0eebb8c5e2219dc"
       }
@@ -1739,9 +1739,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "5f91ce781349ee1c",
+        "outline": "580b876ad8e38e64",
         "snapshot": null,
-        "outputMd": "0928302d47bcf194",
+        "outputMd": "457f341ceaca5e3a",
         "examples": null
       }
     },
@@ -1776,7 +1776,7 @@
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "1a2bb081c3e34482",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "82313d5b6fe140d2",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "db2c4388ca783a75",
-    "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "e6447700166b7952",
+    "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "fe53248b2e3fb3f8",
     "packages/core/skills/app-shell-patterns/references/components/appearance-switcher.md": "b55f1d538651d467",
     "packages/core/skills/app-shell-patterns/references/components/attachment.md": "35bebce540d6ac28",
     "packages/core/skills/app-shell-patterns/references/components/autocomplete.md": "bd6ae01bf39d1ad6",
@@ -1844,7 +1844,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-route-error.md": "1a44180ec84ce4b9",
     "packages/core/skills/app-shell-patterns/references/api/use-theme.md": "c338022de386d5e4",
     "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "30c15545ab3c4954",
-    "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "0928302d47bcf194",
+    "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "457f341ceaca5e3a",
     "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
     "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "be00d1109761b7f1",
     "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",

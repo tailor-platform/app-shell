@@ -16,6 +16,7 @@ import {
   buildConfigurations,
   type AppInfo,
   type ContextData,
+  type ToastDefaults,
 } from "@/contexts/appshell-context";
 import { RouterContainer, type RouterContainerProps } from "@/routing/router";
 import { ThemeProvider, type ColorTheme } from "@/contexts/theme-context";
@@ -124,6 +125,23 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * If not provided, date/time components fall back to the user's local timezone.
    */
   timeZone?: string;
+
+  /**
+   * Defaults `useToast` applies per kind of toast when the call does not set them.
+   *
+   * Built-in: `toast.error(...)`, the error state of `toast.promise(...)`, and any toast
+   * with an `action` get `{ duration: Infinity, closeButton: true }`, so they stay until
+   * the user closes them. A kind set here replaces its built-in default as a whole; a kind
+   * left out keeps it. Pass `{}` for a kind to fall back to sonner's own defaults (4 s, no
+   * close button).
+   *
+   * @example
+   * ```tsx
+   * // Errors close on their own again; toasts with an action still stay.
+   * <AppShell toastDefaults={{ error: {} }} modules={[...]} />
+   * ```
+   */
+  toastDefaults?: ToastDefaults;
 
   /**
    * Global error boundary component applied to all routes.
@@ -334,6 +352,7 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
             errorBoundary: props.errorBoundary,
             locale: props.locale,
             timeZone: props.timeZone,
+            toastDefaults: props.toastDefaults,
           })
         : null,
     [
@@ -343,6 +362,7 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
       props.errorBoundary,
       props.locale,
       props.timeZone,
+      props.toastDefaults,
     ],
   );
 

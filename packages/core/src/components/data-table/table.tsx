@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef } from "react";
 import { Table } from "@/components/table";
-import { DataTableContext, PinMeasureContext } from "./context";
+import { DataTableContext, PinMeasureContext, selectionInTreeColumn } from "./context";
 import { DataTableHeaders } from "./header";
 import { DataTableBody } from "./body";
 import { DataTableColumnFooter } from "./column-footer";
@@ -15,7 +15,7 @@ function DataTableTable({ className }: { className?: string }) {
   const pinnedColumns = ctx?.pinnedColumns;
   const currentPage = ctx?.currentPage;
   const pageSize = ctx?.pageSize;
-  const hasSelection = !!ctx?.toggleRowSelection;
+  const hasSelection = !!ctx?.toggleRowSelection && !selectionInTreeColumn(ctx);
   const hasExpand = !!ctx?.rowExpansion;
   const hasRowActions = !!ctx?.rowActions?.length;
 

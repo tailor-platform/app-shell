@@ -1,9 +1,12 @@
 import { useCallback, useMemo } from "react";
 import type { CollectionControl, Filter, PageInfo, SortState } from "@/types/collection";
+import { useOnceWarnings } from "@/hooks/use-once-warnings";
 import { useColumns } from "./use-columns";
 import { usePageCounter } from "./use-page-counter";
 import { useRowExpansion } from "./use-row-expansion";
 import { useRowSelection } from "./use-row-selection";
+import { buildHierarchyColumn, useSubRows } from "./use-sub-rows";
+import { HIERARCHY_KEY } from "./column-layout";
 import type { UseDataTableOptions, UseDataTableReturn } from "./types";
 
 /**
@@ -53,9 +56,12 @@ export function useDataTable<
     rowActions,
     onSelectionChange,
     rowSelection,
-    rowExpansion,
+    rowExpansion: rowExpansionOption,
+    subRows,
     sort: sortOption,
   } = options;
+  // Sub-rows and detail panels can't be combined; `useSubRows` warns about it.
+  const rowExpansion = subRows ? undefined : rowExpansionOption;
 
   // ---------------------------------------------------------------------------
   // Data extraction
@@ -86,8 +92,15 @@ export function useDataTable<
   const hasNextPage = control?.getHasNextPage(pageInfo) ?? pageInfo.hasNextPage;
 
   // ---------------------------------------------------------------------------
-  // Column visibility / order / pinning (persisted per-user when tableId is set)
+  // Column visibility / order / pinning (persisted per-user when tableId is set).
+  // The sub-rows hierarchy column is the feature's own, outside all of this.
   // ---------------------------------------------------------------------------
+  const hierarchyColumnOption = subRows?.hierarchyColumn;
+  const hierarchyColumn = useMemo(
+    () => (hierarchyColumnOption ? buildHierarchyColumn(hierarchyColumnOption) : undefined),
+    [hierarchyColumnOption],
+  );
+  const treeColumnKey = hierarchyColumn ? HIERARCHY_KEY : undefined;
   const {
     visibleColumns,
     toggleColumn,
@@ -168,7 +181,17 @@ export function useDataTable<
   }, []);
 
   const {
+    index: treeIndex,
+    visibleRows,
+    expandedSubRowIds,
+    toggleSubRows,
+    warnings: subRowsWarnings,
+  } = useSubRows(rows, subRows, rowExpansionOption, getRowId);
+  useOnceWarnings(subRowsWarnings);
+
+  const {
     selectedIds,
+    getRowCheckState,
     isRowSelected,
     toggleRowSelection,
     selectAllRows,
@@ -178,7 +201,7 @@ export function useDataTable<
     runSelectionAction,
     isAllSelected,
     isIndeterminate,
-  } = useRowSelection(rows, rowSelection, onSelectionChange, getRowId);
+  } = useRowSelection(rows, rowSelection, onSelectionChange, getRowId, treeIndex);
 
   const {
     expandedIds: expandedIdsList,
@@ -238,5 +261,12 @@ export function useDataTable<
     toggleRowExpansion,
     collapseAllRows,
     rowExpansion,
+    subRows,
+    visibleRows,
+    treeColumnKey,
+    hierarchyColumn,
+    expandedSubRowIds,
+    toggleSubRows,
+    getRowCheckState,
   };
 }

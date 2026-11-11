@@ -1,6 +1,6 @@
 ---
 name: app-shell-patterns
-description: "Builds and edits UI in apps that depend on @tailor-platform/app-shell (Tailor ERP and erp-kit frontends). Use before writing or changing any page, screen, route, module or resource, list or table, detail view, form (modal, wizard, sectioned, single-page, composer), dialog, confirm-to-delete, toast, bulk multi-select, sidebar or nav item, guard, or UI label — and when choosing an AppShell component, layout, hook, or design token. Gives the endorsed page and pattern for the screen, its exact imports, and the house rules (AppShell components only; no raw HTML or other UI libraries). For upgrading @tailor-platform/app-shell, or styling, theming or dark-mode breakage after a version bump, use app-shell-upgrade."
+description: "Builds and edits UI in apps that depend on @tailor-platform/app-shell (Tailor ERP and erp-kit frontends). Use before writing or changing any page, screen, route, module or resource, list or table, detail view, form (modal, wizard, sectioned, single-page, composer), dialog, confirm-to-delete, toast, bulk multi-select, sidebar or nav item, guard, or UI label — and when choosing an AppShell component, layout, hook, or design token. Gives the endorsed page and pattern for the screen, its exact imports, and the house rules (AppShell components only; no raw HTML or other UI libraries). For upgrading @tailor-platform/app-shell, updating the app's code after a version bump, or styling, theming or dark-mode breakage after one, use app-shell-upgrade."
 compatibility: "Requires @tailor-platform/app-shell in the project. Use the copy shipped in the installed package's skills/ directory, so its guidance matches the installed version."
 metadata:
   app-shell-version: "{{APP_SHELL_VERSION}}"
@@ -24,7 +24,7 @@ Cross-cutting guides that underpin every screen — styling & theming and the to
 
 ## Upgrading
 
-Upgrading `@tailor-platform/app-shell`, or fixing styling, theming or dark-mode breakage that appeared after a version bump, is the `app-shell-upgrade` skill's job. It ships alongside this one in the package's `skills/` directory and carries the migration list.
+Upgrading `@tailor-platform/app-shell`, updating the app's code after a version bump, or fixing styling, theming or dark-mode breakage that appeared after one, is the `app-shell-upgrade` skill's job. It ships alongside this one in the package's `skills/` directory and carries the migration list.
 
 ## Available Components
 

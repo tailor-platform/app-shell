@@ -198,8 +198,15 @@ export function computeSkill(
 
   // Migrations: copy with relative links rewritten to absolute repo URLs, since
   // the consuming app has no docs/ tree to resolve them against.
+  // A configured source that's missing throws: for a migrations-only skill it
+  // would otherwise ship with nothing in it and still pass check.
   const migAbs = skill.migrationsSource ? join(repoRoot, skill.migrationsSource) : null;
-  if (migAbs && existsSync(migAbs)) {
+  if (migAbs) {
+    if (!existsSync(migAbs)) {
+      throw new Error(
+        `skill ${skill.outDir}: migrationsSource ${skill.migrationsSource} does not exist`,
+      );
+    }
     if (!skill.repoBlobUrl) {
       throw new Error(`skill ${skill.outDir}: migrationsSource needs repoBlobUrl`);
     }

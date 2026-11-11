@@ -98,6 +98,22 @@ describe("computeSkill", () => {
     );
   });
 
+  it("throws when the configured migrations source is missing", () => {
+    const { root, outlines } = fixture();
+    expect(() =>
+      computeSkill(
+        root,
+        {
+          outDir: "up",
+          templatePath: "SKILL.template.md",
+          migrationsSource: "docs/moved.md",
+          repoBlobUrl: "https://example.test/blob/main",
+        },
+        outlines,
+      ),
+    ).toThrow(/docs\/moved\.md does not exist/);
+  });
+
   it("requires repoBlobUrl alongside migrationsSource", () => {
     const { root, outlines } = fixture();
     expect(() =>

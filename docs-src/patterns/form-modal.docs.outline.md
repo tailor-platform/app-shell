@@ -41,7 +41,8 @@ The route-driven variant renders the same component at both the parent path and 
 
 ## Constraints
 
-- Dialog renders full-screen sheet below 1024px; centered max-w-md at 1024–1280px
+- `Dialog.Content size` sets the width: `"md"` (32rem, default) for up to ~6 fields, `"lg"` (45rem) for 6–12 fields grouped with `FormLayout.Section variant="plain"`. Lay fields out with [`FormLayout`](../components/form-layout.md) (`columns={2}`)
+- Put the `Form` inside `Dialog.Body` so long forms scroll while the header and footer stay put; submit from `Dialog.Footer` with `form="<id>"`
 - Route-driven variant requires both parent path and create/edit path to render the same component
 - `onOpenChange` must navigate back — just calling `setOpen(false)` leaves the URL broken
 - Use `<Form onFormSubmit>`, never a bare `<form onSubmit>` — see **Form state** below
@@ -49,7 +50,7 @@ The route-driven variant renders the same component at both the parent path and 
 
 ## Form state
 
-Applies to every `form/*` pattern. Full detail in **`components.md`** → Forms.
+Applies to every `form/*` pattern. Full detail in [Form, Field, and Fieldset](../components/form.md) and [FormLayout](../components/form-layout.md).
 
 `form/composer` follows all of this too, with one documented exception noted below: its body is
 controlled, because a composer reads the value during render to gate its submit and swap its

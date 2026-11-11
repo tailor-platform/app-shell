@@ -7,7 +7,7 @@ title: Wizard Form
 category: pattern
 subcategory: form
 description: Multi-stage create flow with 3-7 steps and per-step validation gates
-requiredImports: [Layout, Card, Stepper, Form, Fieldset, Field, Select, Button]
+requiredImports: [Layout, Stepper, Form, FormLayout, Field, Select, Button]
 tags: [form, wizard, multi-step, stepper, onboarding]
 do:
   - Multi-stage Create with 3-7 steps
@@ -30,6 +30,13 @@ dont:
 For CSV/spreadsheet import specifically, use the `CsvImporter` component — it already implements
 the upload → map → validate → confirm flow. Don't rebuild it here.
 
+## Where it lives
+
+| Steps hold…                                  | Container                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| A few fields each, started from a list       | `Dialog size="lg"`: a horizontal `Stepper` under the title, Back on the left of the footer |
+| Enough to need a page, or the flow has a URL | `Layout maxWidth="xl"`: a vertical `Stepper` in a left column, each step a card section    |
+
 ## Page Implementation
 
 <!-- example: form-wizard -->
@@ -41,14 +48,16 @@ the upload → map → validate → confirm flow. Don't rebuild it here.
 - Max 7 steps — more than that causes user abandonment
 - Back-navigation must preserve prior step's input
 - Validation must be per-step — don't defer until final submit
-- Show the steps with `Stepper`; it collapses to "Step 2 of 4" when its container is narrower than 400px
+- Show progress with [`Stepper`](../components/stepper.md), with each step's `status` derived from the
+  current step. It collapses to markers plus "Step 2 of 4" below 400px of container width by itself
+- Pass `onStepClick` so completed steps can be revisited; later steps stay unclickable until reached
 - One `<Form>` rendered per step, keyed by step index so it remounts cleanly
 - Accumulated values live in a `draft` state object above the `Form`; each step's fields read
   their initial value from it via `defaultValue`
 
 ## Form state
 
-Rules that apply to every `form/*` pattern are in **`components.md`** → Forms, with a worked example
+Rules that apply to every `form/*` pattern are in [Form, Field, and Fieldset](../components/form.md) and [FormLayout](../components/form-layout.md), with a worked example
 in **`form/modal`** → Form state: `Form` + `Field` is the default stack, submit via `onFormSubmit`,
 dropdowns need only a wrapping `Field.Root` (no `name`, no state), server errors route through
 `errors`, and React Hook Form is an optional escape hatch.
@@ -70,4 +79,5 @@ prior value from `draft` via `defaultValue`; nothing needs an `onChange`.
 - A plain `onClick` "Next" that advances without validating — use `type="submit"` and let
   `onFormSubmit` gate it
 - Wrapping all steps in one `<Form>` and hiding inactive ones — hidden required fields block submit
+- Badges or hand-built dots as the step indicator — use `Stepper`
 - Hand-building a CSV import wizard — use `CsvImporter`

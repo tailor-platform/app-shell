@@ -225,6 +225,13 @@ export { Dialog } from "./components/dialog";
 export { Field } from "./components/field";
 export { Fieldset } from "./components/fieldset";
 export { Form, type FormProps } from "./components/form";
+export {
+  FormLayout,
+  type FormLayoutProps,
+  type FormLayoutSectionProps,
+  type FormLayoutItemProps,
+  type FormLayoutActionsProps,
+} from "./components/form-layout";
 export { Menu } from "./components/menu";
 // Shared by the `position` prop on `Menu.Content` and `Tooltip.Content`.
 export type { PositionProps } from "./lib/position";

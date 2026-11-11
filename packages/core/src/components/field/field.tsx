@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Field as BaseField } from "@base-ui/react/field";
+import { useLabelableContext } from "@base-ui/react/internals/labelable-provider";
 
 import { useOnceWarnings } from "@/hooks/use-once-warnings";
 import { cn } from "@/lib/utils";
@@ -12,6 +13,7 @@ import { DateField, DatePicker, DateRangePicker } from "../date-field";
 import { Select } from "../select";
 import { Textarea } from "../textarea";
 import { Tree } from "../tree";
+import type { FormSpan } from "@/lib/form-span";
 
 // Only the props relevant to the Field abstraction are picked from BaseField.Root.
 // Base UI-internal props (e.g. actionsRef) are intentionally excluded
@@ -41,6 +43,11 @@ type FieldRootProps = Pick<
    * When provided, the field is marked invalid (`invalid={!!error}`).
    */
   error?: { message?: string };
+  /**
+   * How many columns the field covers inside a `FormLayout` grid (`2`, `3`
+   * or `"full"`). Ignored outside `FormLayout`.
+   */
+  span?: FormSpan;
 };
 
 /**
@@ -97,6 +104,7 @@ function Root({
   isDirty,
   invalid,
   error,
+  span,
   // Absorb RHF's isValidating so it doesn't leak to the DOM.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isValidating: _isValidating,
@@ -105,6 +113,7 @@ function Root({
   return (
     <BaseField.Root
       data-slot="field"
+      data-span={span}
       className={cn("astw:flex astw:flex-col astw:items-start astw:gap-1", className)}
       touched={isTouched}
       dirty={isDirty}
@@ -124,14 +133,37 @@ Root.displayName = "Field.Root";
  * Any Base UI control inside the same `Field.Root` (Field.Control, Select,
  * Combobox, Autocomplete) registers its ID with the context, so clicking
  * this label will focus the correct control.
+ *
+ * Set `required` to show the required marker. It is visual only: put
+ * `required` on the control as well, which is what screen readers announce
+ * and what validation checks.
  */
-function Label({ className, ...props }: React.ComponentProps<typeof BaseField.Label>) {
+function Label({
+  className,
+  required,
+  children,
+  ...props
+}: React.ComponentProps<typeof BaseField.Label> & {
+  /** Shows the required marker (`*`) after the label text. */
+  required?: boolean;
+}) {
   return (
     <Text
       variant="label-md"
       className={cn(className)}
       render={<BaseField.Label data-slot="field-label" {...props} />}
-    />
+    >
+      {children}
+      {required && (
+        <span
+          aria-hidden="true"
+          data-slot="field-required-marker"
+          className="astw:ml-0.5 astw:text-danger-text"
+        >
+          *
+        </span>
+      )}
+    </Text>
   );
 }
 Label.displayName = "Field.Label";
@@ -318,10 +350,52 @@ function Validity({ ...props }: React.ComponentProps<typeof BaseField.Validity>)
 }
 Validity.displayName = "Field.Validity";
 
+/**
+ * A read-only value in the control's place.
+ *
+ * It reserves an input's height, so a value the form shows but doesn't
+ * change — a supplier fixed after confirmation, a status badge, a calculated
+ * total — lines up with the editable fields beside it. Takes any content.
+ *
+ * There is no control for `Field.Label` to point at, so the value is a
+ * `group` named by the label (`aria-labelledby`): screen readers read
+ * "Supplier, Kansai Textile Co." together. Outside a `Field.Root` with a
+ * `Field.Label`, give it an `aria-label` yourself.
+ *
+ * @example
+ * ```tsx
+ * <Field.Root>
+ *   <Field.Label>Supplier</Field.Label>
+ *   <Field.Value>Kansai Textile Co.</Field.Value>
+ * </Field.Root>
+ * ```
+ */
+function Value({ className, ...props }: React.ComponentProps<"div">) {
+  // `Field.Label` registers its id with the field's labelable context.
+  const { labelId } = useLabelableContext();
+  // A generic `div` can't take a name, so the value becomes a `group` once
+  // it has one, from the label or from the consumer.
+  const named = Boolean(labelId || props["aria-label"] || props["aria-labelledby"]);
+  return (
+    <div
+      data-slot="field-value"
+      role={named ? "group" : undefined}
+      aria-labelledby={labelId}
+      className={cn(
+        "astw:flex astw:min-h-9 astw:min-w-0 astw:items-center astw:text-body-md astw:text-foreground",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+Value.displayName = "Field.Value";
+
 export const Field = {
   Root,
   Label,
   Control,
+  Value,
   Description,
   Error,
   Validity,

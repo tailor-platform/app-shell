@@ -76,6 +76,39 @@ describe("Field", () => {
     expect(screen.getByText("Test Label")).toBeDefined();
   });
 
+  it("shows a visual-only required marker on the label", () => {
+    render(
+      <Field.Root name="test">
+        <Field.Label required>Name</Field.Label>
+        <Field.Control required />
+      </Field.Root>,
+    );
+    const marker = document.querySelector('[data-slot="field-required-marker"]');
+    expect(marker!.getAttribute("aria-hidden")).toBe("true");
+    expect(marker?.textContent).toBe("*");
+    // The accessible name stays the label text; `required` on the control is what's announced.
+    expect((screen.getByRole("textbox", { name: "Name" }) as HTMLInputElement).required).toBe(true);
+  });
+
+  it("renders no required marker by default", () => {
+    render(
+      <Field.Root name="test">
+        <Field.Label>Name</Field.Label>
+        <Field.Control />
+      </Field.Root>,
+    );
+    expect(document.querySelector('[data-slot="field-required-marker"]')).toBeNull();
+  });
+
+  it("sets data-span from span for FormLayout", () => {
+    const { container } = render(
+      <Field.Root name="test" span="full">
+        <Field.Control />
+      </Field.Root>,
+    );
+    expect(container.querySelector('[data-slot="field"]')!.getAttribute("data-span")).toBe("full");
+  });
+
   it("renders description text", () => {
     render(
       <Field.Root name="test">
@@ -264,6 +297,52 @@ describe("Field", () => {
       );
       expect(warn).not.toHaveBeenCalled();
       warn.mockRestore();
+    });
+  });
+
+  describe("Field.Value", () => {
+    it("shows a read-only value at a control's height", () => {
+      render(
+        <Field.Root>
+          <Field.Label>Supplier</Field.Label>
+          <Field.Value>Kansai Textile Co.</Field.Value>
+        </Field.Root>,
+      );
+      const value = screen.getByText("Kansai Textile Co.");
+      expect(value.getAttribute("data-slot")).toBe("field-value");
+      expect(value.className).toContain("astw:min-h-9");
+      expect(document.querySelector("input")).toBeNull();
+    });
+
+    it("is named by the field's label", async () => {
+      render(
+        <Field.Root>
+          <Field.Label>Supplier</Field.Label>
+          <Field.Value>Kansai Textile Co.</Field.Value>
+        </Field.Root>,
+      );
+      const value = await screen.findByRole("group", { name: "Supplier" });
+      expect(value.textContent).toBe("Kansai Textile Co.");
+      const label = screen.getByText("Supplier");
+      expect(value.getAttribute("aria-labelledby")).toBe(label.id);
+    });
+
+    it("stays a plain element without a label", () => {
+      render(
+        <Field.Root>
+          <Field.Value>Kansai Textile Co.</Field.Value>
+        </Field.Root>,
+      );
+      const value = screen.getByText("Kansai Textile Co.");
+      expect(value.hasAttribute("role")).toBe(false);
+      expect(value.hasAttribute("aria-labelledby")).toBe(false);
+    });
+
+    it("takes an aria-label when there is no Field.Label", () => {
+      render(<Field.Value aria-label="Supplier">Kansai Textile Co.</Field.Value>);
+      expect(screen.getByRole("group", { name: "Supplier" }).textContent).toBe(
+        "Kansai Textile Co.",
+      );
     });
   });
 });

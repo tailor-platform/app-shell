@@ -1,4 +1,4 @@
-import { Button, Card, Combobox, Field, Fieldset, Form, Layout } from "@tailor-platform/app-shell";
+import { Button, Combobox, Field, Form, FormLayout, Layout } from "@tailor-platform/app-shell";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "JPY"];
 
@@ -22,7 +22,7 @@ export function FormSectioned() {
   const onCancel = () => {};
 
   return (
-    <Layout>
+    <Layout maxWidth="lg">
       <Layout.Header
         title="Product settings"
         actions={[
@@ -38,95 +38,93 @@ export function FormSectioned() {
         <Form
           id="product-settings-form"
           noValidate
-          className="space-y-4"
+          className="flex flex-col gap-4"
           onFormSubmit={(values) => onSave(values)}
         >
-          {/* Anchor nav — each entry targets its section's Card by id. */}
-          <nav aria-label="Sections" className="flex gap-4 text-sm">
+          {/* Anchor nav — each entry targets its FormLayout.Section by id. */}
+          <nav aria-label="Sections" className="flex gap-4">
             {SECTIONS.map((section) => (
               <a
                 key={section.id}
                 href={`#${anchorIdFor(section.id)}`}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-body-md text-muted-foreground hover:text-foreground"
               >
                 {section.title}
               </a>
             ))}
           </nav>
 
-          <Card.Root id={anchorIdFor("identity")}>
-            <Card.Header title={SECTIONS[0].title} description={SECTIONS[0].description} />
-            <Card.Content>
-              <Fieldset.Root className="grid gap-4 md:grid-cols-2">
-                <Field.Root name="name">
-                  <Field.Label>Name</Field.Label>
-                  <Field.Control required />
-                  <Field.Error match="valueMissing">Name is required.</Field.Error>
-                </Field.Root>
-                <Field.Root name="sku">
-                  <Field.Label>SKU</Field.Label>
-                  <Field.Control required />
-                  <Field.Error match="valueMissing">SKU is required.</Field.Error>
-                </Field.Root>
-                <Field.Root name="description" className="md:col-span-2">
-                  <Field.Label>Description</Field.Label>
-                  <Field.Control />
-                </Field.Root>
-              </Fieldset.Root>
-            </Card.Content>
-          </Card.Root>
+          {/* Each section is a card with its own two-column grid; one Form wraps them all. */}
+          <FormLayout columns={2}>
+            <FormLayout.Section
+              id={anchorIdFor("identity")}
+              title={SECTIONS[0].title}
+              description={SECTIONS[0].description}
+            >
+              <Field.Root name="name">
+                <Field.Label required>Name</Field.Label>
+                <Field.Control required />
+                <Field.Error match="valueMissing">Name is required.</Field.Error>
+              </Field.Root>
+              <Field.Root name="sku">
+                <Field.Label required>SKU</Field.Label>
+                <Field.Control required />
+                <Field.Error match="valueMissing">SKU is required.</Field.Error>
+              </Field.Root>
+              <Field.Root name="description" span="full">
+                <Field.Label>Description</Field.Label>
+                <Field.Control />
+              </Field.Root>
+            </FormLayout.Section>
 
-          <Card.Root id={anchorIdFor("pricing")}>
-            <Card.Header title={SECTIONS[1].title} description={SECTIONS[1].description} />
-            <Card.Content>
-              <Fieldset.Root className="grid gap-4 md:grid-cols-2">
-                <Field.Root name="price">
-                  <Field.Label>Price</Field.Label>
-                  <Field.Control type="number" required min={0} step="0.01" />
-                  <Field.Error match="valueMissing">Price is required.</Field.Error>
-                </Field.Root>
-                <Field.Root name="currency">
-                  <Field.Label>Currency</Field.Label>
-                  <Combobox items={CURRENCIES} defaultValue="USD" placeholder="Select currency" />
-                  <Field.Error />
-                </Field.Root>
-              </Fieldset.Root>
-            </Card.Content>
-          </Card.Root>
+            <FormLayout.Section
+              id={anchorIdFor("pricing")}
+              title={SECTIONS[1].title}
+              description={SECTIONS[1].description}
+            >
+              <Field.Root name="price">
+                <Field.Label required>Price</Field.Label>
+                <Field.Control type="number" required min={0} step="0.01" />
+                <Field.Error match="valueMissing">Price is required.</Field.Error>
+              </Field.Root>
+              <Field.Root name="currency">
+                <Field.Label>Currency</Field.Label>
+                <Combobox items={CURRENCIES} defaultValue="USD" placeholder="Select currency" />
+                <Field.Error />
+              </Field.Root>
+            </FormLayout.Section>
 
-          <Card.Root id={anchorIdFor("inventory")}>
-            <Card.Header title={SECTIONS[2].title} description={SECTIONS[2].description} />
-            <Card.Content>
-              <Fieldset.Root className="grid gap-4 md:grid-cols-2">
-                <Field.Root name="quantity">
-                  <Field.Label>Initial quantity</Field.Label>
-                  <Field.Control type="number" required min={0} />
-                  <Field.Error match="valueMissing">Initial quantity is required.</Field.Error>
-                </Field.Root>
-                <Field.Root name="reorderPoint">
-                  <Field.Label>Reorder point</Field.Label>
-                  <Field.Control type="number" min={0} />
-                  <Field.Description>
-                    Leave blank to disable replenishment alerts.
-                  </Field.Description>
-                </Field.Root>
-                {/*
-                 * Object items would otherwise reach `onFormSubmit` as JSON.
-                 * `itemToStringValue` picks the field to submit; `mapItem`
-                 * stays responsible for what the user sees.
-                 */}
-                <Field.Root name="warehouse">
-                  <Field.Label>Default warehouse</Field.Label>
-                  <Combobox
-                    items={WAREHOUSES}
-                    mapItem={(w) => ({ label: w.name, key: String(w.id) })}
-                    itemToStringValue={(w) => String(w.id)}
-                    placeholder="Select warehouse"
-                  />
-                </Field.Root>
-              </Fieldset.Root>
-            </Card.Content>
-          </Card.Root>
+            <FormLayout.Section
+              id={anchorIdFor("inventory")}
+              title={SECTIONS[2].title}
+              description={SECTIONS[2].description}
+            >
+              <Field.Root name="quantity">
+                <Field.Label required>Initial quantity</Field.Label>
+                <Field.Control type="number" required min={0} />
+                <Field.Error match="valueMissing">Initial quantity is required.</Field.Error>
+              </Field.Root>
+              <Field.Root name="reorderPoint">
+                <Field.Label>Reorder point</Field.Label>
+                <Field.Control type="number" min={0} />
+                <Field.Description>Leave blank to disable replenishment alerts.</Field.Description>
+              </Field.Root>
+              {/*
+               * Object items would otherwise reach `onFormSubmit` as JSON.
+               * `itemToStringValue` picks the field to submit; `mapItem`
+               * stays responsible for what the user sees.
+               */}
+              <Field.Root name="warehouse">
+                <Field.Label>Default warehouse</Field.Label>
+                <Combobox
+                  items={WAREHOUSES}
+                  mapItem={(w) => ({ label: w.name, key: String(w.id) })}
+                  itemToStringValue={(w) => String(w.id)}
+                  placeholder="Select warehouse"
+                />
+              </Field.Root>
+            </FormLayout.Section>
+          </FormLayout>
         </Form>
       </Layout.Column>
     </Layout>

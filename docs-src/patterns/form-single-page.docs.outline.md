@@ -33,7 +33,7 @@ dont:
 
 ## Constraints
 
-- Single column full width below 1024px; single column max-w constrained at 1024–1280px
+- `Layout maxWidth="lg"` centres the page at 64rem; fields sit in one `FormLayout.Section` card with `FormLayout columns={2}`, collapsing to one column on narrow screens
 - Without an explicit routed-page requirement, the answer is `form/modal`
 - A `/create` or `/edit` route in the screen spec does NOT require a full-page replacement
 - Save/Cancel belong in `Layout.Header`, wired with `<Button type="submit" form="…">` matching the
@@ -43,7 +43,7 @@ dont:
 
 ## Form state
 
-Rules that apply to every `form/*` pattern are in **`components.md`** → Forms, with a worked example
+Rules that apply to every `form/*` pattern are in [Form, Field, and Fieldset](../components/form.md) and [FormLayout](../components/form-layout.md), with a worked example
 in **`form/modal`** → Form state: `Form` + `Field` is the default stack, submit via `onFormSubmit`,
 dropdowns need only a wrapping `Field.Root` (no `name`, no state), server errors route through
 `errors`, and React Hook Form is an optional escape hatch.

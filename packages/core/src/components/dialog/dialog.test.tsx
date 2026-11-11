@@ -9,6 +9,7 @@ afterEach(() => {
 });
 
 const isPopup = (el: HTMLElement) => el.getAttribute("data-slot") === "dialog-content";
+const getDialogPanel = () => document.querySelector('[data-slot="dialog-content"]') as HTMLElement;
 
 describe("Dialog", () => {
   // ==========================================================================
@@ -200,6 +201,22 @@ describe("Dialog", () => {
     });
   });
 
+  it("right-aligns footer buttons at their own width at every size", () => {
+    render(
+      <Dialog.Root defaultOpen>
+        <Dialog.Content>
+          <Dialog.Title>Footer</Dialog.Title>
+          <Dialog.Footer>
+            <button>Save</button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>,
+    );
+    const footer = screen.getByText("Save").parentElement!;
+    expect(footer.className).toContain("astw:justify-end");
+    expect(footer.className).not.toContain("flex-col");
+  });
+
   it("renders DialogFooter", async () => {
     const user = userEvent.setup();
 
@@ -222,6 +239,80 @@ describe("Dialog", () => {
     await waitFor(() => {
       expect(screen.getByText("Submit")).toBeDefined();
     });
+  });
+
+  it("sizes the panel with the size prop, defaulting to md", () => {
+    const { rerender } = render(
+      <Dialog.Root defaultOpen>
+        <Dialog.Content>
+          <Dialog.Title>Sized</Dialog.Title>
+        </Dialog.Content>
+      </Dialog.Root>,
+    );
+    expect(getDialogPanel().className).toContain("astw:sm:max-w-[min(32rem,calc(100%-2rem))]");
+
+    rerender(
+      <Dialog.Root defaultOpen>
+        <Dialog.Content size="xl">
+          <Dialog.Title>Sized</Dialog.Title>
+        </Dialog.Content>
+      </Dialog.Root>,
+    );
+    expect(getDialogPanel().className).toContain("astw:sm:max-w-[min(60rem,calc(100%-2rem))]");
+    expect(getDialogPanel().className).not.toContain("32rem");
+  });
+
+  // lg and xl are wider than the sm breakpoint; a bare `sm:max-w-[45rem]`
+  // would replace the base margin and touch the screen edges up to 45rem.
+  it.each(["sm", "md", "lg", "xl"] as const)(
+    "keeps the 1rem side margin at every width for size %s",
+    (size) => {
+      render(
+        <Dialog.Root defaultOpen>
+          <Dialog.Content size={size}>
+            <Dialog.Title>Sized</Dialog.Title>
+          </Dialog.Content>
+        </Dialog.Root>,
+      );
+      const smMaxWidth = getDialogPanel()
+        .className.split(/\s+/)
+        .filter((c) => c.startsWith("astw:sm:max-w-"));
+      expect(smMaxWidth).toHaveLength(1);
+      expect(smMaxWidth[0]).toMatch(/^astw:sm:max-w-\[min\(\d+rem,calc\(100%-2rem\)\)\]$/);
+    },
+  );
+
+  it("only lets Dialog.Body shrink, so other children keep their height", () => {
+    render(
+      <Dialog.Root defaultOpen>
+        <Dialog.Content>
+          <Dialog.Title>Long</Dialog.Title>
+          <Dialog.Body>Body content</Dialog.Body>
+        </Dialog.Content>
+      </Dialog.Root>,
+    );
+    expect(getDialogPanel().className).toContain(
+      "astw:[&>*:not([data-slot=dialog-body])]:shrink-0",
+    );
+    const body = screen.getByText("Body content");
+    expect(body.className).toContain("astw:flex-1");
+    expect(body.className).toContain("astw:min-h-0");
+  });
+
+  it("caps the panel at the viewport height and scrolls Dialog.Body", () => {
+    render(
+      <Dialog.Root defaultOpen>
+        <Dialog.Content>
+          <Dialog.Title>Long</Dialog.Title>
+          <Dialog.Body>Body content</Dialog.Body>
+        </Dialog.Content>
+      </Dialog.Root>,
+    );
+    const panel = document.querySelector('[data-slot="dialog-content"]') as HTMLElement;
+    expect(panel.className).toContain("astw:max-h-[calc(100dvh-2rem)]");
+    const body = screen.getByText("Body content");
+    expect(body!.getAttribute("data-slot")).toBe("dialog-body");
+    expect(body.className).toContain("astw:overflow-y-auto");
   });
 
   it("closes dialog when pressing Escape", async () => {

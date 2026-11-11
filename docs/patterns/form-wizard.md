@@ -16,6 +16,13 @@ description: Multi-stage create flow with 3-7 steps and per-step validation gate
 For CSV/spreadsheet import specifically, use the `CsvImporter` component — it already implements
 the upload → map → validate → confirm flow. Don't rebuild it here.
 
+## Where it lives
+
+| Steps hold…                                  | Container                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| A few fields each, started from a list       | `Dialog size="lg"`: a horizontal `Stepper` under the title, Back on the left of the footer |
+| Enough to need a page, or the flow has a URL | `Layout maxWidth="xl"`: a vertical `Stepper` in a left column, each step a card section    |
+
 ## Page Implementation
 
 <example-preview name="form-wizard"></example-preview>
@@ -52,7 +59,8 @@ function FormWizard() {
     <Layout>
       <Layout.Header title="Create task" />
       <Layout.Column>
-        {/* Statuses come from the current step; completed steps go back on click */}
+        {/* The Stepper only displays progress: each status comes from `step`.
+            Completed steps are clickable, so the user can go back to one. */}
         <Stepper
           aria-label="Create task"
           steps={STEPS.map((label, i) => ({
@@ -64,11 +72,10 @@ function FormWizard() {
         />
 
         <Form key={step} noValidate onFormSubmit={handleStepSubmit}>
-          <Card.Root>
-            <Card.Header title={STEPS[step]} />
-            <Card.Content>
+          <FormLayout columns={2}>
+            <FormLayout.Section title={STEPS[step]}>
               {step === 0 && (
-                <Fieldset.Root className="space-y-4">
+                <>
                   <Field.Root name="title">
                     <Field.Label>Title</Field.Label>
                     <Field.Control required defaultValue={draft.title} />
@@ -78,7 +85,7 @@ function FormWizard() {
                     <Field.Label>Description</Field.Label>
                     <Field.Control defaultValue={draft.description} />
                   </Field.Root>
-                </Fieldset.Root>
+                </>
               )}
 
               {step === 1 && (
@@ -95,7 +102,7 @@ function FormWizard() {
               )}
 
               {step === 2 && (
-                <Fieldset.Root className="grid gap-4 md:grid-cols-2">
+                <>
                   <Field.Root name="startDate">
                     <Field.Label>Start date</Field.Label>
                     <Field.Control type="date" required defaultValue={draft.startDate} />
@@ -105,34 +112,37 @@ function FormWizard() {
                     <Field.Label>Estimate (hours)</Field.Label>
                     <Field.Control type="number" min={0} defaultValue={draft.estimate} />
                   </Field.Root>
-                </Fieldset.Root>
+                </>
               )}
 
-              {step === 3 && (
-                <dl className="grid grid-cols-2 gap-2 text-sm">
-                  <dt className="text-muted-foreground">Title</dt>
-                  <dd>{draft.title}</dd>
-                  <dt className="text-muted-foreground">Owner</dt>
-                  <dd>{draft.owner || "—"}</dd>
-                  <dt className="text-muted-foreground">Start date</dt>
-                  <dd>{draft.startDate || "—"}</dd>
-                  <dt className="text-muted-foreground">Estimate</dt>
-                  <dd>{draft.estimate ? `${draft.estimate}h` : "—"}</dd>
-                </dl>
-              )}
-            </Card.Content>
-          </Card.Root>
+              {step === 3 &&
+                (
+                  [
+                    ["Title", draft.title],
+                    ["Owner", draft.owner],
+                    ["Start date", draft.startDate],
+                    ["Estimate", draft.estimate ? `${draft.estimate}h` : ""],
+                  ] as const
+                ).map(([label, value]) => (
+                  // Review values sit in the same grid, at an input's height
+                  <Field.Root key={label}>
+                    <Field.Label>{label}</Field.Label>
+                    <Field.Value>{value || "—"}</Field.Value>
+                  </Field.Root>
+                ))}
+            </FormLayout.Section>
 
-          <div className="flex justify-between pt-4">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => (step === 0 ? onCancel() : setStep(step - 1))}
-            >
-              {step === 0 ? "Cancel" : "Back"}
-            </Button>
-            <Button type="submit">{isLastStep ? "Create" : "Next"}</Button>
-          </div>
+            <FormLayout.Actions>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => (step === 0 ? onCancel() : setStep(step - 1))}
+              >
+                {step === 0 ? "Cancel" : "Back"}
+              </Button>
+              <Button type="submit">{isLastStep ? "Create" : "Next"}</Button>
+            </FormLayout.Actions>
+          </FormLayout>
         </Form>
       </Layout.Column>
     </Layout>
@@ -147,14 +157,16 @@ function FormWizard() {
 - Max 7 steps — more than that causes user abandonment
 - Back-navigation must preserve prior step's input
 - Validation must be per-step — don't defer until final submit
-- Show the steps with `Stepper`; it collapses to "Step 2 of 4" when its container is narrower than 400px
+- Show progress with [`Stepper`](../components/stepper.md), with each step's `status` derived from the
+  current step. It collapses to markers plus "Step 2 of 4" below 400px of container width by itself
+- Pass `onStepClick` so completed steps can be revisited; later steps stay unclickable until reached
 - One `<Form>` rendered per step, keyed by step index so it remounts cleanly
 - Accumulated values live in a `draft` state object above the `Form`; each step's fields read
   their initial value from it via `defaultValue`
 
 ## Form state
 
-Rules that apply to every `form/*` pattern are in **`components.md`** → Forms, with a worked example
+Rules that apply to every `form/*` pattern are in [Form, Field, and Fieldset](../components/form.md) and [FormLayout](../components/form-layout.md), with a worked example
 in **`form/modal`** → Form state: `Form` + `Field` is the default stack, submit via `onFormSubmit`,
 dropdowns need only a wrapping `Field.Root` (no `name`, no state), server errors route through
 `errors`, and React Hook Form is an optional escape hatch.
@@ -176,4 +188,5 @@ prior value from `draft` via `defaultValue`; nothing needs an `onChange`.
 - A plain `onClick` "Next" that advances without validating — use `type="submit"` and let
   `onFormSubmit` gate it
 - Wrapping all steps in one `<Form>` and hiding inactive ones — hidden required fields block submit
+- Badges or hand-built dots as the step indicator — use `Stepper`
 - Hand-building a CSV import wizard — use `CsvImporter`

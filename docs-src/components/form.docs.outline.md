@@ -107,6 +107,7 @@ A compound component that groups all parts of a form field and manages its valid
 | `Field.Root`        | Context boundary for a single field. Manages validation state.                                                         |
 | `Field.Label`       | Accessible label; `htmlFor` is resolved automatically via context.                                                     |
 | `Field.Control`     | Styled text `<input>`. `Select`, `Combobox`, and the other self-wired controls go directly under `Field.Root` instead. |
+| `Field.Value`       | A read-only value in the control's place, at an input's height, so it lines up with editable fields beside it.         |
 | `Field.Description` | Supplementary help text; automatically linked via `aria-describedby`.                                                  |
 | `Field.Error`       | Validation error message. Use `match` to target specific validity states.                                              |
 | `Field.Validity`    | Render-prop access to the field's `ValidityState` for fully custom validation UI.                                      |
@@ -125,7 +126,29 @@ A compound component that groups all parts of a form field and manages its valid
 | `validate`               | `(value: string) => string \| undefined` | -       | Custom validation function; return an error message string to mark the field invalid.               |
 | `validationMode`         | `"onSubmit" \| "onBlur" \| "onChange"`   | -       | Overrides the parent Form's `validationMode` for this field.                                        |
 | `validationDebounceTime` | `number`                                 | -       | Debounce delay (ms) for `"onChange"` validation mode.                                               |
+| `span`                   | `2 \| 3 \| "full"`                       | -       | Columns the field covers inside a [`FormLayout`](./form-layout.md) grid. Ignored outside it.        |
 | `className`              | `string`                                 | -       | Additional CSS classes for the field wrapper.                                                       |
+
+### Field.Label Props
+
+Accepts all standard `<label>` props, plus:
+
+| Prop       | Type      | Default | Description                                                                                                                               |
+| ---------- | --------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `required` | `boolean` | `false` | Shows the required marker (`*`) after the label. Visual only — also set `required` on the control, which is what's checked and announced. |
+
+### Read-only values
+
+Use `Field.Value` for a value the form shows but doesn't change: a supplier fixed after the order is confirmed, a status badge, a calculated total. It takes the control's place and height, so it lines up with the inputs in the same row.
+
+```tsx
+<Field.Root>
+  <Field.Label>Supplier</Field.Label>
+  <Field.Value>Kansai Textile Co.</Field.Value>
+</Field.Root>
+```
+
+There is no control for the label to point at, so `Field.Value` is a group named by the `Field.Label` in the same `Field.Root`: screen readers read "Supplier, Kansai Textile Co." together. Without a `Field.Label`, give `Field.Value` an `aria-label`.
 
 ### Field.Error Props
 
@@ -311,11 +334,12 @@ A compound component (`Fieldset.Root`, `Fieldset.Legend`) for grouping related f
 
 ### Fieldset.Root Props
 
-| Prop        | Type              | Default | Description                                |
-| ----------- | ----------------- | ------- | ------------------------------------------ |
-| `children`  | `React.ReactNode` | -       | Field components to group.                 |
-| `disabled`  | `boolean`         | -       | Disables all controls within the fieldset. |
-| `className` | `string`          | -       | Additional CSS classes.                    |
+| Prop        | Type               | Default | Description                                 |
+| ----------- | ------------------ | ------- | ------------------------------------------- |
+| `children`  | `React.ReactNode`  | -       | Field components to group.                  |
+| `disabled`  | `boolean`          | -       | Disables all controls within the fieldset.  |
+| `span`      | `2 \| 3 \| "full"` | -       | Columns covered inside a `FormLayout` grid. |
+| `className` | `string`           | -       | Additional CSS classes.                     |
 
 ### Example
 
@@ -382,6 +406,7 @@ The `Field` context handles only accessibility wiring (`htmlFor`, `aria-describe
 
 ## Related
 
+- [FormLayout](./form-layout.md) — Multi-column grid, sections and action bar for laying out fields.
 - [Input](./input.md) — Standalone styled input, useful outside of forms.
 - [Textarea](./textarea.md) — Multi-line text control that integrates automatically with `Field`.
 - [Checkbox](./checkbox.md) — Boolean control that integrates automatically with `Field`.

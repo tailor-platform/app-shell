@@ -23,41 +23,48 @@ function ModalForm() {
   return (
     <Dialog.Root>
       <Dialog.Trigger render={<Button />}>Add address</Dialog.Trigger>
-      <Dialog.Content>
+      <Dialog.Content size="md">
         <Dialog.Header>
           <Dialog.Title>Add address</Dialog.Title>
           <Dialog.Description>Add a shipping address to this order.</Dialog.Description>
         </Dialog.Header>
         {/*
+         * The form sits in `Dialog.Body`, which scrolls when the form is long;
+         * the footer stays put and submits through `form="address-form"`.
          * `onFormSubmit` fires only after validation passes and receives the
          * registered field values — no `<form onSubmit>` + `new FormData(...)`.
          */}
-        <Form<AddressDraft>
-          noValidate
-          onFormSubmit={(values) => window.alert(`Saving ${values.label}`)}
-        >
-          <div className="flex flex-col gap-4 py-4">
-            <Field.Root name="label">
-              <Field.Label>Label</Field.Label>
-              <Field.Control required />
-              <Field.Error match="valueMissing">Label is required.</Field.Error>
-            </Field.Root>
-            <Field.Root name="street">
-              <Field.Label>Street</Field.Label>
-              <Field.Control required />
-              <Field.Error match="valueMissing">Street is required.</Field.Error>
-            </Field.Root>
-            <Field.Root name="city">
-              <Field.Label>City</Field.Label>
-              <Field.Control required />
-              <Field.Error match="valueMissing">City is required.</Field.Error>
-            </Field.Root>
-          </div>
-          <Dialog.Footer>
-            <Dialog.Close render={<Button type="button" variant="ghost" />}>Cancel</Dialog.Close>
-            <Button type="submit">Save</Button>
-          </Dialog.Footer>
-        </Form>
+        <Dialog.Body>
+          <Form<AddressDraft>
+            id="address-form"
+            noValidate
+            onFormSubmit={(values) => window.alert(`Saving ${values.label}`)}
+          >
+            <FormLayout columns={2}>
+              <Field.Root name="label" span="full">
+                <Field.Label required>Label</Field.Label>
+                <Field.Control required />
+                <Field.Error match="valueMissing">Label is required.</Field.Error>
+              </Field.Root>
+              <Field.Root name="street">
+                <Field.Label required>Street</Field.Label>
+                <Field.Control required />
+                <Field.Error match="valueMissing">Street is required.</Field.Error>
+              </Field.Root>
+              <Field.Root name="city">
+                <Field.Label required>City</Field.Label>
+                <Field.Control required />
+                <Field.Error match="valueMissing">City is required.</Field.Error>
+              </Field.Root>
+            </FormLayout>
+          </Form>
+        </Dialog.Body>
+        <Dialog.Footer>
+          <Dialog.Close render={<Button type="button" variant="ghost" />}>Cancel</Dialog.Close>
+          <Button type="submit" form="address-form">
+            Save
+          </Button>
+        </Dialog.Footer>
       </Dialog.Content>
     </Dialog.Root>
   );
@@ -121,7 +128,8 @@ function ModalFormRouted() {
 
 ## Constraints
 
-- Dialog renders full-screen sheet below 1024px; centered max-w-md at 1024–1280px
+- `Dialog.Content size` sets the width: `"md"` (32rem, default) for up to ~6 fields, `"lg"` (45rem) for 6–12 fields grouped with `FormLayout.Section variant="plain"`. Lay fields out with [`FormLayout`](../components/form-layout.md) (`columns={2}`)
+- Put the `Form` inside `Dialog.Body` so long forms scroll while the header and footer stay put; submit from `Dialog.Footer` with `form="<id>"`
 - Route-driven variant requires both parent path and create/edit path to render the same component
 - `onOpenChange` must navigate back — just calling `setOpen(false)` leaves the URL broken
 - Use `<Form onFormSubmit>`, never a bare `<form onSubmit>` — see **Form state** below
@@ -129,7 +137,7 @@ function ModalFormRouted() {
 
 ## Form state
 
-Applies to every `form/*` pattern. Full detail in **`components.md`** → Forms.
+Applies to every `form/*` pattern. Full detail in [Form, Field, and Fieldset](../components/form.md) and [FormLayout](../components/form-layout.md).
 
 `form/composer` follows all of this too, with one documented exception noted below: its body is
 controlled, because a composer reads the value during render to gate its submit and swap its

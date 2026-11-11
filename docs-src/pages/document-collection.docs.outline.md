@@ -107,34 +107,6 @@ Ensure you pass an appropriate `type` value to match the type of value the field
 
 Primary identifiers, E.g. Document Number, or Product SKU should show first, and be pinned-left via `pin: "left"`
 
-## The row set
-
-There may be situations where it is useful for the user to switch between different related datasets on the same page. Both/all of which need to make sense to be found on this page where it sits in the navigation structure.
-
-Tabs here are only for genuinely different datasets, each with its own columns. They are not for preset views of the same records — "Open", "Overdue", "Paid" — which are filters on one table and belong in its toolbar (see [Preset filters](#preset-filters)).
-
-```
-Layout fill
-  +------------------------------------------------------------+
-  | Layout.Header                                              |
-  |  (as above)                                                |
-  +------------------------------------------------------------+
-  | Layout.Column                                              |
-  |  Tabs.Root variant="line"                                  |
-  |   Tabs.List                                                |
-  |    Tabs.Tab: Orders       Tabs.Tab: Order lines            |
-  |   Tabs.Panel                                               |
-  |    DataTable.Root                                          |
-  |     (as above)                                             |
-  +------------------------------------------------------------+
-```
-
-Each tab is its own [`Tabs.Panel`](../components/tabs.md) holding its own `DataTable.Root`, with its own query, columns and toolbar. The tabs sit above the table, inside the column, so the header and its create action stay the same whichever tab is active.
-
-- **Keep the active tab in the URL**, e.g. `?tab=lines`, the same as the table's filters and sort, so a link or a refresh lands on the same table.
-- **Only the active panel is mounted.** Leave `keepMounted` off. `useURLCollectionVariables` writes to fixed URL keys (`p`, `s`, `f.<field>:<op>`), so two mounted tables would read and write each other's state.
-- **Switching tab clears the outgoing table's filter, sort and page params** in the same event that sets the tab, since a filter on one dataset rarely means anything on the other.
-
 ## Variants
 
 The main variance in document collection pages across different record types will be in the table's Toolbar. How each varies will be informed by the type of document and its fields, and the needs that the user as someone making decisions based on or taking action on the data.
@@ -258,6 +230,8 @@ Exports are the exception. Add one only when the use case needs people to downlo
 
 When someone wants to download a copy of the data, they'll commonly want the whole set they've filtered down to, without selecting anything. So exports sit in the toolbar as permanent buttons, and export every record matching the current filter and sort. When rows are selected, the same buttons export only that selection.
 
+A document that belongs to each record, such as an invoice's PDF, a packing slip or a shipping label, isn't an export. Getting it is an action on that record, like sending or voiding it, so it goes in the row's action menu, and in the bulk actions where doing it for several records at once is useful.
+
 If the requirements only call for one format, use a single "Download XLS" button. Where several formats are available, use one "Download" button that opens a menu of the formats:
 
 ```tsx
@@ -335,6 +309,34 @@ const canFill = useCardsFitTwoRows();
 ```
 
 The same applies to anything else stacked above the table: when it would leave the table too little height, bail out of `fill` at that width. This is pending a `Layout` option that does it for you.
+
+### The row set
+
+There may be situations where it is useful for the user to switch between different related datasets on the same page. Both/all of which need to make sense to be found on this page where it sits in the navigation structure.
+
+Tabs here are only for genuinely different datasets, each with its own columns. They are not for preset views of the same records — "Open", "Overdue", "Paid" — which are filters on one table and belong in its toolbar (see [Preset filters](#preset-filters)).
+
+```
+Layout fill
+  +------------------------------------------------------------+
+  | Layout.Header                                              |
+  |  (as above)                                                |
+  +------------------------------------------------------------+
+  | Layout.Column                                              |
+  |  Tabs.Root variant="line"                                  |
+  |   Tabs.List                                                |
+  |    Tabs.Tab: Orders       Tabs.Tab: Order lines            |
+  |   Tabs.Panel                                               |
+  |    DataTable.Root                                          |
+  |     (as above)                                             |
+  +------------------------------------------------------------+
+```
+
+Each tab is its own [`Tabs.Panel`](../components/tabs.md) holding its own `DataTable.Root`, with its own query, columns and toolbar. The tabs sit above the table, inside the column, so the header and its create action stay the same whichever tab is active.
+
+- **Keep the active tab in the URL**, e.g. `?tab=lines`, the same as the table's filters and sort, so a link or a refresh lands on the same table.
+- **Only the active panel is mounted.** Leave `keepMounted` off. `useURLCollectionVariables` writes to fixed URL keys (`p`, `s`, `f.<field>:<op>`), so two mounted tables would read and write each other's state.
+- **Switching tab clears the outgoing table's filter, sort and page params** in the same event that sets the tab, since a filter on one dataset rarely means anything on the other.
 
 ## Data-fetching
 

@@ -824,9 +824,9 @@
       "symbols": ["GlobalHeaderLayout", "GlobalHeaderLayoutProps"],
       "hashes": {
         "typeSurface": "70edbc7c68dcc7aa",
-        "outline": "f921a854181d6d1c",
+        "outline": "44d1374ea9192b2e",
         "snapshot": null,
-        "outputMd": "dd2b0da3702cf8d9",
+        "outputMd": "fe86450720c4d586",
         "examples": null
       }
     },
@@ -1317,9 +1317,9 @@
       "symbols": ["SidebarLayout", "SidebarLayoutProps"],
       "hashes": {
         "typeSurface": "bbc777033634cea5",
-        "outline": "25ad69b3d94bffc9",
+        "outline": "751ddd6bd3fe3ba6",
         "snapshot": null,
-        "outputMd": "e50b2d649289d772",
+        "outputMd": "af971809e42dfdb8",
         "examples": null
       }
     },
@@ -1831,7 +1831,7 @@
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "224745760083ee35",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "41bbf91bfb9f41d4",
-    "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
+    "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "fe86450720c4d586",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",
@@ -1842,7 +1842,7 @@
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "1f81ebd562c50371",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "a36192df64f16adc",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "e50b2d649289d772",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "af971809e42dfdb8",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "8ab89452180de4e1",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",

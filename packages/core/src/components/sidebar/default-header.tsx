@@ -3,13 +3,13 @@ import { AppearanceSwitcher } from "@/components/appearance-switcher";
 import { DynamicBreadcrumb } from "./dynamic-breadcrumb";
 
 const HidableSidebarTrigger = () => {
-  const { open, isIconMode, collapsible } = useSidebar();
+  const { open, isTablet, canToggle } = useSidebar();
 
-  if (!collapsible) return null;
+  if (!canToggle) return null;
 
-  // Hide trigger when sidebar is open (desktop), but show it in icon mode
+  // Hide the expanded desktop trigger; responsive drawers still need an entry point.
   return (
-    <div className={open && !isIconMode ? "astw:md:hidden" : undefined}>
+    <div className={open && !isTablet ? "astw:md:hidden" : undefined}>
       <SidebarTrigger className="astw:-ml-2.5" />
     </div>
   );

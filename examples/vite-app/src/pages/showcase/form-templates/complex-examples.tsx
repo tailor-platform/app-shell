@@ -33,6 +33,7 @@ import {
   SupplierFields,
   WAREHOUSES,
 } from "./fields";
+import { InPlaceExamples } from "./in-place-examples";
 
 // Complex examples: how far FormLayout stretches before you need anything
 // custom. Each one is self-contained so it can be lifted into a real page.
@@ -631,6 +632,7 @@ export function ComplexExamples() {
       <ConditionalFields />
       <FormWithSummary />
       <DocumentWithLineItems />
+      <InPlaceExamples />
     </div>
   );
 }

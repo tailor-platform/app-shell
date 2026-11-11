@@ -48,7 +48,12 @@ function Harness({
 }: {
   tableColumns?: Column<Line>[];
   data?: DataTableData<Line>;
-  options?: Partial<Omit<UseDataTableOptions<Line>, "columns" | "data">>;
+  // Distributes over the rowExpansion / subRows union, which a plain Omit would collapse.
+  options?: UseDataTableOptions<Line> extends infer O
+    ? O extends unknown
+      ? Partial<Omit<O, "columns" | "data">>
+      : never
+    : never;
   capture?: (table: UseDataTableReturn<Line>) => void;
   footerBar?: boolean;
 }) {

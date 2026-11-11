@@ -90,14 +90,14 @@ const labels = defineI18nLabels({
 - The items belong under a parent with its own icon (or landing page via `to`)
 - You need nesting
 
-| Feature             | SidebarSection    | SidebarGroup              |
-| ------------------- | ----------------- | ------------------------- |
-| **Collapsible**     | ❌ No             | ✅ Yes                    |
-| **Heading is link** | ❌ No             | Optional (`to` prop)      |
-| **Icon**            | ❌ No             | Optional                  |
-| **Child styling**   | Same as top level | Indented submenu          |
-| **Icon rail**       | Heading hidden    | Group icon opens a flyout |
-| **Nesting**         | Not intended      | Can contain groups        |
+| Feature             | SidebarSection    | SidebarGroup                                       |
+| ------------------- | ----------------- | -------------------------------------------------- |
+| **Collapsible**     | ❌ No             | ✅ Yes                                             |
+| **Heading is link** | ❌ No             | Optional (`to` prop)                               |
+| **Icon**            | ❌ No             | Optional                                           |
+| **Child styling**   | Same as top level | Indented submenu                                   |
+| **Icon rail**       | Heading hidden    | Group icon opens a flyout (hover, or tap on touch) |
+| **Nesting**         | Not intended      | Can contain groups                                 |
 
 ## Accessibility
 

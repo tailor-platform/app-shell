@@ -864,9 +864,9 @@
       "symbols": ["GlobalHeaderLayout", "GlobalHeaderLayoutProps"],
       "hashes": {
         "typeSurface": "70edbc7c68dcc7aa",
-        "outline": "f921a854181d6d1c",
+        "outline": "44d1374ea9192b2e",
         "snapshot": null,
-        "outputMd": "dd2b0da3702cf8d9",
+        "outputMd": "fe86450720c4d586",
         "examples": null
       }
     },
@@ -1289,9 +1289,9 @@
       "symbols": ["Select", "SelectAsyncFetcher"],
       "hashes": {
         "typeSurface": "429710973dfa912b",
-        "outline": "a8b7834a8817e0d5",
-        "snapshot": "bbc98c8f1c65fd46",
-        "outputMd": "b3dd3b9a58a9d290",
+        "outline": "85a352fb834a1208",
+        "snapshot": "c7aa045d22de4cc7",
+        "outputMd": "e1835371d2ef76fc",
         "examples": "1ce89cec30045466"
       }
     },
@@ -1357,9 +1357,9 @@
       "symbols": ["SidebarLayout", "SidebarLayoutProps"],
       "hashes": {
         "typeSurface": "bbc777033634cea5",
-        "outline": "25ad69b3d94bffc9",
+        "outline": "751ddd6bd3fe3ba6",
         "snapshot": null,
-        "outputMd": "e50b2d649289d772",
+        "outputMd": "af971809e42dfdb8",
         "examples": null
       }
     },
@@ -1890,18 +1890,18 @@
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "224745760083ee35",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "1c66f15802f5bb2d",
     "packages/core/skills/app-shell-patterns/references/components/form-layout.md": "58a28a78394e2a05",
-    "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
+    "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "fe86450720c4d586",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "aed122a19e84cb03",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
-    "packages/core/skills/app-shell-patterns/references/components/select.md": "b3dd3b9a58a9d290",
+    "packages/core/skills/app-shell-patterns/references/components/select.md": "e1835371d2ef76fc",
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "1f81ebd562c50371",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "a36192df64f16adc",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "e50b2d649289d772",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "af971809e42dfdb8",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "8ab89452180de4e1",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
     "packages/core/skills/app-shell-patterns/references/components/stepper.md": "dfd07cfec2f84d5b",

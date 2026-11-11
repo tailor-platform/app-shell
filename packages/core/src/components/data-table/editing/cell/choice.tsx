@@ -23,7 +23,7 @@ export function ChoiceEditCell<TRow extends Record<string, unknown>>(
       {...coreProps}
       editor={choiceEditor}
       options={{
-        choices: columnChoices(col) ?? [],
+        options: columnChoices(col) ?? [],
         renderOption:
           col.type === "badge"
             ? (value, label) => (

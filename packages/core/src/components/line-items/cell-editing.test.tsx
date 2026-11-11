@@ -14,7 +14,10 @@ import { MemoryRouter } from "react-router";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import { CellEditError } from "@/components/internals/table-core/cell-edit-error";
 import { LineItems } from "./line-items";
-import { useLineItemsCellRenderersByColumn, type lineItemsEditors } from "./line-items-cell";
+import {
+  useLineItemsCellRenderersByColumn,
+  type createLineItemsCellPreparers,
+} from "./line-items-cell";
 import { useLineItems } from "./use-line-items";
 import type { LineItemsColumn, UseLineItemsReturn } from "./types";
 
@@ -69,7 +72,10 @@ const editorColumns = {
   number: quantityColumn,
   combobox: statusColumn,
   date: dateColumn,
-} satisfies Record<keyof typeof lineItemsEditors, LineItemsColumn<Row>>;
+} satisfies Record<
+  keyof ReturnType<typeof createLineItemsCellPreparers>["editors"],
+  LineItemsColumn<Row>
+>;
 const canEdit = (row: Row) => row.allowed;
 const configurations = buildConfigurations({ modules: [], locale: "en", timeZone: "Asia/Tokyo" });
 
@@ -155,6 +161,62 @@ describe("LineItems cell editing integration", () => {
     expect(result.current[0].renderDisplay(rows[0], false)).toBe("Custom label");
   });
 
+  it.each([
+    { name: "text", column: nameColumn, align: "left" },
+    { name: "number", column: quantityColumn, align: "right" },
+    { name: "choice", column: statusColumn, align: "left" },
+    {
+      name: "money display",
+      column: { ...quantityColumn, type: "money" } satisfies LineItemsColumn<Row>,
+      align: "right",
+    },
+    {
+      name: "number editor with text display",
+      column: { ...quantityColumn, type: "text" } satisfies LineItemsColumn<Row>,
+      align: "left",
+    },
+    {
+      name: "explicit alignment",
+      column: { ...quantityColumn, align: "center" } satisfies LineItemsColumn<Row>,
+      align: "center",
+    },
+    {
+      name: "readonly number",
+      column: { accessorKey: "quantity", type: "number" } satisfies LineItemsColumn<Row>,
+      align: "right",
+    },
+    {
+      name: "computed money",
+      column: {
+        id: "computed",
+        type: "money",
+        accessor: (row: Row) => row.quantity,
+      } satisfies LineItemsColumn<Row>,
+      align: "right",
+    },
+  ])("prepares resolved alignment for $name", ({ column, align }) => {
+    const { result } = renderHook(() => useLineItemsCellRenderersByColumn([column], "UTC"));
+    expect(result.current[0].align).toBe(align);
+  });
+
+  it("rebinds date formatting on timezone changes independently of a text editor", () => {
+    const columns: LineItemsColumn<Row>[] = [
+      {
+        ...dateColumn,
+        typeOptions: { locale: "en-US" },
+        edit: nameColumn.edit,
+      },
+    ];
+    const row = { ...rows[0], date: "2026-10-09T01:00:00Z" };
+    const { result, rerender } = renderHook(
+      ({ timeZone }: { timeZone: string }) => useLineItemsCellRenderersByColumn(columns, timeZone),
+      { initialProps: { timeZone: "UTC" } },
+    );
+    expect(result.current[0].renderDisplay(row, false)).toBe("Oct 9, 2026");
+    rerender({ timeZone: "America/Los_Angeles" });
+    expect(result.current[0].renderDisplay(row, false)).toBe("Oct 8, 2026");
+  });
+
   it("preserves a cell draft and its row identity through keyboard reordering", () => {
     const editor = setup([nameColumn], [rows[0], { ...rows[0], id: "B", name: "Second" }], true);
     draft(textbox(), "Changed");
@@ -203,6 +265,33 @@ describe("LineItems cell editing integration", () => {
     expect(editor.value.lines[0].quantity).toBeNull();
   });
 
+  it("keeps money display independent of the number editor and uses the current row's currency", () => {
+    const currency = vi.fn((row: Row) => (row.allowed ? "USD" : "EUR"));
+    const editor = setup(
+      [
+        {
+          ...quantityColumn,
+          type: "money",
+          typeOptions: { currency },
+          edit: { ...quantityColumn.edit, canEdit },
+        },
+      ],
+      [rows[0], { ...rows[0], id: "B", allowed: false }],
+    );
+    const usd = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" });
+    const eur = new Intl.NumberFormat(undefined, { style: "currency", currency: "EUR" });
+    expect(screen.getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
+      usd.format(2),
+      eur.format(2),
+    ]);
+    const input = textbox("Quantity");
+    draft(input, "3.5");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(editor.value.lines[0].quantity).toBe(3.5);
+    expect(screen.getAllByRole("cell")[0].textContent).toBe(usd.format(3.5));
+    expect(currency).toHaveBeenCalledWith(editor.value.lines[0]);
+  });
+
   it("updates column widths without discarding an unconfirmed cell draft", () => {
     const editor = setup([nameColumn]);
     const input = textbox();
@@ -241,6 +330,28 @@ describe("LineItems cell editing integration", () => {
     expect(editor.value.lines[0].status).toBe("closed");
     expect(editor.value.lines[1].status).toBe("open");
     expect(editor.value.isDirty).toBe(true);
+  });
+
+  it.each([
+    { status: "open", text: "Open", badge: "Open" },
+    { status: "unlisted", text: "unlisted", badge: "unlisted" },
+    { status: null, text: "—", badge: "—" },
+    { status: "", text: "—", badge: "—" },
+    { status: "blank", text: "—", badge: "" },
+  ])("preserves text and badge label fallbacks for $status", ({ status, text, badge }) => {
+    const edit = {
+      ...statusColumn.edit,
+      options: [...statusColumn.edit.options, { value: "blank", label: "" }],
+      canEdit: () => false,
+    };
+    setup(
+      [
+        { ...statusColumn, id: "text", edit },
+        { ...statusColumn, id: "badge", type: "badge", edit },
+      ],
+      [{ ...rows[0], status }],
+    );
+    expect(screen.getAllByRole("cell").map((cell) => cell.textContent)).toEqual([text, badge]);
   });
 
   it("retains link navigation and keyboard focus for readonly rows of an editable link column", async () => {
@@ -360,6 +471,16 @@ describe("LineItems cell editing integration", () => {
     await editor.user.click(dateTrigger());
     await editor.user.click(screen.getByRole("button", { name: "Clear" }));
     expect(editor.value.lines[0].date).toBeNull();
+  });
+
+  it("binds the timezone to date input independently of text display", async () => {
+    const editor = setup(
+      [{ ...dateColumn, type: "text" }],
+      [{ ...rows[0], date: "2026-10-08T17:00:00Z" }],
+    );
+    expect(screen.getByRole("cell").textContent).toBe("2026-10-08T17:00:00Z");
+    await editor.user.click(dateTrigger());
+    expect(dayButton("9").hasAttribute("data-selected")).toBe(true);
   });
 
   it("holds datetime drafts until Done and converts the configured timezone to an ISO timestamp", async () => {

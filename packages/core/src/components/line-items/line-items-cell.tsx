@@ -1,11 +1,12 @@
 import { useMemo, type ComponentProps, type ReactNode } from "react";
 import { BadgeList } from "@/components/badge-list";
 import { Table } from "@/components/table";
-import { createValueRenderer } from "@/components/internals/table-core";
-import type {
-  ColumnCellType,
-  TypedColumnDisplay,
-} from "@/components/internals/table-core/column-types";
+import {
+  createValueRenderer,
+  displayCellAdapters,
+  getDisplayCellAdapter,
+} from "@/components/internals/table-core";
+import type { ValueDisplayDescriptor } from "@/components/internals/table-core/column-types";
 import type {
   CellEditor,
   CellEditorOptions,
@@ -21,88 +22,179 @@ import type { LineItemsEditing } from "./editing";
 import { useLineItemsT } from "./i18n";
 import type { LineItemsColumn } from "./types";
 
-interface LineItemsCellEditor {
+/**
+ * Resolved cell alignment and rendering operations prepared for one column and reused across rows.
+ * Consumers select a row's display mode without inspecting editor kinds, settings, or choice metadata.
+ *
+ * @typeParam T - Row type preserved for accessors and row-dependent display options.
+ */
+interface LineItemsCellRenderers<T extends Record<string, unknown>> {
+  /** Explicit column alignment, or the display type's default; shared by the header, preview, and input. */
+  align: EditableCellOwnerProps["align"];
+  /** Invoke directly with owner-bound values, callbacks, and session; do not mount this callback as a component. */
   renderCell: (props: EditableCellOwnerProps) => ReactNode;
+  /** Render row data or custom content; editable selects the input-compatible preview, not permission or draft state. */
+  renderDisplay: (row: T, editable: boolean) => ReactNode;
 }
 
-interface LineItemsChoiceCellEditor extends LineItemsCellEditor {
-  choices: ComponentProps<typeof choiceEditor.Editor>["options"]["choices"];
-}
+type ValueRenderer<T> = (value: unknown, row: T) => ReactNode;
 
-type EditorDisplay =
-  | TypedColumnDisplay<Record<string, unknown>, "badge">
-  | { type?: Exclude<ColumnCellType, "badge"> };
+/**
+ * Bind a row's value source to already-prepared readonly and editable value renderers.
+ * This common step knows no display kinds, editor settings, labels, or timezone dependencies.
+ *
+ * @param source - Property or computed accessor supplying the raw value.
+ * @param renderReadonly - Prepared value renderer for readonly cells.
+ * @param renderEditable - Input-compatible preview renderer; defaults to the readonly renderer.
+ * @returns Row renderer whose mode is selected by the caller after evaluating the row's edit policy.
+ */
+function bindDisplay<T extends Record<string, unknown>>(
+  source: { accessorKey?: keyof T & string; accessor?: (row: T) => unknown },
+  renderReadonly: ValueRenderer<T>,
+  renderEditable: ValueRenderer<T> = renderReadonly,
+): LineItemsCellRenderers<T>["renderDisplay"] {
+  return (row, editable) => {
+    const current =
+      source.accessorKey !== undefined ? row[source.accessorKey] : source.accessor?.(row);
+    return (editable ? renderEditable : renderReadonly)(current, row);
+  };
+}
 
 /** Bind the implementation used for type derivation to the same input used for rendering. */
-function defineLineItemsEditor<
-  TOptions,
-  TOutput,
-  TSettings,
-  TPrepared extends { options: NoInfer<TOptions> },
->(
+function defineLineItemsEditor<TOptions, TOutput, TSettings>(
   editor: CellEditor<TOptions, TOutput>,
-  prepare: (settings: TSettings, display: EditorDisplay) => TPrepared,
+  prepare: <T extends Record<string, unknown>>(
+    settings: TSettings,
+    column: LineItemsColumn<T>,
+  ) => { options: NoInfer<TOptions> } & Omit<LineItemsCellRenderers<T>, "renderCell">,
 ) {
   return {
     editor,
-    prepare(settings: TSettings, display: EditorDisplay) {
-      const { options, ...metadata } = prepare(settings, display);
+    prepare<T extends Record<string, unknown>>(
+      settings: TSettings,
+      column: LineItemsColumn<T>,
+    ): LineItemsCellRenderers<T> {
+      const { options, align, renderDisplay } = prepare(settings, column);
       return {
-        ...metadata,
-        renderCell: (props: EditableCellOwnerProps) => (
-          <EditableCell {...props} editor={editor} options={options} />
-        ),
+        align,
+        renderCell: (props) => <EditableCell {...props} editor={editor} options={options} />,
+        renderDisplay,
       };
     },
   };
 }
 
-/** The single LineItems public-name, settings and implementation mapping. */
-export const lineItemsEditors = {
-  text: defineLineItemsEditor(textEditor, (_settings: Record<never, never>) => ({ options: {} })),
-  number: defineLineItemsEditor(numberEditor, (_settings: Record<never, never>) => ({
-    options: {},
-  })),
-  date: defineLineItemsEditor(dateEditor, (settings: CellEditorOptions<typeof dateEditor>) => ({
-    options: { withTime: settings.withTime },
-  })),
-  combobox: defineLineItemsEditor(
-    choiceEditor,
-    (settings: { options: CellEditorOptions<typeof choiceEditor>["choices"] }, display) => ({
-      choices: settings.options,
-      options: {
-        choices: settings.options,
-        renderOption:
-          display.type === "badge"
-            ? (value, label) => (
-                <BadgeList value={value} options={display.typeOptions} resolveLabel={() => label} />
-              )
-            : undefined,
-      },
-    }),
-  ),
-};
+/** Assemble column preparers, binding timezone only to date formatting and date input options. */
+export function createLineItemsCellPreparers(timeZone: string) {
+  function prepareValueRenderer<T extends Record<string, unknown>>(
+    display: ValueDisplayDescriptor<T>,
+  ): ValueRenderer<T> {
+    return display.type === "date"
+      ? displayCellAdapters.date.createRenderer(display.typeOptions, timeZone)
+      : createValueRenderer(display);
+  }
 
+  /** Custom output wins before any built-in value renderer is prepared. */
+  function prepareDisplay<T extends Record<string, unknown>>(
+    column: LineItemsColumn<T>,
+  ): Omit<LineItemsCellRenderers<T>, "renderCell"> {
+    const align = column.align ?? getDisplayCellAdapter(column.type).defaultAlign;
+    if (column.render) return { align, renderDisplay: column.render };
+    const renderReadonly = prepareValueRenderer(column);
+    const renderEditable =
+      column.type === "link" ? createValueRenderer({ type: "text" }) : renderReadonly;
+    return { align, renderDisplay: bindDisplay(column, renderReadonly, renderEditable) };
+  }
+
+  function prepareChoiceDisplay<T extends Record<string, unknown>>(
+    column: LineItemsColumn<T>,
+    options: CellEditorOptions<typeof choiceEditor>["options"],
+  ): Omit<LineItemsCellRenderers<T>, "renderCell"> {
+    const align = column.align ?? getDisplayCellAdapter(column.type).defaultAlign;
+    if (column.render) return { align, renderDisplay: column.render };
+    const resolveLabel = (value: unknown) =>
+      options.find((option) => option.value === value)?.label;
+    if (column.type === "badge") {
+      const renderBadge = createValueRenderer(column, {
+        resolveBadgeLabel: (value) => resolveLabel(value) ?? value,
+      });
+      return { align, renderDisplay: bindDisplay(column, renderBadge) };
+    }
+    const renderReadonly = prepareValueRenderer(column);
+    const renderEditable =
+      column.type === "link" ? createValueRenderer({ type: "text" }) : renderReadonly;
+    return {
+      align,
+      renderDisplay: bindDisplay(
+        column,
+        (value, row) => renderReadonly(resolveLabel(value) ?? value, row),
+        (value, row) => renderEditable(resolveLabel(value) ?? value, row),
+      ),
+    };
+  }
+
+  /** The single LineItems public-name, settings and implementation mapping. */
+  const editors = {
+    text: defineLineItemsEditor(textEditor, (_settings: Record<never, never>, column) => ({
+      options: {},
+      ...prepareDisplay(column),
+    })),
+    number: defineLineItemsEditor(numberEditor, (_settings: Record<never, never>, column) => ({
+      options: {},
+      ...prepareDisplay(column),
+    })),
+    date: defineLineItemsEditor(
+      dateEditor,
+      (settings: Pick<CellEditorOptions<typeof dateEditor>, "withTime">, column) => ({
+        options: { withTime: settings.withTime, timeZone },
+        ...prepareDisplay(column),
+      }),
+    ),
+    combobox: defineLineItemsEditor(
+      choiceEditor,
+      ({ options }: Pick<CellEditorOptions<typeof choiceEditor>, "options">, column) => ({
+        options: {
+          options,
+          renderOption:
+            column.type === "badge"
+              ? (value, label) => (
+                  <BadgeList
+                    value={value}
+                    options={column.typeOptions}
+                    resolveLabel={() => label}
+                  />
+                )
+              : undefined,
+        },
+        ...prepareChoiceDisplay(column, options),
+      }),
+    ),
+  };
+  return { editors, prepareDisplay };
+}
+
+type EditorCatalog = ReturnType<typeof createLineItemsCellPreparers>["editors"];
 type EditorSettingsByKind = {
-  [K in keyof typeof lineItemsEditors]: Parameters<(typeof lineItemsEditors)[K]["prepare"]>[0];
+  [K in keyof EditorCatalog]: Parameters<EditorCatalog[K]["prepare"]>[0];
 };
 type EditorPreparers = {
   [K in keyof EditorSettingsByKind]: {
-    prepare: (
+    prepare: <T extends Record<string, unknown>>(
       settings: EditorSettingsByKind[K],
-      display: EditorDisplay,
-    ) => LineItemsCellEditor | LineItemsChoiceCellEditor;
+      column: LineItemsColumn<T>,
+    ) => LineItemsCellRenderers<T>;
   };
 };
 
 /** Keep keyed selection correlated with its settings without another editor-kind switch. */
-function resolveEditor<K extends keyof EditorSettingsByKind>(
+function resolveEditor<K extends keyof EditorSettingsByKind, T extends Record<string, unknown>>(
+  editors: EditorCatalog,
   edit: (EditorSettingsByKind[K] & { editorType: K }) | undefined,
-  display: EditorDisplay,
-): LineItemsCellEditor | LineItemsChoiceCellEditor | undefined {
+  column: LineItemsColumn<T>,
+): LineItemsCellRenderers<T> | undefined {
   if (!edit) return undefined;
-  const adapter: EditorPreparers[K] = lineItemsEditors[edit.editorType];
-  return adapter.prepare(edit, display);
+  const adapter: EditorPreparers[K] = editors[edit.editorType];
+  return adapter.prepare(edit, column);
 }
 
 /** Prepare and memoize cell renderers per column; row permissions choose the display mode later. */
@@ -110,47 +202,20 @@ export function useLineItemsCellRenderersByColumn<T extends Record<string, unkno
   columns: readonly LineItemsColumn<T>[],
   timeZone: string,
 ) {
-  return useMemo(
-    () =>
-      columns.map((column) => {
-        const editor = resolveEditor(column.edit, column);
-        const cell = {
-          column,
-          editor,
-          id: column.id ?? column.accessorKey!,
-          align:
-            column.align ??
-            (column.type === "number" || column.type === "money"
-              ? ("right" as const)
-              : ("left" as const)),
-        };
-        if (column.render) return { ...cell, renderDisplay: column.render };
-        const choices = editor && "choices" in editor ? editor.choices : undefined;
-        const renderValue = createValueRenderer(column, timeZone, {
-          resolveBadgeLabel: choices
-            ? (raw) => choices.find((option) => option.value === raw)?.label ?? raw
-            : undefined,
-        });
-        const renderEditableValue =
-          column.type === "link" && editor
-            ? createValueRenderer({ type: "text" }, timeZone)
-            : renderValue;
-        return {
-          ...cell,
-          renderDisplay: (row: T, editable: boolean) => {
-            const current =
-              column.accessorKey !== undefined ? row[column.accessorKey] : column.accessor?.(row);
-            const render = editable ? renderEditableValue : renderValue;
-            if (!choices || column.type === "badge") return render(current, row);
-            return render(
-              choices.find((option) => option.value === current)?.label ?? current,
-              row,
-            );
-          },
-        };
-      }),
-    [columns, timeZone],
-  );
+  return useMemo(() => {
+    const { editors, prepareDisplay } = createLineItemsCellPreparers(timeZone);
+    return columns.map((column) => {
+      const renderers = resolveEditor(editors, column.edit, column);
+      const presentation = renderers ?? prepareDisplay(column);
+      return {
+        column,
+        id: column.id ?? column.accessorKey!,
+        align: presentation.align,
+        renderCell: renderers?.renderCell,
+        renderDisplay: presentation.renderDisplay,
+      };
+    });
+  }, [columns, timeZone]);
 }
 
 /** Adapts property-owned confirmation to the same cell controls used by DataTable. */
@@ -158,22 +223,20 @@ export function LineItemsEditableCell<T extends Record<string, unknown>>({
   row,
   column,
   edit,
-  editor,
+  renderCell,
   index,
   editing,
   display,
-  timeZone,
   cellProps,
 }: {
   row: T;
   column: LineItemsColumn<T>;
   edit: NonNullable<LineItemsColumn<T>["edit"]>;
-  editor: LineItemsCellEditor;
+  renderCell: LineItemsCellRenderers<T>["renderCell"];
   index: number;
   editing: LineItemsEditing<T>;
   display: ReactNode;
-  timeZone: string;
-  cellProps: ComponentProps<typeof Table.Cell>;
+  cellProps: ComponentProps<typeof Table.Cell> & { align: EditableCellOwnerProps["align"] };
 }) {
   const t = useLineItemsT();
   const session = editing.getSession(row, column);
@@ -184,7 +247,6 @@ export function LineItemsEditableCell<T extends Record<string, unknown>>({
   const props: EditableCellOwnerProps = {
     current: row[column.accessorKey!],
     display,
-    timeZone,
     cellProps,
     session,
     commit: (value) => editing.commitField(key, id, value),
@@ -193,7 +255,7 @@ export function LineItemsEditableCell<T extends Record<string, unknown>>({
     label,
     rowKey: key,
     colKey: id,
-    align: cellProps.align ?? "left",
+    align: cellProps.align,
     slotPrefix: "line-items",
     labels: {
       notANumber: t("notANumber"),
@@ -210,7 +272,7 @@ export function LineItemsEditableCell<T extends Record<string, unknown>>({
       done: t("done"),
     },
   };
-  return editor.renderCell(props);
+  return renderCell(props);
 }
 
 export function LineItemsDisplayCell(props: ComponentProps<typeof Table.Cell>) {

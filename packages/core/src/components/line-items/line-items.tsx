@@ -93,9 +93,9 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                 </button>
               </Table.Cell>
             )}
-            {cellsByColumn.map(({ column, editor, id, align, renderDisplay }) => {
+            {cellsByColumn.map(({ column, renderCell, id, align, renderDisplay }) => {
               const edit = column.edit;
-              if (!edit || !editor || !(edit.canEdit?.(row) ?? true))
+              if (!edit || !renderCell || !(edit.canEdit?.(row) ?? true))
                 return (
                   <LineItemsDisplayCell key={id} align={align}>
                     {renderDisplay(row, false)}
@@ -107,11 +107,10 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                   row={row}
                   column={column}
                   edit={edit}
-                  editor={editor}
+                  renderCell={renderCell}
                   index={index}
                   editing={getLineItemsEditing(value)}
                   display={renderDisplay(row, true)}
-                  timeZone={timeZone}
                   cellProps={{ align }}
                 />
               );

@@ -1,4 +1,10 @@
-export { createValueRenderer, type ValueRendererOptions } from "./cell-renderers";
+export {
+  createDateRenderer,
+  createValueRenderer,
+  displayCellAdapters,
+  getDisplayCellAdapter,
+  type ValueRendererOptions,
+} from "./cell-renderers";
 export type {
   BadgeCellOptions,
   ColumnCellType,

@@ -6,8 +6,10 @@ import type {
 import type { choiceEditor } from "@/components/internals/table-core/editing/choice";
 import type { dateEditor } from "@/components/internals/table-core/editing/date";
 import type { numberEditor, textEditor } from "@/components/internals/table-core/editing/typing";
-import type { lineItemsEditors } from "./line-items-cell";
+import type { createLineItemsCellPreparers } from "./line-items-cell";
 import type { LineItemsColumn, LineItemsEditor } from "./types";
+
+type EditorCatalog = ReturnType<typeof createLineItemsCellPreparers>["editors"];
 
 type Row = {
   id?: string;
@@ -81,9 +83,7 @@ test("cell editors retain property-specific nullable output and row callback typ
 });
 
 test("public editor settings and confirmation values follow the concrete editors", () => {
-  expectTypeOf<LineItemsEditor<Row, unknown>["editorType"]>().toEqualTypeOf<
-    keyof typeof lineItemsEditors
-  >();
+  expectTypeOf<LineItemsEditor<Row, unknown>["editorType"]>().toEqualTypeOf<keyof EditorCatalog>();
   type PublicEditor<K extends LineItemsEditor<Row, unknown>["editorType"]> = Extract<
     LineItemsEditor<Row, unknown>,
     { editorType: K }
@@ -99,8 +99,19 @@ test("public editor settings and confirmation values follow the concrete editors
   expectTypeOf<PublicEditor<"date">["withTime"]>().toEqualTypeOf<
     CellEditorOptions<typeof dateEditor>["withTime"]
   >();
+  expectTypeOf<Extract<keyof PublicEditor<"date">, "timeZone">>().toEqualTypeOf<never>();
   expectTypeOf<PublicEditor<"combobox">["options"]>().toEqualTypeOf<
-    CellEditorOptions<typeof choiceEditor>["choices"]
+    CellEditorOptions<typeof choiceEditor>["options"]
+  >();
+  type PreparedEditors = {
+    [K in keyof EditorCatalog]: ReturnType<EditorCatalog[K]["prepare"]>;
+  };
+  expectTypeOf<keyof PreparedEditors["text"]>().toEqualTypeOf<
+    "align" | "renderCell" | "renderDisplay"
+  >();
+  expectTypeOf<PreparedEditors["text"]["align"]>().toEqualTypeOf<"left" | "center" | "right">();
+  expectTypeOf<PreparedEditors>().toEqualTypeOf<
+    Record<keyof EditorCatalog, PreparedEditors["text"]>
   >();
 
   const choice: PublicEditor<"combobox"> = {

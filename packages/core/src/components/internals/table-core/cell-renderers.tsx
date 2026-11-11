@@ -5,10 +5,12 @@ import { BadgeList, toValueArray } from "@/components/badge-list";
 import { normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type {
   BadgeCellOptions,
+  ColumnCellType,
   DateCellOptions,
   LinkCellOptions,
   MoneyCellOptions,
   NumberCellOptions,
+  TypedColumnDisplay,
   ValueDisplayDescriptor,
 } from "./column-types";
 
@@ -95,7 +97,8 @@ function resolveDateFormatOptions(format: string): Intl.DateTimeFormatOptions {
   return { month: "short", day: "numeric", year: "numeric" };
 }
 
-function createDateRenderer(
+/** Bind date-only and datetime formatting to a timezone once, retaining independent formatter caches. */
+export function createDateRenderer(
   options: DateCellOptions | undefined,
   timeZone: string,
 ): (value: unknown) => ReactNode {
@@ -164,24 +167,86 @@ function renderLink<TRow extends Record<string, unknown>>(
   );
 }
 
-/** Build once per display/timezone definition so date formatters are shared across rows. */
+/** Display implementations and their default presentation policy share one exhaustive catalog. */
+export const displayCellAdapters = {
+  text: {
+    defaultAlign: "left",
+    createRenderer: () => renderText,
+  },
+  number: {
+    defaultAlign: "right",
+    createRenderer:
+      (display: TypedColumnDisplay<Record<string, unknown>, "number">) => (value: unknown) =>
+        renderNumber(value, display.typeOptions),
+  },
+  money: {
+    defaultAlign: "right",
+    createRenderer:
+      <TRow extends Record<string, unknown>>(display: TypedColumnDisplay<TRow, "money">) =>
+      (value: unknown, row: TRow) =>
+        renderMoney(value, row, display.typeOptions),
+  },
+  date: {
+    defaultAlign: "left",
+    createRenderer: createDateRenderer,
+  },
+  badge: {
+    defaultAlign: "left",
+    createRenderer:
+      (
+        display: TypedColumnDisplay<Record<string, unknown>, "badge">,
+        options: ValueRendererOptions = {},
+      ) =>
+      (value: unknown) =>
+        renderBadge(value, display.typeOptions, options.resolveBadgeLabel),
+  },
+  link: {
+    defaultAlign: "left",
+    createRenderer:
+      <TRow extends Record<string, unknown>>(display: TypedColumnDisplay<TRow, "link">) =>
+      (value: unknown, row: TRow) =>
+        renderLink(value, row, display.typeOptions),
+  },
+} satisfies Record<
+  ColumnCellType,
+  { defaultAlign: "left" | "right"; createRenderer: (...args: never[]) => unknown }
+>;
+
+/** Read presentation metadata without constructing a renderer; unknown runtime kinds retain the text fallback. */
+export function getDisplayCellAdapter(type: ColumnCellType | undefined) {
+  return typeof type === "string" && Object.hasOwn(displayCellAdapters, type)
+    ? displayCellAdapters[type]
+    : displayCellAdapters.text;
+}
+
+type ValueKind = Exclude<keyof typeof displayCellAdapters, "date">;
+type ValueAdapters<TRow extends Record<string, unknown>> = {
+  [K in ValueKind]: {
+    createRenderer: (
+      display: TypedColumnDisplay<TRow, K>,
+      options: ValueRendererOptions,
+    ) => (value: unknown, row: TRow) => ReactNode;
+  };
+};
+
+/** Keep keyed selection correlated with its descriptor and row-dependent options. */
+function createTypedValueRenderer<TRow extends Record<string, unknown>, K extends ValueKind>(
+  type: K,
+  descriptor: TypedColumnDisplay<TRow, K>,
+  options: ValueRendererOptions,
+): (value: unknown, row: TRow) => ReactNode {
+  const adapter: ValueAdapters<TRow>[K] = displayCellAdapters[type];
+  return adapter.createRenderer(descriptor, options);
+}
+
+/** Create a timezone-independent value renderer; dates use createDateRenderer instead. */
 export function createValueRenderer<TRow extends Record<string, unknown>>(
-  descriptor: ValueDisplayDescriptor<TRow>,
-  timeZone: string,
+  descriptor: Exclude<ValueDisplayDescriptor<TRow>, { type: "date" }>,
   options: ValueRendererOptions = {},
 ): (value: unknown, row: TRow) => ReactNode {
-  switch (descriptor.type) {
-    case "number":
-      return (value) => renderNumber(value, descriptor.typeOptions);
-    case "money":
-      return (value, row) => renderMoney(value, row, descriptor.typeOptions);
-    case "date":
-      return createDateRenderer(descriptor.typeOptions, timeZone);
-    case "badge":
-      return (value) => renderBadge(value, descriptor.typeOptions, options.resolveBadgeLabel);
-    case "link":
-      return (value, row) => renderLink(value, row, descriptor.typeOptions);
-    default:
-      return renderText;
-  }
+  if (descriptor.type === undefined) return displayCellAdapters.text.createRenderer();
+  const type: unknown = descriptor.type;
+  if (typeof type !== "string" || !Object.hasOwn(displayCellAdapters, type) || type === "date")
+    return displayCellAdapters.text.createRenderer();
+  return createTypedValueRenderer<TRow, ValueKind>(descriptor.type, descriptor, options);
 }

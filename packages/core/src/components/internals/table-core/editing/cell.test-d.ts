@@ -4,25 +4,28 @@ import { EditableCell, type EditableCellOwnerProps } from "./cell";
 import { choiceEditor } from "./choice";
 import { dateEditor } from "./date";
 import { numberEditor, textEditor } from "./typing";
-import type { CellEditorOptions, CellEditorOutput } from "./props";
+import type { CellEditorOptions, CellEditorOutput, CellEditorProps } from "./props";
 
 declare const ownerProps: EditableCellOwnerProps;
 
 test("injected editors retain required options without a kind discriminator", () => {
   type ChoiceOptions = CellEditorOptions<typeof choiceEditor>;
   type DateOptions = CellEditorOptions<typeof dateEditor>;
-  expectTypeOf<ChoiceOptions["choices"]>().toEqualTypeOf<
+  expectTypeOf<ChoiceOptions["options"]>().toEqualTypeOf<
     readonly { value: string; label: string }[]
   >();
   expectTypeOf<DateOptions["withTime"]>().toEqualTypeOf<boolean | undefined>();
-  expectTypeOf<keyof ChoiceOptions>().toEqualTypeOf<"choices" | "renderOption">();
-  expectTypeOf<keyof DateOptions>().toEqualTypeOf<"withTime">();
+  expectTypeOf<DateOptions["timeZone"]>().toEqualTypeOf<string>();
+  expectTypeOf<keyof ChoiceOptions>().toEqualTypeOf<"options" | "renderOption">();
+  expectTypeOf<keyof DateOptions>().toEqualTypeOf<"withTime" | "timeZone">();
+  expectTypeOf<Extract<keyof CellEditorProps<unknown>, "timeZone">>().toEqualTypeOf<never>();
+  expectTypeOf<Extract<keyof EditableCellOwnerProps, "timeZone">>().toEqualTypeOf<never>();
 
   EditableCell({
     ...ownerProps,
     editor: choiceEditor,
     options: {
-      choices: [{ value: "open", label: "Open" }],
+      options: [{ value: "open", label: "Open" }],
       renderOption: (value, label) => {
         expectTypeOf(value).toEqualTypeOf<string>();
         expectTypeOf(label).toEqualTypeOf<string>();
@@ -30,7 +33,8 @@ test("injected editors retain required options without a kind discriminator", ()
       },
     },
   });
-  EditableCell({ ...ownerProps, editor: dateEditor, options: { withTime: true } });
+  EditableCell({ ...ownerProps, editor: dateEditor, options: { withTime: true, timeZone: "UTC" } });
+  EditableCell({ ...ownerProps, editor: dateEditor, options: { timeZone: "UTC" } });
   EditableCell({ ...ownerProps, editor: textEditor, options: {} });
   EditableCell({ ...ownerProps, editor: numberEditor, options: {} });
 });
@@ -72,7 +76,7 @@ test("cell confirmation types are inferred only from the selected editor", () =>
   EditableCell({
     ...ownerProps,
     editor: choiceEditor,
-    options: { choices: [] },
+    options: { options: [] },
     commit: (value) => {
       expectTypeOf(value).toEqualTypeOf<string | null>();
     },
@@ -94,7 +98,7 @@ test("cell confirmation types are inferred only from the selected editor", () =>
   EditableCell({
     ...ownerProps,
     editor: dateEditor,
-    options: {},
+    options: { timeZone: "UTC" },
     // @ts-expect-error A callback cannot change the confirmed output of a date editor.
     commit: (_value: number | null) => {},
   });
@@ -107,8 +111,14 @@ test("options cannot widen or disagree with the injected editor", () => {
   EditableCell({ ...ownerProps, editor: choiceEditor, options: {} });
   // @ts-expect-error Date options cannot substitute for choice options.
   EditableCell({ ...ownerProps, editor: choiceEditor, options: { withTime: true } });
+  // @ts-expect-error Fixed candidates use options, not a second choices shape.
+  EditableCell({ ...ownerProps, editor: choiceEditor, options: { choices: [] } });
   // @ts-expect-error A date editor cannot receive choice options.
-  EditableCell({ ...ownerProps, editor: dateEditor, options: { choices: [] } });
+  EditableCell({ ...ownerProps, editor: dateEditor, options: { timeZone: "UTC", options: [] } });
+  // @ts-expect-error The date adapter must resolve its timezone before rendering.
+  EditableCell({ ...ownerProps, editor: dateEditor, options: { withTime: true } });
+  // @ts-expect-error A timezone is not part of the generic cell contract.
+  EditableCell({ ...ownerProps, editor: numberEditor, options: {}, timeZone: "UTC" });
   // @ts-expect-error A number editor has no date options.
   EditableCell({ ...ownerProps, editor: numberEditor, options: { withTime: true } });
   // @ts-expect-error Options describe the selected editor, not another kind.

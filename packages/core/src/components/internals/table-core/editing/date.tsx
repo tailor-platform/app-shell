@@ -38,7 +38,11 @@ function tabBetweenCells(
   if (navigation?.move(from, event.shiftKey ? "prev" : "next")) event.preventDefault();
 }
 
-type DateEditorOptions = { withTime?: boolean };
+type DateEditorOptions = {
+  withTime?: boolean;
+  /** Owner-resolved timezone for date/datetime conversion; not part of the common cell contract. */
+  timeZone: string;
+};
 
 function DateEditor({
   options,
@@ -51,14 +55,13 @@ function DateEditor({
   slotPrefix,
   interceptErrors = true,
   session: external,
-  timeZone,
   rowKey,
   colKey,
   label,
   navigation,
   children,
 }: CellEditorProps<DateEditorOptions, string | null>) {
-  const withTime = options.withTime ?? false;
+  const { withTime = false, timeZone } = options;
   const session = useCellEditSession<DateTimeDraft>(interceptErrors, external);
   const { state } = session;
   const { callbackError, containsErrorTarget } = useCellError(

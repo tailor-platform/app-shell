@@ -39,7 +39,6 @@ describe("editor composition", () => {
         colKey="value"
         label="Value"
         align="left"
-        timeZone="UTC"
       >
         {({ input }) => <section>{input}</section>}
       </numberEditor.Editor>,
@@ -70,7 +69,7 @@ describe("editor composition", () => {
           <Table.Row>
             <EditableCell
               editor={choiceEditor}
-              options={{ choices: [{ value: "open", label: "Open" }] }}
+              options={{ options: [{ value: "open", label: "Open" }] }}
               current="open"
               display="Formatted choice"
               cellProps={{ align: "left" }}
@@ -81,7 +80,6 @@ describe("editor composition", () => {
               colKey="choice"
               label="Choice"
               align="left"
-              timeZone="UTC"
             />
           </Table.Row>
         </Table.Body>
@@ -131,7 +129,6 @@ describe("editor composition", () => {
               colKey="custom"
               label="Injected"
               align="left"
-              timeZone="UTC"
             />
           </Table.Row>
         </Table.Body>
@@ -154,7 +151,7 @@ describe("editor composition", () => {
             <Table.Row>
               <EditableCell
                 editor={dateEditor}
-                options={{}}
+                options={{ timeZone: "UTC" }}
                 current="2026-10-02"
                 display="Formatted date"
                 cellProps={{ align: "left" }}
@@ -166,7 +163,6 @@ describe("editor composition", () => {
                 colKey="date"
                 label="Date"
                 align="left"
-                timeZone="UTC"
               />
             </Table.Row>
           </Table.Body>

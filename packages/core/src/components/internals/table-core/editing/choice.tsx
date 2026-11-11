@@ -42,12 +42,12 @@ const isChoiceEqual = (a: Choice, b: Choice) => a.value === b.value;
 const choiceLabel = (choice: Choice) => choice.label;
 
 type ChoiceEditorOptions = {
-  choices: readonly { value: string; label: string }[];
+  options: readonly { value: string; label: string }[];
   renderOption?: (value: string, label: string) => ReactNode;
 };
 
 function ChoiceEditor({
-  options: { choices, renderOption },
+  options: { options, renderOption },
   current,
   change = () => undefined,
   commit,
@@ -72,14 +72,14 @@ function ChoiceEditor({
   const value = toTextValue(current);
   const noneLabel = labels.none;
   // Keyed on content: rebuilding columns must not reset the highlight mid-search.
-  const choicesKey = (choices ?? []).map((c) => `${c.value}\u0000${c.label}`).join("\u0001");
+  const optionsKey = (options ?? []).map((c) => `${c.value}\u0000${c.label}`).join("\u0001");
   const items = useMemo<Choice[]>(
     () => [
       { value: null, label: noneLabel },
-      ...(choices ?? []).map((c) => ({ value: c.value, label: String(c.label) })),
+      ...(options ?? []).map((c) => ({ value: c.value, label: String(c.label) })),
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `choicesKey` stands for `choices`.
-    [choicesKey, noneLabel],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `optionsKey` stands for `options`.
+    [optionsKey, noneLabel],
   );
 
   const selected = items.find((item) => item.value === value) ?? null;

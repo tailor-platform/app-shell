@@ -51,7 +51,6 @@ export function useEditorProps<TRow extends Record<string, unknown>>({
     renderError: renderError ? (error) => renderError({ row, error }) : undefined,
     interceptErrors: col.edit?.error !== false,
     truncate: col.truncate,
-    timeZone,
     slotPrefix: "data-table",
     labels: {
       notANumber: t("editNotANumber"),

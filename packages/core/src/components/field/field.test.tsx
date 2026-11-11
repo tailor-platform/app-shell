@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { renderRHFForm } from "../../../tests/rhf-test-utils";
 import { Checkbox } from "../checkbox";
 import { Select } from "../select";
+import { Tree } from "../tree";
 import { Field } from "./field";
 
 afterEach(() => {
@@ -227,6 +228,21 @@ describe("Field", () => {
         </Field.Root>,
       );
       expect(warn.mock.calls[0][0]).toContain("render={<Select.Async />}");
+      warn.mockRestore();
+    });
+
+    it("warns for Tree", () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      render(
+        <Field.Root name="bins">
+          <Field.Control
+            render={
+              <Tree selectionMode="checkbox" items={[]} mapItem={() => ({ key: "", label: "" })} />
+            }
+          />
+        </Field.Root>,
+      );
+      expect(warn.mock.calls[0][0]).toContain("render={<Tree />}");
       warn.mockRestore();
     });
 

@@ -151,6 +151,14 @@ type SelectAsyncFetcher<T> = (options: { signal: AbortSignal }) => Promise<T[]>;
 
 If the fetcher throws or rejects, `Select.Async` renders a built-in inline error state in the dropdown — the `errorText` message plus a **Retry** button that re-runs the fetch — instead of the misleading empty state. Aborted requests (the dropdown closed before the fetch settled) are ignored, and announcements are de-duped per outage. Pass `onFetchError` to run a side effect (logging, toast) — it fires once per outage and re-arms after the next successful fetch.
 
+## Long Lists
+
+The list is at most 15rem tall and scrolls when there are more options. To change the height, compose with `Select.Parts` and pass a plain class with a trailing `!` to `Content`:
+
+```tsx
+<Select.Parts.Content className="max-h-96!">{/* items */}</Select.Parts.Content>
+```
+
 ## Low-level Primitives
 
 `Select.Parts` exposes the styled sub-components for fully custom compositions:

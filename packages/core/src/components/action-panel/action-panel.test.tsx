@@ -1,0 +1,394 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
+import { ActionPanel } from "./action-panel";
+import { AppShellConfigContext, buildConfigurations } from "../../contexts/appshell-context";
+import {
+  CommandPaletteProvider,
+  useCommandPaletteActions,
+} from "../../contexts/command-palette-context";
+
+const MockIcon = () => <span data-testid="mock-icon">icon</span>;
+
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <MemoryRouter>
+    <CommandPaletteProvider>{children}</CommandPaletteProvider>
+  </MemoryRouter>
+);
+
+afterEach(() => {
+  cleanup();
+});
+
+const renderActionPanel = (props: React.ComponentProps<typeof ActionPanel>, locale = "en") =>
+  render(
+    <AppShellConfigContext.Provider
+      value={{ configurations: buildConfigurations({ modules: [], locale }) }}
+    >
+      <ActionPanel {...props} />
+    </AppShellConfigContext.Provider>,
+    { wrapper },
+  );
+
+describe("ActionPanel", () => {
+  it("renders title", () => {
+    renderActionPanel({ title: "Actions", actions: [] });
+    const heading = screen.getByRole("heading", { name: "Actions" });
+    expect(heading).toBeDefined();
+    expect(heading.textContent).toBe("Actions");
+  });
+
+  it("renders empty state when no actions", () => {
+    renderActionPanel({ title: "Actions", actions: [] });
+    const message = screen.getByText("No actions available");
+    expect(message.className).toContain("astw:text-body-md");
+    expect(message.parentElement?.getAttribute("data-slot")).toBe("card-content");
+    expect(message.parentElement?.className).toContain("astw:px-8");
+    expect(message.parentElement?.className).toContain("astw:pt-2");
+    expect(message.parentElement?.className).toContain("astw:pb-6");
+  });
+
+  it.each([
+    ["en", "No actions available"],
+    ["ja", "利用可能なアクションはありません"],
+    ["fr", "No actions available"],
+  ])("localizes the default empty content for %s", (locale, message) => {
+    renderActionPanel({ title: "Actions", actions: [], emptyContent: undefined }, locale);
+
+    const content = screen.getByText(message);
+    expect(content.className).toContain("astw:text-body-md");
+    expect(content.className).toContain("astw:text-muted-foreground");
+  });
+
+  it.each(["en", "ja"])("styles a custom string instead of the %s default", (locale) => {
+    renderActionPanel(
+      {
+        title: "操作",
+        actions: [],
+        emptyContent: "利用可能な操作はありません",
+      },
+      locale,
+    );
+
+    const content = screen.getByText("利用可能な操作はありません");
+    expect(content.tagName).toBe("P");
+    expect(content.className).toContain("astw:text-body-md");
+    expect(content.className).toContain("astw:text-muted-foreground");
+    expect(content.parentElement?.getAttribute("data-slot")).toBe("card-content");
+    expect(content.parentElement?.className).toContain("astw:px-8");
+    expect(content.parentElement?.className).toContain("astw:pt-2");
+    expect(content.parentElement?.className).toContain("astw:pb-6");
+    expect(screen.queryByText("No actions available")).toBeNull();
+    expect(screen.queryByText("利用可能なアクションはありません")).toBeNull();
+  });
+
+  it("renders custom JSX without a paragraph wrapper", () => {
+    renderActionPanel({
+      title: "操作",
+      actions: [],
+      emptyContent: (
+        <div data-testid="custom-empty-state">
+          <p>利用可能な操作はありません</p>
+          <a href="/help/actions">操作について</a>
+        </div>
+      ),
+    });
+
+    expect(screen.getByText("利用可能な操作はありません")).toBeDefined();
+    expect(screen.getByRole("link", { name: "操作について" }).getAttribute("href")).toBe(
+      "/help/actions",
+    );
+    const customContent = screen.getByTestId("custom-empty-state");
+    expect(customContent.closest("p")).toBeNull();
+    expect(customContent.parentElement?.getAttribute("data-slot")).toBe("card-content");
+    expect(customContent.parentElement?.className).toContain("astw:px-8");
+    expect(customContent.parentElement?.className).toContain("astw:pt-2");
+    expect(customContent.parentElement?.className).toContain("astw:pb-6");
+    expect(screen.queryByText("No actions available")).toBeNull();
+  });
+
+  it.each([null, false, true])("renders no empty-state padding for %j", (emptyContent) => {
+    const { container } = renderActionPanel({
+      title: "Actions",
+      actions: [],
+      emptyContent,
+    });
+
+    expect(screen.queryByText("No actions available")).toBeNull();
+    const content = container.querySelector('[data-slot="card-content"]');
+    expect(content?.textContent).toBe("");
+    expect(content?.childElementCount).toBe(0);
+    expect(content?.className).toContain("astw:px-8");
+    expect(content?.className).toContain("astw:pb-4");
+    expect(content?.className).not.toContain("astw:pt-2");
+    expect(screen.getByRole("heading", { name: "Actions" })).toBeDefined();
+  });
+
+  it("does not fall back to the default for an empty string", () => {
+    renderActionPanel({ title: "Actions", actions: [], emptyContent: "" });
+    expect(screen.queryByText("No actions available")).toBeNull();
+  });
+
+  it("renders zero as custom content", () => {
+    renderActionPanel({ title: "Actions", actions: [], emptyContent: 0 });
+    expect(screen.getByText("0").getAttribute("data-slot")).toBe("card-content");
+  });
+
+  it("does not render empty content when actions are present", () => {
+    renderActionPanel({
+      title: "Actions",
+      actions: [{ key: "1", label: "Create invoice", icon: <MockIcon /> }],
+      emptyContent: <div>利用可能な操作はありません</div>,
+    });
+
+    expect(screen.getByRole("button", { name: "Create invoice" })).toBeDefined();
+    expect(screen.queryByText("利用可能な操作はありません")).toBeNull();
+    expect(screen.queryByText("No actions available")).toBeNull();
+  });
+
+  it("renders action list with buttons when onClick is provided", () => {
+    const actions = [
+      {
+        key: "1",
+        label: "Create invoice",
+        icon: <MockIcon />,
+        onClick: () => {},
+      },
+      { key: "2", label: "Edit order", icon: <MockIcon />, onClick: () => {} },
+    ];
+    const { container } = renderActionPanel({ title: "Actions", actions });
+
+    const button = screen.getByRole("button", { name: "Create invoice" });
+    expect(button.className).toContain("astw:px-3");
+    expect(screen.getByRole("list").className).toContain("astw:-mx-3");
+    expect(screen.getByRole("list").className).toContain("astw:my-0");
+    expect(screen.getByRole("list").className).not.toContain("astw:m-0");
+    expect(button.className).toContain("astw:py-2");
+    expect(button.className).toContain("astw:border-0");
+    expect(button.className).toContain("astw:text-label-md");
+    expect(container.querySelector('[data-slot="card-header"]')?.className).toContain("astw:px-8");
+    const content = container.querySelector('[data-slot="card-content"]');
+    expect(content?.className).toContain("astw:px-8");
+    expect(content?.className).toContain("astw:pb-4");
+    expect(content?.className).not.toContain("astw:pt-2");
+    expect(screen.getByRole("button", { name: "Edit order" })).toBeDefined();
+    expect(screen.getAllByTestId("mock-icon").length).toBe(2);
+  });
+
+  it("calls onClick when action button is clicked", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    renderActionPanel({
+      title: "Actions",
+      actions: [{ key: "1", label: "Do something", icon: <MockIcon />, onClick }],
+    });
+
+    await user.click(screen.getByRole("button", { name: "Do something" }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("applies disabled state to button action", () => {
+    renderActionPanel({
+      title: "Actions",
+      actions: [
+        {
+          key: "1",
+          label: "Disabled action",
+          icon: <MockIcon />,
+          onClick: () => {},
+          disabled: true,
+        },
+      ],
+    });
+
+    const button = screen.getByRole("button", { name: "Disabled action" });
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect(button).toHaveProperty("disabled", true);
+  });
+
+  it("accepts custom className", () => {
+    const { container } = renderActionPanel({
+      title: "Actions",
+      actions: [],
+      className: "custom-panel",
+    });
+    const card = container.firstChild as HTMLElement;
+    expect(card.className).toContain("custom-panel");
+  });
+
+  it("loading row is non-interactive and has aria-busy", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    renderActionPanel({
+      title: "Actions",
+      actions: [
+        {
+          key: "1",
+          label: "Submit",
+          icon: <MockIcon />,
+          onClick,
+          loading: true,
+        },
+      ],
+    });
+
+    const button = screen.getByRole("button", { name: "Submit" });
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(button).toHaveProperty("disabled", true);
+
+    await user.click(button);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("loading row shows spinner in icon slot", () => {
+    renderActionPanel({
+      title: "Actions",
+      actions: [
+        {
+          key: "1",
+          label: "Saving",
+          icon: <MockIcon />,
+          onClick: () => {},
+          loading: true,
+        },
+      ],
+    });
+
+    expect(screen.getByTestId("action-panel-spinner")).toBeDefined();
+    expect(screen.queryByTestId("mock-icon")).toBeNull();
+  });
+
+  it("disabled and loading row is non-interactive", () => {
+    renderActionPanel({
+      title: "Actions",
+      actions: [
+        {
+          key: "1",
+          label: "Action",
+          icon: <MockIcon />,
+          onClick: () => {},
+          disabled: true,
+          loading: true,
+        },
+      ],
+    });
+
+    const button = screen.getByRole("button", { name: "Action" });
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(button).toHaveProperty("disabled", true);
+  });
+});
+
+const ActionsReader = ({ onActions }: { onActions: (a: unknown[]) => void }) => {
+  const actions = useCommandPaletteActions();
+  onActions(actions);
+  return null;
+};
+
+describe("ActionPanel context registration", () => {
+  it("registers actions to CommandPaletteContext on mount", () => {
+    const onActions = vi.fn();
+
+    render(
+      <>
+        <ActionPanel
+          title="My Panel"
+          actions={[
+            {
+              key: "a1",
+              label: "Action One",
+              icon: <MockIcon />,
+              onClick: () => {},
+            },
+            {
+              key: "a2",
+              label: "Action Two",
+              icon: <MockIcon />,
+              onClick: () => {},
+            },
+          ]}
+        />
+        <ActionsReader onActions={onActions} />
+      </>,
+      { wrapper },
+    );
+
+    const lastCall = onActions.mock.calls[onActions.mock.calls.length - 1][0];
+    expect(lastCall).toHaveLength(2);
+    expect(lastCall[0].key).toBe("a1");
+    expect(lastCall[0].label).toBe("Action One");
+    expect(lastCall[0].group).toBe("My Panel");
+    expect(lastCall[1].key).toBe("a2");
+  });
+
+  it("does not register disabled or loading actions", () => {
+    const onActions = vi.fn();
+
+    render(
+      <>
+        <ActionPanel
+          title="Panel"
+          actions={[
+            { key: "ok", label: "Ok", icon: <MockIcon />, onClick: () => {} },
+            {
+              key: "disabled",
+              label: "Disabled",
+              icon: <MockIcon />,
+              onClick: () => {},
+              disabled: true,
+            },
+            {
+              key: "loading",
+              label: "Loading",
+              icon: <MockIcon />,
+              onClick: () => {},
+              loading: true,
+            },
+            { key: "no-click", label: "No Click", icon: <MockIcon /> },
+          ]}
+        />
+        <ActionsReader onActions={onActions} />
+      </>,
+      { wrapper },
+    );
+
+    const lastCall = onActions.mock.calls[onActions.mock.calls.length - 1][0];
+    expect(lastCall).toHaveLength(1);
+    expect(lastCall[0].key).toBe("ok");
+  });
+
+  it("unregisters actions when ActionPanel unmounts", () => {
+    const onActions = vi.fn();
+
+    // Use rerender so the same CommandPaletteProvider instance survives
+    const { rerender } = render(
+      <>
+        <ActionPanel
+          title="Panel"
+          actions={[
+            {
+              key: "a1",
+              label: "Action",
+              icon: <MockIcon />,
+              onClick: () => {},
+            },
+          ]}
+        />
+        <ActionsReader onActions={onActions} />
+      </>,
+      { wrapper },
+    );
+
+    // Actions registered
+    const beforeUnmount = onActions.mock.calls[onActions.mock.calls.length - 1][0];
+    expect(beforeUnmount).toHaveLength(1);
+
+    // Remove ActionPanel but keep the provider alive
+    rerender(<ActionsReader onActions={onActions} />);
+
+    const afterUnmount = onActions.mock.calls[onActions.mock.calls.length - 1][0];
+    expect(afterUnmount).toHaveLength(0);
+  });
+});

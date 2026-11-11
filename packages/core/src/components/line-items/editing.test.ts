@@ -282,7 +282,7 @@ describe("document-owned cell editing", () => {
   });
 
   it("rejects editors on the server identity property", () => {
-    const columns: LineItemsColumn<{ id: string | null }>[] = [
+    const columns: LineItemsColumn<{ id?: string | null }>[] = [
       { accessorKey: "id", edit: { editorType: "text" } },
     ];
     const store = createLineItemsDocumentStore({ columns });

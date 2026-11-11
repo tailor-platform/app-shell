@@ -26,24 +26,24 @@ const STAY_UNTIL_CLOSED: ToastDefault = { duration: Infinity, closeButton: true 
 const isErrorOptions = (result: PromiseErrorResult): result is PromiseErrorOptions =>
   typeof result === "object" && result !== null && "message" in result;
 
+const applyDefault = (
+  data: ExternalToast | undefined,
+  fallback: ToastDefault,
+): ExternalToast | undefined => {
+  // A toast the user cannot dismiss gets no close button from Sonner (it draws one that does
+  // nothing) and must not stay open by default either, or nothing but `toast.dismiss(id)` ends
+  // it. It keeps Sonner's defaults; a caller that closes it in code passes `duration: Infinity`.
+  if (data?.dismissible === false) return data;
+  return {
+    ...data,
+    duration: data?.duration ?? fallback.duration,
+    closeButton: data?.closeButton ?? fallback.closeButton,
+  };
+};
+
 const createToast = (defaults: ToastDefaults): Toast => {
   const errorDefault = defaults.error ?? STAY_UNTIL_CLOSED;
   const actionDefault = defaults.action ?? STAY_UNTIL_CLOSED;
-
-  const applyDefault = (
-    data: ExternalToast | undefined,
-    fallback: ToastDefault,
-  ): ExternalToast | undefined => {
-    // A toast the user cannot dismiss gets no close button from Sonner (it draws one that does
-    // nothing) and must not stay open by default either, or nothing but `toast.dismiss(id)` ends
-    // it. It keeps Sonner's defaults; a caller that closes it in code passes `duration: Infinity`.
-    if (data?.dismissible === false) return data;
-    return {
-      ...data,
-      duration: data?.duration ?? fallback.duration,
-      closeButton: data?.closeButton ?? fallback.closeButton,
-    };
-  };
 
   const withActionDefaults = (data?: ExternalToast): ExternalToast | undefined => {
     if (data?.action) return applyDefault(data, actionDefault);

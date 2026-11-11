@@ -535,9 +535,9 @@
       "symbols": ["DefaultSidebar", "DefaultSidebarProps"],
       "hashes": {
         "typeSurface": "48705640a924a509",
-        "outline": "b87f4c0a97cb16d5",
+        "outline": "52ae5de7c9328224",
         "snapshot": null,
-        "outputMd": "8e24da61e95b6434",
+        "outputMd": "9b1672c71b6db3ff",
         "examples": null
       }
     },
@@ -1283,9 +1283,9 @@
       "symbols": ["SidebarGroup", "SidebarGroupProps"],
       "hashes": {
         "typeSurface": "cc25e488e6896569",
-        "outline": "e79fb25ae1150e98",
+        "outline": "3034121b99170a52",
         "snapshot": null,
-        "outputMd": "a36192df64f16adc",
+        "outputMd": "370eccb532278bd1",
         "examples": null
       }
     },
@@ -1351,9 +1351,9 @@
       "symbols": ["SidebarSection", "SidebarSectionProps"],
       "hashes": {
         "typeSurface": "ce68c5cffbff714e",
-        "outline": "3037879cbe56ff52",
+        "outline": "af56f554ff9caec3",
         "snapshot": null,
-        "outputMd": "8ab89452180de4e1",
+        "outputMd": "281cfa2dcbff14be",
         "examples": null
       }
     },
@@ -1419,9 +1419,9 @@
       "symbols": ["Tabs"],
       "hashes": {
         "typeSurface": "f6795191b952e110",
-        "outline": "b73ba87ed529e09d",
-        "snapshot": "655d96c1394a3ace",
-        "outputMd": "30bb32e57fc78bd9",
+        "outline": "833da61f24d1318a",
+        "snapshot": "43ed7df4bd0f3c75",
+        "outputMd": "b8c595669cbe7353",
         "examples": "b07f258088e81cac"
       }
     },
@@ -1825,7 +1825,7 @@
     "packages/core/skills/app-shell-patterns/references/components/data-table.md": "5245e4f3e598fbd4",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "df6777c49ca5c7e2",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
-    "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "8e24da61e95b6434",
+    "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "9b1672c71b6db3ff",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "5ff9a70e8eea88dd",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
@@ -1840,13 +1840,13 @@
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "e1835371d2ef76fc",
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "0f16983ba71be0bf",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "a36192df64f16adc",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "370eccb532278bd1",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "af971809e42dfdb8",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "8ab89452180de4e1",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "281cfa2dcbff14be",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",
-    "packages/core/skills/app-shell-patterns/references/components/tabs.md": "30bb32e57fc78bd9",
+    "packages/core/skills/app-shell-patterns/references/components/tabs.md": "b8c595669cbe7353",
     "packages/core/skills/app-shell-patterns/references/components/text.md": "24262ae6cb49a138",
     "packages/core/skills/app-shell-patterns/references/components/textarea.md": "c940bc01cd573334",
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",

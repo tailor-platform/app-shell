@@ -92,22 +92,28 @@ Pick the maximum by where the form lives: `2` for dialogs, sheets and most pages
 
 ## Field widths
 
-Every field takes one column unless it sets `span` on `Field.Root` or `Fieldset.Root` (`2`, `3` or `"full"`), or on `FormLayout.Item` for other content. A span never exceeds the columns currently shown — `span={3}` in a two-column grid covers both columns.
+Every field takes one column unless it sets `span` on `Field.Root` or `Fieldset.Root` (`2`, `3` or `"full"`), or on `FormLayout.Item` for other content. Size each field with these rules:
+
+1. **Size by the value, not the label.** Ask how long the value the user types or picks usually is.
+2. **One short value takes one column** — the default. Codes, numbers, amounts, dates, statuses, single picks from a list, emails, phone numbers.
+3. **A value that often runs long, or that is two values, takes two columns** (`span={2}`): full names and titles, a street line, a date range.
+4. **Free text, sentences and anything that isn't a single value take the full row** (`span="full"`): notes and descriptions, a checkbox or switch with a sentence label, a group of checkboxes, a file upload, an alert, a table, totals. A field holding a `Textarea` does this on its own; give it a `span` to keep it narrower.
+5. **Keep related fields together.** Fields that belong together sit side by side in source order (currency and amount, city and postal code); a group that must stay together, such as an address, goes in a `Fieldset.Root span={2}` with its own `FormLayout`.
+6. **Don't widen a field to fill a row.** An empty cell at the end of a row is fine; a stretched short field reads as a longer value than it is.
+7. **Don't size for small screens.** Spans are capped at the columns shown — `span={3}` in a two-column grid covers both — and every field takes the full width in a narrow container, so no field needs a mobile variant.
+
+How the rules apply to common fields:
+
+| Field                                                                 | Width                                               | Rule |
+| --------------------------------------------------------------------- | --------------------------------------------------- | ---- |
+| Text, select, combobox, date, number, money, code, email, phone       | One column (default)                                | 2    |
+| Names and titles (legal name, a long supplier name), date ranges      | `span={2}`                                          | 3    |
+| `Textarea` (notes, descriptions)                                      | Full row (automatic)                                | 4    |
+| Checkbox or switch with a sentence label, checkbox group, file upload | `span="full"`                                       | 4    |
+| Alerts, tables, line items, totals                                    | `FormLayout.Item span="full"`                       | 4    |
+| Address block                                                         | `Fieldset.Root span={2}` with a nested `FormLayout` | 5    |
 
 `span` only works on a **direct child** of the `FormLayout` or `FormLayout.Section` grid. The grid applies the span to its own children, because only the grid knows how many columns it is showing. A `Field.Root` wrapped in another element — a `div`, or a component of yours that renders a wrapper around it — is no longer a direct child, so its span is dropped and it takes one column. Put the `span` on the outermost element instead: use `FormLayout.Item span={2}` around the wrapper, or have your component pass `span` to the `Field.Root` it renders without wrapping it.
-
-A field holding a `Textarea` takes the full row automatically; give it a `span` to keep it narrower. For the rest, start from these widths:
-
-| Field                                                            | Width                                               | Why                                                |
-| ---------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------- |
-| Text, select, combobox, date, number, money, code, email, phone  | One column (default)                                | Short to medium values                             |
-| Names and titles (legal name, a long supplier name), date ranges | `span={2}`                                          | Values often get cut off in one column             |
-| `Textarea` (notes, descriptions)                                 | Full row (automatic)                                | Free text needs the room                           |
-| Address block                                                    | `Fieldset.Root span={2}` with a nested `FormLayout` | Lines stay grouped; two addresses sit side by side |
-| Checkbox or switch with a sentence label                         | `span="full"`                                       | Reads as a sentence, not a value                   |
-| Alerts, tables, line items, totals                               | `FormLayout.Item span="full"`                       | Not a single value                                 |
-
-Order matters too: keep related short fields next to each other (currency and amount, city and postal code) so they share a row.
 
 ## Sections
 

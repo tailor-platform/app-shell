@@ -762,9 +762,9 @@
       ],
       "hashes": {
         "typeSurface": "6210ea28649026a8",
-        "outline": "3885e81af183d636",
+        "outline": "ff671aa7c7774859",
         "snapshot": "b222cdafb62c9883",
-        "outputMd": "3ef8db15cebc4671",
+        "outputMd": "20cf2f9eb06a8423",
         "examples": "56c8f6cc9667bb78"
       }
     },
@@ -1871,7 +1871,7 @@
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "224745760083ee35",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "1c66f15802f5bb2d",
-    "packages/core/skills/app-shell-patterns/references/components/form-layout.md": "3ef8db15cebc4671",
+    "packages/core/skills/app-shell-patterns/references/components/form-layout.md": "20cf2f9eb06a8423",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
@@ -1934,6 +1934,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "930db027a28bbe24",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "fe8232d31b24aed0",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "c71ad3415b0e8f8e"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "e15439195a4c3341"
   }
 }

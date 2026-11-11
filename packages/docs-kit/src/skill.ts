@@ -1,15 +1,16 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
-import type { DocsConfig, Outline } from "./types";
+import type { Finding } from "./coverage";
+import type { DocsConfig, Outline, SkillConfig, SkillSection } from "./types";
 
 function toPosix(p: string): string {
   return p.split("\\").join("/");
 }
 
-/** Generated-doc output dir → skill reference section. Concepts/references are
- * intentionally excluded — the skill covers building UI, not framework prose. */
-const SECTION_BY_OUTDIR: Record<string, string> = {
+/** Generated-doc output dir → skill reference section. `docs/references` is
+ * intentionally excluded. */
+const SECTION_BY_OUTDIR: Record<string, SkillSection> = {
   "docs/concepts": "concepts",
   "docs/components": "components",
   "docs/api": "api",
@@ -73,9 +74,58 @@ function entryTable(list: Outline[], dir: string): string {
 
 const VERSION_PLACEHOLDER = /\{\{APP_SHELL_VERSION\}\}/g;
 
+export const SKILL_SECTIONS: readonly SkillSection[] = [
+  "concepts",
+  "components",
+  "api",
+  "patterns",
+  "pages",
+];
+
+/** Every docs output dir must reach a skill or be listed under
+ * `policy.skills.unclaimed` with a reason, so a new docs category can't
+ * silently ship to no consumer. Stale exceptions block too. */
+export function unclaimedSkillDirFindings(config: DocsConfig): Finding[] {
+  if (config.skills.length === 0) return [];
+  const findings: Finding[] = [];
+  const block = (message: string): void => {
+    findings.push({ level: "block", slug: "skill", message });
+  };
+  const claimed = new Set(config.skills.flatMap((s) => s.sections ?? SKILL_SECTIONS));
+  const unclaimed = new Map(config.unclaimedSkillDirs.map((u) => [u.dir, u]));
+  const outDirs = new Set(config.categories.map((c) => c.outDir));
+
+  for (const dir of outDirs) {
+    const section = SECTION_BY_OUTDIR[dir];
+    const isClaimed = section !== undefined && claimed.has(section);
+    const exception = unclaimed.get(dir);
+    if (isClaimed && exception) {
+      block(
+        `${dir} is listed under policy.skills.unclaimed but a skill carries it — remove the exception.`,
+      );
+    } else if (!isClaimed && !exception) {
+      block(
+        section === undefined
+          ? `${dir} has no skill section, so no skill carries it. Add it to SECTION_BY_OUTDIR in packages/docs-kit/src/skill.ts and to a skill's sections, or list it under policy.skills.unclaimed with a reason.`
+          : `${dir} (section "${section}") is in no skill's sections. Add it to a skill in outputs.skills, or list it under policy.skills.unclaimed with a reason.`,
+      );
+    }
+  }
+  for (const u of config.unclaimedSkillDirs) {
+    if (!outDirs.has(u.dir)) {
+      block(
+        `policy.skills.unclaimed lists ${u.dir}, which is not a documents.mappings dir — remove it.`,
+      );
+    } else if (!u.reason?.trim()) {
+      block(`policy.skills.unclaimed entry ${u.dir} needs a reason.`);
+    }
+  }
+  return findings;
+}
+
 /** Read the version stamped into the skill, or null when no source is configured. */
-export function readSkillVersion(repoRoot: string, config: DocsConfig): string | null {
-  const source = config.skill?.versionSource;
+export function readSkillVersion(repoRoot: string, skill: SkillConfig): string | null {
+  const source = skill.versionSource;
   if (!source) return null;
   const { version } = JSON.parse(readFileSync(join(repoRoot, source), "utf8")) as {
     version?: string;
@@ -99,12 +149,12 @@ export function stampSkill(content: string, version: string | null): string {
 /** Compute the skill and stamp it, so a bad version source fails before any write. */
 export function computeStampedSkill(
   repoRoot: string,
-  config: DocsConfig,
+  skill: SkillConfig,
   outlines: Outline[],
 ): Map<string, { content: string; stamped: string }> {
-  const version = readSkillVersion(repoRoot, config);
+  const version = readSkillVersion(repoRoot, skill);
   const files = new Map<string, { content: string; stamped: string }>();
-  for (const [p, content] of computeSkill(repoRoot, config, outlines)) {
+  for (const [p, content] of computeSkill(repoRoot, skill, outlines)) {
     files.set(p, { content, stamped: stampSkill(content, version) });
   }
   return files;
@@ -116,15 +166,14 @@ export function computeStampedSkill(
  * output needing to exist. */
 export function computeSkill(
   repoRoot: string,
-  config: DocsConfig,
+  skill: SkillConfig,
   outlines: Outline[],
 ): Map<string, string> {
   const files = new Map<string, string>();
-  const skill = config.skill;
-  if (!skill) return files;
+  const included = new Set(skill.sections ?? SKILL_SECTIONS);
   const rel = (abs: string): string => toPosix(relative(repoRoot, abs));
 
-  const sections: Record<string, Outline[]> = {
+  const sections: Record<SkillSection, Outline[]> = {
     concepts: [],
     components: [],
     api: [],
@@ -133,7 +182,7 @@ export function computeSkill(
   };
   for (const o of outlines) {
     const section = SECTION_BY_OUTDIR[o.outDir];
-    if (section) sections[section].push(o);
+    if (section && included.has(section)) sections[section].push(o);
   }
 
   // Reference docs: copy the generated markdown (docs/ is not published, so the
@@ -149,13 +198,17 @@ export function computeSkill(
 
   // Migrations: copy with relative links rewritten to absolute repo URLs, since
   // the consuming app has no docs/ tree to resolve them against.
-  const migAbs = join(repoRoot, skill.migrationsSource);
-  if (existsSync(migAbs)) {
+  const migAbs = skill.migrationsSource ? join(repoRoot, skill.migrationsSource) : null;
+  if (migAbs && existsSync(migAbs)) {
+    if (!skill.repoBlobUrl) {
+      throw new Error(`skill ${skill.outDir}: migrationsSource needs repoBlobUrl`);
+    }
+    const blobUrl = skill.repoBlobUrl;
     const body = stripFrontmatter(readFileSync(migAbs, "utf8"))
       .trim()
       .replace(
         /\]\((\.{1,2}\/[^)\s]+)\)/g,
-        (_m, target: string) => `](${skill.repoBlobUrl}/${toPosix(join("docs", target))})`,
+        (_m, target: string) => `](${blobUrl}/${toPosix(join("docs", target))})`,
       );
     files.set(rel(join(repoRoot, skill.outDir, "references", "migrations.md")), `${body}\n`);
   }

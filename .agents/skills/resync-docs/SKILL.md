@@ -57,7 +57,7 @@ For each drifting unit:
 - Never edit files under `docs/` by hand — only `*.docs.outline.md` and `*.docs.examples.tsx`. docs-browser derives its routes from `docs-manifest.json` (declarative `modules` in `App.tsx`); there are no generated route stubs.
 - One example export per token; keep them runnable (they are type-checked in CI).
 - Regenerate only what changed; a clean tree must produce a zero-diff `sync`.
-- The `app-shell-patterns` consumer skill is emitted by `docs-kit sync` (see `packages/docs-kit/src/skill.ts`) from `docs-src/` — components, hooks/api, patterns, pages, and concepts, plus the authored `docs-src/skill/SKILL.template.md` shell — so it refreshes automatically on every resync; there is no separate step.
+- The consumer skills are emitted by `docs-kit sync` (see `packages/docs-kit/src/skill.ts` and `outputs.skills` in `docs-kit.config.json`), so they refresh automatically on every resync; there is no separate step. `app-shell-patterns` is built from the generated components, hooks/api, patterns, pages and concepts plus the authored `docs-src/skill/app-shell-patterns/SKILL.template.md`; `app-shell-upgrade` is built from `docs/migrations.md` plus `docs-src/skill/app-shell-upgrade/SKILL.template.md`.
 
 ## Related
 

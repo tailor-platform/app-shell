@@ -192,7 +192,7 @@
       "hashes": {
         "typeSurface": "81040ce8342602bc",
         "outline": "b8d3f69b4adc4f13",
-        "snapshot": "714e29c5156e1f91",
+        "snapshot": "dbd3c11b7dab615d",
         "outputMd": "bd6ae01bf39d1ad6",
         "examples": "63e2a53825a527a4"
       }
@@ -294,7 +294,7 @@
       "hashes": {
         "typeSurface": "74ec02220321c626",
         "outline": "d56abfe9595252ba",
-        "snapshot": "b2d280c2ba21f456",
+        "snapshot": "6fe89974e3712977",
         "outputMd": "dfb775c7c4307409",
         "examples": "4c96b71b68808c66"
       }
@@ -430,6 +430,7 @@
         "DataTableFilterConfig",
         "DataTablePaginationProps",
         "DataTableRootProps",
+        "DataTableTreeRow",
         "DateCellEditOptions",
         "DateTimeDraft",
         "FieldMetadata",
@@ -439,6 +440,7 @@
         "FilterOperator",
         "FooterRenderContext",
         "HeaderRenderContext",
+        "HierarchyColumn",
         "MetadataFieldOptions",
         "NodeType",
         "NumberCellEditOptions",
@@ -452,6 +454,7 @@
         "SelectionActionHelpers",
         "SortConfig",
         "SortState",
+        "SubRowsOptions",
         "TableFieldName",
         "TableMetadata",
         "TableMetadataFilter",
@@ -473,10 +476,10 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "33eb2bdd6be1c774",
-        "outline": "d4d12b967d1942ba",
+        "typeSurface": "413c66caec0a0bf8",
+        "outline": "29c9dfafe80498d1",
         "snapshot": "a97e067c66e46ef6",
-        "outputMd": "0114d7644bbd65f4",
+        "outputMd": "20caedeca6838d55",
         "examples": "e7100d7517f72495"
       }
     },
@@ -532,9 +535,9 @@
       "symbols": ["DefaultSidebar", "DefaultSidebarProps"],
       "hashes": {
         "typeSurface": "48705640a924a509",
-        "outline": "b87f4c0a97cb16d5",
+        "outline": "52ae5de7c9328224",
         "snapshot": null,
-        "outputMd": "8e24da61e95b6434",
+        "outputMd": "9b1672c71b6db3ff",
         "examples": null
       }
     },
@@ -635,7 +638,7 @@
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
         "outline": "b265fed115996728",
-        "snapshot": "db7d26786cde5cfc",
+        "snapshot": "86c672f1c58f27fd",
         "outputMd": "e862d97903e8f596",
         "examples": "934c52d4e8761404"
       }
@@ -702,9 +705,9 @@
       "symbols": ["FilterRail", "FilterRailRootProps", "FilterRailSection", "useFilterRailLayout"],
       "hashes": {
         "typeSurface": "b795ce4e10be0653",
-        "outline": "d9e8930edd2a191c",
+        "outline": "a75520ebeae4769b",
         "snapshot": "ddebbf9718587cff",
-        "outputMd": "c6a48c4d8e8b0078",
+        "outputMd": "224745760083ee35",
         "examples": null
       }
     },
@@ -719,9 +722,9 @@
       "symbols": ["Form", "FormProps"],
       "hashes": {
         "typeSurface": "7b374d45d53d4535",
-        "outline": "7fefd291a00de910",
+        "outline": "32305880c11fbafa",
         "snapshot": "5d7a7904c5256f29",
-        "outputMd": "e4a66f7b1ee4aa98",
+        "outputMd": "41bbf91bfb9f41d4",
         "examples": null
       }
     },
@@ -821,9 +824,9 @@
       "symbols": ["GlobalHeaderLayout", "GlobalHeaderLayoutProps"],
       "hashes": {
         "typeSurface": "70edbc7c68dcc7aa",
-        "outline": "f921a854181d6d1c",
+        "outline": "44d1374ea9192b2e",
         "snapshot": null,
-        "outputMd": "dd2b0da3702cf8d9",
+        "outputMd": "fe86450720c4d586",
         "examples": null
       }
     },
@@ -1059,9 +1062,9 @@
       "symbols": ["Layout", "LayoutProps"],
       "hashes": {
         "typeSurface": "c7e8fec79020d657",
-        "outline": "4fe2b74f186d792a",
+        "outline": "28495e5c9c57269b",
         "snapshot": "03dedb3cc14b1eaf",
-        "outputMd": "6f956d57a15366a0",
+        "outputMd": "812a021474171686",
         "examples": "3e841d9dcde141f6"
       }
     },
@@ -1094,7 +1097,7 @@
       "hashes": {
         "typeSurface": "943616def28cafb0",
         "outline": "8f06df28129676c8",
-        "snapshot": "44c485a38e8d9eb4",
+        "snapshot": "212e64b91be708c9",
         "outputMd": "ceb4a05822538d20",
         "examples": "cff0508bb5520ae6"
       }
@@ -1127,9 +1130,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "4a3f8bfe2a04a5ce",
+        "outline": "3ad2e1124c9f5691",
         "snapshot": null,
-        "outputMd": "ef5dd9ad722f609f",
+        "outputMd": "7730433adcc0bbbf",
         "examples": null
       }
     },
@@ -1246,9 +1249,9 @@
       "symbols": ["Select", "SelectAsyncFetcher"],
       "hashes": {
         "typeSurface": "429710973dfa912b",
-        "outline": "a8b7834a8817e0d5",
-        "snapshot": "bd7e6f45871b88e7",
-        "outputMd": "b3dd3b9a58a9d290",
+        "outline": "85a352fb834a1208",
+        "snapshot": "c7aa045d22de4cc7",
+        "outputMd": "e1835371d2ef76fc",
         "examples": "1ce89cec30045466"
       }
     },
@@ -1264,7 +1267,7 @@
       "hashes": {
         "typeSurface": "e760949efcbe4c38",
         "outline": "464d91acc48f7c9d",
-        "snapshot": "429bdb8c86bb2ad6",
+        "snapshot": "8c75bb4dad18f7b8",
         "outputMd": "1f81ebd562c50371",
         "examples": "b0eebb8c5e2219dc"
       }
@@ -1280,9 +1283,9 @@
       "symbols": ["SidebarGroup", "SidebarGroupProps"],
       "hashes": {
         "typeSurface": "cc25e488e6896569",
-        "outline": "e79fb25ae1150e98",
+        "outline": "3034121b99170a52",
         "snapshot": null,
-        "outputMd": "a36192df64f16adc",
+        "outputMd": "370eccb532278bd1",
         "examples": null
       }
     },
@@ -1314,9 +1317,9 @@
       "symbols": ["SidebarLayout", "SidebarLayoutProps"],
       "hashes": {
         "typeSurface": "bbc777033634cea5",
-        "outline": "25ad69b3d94bffc9",
+        "outline": "751ddd6bd3fe3ba6",
         "snapshot": null,
-        "outputMd": "e50b2d649289d772",
+        "outputMd": "af971809e42dfdb8",
         "examples": null
       }
     },
@@ -1348,9 +1351,9 @@
       "symbols": ["SidebarSection", "SidebarSectionProps"],
       "hashes": {
         "typeSurface": "ce68c5cffbff714e",
-        "outline": "3037879cbe56ff52",
+        "outline": "af56f554ff9caec3",
         "snapshot": null,
-        "outputMd": "8ab89452180de4e1",
+        "outputMd": "281cfa2dcbff14be",
         "examples": null
       }
     },
@@ -1382,9 +1385,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "df7b4c8eda7a0a26",
+        "outline": "b84371c49b059421",
         "snapshot": null,
-        "outputMd": "738de43e7c54adf6",
+        "outputMd": "18b382f6774e7682",
         "examples": "4d19f4f688e0f0ac"
       }
     },
@@ -1416,9 +1419,9 @@
       "symbols": ["Tabs"],
       "hashes": {
         "typeSurface": "f6795191b952e110",
-        "outline": "b73ba87ed529e09d",
-        "snapshot": "655d96c1394a3ace",
-        "outputMd": "30bb32e57fc78bd9",
+        "outline": "833da61f24d1318a",
+        "snapshot": "43ed7df4bd0f3c75",
+        "outputMd": "b8c595669cbe7353",
         "examples": "b07f258088e81cac"
       }
     },
@@ -1519,9 +1522,40 @@
       "hashes": {
         "typeSurface": "d652b740db9471c7",
         "outline": "eea5aed5cf4c8f33",
-        "snapshot": "22f8d6be85ad8f80",
+        "snapshot": "19ed635d615f04af",
         "outputMd": "113c95b2995917ed",
         "examples": "87b93974e65d3a07"
+      }
+    },
+    "tree": {
+      "slug": "tree",
+      "kind": "code-backed",
+      "outline": "docs-src/components/tree.docs.outline.md",
+      "output": "docs/components/tree.md",
+      "examples": null,
+      "sources": [
+        "packages/core/src/components/tree/**",
+        "packages/core/src/lib/tree/**",
+        "packages/core/src/components/tree-picker/**"
+      ],
+      "claims": [],
+      "symbols": [
+        "Tree",
+        "TreeChangeDetails",
+        "TreeMappedItem",
+        "TreePicker",
+        "TreePickerProps",
+        "TreeProps",
+        "TreeRowState",
+        "TreeSelectedItem",
+        "TreeSelectionStrategy"
+      ],
+      "hashes": {
+        "typeSurface": "95d4d96e2c7cad05",
+        "outline": "6bf693a08fb6db9f",
+        "snapshot": "e63b60420ec5113f",
+        "outputMd": "11c3358163ce9216",
+        "examples": null
       }
     },
     "use-ai-chat": {
@@ -1771,7 +1805,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "5f77dda61ce9abd4",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "738de43e7c54adf6",
+    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "18b382f6774e7682",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "03362008aa77d4cf",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "1a2bb081c3e34482",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "82313d5b6fe140d2",
@@ -1788,36 +1822,37 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "0114d7644bbd65f4",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "20caedeca6838d55",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "df6777c49ca5c7e2",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
-    "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "8e24da61e95b6434",
+    "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "9b1672c71b6db3ff",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "e862d97903e8f596",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
-    "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "c6a48c4d8e8b0078",
-    "packages/core/skills/app-shell-patterns/references/components/form.md": "e4a66f7b1ee4aa98",
-    "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "dd2b0da3702cf8d9",
+    "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "224745760083ee35",
+    "packages/core/skills/app-shell-patterns/references/components/form.md": "41bbf91bfb9f41d4",
+    "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "fe86450720c4d586",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",
-    "packages/core/skills/app-shell-patterns/references/components/layout.md": "6f956d57a15366a0",
+    "packages/core/skills/app-shell-patterns/references/components/layout.md": "812a021474171686",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "ceb4a05822538d20",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "5a1c557768c6590f",
-    "packages/core/skills/app-shell-patterns/references/components/select.md": "b3dd3b9a58a9d290",
+    "packages/core/skills/app-shell-patterns/references/components/select.md": "e1835371d2ef76fc",
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "1f81ebd562c50371",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "a36192df64f16adc",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "370eccb532278bd1",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "e50b2d649289d772",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "8ab89452180de4e1",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "af971809e42dfdb8",
+    "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "281cfa2dcbff14be",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",
-    "packages/core/skills/app-shell-patterns/references/components/tabs.md": "30bb32e57fc78bd9",
+    "packages/core/skills/app-shell-patterns/references/components/tabs.md": "b8c595669cbe7353",
     "packages/core/skills/app-shell-patterns/references/components/text.md": "24262ae6cb49a138",
     "packages/core/skills/app-shell-patterns/references/components/textarea.md": "c940bc01cd573334",
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "699249c9452485ab",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "91d70b140c7bb747",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "113c95b2995917ed",
+    "packages/core/skills/app-shell-patterns/references/components/tree.md": "11c3358163ce9216",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "8d4fc931339d9a3f",
     "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "daf6c93e7285ee88",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",
@@ -1856,7 +1891,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "930db027a28bbe24",
-    "packages/core/skills/app-shell-patterns/references/migrations.md": "e0286979718e2769",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "2c900e3b4d203b31"
+    "packages/core/skills/app-shell-patterns/references/migrations.md": "fe8232d31b24aed0",
+    "packages/core/skills/app-shell-patterns/SKILL.md": "0e6c9be8c4ece7bc"
   }
 }

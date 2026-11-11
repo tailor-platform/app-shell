@@ -175,6 +175,16 @@ export { useOverrideBreadcrumb } from "./hooks/use-override-breadcrumb";
 export { Alert, alertVariants, type AlertProps } from "./components/alert";
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export type { BadgeVariant, BadgeOptions } from "./components/badge-list";
+export {
+  Tree,
+  type TreeChangeDetails,
+  type TreeMappedItem,
+  type TreeProps,
+  type TreeRowState,
+  type TreeSelectedItem,
+  type TreeSelectionStrategy,
+} from "./components/tree";
+export { TreePicker, type TreePickerProps } from "./components/tree-picker";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export {
   ActivityCard,
@@ -323,12 +333,15 @@ export {
   type Column,
   type DataTableData,
   type DataTableFilterConfig,
+  type DataTableTreeRow,
   type HeaderRenderContext,
   type FooterRenderContext,
   type DataTableAction,
   type RowAction,
   type SelectionAction,
   type SelectionActionHelpers,
+  type SubRowsOptions,
+  type HierarchyColumn,
   type UseDataTableOptions,
   type UseDataTableReturn,
   type MetadataFieldOptions,

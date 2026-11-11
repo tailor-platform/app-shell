@@ -27,7 +27,7 @@ afterEach(() => {
 });
 
 /**
- * Force a true desktop width (>= 1200px) so `isIconMode` (tablet) is false —
+ * Force a true desktop width (>= 1200px) so `isTablet` is false.
  * the default test width lands in the tablet range, which forces the icon rail.
  */
 const stubDesktopViewport = () => {

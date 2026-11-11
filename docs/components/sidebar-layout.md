@@ -48,12 +48,13 @@ This gives you:
 
 ### Common props
 
-| Prop          | Type              | Default                            | Description                                                                                                  |
-| ------------- | ----------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `sidebar`     | `React.ReactNode` | `<SidebarLayout.DefaultSidebar />` | Replaces the entire sidebar region.                                                                          |
-| `defaultOpen` | `boolean`         | `true`                             | Whether the sidebar starts expanded on desktop.                                                              |
-| `collapsible` | `boolean`         | `true`                             | Whether the sidebar can be collapsed. When `false`, toggle controls are hidden and `defaultOpen` is ignored. |
-| `topBar`      | `React.ReactNode` | -                                  | Full-width bar above both the sidebar and the content region.                                                |
+| Prop               | Type                                                         | Default                            | Description                                                                                                                                        |
+| ------------------ | ------------------------------------------------------------ | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sidebar`          | `React.ReactNode`                                            | `<SidebarLayout.DefaultSidebar />` | Replaces the entire sidebar region.                                                                                                                |
+| `defaultOpen`      | `boolean`                                                    | `true`                             | Whether the sidebar starts expanded on desktop. Ignored in `"fixed"` and `"resize"` modes.                                                         |
+| `sidebarBehaviour` | `"fixed" \| "collapse" \| "resize" \| "collapse-and-resize"` | `"collapse-and-resize"`            | Selects the permitted desktop operations. Mobile/tablet drawer access is independent of this setting.                                              |
+| `collapsible`      | `boolean`                                                    | -                                  | Deprecated compatibility prop: explicit `false` maps to `"fixed"` and explicit `true` to `"collapse"`. Cannot be combined with `sidebarBehaviour`. |
+| `topBar`           | `React.ReactNode`                                            | -                                  | Full-width bar above both the sidebar and the content region.                                                                                      |
 
 ### Default content mode
 
@@ -73,6 +74,61 @@ Use this when you need to compose your own columns beside the sidebar.
 | `body` | `React.ReactNode` | required | Replaces everything to the right of the sidebar. Compose it with `ContentContainer`, `Outlet`, and `Trigger`. |
 
 `body` is mutually exclusive with `header` and `children`, because it replaces the region those props normally describe.
+
+## Resizing the sidebar
+
+`sidebarBehaviour` selects the desktop operations. It defaults to `"collapse-and-resize"`:
+
+| Mode                    | Collapse | Resize |
+| ----------------------- | -------- | ------ |
+| `"fixed"`               | No       | No     |
+| `"collapse"`            | Yes      | No     |
+| `"resize"`              | No       | Yes    |
+| `"collapse-and-resize"` | Yes      | Yes    |
+
+```tsx
+<SidebarLayout />; // Both operations are enabled by default
+<SidebarLayout sidebarBehaviour="fixed" />;
+<SidebarLayout sidebarBehaviour="collapse" />;
+<SidebarLayout sidebarBehaviour="resize" />;
+<SidebarLayout sidebarBehaviour="collapse-and-resize" />;
+```
+
+`"fixed"` and `"resize"` always keep the desktop sidebar expanded, ignore `defaultOpen`, and make `useAppShellSidebar().setOpen()` inert. They hide desktop collapse controls and do not intercept the desktop toggle shortcut. `"collapse"` has toggle controls but no resize handle.
+
+All modes keep the layout's normal mobile/tablet drawer and icon-rail overlay presentation. The trigger, `toggle()`, and shortcut can still open the full menu when desktop collapsing is disabled. These responsive visibility states are independent of desktop expansion.
+
+### Deprecated `collapsible`
+
+The existing boolean remains supported but is deprecated. Explicit `false` maps to `"fixed"`; explicit `true` maps to `"collapse"`. Omitting both props uses the new `"collapse-and-resize"` default. TypeScript rejects specifying both props together.
+
+```tsx
+// Before
+<SidebarLayout collapsible={false} />;
+
+// After
+<SidebarLayout sidebarBehaviour="fixed" />;
+```
+
+This intentionally changes the responsive presentation of legacy `collapsible={false}`: it no longer forces a fixed sidebar on mobile/tablet. It keeps desktop fixed while using the normal responsive drawer/overlay. A completely custom `sidebar` still owns its own presentation and sizing.
+
+### Resize interaction
+
+The initial width is 256px. In `"resize"` and `"collapse-and-resize"` modes, the whole outer edge of the expanded desktop sidebar is a resize handle. Hovering it shows the resize cursor and a small pill beside the border that follows the pointer. Drag the edge, or focus the handle and use Left/Right arrows (16px steps), Home, or End (480px). Double-click restores the default 256px width.
+
+In `"resize"` mode, dragging follows the pointer and clamps to 192–480px without collapse resistance. Home and Left at the minimum keep the sidebar at 192px; double-clicking at 256px does not collapse it.
+
+In `"collapse-and-resize"` mode, Home or Left at the minimum collapses the sidebar, and double-clicking at 256px collapses it. The collapsed desktop sidebar keeps its handle. Double-clicking it or using Enter/Space restores 256px; a single pointer click does nothing.
+
+In `"collapse-and-resize"` mode, dragging uses a position-based resistance curve, not a delayed CSS transition. Between the collapsed width and the minimum expanded width (192px), most of the interval uses a 25% movement gain: moving the pointer 10px moves the edge only 2.5px. In the final quarter near the opposite boundary, a smooth position-based blend catches up to the pointer. The edge stops when the pointer stops; it does not catch up over time. At 192px and above it follows the pointer 1:1, up to 480px. Shrinking through the same range resists toward the collapsed position. It collapses slightly early, when the pointer enters the final 20% of that interval, with the curve already meeting the collapsed width at that point. The same pointer stays captured across both transitions, without a jump to 256px.
+
+With collapsing enabled, releasing inside the resistance range settles back to the current mode's boundary (collapsed width or 192px).
+
+Live drag pixels are applied through CSS custom properties rather than React state on every pointer movement. React commits the width at mode changes and when the gesture ends; ARIA values stay current during dragging. Width changes still require browser layout because the content column resizes live.
+
+Width is not persisted across remounts or reloads. The icon rail keeps its existing collapsed width. Mobile drawers and tablet overlays keep their existing widths and do not show handles.
+
+This applies to the built-in sidebar primitives, including `SidebarLayout.DefaultSidebar`. An arbitrary custom `sidebar` element still owns its own sizing.
 
 ## Extending the built-in header
 
@@ -162,26 +218,33 @@ Use `body` when the stock content column is too restrictive and you need your ow
 
 ## Reading and controlling the sidebar
 
-Use `useAppShellSidebar()` to read and control the sidebar state instead of observing internal DOM attributes or clicking the trigger through the DOM.
+Use `useAppShellSidebar()` to read and control the sidebar state instead of observing internal DOM attributes or clicking the trigger through the DOM. It also exposes the effective `sidebarBehaviour`, already normalized from either public prop, so custom sidebars do not need to handle the deprecated boolean themselves.
+
+`open` and `setOpen()` describe desktop expansion. Drawer visibility is separate: `toggle()` selects the mobile drawer, tablet overlay, or desktop state according to the viewport. The four existing hook fields (`open`, `isMobile`, `setOpen`, and `toggle`) remain available.
 
 ```tsx
 import { useAppShellSidebar } from "@tailor-platform/app-shell";
 
 function CustomHeader() {
-  const { open, isMobile, toggle } = useAppShellSidebar();
+  const { sidebarBehaviour, open, isMobile, toggle } = useAppShellSidebar();
 
   return (
     <div className="flex items-center justify-between border-b px-4 py-3">
       <button type="button" onClick={toggle}>
-        {open ? "Hide navigation" : "Show navigation"}
+        Toggle navigation
       </button>
-      <span>{isMobile ? "Mobile" : "Desktop"}</span>
+      <span>
+        {sidebarBehaviour}: {open ? "Desktop expanded" : "Desktop collapsed"}
+      </span>
+      <span>{isMobile ? "Mobile" : "Non-mobile"}</span>
     </div>
   );
 }
 ```
 
-Outside `SidebarLayout`, the hook returns a safe fallback (`open: true`, `isMobile: false`, no-op setters) rather than throwing.
+Outside `SidebarLayout`, the hook returns a safe fallback (`sidebarBehaviour: "fixed"`, `open: true`, `isMobile: false`, no-op actions) rather than throwing. This fallback describes the absence of a managed sidebar; it is not the layout's default mode.
+
+The desktop capabilities can be derived from the reported mode: `"collapse"` and `"collapse-and-resize"` permit collapse, while `"resize"` and `"collapse-and-resize"` permit resizing. Reading this setting does not automatically add resize behavior to arbitrary custom markup.
 
 ## Reusing the built-in breadcrumb
 

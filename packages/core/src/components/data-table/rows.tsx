@@ -7,7 +7,8 @@ import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Menu } from "@/components/menu";
 import { Tooltip } from "@/components/tooltip";
-import type { RowAction, RowExpansionOptions } from "./types";
+import type { DataTableTreeRow, RowAction, RowExpansionOptions } from "./types";
+import { SubRowsCellContent } from "./sub-rows-cell";
 import { getCellValue, createTypedCellRenderer } from "./cell-renderers";
 import { DataTableCellContextMenu, getCellContextValue } from "./context-menu";
 import { useCellContextMenu } from "./use-cell-context-menu";
@@ -17,7 +18,8 @@ import { useCellEditNavigation } from "./editing/use-navigation";
 import { RowExpandToggle, DataTableExpandedRow } from "./expanded-row";
 import { useDataTableT } from "./i18n";
 import {
-  SELECTION_WIDTH,
+  selectionCellBase,
+  treeCellPadding,
   EXPAND_WIDTH,
   ACTIONS_WIDTH,
   pinCellProps,
@@ -39,6 +41,14 @@ interface DataTableRowsProps<TRow extends Record<string, unknown>> {
   /** Optional — `DataTableContextValue` may be hand-constructed without it. */
   isRowExpanded?: (row: TRow) => boolean;
   toggleRowExpansion?: (row: TRow) => void;
+  /** With sub-rows: the rows to render, each with its depth and open state. */
+  treeRows?: DataTableTreeRow<TRow>[];
+  /** With sub-rows: the column that carries the indent and caret. */
+  treeColumnKey?: string;
+  toggleSubRows?: (row: TRow) => void;
+  /** With propagating selection: the checkbox sits in the tree column. */
+  selectionInTree?: boolean;
+  getRowCheckState?: (row: TRow) => { checked: boolean; indeterminate: boolean };
 }
 
 /** @internal */
@@ -55,9 +65,15 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   rowExpansion,
   isRowExpanded,
   toggleRowExpansion,
+  treeRows,
+  treeColumnKey,
+  toggleSubRows,
+  selectionInTree = false,
+  getRowCheckState,
 }: DataTableRowsProps<TRow>) {
   const t = useDataTableT();
   const baseId = useId();
+  const besideTree = treeRows !== undefined;
   const { value: timeZone } = useTimeZone();
   const hasExpand = !!rowExpansion;
   const { ordered, keys, placements, selection, expand, actions } = pinLayout;
@@ -82,10 +98,17 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   // Namespaced so an id-less row's index fallback can't collide with a real
   // id of the same digits — React reconciles duplicate keys by position,
   // pairing a detail panel with the wrong row.
-  const rowKeys = rows.map((row, rowIndex) => {
+  // With sub-rows the rendered list is the open tree, and a row's key is its
+  // position in it (one id can't repeat in a row's own ancestry, but the same
+  // row object can sit under two parents).
+  const items: DataTableTreeRow<TRow>[] =
+    treeRows ?? rows.map((row) => ({ row, depth: 0, hasSubRows: false, expanded: false, key: "" }));
+  const rowKeys = items.map(({ row, key }, rowIndex) => {
+    if (treeRows) return `tree:${key}`;
     const rowId = (row as Record<string, unknown>)["id"];
     return rowId != null ? `id:${String(rowId)}` : `idx:${rowIndex}`;
   });
+  const selectionEnabled = !!toggleRowSelection;
   // Tab / Shift+Tab move between editable cells in the order they render.
   navigation.setOrder(rowKeys, ordered?.map((col) => keys.get(col) as string) ?? []);
   // In a table people edit, every data cell says what a click does: editors
@@ -96,9 +119,11 @@ function DataTableRows<TRow extends Record<string, unknown>>({
 
   return (
     <>
-      {rows.map((row, rowIndex) => {
+      {items.map((item, rowIndex) => {
+        const { row } = item;
         const rowId = (row as Record<string, unknown>)["id"];
-        const selected = isRowSelected?.(row) ?? false;
+        const checkState = getRowCheckState?.(row);
+        const selected = checkState?.checked ?? isRowSelected?.(row) ?? false;
         const rowKey = rowKeys[rowIndex];
         // Expansion is keyed by id, so a row without one gets no chevron at all
         // rather than a disabled one — it must never be un-toggleable (D5).
@@ -115,12 +140,12 @@ function DataTableRows<TRow extends Record<string, unknown>>({
         const dataRow = (
           <Table.Row
             data-slot="data-table-row"
-            aria-selected={hasSelection ? selected : undefined}
+            aria-selected={selectionEnabled ? selected : undefined}
             // `Table.Row` styles the selected background off `data-[state=selected]`,
             // so set it here too. Without it, only the pinned cells (which carry
             // their own `group-aria-selected:bg-muted`) tint on selection, leaving
             // the scrollable cells un-highlighted. `aria-selected` stays for a11y.
-            data-state={hasSelection && selected ? "selected" : undefined}
+            data-state={selectionEnabled && selected ? "selected" : undefined}
             className={cn("astw:group", onClickRow && "astw:cursor-pointer")}
             onClick={onClickRow ? () => onClickRow(row) : undefined}
           >
@@ -129,7 +154,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               (() => {
                 const { style, className } = pinCellProps(
                   selection,
-                  { style: { width: SELECTION_WIDTH }, className: "astw:pl-3!" },
+                  selectionCellBase(besideTree),
                   "body",
                 );
                 return (
@@ -183,8 +208,12 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                   `[DataTable] Column "${key}" has an \`edit\` config, but a row has no \`id\`. Rows without an \`id\` are shown read-only.`,
                 );
               }
+              const isTreeColumn = treeRows !== undefined && key === treeColumnKey;
               const editable =
                 editableColumn &&
+                // The tree column's cell also holds the indent and caret, so it
+                // stays read-only rather than handing the whole cell to an editor.
+                !isTreeColumn &&
                 rowId != null &&
                 // A badge dropdown picks one value; a cell holding several stays
                 // read-only rather than have its list replaced by a single pick.
@@ -204,6 +233,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                   },
                   className: cn(
                     resolveAlign(col) === "right" && "astw:text-right",
+                    isTreeColumn && treeCellPadding(!hasSelection),
                     // Keep the width constraint on the cell, but move the
                     // `overflow: hidden` truncation to an inner span (below) — a
                     // truncating cell would otherwise clip the freeze-shadow
@@ -217,7 +247,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               // A read-only cell of a dropdown / date column keeps the icon's
               // space like its editable neighbours, so the column's width never shifts.
               const iconSpace = editableColumn && hasEditorIcon(col);
-              const cellBody =
+              const ownBody =
                 col.truncate || iconSpace ? (
                   <span
                     className={cn(
@@ -231,6 +261,33 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                 ) : (
                   content
                 );
+              let cellBody: ReactNode = ownBody;
+              if (isTreeColumn) {
+                const raw = getCellValue(row, col);
+                cellBody = (
+                  <SubRowsCellContent
+                    depth={item.depth}
+                    hasSubRows={item.hasSubRows && rowId != null}
+                    expanded={item.expanded}
+                    label={
+                      typeof raw === "string" || typeof raw === "number" ? String(raw) : undefined
+                    }
+                    onToggle={() => toggleSubRows?.(row)}
+                    selection={
+                      selectionInTree && toggleRowSelection
+                        ? {
+                            checked: checkState?.checked ?? selected,
+                            indeterminate: checkState?.indeterminate ?? false,
+                            disabled: rowId == null,
+                            onToggle: () => toggleRowSelection(row),
+                          }
+                        : undefined
+                    }
+                  >
+                    {ownBody}
+                  </SubRowsCellContent>
+                );
+              }
               const menuValue = getCellContextValue(row, col, content);
               const headerLabel = col.label ?? key;
 

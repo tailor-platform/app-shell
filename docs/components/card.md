@@ -7,7 +7,7 @@ description: General-purpose container with consistent styling using a compound 
 
 # Card
 
-`Card` is a general-purpose container component with a compound component API (`Card.Root`, `Card.Header`, `Card.Content`). It provides consistent surface styling (background, border, border-radius, shadow) for grouping related content.
+`Card` is a general-purpose container component with a compound component API (`Card.Root`, `Card.Header`, `Card.Content`, `Card.Footer`). It provides consistent surface styling (background, border, border-radius, shadow) for grouping related content.
 
 ## Import
 
@@ -34,11 +34,12 @@ function BasicUsage() {
 
 ## Parts
 
-| Part           | Description                                                      |
-| -------------- | ---------------------------------------------------------------- |
-| `Card.Root`    | Outer container. Renders a `<div>` with surface styling applied. |
-| `Card.Header`  | Top section with an optional title and description.              |
-| `Card.Content` | Body section with consistent padding, or edge-to-edge.           |
+| Part           | Description                                                       |
+| -------------- | ----------------------------------------------------------------- |
+| `Card.Root`    | Outer container. Renders a `<div>` with surface styling applied.  |
+| `Card.Header`  | Top section with an optional title, description, and action slot. |
+| `Card.Content` | Body section with consistent padding, or edge-to-edge.            |
+| `Card.Footer`  | Right-aligned actions with consistent padding and a top border.   |
 
 ## Card.Root Props
 
@@ -54,8 +55,9 @@ function BasicUsage() {
 | Prop          | Type              | Default | Description                                                 |
 | ------------- | ----------------- | ------- | ----------------------------------------------------------- |
 | `title`       | `React.ReactNode` | -       | Card title rendered in a `<h3>`.                            |
-| `description` | `React.ReactNode` | -       | Supplementary text rendered below the title.                |
-| `children`    | `React.ReactNode` | -       | Additional header content rendered after title/description. |
+| `description` | `React.ReactNode` | -       | Supplementary text rendered full-width below the title row. |
+| `action`      | `React.ReactNode` | -       | Actions aligned to the right of the title.                  |
+| `children`    | `React.ReactNode` | -       | Full-width content rendered after the title/description.    |
 | `className`   | `string`          | -       | Additional CSS classes.                                     |
 
 ## Card.Content Props
@@ -67,6 +69,56 @@ function BasicUsage() {
 | `padding`   | `"default"` \| `"none"` | `"default"` | `"none"` renders the content edge-to-edge — see [Edge-to-edge content](#edge-to-edge-content). |
 | `className` | `string`                | -           | Additional CSS classes                                                                         |
 | `children`  | `React.ReactNode`       | -           | Card body content                                                                              |
+
+## Card.Footer Props
+
+`Card.Footer` accepts all standard HTML `<div>` props, including `ref`.
+
+| Prop        | Type              | Default | Description                            |
+| ----------- | ----------------- | ------- | -------------------------------------- |
+| `className` | `string`          | -       | Additional CSS classes                 |
+| `children`  | `React.ReactNode` | -       | Action buttons or other footer content |
+
+The footer uses a wrapping, right-aligned flex row with vertically centered items and an 8px gap (`gap-2`). It has 24px horizontal padding (`px-6`), 16px vertical padding (`py-4`), and a top border.
+
+## Header and footer actions
+
+Use `Card.Header.action` for controls on the title row and `Card.Footer` for actions below the body:
+
+<example-preview name="header-and-footer-actions"></example-preview>
+
+```tsx
+function HeaderAndFooterActions() {
+  return (
+    <Card.Root>
+      <Card.Header
+        title="Order details"
+        description="Review the order before saving."
+        action={
+          <Button type="button" variant="outline" size="sm">
+            Edit
+          </Button>
+        }
+      />
+      <Card.Content>
+        <Text.p>Order content goes here.</Text.p>
+      </Card.Content>
+      <Card.Footer>
+        <Button type="button" variant="outline">
+          Cancel
+        </Button>
+        <Button type="button">Save</Button>
+      </Card.Footer>
+    </Card.Root>
+  );
+}
+```
+
+`action` accepts any `React.ReactNode`, including a Fragment containing multiple buttons or a select. The title is optional; without one, the action remains right-aligned. In narrow cards, actions can wrap onto another line.
+
+The description and `children` remain full-width below the title/action row. Without `action`, the existing header layout is unchanged. Use `children` for supplementary content below the title, not for title-row actions.
+
+`Card.Footer` only provides layout: it does not submit forms or implement save/cancel behavior. Set button types and handlers as appropriate for your form. It can follow either padded content or `Card.Content padding="none"`; a nested `DataTable.Footer` remains a separate region for pagination or other table controls.
 
 ## Edge-to-edge content
 
@@ -160,6 +212,8 @@ For a scrollable list, put the overflow on `Card.Content`. Rows supply their own
 ```
 
 ### Custom header content
+
+Header `children` render below the title and description. For actions beside the title, use `action` instead.
 
 ```tsx
 <Card.Root>

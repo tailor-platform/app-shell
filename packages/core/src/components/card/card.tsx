@@ -20,9 +20,25 @@ Root.displayName = "Card.Root";
 type HeaderProps = Omit<React.ComponentProps<"div">, "title"> & {
   title?: React.ReactNode;
   description?: React.ReactNode;
+  /** Actions displayed to the right of the title, wrapping when space is limited. */
+  action?: React.ReactNode;
 };
 
-function Header({ className, title, description, children, ...props }: HeaderProps) {
+function Header({ className, title, description, action, children, ...props }: HeaderProps) {
+  const hasAction = action != null && action !== false;
+  const titleElement = title && (
+    <Text.h3
+      variant="heading-md"
+      className={cn(
+        "astw:leading-none astw:text-card-foreground",
+        hasAction && "astw:min-w-0 astw:max-w-full astw:wrap-anywhere",
+      )}
+      data-slot="card-title"
+    >
+      {title}
+    </Text.h3>
+  );
+
   return (
     <div
       data-slot="card-header"
@@ -32,14 +48,21 @@ function Header({ className, title, description, children, ...props }: HeaderPro
       )}
       {...props}
     >
-      {title && (
-        <Text.h3
-          variant="heading-md"
-          className="astw:leading-none astw:text-card-foreground"
-          data-slot="card-title"
+      {hasAction ? (
+        <div
+          data-slot="card-header-title-row"
+          className="astw:flex astw:min-w-0 astw:flex-wrap astw:items-center astw:gap-2"
         >
-          {title}
-        </Text.h3>
+          {titleElement}
+          <div
+            data-slot="card-header-action"
+            className="astw:ml-auto astw:flex astw:min-w-0 astw:max-w-full astw:flex-wrap astw:items-center astw:justify-end astw:gap-2"
+          >
+            {action}
+          </div>
+        </div>
+      ) : (
+        titleElement
       )}
       {description && (
         <Text.div className="astw:text-muted-foreground" data-slot="card-description">
@@ -86,4 +109,19 @@ function Content({ className, padding = "default", ...props }: ContentProps) {
 }
 Content.displayName = "Card.Content";
 
-export const Card = { Root, Header, Content };
+/** A right-aligned, wrapping action region separated from the body by a top border. */
+function Footer({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-footer"
+      className={cn(
+        "astw:flex astw:flex-wrap astw:items-center astw:justify-end astw:gap-2 astw:border-t astw:border-border astw:px-6 astw:py-4",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+Footer.displayName = "Card.Footer";
+
+export const Card = { Root, Header, Content, Footer };

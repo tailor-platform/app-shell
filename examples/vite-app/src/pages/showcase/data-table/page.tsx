@@ -141,17 +141,19 @@ function matchesQuery(row: Invoice, query: CollectionVariables["query"]): boolea
 
 async function queryInvoices(variables: CollectionVariables): Promise<DataTableData<Invoice>> {
   // 1. filter
-  let rows = ALL_INVOICES.filter((r) => matchesQuery(r, variables.query));
+  const rows = ALL_INVOICES.filter((r) => matchesQuery(r, variables.query));
 
   // 2. sort
-  if (variables.order?.length) {
-    const [{ field, direction }] = variables.order;
-    const dir = direction === "Desc" ? -1 : 1;
-    rows = [...rows].sort((a, b) => {
-      const av = a[field as keyof Invoice];
-      const bv = b[field as keyof Invoice];
-      if (av < bv) return -1 * dir;
-      if (av > bv) return 1 * dir;
+  const order = variables.order;
+  if (order?.length) {
+    rows.sort((a, b) => {
+      for (const { field, direction } of order) {
+        const dir = direction === "Desc" ? -1 : 1;
+        const av = a[field as keyof Invoice];
+        const bv = b[field as keyof Invoice];
+        if (av < bv) return -1 * dir;
+        if (av > bv) return 1 * dir;
+      }
       return 0;
     });
   }
@@ -328,7 +330,7 @@ function InvoiceTable({ toolbar }: { toolbar: (control: CollectionControl) => Re
     });
   }, [variables, variablesKey]);
 
-  const table = useDataTable({ columns, data, loading, control });
+  const table = useDataTable({ columns, data, loading, control, sort: { multiple: true } });
 
   return (
     <DataTable.Root value={table}>

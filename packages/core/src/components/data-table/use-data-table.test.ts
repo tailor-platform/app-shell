@@ -399,6 +399,15 @@ describe("useDataTable", () => {
       expect(result.current.sortStates).toEqual([{ field: "name", direction: "Asc" }]);
     });
 
+    it.each([
+      { sort: undefined, multiple: false },
+      { sort: false as const, multiple: false },
+      { sort: { multiple: true }, multiple: true },
+    ])("exposes the configured sort mode: $multiple", ({ sort, multiple }) => {
+      const { result } = renderHook(() => useDataTable({ columns, data: testData, sort }));
+      expect(result.current.sortMultiple).toBe(multiple);
+    });
+
     it("onSort calls clearSort then setSort in single mode (default)", () => {
       const control = makeControl();
       const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));

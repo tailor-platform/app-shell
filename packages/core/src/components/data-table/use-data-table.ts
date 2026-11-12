@@ -218,6 +218,7 @@ export function useDataTable<
     loading,
     error,
     sortStates,
+    sortMultiple,
     onSort,
     pageInfo,
     total,

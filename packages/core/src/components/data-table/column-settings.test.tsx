@@ -58,6 +58,11 @@ const headerLabels = (container: HTMLElement) =>
     .filter(Boolean);
 
 describe("DataTable.Toolbar columnSettings", () => {
+  it("labels the Japanese trigger as 列設定", () => {
+    render(<SettingsHarness />, { wrapper: createAppShellWrapper("ja") });
+    expect(screen.getByRole("button", { name: "列設定" })).toBeTruthy();
+  });
+
   it("renders the Columns button only when the columnSettings prop is set", () => {
     function Bare() {
       const table = useDataTable<Row>({ columns, data });

@@ -16,6 +16,18 @@ export const dataTableLabels = defineI18nLabels({
     // Column settings (DataTable.Toolbar columnSettings)
     columns: "Columns",
     columnSettings: "Column settings",
+    columnVisibility: "Visibility",
+    columnSorting: "Sorting",
+    sortedColumns: "Sorted columns",
+    availableSortColumns: "Available columns",
+    dropColumnsToSort: "Drag columns here, or select a column below",
+    noSortColumns: "No columns available to sort",
+    addColumnSort: (props: { column: string }) => `Sort by ${props.column}`,
+    removeColumnSort: (props: { column: string }) => `Remove sort for ${props.column}`,
+    reorderColumnSort: (props: { column: string; index: number; count: number }) =>
+      `Reorder sort for ${props.column} (${props.index} of ${props.count}). Use Arrow Up or Arrow Down`,
+    changeColumnSortDirection: (props: { column: string; direction: string }) =>
+      `${props.column}: ${props.direction}. Toggle sort direction`,
     copyColumnLabel: "Copy label",
     copyCellValue: "Copy value",
     copyCellHeaderValue: "Copy header and value",
@@ -153,8 +165,20 @@ export const dataTableLabels = defineI18nLabels({
     rowActions: "行の操作",
 
     // Column settings
-    columns: "列",
+    columns: "列設定",
     columnSettings: "列の設定",
+    columnVisibility: "表示設定",
+    columnSorting: "ソート設定",
+    sortedColumns: "ソート中の列",
+    availableSortColumns: "追加できる列",
+    dropColumnsToSort: "列をここにドラッグするか、下の列を選択してください",
+    noSortColumns: "追加できるソート列がありません",
+    addColumnSort: (props: { column: string }) => `${props.column}でソート`,
+    removeColumnSort: (props: { column: string }) => `${props.column}のソートを解除`,
+    reorderColumnSort: (props: { column: string; index: number; count: number }) =>
+      `${props.column}のソート優先順位を変更（${props.count}列中${props.index}番目）。上下矢印キーで移動`,
+    changeColumnSortDirection: (props: { column: string; direction: string }) =>
+      `${props.column}: ${props.direction}。ソート方向を切り替え`,
     copyColumnLabel: "ラベルをコピー",
     copyCellValue: "値をコピー",
     copyCellHeaderValue: "ヘッダと値をコピー",

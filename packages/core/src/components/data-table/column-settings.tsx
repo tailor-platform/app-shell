@@ -6,15 +6,22 @@ import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Input } from "@/components/input";
 import { Tooltip } from "@/components/tooltip";
+import { Tabs } from "@/components/tabs";
+import { useCollectionControlOptional } from "@/contexts/collection-control-context";
 import { useDataTableContext } from "./context";
 import { useDataTableT } from "./i18n";
 import { columnKeyAt } from "./column-layout";
+import { DataTableSortSettings } from "./sort-settings";
+import {
+  SETTINGS_SECTION_CLASS,
+  SETTINGS_HEADING_CLASS,
+  SETTINGS_ROW_CLASS,
+  SETTINGS_LABEL_CLASS,
+} from "./column-settings-styles";
 
-// Shared popup styling, matching DataTable's filter popover. The width cap lives
-// on the popup itself (not the inner fieldset) so base-ui measures the real width
-// and anchors it flush under the trigger.
+// Size the popup itself so Base UI anchors it correctly and keeps it within the viewport.
 const POPUP_CLASS = cn(
-  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-portal) astw:origin-(--transform-origin) astw:max-w-[360px] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-portal) astw:origin-(--transform-origin) astw:w-[400px] astw:max-w-[calc(100vw-2rem)] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
 
@@ -48,7 +55,9 @@ function effectiveSection(
  * A "Columns" toolbar popover with three drop zones — **Fixed left**,
  * **Scrollable**, and **Fixed right**. Drag a column into a zone to pin it to
  * that edge (or unpin it), and drag within a zone to reorder. Each row has a
- * visibility checkbox. State persists when `useDataTable` has a `tableId`.
+ * visibility checkbox. Layout state persists when `useDataTable` has a `tableId`.
+ * A second tab manages collection sorting: drag or select candidates to add a
+ * sort key, toggle its direction, or remove it. Requires sorting to be enabled.
  *
  * Place inside any toolbar or other action layout within `DataTable.Root`.
  */
@@ -64,7 +73,10 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     pinnedColumns,
     setPin,
     setColumnOrder,
+    onSort,
   } = useDataTableContext<Record<string, unknown>>();
+  const control = useCollectionControlOptional();
+  const canSort = !!onSort && !!control;
 
   const meta = useMemo(() => {
     const label = new Map<string, string>();
@@ -171,10 +183,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           const after = e.clientY > rect.top + rect.height / 2;
           setDropTarget({ section, index: after ? fullIndex + 1 : fullIndex });
         }}
-        className={cn(
-          "astw:relative astw:flex astw:items-center astw:gap-2 astw:rounded-sm astw:py-1 astw:pr-2 astw:pl-1.5 astw:hover:bg-accent",
-          dragKey === key && "astw:opacity-40",
-        )}
+        className={cn(SETTINGS_ROW_CLASS, dragKey === key && "astw:opacity-40")}
       >
         {showBefore && (
           <span className="astw:pointer-events-none astw:absolute astw:inset-x-1 astw:-top-px astw:z-10 astw:h-0.5 astw:rounded-full astw:bg-primary" />
@@ -192,7 +201,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           type="button"
           onClick={() => toggleColumn(key)}
           title={meta.label.get(key) ?? key}
-          className="astw:min-w-0 astw:flex-1 astw:cursor-pointer astw:truncate astw:text-left astw:text-body-md"
+          className={SETTINGS_LABEL_CLASS}
         >
           {meta.label.get(key) ?? key}
         </button>
@@ -262,13 +271,11 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         className={cn(
           // No gap between rows: a gap would be "section area" that re-triggers
           // the end-of-section handler as the cursor passes between rows.
-          "astw:flex astw:flex-col astw:rounded-md astw:py-1.5",
+          SETTINGS_SECTION_CLASS,
           active && "astw:bg-accent/40",
         )}
       >
-        <div className="astw:px-1.5 astw:pb-1 astw:text-label-sm astw:text-muted-foreground">
-          {title}
-        </div>
+        <div className={SETTINGS_HEADING_CLASS}>{title}</div>
         {/* Only the Scrollable section gets an internal scroll cap; the pinned
             zones stay fully visible. */}
         {opts?.scroll ? (
@@ -299,37 +306,62 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           <Popover.Popup data-slot="data-table-column-settings-popup" className={POPUP_CLASS}>
             <fieldset
               aria-label={t("columnSettings")}
-              className="astw:m-0 astw:flex astw:min-w-72 astw:flex-col astw:border-0 astw:p-2"
+              className="astw:m-0 astw:flex astw:min-w-0 astw:flex-col astw:border-0 astw:p-2"
             >
-              {/* Search sits above the pinned-left section; it filters only the
-                  Scrollable list — the Fixed left / right zones always show in
-                  full. */}
-              <div className="astw:relative astw:mb-1 astw:px-1">
-                <Search className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-3.5 astw:size-3.5 astw:-translate-y-1/2 astw:text-muted-foreground" />
-                <Input
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t("searchColumns")}
-                  aria-label={t("searchColumns")}
-                  className="astw:h-8 astw:pl-8 astw:text-body-md"
-                />
-              </div>
-              {renderSection("left", t("sectionPinnedLeft"))}
-              <div className="astw:mx-1 astw:border-t astw:border-border" />
-              {renderSection("scrollable", t("sectionScrollable"), { scroll: true, filter: true })}
-              <div className="astw:mx-1 astw:border-t astw:border-border" />
-              {renderSection("right", t("sectionPinnedRight"))}
-              <div className="astw:mx-1 astw:mt-1 astw:border-t astw:border-border" />
-              <div className="astw:mt-1.5 astw:flex astw:justify-end">
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  onClick={allVisible ? hideAllColumns : showAllColumns}
+              <Tabs.Root
+                key={canSort ? "sortable" : "visibility-only"}
+                defaultValue="visibility"
+                variant="capsule"
+                size="xs"
+                onValueChange={resetDrag}
+              >
+                <Tabs.List aria-label={t("columnSettings")} className="astw:mb-2 astw:w-full">
+                  <Tabs.Tab value="visibility" className="astw:flex-1">
+                    {t("columnVisibility")}
+                  </Tabs.Tab>
+                  <Tabs.Tab value="sorting" disabled={!canSort} className="astw:flex-1">
+                    {t("columnSorting")}
+                  </Tabs.Tab>
+                </Tabs.List>
+                {/* Search narrows candidates; pinned columns and active sort keys stay visible. */}
+                <div className="astw:relative astw:mb-1 astw:px-1">
+                  <Search className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-3.5 astw:size-3.5 astw:-translate-y-1/2 astw:text-muted-foreground" />
+                  <Input
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={t("searchColumns")}
+                    aria-label={t("searchColumns")}
+                    className="astw:h-8 astw:pl-8 astw:text-body-md"
+                  />
+                </div>
+                <Tabs.Panel value="visibility" className="astw:mt-0">
+                  {renderSection("left", t("sectionPinnedLeft"))}
+                  <div className="astw:mx-1 astw:border-t astw:border-border" />
+                  {renderSection("scrollable", t("sectionScrollable"), {
+                    scroll: true,
+                    filter: true,
+                  })}
+                  <div className="astw:mx-1 astw:border-t astw:border-border" />
+                  {renderSection("right", t("sectionPinnedRight"))}
+                  <div className="astw:mx-1 astw:mt-1 astw:border-t astw:border-border" />
+                  <div className="astw:mt-1.5 astw:flex astw:justify-end">
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={allVisible ? hideAllColumns : showAllColumns}
+                    >
+                      {t(allVisible ? "hideAllColumns" : "showAllColumns")}
+                    </Button>
+                  </div>
+                </Tabs.Panel>
+                <Tabs.Panel
+                  value="sorting"
+                  className="astw:mt-0 astw:max-h-[min(60vh,30rem)] astw:overflow-y-auto"
                 >
-                  {t(allVisible ? "hideAllColumns" : "showAllColumns")}
-                </Button>
-              </div>
+                  {canSort && <DataTableSortSettings query={query} />}
+                </Tabs.Panel>
+              </Tabs.Root>
             </fieldset>
           </Popover.Popup>
         </Popover.Positioner>

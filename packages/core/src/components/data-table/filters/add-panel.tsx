@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { Button } from "@/components/button";
 import { Filter as FilterIcon, Search, Check, X } from "lucide-react";
-import { Input } from "@/components/input";
+import { StandaloneInput } from "@/components/input/standalone-input";
 import { parseDate } from "@internationalized/date";
 import { Calendar } from "@/components/calendar";
 import { useTimeZone, useResolvedLocale } from "@/contexts/appshell-context";
@@ -178,7 +178,7 @@ function AddFilterPanel({
               {/* Field search — spacing/style mirrors the ColumnSettings search. */}
               <div className="astw:relative astw:mb-1">
                 <Search className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-2.5 astw:size-3.5 astw:-translate-y-1/2 astw:text-muted-foreground" />
-                <Input
+                <StandaloneInput
                   type="search"
                   value={fieldQuery}
                   onChange={(e) => handleFieldQueryChange(e.target.value)}
@@ -367,7 +367,7 @@ function PanelDateTimeInput({
         <Text.span variant="body-sm" className="astw:text-muted-foreground">
           {t("chooseTime")}
         </Text.span>
-        <Input
+        <StandaloneInput
           type="time"
           aria-label={`${ariaLabel} (${t("chooseTime")})`}
           value={timePart}
@@ -676,7 +676,7 @@ function PanelValueEditor({
     // Single-value `time` uses the native time input. (`date`/`datetime` above.)
     editor = (
       <div className="astw:p-2">
-        <Input
+        <StandaloneInput
           {...getTemporalInputProps(type)}
           aria-label={label}
           value={text}
@@ -691,7 +691,7 @@ function PanelValueEditor({
   } else {
     editor = (
       <div className="astw:p-2">
-        <Input
+        <StandaloneInput
           type={type === "number" ? "number" : "text"}
           inputMode={type === "decimal" ? "decimal" : undefined}
           value={text}

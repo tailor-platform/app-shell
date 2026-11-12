@@ -3,7 +3,7 @@ import { useNavigate, Await } from "react-router";
 import { useAppInfoPageRoute } from "@/components/internals/app-info";
 import { SearchIcon } from "lucide-react";
 import { Dialog } from "@/components/dialog";
-import { Input } from "@/components/input";
+import { StandaloneInput } from "@/components/input/standalone-input";
 import { Spinner } from "@/components/spinner";
 import { useT } from "@/i18n-labels";
 import { cn } from "@/lib/utils";
@@ -587,7 +587,7 @@ export function CommandPaletteContent({ navItems, extraRoutes = [] }: CommandPal
               {activeSearchSource.prefix}
             </span>
           )}
-          <Input
+          <StandaloneInput
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("commandPaletteSearch")}

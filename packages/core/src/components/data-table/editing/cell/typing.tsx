@@ -10,7 +10,7 @@ import {
 } from "react";
 import { cn } from "@/lib/utils";
 import { isComposing } from "@/lib/is-composing";
-import { Input } from "@/components/input";
+import { StandaloneInput } from "@/components/input/standalone-input";
 import { Tooltip } from "@/components/tooltip";
 import {
   normalizeNumberText,
@@ -213,7 +213,7 @@ export function TypingEditCell<TRow extends Record<string, unknown>>({
       <Tooltip.Root open={message !== undefined && (focused || hovered)}>
         <Tooltip.Trigger
           render={
-            <Input
+            <StandaloneInput
               ref={register}
               type="text"
               value={text}

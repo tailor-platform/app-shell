@@ -4,7 +4,7 @@ import { GripVertical, Search, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
-import { Input } from "@/components/input";
+import { StandaloneInput } from "@/components/input/standalone-input";
 import { Tooltip } from "@/components/tooltip";
 import { useDataTableContext } from "./context";
 import { useDataTableT } from "./i18n";
@@ -306,7 +306,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
                   full. */}
               <div className="astw:relative astw:mb-1 astw:px-1">
                 <Search className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-3.5 astw:size-3.5 astw:-translate-y-1/2 astw:text-muted-foreground" />
-                <Input
+                <StandaloneInput
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}

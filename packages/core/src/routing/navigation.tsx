@@ -68,26 +68,27 @@ const buildNavItems = async (props: BuildNavItemsProps) => {
       if (parseDynamicSegment(module.path) !== null) return null;
 
       const guardResult = await runGuards(module.guards);
-      if (guardResult.type !== "pass") return null;
+      if (guardResult.type === "hidden") return null;
 
       const visibleResources = await filterVisibleResources(
         module.resources,
         module.path,
         resolveTitle,
       );
+      const isNavigable = module.meta.menuItemClickable || guardResult.type === "redirect";
       // Skip if no visible resources AND the module itself is not directly navigable
-      if (visibleResources.length === 0 && !module.meta.menuItemClickable) return null;
+      if (visibleResources.length === 0 && !isNavigable) return null;
 
-      return { module, resources: visibleResources };
+      return { module, resources: visibleResources, isNavigable };
     }),
   );
 
   return resolvedModules
     .filter((entry) => entry !== null)
-    .map(({ module, resources }) => {
+    .map(({ module, resources, isNavigable }) => {
       return {
         title: resolveTitle(module.meta.title, module.path),
-        url: module.meta.menuItemClickable ? module.path || "/" : undefined,
+        url: isNavigable ? module.path || "/" : undefined,
         icon: module.meta.icon || <Table />,
         items: resources,
       };
@@ -105,11 +106,11 @@ const filterVisibleResources = async (
       if (parseDynamicSegment(resource.path) !== null) return null;
 
       const guardResult = await runGuards(resource.guards);
-      if (guardResult.type !== "pass") return null;
+      if (guardResult.type === "hidden") return null;
 
       const resourcePath = `${basePath}/${resource.path}`;
       const resourceTitle = resolveTitle(resource.meta.title, resource.path);
-      const hasComponent = resource.component !== undefined;
+      const isNavigable = resource.component !== undefined || guardResult.type === "redirect";
 
       // Recursively process subResources
       const subItems = resource.subResources
@@ -118,12 +119,12 @@ const filterVisibleResources = async (
 
       const hasVisibleSubItems = subItems && subItems.length > 0;
 
-      // Componentless resources without sub-resources are dead-end namespaces
-      if (!hasComponent && !hasVisibleSubItems) return null;
+      // Non-navigable resources without sub-resources are dead-end namespaces
+      if (!isNavigable && !hasVisibleSubItems) return null;
 
       return {
         title: resourceTitle,
-        url: hasComponent ? resourcePath : undefined,
+        url: isNavigable ? resourcePath : undefined,
         items: hasVisibleSubItems ? subItems : undefined,
       };
     }),
@@ -251,10 +252,11 @@ const collectCurrentPathAwareRoutes = async ({
   routeMap: Map<string, NavigatableRoute>;
 }): Promise<void> => {
   const guardResult = await runGuards(node.guards);
-  if (guardResult.type !== "pass") return;
+  if (guardResult.type === "hidden") return;
 
   const isNavigable =
-    "resources" in node ? node.meta.menuItemClickable : node.component !== undefined;
+    guardResult.type === "redirect" ||
+    ("resources" in node ? node.meta.menuItemClickable : node.component !== undefined);
   if (isNavigable) {
     const path = routePathFromSegments(baseSegments);
     routeMap.set(path, {

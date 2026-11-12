@@ -70,6 +70,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     sortStates,
     onSort,
     rowActions,
+    rowInteraction,
     setPin,
     toggleRowSelection,
     selectAllRows,
@@ -85,7 +86,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
   const hasSelection = !!toggleRowSelection && !selectionInTreeColumn(ctx);
   const besideTree = hasTreeColumn(ctx);
   const hasExpand = !!rowExpansion;
-  const hasRowActions = !!(rowActions && rowActions.length > 0);
+  const hasRowActions = !!rowInteraction || !!rowActions?.length;
   // With propagating sub-rows, select-all sits in the tree column's header,
   // lined up with the rows' checkboxes.
   const selectAllInTree = selectionInTreeColumn(ctx);

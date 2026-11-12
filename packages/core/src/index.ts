@@ -338,6 +338,7 @@ export {
   type FooterRenderContext,
   type DataTableAction,
   type RowAction,
+  type RowInteraction,
   type SelectionAction,
   type SelectionActionHelpers,
   type SubRowsOptions,

@@ -76,7 +76,6 @@ overrides:
 # pnpm resolves optionalDependencies correctly so these fallback scripts are unnecessary.
 allowBuilds:
   esbuild: false
-  "@swc/core": false
   sharp: false
   protobufjs: false
   msw: false

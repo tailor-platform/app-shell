@@ -27,10 +27,25 @@ export interface DateRange<T extends DateValue = DateValue> {
   end: T;
 }
 
+/**
+ * Interaction events from a two-pick range selection. Initial render, hover,
+ * and unmount do not emit events.
+ */
 export type RangeCalendarSelectionEvent<T extends DateValue = DateValue> =
-  | { type: "selection-start" }
-  | { type: "range-complete"; value: DateRange<T> }
-  | { type: "selection-cancel" };
+  | {
+      /** The first accepted pointer or keyboard pick anchors an unfinished range. */
+      type: "selection-start";
+    }
+  | {
+      /** The second accepted pick completes the range, ordering its endpoints. */
+      type: "range-complete";
+      /** The completed range, also delivered to the existing `onChange` callback. */
+      value: DateRange<T>;
+    }
+  | {
+      /** An unfinished selection is cancelled (e.g. with Escape), without committing a value. */
+      type: "selection-cancel";
+    };
 
 export interface RangeCalendarStateOptions extends CalendarGridOptions {
   value?: DateRange | null;

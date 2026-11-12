@@ -383,11 +383,32 @@ function PanelDateTimeInput({
   );
 }
 
+/** Events from the panel's calendar selection and per-bound datetime time inputs. */
 type RangeInputEvent =
-  | { type: "selection-start" }
-  | { type: "range-complete"; min: string; max: string }
-  | { type: "selection-cancel" }
-  | { type: "time-change"; bound: "min" | "max"; value: string };
+  | {
+      /** The first calendar pick starts a new range; existing bounds remain unchanged. */
+      type: "selection-start";
+    }
+  | {
+      /** The second calendar pick completes the range; both bounds are updated together. */
+      type: "range-complete";
+      /** Completed start bound in the filter's date/datetime string format. */
+      min: string;
+      /** Completed end bound in the filter's date/datetime string format. */
+      max: string;
+    }
+  | {
+      /** An unfinished calendar selection is cancelled; current bounds are retained. */
+      type: "selection-cancel";
+    }
+  | {
+      /** A time input changes one bound without completing any pending calendar selection. */
+      type: "time-change";
+      /** The bound whose time input changed. */
+      bound: "min" | "max";
+      /** Updated datetime filter string, or empty when no date is selected. */
+      value: string;
+    };
 
 /**
  * Two-click range selection for date / datetime "between" filters, with

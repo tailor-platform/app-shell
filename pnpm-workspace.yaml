@@ -47,21 +47,10 @@ minimumReleaseAge: 4320
 # Note: this matches on package name (glob), so it exempts all versions, not a
 # specific one.
 minimumReleaseAgeExclude:
-  # First-party package exemption is intentional and permanent: this matches the
-  # package name, so every version is exempt from the maturity gate.
+  # First-party package exemptions are intentional and permanent: these match
+  # package names, so every version is exempt from the maturity gate.
   - "@tailor-platform/auth-public-client"
-  # Approved SDK update; exempt only this version from the maturity gate.
-  - "@tailor-platform/sdk@2.40.0"
-  # Renovate security update: vitest@4.1.11
-  - vitest@4.1.11
-  # Renovate security update: next@16.3.3 || 16.3.8 || 16.4.1
-  - next@16.3.3 || 16.3.8 || 16.4.1
-  # Renovate security update: zod@4.6.6
-  - zod@4.6.6
-  # Renovate security update: happy-dom@21.0.4
-  - happy-dom@21.0.4
-  # Renovate security update: vite@7.3.8
-  - vite@7.3.8
+  - "@tailor-platform/sdk"
 
 overrides:
   # API Extractor's TSDoc and Rushstack Ajv dependencies resolve the vulnerable

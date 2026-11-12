@@ -91,6 +91,8 @@ export function DataTableRowPrimaryAction<TRow extends Record<string, unknown>>(
   ) : (
     <span
       {...props}
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- HTML has no native disabled link; keep its name and role without a destination.
+      role="link"
       aria-disabled="true"
       className={cn(className, "astw:cursor-not-allowed astw:opacity-50")}
     >

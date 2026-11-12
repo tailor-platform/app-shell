@@ -230,8 +230,9 @@ describe("DataTable row interaction", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it("does not leave a navigable link or active row shortcut when canApply is false", () => {
-    const { container } = render(
+  it("exposes a disabled link without a destination, Tab stop, or active row shortcut", async () => {
+    const user = userEvent.setup();
+    render(
       <Harness
         options={{
           ...base,
@@ -240,14 +241,15 @@ describe("DataTable row interaction", () => {
       />,
       { wrapper },
     );
-    const disabled = primaryActions(container)[0];
+    const disabled = screen.getByRole("link", { name: "Details: Alice" });
     expect(disabled.getAttribute("aria-disabled")).toBe("true");
-    expect(disabled.closest("a[href]")).toBeNull();
-    expect(screen.queryByRole("link", { name: "Details: Alice" })).toBeNull();
-    expect(screen.getByRole("link", { name: "Details: Bob" })).toBeDefined();
+    expect(disabled.getAttribute("href")).toBeNull();
+    expect(disabled.tabIndex).toBe(-1);
     fireEvent.click(screen.getByText("Alice"));
     fireEvent.click(disabled);
     expect(screen.getByTestId("location").textContent).toBe("/");
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByRole("link", { name: "Details: Bob" }));
   });
 
   it("runs a click interaction exactly once from either its button or its row", async () => {

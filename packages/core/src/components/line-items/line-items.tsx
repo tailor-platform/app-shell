@@ -1,14 +1,19 @@
-import { useMemo, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { GripVerticalIcon } from "lucide-react";
 import { Table } from "@/components/table";
 import { Text } from "@/components/text";
 import { useTimeZone } from "@/contexts/appshell-context";
-import { createValueRenderer } from "@/components/internals/table-core";
 import { cn } from "@/lib/utils";
 import { LineItemsContext, useLineItemsContext } from "./line-items-context";
 import { useLineItemsT } from "./i18n";
 import { useLineItemsReorder } from "./use-line-items-reorder";
 import { clientKeyOf } from "./document/identity";
+import { getLineItemsEditing } from "./editing";
+import {
+  LineItemsDisplayCell,
+  LineItemsEditableCell,
+  useLineItemsCellRenderersByColumn,
+} from "./line-items-cell";
 import type { UseLineItemsReturn } from "./types";
 
 export type LineItemsRootProps<T extends Record<string, unknown>> = {
@@ -48,20 +53,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
   const { value: timeZone } = useTimeZone();
   const t = useLineItemsT();
   const reorder = useLineItemsReorder(value);
-  const columns = useMemo(
-    () =>
-      value.columns.map((column) => ({
-        column,
-        id: column.id ?? column.accessorKey!,
-        align:
-          column.align ??
-          (column.type === "number" || column.type === "money"
-            ? ("right" as const)
-            : ("left" as const)),
-        renderValue: column.render ? undefined : createValueRenderer(column, timeZone),
-      })),
-    [value.columns, timeZone],
-  );
+  const cellsByColumn = useLineItemsCellRenderersByColumn(value.columns, timeZone);
   return (
     <Table.Root data-slot="line-items-table" className={className}>
       <Table.Caption className="astw:sr-only">{label ?? t("title")}</Table.Caption>
@@ -72,8 +64,8 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
               <Text.span className="astw:sr-only">{t("order")}</Text.span>
             </Table.Head>
           )}
-          {columns.map(({ column, id, align }) => (
-            <Table.Head key={id} scope="col" align={align}>
+          {cellsByColumn.map(({ column, id, align }) => (
+            <Table.Head key={id} scope="col" align={align} style={{ width: column.width }}>
               {column.label}
             </Table.Head>
           ))}
@@ -101,23 +93,33 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                 </button>
               </Table.Cell>
             )}
-            {columns.map(({ column, id, align, renderValue }) => (
-              <Table.Cell key={id} align={align}>
-                {column.render
-                  ? column.render(row)
-                  : renderValue!(
-                      column.accessorKey !== undefined
-                        ? row[column.accessorKey]
-                        : column.accessor?.(row),
-                      row,
-                    )}
-              </Table.Cell>
-            ))}
+            {cellsByColumn.map(({ column, renderCell, id, align, renderDisplay }) => {
+              const edit = column.edit;
+              if (!edit || !renderCell || !(edit.canEdit?.(row) ?? true))
+                return (
+                  <LineItemsDisplayCell key={id} align={align}>
+                    {renderDisplay(row, false)}
+                  </LineItemsDisplayCell>
+                );
+              return (
+                <LineItemsEditableCell
+                  key={id}
+                  row={row}
+                  column={column}
+                  edit={edit}
+                  renderCell={renderCell}
+                  index={index}
+                  editing={getLineItemsEditing(value)}
+                  display={renderDisplay(row, true)}
+                  cellProps={{ align }}
+                />
+              );
+            })}
           </Table.Row>
         ))}
         {value.lines.length === 0 && (
           <Table.Row>
-            <Table.Cell colSpan={Math.max(1, columns.length + (value.orderer ? 1 : 0))}>
+            <Table.Cell colSpan={Math.max(1, cellsByColumn.length + (value.orderer ? 1 : 0))}>
               <Text
                 variant="body-sm"
                 className="astw:py-6 astw:text-center astw:text-muted-foreground"

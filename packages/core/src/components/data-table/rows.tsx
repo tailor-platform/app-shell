@@ -13,7 +13,7 @@ import { getCellValue, createTypedCellRenderer } from "./cell-renderers";
 import { DataTableCellContextMenu, getCellContextValue } from "./context-menu";
 import { useCellContextMenu } from "./use-cell-context-menu";
 import { DataTableEditableCell, hasEditorIcon, isEditableColumn } from "./editing/cell/root";
-import { ICON_SPACE_CLASS_NAME } from "./editing/cell/shared";
+import { ICON_SPACE_CLASS_NAME } from "@/components/internals/table-core/editing/shared";
 import { useCellEditNavigation } from "./editing/use-navigation";
 import { RowExpandToggle, DataTableExpandedRow } from "./expanded-row";
 import { useDataTableT } from "./i18n";

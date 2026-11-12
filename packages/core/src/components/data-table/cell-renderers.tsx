@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { createValueRenderer } from "@/components/internals/table-core";
+import { createValueRenderer, displayCellAdapters } from "@/components/internals/table-core";
 import { optionLabel, resolveBadgeOptions } from "./cell-values";
 import type { Column } from "./types";
 
@@ -31,8 +31,8 @@ export function createTypedCellRenderer<TRow extends Record<string, unknown>>(
   timeZone: string,
 ): (row: TRow) => ReactNode {
   if (col.type === "date") {
-    const renderDate = createValueRenderer(col, timeZone);
-    return (row) => renderDate(getCellValue(row, col), row);
+    const renderDate = displayCellAdapters.date.createRenderer(col.typeOptions, timeZone);
+    return (row) => renderDate(getCellValue(row, col));
   }
   return (row) => renderTypedValue(row, col, getCellValue(row, col));
 }
@@ -50,15 +50,17 @@ export function renderTypedValue<TRow extends Record<string, unknown>>(
   value: unknown,
   options?: { linkAsText?: boolean; timeZone?: string },
 ): ReactNode {
-  const timeZone =
-    options?.timeZone ??
-    (col.type === "date" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC");
   switch (col.type) {
+    case "date":
+      return displayCellAdapters.date.createRenderer(
+        col.typeOptions,
+        options?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+      )(value);
     case "badge": {
       const choices = col.edit
         ? resolveBadgeOptions(col.edit.options, col.typeOptions, col.filter)
         : undefined;
-      return createValueRenderer(col, timeZone, {
+      return createValueRenderer(col, {
         resolveBadgeLabel: choices ? (item) => String(optionLabel(choices, item)) : undefined,
       })(value, row);
     }
@@ -66,11 +68,11 @@ export function renderTypedValue<TRow extends Record<string, unknown>>(
       // An editable link is an input, not navigation; its choice label is resolved here.
       const label = optionLabel(col.edit?.options, value);
       const descriptor = options?.linkAsText ? ({ type: "text" } as const) : col;
-      return createValueRenderer(descriptor, timeZone)(label, row);
+      return createValueRenderer(descriptor)(label, row);
     }
     case "text":
-      return createValueRenderer(col, timeZone)(optionLabel(col.edit?.options, value), row);
+      return createValueRenderer(col)(optionLabel(col.edit?.options, value), row);
     default:
-      return createValueRenderer(col, timeZone)(value, row);
+      return createValueRenderer(col)(value, row);
   }
 }

@@ -45,7 +45,7 @@ test("row commands retain row types without exposing unfinished save APIs", () =
     value.updateField("A", "missing", 2);
     // @ts-expect-error A new line must supply the complete editing model.
     value.addLine({ name: "Incomplete" });
-    // @ts-expect-error This slice does not implement cell confirmation or persistence.
+    // @ts-expect-error This slice does not implement document-wide confirmation or persistence.
     value.commitEdits();
     // @ts-expect-error Controlled rows are not supported.
     const controlled: UseLineItemsOptions<Row> = { columns: [], lines: [] };
@@ -142,13 +142,21 @@ test("the store adapter preserves property-specific command typing", () => {
 });
 
 test("property, computed and value-less columns keep source and display contracts", () => {
-  const property: LineItemsColumn<Row> = { accessorKey: "quantity", type: "number" };
+  expectTypeOf<LineItemsColumn<Row>["width"]>().toEqualTypeOf<number | undefined>();
+  const property: LineItemsColumn<Row> = { accessorKey: "quantity", type: "number", width: 120 };
   const computed: LineItemsColumn<Row> = {
     id: "double",
+    width: 160,
     type: "number",
     accessor: (row) => row.quantity * 2,
   };
-  const custom: LineItemsColumn<Row> = { id: "custom", render: (row) => row.detail.nested };
+  const custom: LineItemsColumn<Row> = {
+    id: "custom",
+    width: 96,
+    render: (row) => row.detail.nested,
+  };
+  // @ts-expect-error Widths are pixel numbers, not CSS strings.
+  const cssWidth: LineItemsColumn<Row> = { id: "custom", width: "96px" };
   // @ts-expect-error Property sources must exist on the row.
   const missing: LineItemsColumn<Row> = { accessorKey: "missing" };
   // @ts-expect-error A string property cannot use a number renderer.
@@ -170,11 +178,12 @@ test("property, computed and value-less columns keep source and display contract
   };
   // @ts-expect-error A link still requires href options.
   const link: LineItemsColumn<Row> = { accessorKey: "name", type: "link" };
-  // @ts-expect-error No cell editor is implemented in the readonly slice.
+  // @ts-expect-error Clearing a text editor emits null, which this required field cannot adopt.
   const editing: LineItemsColumn<Row> = { accessorKey: "name", edit: { editorType: "text" } };
   void property;
   void computed;
   void custom;
+  void cssWidth;
   void missing;
   void wrongProperty;
   void structured;

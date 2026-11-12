@@ -173,12 +173,12 @@ describe("LineItems document rows and identity", () => {
 
   it("accepts display-only reconfiguration but rejects changing property ownership", () => {
     const doc = document();
-    doc.setColumns([
+    doc.assertColumns([
       ...columns.toReversed(),
       { accessorKey: "quantity", id: "duplicate-display", label: "Also quantity" },
       { id: "computed", accessor: (line) => line.quantity * 2 },
     ]);
-    expect(() => doc.setColumns([{ accessorKey: "name" }])).toThrow(
+    expect(() => doc.assertColumns([{ accessorKey: "name" }])).toThrow(
       "change document property ownership",
     );
     doc.updateField("A", "quantity", 2);

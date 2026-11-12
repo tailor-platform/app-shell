@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import type { CellEditorOutput } from "@/components/internals/table-core/editing/props";
+import type { lineItemsEditors } from "../editor-factory";
 import type {
   ColumnCellType,
   ColumnDisplay,
@@ -7,11 +9,35 @@ import type {
 } from "@/components/internals/table-core/column-types";
 import type { createLineItemsIdentity } from "./identity";
 
+type EditorBase<TRow extends Record<string, unknown>, TValue> = {
+  /** A check before adoption; throw/rejection retains the draft. Not a persistence callback. */
+  onValueCommitted?: (row: Readonly<TRow>, value: TValue) => void | Promise<void>;
+  /** UI policy only; direct row commands remain available. */
+  canEdit?: (row: TRow) => boolean;
+  /** Adopt eagerly without intercepting callback failures, or replace the error content. */
+  error?: false | { render: (ctx: { row: TRow; error: unknown }) => ReactNode };
+};
+
+type EditorCatalog = typeof lineItemsEditors;
+type EditorAdapter<K extends keyof EditorCatalog> = ReturnType<EditorCatalog[K]["bind"]>;
+type EditorOutput<K extends keyof EditorCatalog> = CellEditorOutput<EditorAdapter<K>["editor"]>;
+
+/** Derive supported kinds, settings and outputs from the adapters; outputs must fit the property. */
+export type LineItemsEditor<TRow extends Record<string, unknown>, TValue> = {
+  [K in keyof EditorCatalog]: [EditorOutput<K>] extends [TValue]
+    ? EditorBase<TRow, EditorOutput<K>> & { editorType: K } & Parameters<
+          EditorAdapter<K>["prepare"]
+        >[0]
+    : never;
+}[keyof EditorCatalog];
+
 type DisplayProps<TRow extends Record<string, unknown>> = {
   label?: string;
   /** Overrides the built-in renderer, including when it returns null. */
   render?: (row: TRow) => ReactNode;
   align?: "left" | "center" | "right";
+  /** Preferred column width in pixels; omitted widths are automatic and content may require more space. */
+  width?: number;
 };
 
 type PropertyColumn<TRow extends Record<string, unknown>> = {
@@ -20,12 +46,14 @@ type PropertyColumn<TRow extends Record<string, unknown>> = {
       accessorKey: K;
       accessor?: never;
       id?: string;
+      edit?: LineItemsEditor<TRow, TRow[K]>;
     };
 }[keyof TRow & string];
 
 type ComputedColumn<TRow extends Record<string, unknown>> = DisplayProps<TRow> & {
   id: string;
   accessorKey?: never;
+  edit?: never;
 } & (
     | { type?: undefined; typeOptions?: never; accessor: (row: TRow) => unknown }
     | {
@@ -40,6 +68,7 @@ type SourceLessColumn<TRow extends Record<string, unknown>> = DisplayProps<TRow>
     id: string;
     accessorKey?: never;
     accessor?: never;
+    edit?: never;
   };
 
 /** A property, computed value, or explicitly value-less display column. */

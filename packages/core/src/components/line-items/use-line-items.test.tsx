@@ -80,11 +80,33 @@ it("rejects duplicate and empty column identities", () => {
   ).toThrow("column IDs must be non-empty and unique");
 });
 
-it("rejects cell editors instead of silently ignoring them", () => {
-  const editable = { accessorKey: "name" as const, edit: { editorType: "text" } };
-  expect(() => renderHook(() => useLineItems<Row>({ columns: [editable] }))).toThrow(
-    "cell editors are not supported yet",
-  );
+it.each(["custom", "constructor", "__proto__", { toString: () => "text" }, Object("number")])(
+  "rejects unsupported editor %s instead of silently ignoring it",
+  (editorType) => {
+    const unsupported = [{ accessorKey: "name", edit: { editorType } }];
+    expect(() =>
+      renderHook(() =>
+        useLineItems({ columns: unsupported } as unknown as UseLineItemsOptions<Row>),
+      ),
+    ).toThrow("Unsupported LineItems editor type");
+  },
+);
+
+it.each([
+  { options: undefined },
+  { options: null },
+  { options: {} },
+  { options: () => [] },
+  { options: [null] },
+  { options: [{ value: 1, label: "One" }] },
+  { options: [{ value: "one", label: 1 }] },
+])("rejects malformed combobox options $options", ({ options }) => {
+  const invalid = [
+    { accessorKey: "name", edit: { editorType: "combobox", editorOptions: { options } } },
+  ];
+  expect(() =>
+    renderHook(() => useLineItems({ columns: invalid } as unknown as UseLineItemsOptions<Row>)),
+  ).toThrow("Combobox editors require fixed string options");
 });
 
 it("reflects sequential commands and dirty state under StrictMode", () => {

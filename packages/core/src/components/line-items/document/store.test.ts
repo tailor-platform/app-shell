@@ -27,7 +27,7 @@ describe("LineItems document store notifications", () => {
     expect(initial.every(Object.isFrozen)).toBe(true);
     expect(value.getLineKey(initial[0])).toBe("A");
     expect(value.isDirty()).toBe(false);
-    value.setColumns(columns.toReversed());
+    value.assertColumns(columns.toReversed());
     expect(value.getSnapshot()).toBe(initial);
     expect(listener).not.toHaveBeenCalled();
   });
@@ -68,7 +68,7 @@ describe("LineItems document store notifications", () => {
     expect(() => value.updateField("A", "hidden", "hidden change")).toThrow("no document owner");
     expect(() => value.removeLine("missing")).toThrow("Unknown line");
     expect(() => value.reorderLine("A", "missing")).toThrow("Unknown line");
-    expect(() => value.setColumns([])).toThrow("change document property ownership");
+    expect(() => value.assertColumns([])).toThrow("change document property ownership");
     expect(value.getSnapshot()).toBe(initial);
     expect(value.isDirty()).toBe(false);
     expect(listener).not.toHaveBeenCalled();

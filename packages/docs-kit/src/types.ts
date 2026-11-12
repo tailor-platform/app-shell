@@ -84,7 +84,8 @@ export interface ManifestEntry {
 export interface Manifest {
   version: number;
   units: Record<string, ManifestEntry>;
-  /** Generated skill file (repo-relative) -> content hash. Absent when no skill is configured. */
+  /** Generated skill file (repo-relative) -> content hash, across every configured
+   * skill. Absent when no skill is configured. */
   skill?: Record<string, string>;
 }
 
@@ -95,18 +96,31 @@ export interface CategoryRule {
   outDir: string;
 }
 
+/** Generated-doc categories a skill can carry as `references/<section>/`. */
+export type SkillSection = "concepts" | "components" | "api" | "patterns" | "pages";
+
 export interface SkillConfig {
   /** Repo-relative output dir for the generated consumer skill. */
   outDir: string;
   /** Repo-relative SKILL.md template with {{CATEGORY_TABLE}} placeholders. */
   templatePath: string;
+  /** Doc categories copied into `references/`. Defaults to all of them; `[]` ships none. */
+  sections?: SkillSection[];
   /** Repo-relative migrations doc copied (with links rewritten) into the skill. */
-  migrationsSource: string;
-  /** Base blob URL for rewriting the migrations doc's relative links. */
-  repoBlobUrl: string;
+  migrationsSource?: string;
+  /** Base blob URL for rewriting the migrations doc's relative links. Required with `migrationsSource`. */
+  repoBlobUrl?: string;
   /** Repo-relative package.json whose `version` is stamped into SKILL.md's
    * `{{APP_SHELL_VERSION}}` at write time. */
   versionSource?: string;
+}
+
+/** A docs output dir deliberately left out of every consumer skill. */
+export interface UnclaimedSkillDir {
+  /** Repo-relative output dir, exactly as a `documents.mappings[].dir`. */
+  dir: string;
+  /** Why no skill carries it. Required, so the omission is a recorded decision. */
+  reason: string;
 }
 
 export interface DocsConfig {
@@ -125,6 +139,8 @@ export interface DocsConfig {
   exclusions: string[];
   /** Repo-relative dir holding centralized test snapshots (advisory signal). */
   snapshotDir?: string;
-  /** Consumer-skill generation. When set, sync emits it and check validates it. */
-  skill?: SkillConfig;
+  /** Consumer skills. sync emits each one and check validates each one. */
+  skills: SkillConfig[];
+  /** Output dirs no skill carries. Any other unclaimed output dir blocks check. */
+  unclaimedSkillDirs: UnclaimedSkillDir[];
 }

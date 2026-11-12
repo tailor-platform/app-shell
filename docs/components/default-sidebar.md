@@ -75,7 +75,7 @@ With `iconRail`, collapsing the sidebar keeps icons visible at every width:
 
 - on desktop, the sidebar collapses to a narrow persistent rail
 - on mobile, the rail stays visible and its toggle opens the full sidebar as a slide-in drawer
-- grouped items reveal child pages from the collapsed icon via a flyout popover
+- grouped items reveal child pages from the collapsed icon via a flyout popover: it opens on hover with a mouse, and on tap on a touch device (tap again, tap outside, or press `Escape` to close it). A group with its own page links to it from the flyout heading
 - items without children show their label in a tooltip
 
 [`GlobalHeaderLayout`](./global-header-layout.md) bakes this mode in through `GlobalHeaderLayout.DefaultSidebar`.

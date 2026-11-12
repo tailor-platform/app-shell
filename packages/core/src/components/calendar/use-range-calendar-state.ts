@@ -27,10 +27,16 @@ export interface DateRange<T extends DateValue = DateValue> {
   end: T;
 }
 
+export type RangeCalendarSelectionEvent<T extends DateValue = DateValue> =
+  | { type: "selection-start" }
+  | { type: "range-complete"; value: DateRange<T> }
+  | { type: "selection-cancel" };
+
 export interface RangeCalendarStateOptions extends CalendarGridOptions {
   value?: DateRange | null;
   defaultValue?: DateRange | null;
   onChange?: (value: DateRange) => void;
+  onSelectionStateChange?: (event: RangeCalendarSelectionEvent) => void;
 }
 
 function orderRange(a: CalendarDate, b: CalendarDate): { start: CalendarDate; end: CalendarDate } {
@@ -38,7 +44,13 @@ function orderRange(a: CalendarDate, b: CalendarDate): { start: CalendarDate; en
 }
 
 export function useRangeCalendarState(options: RangeCalendarStateOptions) {
-  const { value: controlledValue, defaultValue, onChange, ...gridOptions } = options;
+  const {
+    value: controlledValue,
+    defaultValue,
+    onChange,
+    onSelectionStateChange,
+    ...gridOptions
+  } = options;
   const { minValue, maxValue, isDateUnavailable } = gridOptions;
 
   const isValueControlled = controlledValue !== undefined;
@@ -79,6 +91,7 @@ export function useRangeCalendarState(options: RangeCalendarStateOptions) {
     (date: CalendarDate, { viaKeyboard }: { viaKeyboard: boolean }) => {
       if (anchorDate == null) {
         setAnchorDate(date);
+        onSelectionStateChange?.({ type: "selection-start" });
         // A keyboard-set anchor advances focus one day so arrow keys visibly
         // extend the range from here (react-aria's cue that selection started).
         // Except onto an unavailable day: the anchored bounds (below) will
@@ -97,13 +110,18 @@ export function useRangeCalendarState(options: RangeCalendarStateOptions) {
       };
       setAnchorDate(null);
       if (!isValueControlled) setInternalValue(next);
+      onSelectionStateChange?.({ type: "range-complete", value: next });
       onChange?.(next);
       return undefined;
     },
-    [anchorDate, value, isValueControlled, onChange, isDateUnavailable],
+    [anchorDate, value, isValueControlled, onChange, onSelectionStateChange, isDateUnavailable],
   );
 
-  const cancelSelection = useCallback(() => setAnchorDate(null), []);
+  const cancelSelection = useCallback(() => {
+    if (anchorDate == null) return;
+    setAnchorDate(null);
+    onSelectionStateChange?.({ type: "selection-cancel" });
+  }, [anchorDate, onSelectionStateChange]);
 
   const adapter = useMemo<CalendarSelectionAdapter>(
     () => ({ dayFlags, select, onEscape: cancelSelection }),

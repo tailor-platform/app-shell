@@ -1,6 +1,7 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import type { Column } from "../types";
 import {
   TestFilters,
@@ -375,6 +376,206 @@ describe("AddFilterPanel", () => {
     expect(control.addFilter).toHaveBeenCalledWith("createdAt", "between", {
       min: "2025-06-25",
       max: "2025-06-27",
+    });
+  });
+
+  it.each([
+    [11, 15, "2025-06-11T12:15:00.000Z", "2025-06-15T12:30:45.123Z"],
+    [10, 16, "2025-06-10T12:15:30.456Z", "2025-06-16T12:30:00.000Z"],
+    [10, 15, "2025-06-10T12:15:30.456Z", "2025-06-15T12:30:45.123Z"],
+  ])("preserves unchanged datetime bounds when selecting %i–%i", async (start, end, min, max) => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [
+        {
+          field: "publishedAt",
+          operator: "between",
+          value: { min: "2025-06-10T12:15:30.456Z", max: "2025-06-15T12:30:45.123Z" },
+        },
+      ],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(calendarDay(start));
+    await user.click(calendarDay(end));
+    await user.click(screen.getByRole("button", { name: "Update" }));
+
+    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "between", { min, max });
+  });
+
+  it.each([dateColumn, datetimeColumn])(
+    "blocks unfinished selections and restores the saved $id range on cancellation",
+    async (column) => {
+      const user = userEvent.setup();
+      const value =
+        column === dateColumn
+          ? { min: "2025-06-10", max: "2025-06-15" }
+          : { min: "2025-06-10T12:00:00.000Z", max: "2025-06-15T12:00:00.000Z" };
+      const control = makeControl({
+        filters: [{ field: column.id!, operator: "between", value }],
+      });
+      render(<TestFilters control={control} columns={[column]} />, { wrapper: timeZoneWrapper });
+
+      await user.click(screen.getByRole("button", { name: /Add filter/ }));
+      const update = screen.getByRole("button", { name: "Update" }) as HTMLButtonElement;
+      expect(update.disabled).toBe(false);
+      await user.click(calendarDay(20));
+      expect(update.disabled).toBe(true);
+      fireEvent.click(update);
+      expect(control.addFilter).not.toHaveBeenCalled();
+
+      await user.keyboard("{Escape}");
+      await user.click(screen.getByRole("button", { name: /Add filter/ }));
+      const restoredUpdate = await screen.findByRole("button", { name: "Update" });
+      expect((restoredUpdate as HTMLButtonElement).disabled).toBe(false);
+      expect(calendarDay(10).hasAttribute("data-selection-start")).toBe(true);
+      expect(calendarDay(15).hasAttribute("data-selection-end")).toBe(true);
+      await user.click(restoredUpdate);
+      expect(control.addFilter).toHaveBeenCalledWith(column.id, "between", value);
+    },
+  );
+
+  it("blocks replacing a newly completed range until the second pick", async () => {
+    vi.setSystemTime(new Date("2025-06-01T12:00:00Z"));
+    const user = userEvent.setup();
+    const control = makeControl();
+    render(<TestFilters control={control} columns={[dateColumn]} />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(screen.getByRole("button", { name: "is between" }));
+    await user.click(calendarDay(10));
+    await user.click(calendarDay(15));
+    const apply = screen.getByRole("button", { name: "Apply" }) as HTMLButtonElement;
+    expect(apply.disabled).toBe(false);
+
+    await user.click(calendarDay(20));
+    expect(apply.disabled).toBe(true);
+    fireEvent.click(apply);
+    expect(control.addFilter).not.toHaveBeenCalled();
+    await user.click(calendarDay(25));
+    expect(apply.disabled).toBe(false);
+    await user.click(apply);
+    expect(control.addFilter).toHaveBeenCalledWith("createdAt", "between", {
+      min: "2025-06-20",
+      max: "2025-06-25",
+    });
+  });
+
+  it("clears the draft and unfinished selection when clearing all filters", async () => {
+    vi.setSystemTime(new Date("2025-06-01T12:00:00Z"));
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [
+        {
+          field: "createdAt",
+          operator: "between",
+          value: { min: "2025-06-10", max: "2025-06-15" },
+        },
+        { field: "count", operator: "eq", value: 5 },
+      ],
+    });
+    function StatefulFilters() {
+      const [filters, setFilters] = useState(control.filters);
+      return (
+        <TestFilters
+          columns={[dateColumn, numberColumn]}
+          control={{
+            ...control,
+            filters,
+            clearFilters: () => {
+              control.clearFilters();
+              setFilters([]);
+            },
+          }}
+        />
+      );
+    }
+    render(<StatefulFilters />, { wrapper });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(calendarDay(20));
+    await user.click(screen.getByRole("button", { name: "Clear all filters" }));
+    expect(control.clearFilters).toHaveBeenCalledOnce();
+    const apply = screen.getByRole("button", { name: "Apply" }) as HTMLButtonElement;
+    expect(apply.disabled).toBe(true);
+    expect(screen.getByRole("grid").getAttribute("aria-label")).toBe("Created At");
+    expect(screen.getByRole("grid").querySelectorAll("button[data-selected]")).toHaveLength(0);
+
+    await user.click(calendarDay(25));
+    expect(apply.disabled).toBe(true);
+    await user.click(calendarDay(27));
+    expect(apply.disabled).toBe(false);
+    await user.click(apply);
+    expect(control.addFilter).toHaveBeenCalledWith("createdAt", "between", {
+      min: "2025-06-25",
+      max: "2025-06-27",
+    });
+  });
+
+  it.each(["From", "To"])(
+    "updates only the %s time without changing the other bound",
+    async (bound) => {
+      const user = userEvent.setup();
+      const value = { min: "2025-06-10T12:15:30.456Z", max: "2025-06-15T12:30:45.123Z" };
+      const control = makeControl({
+        filters: [{ field: "publishedAt", operator: "between", value }],
+      });
+      render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+        wrapper: timeZoneWrapper,
+      });
+
+      await user.click(screen.getByRole("button", { name: /Add filter/ }));
+      fireEvent.change(screen.getByLabelText(`Published At — ${bound} (Choose time)`), {
+        target: { value: "08:45" },
+      });
+      await user.click(screen.getByRole("button", { name: "Update" }));
+
+      expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "between", {
+        min: bound === "From" ? "2025-06-10T15:45:00.000Z" : value.min,
+        max: bound === "To" ? "2025-06-15T15:45:00.000Z" : value.max,
+      });
+    },
+  );
+
+  it("does not complete a pending range when either time is edited", async () => {
+    const user = userEvent.setup();
+    const control = makeControl({
+      filters: [
+        {
+          field: "publishedAt",
+          operator: "between",
+          value: { min: "2025-06-10T12:00:00Z", max: "2025-06-15T12:00:00Z" },
+        },
+      ],
+    });
+    render(<TestFilters control={control} columns={[datetimeColumn]} />, {
+      wrapper: timeZoneWrapper,
+    });
+
+    await user.click(screen.getByRole("button", { name: /Add filter/ }));
+    await user.click(calendarDay(20));
+    const update = screen.getByRole("button", { name: "Update" }) as HTMLButtonElement;
+    expect(update.disabled).toBe(true);
+    for (const [bound, time] of [
+      ["From", "08:45"],
+      ["To", "09:15"],
+    ]) {
+      fireEvent.change(screen.getByLabelText(`Published At — ${bound} (Choose time)`), {
+        target: { value: time },
+      });
+      expect(update.disabled).toBe(true);
+      expect(control.addFilter).not.toHaveBeenCalled();
+    }
+
+    await user.click(calendarDay(25));
+    expect(update.disabled).toBe(false);
+    await user.click(update);
+    expect(control.addFilter).toHaveBeenCalledWith("publishedAt", "between", {
+      min: "2025-06-20T15:45:00.000Z",
+      max: "2025-06-25T16:15:00.000Z",
     });
   });
 

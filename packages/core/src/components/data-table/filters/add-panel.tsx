@@ -82,6 +82,7 @@ function AddFilterPanel({
   // Field search: enterprise tables can have many filterable fields, so the
   // panel always offers a search box over the field list.
   const [fieldQuery, setFieldQuery] = useState("");
+  const [editorKey, setEditorKey] = useState(0);
   const fq = fieldQuery.trim().toLowerCase();
   const visibleFieldColumns = fq
     ? columns.filter((c) => (c.label ?? c.filter.field).toLowerCase().includes(fq))
@@ -129,6 +130,11 @@ function AddFilterPanel({
       setFieldQuery("");
       selectField(columns[0]?.filter.field ?? "");
     }
+  };
+
+  const clearAll = () => {
+    control.clearFilters();
+    setEditorKey((key) => key + 1);
   };
 
   const activeFields = new Set(control.filters.map((f) => f.field));
@@ -220,7 +226,7 @@ function AddFilterPanel({
                   <Button
                     variant="ghost"
                     size="xs"
-                    onClick={() => control.clearFilters()}
+                    onClick={clearAll}
                     className="astw:w-full astw:justify-start astw:text-muted-foreground"
                   >
                     {t("clearAllFilters")}
@@ -256,7 +262,7 @@ function AddFilterPanel({
             <div className="astw:flex astw:w-[260px] astw:min-w-0 astw:flex-col astw:border-l astw:border-border">
               {selectedColumn && effectiveOperator && (
                 <PanelValueEditor
-                  key={`${fieldName}:${effectiveOperator}`}
+                  key={`${fieldName}:${effectiveOperator}:${editorKey}`}
                   column={selectedColumn}
                   operator={effectiveOperator}
                   filter={activeFilter}
@@ -377,6 +383,12 @@ function PanelDateTimeInput({
   );
 }
 
+type RangeInputEvent =
+  | { type: "selection-start" }
+  | { type: "range-complete"; min: string; max: string }
+  | { type: "selection-cancel" }
+  | { type: "time-change"; bound: "min" | "max"; value: string };
+
 /**
  * Two-click range selection for date / datetime "between" filters, with
  * independent time inputs for datetime bounds.
@@ -385,22 +397,20 @@ function PanelDateRangeInput({
   label,
   min,
   max,
-  onChangeMin,
-  onChangeMax,
+  onStateChange,
   withTime = false,
 }: {
   label: string;
   min: string;
   max: string;
-  onChangeMin: (value: string) => void;
-  onChangeMax: (value: string) => void;
+  onStateChange: (event: RangeInputEvent) => void;
   withTime?: boolean;
 }) {
   const t = useDataTableT();
   const shellTz = useTimeZone();
   const bounds = [
-    { key: "from", label: t("filterBetweenFrom"), value: min, onChange: onChangeMin },
-    { key: "to", label: t("filterBetweenTo"), value: max, onChange: onChangeMax },
+    { key: "min" as const, label: t("filterBetweenFrom"), value: min },
+    { key: "max" as const, label: t("filterBetweenTo"), value: max },
   ].map((bound) => ({
     ...bound,
     ...(withTime
@@ -436,9 +446,19 @@ function PanelDateRangeInput({
           value={
             from.date && to.date ? { start: parseDate(from.date), end: parseDate(to.date) } : null
           }
-          onChange={({ start, end }) => {
-            onChangeMin(toValue(start.toString(), from.time));
-            onChangeMax(toValue(end.toString(), to.time));
+          onSelectionStateChange={(event) => {
+            if (event.type !== "range-complete") {
+              onStateChange(event);
+              return;
+            }
+            const start = event.value.start.toString();
+            const end = event.value.end.toString();
+            // Unchanged dates retain their original sub-minute precision.
+            onStateChange({
+              type: "range-complete",
+              min: start === from.date ? min : toValue(start, from.time),
+              max: end === to.date ? max : toValue(end, to.time),
+            });
           }}
         />
       </div>
@@ -454,7 +474,13 @@ function PanelDateRangeInput({
                 type="time"
                 aria-label={`${label} — ${b.label} (${t("chooseTime")})`}
                 value={b.time}
-                onChange={(e) => b.onChange(toValue(b.date, e.target.value))}
+                onChange={(e) =>
+                  onStateChange({
+                    type: "time-change",
+                    bound: b.key,
+                    value: toValue(b.date, e.target.value),
+                  })
+                }
                 className="astw:h-8 astw:min-w-0 astw:text-body-md"
               />
             </label>
@@ -513,8 +539,30 @@ function PanelValueEditor({
   const [min, setMin] = useState(range?.min != null ? String(range.min) : "");
   const [max, setMax] = useState(range?.max != null ? String(range.max) : "");
   const [rangeKey, setRangeKey] = useState(0);
+  const [isSelectingRange, setIsSelectingRange] = useState(false);
+
+  const handleRangeStateChange = (event: RangeInputEvent) => {
+    switch (event.type) {
+      case "selection-start":
+        setIsSelectingRange(true);
+        break;
+      case "range-complete":
+        setMin(event.min);
+        setMax(event.max);
+        setIsSelectingRange(false);
+        break;
+      case "selection-cancel":
+        setIsSelectingRange(false);
+        break;
+      case "time-change":
+        if (event.bound === "min") setMin(event.value);
+        else setMax(event.value);
+        break;
+    }
+  };
 
   const apply = () => {
+    if (isSelectingRange) return;
     if (type === "enum") {
       if (enumSel.length === 0) control.removeFilter(field);
       else control.addFilter(field, "in", enumSel);
@@ -561,11 +609,13 @@ function PanelValueEditor({
     setMax("");
     // Also discard the calendar's unfinished two-click selection.
     setRangeKey((key) => key + 1);
+    setIsSelectingRange(false);
   };
 
   // Gate the Apply button so it's disabled on invalid input (rather than enabled
   // but inert). An empty draft is allowed only when it clears an existing filter.
   const canApply = (() => {
+    if (isSelectingRange) return false;
     if (type === "enum") return enumSel.length > 0 || !!filter;
     if (type === "boolean") return true;
     if (isBetween) {
@@ -616,8 +666,7 @@ function PanelValueEditor({
           label={label}
           min={min}
           max={max}
-          onChangeMin={setMin}
-          onChangeMax={setMax}
+          onStateChange={handleRangeStateChange}
           withTime={type === "datetime"}
         />
       </div>

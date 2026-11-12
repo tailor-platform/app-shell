@@ -6,10 +6,11 @@ import type {
 import type { choiceEditor } from "@/components/internals/table-core/editing/choice";
 import type { dateEditor } from "@/components/internals/table-core/editing/date";
 import type { numberEditor, textEditor } from "@/components/internals/table-core/editing/typing";
-import type { createLineItemsCellPreparers } from "./line-items-cell";
+import type { lineItemsEditors } from "./editor-factory";
 import type { LineItemsColumn, LineItemsEditor } from "./types";
 
-type EditorCatalog = ReturnType<typeof createLineItemsCellPreparers>["editors"];
+type EditorCatalog = typeof lineItemsEditors;
+type EditorAdapter<K extends keyof EditorCatalog> = ReturnType<EditorCatalog[K]["bind"]>;
 
 type Row = {
   id?: string;
@@ -83,6 +84,11 @@ test("cell editors retain property-specific nullable output and row callback typ
 });
 
 test("public editor settings and confirmation values follow the concrete editors", () => {
+  type DefinitionKeys = { [K in keyof EditorCatalog]: keyof EditorCatalog[K] };
+  expectTypeOf<DefinitionKeys>().toEqualTypeOf<Record<keyof EditorCatalog, "validate" | "bind">>();
+  type UIAdapters = Parameters<EditorCatalog["combobox"]["bind"]>[0];
+  type AdapterKeys = { [K in keyof UIAdapters]: keyof UIAdapters[K] };
+  expectTypeOf<AdapterKeys>().toEqualTypeOf<Record<keyof UIAdapters, "editor" | "prepare">>();
   expectTypeOf<LineItemsEditor<Row, unknown>["editorType"]>().toEqualTypeOf<keyof EditorCatalog>();
   type PublicEditor<K extends LineItemsEditor<Row, unknown>["editorType"]> = Extract<
     LineItemsEditor<Row, unknown>,
@@ -104,7 +110,7 @@ test("public editor settings and confirmation values follow the concrete editors
     CellEditorOptions<typeof choiceEditor>["options"]
   >();
   type PreparedEditors = {
-    [K in keyof EditorCatalog]: ReturnType<EditorCatalog[K]["prepare"]>;
+    [K in keyof EditorCatalog]: ReturnType<EditorAdapter<K>["prepare"]>;
   };
   expectTypeOf<keyof PreparedEditors["text"]>().toEqualTypeOf<
     "align" | "renderCell" | "renderDisplay"

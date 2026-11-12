@@ -19,6 +19,7 @@ import { choiceEditor } from "@/components/internals/table-core/editing/choice";
 import { dateEditor } from "@/components/internals/table-core/editing/date";
 import { numberEditor, textEditor } from "@/components/internals/table-core/editing/typing";
 import type { LineItemsEditing } from "./editing";
+import { lineItemsEditors } from "./editor-factory";
 import { useLineItemsT } from "./i18n";
 import type { LineItemsColumn } from "./types";
 
@@ -35,6 +36,17 @@ interface LineItemsCellRenderers<T extends Record<string, unknown>> {
   renderCell: (props: EditableCellOwnerProps) => ReactNode;
   /** Render row data or custom content; editable selects the input-compatible preview, not permission or draft state. */
   renderDisplay: (row: T, editable: boolean) => ReactNode;
+}
+
+/** UI-owned preparation, retaining the editor actually rendered as the source of its output contract. */
+export interface LineItemsEditorAdapter<TOptions, TOutput, TSettings> {
+  /** Concrete input used for both rendering and output-type derivation. */
+  editor: CellEditor<TOptions, TOutput>;
+  /** Resolve settings, display policy, and environment dependencies before rendering rows. */
+  prepare<T extends Record<string, unknown>>(
+    settings: TSettings,
+    column: LineItemsColumn<T>,
+  ): LineItemsCellRenderers<T>;
 }
 
 type ValueRenderer<T> = (value: unknown, row: T) => ReactNode;
@@ -61,19 +73,16 @@ function bindDisplay<T extends Record<string, unknown>>(
 }
 
 /** Bind the implementation used for type derivation to the same input used for rendering. */
-function defineLineItemsEditor<TOptions, TOutput, TSettings>(
+function bindEditor<TOptions, TOutput, TSettings>(
   editor: CellEditor<TOptions, TOutput>,
   prepare: <T extends Record<string, unknown>>(
     settings: TSettings,
     column: LineItemsColumn<T>,
   ) => { options: NoInfer<TOptions> } & Omit<LineItemsCellRenderers<T>, "renderCell">,
-) {
+): LineItemsEditorAdapter<TOptions, TOutput, TSettings> {
   return {
     editor,
-    prepare<T extends Record<string, unknown>>(
-      settings: TSettings,
-      column: LineItemsColumn<T>,
-    ): LineItemsCellRenderers<T> {
+    prepare(settings, column) {
       const { options, align, renderDisplay } = prepare(settings, column);
       return {
         align,
@@ -84,7 +93,7 @@ function defineLineItemsEditor<TOptions, TOutput, TSettings>(
   };
 }
 
-/** Assemble column preparers, binding timezone only to date formatting and date input options. */
+/** Assemble UI adapters and readonly presentation, binding date dependencies before rendering. */
 export function createLineItemsCellPreparers(timeZone: string) {
   function prepareValueRenderer<T extends Record<string, unknown>>(
     display: ValueDisplayDescriptor<T>,
@@ -133,24 +142,23 @@ export function createLineItemsCellPreparers(timeZone: string) {
     };
   }
 
-  /** The single LineItems public-name, settings and implementation mapping. */
-  const editors = {
-    text: defineLineItemsEditor(textEditor, (_settings: Record<never, never>, column) => ({
+  const bindings = {
+    text: bindEditor(textEditor, (_settings: Record<never, never>, column) => ({
       options: {},
       ...prepareDisplay(column),
     })),
-    number: defineLineItemsEditor(numberEditor, (_settings: Record<never, never>, column) => ({
+    number: bindEditor(numberEditor, (_settings: Record<never, never>, column) => ({
       options: {},
       ...prepareDisplay(column),
     })),
-    date: defineLineItemsEditor(
+    date: bindEditor(
       dateEditor,
       (settings: Pick<CellEditorOptions<typeof dateEditor>, "withTime">, column) => ({
         options: { withTime: settings.withTime, timeZone },
         ...prepareDisplay(column),
       }),
     ),
-    combobox: defineLineItemsEditor(
+    choice: bindEditor(
       choiceEditor,
       ({ options }: Pick<CellEditorOptions<typeof choiceEditor>, "options">, column) => ({
         options: {
@@ -170,31 +178,34 @@ export function createLineItemsCellPreparers(timeZone: string) {
       }),
     ),
   };
-  return { editors, prepareDisplay };
+  return { bindings, prepareDisplay };
 }
 
-type EditorCatalog = ReturnType<typeof createLineItemsCellPreparers>["editors"];
+type EditorCatalog = typeof lineItemsEditors;
+type UIAdapters = ReturnType<typeof createLineItemsCellPreparers>["bindings"];
 type EditorSettingsByKind = {
-  [K in keyof EditorCatalog]: Parameters<EditorCatalog[K]["prepare"]>[0];
+  [K in keyof EditorCatalog]: Parameters<ReturnType<EditorCatalog[K]["bind"]>["prepare"]>[0];
 };
-type EditorPreparers = {
+type EditorDefinitions = {
   [K in keyof EditorSettingsByKind]: {
-    prepare: <T extends Record<string, unknown>>(
-      settings: EditorSettingsByKind[K],
-      column: LineItemsColumn<T>,
-    ) => LineItemsCellRenderers<T>;
+    bind: (ui: UIAdapters) => {
+      prepare: <T extends Record<string, unknown>>(
+        settings: EditorSettingsByKind[K],
+        column: LineItemsColumn<T>,
+      ) => LineItemsCellRenderers<T>;
+    };
   };
 };
 
 /** Keep keyed selection correlated with its settings without another editor-kind switch. */
 function resolveEditor<K extends keyof EditorSettingsByKind, T extends Record<string, unknown>>(
-  editors: EditorCatalog,
   edit: (EditorSettingsByKind[K] & { editorType: K }) | undefined,
   column: LineItemsColumn<T>,
+  bindings: UIAdapters,
 ): LineItemsCellRenderers<T> | undefined {
   if (!edit) return undefined;
-  const adapter: EditorPreparers[K] = editors[edit.editorType];
-  return adapter.prepare(edit, column);
+  const definition: EditorDefinitions[K] = lineItemsEditors[edit.editorType];
+  return definition.bind(bindings).prepare(edit, column);
 }
 
 /** Prepare and memoize cell renderers per column; row permissions choose the display mode later. */
@@ -203,9 +214,9 @@ export function useLineItemsCellRenderersByColumn<T extends Record<string, unkno
   timeZone: string,
 ) {
   return useMemo(() => {
-    const { editors, prepareDisplay } = createLineItemsCellPreparers(timeZone);
+    const { bindings, prepareDisplay } = createLineItemsCellPreparers(timeZone);
     return columns.map((column) => {
-      const renderers = resolveEditor(editors, column.edit, column);
+      const renderers = resolveEditor(column.edit, column, bindings);
       const presentation = renderers ?? prepareDisplay(column);
       return {
         column,

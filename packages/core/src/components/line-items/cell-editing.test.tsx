@@ -14,10 +14,8 @@ import { MemoryRouter } from "react-router";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import { CellEditError } from "@/components/internals/table-core/cell-edit-error";
 import { LineItems } from "./line-items";
-import {
-  useLineItemsCellRenderersByColumn,
-  type createLineItemsCellPreparers,
-} from "./line-items-cell";
+import { useLineItemsCellRenderersByColumn } from "./line-items-cell";
+import type { lineItemsEditors } from "./editor-factory";
 import { useLineItems } from "./use-line-items";
 import type { LineItemsColumn, UseLineItemsReturn } from "./types";
 
@@ -72,10 +70,7 @@ const editorColumns = {
   number: quantityColumn,
   combobox: statusColumn,
   date: dateColumn,
-} satisfies Record<
-  keyof ReturnType<typeof createLineItemsCellPreparers>["editors"],
-  LineItemsColumn<Row>
->;
+} satisfies Record<keyof typeof lineItemsEditors, LineItemsColumn<Row>>;
 const canEdit = (row: Row) => row.allowed;
 const configurations = buildConfigurations({ modules: [], locale: "en", timeZone: "Asia/Tokyo" });
 

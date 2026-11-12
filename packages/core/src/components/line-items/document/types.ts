@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { CellEditorOutput } from "@/components/internals/table-core/editing/props";
-import type { createLineItemsCellPreparers } from "../line-items-cell";
+import type { lineItemsEditors } from "../editor-factory";
 import type {
   ColumnCellType,
   ColumnDisplay,
@@ -18,14 +18,15 @@ type EditorBase<TRow extends Record<string, unknown>, TValue> = {
   error?: false | { render: (ctx: { row: TRow; error: unknown }) => ReactNode };
 };
 
-type EditorCatalog = ReturnType<typeof createLineItemsCellPreparers>["editors"];
-type EditorOutput<K extends keyof EditorCatalog> = CellEditorOutput<EditorCatalog[K]["editor"]>;
+type EditorCatalog = typeof lineItemsEditors;
+type EditorAdapter<K extends keyof EditorCatalog> = ReturnType<EditorCatalog[K]["bind"]>;
+type EditorOutput<K extends keyof EditorCatalog> = CellEditorOutput<EditorAdapter<K>["editor"]>;
 
 /** Derive supported kinds, settings and outputs from the adapters; outputs must fit the property. */
 export type LineItemsEditor<TRow extends Record<string, unknown>, TValue> = {
   [K in keyof EditorCatalog]: [EditorOutput<K>] extends [TValue]
     ? EditorBase<TRow, EditorOutput<K>> & { editorType: K } & Parameters<
-          EditorCatalog[K]["prepare"]
+          EditorAdapter<K>["prepare"]
         >[0]
     : never;
 }[keyof EditorCatalog];

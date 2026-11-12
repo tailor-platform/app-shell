@@ -53,10 +53,12 @@ const statusColumn = {
   type: "text",
   edit: {
     editorType: "combobox",
-    options: [
-      { value: "open", label: "Open" },
-      { value: "closed", label: "Closed" },
-    ],
+    editorOptions: {
+      options: [
+        { value: "open", label: "Open" },
+        { value: "closed", label: "Closed" },
+      ],
+    },
   },
 } satisfies LineItemsColumn<Row>;
 const dateColumn = {
@@ -336,7 +338,9 @@ describe("LineItems cell editing integration", () => {
   ])("preserves text and badge label fallbacks for $status", ({ status, text, badge }) => {
     const edit = {
       ...statusColumn.edit,
-      options: [...statusColumn.edit.options, { value: "blank", label: "" }],
+      editorOptions: {
+        options: [...statusColumn.edit.editorOptions.options, { value: "blank", label: "" }],
+      },
       canEdit: () => false,
     };
     setup(
@@ -430,13 +434,13 @@ describe("LineItems cell editing integration", () => {
   );
 
   it("skips choice-label lookup for custom-rendered readonly cells", () => {
-    const options = [...statusColumn.edit.options];
+    const options = [...statusColumn.edit.editorOptions.options];
     const find = vi.spyOn(options, "find");
     setup([
       {
         ...statusColumn,
         render: () => null,
-        edit: { ...statusColumn.edit, options, canEdit: () => false },
+        edit: { ...statusColumn.edit, editorOptions: { options }, canEdit: () => false },
       },
     ]);
     expect(screen.getByRole("cell").textContent).toBe("");
@@ -482,7 +486,7 @@ describe("LineItems cell editing integration", () => {
     const column: LineItemsColumn<Row> = {
       ...dateColumn,
       typeOptions: { dateFormat: "datetime" as const },
-      edit: { editorType: "date" as const, withTime: true },
+      edit: { editorType: "date" as const, editorOptions: { withTime: true } },
     };
     const editor = setup([column]);
     await editor.user.click(dateTrigger());

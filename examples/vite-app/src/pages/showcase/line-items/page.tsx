@@ -99,10 +99,12 @@ const LineItemsPage = () => {
         edit: {
           editorType: "combobox",
           canEdit,
-          options: [
-            { value: "open", label: "Open" },
-            { value: "closed", label: "Closed" },
-          ],
+          editorOptions: {
+            options: [
+              { value: "open", label: "Open" },
+              { value: "closed", label: "Closed" },
+            ],
+          },
         },
       },
       {

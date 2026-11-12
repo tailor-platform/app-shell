@@ -46,9 +46,9 @@ export const lineItemsEditors = {
 } satisfies Record<string, LineItemsEditorDefinition<unknown>>;
 
 /** Validate settings through the same definitions used for rendering, without loading UI modules. */
-export function assertLineItemsEditor(settings: { editorType: unknown }) {
-  const kind = settings.editorType;
+export function assertLineItemsEditor(edit: { editorType: unknown; editorOptions?: unknown }) {
+  const kind = edit.editorType;
   if (typeof kind !== "string" || !Object.hasOwn(lineItemsEditors, kind))
     throw new Error("Unsupported LineItems editor type");
-  lineItemsEditors[kind as keyof typeof lineItemsEditors].validate(settings);
+  lineItemsEditors[kind as keyof typeof lineItemsEditors].validate(edit.editorOptions);
 }

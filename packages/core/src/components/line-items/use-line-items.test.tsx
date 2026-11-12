@@ -101,7 +101,9 @@ it.each([
   { options: [{ value: 1, label: "One" }] },
   { options: [{ value: "one", label: 1 }] },
 ])("rejects malformed combobox options $options", ({ options }) => {
-  const invalid = [{ accessorKey: "name", edit: { editorType: "combobox", options } }];
+  const invalid = [
+    { accessorKey: "name", edit: { editorType: "combobox", editorOptions: { options } } },
+  ];
   expect(() =>
     renderHook(() => useLineItems({ columns: invalid } as unknown as UseLineItemsOptions<Row>)),
   ).toThrow("Combobox editors require fixed string options");

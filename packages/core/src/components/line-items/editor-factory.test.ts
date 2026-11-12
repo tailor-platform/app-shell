@@ -15,10 +15,10 @@ type Row = { id?: string; value: string | number | null };
 const settings = {
   text: { editorType: "text" },
   number: { editorType: "number" },
-  date: { editorType: "date", withTime: true },
+  date: { editorType: "date", editorOptions: { withTime: true } },
   combobox: {
     editorType: "combobox",
-    options: Object.freeze([{ value: "open", label: "Open" }]),
+    editorOptions: { options: Object.freeze([{ value: "open", label: "Open" }]) },
   },
 } satisfies {
   [K in keyof typeof lineItemsEditors]: Extract<LineItemsEditor<Row, unknown>, { editorType: K }>;
@@ -64,12 +64,20 @@ describe("headless editor definitions", () => {
     null,
     {},
     () => [],
-    [null],
-    [{ value: 1, label: "One" }],
-    [{ value: "one", label: 1 }],
-  ])("rejects malformed fixed options %s without UI preparation", (options) => {
-    const edit = { editorType: "combobox", options };
+    [],
+    { options: undefined },
+    { options: null },
+    { options: {} },
+    { options: () => [] },
+    { options: [null] },
+    { options: [{ value: 1, label: "One" }] },
+    { options: [{ value: "one", label: 1 }] },
+  ])("rejects malformed editorOptions %s without UI preparation", (editorOptions) => {
+    const edit = { editorType: "combobox", editorOptions };
     expect(() => assertLineItemsEditor(edit)).toThrow(
+      "Combobox editors require fixed string options",
+    );
+    expect(() => createLineItemsDocument<Row>({ columns: columns(edit) })).toThrow(
       "Combobox editors require fixed string options",
     );
     const doc = document();
@@ -79,5 +87,12 @@ describe("headless editor definitions", () => {
     );
     expect(doc.getRows()).toBe(before);
     expect(doc.isDirty()).toBe(false);
+  });
+
+  it("does not accept legacy flattened combobox options", () => {
+    const edit = { editorType: "combobox", options: [{ value: "open", label: "Open" }] };
+    expect(() => assertLineItemsEditor(edit)).toThrow(
+      "Combobox editors require fixed string options",
+    );
   });
 });

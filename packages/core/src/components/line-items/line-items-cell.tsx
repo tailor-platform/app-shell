@@ -143,24 +143,36 @@ export function createLineItemsCellPreparers(timeZone: string) {
   }
 
   const bindings = {
-    text: bindEditor(textEditor, (_settings: Record<never, never>, column) => ({
+    text: bindEditor(textEditor, (_settings: { editorOptions?: never }, column) => ({
       options: {},
       ...prepareDisplay(column),
     })),
-    number: bindEditor(numberEditor, (_settings: Record<never, never>, column) => ({
+    number: bindEditor(numberEditor, (_settings: { editorOptions?: never }, column) => ({
       options: {},
       ...prepareDisplay(column),
     })),
     date: bindEditor(
       dateEditor,
-      (settings: Pick<CellEditorOptions<typeof dateEditor>, "withTime">, column) => ({
-        options: { withTime: settings.withTime, timeZone },
+      (
+        {
+          editorOptions,
+        }: { editorOptions?: Pick<CellEditorOptions<typeof dateEditor>, "withTime"> },
+        column,
+      ) => ({
+        options: { withTime: editorOptions?.withTime, timeZone },
         ...prepareDisplay(column),
       }),
     ),
     choice: bindEditor(
       choiceEditor,
-      ({ options }: Pick<CellEditorOptions<typeof choiceEditor>, "options">, column) => ({
+      (
+        {
+          editorOptions: { options },
+        }: {
+          editorOptions: Pick<CellEditorOptions<typeof choiceEditor>, "options">;
+        },
+        column,
+      ) => ({
         options: {
           options,
           renderOption:

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Input } from "@/components/input";
+import { Select } from "@/components/select";
 import { Tooltip } from "@/components/tooltip";
 import { useDataTableContext } from "./context";
 import { useDataTableT } from "./i18n";
@@ -14,9 +15,15 @@ import { columnKeyAt } from "./column-layout";
 // on the popup itself (not the inner fieldset) so base-ui measures the real width
 // and anchors it flush under the trigger.
 const POPUP_CLASS = cn(
-  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-portal) astw:origin-(--transform-origin) astw:max-w-[360px] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
+  "astw:bg-popover astw:text-popover-foreground astw:z-(--z-portal) astw:origin-(--transform-origin) astw:max-w-[440px] astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
   "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
 );
+
+const SORT_ITEMS: { value: "none" | "Asc" | "Desc"; label: string }[] = [
+  { value: "none", label: "No sort" },
+  { value: "Asc", label: "Ascending" },
+  { value: "Desc", label: "Descending" },
+];
 
 type Section = "left" | "scrollable" | "right";
 
@@ -64,17 +71,21 @@ function DataTableColumnSettings({ className }: { className?: string }) {
     pinnedColumns,
     setPin,
     setColumnOrder,
+    sortStates,
+    onSort,
   } = useDataTableContext<Record<string, unknown>>();
 
   const meta = useMemo(() => {
     const label = new Map<string, string>();
     const defaultPin = new Map<string, "left" | "right" | undefined>();
+    const sortField = new Map<string, string | undefined>();
     columns.forEach((col, i) => {
       const key = columnKeyAt(col, i);
       label.set(key, col.label ?? key);
       defaultPin.set(key, col.pin);
+      sortField.set(key, col.sort?.field);
     });
-    return { label, defaultPin };
+    return { label, defaultPin, sortField };
   }, [columns]);
 
   const sectionOf = useCallback(
@@ -158,6 +169,10 @@ function DataTableColumnSettings({ className }: { className?: string }) {
       dropTarget?.section === section &&
       isLast &&
       dropTarget.index === fullIndex + 1;
+    const sortField = onSort ? meta.sortField.get(key) : undefined;
+    const priority = sortField ? sortStates.findIndex((st) => st.field === sortField) : -1;
+    const current: "none" | "Asc" | "Desc" =
+      priority >= 0 ? sortStates[priority].direction : "none";
     return (
       <div
         key={key}
@@ -182,6 +197,18 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         {showAfter && (
           <span className="astw:pointer-events-none astw:absolute astw:inset-x-1 astw:-bottom-px astw:z-10 astw:h-0.5 astw:rounded-full astw:bg-primary" />
         )}
+        <Tooltip.Root>
+          <Tooltip.Trigger
+            render={
+              <Checkbox
+                checked={isColumnVisible(key)}
+                onCheckedChange={() => toggleColumn(key)}
+                aria-label={meta.label.get(key)}
+              />
+            }
+          />
+          <Tooltip.Content>{t(isColumnVisible(key) ? "hideColumn" : "showColumn")}</Tooltip.Content>
+        </Tooltip.Root>
         <span
           aria-label={t("dragToReorder")}
           className="astw:cursor-grab astw:text-muted-foreground"
@@ -196,21 +223,41 @@ function DataTableColumnSettings({ className }: { className?: string }) {
         >
           {meta.label.get(key) ?? key}
         </button>
-        <Tooltip.Root>
-          {/* The checkbox itself is the trigger (props, incl. ref in React 19,
-              forward to Checkbox.Root) so hover AND keyboard focus open the
-              tooltip and its text is wired to the control via aria-describedby. */}
-          <Tooltip.Trigger
-            render={
-              <Checkbox
-                checked={isColumnVisible(key)}
-                onCheckedChange={() => toggleColumn(key)}
-                aria-label={meta.label.get(key)}
-              />
-            }
-          />
-          <Tooltip.Content>{t(isColumnVisible(key) ? "hideColumn" : "showColumn")}</Tooltip.Content>
-        </Tooltip.Root>
+        {/* 🧪 Prototype: per-column sort select, right-aligned like FilterRail settings. */}
+        {sortField ? (
+          <>
+            <span className="astw:w-4 astw:text-center astw:text-label-sm astw:text-muted-foreground">
+              {priority >= 0 && sortStates.length > 1 ? priority + 1 : ""}
+            </span>
+            <Select
+              items={SORT_ITEMS}
+              mapItem={(item) => ({ value: item.value, label: item.label })}
+              value={SORT_ITEMS.find((item) => item.value === current) ?? null}
+              onValueChange={(next) => {
+                if (!next || Array.isArray(next)) return;
+                if (next.value === "none") {
+                  onSort?.(sortField, undefined);
+                  return;
+                }
+                onSort?.(sortField, next.value);
+                // setSort moves a key to the end; re-append the keys that were
+                // after it so changing direction keeps its priority.
+                if (priority >= 0) {
+                  for (const later of sortStates.slice(priority + 1)) {
+                    onSort?.(later.field, undefined);
+                    onSort?.(later.field, later.direction);
+                  }
+                }
+              }}
+              aria-label={meta.label.get(key) ?? key}
+              className="astw:w-[8.5rem] astw:shrink-0 astw:[&_[data-slot=select-trigger]]:h-7 astw:[&_[data-slot=select-trigger]]:text-xs"
+            />
+          </>
+        ) : onSort ? (
+          <span className="astw:w-[10rem] astw:shrink-0 astw:text-right astw:text-body-sm astw:text-muted-foreground">
+            —
+          </span>
+        ) : null}
       </div>
     );
   };
@@ -299,7 +346,7 @@ function DataTableColumnSettings({ className }: { className?: string }) {
           <Popover.Popup data-slot="data-table-column-settings-popup" className={POPUP_CLASS}>
             <fieldset
               aria-label={t("columnSettings")}
-              className="astw:m-0 astw:flex astw:min-w-72 astw:flex-col astw:border-0 astw:p-2"
+              className="astw:m-0 astw:flex astw:min-w-[26rem] astw:flex-col astw:border-0 astw:p-2"
             >
               {/* Search sits above the pinned-left section; it filters only the
                   Scrollable list — the Fixed left / right zones always show in

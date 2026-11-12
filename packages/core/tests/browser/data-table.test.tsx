@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { DataTable, Text, Toolbar, useDataTable } from "@tailor-platform/app-shell";
 import { AppShell } from "@tailor-platform/app-shell/testing";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 type Row = { id: string; name: string };
 
@@ -69,6 +70,17 @@ function TestTable({
           <Text.span>Table footer</Text.span>
         </DataTable.Footer>
       </DataTable.Root>
+    </div>
+  );
+}
+
+function WideStatus({ onAction }: { onAction: () => void }) {
+  return (
+    <div style={{ width: 1200, display: "flex", justifyContent: "space-between" }}>
+      <button type="button">First status action</button>
+      <button type="button" onClick={onAction}>
+        Last status action
+      </button>
     </div>
   );
 }
@@ -147,6 +159,72 @@ describe.each(["empty", "error"] as const)("DataTable %s layout", (state) => {
     container.scrollLeft = 0;
     fireEvent.scroll(container);
     await waitFor(expectCentered);
+  });
+
+  it("scrolls oversized custom content independently of the columns to reach its last action", async () => {
+    const user = userEvent.setup();
+    const onAction = vi.fn();
+    const content = <WideStatus onAction={onAction} />;
+    render(
+      <div style={{ width: 600 }}>
+        <TestTable wide error={error} emptyContent={content} errorContent={content} />
+      </div>,
+      { wrapper },
+    );
+    const action = await screen.findByRole("button", { name: "Last status action" });
+    const container = scrollContainer();
+    const status = element('[data-slot="data-table-status-content"]');
+    await waitFor(() => {
+      expect(container.scrollWidth).toBeGreaterThan(container.clientWidth * 2);
+      expect(status.scrollWidth).toBeGreaterThan(status.clientWidth);
+      expect(rect(action).left).toBeGreaterThan(rect(status).right);
+    });
+
+    container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
+    fireEvent.scroll(container);
+    const columnScroll = container.scrollLeft;
+    status.scrollLeft = status.scrollWidth - status.clientWidth;
+    fireEvent.scroll(status);
+    await waitFor(() => {
+      expect(status.scrollLeft).toBeGreaterThan(0);
+      expect(rect(action).left).toBeGreaterThanOrEqual(rect(status).left);
+      expect(rect(action).right).toBeLessThanOrEqual(rect(status).right);
+      expect(container.scrollLeft).toBe(columnScroll);
+    });
+
+    await user.click(action);
+    expect(onAction).toHaveBeenCalledOnce();
+  });
+
+  it("reveals and activates an off-screen custom action using the keyboard", async () => {
+    const user = userEvent.setup();
+    const onAction = vi.fn();
+    const content = <WideStatus onAction={onAction} />;
+    render(
+      <div style={{ width: 600 }}>
+        <TestTable wide error={error} emptyContent={content} errorContent={content} />
+      </div>,
+      { wrapper },
+    );
+    const first = await screen.findByRole("button", { name: "First status action" });
+    const last = screen.getByRole("button", { name: "Last status action" });
+    const status = element('[data-slot="data-table-status-content"]');
+    await waitFor(() => {
+      expect(status.scrollLeft).toBe(0);
+      expect(rect(last).left).toBeGreaterThan(rect(status).right);
+    });
+
+    await user.click(first);
+    await user.tab();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(last);
+      expect(status.scrollLeft).toBeGreaterThan(0);
+      expect(rect(last).left).toBeGreaterThanOrEqual(rect(status).left);
+      expect(rect(last).right).toBeLessThanOrEqual(rect(status).right);
+      expect(scrollContainer().scrollLeft).toBe(0);
+    });
+    await user.keyboard("{Enter}");
+    expect(onAction).toHaveBeenCalledOnce();
   });
 
   it("keeps the existing three-row minimum when height is not constrained", async () => {

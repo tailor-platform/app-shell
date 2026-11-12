@@ -152,7 +152,7 @@ function DataTableStatusRow({ totalColSpan, state, children }: DataTableStatusRo
         {/* Match expanded rows: center within the scrollport, not the full column span. */}
         <div
           data-slot="data-table-status-content"
-          className="astw:sticky astw:left-0 astw:px-6 astw:py-2 astw:whitespace-normal astw:wrap-break-word"
+          className="astw:sticky astw:left-0 astw:overflow-x-auto astw:px-6 astw:py-2 astw:whitespace-normal astw:wrap-break-word"
           style={{ width: "min(100%, var(--data-table-viewport, 100%))" }}
         >
           {children}

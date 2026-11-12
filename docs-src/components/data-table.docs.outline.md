@@ -203,7 +203,7 @@ Omitting either prop or passing `undefined` preserves its default message. Pass 
 
 Without a height constraint, empty and error regions keep their existing three-row minimum height. When `DataTable.Root` has an explicit height, or fills a bounded flex parent with `className="flex-1"`, the status region fills the available table-body height and centers its content above the table footer. Empty results can also have a column footer; errors continue to hide it. Set the height on the root or its parent, not on `DataTable.Table`: its `className` targets the inner `<table>`. Tall custom content can increase the row height and scroll inside the table region. Headers and footers keep their natural heights, and data and loading rows are not stretched.
 
-When columns overflow horizontally, empty and error content stays centered within the visible scrollport rather than the full table width. Messages remain visible at the initial scroll position, while scrolling sideways, and after resizing. The status cell still spans all visible columns; headers and data rows retain their normal horizontal scrolling.
+When columns overflow horizontally, empty and error content stays centered within the visible scrollport rather than the full table width. Messages remain visible at the initial scroll position, while scrolling sideways, and after resizing. The status cell still spans all visible columns; headers and data rows retain their normal horizontal scrolling. Custom markup wider than the viewport has its own horizontal scroll area, independent of the columns, so off-screen content and actions remain reachable.
 
 <!-- example: empty-content | An empty approval table with custom markup centered in a fixed-height root. -->
 

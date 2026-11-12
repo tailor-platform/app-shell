@@ -5,7 +5,7 @@ packages:
   - packages/**
 
 catalog:
-  "@tailor-platform/sdk": ^2.7.0
+  "@tailor-platform/sdk": ^2.40.0
   "@tailwindcss/postcss": ^4.3.5
   "@types/node": ^25.9.8
   "@types/react": ^19
@@ -50,6 +50,8 @@ minimumReleaseAgeExclude:
   # First-party package exemption is intentional and permanent: this matches the
   # package name, so every version is exempt from the maturity gate.
   - "@tailor-platform/auth-public-client"
+  # Approved SDK update; exempt only this version from the maturity gate.
+  - "@tailor-platform/sdk@2.40.0"
   # Renovate security update: vitest@4.1.11
   - vitest@4.1.11
   # Renovate security update: next@16.3.3 || 16.3.8 || 16.4.1
@@ -67,6 +69,8 @@ overrides:
   ajv>fast-uri: 3.1.9
   # oxfmt pins vulnerable tinypool@2.1.0 (GHSA-85c8-ppgw-ccpr).
   oxfmt>tinypool: 2.1.2
+  # SDK v1 pins vulnerable zod@4.4.3 (GHSA-mrhx-c7xc-m3w5).
+  "@tailor-platform/sdk@^1>zod": 4.6.7
 
 # Deny all lifecycle scripts (postinstall, install, preinstall).
 # pnpm resolves optionalDependencies correctly so these fallback scripts are unnecessary.

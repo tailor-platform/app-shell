@@ -7,7 +7,7 @@ import { Button } from "@/components/button";
 import { Calendar } from "@/components/calendar";
 import { Input } from "@/components/input";
 import { sameDate, toCalendarDate, toIsoDateTime, toTimeText } from "../input-values";
-import type { CellEditor, CellEditorNavigation, CellEditorProps, DateTimeDraft } from "./props";
+import type { CellEditor, CellEditorNavigation, CellEditorProps } from "./props";
 import { useCellEditSession } from "./use-session";
 import {
   OVERLAY_CLASS_NAME,
@@ -36,6 +36,12 @@ function tabBetweenCells(
 ) {
   if (event.key !== "Tab" || open) return;
   if (navigation?.move(from, event.shiftKey ? "prev" : "next")) event.preventDefault();
+}
+
+/** Incomplete date-time editor state, interpreted in the AppShell timezone. */
+export interface DateTimeDraft {
+  day: string | null;
+  time: string | null;
 }
 
 type DateEditorOptions = {

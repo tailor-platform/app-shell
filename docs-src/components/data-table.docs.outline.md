@@ -7,6 +7,7 @@ sources:
   - packages/core/src/components/data-table/**
   - packages/core/src/components/internals/table-core/column-types.ts
   - packages/core/src/components/internals/table-core/cell-edit-error.ts
+  - packages/core/src/components/internals/table-core/editing/date.tsx
   - packages/core/src/hooks/use-collection-variables.ts
   - packages/core/src/lib/collection-url-state.ts
   - packages/core/src/contexts/collection-control-context.tsx

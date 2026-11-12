@@ -117,8 +117,3 @@ export interface CellEditorProps<TOptions, TOutput = unknown> {
   /** Render-time composition of the input and interaction state, not a state-change notification. */
   children: (view: CellEditorView) => ReactNode;
 }
-
-export interface DateTimeDraft {
-  day: string | null;
-  time: string | null;
-}

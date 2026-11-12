@@ -1622,14 +1622,14 @@ If an existing backend stores document dates as datetime instants, a shared busi
 
 `date` columns render app-shell date components as the value editor: single-value operators (`eq` / `gte` / `lte`) use an inline `Calendar`, and the `between` range uses two [`DatePicker`](./date-picker.md) **From** / **To** fields. (The range fields are a stopgap — they'll be replaced with a single range calendar once date-range support lands in the date-picker component.) `date` columns also present a friendlier, slimmer operator set:
 
-| Operator  | Label        | Meaning                    |
-| --------- | ------------ | -------------------------- |
-| `eq`      | _exact date_ | matches that calendar date |
-| `gte`     | _after_      | on or after (inclusive)    |
-| `lte`     | _before_     | on or before (inclusive)   |
-| `between` | _between_    | inclusive min–max range    |
+| Operator  | Label          | Meaning                    |
+| --------- | -------------- | -------------------------- |
+| `eq`      | _exact date_   | matches that calendar date |
+| `gte`     | _on or after_  | on or after (inclusive)    |
+| `lte`     | _on or before_ | on or before (inclusive)   |
+| `between` | _between_      | inclusive min–max range    |
 
-`gt` / `lt` / `ne` are intentionally dropped — the inclusive _after_ / _before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set. Datetime editors pair a calendar/date picker with a time input; `time` uses a native time input.)
+`gt` / `lt` / `ne` are intentionally dropped — the inclusive _on or after_ / _on or before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set. Datetime editors pair a calendar/date picker with a time input; `time` uses a native time input.)
 
 ### String Filter Case Sensitivity
 

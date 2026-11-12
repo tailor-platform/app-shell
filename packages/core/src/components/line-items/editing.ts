@@ -133,11 +133,15 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
       for (const [key, rowCells] of cells) {
         for (const [id, cell] of rowCells) {
           const after = columnFor(id);
-          if (!after?.edit || after.accessorKey !== cell.property) {
+          if (!after?.edit) {
             cell.session.cancel();
             cell.session.deactivate();
             rowCells.delete(id);
             continue;
+          }
+          if (after.accessorKey !== cell.property) {
+            cell.property = after.accessorKey!;
+            cell.session.cancel();
           }
           const row = getCurrentRow(key);
           if (row && !(after.edit.canEdit?.(row) ?? true)) cell.session.cancel();

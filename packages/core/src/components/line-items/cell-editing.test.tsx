@@ -302,6 +302,66 @@ describe("LineItems cell editing integration", () => {
     expect(editor.value.lines[0].name).toBe("Changed");
   });
 
+  it.each(["idle", "editing"] as const)(
+    "keeps a mounted %s editor usable when its column ID is rebound to another owned property",
+    (state) => {
+      const column = { ...nameColumn, id: "editable" };
+      const editor = setup([column, { id: "other", accessorKey: "status" }]);
+      const input = textbox();
+      if (state === "editing") draft(input, "Discarded");
+
+      editor.update([
+        { ...column, accessorKey: "status" },
+        { id: "other", accessorKey: "name" },
+      ]);
+
+      expect(textbox()).toBe(input);
+      expect(input.value).toBe("open");
+      expect(editor.value.isDirty).toBe(false);
+      draft(input, "Canceled by command");
+      expect(input.value).toBe("Canceled by command");
+      act(() => editor.value.updateField("A", "status", "Command"));
+      expect(input.value).toBe("Command");
+      draft(input, "Changed");
+      expect(input.value).toBe("Changed");
+      fireEvent.keyDown(input, { key: "Enter" });
+      expect(editor.value.lines[0]).toMatchObject({ name: "Widget", status: "Changed" });
+    },
+  );
+
+  it("discards a pending check when a retained column is rebound and accepts the next edit", async () => {
+    const request = deferred();
+    const check = vi.fn().mockImplementationOnce(() => request.promise);
+    const column = {
+      ...nameColumn,
+      id: "editable",
+      edit: { ...nameColumn.edit, onValueCommitted: check },
+    };
+    const editor = setup([column, { id: "other", accessorKey: "status" }]);
+    const input = textbox();
+    draft(input, "Stale");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(check).toHaveBeenCalledTimes(1);
+    expect(input.closest("td")?.getAttribute("aria-busy")).toBe("true");
+
+    editor.update([
+      { ...column, accessorKey: "status" },
+      { id: "other", accessorKey: "name" },
+    ]);
+
+    expect(textbox()).toBe(input);
+    expect(input.value).toBe("open");
+    expect(input.closest("td")?.getAttribute("aria-busy")).not.toBe("true");
+    draft(input, "Current");
+    await resolveRequest(request);
+    expect(input.value).toBe("Current");
+    expect(editor.value.lines[0]).toMatchObject({ name: "Widget", status: "open" });
+    expect(editor.value.isDirty).toBe(false);
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(check).toHaveBeenCalledTimes(2);
+    expect(editor.value.lines[0]).toMatchObject({ name: "Widget", status: "Current" });
+  });
+
   it("does not confirm an IME conversion as an editor commit", () => {
     const editor = setup([nameColumn]);
     const input = textbox();

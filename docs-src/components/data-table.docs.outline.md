@@ -187,6 +187,28 @@ function JournalsPage() {
 | `children`  | `ReactNode`                | Sub-components to render inside the root.    |
 | `className` | `string`                   | Additional CSS class for the root container. |
 
+### `DataTable.Table` Props
+
+| Prop           | Type        | Description                                                                                 |
+| -------------- | ----------- | ------------------------------------------------------------------------------------------- |
+| `className`    | `string`    | Additional CSS class for the inner `<table>` element.                                       |
+| `emptyContent` | `ReactNode` | Content shown for an empty result. Defaults to the localized "No data" message.             |
+| `errorContent` | `ReactNode` | Content shown on error. Defaults to the localized error prefix followed by `error.message`. |
+
+`emptyContent` and `errorContent` belong on `DataTable.Table`, not `DataTable.Root` or `useDataTable`. Strings use the default muted styling for empty results and error-color styling for errors. Other React nodes render inside a viewport-sized status container, so custom markup can include descriptions and actions without an extra inline text wrapper. Retry behavior and error classification remain consumer-owned; use the error from your query or `table.error` to build content specific to the failure.
+
+Loading takes precedence over errors; errors take precedence over empty results and data rows. `errorContent` is only shown when loading has finished and an error is present, even if stale rows remain. `emptyContent` is only shown when loading has finished, no error is present, and there are no rows. Neither override is displayed during loading or a successful non-empty result.
+
+Omitting either prop or passing `undefined` preserves its default message. Pass `null`, `false`, or an empty string to hide the content without removing the status row; `0` is rendered as content. Both status cells span all visible columns, including selection, expansion, and row-action columns.
+
+Without a height constraint, empty and error regions keep their existing three-row minimum height. When `DataTable.Root` has an explicit height, or fills a bounded flex parent with `className="flex-1"`, the status region fills the available table-body height and centers its content above the table footer. Empty results can also have a column footer; errors continue to hide it. Set the height on the root or its parent, not on `DataTable.Table`: its `className` targets the inner `<table>`. Tall custom content can increase the row height and scroll inside the table region. Headers and footers keep their natural heights, and data and loading rows are not stretched.
+
+When columns overflow horizontally, empty and error content stays centered within the visible scrollport rather than the full table width. Messages remain visible at the initial scroll position, while scrolling sideways, and after resizing. The status cell still spans all visible columns; headers and data rows retain their normal horizontal scrolling.
+
+<!-- example: empty-content | An empty approval table with custom markup centered in a fixed-height root. -->
+
+<!-- example: error-content | A failed approval table with custom error markup centered in a fixed-height root. -->
+
 ### `DataTable.Toolbar` Props
 
 | Prop             | Type        | Default | Description                                                                                                                                 |

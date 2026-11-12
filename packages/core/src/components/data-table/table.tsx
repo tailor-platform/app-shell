@@ -1,4 +1,5 @@
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import { Table } from "@/components/table";
 import { DataTableContext, PinMeasureContext, selectionInTreeColumn } from "./context";
 import { DataTableHeaders } from "./header";
@@ -7,7 +8,17 @@ import { DataTableColumnFooter } from "./column-footer";
 import { useTableMeasurements } from "./use-table-measurements";
 
 /** Use `DataTable.Table` instead of calling this directly. */
-function DataTableTable({ className }: { className?: string }) {
+function DataTableTable({
+  className,
+  emptyContent,
+  errorContent,
+}: {
+  className?: string;
+  /** Content for an empty result. Defaults to the localized message; null hides the content. */
+  emptyContent?: ReactNode;
+  /** Content shown on error. Defaults to the localized prefix and error message; null hides the content. */
+  errorContent?: ReactNode;
+}) {
   const ctx = useContext(DataTableContext);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -18,6 +29,8 @@ function DataTableTable({ className }: { className?: string }) {
   const hasSelection = !!ctx?.toggleRowSelection && !selectionInTreeColumn(ctx);
   const hasExpand = !!ctx?.rowExpansion;
   const hasRowActions = !!ctx?.rowActions?.length;
+  // Fill spare height without stretching headers, footers, or real data rows.
+  const hasStatusRow = !ctx?.loading && (!!ctx?.error || !ctx?.rows.length);
 
   const widths = useTableMeasurements(containerRef, {
     visibleColumns,
@@ -49,11 +62,15 @@ function DataTableTable({ className }: { className?: string }) {
       <Table.Root
         data-slot="data-table-table"
         containerRef={containerRef}
-        containerClassName="astw:min-h-0 astw:overflow-auto"
-        className={className}
+        containerClassName={cn("astw:min-h-0 astw:overflow-auto", hasStatusRow && "astw:flex-1")}
+        className={cn(hasStatusRow && "astw:h-full", className)}
       >
         <DataTableHeaders />
-        <DataTableBody />
+        <DataTableBody
+          className={hasStatusRow ? "astw:h-full" : undefined}
+          emptyContent={emptyContent}
+          errorContent={errorContent}
+        />
         <DataTableColumnFooter />
       </Table.Root>
     </PinMeasureContext.Provider>

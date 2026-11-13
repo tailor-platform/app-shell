@@ -150,10 +150,10 @@ describe("DateFilterEditor", () => {
   });
 
   it.each([
-    ["gte", "以降（当日を含む）"],
-    ["lte", "以前（当日を含む）"],
+    ["gte", "以降"],
+    ["lte", "以前"],
   ] as const)(
-    "makes the inclusive %s bound explicit in Japanese chips and operator lists",
+    "uses the existing Japanese label for %s in chips and operator lists",
     async (operator, label) => {
       const user = userEvent.setup();
       const control = makeControl({
@@ -168,8 +168,8 @@ describe("DateFilterEditor", () => {
       const popup = document.querySelector(
         '[data-slot="data-table-filter-operator-popup"]',
       ) as HTMLElement;
-      expect(within(popup).getByRole("button", { name: "以降（当日を含む）" })).toBeDefined();
-      expect(within(popup).getByRole("button", { name: "以前（当日を含む）" })).toBeDefined();
+      expect(within(popup).getByRole("button", { name: "以降" })).toBeDefined();
+      expect(within(popup).getByRole("button", { name: "以前" })).toBeDefined();
     },
   );
 

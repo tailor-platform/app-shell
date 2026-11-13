@@ -761,12 +761,13 @@ function RowClickInteraction() {
 - **One definition provides row clicks and the explicit control.** An unmodified primary-button click in the same DOM row activates its generated primary link/button. Ordinary built-in and custom display content use normal React event bubbling; no column opt-in or DOM-role classification is required. Selecting row text does not activate the shortcut. Nested rows and portaled content do not activate their parent row.
 - **Browser link operations belong to the real link.** Cmd/Ctrl-click, middle-click, URL preview, and the browser's link context menu are available on the generated link, not promised on row whitespace. The dedicated actions cell does not install the data-cell copy/filter context menu.
 - **Keep table semantics.** Rows do not become links, buttons, or extra Tab stops. The generated control is keyboard-reachable, has a visible focus indication, and is focused before a row-background shortcut activates it. Consumer-owned drawers and dialogs still own their overlay focus behavior.
+- **Native Tab order with row interactions.** Tab / Shift+Tab follow the browser's normal order through editors, related links, primary actions, menus, and selection controls. Editors still confirm and validate drafts before leaving; invalid drafts can prevent movement. Tables without `rowInteraction` retain their existing editor-to-editor navigation.
 
 ### Cell controls and event propagation
 
 `rowInteraction` adds an explicit, keyboard-accessible primary control to the familiar row-click model. It does not inspect arbitrary renderer DOM or introduce a column interaction flag.
 
-- DataTable's selection, expansion, hierarchy controls, primary action, and secondary menu stop click propagation. Built-in cell links and badge overflow controls also keep their clicks independent; their surrounding ordinary cell content can still activate the row.
+- DataTable's selection, expansion, hierarchy controls, primary action, and secondary menu stop click propagation. With `rowInteraction`, DataTable also stops propagation from built-in cell links and badge overflow controls; their surrounding ordinary cell content can still activate the row. These additional boundaries do not apply to deprecated `onClickRow` or badge rendering outside row-interaction tables.
 - **Every column with `edit` stops propagation**, including read-only rows where `edit.canEdit` returns `false`. A cell's click never changes from editing to the row's primary action as eligibility changes.
 - **Custom interactive renderers own their event boundary**, as with legacy row clicks. Call `event.stopPropagation()` on custom links, buttons, inputs, or a suitable enclosing boundary when they must not also activate the row. This is normal React event handling, not automatic detection or sanitization.
 
@@ -787,6 +788,8 @@ column({
 ```
 
 Display-only custom renderers need no additional configuration. The generated Open/Edit control remains available independently of cell rendering and editing.
+
+`stopPropagation()` also prevents bubbling to React parents outside the table. Independent-control clicks are not guaranteed to reach a parent's `onClick`; the table does not introduce a separate event-identification mechanism to preserve that bubbling.
 
 ### Migrating from `onClickRow`
 

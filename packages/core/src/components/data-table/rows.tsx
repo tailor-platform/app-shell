@@ -31,11 +31,12 @@ import {
   treeCellPadding,
   EXPAND_WIDTH,
   ACTIONS_WIDTH,
-  ACTIONS_KEY,
   pinCellProps,
   resolveAlign,
   type PinLayout,
 } from "./column-layout";
+
+const stopClickPropagation = (event: MouseEvent<HTMLElement>) => event.stopPropagation();
 
 interface DataTableRowsProps<TRow extends Record<string, unknown>> {
   rows: TRow[];
@@ -89,15 +90,16 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   const { value: timeZone } = useTimeZone();
   const hasExpand = !!rowExpansion;
   const { ordered, keys, placements, selection, expand, actions } = pinLayout;
+  const onControlClick = rowInteraction ? stopClickPropagation : undefined;
   // Intl formatter construction is costly; avoid repeating it for every cell render.
   const cellRenderers = useMemo(
     () =>
       new Map(
         ordered
           .filter((col) => !col.render)
-          .map((col) => [col, createTypedCellRenderer(col, timeZone)]),
+          .map((col) => [col, createTypedCellRenderer(col, timeZone, onControlClick)]),
       ),
-    [ordered, timeZone],
+    [ordered, timeZone, onControlClick],
   );
   const {
     contextMenu: cellContextMenu,
@@ -106,7 +108,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
     handleContextMenuCloseComplete: handleCellContextMenuCloseComplete,
     getCellContextMenuHandlers,
   } = useCellContextMenu();
-  const navigation = useCellEditNavigation();
+  const navigation = useCellEditNavigation(!rowInteraction);
   // Namespaced so an id-less row's index fallback can't collide with a real
   // id of the same digits — React reconciles duplicate keys by position,
   // pairing a detail panel with the wrong row.
@@ -121,11 +123,11 @@ function DataTableRows<TRow extends Record<string, unknown>>({
     return rowId != null ? `id:${String(rowId)}` : `idx:${rowIndex}`;
   });
   const selectionEnabled = !!toggleRowSelection;
-  // Include the primary action so editor Tab navigation cannot skip a row's link/button.
-  navigation.setOrder(rowKeys, [
-    ...ordered.map((col) => keys.get(col) as string),
-    ...(rowInteraction ? [ACTIONS_KEY] : []),
-  ]);
+  // Legacy tables retain editor-to-editor moves; row interactions use native Tab order.
+  navigation.setOrder(
+    rowKeys,
+    ordered.map((col) => keys.get(col) as string),
+  );
   // In a table people edit, every data cell says what a click does: editors
   // show a text or pointer cursor, and the rest show "not allowed". Skipped when
   // rows are clickable, where the row click is what the cursor should promise.
@@ -410,8 +412,6 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                           interaction={rowInteraction}
                           row={row}
                           enabled={primaryEnabled}
-                          navigation={navigation}
-                          rowKey={rowKey}
                         />
                         {!!rowActions?.length && <RowActionsMenu actions={rowActions} row={row} />}
                       </div>

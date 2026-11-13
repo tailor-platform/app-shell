@@ -220,18 +220,122 @@ describe("DataTable row interaction", () => {
     expect(screen.getByTestId("location").textContent).toBe("/");
   });
 
-  it("includes the primary action between rows in the editor's Tab order", async () => {
+  it("preserves native Tab order through related links, primary actions, menus, and selection", async () => {
+    const user = userEvent.setup();
+    const commit = vi.fn();
+    const { container } = render(
+      <Harness
+        options={{
+          ...base,
+          columns: [
+            { id: "name", label: "Name", type: "text", edit: { onValueCommitted: commit } },
+            {
+              id: "customer",
+              label: "Customer",
+              render: (row) => (
+                <Link to={`/customers/${row.id}`} onClick={(event) => event.stopPropagation()}>
+                  Customer {row.name}
+                </Link>
+              ),
+            },
+          ],
+          rowInteraction: linkInteraction,
+          rowSelection: {},
+          rowActions: [{ id: "archive", label: "Archive", onClick: vi.fn() }],
+        }}
+      />,
+      { wrapper },
+    );
+    const [firstRow, secondRow] = dataRows(container);
+    const firstEditor = within(firstRow).getByRole("textbox");
+    const secondEditor = within(secondRow).getByRole("textbox");
+    await user.click(secondEditor);
+    await user.type(secondEditor, " updated");
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByRole("link", { name: "Customer Bob" }));
+    expect(commit).toHaveBeenCalledWith(testData.rows[1], "Bob updated");
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByRole("link", { name: "Details: Bob" }));
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(screen.getByRole("link", { name: "Customer Bob" }));
+    await user.click(secondEditor);
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(
+      within(secondRow).getByRole("checkbox", { name: "Select row" }),
+    );
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(
+      within(firstRow).getByRole("button", { name: "Row actions" }),
+    );
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(screen.getByRole("link", { name: "Details: Alice" }));
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(screen.getByRole("link", { name: "Customer Alice" }));
+    await user.tab({ shift: true });
+    expect(document.activeElement).toBe(firstEditor);
+  });
+
+  it.each(["id", "label"] as const)(
+    "does not share a navigation namespace with the primary action (%s)",
+    async (source) => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <Harness
+          options={{
+            ...base,
+            data: { rows: [testData.rows[0]] },
+            columns: [
+              {
+                id: source === "id" ? "__datatable_actions__" : undefined,
+                label: source === "label" ? "__datatable_actions__" : "Name",
+                type: "text",
+                accessor: (row) => row.name,
+                edit: { onValueCommitted: vi.fn() },
+              },
+              { id: "status", label: "Status", type: "text", edit: { onValueCommitted: vi.fn() } },
+            ],
+            rowInteraction: linkInteraction,
+          }}
+        />,
+        { wrapper },
+      );
+      const [firstEditor, secondEditor] = within(dataRows(container)[0]).getAllByRole("textbox");
+      await user.tab();
+      expect(document.activeElement).toBe(firstEditor);
+      await user.tab();
+      expect(document.activeElement).toBe(secondEditor);
+      await user.tab({ shift: true });
+      expect(document.activeElement).toBe(firstEditor);
+      await user.tab();
+      await user.tab();
+      expect(document.activeElement).toBe(screen.getByRole("link", { name: "Details: Alice" }));
+    },
+  );
+
+  it("preserves native Tab order when leaving a choice editor", async () => {
     const user = userEvent.setup();
     render(
       <Harness
         options={{
           ...base,
+          data: { rows: [testData.rows[0]] },
           columns: [
             {
-              id: "name",
-              label: "Name",
+              id: "status",
+              label: "Status",
               type: "text",
-              edit: { onValueCommitted: vi.fn() },
+              edit: {
+                options: [
+                  { value: "Active", label: "Active" },
+                  { value: "Inactive", label: "Inactive" },
+                ],
+                onValueCommitted: vi.fn(),
+              },
+            },
+            {
+              id: "customer",
+              label: "Customer",
+              render: (row) => <Link to={`/customers/${row.id}`}>Customer</Link>,
             },
           ],
           rowInteraction: linkInteraction,
@@ -240,13 +344,48 @@ describe("DataTable row interaction", () => {
       { wrapper },
     );
     await user.tab();
-    expect(document.activeElement?.closest("td")?.hasAttribute("data-editable")).toBe(true);
+    const editor = screen.getByRole("combobox");
+    expect(document.activeElement).toBe(editor);
     await user.tab();
-    expect(document.activeElement).toBe(screen.getByRole("link", { name: "Details: Alice" }));
-    await user.tab();
-    expect(document.activeElement?.closest("td")?.hasAttribute("data-editable")).toBe(true);
+    expect(document.activeElement).toBe(screen.getByRole("link", { name: "Customer" }));
     await user.tab({ shift: true });
-    expect(document.activeElement).toBe(screen.getByRole("link", { name: "Details: Alice" }));
+    expect(document.activeElement).toBe(editor);
+  });
+
+  it("keeps numeric validation before native Tab movement", async () => {
+    const user = userEvent.setup();
+    const commit = vi.fn();
+    render(
+      <Harness
+        options={{
+          ...base,
+          data: { rows: [testData.rows[0]] },
+          columns: [
+            {
+              id: "amount",
+              label: "Amount",
+              type: "number",
+              accessor: () => 10,
+              edit: { onValueCommitted: commit },
+            },
+            {
+              id: "customer",
+              label: "Customer",
+              render: (row) => <Link to={`/customers/${row.id}`}>Customer</Link>,
+            },
+          ],
+          rowInteraction: linkInteraction,
+        }}
+      />,
+      { wrapper },
+    );
+    const editor = screen.getByRole("textbox");
+    await user.click(editor);
+    await user.clear(editor);
+    await user.type(editor, "not a number");
+    await user.tab();
+    expect(document.activeElement).toBe(editor);
+    expect(commit).not.toHaveBeenCalled();
   });
 
   it("supports navigation from the primary link and the row background", async () => {
@@ -408,29 +547,37 @@ describe("DataTable row interaction", () => {
   it("keeps the built-in badge overflow control separate from ordinary row clicks", async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
+    const onParentClick = vi.fn();
     const { container } = render(
-      <Harness
-        options={{
-          ...base,
-          columns: [
-            {
-              id: "status",
-              label: "Status",
-              type: "badge",
-              accessor: (row) => [row.status, "Other"],
-              typeOptions: { maxVisible: 1 },
-            },
-          ],
-          rowInteraction: { type: "click", label: "Edit", onClick },
-        }}
-      />,
+      <div role="presentation" onClick={onParentClick}>
+        <Harness
+          options={{
+            ...base,
+            columns: [
+              {
+                id: "status",
+                label: "Status",
+                type: "badge",
+                accessor: (row) => [row.status, "Other"],
+                typeOptions: { maxVisible: 1 },
+              },
+            ],
+            rowInteraction: { type: "click", label: "Edit", onClick },
+          }}
+        />
+      </div>,
       { wrapper },
     );
-    fireEvent.click(dataRows(container)[0].cells[0]);
+    const row = dataRows(container)[0];
+    fireEvent.click(within(row).getByText("Active"));
     expect(onClick).toHaveBeenCalledExactlyOnceWith(testData.rows[0]);
+    expect(onParentClick).toHaveBeenCalledOnce();
     onClick.mockClear();
-    await user.click(screen.getAllByRole("button", { name: "+1" })[0]);
+    onParentClick.mockClear();
+    await user.click(within(row).getByRole("button", { name: "+1" }));
+    expect(await screen.findByText("Other")).toBeDefined();
     expect(onClick).not.toHaveBeenCalled();
+    expect(onParentClick).not.toHaveBeenCalled();
   });
 
   it("keeps active editors separate from row activation", () => {
@@ -719,6 +866,78 @@ describe("DataTable row interaction", () => {
     );
     expect(container.querySelector("tbody td")?.getAttribute("colspan")).toBe("3");
   });
+
+  it.each(["link", "overflow"] as const)(
+    "preserves legacy control bubbling when row interaction changes (%s)",
+    async (kind) => {
+      const user = userEvent.setup();
+      const onClickRow = vi.fn();
+      const onPrimaryClick = vi.fn();
+      const onParentClick = vi.fn();
+      const columns: Column<TestRow>[] =
+        kind === "link"
+          ? [
+              {
+                id: "name",
+                label: "Name",
+                type: "link",
+                typeOptions: { href: (row) => `/customers/${row.id}` },
+              },
+            ]
+          : [
+              {
+                id: "status",
+                label: "Status",
+                type: "badge",
+                accessor: (row) => [row.status, "Other"],
+                typeOptions: { maxVisible: 1 },
+              },
+            ];
+      const options = {
+        ...base,
+        columns,
+        rowActions: [{ id: "inspect", label: "Inspect", onClick: vi.fn() }],
+      };
+      const interaction = { type: "click" as const, label: "Edit", onClick: onPrimaryClick };
+      const { container, rerender } = render(
+        <div role="presentation" onClick={onParentClick}>
+          <Harness options={{ ...options, onClickRow }} />
+        </div>,
+        { wrapper },
+      );
+      const control = () =>
+        within(dataRows(container)[0]).getByRole(kind === "link" ? "link" : "button", {
+          name: kind === "link" ? "Alice" : "+1",
+        });
+      await user.click(control());
+      if (kind === "link") expect(screen.getByTestId("location").textContent).toBe("/customers/1");
+      else expect(await screen.findByText("Other")).toBeDefined();
+      expect(onClickRow).toHaveBeenCalledExactlyOnceWith(testData.rows[0]);
+      expect(onParentClick).toHaveBeenCalledOnce();
+      onClickRow.mockClear();
+      onParentClick.mockClear();
+
+      rerender(
+        <div role="presentation" onClick={onParentClick}>
+          <Harness options={{ ...options, rowInteraction: interaction }} />
+        </div>,
+      );
+      await user.click(control());
+      expect(onPrimaryClick).not.toHaveBeenCalled();
+      expect(onClickRow).not.toHaveBeenCalled();
+      expect(onParentClick).not.toHaveBeenCalled();
+
+      rerender(
+        <div role="presentation" onClick={onParentClick}>
+          <Harness options={{ ...options, onClickRow }} />
+        </div>,
+      );
+      await user.click(control());
+      expect(onClickRow).toHaveBeenCalledExactlyOnceWith(testData.rows[0]);
+      expect(onParentClick).toHaveBeenCalledOnce();
+      expect(onPrimaryClick).not.toHaveBeenCalled();
+    },
+  );
 
   it("preserves the legacy callback without generating a primary action", () => {
     const onClickRow = vi.fn();

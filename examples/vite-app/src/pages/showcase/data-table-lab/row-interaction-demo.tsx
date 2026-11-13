@@ -56,18 +56,14 @@ export function RowInteractionDemo() {
   const detailOrder = ORDERS.find((order) => order.id === orderId);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [feedback, setFeedback] = useState("No secondary action yet.");
+  const [linkParentClicks, setLinkParentClicks] = useState(0);
+  const [clickParentClicks, setClickParentClicks] = useState(0);
+  const [editCalls, setEditCalls] = useState(0);
+  const [legacyParentClicks, setLegacyParentClicks] = useState(0);
+  const [legacyCalls, setLegacyCalls] = useState(0);
 
   const columns = [
     column({ id: "id", label: "Order", type: "text", width: 140 }),
-    column({
-      id: "customer",
-      label: "Customer (related link)",
-      type: "link",
-      width: 230,
-      typeOptions: {
-        href: (row) => `${pathname}?row-demo-customer=${encodeURIComponent(row.customer)}`,
-      },
-    }),
     column({
       id: "total",
       label: "Total (edit configured)",
@@ -78,6 +74,40 @@ export function RowInteractionDemo() {
         onValueCommitted: (row, total) =>
           setFeedback(`${row.id}: total draft ${total ?? "empty"} (not saved).`),
       },
+    }),
+    column({
+      id: "customer",
+      label: "Customer (related link)",
+      type: "link",
+      width: 230,
+      typeOptions: {
+        href: (row) => `${pathname}?row-demo-customer=${encodeURIComponent(row.customer)}`,
+      },
+    }),
+    column({
+      id: "tags",
+      label: "Tags (overflow)",
+      type: "badge",
+      width: 160,
+      accessor: () => ["New", "Priority", "Domestic"],
+      typeOptions: { maxVisible: 1 },
+    }),
+    column({
+      id: "custom-action",
+      label: "Custom action",
+      width: 180,
+      render: (row) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(event) => {
+            event.stopPropagation();
+            setFeedback(`Inspected ${row.id} (custom action only).`);
+          }}
+        >
+          Inspect {row.id}
+        </Button>
+      ),
     }),
     column({
       id: "status",
@@ -129,7 +159,18 @@ export function RowInteractionDemo() {
       label: "Edit",
       getLabel: (row) => row.id,
       canApply: (row) => row.status !== "restricted",
-      onClick: (row) => setEditingOrder(row),
+      onClick: (row) => {
+        setEditCalls((count) => count + 1);
+        setEditingOrder(row);
+      },
+    },
+  });
+  const legacyTable = useDataTable({
+    columns,
+    data: { rows: [ORDERS[0]] },
+    onClickRow: (row) => {
+      setLegacyCalls((count) => count + 1);
+      setFeedback(`Legacy onClickRow ran for ${row.id}.`);
     },
   });
 
@@ -167,19 +208,29 @@ export function RowInteractionDemo() {
           configured: neither editable nor read-only totals open the record. Open is a real link
           styled as a button; Cmd/Ctrl-click, middle-click, and the browser link menu work on Open
           itself. Built-in related links, checkboxes, and the secondary menu keep their clicks
-          independent. Custom interactive renderers should call event.stopPropagation(), as with
-          ordinary React row-click handlers.
+          independent. The +2 overflow and custom Inspect button also stay independent. Inspect
+          demonstrates event.stopPropagation() in a custom renderer, without column opt-ins.
+          Independent controls stop bubbling to the React parent as well. Tab / Shift+Tab follow
+          native order through every control.
         </Text.p>
-        <DataTable.Root value={linkTable}>
-          <Toolbar.Root>
-            <Toolbar.Row className="justify-end" aria-label="Order navigation table controls">
-              <Toolbar.Group>
-                <DataTable.ColumnSettings />
-              </Toolbar.Group>
-            </Toolbar.Row>
-          </Toolbar.Root>
-          <DataTable.Table />
-        </DataTable.Root>
+        <Text
+          variant="body-sm"
+          render={<output id="row-interaction-link-events" aria-live="polite" />}
+        >
+          Parent bubbling clicks: {linkParentClicks}
+        </Text>
+        <div role="presentation" onClick={() => setLinkParentClicks((count) => count + 1)}>
+          <DataTable.Root value={linkTable}>
+            <Toolbar.Root>
+              <Toolbar.Row className="justify-end" aria-label="Order navigation table controls">
+                <Toolbar.Group>
+                  <DataTable.ColumnSettings />
+                </Toolbar.Group>
+              </Toolbar.Row>
+            </Toolbar.Root>
+            <DataTable.Table />
+          </DataTable.Root>
+        </div>
       </section>
 
       <section aria-labelledby="row-interaction-click-heading" className="space-y-3">
@@ -190,11 +241,44 @@ export function RowInteractionDemo() {
           Edit is a real button: Tab to it and press Enter or Space, or click Order, Access, or
           Note. Only ORD-1001's total can be edited; all Total cells stay outside row activation,
           including read-only ones. Total drafts are reported below, not saved. The restricted row
-          cannot open the drawer. No renderer opt-in or DOM marker is required.
+          cannot open the drawer. No renderer opt-in or DOM marker is required. Watch the counters:
+          a background click invokes Edit and bubbles to the parent; Edit itself invokes its
+          callback but stops bubbling. Related links, +2, Inspect, selection, and the menu invoke
+          neither Edit nor the parent's onClick.
         </Text.p>
-        <DataTable.Root value={clickTable}>
-          <DataTable.Table />
-        </DataTable.Root>
+        <Text
+          variant="body-sm"
+          render={<output id="row-interaction-click-events" aria-live="polite" />}
+        >
+          Edit callbacks: {editCalls} · Parent bubbling clicks: {clickParentClicks}
+        </Text>
+        <div role="presentation" onClick={() => setClickParentClicks((count) => count + 1)}>
+          <DataTable.Root value={clickTable}>
+            <DataTable.Table />
+          </DataTable.Root>
+        </div>
+      </section>
+
+      <section aria-labelledby="row-interaction-legacy-heading" className="space-y-3">
+        <Text.h3 id="row-interaction-legacy-heading" variant="heading-sm">
+          Legacy onClickRow — unchanged behavior
+        </Text.h3>
+        <Text.p variant="body-sm" className="max-w-3xl text-muted-foreground">
+          This deprecated API intentionally keeps its previous behavior: Customer and +2 perform
+          their own operation, also call onClickRow, and bubble to the parent. This demonstrates the
+          legacy limitation, not recommended usage. The new API above separates those operations.
+        </Text.p>
+        <Text
+          variant="body-sm"
+          render={<output id="row-interaction-legacy-events" aria-live="polite" />}
+        >
+          Legacy callbacks: {legacyCalls} · Parent bubbling clicks: {legacyParentClicks}
+        </Text>
+        <div role="presentation" onClick={() => setLegacyParentClicks((count) => count + 1)}>
+          <DataTable.Root value={legacyTable}>
+            <DataTable.Table />
+          </DataTable.Root>
+        </div>
       </section>
 
       <Text

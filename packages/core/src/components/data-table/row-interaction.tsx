@@ -2,9 +2,6 @@ import type { MouseEvent } from "react";
 import { Link } from "react-router";
 import { Button, buttonVariants } from "@/components/button";
 import { cn } from "@/lib/utils";
-import { ACTIONS_KEY } from "./column-layout";
-import { useNavigationRef } from "./editing/cell/shared";
-import type { CellEditNavigation } from "./editing/use-navigation";
 import type { RowInteraction } from "./types";
 
 /** Activate the real control so routing and drawer focus return have one source of truth. */
@@ -45,24 +42,18 @@ export function DataTableRowPrimaryAction<TRow extends Record<string, unknown>>(
   interaction,
   row,
   enabled,
-  navigation,
-  rowKey,
 }: {
   id: string;
   interaction: RowInteraction<TRow>;
   row: TRow;
   enabled: boolean;
-  navigation: CellEditNavigation;
-  rowKey: string;
 }) {
-  const navigationRef = useNavigationRef<HTMLElement>(navigation, rowKey, ACTIONS_KEY);
   const identity = interaction.getLabel?.(row);
   const accessibleName = identity ? `${interaction.label}: ${identity}` : interaction.label;
   const props = {
     id,
     "data-slot": "data-table-row-primary-action",
     "aria-label": accessibleName,
-    ref: enabled ? navigationRef : undefined,
   };
 
   if (interaction.type === "click") {

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createAppShellWrapper } from "../../../tests/test-utils";
@@ -125,6 +125,20 @@ describe("BadgeList", () => {
       expect(screen.getByText("c")).toBeDefined();
       expect(screen.getByText("d")).toBeDefined();
     });
+  });
+
+  it("lets standalone overflow clicks bubble to the parent", async () => {
+    const user = userEvent.setup();
+    const onParentClick = vi.fn();
+    render(
+      <div role="presentation" onClick={onParentClick}>
+        <BadgeList value={["visible", "overflow"]} maxVisible={1} />
+      </div>,
+      { wrapper },
+    );
+    await user.click(screen.getByRole("button", { name: "+1" }));
+    expect(await screen.findByText("overflow")).toBeDefined();
+    expect(onParentClick).toHaveBeenCalledOnce();
   });
 
   it("applies badgeClassName to each badge", () => {

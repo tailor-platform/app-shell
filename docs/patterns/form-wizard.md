@@ -52,20 +52,16 @@ function FormWizard() {
     <Layout>
       <Layout.Header title="Create task" />
       <Layout.Column>
-        <Card.Root>
-          <Card.Content>
-            <div className="flex items-center gap-2">
-              {STEPS.map((label, i) => (
-                <Badge
-                  key={label}
-                  variant={i === step ? "default" : i < step ? "success" : "neutral"}
-                >
-                  {i + 1}. {label}
-                </Badge>
-              ))}
-            </div>
-          </Card.Content>
-        </Card.Root>
+        {/* Statuses come from the current step; completed steps go back on click */}
+        <Stepper
+          aria-label="Create task"
+          steps={STEPS.map((label, i) => ({
+            id: String(i),
+            label,
+            status: i < step ? "complete" : i === step ? "current" : "upcoming",
+          }))}
+          onStepClick={(id) => setStep(Number(id))}
+        />
 
         <Form key={step} noValidate onFormSubmit={handleStepSubmit}>
           <Card.Root>
@@ -151,7 +147,7 @@ function FormWizard() {
 - Max 7 steps — more than that causes user abandonment
 - Back-navigation must preserve prior step's input
 - Validation must be per-step — don't defer until final submit
-- Step indicator collapses to "Step 2 of 4" label below 1024px
+- Show the steps with `Stepper`; it collapses to "Step 2 of 4" when its container is narrower than 400px
 - One `<Form>` rendered per step, keyed by step index so it remounts cleanly
 - Accumulated values live in a `draft` state object above the `Form`; each step's fields read
   their initial value from it via `defaultValue`

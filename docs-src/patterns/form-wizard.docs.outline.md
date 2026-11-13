@@ -7,7 +7,7 @@ title: Wizard Form
 category: pattern
 subcategory: form
 description: Multi-stage create flow with 3-7 steps and per-step validation gates
-requiredImports: [Layout, Card, Badge, Form, Fieldset, Field, Select, Button]
+requiredImports: [Layout, Card, Stepper, Form, Fieldset, Field, Select, Button]
 tags: [form, wizard, multi-step, stepper, onboarding]
 do:
   - Multi-stage Create with 3-7 steps
@@ -41,7 +41,7 @@ the upload → map → validate → confirm flow. Don't rebuild it here.
 - Max 7 steps — more than that causes user abandonment
 - Back-navigation must preserve prior step's input
 - Validation must be per-step — don't defer until final submit
-- Step indicator collapses to "Step 2 of 4" label below 1024px
+- Show the steps with `Stepper`; it collapses to "Step 2 of 4" when its container is narrower than 400px
 - One `<Form>` rendered per step, keyed by step index so it remounts cleanly
 - Accumulated values live in a `draft` state object above the `Form`; each step's fields read
   their initial value from it via `defaultValue`

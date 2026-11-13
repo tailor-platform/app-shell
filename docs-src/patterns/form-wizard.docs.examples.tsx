@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Badge,
   Button,
   Card,
   Field,
@@ -8,6 +7,7 @@ import {
   Form,
   Layout,
   Select,
+  Stepper,
 } from "@tailor-platform/app-shell";
 
 const OWNERS = ["Tanaka", "Sato", "Suzuki", "Yamada"];
@@ -60,20 +60,16 @@ export function FormWizard() {
     <Layout>
       <Layout.Header title="Create task" />
       <Layout.Column>
-        <Card.Root>
-          <Card.Content>
-            <div className="flex items-center gap-2">
-              {STEPS.map((label, i) => (
-                <Badge
-                  key={label}
-                  variant={i === step ? "default" : i < step ? "success" : "neutral"}
-                >
-                  {i + 1}. {label}
-                </Badge>
-              ))}
-            </div>
-          </Card.Content>
-        </Card.Root>
+        {/* Statuses come from the current step; completed steps go back on click */}
+        <Stepper
+          aria-label="Create task"
+          steps={STEPS.map((label, i) => ({
+            id: String(i),
+            label,
+            status: i < step ? "complete" : i === step ? "current" : "upcoming",
+          }))}
+          onStepClick={(id) => setStep(Number(id))}
+        />
 
         <Form key={step} noValidate onFormSubmit={handleStepSubmit}>
           <Card.Root>

@@ -305,6 +305,37 @@ describe("ActionPanel confirmation", () => {
     },
   );
 
+  it.each(["confirmation", "onClick"] as const)(
+    "keeps the row pending when %s is removed during execution",
+    async (removed) => {
+      const user = userEvent.setup();
+      const operation = deferred();
+      const onClick = vi.fn(() => operation.promise);
+      const action = makeAction({ onClick });
+      const { rerender } = render(panel(action));
+      const { dialog } = await openConfirmation(user);
+      await user.click(within(dialog).getByRole("button", { name: "Delete order" }));
+
+      rerender(panel({ ...action, [removed]: undefined }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      const row = screen.getByRole("button", { name: "Delete order" });
+      expect(row).toHaveProperty("disabled", true);
+      expect(row.getAttribute("aria-busy")).toBe("true");
+      await user.click(row);
+      expect(onClick).toHaveBeenCalledTimes(1);
+
+      rerender(panel(action));
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(screen.getByRole("button", { name: "Delete order" })).toHaveProperty("disabled", true);
+      await act(async () => operation.resolve());
+      expect(screen.getByRole("button", { name: "Delete order" })).toHaveProperty(
+        "disabled",
+        false,
+      );
+      expect(screen.queryByRole("dialog")).toBeNull();
+    },
+  );
+
   it("does not infer success from an external loading transition", async () => {
     const user = userEvent.setup();
     const operation = deferred();

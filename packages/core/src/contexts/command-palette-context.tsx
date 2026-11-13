@@ -17,9 +17,8 @@ import type { NavigatableRoute } from "@/routing/path";
 /**
  * An action entry displayed in the CommandPalette.
  *
- * Actions registered via `useRegisterCommandPaletteActions` (or implicitly
- * through `ActionPanel`) appear in the "Actions" section of the palette and
- * are searchable by `label`.
+ * Actions explicitly registered via `useRegisterCommandPaletteActions` appear
+ * in the "Actions" section of the palette and are searchable by `label`.
  */
 export type CommandPaletteAction = {
   /** Unique key for React reconciliation */
@@ -29,7 +28,7 @@ export type CommandPaletteAction = {
   /** Optional icon rendered next to the label */
   icon?: ReactNode;
   /**
-   * Group name used to categorise the action (e.g. the ActionPanel title).
+   * Group name used to categorise the action (e.g. "Order Actions").
    * When using `useRegisterCommandPaletteActions`, the hook fills this from
    * its `group` parameter if not already set.
    */
@@ -259,7 +258,7 @@ export function CommandPaletteProvider({
 /**
  * Returns a `register` function to add contextual actions to the CommandPalette.
  *
- * @internal — used by `useRegisterCommandPaletteActions` and `ActionPanel`.
+ * @internal — used by `useRegisterCommandPaletteActions`.
  * Prefer `useRegisterCommandPaletteActions` for public usage.
  */
 export function useCommandPaletteDispatch(): DispatchContextValue {

@@ -31,6 +31,7 @@ export type GeneratedRouteParams = {
   "/showcase/colors": {};
   "/showcase/csv-importer": {};
   "/showcase/data-table": {};
+  "/showcase/data-table-empty": {};
   "/showcase/data-table-lab": {};
   "/showcase/data-table-selection": {};
   "/showcase/data-table-tree": {};

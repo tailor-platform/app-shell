@@ -312,6 +312,82 @@ describe("DataTable row interaction", () => {
     },
   );
 
+  it.each([
+    ["id", "left"],
+    ["label", "left"],
+    ["id", "right"],
+    ["label", "right"],
+  ] as const)(
+    "keeps sticky offsets separate when a data column %s collides with the actions key on the %s",
+    (source, side) => {
+      const measuredWidths: Record<string, number> = {
+        "column:__datatable_actions__": 120,
+        __datatable_actions__: 50,
+        "column:outer": 40,
+        "column:inner": 30,
+      };
+      vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+        function (this: HTMLElement) {
+          const width = measuredWidths[this.dataset.measureKey ?? ""] ?? 80;
+          return {
+            x: 0,
+            y: 0,
+            left: 0,
+            right: width,
+            top: 0,
+            bottom: 24,
+            width,
+            height: 24,
+            toJSON: () => ({}),
+          };
+        },
+      );
+
+      const collisionColumn = {
+        id: source === "id" ? "__datatable_actions__" : undefined,
+        label: source === "label" ? "__datatable_actions__" : "Collision",
+        type: "text" as const,
+        pin: side,
+      };
+      const columns =
+        side === "left"
+          ? [
+              collisionColumn,
+              { id: "next", label: "Next", type: "text" as const, pin: "left" as const },
+            ]
+          : [
+              { id: "inner", label: "Inner", type: "text" as const, pin: "right" as const },
+              collisionColumn,
+              { id: "outer", label: "Outer", type: "text" as const, pin: "right" as const },
+            ];
+      const { container } = render(
+        <Harness
+          options={{
+            ...base,
+            columns,
+            data: { rows: [testData.rows[0]] },
+            rowInteraction: linkInteraction,
+          }}
+        />,
+        { wrapper },
+      );
+
+      if (side === "left") {
+        expect(
+          container.querySelector<HTMLElement>(
+            '[data-slot="data-table-header"] th[data-col-key="next"]',
+          )?.style.left,
+        ).toBe("120px");
+      } else {
+        expect(
+          container.querySelector<HTMLElement>(
+            '[data-slot="data-table-header"] th[data-col-key="inner"]',
+          )?.style.right,
+        ).toBe("210px");
+      }
+    },
+  );
+
   it("preserves native Tab order when leaving a choice editor", async () => {
     const user = userEvent.setup();
     render(

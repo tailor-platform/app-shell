@@ -25,6 +25,11 @@ const ACTIONS_KEY = "__datatable_actions__";
 const EXPAND_KEY = "__datatable_expand__";
 // Key of the sub-rows hierarchy column, which `subRows.hierarchyColumn` defines.
 const HIERARCHY_KEY = "__datatable_hierarchy__";
+const COLUMN_MEASUREMENT_PREFIX = "column:";
+
+function columnMeasurementKey(key: string): string {
+  return `${COLUMN_MEASUREMENT_PREFIX}${key}`;
+}
 
 type PinSide = "left" | "right";
 type ColumnWidths = Record<string, number>;
@@ -174,7 +179,7 @@ function computePinLayout<TRow extends Record<string, unknown>>(
   }
   left.forEach((col, i) => {
     placements.set(col, { side: "left", offset: leftOffset, isBoundary: i === left.length - 1 });
-    leftOffset += resolveWidth(keys.get(col) as string, col.width, widths);
+    leftOffset += resolveWidth(columnMeasurementKey(keys.get(col) as string), col.width, widths);
   });
 
   // Right group, visually [...right, actions?]; offsets accumulate leftward.
@@ -187,7 +192,7 @@ function computePinLayout<TRow extends Record<string, unknown>>(
   for (let i = right.length - 1; i >= 0; i--) {
     const col = right[i];
     placements.set(col, { side: "right", offset: rightOffset, isBoundary: i === 0 });
-    rightOffset += resolveWidth(keys.get(col) as string, col.width, widths);
+    rightOffset += resolveWidth(columnMeasurementKey(keys.get(col) as string), col.width, widths);
   }
 
   return { ordered: [...left, ...middle, ...right], keys, placements, selection, expand, actions };
@@ -252,6 +257,7 @@ export {
   ACTIONS_KEY,
   EXPAND_KEY,
   HIERARCHY_KEY,
+  columnMeasurementKey,
   columnKeyAt,
   resolvePin,
   selectionCellBase,

@@ -113,7 +113,7 @@ For `pnpm gql-tada:check` to pass, always destructure with optional chaining and
 
 ### Wiring to `DataTable` (sort, filters, pagination)
 
-For **standard list pages**, do not hand-roll only `first` / `after`. Compose AppShell **`DataTable`** + **`useCollectionVariables`** + **`useDataTable`**: derive query variables from `variables.pagination`, `variables.query`, `variables.order`, map `edges` / `pageInfo` / `total` into `useDataTable`’s `data`. See [`list-dense-scan`](../patterns/list-dense-scan.md) and [`DataTable`](../components/data-table.md).
+For **standard list pages**, do not hand-roll only `first` / `after`. Compose AppShell **`DataTable`** + **`useCollectionVariables`** + **`useDataTable`**: derive query variables from `variables.pagination`, `variables.query`, `variables.order`, map `edges` / `pageInfo` / `total` into `useDataTable`’s `data`. See [`page/document-collection`](../pages/document-collection.md) and [`DataTable`](../components/data-table.md).
 
 When `@tailor-platform/sdk-plugin-app-shell` codegen is enabled, pass generated **`tableMetadata`** into **`useCollectionVariables`** so `variables.query` / `variables.order` are typed against your Tailor GraphQL inputs (upstream **data-table.md** Typed query variables).
 

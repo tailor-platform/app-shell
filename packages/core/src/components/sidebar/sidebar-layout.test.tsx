@@ -925,6 +925,35 @@ describe("SidebarLayout", () => {
     });
   });
 
+  describe("scroll containment", () => {
+    // Anchor jumps, scrollIntoView and focus scroll every scrollable ancestor.
+    // An `overflow: hidden` frame still counts, so the whole shell shifted up.
+    it("clips the frame so it can't be scrolled", async () => {
+      renderSidebarLayout();
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-slot="sidebar-wrapper"]')).not.toBeNull();
+      });
+
+      const classes = document.querySelector('[data-slot="sidebar-wrapper"]')?.className.split(" ");
+      expect(classes).toContain("astw:overflow-clip");
+      expect(classes).not.toContain("astw:overflow-hidden");
+    });
+
+    it("positions absolute content against the content scroller, not the frame", async () => {
+      renderSidebarLayout();
+
+      await waitFor(() => {
+        expect(document.querySelector("[data-appshell-scroll-container]")).not.toBeNull();
+      });
+
+      // Select and Combobox render absolutely positioned hidden inputs; they
+      // must scroll with the content instead of stretching the frame.
+      const scroller = document.querySelector("[data-appshell-scroll-container]");
+      expect(scroller?.className.split(" ")).toContain("astw:relative");
+    });
+  });
+
   describe("namespace", () => {
     it("exposes DefaultSidebar and DefaultHeader on SidebarLayout", () => {
       expect(SidebarLayout.DefaultSidebar).toBe(DefaultSidebar);

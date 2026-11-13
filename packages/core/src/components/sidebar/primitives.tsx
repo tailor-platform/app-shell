@@ -236,8 +236,10 @@ function SidebarProvider({
           className={cn(
             // h-svh (not min-h-svh): the shell is viewport-bounded so scrolling
             // happens in the content area (or inside components like DataTable),
-            // never on the document itself.
-            "astw:group/sidebar-wrapper astw:has-data-[variant=inset]:bg-sidebar astw:flex astw:h-svh astw:w-full astw:overflow-hidden",
+            // never on the document itself. `overflow-clip` rather than
+            // `hidden`: a hidden box can still be scrolled by anchor jumps,
+            // scrollIntoView and focus, which would shift the whole shell.
+            "astw:group/sidebar-wrapper astw:has-data-[variant=inset]:bg-sidebar astw:flex astw:h-svh astw:w-full astw:overflow-clip",
             className,
           )}
           {...props}

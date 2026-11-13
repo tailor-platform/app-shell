@@ -4,7 +4,7 @@ import type {
   AIGatewayFunctionTool,
   AIGatewayToolCall,
 } from "./client";
-import type { AILocalTool } from "./tools";
+import type { AILocalTool, AIChatToolPart } from "./tools";
 import { deriveVisibleMessages, resolveToolCalls } from "./tool-execution";
 
 const MAX_TOOL_ROUNDS = 8;
@@ -70,6 +70,7 @@ export async function* runAssistantLoop(input: {
   tools: Record<string, AILocalTool> | undefined;
   transcript: AIGatewayChatMessage[];
   signal: AbortSignal;
+  onToolPart?: (toolCall: AIGatewayToolCall, part: AIChatToolPart) => void;
 }): AsyncGenerator<AssistantLoopEvent> {
   const { gatewayTools, localTools } = normalizeConfiguredTools(input.tools);
   const transcript = [...input.transcript];
@@ -105,6 +106,7 @@ export async function* runAssistantLoop(input: {
       localTools,
       signal: input.signal,
       visibleMessages: deriveVisibleMessages(transcript),
+      onToolPart: input.onToolPart,
     });
 
     transcript.push(...toolMessages);

@@ -78,7 +78,7 @@ _Generated from the type surface — first-party props only._
 
 | Prop       | Type                                                                                                                                                                                                                                                                               | Default     | Description          |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | -------------------- |
-| `variant?` | `"error" \| "neutral" \| "success" \| "warning" \| "info" \| "default" \| "subtle-success" \| "subtle-warning" \| "subtle-error" \| "subtle-info" \| "subtle-neutral" \| "outline-success" \| "outline-warning" \| "outline-error" \| "outline-info" \| "outline-neutral" \| null` | `"default"` | Visual style variant |
+| `variant?` | `"error" \| "success" \| "default" \| "neutral" \| "info" \| "warning" \| "subtle-success" \| "subtle-warning" \| "subtle-error" \| "subtle-info" \| "subtle-neutral" \| "outline-success" \| "outline-warning" \| "outline-error" \| "outline-info" \| "outline-neutral" \| null` | `"default"` | Visual style variant |
 
 ## Exports
 

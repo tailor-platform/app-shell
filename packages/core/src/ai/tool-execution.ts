@@ -1,6 +1,6 @@
 import { isAbortError, type AIGatewayChatMessage, type AIGatewayToolCall } from "./client";
 import type { AIChatMessage } from "./use-ai-chat";
-import type { AIChatToolContext, AILocalTool } from "./tools";
+import type { AIChatToolContext, AIChatToolPart, AILocalTool } from "./tools";
 
 /**
  * Executes requested local tools in call order and converts their outputs into
@@ -11,6 +11,7 @@ export async function resolveToolCalls(input: {
   localTools: Map<string, AILocalTool>;
   signal: AbortSignal;
   visibleMessages: AIChatToolContext["messages"];
+  onToolPart?: (toolCall: AIGatewayToolCall, part: AIChatToolPart) => void;
 }): Promise<Extract<AIGatewayChatMessage, { role: "tool" }>[]> {
   const messages: Extract<AIGatewayChatMessage, { role: "tool" }>[] = [];
 
@@ -27,6 +28,7 @@ export async function resolveToolCalls(input: {
           signal: input.signal,
           messages: input.visibleMessages,
         },
+        onToolPart: input.onToolPart,
       }),
     );
   }
@@ -43,7 +45,8 @@ export async function resolveToolCalls(input: {
 async function resolveToolCall(input: {
   toolCall: AIGatewayToolCall;
   localTools: Map<string, AILocalTool>;
-  context: AIChatToolContext;
+  context: Omit<AIChatToolContext, "emit">;
+  onToolPart?: (toolCall: AIGatewayToolCall, part: AIChatToolPart) => void;
 }): Promise<Extract<AIGatewayChatMessage, { role: "tool" }>> {
   const tool = input.localTools.get(input.toolCall.name);
 
@@ -55,6 +58,7 @@ async function resolveToolCall(input: {
     };
   }
 
+  let acceptingParts = true;
   try {
     const rawArguments = parseToolArguments(input.toolCall.argumentsText);
     const result = await tool.schema["~standard"].validate(rawArguments);
@@ -71,7 +75,15 @@ async function resolveToolCall(input: {
       };
     }
 
-    const output = await tool.execute(result.value, input.context);
+    const output = await tool.execute(result.value, {
+      ...input.context,
+      emit(part) {
+        if (acceptingParts && !input.context.signal.aborted) {
+          input.onToolPart?.(input.toolCall, part);
+        }
+      },
+    });
+    if (input.context.signal.aborted) throw createAbortError();
     return {
       role: "tool",
       toolCallId: input.toolCall.id,
@@ -90,6 +102,8 @@ async function resolveToolCall(input: {
       toolCallId: input.toolCall.id,
       content: JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
     };
+  } finally {
+    acceptingParts = false;
   }
 }
 
@@ -103,9 +117,19 @@ export function deriveVisibleMessages(transcript: AIGatewayChatMessage[]): AICha
   for (const message of transcript) {
     if (message.role === "user") {
       // ponytail: ids are placeholders — tool executors only read content, not ids
-      result.push({ id: "", role: "user", content: message.content });
+      result.push({
+        id: "",
+        role: "user",
+        content: message.content,
+        parts: [{ id: "", type: "text", text: message.content }],
+      });
     } else if (message.role === "assistant" && message.content) {
-      result.push({ id: "", role: "assistant", content: message.content });
+      result.push({
+        id: "",
+        role: "assistant",
+        content: message.content,
+        parts: [{ id: "", type: "text", text: message.content }],
+      });
     }
   }
 

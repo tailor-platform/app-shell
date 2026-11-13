@@ -49,7 +49,7 @@ _Generated from the type surface — first-party props only._
 | `action?`      | `React.ReactNode`                                                  | -           | Action element rendered below the description        |
 | `dismissible?` | `boolean`                                                          | -           | Shows a dismiss button; hides the alert when clicked |
 | `onDismiss?`   | `() => void`                                                       | -           | Callback invoked when the dismiss button is clicked  |
-| `variant?`     | `"error" \| "neutral" \| "success" \| "warning" \| "info" \| null` | `"neutral"` | Visual style and automatic icon                      |
+| `variant?`     | `"error" \| "success" \| "neutral" \| "info" \| "warning" \| null` | `"neutral"` | Visual style and automatic icon                      |
 
 ## Exports
 

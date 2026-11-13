@@ -6,14 +6,30 @@ import {
   type AIChatAssistantTurnResult,
   type AssistantLoopEvent,
 } from "./assistant-loop";
-import type { AILocalTool } from "./tools";
+import type { AILocalTool, AIChatToolPart } from "./tools";
+import type { AIGatewayToolCall } from "./client";
+
+/** Ordered text and tool-owned display parts retained in the public conversation. */
+export type AIChatMessagePart =
+  | { id: string; type: "text"; text: string }
+  | {
+      id: string;
+      type: "tool-call";
+      toolCallId: string;
+      name: string;
+      parts: AIChatToolPart[];
+    };
 
 /** Public chat message shape exposed by `useAIChat()`. */
 export interface AIChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  /** Ordered display parts. content remains the message's plain text for existing callers. */
+  parts?: AIChatMessagePart[];
 }
+
+type ChatMessage = AIChatMessage & { parts: AIChatMessagePart[] };
 
 export type AIChatStatus = "ready" | "submitted" | "streaming" | "error";
 
@@ -34,6 +50,7 @@ interface ActiveHandle {
 class ChatRequestContext {
   transcript: AIGatewayChatMessage[];
   private turnMessageId: string | null = null;
+  private toolTurnMessageId: string | null = null;
   private turnContent = "";
 
   constructor(initialTranscript: AIGatewayChatMessage[]) {
@@ -54,8 +71,29 @@ class ChatRequestContext {
     if (turn.gatewayAssistantMessage.content || turn.toolCalls.length > 0) {
       this.transcript.push(turn.gatewayAssistantMessage);
     }
+    this.toolTurnMessageId = this.turnMessageId;
     this.turnMessageId = null;
     this.turnContent = "";
+  }
+
+  appendToolPart(
+    toolCall: AIGatewayToolCall,
+    part: AIChatToolPart,
+  ): {
+    messageId: string;
+    part: Extract<AIChatMessagePart, { type: "tool-call" }>;
+  } {
+    this.toolTurnMessageId ??= crypto.randomUUID();
+    return {
+      messageId: this.toolTurnMessageId,
+      part: {
+        id: `${this.toolTurnMessageId}:${toolCall.id}`,
+        type: "tool-call",
+        toolCallId: toolCall.id,
+        name: toolCall.name,
+        parts: [part],
+      },
+    };
   }
 
   commitToolResults(messages: Extract<AIGatewayChatMessage, { role: "tool" }>[]): void {
@@ -84,15 +122,15 @@ class ChatRequestContext {
 /**
  * React hook for AI Gateway chat with optional local tools.
  *
- * Messages stay text-first. Requested tool names are exposed only for the
- * active request; tool-call and tool-result protocol messages remain internal.
+ * Plain text stays available in content. Ordered parts also retain tool-emitted display data.
+ * Requested tool names are transient; tool-call and tool-result protocol messages stay internal.
  */
 export function useAIChat(config: {
   client: AIGatewayClient;
   model: string;
   tools?: Record<string, AILocalTool>;
 }): {
-  messages: AIChatMessage[];
+  messages: ChatMessage[];
   /** Requested tools in the active flow; cleared on completion, stop, or error. */
   toolCalls: ActiveToolCall[];
   status: AIChatStatus;
@@ -104,14 +142,14 @@ export function useAIChat(config: {
   sendMessage: (message: string) => Promise<boolean>;
   stop: () => void;
 } {
-  const [messages, setMessages] = useState<AIChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [toolCalls, setToolCalls] = useState<ActiveToolCall[]>([]);
   const [status, setStatus] = useState<AIChatStatus>("ready");
   const [error, setError] = useState<Error | undefined>(undefined);
   const transcriptRef = useRef<AIGatewayChatMessage[]>([]);
   const activeRef = useRef<ActiveHandle | null>(null);
 
-  const updateMessages = useCallback((updater: (previous: AIChatMessage[]) => AIChatMessage[]) => {
+  const updateMessages = useCallback((updater: (previous: ChatMessage[]) => ChatMessage[]) => {
     setMessages((previous) => updater(previous));
   }, []);
 
@@ -140,10 +178,12 @@ export function useAIChat(config: {
       const text = message.trim();
       if (!text) return false;
 
-      const userMessage: AIChatMessage = {
-        id: crypto.randomUUID(),
+      const userId = crypto.randomUUID();
+      const userMessage: ChatMessage = {
+        id: userId,
         role: "user",
         content: text,
+        parts: [{ id: `${userId}:text`, type: "text", text }],
       };
 
       updateMessages((previous) => [...previous, userMessage]);
@@ -166,6 +206,32 @@ export function useAIChat(config: {
           tools: config.tools,
           transcript: ctx.transcript,
           signal: controller.signal,
+          onToolPart(toolCall, displayPart) {
+            if (activeRef.current !== handle || controller.signal.aborted) return;
+            const { messageId, part } = ctx.appendToolPart(toolCall, displayPart);
+            updateMessages((previous) => {
+              if (!previous.some((entry) => entry.id === messageId)) {
+                return [
+                  ...previous,
+                  { id: messageId, role: "assistant", content: "", parts: [part] },
+                ];
+              }
+              return previous.map((entry) => {
+                if (entry.id !== messageId) return entry;
+                const existing = entry.parts.some((item) => item.id === part.id);
+                return {
+                  ...entry,
+                  parts: existing
+                    ? entry.parts.map((item) =>
+                        item.id === part.id && item.type === "tool-call"
+                          ? { ...item, parts: [...item.parts, displayPart] }
+                          : item,
+                      )
+                    : [...entry.parts, part],
+                };
+              });
+            });
+          },
         })) {
           if (activeRef.current !== handle) break;
           applyEvent(event, ctx, updateMessages, setStatus, setToolCalls);
@@ -205,7 +271,7 @@ export function useAIChat(config: {
 function applyEvent(
   event: AssistantLoopEvent,
   ctx: ChatRequestContext,
-  updateMessages: (updater: (previous: AIChatMessage[]) => AIChatMessage[]) => void,
+  updateMessages: (updater: (previous: ChatMessage[]) => ChatMessage[]) => void,
   setStatus: (status: AIChatStatus) => void,
   setToolCalls: (updater: (previous: ActiveToolCall[]) => ActiveToolCall[]) => void,
 ): void {
@@ -215,10 +281,28 @@ function applyEvent(
       setStatus("streaming");
 
       if (isNew) {
-        updateMessages((previous) => [...previous, { id: messageId, role: "assistant", content }]);
+        updateMessages((previous) => [
+          ...previous,
+          {
+            id: messageId,
+            role: "assistant",
+            content,
+            parts: [{ id: `${messageId}:text`, type: "text", text: content }],
+          },
+        ]);
       } else {
         updateMessages((previous) =>
-          previous.map((entry) => (entry.id === messageId ? { ...entry, content } : entry)),
+          previous.map((entry) =>
+            entry.id === messageId
+              ? {
+                  ...entry,
+                  content,
+                  parts: entry.parts.map((part) =>
+                    part.type === "text" ? { ...part, text: content } : part,
+                  ),
+                }
+              : entry,
+          ),
         );
       }
       break;

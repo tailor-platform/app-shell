@@ -1,7 +1,10 @@
+import { useId, useRef, useState } from "react";
 import { useT } from "@/i18n-labels";
 import { cn } from "../../lib/utils";
 import { Card } from "../card";
 import { Spinner } from "../spinner";
+import { Button } from "../button";
+import { Dialog, DialogContent } from "../dialog/dialog";
 import type { ActionPanelProps, ActionItem } from "./types";
 import { Text } from "../text";
 
@@ -26,13 +29,48 @@ const actionRowDestructiveClasses =
 const actionRowDisabledClasses = "astw:pointer-events-none astw:opacity-50";
 
 function ActionRow({ action }: { action: ActionItem }) {
-  const { key, label, icon, onClick, disabled, loading, variant } = action;
-  const isDisabled = Boolean(disabled) || Boolean(loading);
+  const { key, label, icon, onClick, disabled, loading, variant, confirmation } = action;
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inFlightRef = useRef(false);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const errorId = useId();
+  const isLoading = Boolean(loading) || pending;
+  const isDisabled = Boolean(disabled) || isLoading;
+
+  // Discard invalid decisions; failed attempts survive lagging external loading for retry.
+  if (open && (!confirmation || !onClick || (!pending && (disabled || (loading && !error))))) {
+    setOpen(false);
+    setError(null);
+  }
+
+  const handleConfirm = async () => {
+    if (!open || inFlightRef.current || disabled || loading || !onClick || !confirmation) return;
+    inFlightRef.current = true;
+    setPending(true);
+    setError(null);
+    try {
+      // Normalize synchronous throws so the re-entry guard also spans the current event.
+      await Promise.resolve().then(onClick);
+      setOpen(false);
+    } catch (failure) {
+      setError(
+        failure instanceof Error && failure.message
+          ? failure.message
+          : t("actionPanelActionFailed"),
+      );
+    } finally {
+      inFlightRef.current = false;
+      setPending(false);
+    }
+  };
 
   const content = (
     <>
       <span className={iconSlotClasses} aria-hidden>
-        {loading ? <Spinner data-testid="action-panel-spinner" /> : icon}
+        {isLoading ? <Spinner data-testid="action-panel-spinner" /> : icon}
       </span>
       <span className="astw:min-w-0 astw:truncate">{label}</span>
     </>
@@ -44,19 +82,64 @@ function ActionRow({ action }: { action: ActionItem }) {
     variant === "destructive" && !isDisabled && actionRowDestructiveClasses,
   );
 
-  return (
+  const row = (
     <button
       type="button"
       className={rowClasses}
-      onClick={isDisabled ? undefined : onClick}
+      onClick={isDisabled || confirmation ? undefined : onClick}
       disabled={isDisabled}
       aria-disabled={isDisabled}
-      aria-busy={loading}
+      aria-busy={isLoading}
       data-slot="action-panel-item"
       data-key={key}
     >
       {content}
     </button>
+  );
+
+  if (!confirmation || !onClick) return row;
+
+  return (
+    <Dialog.Root
+      open={open}
+      onOpenChange={(nextOpen, details) => {
+        if (inFlightRef.current || isLoading || (nextOpen && isDisabled)) {
+          details.cancel();
+          return;
+        }
+        setError(null);
+        setOpen(nextOpen);
+      }}
+    >
+      <Dialog.Trigger disabled={isDisabled} render={row} />
+      <DialogContent initialFocus={cancelRef} closeDisabled={isLoading} aria-busy={isLoading}>
+        <Dialog.Header>
+          <Dialog.Title>{confirmation.title}</Dialog.Title>
+          <Dialog.Description>{confirmation.description}</Dialog.Description>
+        </Dialog.Header>
+        {error && (
+          <Text.div id={errorId} role="alert" variant="body-sm" className="astw:text-danger-text">
+            {error}
+          </Text.div>
+        )}
+        <Dialog.Footer>
+          <Dialog.Close disabled={isLoading} render={<Button ref={cancelRef} variant="outline" />}>
+            {confirmation.cancelLabel ?? t("actionPanelCancel")}
+          </Dialog.Close>
+          <Button
+            type="button"
+            variant={variant}
+            disabled={isDisabled}
+            aria-describedby={error ? errorId : undefined}
+            onClick={handleConfirm}
+          >
+            {isLoading
+              ? (confirmation.busyLabel ?? t("actionPanelWorking"))
+              : (confirmation.confirmLabel ?? label)}
+          </Button>
+        </Dialog.Footer>
+      </DialogContent>
+    </Dialog.Root>
   );
 }
 
@@ -73,6 +156,10 @@ function ActionRow({ action }: { action: ActionItem }) {
  *
  * When an action has `loading: true`, the row shows a spinner in the icon slot and is
  * non-interactive (useful for backend-driven actions: parent sets loading from mutation/request state).
+ *
+ * Set an action's `confirmation` to ask before executing its `onClick`. Confirmed
+ * callbacks are awaited: fulfillment closes the dialog, while failure stays open for retry.
+ * Return the Promise and throw a user-facing Error to display its message.
  *
  * Actions are not registered to the CommandPalette. To expose actions there,
  * register them explicitly with `useRegisterCommandPaletteActions` inside `AppShell`.

@@ -90,8 +90,15 @@ function firstTabbable(root: HTMLElement): HTMLElement | null {
   );
 }
 
-/** The main dialog panel that contains the dialog content. Automatically includes a close button and overlay. */
-function Content({ className, children, ref, initialFocus, ...props }: DialogContentProps) {
+/** @internal Shared styled content; confirmed actions can disable the close affordance while running. */
+export function DialogContent({
+  className,
+  children,
+  ref,
+  initialFocus,
+  closeDisabled,
+  ...props
+}: DialogContentProps & { closeDisabled?: boolean }) {
   const popupRef = React.useRef<HTMLDivElement>(null);
 
   // Base UI focuses the first tabbable element on open (the popup itself on
@@ -132,13 +139,20 @@ function Content({ className, children, ref, initialFocus, ...props }: DialogCon
         {...props}
       >
         {children}
-        <BaseDialog.Close className="astw:ring-offset-card astw:focus:ring-ring astw:data-open:bg-accent astw:data-open:text-muted-foreground astw:absolute astw:top-4 astw:right-4 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none astw:[&_svg]:pointer-events-none astw:[&_svg]:shrink-0 astw:[&_svg:not([class*='size-'])]:size-4">
+        <BaseDialog.Close
+          disabled={closeDisabled}
+          className="astw:ring-offset-card astw:focus:ring-ring astw:data-open:bg-accent astw:data-open:text-muted-foreground astw:absolute astw:top-4 astw:right-4 astw:rounded-xs astw:opacity-70 astw:transition-opacity astw:hover:opacity-100 astw:focus:ring-2 astw:focus:ring-offset-2 astw:focus:outline-hidden astw:disabled:pointer-events-none astw:[&_svg]:pointer-events-none astw:[&_svg]:shrink-0 astw:[&_svg:not([class*='size-'])]:size-4"
+        >
           <XIcon />
           <span className="astw:sr-only">Close</span>
         </BaseDialog.Close>
       </BaseDialog.Popup>
     </Portal>
   );
+}
+/** The main dialog panel that contains the dialog content. Automatically includes a close button and overlay. */
+function Content(props: DialogContentProps) {
+  return <DialogContent {...props} />;
 }
 Content.displayName = "Dialog.Content";
 

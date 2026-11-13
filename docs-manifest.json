@@ -12,10 +12,10 @@
       "symbols": ["ActionPanel", "ActionPanelProps"],
       "hashes": {
         "typeSurface": "f497e4e3021d029a",
-        "outline": "206f2dfc26794df8",
-        "snapshot": null,
-        "outputMd": "2b3e278cffe05311",
-        "examples": "94c4303f3d6cdbec"
+        "outline": "d71939c0f3ab0f82",
+        "snapshot": "edd766c1f0dd3afb",
+        "outputMd": "b4861a3467bf6d63",
+        "examples": "14d33c83339060b7"
       }
     },
     "activity-card": {
@@ -310,9 +310,9 @@
       "symbols": ["CommandPalette"],
       "hashes": {
         "typeSurface": "818f6808b94f8041",
-        "outline": "e5853516a3b8b031",
+        "outline": "3b809e7310326957",
         "snapshot": null,
-        "outputMd": "8a3ef2de651416fc",
+        "outputMd": "52bfae24bfb19f2d",
         "examples": null
       }
     },
@@ -1806,7 +1806,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "5f77dda61ce9abd4",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "18b382f6774e7682",
-    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "2b3e278cffe05311",
+    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "b4861a3467bf6d63",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "1a2bb081c3e34482",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "82313d5b6fe140d2",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "db2c4388ca783a75",
@@ -1820,7 +1820,7 @@
     "packages/core/skills/app-shell-patterns/references/components/card.md": "6e18faeb676654b4",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
-    "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "8a3ef2de651416fc",
+    "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "52bfae24bfb19f2d",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
     "packages/core/skills/app-shell-patterns/references/components/data-table.md": "41de398263666fa7",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "d4b478c7ba8304d5",

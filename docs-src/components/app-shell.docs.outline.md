@@ -228,6 +228,21 @@ Supported locales: `en`, `ja`
 
 Access the configured timezone in components using [`useTimeZone`](../api/use-time-zone.md).
 
+### toastDefaults
+
+- **Type:** `{ error?: ToastDefault; action?: ToastDefault }` where `ToastDefault` is `{ duration?: number; closeButton?: boolean }` (optional)
+- **Default:** `error` and `action` both `{ duration: Infinity, closeButton: true }`
+- **Description:** Options [`useToast`](../api/use-toast.md) applies to a toast when the call does not set them. `error` covers `toast.error(...)` and the error state of `toast.promise(...)`; `action` covers any toast with an `action`. With the defaults, these toasts stay until the user closes them and show a close button. A kind set here replaces its built-in default as a whole; a kind left out keeps it. Pass `{}` for a kind to fall back to sonner's own defaults (4 seconds, no close button).
+
+```tsx
+// Errors close on their own again; toasts with an action still stay.
+<AppShell toastDefaults={{ error: {} }} modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+Toasts with `dismissible: false` always keep sonner's defaults, and a `duration` or `closeButton` passed to the call always wins. See [useToast → Defaults](../api/use-toast.md#defaults).
+
 ### errorBoundary
 
 - **Type:** `ErrorBoundaryComponent` (optional)

@@ -40,12 +40,15 @@ dont:
 
 ## Constraints
 
-- Toast renders as a top-right overlay; mobile (<1024) anchors to bottom-center
-- Stack max one visible at a time; replace prior toast on new emission
-- Success auto-dismisses after 3s; Error is sticky (no auto-dismiss)
+- Toasts render at the bottom right. At 600px and below they span the bottom of the viewport
+- Up to three stay visible; older ones collapse behind the newest and leave as new ones arrive
+- Success, info and plain toasts close by themselves after 4s
+- Error toasts, and any toast with an `action`, stay until the user closes them and show a close button. `useToast` sets this; a `duration` or `closeButton` passed to the call wins
+- Never make a toast the only way to do something. If a toast offers Undo, the page offers a way back too. While a dialog or sheet is open, the keyboard reaches a toast only through sonner's hotkey (Alt+T)
 
 ## Anti-patterns
 
 - Toast on every navigation — creates noise; reserve for mutation feedback
-- More than one toast stacking — replace, don't accumulate
+- One toast per item in a bulk operation — one toast that sums up the result
+- An Undo or Retry that exists only in the toast — the page needs the same way back
 - Blocking the UI on a toast — toasts are non-modal by definition

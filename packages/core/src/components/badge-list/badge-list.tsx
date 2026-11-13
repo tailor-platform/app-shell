@@ -142,6 +142,8 @@ export function BadgeList({
       {overflow.length > 0 && (
         <Popover.Root>
           <Popover.Trigger
+            // The overflow control must not activate an enclosing row or card.
+            onClick={(event) => event.stopPropagation()}
             openOnHover
             className="astw:cursor-default astw:rounded-md astw:px-2 astw:py-0.5 astw:text-label-sm astw:text-muted-foreground astw:hover:bg-muted astw:transition-colors"
           >

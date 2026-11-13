@@ -1,4 +1,12 @@
-import { Fragment, useId, useMemo, useRef, type CSSProperties, type ReactNode } from "react";
+import {
+  Fragment,
+  useId,
+  useMemo,
+  useRef,
+  type CSSProperties,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTimeZone } from "@/contexts/appshell-context";
@@ -134,6 +142,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
         const checkState = getRowCheckState?.(row);
         const selected = checkState?.checked ?? isRowSelected?.(row) ?? false;
         const rowKey = rowKeys[rowIndex];
+        const primaryActionId = `${baseId}-action-${rowIndex}`;
         // Expansion is keyed by id, so a row without one gets no chevron at all
         // rather than a disabled one — it must never be un-toggleable (D5).
         const expandable = hasExpand && rowId != null && (rowExpansion?.canExpand?.(row) ?? true);
@@ -160,7 +169,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               onClickRow || primaryEnabled
                 ? (event) => {
                     if (rowInteraction) {
-                      if (!cellContextMenuOpen) activateRowPrimaryAction(event);
+                      if (!cellContextMenuOpen) activateRowPrimaryAction(event, primaryActionId);
                     } else {
                       onClickRow?.(row);
                     }
@@ -332,10 +341,15 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               });
               const cellProps = {
                 "data-slot": "data-table-cell" as const,
+                onClick:
+                  rowInteraction && col.edit !== undefined
+                    ? (event: MouseEvent) => event.stopPropagation()
+                    : undefined,
                 title: customCellProps?.title,
                 style: { ...cellStyle, WebkitTouchCallout: "none" } satisfies CSSProperties,
                 className: cn(
                   cellClassName,
+                  rowInteraction && col.edit !== undefined && !editable && "astw:cursor-default",
                   blockReadOnlyCells && !editable && "astw:cursor-not-allowed",
                   customCellProps?.className,
                 ),
@@ -392,6 +406,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                     {rowInteraction ? (
                       <div className="astw:inline-flex astw:items-center astw:gap-1 astw:whitespace-nowrap">
                         <DataTableRowPrimaryAction
+                          id={primaryActionId}
                           interaction={rowInteraction}
                           row={row}
                           enabled={primaryEnabled}

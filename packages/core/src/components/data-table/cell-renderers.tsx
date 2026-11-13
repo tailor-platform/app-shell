@@ -182,7 +182,11 @@ function renderLink<TRow extends Record<string, unknown>>(
   const href = options.href(row);
   if (!href) return label;
   return (
-    <Link to={href} className="astw:text-primary astw:underline-offset-4 astw:hover:underline">
+    <Link
+      to={href}
+      className="astw:text-primary astw:underline-offset-4 astw:hover:underline"
+      onClick={(event) => event.stopPropagation()}
+    >
       {label}
     </Link>
   );

@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import { Link, MemoryRouter, useLocation } from "react-router";
 import type { Column, RowInteraction, UseDataTableOptions } from "@/index";
-import { testColumns, testData, wrapper as AppShellWrapper, type TestRow } from "./test-utils";
+import { testData, wrapper as AppShellWrapper, type TestRow } from "./test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
 
@@ -15,6 +15,10 @@ afterEach(() => {
   window.getSelection()?.removeAllRanges();
 });
 
+const testColumns: Column<TestRow>[] = [
+  { id: "name", label: "Name", type: "text" },
+  { id: "status", label: "Status", type: "text" },
+];
 const base = { columns: testColumns, data: testData };
 const linkInteraction: RowInteraction<TestRow> = {
   type: "link",
@@ -142,6 +146,56 @@ describe("DataTable row interaction", () => {
       expect(row.getAttribute("tabindex")).toBeNull();
       expect(row.lastElementChild?.getAttribute("style")).toContain("sticky");
     }
+  });
+
+  it("activates the identified primary action even when its cell is not last", () => {
+    const onClick = vi.fn();
+    const { container } = render(
+      <Harness options={{ ...base, rowInteraction: { type: "click", label: "Edit", onClick } }} />,
+      { wrapper },
+    );
+    const row = dataRows(container)[0];
+    const extraCell = document.createElement("td");
+    row.append(extraCell);
+    fireEvent.click(within(row).getByText("Alice"));
+    extraCell.remove();
+    expect(onClick).toHaveBeenCalledExactlyOnceWith(testData.rows[0]);
+  });
+
+  it("keeps internal action IDs unique across tables with the same record IDs", () => {
+    const first = vi.fn();
+    const second = vi.fn();
+    const data = {
+      rows: [
+        { ...testData.rows[0], id: "record one" },
+        { ...testData.rows[1], id: "record_one" },
+      ],
+    };
+    const { container } = render(
+      <>
+        <Harness
+          options={{
+            ...base,
+            data,
+            rowInteraction: { type: "click", label: "Edit", onClick: first },
+          }}
+        />
+        <Harness
+          options={{
+            ...base,
+            data,
+            rowInteraction: { type: "click", label: "Edit", onClick: second },
+          }}
+        />
+      </>,
+      { wrapper },
+    );
+    const ids = primaryActions(container).map((action) => action.id);
+    expect(ids.every(Boolean)).toBe(true);
+    expect(new Set(ids).size).toBe(4);
+    fireEvent.click(dataRows(container)[2].cells[0]);
+    expect(second).toHaveBeenCalledExactlyOnceWith(data.rows[0]);
+    expect(first).not.toHaveBeenCalled();
   });
 
   it("uses label alone when no row identity is provided", () => {
@@ -299,7 +353,173 @@ describe("DataTable row interaction", () => {
     expect(onClick).not.toHaveBeenCalled();
   });
 
-  it("lets custom related links, buttons, and labelled inputs own their clicks", async () => {
+  it.each([false, true])(
+    "supports custom display renderers without column interaction options (element: %s)",
+    (element) => {
+      const onClick = vi.fn();
+      render(
+        <Harness
+          options={{
+            ...base,
+            columns: [
+              {
+                id: "name",
+                label: "Name",
+                render: (row) => (element ? <span>{row.name}</span> : row.name),
+              },
+            ],
+            rowInteraction: { type: "click", label: "Edit", onClick },
+          }}
+        />,
+        { wrapper },
+      );
+      fireEvent.click(screen.getByText("Alice"));
+      expect(onClick).toHaveBeenCalledExactlyOnceWith(testData.rows[0]);
+    },
+  );
+
+  it("keeps built-in related links independent while their cell padding retains row activation", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    const { container } = render(
+      <Harness
+        options={{
+          ...base,
+          columns: [
+            {
+              id: "name",
+              label: "Name",
+              type: "link",
+              typeOptions: { href: (row) => `/customers/${row.id}` },
+            },
+          ],
+          rowInteraction: { type: "click", label: "Edit", onClick },
+        }}
+      />,
+      { wrapper },
+    );
+    await user.click(screen.getByRole("link", { name: "Alice" }));
+    expect(screen.getByTestId("location").textContent).toBe("/customers/1");
+    expect(onClick).not.toHaveBeenCalled();
+    fireEvent.click(dataRows(container)[0].cells[0]);
+    expect(onClick).toHaveBeenCalledExactlyOnceWith(testData.rows[0]);
+  });
+
+  it("keeps the built-in badge overflow control separate from ordinary row clicks", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    const { container } = render(
+      <Harness
+        options={{
+          ...base,
+          columns: [
+            {
+              id: "status",
+              label: "Status",
+              type: "badge",
+              accessor: (row) => [row.status, "Other"],
+              typeOptions: { maxVisible: 1 },
+            },
+          ],
+          rowInteraction: { type: "click", label: "Edit", onClick },
+        }}
+      />,
+      { wrapper },
+    );
+    fireEvent.click(dataRows(container)[0].cells[0]);
+    expect(onClick).toHaveBeenCalledExactlyOnceWith(testData.rows[0]);
+    onClick.mockClear();
+    await user.click(screen.getAllByRole("button", { name: "+1" })[0]);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("keeps active editors separate from row activation", () => {
+    const onClick = vi.fn();
+    const { container } = render(
+      <Harness
+        options={{
+          ...base,
+          columns: [
+            {
+              id: "name",
+              label: "Name",
+              type: "text",
+              edit: { onValueCommitted: vi.fn() },
+            },
+          ],
+          rowInteraction: { type: "click", label: "Edit", onClick },
+        }}
+      />,
+      { wrapper },
+    );
+    fireEvent.click(dataRows(container)[0].cells[0]);
+    fireEvent.click(screen.getAllByRole("textbox")[0]);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])(
+    "keeps read-only edit columns outside the shortcut (custom render: %s)",
+    async (customRender) => {
+      const user = userEvent.setup();
+      const onClick = vi.fn();
+      const { container } = render(
+        <Harness
+          options={{
+            ...base,
+            columns: [
+              {
+                id: "name",
+                label: "Name",
+                type: "text",
+                render: customRender ? (row) => <span>{row.name}</span> : undefined,
+                edit: { canEdit: () => false, onValueCommitted: vi.fn() },
+              },
+            ],
+            rowInteraction: { type: "click", label: "Edit", getLabel: (row) => row.name, onClick },
+          }}
+        />,
+        { wrapper },
+      );
+      const cell = dataRows(container)[0].cells[0];
+      expect(screen.queryByRole("textbox")).toBeNull();
+      fireEvent.click(cell);
+      fireEvent.click(screen.getByText("Alice"));
+      expect(onClick).not.toHaveBeenCalled();
+      await user.click(screen.getByRole("button", { name: "Edit: Alice" }));
+      expect(onClick).toHaveBeenCalledExactlyOnceWith(testData.rows[0]);
+    },
+  );
+
+  it("keeps hierarchy controls separate while its display label activates the row", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    render(
+      <Harness
+        options={{
+          ...base,
+          columns: [testColumns[1]],
+          data: { rows: [testData.rows[0]] },
+          subRows: {
+            getSubRows: (row) => (row.id === "1" ? [testData.rows[1]] : []),
+            hierarchyColumn: { label: "Hierarchy", type: "text", accessor: (row) => row.name },
+          },
+          rowSelection: {},
+          rowInteraction: { type: "click", label: "Edit", onClick },
+        }}
+      />,
+      { wrapper },
+    );
+    const label = screen.getByText("Alice");
+    const caret = screen.getByRole("button", { name: "Expand row Alice" });
+    await user.click(label);
+    expect(onClick).toHaveBeenCalledExactlyOnceWith(testData.rows[0]);
+    onClick.mockClear();
+    await user.click(caret);
+    await user.click(screen.getAllByRole("checkbox", { name: "Select row" })[0]);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("honors stopPropagation from custom links, buttons, and labelled inputs", async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
     const customAction = vi.fn();
@@ -310,11 +530,19 @@ describe("DataTable row interaction", () => {
         label: "Controls",
         render: (row) => (
           <>
-            <Link to={`/customers/${row.id}`}>Customer {row.name}</Link>
-            <button type="button" onClick={customAction}>
+            <Link to={`/customers/${row.id}`} onClick={(event) => event.stopPropagation()}>
+              Customer {row.name}
+            </Link>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                customAction();
+              }}
+            >
               Custom {row.name}
             </button>
-            <label>
+            <label onClick={(event) => event.stopPropagation()}>
               Select {row.name}
               <input type="checkbox" />
             </label>
@@ -494,7 +722,16 @@ describe("DataTable row interaction", () => {
 
   it("preserves the legacy callback without generating a primary action", () => {
     const onClickRow = vi.fn();
-    const { container } = render(<Harness options={{ ...base, onClickRow }} />, { wrapper });
+    const { container } = render(
+      <Harness
+        options={{
+          ...base,
+          columns: [{ ...testColumns[0], render: (row) => row.name }, testColumns[1]],
+          onClickRow,
+        }}
+      />,
+      { wrapper },
+    );
     fireEvent.click(screen.getByText("Alice"));
     expect(onClickRow).toHaveBeenCalledExactlyOnceWith(testData.rows[0]);
     expect(primaryActions(container)).toHaveLength(0);

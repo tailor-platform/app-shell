@@ -558,7 +558,8 @@ const DataTableLabPage = () => {
               A single <code>rowInteraction</code> definition generates the visible primary link or
               button in the right-pinned actions column, beside the optional secondary menu. No data
               column is promoted to a primary cell: column visibility and rendering remain
-              independent. Plain row clicks are a shortcut to the same action.
+              independent. Ordinary row clicks activate the same action through normal React event
+              bubbling. Custom interactive renderers keep their own event boundaries.
             </>
           }
         >

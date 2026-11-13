@@ -1,4 +1,5 @@
 import {
+  Badge,
   Button,
   DataTable,
   Link,
@@ -67,18 +68,36 @@ export function RowInteractionDemo() {
         href: (row) => `${pathname}?row-demo-customer=${encodeURIComponent(row.customer)}`,
       },
     }),
-    column({ id: "total", label: "Total", type: "money", width: 130 }),
     column({
-      id: "status",
-      label: "Access",
-      type: "badge",
-      width: 130,
-      typeOptions: {
-        badgeLabelMap: { ready: "Available", restricted: "Restricted" },
-        badgeVariantMap: { ready: "success", restricted: "neutral" },
+      id: "total",
+      label: "Total (edit configured)",
+      type: "money",
+      width: 200,
+      edit: {
+        canEdit: (row) => row.id === "ORD-1001",
+        onValueCommitted: (row, total) =>
+          setFeedback(`${row.id}: total draft ${total ?? "empty"} (not saved).`),
       },
     }),
-    column({ id: "note", label: "Note", type: "text", width: 430 }),
+    column({
+      id: "status",
+      label: "Access (custom renderer)",
+      width: 210,
+      render: (row) => (
+        <Badge
+          variant={row.status === "ready" ? "success" : "neutral"}
+          className="astw:cursor-inherit"
+        >
+          {row.status === "ready" ? "Available" : "Restricted"}
+        </Badge>
+      ),
+    }),
+    column({
+      id: "note",
+      label: "Note (custom renderer)",
+      width: 430,
+      render: (row) => <Text.span>{row.note}</Text.span>,
+    }),
   ];
   const rowActions = [
     {
@@ -143,10 +162,13 @@ export function RowInteractionDemo() {
           Link — open order details
         </Text.h3>
         <Text.p variant="body-sm" className="max-w-3xl text-muted-foreground">
-          Click plain row content or the pinned Open control. Open looks like a button but is a real
-          link: Cmd/Ctrl-click, middle-click, and the browser link menu remain available on it.
-          Customer links navigate to a different destination. Checkboxes and the secondary menu must
-          not open order details. Hide every data column with Columns: Open remains available.
+          Row clicks and Open come from one rowInteraction definition. Order, Access, and Note all
+          activate the same primary action without column-specific configuration. Total has edit
+          configured: neither editable nor read-only totals open the record. Open is a real link
+          styled as a button; Cmd/Ctrl-click, middle-click, and the browser link menu work on Open
+          itself. Built-in related links, checkboxes, and the secondary menu keep their clicks
+          independent. Custom interactive renderers should call event.stopPropagation(), as with
+          ordinary React row-click handlers.
         </Text.p>
         <DataTable.Root value={linkTable}>
           <Toolbar.Root>
@@ -165,8 +187,10 @@ export function RowInteractionDemo() {
           Click — open an edit drawer
         </Text.h3>
         <Text.p variant="body-sm" className="max-w-3xl text-muted-foreground">
-          Edit is a real button: Tab to it and press Enter or Space, or click plain row content. The
-          restricted row cannot open the drawer. Other controls keep their own behavior.
+          Edit is a real button: Tab to it and press Enter or Space, or click Order, Access, or
+          Note. Only ORD-1001's total can be edited; all Total cells stay outside row activation,
+          including read-only ones. Total drafts are reported below, not saved. The restricted row
+          cannot open the drawer. No renderer opt-in or DOM marker is required.
         </Text.p>
         <DataTable.Root value={clickTable}>
           <DataTable.Table />

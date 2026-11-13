@@ -8,7 +8,10 @@ import type { CellEditNavigation } from "./editing/use-navigation";
 import type { RowInteraction } from "./types";
 
 /** Activate the real control so routing and drawer focus return have one source of truth. */
-export function activateRowPrimaryAction(event: MouseEvent<HTMLTableRowElement>) {
+export function activateRowPrimaryAction(
+  event: MouseEvent<HTMLTableRowElement>,
+  primaryActionId: string,
+) {
   const { currentTarget, target } = event;
   if (
     event.defaultPrevented ||
@@ -23,13 +26,6 @@ export function activateRowPrimaryAction(event: MouseEvent<HTMLTableRowElement>)
   )
     return;
 
-  const control = target.closest(
-    'a, button, input, select, textarea, label, summary, [tabindex], [contenteditable]:not([contenteditable="false"]), [data-editable], ' +
-      '[role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="switch"], [role="combobox"], [role="textbox"], ' +
-      '[role="slider"], [role="spinbutton"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="tab"], [role="treeitem"], [role="option"]',
-  );
-  if (control && currentTarget.contains(control)) return;
-
   const selection = currentTarget.ownerDocument.getSelection();
   if (
     selection &&
@@ -38,21 +34,21 @@ export function activateRowPrimaryAction(event: MouseEvent<HTMLTableRowElement>)
   )
     return;
 
-  const action = currentTarget.lastElementChild?.querySelector<HTMLElement>(
-    '[data-slot="data-table-row-primary-action"]',
-  );
-  if (!action?.matches("a[href], button:not(:disabled)")) return;
+  const action = currentTarget.ownerDocument.getElementById(primaryActionId);
+  if (!action?.matches("a[href], button:not(:disabled)") || !currentTarget.contains(action)) return;
   action.focus({ preventScroll: true });
   action.click();
 }
 
 export function DataTableRowPrimaryAction<TRow extends Record<string, unknown>>({
+  id,
   interaction,
   row,
   enabled,
   navigation,
   rowKey,
 }: {
+  id: string;
   interaction: RowInteraction<TRow>;
   row: TRow;
   enabled: boolean;
@@ -63,6 +59,7 @@ export function DataTableRowPrimaryAction<TRow extends Record<string, unknown>>(
   const identity = interaction.getLabel?.(row);
   const accessibleName = identity ? `${interaction.label}: ${identity}` : interaction.label;
   const props = {
+    id,
     "data-slot": "data-table-row-primary-action",
     "aria-label": accessibleName,
     ref: enabled ? navigationRef : undefined,

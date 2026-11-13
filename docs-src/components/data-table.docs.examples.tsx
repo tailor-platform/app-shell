@@ -261,7 +261,12 @@ export function RowLinkInteraction() {
       ],
     },
     columns: [
-      column({ id: "orderNumber", label: "Order", type: "text" }),
+      column({
+        id: "orderNumber",
+        label: "Order",
+        type: "text",
+        render: (row) => <Text.span>{row.orderNumber}</Text.span>,
+      }),
       column({ id: "status", label: "Status", type: "text" }),
     ],
     rowInteraction: {

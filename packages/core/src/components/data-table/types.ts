@@ -744,9 +744,10 @@ type DataTableRowInteractionOptions<TRow extends Record<string, unknown>> =
   | {
       /**
        * Creates a visible primary link/button in the right-pinned actions column.
-       * Plain clicks on noninteractive row content activate the same control;
-       * modified clicks and browser link operations are supported on the link itself.
-       * Independent of data-column visibility, rendering, and editing.
+       * Plain row clicks activate the same control. Built-in controls and columns
+       * with `edit` stop propagation; custom interactive renderers must do the same.
+       * Modified clicks and browser link operations are supported on the link itself.
+       * The primary control is independent of data-column visibility and rendering.
        */
       rowInteraction?: RowInteraction<TRow>;
       onClickRow?: never;

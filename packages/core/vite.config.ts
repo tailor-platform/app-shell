@@ -2,6 +2,7 @@ import { createRequire } from "node:module";
 import react from "@vitejs/plugin-react";
 import { defineConfig, esmExternalRequirePlugin } from "vite";
 import dts from "vite-plugin-dts";
+import { build as buildTestingTypes } from "tsdown";
 
 /**
  * Vite 8 / Rolldown preserves `require()` for externalized modules.
@@ -32,6 +33,15 @@ const externalizeDeps = () => {
 const whenProductionBuild = (mode: string) => mode === "production";
 
 export default defineConfig(({ mode }) => ({
+  builder: {
+    async buildApp(builder) {
+      const client = builder.environments.client;
+      await builder.build(client);
+      if (!client.config.build.watch) {
+        await buildTestingTypes({ config: "tsdown.testing.config.ts" });
+      }
+    },
+  },
   plugins: [
     /**
      * Generate TypeScript declaration files.

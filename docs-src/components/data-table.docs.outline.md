@@ -277,6 +277,21 @@ const table = useDataTable<Order>({
 </DataTable.Root>;
 ```
 
+## Reading sort state
+
+The primary sorted column exposes `aria-sort="ascending"` or `"descending"` on its actual `<th>`, including when `header(ctx)` renders custom content. Following WAI-ARIA guidance, at most one header has the attribute. Unsorted and secondary sort columns omit it, as do all columns when no `control` is supplied or `sort: false` disables sorting. If the primary sort column is hidden or not represented by a column, no visible header receives `aria-sort`; a secondary key is not promoted just for accessibility. Tests can assert this attribute instead of relying on the internal sort-indicator markup.
+
+For programmatic access, `useDataTable()` returns `sortStates`: an array of `{ field, direction: "Asc" | "Desc" }` entries, in sort-priority order. It updates with the collection `control` without requiring URL synchronization, and is empty when there is no control or sorting is disabled. Read the full array for multi-column sorting; `aria-sort` does not convey secondary keys or sort priority. Sorting still runs through the consumer's query/data layer, not locally inside `DataTable`.
+
+Sortable `header(ctx)` and `headerProps(ctx)` callbacks also receive:
+
+| Property    | Type                  | Description                                                                                                                                  |
+| ----------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sortIndex` | `number \| undefined` | This column's 1-based position in the active sort keys; `undefined` when unsorted.                                                           |
+| `sortCount` | `number`              | Total number of active sort keys, including hidden or unrepresented columns. `0` when no sort is active; not the number of sortable columns. |
+
+These properties are available after narrowing with `ctx.sortable`, alongside `sortDirection` and `activateSort()`. They let custom headers read priority without depending on the table context. Built-in header visuals are unchanged: sorted columns show only `▲` / `▼`, and unsorted columns show no indicator. No built-in priority badges, multi-sort announcements, or sort toolbar controls are added.
+
 ## Per-cell styling
 
 Use `cellProps(row)` to set `className`, `style`, and `title` on the actual data-cell `<td>`, including its padding. Return `undefined` to keep the defaults. This works with built-in renderers, custom `render`, truncation tooltips, and editable cells. It does not customize headers, footers, loading placeholders, empty/error states, or the built-in selection, expansion, and action cells. Content stays owned by `render`; events, refs, and cell spanning are not supported through `cellProps`.
@@ -287,7 +302,7 @@ Column `width` and the pinned cell's sticky position/edge offset take precedence
 
 ### Header styling
 
-Use `headerProps(ctx)` to return `className`, `style`, and/or `title` to customize the actual `<th>`, including its padding. Like `cellProps(row)`, return `undefined` to keep the defaults. It receives the same `HeaderRenderContext` as `header(ctx)`: `label` and `sortable`, plus `sortDirection` and `activateSort()` when sortable. It works with the default header or a custom `header(ctx)` renderer; styling alone does not replace the built-in sort button or context menu.
+Use `headerProps(ctx)` to return `className`, `style`, and/or `title` to customize the actual `<th>`, including its padding. Like `cellProps(row)`, return `undefined` to keep the defaults. It receives the same `HeaderRenderContext` as `header(ctx)`: `label` and `sortable`, plus `sortDirection`, `sortIndex`, `sortCount`, and `activateSort()` when sortable. It works with the default header or a custom `header(ctx)` renderer; styling alone does not replace the built-in sort button or context menu.
 
 Classes are merged after built-in classes, and column `width` and sticky position/edge offset take precedence over the returned `style`, just as for body cells. Use opaque backgrounds for pinned headers. Events, refs, content, and cell spanning are not supported through `headerProps`; built-in selection, expansion, and action headers are unaffected.
 
@@ -849,7 +864,7 @@ A column definition passed to `useDataTable`. `Column<TRow>` is a discriminated 
 | Property      | Type                                                                                                             | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `label`       | `string`                                                                                                         | Column header text. Omit for icon-only columns.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `header`      | `(ctx: HeaderRenderContext) => ReactNode`                                                                        | Custom header renderer. Presentation only. When omitted, the built-in header renders `label` and owns the sort button/indicator. When provided, the return value replaces the built-in header entirely; sortable custom headers receive `sortDirection` and `activateSort()` via `ctx` and must render their own click surface for left-click sorting. The header context menu still uses the column metadata (`label`, `sort`, etc.).                                                                            |
+| `header`      | `(ctx: HeaderRenderContext) => ReactNode`                                                                        | Custom header renderer. Presentation only. When omitted, the built-in header renders `label` and owns the sort button/indicator. When provided, the return value replaces the built-in header entirely; sortable custom headers receive `sortDirection`, `sortIndex`, `sortCount`, and `activateSort()` via `ctx` and must render their own click surface for left-click sorting. The header context menu still uses the column metadata (`label`, `sort`, etc.).                                                 |
 | `footer`      | `string \| ((ctx: FooterRenderContext<TRow>) => ReactNode)`                                                      | Optional static string or column footer renderer, including callbacks created by `aggregations`. Renderers receive current `data.rows` (the current page, not selected rows or all records). Enables the automatic sticky `<tfoot>` row; no default content or typed formatting is applied. See [Column footers](#column-footers).                                                                                                                                                                                |
 | `render`      | `(row: TRow) => ReactNode`                                                                                       | Renders the cell content. Presentation only. Optional — overrides the built-in `type` display renderer when set, not an editor configured through `edit`. Leave `edit` unset to draw your own editor with `render`. Built-in behaviors that need the raw value (truncate tooltip, cell copy/filter context-menu actions) still resolve it from `accessor` first, then `row[col.id]`, and only fall back to the return value of `render(row)` when it is a primitive (`string`, `number`, `boolean`, or `bigint`). |
 | `id`          | `string`                                                                                                         | Stable identifier for column visibility, persisted layout state, raw-value fallback (`row[col.id]`), and the React key. Falls back to `label` when omitted. Set this explicitly when `label` is absent, not unique, or when a custom-rendered column should still participate in built-in cell behaviors that need a raw value.                                                                                                                                                                                   |
@@ -1138,7 +1153,7 @@ The `filter` property on a column accepts the same base shape as `FilterConfig`,
 | `number`   | Number                       | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
 | `decimal`  | Decimal text (string value)  | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
 | `datetime` | Calendar / DatePicker + Time | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `date`     | **Calendar / DatePicker**    | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
+| `date`     | **Calendar / DatePicker**    | `eq` (_exact date_), `gte` (_on or after_), `lte` (_on or before_), **`between`**                            |
 | `time`     | Time                         | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
 | `enum`     | Dropdown                     | `eq`, `ne`, `in`, `nin`                                                                                      |
 | `boolean`  | Toggle                       | `eq`, `ne`                                                                                                   |
@@ -1206,14 +1221,14 @@ If an existing backend stores document dates as datetime instants, a shared busi
 
 `date` columns render app-shell date components as the value editor: single-value operators (`eq` / `gte` / `lte`) use an inline `Calendar`, and the `between` range uses two [`DatePicker`](./date-picker.md) **From** / **To** fields. (The range fields are a stopgap — they'll be replaced with a single range calendar once date-range support lands in the date-picker component.) `date` columns also present a friendlier, slimmer operator set:
 
-| Operator  | Label        | Meaning                    |
-| --------- | ------------ | -------------------------- |
-| `eq`      | _exact date_ | matches that calendar date |
-| `gte`     | _after_      | on or after (inclusive)    |
-| `lte`     | _before_     | on or before (inclusive)   |
-| `between` | _between_    | inclusive min–max range    |
+| Operator  | Label          | Meaning                    |
+| --------- | -------------- | -------------------------- |
+| `eq`      | _exact date_   | matches that calendar date |
+| `gte`     | _on or after_  | on or after (inclusive)    |
+| `lte`     | _on or before_ | on or before (inclusive)   |
+| `between` | _between_      | inclusive min–max range    |
 
-`gt` / `lt` / `ne` are intentionally dropped — the inclusive _after_ / _before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set. Datetime editors pair a calendar/date picker with a time input; `time` uses a native time input.)
+`gt` / `lt` / `ne` are intentionally dropped — the inclusive _on or after_ / _on or before_ cover the intent. The filter chip shows the value as a locale-formatted date (e.g. `15 Jun 2026`), and the picker resolves its locale/timezone from the AppShell context. (Only `date` is remapped this way; `datetime` and `time` keep the full numeric operator set. Datetime editors pair a calendar/date picker with a time input; `time` uses a native time input.)
 
 ### String Filter Case Sensitivity
 

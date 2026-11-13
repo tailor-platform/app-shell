@@ -263,8 +263,8 @@ describe("AddFilterPanel", () => {
     const panelQueries = within(panel as HTMLElement);
     expect(panelQueries.queryByRole("button", { name: "greater than" })).toBeNull();
     expect(panelQueries.getByRole("button", { name: "exact date" })).toBeDefined();
-    expect(panelQueries.getByRole("button", { name: "after" })).toBeDefined();
-    expect(panelQueries.getByRole("button", { name: "before" })).toBeDefined();
+    expect(panelQueries.getByRole("button", { name: "on or after" })).toBeDefined();
+    expect(panelQueries.getByRole("button", { name: "on or before" })).toBeDefined();
   });
 
   it("disables the commit button when the between range is reversed (min > max)", async () => {

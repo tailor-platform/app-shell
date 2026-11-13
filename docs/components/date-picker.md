@@ -253,6 +253,16 @@ A typed range with `end` before `start` sets the invalid state and reports a bui
 
 Same surface as `CalendarProps`, with `value` / `defaultValue`: `DateRange | null` and `onChange`: `(v: DateRange) => void` (fired once per selection, when the second date completes the range).
 
+The optional `onSelectionStateChange` receives a discriminated event for each selection transition:
+
+| `event.type`       | Additional payload | Meaning                                    |
+| ------------------ | ------------------ | ------------------------------------------ |
+| `selection-start`  | —                  | The first pick anchors an unfinished range |
+| `range-complete`   | `value: DateRange` | The second pick completes an ordered range |
+| `selection-cancel` | —                  | Escape cancels an unfinished selection     |
+
+Use these events to disable external Apply actions until selection completes or is cancelled. Only `range-complete` carries a value; it contains the same range passed to the existing `onChange`, so event-only consumers do not need to subscribe to both callbacks. Events report interactions only, not initial render or unmount; when resetting or remounting the calendar, reset any parent-owned selection state too.
+
 ## Related
 
 - [useTimeZone](../api/use-time-zone.md)

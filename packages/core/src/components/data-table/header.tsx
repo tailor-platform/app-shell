@@ -121,6 +121,8 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
       }),
     [columns, pinnedColumns, hasSelection, hasExpand, hasRowActions, widths, columnKeys],
   );
+  const sortCount = sortStates.length;
+  const primarySortColumn = ordered.find((col) => col.sort?.field === sortStates[0]?.field);
 
   return (
     // Sticky within the DataTable.Table scroll container so column headers
@@ -167,10 +169,11 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           const isTreeColumn = besideTree && key === treeColumnKey;
           const label = col.label;
           const sortField = col.sort?.field;
-          const currentSort = sortField
-            ? sortStates?.find((s) => s.field === sortField)
-            : undefined;
+          const sortStateIndex = sortStates.findIndex((s) => s.field === sortField);
+          const currentSort = sortStates[sortStateIndex];
           const isSortable = !!sortField && !!onSort;
+          const ariaSort =
+            currentSort && (currentSort.direction === "Asc" ? "ascending" : "descending");
 
           const activateSort = () => {
             if (!sortField || !onSort) return;
@@ -182,6 +185,8 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                 label,
                 sortable: true,
                 sortDirection: currentSort?.direction,
+                sortIndex: sortStateIndex >= 0 ? sortStateIndex + 1 : undefined,
+                sortCount,
                 activateSort,
               }
             : { label, sortable: false };
@@ -213,6 +218,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
             <Table.Head
               key={key}
               data-col-key={key}
+              aria-sort={isSortable && col === primarySortColumn ? ariaSort : undefined}
               title={customHeaderProps?.title}
               style={style}
               className={cn(className, customHeaderProps?.className)}

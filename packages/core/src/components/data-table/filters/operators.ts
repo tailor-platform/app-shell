@@ -25,7 +25,7 @@ const NUMERIC_TEMPORAL_OPERATORS = ["eq", "ne", "gt", "gte", "lt", "lte", "betwe
 type NumericTemporalOperator = (typeof NUMERIC_TEMPORAL_OPERATORS)[number];
 
 // Date filters use a slimmer, friendlier operator set: an exact date, inclusive
-// "after"/"before" (gte/lte), and a between range. No gt/lt/ne.
+// "on or after"/"on or before" (gte/lte), and a between range. No gt/lt/ne.
 const DATE_OPERATORS = ["eq", "gte", "lte", "between"] as const;
 
 /** Operators offered for a temporal editor, narrowed for `date` columns. */
@@ -144,7 +144,7 @@ export function getOperatorLabel(
   t: ReturnType<typeof useDataTableT>,
   type?: FilterConfig["type"],
 ): string {
-  // Date columns relabel the comparison operators (exact date / after / before).
+  // Date columns relabel the comparisons (exact date / on or after / on or before).
   if (type === "date") {
     if (operator === "eq") return t("filterDateOperator_eq");
     if (operator === "gte") return t("filterDateOperator_gte");

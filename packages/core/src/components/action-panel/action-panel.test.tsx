@@ -7,6 +7,7 @@ import { AppShellConfigContext, buildConfigurations } from "../../contexts/appsh
 import {
   CommandPaletteProvider,
   useCommandPaletteActions,
+  useRegisterCommandPaletteActions,
 } from "../../contexts/command-palette-context";
 
 const MockIcon = () => <span data-testid="mock-icon">icon</span>;
@@ -28,10 +29,23 @@ const renderActionPanel = (props: React.ComponentProps<typeof ActionPanel>, loca
     >
       <ActionPanel {...props} />
     </AppShellConfigContext.Provider>,
-    { wrapper },
   );
 
 describe("ActionPanel", () => {
+  it("renders and executes actions without AppShell or a router", async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    render(
+      <ActionPanel
+        title="Actions"
+        actions={[{ key: "print", label: "Print", icon: <MockIcon />, onClick }]}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Print" }));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
   it("renders title", () => {
     renderActionPanel({ title: "Actions", actions: [] });
     const heading = screen.getByRole("heading", { name: "Actions" });
@@ -288,107 +302,69 @@ const ActionsReader = ({ onActions }: { onActions: (a: unknown[]) => void }) => 
 };
 
 describe("ActionPanel context registration", () => {
-  it("registers actions to CommandPaletteContext on mount", () => {
+  it("does not register actions on mount or rerender", () => {
     const onActions = vi.fn();
-
-    render(
-      <>
-        <ActionPanel
-          title="My Panel"
-          actions={[
-            {
-              key: "a1",
-              label: "Action One",
-              icon: <MockIcon />,
-              onClick: () => {},
-            },
-            {
-              key: "a2",
-              label: "Action Two",
-              icon: <MockIcon />,
-              onClick: () => {},
-            },
-          ]}
-        />
-        <ActionsReader onActions={onActions} />
-      </>,
-      { wrapper },
-    );
-
-    const lastCall = onActions.mock.calls[onActions.mock.calls.length - 1][0];
-    expect(lastCall).toHaveLength(2);
-    expect(lastCall[0].key).toBe("a1");
-    expect(lastCall[0].label).toBe("Action One");
-    expect(lastCall[0].group).toBe("My Panel");
-    expect(lastCall[1].key).toBe("a2");
-  });
-
-  it("does not register disabled or loading actions", () => {
-    const onActions = vi.fn();
-
-    render(
+    const renderPanel = (label: string) => (
       <>
         <ActionPanel
           title="Panel"
-          actions={[
-            { key: "ok", label: "Ok", icon: <MockIcon />, onClick: () => {} },
-            {
-              key: "disabled",
-              label: "Disabled",
-              icon: <MockIcon />,
-              onClick: () => {},
-              disabled: true,
-            },
-            {
-              key: "loading",
-              label: "Loading",
-              icon: <MockIcon />,
-              onClick: () => {},
-              loading: true,
-            },
-            { key: "no-click", label: "No Click", icon: <MockIcon /> },
-          ]}
+          actions={[{ key: "action", label, icon: <MockIcon />, onClick: () => {} }]}
         />
         <ActionsReader onActions={onActions} />
-      </>,
-      { wrapper },
+      </>
     );
 
-    const lastCall = onActions.mock.calls[onActions.mock.calls.length - 1][0];
-    expect(lastCall).toHaveLength(1);
-    expect(lastCall[0].key).toBe("ok");
+    const { rerender } = render(renderPanel("Action"), { wrapper });
+    expect(onActions.mock.lastCall?.[0]).toEqual([]);
+
+    rerender(renderPanel("Updated action"));
+    expect(onActions.mock.lastCall?.[0]).toEqual([]);
   });
 
-  it("unregisters actions when ActionPanel unmounts", () => {
+  it("allows explicit registration with the existing hook", () => {
     const onActions = vi.fn();
+    const onClick = vi.fn();
+    const actions: React.ComponentProps<typeof ActionPanel>["actions"] = [
+      { key: "ok", label: "Ok", icon: <MockIcon />, onClick },
+      { key: "disabled", label: "Disabled", icon: <MockIcon />, onClick, disabled: true },
+      { key: "loading", label: "Loading", icon: <MockIcon />, onClick, loading: true },
+      { key: "no-click", label: "No Click", icon: <MockIcon /> },
+    ];
 
-    // Use rerender so the same CommandPaletteProvider instance survives
+    function RegisteredPanel() {
+      useRegisterCommandPaletteActions(
+        "Panel",
+        actions.flatMap((action) =>
+          !action.disabled && !action.loading && action.onClick
+            ? [
+                {
+                  key: action.key,
+                  label: action.label,
+                  icon: action.icon,
+                  onSelect: action.onClick,
+                },
+              ]
+            : [],
+        ),
+      );
+      return <ActionPanel title="Panel" actions={actions} />;
+    }
+
     const { rerender } = render(
       <>
-        <ActionPanel
-          title="Panel"
-          actions={[
-            {
-              key: "a1",
-              label: "Action",
-              icon: <MockIcon />,
-              onClick: () => {},
-            },
-          ]}
-        />
+        <RegisteredPanel />
         <ActionsReader onActions={onActions} />
       </>,
       { wrapper },
     );
 
-    // Actions registered
-    const beforeUnmount = onActions.mock.calls[onActions.mock.calls.length - 1][0];
-    expect(beforeUnmount).toHaveLength(1);
+    const registeredActions = onActions.mock.lastCall?.[0];
+    expect(registeredActions).toHaveLength(1);
+    expect(registeredActions[0]).toMatchObject({ key: "ok", label: "Ok", group: "Panel" });
+    registeredActions[0].onSelect();
+    expect(onClick).toHaveBeenCalledTimes(1);
 
-    // Remove ActionPanel but keep the provider alive
     rerender(<ActionsReader onActions={onActions} />);
-
-    const afterUnmount = onActions.mock.calls[onActions.mock.calls.length - 1][0];
-    expect(afterUnmount).toHaveLength(0);
+    expect(onActions.mock.lastCall?.[0]).toEqual([]);
   });
 });

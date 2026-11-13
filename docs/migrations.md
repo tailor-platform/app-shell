@@ -15,6 +15,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.21.0        | [ActionPanel no longer registers CommandPalette actions](#1210-actionpanel-no-longer-registers-commandpalette-actions)       |
 | 1.20.0        | [z-index tokens renamed; old names are aliases](#1200-z-index-tokens-renamed-old-names-are-aliases)                          |
 | 1.18.0        | [Destructive colours now resolve to the danger roles](#1180-destructive-colours-now-resolve-to-the-danger-roles)             |
 | 1.17.0        | [Status and alert tokens now resolve to the colour roles](#1170-status-and-alert-tokens-now-resolve-to-the-colour-roles)     |
@@ -28,6 +29,47 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
+
+## 1.21.0: ActionPanel no longer registers CommandPalette actions
+
+**Applies to:** apps upgrading to 1.21.0 or later that rely on `ActionPanel` actions appearing in the CommandPalette automatically. This is a breaking behavior change shipped in a minor release.
+
+`ActionPanel` now only renders action rows. Rendering a panel no longer makes its actions searchable or executable through `Cmd+K` / `Ctrl+K`. There is no TypeScript error: those actions silently disappear from the palette unless the app registers them explicitly. Row clicks, `disabled`, `loading`, and `variant` keep their existing behavior.
+
+How to detect it: find `ActionPanel` usages and check whether their actions are expected in the CommandPalette without a corresponding `useRegisterCommandPaletteActions` call.
+
+Before — rendering the panel also registered its enabled actions:
+
+```tsx
+<ActionPanel title="Order Actions" actions={actions} />
+```
+
+After — register the desired actions explicitly in a component inside `AppShell`:
+
+```tsx
+import {
+  ActionPanel,
+  type ActionPanelProps,
+  useRegisterCommandPaletteActions,
+} from "@tailor-platform/app-shell";
+
+function OrderActions({ actions }: { actions: ActionPanelProps["actions"] }) {
+  useRegisterCommandPaletteActions(
+    "Order Actions",
+    actions.flatMap((action) =>
+      !action.disabled && !action.loading && action.onClick
+        ? [{ key: action.key, label: action.label, icon: action.icon, onSelect: action.onClick }]
+        : [],
+    ),
+  );
+
+  return <ActionPanel title="Order Actions" actions={actions} />;
+}
+```
+
+The filter preserves the old eligibility rules and maps `onClick` to the hook's `onSelect`. You can instead register only the actions you want in the palette. Registration is removed when the calling component unmounts. If panel actions should not appear in the palette, no application change is needed.
+
+`ActionPanel` itself no longer requires a CommandPalette provider and can be rendered outside `AppShell`. The registration hook still requires `AppShell`.
 
 ## 1.20.0: z-index tokens renamed; old names are aliases
 

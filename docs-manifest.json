@@ -12,10 +12,10 @@
       "symbols": ["ActionPanel", "ActionPanelProps"],
       "hashes": {
         "typeSurface": "f497e4e3021d029a",
-        "outline": "2e5fe6fdb0636b7c",
+        "outline": "206f2dfc26794df8",
         "snapshot": null,
-        "outputMd": "03362008aa77d4cf",
-        "examples": "97546c5d7e75d710"
+        "outputMd": "2b3e278cffe05311",
+        "examples": "94c4303f3d6cdbec"
       }
     },
     "activity-card": {
@@ -310,9 +310,9 @@
       "symbols": ["CommandPalette"],
       "hashes": {
         "typeSurface": "818f6808b94f8041",
-        "outline": "92145a0043e61c29",
+        "outline": "e5853516a3b8b031",
         "snapshot": null,
-        "outputMd": "7e5bc675a593791a",
+        "outputMd": "8a3ef2de651416fc",
         "examples": null
       }
     },
@@ -1130,9 +1130,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "3ad2e1124c9f5691",
+        "outline": "75aabeef63943e2c",
         "snapshot": null,
-        "outputMd": "7730433adcc0bbbf",
+        "outputMd": "75894b469fb44d2c",
         "examples": null
       }
     },
@@ -1688,9 +1688,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "990b894284c803c2",
+        "outline": "ff361c1100d89522",
         "snapshot": null,
-        "outputMd": "7144ae3dc68aa65b",
+        "outputMd": "d1fe052cb61f3b9f",
         "examples": null
       }
     },
@@ -1806,7 +1806,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "5f77dda61ce9abd4",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "18b382f6774e7682",
-    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "03362008aa77d4cf",
+    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "2b3e278cffe05311",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "1a2bb081c3e34482",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "82313d5b6fe140d2",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "db2c4388ca783a75",
@@ -1820,7 +1820,7 @@
     "packages/core/skills/app-shell-patterns/references/components/card.md": "6e18faeb676654b4",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
-    "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
+    "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "8a3ef2de651416fc",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
     "packages/core/skills/app-shell-patterns/references/components/data-table.md": "41de398263666fa7",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "d4b478c7ba8304d5",
@@ -1874,7 +1874,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-auth.md": "7573794b872af4c8",
     "packages/core/skills/app-shell-patterns/references/api/use-override-breadcrumb.md": "6ec55fc3dfd8c21d",
     "packages/core/skills/app-shell-patterns/references/api/use-page-meta.md": "f988bdc0fb180f0c",
-    "packages/core/skills/app-shell-patterns/references/api/use-register-command-palette-actions.md": "7144ae3dc68aa65b",
+    "packages/core/skills/app-shell-patterns/references/api/use-register-command-palette-actions.md": "d1fe052cb61f3b9f",
     "packages/core/skills/app-shell-patterns/references/api/use-resolved-locale.md": "d0eb9f125c314d85",
     "packages/core/skills/app-shell-patterns/references/api/use-route-error.md": "1a44180ec84ce4b9",
     "packages/core/skills/app-shell-patterns/references/api/use-theme.md": "c338022de386d5e4",
@@ -1891,7 +1891,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "930db027a28bbe24",
-    "packages/core/skills/app-shell-patterns/references/migrations.md": "fe8232d31b24aed0",
+    "packages/core/skills/app-shell-patterns/references/migrations.md": "574e2235ed087891",
     "packages/core/skills/app-shell-patterns/SKILL.md": "0e6c9be8c4ece7bc"
   }
 }

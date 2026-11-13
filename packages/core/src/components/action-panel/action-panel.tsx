@@ -2,7 +2,6 @@ import { useT } from "@/i18n-labels";
 import { cn } from "../../lib/utils";
 import { Card } from "../card";
 import { Spinner } from "../spinner";
-import { useRegisterCommandPaletteActions } from "../../contexts/command-palette-context";
 import type { ActionPanelProps, ActionItem } from "./types";
 import { Text } from "../text";
 
@@ -75,14 +74,9 @@ function ActionRow({ action }: { action: ActionItem }) {
  * When an action has `loading: true`, the row shows a spinner in the icon slot and is
  * non-interactive (useful for backend-driven actions: parent sets loading from mutation/request state).
  *
- * **CommandPalette integration** — Actions that are enabled (not `disabled`,
- * not `loading`, and have an `onClick` handler) are automatically registered
- * to the CommandPalette so users can discover and trigger them via keyboard
- * shortcut. The actions are grouped under the panel's `title`. Registration
- * is cleaned up when the ActionPanel unmounts.
- *
- * NOTE: This component must be rendered inside `AppShell` (which provides
- * `CommandPaletteProvider`). Rendering it outside that tree will throw.
+ * Actions are not registered to the CommandPalette. To expose actions there,
+ * register them explicitly with `useRegisterCommandPaletteActions` inside `AppShell`.
+ * ActionPanel itself can be rendered outside `AppShell`.
  *
  * @example
  * ```tsx
@@ -113,20 +107,6 @@ export function ActionPanel({ title, actions, emptyContent, className }: ActionP
     actions.length === 0 &&
     resolvedEmptyContent != null &&
     typeof resolvedEmptyContent !== "boolean";
-
-  // Register enabled actions to the CommandPalette context so they are
-  // searchable and triggerable from the palette.
-  useRegisterCommandPaletteActions(
-    title,
-    actions
-      .filter((a) => !a.disabled && !a.loading && a.onClick)
-      .map((a) => ({
-        key: a.key,
-        label: a.label,
-        icon: a.icon,
-        onSelect: a.onClick!,
-      })),
-  );
 
   return (
     <Card.Root className={cn("astw:min-w-69.5 astw:w-full", className)}>

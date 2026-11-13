@@ -80,24 +80,17 @@ const handleConfirm = async () => {
 />;
 ```
 
-## CommandPalette Integration
+## Explicit CommandPalette Registration
 
-`ActionPanel` automatically registers its enabled actions to the CommandPalette. Actions that are not `disabled`, not `loading`, and have an `onClick` handler are registered under the panel's `title` as the group name. Registration is cleaned up when the component unmounts.
+`ActionPanel` does not register actions to the CommandPalette and can be rendered outside `AppShell`. Rendering a row only exposes its `onClick` through that row.
 
-This means users can discover and trigger any visible ActionPanel action via `Cmd+K` / `Ctrl+K` without any additional setup.
+To make selected actions discoverable via `Cmd+K` / `Ctrl+K`, register them explicitly with [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md). Filter out disabled or loading actions and actions without an `onClick` handler, then map `onClick` to `onSelect`. You can register only a subset of the panel's actions.
 
-```tsx
-// Actions in this panel will automatically appear in the CommandPalette
-<ActionPanel
-  title="Order Actions"
-  actions={[
-    { key: "confirm", label: "Confirm order", icon: <CheckIcon />, onClick: handleConfirm },
-    { key: "cancel", label: "Cancel order", icon: <XIcon />, onClick: handleCancel },
-  ]}
-/>
-```
+<!-- example: explicit-command-palette-registration -->
 
-> **Note:** `ActionPanel` must be rendered inside `AppShell` (which provides the required `CommandPaletteProvider`). Rendering it outside that tree will throw.
+The registration hook requires `AppShell` and unregisters actions when the calling component unmounts. The panel itself does not require a CommandPalette provider.
+
+Apps upgrading from automatic registration should follow the [migration guide](../migrations.md#1210-actionpanel-no-longer-registers-commandpalette-actions).
 
 ## Backend-Driven Pattern
 

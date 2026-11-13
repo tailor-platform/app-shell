@@ -34,13 +34,13 @@ import { Package } from "lucide-react";
 
 ## Props
 
-| Prop          | Type                        | Default      | Description                                    |
-| ------------- | --------------------------- | ------------ | ---------------------------------------------- |
-| `title`       | `string \| LocalizedString` | **Required** | Group title (supports i18n)                    |
-| `icon`        | `React.ReactNode`           | -            | Icon displayed next to title                   |
-| `to`          | `string`                    | -            | Makes title clickable (navigates to URL)       |
-| `defaultOpen` | `boolean`                   | `true`       | Initial expanded/collapsed state               |
-| `children`    | `React.ReactNode`           | **Required** | Child items (SidebarItem, nested groups, etc.) |
+| Prop          | Type                        | Default      | Description                                                                                                                                                          |
+| ------------- | --------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`       | `string \| LocalizedString` | **Required** | Group title (supports i18n)                                                                                                                                          |
+| `icon`        | `React.ReactNode`           | -            | Icon displayed next to title                                                                                                                                         |
+| `to`          | `string`                    | -            | Makes title clickable (navigates to URL). In the icon rail on a touch device, tapping the group opens its flyout instead; the page is linked from the flyout heading |
+| `defaultOpen` | `boolean`                   | `true`       | Initial expanded/collapsed state                                                                                                                                     |
+| `children`    | `React.ReactNode`           | **Required** | Child items (SidebarItem, nested groups, etc.)                                                                                                                       |
 
 ## Features
 
@@ -169,6 +169,8 @@ import { Settings } from "lucide-react";
 ```
 
 Clicking "Settings" navigates to `/settings`, while child items navigate to their specific pages.
+
+In the collapsed icon rail, the group icon is the link on a mouse device, and its flyout opens on hover. On a touch device the icon opens the flyout on tap, and "Settings" is the link at the top of the flyout.
 
 ### Multiple Groups
 

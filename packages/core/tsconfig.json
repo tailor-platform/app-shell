@@ -23,5 +23,5 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["."],
-  "exclude": ["tests/browser"]
+  "exclude": ["tests/browser", "tests/dts"]
 }

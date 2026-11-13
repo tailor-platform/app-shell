@@ -1153,7 +1153,7 @@ The `filter` property on a column accepts the same base shape as `FilterConfig`,
 | `number`   | Number                       | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
 | `decimal`  | Decimal text (string value)  | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
 | `datetime` | Calendar / DatePicker + Time | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
-| `date`     | **Calendar / DatePicker**    | `eq` (_exact date_), `gte` (_after_), `lte` (_before_), **`between`**                                        |
+| `date`     | **Calendar / DatePicker**    | `eq` (_exact date_), `gte` (_on or after_), `lte` (_on or before_), **`between`**                            |
 | `time`     | Time                         | `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, **`between`**, `in`, `nin`                                             |
 | `enum`     | Dropdown                     | `eq`, `ne`, `in`, `nin`                                                                                      |
 | `boolean`  | Toggle                       | `eq`, `ne`                                                                                                   |

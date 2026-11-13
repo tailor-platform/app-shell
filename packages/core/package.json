@@ -41,7 +41,7 @@
     },
     "./testing": {
       "types": "./dist-testing/testing.d.ts",
-      "default": "./dist/testing.js"
+      "default": "./dist-testing/testing.js"
     }
   },
   "publishConfig": {

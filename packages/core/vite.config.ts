@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import react from "@vitejs/plugin-react";
 import { defineConfig, esmExternalRequirePlugin } from "vite";
 import dts from "vite-plugin-dts";
-import { build as buildTestingTypes } from "tsdown";
+import { build as buildTesting } from "tsdown";
 
 /**
  * Vite 8 / Rolldown preserves `require()` for externalized modules.
@@ -36,38 +36,39 @@ export default defineConfig(({ mode }) => ({
   builder: {
     async buildApp(builder) {
       /**
-       * Vite builds runtime JS/CSS for all entries and generates declarations
-       * with vite-plugin-dts. We do not publish that plugin's testing rollup:
-       * API Extractor bundles each entry independently, duplicating shared types
-       * such as AppShellRegister. Augmenting the main entry would then have no
-       * effect on testing's props and guards.
+       * Vite builds main JS/CSS and the private testing-runtime entry together;
+       * tsdown then builds the public testing entry's JS and declarations.
        *
-       * tsdown builds ONLY testing declarations from testing-types.ts. That
-       * facade imports the main entry's public types, and its config keeps the
-       * main package external, preserving one shared type identity.
+       * Two identities must remain shared across these builds. For types, API
+       * Extractor's independent entry rollups would duplicate AppShellRegister,
+       * so testing.ts imports main's public props and WithPages types instead.
+       * tsdown keeps that main-package import external to preserve augmentation.
        *
-       * Do not independently bundle testing's runtime JS with tsdown: its entry
-       * imports the local AppShellInternal implementation, which would bring a
-       * second copy of the internal React Context modules into that bundle.
-       * Main-entry hooks reading those Contexts would then use different instances
-       * from the providers mounted by testing's AppShell and would not see them.
-       * Externalizing React alone cannot prevent duplication of local Contexts.
-       * Keep both runtime entries in Vite's single graph to share their instances.
+       * For runtime state, independently bundling the local AppShellInternal
+       * source would duplicate React Contexts AND the module-scope guard store.
+       * Main-entry hooks and main-created module loaders would then read state
+       * different from the providers/store populated by testing's AppShell.
+       * Externalizing React alone does not externalize these local modules.
        *
-       * Finish the main build first: the facade resolves this package's root
-       * export to the emitted main declarations, not to source files. Using
-       * buildApp keeps `vite build` as the sole entry point and prevents the
-       * testing step from running if the main build fails.
+       * The private testing-runtime entry shares its implementation with main
+       * in Vite's graph. tsdown externalizes that entry and imports its stable
+       * output path, not a hashed chunk or minified export alias. It therefore
+       * owns testing's output without bundling another copy of shared state.
+       * No public package export is added for the private runtime entry.
+       *
+       * Finish Vite first: testing resolves main's emitted declarations and
+       * needs the private runtime output. buildApp keeps `vite build` as the
+       * sole entry point and skips testing if the main build fails.
        */
       const client = builder.environments.client;
       await builder.build(client);
 
       // In watch mode, build(client) returns a watcher before outputs are ready.
-      // Testing declarations are intentionally built only by a normal build;
-      // dist-testing survives Vite's dist cleanup, and its imports continue to
-      // resolve updated main types without a separate testing watcher.
+      // Testing is intentionally built only by a normal build. dist-testing
+      // survives Vite's dist cleanup; its stable runtime and main-type imports
+      // follow subsequent main builds without a separate testing watcher.
       if (!client.config.build.watch) {
-        await buildTestingTypes({ config: "tsdown.testing.config.ts" });
+        await buildTesting({ config: "tsdown.testing.config.ts" });
       }
     },
   },
@@ -100,7 +101,7 @@ export default defineConfig(({ mode }) => ({
         "app-shell": "src/index.ts",
         "style-entry": "src/style-entry.ts",
         "vite-plugin": "src/vite-plugin.ts",
-        testing: "src/testing/index.ts",
+        "testing-runtime": "src/testing/runtime.ts",
       },
       cssFileName: "app-shell-core",
       formats: ["es"],

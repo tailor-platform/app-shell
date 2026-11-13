@@ -1,4 +1,4 @@
-import { Card, Table, Text } from "@tailor-platform/app-shell";
+import { Button, Card, Table, Text } from "@tailor-platform/app-shell";
 
 export function BasicUsage() {
   return (
@@ -7,6 +7,31 @@ export function BasicUsage() {
       <Card.Content>
         <Text.p>Content goes here</Text.p>
       </Card.Content>
+    </Card.Root>
+  );
+}
+
+export function HeaderAndFooterActions() {
+  return (
+    <Card.Root>
+      <Card.Header
+        title="Order details"
+        description="Review the order before saving."
+        action={
+          <Button type="button" variant="outline" size="sm">
+            Edit
+          </Button>
+        }
+      />
+      <Card.Content>
+        <Text.p>Order content goes here.</Text.p>
+      </Card.Content>
+      <Card.Footer>
+        <Button type="button" variant="outline">
+          Cancel
+        </Button>
+        <Button type="button">Save</Button>
+      </Card.Footer>
     </Card.Root>
   );
 }

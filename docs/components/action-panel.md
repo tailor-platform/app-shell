@@ -63,15 +63,16 @@ _Generated from the type surface — first-party props only._
 
 ### ActionItem
 
-| Property   | Type                          | Default      | Description                                                           |
-| ---------- | ----------------------------- | ------------ | --------------------------------------------------------------------- |
-| `key`      | `string`                      | **Required** | Unique key for stable rendering                                       |
-| `label`    | `string`                      | **Required** | Action label shown to users                                           |
-| `icon`     | `ReactNode`                   | **Required** | Icon rendered in a fixed 16px slot                                    |
-| `onClick`  | `() => void \| Promise<void>` | -            | Click handler for the action                                          |
-| `disabled` | `boolean`                     | `false`      | Disables interaction and applies disabled styling                     |
-| `loading`  | `boolean`                     | `false`      | Shows spinner, disables interaction, sets busy UI                     |
-| `variant`  | `"default" \| "destructive"`  | `"default"`  | Visual variant; use `"destructive"` for dangerous actions like delete |
+| Property       | Type                                                              | Default      | Description                                                           |
+| -------------- | ----------------------------------------------------------------- | ------------ | --------------------------------------------------------------------- |
+| `key`          | `string`                                                          | **Required** | Unique key for stable rendering                                       |
+| `label`        | `string`                                                          | **Required** | Action label shown to users                                           |
+| `icon`         | `ReactNode`                                                       | **Required** | Icon rendered in a fixed 16px slot                                    |
+| `onClick`      | `() => void \| Promise<void>`                                     | -            | Runs immediately, or after confirmation when configured               |
+| `confirmation` | `{ title; description; confirmLabel?; cancelLabel?; busyLabel? }` | -            | Optional confirmation before executing `onClick`                      |
+| `disabled`     | `boolean`                                                         | `false`      | Disables interaction and applies disabled styling                     |
+| `loading`      | `boolean`                                                         | `false`      | Shows spinner, disables interaction, sets busy UI                     |
+| `variant`      | `"default" \| "destructive"`                                      | `"default"`  | Visual variant; use `"destructive"` for dangerous actions like delete |
 
 ## Behavior
 
@@ -137,6 +138,84 @@ const handleConfirm = async () => {
 />;
 ```
 
+## Confirmation
+
+Add `confirmation` to an action to show a dialog before executing its `onClick`. Actions without it keep their immediate click behavior. `variant: "destructive"` styles both the row and its confirm button; irreversible constructive actions can keep the default variant.
+
+<example-preview name="confirmation"></example-preview>
+
+```tsx
+function Confirmation() {
+  const [deleted, setDeleted] = useState(false);
+  const [shouldFail, setShouldFail] = useState(true);
+
+  return (
+    <ActionPanel
+      title="Order Actions"
+      emptyContent="Order deleted"
+      actions={
+        deleted
+          ? []
+          : [
+              {
+                key: "delete-order",
+                label: "Delete order",
+                icon: <Trash2 />,
+                variant: "destructive",
+                confirmation: {
+                  title: "Delete order ORD-1024?",
+                  description:
+                    "This removes the order and all its line items. This cannot be undone.",
+                  cancelLabel: "Keep order",
+                  busyLabel: "Deleting…",
+                },
+                onClick: async () => {
+                  // Simulate a rejected request once so the example also demonstrates retry.
+                  if (shouldFail) {
+                    setShouldFail(false);
+                    throw new Error("The order could not be deleted. Please try again.");
+                  }
+                  setDeleted(true);
+                },
+              },
+            ]
+      }
+    />
+  );
+}
+```
+
+| Option         | Type        | Default                            | Description                                        |
+| -------------- | ----------- | ---------------------------------- | -------------------------------------------------- |
+| `title`        | `string`    | **Required**                       | Question identifying the action and target         |
+| `description`  | `ReactNode` | **Required**                       | Consequences of the action; use text or inline JSX |
+| `confirmLabel` | `string`    | `action.label`                     | Confirm button label                               |
+| `cancelLabel`  | `string`    | Localized `Cancel` / `キャンセル`  | Dismiss button label                               |
+| `busyLabel`    | `string`    | Localized `Working...` / `処理中…` | Confirm button label during execution              |
+
+Use a specific title and consequence, not a generic "Are you sure?". For an action called "Cancel order", use `cancelLabel: "Keep order"` so the two buttons do not mean opposite things under the same label.
+
+### Execution and failure
+
+- Clicking the row only opens confirmation. Dismissing it never calls `onClick`.
+- The cancel button receives initial focus; closing returns focus to the row when it still exists and is enabled.
+- Synchronous completion or a fulfilled Promise closes the dialog.
+- While execution is pending, the row shows a spinner, all dialog buttons are disabled, and Escape and outside clicks cannot dismiss the dialog. Immediate repeated confirmation does not dispatch twice.
+- A synchronous throw or rejected Promise keeps the dialog open, announces an inline error, and permits retry. Retrying or dismissing clears the error.
+- `Error.message` is shown directly: throw an Error containing a safe, user-facing message. Other thrown values (or an empty Error message) use the localized fallback `The action could not be completed.` / `操作を完了できませんでした。`. Success toasts, error normalization, and backend authorization remain application responsibilities.
+
+**Return the Promise.** `onClick: () => void performAction()` hides completion from the panel, so it closes immediately and cannot track pending state or handle rejection. For clients such as urql that resolve with `result.error`, check the result and throw a user-facing Error on failure instead of returning normally.
+
+The existing `loading` prop remains supported, but its transition to `false` is not a success signal: the panel waits for the callback's Promise. Confirmation is ignored when no `onClick` handler is provided.
+
+### Action identity and scope
+
+Before execution, removing or disabling an action, marking it loading, or removing its confirmation/callback discards the open confirmation. Re-enabling it does not reopen the old dialog. Removing the row or changing its key also discards its local confirmation state; completion of an old request cannot change a different row's dialog.
+
+If the panel is reused for a different record, use `<ActionPanel key={record.id} ... />` or record-specific action keys. A stable key such as `"delete"` alone cannot identify that the target record changed. Include a status/version in the key if that change should invalidate a decision even while the action remains available. The backend must still validate the current record state and make retries safe: a rejected request does not prove the server made no change.
+
+This API handles descriptive confirmation only. For reason input, validation, custom layouts, or externally controlled open state, compose [`Dialog`](./dialog.md) with your own handlers instead.
+
 ## Explicit CommandPalette Registration
 
 `ActionPanel` does not register actions to the CommandPalette and can be rendered outside `AppShell`. Rendering a row only exposes its `onClick` through that row.
@@ -159,7 +238,7 @@ function ExplicitCommandPaletteRegistration() {
   useRegisterCommandPaletteActions(
     "Order Actions",
     actions.flatMap((action) =>
-      !action.disabled && !action.loading && action.onClick
+      !action.disabled && !action.loading && !action.confirmation && action.onClick
         ? [{ key: action.key, label: action.label, icon: action.icon, onSelect: action.onClick }]
         : [],
     ),
@@ -170,6 +249,8 @@ function ExplicitCommandPaletteRegistration() {
 ```
 
 The registration hook requires `AppShell` and unregisters actions when the calling component unmounts. The panel itself does not require a CommandPalette provider.
+
+Confirmation applies only to the panel row. Registering its raw `onClick` as `onSelect` executes it directly and does **not** open the panel's confirmation. The example excludes actions with `confirmation`; leave them out of the palette or provide a separate confirmation flow for that entry point.
 
 Apps upgrading from automatic registration should follow the [migration guide](../migrations.md#1210-actionpanel-no-longer-registers-commandpalette-actions).
 
@@ -190,6 +271,8 @@ This keeps `ActionPanel` simple and reusable across entity types.
 - Buttons are keyboard accessible and include focus-visible states.
 - Loading rows set `aria-busy="true"`.
 - Disabled rows set `aria-disabled="true"` and native `disabled`.
+- Confirmed rows expose dialog state, trap focus while open, and focus the safe dismissal button first.
+- Confirmation errors use `role="alert"` and are associated with the retry button through `aria-describedby`.
 
 ## Styling
 

@@ -15,8 +15,26 @@ export interface ActionItem {
   label: string;
   /** Icon: any component or SVG; rendered in a fixed-size slot (e.g. 16px) */
   icon: ReactNode;
-  /** Called when the row is clicked. For navigation, use useNavigate() inside the callback. */
+  /**
+   * Called immediately, or after confirmation when `confirmation` is provided.
+   * For confirmed actions, return the Promise: fulfillment closes the dialog;
+   * throwing or rejecting keeps it open and displays Error.message (a localized fallback for other errors).
+   * For navigation, use useNavigate() inside the callback.
+   */
   onClick?: () => void | Promise<void>;
+  /** Optional confirmation before executing onClick. Ignored when onClick is absent. */
+  confirmation?: {
+    /** Question identifying the action and its target. */
+    title: string;
+    /** Consequences of confirming; use text or inline JSX, not form controls. */
+    description: ReactNode;
+    /** Confirm button label; defaults to this action's label. */
+    confirmLabel?: string;
+    /** Dismiss button label; defaults to localized "Cancel". */
+    cancelLabel?: string;
+    /** Confirm button label during execution; defaults to localized "Working...". */
+    busyLabel?: string;
+  };
   /** Optional; disable the row */
   disabled?: boolean;
   /** When true, show loading indicator in the row and make it non-interactive */

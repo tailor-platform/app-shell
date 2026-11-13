@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useT } from "@/i18n-labels";
 import { cn } from "../../lib/utils";
 import { Card } from "../card";
 import { Spinner } from "../spinner";
 import type { ActionPanelProps, ActionItem } from "./types";
+import { ActionConfirmation } from "./action-confirmation";
 import { Text } from "../text";
 
 const iconSlotClasses = "astw:flex astw:size-4 astw:items-center astw:justify-center";
@@ -26,13 +28,15 @@ const actionRowDestructiveClasses =
 const actionRowDisabledClasses = "astw:pointer-events-none astw:opacity-50";
 
 function ActionRow({ action }: { action: ActionItem }) {
-  const { key, label, icon, onClick, disabled, loading, variant } = action;
-  const isDisabled = Boolean(disabled) || Boolean(loading);
+  const { key, label, icon, onClick, disabled, loading, variant, confirmation } = action;
+  const [pending, setPending] = useState(false);
+  const isLoading = Boolean(loading) || pending;
+  const isDisabled = Boolean(disabled) || isLoading;
 
   const content = (
     <>
       <span className={iconSlotClasses} aria-hidden>
-        {loading ? <Spinner data-testid="action-panel-spinner" /> : icon}
+        {isLoading ? <Spinner data-testid="action-panel-spinner" /> : icon}
       </span>
       <span className="astw:min-w-0 astw:truncate">{label}</span>
     </>
@@ -44,19 +48,31 @@ function ActionRow({ action }: { action: ActionItem }) {
     variant === "destructive" && !isDisabled && actionRowDestructiveClasses,
   );
 
-  return (
+  const row = (
     <button
       type="button"
       className={rowClasses}
-      onClick={isDisabled ? undefined : onClick}
+      onClick={isDisabled || confirmation ? undefined : onClick}
       disabled={isDisabled}
       aria-disabled={isDisabled}
-      aria-busy={loading}
+      aria-busy={isLoading}
       data-slot="action-panel-item"
       data-key={key}
     >
       {content}
     </button>
+  );
+
+  // Keep the controller mounted until execution settles, even if the action's confirmation is removed.
+  return (confirmation && onClick) || pending ? (
+    <ActionConfirmation
+      action={action}
+      pending={pending}
+      onPendingChange={setPending}
+      trigger={row}
+    />
+  ) : (
+    row
   );
 }
 
@@ -73,6 +89,10 @@ function ActionRow({ action }: { action: ActionItem }) {
  *
  * When an action has `loading: true`, the row shows a spinner in the icon slot and is
  * non-interactive (useful for backend-driven actions: parent sets loading from mutation/request state).
+ *
+ * Set an action's `confirmation` to ask before executing its `onClick`. Confirmed
+ * callbacks are awaited: fulfillment closes the dialog, while failure stays open for retry.
+ * Return the Promise and throw a user-facing Error to display its message.
  *
  * Actions are not registered to the CommandPalette. To expose actions there,
  * register them explicitly with `useRegisterCommandPaletteActions` inside `AppShell`.

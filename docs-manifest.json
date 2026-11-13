@@ -174,9 +174,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "a26f5ee47d6a6a6d",
+        "outline": "cd9dc5d220e4310c",
         "snapshot": null,
-        "outputMd": "d9acfbe48ada274b",
+        "outputMd": "a3f7aa913d59fdd7",
         "examples": null
       }
     },
@@ -1436,9 +1436,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "308305a60010c761",
+        "outline": "da098666213bf762",
         "snapshot": null,
-        "outputMd": "409aaa21577d96ad",
+        "outputMd": "f53bdca925ec06d8",
         "examples": null
       }
     },
@@ -1815,7 +1815,7 @@
     }
   },
   "skill": {
-    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "d9acfbe48ada274b",
+    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "a3f7aa913d59fdd7",
     "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "18b8fc747d52455a",
     "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "e189f95dbe4b0286",
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "a59a10293fba053b",
@@ -1823,7 +1823,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "b6316f166f1f7a42",
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "18b382f6774e7682",
-    "packages/core/skills/app-shell-patterns/references/concepts/testing.md": "409aaa21577d96ad",
+    "packages/core/skills/app-shell-patterns/references/concepts/testing.md": "f53bdca925ec06d8",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "03362008aa77d4cf",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "1a2bb081c3e34482",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "82313d5b6fe140d2",

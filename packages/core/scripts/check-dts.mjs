@@ -160,7 +160,39 @@ try {
       return `import * as entry${i} from "${specifier}";\nvoid entry${i};`;
     })
     .join("\n");
-  writeFileSync(join(project, "check.tsx"), `${checkSource}\n`);
+  const memoryAuthCheck = `
+import { AuthProvider, useAuth, useAuthSuspense, type AuthState, type EnhancedAuthClient } from "${corePkg.name}";
+import { createMemoryAuthClient, MemoryAuthProvider, type MemoryAuthClient, type MemoryAuthProviderProps } from "${corePkg.name}/testing";
+
+const state: AuthState = { isReady: true, isAuthenticated: true, error: null };
+const auth: MemoryAuthClient = createMemoryAuthClient(state);
+const productionClient: EnhancedAuthClient = auth;
+auth.setState(state);
+const ownedProps: MemoryAuthProviderProps = { initialState: state };
+
+function AuthStatus() {
+  useAuth();
+  useAuthSuspense();
+  return null;
+}
+
+void [
+  <AuthProvider client={productionClient}><AuthStatus /></AuthProvider>,
+  <MemoryAuthProvider><AuthStatus /></MemoryAuthProvider>,
+  <MemoryAuthProvider {...ownedProps}><AuthStatus /></MemoryAuthProvider>,
+  <MemoryAuthProvider client={auth} autoLogin={false} guardComponent={() => null}><AuthStatus /></MemoryAuthProvider>,
+];
+
+// @ts-expect-error The provider has exactly one state owner.
+const conflicting = <MemoryAuthProvider client={auth} initialState={state} />;
+void conflicting;
+// @ts-expect-error State updates require all existing AuthState fields.
+auth.setState({ isAuthenticated: true });
+// @ts-expect-error A production-only client has no test state setter.
+const wrongClient = <MemoryAuthProvider client={productionClient} />;
+void wrongClient;
+`;
+  writeFileSync(join(project, "check.tsx"), `${checkSource}\n${memoryAuthCheck}`);
 
   console.log("check-dts: installing the packed tarball into a scratch project…");
   run("npm", ["install", "--no-audit", "--no-fund", "--loglevel=error"], project);

@@ -1,5 +1,37 @@
 # @tailor-platform/app-shell
 
+## 1.21.0
+
+### Minor Changes
+
+- 0b6e1c8: Expose the 1-based `sortIndex` (undefined when unsorted) and active-key `sortCount` in sortable DataTable `header(ctx)` and `headerProps(ctx)` callbacks, without changing built-in header visuals. After narrowing with `ctx.sortable`, read `ctx.sortIndex` and `ctx.sortCount` to access sort priority without using table context.
+  
+  Add `aria-sort="ascending"` or `"descending"` to the primary sorted header, including custom headers. Unsorted and secondary headers omit the attribute; use the existing `useDataTable().sortStates` array to read all active sorts.
+- b4ede51: Add the optional `RangeCalendar.onSelectionStateChange` callback with `selection-start`, `range-complete`, and `selection-cancel` events.
+  Only `range-complete` carries the selected `DateRange`; the existing `onChange` callback remains unchanged.
+  Export `RangeCalendarSelectionEvent` for explicitly typed selection event handlers.
+  
+  ```tsx
+  import { RangeCalendar } from "@tailor-platform/app-shell";
+  
+  <RangeCalendar
+    aria-label="Date range"
+    onSelectionStateChange={(event) => {
+      if (event.type === "range-complete") {
+        console.log(event.value);
+      }
+    }}
+  />;
+  ```
+
+### Patch Changes
+
+- b4ede51: Use a two-click range calendar with highlighted dates for date and datetime "between" filters in the Add filter panel.
+  Remove redundant From/To date summaries while keeping separate start/end time inputs, timezone conversion, and reversed-range validation.
+  Preserve unchanged datetime bounds' seconds and fractions, block applying unfinished selections, and reset drafts on Clear all.
+- f1e9a31: Clarify English date filter labels in operator lists and filter chips with "on or after" / "on or before".
+  The labels now explicitly state that `gte` / `lte` include the selected date; Japanese labels and filter semantics are unchanged.
+
 ## 1.20.0
 
 ### Minor Changes

@@ -31,6 +31,7 @@ import {
   type DataTablePaginationProps,
   type DataTableAction,
   type RowAction,
+  type RowInteraction,
   type RowSelectionOptions,
   type SelectionAction,
   type UseDataTableOptions,
@@ -417,6 +418,65 @@ The submenu is intentionally narrower than the full filter editor:
 - multi-value operators such as `between` are excluded
 - enum filters use the **raw enum value**, not the rendered label
 
+## Row interaction
+
+Pass `rowInteraction` to define the row's primary action. DataTable generates a **visible native link or button** in the right-pinned actions column; it is not hidden in the secondary `rowActions` menu. When both options are present, the primary control and menu share one column. No data column is wrapped or repurposed, and there is no `primaryColumnId`: the primary action stays available when data columns are hidden, reordered, custom-rendered, or edited. The generated actions column is outside column settings and persisted column layout.
+
+### Navigate with a link
+
+Use `type: "link"` for navigation. The primary link has the same ghost-button appearance as a click-type action, but remains a native anchor with browser link behavior. `href(row)` is the single destination for the real link and the row's plain-click shortcut. It must return a string; use `canApply` rather than a null destination to disable a row. This example keeps the destination in the current page's query string so it can also be opened in another tab or reloaded.
+
+<!-- example: row-link-interaction | Generate native primary links independently of data columns, identify each order with getLabel, and disable an archived order with canApply. -->
+
+### Open a drawer with a button
+
+Use `type: "click"` for a non-navigation action, such as opening a detail drawer. DataTable generates a native button and invokes `onClick(row)`. `href` and `onClick` are mutually exclusive in the type; do not model navigation as a click callback calling `navigate`.
+
+<!-- example: row-click-interaction | Generate a primary button that opens a controlled Sheet for the selected order, without changing ordinary column definitions. -->
+
+### Labels, eligibility, and interaction rules
+
+- **`label` is required.** Supply the visible, localized action text, such as `"Open"` or `"Edit"`. Optional `getLabel(row)` returns a bare record identity, such as `"ORD-1001"`; the accessible name becomes `"Open: ORD-1001"`. Without an identity, it is the visible label alone.
+- **`canApply(row)` defaults to `true`.** Returning `false` disables both the primary control and the row shortcut. Link mode then renders a non-navigable element with `role="link"`, `aria-disabled="true"`, and the same accessible name, without an `href` or Tab stop; click mode renders a disabled button. Independent row controls and secondary actions remain available.
+- **One definition provides row clicks and the explicit control.** An unmodified primary-button click in the same DOM row activates its generated primary link/button. Ordinary built-in and custom display content use normal React event bubbling; no column opt-in or DOM-role classification is required. Selecting row text does not activate the shortcut. Nested rows and portaled content do not activate their parent row.
+- **Browser link operations belong to the real link.** Cmd/Ctrl-click, middle-click, URL preview, and the browser's link context menu are available on the generated link, not promised on row whitespace. The dedicated actions cell does not install the data-cell copy/filter context menu.
+- **Keep table semantics.** Rows do not become links, buttons, or extra Tab stops. The generated control is keyboard-reachable, has a visible focus indication, and is focused before a row-background shortcut activates it. Consumer-owned drawers and dialogs still own their overlay focus behavior.
+- **Native Tab order with row interactions.** Tab / Shift+Tab follow the browser's normal order through editors, related links, primary actions, menus, and selection controls. Editors still confirm and validate drafts before leaving; invalid drafts can prevent movement. Tables without `rowInteraction` retain their existing editor-to-editor navigation.
+
+### Cell controls and event propagation
+
+`rowInteraction` adds an explicit, keyboard-accessible primary control to the familiar row-click model. It does not inspect arbitrary renderer DOM or introduce a column interaction flag.
+
+- DataTable's selection, expansion, hierarchy controls, primary action, and secondary menu stop click propagation. With `rowInteraction`, DataTable also stops propagation from built-in cell links and badge overflow controls; their surrounding ordinary cell content can still activate the row. These additional boundaries do not apply to deprecated `onClickRow` or badge rendering outside row-interaction tables.
+- **Every column with `edit` stops propagation**, including read-only rows where `edit.canEdit` returns `false`. A cell's click never changes from editing to the row's primary action as eligibility changes.
+- **Custom interactive renderers own their event boundary**, as with legacy row clicks. Call `event.stopPropagation()` on custom links, buttons, inputs, or a suitable enclosing boundary when they must not also activate the row. This is normal React event handling, not automatic detection or sanitization.
+
+```tsx
+column({
+  id: "customer",
+  render: (row) => (
+    <Button
+      onClick={(event) => {
+        event.stopPropagation();
+        openCustomer(row.customerId);
+      }}
+    >
+      Open customer
+    </Button>
+  ),
+});
+```
+
+Display-only custom renderers need no additional configuration. The generated Open/Edit control remains available independently of cell rendering and editing.
+
+`stopPropagation()` also prevents bubbling to React parents outside the table. Independent-control clicks are not guaranteed to reach a parent's `onClick`; the table does not introduce a separate event-identification mechanism to preserve that bubbling.
+
+### Migrating from `onClickRow`
+
+`onClickRow` remains supported with its legacy behavior, but is deprecated. Configure either `onClickRow` or `rowInteraction`; supplying both is a type error, including when options are spread from a variable.
+
+For navigation, move the destination from `onClickRow: (row) => navigate(...)` into `rowInteraction.href`, and provide `type: "link"` and a visible `label`. Remove any custom identifier-cell `RowLink` wrapper that only duplicated this same primary action; keep its display formatting as ordinary cell content. Related-record links remain independent and should not be removed. For drawer-style actions, move the callback into `type: "click"` with `onClick`. Existing `rowActions` definitions do not change. Preserve the existing `stopPropagation()` boundaries on custom interactive renderers; ordinary custom display renderers need no opt-in.
+
 ## Expandable rows
 
 Pass `rowExpansion` to `useDataTable` and each row gets a chevron that reveals a detail panel beneath it. Providing the option is what enables the feature — a dedicated chevron column is added at the left edge (auto-pinned left, after the selection column) and the detail row renders automatically. There is nothing new to compose in JSX.
@@ -439,7 +499,7 @@ const table = useDataTable<Order>({
 - **Rows must have an `id`.** Expansion is keyed by `row.id`, the same constraint as row selection. Rows without one render **no chevron** (not a disabled one) — a row must never be un-toggleable.
 - **`canExpand`** suppresses the chevron per row (e.g. an order with no line items). The cell is still rendered, empty, so the column count stays consistent. The predicate gates the panel in **both** directions: a row whose result flips to `false` while open closes immediately, and an id sitting in `expandedIds` never opens a panel for a row the predicate rejects. That matters when restoring `expandedIds` from a URL or storage — the excluded row may have no detail data to render at all. Its id stays in `expandedIds` but is inert; `collapseAllRows()` clears it.
 - **`getLabel`** returns a **bare identifier** — `"INV-1001"`, not `"Expand row INV-1001"`. The built-in i18n labels compose it into the trigger's accessible name (`"Expand row INV-1001"`) and the panel's (`"INV-1001 details"`), so English and Japanese word order both stay correct. Without it, the generic "Expand row" / "Row details" strings are used — set it on any table with more than a couple of rows.
-- **`onClickRow` is unaffected.** The chevron lives in its own column and stops click propagation, so row-level navigation keeps working.
+- **Primary row actions and legacy `onClickRow` are unaffected.** The chevron lives in its own column and stops click propagation, so expanding a row does not run its primary action.
 - **Expansion survives page changes.** Ids of rows that are no longer on the page simply don't render. Call `collapseAllRows()` to reset.
 - **Multiple rows can be open at once.** There is no accordion / single-open mode.
 
@@ -831,21 +891,22 @@ const table = useDataTable({
 
 ### Options
 
-| Option              | Type                               | Description                                                                                                                                                                                                 |
-| ------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                                               |
-| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                                               |
-| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                                                    |
-| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                                                       |
-| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                                            |
-| `onClickRow`        | `(row: TRow) => void`              | Called when the user clicks a row. Adds a pointer cursor to rows.                                                                                                                                           |
-| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.                                        |
-| `rowActions`        | `RowAction<TRow>[]`                | Per-row action items rendered in a kebab-menu column. The column is omitted when empty or not provided.                                                                                                     |
-| `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`, with optional `actions`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection).    |
-| `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                                             |
-| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows).                             |
-| `subRows`           | `SubRowsOptions<TRow>`             | Nested rows: `getSubRows`, `hierarchyColumn` (a `HierarchyColumn<TRow>`), and `expandedIds` + `onExpandedChange` or `defaultExpandedIds`. Can't be combined with `rowExpansion`. See [Sub-rows](#sub-rows). |
-| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                                                   |
+| Option              | Type                               | Description                                                                                                                                                                                                                                                                           |
+| ------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `columns`           | `Column<TRow>[]`                   | Column definitions. Required.                                                                                                                                                                                                                                                         |
+| `data`              | `DataTableData<TRow> \| undefined` | Fetched data. Pass `undefined` while loading.                                                                                                                                                                                                                                         |
+| `loading`           | `boolean`                          | When `true`, renders a loading skeleton.                                                                                                                                                                                                                                              |
+| `error`             | `Error \| null`                    | When set, renders an error message in the table body.                                                                                                                                                                                                                                 |
+| `control`           | `CollectionControl`                | Collection control from `useCollectionVariables()`. Required for `DataTable.Pagination` and `DataTable.Filters`.                                                                                                                                                                      |
+| `rowInteraction`    | `RowInteraction<TRow>`             | One primary action definition for ordinary row clicks and a visible link/button in the right-pinned actions column. Requires `label` and either `type: "link"` + `href`, or `type: "click"` + `onClick`; optional `getLabel` and `canApply`. See [Row interaction](#row-interaction). |
+| `onClickRow`        | `(row: TRow) => void`              | **Deprecated:** use `rowInteraction` for an explicit, keyboard-accessible primary control. Legacy callback behavior remains supported; cannot be combined with `rowInteraction`.                                                                                                      |
+| `tableId`           | `string`                           | Stable id used to persist per-user column layout (visibility, order, pinning) to `localStorage`. When omitted, column layout is in-memory only and resets on reload.                                                                                                                  |
+| `rowActions`        | `RowAction<TRow>[]`                | Secondary actions rendered in a kebab menu, sharing the actions column with `rowInteraction` when present. The column is omitted only when neither a primary interaction nor secondary actions are configured.                                                                        |
+| `rowSelection`      | `RowSelectionOptions`              | Controlled `selectedIds` + `onChange`, or uncontrolled `defaultSelectedIds` + optional `onChange`, with optional `actions`. Providing even `{}` enables checkboxes. See [Row selection](#row-selection).                                                                              |
+| `onSelectionChange` | `(ids: string[]) => void`          | **Deprecated:** use `rowSelection.onChange`. Still supported for compatibility; enables checkboxes and is used when the new callback is absent.                                                                                                                                       |
+| `rowExpansion`      | `RowExpansionOptions<TRow>`        | Expandable detail rows: `render`, plus optional `canExpand` / `getLabel`, and `expandedIds` + `onChange` together for controlled mode. See [Expandable rows](#expandable-rows).                                                                                                       |
+| `subRows`           | `SubRowsOptions<TRow>`             | Nested rows: `getSubRows`, `hierarchyColumn` (a `HierarchyColumn<TRow>`), and `expandedIds` + `onExpandedChange` or `defaultExpandedIds`. Can't be combined with `rowExpansion`. See [Sub-rows](#sub-rows).                                                                           |
+| `sort`              | `false \| { multiple?: boolean }`  | Sort behaviour. `false` disables sorting entirely. `{ multiple: true }` enables multi-column sorting. Omit or pass `{}` for single-column sort (default).                                                                                                                             |
 
 ### `DataTableData`
 

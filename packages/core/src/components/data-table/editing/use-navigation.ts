@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export type CellEditDirection = "next" | "prev";
 
@@ -18,7 +18,7 @@ export interface CellEditNavigation {
   register: (rowKey: string, colKey: string, element: HTMLElement) => () => void;
   /** The rendered row keys (top to bottom) and column keys (left to right). */
   setOrder: (rowKeys: readonly string[], colKeys: readonly string[]) => void;
-  /** Focuses the nearest editable cell in `direction`; `false` when there is none. */
+  /** Moves focus explicitly; `false` lets the browser handle Tab (no target or native-order mode). */
   move: (from: { rowKey: string; colKey: string }, direction: CellEditDirection) => boolean;
 }
 
@@ -73,8 +73,11 @@ export function createCellEditNavigation(): CellEditNavigation {
   };
 }
 
-/** One navigation registry per rendered table body. */
-export function useCellEditNavigation(): CellEditNavigation {
+/** Disable explicit focus moves when the table should follow native Tab order. */
+export function useCellEditNavigation(moveFocus = true): CellEditNavigation {
   const [navigation] = useState(createCellEditNavigation);
-  return navigation;
+  return useMemo(
+    () => (moveFocus ? navigation : { ...navigation, move: () => false }),
+    [navigation, moveFocus],
+  );
 }

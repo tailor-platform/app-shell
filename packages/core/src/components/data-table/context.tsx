@@ -4,6 +4,7 @@ import type {
   DataTableTreeRow,
   RowAction,
   RowExpansionOptions,
+  RowInteraction,
   RowSelectionOptions,
   SubRowsOptions,
 } from "./types";
@@ -66,6 +67,8 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   setPin: (key: string, side: "left" | "right" | "none" | null) => void;
 
   // Row interaction
+  rowInteraction?: RowInteraction<TRow>;
+  /** @deprecated Use `rowInteraction` instead. */
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
 

@@ -36,12 +36,13 @@ function DataTableColumnFooter() {
     toggleRowSelection,
     rowExpansion,
     rowActions,
+    rowInteraction,
   } = ctx;
   const widths = useContext(PinMeasureContext);
   const hasSelection = !!toggleRowSelection && !selectionInTreeColumn(ctx);
   const besideTree = hasTreeColumn(ctx);
   const hasExpand = !!rowExpansion;
-  const hasRowActions = !!rowActions?.length;
+  const hasRowActions = !!rowInteraction || !!rowActions?.length;
   const columnKeys = useMemo(
     () => buildColumnKeys(allColumns, hierarchyColumn),
     [allColumns, hierarchyColumn],

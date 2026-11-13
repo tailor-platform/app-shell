@@ -20,6 +20,7 @@ import {
   ACTIONS_WIDTH,
   ACTIONS_KEY,
   buildColumnKeys,
+  columnMeasurementKey,
   computePinLayout,
   pinCellProps,
   resolveAlign,
@@ -70,6 +71,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     sortStates,
     onSort,
     rowActions,
+    rowInteraction,
     setPin,
     toggleRowSelection,
     selectAllRows,
@@ -85,7 +87,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
   const hasSelection = !!toggleRowSelection && !selectionInTreeColumn(ctx);
   const besideTree = hasTreeColumn(ctx);
   const hasExpand = !!rowExpansion;
-  const hasRowActions = !!(rowActions && rowActions.length > 0);
+  const hasRowActions = !!rowInteraction || !!rowActions?.length;
   // With propagating sub-rows, select-all sits in the tree column's header,
   // lined up with the rows' checkboxes.
   const selectAllInTree = selectionInTreeColumn(ctx);
@@ -145,7 +147,12 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               "header",
             );
             return (
-              <Table.Head data-col-key={SELECTION_KEY} style={style} className={className}>
+              <Table.Head
+                data-col-key={SELECTION_KEY}
+                data-measure-key={SELECTION_KEY}
+                style={style}
+                className={className}
+              >
                 {selectAllCheckbox}
               </Table.Head>
             );
@@ -158,7 +165,12 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               "header",
             );
             return (
-              <Table.Head data-col-key={EXPAND_KEY} style={style} className={className}>
+              <Table.Head
+                data-col-key={EXPAND_KEY}
+                data-measure-key={EXPAND_KEY}
+                style={style}
+                className={className}
+              >
                 <span className="astw:sr-only">{t("expandColumnHeader")}</span>
               </Table.Head>
             );
@@ -217,6 +229,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
             <Table.Head
               key={key}
               data-col-key={key}
+              data-measure-key={columnMeasurementKey(key)}
               aria-sort={isSortable && col === primarySortColumn ? ariaSort : undefined}
               title={customHeaderProps?.title}
               style={style}
@@ -257,7 +270,12 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
               "header",
             );
             return (
-              <Table.Head data-col-key={ACTIONS_KEY} style={style} className={className}>
+              <Table.Head
+                data-col-key={ACTIONS_KEY}
+                data-measure-key={ACTIONS_KEY}
+                style={style}
+                className={className}
+              >
                 <span className="astw:sr-only">{t("actionsHeader")}</span>
               </Table.Head>
             );

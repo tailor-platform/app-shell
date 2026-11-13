@@ -53,6 +53,7 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     goToLastPage: value.goToLastPage,
     hasPrevPage: value.hasPrevPage,
     hasNextPage: value.hasNextPage,
+    rowInteraction: value.rowInteraction,
     onClickRow: value.onClickRow,
     rowActions: value.rowActions,
     rowSelection: value.rowSelection,

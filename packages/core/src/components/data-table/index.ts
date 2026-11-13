@@ -33,6 +33,7 @@ export type {
   NumberCellOptions,
   DataTableAction,
   RowAction,
+  RowInteraction,
   RowSelectionOptions,
   TextCellEditOptions,
   SelectionAction,

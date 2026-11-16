@@ -54,6 +54,8 @@ export default defineConfig(({ mode }) => ({
       // Ordinary .d.ts files target Bundler resolution, which accepts extensionless imports.
       // No moduleFormat conversion: NodeNext/Node16 compatibility and its patches are out of scope.
       compilerOptions: {
+        // Preserve @internal filtering without API Extractor's public rollup.
+        stripInternal: true,
         // Sources are not shipped, so declaration maps would point at unavailable .ts/.tsx files.
         declarationMap: false,
         // A clean build has no dist yet; resolve testing's type-only package self-import via source.

@@ -4,7 +4,7 @@ import type {
   TestRouter as RuntimeTestRouter,
   TestRouterProps as RuntimeTestRouterProps,
 } from "../src/testing/test-router";
-import type { AppShell, TestAppShellProps, TestRouter, TestRouterProps } from "../testing";
+import type { AppShell, TestAppShellProps, TestRouter, TestRouterProps } from "../src/testing";
 
 it("keeps the testing entry aligned with its internal runtime exports", () => {
   expectTypeOf<typeof AppShell>().toExtend<typeof AppShellInternal>();

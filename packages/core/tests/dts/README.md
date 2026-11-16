@@ -6,8 +6,9 @@ are needed. Use public package imports and `@ts-expect-error` for usages that mu
 Do not use `.test.*` filenames: these are compile-time fixtures, not Vitest tests.
 
 `pnpm exec turbo run check-dts` builds the packages, packs and installs them once, then compiles
-the entry-point smoke test and each fixture separately with `skipLibCheck: false`. Fixtures run
-outside the workspace, against the installed tarball. The runner loads the installed TypeScript
+the entry-point smoke test and each fixture separately with Bundler resolution and
+`skipLibCheck: false`. NodeNext/Node16 resolution is outside AppShell's compatibility guarantee.
+Fixtures run outside the workspace, against the installed tarball. The runner loads the installed TypeScript
 compiler API once and creates a separate program and compiler host for each case, keeping module
 augmentations from leaking between cases. It generates each case's `tsconfig.json` with the
 shared compiler settings; don't add one to a fixture. Declaration checking is enabled without

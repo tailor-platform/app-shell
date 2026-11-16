@@ -1,8 +1,8 @@
 import { createRequire } from "node:module";
 import react from "@vitejs/plugin-react";
+import ts from "typescript";
 import { defineConfig, esmExternalRequirePlugin } from "vite";
 import dts from "vite-plugin-dts";
-import { build as buildTesting } from "tsdown";
 
 /**
  * Vite 8 / Rolldown preserves `require()` for externalized modules.
@@ -33,52 +33,47 @@ const externalizeDeps = () => {
 const whenProductionBuild = (mode: string) => mode === "production";
 
 export default defineConfig(({ mode }) => ({
-  builder: {
-    async buildApp(builder) {
-      /**
-       * Vite builds main JS/CSS and the private testing-runtime entry together;
-       * tsdown then builds the public testing entry's JS and declarations.
-       *
-       * Two identities must remain shared across these builds. For types, API
-       * Extractor's independent entry rollups would duplicate AppShellRegister,
-       * so testing.ts imports main's public props and WithPages types instead.
-       * tsdown keeps that main-package import external to preserve augmentation.
-       *
-       * For runtime state, independently bundling the local AppShellInternal
-       * source would duplicate React Contexts AND the module-scope guard store.
-       * Main-entry hooks and main-created module loaders would then read state
-       * different from the providers/store populated by testing's AppShell.
-       * Externalizing React alone does not externalize these local modules.
-       *
-       * The private testing-runtime entry shares its implementation with main
-       * in Vite's graph. tsdown externalizes that entry and imports its stable
-       * output path, not a hashed chunk or minified export alias. It therefore
-       * owns testing's output without bundling another copy of shared state.
-       * No public package export is added for the private runtime entry.
-       *
-       * Finish Vite first: testing resolves main's emitted declarations and
-       * needs the private runtime output. buildApp keeps `vite build` as the
-       * sole entry point and skips testing if the main build fails.
-       */
-      const client = builder.environments.client;
-      await builder.build(client);
-
-      // In watch mode, build(client) returns a watcher before outputs are ready.
-      // Testing is intentionally built only by a normal build. dist-testing
-      // survives Vite's dist cleanup; its stable runtime and main-type imports
-      // follow subsequent main builds without a separate testing watcher.
-      if (!client.config.build.watch) {
-        await buildTesting({ config: "tsdown.testing.config.ts" });
-      }
-    },
-  },
   plugins: [
-    /**
-     * Generate TypeScript declaration files.
-     */
+    // Generate main and /testing declarations together, without a second build pipeline.
     dts({
+      // Only library source belongs in dist, not build configs or test infrastructure.
       include: ["src"],
-      bundleTypes: true,
+      // Unbundled output retains each source declaration, so exclude tests before publishing.
+      exclude: ["**/*.test.*", "**/*.test-d.*", "**/test-utils.*"],
+      // Strip src/ so shared declarations live under dist/components, dist/contexts, etc.
+      entryRoot: "src",
+
+      // Independent entry rollups can duplicate AppShellRegister and disconnect augmentation.
+      // Keep one shared type graph for main/testing props, guards, and AppShell.WithPages.
+      // Runtime Contexts and guard state are shared separately by the single lib.entry build.
+      bundleTypes: false,
+      // Source filenames differ from public entry names (index -> app-shell, testing/index -> testing).
+      // Emit .d.ts facades matching the JS entry names and package.json exports.
+      insertTypesEntry: true,
+
+      // Ordinary .d.ts files target Bundler resolution, which accepts extensionless imports.
+      // No moduleFormat conversion: NodeNext/Node16 compatibility and its patches are out of scope.
+      compilerOptions: {
+        // Sources are not shipped, so declaration maps would point at unavailable .ts/.tsx files.
+        declarationMap: false,
+        // A clean build has no dist yet; resolve testing's type-only package self-import via source.
+        // This override replaces tsconfig paths, so retain the existing @/* alias as well.
+        paths: {
+          "@/*": ["./src/*"],
+          "@tailor-platform/app-shell": ["./src/index.ts"],
+        },
+      },
+      // Keep the public package import in output instead of rewriting it to a local file.
+      // Testing-only consumers must load main's type entry for their module augmentation to apply.
+      aliasesExclude: ["@tailor-platform/app-shell"],
+
+      // The plugin reports diagnostics without failing by default; never ship invalid declarations.
+      // Warnings remain non-fatal; check-dts also validates the actual tarball with skipLibCheck: false.
+      afterDiagnostic(diagnostics) {
+        if (diagnostics.some(({ category }) => category === ts.DiagnosticCategory.Error)) {
+          throw new Error("Declaration generation failed; see TypeScript diagnostics above.");
+        }
+      },
     }),
 
     /**
@@ -101,7 +96,8 @@ export default defineConfig(({ mode }) => ({
         "app-shell": "src/index.ts",
         "style-entry": "src/style-entry.ts",
         "vite-plugin": "src/vite-plugin.ts",
-        "testing-runtime": "src/testing/runtime.ts",
+        // One JS graph shares Contexts and module-scope guard state.
+        testing: "src/testing/index.ts",
       },
       cssFileName: "app-shell-core",
       formats: ["es"],

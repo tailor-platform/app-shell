@@ -23,6 +23,11 @@ AppShell is an opinionated React application framework for creating applications
 
 Next.js App Router compatibility is covered by the minimal smoke fixture under [`e2e/tests/nextjs-smoke`](./e2e/tests/nextjs-smoke).
 
+## TypeScript compatibility
+
+AppShell targets bundler-based applications. Use TypeScript's `moduleResolution: "bundler"`
+(the Vite default). NodeNext/Node16 resolution is not part of the compatibility guarantee.
+
 ## Documentation
 
 For users building applications with AppShell, see the detailed guides in `docs/`:

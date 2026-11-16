@@ -186,11 +186,20 @@ try {
 
   console.log("check-dts: installing the packed tarball into a scratch project…");
   run("npm", ["install", "--no-audit", "--no-fund", "--loglevel=error"], project);
+  const testDeclarations = readdirSync(join(project, "node_modules", corePkg.name, "dist"), {
+    recursive: true,
+  }).filter(
+    (path) =>
+      /\.d\.(?:c|m)?ts$/.test(path) && /(?:\.test(?:-d)?\.|(?:^|[/\\])test-utils\.)/.test(path),
+  );
+  if (testDeclarations.length > 0) {
+    throw new Error(`Test declarations must not ship: ${testDeclarations.join(", ")}`);
+  }
   const ts = createRequire(join(project, "package.json"))("typescript");
 
-  // Each case gets its own program and host so module augmentations cannot leak between fixtures.
+  // Each case gets its own program so module augmentations cannot leak.
   for (const { name, directory } of checks) {
-    console.log(`check-dts: checking ${name} with skipLibCheck: false…`);
+    console.log(`check-dts: checking ${name} with Bundler resolution and skipLibCheck: false…`);
     const configPath = join(directory, "tsconfig.json");
     const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
     const config = configFile.error

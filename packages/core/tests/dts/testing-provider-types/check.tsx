@@ -37,8 +37,6 @@ export const legacyDefaultShell = <LegacyAppShell {...legacyDefaultProps} />;
 export const legacyMissingEntries = <LegacyAppShell memory />;
 // @ts-expect-error Legacy history entries must remain strings.
 export const legacyInvalidEntries = <LegacyAppShell memory initialEntries={[123]} />;
-export const LegacyConfiguredShell = LegacyAppShell.WithPages([]);
-export const legacyConfiguredShell = <LegacyConfiguredShell />;
 
 export const routerProps: TestRouterProps = {
   path: "/dashboard",

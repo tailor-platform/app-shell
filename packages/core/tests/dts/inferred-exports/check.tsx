@@ -11,5 +11,5 @@ export const columnHelper: ReturnType<typeof createColumnHelper<{ id: string }>>
   createColumnHelper<{ id: string }>();
 export const SidebarContent = SidebarLayout.ContentContainer;
 export const GlobalHeader = GlobalHeaderLayout.DefaultHeader;
-export const ConfiguredAppShell = AppShell.WithPages([]);
+export const PublicAppShell = AppShell;
 export const TestingProvider = AppShellTestingProvider;

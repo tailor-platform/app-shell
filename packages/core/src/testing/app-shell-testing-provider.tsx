@@ -6,7 +6,7 @@ export type AppShellTestingProviderProps = PropsWithChildren<{
   initialEntries: string[];
 }>;
 
-/** Enable memory routing for AppShell and configured WithPages shells in this subtree. */
+/** Enable memory routing for AppShell, including file-based routing, in this subtree. */
 export const AppShellTestingProvider = ({
   children,
   initialEntries,

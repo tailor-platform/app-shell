@@ -3,7 +3,7 @@
 ---
 
 Add `AppShellTestingProvider` so tests can use the main entry's `AppShell` and `AppShellProps`, keeping module definitions, guards, and `AppShellRegister` augmentation on the same public types.
-The provider requires `initialEntries: string[]` and selects memory routing for enclosed AppShells, including shells pre-configured through `AppShell.WithPages()`. Without it, the main AppShell uses browser routing.
+The provider requires `initialEntries: string[]` and selects memory routing for enclosed AppShells, including file-based routing configured by the Vite plugin. Without it, the main AppShell uses browser routing.
 Keep the existing `/testing` exports `AppShell` and `TestAppShellProps` available with `@deprecated` annotations. Existing tests remain supported; prefer this provider-based setup for new page and integration tests. `TestRouter` and `TestRouterProps` are unchanged and remain supported for focused component unit tests.
 
 Before:

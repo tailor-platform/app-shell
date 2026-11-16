@@ -7,8 +7,10 @@ import { AppShellTestingProvider } from "./app-shell-testing-provider";
 export type TestAppShellProps = AppShellProps & RouterContainerProps;
 
 /** @deprecated Wrap main's AppShell in AppShellTestingProvider instead. */
-export const AppShell: ((props: TestAppShellProps) => JSX.Element | null) &
-  Pick<typeof ProductionAppShell, "WithPages"> = Object.assign(
+export const AppShell: ((props: TestAppShellProps) => JSX.Element | null) & {
+  /** @internal Used by the Vite plugin to inject pages. */
+  WithPages: typeof ProductionAppShell.WithPages;
+} = Object.assign(
   (props: TestAppShellProps) =>
     props.memory ? (
       <AppShellTestingProvider initialEntries={props.initialEntries}>

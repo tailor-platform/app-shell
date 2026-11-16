@@ -299,7 +299,7 @@ expect(await screen.findByText("Order A42")).toBeDefined();
 
 Here `modules` is your test fixture with an `/orders/:id` page rendering `Order A42`. Tests use the main entry's `AppShellProps`, modules, and guards, so the `AppShellRegister` augmentation described in [useAppShell](../api/use-app-shell.md) applies without a separate testing props type.
 
-The same provider works with shells pre-configured by the Vite plugin through `AppShell.WithPages()`. For isolated tests, supply explicit test modules rather than calling that internal helper directly.
+The same provider also works with file-based routing configured by the Vite plugin.
 
 ## Router-only component tests
 

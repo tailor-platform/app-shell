@@ -29,7 +29,7 @@ import { Text } from "../text";
 import { AppShellTestingContext } from "./testing-context";
 
 /**
- * Shared props between `AppShellProps` and the internal `WithPages` wrapper.
+ * Shared props for manual and file-based route configuration.
  *
  * These props are available regardless of whether routes are configured
  * automatically (via vite-plugin) or manually (via `modules` prop).
@@ -91,7 +91,7 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * Guards for the root route.
    *
    * When using file-based routing, this is automatically set from
-   * the root page's guards via `AppShell.WithPages()`.
+   * the root page's guards by the Vite plugin.
    *
    * @example
    * ```tsx
@@ -231,7 +231,7 @@ type SharedAppShellProps = React.PropsWithChildren<{
  *
  * Routes can be configured in two ways:
  * 1. **Automatic (recommended)**: Use the vite-plugin which automatically
- *    configures pages via `AppShell.WithPages()`.
+ *    configures pages.
  * 2. **Explicit modules**: Pass the `modules` prop for manual configuration.
  *
  * @example
@@ -258,7 +258,7 @@ export type AppShellProps = SharedAppShellProps & {
   /**
    * Navigation configuration.
    *
-   * When using vite-plugin, this is automatically set via `AppShell.WithPages()`.
+   * When using vite-plugin, this is automatically set by the plugin.
    * For manual configuration, pass modules directly.
    */
   modules?: Modules;
@@ -404,14 +404,6 @@ const AppShellRoot = (props: AppShellProps) => {
   );
 };
 
-/**
- * Create an AppShell component with pages pre-configured.
- *
- * @internal
- * This method is used internally by the vite-plugin to inject pages.
- * Users should not call this directly. Use the vite-plugin for automatic
- * page configuration, or pass the `modules` prop for manual configuration.
- */
 AppShellRoot.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
   // Convert pages to modules at component creation time (not render time)
   const allModules = convertPagesToModules(pages);
@@ -430,5 +422,6 @@ AppShellRoot.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
  * `@tailor-platform/app-shell/testing`. Routing mode is not an AppShell prop.
  */
 export const AppShell: ((props: AppShellProps) => React.ReactNode) & {
+  /** @internal Used by the Vite plugin to inject pages. */
   WithPages: (pages: PageEntry[]) => FC<AppShellProps>;
 } = AppShellRoot;

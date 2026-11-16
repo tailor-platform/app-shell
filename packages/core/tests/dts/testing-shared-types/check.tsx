@@ -59,12 +59,3 @@ export const shell = (
 const invalidData = { currentUser: { id: 123 } };
 // @ts-expect-error Augmentation must reject an invalid AppShell contextData prop.
 export const invalidContext = <AppShell contextData={invalidData} />;
-
-const ConfiguredShell = AppShell.WithPages([]);
-export const configuredShell = (
-  <AppShellTestingProvider initialEntries={["/"]}>
-    <ConfiguredShell contextData={{ currentUser: { id: "user-1" } }} rootGuards={[guard]} />
-  </AppShellTestingProvider>
-);
-// @ts-expect-error WithPages must retain the same augmented AppShell props.
-export const invalidConfiguredContext = <ConfiguredShell contextData={invalidData} />;

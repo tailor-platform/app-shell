@@ -1,4 +1,5 @@
-import { createAuthClient, type EnhancedAuthClient } from "@tailor-platform/app-shell";
+import { AppShell, createAuthClient, type EnhancedAuthClient } from "@tailor-platform/app-shell";
+import { AppShell as LegacyAppShell } from "@tailor-platform/app-shell/testing";
 
 declare const client: EnhancedAuthClient;
 declare const createdClient: ReturnType<typeof createAuthClient>;
@@ -12,3 +13,8 @@ client.getCallbackStatusSnapshot?.();
 client.subscribeCallbackStatus?.(() => {});
 // @ts-expect-error Factory return types must also exclude internal callback methods.
 createdClient.getCallbackStatusSnapshot?.();
+
+// @ts-expect-error Internal page configuration must not appear in published types.
+void AppShell.WithPages;
+// @ts-expect-error The deprecated shell must not expose internal page configuration either.
+void LegacyAppShell.WithPages;

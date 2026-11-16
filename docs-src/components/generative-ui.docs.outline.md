@@ -1,0 +1,152 @@
+---
+kind: code-backed
+group: generative-ui
+title: Generative UI
+description: Schema-registered read-only cards rendered through an AI Gateway local tool
+sources:
+  - packages/core/src/components/generative-ui/**
+---
+
+# Generative UI
+
+`defineGenerativeUI()` pairs registered card schemas with application-owned React components. The model chooses a card type and produces its input data; it does not generate JSX, HTML, styling, or executable actions.
+
+The definition provides a standalone `Renderer` and a local `tool` for [`useAIChat()`](../api/use-ai-chat.md). The definition does not own conversation state, so it can be reused by multiple chat instances.
+
+## Import
+
+```tsx
+import {
+  defineGenerativeUI,
+  generativeUICards,
+  type GenerativeUICardDefinition,
+  type GenerativeUIDocument,
+  type GenerativeUIRendererProps,
+} from "@tailor-platform/app-shell";
+```
+
+## Standalone rendering
+
+Register the built-in report explicitly. Only registered definitions are advertised to the model.
+
+<!-- example: basic-usage -->
+
+`Renderer` validates its `document` before rendering any card. Synchronous and asynchronous Standard Schema validators are supported; content remains empty while validation is pending. An invalid document shows a localized cannot-display message rather than partially rendering valid cards. Validation results from a replaced document or an unmounted renderer are ignored.
+
+## Local tool integration
+
+Register the returned tool under `ui_render` alongside other local tools. That name is an application-selected tool key, not an AI Gateway built-in.
+
+<!-- example: local-tool -->
+
+This live example scripts only the gateway response; tool validation, execution, message parts, and card rendering use the real AppShell code paths.
+
+The returned tool is an ordinary local tool. On valid input, its executor calls the generic `AIChatToolContext.emit()` channel and returns `{ ok: true, shown: number }` to the model:
+
+```typescript
+execute(document, { emit }) {
+  if (!emit) throw new Error("Generative UI tools require a context.emit callback");
+  emit({ type: "generative-ui", data: document });
+  return { ok: true, shown: document.cards.length };
+}
+```
+
+The tool execution engine records application-defined display data without knowing about Generative UI. The hierarchy is `message.parts` → `tool-call` → `parts`; `{ type: "generative-ui", data: document }` is one kind of nested tool display part, not a top-level message part. Applications choose which display-part types to render and pass the `data` of a `generative-ui` part to `ui.Renderer`.
+
+The result acknowledges accepted and published cards, not a browser-paint receipt. The assistant continues its normal tool loop; displaying a card does not end the turn or wait for a user answer. Invalid input returns a tool error so the model can correct its data, without emitting a display part.
+
+Render `message.parts` and each tool call's nested `parts` in order inside `AIChat.Conversation`. `message.content` remains available for text-only consumers and copy actions, but it does not include card content. A tool-only turn that emits display data creates an assistant message whose `content` is empty. Only emitting tools create retained `tool-call` display parts; ordinary tools keep their existing transient metadata and internal protocol behavior. These display records do not expose execution status, input, or output, and are not a success receipt.
+
+`emit()` is ignored after the executor settles, the request is stopped, or the hook unmounts. Parts emitted earlier remain visible even if a later tool fails or the request is aborted. Do not use the transient `toolCalls` array as display history.
+
+## Registering an application card
+
+Each registry key identifies a card type. A definition contains `schema` and `component`; the component receives `{ data }` inferred from that schema's validated output. A schema must implement both Standard Schema validation and Standard JSON Schema generation, the same contract as `defineAIChatTool()`; Zod 4 is one compatible implementation.
+
+For this initial version, model-input JSON Schemas must be reference-free: `$ref`, `$dynamicRef`, and `$recursiveRef` are rejected when building a tool request rather than being embedded with incorrect reference scopes. Inline object/array schemas are supported; recursive card schemas are not yet supported. Standalone rendering still uses the registered validator directly.
+
+For example, let the model provide a record identifier rather than regenerate a record's fields:
+
+```tsx
+import { defineGenerativeUI, generativeUICards } from "@tailor-platform/app-shell";
+import { z } from "zod/v4";
+
+const ui = defineGenerativeUI({
+  cards: {
+    Report: generativeUICards.report,
+    OrderSummary: {
+      schema: z.object({ orderId: z.string().min(1) }),
+      component: OrderSummaryCard,
+    },
+  },
+});
+
+function OrderSummaryCard({ data }: { data: { orderId: string } }) {
+  return <ApplicationOrderSummary orderId={data.orderId} />;
+}
+```
+
+`ApplicationOrderSummary` belongs to the application. Data fetching, access control, and record accuracy remain application responsibilities. Keep registered cards read-only; the renderer does not provide an approval or write boundary.
+
+## Document shape
+
+```typescript
+interface GenerativeUIDocument {
+  cards: { type: string; data: unknown }[];
+}
+```
+
+A document contains 1–5 cards. Each `type` must be registered, and each `data` must satisfy its registered schema. The document and card envelopes accept no extra fields.
+
+```json
+{
+  "cards": [{ "type": "OrderSummary", "data": { "orderId": "order_123" } }]
+}
+```
+
+The nested `generative-ui` display part's `data` retains the original input document, not React elements or schema-transformed output. The renderer validates that input again and passes validated output to the component. For transforming schemas, this prevents transformed output being incorrectly treated as fresh input during replay. Validators should be pure and repeatable.
+
+Treat documents as immutable and replace the document object when its contents change. Applications can store JSON documents and render them separately, but AppShell does not provide durable conversation storage, history import, or automatic restoration through this API.
+
+## Built-in Report
+
+Register `generativeUICards.report` under the desired card name, conventionally `Report`. Its data is `{ blocks: [{ text, parts? }] }`: every block starts with a short claim explaining its accompanying parts.
+
+| Part `kind` | Display                                                              |
+| ----------- | -------------------------------------------------------------------- |
+| `text`      | Supplementary prose using the safe `AIChat.Response` Markdown subset |
+| `metrics`   | Numeric tiles with labels, optional units, and evidence references   |
+| `chips`     | Short status values with labels                                      |
+| `fields`    | Key-value fields, optional comparison verdicts, and previous values  |
+| `table`     | Read-only table with declared columns, rows, and an optional footer  |
+| `list`      | Bulleted findings or next steps                                      |
+| `callout`   | Informational notices or warnings                                    |
+| `checklist` | Read-only validation statuses, not editable checkboxes               |
+| `timeline`  | Timestamped record history                                           |
+
+Reports allow 1–8 blocks, at most 3 parts per block, and at most 8 parts in total. A table must be alone in its block and allows 1–8 columns and 1–200 rows. Column keys must be unique; each row must match the declared columns, using `null` for empty cells. Footer keys must be declared columns.
+
+Evidence references are required for metric, chip, and field items, timeline events, and the table as a whole. References are displayed as plain source text, never navigated as arbitrary URLs. Unknown properties, unknown part kinds, invalid dates, non-finite numbers, and oversized collections are rejected. Unknown field values use `null` instead of guesses.
+
+Report prose uses the safe Markdown subset from [`AIChat.Response`](./ai-chat.md#response). Number/date formatting and labels use the current AppShell locale, and timeline dates use the configured timezone, with standalone fallbacks; no additional provider is required.
+
+Schema validation checks shape and limits. It does **not** establish that a reference exists, that a number matches an authoritative calculation, or that the model's claims are correct. Perform those domain checks in the application rather than treating a report as business validation.
+
+## Renderer props
+
+| Prop        | Type      | Description                                          |
+| ----------- | --------- | ---------------------------------------------------- |
+| `document`  | `unknown` | Required untrusted input, validated before rendering |
+| `className` | `string`  | Merged onto the renderer's outer `div`               |
+
+Other standard `div` props are forwarded. Children are supplied by the registered card components, not a `children` prop.
+
+## Scope
+
+This API only displays completed, read-only card documents. It does not provide `ui_ask`, choice/input/approval cards, saving or updating records, durable conversation restoration, or incremental rendering of partially generated JSON.
+
+## Related
+
+- [AIChat](./ai-chat.md)
+- [useAIChat](../api/use-ai-chat.md)
+- [DescriptionCard](./description-card.md)

@@ -20,12 +20,20 @@ import type { AIChatMessage } from "./use-ai-chat";
 export type AIChatToolSchema<Input = unknown, Output = Input> = StandardSchemaV1<Input, Output> &
   StandardJSONSchemaV1<Input, Output>;
 
+/** Application-defined display data emitted by a local tool, separate from its model-facing result. */
+export interface AIChatToolPart {
+  type: string;
+  data: unknown;
+}
+
 /** Context passed to local tool executors. */
 export interface AIChatToolContext {
   /** Abort signal for the in-flight chat request. */
   signal: AbortSignal;
   /** Public user/assistant transcript visible to the current chat turn. */
   messages: AIChatMessage[];
+  /** Append a display part to this tool call. useAIChat provides this; direct executor calls may omit it. */
+  emit?: (part: AIChatToolPart) => void;
 }
 
 /**

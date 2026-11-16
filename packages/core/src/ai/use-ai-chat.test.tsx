@@ -5,6 +5,13 @@ import { useAIChat } from "./use-ai-chat";
 import type { AIGatewayChatRequest, AIGatewayClient } from "./client";
 import { defineAIChatTool } from "./tools";
 
+function textMessage(message: { id: string; role: string; content: string }) {
+  return {
+    ...message,
+    parts: [{ id: `${message.id}:text`, type: "text", text: message.content }],
+  };
+}
+
 function createAbortError(): Error {
   if (typeof DOMException !== "undefined") {
     return new DOMException("The operation was aborted.", "AbortError");
@@ -67,7 +74,9 @@ describe("useAIChat", () => {
     });
 
     expect(result.current.status).toBe("submitted");
-    expect(result.current.messages).toEqual([{ id: "id-1", role: "user", content: "Hi" }]);
+    expect(result.current.messages).toEqual(
+      [{ id: "id-1", role: "user", content: "Hi" }].map(textMessage),
+    );
 
     await act(async () => {
       releaseFirstChunk();
@@ -75,10 +84,12 @@ describe("useAIChat", () => {
 
     await waitFor(() => {
       expect(result.current.status).toBe("streaming");
-      expect(result.current.messages).toEqual([
-        { id: "id-1", role: "user", content: "Hi" },
-        { id: "id-2", role: "assistant", content: "Hello" },
-      ]);
+      expect(result.current.messages).toEqual(
+        [
+          { id: "id-1", role: "user", content: "Hi" },
+          { id: "id-2", role: "assistant", content: "Hello" },
+        ].map(textMessage),
+      );
     });
 
     expect(client.streamChatCompletion).toHaveBeenCalledWith({
@@ -94,10 +105,12 @@ describe("useAIChat", () => {
 
     await waitFor(() => {
       expect(result.current.status).toBe("ready");
-      expect(result.current.messages).toEqual([
-        { id: "id-1", role: "user", content: "Hi" },
-        { id: "id-2", role: "assistant", content: "Hello world" },
-      ]);
+      expect(result.current.messages).toEqual(
+        [
+          { id: "id-1", role: "user", content: "Hi" },
+          { id: "id-2", role: "assistant", content: "Hello world" },
+        ].map(textMessage),
+      );
     });
   });
 
@@ -143,10 +156,12 @@ describe("useAIChat", () => {
     await waitFor(() => {
       expect(result.current.status).toBe("ready");
       expect(result.current.error).toBeUndefined();
-      expect(result.current.messages).toEqual([
-        { id: "id-1", role: "user", content: "Hi" },
-        { id: "id-2", role: "assistant", content: "Partial" },
-      ]);
+      expect(result.current.messages).toEqual(
+        [
+          { id: "id-1", role: "user", content: "Hi" },
+          { id: "id-2", role: "assistant", content: "Partial" },
+        ].map(textMessage),
+      );
     });
   });
 
@@ -182,10 +197,12 @@ describe("useAIChat", () => {
 
     await waitFor(() => {
       expect(result.current.status).toBe("streaming");
-      expect(result.current.messages).toEqual([
-        { id: "id-1", role: "user", content: "First" },
-        { id: "id-2", role: "assistant", content: "Partial" },
-      ]);
+      expect(result.current.messages).toEqual(
+        [
+          { id: "id-1", role: "user", content: "First" },
+          { id: "id-2", role: "assistant", content: "Partial" },
+        ].map(textMessage),
+      );
     });
 
     act(() => {
@@ -201,12 +218,14 @@ describe("useAIChat", () => {
     });
 
     await waitFor(() => {
-      expect(result.current.messages).toEqual([
-        { id: "id-1", role: "user", content: "First" },
-        { id: "id-2", role: "assistant", content: "Partial" },
-        { id: "id-3", role: "user", content: "Second" },
-        { id: "id-4", role: "assistant", content: "Fresh" },
-      ]);
+      expect(result.current.messages).toEqual(
+        [
+          { id: "id-1", role: "user", content: "First" },
+          { id: "id-2", role: "assistant", content: "Partial" },
+          { id: "id-3", role: "user", content: "Second" },
+          { id: "id-4", role: "assistant", content: "Fresh" },
+        ].map(textMessage),
+      );
     });
 
     releaseStoppedRequest();
@@ -215,12 +234,14 @@ describe("useAIChat", () => {
     });
 
     await waitFor(() => {
-      expect(result.current.messages).toEqual([
-        { id: "id-1", role: "user", content: "First" },
-        { id: "id-2", role: "assistant", content: "Partial" },
-        { id: "id-3", role: "user", content: "Second" },
-        { id: "id-4", role: "assistant", content: "Fresh" },
-      ]);
+      expect(result.current.messages).toEqual(
+        [
+          { id: "id-1", role: "user", content: "First" },
+          { id: "id-2", role: "assistant", content: "Partial" },
+          { id: "id-3", role: "user", content: "Second" },
+          { id: "id-4", role: "assistant", content: "Fresh" },
+        ].map(textMessage),
+      );
     });
   });
 
@@ -245,7 +266,9 @@ describe("useAIChat", () => {
     await waitFor(() => {
       expect(result.current.status).toBe("error");
       expect(result.current.error?.message).toBe("boom");
-      expect(result.current.messages).toEqual([{ id: "id-1", role: "user", content: "Hi" }]);
+      expect(result.current.messages).toEqual(
+        [{ id: "id-1", role: "user", content: "Hi" }].map(textMessage),
+      );
     });
 
     shouldFail = false;
@@ -257,11 +280,13 @@ describe("useAIChat", () => {
     await waitFor(() => {
       expect(result.current.status).toBe("ready");
       expect(result.current.error).toBeUndefined();
-      expect(result.current.messages).toEqual([
-        { id: "id-1", role: "user", content: "Hi" },
-        { id: "id-2", role: "user", content: "Retry" },
-        { id: "id-3", role: "assistant", content: "Recovered" },
-      ]);
+      expect(result.current.messages).toEqual(
+        [
+          { id: "id-1", role: "user", content: "Hi" },
+          { id: "id-2", role: "user", content: "Retry" },
+          { id: "id-3", role: "assistant", content: "Recovered" },
+        ].map(textMessage),
+      );
     });
   });
 
@@ -436,10 +461,12 @@ describe("useAIChat", () => {
 
     await waitFor(() => {
       expect(result.current.status).toBe("ready");
-      expect(result.current.messages).toEqual([
-        { id: "id-1", role: "user", content: "Find customer" },
-        { id: "id-2", role: "assistant", content: "Customer: Acme Corp" },
-      ]);
+      expect(result.current.messages).toEqual(
+        [
+          { id: "id-1", role: "user", content: "Find customer" },
+          { id: "id-2", role: "assistant", content: "Customer: Acme Corp" },
+        ].map(textMessage),
+      );
       expect(result.current.toolCalls).toEqual([]);
     });
 
@@ -511,10 +538,12 @@ describe("useAIChat", () => {
     expect(result.current.status).toBe("submitted");
     expect(client.streamChatCompletion).toHaveBeenCalledTimes(1);
     expect(result.current.toolCalls).toEqual(firstCalls);
-    expect(result.current.messages).toEqual([
-      { id: "id-1", role: "user", content: "Check three values" },
-      { id: "id-2", role: "assistant", content: "Checking" },
-    ]);
+    expect(result.current.messages).toEqual(
+      [
+        { id: "id-1", role: "user", content: "Check three values" },
+        { id: "id-2", role: "assistant", content: "Checking" },
+      ].map(textMessage),
+    );
 
     await act(async () => {
       await expect(result.current.sendMessage("Ignored")).resolves.toBe(false);
@@ -543,11 +572,13 @@ describe("useAIChat", () => {
 
     expect(result.current.status).toBe("ready");
     expect(result.current.toolCalls).toEqual([]);
-    expect(result.current.messages).toEqual([
-      { id: "id-1", role: "user", content: "Check three values" },
-      { id: "id-2", role: "assistant", content: "Checking" },
-      { id: "id-3", role: "assistant", content: "Done" },
-    ]);
+    expect(result.current.messages).toEqual(
+      [
+        { id: "id-1", role: "user", content: "Check three values" },
+        { id: "id-2", role: "assistant", content: "Checking" },
+        { id: "id-3", role: "assistant", content: "Done" },
+      ].map(textMessage),
+    );
   });
 
   it.each([false, true])(
@@ -686,7 +717,9 @@ describe("useAIChat", () => {
     });
     expect(result.current.status).toBe("submitted");
     expect(result.current.toolCalls).toEqual([{ id: "observed", name: "lookup" }]);
-    expect(result.current.messages).toEqual([{ id: "id-1", role: "user", content: "First" }]);
+    expect(result.current.messages).toEqual(
+      [{ id: "id-1", role: "user", content: "First" }].map(textMessage),
+    );
 
     act(() => result.current.stop());
     expect(result.current.status).toBe("ready");
@@ -697,10 +730,12 @@ describe("useAIChat", () => {
       secondSendPromise = result.current.sendMessage("Second");
     });
     expect(result.current.toolCalls).toEqual([{ id: "fresh", name: "lookup" }]);
-    expect(result.current.messages).toEqual([
-      { id: "id-1", role: "user", content: "First" },
-      { id: "id-2", role: "user", content: "Second" },
-    ]);
+    expect(result.current.messages).toEqual(
+      [
+        { id: "id-1", role: "user", content: "First" },
+        { id: "id-2", role: "user", content: "Second" },
+      ].map(textMessage),
+    );
 
     await act(async () => {
       releaseStoppedRequest();
@@ -714,11 +749,13 @@ describe("useAIChat", () => {
       await expect(secondSendPromise).resolves.toBe(true);
     });
     expect(result.current.toolCalls).toEqual([]);
-    expect(result.current.messages).toEqual([
-      { id: "id-1", role: "user", content: "First" },
-      { id: "id-2", role: "user", content: "Second" },
-      { id: "id-3", role: "assistant", content: "Fresh" },
-    ]);
+    expect(result.current.messages).toEqual(
+      [
+        { id: "id-1", role: "user", content: "First" },
+        { id: "id-2", role: "user", content: "Second" },
+        { id: "id-3", role: "assistant", content: "Fresh" },
+      ].map(textMessage),
+    );
     expect(result.current.status).toBe("ready");
     expect(result.current.error).toBeUndefined();
     expect(client.streamChatCompletion).toHaveBeenCalledTimes(4);
@@ -772,9 +809,9 @@ describe("useAIChat", () => {
       sendPromise = result.current.sendMessage("Try the tool");
     });
     expect(result.current.toolCalls).toEqual([{ id: "failed-call", name: "failingTool" }]);
-    expect(result.current.messages).toEqual([
-      { id: "id-1", role: "user", content: "Try the tool" },
-    ]);
+    expect(result.current.messages).toEqual(
+      [{ id: "id-1", role: "user", content: "Try the tool" }].map(textMessage),
+    );
 
     await act(async () => {
       releaseFailure();
@@ -783,19 +820,21 @@ describe("useAIChat", () => {
     expect(result.current.status).toBe("error");
     expect(result.current.error?.message).toBe("reply failed");
     expect(result.current.toolCalls).toEqual([]);
-    expect(result.current.messages).toEqual([
-      { id: "id-1", role: "user", content: "Try the tool" },
-    ]);
+    expect(result.current.messages).toEqual(
+      [{ id: "id-1", role: "user", content: "Try the tool" }].map(textMessage),
+    );
 
     await act(async () => {
       await expect(result.current.sendMessage("Retry")).resolves.toBe(true);
     });
     expect(result.current.toolCalls).toEqual([]);
-    expect(result.current.messages).toEqual([
-      { id: "id-1", role: "user", content: "Try the tool" },
-      { id: "id-2", role: "user", content: "Retry" },
-      { id: "id-3", role: "assistant", content: "Recovered" },
-    ]);
+    expect(result.current.messages).toEqual(
+      [
+        { id: "id-1", role: "user", content: "Try the tool" },
+        { id: "id-2", role: "user", content: "Retry" },
+        { id: "id-3", role: "assistant", content: "Recovered" },
+      ].map(textMessage),
+    );
   });
 
   it.each([false, true])(
@@ -887,10 +926,12 @@ describe("useAIChat", () => {
     releaseRequest();
     await waitFor(() => {
       expect(result.current.status).toBe("ready");
-      expect(result.current.messages).toEqual([
-        { id: "id-1", role: "user", content: "First" },
-        { id: "id-2", role: "assistant", content: "Done" },
-      ]);
+      expect(result.current.messages).toEqual(
+        [
+          { id: "id-1", role: "user", content: "First" },
+          { id: "id-2", role: "assistant", content: "Done" },
+        ].map(textMessage),
+      );
     });
   });
 });

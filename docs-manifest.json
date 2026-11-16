@@ -98,10 +98,10 @@
       "claims": [],
       "symbols": ["Alert", "AlertProps", "alertVariants"],
       "hashes": {
-        "typeSurface": "f28bf34ae1466912",
+        "typeSurface": "2dcd9cac0ef6ecaa",
         "outline": "6138eac23571e177",
         "snapshot": "049e72553f5b7a6f",
-        "outputMd": "db2c4388ca783a75",
+        "outputMd": "2fc2a5334a050bb2",
         "examples": "65d5fc73550e395a"
       }
     },
@@ -224,10 +224,10 @@
       "claims": [],
       "symbols": ["Badge", "BadgeProps", "badgeVariants"],
       "hashes": {
-        "typeSurface": "f4b8b24fb5f5bab1",
+        "typeSurface": "c85cbda96a299537",
         "outline": "0712a6c09e7ab542",
         "snapshot": null,
-        "outputMd": "3d62a0fe0a539934",
+        "outputMd": "22b33b4ddf882809",
         "examples": "5aaa54515d4643ea"
       }
     },
@@ -476,7 +476,7 @@
         "withURLCollectionState"
       ],
       "hashes": {
-        "typeSurface": "413c66caec0a0bf8",
+        "typeSurface": "0ded5c2d2c79f75d",
         "outline": "713d3739fd5db394",
         "snapshot": "a97e067c66e46ef6",
         "outputMd": "41de398263666fa7",
@@ -721,7 +721,7 @@
       "claims": [],
       "symbols": ["Form", "FormProps"],
       "hashes": {
-        "typeSurface": "7b374d45d53d4535",
+        "typeSurface": "e179027078fd2023",
         "outline": "32305880c11fbafa",
         "snapshot": "5d7a7904c5256f29",
         "outputMd": "41bbf91bfb9f41d4",
@@ -811,6 +811,29 @@
         "snapshot": null,
         "outputMd": "851afb4672da6673",
         "examples": "157ff03dc999d3d3"
+      }
+    },
+    "generative-ui": {
+      "slug": "generative-ui",
+      "kind": "code-backed",
+      "outline": "docs-src/components/generative-ui.docs.outline.md",
+      "output": "docs/components/generative-ui.md",
+      "examples": "docs-src/components/generative-ui.docs.examples.tsx",
+      "sources": ["packages/core/src/components/generative-ui/**"],
+      "claims": [],
+      "symbols": [
+        "GenerativeUICardDefinition",
+        "GenerativeUIDocument",
+        "GenerativeUIRendererProps",
+        "defineGenerativeUI",
+        "generativeUICards"
+      ],
+      "hashes": {
+        "typeSurface": "dd420bca3fd3fbb7",
+        "outline": "2012ad130cb72f82",
+        "snapshot": "d254a074b31dc049",
+        "outputMd": "40237bac98b5f95e",
+        "examples": "121be741ea8b4235"
       }
     },
     "global-header-layout": {
@@ -1452,7 +1475,7 @@
       "claims": [],
       "symbols": ["Textarea", "TextareaProps"],
       "hashes": {
-        "typeSurface": "3d9225f7356a29b2",
+        "typeSurface": "fefadfdf7fd145d2",
         "outline": "40952524e46c333e",
         "snapshot": "c8500808c03baa29",
         "outputMd": "c940bc01cd573334",
@@ -1569,9 +1592,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "807ee6ee2b33d5de",
+        "outline": "dfad17ec9cfbd964",
         "snapshot": null,
-        "outputMd": "3bcaceab3290ca92",
+        "outputMd": "69e761b82b5af1d0",
         "examples": null
       }
     },
@@ -1809,13 +1832,13 @@
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "03362008aa77d4cf",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "1a2bb081c3e34482",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "82313d5b6fe140d2",
-    "packages/core/skills/app-shell-patterns/references/components/alert.md": "db2c4388ca783a75",
+    "packages/core/skills/app-shell-patterns/references/components/alert.md": "2fc2a5334a050bb2",
     "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "e6447700166b7952",
     "packages/core/skills/app-shell-patterns/references/components/appearance-switcher.md": "b55f1d538651d467",
     "packages/core/skills/app-shell-patterns/references/components/attachment.md": "35bebce540d6ac28",
     "packages/core/skills/app-shell-patterns/references/components/autocomplete.md": "bd6ae01bf39d1ad6",
     "packages/core/skills/app-shell-patterns/references/components/avatar.md": "a874b74c176bcb47",
-    "packages/core/skills/app-shell-patterns/references/components/badge.md": "3d62a0fe0a539934",
+    "packages/core/skills/app-shell-patterns/references/components/badge.md": "22b33b4ddf882809",
     "packages/core/skills/app-shell-patterns/references/components/button.md": "bce0e2fada1d1638",
     "packages/core/skills/app-shell-patterns/references/components/card.md": "6e18faeb676654b4",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "14f7ba23f441df38",
@@ -1831,6 +1854,7 @@
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "224745760083ee35",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "41bbf91bfb9f41d4",
+    "packages/core/skills/app-shell-patterns/references/components/generative-ui.md": "40237bac98b5f95e",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "fe86450720c4d586",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
@@ -1867,7 +1891,7 @@
     "packages/core/skills/app-shell-patterns/references/api/router/use-location.md": "ddb44cc51af636cc",
     "packages/core/skills/app-shell-patterns/references/api/router/use-navigate.md": "d018cb13a7ddc38b",
     "packages/core/skills/app-shell-patterns/references/api/router/use-params.md": "78c15519a8339ebb",
-    "packages/core/skills/app-shell-patterns/references/api/use-ai-chat.md": "3bcaceab3290ca92",
+    "packages/core/skills/app-shell-patterns/references/api/use-ai-chat.md": "69e761b82b5af1d0",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell.md": "2a73bb3f3fe1a802",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "42363ef05098768c",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "2ad40b17e578246d",
@@ -1892,6 +1916,6 @@
     "packages/core/skills/app-shell-patterns/references/patterns/list-dense-scan.md": "59c93617dc135033",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "930db027a28bbe24",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "fe8232d31b24aed0",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "0e6c9be8c4ece7bc"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "3d6c23309b8244d3"
   }
 }

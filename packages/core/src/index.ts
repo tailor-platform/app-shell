@@ -76,10 +76,23 @@ export {
   type AIGatewayFunctionTool,
   type AIChatCompletionEvent,
 } from "./ai/client";
-export { useAIChat, type AIChatMessage, type AIChatStatus } from "./ai/use-ai-chat";
+export {
+  useAIChat,
+  type AIChatMessage,
+  type AIChatMessagePart,
+  type AIChatStatus,
+} from "./ai/use-ai-chat";
+export {
+  defineGenerativeUI,
+  generativeUICards,
+  type GenerativeUICardDefinition,
+  type GenerativeUIDocument,
+  type GenerativeUIRendererProps,
+} from "./components/generative-ui";
 export {
   defineAIChatTool,
   type AIChatToolContext,
+  type AIChatToolPart,
   type AIChatToolSchema,
   type AILocalTool,
 } from "./ai/tools";

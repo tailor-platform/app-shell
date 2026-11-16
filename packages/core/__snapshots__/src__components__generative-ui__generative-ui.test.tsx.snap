@@ -1,0 +1,3 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`defineGenerativeUI > renders a valid standalone document in order 1`] = `"<div data-slot="generative-ui" class="astw:space-y-4 consumer-class" aria-label="Generated summary"><h3>Order summary</h3></div>"`;

@@ -17,7 +17,7 @@ const useAIChat: (config: {
   model: string;
   tools?: Record<string, AILocalTool>;
 }) => {
-  messages: AIChatMessage[];
+  messages: (AIChatMessage & { parts: AIChatMessagePart[] })[];
   toolCalls: { id: string; name: string }[];
   status: "ready" | "submitted" | "streaming" | "error";
   error?: Error;
@@ -35,15 +35,37 @@ interface AIChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  parts?: AIChatMessagePart[];
+}
+
+type AIChatMessagePart =
+  | { id: string; type: "text"; text: string }
+  | {
+      id: string;
+      type: "tool-call";
+      toolCallId: string;
+      name: string;
+      parts: AIChatToolPart[];
+    };
+
+interface AIChatToolPart {
+  type: string;
+  data: unknown;
 }
 ```
+
+`useAIChat()` always returns messages with `parts`. The exported `AIChatMessage` type keeps that property optional so existing callers can still construct text-only messages. `content` remains the message's plain text for existing callers. `parts` retains text and tool-owned display data in order. The hierarchy is `message.parts` → `tool-call` → `parts`: each nested `AIChatToolPart` is application-defined, and the tool execution engine does not know how it should be rendered. [Generative UI](../components/generative-ui.md) is one display-part type, emitted as `{ type: "generative-ui", data: document }`.
+
+Only tools that call `AIChatToolContext.emit()` create retained `tool-call` display parts. A tool-only turn that emits display data creates an assistant message with empty `content`. Emitted parts survive request completion, and previously emitted parts remain even if a later tool fails or the request is stopped; their presence does not prove successful execution. These display records do not expose status, input, or output.
+
+The local executor's `AIChatToolContext.messages` is derived from the gateway's text transcript; it is not the renderer's display history. Ordinary tool-call arguments/results stay in the internal gateway transcript rather than becoming public display parts.
 
 ### `toolCalls`
 
 - **Type:** `{ id: string; name: string }[]`
-- **Description:** Tool calls requested by the model in the active flow, including earlier tool rounds of the current request. This transient list is cleared when the response finishes, is stopped, or fails; it is never added to `messages` or conversation history.
+- **Description:** Tool calls requested by the model in the active flow, including earlier tool rounds of the current request. This transient activity list is cleared when the response finishes, is stopped, or fails; it is not the retained display history.
 
-Calls become available before local tool execution. They record requested tool names, not successful execution. Arguments and results remain internal.
+Calls become available before local tool execution. They record requested tool names, not successful execution. Arguments and results remain internal. Display data emitted by a local tool is retained separately under that call's nested `parts` in `messages[].parts`.
 
 ### `status`
 
@@ -68,7 +90,11 @@ Calls become available before local tool execution. They record requested tool n
 
 ### `tools`
 
-Register local tools under a single object using `defineAIChatTool(...)`. Their schemas must implement both [Standard Schema](https://standardschema.dev/) validation and Standard JSON Schema generation (for example, Zod 4). Provider-native tools are not supported.
+Register local tools under a single object using `defineAIChatTool(...)`. `useAIChat` supplies `context.emit({ type, data })` for publishing tool-owned display parts. `emit` is optional on the exported context type for compatibility with direct executor calls; tools that need it should check its presence. Their schemas must implement both [Standard Schema](https://standardschema.dev/) validation and Standard JSON Schema generation (for example, Zod 4). Provider-native tools are not supported.
+
+An executor can call `AIChatToolContext.emit(part)` to append application-defined display data to its own tool call, separately from its model-facing return value. The channel accepts `{ type: string, data: unknown }`; the application decides how to render it. Emission is ignored after execution settles, the request is aborted, or the hook unmounts.
+
+For read-only generated cards, register the ordinary tool returned by `defineGenerativeUI()` as `tools: { ui_render: ui.tool }`. It emits `{ type: "generative-ui", data: document }`; render the `data` from those nested tool-call parts with `ui.Renderer`. Displaying cards does not end the assistant turn or wait for user input. See [Generative UI](../components/generative-ui.md) for a complete example.
 
 ## Usage
 
@@ -139,10 +165,11 @@ export function ChatScreen() {
 ## Notes
 
 - AppShell chooses the appropriate AI Gateway transport automatically
-- Public messages stay user/assistant text-first; tool calls and results never become conversation messages
-- System prompts and custom history shaping should use the low-level client directly
-- `stop()` keeps already-streamed assistant text, clears the active `toolCalls`, and ignores late events from the stopped request
+- Public messages stay user/assistant text-first, with ordered tool-call display parts containing application-defined nested `parts`; tool-call and tool-result protocol entries stay internal
+- System prompts and custom history shaping should use the low-level client directly; this hook does not provide durable conversation storage or history import
+- `stop()` keeps already-streamed assistant text and already-emitted tool display parts, clears the active `toolCalls`, and ignores late text/emission events from the stopped request
 
 ## Related
 
 - [createAIGatewayClient](./create-ai-gateway-client.md)
+- [Generative UI](../components/generative-ui.md)

@@ -66,7 +66,7 @@ Types come with them: `Location`, `NavigateFunction`, `NavigateOptions`, `To`, `
 
 ### What it deliberately does not give you
 
-**Router construction** — `createBrowserRouter`, `RouterProvider`, `BrowserRouter`, `MemoryRouter`, `Routes`, `Route`. AppShell builds the router from your modules and resources; a second one nested inside it is the bug this page is about. To control routing in tests, use the [`/testing` entry point](#testing) rather than building your own router.
+**Router construction** — `createBrowserRouter`, `RouterProvider`, `BrowserRouter`, `MemoryRouter`, `Routes`, `Route`. AppShell builds the router from your modules and resources; a second one nested inside it is the bug this page is about. For test wrappers and memory routing, see the [Testing guide](./testing.md).
 
 **Data-router APIs** — `useLoaderData`, `Form`, `useSubmit`, `useFetcher`, `useActionData`, `useRevalidator`. AppShell does not wire up React Router's data layer, so these have nothing to talk to. Load data in the page component or your own data layer. (AppShell exports its own `Form`, which is part of the [form system](../components/form.md) and unrelated to React Router's.)
 
@@ -75,66 +75,6 @@ Missing something you need? Ask for it to be added here rather than adding a dir
 ### One caveat
 
 A third-party library that itself depends on `react-router` can still pull in a second copy. That is rare, and outside what AppShell can control. If routing starts throwing the error above, look for a duplicate — under pnpm, `pnpm why react-router`.
-
-## Testing
-
-For test setup, form interactions, and provider fixtures, see the [Testing guide](./testing.md).
-
-Test helpers live in a separate entry point, `@tailor-platform/app-shell/testing`. Import `AppShell` from the main entry in both applications and tests. It uses browser routing unless an enclosing `AppShellTestingProvider` explicitly selects memory routing; `memory` and `initialEntries` are not AppShell props.
-
-### Pages and integration tests
-
-Because AppShell owns the router, a test mounts AppShell rather than building a router. Wrap it in `AppShellTestingProvider` to start at a known URL without touching `window.location`:
-
-```tsx
-import { render, screen } from "@testing-library/react";
-import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
-import { AppShellTestingProvider } from "@tailor-platform/app-shell/testing";
-
-render(
-  <AppShellTestingProvider initialEntries={["/orders/A42"]}>
-    <AppShell modules={modules}>
-      <SidebarLayout />
-    </AppShell>
-  </AppShellTestingProvider>,
-);
-
-expect(await screen.findByText("Order A42")).toBeDefined();
-```
-
-The provider requires `initialEntries: string[]`, the initial history stack — the last entry is the current location. Each mounted AppShell owns its history. Reuse the same `initialEntries` array across wrapper rerenders when that history should be retained. Nested providers use the nearest provider's settings.
-
-The same provider works with shells pre-configured by the Vite plugin through `AppShell.WithPages()`. Tests use the main entry's `AppShellProps`, modules, and guards, so the `AppShellRegister` augmentation described in [useAppShell](../api/use-app-shell.md) applies without a separate testing props type.
-
-The existing `/testing` exports `AppShell` and `TestAppShellProps` remain available but are deprecated. Prefer the main entry's `AppShell` and `AppShellProps` with `AppShellTestingProvider` for new page and integration tests. See the [migration example](../migrations.md#unreleased-testing-helpers-deprecated-in-favour-of-testingprovider) for existing tests.
-
-### Unit tests
-
-A component that calls `useNavigate` or renders a `<Link>` needs a router above it, but mounting a whole AppShell for that is heavy. `TestRouter` and `TestRouterProps` remain supported for unit tests; the provider does not replace them. `TestRouter` provides just the router context:
-
-```tsx
-import { TestRouter } from "@tailor-platform/app-shell/testing";
-
-render(
-  <TestRouter initialEntries={["/orders/A42"]}>
-    <SaveButton />
-  </TestRouter>,
-);
-```
-
-**If the component reads the route**, pass `path`. A router on its own matches nothing, so `useParams()` comes back empty even when `initialEntries` holds a URL that looks like it should match:
-
-```tsx
-render(
-  <TestRouter path="/orders/:id" initialEntries={["/orders/A42"]}>
-    <OrderBadge /> {/* useParams() -> { id: "A42" } */}
-  </TestRouter>,
-);
-```
-
-The same applies to `useMatch` and to relative `<Link>` targets. Compose your own providers — a GraphQL client, say — around `TestRouter` as needed.
-
-Use `TestRouter` for focused component unit tests. Use `AppShell` inside `AppShellTestingProvider` for page and integration tests.
 
 ## Example
 

@@ -428,7 +428,7 @@ Use this same `AppShell` inside `AppShellTestingProvider` from `@tailor-platform
 
 The provider also applies to shells pre-configured by the Vite plugin through `AppShell.WithPages()`. Tests retain the same `AppShellProps` and `AppShellRegister` augmentation as the application. The existing `/testing` exports `AppShell` and `TestAppShellProps` remain available with `@deprecated` annotations; new page and integration tests should use the provider-based setup. `TestRouter` and `TestRouterProps` remain supported for focused component unit tests.
 
-[See the testing setup →](../concepts/routing-navigation.md#testing)
+[See the testing setup →](../concepts/testing.md#use-a-testing-library-wrapper)
 
 ## Complete Example
 

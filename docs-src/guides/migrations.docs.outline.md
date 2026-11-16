@@ -67,7 +67,7 @@ render(
 
 Inside the provider, AppShell uses memory routing without changing `window.location`. Outside it, AppShell uses browser routing, so tests that use the deprecated testing AppShell without memory routing can migrate to the main AppShell without a provider. The provider also applies to shells pre-configured through `AppShell.WithPages()`, and provider-based tests use the same `AppShellRegister` augmentation as the application. `TestRouter` and `TestRouterProps` are unchanged and remain supported for focused component unit tests; they are not replaced by `AppShellTestingProvider`.
 
-To migrate existing page and integration tests, search imports for `AppShell` or `TestAppShellProps` from `/testing`, and move any `memory` / `initialEntries` AppShell props into the provider setup. Existing focused `TestRouter` tests may remain unchanged. See [Routing and Navigation](./concepts/routing-navigation.md#testing) for the full testing setup.
+To migrate existing page and integration tests, search imports for `AppShell` or `TestAppShellProps` from `/testing`, and move any `memory` / `initialEntries` AppShell props into the provider setup. Existing focused `TestRouter` tests may remain unchanged. See the [Testing guide](./concepts/testing.md) for the full testing setup.
 
 ## 1.20.0: z-index tokens renamed; old names are aliases
 

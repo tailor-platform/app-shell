@@ -116,8 +116,8 @@ export const dataTableLabels = defineI18nLabels({
     // Date-specific operator labels (date filters drop gt/lt/ne and treat the
     // boundary as inclusive).
     filterDateOperator_eq: "exact date",
-    filterDateOperator_gte: "after",
-    filterDateOperator_lte: "before",
+    filterDateOperator_gte: "on or after",
+    filterDateOperator_lte: "on or before",
     filterBetweenFrom: "From",
     filterBetweenTo: "To",
     filterBetweenMin: "Min",

@@ -80,31 +80,37 @@ A third-party library that itself depends on `react-router` can still pull in a 
 
 For test setup, form interactions, and provider fixtures, see the [Testing guide](./testing.md).
 
-Test helpers live in a separate entry point, `@tailor-platform/app-shell/testing`. Memory routing is kept out of the main entry because an app that shipped it would render correctly while the URL bar silently stopped tracking navigation — the `AppShell` you import from `@tailor-platform/app-shell` always uses browser routing, and pins it off regardless of what you pass.
+Test helpers live in a separate entry point, `@tailor-platform/app-shell/testing`. Import `AppShell` from the main entry in both applications and tests. It uses browser routing unless an enclosing `AppShellTestingProvider` explicitly selects memory routing; `memory` and `initialEntries` are not AppShell props.
 
 ### Pages and integration tests
 
-Because AppShell owns the router, a test mounts AppShell rather than building a router. The `AppShell` exported from `/testing` is the same shell, and additionally accepts `memory` with `initialEntries` so it starts at a known URL without touching `window.location`:
+Because AppShell owns the router, a test mounts AppShell rather than building a router. Wrap it in `AppShellTestingProvider` to start at a known URL without touching `window.location`:
 
 ```tsx
 import { render, screen } from "@testing-library/react";
-import { AppShell } from "@tailor-platform/app-shell/testing";
-import { SidebarLayout } from "@tailor-platform/app-shell";
+import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
+import { AppShellTestingProvider } from "@tailor-platform/app-shell/testing";
 
 render(
-  <AppShell memory initialEntries={["/orders/A42"]} modules={modules}>
-    <SidebarLayout />
-  </AppShell>,
+  <AppShellTestingProvider initialEntries={["/orders/A42"]}>
+    <AppShell modules={modules}>
+      <SidebarLayout />
+    </AppShell>
+  </AppShellTestingProvider>,
 );
 
 expect(await screen.findByText("Order A42")).toBeDefined();
 ```
 
-`initialEntries` is the history stack to start with — the last entry is the current location. Each render owns its history, so tests do not leak navigation state into one another.
+The provider requires `initialEntries: string[]`, the initial history stack — the last entry is the current location. Each mounted AppShell owns its history. Reuse the same `initialEntries` array across wrapper rerenders when that history should be retained. Nested providers use the nearest provider's settings.
+
+The same provider works with shells pre-configured by the Vite plugin through `AppShell.WithPages()`. Tests use the main entry's `AppShellProps`, modules, and guards, so the `AppShellRegister` augmentation described in [useAppShell](../api/use-app-shell.md) applies without a separate testing props type.
+
+The existing `/testing` exports `AppShell` and `TestAppShellProps` remain available but are deprecated. Prefer the main entry's `AppShell` and `AppShellProps` with `AppShellTestingProvider` for new page and integration tests. See the [migration example](../migrations.md#unreleased-testing-helpers-deprecated-in-favour-of-testingprovider) for existing tests.
 
 ### Unit tests
 
-A component that calls `useNavigate` or renders a `<Link>` needs a router above it, but mounting a whole AppShell for that is heavy. `TestRouter` provides just the router context:
+A component that calls `useNavigate` or renders a `<Link>` needs a router above it, but mounting a whole AppShell for that is heavy. `TestRouter` and `TestRouterProps` remain supported for unit tests; the provider does not replace them. `TestRouter` provides just the router context:
 
 ```tsx
 import { TestRouter } from "@tailor-platform/app-shell/testing";
@@ -128,7 +134,7 @@ render(
 
 The same applies to `useMatch` and to relative `<Link>` targets. Compose your own providers — a GraphQL client, say — around `TestRouter` as needed.
 
-Reach for `TestRouter` when the component under test is the subject; mount `AppShell memory` when the routing itself is.
+Use `TestRouter` for focused component unit tests. Use `AppShell` inside `AppShellTestingProvider` for page and integration tests.
 
 ## Example
 

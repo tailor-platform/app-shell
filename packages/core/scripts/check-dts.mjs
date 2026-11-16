@@ -13,6 +13,7 @@
 
 import { execFileSync } from "node:child_process";
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -28,6 +29,7 @@ import { fileURLToPath } from "node:url";
 const corePkgDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const repoRoot = resolve(corePkgDir, "..", "..");
 const vitePluginDir = join(repoRoot, "packages", "vite-plugin");
+const fixturesDir = join(corePkgDir, "tests", "dts");
 
 const readJson = (path) => JSON.parse(readFileSync(path, "utf8"));
 const corePkg = readJson(join(corePkgDir, "package.json"));
@@ -143,6 +145,7 @@ try {
           moduleResolution: "bundler",
           strict: true,
           noEmit: true,
+          declaration: true,
           jsx: "react-jsx",
           skipLibCheck: false,
         },
@@ -162,67 +165,88 @@ try {
     .join("\n");
   writeFileSync(join(project, "check.tsx"), `${checkSource}\n`);
 
+  const checks = [{ name: "entry-points", directory: project }];
+  for (const entry of readdirSync(fixturesDir, { withFileTypes: true }).toSorted((a, b) =>
+    a.name.localeCompare(b.name),
+  )) {
+    if (!entry.isDirectory()) continue;
+    const directory = join(project, "fixtures", entry.name);
+    cpSync(join(fixturesDir, entry.name), directory, { recursive: true });
+    writeFileSync(
+      join(directory, "tsconfig.json"),
+      `${JSON.stringify(
+        { extends: "../../tsconfig.json", include: ["**/*.ts", "**/*.tsx"] },
+        null,
+        2,
+      )}\n`,
+    );
+    checks.push({ name: entry.name, directory });
+  }
+
   console.log("check-dts: installing the packed tarball into a scratch project…");
   run("npm", ["install", "--no-audit", "--no-fund", "--loglevel=error"], project);
 
-  console.log("check-dts: type-checking with skipLibCheck: false…");
-  let output = "";
-  let tscFailed = false;
-  try {
-    output = run(
-      process.execPath,
-      [
-        join(project, "node_modules", "typescript", "bin", "tsc"),
-        "--noEmit",
-        "-p",
-        "tsconfig.json",
-      ],
-      project,
-    );
-  } catch (error) {
-    tscFailed = true;
-    output = `${error.stdout ?? ""}${error.stderr ?? ""}`;
-  }
+  // Each fixture runs in its own compiler process so augmentations cannot leak.
+  for (const { name, directory } of checks) {
+    console.log(`check-dts: checking ${name} with skipLibCheck: false…`);
+    let output = "";
+    let tscFailed = false;
+    try {
+      output = run(
+        process.execPath,
+        [
+          join(project, "node_modules", "typescript", "bin", "tsc"),
+          "--noEmit",
+          "-p",
+          "tsconfig.json",
+        ],
+        directory,
+      );
+    } catch (error) {
+      tscFailed = true;
+      output = `${error.stdout ?? ""}${error.stderr ?? ""}`;
+    }
 
-  // Third-party errors are reported but not fatal — failing on declarations we don't
-  // control is the trap that rules out `skipLibCheck: false` repo-wide. Errors with no
-  // file attribution (a bad tsconfig, a crash) stay fatal so a broken harness can't
-  // masquerade as a clean run. tsc always writes paths with forward slashes.
-  const ourPrefix = `node_modules/${corePkg.name}`;
-  const ours = [];
-  const foreign = [];
-  const unexpected = [];
-  for (const line of output.split("\n")) {
-    if (!/error TS\d+:/.test(line)) continue;
-    if (line.includes(ourPrefix) || line.startsWith("check.tsx")) ours.push(line);
-    else if (line.includes("node_modules/")) foreign.push(line);
-    else unexpected.push(line);
-  }
+    // Third-party errors are reported but not fatal — failing on declarations we don't
+    // control is the trap that rules out `skipLibCheck: false` repo-wide. Errors with no
+    // file attribution (a bad tsconfig, a crash) stay fatal so a broken harness can't
+    // masquerade as a clean run. tsc always writes paths with forward slashes.
+    const ourPrefix = `node_modules/${corePkg.name}`;
+    const ours = [];
+    const foreign = [];
+    const unexpected = [];
+    for (const line of output.split("\n")) {
+      if (!/error TS\d+:/.test(line)) continue;
+      if (line.includes(ourPrefix) || line.startsWith("check.tsx")) ours.push(line);
+      else if (line.includes("node_modules/")) foreign.push(line);
+      else unexpected.push(line);
+    }
 
-  if (foreign.length > 0) {
-    console.log(`\ncheck-dts: ${foreign.length} error(s) in third-party declarations (not fatal):`);
-    for (const line of foreign.slice(0, 20)) console.log(`  ${line}`);
-  }
+    if (foreign.length > 0) {
+      console.log(
+        `\ncheck-dts: ${foreign.length} error(s) in third-party declarations (not fatal):`,
+      );
+      for (const line of foreign.slice(0, 20)) console.log(`  ${line}`);
+    }
 
-  if (ours.length > 0) {
-    failed = true;
-    console.error(
-      `\ncheck-dts: FAILED — ${ours.length} error(s) in the published declarations of ${corePkg.name}:\n`,
-    );
-    for (const line of ours) console.error(`  ${line}`);
-    console.error(
-      "\nThese errors are invisible to `pnpm type-check` (it sets skipLibCheck: true) but break\n" +
-        "every consumer compiling with `skipLibCheck: false`. Fix them at the source in\n" +
-        "packages/core/src, then re-run `pnpm --filter @tailor-platform/app-shell check-dts`.",
-    );
-  } else if (unexpected.length > 0 || (tscFailed && foreign.length === 0)) {
-    failed = true;
-    console.error("\ncheck-dts: FAILED — the check itself did not run cleanly:\n");
-    console.error(output.trim() || "(no output)");
-  } else {
-    console.log(
-      `\ncheck-dts: OK — published declarations type-check cleanly for ${entryPoints.map((e) => e.subpath).join(", ")}.`,
-    );
+    if (ours.length > 0) {
+      failed = true;
+      console.error(
+        `\ncheck-dts: FAILED — ${name}: ${ours.length} declaration/consumer error(s):\n`,
+      );
+      for (const line of ours) console.error(`  ${line}`);
+      console.error(
+        "\nThese errors are invisible to `pnpm type-check` (it sets skipLibCheck: true) but break\n" +
+          "every consumer compiling with `skipLibCheck: false`. Fix them at the source in\n" +
+          "packages/core/src, then re-run `pnpm --filter @tailor-platform/app-shell check-dts`.",
+      );
+    } else if (unexpected.length > 0 || (tscFailed && foreign.length === 0)) {
+      failed = true;
+      console.error(`\ncheck-dts: FAILED — ${name}: the check itself did not run cleanly:\n`);
+      console.error(output.trim() || "(no output)");
+    } else {
+      console.log(`check-dts: OK — ${name}`);
+    }
   }
 } finally {
   if (process.env.KEEP_DTS_FIXTURE) {

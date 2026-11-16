@@ -422,6 +422,14 @@ import { AppShell, SidebarLayout, DefaultSidebar } from "@tailor-platform/app-sh
 
 [Learn more about File-Based Routing →](../concepts/file-based-routing.md)
 
+## Testing
+
+Use this same `AppShell` inside `AppShellTestingProvider` from `@tailor-platform/app-shell/testing` for page and integration tests. The provider requires `initialEntries: string[]` and selects memory routing without changing `window.location`; without a provider, AppShell uses browser routing. `memory` and `initialEntries` are not AppShell props.
+
+The provider also applies to shells pre-configured by the Vite plugin through `AppShell.WithPages()`. Tests retain the same `AppShellProps` and `AppShellRegister` augmentation as the application. The existing `/testing` exports `AppShell` and `TestAppShellProps` remain available with `@deprecated` annotations; new page and integration tests should use the provider-based setup. `TestRouter` and `TestRouterProps` remain supported for focused component unit tests.
+
+[See the testing setup →](../concepts/routing-navigation.md#testing)
+
 ## Complete Example
 
 Here's a complete example with all common features:

@@ -13,21 +13,61 @@ This page is deliberately narrow. It is **not** a changelog — see [`packages/c
 
 Each entry states which versions are affected, what breaks, how to detect it, and what to change. Entries stay here permanently; they are not pruned when they get old, because apps upgrade across arbitrary version gaps.
 
-| Version       | Change                                                                                                                       |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| 1.20.0        | [z-index tokens renamed; old names are aliases](#1200-z-index-tokens-renamed-old-names-are-aliases)                          |
-| 1.18.0        | [Destructive colours now resolve to the danger roles](#1180-destructive-colours-now-resolve-to-the-danger-roles)             |
-| 1.17.0        | [Status and alert tokens now resolve to the colour roles](#1170-status-and-alert-tokens-now-resolve-to-the-colour-roles)     |
-| 1.15.0        | [Base UI 1.8.0 breaks closed-`Select` and dialog-click tests](#1150-base-ui-180-breaks-closed-select-and-dialog-click-tests) |
-| 1.12.0        | [`DateField` / `DatePicker` field chrome moved to `Field.Root`](#1120-datefield--datepicker-field-chrome-moved-to-fieldroot) |
-| 1.11.0        | [React 19.2.7 and React Router v8 required](#1110-react-1927-and-react-router-v8-are-now-required)                           |
-| 1.11.0        | [Non-modal `Sheet` renders no backdrop](#1110-non-modal-sheet-no-longer-renders-a-backdrop)                                  |
-| 1.8.0         | [`stream` removed from `useAIChat()`](#180-stream-removed-from-useaichat)                                                    |
-| 1.5.0 → 1.7.0 | [Remove the theme bridge workaround](#150--170-remove-the-theme-bridge-workaround)                                           |
-| 1.5.0         | [`loader` removed from file-based pages](#150-loader-removed-from-file-based-page-definitions)                               |
-| 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
-| 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
-| before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
+| Version       | Change                                                                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Unreleased    | [Testing helpers deprecated in favour of TestingProvider](#unreleased-testing-helpers-deprecated-in-favour-of-testingprovider) |
+| 1.20.0        | [z-index tokens renamed; old names are aliases](#1200-z-index-tokens-renamed-old-names-are-aliases)                            |
+| 1.18.0        | [Destructive colours now resolve to the danger roles](#1180-destructive-colours-now-resolve-to-the-danger-roles)               |
+| 1.17.0        | [Status and alert tokens now resolve to the colour roles](#1170-status-and-alert-tokens-now-resolve-to-the-colour-roles)       |
+| 1.15.0        | [Base UI 1.8.0 breaks closed-`Select` and dialog-click tests](#1150-base-ui-180-breaks-closed-select-and-dialog-click-tests)   |
+| 1.12.0        | [`DateField` / `DatePicker` field chrome moved to `Field.Root`](#1120-datefield--datepicker-field-chrome-moved-to-fieldroot)   |
+| 1.11.0        | [React 19.2.7 and React Router v8 required](#1110-react-1927-and-react-router-v8-are-now-required)                             |
+| 1.11.0        | [Non-modal `Sheet` renders no backdrop](#1110-non-modal-sheet-no-longer-renders-a-backdrop)                                    |
+| 1.8.0         | [`stream` removed from `useAIChat()`](#180-stream-removed-from-useaichat)                                                      |
+| 1.5.0 → 1.7.0 | [Remove the theme bridge workaround](#150--170-remove-the-theme-bridge-workaround)                                             |
+| 1.5.0         | [`loader` removed from file-based pages](#150-loader-removed-from-file-based-page-definitions)                                 |
+| 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                                |
+| 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                          |
+| before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                         |
+
+## Unreleased: testing helpers deprecated in favour of TestingProvider
+
+**Applies to:** tests importing `AppShell` or `TestAppShellProps` from `@tailor-platform/app-shell/testing`.
+
+The existing `/testing` exports `AppShell` and `TestAppShellProps` remain available but are marked `@deprecated`. No immediate migration is required. For new page and integration tests, import `AppShell` and `AppShellProps` from the main entry and move the initial history stack to `AppShellTestingProvider` from `/testing`. The provider requires `initialEntries: string[]`; neither the main AppShell nor the provider accepts a `memory` prop.
+
+Before:
+
+```tsx
+import { AppShell, type TestAppShellProps } from "@tailor-platform/app-shell/testing";
+
+const props: TestAppShellProps = {
+  modules,
+  memory: true,
+  initialEntries: ["/orders/A42"],
+};
+
+render(<AppShell {...props} />);
+```
+
+After:
+
+```tsx
+import { AppShell, type AppShellProps } from "@tailor-platform/app-shell";
+import { AppShellTestingProvider } from "@tailor-platform/app-shell/testing";
+
+const props: AppShellProps = { modules };
+
+render(
+  <AppShellTestingProvider initialEntries={["/orders/A42"]}>
+    <AppShell {...props} />
+  </AppShellTestingProvider>,
+);
+```
+
+Inside the provider, AppShell uses memory routing without changing `window.location`. Outside it, AppShell uses browser routing, so tests that use the deprecated testing AppShell without memory routing can migrate to the main AppShell without a provider. The provider also applies to shells pre-configured through `AppShell.WithPages()`, and provider-based tests use the same `AppShellRegister` augmentation as the application. `TestRouter` and `TestRouterProps` are unchanged and remain supported for focused component unit tests; they are not replaced by `AppShellTestingProvider`.
+
+To migrate existing page and integration tests, search imports for `AppShell` or `TestAppShellProps` from `/testing`, and move any `memory` / `initialEntries` AppShell props into the provider setup. Existing focused `TestRouter` tests may remain unchanged. See [Routing and Navigation](./concepts/routing-navigation.md#testing) for the full testing setup.
 
 ## 1.20.0: z-index tokens renamed; old names are aliases
 

@@ -13,6 +13,7 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, "dist/**", "tests/browser/**"],
     typecheck: {
       enabled: true,
+      tsconfig: "./tsconfig.type-check.json",
     },
     coverage: {
       enabled: coverageEnabled,

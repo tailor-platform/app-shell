@@ -361,7 +361,6 @@ export {
   type BadgeCellEditOptions,
   type DateCellEditOptions,
   type CellEditState,
-  type DateTimeDraft,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";
 export { useURLCollectionVariables, withURLCollectionState } from "./lib/collection-url-state";

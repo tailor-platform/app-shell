@@ -7,7 +7,6 @@ sources:
   - packages/core/src/components/data-table/**
   - packages/core/src/components/internals/table-core/column-types.ts
   - packages/core/src/components/internals/table-core/cell-edit-error.ts
-  - packages/core/src/components/internals/table-core/editing/date.tsx
   - packages/core/src/hooks/use-collection-variables.ts
   - packages/core/src/lib/collection-url-state.ts
   - packages/core/src/contexts/collection-control-context.tsx
@@ -45,7 +44,6 @@ import {
   type BadgeCellEditOptions,
   type DateCellEditOptions,
   type CellEditState,
-  type DateTimeDraft,
   type FooterRenderContext,
 } from "@tailor-platform/app-shell";
 ```
@@ -527,9 +525,9 @@ Give a typed column an `edit` config to use its built-in editor. This standardiz
 | `text` / `link` with `edit.options`  | Searchable dropdown                       | Selected string `value`, or `null`; not search text or highlights | Selected string `value`, or `null`     |
 | `badge`                              | Searchable dropdown using the same badges | Selected string `value`, or `null`; not search text or highlights | Selected string `value`, or `null`     |
 | `date`                               | Calendar                                  | `"YYYY-MM-DD" \| null`                                            | `"YYYY-MM-DD" \| null`                 |
-| `date` with `dateFormat: "datetime"` | Calendar and time field                   | Complete `DateTimeDraft` snapshot                                 | UTC ISO timestamp, or `null` for Clear |
+| `date` with `dateFormat: "datetime"` | Calendar and time field                   | Complete `{ day, time }` snapshot                                 | UTC ISO timestamp, or `null` for Clear |
 
-Callback types describe the **editor's output**, not the original row field's runtime type. For example, text/link/badge editors confirm strings or `null` even when their display accepts numbers or booleans. The editing option types, `CellEditState`, and `DateTimeDraft` are exported from the package root; parsing and navigation helpers remain internal.
+Callback types describe the **editor's output**, not the original row field's runtime type. For example, text/link/badge editors confirm strings or `null` even when their display accepts numbers or booleans. The editing option types and `CellEditState` are exported from the package root. The datetime draft shape is inferred through `DateCellEditOptions`, without a standalone public type export; parsing and navigation helpers remain internal.
 
 For example, inside a receipt page, accept or reject each proposed quantity yourself. Throw `CellEditError` for invalid quantities to retain the draft and show the message in the cell's error popover. Patch the changed field with a functional state update rather than replacing a whole row captured before another edit:
 

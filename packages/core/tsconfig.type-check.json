@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"],
+      "@tailor-platform/app-shell": ["./src/index.ts"],
+      "@tailor-platform/app-shell/testing": ["./src/testing/index.ts"]
+    }
+  },
+  "exclude": ["dist", "tests/browser", "tests/dts"]
+}

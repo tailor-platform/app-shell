@@ -11,6 +11,8 @@ sources:
 
 The `Checkbox` component is a styled control for boolean fields. It wraps Base UI's checkbox, so it works with [`Field`](./form.md) and React Hook Form the same way `Input`, `Select`, and `Combobox` do — dropped inside a `Field.Root` it inherits label association, `aria-describedby`, `disabled`, and the invalid (error) state automatically.
 
+The box is 16px; its hit area is 24×24px (the WCAG 2.5.8 target size), so a bare checkbox in a table row is as easy to tap as a labelled one.
+
 ## Import
 
 ```tsx

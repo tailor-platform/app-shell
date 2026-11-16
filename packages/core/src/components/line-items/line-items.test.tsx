@@ -258,7 +258,13 @@ describe("LineItems table", () => {
         .slice(1)
         .map((row) => within(row).getAllByRole("cell")[1].textContent);
     const handle = screen.getByRole("button", { name: "Reorder line 3" });
-    expect(within(originalRows[2]).getAllByRole("cell")[0].contains(handle)).toBe(true);
+    const handleCell = within(originalRows[2]).getAllByRole("cell")[0];
+    expect(handleCell.contains(handle)).toBe(true);
+    expect(handleCell.className).toContain("astw:first:pl-0");
+    expect(handleCell.className).not.toContain("astw:first:pl-6");
+    const handleHead = within(table).getAllByRole("columnheader")[0];
+    expect(handleHead.className).toContain("astw:first:pl-0");
+    expect(handleHead.className).not.toContain("astw:first:pl-6");
     expect(handle.getAttribute("draggable")).toBe("true");
     expect(screen.getAllByRole("button")).toHaveLength(5);
 

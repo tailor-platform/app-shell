@@ -60,7 +60,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
       <Table.Header>
         <Table.Row>
           {value.orderer && (
-            <Table.Head scope="col" className="astw:w-0">
+            <Table.Head scope="col" className="astw:w-0 astw:px-0 astw:first:pl-0">
               <Text.span className="astw:sr-only">{t("order")}</Text.span>
             </Table.Head>
           )}
@@ -79,7 +79,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
             className="astw:data-dragging:opacity-40 astw:data-[drop-position=before]:[&>td]:shadow-[inset_0_2px_0_var(--primary)] astw:data-[drop-position=after]:[&>td]:shadow-[inset_0_-2px_0_var(--primary)]"
           >
             {value.orderer && (
-              <Table.Cell className="astw:w-0 astw:py-1.5 astw:pr-0">
+              <Table.Cell className="astw:w-0 astw:py-1.5 astw:px-0 astw:first:pl-0">
                 {/* shortcut: native dragging is desktop-only, add pointer dragging if touch dragging is required. */}
                 <button
                   type="button"

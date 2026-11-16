@@ -134,8 +134,6 @@ try {
     )}\n`,
   );
 
-  // `target`/`lib` are explicit: without them `@types/react` and `react-router` report
-  // `Cannot find name 'Iterable'`, an artefact of this config rather than a real defect.
   writeFileSync(
     join(project, "tsconfig.json"),
     `${JSON.stringify(

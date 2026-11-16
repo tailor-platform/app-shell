@@ -54,7 +54,7 @@
     "lint": "oxlint -c .oxlintrc.jsonc",
     "test": "vitest run",
     "test:browser": "pnpm build && vitest run --config vitest.browser.config.ts",
-    "type-check": "tsc --project tsconfig.type-check.json --incremental"
+    "type-check": "tsc --incremental"
   },
   "dependencies": {
     "@base-ui/react": "1.8.0",

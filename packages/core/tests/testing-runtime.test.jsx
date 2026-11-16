@@ -8,7 +8,6 @@ import {
   useAppShellData,
   useLocation,
   useParams,
-  type GuardContext,
 } from "@tailor-platform/app-shell";
 import {
   AppShell as LegacyAppShell,
@@ -23,7 +22,7 @@ afterEach(cleanup);
 it("shares the testing provider with main-entry hooks and guard state", async () => {
   const before = window.location.pathname;
   const contextData = { token: "shared-runtime" };
-  const guard = vi.fn(({ context }: GuardContext) => {
+  const guard = vi.fn(({ context }) => {
     expect(context).toEqual(contextData);
     return pass();
   });
@@ -77,13 +76,13 @@ it("shares the testing provider with a configured main-entry AppShell", async ()
   expect(window.location.pathname).toBe(before);
 });
 
-it.each(["memory", "browser"] as const)(
+it.each(["memory", "browser"])(
   "keeps the deprecated AppShell's %s routing compatible with main-entry state",
   async (mode) => {
     const before = window.location.href;
     const historyState = window.history.state;
     const contextData = { token: "legacy-runtime" };
-    const guard = vi.fn(({ context }: GuardContext) => {
+    const guard = vi.fn(({ context }) => {
       expect(context).toEqual(contextData);
       return pass();
     });
@@ -104,9 +103,7 @@ it.each(["memory", "browser"] as const)(
     ];
     if (mode === "browser") window.history.replaceState(null, "", "/legacy-browser");
     const routingProps =
-      mode === "memory"
-        ? { memory: true as const, initialEntries: ["/legacy-browser"] }
-        : { memory: false as const };
+      mode === "memory" ? { memory: true, initialEntries: ["/legacy-browser"] } : { memory: false };
     const { unmount } = render(
       <LegacyAppShell {...routingProps} modules={modules} title="Legacy" contextData={contextData}>
         <Outlet />

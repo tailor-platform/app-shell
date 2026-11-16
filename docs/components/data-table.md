@@ -1851,6 +1851,9 @@ All options accepted by `useCollectionVariables` are accepted here too. `tableMe
 | Sort       | `s`                    | `?s=createdAt:desc`   |
 | Filter     | `f.<field>:<operator>` | `?f.status:eq=ACTIVE` |
 
+For multi-column sorting, repeat `s` in priority order. For example,
+`?s=status:asc&s=createdAt:desc` sorts by status first, then by creation date within each status.
+
 ### Custom search-params binding: `withURLCollectionState`
 
 If you need URL persistence but cannot use react-router's `useSearchParams` (e.g. a different router or test environment), use the pure `withURLCollectionState` decorator to compose URL state with `useCollectionVariables` directly:

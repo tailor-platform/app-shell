@@ -70,6 +70,18 @@ describe("parseCollectionSearchParams", () => {
     });
   });
 
+  it("restores valid sort fields in URL order and ignores duplicate fields", () => {
+    const result = parseCollectionSearchParams(
+      tableMetadata.task,
+      new URLSearchParams("s=amount:asc&s=title:desc&s=createdAt:asc&s=title:asc"),
+    );
+
+    expect(result.sortStates).toEqual([
+      { field: "title", direction: "Desc" },
+      { field: "createdAt", direction: "Asc" },
+    ]);
+  });
+
   it("supports untyped parsing without metadata", () => {
     const result = parseCollectionSearchParams(
       new URLSearchParams('p=25&s=name:asc&f.tags:in=["a","b"]'),
@@ -155,6 +167,23 @@ describe("writeCollectionSearchParams", () => {
 
     expect(result).toBe(prev);
   });
+
+  it("writes all sort columns and detects a priority-only change", () => {
+    const prev = new URLSearchParams("p=20&s=createdAt:asc&s=title:desc&tab=orders");
+    const state: CollectionPersistedState<"title" | "createdAt"> = {
+      filters: [],
+      sortStates: [
+        { field: "title", direction: "Desc" },
+        { field: "createdAt", direction: "Asc" },
+      ],
+      pageSize: 20,
+    };
+    const written = writeCollectionSearchParams(prev, state);
+
+    expect(written.getAll("s")).toEqual(["title:desc", "createdAt:asc"]);
+    expect(written.get("tab")).toBe("orders");
+    expect(writeCollectionSearchParams(written, state)).toBe(written);
+  });
 });
 
 function SearchParamsWrapper({ children }: PropsWithChildren) {
@@ -221,6 +250,20 @@ describe("withURLCollectionState", () => {
 });
 
 describe("useURLCollectionVariables", () => {
+  it("restores the full GraphQL order when an existing table URL is opened", () => {
+    const wrapper = ({ children }: PropsWithChildren) =>
+      createElement(MemoryRouter, { initialEntries: ["/?s=title:desc&s=createdAt:asc"] }, children);
+    const { result } = renderHook(
+      () => useURLCollectionVariables({ tableMetadata: tableMetadata.task }),
+      { wrapper },
+    );
+
+    expect(result.current.variables.order).toEqual([
+      { field: "title", direction: "Desc" },
+      { field: "createdAt", direction: "Asc" },
+    ]);
+  });
+
   it("returns undefined query when the URL has no filters", () => {
     const wrapper = ({ children }: PropsWithChildren) =>
       createElement(MemoryRouter, { initialEntries: ["/"] }, children);

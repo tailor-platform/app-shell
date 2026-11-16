@@ -9,6 +9,7 @@ import {
   type CollectionVariables,
   type FieldType,
   type Filter,
+  type SortState,
   type TableFieldName,
   type TableMetadata,
   type TableMetadataFilter,
@@ -128,13 +129,15 @@ export function parseCollectionSearchParams(
     if (Number.isFinite(n) && n > 0) nextState.pageSize = n;
   }
 
-  const sort = params.get(KEY_SORT);
-  if (sort) {
+  const sortStates: SortState[] = [];
+  const seenSortFields = new Set<string>();
+  for (const sort of params.getAll(KEY_SORT)) {
     const [field, rawDir] = sort.split(":");
-    if (field && isValidSortField(tableMetadata, field)) {
-      nextState.sortStates = [{ field, direction: rawDir === "desc" ? "Desc" : "Asc" }];
-    }
+    if (!field || seenSortFields.has(field) || !isValidSortField(tableMetadata, field)) continue;
+    seenSortFields.add(field);
+    sortStates.push({ field, direction: rawDir === "desc" ? "Desc" : "Asc" });
   }
+  if (sortStates.length > 0) nextState.sortStates = sortStates;
 
   const nextFilters: Filter[] = [];
   for (const [key, value] of params.entries()) {
@@ -172,11 +175,9 @@ export function writeCollectionSearchParams<
     next.delete(KEY_PAGE_SIZE);
   }
 
-  if (state.sortStates.length > 0) {
-    const { field, direction } = state.sortStates[0];
-    next.set(KEY_SORT, `${field}:${direction === "Desc" ? "desc" : "asc"}`);
-  } else {
-    next.delete(KEY_SORT);
+  next.delete(KEY_SORT);
+  for (const { field, direction } of state.sortStates) {
+    next.append(KEY_SORT, `${field}:${direction === "Desc" ? "desc" : "asc"}`);
   }
 
   // Snapshot keys before iterating — we delete entries during the loop.
@@ -192,7 +193,7 @@ export function writeCollectionSearchParams<
   // trigger re-renders in some react-router versions. Compare on a sorted
   // snapshot rather than `.toString()`: the filter rebuild above is delete-
   // then-set, so key order can shift between renders even when the param
-  // multiset is identical (and `.toString()` is additionally sensitive to
+  // entries are equivalent (and `.toString()` is additionally sensitive to
   // `&`/`=` characters inside values).
   if (stableQueryString(next) === stableQueryString(prev)) return prev;
   return next;
@@ -366,16 +367,17 @@ export function decodeFilterValue(raw: string): unknown {
 }
 
 /**
- * Order-insensitive, unambiguous snapshot of a URLSearchParams for equality
- * checks. Entries are sorted by key then value so a reordered-but-equivalent
- * param set compares equal, and the pairs are JSON-encoded so a key or value
+ * Snapshot of a URLSearchParams for equality checks. Entries are sorted by
+ * key then value, except repeated sort keys whose order is the sort priority.
+ * Pairs are JSON-encoded so a key or value
  * containing `&`/`=` can't collide with the entry boundary the way a re-joined
  * query string would (e.g. `[["a","x"],["b","y"]]` vs `[["a","x&b=y"]]`).
  */
 function stableQueryString(sp: URLSearchParams): string {
   return JSON.stringify(
     Array.from(sp.entries()).toSorted(
-      ([ak, av], [bk, bv]) => ak.localeCompare(bk) || av.localeCompare(bv),
+      ([ak, av], [bk, bv]) =>
+        ak.localeCompare(bk) || (ak === KEY_SORT && bk === KEY_SORT ? 0 : av.localeCompare(bv)),
     ),
   );
 }

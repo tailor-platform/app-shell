@@ -1,12 +1,7 @@
 import { useMemo, type ComponentProps, type ReactNode } from "react";
 import { BadgeList } from "@/components/badge-list";
 import { Table } from "@/components/table";
-import {
-  createValueRenderer,
-  displayCellAdapters,
-  getDisplayCellAdapter,
-} from "@/components/internals/table-core";
-import type { ValueDisplayDescriptor } from "@/components/internals/table-core/column-types";
+import { createValueRenderer, getDisplayCellAdapter } from "@/components/internals/table-core";
 import type {
   CellEditor,
   CellEditorOptions,
@@ -95,21 +90,13 @@ function bindEditor<TOptions, TOutput, TSettings>(
 
 /** Assemble UI adapters and readonly presentation, binding date dependencies before rendering. */
 export function createLineItemsCellPreparers(timeZone: string) {
-  function prepareValueRenderer<T extends Record<string, unknown>>(
-    display: ValueDisplayDescriptor<T>,
-  ): ValueRenderer<T> {
-    return display.type === "date"
-      ? displayCellAdapters.date.createRenderer(display.typeOptions, timeZone)
-      : createValueRenderer(display);
-  }
-
   /** Custom output wins before any built-in value renderer is prepared. */
   function prepareDisplay<T extends Record<string, unknown>>(
     column: LineItemsColumn<T>,
   ): Omit<LineItemsCellRenderers<T>, "renderCell"> {
     const align = column.align ?? getDisplayCellAdapter(column.type).defaultAlign;
     if (column.render) return { align, renderDisplay: column.render };
-    const renderReadonly = prepareValueRenderer(column);
+    const renderReadonly = createValueRenderer(column, { timeZone });
     const renderEditable =
       column.type === "link" ? createValueRenderer({ type: "text" }) : renderReadonly;
     return { align, renderDisplay: bindDisplay(column, renderReadonly, renderEditable) };
@@ -129,7 +116,7 @@ export function createLineItemsCellPreparers(timeZone: string) {
       });
       return { align, renderDisplay: bindDisplay(column, renderBadge) };
     }
-    const renderReadonly = prepareValueRenderer(column);
+    const renderReadonly = createValueRenderer(column, { timeZone });
     const renderEditable =
       column.type === "link" ? createValueRenderer({ type: "text" }) : renderReadonly;
     return {
@@ -156,10 +143,10 @@ export function createLineItemsCellPreparers(timeZone: string) {
       (
         {
           editorOptions,
-        }: { editorOptions?: Pick<CellEditorOptions<typeof dateEditor>, "withTime"> },
+        }: { editorOptions?: Omit<CellEditorOptions<typeof dateEditor>, "timeZone"> },
         column,
       ) => ({
-        options: { withTime: editorOptions?.withTime, timeZone },
+        options: { ...editorOptions, timeZone },
         ...prepareDisplay(column),
       }),
     ),

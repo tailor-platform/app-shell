@@ -14,9 +14,13 @@ test("the display catalog is exhaustive and keeps timezone specific to dates", (
   displayCellAdapters.date.createRenderer({}, "Asia/Tokyo");
   // @ts-expect-error Date preparation requires its timezone dependency.
   displayCellAdapters.date.createRenderer({});
-  // @ts-expect-error Date descriptors do not enter timezone-independent preparation.
+  createValueRenderer({ type: "date" }, { timeZone: "Asia/Tokyo" });
+  createValueRenderer({ type: "number" }, { timeZone: "UTC" });
+  // @ts-expect-error Date preparation requires its timezone dependency.
   createValueRenderer({ type: "date" });
-  // @ts-expect-error General display preparation does not accept a timezone.
+  // @ts-expect-error Date preparation cannot omit timezone from its options.
+  createValueRenderer({ type: "date" }, {});
+  // @ts-expect-error Renderer dependencies are passed as an options object.
   createValueRenderer({ type: "number" }, "UTC");
 });
 

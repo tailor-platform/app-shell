@@ -1,4 +1,6 @@
 import { expectTypeOf, test } from "vitest";
+import { parseDate } from "@internationalized/date";
+import type { CalendarProps } from "@/components/calendar";
 import type {
   CellEditorOptions,
   CellEditorOutput,
@@ -47,7 +49,20 @@ test("cell editors retain property-specific nullable output and row callback typ
   const date: LineItemsColumn<Row> = {
     accessorKey: "name",
     type: "date",
-    edit: { editorType: "date", editorOptions: { withTime: true } },
+    edit: {
+      editorType: "date",
+      editorOptions: {
+        withTime: true,
+        minValue: parseDate("2026-10-05"),
+        maxValue: parseDate("2026-10-25"),
+        isDateUnavailable: (day) => {
+          expectTypeOf(day).toEqualTypeOf<
+            Parameters<NonNullable<CalendarProps["isDateUnavailable"]>>[0]
+          >();
+          return day.day === 10;
+        },
+      },
+    },
   };
   const choice: LineItemsColumn<Row> = {
     accessorKey: "name",
@@ -112,7 +127,7 @@ test("public editor settings and confirmation values follow the concrete editors
   expectTypeOf<PublicEditor<"text">["editorOptions"]>().toEqualTypeOf<undefined>();
   expectTypeOf<PublicEditor<"number">["editorOptions"]>().toEqualTypeOf<undefined>();
   expectTypeOf<PublicEditor<"date">["editorOptions"]>().toEqualTypeOf<
-    Pick<CellEditorOptions<typeof dateEditor>, "withTime"> | undefined
+    Omit<CellEditorOptions<typeof dateEditor>, "timeZone"> | undefined
   >();
   expectTypeOf<PublicEditor<"combobox">["editorOptions"]>().toEqualTypeOf<
     Pick<CellEditorOptions<typeof choiceEditor>, "options">
@@ -161,6 +176,10 @@ test("editorType discriminates nested editorOptions and rejects the flattened se
     { editorType: "combobox", editorOptions: { options: [], withTime: true } },
     // @ts-expect-error Timezone comes from AppShell, not editorOptions.
     { editorType: "date", editorOptions: { timeZone: "UTC" } },
+    // @ts-expect-error Date bounds use Calendar DateValue objects, not strings.
+    { editorType: "date", editorOptions: { minValue: "2026-10-05" } },
+    // @ts-expect-error The editor owns Calendar value and callbacks.
+    { editorType: "date", editorOptions: { value: null } },
     // @ts-expect-error Date settings are nested under editorOptions.
     { editorType: "date", withTime: true },
     // @ts-expect-error Fixed choices are nested under editorOptions.

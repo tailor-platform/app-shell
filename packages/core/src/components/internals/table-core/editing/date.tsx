@@ -4,7 +4,7 @@ import { CalendarDays } from "lucide-react";
 import type { CalendarDate } from "@internationalized/date";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
-import { Calendar } from "@/components/calendar";
+import { Calendar, type CalendarProps } from "@/components/calendar";
 import { Input } from "@/components/input";
 import { sameDate, toCalendarDate, toIsoDateTime, toTimeText } from "../input-values";
 import type { CellEditor, CellEditorNavigation, CellEditorProps } from "./props";
@@ -48,7 +48,7 @@ type DateEditorOptions = {
   withTime?: boolean;
   /** Owner-resolved timezone for date/datetime conversion; not part of the common cell contract. */
   timeZone: string;
-};
+} & Pick<CalendarProps, "minValue" | "maxValue" | "isDateUnavailable">;
 
 function DateEditor({
   options,
@@ -67,7 +67,7 @@ function DateEditor({
   navigation,
   children,
 }: CellEditorProps<DateEditorOptions, string | null>) {
-  const { withTime = false, timeZone } = options;
+  const { withTime = false, timeZone, minValue, maxValue, isDateUnavailable } = options;
   const session = useCellEditSession<DateTimeDraft>(interceptErrors, external);
   const { state } = session;
   const { callbackError, containsErrorTarget } = useCellError(
@@ -115,8 +115,13 @@ function DateEditor({
   };
   const activeDraft = state.status === "idle" ? baseline : state.draft;
   const pickedDay = toCalendarDate(activeDraft.day, timeZone);
+  const dayAllowed =
+    pickedDay &&
+    (!minValue || pickedDay.compare(minValue) >= 0) &&
+    (!maxValue || pickedDay.compare(maxValue) <= 0) &&
+    !isDateUnavailable?.(pickedDay);
   const timestamp =
-    withTime && pickedDay && activeDraft.time
+    withTime && dayAllowed && activeDraft.time
       ? toIsoDateTime(pickedDay, activeDraft.time, timeZone)
       : undefined;
   const draftDisplay = withTime
@@ -203,6 +208,9 @@ function DateEditor({
                 value={pickedDay}
                 defaultFocusedValue={pickedDay ?? undefined}
                 onChange={handlePick}
+                minValue={minValue}
+                maxValue={maxValue}
+                isDateUnavailable={isDateUnavailable}
               />
               {withTime && (
                 <Input

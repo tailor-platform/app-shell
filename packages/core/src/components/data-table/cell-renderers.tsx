@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { createValueRenderer, displayCellAdapters } from "@/components/internals/table-core";
+import { createValueRenderer } from "@/components/internals/table-core";
 import { optionLabel, resolveBadgeOptions } from "./cell-values";
 import type { Column } from "./types";
 
@@ -31,8 +31,8 @@ export function createTypedCellRenderer<TRow extends Record<string, unknown>>(
   timeZone: string,
 ): (row: TRow) => ReactNode {
   if (col.type === "date") {
-    const renderDate = displayCellAdapters.date.createRenderer(col.typeOptions, timeZone);
-    return (row) => renderDate(getCellValue(row, col));
+    const renderDate = createValueRenderer(col, { timeZone });
+    return (row) => renderDate(getCellValue(row, col), row);
   }
   return (row) => renderTypedValue(row, col, getCellValue(row, col));
 }
@@ -52,10 +52,9 @@ export function renderTypedValue<TRow extends Record<string, unknown>>(
 ): ReactNode {
   switch (col.type) {
     case "date":
-      return displayCellAdapters.date.createRenderer(
-        col.typeOptions,
-        options?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
-      )(value);
+      return createValueRenderer(col, {
+        timeZone: options?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+      })(value, row);
     case "badge": {
       const choices = col.edit
         ? resolveBadgeOptions(col.edit.options, col.typeOptions, col.filter)

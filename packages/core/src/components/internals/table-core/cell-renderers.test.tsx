@@ -110,9 +110,22 @@ describe("display cell adapters", () => {
     expect(displayCellAdapters.date.createRenderer).toBe(createDateRenderer);
   });
 
-  it("keeps date dependencies out of generic preparation even at runtime", () => {
-    // @ts-expect-error Date descriptors use timezone-specific preparation.
-    expect(createValueRenderer({ type: "date" })("Raw value", {})).toBe("Raw value");
+  it("creates date renderers through the catalog with an explicit timezone", () => {
+    const createRenderer = vi.spyOn(displayCellAdapters.date, "createRenderer");
+    const descriptor = { type: "date" as const, typeOptions: { locale: "en-US" } };
+    const renderer = createValueRenderer(descriptor, { timeZone: "America/New_York" });
+    expect(createRenderer).toHaveBeenCalledExactlyOnceWith(
+      descriptor.typeOptions,
+      "America/New_York",
+    );
+    expect(renderer("2026-10-09T00:00:00Z", {})).toBe("Oct 8, 2026");
+  });
+
+  it("rejects date preparation without a timezone even at runtime", () => {
+    // @ts-expect-error Exercise JavaScript configuration outside the typed contract.
+    expect(() => createValueRenderer({ type: "date" })).toThrow(
+      "Date rendering requires a timezone.",
+    );
   });
 
   it.each(["custom", "constructor", "__proto__", Object("number"), { toString: () => "number" }])(
@@ -193,10 +206,13 @@ describe("neutral value rendering", () => {
     const spy = vi.spyOn(Intl, "DateTimeFormat").mockImplementation(function (locale, options) {
       return new DateTimeFormat(locale, options);
     });
-    const renderer = createDateRenderer({ locale: "en-US" }, "America/New_York");
+    const renderer = createValueRenderer(
+      { type: "date", typeOptions: { locale: "en-US" } },
+      { timeZone: "America/New_York" },
+    );
     for (let index = 0; index < 3; index++) {
-      expect(renderer("2026-10-09")).toBe("Oct 9, 2026");
-      expect(renderer("2026-10-09T00:00:00Z")).toBe("Oct 8, 2026");
+      expect(renderer("2026-10-09", {})).toBe("Oct 9, 2026");
+      expect(renderer("2026-10-09T00:00:00Z", {})).toBe("Oct 8, 2026");
     }
     expect(
       spy.mock.calls
@@ -206,9 +222,12 @@ describe("neutral value rendering", () => {
   });
 
   it("preserves a skipped calendar date and placeholders without constructing invalid formatters", () => {
-    const renderer = createDateRenderer({ locale: "en-US" }, "Pacific/Apia");
-    expect(renderer("2011-12-30")).toBe("Dec 30, 2011");
-    const view = render(<>{renderer("2026-02-30")}</>);
+    const renderer = createValueRenderer(
+      { type: "date", typeOptions: { locale: "en-US" } },
+      { timeZone: "Pacific/Apia" },
+    );
+    expect(renderer("2011-12-30", {})).toBe("Dec 30, 2011");
+    const view = render(<>{renderer("2026-02-30", {})}</>);
     expect(screen.getByText("—")).toBeDefined();
     view.rerender(<>{createValueRenderer({ type: "badge" })([null, ""], {})}</>);
     expect(screen.getByText("—")).toBeDefined();

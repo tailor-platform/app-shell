@@ -11,6 +11,7 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
+import { parseDate, type DateValue } from "@internationalized/date";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import { CellEditError } from "@/components/internals/table-core/cell-edit-error";
 import { LineItems } from "./line-items";
@@ -531,6 +532,83 @@ describe("LineItems cell editing integration", () => {
     await editor.user.click(screen.getByRole("button", { name: "Clear" }));
     expect(editor.value.lines[0].date).toBeNull();
   });
+
+  it.each([false, true])(
+    "applies Calendar date restrictions through editorOptions (withTime: %s)",
+    async (withTime) => {
+      const commit = vi.fn();
+      const column: LineItemsColumn<Row> = {
+        ...dateColumn,
+        edit: {
+          editorType: "date" as const,
+          editorOptions: {
+            withTime,
+            minValue: parseDate("2026-10-05"),
+            maxValue: parseDate("2026-10-25"),
+            isDateUnavailable: (day: DateValue) => day.day === 10,
+          },
+          onValueCommitted: commit,
+        },
+      };
+      const editor = setup([column], [{ ...rows[0], date: "2026-10-15" }]);
+      await editor.user.click(dateTrigger());
+      for (const day of ["4", "10", "26"]) {
+        const button = dayButton(day);
+        expect(button.getAttribute("aria-disabled")).toBe("true");
+        await editor.user.click(button);
+        act(() => button.focus());
+        await editor.user.keyboard("{Enter}");
+        expect(editor.value.lines[0].date).toBe("2026-10-15");
+        expect(commit).not.toHaveBeenCalled();
+      }
+      await editor.user.click(dayButton("20"));
+      if (withTime) {
+        fireEvent.change(screen.getByLabelText("Date, Row 1 (Time)"), {
+          target: { value: "14:30" },
+        });
+        expect(commit).not.toHaveBeenCalled();
+        await editor.user.click(screen.getByRole("button", { name: "Done" }));
+      }
+      expect(editor.value.lines[0].date).toBe(withTime ? "2026-10-20T05:30:00.000Z" : "2026-10-20");
+      expect(commit).toHaveBeenCalledOnce();
+      await editor.user.click(dateTrigger());
+      await editor.user.click(screen.getByRole("button", { name: "Clear" }));
+      expect(editor.value.lines[0].date).toBeNull();
+    },
+  );
+
+  it.each(["before", "after", "unavailable"] as const)(
+    "does not confirm a time-only edit on a %s restricted day",
+    async (restriction) => {
+      const commit = vi.fn();
+      const column: LineItemsColumn<Row> = {
+        ...dateColumn,
+        edit: {
+          editorType: "date" as const,
+          editorOptions: {
+            withTime: true,
+            minValue: restriction === "before" ? parseDate("2026-10-05") : undefined,
+            maxValue: restriction === "after" ? parseDate("2026-10-01") : undefined,
+            isDateUnavailable:
+              restriction === "unavailable" ? (day: DateValue) => day.day === 2 : undefined,
+          },
+          onValueCommitted: commit,
+        },
+      };
+      const editor = setup([column]);
+      await editor.user.click(dateTrigger());
+      fireEvent.change(screen.getByLabelText("Date, Row 1 (Time)"), {
+        target: { value: "14:30" },
+      });
+      const done = screen.getByRole("button", { name: "Done" }) as HTMLButtonElement;
+      expect(done.disabled).toBe(true);
+      await editor.user.click(done);
+      expect(commit).not.toHaveBeenCalled();
+      expect(editor.value.lines[0].date).toBe("2026-10-02");
+      await editor.user.click(screen.getByRole("button", { name: "Clear" }));
+      expect(editor.value.lines[0].date).toBeNull();
+    },
+  );
 
   it("binds the timezone to date input independently of text display", async () => {
     const editor = setup(

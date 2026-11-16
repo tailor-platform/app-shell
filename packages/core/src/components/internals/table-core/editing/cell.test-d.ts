@@ -17,7 +17,9 @@ test("injected editors retain required options without a kind discriminator", ()
   expectTypeOf<DateOptions["withTime"]>().toEqualTypeOf<boolean | undefined>();
   expectTypeOf<DateOptions["timeZone"]>().toEqualTypeOf<string>();
   expectTypeOf<keyof ChoiceOptions>().toEqualTypeOf<"options" | "renderOption">();
-  expectTypeOf<keyof DateOptions>().toEqualTypeOf<"withTime" | "timeZone">();
+  expectTypeOf<keyof DateOptions>().toEqualTypeOf<
+    "withTime" | "timeZone" | "minValue" | "maxValue" | "isDateUnavailable"
+  >();
   expectTypeOf<Extract<keyof CellEditorProps<unknown>, "timeZone">>().toEqualTypeOf<never>();
   expectTypeOf<Extract<keyof EditableCellOwnerProps, "timeZone">>().toEqualTypeOf<never>();
 

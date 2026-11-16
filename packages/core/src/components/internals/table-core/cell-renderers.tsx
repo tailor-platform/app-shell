@@ -15,6 +15,8 @@ import type {
 } from "./column-types";
 
 export interface ValueRendererOptions {
+  /** Owner-resolved timezone, required when preparing a date renderer. */
+  timeZone?: string;
   /** Optional, already-resolved display label policy for individual badge values. */
   resolveBadgeLabel?: (value: string) => string;
 }
@@ -239,14 +241,26 @@ function createTypedValueRenderer<TRow extends Record<string, unknown>, K extend
   return adapter.createRenderer(descriptor, options);
 }
 
-/** Create a timezone-independent value renderer; dates use createDateRenderer instead. */
+/** Prepare any built-in display renderer; dates require an explicitly resolved timezone. */
 export function createValueRenderer<TRow extends Record<string, unknown>>(
   descriptor: Exclude<ValueDisplayDescriptor<TRow>, { type: "date" }>,
+  options?: ValueRendererOptions,
+): (value: unknown, row: TRow) => ReactNode;
+export function createValueRenderer<TRow extends Record<string, unknown>>(
+  descriptor: ValueDisplayDescriptor<TRow>,
+  options: ValueRendererOptions & { timeZone: string },
+): (value: unknown, row: TRow) => ReactNode;
+export function createValueRenderer<TRow extends Record<string, unknown>>(
+  descriptor: ValueDisplayDescriptor<TRow>,
   options: ValueRendererOptions = {},
 ): (value: unknown, row: TRow) => ReactNode {
   if (descriptor.type === undefined) return displayCellAdapters.text.createRenderer();
   const type: unknown = descriptor.type;
-  if (typeof type !== "string" || !Object.hasOwn(displayCellAdapters, type) || type === "date")
+  if (typeof type !== "string" || !Object.hasOwn(displayCellAdapters, type))
     return displayCellAdapters.text.createRenderer();
+  if (descriptor.type === "date") {
+    if (!options.timeZone) throw new Error("Date rendering requires a timezone.");
+    return displayCellAdapters.date.createRenderer(descriptor.typeOptions, options.timeZone);
+  }
   return createTypedValueRenderer<TRow, ValueKind>(descriptor.type, descriptor, options);
 }

@@ -2,6 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { useTimeZone } from "@/contexts/appshell-context";
 import type { Table } from "@/components/table";
 import type { EditableCellOwnerProps } from "@/components/internals/table-core/editing/cell";
+import type { ValueRenderer } from "@/components/internals/table-core";
 import type { Column } from "../../types";
 import { getCellValue, renderTypedValue } from "../../cell-renderers";
 import { resolveBadgeOptions } from "../../cell-values";
@@ -24,20 +25,21 @@ export function columnChoices<TRow extends Record<string, unknown>>(col: Column<
 export function useEditorProps<TRow extends Record<string, unknown>>({
   row,
   col,
-  dateRenderer,
+  valueRenderer,
   ...props
 }: DataTableEditableCellProps<TRow>): EditableCellOwnerProps {
   const { value: timeZone } = useTimeZone();
   const t = useDataTableT();
   const current = getCellValue(row, col);
-  const render = col.render ?? dateRenderer;
   const renderError = col.edit?.error && col.edit.error.render;
+  let display: ReactNode;
+  if (col.render) display = col.render(row);
+  else if (valueRenderer) display = valueRenderer(current, row);
+  else display = renderTypedValue(row, col, current, { linkAsText: true, timeZone });
   return {
     ...props,
     current,
-    display: render
-      ? render(row)
-      : renderTypedValue(row, col, current, { linkAsText: true, timeZone }),
+    display,
     change: (value) =>
       (col.edit?.onValueChange as ((row: TRow, value: unknown) => unknown) | undefined)?.(
         row,
@@ -82,8 +84,8 @@ export interface DataTableEditableCellProps<
   align: "left" | "right";
   tooltipLabel?: string;
   navigation: CellEditNavigation;
-  /** Reuses the table's column-level date formatter cache. */
-  dateRenderer?: (row: TRow) => ReactNode;
+  /** Reuses column-level preparation with the editor's already-resolved current value. */
+  valueRenderer?: ValueRenderer<TRow>;
   /** `data-slot`, style, class and context-menu handlers shared with static cells. */
   cellProps: ComponentProps<typeof Table.Cell>;
 }

@@ -1,7 +1,11 @@
 import { useMemo, type ComponentProps, type ReactNode } from "react";
 import { BadgeList } from "@/components/badge-list";
 import { Table } from "@/components/table";
-import { createValueRenderer, getDisplayCellAdapter } from "@/components/internals/table-core";
+import {
+  createValueRenderer,
+  getDisplayCellAdapter,
+  type ValueRenderer,
+} from "@/components/internals/table-core";
 import type {
   CellEditor,
   CellEditorOptions,
@@ -43,8 +47,6 @@ export interface LineItemsEditorAdapter<TOptions, TOutput, TSettings> {
     column: LineItemsColumn<T>,
   ): LineItemsCellRenderers<T>;
 }
-
-type ValueRenderer<T> = (value: unknown, row: T) => ReactNode;
 
 /**
  * Bind a row's value source to already-prepared readonly and editable value renderers.
@@ -98,7 +100,7 @@ export function createLineItemsCellPreparers(timeZone: string) {
     if (column.render) return { align, renderDisplay: column.render };
     const renderReadonly = createValueRenderer(column, { timeZone });
     const renderEditable =
-      column.type === "link" ? createValueRenderer({ type: "text" }) : renderReadonly;
+      column.type === "link" ? createValueRenderer({ type: "text" }, { timeZone }) : renderReadonly;
     return { align, renderDisplay: bindDisplay(column, renderReadonly, renderEditable) };
   }
 
@@ -112,13 +114,14 @@ export function createLineItemsCellPreparers(timeZone: string) {
       options.find((option) => option.value === value)?.label;
     if (column.type === "badge") {
       const renderBadge = createValueRenderer(column, {
+        timeZone,
         resolveBadgeLabel: (value) => resolveLabel(value) ?? value,
       });
       return { align, renderDisplay: bindDisplay(column, renderBadge) };
     }
     const renderReadonly = createValueRenderer(column, { timeZone });
     const renderEditable =
-      column.type === "link" ? createValueRenderer({ type: "text" }) : renderReadonly;
+      column.type === "link" ? createValueRenderer({ type: "text" }, { timeZone }) : renderReadonly;
     return {
       align,
       renderDisplay: bindDisplay(

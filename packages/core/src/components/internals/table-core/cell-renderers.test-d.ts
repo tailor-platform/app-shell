@@ -1,58 +1,75 @@
 import type { ReactNode } from "react";
 import { expectTypeOf, test } from "vitest";
-import { createDateRenderer, createValueRenderer, displayCellAdapters } from "./cell-renderers";
-import type { ColumnCellType } from "./column-types";
+import { createValueRenderer, type ValueRendererContext } from "./cell-renderers";
+import { displayCellAdapters } from "./display-cell-adapters";
+import type { ColumnCellType, TypedColumnDisplay } from "./column-types";
 
 type Row = { id: string; currency: string };
+const context: ValueRendererContext = { timeZone: "Asia/Tokyo" };
 
-test("the display catalog is exhaustive and keeps timezone specific to dates", () => {
+test("the exhaustive display catalog shares one preparation contract", () => {
   expectTypeOf<keyof typeof displayCellAdapters>().toEqualTypeOf<ColumnCellType>();
-  expectTypeOf(displayCellAdapters.date.createRenderer).toEqualTypeOf<typeof createDateRenderer>();
   expectTypeOf(displayCellAdapters.number.defaultAlign).toEqualTypeOf<"right">();
   expectTypeOf(displayCellAdapters.text.defaultAlign).toEqualTypeOf<"left">();
+  expectTypeOf(displayCellAdapters.date.createRenderer<Row>).parameters.toEqualTypeOf<
+    [TypedColumnDisplay<Row, "date">, ValueRendererContext]
+  >();
+  expectTypeOf(displayCellAdapters.money.createRenderer<Row>).parameters.toEqualTypeOf<
+    [TypedColumnDisplay<Row, "money">, ValueRendererContext]
+  >();
+  expectTypeOf(displayCellAdapters.text.createRenderer<Row>).parameters.toEqualTypeOf<
+    [TypedColumnDisplay<Row, "text">, ValueRendererContext]
+  >();
 
-  displayCellAdapters.date.createRenderer({}, "Asia/Tokyo");
-  // @ts-expect-error Date preparation requires its timezone dependency.
-  displayCellAdapters.date.createRenderer({});
-  createValueRenderer({ type: "date" }, { timeZone: "Asia/Tokyo" });
-  createValueRenderer({ type: "number" }, { timeZone: "UTC" });
-  // @ts-expect-error Date preparation requires its timezone dependency.
+  createValueRenderer({ type: "date" }, context);
+  createValueRenderer({ type: "number" }, context);
+  // @ts-expect-error Every display kind requires its owner-resolved context.
+  createValueRenderer({ type: "number" });
+  // @ts-expect-error Date preparation uses the same required context.
   createValueRenderer({ type: "date" });
-  // @ts-expect-error Date preparation cannot omit timezone from its options.
+  // @ts-expect-error The display environment must include its timezone.
   createValueRenderer({ type: "date" }, {});
-  // @ts-expect-error Renderer dependencies are passed as an options object.
+  // @ts-expect-error Renderer dependencies are passed as a context object.
   createValueRenderer({ type: "number" }, "UTC");
+  // @ts-expect-error Adapters also require the shared preparation context.
+  displayCellAdapters.text.createRenderer({ type: "text" });
 });
 
 test("renderer creation preserves row-dependent currency and link contracts", () => {
-  const money = displayCellAdapters.money.createRenderer<Row>({
-    type: "money",
-    typeOptions: { currency: (row) => row.currency },
-  });
-  const link = displayCellAdapters.link.createRenderer<Row>({
-    type: "link",
-    typeOptions: { href: (row) => `/rows/${row.id}` },
-  });
-  const dispatched = createValueRenderer<Row>({
-    type: "money",
-    typeOptions: { currency: (row) => row.currency },
-  });
+  const money = displayCellAdapters.money.createRenderer<Row>(
+    { type: "money", typeOptions: { currency: (row) => row.currency } },
+    context,
+  );
+  const link = displayCellAdapters.link.createRenderer<Row>(
+    { type: "link", typeOptions: { href: (row) => `/rows/${row.id}` } },
+    context,
+  );
+  const dispatched = createValueRenderer<Row>(
+    { type: "money", typeOptions: { currency: (row) => row.currency } },
+    context,
+  );
   expectTypeOf(money).toEqualTypeOf<(value: unknown, row: Row) => ReactNode>();
   expectTypeOf(link).toEqualTypeOf<(value: unknown, row: Row) => ReactNode>();
   expectTypeOf(dispatched).toEqualTypeOf<(value: unknown, row: Row) => ReactNode>();
 
-  displayCellAdapters.money.createRenderer<Row>({
-    type: "money",
-    typeOptions: {
-      // @ts-expect-error A currency callback cannot require a different row shape.
-      currency: (row: { other: string }) => row.other,
+  displayCellAdapters.money.createRenderer<Row>(
+    {
+      type: "money",
+      typeOptions: {
+        // @ts-expect-error A currency callback cannot require a different row shape.
+        currency: (row: { other: string }) => row.other,
+      },
     },
-  });
-  displayCellAdapters.link.createRenderer<Row>({
-    type: "link",
-    typeOptions: {
-      // @ts-expect-error A link callback cannot require a different row shape.
-      href: (row: { other: string }) => row.other,
+    context,
+  );
+  displayCellAdapters.link.createRenderer<Row>(
+    {
+      type: "link",
+      typeOptions: {
+        // @ts-expect-error A link callback cannot require a different row shape.
+        href: (row: { other: string }) => row.other,
+      },
     },
-  });
+    context,
+  );
 });

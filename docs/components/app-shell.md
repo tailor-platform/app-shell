@@ -518,6 +518,7 @@ export default App;
 
 ## Related Concepts
 
+- [Testing](../concepts/testing.md#supply-appshell-provider-state-without-mocking-internals) - Test provider state with memory routing and application-owned mocks
 - [Modules and Resources](../concepts/modules-and-resources.md) - Application structure
 - [Authentication](../concepts/authentication.md) - User authentication setup
 - [Routing and Navigation](../concepts/routing-navigation.md) - Navigation between pages

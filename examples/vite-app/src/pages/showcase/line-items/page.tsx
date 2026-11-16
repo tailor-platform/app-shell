@@ -8,7 +8,7 @@ import {
   type AppShellPageProps,
   type LineItemsColumn,
 } from "@tailor-platform/app-shell";
-import { ListIcon } from "lucide-react";
+import { ListIcon, XIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 
 type OrderLine = {
@@ -118,17 +118,17 @@ const LineItemsPage = () => {
             {
               id: "actions",
               label: "Actions",
-              width: 96,
+              width: 64,
               align: "right",
               render: (line) => (
                 <Button
                   type="button"
-                  variant="link"
-                  className="astw:h-auto astw:p-0"
+                  variant="ghost"
+                  size="icon"
                   aria-label={`Delete ${line.item ?? "line"}`}
                   onClick={() => lineItems.removeLine(lineItems.getLineKey(line))}
                 >
-                  Delete
+                  <XIcon aria-hidden="true" />
                 </Button>
               ),
             } satisfies LineItemsColumn<OrderLine>,

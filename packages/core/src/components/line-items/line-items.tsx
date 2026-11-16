@@ -64,11 +64,25 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
               <Text.span className="astw:sr-only">{t("order")}</Text.span>
             </Table.Head>
           )}
-          {cellsByColumn.map(({ column, id, align }) => (
-            <Table.Head key={id} scope="col" align={align} style={{ width: column.width }}>
-              {column.label}
-            </Table.Head>
-          ))}
+          {cellsByColumn.map(({ column, id, align }) => {
+            const headerProps = column.headerProps?.();
+            return (
+              <Table.Head
+                key={id}
+                data-col-key={id}
+                scope="col"
+                align={align}
+                className={headerProps?.className}
+                title={headerProps?.title}
+                style={{
+                  ...headerProps?.style,
+                  ...(column.width !== undefined ? { width: column.width } : {}),
+                }}
+              >
+                {column.label}
+              </Table.Head>
+            );
+          })}
         </Table.Row>
       </Table.Header>
       <Table.Body {...reorder.bodyProps}>
@@ -95,9 +109,17 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
             )}
             {cellsByColumn.map(({ column, renderCell, id, align, renderDisplay }) => {
               const edit = column.edit;
+              const customCellProps = column.cellProps?.(row);
+              const cellProps = {
+                align,
+                "data-col-key": id,
+                className: customCellProps?.className,
+                style: customCellProps?.style,
+                title: customCellProps?.title,
+              };
               if (!edit || !renderCell || !(edit.canEdit?.(row) ?? true))
                 return (
-                  <LineItemsDisplayCell key={id} align={align}>
+                  <LineItemsDisplayCell key={id} {...cellProps}>
                     {renderDisplay(row, false)}
                   </LineItemsDisplayCell>
                 );
@@ -111,7 +133,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                   index={index}
                   editing={getLineItemsEditing(value)}
                   display={renderDisplay(row, true)}
-                  cellProps={{ align }}
+                  cellProps={cellProps}
                 />
               );
             })}

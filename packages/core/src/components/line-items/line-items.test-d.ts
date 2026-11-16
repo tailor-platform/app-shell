@@ -1,4 +1,5 @@
 import { expectTypeOf, test } from "vitest";
+import type { ComponentProps } from "react";
 import {
   LineItems,
   useLineItems,
@@ -11,6 +12,26 @@ import {
 import { createLineItemsDocumentStore } from "./document/store";
 
 type Row = { id?: string; name: string; quantity: number; detail: { nested: string } };
+
+test("column styling hooks retain row types without exposing content or events", () => {
+  expectTypeOf<NonNullable<LineItemsColumn<Row>["headerProps"]>>().toEqualTypeOf<
+    () => Pick<ComponentProps<"th">, "className" | "style" | "title"> | undefined
+  >();
+  expectTypeOf<NonNullable<LineItemsColumn<Row>["cellProps"]>>().toEqualTypeOf<
+    (row: Row) => Pick<ComponentProps<"td">, "className" | "style" | "title"> | undefined
+  >();
+  expectTypeOf<Extract<keyof LineItemsColumn<Row>, "role">>().toEqualTypeOf<never>();
+  const column: LineItemsColumn<Row> = {
+    id: "operations",
+    render: (row) => row.name,
+    headerProps: () => ({ className: "astw:text-center" }),
+    cellProps: (row) => {
+      expectTypeOf(row).toEqualTypeOf<Row>();
+      return { title: row.name, style: { color: "red" } };
+    },
+  };
+  void column;
+});
 
 test("row commands retain row types without exposing unfinished save APIs", () => {
   function Contract() {

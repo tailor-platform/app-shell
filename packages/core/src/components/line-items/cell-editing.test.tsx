@@ -138,6 +138,41 @@ async function resolveRequest(request: ReturnType<typeof deferred>) {
 }
 
 describe("LineItems cell editing integration", () => {
+  it("keeps column keys on editable cells and their headers", () => {
+    setup([nameColumn]);
+    expect(screen.getByRole("columnheader").getAttribute("data-col-key")).toBe("name");
+    expect(screen.getByRole("cell").getAttribute("data-col-key")).toBe("name");
+  });
+
+  it("updates cell styling props without replacing an editor or discarding its draft", () => {
+    const column = {
+      ...nameColumn,
+      headerProps: () => ({ title: "Styled name" }),
+      cellProps: (row: Row) => ({
+        className: "astw:py-1",
+        style: { backgroundColor: "red" },
+        title: row.id,
+      }),
+    } satisfies LineItemsColumn<Row>;
+    const editor = setup([column]);
+    const input = textbox();
+    const cell = screen.getByRole("cell");
+    expect(cell.title).toBe("A");
+    expect(cell.style.backgroundColor).toBe("red");
+    expect(cell.className).toContain("astw:py-1");
+    draft(input, "Changed");
+    editor.update([{ ...column, headerProps: () => undefined, cellProps: () => undefined }]);
+    expect(textbox()).toBe(input);
+    expect(input.value).toBe("Changed");
+    expect(cell.title).toBe("");
+    expect(cell.style.backgroundColor).toBe("");
+    expect(cell.className).toContain("astw:py-2");
+    expect(screen.getByRole("columnheader").title).toBe("");
+    expect(editor.value.isDirty).toBe(false);
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(editor.value.lines[0].name).toBe("Changed");
+  });
+
   it("memoizes cell renderers by columns and time zone", () => {
     const columns: LineItemsColumn<Row>[] = [nameColumn];
     const { result, rerender } = renderHook(

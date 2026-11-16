@@ -119,12 +119,15 @@ const LineItemsPage = () => {
               id: "actions",
               label: "Actions",
               width: 64,
-              align: "right",
+              align: "center",
+              headerProps: () => ({ className: "astw:first:pl-2 astw:last:pr-2" }),
+              cellProps: () => ({ className: "astw:py-1 astw:first:pl-2 astw:last:pr-2" }),
               render: (line) => (
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="xs"
+                  className="astw:align-middle"
                   aria-label={`Delete ${line.item ?? "line"}`}
                   onClick={() => lineItems.removeLine(lineItems.getLineKey(line))}
                 >

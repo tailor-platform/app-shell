@@ -134,8 +134,18 @@ describe("LineItems table", () => {
         .getAllByRole("columnheader")
         .every((header) => header.getAttribute("scope") === "col"),
     ).toBe(true);
+    const keys = columns.map((column) => column.id ?? column.accessorKey);
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((header) => header.getAttribute("data-col-key")),
+    ).toEqual(keys);
+    expect(cells.map((cell) => cell.getAttribute("data-col-key"))).toEqual(keys);
     expect(cells[1].className).toContain("astw:text-right");
     expect(cells[7].className).toContain("astw:text-center");
+    expect(cells[7].className).toContain("astw:last:pr-6");
+    expect(within(table).getAllByRole("columnheader")[7].className).toContain("astw:last:pr-6");
+    expect(cells[0].className).toContain("astw:first:pl-6");
     expect(table.className).toContain("custom-table");
     expect(container.querySelector('[data-slot="line-items"]')?.className).toContain(
       "custom-frame",
@@ -143,6 +153,74 @@ describe("LineItems table", () => {
     expect(screen.queryByRole("textbox")).toBeNull();
     expect(screen.queryByRole("checkbox")).toBeNull();
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it.each([columns[0], columns[5], columns[7]])(
+    "applies column styling props to property, computed, and custom columns ($id)",
+    (column) => {
+      let styled = true;
+      const headerProps = vi.fn(() =>
+        styled
+          ? {
+              className: "astw:text-right astw:last:pr-2",
+              style: { backgroundColor: "red", width: 180 },
+              title: "Custom header",
+            }
+          : undefined,
+      );
+      const cellProps = vi.fn((row: Row) =>
+        styled
+          ? {
+              className: "astw:text-left astw:py-1 astw:last:pr-2",
+              style: { color: row.id === "A" ? "red" : "blue" },
+              title: row.name,
+            }
+          : undefined,
+      );
+      const data = [rows[0], { ...rows[0], id: "B", name: "Second" }];
+      const { rerender } = render(
+        <Harness
+          orderer={false}
+          data={data}
+          cols={[{ ...column, width: 0, headerProps, cellProps }]}
+        />,
+      );
+      const header = screen.getByRole("columnheader");
+      const cells = screen.getAllByRole("cell");
+      const content = cells.map((cell) => cell.textContent);
+      expect(headerProps).toHaveBeenCalledWith();
+      expect(header.title).toBe("Custom header");
+      expect(header.style.width).toBe("0px");
+      expect(header.style.backgroundColor).toBe("red");
+      expect(header.className).toContain("astw:text-right");
+      expect(header.className).toContain("astw:last:pr-2");
+      expect(cells.map((cell) => cell.title)).toEqual(["Widget", "Second"]);
+      expect(cells.map((cell) => cell.style.color)).toEqual(["red", "blue"]);
+      expect(cells[0].className).toContain("astw:py-1");
+      expect(cells[0].className).toContain("astw:text-left");
+      rerender(
+        <Harness orderer={false} data={data} cols={[{ ...column, headerProps, cellProps }]} />,
+      );
+      expect(header.style.width).toBe("180px");
+      styled = false;
+      rerender(
+        <Harness orderer={false} data={data} cols={[{ ...column, headerProps, cellProps }]} />,
+      );
+      expect(header.title).toBe("");
+      expect(header.style.width).toBe("");
+      expect(header.style.backgroundColor).toBe("");
+      expect(header.className).toContain("astw:last:pr-6");
+      expect(cells.map((cell) => cell.style.color)).toEqual(["", ""]);
+      expect(cells.map((cell) => cell.title)).toEqual(["", ""]);
+      expect(cells[0].className).toContain("astw:py-2");
+      expect(cells.map((cell) => cell.textContent)).toEqual(content);
+    },
+  );
+
+  it("does not call cellProps for an empty table", () => {
+    const cellProps = vi.fn(() => ({ title: "Unused" }));
+    render(<Harness orderer={false} data={[]} cols={[{ ...columns[0], cellProps }]} />);
+    expect(cellProps).not.toHaveBeenCalled();
   });
 
   it("applies pixel widths to all column kinds and restores automatic sizing when omitted", () => {

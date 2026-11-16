@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import type { CellEditorOutput } from "@/components/internals/table-core/editing/props";
 import type { lineItemsEditors } from "../editor-factory";
 import type {
@@ -38,6 +38,12 @@ type DisplayProps<TRow extends Record<string, unknown>> = {
   align?: "left" | "center" | "right";
   /** Preferred column width in pixels; omitted widths are automatic and content may require more space. */
   width?: number;
+  /** Header styling; return undefined to retain defaults. Column width takes precedence over style.width. */
+  headerProps?: () => Pick<ComponentProps<"th">, "className" | "style" | "title"> | undefined;
+  /** Row-specific styling for readonly and editable cells; content and editing behavior remain owned by the table. */
+  cellProps?: (
+    row: TRow,
+  ) => Pick<ComponentProps<"td">, "className" | "style" | "title"> | undefined;
 };
 
 type PropertyColumn<TRow extends Record<string, unknown>> = {

@@ -3,5 +3,5 @@ export {
   AppShellTestingProvider,
   type AppShellTestingProviderProps,
 } from "./app-shell-testing-provider";
-export { AppShell, type TestAppShellProps } from "./legacy-app-shell";
+export { AppShell, type TestAppShellProps } from "./legacy";
 export { TestRouter, type TestRouterProps } from "./test-router";

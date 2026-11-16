@@ -78,6 +78,8 @@ A third-party library that itself depends on `react-router` can still pull in a 
 
 ## Testing
 
+For test setup, form interactions, and provider fixtures, see the [Testing guide](./testing.md).
+
 Test helpers live in a separate entry point, `@tailor-platform/app-shell/testing`. Memory routing is kept out of the main entry because an app that shipped it would render correctly while the URL bar silently stopped tracking navigation — the `AppShell` you import from `@tailor-platform/app-shell` always uses browser routing, and pins it off regardless of what you pass.
 
 ### Pages and integration tests

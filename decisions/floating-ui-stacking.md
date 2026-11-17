@@ -1,7 +1,7 @@
 # Decision: one stacking rule for floating UI
 
-> Status: **Decided for the first step. The Toaster portals to `body`, `--z-toast` (100) is added, the layout root is isolated, and two guard tests hold the rule. Step 3 implemented: the tokens are `--z-nav` (10), `--z-portal` (50) and `--z-toast` (100); `--z-sidebar`, `--z-popup` and `--z-overlay` are aliases until the next major (tailor-inc/platform-planning#2084), and `--z-sidebar-rail` is a value inside the sidebar.**
-> Scope: the stacking order of dialogs, sheets, menus, selects, comboboxes, tooltips and toasts in `packages/core`; the `--z-*` tokens in `globals.css`. Token renames and the toast position on narrow screens are later steps.
+> Status: **Decided for steps 1 and 2, step 3 implemented. Step 1 (tailor-platform/app-shell#668): the Toaster portals to `body`, `--z-toast` (100) is added, the layout root is isolated, and two guard tests hold the rule. Step 2: the docs state the rule, the stacked-modal guideline and the three tokens; see [Decided on 2026-11-08](#decided-on-2026-11-08-step-2). Step 3 (tailor-platform/app-shell#689): the tokens are `--z-nav` (10), `--z-portal` (50) and `--z-toast` (100); `--z-sidebar`, `--z-popup` and `--z-overlay` are aliases until the next major (tailor-inc/platform-planning#2084), and `--z-sidebar-rail` is a value inside the sidebar.**
+> Scope: the stacking order of dialogs, sheets, menus, selects, comboboxes, tooltips and toasts in `packages/core`; the `--z-*` tokens in `globals.css`. The toast position on narrow screens (step 4) is a later step.
 
 ## Context
 
@@ -25,7 +25,7 @@ Proposal: tailor-inc/platform-planning#2349. Bug: tailor-inc/platform-planning#2
 ### The mechanism, not the values, defines the order
 
 1. **One exit.** Every floating component renders through a portal to the end of `body`: Dialog, Sheet, Menu, Select, Combobox, Tooltip, the command palette (a Dialog), the sidebar flyout, and now the Toaster. Nothing floating stays inside the content column.
-2. **Open order inside the band.** Popups and overlays share the value 50 on purpose. The order is the order of opening: a select opened inside a dialog is above the dialog because it was portaled later. A static value cannot express this.
+2. **Open order inside the band.** Popups and overlays share the value 50 on purpose, so paint order is DOM order. Every portal is appended to the end of `body` on open and unmounted on close (Base UI's `keepMounted` defaults to `false`, and core does not set it on a portal), so DOM order is open order: a select opened inside a dialog is above the dialog because its portal was appended later. A static value cannot express this. A custom portal that stays mounted and only toggles visibility keeps its DOM position and does not get this order; the docs state the requirement.
 3. **An isolated root.** The sidebar wrapper, the root shared by `SidebarLayout` and `GlobalHeaderLayout`, has `isolation: isolate`. A z-index set inside the page is ordered within the page and cannot reach the portal band. The tokens become a statement of intent, not a contract consumers must keep by hand.
 4. **Guards.** `tests/floating-portal.test.tsx`: when open, the popup of each floating component is inside a portal that is a direct child of `body`, even when mounted under a stacking context. `tests/z-index-usage.test.ts`: a viewport-fixed element never uses a raw `z-*` utility, no raw value reaches 50, inline `zIndex` goes through `var(--z-*)`, and every token referenced is declared. Raw `z-10` and `z-20` stay allowed for local layering inside a component (a sticky table header, the timeline rails). `tests/browser/stacking.test.tsx` checks the result with `elementFromPoint`: Dialog on Dialog, Dialog on Sheet, a Menu inside a Dialog, each with a toast.
 
@@ -51,6 +51,33 @@ The value is set as an inline style on Sonner's `[data-sonner-toaster]`, not as 
 - Clicking a toast does not close an open dialog or sheet: Base UI ignores presses on elements it did not mark as outside, and the Toaster carries `aria-live`, which `markOthers` skips. The browser test covers it.
 - The Toaster does not get `aria-hidden` or `inert` while a modal is open, for the same reason. The browser test covers it.
 - AppShell and Base UI 1.8.0 do not use the native `<dialog>` or the Popover API. If a later version adopts the top layer, z-index stops applying to those layers, because the top layer is ordered by insertion.
+
+## Decided on 2026-11-08 (step 2)
+
+Decided in tailor-inc/platform-planning#2349 (comment of 2026-11-08). Step 2 writes these into the docs (`docs-src/concepts/styling-theming`, `components/dialog`, `components/sheet`, `patterns/form-modal`). It changes no component.
+
+### Stacked modals: two levels at most
+
+- A second modal is for a confirmation or a warning only: a confirm before discarding changes, or a picker opened from a form modal (tailor-inc/platform-planning#786).
+- `Escape` and an outside press close only the top modal. When the second modal closes, focus returns to the element that opened it.
+- A screen that needs a third level uses a step inside the dialog instead.
+- This is a docs guideline. The components do not enforce it.
+
+Checked in Base UI 1.8.0 (`dialog/root/useDialogRoot`): `escapeKey` and the outside-press check are gated on `isTopmost`, which counts nested open dialogs through the React context of the parent `Dialog.Root`. The docs therefore say to render the second dialog inside the first one's content. `DialogPopup` passes `finalFocus` as `returnFocus`, so focus returns to the trigger or the previously focused element. Not verified in a browser test; the regression test in `tests/browser/stacking.test.tsx` checks only the paint order.
+
+### Three tokens, named by layer
+
+| Token        | Value | Use                                                       | Old names, kept as aliases |
+| ------------ | ----- | --------------------------------------------------------- | -------------------------- |
+| `--z-nav`    | 10    | persistent navigation that never blocks the page          | `--z-sidebar`              |
+| `--z-portal` | 50    | everything rendered through a portal: popups and overlays | `--z-popup`, `--z-overlay` |
+| `--z-toast`  | 100   | toast                                                     | —                          |
+
+- One token for the portal band, because popups and overlays already share one value and the order inside the band comes from the open order. Two names suggest that one is above the other. If someone raises `overlay` above `popup`, a Select opened inside a Dialog goes behind the Dialog, the same failure as tailor-inc/platform-planning#1967. The difference between a popup and an overlay is a behaviour contract (an overlay blocks the page), and the docs table keeps that distinction.
+- `--z-sidebar-rail` becomes a value inside the sidebar and leaves the docs table.
+- A skip link needs no fourth token. It is in the nav layer.
+- The aliases are removed in the next major (tailor-inc/platform-planning#2084).
+- The rename landed as step 3 in tailor-platform/app-shell#689.
 
 ## Not in this step
 

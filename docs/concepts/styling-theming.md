@@ -529,22 +529,43 @@ Always give motion a reduced-motion escape (`motion-reduce:transition-none`, or 
 
 ### Z-index
 
-These exist as raw `:root` variables in the shipped base layer, but are **not** bridged into Tailwind — `z-nav` is not a class. Use the stock numeric utility, or reference the variable when you need it to track AppShell's layering:
+AppShell stacks floating UI by one rule:
 
-| Token        | Value | Use                                                   |
-| ------------ | ----- | ----------------------------------------------------- |
-| `--z-nav`    | 10    | persistent sidebar                                    |
-| `--z-portal` | 50    | menu, tooltip, popover, modal, sheet, dialog backdrop |
-| `--z-toast`  | 100   | toast, always above overlays                          |
+> Layers are ordered by how much they interrupt and how long they stay. Inside the band of layers you open and work in, the most recently opened layer is nearest to you.
 
-The old names still resolve: `--z-sidebar` is an alias of `--z-nav`, and `--z-popup` and `--z-overlay` are aliases of `--z-portal`. They are deprecated and will be removed in the next major. `--z-sidebar-rail` (20) is a value inside the sidebar, not a layer.
+| Layer       | Token        | Value | Old names (aliases)        | Where it renders              | Contract                                                                                                |
+| ----------- | ------------ | ----- | -------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Page        | —            | —     | —                          | the layout root               | The content.                                                                                            |
+| Nav         | `--z-nav`    | 10    | `--z-sidebar`              | the layout root               | Part of the page. Stays. Never blocks the page: sidebar, sticky header, bottom bar, skip link.          |
+| Portal band | `--z-portal` | 50    | `--z-popup`, `--z-overlay` | a portal at the end of `body` | Everything you open: menu, select, combobox, tooltip, dialog, sheet. The last opened is on top.         |
+| Toast       | `--z-toast`  | 100   | —                          | a portal at the end of `body` | A status message. Not part of the work. Never takes focus. Always visible, also over a dialog or sheet. |
+
+The old names are aliases with the same values and will be removed in the next major release. `--z-sidebar-rail` is a value inside the sidebar, not a public token.
+
+These exist as raw `:root` variables in the shipped base layer, but are **not** bridged into Tailwind — `z-portal` is not a class. Reference the variable:
 
 ```tsx
-<div className="z-50" />
-<div className="z-[var(--z-portal)]" />
+<div className="z-(--z-portal)" />
 ```
 
-Never invent a z value — `z-index: 9999` is always wrong. Popups and overlays share `50` intentionally: sequencing comes from DOM order, not z escalation. Every floating AppShell component (dialog, sheet, menu, select, combobox, tooltip, toast) renders through a portal to the end of `body`, and the layout root is `isolation: isolate`, so a z-index inside the page never reaches them. The toast is the one layer above the band: it is always visible over an open dialog or sheet.
+**Popup or overlay.** The portal band has one token. Whether the page behind a layer stays usable is a separate axis, set by the component and its `modal` prop:
+
+- A **popup** (menu, select, combobox, tooltip) is anchored to its trigger and closes on a click elsewhere. What it does to the page behind it depends on the component. `Menu.Root` and `Select.Root` pass `modal` to Base UI, whose default is `true`: while they are open, page scrolling is locked and pointer events outside are blocked on desktop (on touch the page stays scrollable). Pass `modal={false}` to keep the page usable. `SelectStandalone`, `Combobox`, `Autocomplete` and `Tooltip` do not block the page.
+- An **overlay** (`Dialog`, `Sheet` with `modal`) blocks the page: a scrim covers it, the rest of the page is hidden from assistive technology with `aria-hidden`, page scrolling is locked, and there is always a way to close it (a close button, `Escape`, a press on the scrim). `Dialog` and modal `Sheet` do this for you. If you build your own overlay, keep this contract, and lock scrolling on touch screens too: set `overscroll-behavior: contain` on the overlay's scroll area, because `overflow: hidden` on `body` is not enough in iOS home-screen web apps.
+
+**How the order holds.** The values alone do not define the order. Four things do:
+
+1. **One exit.** Every floating AppShell component (dialog, sheet, menu, select, combobox, tooltip, toast) renders through a portal to the end of `body`. Nothing floating stays inside the content column.
+2. **Open order inside the band.** Popups and overlays share one value on purpose, so the browser paints them in DOM order. Every AppShell portal is appended to the end of `body` when its component opens and is unmounted when it closes, so the DOM order is the order of opening: a select opened inside a dialog is above the dialog because its portal was appended later. This is why the band has one token, not two. A higher value for overlays would put that select behind the dialog.
+3. **An isolated root.** The layout root has `isolation: isolate`. A z-index set inside the page is ordered within the page and cannot reach the portal band.
+4. **Guards.** Tests in AppShell check that every open popup is a direct child of a body-level portal, and that components use the tokens and never a raw `z-*` utility on a viewport-fixed element.
+
+**What this means for your app:**
+
+- Never invent a z value. `z-index: 9999` is always wrong, and from inside the page it cannot reach the portal band anyway. A raw `z-10` for local layering inside the page (a sticky table header) is fine.
+- A floating component you build yourself stacks by open order only if it does what the AppShell components do: each time it opens, its portal is appended to the end of `body` (or moved there, if it stays mounted), it is a direct child of `body` so that it shares the parent stacking context with the AppShell portals, and it uses `--z-portal`. A portal that stays mounted and only toggles visibility keeps its old DOM position, so when it reopens it can be behind a layer that is already open.
+- Fixed UI that you place outside the layout root with a z-index above 100 covers toasts.
+- A dialog may open on top of a dialog or a sheet, two levels at most. See [`Dialog`](../components/dialog.md#stacking).
 
 ### Icons
 

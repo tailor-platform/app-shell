@@ -17,6 +17,7 @@ import {
   type EditableCellOwnerProps,
 } from "@/components/internals/table-core/editing/cell";
 import { choiceEditor } from "@/components/internals/table-core/editing/choice";
+import { toTextValue } from "@/components/internals/table-core/input-values";
 import { dateEditor } from "@/components/internals/table-core/editing/date";
 import { numberEditor, textEditor } from "@/components/internals/table-core/editing/typing";
 import { LineItemsClearError, type LineItemsEditing } from "./editing";
@@ -116,8 +117,12 @@ export function createLineItemsCellPreparers(timeZone: string) {
   ): Omit<LineItemsCellRenderers<T>, "renderCell"> {
     const align = column.align ?? getDisplayCellAdapter(column.type).defaultAlign;
     if (column.render) return { align, renderDisplay: column.render };
-    const resolveLabel = (value: unknown) =>
-      options.find((option) => option.value === value)?.label;
+    const resolveLabel = (value: unknown) => {
+      const normalized = toTextValue(value);
+      return normalized === null
+        ? undefined
+        : options.find((option) => option.value === normalized)?.label;
+    };
     if (column.type === "badge") {
       const renderBadge = createValueRenderer(column, {
         timeZone,

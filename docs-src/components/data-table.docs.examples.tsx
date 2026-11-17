@@ -8,6 +8,51 @@ import {
   useDataTable,
 } from "@tailor-platform/app-shell";
 
+export function EmptyContent() {
+  const table = useDataTable<{ id: string; title: string }>({
+    columns: [{ id: "title", label: "Request", type: "text" }],
+    data: { rows: [] },
+  });
+
+  return (
+    <DataTable.Root value={table} className="h-80">
+      <DataTable.Table
+        emptyContent={
+          <div className="space-y-2 whitespace-normal">
+            <Text.p>No requests awaiting approval</Text.p>
+            <Text.p variant="body-sm" className="text-muted-foreground">
+              New requests will appear here when they are ready for review.
+            </Text.p>
+          </div>
+        }
+      />
+    </DataTable.Root>
+  );
+}
+
+export function ErrorContent() {
+  const table = useDataTable<{ id: string; title: string }>({
+    columns: [{ id: "title", label: "Request", type: "text" }],
+    data: { rows: [] },
+    error: new Error("Request timed out"),
+  });
+
+  return (
+    <DataTable.Root value={table} className="h-80">
+      <DataTable.Table
+        errorContent={
+          <div className="space-y-2 whitespace-normal">
+            <Text.p className="text-danger-text">Unable to load requests</Text.p>
+            <Text.p variant="body-sm" className="text-muted-foreground">
+              Please try again later. Contact support if the problem persists.
+            </Text.p>
+          </div>
+        }
+      />
+    </DataTable.Root>
+  );
+}
+
 export function PerCellStyling() {
   type Overtime = { id: string; employee: string; january: number; february: number };
   const { column } = createColumnHelper<Overtime>();

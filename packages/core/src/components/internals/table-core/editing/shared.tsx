@@ -11,11 +11,18 @@ import { Popover } from "@base-ui/react/popover";
 import { CircleAlert, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
+import { Spinner } from "@/components/spinner";
 import { Table } from "@/components/table";
 import { Tooltip } from "@/components/tooltip";
 import { CellEditError } from "../cell-edit-error";
 import type { CellEditFailure } from "../cell-session";
-import type { CellEditorLabels, CellEditorNavigation, CellEditorProps, CellErrorUI } from "./props";
+import type {
+  CellEditorLabels,
+  CellEditorNavigation,
+  CellEditorProps,
+  CellEditorView,
+  CellErrorUI,
+} from "./props";
 
 /**
  * Room for the icon a dropdown or date cell shows at its right edge (a chevron
@@ -141,6 +148,20 @@ export function useCellError(
   return { callbackError, containsErrorTarget };
 }
 
+/** Describe a changed document draft without adding layout space or a focus target. */
+export function useDraftStatus(
+  labels: CellEditorLabels,
+  retained: boolean,
+  changed: boolean,
+  status: "idle" | "editing" | "confirming" | "failed",
+): CellEditorView["draftStatus"] {
+  const id = useId();
+  if (!retained || !changed || status === "idle" || status === "failed") return undefined;
+  const confirming = status === "confirming";
+  const message = confirming ? labels.confirming : labels.unconfirmed;
+  return message === undefined ? undefined : { id, message, confirming };
+}
+
 /**
  * Registers the cell's focusable element with the table's Tab
  * navigation. Unregisters on every detach instead of returning a ref cleanup:
@@ -178,6 +199,8 @@ export function EditableCellFrame({
   onEditorLeave,
   onEditorCancel,
   getFailure,
+  setErrorDetailsOpen,
+  draftStatus,
   confirming,
   children,
 }: {
@@ -192,6 +215,8 @@ export function EditableCellFrame({
   onEditorLeave?: () => void;
   onEditorCancel: () => void;
   getFailure: () => CellEditFailure | undefined;
+  setErrorDetailsOpen?: CellEditorView["setErrorDetailsOpen"];
+  draftStatus?: CellEditorView["draftStatus"];
   confirming: boolean;
   /** Typed-into cells hide the display while the input shows the text. */
   hideDisplay?: "focused" | "forced-colors";
@@ -200,19 +225,28 @@ export function EditableCellFrame({
   children: ReactNode;
 }) {
   const [tooltipOpen, setTooltipOpen] = useState(false);
+  const [focusedWithin, setFocusedWithin] = useState(false);
   const [dismissedFailure, setDismissedFailure] = useState<CellEditFailure | null>(null);
   const [manuallyOpenedFailure, setManuallyOpenedFailure] = useState<CellEditFailure | null>(null);
   const [navigationDismissedFailure, setNavigationDismissedFailure] =
     useState<CellEditFailure | null>(null);
   const errorActionsRef = useRef<Popover.Root.Actions | null>(null);
   const tabNavigationRef = useRef(false);
-  const errorOpen = !!callbackError && dismissedFailure !== callbackError.failure;
-  const showTooltip = tooltipLabel !== undefined && !editing && !callbackError;
+  const errorOpen =
+    !!callbackError &&
+    !callbackError.failure.detailsDismissed &&
+    dismissedFailure !== callbackError.failure;
+  const statusDescription = callbackError ? undefined : draftStatus;
+  const showTooltip =
+    !!statusDescription || (tooltipLabel !== undefined && !editing && !callbackError);
+  const changeErrorDetails = (failure: CellEditFailure, open: boolean) =>
+    setErrorDetailsOpen?.(failure, open) ?? failure;
   const dismissForNavigation = () => {
     const failure = getFailure();
     if (!failure || failure.source === "parse") return;
-    setNavigationDismissedFailure(failure);
-    setDismissedFailure(failure);
+    const dismissed = changeErrorDetails(failure, false);
+    setNavigationDismissedFailure(dismissed);
+    setDismissedFailure(dismissed);
   };
   useLayoutEffect(() => {
     // Remove closing focus guards before native Tab chooses its destination.
@@ -224,6 +258,10 @@ export function EditableCellFrame({
       {...cellProps}
       data-editable=""
       aria-busy={confirming || undefined}
+      onFocusCapture={() => setFocusedWithin(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setFocusedWithin(false);
+      }}
       // The editor is positioned against the cell. A pinned cell is already
       // positioned (sticky), which its inline style keeps.
       className={cn(
@@ -261,7 +299,7 @@ export function EditableCellFrame({
         ) {
           event.preventDefault();
           event.stopPropagation();
-          if (errorOpen) setDismissedFailure(callbackError.failure);
+          if (errorOpen) setDismissedFailure(changeErrorDetails(callbackError.failure, false));
           else onEditorCancel();
           return;
         }
@@ -269,7 +307,7 @@ export function EditableCellFrame({
           event.preventDefault();
           event.stopPropagation();
           setNavigationDismissedFailure(null);
-          setManuallyOpenedFailure(callbackError.failure);
+          setManuallyOpenedFailure(changeErrorDetails(callbackError.failure, true));
           setDismissedFailure(null);
           if (errorOpen) callbackError.popupRef.current?.focus({ preventScroll: true });
         }
@@ -292,6 +330,24 @@ export function EditableCellFrame({
         {display}
       </span>
       {children}
+      {statusDescription && (
+        <>
+          <span id={statusDescription.id} className="astw:sr-only">
+            {statusDescription.message}
+          </span>
+          <span
+            aria-hidden="true"
+            data-slot={`${slotPrefix}-cell-${statusDescription.confirming ? "confirming" : "unconfirmed"}`}
+            className="astw:pointer-events-none astw:absolute astw:top-1 astw:right-1 astw:text-muted-foreground"
+          >
+            {statusDescription.confirming ? (
+              <Spinner size="xs" />
+            ) : (
+              <span className="astw:block astw:size-1.5 astw:rounded-full astw:border astw:border-current" />
+            )}
+          </span>
+        </>
+      )}
       {callbackError && (
         <>
           <output id={callbackError.id} className="astw:sr-only">
@@ -301,10 +357,11 @@ export function EditableCellFrame({
             actionsRef={errorActionsRef}
             open={errorOpen}
             onOpenChange={(open) => {
-              setDismissedFailure(open ? null : callbackError.failure);
+              const failure = changeErrorDetails(callbackError.failure, open);
+              setDismissedFailure(open ? null : failure);
               if (open) {
                 setNavigationDismissedFailure(null);
-                setManuallyOpenedFailure(callbackError.failure);
+                setManuallyOpenedFailure(failure);
               }
             }}
           >
@@ -369,9 +426,12 @@ export function EditableCellFrame({
     </Table.Cell>
   );
   return (
-    <Tooltip.Root open={showTooltip && tooltipOpen} onOpenChange={setTooltipOpen}>
+    <Tooltip.Root
+      open={showTooltip && (tooltipOpen || (!!statusDescription && focusedWithin))}
+      onOpenChange={setTooltipOpen}
+    >
       <Tooltip.Trigger disabled={!showTooltip} render={cell} />
-      <Tooltip.Content>{tooltipLabel}</Tooltip.Content>
+      <Tooltip.Content>{statusDescription?.message ?? tooltipLabel}</Tooltip.Content>
     </Tooltip.Root>
   );
 }

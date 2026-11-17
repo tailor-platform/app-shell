@@ -81,6 +81,40 @@ describe("React-independent cell edit sessions", () => {
     expect(secondView).toHaveBeenCalledTimes(3);
   });
 
+  it("retains error dismissal without invalidating the edit and resets it for a new failure", () => {
+    const session = createCellEditSession<string>();
+    const error = new Error("Rejected");
+    const check = () => {
+      throw error;
+    };
+    session.change("Retained");
+    session.confirm(check);
+    const failure = session.getFailure()!;
+    const revision = session.getRevision();
+    const listener = vi.fn();
+    const detach = session.subscribe(listener);
+    const dismissed = session.setErrorDetailsOpen(failure, false)!;
+    expect(dismissed.detailsDismissed).toBe(true);
+    expect(session.getFailure()).toBe(dismissed);
+    expect(session.getRevision()).toBe(revision);
+    expect(listener).toHaveBeenCalledTimes(1);
+    session.setErrorDetailsOpen(dismissed, false);
+    expect(listener).toHaveBeenCalledTimes(1);
+    detach();
+    expect(session.getFailure()?.detailsDismissed).toBe(true);
+    const reopened = session.setErrorDetailsOpen(dismissed, true)!;
+    expect(reopened.detailsDismissed).toBe(false);
+    session.confirm(check);
+    const retried = session.getFailure()!;
+    expect(retried.error).toBe(error);
+    expect(retried.detailsDismissed).toBeUndefined();
+    expect(session.setErrorDetailsOpen(failure, false)).toBeUndefined();
+    expect(session.getFailure()).toBe(retried);
+    session.deactivate();
+    expect(session.setErrorDetailsOpen(retried, false)).toBeUndefined();
+    expect(session.getFailure()).toBe(retried);
+  });
+
   it("uses the current listener set for each notification when subscriptions change", () => {
     const session = createCellEditSession<string>();
     const late = vi.fn();

@@ -15,6 +15,9 @@ export interface CellEditorLabels {
   chooseTime: string;
   clear: string;
   done: string;
+  /** Optional presentation for document-owned sessions; omitted by collection-owned cells. */
+  unconfirmed?: string;
+  confirming?: string;
 }
 
 /** Optional owner-controlled Tab navigation; omitted tables use native Tab order. */
@@ -42,6 +45,8 @@ export interface CellEditorView {
   onEditorLeave?: () => void;
   onEditorCancel: () => void;
   getFailure: () => CellEditFailure | undefined;
+  setErrorDetailsOpen?: (failure: CellEditFailure, open: boolean) => CellEditFailure | undefined;
+  draftStatus?: { id: string; message: string; confirming: boolean };
   /** Date input preview; column formatting remains owned by the cell. */
   draftPreview?: string;
 }

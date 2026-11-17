@@ -15,6 +15,7 @@ import {
   CELL_ERROR_CLASS_NAME,
   POPUP_CLASS_NAME,
   useCellError,
+  useDraftStatus,
   useNavigationRef,
 } from "./shared";
 
@@ -114,6 +115,12 @@ function DateEditor({
     );
   };
   const activeDraft = state.status === "idle" ? baseline : state.draft;
+  const draftStatus = useDraftStatus(
+    labels,
+    !!external,
+    differs(activeDraft, baseline),
+    state.status,
+  );
   const pickedDay = toCalendarDate(activeDraft.day, timeZone);
   const dayAllowed =
     pickedDay &&
@@ -169,6 +176,8 @@ function DateEditor({
     callbackError,
     onEditorCancel: cancelEditing,
     getFailure: session.getFailure,
+    setErrorDetailsOpen: external ? session.setErrorDetailsOpen : undefined,
+    draftStatus,
     confirming: state.status === "confirming",
     draftPreview,
     input: (
@@ -177,7 +186,7 @@ function DateEditor({
           ref={register}
           aria-label={accessibleName}
           aria-invalid={callbackError ? true : undefined}
-          aria-describedby={callbackError?.id}
+          aria-describedby={callbackError?.id ?? draftStatus?.id}
           aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
           className={cn(TRIGGER_CLASS_NAME, callbackError && CELL_ERROR_CLASS_NAME)}
           onKeyDown={(event) => {

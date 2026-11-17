@@ -27,6 +27,7 @@ import {
   INPUT_CLASS_NAME,
   INPUT_DISPLAY,
   useCellError,
+  useDraftStatus,
   useNavigationRef,
 } from "./shared";
 import type { CellEditor, CellEditorProps } from "./props";
@@ -70,6 +71,13 @@ function TypingEditor<TOutput>({
   const baselineText = format(current);
   const text = state.status === "idle" ? baselineText : state.draft;
   const message = failure?.source === "parse" ? labels.notANumber : undefined;
+  const parsedDraft = parse(text);
+  const draftStatus = useDraftStatus(
+    labels,
+    !!external,
+    text !== baselineText && (parsedDraft === undefined || !isUnchanged(parsedDraft, current)),
+    state.status,
+  );
 
   const revert = (notify = false) => {
     const previous = session.getState();
@@ -194,6 +202,8 @@ function TypingEditor<TOutput>({
     onEditorLeave: handleBlur,
     onEditorCancel: () => revert(true),
     getFailure: session.getFailure,
+    setErrorDetailsOpen: external ? session.setErrorDetailsOpen : undefined,
+    draftStatus,
     confirming: state.status === "confirming",
     input: (
       <>
@@ -212,7 +222,9 @@ function TypingEditor<TOutput>({
                 readOnly={!editing}
                 aria-label={label}
                 aria-invalid={message !== undefined || callbackError ? true : undefined}
-                aria-describedby={message !== undefined ? errorId : callbackError?.id}
+                aria-describedby={
+                  message !== undefined ? errorId : (callbackError?.id ?? draftStatus?.id)
+                }
                 aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
                 inputMode={numeric ? "text" : undefined}
                 enterKeyHint="done"

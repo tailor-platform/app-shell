@@ -283,6 +283,8 @@ export function LineItemsEditableCell<T extends Record<string, unknown>>({
       chooseTime: t("chooseTime"),
       clear: t("clear"),
       done: t("done"),
+      unconfirmed: t("unconfirmed"),
+      confirming: t("confirming"),
     },
   };
   return renderCell(props);

@@ -3,6 +3,8 @@
 export interface CellEditFailure {
   error: unknown;
   source: "parse" | "change" | "commit";
+  /** Retained owners keep dismissal with this failure, not with a mounted cell. */
+  detailsDismissed?: boolean;
 }
 
 /** The cached view of one logical edit; committed row values remain owned by the caller. */
@@ -171,6 +173,13 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
     getCancellationRevision: () => cancellationRevision,
     getState: () => state,
     getFailure: () => (state.status === "failed" ? state : undefined),
+    setErrorDetailsOpen(failure: CellEditFailure, open: boolean): CellEditFailure | undefined {
+      if (!active || state.status !== "failed" || state !== failure) return undefined;
+      if (!!state.detailsDismissed === !open) return state;
+      const next = { ...state, detailsDismissed: !open };
+      transition(next);
+      return next;
+    },
     /** Registers a listener without invoking it; cleanup is idempotent and does not cancel. */
     subscribe(listener: () => void) {
       listeners.add(listener);

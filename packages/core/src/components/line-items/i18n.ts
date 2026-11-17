@@ -20,6 +20,8 @@ const labels = defineI18nLabels({
     chooseTime: "Time",
     clear: "Clear",
     done: "Done",
+    unconfirmed: "Unconfirmed input. It has not been applied to the line.",
+    confirming: "Confirming input.",
   },
   ja: {
     title: "明細",
@@ -40,6 +42,8 @@ const labels = defineI18nLabels({
     chooseTime: "時刻",
     clear: "クリア",
     done: "完了",
+    unconfirmed: "未確定の入力です。まだ明細に反映されていません。",
+    confirming: "入力を確認中です。",
   },
 });
 

@@ -21,6 +21,7 @@ import {
   INPUT_CLASS_NAME,
   INPUT_DISPLAY,
   useCellError,
+  useDraftStatus,
   useNavigationRef,
 } from "./shared";
 import type { CellEditor, CellEditorProps } from "./props";
@@ -87,6 +88,12 @@ function ChoiceEditor({
   const [focused, setFocused] = useState(false);
   const editing = state.status !== "idle";
   const activeChoice = state.status === "idle" ? selected : state.draft;
+  const draftStatus = useDraftStatus(
+    labels,
+    !!external,
+    activeChoice?.value !== value,
+    state.status,
+  );
   // The displayed search text is local while editing, even if consumer data changes.
   const [query, setQuery] = useState<string | null>(null);
   // Keep the closing list filtered until its animation completes.
@@ -276,6 +283,8 @@ function ChoiceEditor({
     onEditorLeave: handleBlur,
     onEditorCancel: cancelEditing,
     getFailure: session.getFailure,
+    setErrorDetailsOpen: external ? session.setErrorDetailsOpen : undefined,
+    draftStatus,
     confirming: state.status === "confirming",
     input: (
       <BaseCombobox.Root<Choice>
@@ -340,7 +349,7 @@ function ChoiceEditor({
           ref={register}
           aria-label={label}
           aria-invalid={callbackError ? true : undefined}
-          aria-describedby={callbackError?.id}
+          aria-describedby={callbackError?.id ?? draftStatus?.id}
           aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
           autoComplete="off"
           enterKeyHint="done"

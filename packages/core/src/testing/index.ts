@@ -5,6 +5,8 @@
 // correct while the URL bar stopped tracking navigation.
 
 export { TestRouter, type TestRouterProps } from "./test-router";
+export { createMemoryAuthClient, type MemoryAuthClient } from "./memory-auth-client";
+export { MemoryAuthProvider, type MemoryAuthProviderProps } from "./memory-auth-provider";
 
 /**
  * `AppShell`, additionally accepting `memory` / `initialEntries` so a test can

@@ -18,14 +18,14 @@ sources:
 
 ## Props
 
-| Prop         | Type              | Default  | Description                                                                                             |
-| ------------ | ----------------- | -------- | ------------------------------------------------------------------------------------------------------- |
-| `header`     | `React.ReactNode` | built-in | Replaces the sidebar header content.                                                                    |
-| `footer`     | `React.ReactNode` | -        | Footer content rendered after the navigation area.                                                      |
-| `children`   | `React.ReactNode` | -        | When provided, enables composition mode and disables auto-generation.                                   |
-| `hideHeader` | `boolean`         | `false`  | Hides the sidebar's own header row. Useful when a full-width top bar already owns the app title/toggle. |
-| `hideSearch` | `boolean`         | `false`  | Hides the built-in **Search** entry that opens the Command Palette.                                     |
-| `iconRail`   | `boolean`         | `false`  | Collapses to a persistent icon rail instead of sliding fully off-canvas.                                |
+| Prop         | Type              | Default  | Description                                                                                                      |
+| ------------ | ----------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `header`     | `React.ReactNode` | built-in | Replaces the sidebar header content. With `hideHeader`, renders directly above navigation without the stock row. |
+| `footer`     | `React.ReactNode` | -        | Footer content rendered after the navigation area.                                                               |
+| `children`   | `React.ReactNode` | -        | When provided, enables composition mode and disables auto-generation.                                            |
+| `hideHeader` | `boolean`         | `false`  | Hides the stock title/toggle row but preserves explicit `header` content. Useful with a full-width top bar.      |
+| `hideSearch` | `boolean`         | `false`  | Hides the built-in **Search** entry that opens the Command Palette.                                              |
+| `iconRail`   | `boolean`         | `false`  | Collapses to a persistent icon rail instead of sliding fully off-canvas.                                         |
 
 ## Basic usage
 
@@ -89,6 +89,21 @@ When the app title and primary toggle live in a full-width top bar, hide the sid
 ```tsx
 <SidebarLayout topBar={<MyGlobalTopBar />} sidebar={<SidebarLayout.DefaultSidebar hideHeader />} />
 ```
+
+When `hideHeader` is set, explicit `header` content renders before the scrolling navigation, without the stock title or header toggle. It remains available in responsive icon rails and mobile/tablet drawers. This also applies to `GlobalHeaderLayout.DefaultSidebar`, which sets `hideHeader` for you.
+
+```tsx
+<SidebarLayout.DefaultSidebar
+  hideHeader
+  header={
+    <div className="shrink-0 p-2">
+      <SectionSwitcher />
+    </div>
+  }
+/>
+```
+
+`SectionSwitcher` here is your application's component. Custom header content owns its spacing and compact presentation in the icon rail. Without `hideHeader`, the existing header row and its toggle behave as before.
 
 ## Custom footer
 

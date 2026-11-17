@@ -535,9 +535,9 @@
       "symbols": ["DefaultSidebar", "DefaultSidebarProps"],
       "hashes": {
         "typeSurface": "48705640a924a509",
-        "outline": "52ae5de7c9328224",
+        "outline": "7c244598d4e454d4",
         "snapshot": null,
-        "outputMd": "9b1672c71b6db3ff",
+        "outputMd": "b13a8a3cc5425bb9",
         "examples": null
       }
     },
@@ -841,9 +841,9 @@
       "symbols": ["GlobalHeaderLayout", "GlobalHeaderLayoutProps"],
       "hashes": {
         "typeSurface": "70edbc7c68dcc7aa",
-        "outline": "44d1374ea9192b2e",
+        "outline": "ea2ec82890443d19",
         "snapshot": null,
-        "outputMd": "fe86450720c4d586",
+        "outputMd": "2977d517d97144f1",
         "examples": null
       }
     },
@@ -1843,13 +1843,13 @@
     "packages/core/skills/app-shell-patterns/references/components/data-table.md": "06f3ce2174fda10a",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "d4b478c7ba8304d5",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
-    "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "9b1672c71b6db3ff",
+    "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "b13a8a3cc5425bb9",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "a347fd1f4ccd433e",
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "5ff9a70e8eea88dd",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "224745760083ee35",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "d14175ebbcef80fe",
-    "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "fe86450720c4d586",
+    "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "2977d517d97144f1",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
     "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",

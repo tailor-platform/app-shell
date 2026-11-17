@@ -39,6 +39,12 @@ The route-driven variant renders the same component at both the parent path and 
 
 <!-- example: modal-form-routed -->
 
+## Second Level: Confirm or Pick
+
+A confirmation or a picker may open on top of the form modal: a "Discard changes?" confirm when the user cancels a dirty form, or a picker that fills one field. This is the second and last level. Render it inside the form dialog's content, so `Escape` and an outside press close only the top dialog. When it closes, focus returns to the element that opened it. See [Dialog → Stacking](../components/dialog.md#stacking).
+
+<!-- example: modal-form-confirm -->
+
 ## Constraints
 
 - Dialog renders full-screen sheet below 1024px; centered max-w-md at 1024–1280px
@@ -46,6 +52,7 @@ The route-driven variant renders the same component at both the parent path and 
 - `onOpenChange` must navigate back — just calling `setOpen(false)` leaves the URL broken
 - Use `<Form onFormSubmit>`, never a bare `<form onSubmit>` — see **Form state** below
 - Cancel must be `type="button"`; inside a `<Form>` an untyped `<button>` defaults to `submit`
+- Two levels of modal at most; the second is a confirmation or a picker, rendered inside the form dialog's content
 
 ## Form state
 
@@ -80,7 +87,7 @@ placeholder.
 
 ## Anti-patterns
 
-- Nesting modals — opening a Dialog from inside another Dialog
+- A second modal that is more than a confirmation or a picker (a form inside the form modal), or a third level — use a step inside the dialog instead
 - Modal containing a wizard — promote to a routed `form/wizard`
 - Save closes the dialog but parent state is stale — wire refetch or optimistic update
 - Building a routed Create/Edit page when the design didn't explicitly call for one — modal is the default

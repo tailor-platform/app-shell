@@ -15,7 +15,7 @@ The `Alert` component is a compound component for displaying contextual status m
 import { Alert } from "@tailor-platform/app-shell";
 ```
 
-The examples below also import `Button` and `alertVariants` from `@tailor-platform/app-shell`.
+The examples below also import `useState` from `react`, and `Button`, `Text`, and `alertVariants` from `@tailor-platform/app-shell`.
 
 ## Basic Usage
 
@@ -132,66 +132,69 @@ function WithAction() {
 
 Set `dismissible` to show a close button. Use `onDismiss` to react when the alert is dismissed:
 
+<example-preview name="dismissible-alert"></example-preview>
+
 ```tsx
-<Alert.Root variant="info" dismissible onDismiss={() => markAlertRead(alertId)}>
-  <Alert.Title>New Feature Available</Alert.Title>
-  <Alert.Description>Check out the new dashboard layout in Settings.</Alert.Description>
-</Alert.Root>
+function DismissibleAlert() {
+  const [dismissed, setDismissed] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-3">
+      {dismissed ? (
+        <Button variant="outline" onClick={() => setDismissed(false)}>
+          Show alert again
+        </Button>
+      ) : (
+        <Alert.Root variant="info" dismissible onDismiss={() => setDismissed(true)}>
+          <Alert.Title>New Feature Available</Alert.Title>
+          <Alert.Description>Check out the new dashboard layout in Settings.</Alert.Description>
+        </Alert.Root>
+      )}
+      <Text.p role="status">
+        {dismissed ? "Alert dismissed." : "Use the close button to dismiss this alert."}
+      </Text.p>
+    </div>
+  );
+}
 ```
 
 > **Note:** When `dismissible` is `true`, clicking the close button hides the alert via internal state. The `onDismiss` callback fires after the alert is hidden.
 
 ## Examples
 
-### Form Validation Error
-
-```tsx
-function OrderForm() {
-  const [error, setError] = useState<string | null>(null);
-
-  return (
-    <form>
-      {error && (
-        <Alert.Root variant="error" dismissible onDismiss={() => setError(null)}>
-          <Alert.Title>Submission Failed</Alert.Title>
-          <Alert.Description>{error}</Alert.Description>
-        </Alert.Root>
-      )}
-      {/* form fields */}
-    </form>
-  );
-}
-```
-
-### Success Confirmation
-
-<example-preview name="success-confirmation"></example-preview>
-
-```tsx
-function SuccessConfirmation() {
-  return (
-    <Alert.Root variant="success">
-      <Alert.Title>Invoice Created</Alert.Title>
-      <Alert.Description>Invoice #INV-0042 has been sent to the customer.</Alert.Description>
-    </Alert.Root>
-  );
-}
-```
-
 ### Warning with Action
 
+This example records the action locally instead of navigating away from the documentation or changing billing information.
+
+<example-preview name="warning-with-action"></example-preview>
+
 ```tsx
-<Alert.Root
-  variant="warning"
-  action={
-    <Button size="sm" variant="outline" onClick={() => navigate("/settings/billing")}>
-      Update Billing
-    </Button>
-  }
->
-  <Alert.Title>Payment Method Expiring</Alert.Title>
-  <Alert.Description>Your credit card on file expires at the end of this month.</Alert.Description>
-</Alert.Root>
+function WarningWithAction() {
+  const [requested, setRequested] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Alert.Root
+        variant="warning"
+        action={
+          <Button size="sm" variant="outline" onClick={() => setRequested(true)}>
+            Update Billing
+          </Button>
+        }
+      >
+        <Alert.Title>Payment Method Expiring</Alert.Title>
+        <Alert.Description>
+          Your credit card on file expires at the end of this month.
+        </Alert.Description>
+      </Alert.Root>
+      <Text.p role="status">
+        {requested
+          ? "Billing settings would open here."
+          : "Click Update Billing to try the action."}
+      </Text.p>
+    </div>
+  );
+}
 ```
 
 ## Accessibility

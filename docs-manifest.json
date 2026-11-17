@@ -99,10 +99,10 @@
       "symbols": ["Alert", "AlertProps", "alertVariants"],
       "hashes": {
         "typeSurface": "f28bf34ae1466912",
-        "outline": "426d48dab41c630a",
+        "outline": "1b9e33f32c7749d7",
         "snapshot": "049e72553f5b7a6f",
-        "outputMd": "ec553870bcb95413",
-        "examples": "21dfc1ea35de5ebb"
+        "outputMd": "9b237d9c19b54102",
+        "examples": "8d745ceb610be06d"
       }
     },
     "app-shell": {
@@ -144,7 +144,7 @@
       "kind": "code-backed",
       "outline": "docs-src/components/attachment.docs.outline.md",
       "output": "docs/components/attachment.md",
-      "examples": null,
+      "examples": "docs-src/components/attachment.docs.examples.tsx",
       "sources": ["packages/core/src/components/attachment/**"],
       "claims": [],
       "symbols": [
@@ -157,10 +157,10 @@
       ],
       "hashes": {
         "typeSurface": "0a9f0c3f82e57e02",
-        "outline": "66aaf22c5067aef1",
+        "outline": "01da6dcb4ae1c2ed",
         "snapshot": "a5bfea8fbe1224ea",
-        "outputMd": "35bebce540d6ac28",
-        "examples": null
+        "outputMd": "8922f126009ee1df",
+        "examples": "6b3ce930e0731c54"
       }
     },
     "authentication": {
@@ -1827,10 +1827,10 @@
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "1741cb78abd51827",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "230039d9f96fd264",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "600d9c288c10878d",
-    "packages/core/skills/app-shell-patterns/references/components/alert.md": "ec553870bcb95413",
+    "packages/core/skills/app-shell-patterns/references/components/alert.md": "9b237d9c19b54102",
     "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "cd57abd4909118a4",
     "packages/core/skills/app-shell-patterns/references/components/appearance-switcher.md": "b55f1d538651d467",
-    "packages/core/skills/app-shell-patterns/references/components/attachment.md": "35bebce540d6ac28",
+    "packages/core/skills/app-shell-patterns/references/components/attachment.md": "8922f126009ee1df",
     "packages/core/skills/app-shell-patterns/references/components/autocomplete.md": "eb5793246e7d561e",
     "packages/core/skills/app-shell-patterns/references/components/avatar.md": "1a98b46e63c2cf7c",
     "packages/core/skills/app-shell-patterns/references/components/badge.md": "7897980baf93a074",

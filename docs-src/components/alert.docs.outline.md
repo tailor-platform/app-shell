@@ -17,7 +17,7 @@ The `Alert` component is a compound component for displaying contextual status m
 import { Alert } from "@tailor-platform/app-shell";
 ```
 
-The examples below also import `Button` and `alertVariants` from `@tailor-platform/app-shell`.
+The examples below also import `useState` from `react`, and `Button`, `Text`, and `alertVariants` from `@tailor-platform/app-shell`.
 
 ## Basic Usage
 
@@ -59,56 +59,17 @@ Use the `action` prop to render an action element below the description:
 
 Set `dismissible` to show a close button. Use `onDismiss` to react when the alert is dismissed:
 
-```tsx
-<Alert.Root variant="info" dismissible onDismiss={() => markAlertRead(alertId)}>
-  <Alert.Title>New Feature Available</Alert.Title>
-  <Alert.Description>Check out the new dashboard layout in Settings.</Alert.Description>
-</Alert.Root>
-```
+<!-- example: dismissible-alert -->
 
 > **Note:** When `dismissible` is `true`, clicking the close button hides the alert via internal state. The `onDismiss` callback fires after the alert is hidden.
 
 ## Examples
 
-### Form Validation Error
-
-```tsx
-function OrderForm() {
-  const [error, setError] = useState<string | null>(null);
-
-  return (
-    <form>
-      {error && (
-        <Alert.Root variant="error" dismissible onDismiss={() => setError(null)}>
-          <Alert.Title>Submission Failed</Alert.Title>
-          <Alert.Description>{error}</Alert.Description>
-        </Alert.Root>
-      )}
-      {/* form fields */}
-    </form>
-  );
-}
-```
-
-### Success Confirmation
-
-<!-- example: success-confirmation -->
-
 ### Warning with Action
 
-```tsx
-<Alert.Root
-  variant="warning"
-  action={
-    <Button size="sm" variant="outline" onClick={() => navigate("/settings/billing")}>
-      Update Billing
-    </Button>
-  }
->
-  <Alert.Title>Payment Method Expiring</Alert.Title>
-  <Alert.Description>Your credit card on file expires at the end of this month.</Alert.Description>
-</Alert.Root>
-```
+This example records the action locally instead of navigating away from the documentation or changing billing information.
+
+<!-- example: warning-with-action -->
 
 ## Accessibility
 

@@ -12,10 +12,10 @@
       "symbols": ["ActionPanel", "ActionPanelProps"],
       "hashes": {
         "typeSurface": "f497e4e3021d029a",
-        "outline": "2e5fe6fdb0636b7c",
+        "outline": "f5634bc87b9c9b35",
         "snapshot": null,
-        "outputMd": "03362008aa77d4cf",
-        "examples": "97546c5d7e75d710"
+        "outputMd": "1741cb78abd51827",
+        "examples": "03289934089b285c"
       }
     },
     "activity-card": {
@@ -37,10 +37,10 @@
       ],
       "hashes": {
         "typeSurface": "8aa0f940fced61be",
-        "outline": "f2f7693515c414f9",
+        "outline": "0acb8012d3e5db12",
         "snapshot": null,
-        "outputMd": "c59d9c40b9918fe0",
-        "examples": "dc5a764073046dce"
+        "outputMd": "230039d9f96fd264",
+        "examples": "c566c6f9fd4e00f6"
       }
     },
     "aggregations": {
@@ -293,10 +293,10 @@
       "symbols": ["Combobox", "ComboboxAsyncFetcher"],
       "hashes": {
         "typeSurface": "74ec02220321c626",
-        "outline": "7504ff9a5d8f8dc2",
+        "outline": "697f63e69aac841d",
         "snapshot": "6fe89974e3712977",
-        "outputMd": "27b506bc032eedc5",
-        "examples": "e98b421a13c14e3f"
+        "outputMd": "c79cd0fe175187e3",
+        "examples": "ca8cc80aeca713e6"
       }
     },
     "command-palette": {
@@ -1249,10 +1249,10 @@
       "symbols": ["Select", "SelectAsyncFetcher"],
       "hashes": {
         "typeSurface": "429710973dfa912b",
-        "outline": "ea83ec331e2d9e5c",
+        "outline": "c542e6fc7c775d4a",
         "snapshot": "c7aa045d22de4cc7",
-        "outputMd": "94c4aa86831a15ea",
-        "examples": "cb4ae6d8371b373e"
+        "outputMd": "7e20d26620366d82",
+        "examples": "260fb265390c4947"
       }
     },
     "sheet": {
@@ -1549,7 +1549,7 @@
       "kind": "code-backed",
       "outline": "docs-src/components/tree.docs.outline.md",
       "output": "docs/components/tree.md",
-      "examples": null,
+      "examples": "docs-src/components/tree.docs.examples.tsx",
       "sources": [
         "packages/core/src/components/tree/**",
         "packages/core/src/lib/tree/**",
@@ -1569,10 +1569,10 @@
       ],
       "hashes": {
         "typeSurface": "95d4d96e2c7cad05",
-        "outline": "6bf693a08fb6db9f",
+        "outline": "1044541495fff6fd",
         "snapshot": "e63b60420ec5113f",
-        "outputMd": "11c3358163ce9216",
-        "examples": null
+        "outputMd": "6010470f3c41538a",
+        "examples": "7e372a50c2939317"
       }
     },
     "use-ai-chat": {
@@ -1824,8 +1824,8 @@
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "ba49357df367615b",
     "packages/core/skills/app-shell-patterns/references/concepts/testing.md": "777fd9ba9f4641f8",
-    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "03362008aa77d4cf",
-    "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "c59d9c40b9918fe0",
+    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "1741cb78abd51827",
+    "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "230039d9f96fd264",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "600d9c288c10878d",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "ec553870bcb95413",
     "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "cd57abd4909118a4",
@@ -1837,7 +1837,7 @@
     "packages/core/skills/app-shell-patterns/references/components/button.md": "be862b0bff15cc1a",
     "packages/core/skills/app-shell-patterns/references/components/card.md": "c1f88a287f197d79",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "3486b9b3bbc6b4aa",
-    "packages/core/skills/app-shell-patterns/references/components/combobox.md": "27b506bc032eedc5",
+    "packages/core/skills/app-shell-patterns/references/components/combobox.md": "c79cd0fe175187e3",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "10c04c78bb846c9a",
     "packages/core/skills/app-shell-patterns/references/components/data-table.md": "06f3ce2174fda10a",
@@ -1856,7 +1856,7 @@
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "3b8bf269c15e2fa5",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "f3daffeba45ee3dd",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "4742120c07f00991",
-    "packages/core/skills/app-shell-patterns/references/components/select.md": "94c4aa86831a15ea",
+    "packages/core/skills/app-shell-patterns/references/components/select.md": "7e20d26620366d82",
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "0be1c6430a4b7ec1",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "370eccb532278bd1",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
@@ -1870,7 +1870,7 @@
     "packages/core/skills/app-shell-patterns/references/components/timeline.md": "958b33e8fa7a9e2b",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "f8a45109e97391f5",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "0f1ebe2b142513a6",
-    "packages/core/skills/app-shell-patterns/references/components/tree.md": "11c3358163ce9216",
+    "packages/core/skills/app-shell-patterns/references/components/tree.md": "6010470f3c41538a",
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "8d4fc931339d9a3f",
     "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "9cdbe8ff36288881",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",

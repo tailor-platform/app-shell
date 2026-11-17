@@ -25,6 +25,58 @@ export function BasicUsage() {
   return <ActivityCard items={items} title="Updates" />;
 }
 
+export function OverflowAndDialog() {
+  const descriptions = [
+    "sent the order confirmation",
+    "confirmed the order",
+    "approved the order",
+    "updated the delivery date",
+    "added a note",
+    "changed the shipping address",
+    "added a line item",
+    "created the order",
+  ];
+  const items = descriptions.map((description, index) => ({
+    id: String(index),
+    actor: { name: index % 2 === 0 ? "Avery" : "Morgan" },
+    description,
+    timestamp: new Date(2026, 2, 21, 17 - index),
+  }));
+
+  return <ActivityCard items={items} title="Order updates" maxVisible={6} overflowLabel="more" />;
+}
+
+export function GroupingByDay() {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const earlier = new Date(today);
+  earlier.setDate(earlier.getDate() - 3);
+
+  const items = [
+    {
+      id: "confirmed",
+      actor: { name: "Avery" },
+      description: "confirmed the order",
+      timestamp: today,
+    },
+    {
+      id: "updated",
+      actor: { name: "Morgan" },
+      description: "updated the delivery date",
+      timestamp: yesterday,
+    },
+    {
+      id: "created",
+      actor: { name: "Avery" },
+      description: "created the order",
+      timestamp: earlier,
+    },
+  ];
+
+  return <ActivityCard items={items} title="Updates by day" groupBy="day" />;
+}
+
 export function CompoundItems() {
   interface MyItem extends ActivityCardBaseItem {
     kind: "approval" | "update";

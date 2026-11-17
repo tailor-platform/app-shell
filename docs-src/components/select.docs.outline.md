@@ -17,7 +17,7 @@ The `Select` component provides a fully assembled single or multi-select dropdow
 import { Select } from "@tailor-platform/app-shell";
 ```
 
-The examples below also import `Field` from `@tailor-platform/app-shell`.
+The examples below also import `useState` from `react`, and `Field`, `Text`, and the `SelectAsyncFetcher` type from `@tailor-platform/app-shell`.
 
 ## Basic Usage
 
@@ -82,21 +82,9 @@ When items are objects, use `mapItem` to tell the component how to display them:
 
 Use `Select.Async` to load items from an API. The fetcher is called each time the dropdown is opened.
 
-```tsx
-import { type SelectAsyncFetcher } from "@tailor-platform/app-shell";
+This example uses local data with a short delay so you can try loading and selection without a backend. Reopen the dropdown to load the items again. For a real API, replace the mock fetcher with `fetch(url, { signal })` and parse the response, forwarding the supplied `AbortSignal` to cancel requests when the dropdown closes.
 
-const fetcher: SelectAsyncFetcher<Fruit> = async ({ signal }) => {
-  const res = await fetch("/api/fruits", { signal });
-  return res.json();
-};
-
-<Select.Async
-  fetcher={fetcher}
-  mapItem={(fruit) => ({ label: fruit.name, key: String(fruit.id) })}
-  placeholder="Pick a fruit"
-  onValueChange={(fruit) => console.log(fruit)}
-/>;
-```
+<!-- example: async-loading -->
 
 ### Select.Async Props
 

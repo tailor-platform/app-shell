@@ -15,6 +15,8 @@ The `Combobox` component provides a searchable combobox with built-in filtering.
 import { Combobox } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `useState` from `react`, and `Text` and the `ComboboxAsyncFetcher` type from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -113,24 +115,36 @@ function MultiSelect() {
 
 Add `onCreateItem` to let users create new items on-the-fly. `T` must be an object type:
 
+<example-preview name="creatable-items"></example-preview>
+
 ```tsx
-type Tag = { id: string; name: string };
+function CreatableItems() {
+  type Tag = { id: string; name: string };
+  const [tags, setTags] = useState<Tag[]>([
+    { id: "1", name: "Bug" },
+    { id: "2", name: "Feature" },
+  ]);
+  const [selected, setSelected] = useState<Tag | null>(null);
 
-const [tags, setTags] = useState<Tag[]>([
-  { id: "1", name: "Bug" },
-  { id: "2", name: "Feature" },
-]);
-
-<Combobox
-  items={tags}
-  mapItem={(tag) => ({ label: tag.name, key: tag.id })}
-  onCreateItem={(value) => {
-    const newTag: Tag = { id: crypto.randomUUID(), name: value };
-    setTags((prev) => [...prev, newTag]);
-    return newTag; // return the new item to add it to the selection
-  }}
-  placeholder="Search or create a tag..."
-/>;
+  return (
+    <div className="flex flex-col gap-3">
+      <Combobox
+        items={tags}
+        mapItem={(tag) => ({ label: tag.name, key: tag.id })}
+        value={selected}
+        onValueChange={setSelected}
+        onCreateItem={(name) => {
+          const tag: Tag = { id: crypto.randomUUID(), name };
+          setTags((previous) => [...previous, tag]);
+          return tag;
+        }}
+        aria-label="Tag"
+        placeholder="Search or create a tag..."
+      />
+      <Text.p>Selected tag: {selected?.name ?? "None"}</Text.p>
+    </div>
+  );
+}
 ```
 
 `onCreateItem` may return:
@@ -143,20 +157,41 @@ const [tags, setTags] = useState<Tag[]>([
 
 Use `Combobox.Async` to load items from an API. The fetcher is called on each keystroke (debounced). When the dropdown first opens or the input is cleared, the fetcher receives `null` as the query — return initial/default items for `null`, or return an empty array to show nothing until the user starts typing.
 
+This example uses local data with a short delay so you can try loading, searching, and empty results without a backend. For a real API, replace the mock fetcher with `fetch(url, { signal })` and parse the response, forwarding the supplied `AbortSignal` to cancel superseded requests.
+
+<example-preview name="async-loading"></example-preview>
+
 ```tsx
-import { type ComboboxAsyncFetcher } from "@tailor-platform/app-shell";
+function AsyncLoading() {
+  type User = { id: string; name: string };
+  const [users] = useState<User[]>([
+    { id: "1", name: "Alex Rivera" },
+    { id: "2", name: "Morgan Lee" },
+    { id: "3", name: "Sam Taylor" },
+  ]);
+  const [selected, setSelected] = useState<User | null>(null);
+  const fetcher: ComboboxAsyncFetcher<User> = async (query, { signal }) => {
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    signal.throwIfAborted();
+    return users.filter((user) => user.name.toLowerCase().includes((query ?? "").toLowerCase()));
+  };
 
-const fetcher: ComboboxAsyncFetcher<User> = async (query, { signal }) => {
-  const res = await fetch(`/api/users?q=${query ?? ""}`, { signal });
-  return res.json();
-};
-
-<Combobox.Async
-  fetcher={fetcher}
-  mapItem={(user) => ({ label: user.name, key: user.id })}
-  placeholder="Search users..."
-  onValueChange={(user) => console.log(user)}
-/>;
+  return (
+    <div className="flex flex-col gap-3">
+      <Combobox.Async
+        fetcher={fetcher}
+        mapItem={(user) => ({ label: user.name, key: user.id })}
+        value={selected}
+        onValueChange={setSelected}
+        aria-label="User search"
+        placeholder="Search users..."
+        loadingText="Loading users..."
+        emptyText="No users found."
+      />
+      <Text.p>Selected user: {selected?.name ?? "None"}</Text.p>
+    </div>
+  );
+}
 ```
 
 `Combobox.Async` also supports `onCreateItem` for creatable async comboboxes.

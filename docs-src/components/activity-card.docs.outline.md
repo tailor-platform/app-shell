@@ -34,18 +34,15 @@ Use `ActivityCardItem` for each item in the standalone API. Use `ActivityCardBas
 
 By default the card shows the 6 most recent activities. If there are more, a button appears at the bottom (e.g. **"2 more activities"**). Clicking it opens a modal dialog titled "All activities" with the full list in a scrollable area. The overflow label can be switched to a count style (**"+2"**) via the `overflowLabel` prop.
 
-```tsx
-<ActivityCard items={manyItems} title="Updates" maxVisible={6} overflowLabel="more" />
-// or overflowLabel="count" for "+N"
-```
+<!-- example: overflow-and-dialog -->
 
 ## Grouping by day
 
 Set `groupBy="day"` to group activities under labels like "TODAY", "YESTERDAY", or a formatted date.
 
-```tsx
-<ActivityCard items={items} title="Updates" groupBy="day" />
-```
+The example uses dates relative to today so all three labels remain visible as time passes.
+
+<!-- example: grouping-by-day -->
 
 ## Props
 

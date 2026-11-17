@@ -38,17 +38,70 @@ function BasicUsage() {
 
 By default the card shows the 6 most recent activities. If there are more, a button appears at the bottom (e.g. **"2 more activities"**). Clicking it opens a modal dialog titled "All activities" with the full list in a scrollable area. The overflow label can be switched to a count style (**"+2"**) via the `overflowLabel` prop.
 
+<example-preview name="overflow-and-dialog"></example-preview>
+
 ```tsx
-<ActivityCard items={manyItems} title="Updates" maxVisible={6} overflowLabel="more" />
-// or overflowLabel="count" for "+N"
+function OverflowAndDialog() {
+  const descriptions = [
+    "sent the order confirmation",
+    "confirmed the order",
+    "approved the order",
+    "updated the delivery date",
+    "added a note",
+    "changed the shipping address",
+    "added a line item",
+    "created the order",
+  ];
+  const items = descriptions.map((description, index) => ({
+    id: String(index),
+    actor: { name: index % 2 === 0 ? "Avery" : "Morgan" },
+    description,
+    timestamp: new Date(2026, 2, 21, 17 - index),
+  }));
+
+  return <ActivityCard items={items} title="Order updates" maxVisible={6} overflowLabel="more" />;
+}
 ```
 
 ## Grouping by day
 
 Set `groupBy="day"` to group activities under labels like "TODAY", "YESTERDAY", or a formatted date.
 
+The example uses dates relative to today so all three labels remain visible as time passes.
+
+<example-preview name="grouping-by-day"></example-preview>
+
 ```tsx
-<ActivityCard items={items} title="Updates" groupBy="day" />
+function GroupingByDay() {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const earlier = new Date(today);
+  earlier.setDate(earlier.getDate() - 3);
+
+  const items = [
+    {
+      id: "confirmed",
+      actor: { name: "Avery" },
+      description: "confirmed the order",
+      timestamp: today,
+    },
+    {
+      id: "updated",
+      actor: { name: "Morgan" },
+      description: "updated the delivery date",
+      timestamp: yesterday,
+    },
+    {
+      id: "created",
+      actor: { name: "Avery" },
+      description: "created the order",
+      timestamp: earlier,
+    },
+  ];
+
+  return <ActivityCard items={items} title="Updates by day" groupBy="day" />;
+}
 ```
 
 ## Props

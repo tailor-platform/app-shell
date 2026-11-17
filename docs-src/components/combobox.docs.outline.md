@@ -17,6 +17,8 @@ The `Combobox` component provides a searchable combobox with built-in filtering.
 import { Combobox } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `useState` from `react`, and `Text` and the `ComboboxAsyncFetcher` type from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -76,25 +78,7 @@ In multi-select mode, selected items are displayed as chips inside the input:
 
 Add `onCreateItem` to let users create new items on-the-fly. `T` must be an object type:
 
-```tsx
-type Tag = { id: string; name: string };
-
-const [tags, setTags] = useState<Tag[]>([
-  { id: "1", name: "Bug" },
-  { id: "2", name: "Feature" },
-]);
-
-<Combobox
-  items={tags}
-  mapItem={(tag) => ({ label: tag.name, key: tag.id })}
-  onCreateItem={(value) => {
-    const newTag: Tag = { id: crypto.randomUUID(), name: value };
-    setTags((prev) => [...prev, newTag]);
-    return newTag; // return the new item to add it to the selection
-  }}
-  placeholder="Search or create a tag..."
-/>;
-```
+<!-- example: creatable-items -->
 
 `onCreateItem` may return:
 
@@ -106,21 +90,9 @@ const [tags, setTags] = useState<Tag[]>([
 
 Use `Combobox.Async` to load items from an API. The fetcher is called on each keystroke (debounced). When the dropdown first opens or the input is cleared, the fetcher receives `null` as the query — return initial/default items for `null`, or return an empty array to show nothing until the user starts typing.
 
-```tsx
-import { type ComboboxAsyncFetcher } from "@tailor-platform/app-shell";
+This example uses local data with a short delay so you can try loading, searching, and empty results without a backend. For a real API, replace the mock fetcher with `fetch(url, { signal })` and parse the response, forwarding the supplied `AbortSignal` to cancel superseded requests.
 
-const fetcher: ComboboxAsyncFetcher<User> = async (query, { signal }) => {
-  const res = await fetch(`/api/users?q=${query ?? ""}`, { signal });
-  return res.json();
-};
-
-<Combobox.Async
-  fetcher={fetcher}
-  mapItem={(user) => ({ label: user.name, key: user.id })}
-  placeholder="Search users..."
-  onValueChange={(user) => console.log(user)}
-/>;
-```
+<!-- example: async-loading -->
 
 `Combobox.Async` also supports `onCreateItem` for creatable async comboboxes.
 

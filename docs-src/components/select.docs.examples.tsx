@@ -1,4 +1,5 @@
-import { Field, Select } from "@tailor-platform/app-shell";
+import { useState } from "react";
+import { Field, Select, Text, type SelectAsyncFetcher } from "@tailor-platform/app-shell";
 
 export function BasicUsage() {
   return (
@@ -46,6 +47,36 @@ export function MultiSelect() {
       placeholder="Pick colors"
       onValueChange={(colors) => console.log(colors)}
     />
+  );
+}
+
+export function AsyncLoading() {
+  type Fruit = { id: number; name: string };
+  const [fruits] = useState<Fruit[]>([
+    { id: 1, name: "Apple" },
+    { id: 2, name: "Banana" },
+    { id: 3, name: "Cherry" },
+  ]);
+  const [selected, setSelected] = useState<Fruit | null>(null);
+  const fetcher: SelectAsyncFetcher<Fruit> = async ({ signal }) => {
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    signal.throwIfAborted();
+    return fruits;
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Select.Async
+        fetcher={fetcher}
+        mapItem={(fruit) => ({ label: fruit.name, key: String(fruit.id) })}
+        value={selected}
+        onValueChange={setSelected}
+        aria-label="Async fruit"
+        placeholder="Pick a fruit"
+        loadingText="Loading fruits..."
+      />
+      <Text.p>Selected fruit: {selected?.name ?? "None"}</Text.p>
+    </div>
   );
 }
 

@@ -25,6 +25,7 @@ export type {
   DataTableTreeRow,
   DateCellEditOptions,
   DateCellOptions,
+  DateTimeDraft,
   LinkCellOptions,
   MetadataFieldOptions,
   MoneyCellOptions,

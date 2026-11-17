@@ -1,6 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { TreeSelectionBehaviorProps } from "@/lib/tree/types";
 import type { DateTimeDraft } from "@/components/internals/table-core/editing/date";
+export type { DateTimeDraft } from "@/components/internals/table-core/editing/date";
 import type {
   BadgeCellOptions,
   DateCellOptions,

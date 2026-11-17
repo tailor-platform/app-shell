@@ -360,6 +360,7 @@ export {
   type NumberCellEditOptions,
   type BadgeCellEditOptions,
   type DateCellEditOptions,
+  type DateTimeDraft,
   type CellEditState,
 } from "./components/data-table";
 export { useCollectionVariables } from "./hooks/use-collection-variables";

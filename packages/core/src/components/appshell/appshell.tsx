@@ -132,14 +132,13 @@ type SharedAppShellProps = React.PropsWithChildren<{
    *
    * Built-in: `toast.error(...)`, the error state of `toast.promise(...)`, and any toast
    * with an `action` get `{ duration: Infinity, closeButton: true }`, so they stay until
-   * the user closes them. A kind set here replaces its built-in default as a whole; a kind
-   * left out keeps it. Pass `{}` for a kind to fall back to sonner's own defaults (4 s, no
-   * close button).
+   * the user closes them. A field set here replaces that field only; fields and kinds left
+   * out keep the built-in default. An empty object for a kind is a type error.
    *
    * @example
    * ```tsx
-   * // Errors close on their own again; toasts with an action still stay.
-   * <AppShell toastDefaults={{ error: {} }} modules={[...]} />
+   * // Errors close after 4 s without a close button, as before; toasts with an action still stay.
+   * <AppShell toastDefaults={{ error: { duration: 4000, closeButton: false } }} modules={[...]} />
    * ```
    */
   toastDefaults?: ToastDefaults;

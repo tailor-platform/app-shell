@@ -61,7 +61,10 @@ describe("useToast", () => {
     await act(async () => {
       toast.error("Failed to save");
     });
-    expect(activeToast("Failed to save")).toMatchObject({ duration: Infinity, closeButton: true });
+    expect(activeToast("Failed to save")).toMatchObject({
+      duration: Infinity,
+      closeButton: true,
+    });
     await waitFor(() => {
       expect(closeButtonOf("Failed to save")).not.toBeNull();
     });
@@ -71,10 +74,18 @@ describe("useToast", () => {
     renderToaster();
     await act(async () => {
       toast("Order archived", { action: { label: "Undo", onClick: () => {} } });
-      toast.success("Order approved", { action: { label: "View", onClick: () => {} } });
+      toast.success("Order approved", {
+        action: { label: "View", onClick: () => {} },
+      });
     });
-    expect(activeToast("Order archived")).toMatchObject({ duration: Infinity, closeButton: true });
-    expect(activeToast("Order approved")).toMatchObject({ duration: Infinity, closeButton: true });
+    expect(activeToast("Order archived")).toMatchObject({
+      duration: Infinity,
+      closeButton: true,
+    });
+    expect(activeToast("Order approved")).toMatchObject({
+      duration: Infinity,
+      closeButton: true,
+    });
   });
 
   it("lets the caller's duration and closeButton win", async () => {
@@ -83,9 +94,18 @@ describe("useToast", () => {
       toast.error("Quiet", { closeButton: false });
       toast.error("Forwarded", { duration: undefined, closeButton: undefined });
     });
-    expect(activeToast("Retrying")).toMatchObject({ duration: 1000, closeButton: true });
-    expect(activeToast("Quiet")).toMatchObject({ duration: Infinity, closeButton: false });
-    expect(activeToast("Forwarded")).toMatchObject({ duration: Infinity, closeButton: true });
+    expect(activeToast("Retrying")).toMatchObject({
+      duration: 1000,
+      closeButton: true,
+    });
+    expect(activeToast("Quiet")).toMatchObject({
+      duration: Infinity,
+      closeButton: false,
+    });
+    expect(activeToast("Forwarded")).toMatchObject({
+      duration: Infinity,
+      closeButton: true,
+    });
   });
 
   it("leaves toasts without an action on Sonner's defaults", async () => {
@@ -111,12 +131,18 @@ describe("useToast", () => {
     renderToaster();
     await act(async () => {
       toast.success("Saved", { id: toast.error("Save failed") });
-      toast.success("Kept", { id: toast.error("Other failure"), duration: 8000 });
+      toast.success("Kept", {
+        id: toast.error("Other failure"),
+        duration: 8000,
+      });
     });
     expect(activeToast("Saved")).toMatchObject({ type: "success" });
     expect(activeToast("Saved")?.duration).toBeUndefined();
     expect(activeToast("Saved")?.closeButton).toBeUndefined();
-    expect(activeToast("Kept")).toMatchObject({ type: "success", duration: 8000 });
+    expect(activeToast("Kept")).toMatchObject({
+      type: "success",
+      duration: 8000,
+    });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(5000);
     });
@@ -129,7 +155,10 @@ describe("useToast", () => {
     renderToaster();
     await act(async () => {
       toast.error("Locked", { dismissible: false });
-      toast("Pinned", { dismissible: false, action: { label: "Undo", onClick: () => {} } });
+      toast("Pinned", {
+        dismissible: false,
+        action: { label: "Undo", onClick: () => {} },
+      });
       toast.error("Kept open", { dismissible: false, duration: Infinity });
     });
     for (const title of ["Locked", "Pinned"]) {
@@ -211,7 +240,10 @@ describe("useToast", () => {
   it("lets a promise call's own options win over the error defaults", async () => {
     const fromFunction = toast.promise(Promise.reject(new Error("boom")), {
       loading: "Saving A",
-      error: (error: Error) => ({ message: `A: ${error.message}`, duration: 1500 }),
+      error: (error: Error) => ({
+        message: `A: ${error.message}`,
+        duration: 1500,
+      }),
     });
     const fromCall = toast.promise(Promise.reject(new Error("boom")), {
       loading: "Saving B",
@@ -262,20 +294,29 @@ describe("useToast with <AppShell toastDefaults>", () => {
     await act(async () => {
       t.error("Failed");
     });
-    expect(activeToast("Failed")).toMatchObject({ duration: Infinity, closeButton: true });
+    expect(activeToast("Failed")).toMatchObject({
+      duration: Infinity,
+      closeButton: true,
+    });
   });
 
-  it("replaces one kind with sonner's defaults and keeps the other", async () => {
+  it("restores the previous behavior for one kind and keeps the other", async () => {
     vi.useFakeTimers();
     renderToaster();
-    const t = useToastWith({ error: {} });
+    const t = useToastWith({ error: { duration: 4000, closeButton: false } });
     await act(async () => {
       t.error("Failed");
       t("Archived", { action: { label: "Undo", onClick: () => {} } });
     });
-    expect(activeToast("Failed")?.duration).toBeUndefined();
-    expect(activeToast("Failed")?.closeButton).toBeUndefined();
-    expect(activeToast("Archived")).toMatchObject({ duration: Infinity, closeButton: true });
+    expect(activeToast("Failed")).toMatchObject({
+      duration: 4000,
+      closeButton: false,
+    });
+    expect(closeButtonOf("Failed")).toBeFalsy();
+    expect(activeToast("Archived")).toMatchObject({
+      duration: Infinity,
+      closeButton: true,
+    });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(5000);
     });
@@ -283,18 +324,28 @@ describe("useToast with <AppShell toastDefaults>", () => {
     expect(document.body.textContent).toContain("Archived");
   });
 
-  it("applies a configured default as a whole, and the caller still wins", async () => {
-    const t = useToastWith({ error: { duration: 10_000 }, action: { closeButton: true } });
+  it("overrides only the configured fields, and the caller still wins", async () => {
+    const t = useToastWith({
+      error: { duration: 10_000 },
+      action: { closeButton: false },
+    });
     await act(async () => {
       t.error("Slow");
-      t.error("Quick", { duration: 1000, closeButton: true });
+      t.error("Quick", { duration: 1000, closeButton: false });
       t.success("Done", { action: { label: "View", onClick: () => {} } });
     });
-    expect(activeToast("Slow")).toMatchObject({ duration: 10_000 });
-    expect(activeToast("Slow")?.closeButton).toBeUndefined();
-    expect(activeToast("Quick")).toMatchObject({ duration: 1000, closeButton: true });
-    expect(activeToast("Done")).toMatchObject({ closeButton: true });
-    expect(activeToast("Done")?.duration).toBeUndefined();
+    expect(activeToast("Slow")).toMatchObject({
+      duration: 10_000,
+      closeButton: true,
+    });
+    expect(activeToast("Quick")).toMatchObject({
+      duration: 1000,
+      closeButton: false,
+    });
+    expect(activeToast("Done")).toMatchObject({
+      duration: Infinity,
+      closeButton: false,
+    });
   });
 
   it("applies the configured error default to the error state of toast.promise", async () => {
@@ -305,13 +356,32 @@ describe("useToast with <AppShell toastDefaults>", () => {
     });
     await expect(failing.unwrap()).rejects.toThrow("boom");
     await waitFor(() => {
-      expect(activeToast("Failed to save")).toMatchObject({ type: "error", duration: 7000 });
-      expect(activeToast("Failed to save")?.closeButton).toBeUndefined();
+      expect(activeToast("Failed to save")).toMatchObject({
+        type: "error",
+        duration: 7000,
+        closeButton: true,
+      });
     });
   });
 
+  it("rejects an empty default for a kind at the type level", () => {
+    const valid: ToastDefaults[] = [
+      { error: { duration: 5000 } },
+      { action: { closeButton: false } },
+      { error: { duration: 4000, closeButton: false } },
+    ];
+    // @ts-expect-error `{}` would mean "no change"; leave the kind out instead.
+    const emptyError: ToastDefaults = { error: {} };
+    // @ts-expect-error the same holds for `action`.
+    const emptyAction: ToastDefaults = { action: {} };
+    expect([...valid, emptyError, emptyAction]).toHaveLength(5);
+  });
+
   it("returns the same toast object while the config does not change", () => {
-    const configurations = buildConfigurations({ modules: [], toastDefaults: { error: {} } });
+    const configurations = buildConfigurations({
+      modules: [],
+      toastDefaults: { error: { duration: 4000 } },
+    });
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <AppShellConfigContext.Provider value={{ configurations }}>
         {children}

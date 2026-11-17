@@ -18,17 +18,27 @@ type PromiseErrorOptions = Extract<PromiseErrorResult, { message: unknown }>;
  * before the user reads it, or an Undo that vanishes while the user reaches for it, is
  * worse than no toast. So errors and toasts that carry an `action` stay until the user
  * closes them, and they get a close button. Options the caller passes win, and an app
- * replaces either default through `<AppShell toastDefaults>`.
+ * changes either default field by field through `<AppShell toastDefaults>`.
+ * The values are written out here, not left to Sonner, so a Sonner upgrade cannot change them.
  * Why: docs-src/patterns/interaction-toast.docs.outline.md (Constraints).
  */
-const STAY_UNTIL_CLOSED: ToastDefault = { duration: Infinity, closeButton: true };
+const STAY_UNTIL_CLOSED: Required<ToastDefault> = {
+  duration: Infinity,
+  closeButton: true,
+};
+
+/** A field the app sets replaces the built-in one; a field it leaves out keeps it. */
+const resolveDefault = (configured: ToastDefault | undefined): Required<ToastDefault> => ({
+  duration: configured?.duration ?? STAY_UNTIL_CLOSED.duration,
+  closeButton: configured?.closeButton ?? STAY_UNTIL_CLOSED.closeButton,
+});
 
 const isErrorOptions = (result: PromiseErrorResult): result is PromiseErrorOptions =>
   typeof result === "object" && result !== null && "message" in result;
 
 const applyDefault = (
   data: ExternalToast | undefined,
-  fallback: ToastDefault,
+  fallback: Required<ToastDefault>,
 ): ExternalToast | undefined => {
   // A toast the user cannot dismiss gets no close button from Sonner (it draws one that does
   // nothing) and must not stay open by default either, or nothing but `toast.dismiss(id)` ends
@@ -42,8 +52,8 @@ const applyDefault = (
 };
 
 const createToast = (defaults: ToastDefaults): Toast => {
-  const errorDefault = defaults.error ?? STAY_UNTIL_CLOSED;
-  const actionDefault = defaults.action ?? STAY_UNTIL_CLOSED;
+  const errorDefault = resolveDefault(defaults.error);
+  const actionDefault = resolveDefault(defaults.action);
 
   const withActionDefaults = (data?: ExternalToast): ExternalToast | undefined => {
     if (data?.action) return applyDefault(data, actionDefault);

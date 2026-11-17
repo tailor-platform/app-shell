@@ -4,11 +4,17 @@
 
 Error toasts, and toasts with an `action`, now stay until the user closes them. `useToast` gives `toast.error(...)`, the error state of `toast.promise(...)`, and any call with an `action` the defaults `duration: Infinity` and `closeButton: true`. Before, Sonner closed every toast after 4 seconds, so a failed save could disappear before the user read it, and an Undo could vanish while the user reached for it.
 
-This changes what users see after the update. To keep the previous behavior, or to set your own defaults, use the new `toastDefaults` prop of `AppShell`. A kind set there replaces its built-in default as a whole; a kind left out keeps it:
+This changes what users see after the update. To keep the previous behavior, or to set your own defaults, use the new `toastDefaults` prop of `AppShell`. A field set there replaces that field only; fields and kinds left out keep the new default. An empty object such as `error: {}` is a type error. See the migration guide (`docs/migrations.md`, 1.21.0).
 
 ```tsx
-// Back to Sonner's defaults (4 seconds, no close button) for both kinds
-<AppShell toastDefaults={{ error: {}, action: {} }} modules={modules} />
+// The previous behavior (4 seconds, no close button) for both kinds
+<AppShell
+  toastDefaults={{
+    error: { duration: 4000, closeButton: false },
+    action: { duration: 4000, closeButton: false },
+  }}
+  modules={modules}
+/>
 ```
 
 A `duration` or `closeButton` passed to the call still wins:

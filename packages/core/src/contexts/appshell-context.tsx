@@ -68,14 +68,23 @@ export type ToastDefault = {
 };
 
 /**
- * Defaults `useToast` applies per kind of toast. A kind that is set here replaces the
- * built-in default for that kind as a whole; a kind that is omitted keeps the built-in one.
+ * `T` with at least one of its fields set. An empty object is a type error, and the
+ * constraint follows `T` when fields are added to it.
+ */
+type AtLeastOne<T> = {
+  [K in keyof T]-?: Required<Pick<T, K>> & Partial<T>;
+}[keyof T];
+
+/**
+ * Defaults `useToast` applies per kind of toast. The built-in default for both kinds is
+ * `{ duration: Infinity, closeButton: true }`. A field set here replaces that field only;
+ * fields and kinds left out keep the built-in default.
  */
 export type ToastDefaults = {
   /** `toast.error(...)` and the error state of `toast.promise(...)`. */
-  error?: ToastDefault;
+  error?: AtLeastOne<ToastDefault>;
   /** Any toast with an `action`. */
-  action?: ToastDefault;
+  action?: AtLeastOne<ToastDefault>;
 };
 
 export type RootConfiguration = {
@@ -235,5 +244,9 @@ export interface TimeZone {
 export const useTimeZone = (): TimeZone => {
   const { configurations } = useContext(AppShellConfigContext);
   const timeZone = configurations.timeZone ?? getLocalTimeZone();
-  return { value: timeZone, today: () => today(timeZone), now: () => now(timeZone) };
+  return {
+    value: timeZone,
+    today: () => today(timeZone),
+    now: () => now(timeZone),
+  };
 };

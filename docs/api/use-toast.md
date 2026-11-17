@@ -48,13 +48,14 @@ A toast with `dismissible: false` keeps sonner's defaults (no close button, clos
 
 A call without an `action` that updates an existing toast by `id`, such as `toast.success("Saved", { id })` after `toast.error`, resets `duration` and `closeButton` to sonner's defaults unless it passes its own, so the updated toast closes by itself.
 
-An app changes these defaults with the [`toastDefaults`](../components/app-shell.md#toastdefaults) prop of `AppShell`. A kind set there replaces its built-in default as a whole; a kind left out keeps it:
+An app changes these defaults with the [`toastDefaults`](../components/app-shell.md#toastdefaults) prop of `AppShell`. A field set there replaces that field only; fields and kinds left out keep the default:
 
 ```tsx
-// Errors close on their own again; toasts with an action still stay.
-<AppShell toastDefaults={{ error: {} }} modules={modules} />
+// Errors close after 4 seconds without a close button, as before 1.21.0;
+// toasts with an action still stay.
+<AppShell toastDefaults={{ error: { duration: 4000, closeButton: false } }} modules={modules} />
 
-// Errors stay for 10 seconds without a close button; the action default is unchanged.
+// Errors close after 10 seconds and keep the close button; the action default is unchanged.
 <AppShell toastDefaults={{ error: { duration: 10_000 } }} modules={modules} />
 ```
 

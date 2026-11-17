@@ -15,6 +15,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.21.0        | [Error and action toasts stay until the user closes them](#1210-error-and-action-toasts-stay-until-the-user-closes-them)     |
 | 1.21.0        | [Testing helpers deprecated in favour of TestingProvider](#1210-testing-helpers-deprecated-in-favour-of-testingprovider)     |
 | 1.20.0        | [z-index tokens renamed; old names are aliases](#1200-z-index-tokens-renamed-old-names-are-aliases)                          |
 | 1.18.0        | [Destructive colours now resolve to the danger roles](#1180-destructive-colours-now-resolve-to-the-danger-roles)             |
@@ -29,6 +30,34 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
+
+## 1.21.0: error and action toasts stay until the user closes them
+
+**Applies to:** apps that show toasts through `useToast`.
+
+Before 1.21.0, every toast closed after 4 seconds and had no close button, because AppShell passed no options and Sonner's defaults applied. From 1.21.0, `toast.error(...)`, the error state of `toast.promise(...)`, and any toast with an `action` get `duration: Infinity` and `closeButton: true`: they stay until the user closes them. Success, info, warning and plain toasts without an `action` are unchanged. Nothing errors; the change is only visible on screen.
+
+How to detect it: search the app for `toast.error(`, `toast.promise(` and toasts with `action:`. Look for places that show many errors in a row (for example, one per rejected edit): up to 3 toasts are visible, and with sticky errors they now stay until closed. Also check code that relied on an error toast closing by itself.
+
+What to change:
+
+- To keep the previous behavior, set both fields for the kind in the `toastDefaults` prop of `AppShell`. A field set there replaces that field only, so both fields are needed:
+
+  ```tsx
+  <AppShell
+    toastDefaults={{
+      error: { duration: 4000, closeButton: false },
+      action: { duration: 4000, closeButton: false },
+    }}
+    modules={modules}
+  />
+  ```
+
+- To change one field, set only that field. `toastDefaults={{ error: { duration: 10_000 } }}` closes errors after 10 seconds and keeps the close button.
+- To change a single call, pass `duration` or `closeButton` to it. The call's options win over `toastDefaults`.
+- If a screen shows many errors in a row, give the call an `id` so that the new toast replaces the previous one: `toast.error(message, { id: "price-error" })`.
+
+An empty object for a kind, such as `error: {}`, is a type error. The prop is documented in [AppShell](./components/app-shell.md#toastdefaults), and the toast rules in [`useToast`](./api/use-toast.md).
 
 ## 1.21.0: testing helpers deprecated in favour of TestingProvider
 

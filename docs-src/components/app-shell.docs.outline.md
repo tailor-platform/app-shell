@@ -230,13 +230,14 @@ Access the configured timezone in components using [`useTimeZone`](../api/use-ti
 
 ### toastDefaults
 
-- **Type:** `{ error?: ToastDefault; action?: ToastDefault }` where `ToastDefault` is `{ duration?: number; closeButton?: boolean }` (optional)
+- **Type:** `{ error?: ToastDefault; action?: ToastDefault }` where `ToastDefault` is `{ duration?: number; closeButton?: boolean }` with at least one field set (optional)
 - **Default:** `error` and `action` both `{ duration: Infinity, closeButton: true }`
-- **Description:** Options [`useToast`](../api/use-toast.md) applies to a toast when the call does not set them. `error` covers `toast.error(...)` and the error state of `toast.promise(...)`; `action` covers any toast with an `action`. With the defaults, these toasts stay until the user closes them and show a close button. A kind set here replaces its built-in default as a whole; a kind left out keeps it. Pass `{}` for a kind to fall back to sonner's own defaults (4 seconds, no close button).
+- **Description:** Options [`useToast`](../api/use-toast.md) applies to a toast when the call does not set them. `error` covers `toast.error(...)` and the error state of `toast.promise(...)`; `action` covers any toast with an `action`. With the defaults, these toasts stay until the user closes them and show a close button. A field set here replaces that field only; fields and kinds left out keep the default. An empty object such as `error: {}` is a type error; leave the kind out instead.
 
 ```tsx
-// Errors close on their own again; toasts with an action still stay.
-<AppShell toastDefaults={{ error: {} }} modules={modules}>
+// Errors close after 4 seconds without a close button, as before 1.21.0;
+// toasts with an action still stay.
+<AppShell toastDefaults={{ error: { duration: 4000, closeButton: false } }} modules={modules}>
   {/* ... */}
 </AppShell>
 ```

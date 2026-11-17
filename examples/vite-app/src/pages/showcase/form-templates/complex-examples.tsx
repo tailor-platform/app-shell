@@ -23,9 +23,9 @@ import {
   useResolvedLocale,
 } from "@tailor-platform/app-shell";
 import {
+  AddressFields,
   BUYERS,
   CARRIERS,
-  COUNTRIES,
   CURRENCIES,
   DeliveryFields,
   PAYMENT_TERMS,
@@ -57,30 +57,6 @@ function ExampleHeader({
         {children}
       </Text>
     </div>
-  );
-}
-
-// 🔽 Reusable address block — a nested FormLayout reflows inside whatever span it gets
-function AddressFields({ prefix }: { prefix: string }) {
-  return (
-    <FormLayout columns={2}>
-      <Field.Root name={`${prefix}.street`} span="full">
-        <Field.Label required>Street</Field.Label>
-        <Field.Control required placeholder="1-2-3 Umeda" />
-      </Field.Root>
-      <Field.Root name={`${prefix}.city`}>
-        <Field.Label required>City</Field.Label>
-        <Field.Control required placeholder="Osaka" />
-      </Field.Root>
-      <Field.Root name={`${prefix}.postcode`}>
-        <Field.Label>Postcode</Field.Label>
-        <Field.Control placeholder="530-0001" />
-      </Field.Root>
-      <Field.Root name={`${prefix}.country`} span="full">
-        <Field.Label required>Country</Field.Label>
-        <Select items={COUNTRIES} defaultValue="Japan" required />
-      </Field.Root>
-    </FormLayout>
   );
 }
 

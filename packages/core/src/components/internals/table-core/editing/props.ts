@@ -79,6 +79,8 @@ export interface CellEditorProps<TOptions, TOutput = unknown> {
   options: TOptions;
   /** Latest owner-adopted value, not the local draft; normalized by the selected editor. */
   current: unknown;
+  /** Whether explicit Clear/None controls are available. Defaults to true. */
+  allowClear?: boolean;
   /**
    * Optional draft/restoration notification; its editor-specific payload may be unparsed.
    * This is not a request to adopt a confirmed value. Restoration errors after cancellation are ignored

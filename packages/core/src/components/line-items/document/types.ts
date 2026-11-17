@@ -10,7 +10,7 @@ import type {
 import type { createLineItemsIdentity } from "./identity";
 
 type EditorBase<TRow extends Record<string, unknown>, TValue> = {
-  /** A check before adoption; throw/rejection retains the draft. Not a persistence callback. */
+  /** Checks the resolved value before adoption, including Clear results; throw/rejection retains the draft. Not persistence. */
   onValueCommitted?: (row: Readonly<TRow>, value: TValue) => void | Promise<void>;
   /** UI policy only; direct row commands remain available. */
   canEdit?: (row: TRow) => boolean;
@@ -18,14 +18,33 @@ type EditorBase<TRow extends Record<string, unknown>, TValue> = {
   error?: false | { render: (ctx: { row: TRow; error: unknown }) => ReactNode };
 };
 
+/** A resolver cannot introduce asynchronous work into Clear value selection. */
+type SynchronousValue =
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | null
+  | undefined
+  | (object & { then?: never });
+/** Null is the default only when accepted; otherwise the property needs an explicit Clear policy. */
+type ClearOptions<TValue> = null extends TValue
+  ? { clearValue?: false | (() => TValue & SynchronousValue) }
+  : { clearValue: false | (() => TValue & SynchronousValue) };
+
 type EditorCatalog = typeof lineItemsEditors;
 type EditorAdapter<K extends keyof EditorCatalog> = ReturnType<EditorCatalog[K]["bind"]>;
 type EditorOutput<K extends keyof EditorCatalog> = CellEditorOutput<EditorAdapter<K>["editor"]>;
 type EditorSettings<K extends keyof EditorCatalog> = Parameters<EditorAdapter<K>["prepare"]>[0];
 type ChoiceOptions = EditorSettings<"combobox">["editorOptions"];
 type ChoiceOption = ChoiceOptions["options"][number];
+type ChoiceValue = Exclude<EditorOutput<"combobox">, null>;
+type PropertyChoiceValue<TValue> = ChoiceValue extends TValue
+  ? ChoiceValue
+  : Extract<TValue, ChoiceValue>;
 type PropertyChoiceOption<TValue> = {
-  [K in keyof ChoiceOption]: K extends "value" ? ChoiceOption[K] & TValue : ChoiceOption[K];
+  [K in keyof ChoiceOption]: K extends "value" ? PropertyChoiceValue<TValue> : ChoiceOption[K];
 };
 type PropertyChoiceOptions<TValue> = {
   [K in keyof ChoiceOptions]: K extends "options"
@@ -33,7 +52,7 @@ type PropertyChoiceOptions<TValue> = {
     : ChoiceOptions[K];
 };
 type PropertyEditorOutput<K extends keyof EditorCatalog, TValue> = K extends "combobox"
-  ? (Exclude<EditorOutput<K>, null> & TValue) | Extract<EditorOutput<K>, null>
+  ? PropertyChoiceValue<TValue> | Extract<EditorOutput<K>, null>
   : EditorOutput<K>;
 type PropertyEditorSettings<K extends keyof EditorCatalog, TValue> = K extends "combobox"
   ? { editorOptions: PropertyChoiceOptions<TValue> }
@@ -43,10 +62,11 @@ type PropertyEditorSettings<K extends keyof EditorCatalog, TValue> = K extends "
 export type LineItemsEditor<TRow extends Record<string, unknown>, TValue> = {
   [K in keyof EditorCatalog]: [Exclude<PropertyEditorOutput<K, TValue>, null>] extends [never]
     ? never
-    : [PropertyEditorOutput<K, TValue>] extends [TValue]
-      ? EditorBase<TRow, PropertyEditorOutput<K, TValue>> & {
-          editorType: K;
-        } & PropertyEditorSettings<K, TValue>
+    : [Exclude<PropertyEditorOutput<K, TValue>, null>] extends [TValue]
+      ? EditorBase<TRow, TValue> &
+          ClearOptions<TValue> & {
+            editorType: K;
+          } & PropertyEditorSettings<K, TValue>
       : never;
 }[keyof EditorCatalog];
 

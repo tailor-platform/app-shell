@@ -54,6 +54,7 @@ type DateEditorOptions = {
 function DateEditor({
   options,
   current,
+  allowClear = true,
   valueLabel,
   change = () => undefined,
   commit,
@@ -110,7 +111,10 @@ function DateEditor({
   };
   const finish = (next: string | null) => {
     session.confirm(
-      () => (sameDate(next, current, withTime, timeZone) ? undefined : commit(next)),
+      () => {
+        if (sameDate(next, current, withTime, timeZone) && (!external || next !== null)) return;
+        return commit(next);
+      },
       () => setOpen(false),
     );
   };
@@ -235,29 +239,38 @@ function DateEditor({
                   className="astw:h-8 astw:text-body-md"
                 />
               )}
-              <div className="astw:flex astw:justify-between astw:gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setDraft({ day: null, time: null });
-                    finish(null);
-                  }}
+              {(allowClear || withTime) && (
+                <div
+                  className={cn(
+                    "astw:flex astw:justify-between astw:gap-2",
+                    !allowClear && "astw:justify-end",
+                  )}
                 >
-                  {labels.clear}
-                </Button>
-                {withTime && (
-                  <Button
-                    size="sm"
-                    disabled={timestamp === undefined}
-                    onClick={() => {
-                      if (timestamp !== undefined) finish(timestamp);
-                    }}
-                  >
-                    {labels.done}
-                  </Button>
-                )}
-              </div>
+                  {allowClear && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setDraft({ day: null, time: null });
+                        finish(null);
+                      }}
+                    >
+                      {labels.clear}
+                    </Button>
+                  )}
+                  {withTime && (
+                    <Button
+                      size="sm"
+                      disabled={timestamp === undefined}
+                      onClick={() => {
+                        if (timestamp !== undefined) finish(timestamp);
+                      }}
+                    >
+                      {labels.done}
+                    </Button>
+                  )}
+                </div>
+              )}
             </Popover.Popup>
           </Popover.Positioner>
         </Popover.Portal>

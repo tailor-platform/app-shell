@@ -17,7 +17,8 @@ import {
 import { choiceEditor } from "@/components/internals/table-core/editing/choice";
 import { dateEditor } from "@/components/internals/table-core/editing/date";
 import { numberEditor, textEditor } from "@/components/internals/table-core/editing/typing";
-import type { LineItemsEditing } from "./editing";
+import { LineItemsClearError, type LineItemsEditing } from "./editing";
+import { CellEditError } from "@/components/internals/table-core/cell-edit-error";
 import { lineItemsEditors } from "./editor-factory";
 import { useLineItemsT } from "./i18n";
 import type { LineItemsColumn } from "./types";
@@ -264,7 +265,15 @@ export function LineItemsEditableCell<T extends Record<string, unknown>>({
     display,
     cellProps,
     session,
-    commit: (value) => editing.commitField(key, id, value),
+    allowClear: edit.clearValue !== false,
+    commit: (value) => {
+      try {
+        return editing.commitField(key, id, value);
+      } catch (error) {
+        if (error instanceof LineItemsClearError) throw new CellEditError(t("clearNotAllowed"));
+        throw error;
+      }
+    },
     renderError: renderError ? (error) => renderError({ row, error }) : undefined,
     interceptErrors: edit.error !== false,
     label,

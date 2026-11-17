@@ -8,6 +8,9 @@ type Cell = { property: string; session: Session };
 const columnId = <T extends Record<string, unknown>>(column: LineItemsColumn<T>) =>
   (column.id ?? column.accessorKey)!;
 
+/** Internal refusal translated by the cell owner before entering error presentation. */
+export class LineItemsClearError extends Error {}
+
 /** Binds logical cell drafts to a document, without owning another copy of its rows. @internal */
 export function createLineItemsEditing<T extends Record<string, unknown>>(
   store: Store<T>,
@@ -84,6 +87,16 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
         throw new Error("The edited cell no longer exists");
       if (!(column.edit.canEdit?.(row) ?? true)) throw new Error("The cell is not editable");
       const revision = source.getRevision();
+      if (value === null) {
+        if (column.edit.clearValue === false)
+          throw new LineItemsClearError("The cell cannot be cleared");
+        value = column.edit.clearValue ? column.edit.clearValue() : null;
+        if (typeof (value as PromiseLike<unknown> | null | undefined)?.then === "function") {
+          void Promise.resolve(value).catch(() => {});
+          throw new Error("LineItems clearValue must return a synchronous value");
+        }
+        if (Object.is(value, row[column.accessorKey])) return;
+      }
       // The correlated property contract is checked before this heterogeneous cell boundary.
       const check = column.edit.onValueCommitted as
         | ((row: Readonly<T>, value: unknown) => void | Promise<void>)

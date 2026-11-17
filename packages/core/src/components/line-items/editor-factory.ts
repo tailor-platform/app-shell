@@ -46,7 +46,17 @@ export const lineItemsEditors = {
 } satisfies Record<string, LineItemsEditorDefinition<unknown>>;
 
 /** Validate settings through the same definitions used for rendering, without loading UI modules. */
-export function assertLineItemsEditor(edit: { editorType: unknown; editorOptions?: unknown }) {
+export function assertLineItemsEditor(edit: {
+  editorType: unknown;
+  editorOptions?: unknown;
+  clearValue?: unknown;
+}) {
+  if (
+    edit.clearValue !== undefined &&
+    edit.clearValue !== false &&
+    typeof edit.clearValue !== "function"
+  )
+    throw new Error("LineItems clearValue must be false or a synchronous function");
   const kind = edit.editorType;
   if (typeof kind !== "string" || !Object.hasOwn(lineItemsEditors, kind))
     throw new Error("Unsupported LineItems editor type");

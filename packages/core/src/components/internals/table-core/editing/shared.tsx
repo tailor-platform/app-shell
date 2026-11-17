@@ -156,7 +156,13 @@ export function useDraftStatus(
   status: "idle" | "editing" | "confirming" | "failed",
 ): CellEditorView["draftStatus"] {
   const id = useId();
-  if (!retained || !changed || status === "idle" || status === "failed") return undefined;
+  if (
+    !retained ||
+    status === "idle" ||
+    status === "failed" ||
+    (!changed && status !== "confirming")
+  )
+    return undefined;
   const confirming = status === "confirming";
   const message = confirming ? labels.confirming : labels.unconfirmed;
   return message === undefined ? undefined : { id, message, confirming };

@@ -71,8 +71,12 @@ test("cell editors retain property-specific nullable output and row callback typ
       editorOptions: { options: [{ value: "open", label: "Open" }] },
     },
   };
-  expectTypeOf<LineItemsEditor<Row, string>>().toEqualTypeOf<never>();
-  expectTypeOf<LineItemsEditor<Row, number>>().toEqualTypeOf<never>();
+  // @ts-expect-error Non-nullable properties require an explicit Clear policy.
+  const missingTextClear: LineItemsEditor<Row, string> = { editorType: "text" };
+  // @ts-expect-error Non-nullable properties require an explicit Clear policy.
+  const missingNumberClear: LineItemsEditor<Row, number> = { editorType: "number" };
+  void missingTextClear;
+  void missingNumberClear;
   expectTypeOf<LineItemsEditor<Row, { code: string }>>().toEqualTypeOf<never>();
   expectTypeOf<
     Extract<LineItemsColumn<Row>, { accessorKey?: never }>["edit"]
@@ -144,7 +148,12 @@ test("fixed choices and confirmation values follow nullable string enum properti
   expectTypeOf<
     Extract<LineItemsEditor<EnumRow, EnumRow["quantity"]>, { editorType: "combobox" }>
   >().toEqualTypeOf<never>();
-  expectTypeOf<LineItemsEditor<EnumRow, EnumRow["requiredStatus"]>>().toEqualTypeOf<never>();
+  const requiredEnum: LineItemsEditor<EnumRow, EnumRow["requiredStatus"]> = {
+    editorType: "combobox",
+    editorOptions: { options: [{ value: "draft", label: "Draft" }] },
+    clearValue: false,
+  };
+  void requiredEnum;
   void column;
   void invalidChoice;
   void numericChoice;
@@ -158,7 +167,7 @@ test("public editor settings and confirmation values follow the concrete editors
   expectTypeOf<AdapterKeys>().toEqualTypeOf<Record<keyof UIAdapters, "editor" | "prepare">>();
   expectTypeOf<LineItemsEditor<Row, unknown>["editorType"]>().toEqualTypeOf<keyof EditorCatalog>();
   type PublicEditor<K extends LineItemsEditor<Row, unknown>["editorType"]> = Extract<
-    LineItemsEditor<Row, unknown>,
+    LineItemsEditor<Row, CellEditorOutput<EditorAdapter<K>["editor"]>>,
     { editorType: K }
   >;
   type ConfirmedValue<K extends LineItemsEditor<Row, unknown>["editorType"]> = Parameters<

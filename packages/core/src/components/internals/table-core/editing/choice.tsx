@@ -50,6 +50,7 @@ type ChoiceEditorOptions = {
 function ChoiceEditor({
   options: { options, renderOption },
   current,
+  allowClear = true,
   change = () => undefined,
   commit,
   renderError,
@@ -71,16 +72,17 @@ function ChoiceEditor({
   );
   const register = useNavigationRef<HTMLInputElement>(navigation, rowKey, colKey);
   const value = toTextValue(current);
+  const shouldCommit = (next: string | null) => next !== value || (!!external && next === null);
   const noneLabel = labels.none;
   // Keyed on content: rebuilding columns must not reset the highlight mid-search.
   const optionsKey = (options ?? []).map((c) => `${c.value}\u0000${c.label}`).join("\u0001");
   const items = useMemo<Choice[]>(
     () => [
-      { value: null, label: noneLabel },
+      ...(allowClear ? [{ value: null, label: noneLabel }] : []),
       ...(options ?? []).map((c) => ({ value: c.value, label: String(c.label) })),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `optionsKey` stands for `options`.
-    [optionsKey, noneLabel],
+    [optionsKey, noneLabel, allowClear],
   );
 
   const selected = items.find((item) => item.value === value) ?? null;
@@ -168,7 +170,7 @@ function ChoiceEditor({
       item.value !== value ? () => change(item.value) : undefined,
     );
     setQuery(item.label);
-    session.confirm(() => (item.value !== value ? commit(item.value) : undefined), closeEditor);
+    session.confirm(() => (shouldCommit(item.value) ? commit(item.value) : undefined), closeEditor);
   };
 
   const explicitCandidate = () => {
@@ -200,7 +202,7 @@ function ChoiceEditor({
         if (!open) {
           if (active.status === "failed" && active.source === "commit") {
             session.confirm(
-              () => (active.draft.value !== value ? commit(active.draft.value) : undefined),
+              () => (shouldCommit(active.draft.value) ? commit(active.draft.value) : undefined),
               closeEditor,
             );
             return;

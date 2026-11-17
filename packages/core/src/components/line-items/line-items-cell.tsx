@@ -119,6 +119,8 @@ export function createLineItemsCellPreparers(timeZone: string) {
       });
       return { align, renderDisplay: bindDisplay(column, renderBadge) };
     }
+    if (column.type !== undefined && column.type !== "text" && column.type !== "link")
+      return prepareDisplay(column);
     const renderReadonly = createValueRenderer(column, { timeZone });
     const renderEditable =
       column.type === "link" ? createValueRenderer({ type: "text" }, { timeZone }) : renderReadonly;

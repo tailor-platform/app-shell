@@ -85,20 +85,38 @@ function Root({ className, children, variant = "default", size = "default", ...p
 }
 Root.displayName = "Tabs.Root";
 
-/** Groups the individual tab buttons. */
-function List({ className, children, ...props }: React.ComponentProps<typeof BaseTabs.List>) {
+// The tablist itself scrolls, because Base UI scrolls that element to reveal
+// the focused or active tab. The 4px padding (also the scroll-padding) keeps the
+// focus ring from being clipped; the negative margin and wider max-width cancel it.
+const LIST_CONTAINER_CLASSES =
+  "astw:-m-[4px] astw:flex astw:max-w-[calc(100%+8px)] astw:overflow-x-auto astw:overflow-y-hidden astw:overscroll-x-contain astw:p-[4px] astw:[scroll-padding-inline:4px] astw:[scrollbar-width:none] astw:[&::-webkit-scrollbar]:hidden";
+
+/**
+ * Groups the individual tab buttons. Tabs stay on one row and scroll sideways
+ * when they do not fit. `className` applies to the inner track.
+ */
+function List({
+  className,
+  children,
+  ...props
+}: Omit<React.ComponentProps<typeof BaseTabs.List>, "render">) {
   const variant = React.useContext(TabsVariantContext);
   return (
     <BaseTabs.List
       data-slot="tabs-list"
-      className={cn(
-        "astw:relative astw:inline-flex astw:items-center astw:justify-center",
-        LIST_VARIANT_CLASSES[variant],
-        className,
-      )}
       {...props}
+      render={<div className={LIST_CONTAINER_CLASSES} />}
     >
-      {children}
+      <div
+        data-slot="tabs-list-track"
+        className={cn(
+          "astw:relative astw:inline-flex astw:items-center astw:justify-center",
+          LIST_VARIANT_CLASSES[variant],
+          className,
+        )}
+      >
+        {children}
+      </div>
     </BaseTabs.List>
   );
 }

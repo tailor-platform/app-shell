@@ -1,9 +1,8 @@
 import {
   AppShell,
-  DefaultSidebar,
   defineModule,
   defineResource,
-  SidebarLayout,
+  GlobalHeaderLayout,
 } from "@tailor-platform/app-shell";
 
 import { DocPage } from "./_lib/DocPage";
@@ -90,7 +89,7 @@ function buildModules(): ReturnType<typeof defineModule>[] {
 const App = () => {
   return (
     <AppShell title="app-shell docs" modules={buildModules()} rootComponent={HomePage}>
-      <SidebarLayout sidebar={<DefaultSidebar />} />
+      <GlobalHeaderLayout />
     </AppShell>
   );
 };

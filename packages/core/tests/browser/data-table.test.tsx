@@ -263,25 +263,60 @@ describe.each(["empty", "error"] as const)("DataTable %s layout", (state) => {
     expect(rect(root()).height).toBe(400);
   });
 
-  it("only stretches status rows when switching between data, status, and loading", async () => {
-    const rows = [{ id: "1", name: "Alice" }];
-    const { rerender } = render(<TestTable rows={rows} />, { wrapper });
-    await screen.findByText("Table footer");
-    const dataHeight = rect(body()).height;
-    const headerHeight = rect(element("thead")).height;
-    expect(dataHeight).toBeLessThan(100);
+  it.each(["fixed", "flex"] as const)(
+    "keeps the footer pinned in a %s-height table when switching between data, status, and loading",
+    async (height) => {
+      const rows = [{ id: "1", name: "Alice" }];
+      const { rerender } = render(<TestTable height={height} rows={rows} />, { wrapper });
+      await screen.findByText("Table footer");
+      const dataHeight = rect(body()).height;
+      const footerHeight = rect(footer()).height;
+      const expectFooterPinned = () => {
+        expect(rect(root()).height).toBe(400);
+        expect(rect(footer()).height).toBe(footerHeight);
+        expect(rect(footer()).bottom).toBeCloseTo(rect(root()).bottom - 1, 0);
+        expect(rect(scrollContainer()).bottom).toBeCloseTo(rect(footer()).top, 0);
+        expect(rect(element("thead")).height).toBe(40);
+        expect(scrollContainer().scrollHeight).toBe(scrollContainer().clientHeight);
+      };
+      expect(dataHeight).toBeLessThan(100);
+      expectFooterPinned();
 
-    rerender(<TestTable error={error} rows={state === "error" ? rows : []} />);
-    expect(rect(body()).height).toBeGreaterThan(250);
-    expect(rect(element("thead")).height).toBe(headerHeight);
+      rerender(<TestTable height={height} error={error} rows={state === "error" ? rows : []} />);
+      expect(rect(body()).height).toBeGreaterThan(250);
+      expectFooterPinned();
 
-    rerender(<TestTable loading error={error} />);
-    const skeleton = element('[data-datatable-state="loading"]');
-    expect(rect(skeleton).height).toBeLessThan(100);
-    expect(screen.queryByTestId(`${state}-content`)).toBeNull();
+      rerender(<TestTable height={height} loading error={error} />);
+      const skeleton = element('[data-datatable-state="loading"]');
+      expect(rect(skeleton).height).toBeLessThan(100);
+      expect(screen.queryByTestId(`${state}-content`)).toBeNull();
+      expectFooterPinned();
 
-    rerender(<TestTable rows={rows} />);
-    expect(rect(body()).height).toBe(dataHeight);
-    expect(rect(element("thead")).height).toBe(headerHeight);
-  });
+      rerender(<TestTable height={height} rows={rows} />);
+      expect(rect(body()).height).toBe(dataHeight);
+      expectFooterPinned();
+    },
+  );
 });
+
+it.each(["data", "loading"] as const)(
+  "keeps a natural-height table compact when showing %s rows",
+  async (state) => {
+    render(
+      <TestTable
+        height="natural"
+        rows={[{ id: "1", name: "Alice" }]}
+        loading={state === "loading"}
+      />,
+      { wrapper },
+    );
+    await screen.findByText("Table footer");
+
+    expect(rect(root()).height).toBeLessThan(400);
+    expect(rect(element("thead")).height).toBe(40);
+    expect(rect(element("tbody tr")).height).toBeLessThan(100);
+    expect(rect(body()).bottom).toBeCloseTo(rect(footer()).top, 0);
+    expect(rect(footer()).bottom).toBeCloseTo(rect(root()).bottom - 1, 0);
+    expect(scrollContainer().scrollHeight).toBe(scrollContainer().clientHeight);
+  },
+);

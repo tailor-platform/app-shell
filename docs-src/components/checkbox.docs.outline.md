@@ -17,7 +17,7 @@ The `Checkbox` component is a styled control for boolean fields. It wraps Base U
 import { Checkbox } from "@tailor-platform/app-shell";
 ```
 
-The examples below also import `Field` from `@tailor-platform/app-shell`.
+The examples below also import `useState` from `react`, and `Field` and `Text` from `@tailor-platform/app-shell`.
 
 ## Basic Usage
 
@@ -49,22 +49,15 @@ Accepts all Base UI `Checkbox.Root` props, plus `label`. The most common:
 
 ### Controlled
 
-```tsx
-const [checked, setChecked] = useState(false);
+Toggle the checkbox to update the value owned by React state. The text below reports the current value.
 
-<Checkbox label="Enable notifications" checked={checked} onCheckedChange={setChecked} />;
-```
+<!-- example: controlled -->
 
 ### Indeterminate ("select all")
 
-```tsx
-<Checkbox
-  aria-label="Select all rows"
-  checked={allSelected}
-  indeterminate={someSelected && !allSelected}
-  onCheckedChange={(checked) => (checked ? selectAll() : clearAll())}
-/>
-```
+The example starts with one order selected, so **Select all orders** is mixed. Select or clear the parent to update every child, or toggle individual orders to move between none, some, and all selected.
+
+<!-- example: select-all -->
 
 ### Disabled
 

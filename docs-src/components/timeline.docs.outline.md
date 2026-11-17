@@ -17,6 +17,8 @@ sources:
 import { Timeline } from "@tailor-platform/app-shell";
 ```
 
+The additional examples also import `Text` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -206,27 +208,15 @@ Background content for a row rendered in a dedicated layer (in front of bands, b
 
 ### Horizontal Scrolling
 
-Use `canvasWidth` on `Timeline.Viewport` to enable horizontal scrolling:
+Use `canvasWidth` on `Timeline.Viewport` to enable horizontal scrolling. The example constrains the visible width, so scroll right to reveal the Release task:
 
-```tsx
-<Timeline.Root start={projectStart} end={projectEnd}>
-  <Timeline.Viewport canvasWidth={2400} axis={axis}>
-    {rows}
-  </Timeline.Viewport>
-</Timeline.Root>
-```
+<!-- example: horizontal-scrolling -->
 
 ### Sticky Axis
 
-Pin the axis to the top during vertical scrolling with `stickyAxis`:
+Pin the axis to the top during vertical scrolling with `stickyAxis`. Give the viewport a bounded height and enable vertical scrolling; this example contains more task rows than fit in its 220px viewport. Scroll inside it to keep the sprint labels in view:
 
-```tsx
-<Timeline.Root start={0} end={100}>
-  <Timeline.Viewport stickyAxis axis={axis}>
-    {rows}
-  </Timeline.Viewport>
-</Timeline.Root>
-```
+<!-- example: sticky-axis -->
 
 ### Dependency Links
 
@@ -236,32 +226,9 @@ Use `id` on `Timeline.Interval` and `Timeline.Link` to draw dependency connector
 
 ### Background Bands and Markers
 
-Use `decorations` to add background highlights and vertical marker lines:
+Use `decorations` to add background highlights and vertical marker lines. The release-freeze interval is named in the axis as well as shaded, and the Today marker is labelled in both the axis and body, so the meaning is not conveyed by colour alone:
 
-```tsx
-<Timeline.Viewport
-  axis={axis}
-  decorations={{
-    bands: [
-      {
-        start: freezeStart,
-        end: freezeEnd,
-        color: "var(--destructive/10)",
-        className: "border-x border-destructive/30",
-      },
-    ],
-    markers: [
-      {
-        at: today,
-        color: "var(--primary)",
-        label: <span className="text-xs text-primary">Today</span>,
-      },
-    ],
-  }}
->
-  {rows}
-</Timeline.Viewport>
-```
+<!-- example: background-bands-and-markers -->
 
 ### Row Background
 

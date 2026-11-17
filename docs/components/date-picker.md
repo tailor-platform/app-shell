@@ -29,7 +29,7 @@ import {
 } from "@tailor-platform/app-shell";
 ```
 
-The examples below also import `Text` from `@tailor-platform/app-shell` and `useId` from `react`.
+The examples below also import `Button`, `Form`, and `Text` from `@tailor-platform/app-shell`, and `useId` and `useState` from `react`.
 
 ## API shape
 
@@ -153,29 +153,81 @@ function WeekStart() {
 
 Use standard HTML + ARIA when rendering the field standalone:
 
+Click **Check delivery date** while empty to show a consumer-owned error, then choose a date to clear it. `isInvalid` and `aria-describedby` connect the standalone control to the visible message; `useId` keeps the association unique.
+
+<example-preview name="standalone-validation"></example-preview>
+
 ```tsx
-<label id="delivery-date-label" htmlFor="delivery-date">
-  Delivery date
-</label>
-<DatePicker
-  id="delivery-date"
-  aria-labelledby="delivery-date-label"
-  aria-describedby={error ? "delivery-date-error" : undefined}
-  isInvalid={!!error}
-  value={value}
-  onChange={setValue}
-/>
-{error && <Text.p id="delivery-date-error">{error}</Text.p>}
+function StandaloneValidation() {
+  const id = useId();
+  const [date, setDate] = useState<DateValue | null>(null);
+  const [checked, setChecked] = useState(false);
+  const error = checked && !date ? "Choose a delivery date." : null;
+
+  return (
+    <div className="max-w-sm space-y-3">
+      <label id={`${id}-label`} htmlFor={id}>
+        Delivery date
+      </label>
+      <DatePicker
+        id={id}
+        aria-labelledby={`${id}-label`}
+        aria-describedby={error ? `${id}-error` : undefined}
+        isInvalid={!!error}
+        value={date}
+        onChange={setDate}
+        placeholderValue={parseDate("2026-04-01")}
+      />
+      {error && (
+        <Text.p id={`${id}-error`} role="alert">
+          {error}
+        </Text.p>
+      )}
+      <Button variant="outline" onClick={() => setChecked(true)}>
+        Check delivery date
+      </Button>
+      <Text.p role="status">Selected date: {date?.toString() ?? "None"}</Text.p>
+    </div>
+  );
+}
 ```
 
 Or let `Field.Root` wire the label, description, and error elements:
 
+Submit the empty field to see its required error. A date before April 1, 2026 can be typed, but the control's `minValue` validation blocks submission and surfaces through `Field.Error match="customError"`. A valid date is submitted as an ISO date string; the result stays local.
+
+<example-preview name="field-validation"></example-preview>
+
 ```tsx
-<Field.Root name="deliveryDate" error={error ? { message: error } : undefined}>
-  <Field.Label>Delivery date</Field.Label>
-  <DatePicker value={value} onChange={setValue} />
-  <Field.Error match={!!error}>{error}</Field.Error>
-</Field.Root>
+function FieldValidation() {
+  const [submitted, setSubmitted] = useState<{ deliveryDate: string } | null>(null);
+
+  return (
+    <Form<{ deliveryDate: string }>
+      noValidate
+      className="max-w-sm space-y-3"
+      onFormSubmit={setSubmitted}
+    >
+      <Field.Root name="deliveryDate">
+        <Field.Label>Delivery date</Field.Label>
+        <DatePicker
+          isRequired
+          minValue={parseDate("2026-04-01")}
+          placeholderValue={parseDate("2026-04-01")}
+        />
+        <Field.Description>
+          Choose April 1, 2026 or later. Earlier dates can be typed, but not submitted.
+        </Field.Description>
+        <Field.Error match="valueMissing">Choose a delivery date.</Field.Error>
+        <Field.Error match="customError" />
+      </Field.Root>
+      <Button type="submit">Save delivery date</Button>
+      <pre role="status" className="overflow-x-auto text-sm">
+        {submitted ? JSON.stringify(submitted, null, 2) : "No date submitted yet."}
+      </pre>
+    </Form>
+  );
+}
 ```
 
 ## Calendar
@@ -200,18 +252,74 @@ function StandaloneCalendar() {
 
 Start and end segmented inputs sharing one calendar popover, with a `{ start, end }` value (`DateRange`) — a **separate component** from `DatePicker`, not a mode. Same composition model as the other controls: standalone with `aria-*`, or inside `Field.Root`. Selection follows the react-aria model — the first calendar pick anchors the range and keeps the popover open, the highlight follows the pointer/arrows, and the second pick completes it; picking backwards swaps the endpoints, while a range **typed** in reverse is flagged invalid (`Field.Error match="customError"`) rather than swapped.
 
+The standalone controlled example keeps real `DateRange` values (`DateValue` endpoints), not strings. Choose two calendar days or edit the segments to see the complete range. **Clear range** resets both ends; a half-entered range reports `null` until both ends are complete. The clear action remounts the picker so incomplete drafts are reset even when the external value is already `null`.
+
+<example-preview name="standalone-date-range"></example-preview>
+
 ```tsx
-const [range, setRange] = useState<DateRange | null>(null);
+function StandaloneDateRange() {
+  const [resetKey, setResetKey] = useState(0);
+  const [range, setRange] = useState<DateRange | null>({
+    start: parseDate("2026-04-09"),
+    end: parseDate("2026-04-12"),
+  });
 
-// standalone
-<DateRangePicker aria-label="Billing period" value={range} onChange={setRange} />
+  return (
+    <div className="max-w-md space-y-3">
+      <DateRangePicker
+        key={resetKey}
+        aria-label="Billing period"
+        value={range}
+        onChange={setRange}
+      />
+      <Button
+        variant="outline"
+        onClick={() => {
+          setRange(null);
+          // Partial ranges already expose null, so remount to clear staged segments too.
+          setResetKey((current) => current + 1);
+        }}
+      >
+        Clear range
+      </Button>
+      <Text.p role="status">
+        {range
+          ? `Complete range: ${range.start.toString()} to ${range.end.toString()}`
+          : "Choose both a start and an end date."}
+      </Text.p>
+    </div>
+  );
+}
+```
 
-// composed
-<Field.Root name="period">
-  <Field.Label>Billing period</Field.Label>
-  <DateRangePicker />
-  <Field.Error match="customError" />
-</Field.Root>
+Inside `Form`, the field owns the input value. Try submitting an empty range or only its start, then type an end date earlier than the start to see the built-in reversed-range error. Calendar selections normalize the endpoint order instead. Complete an ordered range to submit successfully.
+
+`onChange` exposes a `DateRange`, while `Form.onFormSubmit` receives the combined serialized string, for example `{ "period": "2026-04-09/2026-04-12" }`. The example displays that actual form payload without duplicating the input in string state.
+
+<example-preview name="date-range-with-field"></example-preview>
+
+```tsx
+function DateRangeWithField() {
+  const [submitted, setSubmitted] = useState<{ period: string } | null>(null);
+
+  return (
+    <Form<{ period: string }> noValidate className="max-w-md space-y-3" onFormSubmit={setSubmitted}>
+      <Field.Root name="period">
+        <Field.Label>Billing period</Field.Label>
+        <DateRangePicker isRequired placeholderValue={parseDate("2026-04-09")} />
+        <Field.Description>
+          Both dates are required. Type an end before the start to try the reversed-range error.
+        </Field.Description>
+        <Field.Error match="valueMissing">Choose both dates.</Field.Error>
+        <Field.Error match="customError" />
+      </Field.Root>
+      <Button type="submit">Save billing period</Button>
+      <pre role="status" className="overflow-x-auto text-sm">
+        {submitted ? JSON.stringify(submitted, null, 2) : "No range submitted yet."}
+      </pre>
+    </Form>
+  );
+}
 ```
 
 A single combined proxy input is registered as the one Field control — its value is empty until **both** ends are complete, so `isRequired` blocks a partial range. Give that combined input a `name` for a single `start/end` native-POST field (a wrapping `Field.Root` name wins), or use `startName` / `endName` to emit two plain hidden inputs for classic form-POST.

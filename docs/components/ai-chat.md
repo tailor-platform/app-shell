@@ -17,6 +17,8 @@ It renders no border or background of its own. Wrap it in [`Card`](./card.md), [
 import { AIChat, useAIChat, createAIGatewayClient } from "@tailor-platform/app-shell";
 ```
 
+The additional runnable examples also import `useState` from `react`, and `Button`, `Card`, `Select`, `Text`, and `type ToolState` from `@tailor-platform/app-shell`. Their icons (`ChevronsRightIcon`, `CopyIcon`, `EraserIcon`, `HistoryIcon`, `RotateCcwIcon`, `SparklesIcon`, and `ThumbsUpIcon`) come from `lucide-react`.
+
 ## Basic usage
 
 This example uses the real `useAIChat()` hook with a local `AIGatewayClient` fixture. Send a message to see the waiting state, a streamed reply, and the Stop control. Replies are predefined chunks with a short delay, not model output; no prompts leave your browser and no authentication or API key is needed.
@@ -209,33 +211,69 @@ Inside a `<Layout fill>` column (the column is `flex flex-col`, so the card take
 
 A 48px strip above the transcript: leading graphic, title, and an open action slot on the right, closed by a rule that runs the full width of the surface. Omit it for a bare transcript-and-composer surface, and give the card `overflow-hidden` so the rule stays inside its rounded corners.
 
-```tsx
-<AIChat.Header
-  title="Assistant"
-  actions={
-    <>
-      <AIChat.Action label="Conversation history" onClick={openHistory}>
-        <History className="size-3.5" aria-hidden />
-      </AIChat.Action>
-      <AIChat.Action label="Clear conversation" onClick={clear}>
-        <Eraser className="size-3.5" aria-hidden />
-      </AIChat.Action>
-    </>
-  }
-/>
-```
+Try the history/back action, clear the local transcript, or collapse and reopen the card. The collapse control occupies `icon`, while history and clear occupy `actions`. This changes only the example card, not the surrounding application layout:
 
-For a docked right panel, put the collapse control in `icon` so it takes the leading position:
+<example-preview name="header-actions"></example-preview>
 
 ```tsx
-<AIChat.Header
-  title="Assistant"
-  icon={
-    <AIChat.Action label="Collapse panel" onClick={onClose}>
-      <ChevronsRight className="size-3.5" aria-hidden />
-    </AIChat.Action>
-  }
-/>
+function HeaderActions() {
+  const [collapsed, setCollapsed] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [message, setMessage] = useState("Your purchase order is ready for review.");
+
+  if (collapsed) return <Button onClick={() => setCollapsed(false)}>Open assistant</Button>;
+
+  return (
+    <Card.Root className="flex h-64 flex-col overflow-hidden">
+      <AIChat>
+        <AIChat.Header
+          title={showHistory ? "Conversation history" : "Assistant"}
+          icon={
+            <AIChat.Action label="Collapse assistant" onClick={() => setCollapsed(true)}>
+              <ChevronsRightIcon aria-hidden />
+            </AIChat.Action>
+          }
+          actions={
+            <>
+              <AIChat.Action
+                label={showHistory ? "Back to conversation" : "Conversation history"}
+                onClick={() => setShowHistory((value) => !value)}
+              >
+                <HistoryIcon aria-hidden />
+              </AIChat.Action>
+              <AIChat.Action
+                label="Clear conversation"
+                onClick={() => {
+                  setMessage("");
+                  setShowHistory(false);
+                }}
+              >
+                <EraserIcon aria-hidden />
+              </AIChat.Action>
+            </>
+          }
+        />
+        <AIChat.Conversation>
+          {showHistory ? (
+            <AIChat.EmptyState
+              title="No older conversations"
+              description="Use Back to conversation to return to the current transcript."
+            />
+          ) : message ? (
+            <AIChat.Message from="assistant">
+              <AIChat.Response>{message}</AIChat.Response>
+            </AIChat.Message>
+          ) : (
+            <AIChat.EmptyState
+              title="Conversation cleared"
+              description="Only this local example was cleared."
+            />
+          )}
+        </AIChat.Conversation>
+      </AIChat>
+    </Card.Root>
+  );
+}
 ```
 
 ## Attached parts
@@ -278,16 +316,57 @@ function Response() {
 
 `AIChat.EmptyState` stacks `icon`, then the `title`/`description` block, then `children` — so starter suggestions sit alongside the text rather than replacing it:
 
+Choose a starter prompt to display the user turn and a predefined local reply. Use **Reset suggestions** to return to the empty state. This example does not call a model or execute a request:
+
+<example-preview name="empty-state-suggestions"></example-preview>
+
 ```tsx
-<AIChat.EmptyState
-  icon={<Sparkles className="size-6 text-primary" aria-hidden />}
-  title="Ask the assistant"
-  description="Grounded in your help articles."
->
-  <AIChat.Suggestions>
-    <AIChat.Suggestion suggestion="How do I create a purchase order?" onSelect={sendMessage} />
-  </AIChat.Suggestions>
-</AIChat.EmptyState>
+function EmptyStateSuggestions() {
+  const [prompt, setPrompt] = useState<string | null>(null);
+
+  return (
+    <Card.Root className="flex h-80 flex-col overflow-hidden">
+      <AIChat>
+        <AIChat.Header
+          title="Local suggestions"
+          actions={
+            <AIChat.Action label="Reset suggestions" onClick={() => setPrompt(null)}>
+              <RotateCcwIcon aria-hidden />
+            </AIChat.Action>
+          }
+        />
+        <AIChat.Conversation>
+          {prompt === null ? (
+            <AIChat.EmptyState
+              icon={<SparklesIcon className="size-6 text-primary" aria-hidden />}
+              title="Ask the assistant"
+              description="Choose a starter prompt. No request is sent."
+            >
+              <AIChat.Suggestions>
+                <AIChat.Suggestion
+                  suggestion="How do I create a purchase order?"
+                  onSelect={setPrompt}
+                />
+                <AIChat.Suggestion suggestion="Summarize my open orders" onSelect={setPrompt} />
+              </AIChat.Suggestions>
+            </AIChat.EmptyState>
+          ) : (
+            <>
+              <AIChat.Message from="user">
+                <AIChat.Response>{prompt}</AIChat.Response>
+              </AIChat.Message>
+              <AIChat.Message from="assistant">
+                <AIChat.Response>
+                  This predefined local reply shows where an application would render the answer.
+                </AIChat.Response>
+              </AIChat.Message>
+            </>
+          )}
+        </AIChat.Conversation>
+      </AIChat>
+    </Card.Root>
+  );
+}
 ```
 
 `AIChat.Suggestion` submits its `suggestion` text as if the reader had typed and sent it via `onSelect`.
@@ -296,12 +375,54 @@ function Response() {
 
 Icon-button row under a finished assistant turn — copy, retry, feedback. Render it only once the turn has finished so streaming turns stay uncluttered.
 
+Copy the response, produce another local revision with Retry, or mark it helpful. The status below the message records the action. Copy uses the browser clipboard and reports when access is unavailable; Retry and feedback remain entirely local:
+
+<example-preview name="message-actions"></example-preview>
+
 ```tsx
-<AIChat.Actions>
-  <AIChat.Action label="Copy" onClick={() => navigator.clipboard.writeText(message.content)}>
-    <Copy className="size-3.5" aria-hidden />
-  </AIChat.Action>
-</AIChat.Actions>
+function MessageActions() {
+  const [revision, setRevision] = useState(1);
+  const [feedback, setFeedback] = useState("No action selected.");
+  const response = `Summary revision ${revision}: three orders are ready for review.`;
+
+  async function copyResponse() {
+    try {
+      await navigator.clipboard.writeText(response);
+      setFeedback("Response copied.");
+    } catch {
+      setFeedback("Clipboard access is unavailable. Select the response text to copy it manually.");
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <AIChat.Message from="assistant">
+        <AIChat.Response>{response}</AIChat.Response>
+        <AIChat.Actions>
+          <AIChat.Action label="Copy response" onClick={() => void copyResponse()}>
+            <CopyIcon aria-hidden />
+          </AIChat.Action>
+          <AIChat.Action
+            label="Retry response"
+            onClick={() => {
+              setRevision((value) => value + 1);
+              setFeedback("Generated another local revision.");
+            }}
+          >
+            <RotateCcwIcon aria-hidden />
+          </AIChat.Action>
+          <AIChat.Action
+            label="Mark response helpful"
+            onClick={() => setFeedback("Marked helpful.")}
+          >
+            <ThumbsUpIcon aria-hidden />
+          </AIChat.Action>
+        </AIChat.Actions>
+      </AIChat.Message>
+      <Text.p role="status">{feedback}</Text.p>
+    </div>
+  );
+}
 ```
 
 ### Reasoning
@@ -355,15 +476,37 @@ function ChainOfThought() {
 
 `useAIChat()` returns a transient `toolCalls` list separately from `messages`. Render it with `AIChat.ToolCall` after the message history inside `AIChat.Conversation`:
 
+The following fixture shows two requested names. **Finish request** clears them, and **Show requested calls** restores them, making the transient presentation observable without executing a tool:
+
+<example-preview name="active-tool-calls"></example-preview>
+
 ```tsx
-{
-  toolCalls.length > 0 ? (
-    <AIChat.Message from="assistant">
-      {toolCalls.map((call) => (
-        <AIChat.ToolCall key={call.id} call={call} />
-      ))}
-    </AIChat.Message>
-  ) : null;
+function ActiveToolCalls() {
+  const [active, setActive] = useState(true);
+  const calls = [
+    { id: "search", name: "search_help_articles" },
+    { id: "orders", name: "list_open_orders" },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <Button variant="outline" onClick={() => setActive((value) => !value)}>
+        {active ? "Finish request" : "Show requested calls"}
+      </Button>
+      {active ? (
+        <AIChat.Message from="assistant">
+          {calls.map((call) => (
+            <AIChat.ToolCall key={call.id} call={call} />
+          ))}
+        </AIChat.Message>
+      ) : (
+        <Text.p role="status">No active tool requests.</Text.p>
+      )}
+      <Text.p>
+        These fixture names represent requests, not execution results. No tools are executed.
+      </Text.p>
+    </div>
+  );
 }
 ```
 
@@ -377,14 +520,57 @@ These names record model requests, not execution success. Tool arguments and res
 
 Collapsible tool-call card. Maps 1:1 to the AI SDK's tool-part lifecycle, so a streaming loop can update a call in place as parts arrive.
 
+Select each lifecycle state and expand or collapse the card to inspect its local input, result, and error fixtures. The selector controls presentation only; it does not run a tool:
+
+<example-preview name="tool-lifecycle"></example-preview>
+
 ```tsx
-<AIChat.Tool>
-  <AIChat.ToolHeader toolName="search_kb" state={call.state} />
-  <AIChat.ToolContent>
-    <AIChat.ToolInput input={call.input} />
-    <AIChat.ToolOutput output={call.output} errorText={call.errorText} />
-  </AIChat.ToolContent>
-</AIChat.Tool>
+function ToolLifecycle() {
+  const states: ToolState[] = [
+    "input-streaming",
+    "input-available",
+    "output-available",
+    "output-error",
+  ];
+  const [state, setState] = useState<ToolState>("output-available");
+
+  return (
+    <div className="space-y-3">
+      <Select
+        aria-label="Tool lifecycle state"
+        items={states}
+        value={state}
+        onValueChange={(value) => {
+          if (value) setState(value);
+        }}
+      />
+      <AIChat.Tool defaultOpen>
+        <AIChat.ToolHeader
+          toolName="search_help_articles"
+          title="Search help articles"
+          state={state}
+        />
+        <AIChat.ToolContent>
+          <AIChat.ToolInput input={{ query: "purchase order" }} />
+          <AIChat.ToolOutput
+            output={
+              state === "output-available"
+                ? { matches: [{ title: "Creating a purchase order" }] }
+                : undefined
+            }
+            errorText={
+              state === "output-error" ? "The local help index is unavailable." : undefined
+            }
+          />
+        </AIChat.ToolContent>
+      </AIChat.Tool>
+      <Text.p>
+        Change the state to inspect the presentation. Inputs, results, and errors are local
+        fixtures.
+      </Text.p>
+    </div>
+  );
+}
 ```
 
 `state` is `"input-streaming" | "input-available" | "output-available" | "output-error"`.
@@ -393,28 +579,106 @@ Collapsible tool-call card. Maps 1:1 to the AI SDK's tool-part lifecycle, so a s
 
 Compact "Used N sources" citation trigger under a grounded answer. Supply source data from your application; `useAIChat()` does not return citation metadata.
 
+Expand the citations and choose a source to read its local excerpt below the list. An application can use the same `onClick` callback to open its document viewer:
+
+<example-preview name="citation-sources"></example-preview>
+
 ```tsx
-<AIChat.Sources>
-  <AIChat.SourcesTrigger count={sources.length} />
-  <AIChat.SourcesContent>
-    {sources.map((source) => (
-      <AIChat.Source key={source.id} title={source.title} onClick={() => openDocument(source.id)} />
-    ))}
-  </AIChat.SourcesContent>
-</AIChat.Sources>
+function CitationSources() {
+  const sources = [
+    {
+      id: "purchase-orders",
+      title: "Purchase order guide",
+      excerpt: "Create a draft, add line items, then confirm the purchase order.",
+    },
+    {
+      id: "approvals",
+      title: "Approval policy",
+      excerpt: "An authorized reviewer checks quantities and delivery dates before approval.",
+    },
+  ];
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = sources.find((source) => source.id === selectedId);
+
+  return (
+    <div className="space-y-3">
+      <AIChat.Sources>
+        <AIChat.SourcesTrigger count={sources.length} />
+        <AIChat.SourcesContent>
+          {sources.map((source) => (
+            <AIChat.Source
+              key={source.id}
+              title={source.title}
+              onClick={() => setSelectedId(source.id)}
+            />
+          ))}
+        </AIChat.SourcesContent>
+      </AIChat.Sources>
+      <Text.p role="status">
+        {selected
+          ? `${selected.title}: ${selected.excerpt}`
+          : "Expand the citations, then choose a source to read its local excerpt."}
+      </Text.p>
+    </div>
+  );
+}
 ```
 
 ### History
 
 Grouped list of past conversations for reopening an earlier chat. Layout-agnostic — render it in a popover behind a header action, or as a sidebar section of a full chat page. Group titles and date bucketing are yours; `AIChat.History` has no opinion on date ranges.
 
+Choose a conversation to switch its displayed summary. Delete removes only the local fixture; deleting the active item also clears its displayed summary. **Reset history** restores the sample conversations. There is no remote history store or request:
+
+<example-preview name="conversation-history"></example-preview>
+
 ```tsx
-<AIChat.History
-  groups={[{ title: "Today", items: [{ id: "1", title: "Creating a purchase order" }] }]}
-  activeId={activeId}
-  onSelect={loadConversation}
-  onDelete={deleteConversation}
-/>
+function ConversationHistory() {
+  const initialConversations = [
+    {
+      id: "purchase-orders",
+      title: "Creating a purchase order",
+      summary: "Start with a draft and add the required line items.",
+    },
+    {
+      id: "stock",
+      title: "Checking available stock",
+      summary: "Review the available quantity at each warehouse.",
+    },
+  ];
+  const [conversations, setConversations] = useState(initialConversations);
+  const [activeId, setActiveId] = useState("purchase-orders");
+  const selected = conversations.find((conversation) => conversation.id === activeId);
+
+  return (
+    <div className="space-y-3">
+      <Text.p>
+        Choose a saved conversation to read it. Delete affects only these local fixtures.
+      </Text.p>
+      <AIChat.History
+        groups={[{ title: "Today", items: conversations }]}
+        activeId={activeId}
+        onSelect={setActiveId}
+        onDelete={(id) => {
+          setConversations((current) => current.filter((conversation) => conversation.id !== id));
+          setActiveId((current) => (current === id ? "" : current));
+        }}
+      />
+      <Text.p role="status">
+        {selected ? `${selected.title}: ${selected.summary}` : "No conversation selected."}
+      </Text.p>
+      <Button
+        variant="outline"
+        onClick={() => {
+          setConversations(initialConversations);
+          setActiveId("purchase-orders");
+        }}
+      >
+        Reset history
+      </Button>
+    </div>
+  );
+}
 ```
 
 ## Related components

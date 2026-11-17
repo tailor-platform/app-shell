@@ -82,10 +82,10 @@
       ],
       "hashes": {
         "typeSurface": "932ff7674cc6df99",
-        "outline": "dd909165f30290f4",
+        "outline": "05833ccb8b4234b6",
         "snapshot": "39edd53bc6562561",
-        "outputMd": "600d9c288c10878d",
-        "examples": "e6404b222110dba3"
+        "outputMd": "f9777af06e59494c",
+        "examples": "60a6e1915d6d562d"
       }
     },
     "alert": {
@@ -191,10 +191,10 @@
       "symbols": ["Autocomplete", "AutocompleteAsyncFetcher"],
       "hashes": {
         "typeSurface": "81040ce8342602bc",
-        "outline": "8ac7fee576c497c4",
+        "outline": "e6035c4afb635461",
         "snapshot": "dbd3c11b7dab615d",
-        "outputMd": "eb5793246e7d561e",
-        "examples": "95962e9882b63120"
+        "outputMd": "f3179004d35f8c88",
+        "examples": "ad7c86260bdea0da"
       }
     },
     "avatar": {
@@ -276,10 +276,10 @@
       "symbols": ["Checkbox", "CheckboxProps"],
       "hashes": {
         "typeSurface": "3886bf7012f24283",
-        "outline": "95df6a4219305305",
+        "outline": "c6eabaf24988d251",
         "snapshot": "8d4d6148a3df5d61",
-        "outputMd": "3486b9b3bbc6b4aa",
-        "examples": "3de165f1ab896397"
+        "outputMd": "ebe55c40fb5fb2e6",
+        "examples": "afd839a3fc55cc52"
       }
     },
     "combobox": {
@@ -477,10 +477,10 @@
       ],
       "hashes": {
         "typeSurface": "413c66caec0a0bf8",
-        "outline": "dc5f55408b055ba2",
+        "outline": "7591217822d0183b",
         "snapshot": "a97e067c66e46ef6",
-        "outputMd": "06f3ce2174fda10a",
-        "examples": "b94e3109d112007c"
+        "outputMd": "36bb587b7088fb1c",
+        "examples": "8adc119ac0d7152c"
       }
     },
     "date-picker": {
@@ -501,10 +501,10 @@
       ],
       "hashes": {
         "typeSurface": "a0f5522359e8f81d",
-        "outline": "a70a0d73623531de",
+        "outline": "c14eb16a6ed93cab",
         "snapshot": null,
-        "outputMd": "aef949bc09716680",
-        "examples": "85bc7348e764a73c"
+        "outputMd": "ae89f55397bef7ac",
+        "examples": "02725fe17138b56e"
       }
     },
     "default-header": {
@@ -637,10 +637,10 @@
       "symbols": ["Dialog"],
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
-        "outline": "39c82f8a5f9a57d5",
+        "outline": "5ba9ca06b0385f80",
         "snapshot": "86c672f1c58f27fd",
-        "outputMd": "5ff9a70e8eea88dd",
-        "examples": "934c52d4e8761404"
+        "outputMd": "cd9fa9c4b8ccb108",
+        "examples": "f5540beaf3f36609"
       }
     },
     "document-collection": {
@@ -716,16 +716,16 @@
       "kind": "code-backed",
       "outline": "docs-src/components/filter-rail.docs.outline.md",
       "output": "docs/components/filter-rail.md",
-      "examples": null,
+      "examples": "docs-src/components/filter-rail.docs.examples.tsx",
       "sources": ["packages/core/src/components/filter-rail/**"],
       "claims": [],
       "symbols": ["FilterRail", "FilterRailRootProps", "FilterRailSection", "useFilterRailLayout"],
       "hashes": {
         "typeSurface": "b795ce4e10be0653",
-        "outline": "a75520ebeae4769b",
+        "outline": "52990644d6ca82ab",
         "snapshot": "ddebbf9718587cff",
-        "outputMd": "224745760083ee35",
-        "examples": null
+        "outputMd": "12021e27b57f45e9",
+        "examples": "3d2e95eb69cb74fe"
       }
     },
     "form": {
@@ -739,10 +739,10 @@
       "symbols": ["Form", "FormProps"],
       "hashes": {
         "typeSurface": "7b374d45d53d4535",
-        "outline": "f4a5ebf0ce86448f",
+        "outline": "fc23844ab3a67563",
         "snapshot": "5d7a7904c5256f29",
-        "outputMd": "3bef3b38c8f61fca",
-        "examples": "d927bcfc95d109d4"
+        "outputMd": "c97c3d6e426d8b29",
+        "examples": "c56460c1a93d532b"
       }
     },
     "form-composer": {
@@ -1096,10 +1096,10 @@
       "symbols": ["Menu"],
       "hashes": {
         "typeSurface": "943616def28cafb0",
-        "outline": "c1ffae9a3872c334",
+        "outline": "3cb7ee774065168f",
         "snapshot": "212e64b91be708c9",
-        "outputMd": "f3daffeba45ee3dd",
-        "examples": "2e034d6a69c7a147"
+        "outputMd": "05e75c52c12c3c32",
+        "examples": "8c07f9e1d03c5524"
       }
     },
     "metric-card": {
@@ -1504,10 +1504,10 @@
       ],
       "hashes": {
         "typeSurface": "f1d9ac66cafae3d5",
-        "outline": "962d7401a920197a",
+        "outline": "76e6e33c6034cc3b",
         "snapshot": null,
-        "outputMd": "958b33e8fa7a9e2b",
-        "examples": "fd9fed3980ca1fda"
+        "outputMd": "2c08d654e96b8ed1",
+        "examples": "5e404daca5fdeb59"
       }
     },
     "toolbar": {
@@ -1538,10 +1538,10 @@
       "symbols": ["Tooltip"],
       "hashes": {
         "typeSurface": "d652b740db9471c7",
-        "outline": "2b11960ae6fccfba",
+        "outline": "6c02c292edc460ca",
         "snapshot": "19ed635d615f04af",
-        "outputMd": "0f1ebe2b142513a6",
-        "examples": "e60bbb4e78a15a38"
+        "outputMd": "c3faff5e48922922",
+        "examples": "aadf606163c14558"
       }
     },
     "tree": {
@@ -1801,16 +1801,16 @@
       "kind": "code-backed",
       "outline": "docs-src/components/with-guard.docs.outline.md",
       "output": "docs/components/with-guard.md",
-      "examples": null,
+      "examples": "docs-src/components/with-guard.docs.examples.tsx",
       "sources": ["packages/core/src/components/with-guard/**"],
       "claims": [],
       "symbols": ["WithGuard", "WithGuardProps"],
       "hashes": {
         "typeSurface": "82ec0e51747a308b",
-        "outline": "2cf6d6a02b0e3585",
+        "outline": "026c7c8009600712",
         "snapshot": null,
-        "outputMd": "8d4fc931339d9a3f",
-        "examples": null
+        "outputMd": "e3d054e74e4be1c8",
+        "examples": "413511111014e7b6"
       }
     }
   },
@@ -1826,35 +1826,35 @@
     "packages/core/skills/app-shell-patterns/references/concepts/testing.md": "777fd9ba9f4641f8",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "1741cb78abd51827",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "230039d9f96fd264",
-    "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "600d9c288c10878d",
+    "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "f9777af06e59494c",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "9b237d9c19b54102",
     "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "cd57abd4909118a4",
     "packages/core/skills/app-shell-patterns/references/components/appearance-switcher.md": "b55f1d538651d467",
     "packages/core/skills/app-shell-patterns/references/components/attachment.md": "8922f126009ee1df",
-    "packages/core/skills/app-shell-patterns/references/components/autocomplete.md": "eb5793246e7d561e",
+    "packages/core/skills/app-shell-patterns/references/components/autocomplete.md": "f3179004d35f8c88",
     "packages/core/skills/app-shell-patterns/references/components/avatar.md": "1a98b46e63c2cf7c",
     "packages/core/skills/app-shell-patterns/references/components/badge.md": "7897980baf93a074",
     "packages/core/skills/app-shell-patterns/references/components/button.md": "be862b0bff15cc1a",
     "packages/core/skills/app-shell-patterns/references/components/card.md": "c1f88a287f197d79",
-    "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "3486b9b3bbc6b4aa",
+    "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "ebe55c40fb5fb2e6",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "c79cd0fe175187e3",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "10c04c78bb846c9a",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "06f3ce2174fda10a",
-    "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "aef949bc09716680",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "36bb587b7088fb1c",
+    "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "ae89f55397bef7ac",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "9b1672c71b6db3ff",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "8930a410d7d45f89",
-    "packages/core/skills/app-shell-patterns/references/components/dialog.md": "5ff9a70e8eea88dd",
+    "packages/core/skills/app-shell-patterns/references/components/dialog.md": "cd9fa9c4b8ccb108",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "cabfb86627aefd6f",
-    "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "224745760083ee35",
-    "packages/core/skills/app-shell-patterns/references/components/form.md": "3bef3b38c8f61fca",
+    "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "12021e27b57f45e9",
+    "packages/core/skills/app-shell-patterns/references/components/form.md": "c97c3d6e426d8b29",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "fe86450720c4d586",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "d048e972ae8aba3e",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "876dca4c3b3bc9c5",
     "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "3b8bf269c15e2fa5",
-    "packages/core/skills/app-shell-patterns/references/components/menu.md": "f3daffeba45ee3dd",
+    "packages/core/skills/app-shell-patterns/references/components/menu.md": "05e75c52c12c3c32",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "4742120c07f00991",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "7e20d26620366d82",
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "0be1c6430a4b7ec1",
@@ -1867,11 +1867,11 @@
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "a94b016f0c9709b7",
     "packages/core/skills/app-shell-patterns/references/components/text.md": "e5311b1891f3ff7b",
     "packages/core/skills/app-shell-patterns/references/components/textarea.md": "cf324904899ed318",
-    "packages/core/skills/app-shell-patterns/references/components/timeline.md": "958b33e8fa7a9e2b",
+    "packages/core/skills/app-shell-patterns/references/components/timeline.md": "2c08d654e96b8ed1",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "f8a45109e97391f5",
-    "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "0f1ebe2b142513a6",
+    "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "c3faff5e48922922",
     "packages/core/skills/app-shell-patterns/references/components/tree.md": "6010470f3c41538a",
-    "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "8d4fc931339d9a3f",
+    "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "e3d054e74e4be1c8",
     "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "9cdbe8ff36288881",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",

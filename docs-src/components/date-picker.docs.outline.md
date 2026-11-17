@@ -31,7 +31,7 @@ import {
 } from "@tailor-platform/app-shell";
 ```
 
-The examples below also import `Text` from `@tailor-platform/app-shell` and `useId` from `react`.
+The examples below also import `Button`, `Form`, and `Text` from `@tailor-platform/app-shell`, and `useId` and `useState` from `react`.
 
 ## API shape
 
@@ -81,30 +81,15 @@ Week start:
 
 Use standard HTML + ARIA when rendering the field standalone:
 
-```tsx
-<label id="delivery-date-label" htmlFor="delivery-date">
-  Delivery date
-</label>
-<DatePicker
-  id="delivery-date"
-  aria-labelledby="delivery-date-label"
-  aria-describedby={error ? "delivery-date-error" : undefined}
-  isInvalid={!!error}
-  value={value}
-  onChange={setValue}
-/>
-{error && <Text.p id="delivery-date-error">{error}</Text.p>}
-```
+Click **Check delivery date** while empty to show a consumer-owned error, then choose a date to clear it. `isInvalid` and `aria-describedby` connect the standalone control to the visible message; `useId` keeps the association unique.
+
+<!-- example: standalone-validation -->
 
 Or let `Field.Root` wire the label, description, and error elements:
 
-```tsx
-<Field.Root name="deliveryDate" error={error ? { message: error } : undefined}>
-  <Field.Label>Delivery date</Field.Label>
-  <DatePicker value={value} onChange={setValue} />
-  <Field.Error match={!!error}>{error}</Field.Error>
-</Field.Root>
-```
+Submit the empty field to see its required error. A date before April 1, 2026 can be typed, but the control's `minValue` validation blocks submission and surfaces through `Field.Error match="customError"`. A valid date is submitted as an ISO date string; the result stays local.
+
+<!-- example: field-validation -->
 
 ## Calendar
 
@@ -116,19 +101,15 @@ A standalone calendar grid for custom date-selection UIs.
 
 Start and end segmented inputs sharing one calendar popover, with a `{ start, end }` value (`DateRange`) — a **separate component** from `DatePicker`, not a mode. Same composition model as the other controls: standalone with `aria-*`, or inside `Field.Root`. Selection follows the react-aria model — the first calendar pick anchors the range and keeps the popover open, the highlight follows the pointer/arrows, and the second pick completes it; picking backwards swaps the endpoints, while a range **typed** in reverse is flagged invalid (`Field.Error match="customError"`) rather than swapped.
 
-```tsx
-const [range, setRange] = useState<DateRange | null>(null);
+The standalone controlled example keeps real `DateRange` values (`DateValue` endpoints), not strings. Choose two calendar days or edit the segments to see the complete range. **Clear range** resets both ends; a half-entered range reports `null` until both ends are complete. The clear action remounts the picker so incomplete drafts are reset even when the external value is already `null`.
 
-// standalone
-<DateRangePicker aria-label="Billing period" value={range} onChange={setRange} />
+<!-- example: standalone-date-range -->
 
-// composed
-<Field.Root name="period">
-  <Field.Label>Billing period</Field.Label>
-  <DateRangePicker />
-  <Field.Error match="customError" />
-</Field.Root>
-```
+Inside `Form`, the field owns the input value. Try submitting an empty range or only its start, then type an end date earlier than the start to see the built-in reversed-range error. Calendar selections normalize the endpoint order instead. Complete an ordered range to submit successfully.
+
+`onChange` exposes a `DateRange`, while `Form.onFormSubmit` receives the combined serialized string, for example `{ "period": "2026-04-09/2026-04-12" }`. The example displays that actual form payload without duplicating the input in string state.
+
+<!-- example: date-range-with-field -->
 
 A single combined proxy input is registered as the one Field control — its value is empty until **both** ends are complete, so `isRequired` blocks a partial range. Give that combined input a `name` for a single `start/end` native-POST field (a wrapping `Field.Root` name wins), or use `startName` / `endName` to emit two plain hidden inputs for classic form-POST.
 

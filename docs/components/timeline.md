@@ -15,6 +15,8 @@ description: Composable primitives for building time-based layouts with axis gui
 import { Timeline } from "@tailor-platform/app-shell";
 ```
 
+The additional examples also import `Text` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -235,26 +237,106 @@ Background content for a row rendered in a dedicated layer (in front of bands, b
 
 ### Horizontal Scrolling
 
-Use `canvasWidth` on `Timeline.Viewport` to enable horizontal scrolling:
+Use `canvasWidth` on `Timeline.Viewport` to enable horizontal scrolling. The example constrains the visible width, so scroll right to reveal the Release task:
+
+<example-preview name="horizontal-scrolling"></example-preview>
 
 ```tsx
-<Timeline.Root start={projectStart} end={projectEnd}>
-  <Timeline.Viewport canvasWidth={2400} axis={axis}>
-    {rows}
-  </Timeline.Viewport>
-</Timeline.Root>
+function HorizontalScrolling() {
+  const tasks = [
+    { name: "Planning", start: 5, end: 25 },
+    { name: "Implementation", start: 30, end: 70 },
+    { name: "Release", start: 80, end: 98 },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <Text.p>Scroll horizontally to see Release at the far end of the fixed-width canvas.</Text.p>
+      <Timeline.Root start={0} end={100} className="max-w-xl">
+        <Timeline.Viewport
+          canvasWidth={1400}
+          axis={{
+            guides: [{ at: 25 }, { at: 50 }, { at: 75 }],
+            levels: [
+              {
+                kind: "spans",
+                items: [
+                  { start: 0, end: 25, label: "Week 1" },
+                  { start: 25, end: 50, label: "Week 2" },
+                  { start: 50, end: 75, label: "Week 3" },
+                  { start: 75, end: 100, label: "Week 4" },
+                ],
+              },
+            ],
+          }}
+        >
+          {tasks.map((task) => (
+            <Timeline.Row key={task.name} height={44}>
+              <Timeline.Interval start={task.start} end={task.end} insetY={6}>
+                <div className="flex h-full items-center rounded bg-primary px-3 text-primary-foreground">
+                  {task.name}
+                </div>
+              </Timeline.Interval>
+            </Timeline.Row>
+          ))}
+        </Timeline.Viewport>
+      </Timeline.Root>
+    </div>
+  );
+}
 ```
 
 ### Sticky Axis
 
-Pin the axis to the top during vertical scrolling with `stickyAxis`:
+Pin the axis to the top during vertical scrolling with `stickyAxis`. Give the viewport a bounded height and enable vertical scrolling; this example contains more task rows than fit in its 220px viewport. Scroll inside it to keep the sprint labels in view:
+
+<example-preview name="sticky-axis"></example-preview>
 
 ```tsx
-<Timeline.Root start={0} end={100}>
-  <Timeline.Viewport stickyAxis axis={axis}>
-    {rows}
-  </Timeline.Viewport>
-</Timeline.Root>
+function StickyAxis() {
+  const tasks = Array.from({ length: 10 }, (_, index) => ({
+    name: `Task ${index + 1}`,
+    start: 5 + index * 3,
+    end: 45 + index * 4,
+  }));
+
+  return (
+    <div className="space-y-3">
+      <Text.p>
+        Scroll inside the timeline. The sprint labels stay at the top while the task rows move.
+      </Text.p>
+      <Timeline.Root start={0} end={100}>
+        <Timeline.Viewport
+          stickyAxis
+          style={{ height: 220, overflowY: "auto" }}
+          axis={{
+            className: "bg-background",
+            guides: [{ at: 50 }],
+            levels: [
+              {
+                kind: "spans",
+                items: [
+                  { start: 0, end: 50, label: "Sprint 1" },
+                  { start: 50, end: 100, label: "Sprint 2" },
+                ],
+              },
+            ],
+          }}
+        >
+          {tasks.map((task) => (
+            <Timeline.Row key={task.name} height={42}>
+              <Timeline.Interval start={task.start} end={task.end} insetY={5}>
+                <div className="flex h-full items-center rounded bg-secondary px-3 text-secondary-foreground">
+                  {task.name}
+                </div>
+              </Timeline.Interval>
+            </Timeline.Row>
+          ))}
+        </Timeline.Viewport>
+      </Timeline.Root>
+    </div>
+  );
+}
 ```
 
 ### Dependency Links
@@ -293,31 +375,54 @@ function DependencyLinks() {
 
 ### Background Bands and Markers
 
-Use `decorations` to add background highlights and vertical marker lines:
+Use `decorations` to add background highlights and vertical marker lines. The release-freeze interval is named in the axis as well as shaded, and the Today marker is labelled in both the axis and body, so the meaning is not conveyed by colour alone:
+
+<example-preview name="background-bands-and-markers"></example-preview>
 
 ```tsx
-<Timeline.Viewport
-  axis={axis}
-  decorations={{
-    bands: [
-      {
-        start: freezeStart,
-        end: freezeEnd,
-        color: "var(--destructive/10)",
-        className: "border-x border-destructive/30",
-      },
-    ],
-    markers: [
-      {
-        at: today,
-        color: "var(--primary)",
-        label: <span className="text-xs text-primary">Today</span>,
-      },
-    ],
-  }}
->
-  {rows}
-</Timeline.Viewport>
+function BackgroundBandsAndMarkers() {
+  return (
+    <div className="space-y-3">
+      <Text.p>The shaded release freeze spans days 60–80. Today is marked at day 45.</Text.p>
+      <Timeline.Root start={0} end={100}>
+        <Timeline.Viewport
+          axis={{
+            guides: [{ at: 20 }, { at: 40 }, { at: 60 }, { at: 80 }],
+            levels: [
+              {
+                kind: "spans",
+                items: [
+                  { start: 0, end: 60, label: "Development" },
+                  { start: 60, end: 80, label: "Release freeze" },
+                  { start: 80, end: 100, label: "Release" },
+                ],
+              },
+            ],
+          }}
+          decorations={{
+            bands: [{ start: 60, end: 80, color: "var(--warning-surface)" }],
+            markers: [{ at: 45, color: "var(--primary)", label: "Today", placement: "both" }],
+          }}
+        >
+          <Timeline.Row height={52}>
+            <Timeline.Interval start={10} end={55} insetY={12}>
+              <div className="flex h-full items-center rounded bg-secondary px-3 text-secondary-foreground">
+                Build
+              </div>
+            </Timeline.Interval>
+          </Timeline.Row>
+          <Timeline.Row height={52}>
+            <Timeline.Interval start={65} end={95} insetY={12}>
+              <div className="flex h-full items-center rounded bg-primary px-3 text-primary-foreground">
+                Verify and release
+              </div>
+            </Timeline.Interval>
+          </Timeline.Row>
+        </Timeline.Viewport>
+      </Timeline.Root>
+    </div>
+  );
+}
 ```
 
 ### Row Background

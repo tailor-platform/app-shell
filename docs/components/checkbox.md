@@ -15,7 +15,7 @@ The `Checkbox` component is a styled control for boolean fields. It wraps Base U
 import { Checkbox } from "@tailor-platform/app-shell";
 ```
 
-The examples below also import `Field` from `@tailor-platform/app-shell`.
+The examples below also import `useState` from `react`, and `Field` and `Text` from `@tailor-platform/app-shell`.
 
 ## Basic Usage
 
@@ -59,21 +59,62 @@ Accepts all Base UI `Checkbox.Root` props, plus `label`. The most common:
 
 ### Controlled
 
-```tsx
-const [checked, setChecked] = useState(false);
+Toggle the checkbox to update the value owned by React state. The text below reports the current value.
 
-<Checkbox label="Enable notifications" checked={checked} onCheckedChange={setChecked} />;
+<example-preview name="controlled"></example-preview>
+
+```tsx
+function Controlled() {
+  const [checked, setChecked] = useState(false);
+
+  return (
+    <div className="space-y-3">
+      <Checkbox label="Enable notifications" checked={checked} onCheckedChange={setChecked} />
+      <Text.p role="status">Notifications: {checked ? "enabled" : "disabled"}</Text.p>
+    </div>
+  );
+}
 ```
 
 ### Indeterminate ("select all")
 
+The example starts with one order selected, so **Select all orders** is mixed. Select or clear the parent to update every child, or toggle individual orders to move between none, some, and all selected.
+
+<example-preview name="select-all"></example-preview>
+
 ```tsx
-<Checkbox
-  aria-label="Select all rows"
-  checked={allSelected}
-  indeterminate={someSelected && !allSelected}
-  onCheckedChange={(checked) => (checked ? selectAll() : clearAll())}
-/>
+function SelectAll() {
+  const orders = ["Order 1001", "Order 1002", "Order 1003"];
+  const [selected, setSelected] = useState<string[]>(["Order 1001"]);
+  const allSelected = selected.length === orders.length;
+  const someSelected = selected.length > 0;
+
+  return (
+    <div className="space-y-3">
+      <Checkbox
+        label="Select all orders"
+        checked={allSelected}
+        indeterminate={someSelected && !allSelected}
+        onCheckedChange={(checked) => setSelected(checked ? orders : [])}
+      />
+      <div className="flex flex-col gap-2 pl-6" role="group" aria-label="Orders">
+        {orders.map((order) => (
+          <Checkbox
+            key={order}
+            label={order}
+            checked={selected.includes(order)}
+            onCheckedChange={(checked) =>
+              setSelected((current) =>
+                checked ? [...current, order] : current.filter((value) => value !== order),
+              )
+            }
+          />
+        ))}
+      </div>
+      <Text.p role="status">Selected orders: {selected.join(", ") || "None"}</Text.p>
+    </div>
+  );
+}
 ```
 
 ### Disabled

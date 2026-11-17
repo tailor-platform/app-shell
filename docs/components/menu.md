@@ -15,6 +15,8 @@ The `Menu` component provides a dropdown menu with a compound component API. It 
 import { Menu } from "@tailor-platform/app-shell";
 ```
 
+The runnable examples also import `useState` from `react`, `Button` and `Text` from `@tailor-platform/app-shell`, and `EllipsisVerticalIcon` from `lucide-react`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -122,49 +124,79 @@ function GroupedItems() {
 
 ## Checkbox Items
 
-```tsx
-const [bold, setBold] = useState(false);
-const [italic, setItalic] = useState(false);
+Open **Format text** and toggle Bold or Italic. The sample text and the reported settings update together.
 
-<Menu.Root>
-  <Menu.Trigger>Format</Menu.Trigger>
-  <Menu.Content>
-    <Menu.CheckboxItem checked={bold} onCheckedChange={setBold}>
-      <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
-      Bold
-    </Menu.CheckboxItem>
-    <Menu.CheckboxItem checked={italic} onCheckedChange={setItalic}>
-      <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
-      Italic
-    </Menu.CheckboxItem>
-  </Menu.Content>
-</Menu.Root>;
+<example-preview name="checkbox-items"></example-preview>
+
+```tsx
+function CheckboxItems() {
+  const [bold, setBold] = useState(false);
+  const [italic, setItalic] = useState(false);
+
+  return (
+    <div className="space-y-3">
+      <Menu.Root>
+        <Menu.Trigger render={<Button variant="outline" />}>Format text</Menu.Trigger>
+        <Menu.Content>
+          <Menu.CheckboxItem checked={bold} onCheckedChange={setBold}>
+            <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
+            Bold
+          </Menu.CheckboxItem>
+          <Menu.CheckboxItem checked={italic} onCheckedChange={setItalic}>
+            <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
+            Italic
+          </Menu.CheckboxItem>
+        </Menu.Content>
+      </Menu.Root>
+      <Text.p
+        style={{ fontWeight: bold ? "bold" : "normal", fontStyle: italic ? "italic" : "normal" }}
+      >
+        Format this sample text.
+      </Text.p>
+      <Text.p role="status">
+        Bold: {bold ? "on" : "off"}; italic: {italic ? "on" : "off"}
+      </Text.p>
+    </div>
+  );
+}
 ```
 
 ## Radio Items
 
-```tsx
-const [align, setAlign] = useState("left");
+Choose an alignment from **Align text**. Only one radio item is selected, and the sample text moves to that alignment.
 
-<Menu.Root>
-  <Menu.Trigger>Align</Menu.Trigger>
-  <Menu.Content>
-    <Menu.RadioGroup value={align} onValueChange={setAlign}>
-      <Menu.RadioItem value="left">
-        <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
-        Left
-      </Menu.RadioItem>
-      <Menu.RadioItem value="center">
-        <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
-        Center
-      </Menu.RadioItem>
-      <Menu.RadioItem value="right">
-        <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
-        Right
-      </Menu.RadioItem>
-    </Menu.RadioGroup>
-  </Menu.Content>
-</Menu.Root>;
+<example-preview name="radio-items"></example-preview>
+
+```tsx
+function RadioItems() {
+  const [align, setAlign] = useState("left");
+
+  return (
+    <div className="space-y-3">
+      <Menu.Root>
+        <Menu.Trigger render={<Button variant="outline" />}>Align text</Menu.Trigger>
+        <Menu.Content>
+          <Menu.RadioGroup value={align} onValueChange={setAlign}>
+            {["left", "center", "right"].map((value) => (
+              <Menu.RadioItem key={value} value={value}>
+                <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
+                {value}
+              </Menu.RadioItem>
+            ))}
+          </Menu.RadioGroup>
+        </Menu.Content>
+      </Menu.Root>
+      <Text.p
+        className={
+          align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left"
+        }
+      >
+        Align this sample text.
+      </Text.p>
+      <Text.p role="status">Alignment: {align}</Text.p>
+    </div>
+  );
+}
 ```
 
 ## Nested Sub-menus
@@ -194,24 +226,39 @@ function NestedSubmenus() {
 
 ## Examples
 
-### Context Menu
+### Row Actions Menu
+
+Open the order's three-dot button and choose an action. This is a button-triggered dropdown, not a right-click context menu. The example records the chosen action locally without modifying an order or navigating away. Use `render` to make the styled `Button` the trigger itself, rather than nesting two buttons.
+
+<example-preview name="row-actions"></example-preview>
 
 ```tsx
-function OrderActions({ order }: { order: Order }) {
+function RowActions() {
+  const orderNumber = "ORD-1001";
+  const [lastAction, setLastAction] = useState("None");
+
   return (
-    <Menu.Root>
-      <Menu.Trigger>
-        <Button variant="ghost" size="icon">
-          <EllipsisVerticalIcon />
-        </Button>
-      </Menu.Trigger>
-      <Menu.Content>
-        <Menu.Item onSelect={() => handleEdit(order)}>Edit</Menu.Item>
-        <Menu.Item onSelect={() => handleDuplicate(order)}>Duplicate</Menu.Item>
-        <Menu.Separator />
-        <Menu.Item onSelect={() => handleDelete(order)}>Delete</Menu.Item>
-      </Menu.Content>
-    </Menu.Root>
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <Text.span>{orderNumber}</Text.span>
+        <Menu.Root>
+          <Menu.Trigger render={<Button variant="ghost" size="icon" aria-label="Order actions" />}>
+            <EllipsisVerticalIcon />
+          </Menu.Trigger>
+          <Menu.Content>
+            <Menu.Item onClick={() => setLastAction(`Edit ${orderNumber}`)}>Edit</Menu.Item>
+            <Menu.Item onClick={() => setLastAction(`Duplicate ${orderNumber}`)}>
+              Duplicate
+            </Menu.Item>
+            <Menu.Separator />
+            <Menu.Item onClick={() => setLastAction(`View history for ${orderNumber}`)}>
+              View history
+            </Menu.Item>
+          </Menu.Content>
+        </Menu.Root>
+      </div>
+      <Text.p role="status">Last action: {lastAction}</Text.p>
+    </div>
   );
 }
 ```

@@ -19,6 +19,8 @@ It renders no border or background of its own. Wrap it in [`Card`](./card.md), [
 import { AIChat, useAIChat, createAIGatewayClient } from "@tailor-platform/app-shell";
 ```
 
+The additional runnable examples also import `useState` from `react`, and `Button`, `Card`, `Select`, `Text`, and `type ToolState` from `@tailor-platform/app-shell`. Their icons (`ChevronsRightIcon`, `CopyIcon`, `EraserIcon`, `HistoryIcon`, `RotateCcwIcon`, `SparklesIcon`, and `ThumbsUpIcon`) come from `lucide-react`.
+
 ## Basic usage
 
 This example uses the real `useAIChat()` hook with a local `AIGatewayClient` fixture. Send a message to see the waiting state, a streamed reply, and the Stop control. Replies are predefined chunks with a short delay, not model output; no prompts leave your browser and no authentication or API key is needed.
@@ -155,34 +157,9 @@ Inside a `<Layout fill>` column (the column is `flex flex-col`, so the card take
 
 A 48px strip above the transcript: leading graphic, title, and an open action slot on the right, closed by a rule that runs the full width of the surface. Omit it for a bare transcript-and-composer surface, and give the card `overflow-hidden` so the rule stays inside its rounded corners.
 
-```tsx
-<AIChat.Header
-  title="Assistant"
-  actions={
-    <>
-      <AIChat.Action label="Conversation history" onClick={openHistory}>
-        <History className="size-3.5" aria-hidden />
-      </AIChat.Action>
-      <AIChat.Action label="Clear conversation" onClick={clear}>
-        <Eraser className="size-3.5" aria-hidden />
-      </AIChat.Action>
-    </>
-  }
-/>
-```
+Try the history/back action, clear the local transcript, or collapse and reopen the card. The collapse control occupies `icon`, while history and clear occupy `actions`. This changes only the example card, not the surrounding application layout:
 
-For a docked right panel, put the collapse control in `icon` so it takes the leading position:
-
-```tsx
-<AIChat.Header
-  title="Assistant"
-  icon={
-    <AIChat.Action label="Collapse panel" onClick={onClose}>
-      <ChevronsRight className="size-3.5" aria-hidden />
-    </AIChat.Action>
-  }
-/>
-```
+<!-- example: header-actions -->
 
 ## Attached parts
 
@@ -202,17 +179,9 @@ Renders the markdown subset a streamed LLM response actually emits — bold, inl
 
 `AIChat.EmptyState` stacks `icon`, then the `title`/`description` block, then `children` — so starter suggestions sit alongside the text rather than replacing it:
 
-```tsx
-<AIChat.EmptyState
-  icon={<Sparkles className="size-6 text-primary" aria-hidden />}
-  title="Ask the assistant"
-  description="Grounded in your help articles."
->
-  <AIChat.Suggestions>
-    <AIChat.Suggestion suggestion="How do I create a purchase order?" onSelect={sendMessage} />
-  </AIChat.Suggestions>
-</AIChat.EmptyState>
-```
+Choose a starter prompt to display the user turn and a predefined local reply. Use **Reset suggestions** to return to the empty state. This example does not call a model or execute a request:
+
+<!-- example: empty-state-suggestions -->
 
 `AIChat.Suggestion` submits its `suggestion` text as if the reader had typed and sent it via `onSelect`.
 
@@ -220,13 +189,9 @@ Renders the markdown subset a streamed LLM response actually emits — bold, inl
 
 Icon-button row under a finished assistant turn — copy, retry, feedback. Render it only once the turn has finished so streaming turns stay uncluttered.
 
-```tsx
-<AIChat.Actions>
-  <AIChat.Action label="Copy" onClick={() => navigator.clipboard.writeText(message.content)}>
-    <Copy className="size-3.5" aria-hidden />
-  </AIChat.Action>
-</AIChat.Actions>
-```
+Copy the response, produce another local revision with Retry, or mark it helpful. The status below the message records the action. Copy uses the browser clipboard and reports when access is unavailable; Retry and feedback remain entirely local:
+
+<!-- example: message-actions -->
 
 ### Reasoning
 
@@ -246,17 +211,9 @@ Structured step timeline for agentic turns — the discrete plan being executed,
 
 `useAIChat()` returns a transient `toolCalls` list separately from `messages`. Render it with `AIChat.ToolCall` after the message history inside `AIChat.Conversation`:
 
-```tsx
-{
-  toolCalls.length > 0 ? (
-    <AIChat.Message from="assistant">
-      {toolCalls.map((call) => (
-        <AIChat.ToolCall key={call.id} call={call} />
-      ))}
-    </AIChat.Message>
-  ) : null;
-}
-```
+The following fixture shows two requested names. **Finish request** clears them, and **Show requested calls** restores them, making the transient presentation observable without executing a tool:
+
+<!-- example: active-tool-calls -->
 
 Each call renders on its own row, in the order supplied. Labels are localized automatically.
 
@@ -268,15 +225,9 @@ These names record model requests, not execution success. Tool arguments and res
 
 Collapsible tool-call card. Maps 1:1 to the AI SDK's tool-part lifecycle, so a streaming loop can update a call in place as parts arrive.
 
-```tsx
-<AIChat.Tool>
-  <AIChat.ToolHeader toolName="search_kb" state={call.state} />
-  <AIChat.ToolContent>
-    <AIChat.ToolInput input={call.input} />
-    <AIChat.ToolOutput output={call.output} errorText={call.errorText} />
-  </AIChat.ToolContent>
-</AIChat.Tool>
-```
+Select each lifecycle state and expand or collapse the card to inspect its local input, result, and error fixtures. The selector controls presentation only; it does not run a tool:
+
+<!-- example: tool-lifecycle -->
 
 `state` is `"input-streaming" | "input-available" | "output-available" | "output-error"`.
 
@@ -284,29 +235,17 @@ Collapsible tool-call card. Maps 1:1 to the AI SDK's tool-part lifecycle, so a s
 
 Compact "Used N sources" citation trigger under a grounded answer. Supply source data from your application; `useAIChat()` does not return citation metadata.
 
-```tsx
-<AIChat.Sources>
-  <AIChat.SourcesTrigger count={sources.length} />
-  <AIChat.SourcesContent>
-    {sources.map((source) => (
-      <AIChat.Source key={source.id} title={source.title} onClick={() => openDocument(source.id)} />
-    ))}
-  </AIChat.SourcesContent>
-</AIChat.Sources>
-```
+Expand the citations and choose a source to read its local excerpt below the list. An application can use the same `onClick` callback to open its document viewer:
+
+<!-- example: citation-sources -->
 
 ### History
 
 Grouped list of past conversations for reopening an earlier chat. Layout-agnostic — render it in a popover behind a header action, or as a sidebar section of a full chat page. Group titles and date bucketing are yours; `AIChat.History` has no opinion on date ranges.
 
-```tsx
-<AIChat.History
-  groups={[{ title: "Today", items: [{ id: "1", title: "Creating a purchase order" }] }]}
-  activeId={activeId}
-  onSelect={loadConversation}
-  onDelete={deleteConversation}
-/>
-```
+Choose a conversation to switch its displayed summary. Delete removes only the local fixture; deleting the active item also clears its displayed summary. **Reset history** restores the sample conversations. There is no remote history store or request:
+
+<!-- example: conversation-history -->
 
 ## Related components
 

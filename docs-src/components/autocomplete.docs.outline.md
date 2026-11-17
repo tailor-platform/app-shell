@@ -17,6 +17,8 @@ The `Autocomplete` component provides a free-text input with a suggestion list. 
 import { Autocomplete } from "@tailor-platform/app-shell";
 ```
 
+The runnable examples also import `useRef` and `useState` from `react`, and `Button`, `Field`, `Form`, `Text`, and the `AutocompleteAsyncFetcher` type from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -73,20 +75,9 @@ When items are objects, use `mapItem` to tell the component how to display them.
 
 Use `Autocomplete.Async` to fetch suggestions as the user types. The fetcher is called on each keystroke (debounced). When the dropdown first opens or the input is cleared, the fetcher receives `null` as the query — return initial/default suggestions for `null`, or return an empty array to show nothing until the user starts typing.
 
-```tsx
-import { type AutocompleteAsyncFetcher } from "@tailor-platform/app-shell";
+Type **ap** or **ba** to try debounced lookups, a short loading state, and suggestion selection. The example filters local fixtures after a delay and checks the supplied `AbortSignal`; no network request is made. Its value remains the input text, including text that does not match a suggestion. In an application, replace the fixture lookup with your API and forward `signal` to `fetch`.
 
-const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
-  const res = await fetch(`/api/suggestions?q=${query ?? ""}`, { signal });
-  return res.json();
-};
-
-<Autocomplete.Async
-  fetcher={fetcher}
-  placeholder="Search..."
-  onValueChange={(value) => console.log(value)}
-/>;
-```
+<!-- example: async-suggestions -->
 
 ### Autocomplete.Async Props
 
@@ -167,19 +158,9 @@ const [query, setQuery] = useState("");
 
 ### Address Input with Async Suggestions
 
-```tsx
-const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
-  if (!query) return [];
-  const res = await fetch(`/api/address-lookup?q=${encodeURIComponent(query)}`, { signal });
-  return res.json();
-};
+Type **Maple** or **Oak**, choose a suggestion, and submit to inspect the address. You may also submit your own free text: Autocomplete does not require choosing an existing item. An empty address is blocked by the surrounding `Field` and `Form`. Suggestions and submission are local-only.
 
-<Autocomplete.Async
-  fetcher={fetcher}
-  placeholder="Start typing an address..."
-  onValueChange={(address) => form.setValue("address", address)}
-/>;
-```
+<!-- example: address-suggestions -->
 
 ### Async with Parts (custom composition)
 
@@ -194,40 +175,9 @@ Combine `Autocomplete.useAsync` with `Autocomplete.Parts` for full control over 
 | `error`   | `unknown`    | The error thrown by the last fetch, if any              |
 | `retry`   | `() => void` | Re-runs the last fetch (use to build a custom retry UI) |
 
-```tsx
-const suggestions = Autocomplete.useAsync({
-  fetcher: async (query, { signal }) => {
-    const res = await fetch(`/api/suggestions?q=${query ?? ""}`, { signal });
-    return res.json();
-  },
-  onFetchError: (error) => reportError(error),
-});
+Type **k** or **to** to start a lookup. The first completed request deliberately fails; **Retry city search** retries the same query and succeeds. Later searches work normally. The custom composition shows loading, an error, Retry, empty results, and the current input text without a backend. `filter={null}` prevents a second filtering pass over the already-filtered results.
 
-<Autocomplete.Parts.Root {...suggestions} filter={null}>
-  <Autocomplete.Parts.InputGroup>
-    <Autocomplete.Parts.Input placeholder="Search..." />
-    <Autocomplete.Parts.Clear />
-  </Autocomplete.Parts.InputGroup>
-  <Autocomplete.Parts.Content>
-    <Autocomplete.Parts.List>
-      {suggestions.items.map((item) => (
-        <Autocomplete.Parts.Item key={item} value={item}>
-          {item}
-        </Autocomplete.Parts.Item>
-      ))}
-      <Autocomplete.Parts.Empty>
-        {suggestions.error ? (
-          <button onClick={suggestions.retry}>Couldn't load. Retry</button>
-        ) : suggestions.loading ? (
-          "Loading..."
-        ) : (
-          "No results."
-        )}
-      </Autocomplete.Parts.Empty>
-    </Autocomplete.Parts.List>
-  </Autocomplete.Parts.Content>
-</Autocomplete.Parts.Root>;
-```
+<!-- example: async-with-parts -->
 
 ## Accessibility
 

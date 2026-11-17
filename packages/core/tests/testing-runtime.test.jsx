@@ -121,6 +121,42 @@ it.each(["memory", "browser"])(
   },
 );
 
+it.each([
+  ["browser", { memory: false }, "/legacy-browser"],
+  ["default", {}, "/legacy-browser"],
+  ["memory", { memory: true, initialEntries: ["/legacy-memory"] }, "/legacy-memory"],
+])(
+  "keeps legacy %s routing independent of an outer testing provider",
+  async (_mode, props, expected) => {
+    const before = window.location.href;
+    const historyState = window.history.state;
+    const Page = () => <div>{useLocation().pathname}</div>;
+    const modules = ["legacy-browser", "legacy-memory", "provider-memory"].map((path) =>
+      defineModule({
+        path,
+        meta: { title: "Legacy" },
+        component: Page,
+        resources: [],
+      }),
+    );
+    window.history.replaceState(null, "", "/legacy-browser");
+    const { unmount } = render(
+      <AppShellTestingProvider initialEntries={["/provider-memory"]}>
+        <LegacyAppShell {...props} modules={modules}>
+          <Outlet />
+        </LegacyAppShell>
+      </AppShellTestingProvider>,
+    );
+    try {
+      expect(await screen.findByText(expected)).toBeDefined();
+      expect(window.location.pathname).toBe("/legacy-browser");
+    } finally {
+      unmount();
+      window.history.replaceState(historyState, "", before);
+    }
+  },
+);
+
 it("keeps TestRouter compatible with main-entry router hooks", async () => {
   const Page = () => {
     const { id } = useParams();

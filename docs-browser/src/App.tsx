@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { Fragment, type ReactNode, useState } from "react";
 import {
   BookOpenIcon,
   CodeXmlIcon,
@@ -16,8 +16,9 @@ import {
   GlobalHeaderLayout,
   Link,
   Select,
-  SidebarGroup,
   SidebarItem,
+  SidebarSection,
+  SidebarSeparator,
   Text,
   useAppShell,
   useLocation,
@@ -108,17 +109,15 @@ function buildModules(): ReturnType<typeof defineModule>[] {
 const modules = buildModules();
 
 function ResourceItems({ resources, basePath }: { resources: Res[]; basePath: string }) {
-  return resources.map((resource) => {
+  return resources.map((resource, index) => {
     const path = `${basePath}/${resource.path}`;
     return resource.subResources?.length ? (
-      <SidebarGroup
-        key={path}
-        title={resource.meta.title}
-        icon={resource.meta.icon}
-        to={resource.component ? path : undefined}
-      >
-        <ResourceItems resources={resource.subResources} basePath={path} />
-      </SidebarGroup>
+      <Fragment key={path}>
+        {index > 0 && <SidebarSeparator />}
+        <SidebarSection title={resource.meta.title}>
+          <ResourceItems resources={resource.subResources} basePath={path} />
+        </SidebarSection>
+      </Fragment>
     ) : (
       <SidebarItem key={path} to={path} />
     );
@@ -168,9 +167,6 @@ function DocsLayout() {
               </Select.Parts.Content>
             </Select.Parts.Root>
           </div>
-          <div className="hidden min-w-0 flex-1 overflow-hidden sm:block">
-            <GlobalHeaderLayout.Breadcrumb />
-          </div>
           <div className="ml-auto shrink-0">
             <AppearanceSwitcher />
           </div>
@@ -180,10 +176,13 @@ function DocsLayout() {
         <GlobalHeaderLayout.DefaultSidebar>
           {modules
             .filter((module) => selection.section.categories.includes(module.path))
-            .map((module) => (
-              <SidebarGroup key={module.path} title={module.meta.title} icon={module.meta.icon}>
-                <ResourceItems resources={module.resources} basePath={`/${module.path}`} />
-              </SidebarGroup>
+            .map((module, index) => (
+              <Fragment key={module.path}>
+                {index > 0 && <SidebarSeparator />}
+                <SidebarSection title={module.meta.title}>
+                  <ResourceItems resources={module.resources} basePath={`/${module.path}`} />
+                </SidebarSection>
+              </Fragment>
             ))}
         </GlobalHeaderLayout.DefaultSidebar>
       }

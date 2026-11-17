@@ -1,12 +1,13 @@
 import { useState } from "react";
 import {
+  Badge,
   Button,
+  Card,
   Field,
+  Fieldset,
   Form,
-  FormLayout,
   Layout,
   Select,
-  Stepper,
 } from "@tailor-platform/app-shell";
 
 const OWNERS = ["Tanaka", "Sato", "Suzuki", "Yamada"];
@@ -59,23 +60,27 @@ export function FormWizard() {
     <Layout>
       <Layout.Header title="Create task" />
       <Layout.Column>
-        {/* The Stepper only displays progress: each status comes from `step`.
-            Completed steps are clickable, so the user can go back to one. */}
-        <Stepper
-          aria-label="Create task"
-          steps={STEPS.map((label, i) => ({
-            id: String(i),
-            label,
-            status: i < step ? "complete" : i === step ? "current" : "upcoming",
-          }))}
-          onStepClick={(id) => setStep(Number(id))}
-        />
+        <Card.Root>
+          <Card.Content>
+            <div className="flex items-center gap-2">
+              {STEPS.map((label, i) => (
+                <Badge
+                  key={label}
+                  variant={i === step ? "default" : i < step ? "success" : "neutral"}
+                >
+                  {i + 1}. {label}
+                </Badge>
+              ))}
+            </div>
+          </Card.Content>
+        </Card.Root>
 
         <Form key={step} noValidate onFormSubmit={handleStepSubmit}>
-          <FormLayout columns={2}>
-            <FormLayout.Section title={STEPS[step]}>
+          <Card.Root>
+            <Card.Header title={STEPS[step]} />
+            <Card.Content>
               {step === 0 && (
-                <>
+                <Fieldset.Root className="space-y-4">
                   <Field.Root name="title">
                     <Field.Label>Title</Field.Label>
                     <Field.Control required defaultValue={draft.title} />
@@ -85,7 +90,7 @@ export function FormWizard() {
                     <Field.Label>Description</Field.Label>
                     <Field.Control defaultValue={draft.description} />
                   </Field.Root>
-                </>
+                </Fieldset.Root>
               )}
 
               {step === 1 && (
@@ -102,7 +107,7 @@ export function FormWizard() {
               )}
 
               {step === 2 && (
-                <>
+                <Fieldset.Root className="grid gap-4 md:grid-cols-2">
                   <Field.Root name="startDate">
                     <Field.Label>Start date</Field.Label>
                     <Field.Control type="date" required defaultValue={draft.startDate} />
@@ -112,37 +117,34 @@ export function FormWizard() {
                     <Field.Label>Estimate (hours)</Field.Label>
                     <Field.Control type="number" min={0} defaultValue={draft.estimate} />
                   </Field.Root>
-                </>
+                </Fieldset.Root>
               )}
 
-              {step === 3 &&
-                (
-                  [
-                    ["Title", draft.title],
-                    ["Owner", draft.owner],
-                    ["Start date", draft.startDate],
-                    ["Estimate", draft.estimate ? `${draft.estimate}h` : ""],
-                  ] as const
-                ).map(([label, value]) => (
-                  // Review values sit in the same grid, at an input's height
-                  <Field.Root key={label}>
-                    <Field.Label>{label}</Field.Label>
-                    <Field.Value>{value || "—"}</Field.Value>
-                  </Field.Root>
-                ))}
-            </FormLayout.Section>
+              {step === 3 && (
+                <dl className="grid grid-cols-2 gap-2 text-sm">
+                  <dt className="text-muted-foreground">Title</dt>
+                  <dd>{draft.title}</dd>
+                  <dt className="text-muted-foreground">Owner</dt>
+                  <dd>{draft.owner || "—"}</dd>
+                  <dt className="text-muted-foreground">Start date</dt>
+                  <dd>{draft.startDate || "—"}</dd>
+                  <dt className="text-muted-foreground">Estimate</dt>
+                  <dd>{draft.estimate ? `${draft.estimate}h` : "—"}</dd>
+                </dl>
+              )}
+            </Card.Content>
+          </Card.Root>
 
-            <FormLayout.Actions>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => (step === 0 ? onCancel() : setStep(step - 1))}
-              >
-                {step === 0 ? "Cancel" : "Back"}
-              </Button>
-              <Button type="submit">{isLastStep ? "Create" : "Next"}</Button>
-            </FormLayout.Actions>
-          </FormLayout>
+          <div className="flex justify-between pt-4">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => (step === 0 ? onCancel() : setStep(step - 1))}
+            >
+              {step === 0 ? "Cancel" : "Back"}
+            </Button>
+            <Button type="submit">{isLastStep ? "Create" : "Next"}</Button>
+          </div>
         </Form>
       </Layout.Column>
     </Layout>

@@ -1,7 +1,11 @@
 import type { CalendarDate, DateValue } from "@internationalized/date";
 import { useResolvedLocale, useTimeZone } from "@/contexts/appshell-context";
 import type { FirstDayOfWeek } from "./use-calendar-base-state";
-import { useRangeCalendarState, type DateRange } from "./use-range-calendar-state";
+import {
+  useRangeCalendarState,
+  type DateRange,
+  type RangeCalendarSelectionEvent,
+} from "./use-range-calendar-state";
 import { CalendarView } from "./calendar-view";
 
 /**
@@ -15,6 +19,8 @@ export interface RangeCalendarProps<T extends DateValue = DateValue> {
   defaultValue?: DateRange<T> | null;
   /** Fired once per selection, when the second date completes the range. */
   onChange?: (value: DateRange<T>) => void;
+  /** Reports selection start, completion (with its range), or cancellation. */
+  onSelectionStateChange?: (event: RangeCalendarSelectionEvent<T>) => void;
   minValue?: DateValue;
   maxValue?: DateValue;
   isDateUnavailable?: (date: DateValue) => boolean;
@@ -49,6 +55,7 @@ function RangeCalendar<T extends DateValue = DateValue>({
   value,
   defaultValue,
   onChange,
+  onSelectionStateChange,
   minValue,
   maxValue,
   isDateUnavailable,
@@ -72,13 +79,14 @@ function RangeCalendar<T extends DateValue = DateValue>({
   const state = useRangeCalendarState({
     value,
     defaultValue,
-    // Erased to the non-generic DateRange the engine emits. Param contravariance
-    // blocks `(DateRange<T>) => void` ⇒ `(DateRange) => void`, and `T` isn't a
+    // Erased to the non-generic range/events the engine emits. Param contravariance
+    // blocks the generic callbacks from accepting DateValue, and `T` isn't a
     // runtime invariant anyway: each endpoint's concrete type is decided per
     // pick by `withDatePart` (a cold selection with no prior value emits a plain
     // CalendarDate regardless of `T`). Preservation of a seeded part-type is
     // covered by the `withDatePart` unit tests. Mirrors the single Calendar.
     onChange: onChange as (v: DateRange) => void,
+    onSelectionStateChange: onSelectionStateChange as (event: RangeCalendarSelectionEvent) => void,
     minValue,
     maxValue,
     isDateUnavailable,

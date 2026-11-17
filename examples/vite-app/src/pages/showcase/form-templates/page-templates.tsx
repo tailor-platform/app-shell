@@ -1,18 +1,24 @@
 import type { MouseEvent } from "react";
 import {
   Button,
+  Checkbox,
+  Combobox,
+  DatePicker,
   Field,
+  Fieldset,
   Form,
   FormLayout,
   Input,
   ItemList,
   Layout,
+  Select,
   Table,
   Text,
+  Textarea,
   useAppShellScrollContainer,
   useNavigate,
 } from "@tailor-platform/app-shell";
-import { BillingFields, DeliveryFields, SupplierFields } from "./fields";
+import { AddressFields, BillingFields, BUYERS, DeliveryFields, SupplierFields } from "./fields";
 
 // Page templates: the form owns the route. Save sits in `Layout.Header` and
 // reaches the form through `form="<id>"`; long forms add a sticky action bar.
@@ -20,13 +26,28 @@ import { BillingFields, DeliveryFields, SupplierFields } from "./fields";
 const BACK = "/showcase/form-templates";
 
 // 🔽 T3 — Page form. Sections are cards; the section nav is opt-in.
+// Most sections are long enough to scroll past; Approval stays short.
 // 🧪 Dummy Data: Replace with real data later
 const SECTIONS = [
   { id: "supplier", title: "Supplier", description: "Who you are buying from and on what terms." },
   { id: "delivery", title: "Delivery", description: "Where and when the goods arrive." },
-  { id: "billing", title: "Billing & notes", description: "Internal ownership and notes." },
+  { id: "billing", title: "Billing", description: "Which entity is invoiced, and how." },
+  { id: "approval", title: "Approval", description: "Who signs off before the PO is sent." },
+  { id: "ownership", title: "Ownership & notes", description: "Internal ownership and notes." },
 ];
 const anchorIdFor = (id: string) => `page-form-section-${id}`;
+const sectionProps = (index: number) => ({
+  id: anchorIdFor(SECTIONS[index].id),
+  title: SECTIONS[index].title,
+  description: SECTIONS[index].description,
+});
+
+// 🧪 Dummy Data: Replace with real data later
+const ENTITIES = ["Denim Tears Inc. (US)", "Denim Tears KK (Japan)", "Denim Tears Ltd. (UK)"];
+// 🧪 Dummy Data: Replace with real data later
+const TAX_CODES = ["Standard 10%", "Reduced 8%", "Exempt", "Reverse charge"];
+// 🧪 Dummy Data: Replace with real data later
+const MATCHING = ["2-way (PO + invoice)", "3-way (PO + receipt + invoice)"];
 
 export function PageForm({
   // Not a rule: a default you can override. A nav earns its space once there
@@ -57,25 +78,89 @@ export function PageForm({
   const form = (
     <Form id="page-form" onFormSubmit={() => navigate(BACK)}>
       <FormLayout columns={2}>
-        <FormLayout.Section
-          id={anchorIdFor("supplier")}
-          title={SECTIONS[0].title}
-          description={SECTIONS[0].description}
-        >
+        {/* 🔽 Supplier — long */}
+        <FormLayout.Section {...sectionProps(0)}>
           <SupplierFields />
+          <Field.Root name="contactName">
+            <Field.Label>Supplier contact</Field.Label>
+            <Field.Control placeholder="Aiko Tanaka" />
+          </Field.Root>
+          <Field.Root name="contactEmail">
+            <Field.Label>Contact email</Field.Label>
+            <Field.Control type="email" placeholder="aiko@kansai-textile.jp" />
+            <Field.Error match="typeMismatch">Enter a valid email address.</Field.Error>
+          </Field.Root>
+          <Field.Root name="quoteNumber">
+            <Field.Label>Quote number</Field.Label>
+            <Field.Control placeholder="Q-2026-0417" />
+          </Field.Root>
+          <Field.Root name="quoteValidUntil">
+            <Field.Label>Quote valid until</Field.Label>
+            <DatePicker />
+          </Field.Root>
+          <Field.Root name="supplierNote" span="full">
+            <Field.Label>Note to supplier</Field.Label>
+            <Textarea rows={3} placeholder="Printed on the purchase order" />
+          </Field.Root>
         </FormLayout.Section>
-        <FormLayout.Section
-          id={anchorIdFor("delivery")}
-          title={SECTIONS[1].title}
-          description={SECTIONS[1].description}
-        >
-          <DeliveryFields />
+
+        {/* 🔽 Delivery — long, with an address group */}
+        <FormLayout.Section {...sectionProps(1)}>
+          <DeliveryFields withInstructions={false} />
+          <Fieldset.Root span={2} className="flex flex-col gap-3">
+            <Fieldset.Legend>Delivery address</Fieldset.Legend>
+            <AddressFields prefix="delivery" />
+          </Fieldset.Root>
+          <Field.Root name="deliveryInstructions" span="full">
+            <Field.Label>Delivery instructions</Field.Label>
+            <Textarea rows={3} placeholder="Dock hours, contact on arrival, pallet limits…" />
+          </Field.Root>
+          <Field.Root name="partialShipments" span="full">
+            <Checkbox label="Accept partial shipments" defaultChecked />
+          </Field.Root>
         </FormLayout.Section>
-        <FormLayout.Section
-          id={anchorIdFor("billing")}
-          title={SECTIONS[2].title}
-          description={SECTIONS[2].description}
-        >
+
+        {/* 🔽 Billing — long, with an address group */}
+        <FormLayout.Section {...sectionProps(2)}>
+          <Field.Root name="billTo">
+            <Field.Label required>Bill to</Field.Label>
+            <Select items={ENTITIES} defaultValue={ENTITIES[0]} required />
+          </Field.Root>
+          <Field.Root name="billingEmail">
+            <Field.Label>Invoices from supplier to</Field.Label>
+            <Field.Control type="email" placeholder="ap@denimtears.com" />
+            <Field.Error match="typeMismatch">Enter a valid email address.</Field.Error>
+          </Field.Root>
+          <Field.Root name="taxCode">
+            <Field.Label>Tax code</Field.Label>
+            <Select items={TAX_CODES} defaultValue="Standard 10%" />
+          </Field.Root>
+          <Field.Root name="matching">
+            <Field.Label>Invoice matching</Field.Label>
+            <Select items={MATCHING} defaultValue={MATCHING[1]} />
+            <Field.Description>3-way holds payment until the goods are received.</Field.Description>
+          </Field.Root>
+          <Fieldset.Root span={2} className="flex flex-col gap-3">
+            <Fieldset.Legend>Billing address</Fieldset.Legend>
+            <AddressFields prefix="billing" />
+          </Fieldset.Root>
+        </FormLayout.Section>
+
+        {/* 🔽 Approval — deliberately short */}
+        <FormLayout.Section {...sectionProps(3)}>
+          <Field.Root name="approver">
+            <Field.Label required>Approver</Field.Label>
+            <Combobox items={BUYERS} placeholder="Search people" required />
+            <Field.Error match="valueMissing">Choose an approver.</Field.Error>
+          </Field.Root>
+          <Field.Root name="approveBy">
+            <Field.Label>Approve by</Field.Label>
+            <DatePicker />
+          </Field.Root>
+        </FormLayout.Section>
+
+        {/* 🔽 Ownership & notes */}
+        <FormLayout.Section {...sectionProps(4)}>
           <BillingFields />
         </FormLayout.Section>
         <FormLayout.Actions

@@ -14,7 +14,6 @@ import { ComplexExamples } from "./complex-examples";
 import { DeliveryFields, NewSupplierFields, SupplierFields } from "./fields";
 import { FieldTypes } from "./field-types";
 import { ModalForm, SheetForm } from "./overlay-templates";
-import { WizardDialog } from "./wizard-template";
 
 type Template = {
   id: string;
@@ -29,7 +28,6 @@ type Template = {
 const ROUTES = {
   page: "/showcase/form-templates/page",
   document: "/showcase/form-templates/document",
-  wizard: "/showcase/form-templates/wizard",
 };
 
 // ✅ Reusable Component: Can be moved to components/ui/
@@ -148,21 +146,6 @@ export function FormTemplatesOverview() {
         </Button>
       ),
     },
-    {
-      id: "T5",
-      name: "Wizard",
-      when: "Ordered steps, each checked before the next — the later steps depend on the earlier answers. Three to seven steps, with a review at the end.",
-      container: 'Dialog size="lg", or a page with a vertical Stepper',
-      columns: "Up to 2 per step",
-      action: (
-        <>
-          <WizardDialog trigger={<Button variant="outline">In a dialog</Button>} />
-          <Button variant="outline" onClick={() => navigate(ROUTES.wizard)}>
-            On a page
-          </Button>
-        </>
-      ),
-    },
   ];
 
   return (
@@ -200,7 +183,10 @@ export function FormTemplatesOverview() {
                 {/* 🧪 Dummy Data: Replace with real data later */}
                 {[
                   ["Has line items (a document with header and lines)", "T4 Document form"],
-                  ["Has ordered steps that depend on earlier answers", "T5 Wizard"],
+                  [
+                    "Has ordered steps that depend on earlier answers",
+                    "A wizard (form/wizard pattern)",
+                  ],
                   ["Edits one card of a record that's already on screen", "Edit in place (E6)"],
                   ["Needs its own URL, or is long enough to scroll a page", "T3 Page form"],
                   ["Edits part of a record shown beside it", "T2 Side sheet"],

@@ -57,6 +57,8 @@ export function TestDataTable(props: {
   data?: DataTableData<TestRow> | undefined;
   loading?: boolean;
   error?: Error | null;
+  emptyContent?: ReactNode;
+  errorContent?: ReactNode;
   onSelectionChange?: (ids: string[]) => void;
 }) {
   const {
@@ -64,6 +66,8 @@ export function TestDataTable(props: {
     data = "data" in props ? props.data : testData,
     loading,
     error,
+    emptyContent,
+    errorContent,
     onSelectionChange,
   } = props;
   const table = useDataTable<TestRow>({
@@ -75,7 +79,7 @@ export function TestDataTable(props: {
   });
   return (
     <DataTable.Root value={table}>
-      <DataTable.Table />
+      <DataTable.Table emptyContent={emptyContent} errorContent={errorContent} />
     </DataTable.Root>
   );
 }

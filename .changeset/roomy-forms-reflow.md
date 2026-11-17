@@ -21,8 +21,6 @@ Add `FormLayout` for laying out form fields in a responsive grid that reflows by
 </Form>
 ```
 
-The form templates in the example app include a wizard built from `FormLayout` and `Stepper`, and the `form/wizard` pattern now uses `Stepper` for its step indicator.
-
 Supporting additions:
 
 - `Field.Root` and `Fieldset.Root` take `span` (`2 | 3 | "full"`) to widen a field inside `FormLayout`. A field holding a `Textarea` takes the full row unless it sets its own `span`.

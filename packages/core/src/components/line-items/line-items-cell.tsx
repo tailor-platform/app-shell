@@ -104,7 +104,8 @@ export function createLineItemsCellPreparers(timeZone: string) {
     column: LineItemsColumn<T>,
   ): Omit<LineItemsCellRenderers<T>, "renderCell"> {
     const align = column.align ?? getDisplayCellAdapter(column.type).defaultAlign;
-    if (column.render) return { align, renderDisplay: column.render };
+    const render = column.render;
+    if (render) return { align, renderDisplay: (row) => render(row) };
     const renderReadonly = createValueRenderer(column, { timeZone });
     const renderEditable =
       column.type === "link" ? createValueRenderer({ type: "text" }, { timeZone }) : renderReadonly;
@@ -116,7 +117,8 @@ export function createLineItemsCellPreparers(timeZone: string) {
     options: CellEditorOptions<typeof choiceEditor>["options"],
   ): Omit<LineItemsCellRenderers<T>, "renderCell"> {
     const align = column.align ?? getDisplayCellAdapter(column.type).defaultAlign;
-    if (column.render) return { align, renderDisplay: column.render };
+    const render = column.render;
+    if (render) return { align, renderDisplay: (row) => render(row) };
     const resolveLabel = (value: unknown) => {
       const normalized = toTextValue(value);
       return normalized === null

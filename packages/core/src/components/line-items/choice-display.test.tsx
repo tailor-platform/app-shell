@@ -85,6 +85,21 @@ describe("LineItems choice display policy", () => {
     },
   );
 
+  it.each(["text", "combobox"] as const)(
+    "passes only the public row argument to custom render with %s editing",
+    (editorType) => {
+      const custom = vi.fn((_row: Row) => null);
+      setup({
+        ...base,
+        edit: editorType === "combobox" ? edit : { editorType, canEdit: edit.canEdit },
+        render: custom,
+      });
+      expect(custom.mock.calls.map((args) => args.length)).toEqual([1, 1]);
+      expect(custom.mock.calls.map(([row]) => row.id)).toEqual(["A", "B"]);
+      expect(screen.getAllByRole("cell").map((cell) => cell.textContent)).toEqual(["", ""]);
+    },
+  );
+
   it.each([null, "Custom date"])(
     "keeps custom date output %s ahead of built-in formatting",
     (output) => {

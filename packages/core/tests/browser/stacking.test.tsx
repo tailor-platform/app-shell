@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
+  AppShell,
   Dialog,
   Menu,
   Sheet,
@@ -8,7 +9,7 @@ import {
   defineModule,
   useToast,
 } from "@tailor-platform/app-shell";
-import { AppShell } from "@tailor-platform/app-shell/testing";
+import { AppShellTestingProvider } from "@tailor-platform/app-shell/testing";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 // Regression for tailor-inc/platform-planning#2040 and the stacking rule in
@@ -92,9 +93,11 @@ describe("floating UI stacking", () => {
   beforeEach(async () => {
     user = userEvent.setup();
     render(
-      <AppShell memory initialEntries={["/home"]} title="Test" modules={modules()}>
-        <SidebarLayout />
-      </AppShell>,
+      <AppShellTestingProvider initialEntries={["/home"]}>
+        <AppShell title="Test" modules={modules()}>
+          <SidebarLayout />
+        </AppShell>
+      </AppShellTestingProvider>,
     );
     await screen.findByText("Open A");
     // The trap from #2040 is in place: the column the Toaster mounts from has a mask.

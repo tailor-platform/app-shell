@@ -406,7 +406,7 @@ Or create a custom layout:
 
 ## File-Based Routing Mode
 
-When using the Vite plugin for file-based routing, use `AppShell` exactly as you would without the plugin — no `modules` prop required. The plugin intercepts the `@tailor-platform/app-shell` import and wraps `AppShell` with pages pre-configured via `AppShell.WithPages()` internally.
+When using the Vite plugin for file-based routing, use `AppShell` exactly as you would without the plugin — no `modules` prop required. The plugin configures the pages automatically.
 
 ```tsx
 // App.tsx
@@ -418,9 +418,15 @@ import { AppShell, SidebarLayout, DefaultSidebar } from "@tailor-platform/app-sh
 </AppShell>;
 ```
 
-> **Note:** `AppShell.WithPages` is an internal method used by the Vite plugin. Do not call it directly in application code.
-
 [Learn more about File-Based Routing →](../concepts/file-based-routing.md)
+
+## Testing
+
+Use this same `AppShell` inside `AppShellTestingProvider` from `@tailor-platform/app-shell/testing` for page and integration tests. The provider requires `initialEntries: string[]` and selects memory routing without changing `window.location`; without a provider, AppShell uses browser routing. `memory` and `initialEntries` are not AppShell props.
+
+The provider also works with file-based routing configured by the Vite plugin. Tests retain the same `AppShellProps` and `AppShellRegister` augmentation as the application. The existing `/testing` exports `AppShell` and `TestAppShellProps` remain available with `@deprecated` annotations; new page and integration tests should use the provider-based setup. `TestRouter` and `TestRouterProps` remain supported for focused component unit tests.
+
+[See the testing setup →](../concepts/testing.md#use-a-testing-library-wrapper)
 
 ## Complete Example
 

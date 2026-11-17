@@ -1,18 +1,10 @@
 // Test-only entry point: `@tailor-platform/app-shell/testing`.
 //
-// Separate from the main entry so memory routing cannot reach an application
-// bundle: an app rendering the production `AppShell` with `memory` would look
-// correct while the URL bar stopped tracking navigation.
-
+export {
+  AppShellTestingProvider,
+  type AppShellTestingProviderProps,
+} from "./app-shell-testing-provider";
+export { TestAppShell as AppShell, type TestAppShellProps } from "./legacy";
 export { TestRouter, type TestRouterProps } from "./test-router";
 export { createMemoryAuthClient, type MemoryAuthClient } from "./memory-auth-client";
 export { MemoryAuthProvider, type MemoryAuthProviderProps } from "./memory-auth-provider";
-
-/**
- * `AppShell`, additionally accepting `memory` / `initialEntries` so a test can
- * mount at a fixed URL without touching `window.location`. Identical otherwise.
- */
-export {
-  AppShellInternal as AppShell,
-  type AppShellInternalProps as TestAppShellProps,
-} from "@/components/appshell/appshell";

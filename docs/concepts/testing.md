@@ -35,6 +35,8 @@ export default defineConfig({
 });
 ```
 
+For file-based routing, preserve `appShellRoutes()` as well: use the application's Vite config as shown in [File-based routing integration tests](#file-based-routing-integration-tests), rather than replacing its plugins with the React-only setup above.
+
 Clean up rendered components between tests, including popup portals:
 
 ```ts
@@ -51,14 +53,14 @@ DOM environments are useful for component behavior, but do not verify popup posi
 
 ## Choose the smallest test wrapper
 
-| What the component needs                                                           | What to render                               |
-| ---------------------------------------------------------------------------------- | -------------------------------------------- |
-| Only form controls and local state                                                 | The component itself; no `AppShell` required |
-| Router hooks such as `useNavigate`, `useParams`, or `Link`                         | `TestRouter` from `/testing`                 |
-| AppShell configuration, `contextData`, shell features, or page/routing integration | `AppShell` from `/testing`, with `memory`    |
-| Authentication hooks or an authentication guard                                    | `MemoryAuthProvider` from `/testing`         |
+| What the component needs                                                           | What to render                                                         |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Only form controls and local state                                                 | The component itself; no `AppShell` required                           |
+| Router hooks such as `useNavigate`, `useParams`, or `Link`                         | `TestRouter` from `/testing`                                           |
+| AppShell configuration, `contextData`, shell features, or page/routing integration | Main-entry `AppShell` inside `AppShellTestingProvider` from `/testing` |
+| Authentication hooks or an authentication guard                                    | `MemoryAuthProvider` from `/testing`                                   |
 
-`TestRouter` supplies router context only. It does not supply AppShell configuration, theme, authentication, or command-palette state. Features requiring a data router, such as `useBlocker`, need the test `AppShell`, not `TestRouter`.
+`TestRouter` supplies router context only. It does not supply AppShell configuration, theme, authentication, or command-palette state. Features requiring a data router, such as `useBlocker`, need `AppShell` inside `AppShellTestingProvider`, not `TestRouter`.
 
 ## Find form controls by role and accessible name
 
@@ -211,16 +213,19 @@ For DatePicker's calendar, click its “Open calendar” button, await the `dial
 
 ## Supply AppShell provider state without mocking internals
 
-The `AppShell` from `/testing` mounts the real AppShell providers and additionally accepts `memory` and `initialEntries`. Use its normal props for configuration and pass test doubles through `contextData`. Authentication is separate: use [`MemoryAuthProvider`](#supply-authentication-state) when the subject consumes authentication. Do not import internal contexts, mock Base UI, or replace the entire AppShell package with an empty module.
+Import `AppShell` from the main entry and `AppShellTestingProvider` from `/testing`. The testing provider selects memory routing; it does not supply AppShell state by itself. AppShell mounts the real providers. Use its normal props for configuration and pass test doubles through `contextData`. Authentication is separate: use [`MemoryAuthProvider`](#supply-authentication-state) when the subject consumes authentication. Do not import internal contexts, mock Base UI, or replace the entire AppShell package with an empty module.
 
-Here is a complete provider-state test. It needs no routes or layout. The `AppShellRegister` declaration represents the example application's context type; in your project, reuse your existing declaration and supply fixtures matching it rather than declaring a second incompatible type.
+### Use a Testing Library wrapper
+
+Compose both components in React Testing Library's `wrapper` option. This Vitest example supplies provider state without any routed pages or layout. The `AppShellRegister` declaration represents the example application's context type; in your project, reuse your existing declaration and supply fixtures matching it rather than declaring a second incompatible type.
 
 ```tsx
+import type { PropsWithChildren } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, it, vi } from "vitest";
-import { AppShell } from "@tailor-platform/app-shell/testing";
-import { Button, useAppShellData } from "@tailor-platform/app-shell";
+import { AppShell, Button, useAppShellData, type AppShellProps } from "@tailor-platform/app-shell";
+import { AppShellTestingProvider } from "@tailor-platform/app-shell/testing";
 
 declare module "@tailor-platform/app-shell" {
   interface AppShellRegister {
@@ -246,19 +251,24 @@ it("supplies test context data and a fake save function", async () => {
   const user = userEvent.setup();
   const save = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
 
-  render(
-    <AppShell
-      memory
-      initialEntries={["/"]}
-      modules={[]}
-      locale="en-US"
-      timeZone="UTC"
-      defaultColorTheme="light"
-      contextData={{ currentUser: { name: "Ada" }, save }}
-    >
-      <ProfileActions />
-    </AppShell>,
-  );
+  const initialEntries = ["/"];
+  const shellProps: AppShellProps = {
+    modules: [],
+    locale: "en-US",
+    timeZone: "UTC",
+    defaultColorTheme: "light",
+    contextData: { currentUser: { name: "Ada" }, save },
+  };
+
+  function Wrapper({ children }: PropsWithChildren) {
+    return (
+      <AppShellTestingProvider initialEntries={initialEntries}>
+        <AppShell {...shellProps}>{children}</AppShell>
+      </AppShellTestingProvider>
+    );
+  }
+
+  render(<ProfileActions />, { wrapper: Wrapper });
 
   expect(await screen.findByText("Signed in as Ada")).toBeDefined();
   await user.click(screen.getByRole("button", { name: "Save" }));
@@ -266,31 +276,113 @@ it("supplies test context data and a fake save function", async () => {
 });
 ```
 
-This also supplies `useAppShell()` and `useAppShellConfig()` with real provider values; you do not need to fabricate each hook's return shape. Always supply `initialEntries` when using `memory`. For a routed page, define test modules and render a layout such as `SidebarLayout`; see the [page integration example](./routing-navigation.md#pages-and-integration-tests).
+This also supplies `useAppShell()` and `useAppShellConfig()` with real provider values; you do not need to fabricate each hook's return shape. Create fresh fixtures and mocks per test. Keep the wrapper component, `initialEntries` array, and modules stable across Testing Library `rerender` calls so rerenders retain the mounted shell's memory history.
 
-**Typed-route limitation:** Currently the published `/testing` declarations do not share the main entry's `AppShellRegister` augmentation in every route type. If passing typed modules produces an incompatible `GuardContext.context` error, that is a declaration limitation, not a missing provider. The `modules={[]}` provider fixture above avoids it; do not import internal contexts or cast your modules to `any` to hide the error.
+The provider requires `initialEntries: string[]`, the initial history stack — the last entry is the current location. Each mounted AppShell owns its history. Nested providers use the nearest provider's settings. Neither the provider nor the main AppShell accepts a `memory` prop; `initialEntries` belongs to the provider, not AppShell. `modules: []` is sufficient for this provider-state test.
 
-Memory routing does not change `window.location`; assert rendered pages or the location from AppShell's `useLocation` instead. The production `AppShell` does **not** accept memory routing. Even with file-based routing in your app, supply explicit test modules rather than calling the internal `AppShell.WithPages` helper.
+### Pages and integration tests
 
-Mock only the application boundary being exercised: callbacks, clients in `contextData`, or your data library's provider. `AppShell` does not automatically mount `AuthProvider`; add [`MemoryAuthProvider`](#supply-authentication-state) around the test shell when the page consumes authentication, and add your application's data wrappers separately. App-specific user and permission fixtures remain in `contextData`, not in the authentication state. See [Authentication](./authentication.md) for production setup.
+Because AppShell owns the router, a page test mounts AppShell rather than building a router. Pass your typed modules to AppShell and render a layout such as `SidebarLayout`. Wrap it in `AppShellTestingProvider` to start at a known URL without touching `window.location`:
 
-Set locale/timezone explicitly when assertions depend on them. A stored theme preference takes precedence over `defaultColorTheme`; isolate or clear test-owned storage in theme tests. Clean up rendered providers and restore spies/fake timers between tests.
+Mock only the application boundary being exercised: callbacks, clients in `contextData`, or your data library's provider. `AppShell` does not automatically mount `AuthProvider`; add [`MemoryAuthProvider`](#supply-authentication-state) around the shell when the page consumes authentication, and add your application's data wrappers separately. App-specific user and permission fixtures remain in `contextData`, not in the authentication state. See [Authentication](./authentication.md) for production setup.
 
-### Router-only component tests
+```tsx
+import { render, screen } from "@testing-library/react";
+import { AppShell, SidebarLayout } from "@tailor-platform/app-shell";
+import { AppShellTestingProvider } from "@tailor-platform/app-shell/testing";
 
-Use `TestRouter` when AppShell state is not needed:
+render(
+  <AppShellTestingProvider initialEntries={["/orders/A42"]}>
+    <AppShell modules={modules}>
+      <SidebarLayout />
+    </AppShell>
+  </AppShellTestingProvider>,
+);
+
+expect(await screen.findByText("Order A42")).toBeDefined();
+```
+
+Here `modules` is your test fixture with an `/orders/:id` page rendering `Order A42`. Tests use the main entry's `AppShellProps`, modules, and guards, so the `AppShellRegister` augmentation described in [useAppShell](../api/use-app-shell.md) applies without a separate testing props type.
+
+### File-based routing integration tests
+
+**Important: `AppShellTestingProvider` selects memory routing only. It does not discover page files or register routes.** File-based application tests must still run `appShellRoutes()` through Vite, with the same page discovery and entrypoint configuration as the application.
+
+When `appShellRoutes({ entrypoint: "src/App.tsx" })` is configured, only the AppShell import inside `src/App.tsx` receives the discovered pages. Importing and rendering a new `AppShell` directly in a test file does not trigger that injection, even inside `AppShellTestingProvider`.
+
+Reuse the application's Vite config so Vitest runs the same plugins. For an object-style `vite.config.ts` beside the test config:
+
+```ts
+// vitest.config.ts
+import { defineConfig, mergeConfig } from "vitest/config";
+import viteConfig from "./vite.config.ts";
+
+export default mergeConfig(
+  viteConfig,
+  defineConfig({
+    root: import.meta.dirname,
+    test: {
+      environment: "happy-dom",
+      setupFiles: ["./src/test/setup.ts"],
+    },
+  }),
+);
+```
+
+Keep `root` at the application directory: the plugin resolves `entrypoint` and `pagesDir` relative to it; `pagesDir` defaults to `src/pages`, with routes discovered from `page.tsx` files. A separate `vitest.config.ts` does not automatically inherit the plugins from `vite.config.ts`.
+
+Render the real application component from the configured entrypoint, not a replacement AppShell in the test. The test file does not need to be the entrypoint or live beside it. For example, with `src/App.tsx` as the entrypoint and a Dashboard heading in `src/pages/dashboard/page.tsx`:
+
+```tsx
+// tests/app.test.tsx
+import { render, screen } from "@testing-library/react";
+import { AppShellTestingProvider } from "@tailor-platform/app-shell/testing";
+import { expect, it } from "vitest";
+import App from "../src/App";
+
+it("opens a file-based page without changing the browser URL", async () => {
+  const before = window.location.href;
+
+  render(
+    <AppShellTestingProvider initialEntries={["/dashboard"]}>
+      <App />
+    </AppShellTestingProvider>,
+  );
+
+  expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeDefined();
+  expect(window.location.href).toBe(before);
+});
+```
+
+Do not change `entrypoint` to the test file just to inject pages there. Keep the production configuration and import the configured application. For focused page tests that should not load the real page tree, use the explicit `modules` fixture in the previous example instead.
+
+## Router-only component tests
+
+A component that calls `useNavigate` or renders a `<Link>` needs a router above it, but mounting a whole AppShell for that is heavy. Use `TestRouter` when AppShell state is not needed:
 
 ```tsx
 import { TestRouter } from "@tailor-platform/app-shell/testing";
 
 render(
-  <TestRouter path="/orders/:id" initialEntries={["/orders/A42"]}>
-    <OrderBadge />
+  <TestRouter initialEntries={["/orders/A42"]}>
+    <SaveButton />
   </TestRouter>,
 );
 ```
 
-Here `OrderBadge` is your component under test. Pass `path` when it reads route parameters or needs route-relative matching/navigation; without a matching route, `useParams()` is empty. Import routing hooks and `Link` from AppShell, not from a separately installed `react-router` copy. See [Routing and Navigation](./routing-navigation.md#testing) for the helper contracts.
+**If the component reads the route**, pass `path`. Without a matching route, `useParams()` comes back empty even when `initialEntries` holds a URL that looks like it should match:
+
+```tsx
+render(
+  <TestRouter path="/orders/:id" initialEntries={["/orders/A42"]}>
+    <OrderBadge /> {/* useParams() -> { id: "A42" } */}
+  </TestRouter>,
+);
+```
+
+Here `SaveButton` and `OrderBadge` are your components under test. The matching route also matters for `useMatch` and relative `<Link>` targets. Compose your own providers — a GraphQL client, say — around `TestRouter` as needed. `AppShellTestingProvider` does not replace `TestRouter` or `TestRouterProps`; they remain supported for focused component unit tests.
+
+Import routing hooks and `Link` from AppShell, not from a separately installed `react-router` copy. See [Routing and Navigation](./routing-navigation.md#your-app-should-not-depend-on-react-router) for why this matters.
 
 ## Supply authentication state
 

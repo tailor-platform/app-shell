@@ -1,3 +1,13 @@
+import type { ReactNode } from "react";
+import {
+  BookOpenIcon,
+  CodeXmlIcon,
+  ComponentIcon,
+  LayersIcon,
+  LightbulbIcon,
+  PanelsTopLeftIcon,
+} from "lucide-react";
+
 import {
   AppShell,
   defineModule,
@@ -16,13 +26,13 @@ import HomePage from "./pages/page";
 
 type Res = ReturnType<typeof defineResource>;
 
-const CATEGORY_LABEL: Record<string, string> = {
-  guides: "Guides",
-  concepts: "Concepts",
-  components: "Components",
-  patterns: "Patterns",
-  pages: "Pages",
-  api: "API",
+const CATEGORY_META: Record<string, { title: string; icon: ReactNode }> = {
+  guides: { title: "Guides", icon: <BookOpenIcon /> },
+  concepts: { title: "Concepts", icon: <LightbulbIcon /> },
+  components: { title: "Components", icon: <ComponentIcon /> },
+  patterns: { title: "Patterns", icon: <LayersIcon /> },
+  pages: { title: "Pages", icon: <PanelsTopLeftIcon /> },
+  api: { title: "API", icon: <CodeXmlIcon /> },
 };
 // Sidebar order; any category not listed falls to the end alphabetically.
 const CATEGORY_ORDER = ["guides", "concepts", "components", "patterns", "pages", "api"];
@@ -80,7 +90,7 @@ function buildModules(): ReturnType<typeof defineModule>[] {
     .map((category) =>
       defineModule({
         path: category,
-        meta: { title: CATEGORY_LABEL[category] ?? category },
+        meta: CATEGORY_META[category] ?? { title: category },
         resources: buildResources(byCategory.get(category) ?? []),
       }),
     );

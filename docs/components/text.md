@@ -15,6 +15,8 @@ The `Text` component applies a [typography role](../concepts/styling-theming.md#
 import { Text } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Input` and `Table` from `@tailor-platform/app-shell` and `useId` from `react`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -76,10 +78,18 @@ function ElementComponents() {
 
 The element sets the meaning and `variant` sets the appearance. The default is only a starting point, and any role works on any element:
 
+<example-preview name="element-roles"></example-preview>
+
 ```tsx
-<Text.h1 variant="heading-sm">A compact page title</Text.h1>
-<Text.h3 variant="heading-lg">A visually prominent subsection</Text.h3>
-<Text.span variant="body-sm">Updated recently</Text.span>
+function ElementRoles() {
+  return (
+    <div className="flex flex-col gap-3">
+      <Text.h1 variant="heading-sm">A compact page title</Text.h1>
+      <Text.h3 variant="heading-lg">A visually prominent subsection</Text.h3>
+      <Text.span variant="body-sm">Updated recently</Text.span>
+    </div>
+  );
+}
 ```
 
 The element components take `variant`, `className`, the element's own attributes, and a ref typed for the element (`HTMLHeadingElement` for `Text.h2`). They do not take `render`. For any other element, or to compose with another component, use `Text` with `render`.
@@ -88,10 +98,20 @@ The element components take `variant`, `className`, the element's own attributes
 
 All standard HTML attributes are also accepted by `Text`. Put an attribute that belongs to one element, such as `htmlFor` on a `label`, on the `render` element:
 
+<example-preview name="render-label"></example-preview>
+
 ```tsx
-<Text variant="label-md" render={<label htmlFor="quantity" />}>
-  Quantity
-</Text>
+function RenderLabel() {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-2">
+      <Text variant="label-md" render={<label htmlFor={id} />}>
+        Quantity
+      </Text>
+      <Input id={id} type="number" defaultValue={1} />
+    </div>
+  );
+}
 ```
 
 Some lint rules report this example; see [Lint](#lint).
@@ -139,14 +159,22 @@ The sizes and line heights are in the [Typography section of the styling guide](
 
 On `Text`, all three heading roles render `h2` by default. The heading level comes from the document structure, not from the visual size, so set it with `Text.h1` to `Text.h6`:
 
+<example-preview name="heading-level"></example-preview>
+
 ```tsx
-<Text.h3 variant="heading-md">Line items</Text.h3>
+function HeadingLevel() {
+  return <Text.h3 variant="heading-md">Line items</Text.h3>;
+}
 ```
 
 To use a heading role for text that is not a heading, use `Text.div` or `Text.span`:
 
+<example-preview name="non-heading-role"></example-preview>
+
 ```tsx
-<Text.div variant="heading-md">1,240 orders</Text.div>
+function NonHeadingRole() {
+  return <Text.div variant="heading-md">1,240 orders</Text.div>;
+}
 ```
 
 ## Lint
@@ -175,6 +203,9 @@ function ColorAndModifiers() {
       <Text variant="body-md" className="text-muted-foreground">
         Orders sent this month.
       </Text>
+      <Text.h3 variant="heading-md" className="leading-none">
+        Card title
+      </Text.h3>
       <Text variant="label-md" className="tabular-nums">
         1,240.00
       </Text>
@@ -183,26 +214,33 @@ function ColorAndModifiers() {
 }
 ```
 
-```tsx
-<Text variant="body-md" className="text-muted-foreground">
-  Orders sent this month.
-</Text>
-<Text.h3 variant="heading-md" className="leading-none">
-  Card title
-</Text.h3>
-<Text variant="label-md" className="tabular-nums">
-  1,240.00
-</Text>
-```
-
 Do not combine a role with other `leading-*`, `tracking-*`, or `text-*` size values. Pick a different `variant` instead. A `text-*` size class such as `text-sm` has no effect on `Text`: AppShell's stylesheet loads after yours, so the role's size wins.
 
 ## Using Roles Without Text
 
 Each role is also a plain utility, for example `text-heading-md`. Use the utility when you style your own element and do not need `Text`:
 
+<example-preview name="roles-without-text"></example-preview>
+
 ```tsx
-<th className="text-label-md text-muted-foreground">Amount</th>
+function RolesWithoutText() {
+  return (
+    <Table.Root>
+      <Table.Header>
+        <Table.Row>
+          <th scope="col" className="text-label-md text-muted-foreground">
+            Amount
+          </th>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        <Table.Row>
+          <Table.Cell>$1,240.00</Table.Cell>
+        </Table.Row>
+      </Table.Body>
+    </Table.Root>
+  );
+}
 ```
 
 ## TypeScript

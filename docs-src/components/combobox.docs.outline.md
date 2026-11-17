@@ -64,27 +64,13 @@ interface ItemGroup<T> {
 
 ## Grouped Items
 
-```tsx
-const fruits = [
-  { label: "Citrus", items: ["Orange", "Lemon", "Lime"] },
-  { label: "Berries", items: ["Strawberry", "Blueberry"] },
-];
-
-<Combobox items={fruits} placeholder="Search fruits..." />;
-```
+<!-- example: grouped-items -->
 
 ## Multi-select
 
 In multi-select mode, selected items are displayed as chips inside the input:
 
-```tsx
-<Combobox
-  items={["Red", "Green", "Blue"]}
-  multiple
-  placeholder="Pick colors"
-  onValueChange={(colors) => console.log(colors)}
-/>
-```
+<!-- example: multi-select -->
 
 ## Creatable Items
 
@@ -298,9 +284,7 @@ const countries = Combobox.useAsync({
 - Multi-select chips have `aria-label` set from the item label
 - When used standalone (no visible `<label>`), give the input an accessible name with `aria-label` or `aria-labelledby` — otherwise screen readers announce only the current value:
 
-```tsx
-<Combobox items={items} aria-label="Fruit filter" />
-```
+<!-- example: accessible-name -->
 
 ## Related Components
 

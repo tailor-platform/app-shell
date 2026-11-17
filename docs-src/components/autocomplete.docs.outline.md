@@ -61,34 +61,13 @@ interface ItemGroup<T> {
 
 ## Grouped Suggestions
 
-```tsx
-const cities = [
-  { label: "Japan", items: ["Tokyo", "Osaka", "Kyoto"] },
-  { label: "France", items: ["Paris", "Lyon", "Marseille"] },
-];
-
-<Autocomplete items={cities} placeholder="Search cities..." />;
-```
+<!-- example: grouped-suggestions -->
 
 ## Object Items with mapItem
 
 When items are objects, use `mapItem` to tell the component how to display them. The selected value is the item's `label` string returned by `mapItem`:
 
-```tsx
-type City = { code: string; name: string };
-
-const cities: City[] = [
-  { code: "TYO", name: "Tokyo" },
-  { code: "OSA", name: "Osaka" },
-];
-
-<Autocomplete
-  items={cities}
-  mapItem={(city) => ({ label: city.name, key: city.code })}
-  placeholder="Search cities..."
-  onValueChange={(name) => console.log(name)} // receives "Tokyo", "Osaka", etc.
-/>;
-```
+<!-- example: object-items -->
 
 ## Async Suggestions
 
@@ -257,9 +236,7 @@ const suggestions = Autocomplete.useAsync({
 - Selecting a suggestion fills the input with the item's label
 - When used standalone (no visible `<label>`), give the input an accessible name with `aria-label` or `aria-labelledby` — otherwise screen readers announce only the current value:
 
-```tsx
-<Autocomplete items={items} aria-label="City search" />
-```
+<!-- example: accessible-name -->
 
 ## Related Components
 

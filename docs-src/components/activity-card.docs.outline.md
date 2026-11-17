@@ -22,6 +22,8 @@ import {
 } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Text` from `@tailor-platform/app-shell` and `CheckCircle` from `lucide-react`.
+
 Use `ActivityCardItem` for each item in the standalone API. Use `ActivityCardBaseItem` as the minimum constraint when extending items for the compound API.
 
 ## Basic Usage
@@ -100,36 +102,7 @@ import { ActivityCard, type ActivityCardBaseItem } from "@tailor-platform/app-sh
 
 ### Example
 
-```tsx
-import { ActivityCard, Text, type ActivityCardBaseItem } from "@tailor-platform/app-shell";
-
-interface MyItem extends ActivityCardBaseItem {
-  kind: "approval" | "update";
-  label?: string;
-  message?: string;
-}
-
-const items: MyItem[] = [
-  { id: "1", timestamp: new Date(), kind: "approval", label: "PO approved" },
-  { id: "2", timestamp: new Date(), kind: "update", message: "Status changed to CONFIRMED" },
-];
-
-<ActivityCard.Root items={items} title="Updates" groupBy="day">
-  <ActivityCard.Items<MyItem>>
-    {(item) =>
-      item.kind === "approval" ? (
-        <ActivityCard.Item indicator={<ApprovedIcon />}>
-          <Text.p>{item.label}</Text.p>
-        </ActivityCard.Item>
-      ) : (
-        <ActivityCard.Item>
-          <Text.p>{item.message}</Text.p>
-        </ActivityCard.Item>
-      )
-    }
-  </ActivityCard.Items>
-</ActivityCard.Root>;
-```
+<!-- example: compound-items -->
 
 ---
 

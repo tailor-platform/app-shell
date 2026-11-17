@@ -281,20 +281,7 @@ this is how a page-header Save reaches a form in the page body (1.13.0+).
 
 `Field.Validity` exposes the field's `ValidityState` via a render callback, enabling fully custom validation UI.
 
-```tsx
-<Field.Root name="password">
-  <Field.Label>Password</Field.Label>
-  <Field.Control type="password" required minLength={8} />
-  <Field.Validity>
-    {(state) => (
-      <ul>
-        <li>{state.validity.valueMissing ? "❌" : "✅"} Required</li>
-        <li>{state.validity.tooShort ? "❌" : "✅"} At least 8 characters</li>
-      </ul>
-    )}
-  </Field.Validity>
-</Field.Root>
-```
+<!-- example: custom-validation -->
 
 ---
 
@@ -319,19 +306,7 @@ A compound component (`Fieldset.Root`, `Fieldset.Legend`) for grouping related f
 
 ### Example
 
-```tsx
-<Fieldset.Root>
-  <Fieldset.Legend>Billing details</Fieldset.Legend>
-  <Field.Root name="company">
-    <Field.Label>Company</Field.Label>
-    <Field.Control />
-  </Field.Root>
-  <Field.Root name="taxId">
-    <Field.Label>Tax ID</Field.Label>
-    <Field.Control />
-  </Field.Root>
-</Fieldset.Root>
-```
+<!-- example: billing-fieldset -->
 
 ---
 

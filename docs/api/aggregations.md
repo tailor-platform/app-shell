@@ -9,20 +9,41 @@ description: Reusable selector-based sum, average, minimum, maximum, and non-nul
 
 `aggregations` creates reusable callbacks that select values from a row collection and aggregate them. Each callback accepts `{ rows: readonly TRow[] }`; the module has no dependency on React, DataTable, or column definitions.
 
+## Import
+
 ```tsx
-import { aggregations, type Aggregation } from "@tailor-platform/app-shell";
+import { aggregations, Text, type Aggregation } from "@tailor-platform/app-shell";
+```
 
-type Line = { quantity: number | null };
+## Basic usage
 
-const sum = aggregations.sum((row: Line) => row.quantity);
-sum({ rows: [{ quantity: 1 }, { quantity: 2 }, { quantity: null }] }); // 3
-sum({ rows: [{ quantity: 4 }, { quantity: 5 }] }); // 9: no previous aggregate state
+<example-preview name="basic-usage"></example-preview>
 
-const summary: Aggregation<Line, string> = aggregations.sum(
-  (row: Line) => row.quantity,
-  (value) => (value === null ? "Unavailable" : `${value} units`),
-);
-summary({ rows: [{ quantity: 1 }, { quantity: 2 }] }); // "3 units"
+```tsx
+function BasicUsage() {
+  type Line = { quantity: number | null };
+  const sum = aggregations.sum((row: Line) => row.quantity);
+  const summary: Aggregation<Line, string> = aggregations.sum(
+    (row: Line) => row.quantity,
+    (value) => (value === null ? "Unavailable" : `${value} units`),
+  );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Text.p>
+        First collection:{" "}
+        <output>{sum({ rows: [{ quantity: 1 }, { quantity: 2 }, { quantity: null }] })}</output>
+      </Text.p>
+      <Text.p>
+        Second collection, with no previous aggregate state:{" "}
+        <output>{sum({ rows: [{ quantity: 4 }, { quantity: 5 }] })}</output>
+      </Text.p>
+      <Text.p>
+        Formatted total: <output>{summary({ rows: [{ quantity: 1 }, { quantity: 2 }] })}</output>
+      </Text.p>
+    </div>
+  );
+}
 ```
 
 ## Operations
@@ -49,18 +70,35 @@ Calculations use ordinary JavaScript numbers. A non-finite calculated result ret
 
 Pass a second function to transform the final result:
 
-```tsx
-const averageText = aggregations.avg(
-  (row: Line) => row.quantity,
-  (value) => value?.toFixed(2) ?? "–",
-);
-averageText({ rows: [{ quantity: 1 }, { quantity: null }, { quantity: 2 }] }); // "1.50"
+<example-preview name="optional-transformer"></example-preview>
 
-const detailed = aggregations.sum(
-  (row: Line) => row.quantity,
-  (total) => ({ total, valid: total !== null }),
-);
-detailed({ rows: [{ quantity: 1 }, { quantity: 2 }] }); // { total: 3, valid: true }
+```tsx
+function OptionalTransformer() {
+  type Line = { quantity: number | null };
+  const averageText = aggregations.avg(
+    (row: Line) => row.quantity,
+    (value) => value?.toFixed(2) ?? "–",
+  );
+  const detailed = aggregations.sum(
+    (row: Line) => row.quantity,
+    (total) => ({ total, valid: total !== null }),
+  );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Text.p>
+        Average:{" "}
+        <output>
+          {averageText({ rows: [{ quantity: 1 }, { quantity: null }, { quantity: 2 }] })}
+        </output>
+      </Text.p>
+      <Text.p>
+        Structured result:{" "}
+        <output>{JSON.stringify(detailed({ rows: [{ quantity: 1 }, { quantity: 2 }] }))}</output>
+      </Text.p>
+    </div>
+  );
+}
 ```
 
 The transformer is called exactly once per aggregation invocation, including for empty or invalid input. Numeric transformers receive `number | null`; count transformers receive `number`. Its return type becomes the callback's result type, and may be text, JSX, an object, or another value. The aggregation library does not interpret the transformed result.
@@ -75,36 +113,52 @@ An aggregation is an ordinary callback, so a wrapper can validate the supplied r
 
 For example, reject mixed currencies before adding monetary amounts:
 
+<example-preview name="business-validation"></example-preview>
+
 ```tsx
-type MoneyLine = { amount: number | null; currency: string };
-
-const sumAmount = aggregations.sum(
-  (row: MoneyLine) => row.amount,
-  (total) => (total === null ? "Invalid amount" : total.toLocaleString("en-US")),
-);
-
-const moneyFooter = (ctx: { rows: readonly MoneyLine[] }) => {
-  const currencies = new Set(
-    ctx.rows.filter((row) => row.amount != null).map((row) => row.currency),
+function BusinessValidation() {
+  type MoneyLine = { amount: number | null; currency: string };
+  const sumAmount = aggregations.sum(
+    (row: MoneyLine) => row.amount,
+    (total) => (total === null ? "Invalid amount" : total.toLocaleString("en-US")),
   );
-  if (currencies.size > 1) {
-    return `Mixed currencies: ${[...currencies].join(", ")}`;
-  }
-  return sumAmount(ctx);
-};
+  const moneyFooter = (ctx: { rows: readonly MoneyLine[] }) => {
+    const currencies = new Set(
+      ctx.rows.filter((row) => row.amount != null).map((row) => row.currency),
+    );
+    if (currencies.size > 1) {
+      return `Mixed currencies: ${[...currencies].join(", ")}`;
+    }
+    return sumAmount(ctx);
+  };
 
-moneyFooter({
-  rows: [
-    { amount: 1000, currency: "JPY" },
-    { amount: 500, currency: "JPY" },
-  ],
-}); // "1,500"
-moneyFooter({
-  rows: [
-    { amount: 1000, currency: "JPY" },
-    { amount: 500, currency: "USD" },
-  ],
-}); // "Mixed currencies: JPY, USD"
+  return (
+    <div className="flex flex-col gap-2">
+      <Text.p>
+        Same currency:{" "}
+        <output>
+          {moneyFooter({
+            rows: [
+              { amount: 1000, currency: "JPY" },
+              { amount: 500, currency: "JPY" },
+            ],
+          })}
+        </output>
+      </Text.p>
+      <Text.p>
+        Mixed currencies:{" "}
+        <output>
+          {moneyFooter({
+            rows: [
+              { amount: 1000, currency: "JPY" },
+              { amount: 500, currency: "USD" },
+            ],
+          })}
+        </output>
+      </Text.p>
+    </div>
+  );
+}
 ```
 
 The guard ignores nullish amounts because they do not contribute to the sum. A rejected currency combination returns directly without evaluating the selector or transformer. Neither the wrapper nor the helper converts currencies or provides arbitrary-precision arithmetic.

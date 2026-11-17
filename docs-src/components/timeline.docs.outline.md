@@ -19,32 +19,7 @@ import { Timeline } from "@tailor-platform/app-shell";
 
 ## Basic Usage
 
-```tsx
-import { Timeline } from "@tailor-platform/app-shell";
-
-<Timeline.Root start={0} end={100}>
-  <Timeline.Viewport
-    axis={{
-      guides: [{ at: 0 }, { at: 50 }, { at: 100 }],
-      levels: [
-        {
-          kind: "spans",
-          items: [
-            { start: 0, end: 50, label: "Phase 1" },
-            { start: 50, end: 100, label: "Phase 2" },
-          ],
-        },
-      ],
-    }}
-  >
-    <Timeline.Row height={40}>
-      <Timeline.Interval start={10} end={35}>
-        <div className="h-full rounded-md bg-primary" />
-      </Timeline.Interval>
-    </Timeline.Row>
-  </Timeline.Viewport>
-</Timeline.Root>;
-```
+<!-- example: basic-usage -->
 
 ## Sub-components
 
@@ -257,25 +232,7 @@ Pin the axis to the top during vertical scrolling with `stickyAxis`:
 
 Use `id` on `Timeline.Interval` and `Timeline.Link` to draw dependency connectors:
 
-```tsx
-<Timeline.Root start={0} end={100}>
-  <Timeline.Viewport
-    linkDefaults={{ style: { color: "var(--muted-foreground)" }, strokeWidth: 1.5 }}
-  >
-    <Timeline.Row height={40}>
-      <Timeline.Interval id="task-a" start={10} end={40}>
-        <div className="h-full rounded-md bg-primary" />
-      </Timeline.Interval>
-    </Timeline.Row>
-    <Timeline.Row height={40}>
-      <Timeline.Interval id="task-b" start={50} end={80}>
-        <div className="h-full rounded-md bg-secondary" />
-      </Timeline.Interval>
-    </Timeline.Row>
-    <Timeline.Link from="task-a" to="task-b" />
-  </Timeline.Viewport>
-</Timeline.Root>
-```
+<!-- example: dependency-links -->
 
 ### Background Bands and Markers
 
@@ -310,10 +267,4 @@ Use `decorations` to add background highlights and vertical marker lines:
 
 Use `background` on `Timeline.Row` to apply a background that respects guide lines:
 
-```tsx
-<Timeline.Row height={40} background={{ style: { background: "var(--muted)" } }}>
-  <Timeline.Interval start={10} end={35}>
-    <div className="h-full rounded-md bg-primary" />
-  </Timeline.Interval>
-</Timeline.Row>
-```
+<!-- example: row-background -->

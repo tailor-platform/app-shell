@@ -15,6 +15,8 @@ The `Checkbox` component is a styled control for boolean fields. It wraps Base U
 import { Checkbox } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Field` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -27,8 +29,12 @@ function BasicUsage() {
 
 Omit `label` to render just the box — useful for a table row-select cell (pass `aria-label`) or when a `Field.Label` sibling supplies the text.
 
+<example-preview name="box-only"></example-preview>
+
 ```tsx
-<Checkbox aria-label="Select row" />
+function BoxOnly() {
+  return <Checkbox aria-label="Select row" />;
+}
 ```
 
 ## Props
@@ -72,19 +78,29 @@ const [checked, setChecked] = useState(false);
 
 ### Disabled
 
+<example-preview name="disabled"></example-preview>
+
 ```tsx
-<Checkbox label="Unavailable option" disabled />
+function Disabled() {
+  return <Checkbox label="Unavailable option" disabled />;
+}
 ```
 
 ## Use With Field
 
 Placed inside a `Field.Root`, `Checkbox` picks up the field's invalid and disabled state automatically — no `error` prop of its own. Use the inline `label` for the checkbox text and `Field.Error` for the message below it.
 
+<example-preview name="with-field"></example-preview>
+
 ```tsx
-<Field.Root name="acceptTerms" error={{ message: "You must accept the terms." }}>
-  <Checkbox label="I accept the terms and conditions" />
-  <Field.Error>You must accept the terms.</Field.Error>
-</Field.Root>
+function WithField() {
+  return (
+    <Field.Root name="acceptTerms" error={{ message: "You must accept the terms." }}>
+      <Checkbox label="I accept the terms and conditions" />
+      <Field.Error>You must accept the terms.</Field.Error>
+    </Field.Root>
+  );
+}
 ```
 
 ## React Hook Form

@@ -198,11 +198,7 @@ For a docked right panel, put the collapse control in `icon` so it takes the lea
 
 ### Message
 
-```tsx
-<AIChat.Message from="assistant">
-  <AIChat.Response>{message.content}</AIChat.Response>
-</AIChat.Message>
-```
+<!-- example: message -->
 
 User turns render as a right-aligned primary bubble; assistant turns take the full width with no bubble, so reasoning, tool calls, and citations stack inside the same column above the response text.
 
@@ -210,9 +206,7 @@ User turns render as a right-aligned primary bubble; assistant turns take the fu
 
 Renders the markdown subset a streamed LLM response actually emits — bold, inline code, links, headings, bullet/numbered lists — without a markdown dependency. Only `http(s):`, `mailto:`, and same-site relative links render as clickable; any other target renders as plain text, since the text passing through here is untrusted model output. For full CommonMark, swap `<AIChat.Response>` for `react-markdown` or the AI SDK's `streamdown` — call sites keep the same shape.
 
-```tsx
-<AIChat.Response>{message.content}</AIChat.Response>
-```
+<!-- example: response -->
 
 ### EmptyState / Suggestions
 
@@ -248,30 +242,13 @@ Icon-button row under a finished assistant turn — copy, retry, feedback. Rende
 
 Collapsible "thinking" block for reasoning models. Auto-opens while `isStreaming` is true and auto-closes when it turns false, unless the reader has manually toggled it.
 
-```tsx
-<AIChat.Reasoning isStreaming={reasoning.streaming} duration={reasoning.duration}>
-  <AIChat.ReasoningTrigger />
-  <AIChat.ReasoningContent>{reasoning.text}</AIChat.ReasoningContent>
-</AIChat.Reasoning>
-```
+<!-- example: reasoning -->
 
 ### ChainOfThought
 
 Structured step timeline for agentic turns — the discrete plan being executed, each step with a status and optional result chips. Use `Reasoning` for free-form thinking text and this for multi-step tool plans.
 
-```tsx
-<AIChat.ChainOfThought defaultOpen>
-  <AIChat.ChainOfThoughtHeader />
-  <AIChat.ChainOfThoughtContent>
-    <AIChat.ChainOfThoughtStep label="Searching the knowledge base" status="complete">
-      <AIChat.ChainOfThoughtSearchResults>
-        <AIChat.ChainOfThoughtSearchResult>12 hits</AIChat.ChainOfThoughtSearchResult>
-      </AIChat.ChainOfThoughtSearchResults>
-    </AIChat.ChainOfThoughtStep>
-    <AIChat.ChainOfThoughtStep label="Drafting the answer" status="active" />
-  </AIChat.ChainOfThoughtContent>
-</AIChat.ChainOfThought>
-```
+<!-- example: chain-of-thought -->
 
 `status` is `"complete" | "active" | "pending"`.
 

@@ -38,38 +38,39 @@ A `TimeZone` object with the following properties:
 
 ## Usage
 
-```typescript
-import { useTimeZone } from "@tailor-platform/app-shell";
+Import `Text` and `useTimeZone` from `@tailor-platform/app-shell`.
 
+<example-preview name="today-display"></example-preview>
+
+```tsx
 function TodayDisplay() {
   const timeZone = useTimeZone();
   const todayDate = timeZone.today();
-
-  return <span>Today: {todayDate.toString()}</span>;
+  return <Text.span>Today: {todayDate.toString()}</Text.span>;
 }
 ```
 
 ### Current timestamp
 
-```typescript
-import { useTimeZone } from "@tailor-platform/app-shell";
+The timestamp is read when the component renders; this is not an automatically updating clock.
 
+<example-preview name="current-timestamp"></example-preview>
+
+```tsx
 function CurrentTimestamp() {
   const timeZone = useTimeZone();
-
-  return <span>{timeZone.now().toString()}</span>;
+  return <Text.span>{timeZone.now().toString()}</Text.span>;
 }
 ```
 
 ### Accessing the raw IANA string
 
-```typescript
-import { useTimeZone } from "@tailor-platform/app-shell";
+<example-preview name="time-zone-label"></example-preview>
 
+```tsx
 function TimeZoneLabel() {
   const { value } = useTimeZone();
-
-  return <span>Timezone: {value}</span>;
+  return <Text.span>Timezone: {value}</Text.span>;
 }
 ```
 

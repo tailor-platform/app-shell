@@ -17,15 +17,15 @@ The `Checkbox` component is a styled control for boolean fields. It wraps Base U
 import { Checkbox } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Field` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
 
 Omit `label` to render just the box — useful for a table row-select cell (pass `aria-label`) or when a `Field.Label` sibling supplies the text.
 
-```tsx
-<Checkbox aria-label="Select row" />
-```
+<!-- example: box-only -->
 
 ## Props
 
@@ -68,20 +68,13 @@ const [checked, setChecked] = useState(false);
 
 ### Disabled
 
-```tsx
-<Checkbox label="Unavailable option" disabled />
-```
+<!-- example: disabled -->
 
 ## Use With Field
 
 Placed inside a `Field.Root`, `Checkbox` picks up the field's invalid and disabled state automatically — no `error` prop of its own. Use the inline `label` for the checkbox text and `Field.Error` for the message below it.
 
-```tsx
-<Field.Root name="acceptTerms" error={{ message: "You must accept the terms." }}>
-  <Checkbox label="I accept the terms and conditions" />
-  <Field.Error>You must accept the terms.</Field.Error>
-</Field.Root>
-```
+<!-- example: with-field -->
 
 ## React Hook Form
 

@@ -15,6 +15,8 @@ The `Alert` component is a compound component for displaying contextual status m
 import { Alert } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Button` and `alertVariants` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -63,31 +65,35 @@ All standard HTML `<div>` props are also accepted.
 
 Each variant automatically renders a contextual icon:
 
+<example-preview name="variants"></example-preview>
+
 ```tsx
-<Alert.Root variant="neutral">
-  <Alert.Title>Note</Alert.Title>
-  <Alert.Description>General information.</Alert.Description>
-</Alert.Root>
-
-<Alert.Root variant="success">
-  <Alert.Title>Success</Alert.Title>
-  <Alert.Description>Operation completed successfully.</Alert.Description>
-</Alert.Root>
-
-<Alert.Root variant="warning">
-  <Alert.Title>Warning</Alert.Title>
-  <Alert.Description>Proceed with caution.</Alert.Description>
-</Alert.Root>
-
-<Alert.Root variant="error">
-  <Alert.Title>Error</Alert.Title>
-  <Alert.Description>Something went wrong.</Alert.Description>
-</Alert.Root>
-
-<Alert.Root variant="info">
-  <Alert.Title>Info</Alert.Title>
-  <Alert.Description>Here is some useful information.</Alert.Description>
-</Alert.Root>
+function Variants() {
+  return (
+    <div className="flex flex-col gap-3">
+      <Alert.Root variant="neutral">
+        <Alert.Title>Note</Alert.Title>
+        <Alert.Description>General information.</Alert.Description>
+      </Alert.Root>
+      <Alert.Root variant="success">
+        <Alert.Title>Success</Alert.Title>
+        <Alert.Description>Operation completed successfully.</Alert.Description>
+      </Alert.Root>
+      <Alert.Root variant="warning">
+        <Alert.Title>Warning</Alert.Title>
+        <Alert.Description>Proceed with caution.</Alert.Description>
+      </Alert.Root>
+      <Alert.Root variant="error">
+        <Alert.Title>Error</Alert.Title>
+        <Alert.Description>Something went wrong.</Alert.Description>
+      </Alert.Root>
+      <Alert.Root variant="info">
+        <Alert.Title>Info</Alert.Title>
+        <Alert.Description>Here is some useful information.</Alert.Description>
+      </Alert.Root>
+    </div>
+  );
+}
 ```
 
 | Variant   | Automatic Icon      | Color palette   |
@@ -102,18 +108,24 @@ Each variant automatically renders a contextual icon:
 
 Use the `action` prop to render an action element below the description:
 
+<example-preview name="with-action"></example-preview>
+
 ```tsx
-<Alert.Root
-  variant="warning"
-  action={
-    <Button size="sm" variant="outline">
-      Review
-    </Button>
-  }
->
-  <Alert.Title>Review Required</Alert.Title>
-  <Alert.Description>This record has pending changes that need review.</Alert.Description>
-</Alert.Root>
+function WithAction() {
+  return (
+    <Alert.Root
+      variant="warning"
+      action={
+        <Button size="sm" variant="outline">
+          Review
+        </Button>
+      }
+    >
+      <Alert.Title>Review Required</Alert.Title>
+      <Alert.Description>This record has pending changes that need review.</Alert.Description>
+    </Alert.Root>
+  );
+}
 ```
 
 ## Dismissible Alert
@@ -153,11 +165,17 @@ function OrderForm() {
 
 ### Success Confirmation
 
+<example-preview name="success-confirmation"></example-preview>
+
 ```tsx
-<Alert.Root variant="success">
-  <Alert.Title>Invoice Created</Alert.Title>
-  <Alert.Description>Invoice #INV-0042 has been sent to the customer.</Alert.Description>
-</Alert.Root>
+function SuccessConfirmation() {
+  return (
+    <Alert.Root variant="success">
+      <Alert.Title>Invoice Created</Alert.Title>
+      <Alert.Description>Invoice #INV-0042 has been sent to the customer.</Alert.Description>
+    </Alert.Root>
+  );
+}
 ```
 
 ### Warning with Action
@@ -189,11 +207,16 @@ Alerts are styled with the library's internal `astw:`-prefixed utilities. Write 
 1. **Using `className`** on `Alert.Root` for additional styles
 2. **Using `alertVariants`** utility to apply variant classes to custom elements
 
-```tsx
-import { alertVariants } from "@tailor-platform/app-shell";
-import { cn } from "@/lib/utils";
+<example-preview name="styling-utility"></example-preview>
 
-<div className={cn(alertVariants({ variant: "info" }), "my-4")}>Custom alert container</div>;
+```tsx
+function StylingUtility() {
+  return (
+    <div role="alert" className={`${alertVariants({ variant: "info" })} my-4`}>
+      Custom alert container
+    </div>
+  );
+}
 ```
 
 ## Related Components

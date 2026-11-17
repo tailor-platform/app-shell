@@ -15,6 +15,8 @@ The `Select` component provides a fully assembled single or multi-select dropdow
 import { Select } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Field` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -74,43 +76,61 @@ interface ItemGroup<T> {
 
 ## Grouped Items
 
-```tsx
-const fruits = [
-  { label: "Citrus", items: ["Orange", "Lemon", "Lime"] },
-  { label: "Berries", items: ["Strawberry", "Blueberry"] },
-];
+<example-preview name="grouped-items"></example-preview>
 
-<Select items={fruits} placeholder="Pick a fruit" />;
+```tsx
+function GroupedItems() {
+  const fruits = [
+    { label: "Citrus", items: ["Orange", "Lemon", "Lime"] },
+    { label: "Berries", items: ["Strawberry", "Blueberry"] },
+  ];
+
+  return <Select items={fruits} aria-label="Grouped fruits" placeholder="Pick a fruit" />;
+}
 ```
 
 ## Object Items with mapItem
 
 When items are objects, use `mapItem` to tell the component how to display them:
 
+<example-preview name="object-items"></example-preview>
+
 ```tsx
-type Fruit = { id: number; name: string };
+function ObjectItems() {
+  type Fruit = { id: number; name: string };
+  const fruits: Fruit[] = [
+    { id: 1, name: "Apple" },
+    { id: 2, name: "Banana" },
+  ];
 
-const fruits: Fruit[] = [
-  { id: 1, name: "Apple" },
-  { id: 2, name: "Banana" },
-];
-
-<Select
-  items={fruits}
-  mapItem={(fruit) => ({ label: fruit.name, key: String(fruit.id) })}
-  onValueChange={(fruit) => console.log(fruit?.id)}
-/>;
+  return (
+    <Select
+      items={fruits}
+      mapItem={(fruit) => ({ label: fruit.name, key: String(fruit.id) })}
+      aria-label="Fruit"
+      placeholder="Pick a fruit"
+      onValueChange={(fruit) => console.log(fruit?.id)}
+    />
+  );
+}
 ```
 
 ## Multi-select
 
+<example-preview name="multi-select"></example-preview>
+
 ```tsx
-<Select
-  items={["Red", "Green", "Blue"]}
-  multiple
-  placeholder="Pick colors"
-  onValueChange={(colors) => console.log(colors)}
-/>
+function MultiSelect() {
+  return (
+    <Select
+      items={["Red", "Green", "Blue"]}
+      multiple
+      aria-label="Colors"
+      placeholder="Pick colors"
+      onValueChange={(colors) => console.log(colors)}
+    />
+  );
+}
 ```
 
 ## Async Loading
@@ -182,11 +202,17 @@ const { Root, Trigger, Value, Content, Item, Group, GroupLabel, Separator } = Se
 Inside a form, place `Select` directly under `Field.Root`, not inside `Field.Control`. `Select` draws
 its own trigger and registers with the field itself.
 
+<example-preview name="with-field"></example-preview>
+
 ```tsx
-<Field.Root name="country">
-  <Field.Label>Country</Field.Label>
-  <Select items={["Japan", "United States"]} placeholder="Select a country" />
-</Field.Root>
+function WithField() {
+  return (
+    <Field.Root name="country">
+      <Field.Label>Country</Field.Label>
+      <Select items={["Japan", "United States"]} placeholder="Select a country" />
+    </Field.Root>
+  );
+}
 ```
 
 Inside a `Field.Root`, the field's `name` identifies the value and these props are unnecessary —

@@ -15,6 +15,8 @@ The `Tooltip` component displays contextual information on hover or focus. It is
 import { Tooltip } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Button` from `@tailor-platform/app-shell` and `PencilIcon` from `lucide-react`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -74,13 +76,19 @@ Wrap a section of your UI (e.g. a toolbar) with `Tooltip.Provider` to share dela
 
 ## Placement
 
+<example-preview name="placement"></example-preview>
+
 ```tsx
-<Tooltip.Root>
-  <Tooltip.Trigger render={<Button />}>Trigger</Tooltip.Trigger>
-  <Tooltip.Content side="right" align="start">
-    Appears on the right
-  </Tooltip.Content>
-</Tooltip.Root>
+function Placement() {
+  return (
+    <Tooltip.Root>
+      <Tooltip.Trigger render={<Button />}>Trigger</Tooltip.Trigger>
+      <Tooltip.Content side="right" align="start">
+        Appears on the right
+      </Tooltip.Content>
+    </Tooltip.Root>
+  );
+}
 ```
 
 ## Shared Delay with Provider
@@ -110,16 +118,20 @@ Use `Tooltip.Provider` to avoid tooltips opening immediately in dense UIs like t
 
 ### Icon Button with Tooltip
 
-```tsx
-import { PencilIcon } from "lucide-react";
+<example-preview name="icon-button"></example-preview>
 
-<Tooltip.Root>
-  <Tooltip.Trigger render={<Button size="icon" variant="ghost" />}>
-    <PencilIcon />
-    <span className="sr-only">Edit</span>
-  </Tooltip.Trigger>
-  <Tooltip.Content>Edit order</Tooltip.Content>
-</Tooltip.Root>;
+```tsx
+function IconButton() {
+  return (
+    <Tooltip.Root>
+      <Tooltip.Trigger render={<Button size="icon" variant="ghost" />}>
+        <PencilIcon />
+        <span className="sr-only">Edit</span>
+      </Tooltip.Trigger>
+      <Tooltip.Content>Edit order</Tooltip.Content>
+    </Tooltip.Root>
+  );
+}
 ```
 
 ### Controlled Tooltip

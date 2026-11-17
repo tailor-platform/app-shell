@@ -29,6 +29,8 @@ import {
 } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Text` from `@tailor-platform/app-shell` and `useId` from `react`.
+
 ## API shape
 
 `DateField` and `DatePicker` are standalone composite controls.
@@ -41,32 +43,47 @@ import {
 
 Standalone usage with an accessible name:
 
+<example-preview name="standalone-date-field"></example-preview>
+
 ```tsx
-<DateField aria-label="Invoice date" />
+function StandaloneDateField() {
+  return <DateField aria-label="Invoice date" />;
+}
 ```
 
 With a visible label + description:
 
+<example-preview name="labeled-date-field"></example-preview>
+
 ```tsx
-<label id="invoice-date-label" htmlFor="invoice-date">
-  Invoice date
-</label>
-<DateField
-  id="invoice-date"
-  aria-labelledby="invoice-date-label"
-  aria-describedby="invoice-date-help"
-/>
-<Text.p id="invoice-date-help">Format follows your locale</Text.p>
+function LabeledDateField() {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-2">
+      <label id={`${id}-label`} htmlFor={id}>
+        Invoice date
+      </label>
+      <DateField id={id} aria-labelledby={`${id}-label`} aria-describedby={`${id}-help`} />
+      <Text.p id={`${id}-help`}>Format follows your locale</Text.p>
+    </div>
+  );
+}
 ```
 
 Inside `Field.Root`:
 
+<example-preview name="date-field-with-field"></example-preview>
+
 ```tsx
-<Field.Root name="invoiceDate">
-  <Field.Label>Invoice date</Field.Label>
-  <DateField />
-  <Field.Description>Format follows your locale</Field.Description>
-</Field.Root>
+function DateFieldWithField() {
+  return (
+    <Field.Root name="invoiceDate">
+      <Field.Label>Invoice date</Field.Label>
+      <DateField />
+      <Field.Description>Format follows your locale</Field.Description>
+    </Field.Root>
+  );
+}
 ```
 
 Controlled:
@@ -81,31 +98,55 @@ const [date, setDate] = useState<CalendarDate | null>(null);
 
 A `DateField` with a calendar popover.
 
+<example-preview name="standalone-date-picker"></example-preview>
+
 ```tsx
-<DatePicker aria-label="Ship date" />
+function StandaloneDatePicker() {
+  return <DatePicker aria-label="Ship date" />;
+}
 ```
 
 Constrained + unavailable dates:
 
+<example-preview name="constrained-dates"></example-preview>
+
 ```tsx
-<label id="delivery-date-label" htmlFor="delivery-date">
-  Delivery date
-</label>
-<DatePicker
-  id="delivery-date"
-  aria-labelledby="delivery-date-label"
-  minValue={today(getLocalTimeZone())}
-  isDateUnavailable={(date) => {
-    const dow = date.toDate(getLocalTimeZone()).getDay();
-    return dow === 0 || dow === 6; // weekends
-  }}
-/>
+function ConstrainedDates() {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-2">
+      <label id={`${id}-label`} htmlFor={id}>
+        Delivery date
+      </label>
+      <DatePicker
+        id={id}
+        aria-labelledby={`${id}-label`}
+        defaultValue={parseDate("2025-12-19")}
+        minValue={parseDate("2025-12-01")}
+        isDateUnavailable={(date) => {
+          const dow = date.toDate(getLocalTimeZone()).getDay();
+          return dow === 0 || dow === 6;
+        }}
+      />
+    </div>
+  );
+}
 ```
 
 Week start:
 
+<example-preview name="week-start"></example-preview>
+
 ```tsx
-<DatePicker aria-label="Date" firstDayOfWeek="mon" />
+function WeekStart() {
+  return (
+    <DatePicker
+      aria-label="Date with Monday week start"
+      defaultValue={parseDate("2025-12-19")}
+      firstDayOfWeek="mon"
+    />
+  );
+}
 ```
 
 ## Validation and errors
@@ -141,8 +182,18 @@ Or let `Field.Root` wire the label, description, and error elements:
 
 A standalone calendar grid for custom date-selection UIs.
 
+<example-preview name="standalone-calendar"></example-preview>
+
 ```tsx
-<Calendar aria-label="Select date" onChange={(date) => console.log(date)} />
+function StandaloneCalendar() {
+  return (
+    <Calendar
+      aria-label="Select date"
+      defaultValue={parseDate("2025-12-19")}
+      onChange={(date) => console.log(date)}
+    />
+  );
+}
 ```
 
 ## DateRangePicker
@@ -169,24 +220,44 @@ A single combined proxy input is registered as the one Field control — its val
 
 The standalone inline range calendar (the grid inside `DateRangePicker`), for custom layouts.
 
+<example-preview name="standalone-range-calendar"></example-preview>
+
 ```tsx
-<RangeCalendar aria-label="Stay dates" onChange={(range) => console.log(range)} />
+function StandaloneRangeCalendar() {
+  return (
+    <RangeCalendar
+      aria-label="Stay dates"
+      defaultValue={{ start: parseDate("2025-12-19"), end: parseDate("2025-12-23") }}
+      onChange={(range) => console.log(range)}
+    />
+  );
+}
 ```
 
 ## Localization
 
 Locale and timezone come from AppShell automatically. Override per field with `locale` / `timeZone`:
 
+<example-preview name="localized-picker"></example-preview>
+
 ```tsx
-<DatePicker aria-label="Date" locale="ja-JP" />
+function LocalizedPicker() {
+  return <DatePicker aria-label="Date" defaultValue={parseDate("2025-12-19")} locale="ja-JP" />;
+}
 ```
 
 ### Day of the week
 
 `showDayOfWeek` adds the locale's short day of the week where the locale places it — `2025/12/19(金)` for ja-JP, `Fri, 12/19/2025` for en-US. It is read-only and derived from the entered date: it shows a placeholder until the date is complete, and while a date segment is mid-entry it keeps the previous day of the week (muted), so typing `25` into the day never flashes the 2nd's. Screen readers hear the full day name with each date segment's value.
 
+<example-preview name="weekday"></example-preview>
+
 ```tsx
-<DatePicker aria-label="Closing date" showDayOfWeek />
+function Weekday() {
+  return (
+    <DatePicker aria-label="Closing date" defaultValue={parseDate("2025-12-19")} showDayOfWeek />
+  );
+}
 ```
 
 ## Keyboard

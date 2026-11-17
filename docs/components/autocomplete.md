@@ -71,33 +71,45 @@ interface ItemGroup<T> {
 
 ## Grouped Suggestions
 
-```tsx
-const cities = [
-  { label: "Japan", items: ["Tokyo", "Osaka", "Kyoto"] },
-  { label: "France", items: ["Paris", "Lyon", "Marseille"] },
-];
+<example-preview name="grouped-suggestions"></example-preview>
 
-<Autocomplete items={cities} placeholder="Search cities..." />;
+```tsx
+function GroupedSuggestions() {
+  const cities = [
+    { label: "Japan", items: ["Tokyo", "Osaka", "Kyoto"] },
+    { label: "France", items: ["Paris", "Lyon", "Marseille"] },
+  ];
+
+  return (
+    <Autocomplete items={cities} aria-label="Grouped city search" placeholder="Search cities..." />
+  );
+}
 ```
 
 ## Object Items with mapItem
 
 When items are objects, use `mapItem` to tell the component how to display them. The selected value is the item's `label` string returned by `mapItem`:
 
+<example-preview name="object-items"></example-preview>
+
 ```tsx
-type City = { code: string; name: string };
+function ObjectItems() {
+  type City = { code: string; name: string };
+  const cities: City[] = [
+    { code: "TYO", name: "Tokyo" },
+    { code: "OSA", name: "Osaka" },
+  ];
 
-const cities: City[] = [
-  { code: "TYO", name: "Tokyo" },
-  { code: "OSA", name: "Osaka" },
-];
-
-<Autocomplete
-  items={cities}
-  mapItem={(city) => ({ label: city.name, key: city.code })}
-  placeholder="Search cities..."
-  onValueChange={(name) => console.log(name)} // receives "Tokyo", "Osaka", etc.
-/>;
+  return (
+    <Autocomplete
+      items={cities}
+      mapItem={(city) => ({ label: city.name, key: city.code })}
+      aria-label="City name"
+      placeholder="Search cities..."
+      onValueChange={(name) => console.log(name)}
+    />
+  );
+}
 ```
 
 ## Async Suggestions
@@ -267,8 +279,12 @@ const suggestions = Autocomplete.useAsync({
 - Selecting a suggestion fills the input with the item's label
 - When used standalone (no visible `<label>`), give the input an accessible name with `aria-label` or `aria-labelledby` — otherwise screen readers announce only the current value:
 
+<example-preview name="accessible-name"></example-preview>
+
 ```tsx
-<Autocomplete items={items} aria-label="City search" />
+function AccessibleName() {
+  return <Autocomplete items={["Tokyo", "Osaka", "Kyoto"]} aria-label="City search" />;
+}
 ```
 
 ## Related Components

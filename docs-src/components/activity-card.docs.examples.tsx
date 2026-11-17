@@ -1,4 +1,5 @@
-import { ActivityCard } from "@tailor-platform/app-shell";
+import { CheckCircle } from "lucide-react";
+import { ActivityCard, Text, type ActivityCardBaseItem } from "@tailor-platform/app-shell";
 
 const items = [
   {
@@ -22,4 +23,40 @@ const items = [
 
 export function BasicUsage() {
   return <ActivityCard items={items} title="Updates" />;
+}
+
+export function CompoundItems() {
+  interface MyItem extends ActivityCardBaseItem {
+    kind: "approval" | "update";
+    label?: string;
+    message?: string;
+  }
+
+  const items: MyItem[] = [
+    { id: "1", timestamp: "2026-03-21T09:00:00", kind: "approval", label: "PO approved" },
+    {
+      id: "2",
+      timestamp: "2026-03-20T15:00:00",
+      kind: "update",
+      message: "Status changed to CONFIRMED",
+    },
+  ];
+
+  return (
+    <ActivityCard.Root items={items} title="Updates" groupBy="day">
+      <ActivityCard.Items<MyItem>>
+        {(item) =>
+          item.kind === "approval" ? (
+            <ActivityCard.Item indicator={<CheckCircle aria-hidden className="size-4" />}>
+              <Text.p>{item.label}</Text.p>
+            </ActivityCard.Item>
+          ) : (
+            <ActivityCard.Item>
+              <Text.p>{item.message}</Text.p>
+            </ActivityCard.Item>
+          )
+        }
+      </ActivityCard.Items>
+    </ActivityCard.Root>
+  );
 }

@@ -17,6 +17,8 @@ The `Select` component provides a fully assembled single or multi-select dropdow
 import { Select } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Field` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -64,44 +66,17 @@ interface ItemGroup<T> {
 
 ## Grouped Items
 
-```tsx
-const fruits = [
-  { label: "Citrus", items: ["Orange", "Lemon", "Lime"] },
-  { label: "Berries", items: ["Strawberry", "Blueberry"] },
-];
-
-<Select items={fruits} placeholder="Pick a fruit" />;
-```
+<!-- example: grouped-items -->
 
 ## Object Items with mapItem
 
 When items are objects, use `mapItem` to tell the component how to display them:
 
-```tsx
-type Fruit = { id: number; name: string };
-
-const fruits: Fruit[] = [
-  { id: 1, name: "Apple" },
-  { id: 2, name: "Banana" },
-];
-
-<Select
-  items={fruits}
-  mapItem={(fruit) => ({ label: fruit.name, key: String(fruit.id) })}
-  onValueChange={(fruit) => console.log(fruit?.id)}
-/>;
-```
+<!-- example: object-items -->
 
 ## Multi-select
 
-```tsx
-<Select
-  items={["Red", "Green", "Blue"]}
-  multiple
-  placeholder="Pick colors"
-  onValueChange={(colors) => console.log(colors)}
-/>
-```
+<!-- example: multi-select -->
 
 ## Async Loading
 
@@ -172,12 +147,7 @@ const { Root, Trigger, Value, Content, Item, Group, GroupLabel, Separator } = Se
 Inside a form, place `Select` directly under `Field.Root`, not inside `Field.Control`. `Select` draws
 its own trigger and registers with the field itself.
 
-```tsx
-<Field.Root name="country">
-  <Field.Label>Country</Field.Label>
-  <Select items={["Japan", "United States"]} placeholder="Select a country" />
-</Field.Root>
-```
+<!-- example: with-field -->
 
 Inside a `Field.Root`, the field's `name` identifies the value and these props are unnecessary —
 see [Form](./form.md). They matter for **native** submission: a plain `<form>`, `new FormData(form)`,

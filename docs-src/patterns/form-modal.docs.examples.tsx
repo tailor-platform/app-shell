@@ -107,3 +107,74 @@ export function ModalFormRouted() {
     </Layout>
   );
 }
+
+type ContactDraft = {
+  email: string;
+};
+
+// Second level: a confirmation on top of the form modal. The confirm dialog is
+// rendered inside the form dialog's content, so Escape and an outside press close
+// only the confirm, and focus returns to the form when it closes.
+export function ModalFormConfirm() {
+  const [open, setOpen] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const close = () => {
+    setConfirmOpen(false);
+    setDirty(false);
+    setOpen(false);
+  };
+
+  const requestClose = () => (dirty ? setConfirmOpen(true) : close());
+
+  return (
+    // Escape, the close button and a press on the scrim all arrive as `onOpenChange(false)`.
+    <Dialog.Root open={open} onOpenChange={(next) => (next ? setOpen(true) : requestClose())}>
+      <Dialog.Trigger render={<Button />}>Add contact</Dialog.Trigger>
+      <Dialog.Content>
+        <Dialog.Header>
+          <Dialog.Title>Add contact</Dialog.Title>
+        </Dialog.Header>
+        <Form<ContactDraft>
+          noValidate
+          onFormSubmit={(values) => {
+            window.alert(`Saving ${values.email}`);
+            close();
+          }}
+        >
+          <div className="flex flex-col gap-4 py-4" onInput={() => setDirty(true)}>
+            <Field.Root name="email">
+              <Field.Label>Email</Field.Label>
+              <Field.Control type="email" required />
+              <Field.Error match="valueMissing">Email is required.</Field.Error>
+            </Field.Root>
+          </div>
+          <Dialog.Footer>
+            <Button type="button" variant="ghost" onClick={requestClose}>
+              Cancel
+            </Button>
+            <Button type="submit">Save</Button>
+          </Dialog.Footer>
+        </Form>
+
+        <Dialog.Root open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Discard changes?</Dialog.Title>
+              <Dialog.Description>The contact you typed will be lost.</Dialog.Description>
+            </Dialog.Header>
+            <Dialog.Footer>
+              <Dialog.Close render={<Button type="button" variant="outline" />}>
+                Keep editing
+              </Dialog.Close>
+              <Button type="button" variant="destructive" onClick={close}>
+                Discard
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>
+      </Dialog.Content>
+    </Dialog.Root>
+  );
+}

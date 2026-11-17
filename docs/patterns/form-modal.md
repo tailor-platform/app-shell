@@ -119,6 +119,78 @@ function ModalFormRouted() {
 }
 ```
 
+## Second Level: Confirm or Pick
+
+A confirmation or a picker may open on top of the form modal: a "Discard changes?" confirm when the user cancels a dirty form, or a picker that fills one field. This is the second and last level. Render it inside the form dialog's content, so `Escape` and an outside press close only the top dialog. When it closes, focus returns to the element that opened it. See [Dialog → Stacking](../components/dialog.md#stacking).
+
+<example-preview name="modal-form-confirm"></example-preview>
+
+```tsx
+function ModalFormConfirm() {
+  const [open, setOpen] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const close = () => {
+    setConfirmOpen(false);
+    setDirty(false);
+    setOpen(false);
+  };
+
+  const requestClose = () => (dirty ? setConfirmOpen(true) : close());
+
+  return (
+    // Escape, the close button and a press on the scrim all arrive as `onOpenChange(false)`.
+    <Dialog.Root open={open} onOpenChange={(next) => (next ? setOpen(true) : requestClose())}>
+      <Dialog.Trigger render={<Button />}>Add contact</Dialog.Trigger>
+      <Dialog.Content>
+        <Dialog.Header>
+          <Dialog.Title>Add contact</Dialog.Title>
+        </Dialog.Header>
+        <Form<ContactDraft>
+          noValidate
+          onFormSubmit={(values) => {
+            window.alert(`Saving ${values.email}`);
+            close();
+          }}
+        >
+          <div className="flex flex-col gap-4 py-4" onInput={() => setDirty(true)}>
+            <Field.Root name="email">
+              <Field.Label>Email</Field.Label>
+              <Field.Control type="email" required />
+              <Field.Error match="valueMissing">Email is required.</Field.Error>
+            </Field.Root>
+          </div>
+          <Dialog.Footer>
+            <Button type="button" variant="ghost" onClick={requestClose}>
+              Cancel
+            </Button>
+            <Button type="submit">Save</Button>
+          </Dialog.Footer>
+        </Form>
+
+        <Dialog.Root open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Discard changes?</Dialog.Title>
+              <Dialog.Description>The contact you typed will be lost.</Dialog.Description>
+            </Dialog.Header>
+            <Dialog.Footer>
+              <Dialog.Close render={<Button type="button" variant="outline" />}>
+                Keep editing
+              </Dialog.Close>
+              <Button type="button" variant="destructive" onClick={close}>
+                Discard
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>
+      </Dialog.Content>
+    </Dialog.Root>
+  );
+}
+```
+
 ## Constraints
 
 - Dialog renders full-screen sheet below 1024px; centered max-w-md at 1024–1280px
@@ -126,6 +198,7 @@ function ModalFormRouted() {
 - `onOpenChange` must navigate back — just calling `setOpen(false)` leaves the URL broken
 - Use `<Form onFormSubmit>`, never a bare `<form onSubmit>` — see **Form state** below
 - Cancel must be `type="button"`; inside a `<Form>` an untyped `<button>` defaults to `submit`
+- Two levels of modal at most; the second is a confirmation or a picker, rendered inside the form dialog's content
 
 ## Form state
 
@@ -160,7 +233,7 @@ placeholder.
 
 ## Anti-patterns
 
-- Nesting modals — opening a Dialog from inside another Dialog
+- A second modal that is more than a confirmation or a picker (a form inside the form modal), or a third level — use a step inside the dialog instead
 - Modal containing a wizard — promote to a routed `form/wizard`
 - Save closes the dialog but parent state is stale — wire refetch or optimistic update
 - Building a routed Create/Edit page when the design didn't explicitly call for one — modal is the default

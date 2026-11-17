@@ -1,6 +1,6 @@
 import type { LineItemsColumn } from "./document";
 import type { LineItemsIdentityOptions } from "./document/types";
-import type { LINE_ITEMS_EDITING, LineItemsEditing } from "./editing";
+import type { LINE_ITEMS_EDITING } from "./editing";
 
 export type { LineItemsColumn, LineItemsEditor } from "./document/types";
 
@@ -15,7 +15,7 @@ export type UseLineItemsOptions<TRow extends Record<string, unknown>> = {
 
 export type UseLineItemsReturn<TRow extends Record<string, unknown>> = {
   /** Internal handle retained by object spread; not a second owner of row data. */
-  readonly [LINE_ITEMS_EDITING]: LineItemsEditing<TRow>;
+  readonly [LINE_ITEMS_EDITING]: object;
   readonly columns: readonly LineItemsColumn<TRow>[];
   readonly lines: readonly TRow[];
   readonly orderer: boolean;

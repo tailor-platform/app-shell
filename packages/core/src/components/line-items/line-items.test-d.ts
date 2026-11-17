@@ -10,6 +10,7 @@ import {
   type LineItemsTableProps,
 } from "@/index";
 import { createLineItemsDocumentStore } from "./document/store";
+import type { LINE_ITEMS_EDITING } from "./editing";
 
 type Row = { id?: string; name: string; quantity: number; detail: { nested: string } };
 
@@ -40,6 +41,7 @@ test("row commands retain row types without exposing unfinished save APIs", () =
       defaultLines: [],
     });
     expectTypeOf(value).toEqualTypeOf<UseLineItemsReturn<Row>>();
+    expectTypeOf<UseLineItemsReturn<Row>[typeof LINE_ITEMS_EDITING]>().toEqualTypeOf<object>();
     expectTypeOf(value.lines).toEqualTypeOf<readonly Row[]>();
     expectTypeOf(value.getLineKey).toEqualTypeOf<(row: Row) => string>();
     expectTypeOf<LineItemsRootProps<Row>["value"]>().toEqualTypeOf<UseLineItemsReturn<Row>>();

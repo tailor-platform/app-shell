@@ -105,6 +105,51 @@ test("cell editors retain property-specific nullable output and row callback typ
   void asyncChoice;
 });
 
+test("fixed choices and confirmation values follow nullable string enum properties", () => {
+  type EnumRow = {
+    id?: string;
+    status: "draft" | "confirmed" | null;
+    requiredStatus: "draft" | "confirmed";
+    quantity: number | null;
+  };
+  const column: LineItemsColumn<EnumRow> = {
+    accessorKey: "status",
+    edit: {
+      editorType: "combobox",
+      // A partial choice list does not narrow the callback's property-based value type.
+      editorOptions: { options: [{ value: "draft", label: "Draft" }] },
+      onValueCommitted: (row, value) => {
+        expectTypeOf(row).toEqualTypeOf<Readonly<EnumRow>>();
+        expectTypeOf(value).toEqualTypeOf<EnumRow["status"]>();
+      },
+    },
+  };
+  const invalidChoice: LineItemsEditor<EnumRow, EnumRow["status"]> = {
+    editorType: "combobox",
+    editorOptions: {
+      // @ts-expect-error Choices must fit the target property's string enum.
+      options: [{ value: "invalid", label: "Invalid" }],
+    },
+  };
+  const numericChoice: LineItemsEditor<EnumRow, EnumRow["status"]> = {
+    editorType: "combobox",
+    editorOptions: {
+      // @ts-expect-error Numeric choices are not part of the fixed-string choice API.
+      options: [{ value: 1, label: "One" }],
+    },
+  };
+  expectTypeOf<
+    Extract<LineItemsEditor<EnumRow, EnumRow["status"]>, { editorType: "text" }>
+  >().toEqualTypeOf<never>();
+  expectTypeOf<
+    Extract<LineItemsEditor<EnumRow, EnumRow["quantity"]>, { editorType: "combobox" }>
+  >().toEqualTypeOf<never>();
+  expectTypeOf<LineItemsEditor<EnumRow, EnumRow["requiredStatus"]>>().toEqualTypeOf<never>();
+  void column;
+  void invalidChoice;
+  void numericChoice;
+});
+
 test("public editor settings and confirmation values follow the concrete editors", () => {
   type DefinitionKeys = { [K in keyof EditorCatalog]: keyof EditorCatalog[K] };
   expectTypeOf<DefinitionKeys>().toEqualTypeOf<Record<keyof EditorCatalog, "validate" | "bind">>();

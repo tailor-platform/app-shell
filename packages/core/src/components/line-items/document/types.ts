@@ -21,14 +21,33 @@ type EditorBase<TRow extends Record<string, unknown>, TValue> = {
 type EditorCatalog = typeof lineItemsEditors;
 type EditorAdapter<K extends keyof EditorCatalog> = ReturnType<EditorCatalog[K]["bind"]>;
 type EditorOutput<K extends keyof EditorCatalog> = CellEditorOutput<EditorAdapter<K>["editor"]>;
+type EditorSettings<K extends keyof EditorCatalog> = Parameters<EditorAdapter<K>["prepare"]>[0];
+type ChoiceOptions = EditorSettings<"combobox">["editorOptions"];
+type ChoiceOption = ChoiceOptions["options"][number];
+type PropertyChoiceOption<TValue> = {
+  [K in keyof ChoiceOption]: K extends "value" ? ChoiceOption[K] & TValue : ChoiceOption[K];
+};
+type PropertyChoiceOptions<TValue> = {
+  [K in keyof ChoiceOptions]: K extends "options"
+    ? readonly PropertyChoiceOption<TValue>[]
+    : ChoiceOptions[K];
+};
+type PropertyEditorOutput<K extends keyof EditorCatalog, TValue> = K extends "combobox"
+  ? (Exclude<EditorOutput<K>, null> & TValue) | Extract<EditorOutput<K>, null>
+  : EditorOutput<K>;
+type PropertyEditorSettings<K extends keyof EditorCatalog, TValue> = K extends "combobox"
+  ? { editorOptions: PropertyChoiceOptions<TValue> }
+  : EditorSettings<K>;
 
-/** Derive supported kinds, settings and outputs from the adapters; outputs must fit the property. */
+/** Derive editor contracts from the adapters; fixed choices additionally follow the property. */
 export type LineItemsEditor<TRow extends Record<string, unknown>, TValue> = {
-  [K in keyof EditorCatalog]: [EditorOutput<K>] extends [TValue]
-    ? EditorBase<TRow, EditorOutput<K>> & { editorType: K } & Parameters<
-          EditorAdapter<K>["prepare"]
-        >[0]
-    : never;
+  [K in keyof EditorCatalog]: [Exclude<PropertyEditorOutput<K, TValue>, null>] extends [never]
+    ? never
+    : [PropertyEditorOutput<K, TValue>] extends [TValue]
+      ? EditorBase<TRow, PropertyEditorOutput<K, TValue>> & {
+          editorType: K;
+        } & PropertyEditorSettings<K, TValue>
+      : never;
 }[keyof EditorCatalog];
 
 type DisplayProps<TRow extends Record<string, unknown>> = {

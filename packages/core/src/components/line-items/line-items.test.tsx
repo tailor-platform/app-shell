@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState, type FormEvent } from "react";
 import { MemoryRouter } from "react-router";
@@ -591,7 +599,9 @@ describe("LineItems table", () => {
     const clientKey = identity.newClientKey();
     const creation = identity.tag({ ...rows[0], id: undefined }, clientKey);
     identity.remember([creation]);
+    const { result: owner } = renderHook(() => useLineItems<Row>({ columns: [] }));
     const value: UseLineItemsReturn<Row> = {
+      ...owner.current,
       columns: [{ id: "draft", render: () => <DraftCell /> }],
       lines: [creation],
       orderer: true,

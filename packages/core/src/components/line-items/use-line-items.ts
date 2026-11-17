@@ -1,6 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createLineItemsDocumentStore } from "./document/store";
-import { bindLineItemsEditing, createLineItemsEditing } from "./editing";
+import { createLineItemsEditing, LINE_ITEMS_EDITING } from "./editing";
 import type { UseLineItemsOptions, UseLineItemsReturn } from "./types";
 
 /** Owns one document; changing the document identity requires remounting the hook's owner. */
@@ -40,7 +40,8 @@ export function useLineItems<T extends Record<string, unknown>>(
     },
     [store],
   );
-  const value: UseLineItemsReturn<T> = {
+  return {
+    [LINE_ITEMS_EDITING]: editing,
     columns: options.columns,
     lines,
     orderer,
@@ -52,6 +53,4 @@ export function useLineItems<T extends Record<string, unknown>>(
     reorderLine,
     revert: editing.revert,
   };
-  bindLineItemsEditing(value, editing);
-  return value;
 }

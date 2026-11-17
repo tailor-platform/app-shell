@@ -122,7 +122,9 @@ it("retains drag identities across persisted ID assignment and dispatches curren
   const identity = createLineItemsIdentity<Row>("id");
   const lines = ["First", "Second"].map((name) => identity.tag({ name }, identity.newClientKey()));
   identity.remember(lines);
+  const { result: owner } = renderHook(() => useLineItems<Row>({ columns: [] }));
   const value: UseLineItemsReturn<Row> = {
+    ...owner.current,
     columns: [{ accessorKey: "name" }],
     lines,
     orderer: true,

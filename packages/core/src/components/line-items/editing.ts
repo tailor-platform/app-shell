@@ -167,19 +167,13 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
 export type LineItemsEditing<T extends Record<string, unknown>> = ReturnType<
   typeof createLineItemsEditing<T>
 >;
-const owners = new WeakMap<object, unknown>();
+/** Internal document handle; enumerable symbol properties survive shallow copies. */
+export const LINE_ITEMS_EDITING = Symbol("LineItems.editing");
 
-/** Keeps the private editing owner off the hook's headless command surface. */
-export function bindLineItemsEditing<T extends Record<string, unknown>>(
-  value: object,
-  editing: LineItemsEditing<T>,
-) {
-  owners.set(value, editing);
-}
 export function getLineItemsEditing<T extends Record<string, unknown>>(
   value: object,
 ): LineItemsEditing<T> {
-  const editing = owners.get(value);
+  const editing = (value as { [LINE_ITEMS_EDITING]?: LineItemsEditing<T> })[LINE_ITEMS_EDITING];
   if (!editing) throw new Error("Editable LineItems requires the value returned by useLineItems");
-  return editing as LineItemsEditing<T>;
+  return editing;
 }

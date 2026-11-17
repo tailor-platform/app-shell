@@ -15,7 +15,7 @@ function deferred() {
 }
 function setup(
   check?: (row: Readonly<Row>, value: string | null) => void | Promise<void>,
-  error?: false,
+  error?: NonNullable<LineItemsColumn<Row>["edit"]>["error"],
 ) {
   const columns: LineItemsColumn<Row>[] = [
     {
@@ -271,14 +271,79 @@ describe("document-owned cell editing", () => {
     expect(store.getSnapshot()[0].name).toBe("Confirmed");
   });
 
-  it("preserves eager opt-out and callback propagation", () => {
-    const error = new Error("Caller-owned");
-    const { confirm, store, session } = setup(() => {
-      throw error;
-    }, false);
-    expect(() => confirm("Eager")).toThrow(error);
-    expect(store.getSnapshot()[0].name).toBe("Eager");
-    expect(session.getState()).toEqual({ status: "idle" });
+  describe.each(["default", "custom"] as const)("%s error presentation", (presentation) => {
+    const errorOptions = presentation === "custom" ? { render: () => null } : undefined;
+
+    it("retains synchronous rejection without adopting or publishing a snapshot", () => {
+      const error = new Error("Rejected");
+      const check = vi.fn(() => {
+        throw error;
+      });
+      const { confirm, store, session } = setup(check, errorOptions);
+      const initial = store.getSnapshot();
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      expect(() => confirm("Rejected")).not.toThrow();
+
+      expect(session.getFailure()).toMatchObject({ error, source: "commit", draft: "Rejected" });
+      expect(store.getSnapshot()).toBe(initial);
+      expect(store.isDirty()).toBe(false);
+      expect(listener).not.toHaveBeenCalled();
+      expect(check).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(["resolve", "reject"] as const)(
+      "waits before adoption when a pending check will %s and does not repeat it",
+      async (outcome) => {
+        const request = deferred();
+        const check = vi.fn(() => request.promise);
+        const { confirm, editing, store, session } = setup(check, errorOptions);
+        const initial = store.getSnapshot();
+        const listener = vi.fn();
+        store.subscribe(listener);
+        confirm("Candidate");
+        session.confirm(() => editing.commitField("A", "name", "Candidate"));
+
+        expect(session.getState()).toEqual({ status: "confirming", draft: "Candidate" });
+        expect(store.getSnapshot()).toBe(initial);
+        expect(store.isDirty()).toBe(false);
+        expect(listener).not.toHaveBeenCalled();
+        expect(check).toHaveBeenCalledExactlyOnceWith(initial[0], "Candidate");
+
+        const error = new Error("Rejected");
+        if (outcome === "resolve") request.resolve();
+        else request.reject(error);
+        await request.promise.catch(() => {});
+        await Promise.resolve();
+
+        if (outcome === "resolve") {
+          expect(session.getState()).toEqual({ status: "idle" });
+          expect(store.getSnapshot()[0].name).toBe("Candidate");
+          expect(store.isDirty()).toBe(true);
+          expect(listener).toHaveBeenCalledTimes(1);
+        } else {
+          expect(session.getFailure()).toMatchObject({
+            error,
+            source: "commit",
+            draft: "Candidate",
+          });
+          expect(store.getSnapshot()).toBe(initial);
+          expect(store.isDirty()).toBe(false);
+          expect(listener).not.toHaveBeenCalled();
+        }
+        expect(check).toHaveBeenCalledTimes(1);
+      },
+    );
+  });
+
+  it("rejects disabled error handling from untyped configuration", () => {
+    const columns = [
+      { accessorKey: "name", edit: { editorType: "text", error: false } },
+    ] as unknown as LineItemsColumn<Row>[];
+    expect(() => createLineItemsDocumentStore({ columns })).toThrow(
+      "LineItems error handling cannot be disabled",
+    );
   });
 
   it("rejects editors on the server identity property", () => {

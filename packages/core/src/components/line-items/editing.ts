@@ -71,7 +71,7 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
       }
       let cell = rowCells.get(columnId(column));
       if (!cell) {
-        const session = createCellEditSession<unknown>(column.edit?.error !== false);
+        const session = createCellEditSession<unknown>();
         if (!active) session.deactivate();
         cell = { property: column.accessorKey!, session };
         rowCells.set(columnId(column), cell);
@@ -117,13 +117,9 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
         store.updateField(key, column.accessorKey!, value as T[keyof T & string]);
         cancelProperty(key, column.accessorKey!, source);
       };
-      if (column.edit.error === false) {
-        adopt();
-        return check?.(row, value);
-      }
       const result = check?.(row, value);
       if (result && typeof result.then === "function") return Promise.resolve(result).then(adopt);
-      adopt();
+      return adopt();
     },
     updateField<K extends keyof T & string>(key: string, property: K, value: T[K]) {
       store.updateField(key, property, value);
@@ -159,7 +155,7 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
           }
           const row = getCurrentRow(key);
           if (row && !(after.edit.canEdit?.(row) ?? true)) cell.session.cancel();
-          if (active) cell.session.activate(after.edit.error !== false);
+          if (active) cell.session.activate(true);
         }
         if (rowCells.size === 0) cells.delete(key);
       }
@@ -172,8 +168,7 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
     activate() {
       active = true;
       for (const rowCells of cells.values())
-        for (const [id, cell] of rowCells)
-          cell.session.activate(columnFor(id)?.edit?.error !== false);
+        for (const cell of rowCells.values()) cell.session.activate(true);
     },
   };
 }

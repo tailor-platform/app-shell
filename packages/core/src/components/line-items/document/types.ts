@@ -14,8 +14,8 @@ type EditorBase<TRow extends Record<string, unknown>, TValue> = {
   onValueCommitted?: (row: Readonly<TRow>, value: TValue) => void | Promise<void>;
   /** UI policy only; direct row commands remain available. */
   canEdit?: (row: TRow) => boolean;
-  /** Adopt eagerly without intercepting callback failures, or replace the error content. */
-  error?: false | { render: (ctx: { row: TRow; error: unknown }) => ReactNode };
+  /** Replaces error content only; checks always finish before adoption and failures retain the draft. */
+  error?: { render: (ctx: { row: TRow; error: unknown }) => ReactNode };
 };
 
 /** A resolver cannot introduce asynchronous work into Clear value selection. */

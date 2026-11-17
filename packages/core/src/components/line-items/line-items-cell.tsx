@@ -259,7 +259,7 @@ export function LineItemsEditableCell<T extends Record<string, unknown>>({
   const id = (column.id ?? column.accessorKey)!;
   const key = editing.getLineKey(row);
   const label = `${column.label ?? id}, ${t("row", { index: index + 1 })}`;
-  const renderError = edit.error && edit.error.render;
+  const renderError = edit.error?.render;
   const props: EditableCellOwnerProps = {
     current: row[column.accessorKey!],
     display,
@@ -275,7 +275,6 @@ export function LineItemsEditableCell<T extends Record<string, unknown>>({
       }
     },
     renderError: renderError ? (error) => renderError({ row, error }) : undefined,
-    interceptErrors: edit.error !== false,
     label,
     rowKey: key,
     colKey: id,

@@ -100,6 +100,15 @@ test("cell editors retain property-specific nullable output and row callback typ
       fetcher: async () => [],
     },
   };
+  const unhandled: LineItemsEditor<Row, string | null> = {
+    editorType: "text",
+    // @ts-expect-error Error presentation cannot disable checks or eager-adopt the value.
+    error: false,
+  };
+  expectTypeOf<
+    ReturnType<NonNullable<LineItemsEditor<Row, string | null>["onValueCommitted"]>>
+  >().toEqualTypeOf<void | Promise<void>>();
+  void unhandled;
   void text;
   void numeric;
   void date;

@@ -50,7 +50,9 @@ export function assertLineItemsEditor(edit: {
   editorType: unknown;
   editorOptions?: unknown;
   clearValue?: unknown;
+  error?: unknown;
 }) {
+  if (edit.error === false) throw new Error("LineItems error handling cannot be disabled");
   if (
     edit.clearValue !== undefined &&
     edit.clearValue !== false &&

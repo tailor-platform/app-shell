@@ -547,7 +547,7 @@ describe("LineItems cell editing integration", () => {
     const column: LineItemsColumn<Row> = {
       ...statusColumn,
       type: "badge",
-      typeOptions: { badgeLabelMap: { open: "Old label" } },
+      typeOptions: { badgeVariantMap: { open: "success", closed: "neutral" } },
     };
     const editor = setup([column]);
     expect(screen.getByRole("cell").textContent).toBe("Open");

@@ -2,6 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import type { CellEditorOutput } from "@/components/internals/table-core/editing/props";
 import type { lineItemsEditors } from "../editor-factory";
 import type {
+  BadgeCellOptions,
   ColumnCellType,
   ColumnDisplay,
   ColumnDisplayValues,
@@ -85,13 +86,28 @@ type DisplayProps<TRow extends Record<string, unknown>> = {
   ) => Pick<ComponentProps<"td">, "className" | "style" | "title"> | undefined;
 };
 
+/** Combobox labels come from its choices, never a competing badge label map. */
+type PropertyDisplay<
+  TRow extends Record<string, unknown>,
+  TValue,
+  TDisplay = ColumnDisplay<TRow, TValue>,
+> = TDisplay extends { type: "badge" }
+  ? TDisplay &
+      (
+        | {
+            typeOptions?: Omit<BadgeCellOptions, "badgeLabelMap"> & { badgeLabelMap?: never };
+            edit: Extract<LineItemsEditor<TRow, TValue>, { editorType: "combobox" }>;
+          }
+        | { edit?: Exclude<LineItemsEditor<TRow, TValue>, { editorType: "combobox" }> }
+      )
+  : TDisplay & { edit?: LineItemsEditor<TRow, TValue> };
+
 type PropertyColumn<TRow extends Record<string, unknown>> = {
   [K in keyof TRow & string]: DisplayProps<TRow> &
-    ColumnDisplay<TRow, TRow[K]> & {
+    PropertyDisplay<TRow, TRow[K]> & {
       accessorKey: K;
       accessor?: never;
       id?: string;
-      edit?: LineItemsEditor<TRow, TRow[K]>;
     };
 }[keyof TRow & string];
 

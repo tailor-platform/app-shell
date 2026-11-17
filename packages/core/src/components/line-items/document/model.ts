@@ -17,6 +17,12 @@ function compileLineItemsColumns<T extends Record<string, unknown>>(
       if (column.accessorKey === undefined)
         throw new Error("Cell editors require an accessorKey property");
       assertLineItemsEditor(column.edit);
+      if (
+        column.type === "badge" &&
+        column.edit.editorType === "combobox" &&
+        column.typeOptions?.badgeLabelMap !== undefined
+      )
+        throw new Error("Combobox badge labels must be defined in editorOptions.options only");
     }
     ids.add(id);
     if (column.accessorKey !== undefined) properties.add(column.accessorKey);

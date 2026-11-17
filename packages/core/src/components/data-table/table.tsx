@@ -29,7 +29,7 @@ function DataTableTable({
   const hasSelection = !!ctx?.toggleRowSelection && !selectionInTreeColumn(ctx);
   const hasExpand = !!ctx?.rowExpansion;
   const hasRowActions = !!ctx?.rowActions?.length;
-  // Fill spare height without stretching headers, footers, or real data rows.
+  // Only stretch empty/error rows; data and loading rows keep their natural heights.
   const hasStatusRow = !ctx?.loading && (!!ctx?.error || !ctx?.rows.length);
 
   const widths = useTableMeasurements(containerRef, {
@@ -54,6 +54,7 @@ function DataTableTable({
   }, [currentPage, pageSize]);
 
   return (
+    // flex-1 keeps spare height above the footer in every state.
     // min-h-0 lets the scroll container shrink within DataTable.Root's flex
     // column; combined with the container's overflow-auto this is the region
     // that scrolls vertically when height is constrained. The sticky header
@@ -62,7 +63,7 @@ function DataTableTable({
       <Table.Root
         data-slot="data-table-table"
         containerRef={containerRef}
-        containerClassName={cn("astw:min-h-0 astw:overflow-auto", hasStatusRow && "astw:flex-1")}
+        containerClassName="astw:min-h-0 astw:flex-1 astw:overflow-auto"
         className={cn(hasStatusRow && "astw:h-full", className)}
       >
         <DataTableHeaders />

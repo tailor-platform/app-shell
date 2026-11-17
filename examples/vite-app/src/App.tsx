@@ -83,6 +83,7 @@ const AppInner = () => {
               <SidebarItem to="/showcase/toolbar" />
               <SidebarItem to="/showcase/data-table" />
               <SidebarItem to="/showcase/data-table-lab" />
+              <SidebarItem to="/showcase/data-table-column-settings" />
               <SidebarItem to="/showcase/data-table-selection" />
               <SidebarItem to="/showcase/data-table-tree" />
               <SidebarItem to="/showcase/filter-rail" />

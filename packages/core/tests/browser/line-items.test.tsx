@@ -27,7 +27,7 @@ function Page({
 }) {
   const renderItem = normalButtons
     ? (line: { item: string | null }) => (
-        <Button type="button" variant="ghost" size="xs" className="astw:align-middle">
+        <Button type="button" variant="ghost" size="xs" className="align-middle">
           {line.item}
         </Button>
       )
@@ -62,14 +62,14 @@ function Page({
               label: "Actions",
               width: 64,
               align,
-              headerProps: () => ({ className: "astw:text-center astw:first:pl-2 astw:last:pr-2" }),
-              cellProps: () => ({ className: "astw:py-1 astw:first:pl-2 astw:last:pr-2" }),
+              headerProps: () => ({ className: "text-center! first:pl-2! last:pr-2!" }),
+              cellProps: () => ({ className: "py-1! first:pl-2! last:pr-2!" }),
               render: (line) => (
                 <Button
                   type="button"
                   variant="ghost"
                   size="xs"
-                  className="astw:align-middle"
+                  className="align-middle"
                   aria-label={`Delete ${line.item}`}
                   onClick={() => lineItems.removeLine(lineItems.getLineKey(line))}
                 >
@@ -156,12 +156,15 @@ describe("LineItems compact action cells", () => {
       )!;
       const headerStyle = getComputedStyle(header);
       expect(headerStyle.textAlign).toBe("center");
-      expect(headerStyle.paddingRight).toBe(headerStyle.paddingLeft);
+      expect(headerStyle.paddingLeft).toBe("8px");
+      expect(headerStyle.paddingRight).toBe("8px");
       const headerBounds = header.getBoundingClientRect();
       const cell = remove.closest("td")!;
       const cellStyle = getComputedStyle(cell);
       const cellBounds = cell.getBoundingClientRect();
       expect(cellStyle.textAlign).toBe(align);
+      expect(cellStyle.paddingLeft).toBe("8px");
+      expect(cellStyle.paddingRight).toBe("8px");
       if (align === "center") {
         expect(headerBounds.left + headerBounds.width / 2).toBeCloseTo(
           bounds.left + bounds.width / 2,

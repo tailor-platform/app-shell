@@ -121,14 +121,14 @@ const LineItemsPage = () => {
               label: "Actions",
               width: 64,
               align: "center",
-              headerProps: () => ({ className: "astw:first:pl-2 astw:last:pr-2" }),
-              cellProps: () => ({ className: "astw:py-1 astw:first:pl-2 astw:last:pr-2" }),
+              headerProps: () => ({ className: "first:pl-2! last:pr-2!" }),
+              cellProps: () => ({ className: "py-1! first:pl-2! last:pr-2!" }),
               render: (line) => (
                 <Button
                   type="button"
                   variant="ghost"
                   size="xs"
-                  className="astw:align-middle"
+                  className="align-middle"
                   aria-label={`Delete ${line.item ?? "line"}`}
                   onClick={() => lineItems.removeLine(lineItems.getLineKey(line))}
                 >
@@ -155,7 +155,7 @@ const LineItemsPage = () => {
           </Tabs.List>
         </Tabs.Root>
         {editable && (
-          <p className="astw:text-sm astw:text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Clear Quantity or enter zero or a negative number, then press Enter to see a validation
             error.
           </p>
@@ -164,7 +164,7 @@ const LineItemsPage = () => {
           <LineItems.Table aria-label="Order line items" />
         </LineItems.Root>
         {editable && (
-          <div className="astw:flex astw:gap-2">
+          <div className="flex gap-2">
             <Button
               type="button"
               onClick={() =>

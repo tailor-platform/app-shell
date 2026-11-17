@@ -1,4 +1,4 @@
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, type ReactNode } from "react";
 import { Table } from "@/components/table";
 import {
   DataTableContext,
@@ -15,7 +15,15 @@ import { useDataTableT } from "./i18n";
 const DEFAULT_ROWS = 5;
 
 /** @internal */
-function DataTableBody({ className }: { className?: string }) {
+function DataTableBody({
+  className,
+  emptyContent,
+  errorContent,
+}: {
+  className?: string;
+  emptyContent?: ReactNode;
+  errorContent?: ReactNode;
+}) {
   const ctx = useContext(DataTableContext);
   if (!ctx) {
     throw new Error("<DataTable.Body> must be used within <DataTable.Root>");
@@ -86,22 +94,31 @@ function DataTableBody({ className }: { className?: string }) {
   }
 
   if (error) {
+    const content =
+      errorContent === undefined ? `${t("errorPrefix")} ${error.message}` : errorContent;
     return (
       <Table.Body {...tableBodyProps}>
         <DataTableStatusRow totalColSpan={totalColSpan} state="error">
-          <span className="astw:text-danger-text">
-            {t("errorPrefix")} {error.message}
-          </span>
+          {typeof content === "string" ? (
+            <span className="astw:text-danger-text">{content}</span>
+          ) : (
+            content
+          )}
         </DataTableStatusRow>
       </Table.Body>
     );
   }
 
   if (!rows || rows.length === 0) {
+    const content = emptyContent === undefined ? t("noData") : emptyContent;
     return (
       <Table.Body {...tableBodyProps}>
         <DataTableStatusRow totalColSpan={totalColSpan} state="empty">
-          <span className="astw:text-muted-foreground">{t("noData")}</span>
+          {typeof content === "string" ? (
+            <span className="astw:text-muted-foreground">{content}</span>
+          ) : (
+            content
+          )}
         </DataTableStatusRow>
       </Table.Body>
     );

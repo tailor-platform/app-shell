@@ -6,7 +6,7 @@ import {
   setContextData,
   defineModule,
 } from "@/resource";
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
 import { type FC } from "react";
 import { HouseIcon } from "lucide-react";
 import { labels } from "@/i18n-labels";
@@ -27,9 +27,10 @@ import { useIsClient } from "@/hooks/use-is-client";
 import { convertPagesToModules } from "@/fs-routes/converter";
 import type { PageEntry } from "@/fs-routes/types";
 import { Text } from "../text";
+import { AppShellTestingContext } from "./testing-context";
 
 /**
- * Shared props between `AppShellProps` and the internal `WithPages` wrapper.
+ * Shared props for manual and file-based route configuration.
  *
  * These props are available regardless of whether routes are configured
  * automatically (via vite-plugin) or manually (via `modules` prop).
@@ -91,7 +92,7 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * Guards for the root route.
    *
    * When using file-based routing, this is automatically set from
-   * the root page's guards via `AppShell.WithPages()`.
+   * the root page's guards by the Vite plugin.
    *
    * @example
    * ```tsx
@@ -248,7 +249,7 @@ type SharedAppShellProps = React.PropsWithChildren<{
  *
  * Routes can be configured in two ways:
  * 1. **Automatic (recommended)**: Use the vite-plugin which automatically
- *    configures pages via `AppShell.WithPages()`.
+ *    configures pages.
  * 2. **Explicit modules**: Pass the `modules` prop for manual configuration.
  *
  * @example
@@ -275,22 +276,15 @@ export type AppShellProps = SharedAppShellProps & {
   /**
    * Navigation configuration.
    *
-   * When using vite-plugin, this is automatically set via `AppShell.WithPages()`.
+   * When using vite-plugin, this is automatically set by the plugin.
    * For manual configuration, pass modules directly.
    */
   modules?: Modules;
 };
 
-/**
- * AppShell's props plus the routing mode. Memory routing is absent from the
- * public {@link AppShellProps} so it cannot be shipped by accident; tests reach
- * it via `@tailor-platform/app-shell/testing`, which re-exports this as
- * `TestAppShellProps`.
- */
-export type AppShellInternalProps = AppShellProps & RouterContainerProps;
-
-export const AppShellInternal = (props: AppShellInternalProps) => {
+const AppShellRoot = (props: AppShellProps) => {
   const clientSide = useIsClient();
+  const initialEntries = useContext(AppShellTestingContext);
 
   // Set context data for guards (module scope)
   const contextData = (props.contextData ?? {}) as ContextData;
@@ -298,9 +292,8 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
 
   const { modules: propsModules, rootComponent, rootGuards } = props;
 
-  // Narrow the union once so the router gets a well-typed pair.
-  const routingMode: RouterContainerProps = props.memory
-    ? { memory: true, initialEntries: props.initialEntries }
+  const routingMode: RouterContainerProps = initialEntries
+    ? { memory: true, initialEntries }
     : { memory: false };
 
   const modules = useMemo(() => {
@@ -431,20 +424,12 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
   );
 };
 
-/**
- * Create an AppShell component with pages pre-configured.
- *
- * @internal
- * This method is used internally by the vite-plugin to inject pages.
- * Users should not call this directly. Use the vite-plugin for automatic
- * page configuration, or pass the `modules` prop for manual configuration.
- */
-AppShellInternal.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
+AppShellRoot.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
   // Convert pages to modules at component creation time (not render time)
   const allModules = convertPagesToModules(pages);
 
   const WrappedAppShell: FC<AppShellProps> = (props) => {
-    return <AppShellInternal {...props} modules={allModules} memory={false} />;
+    return <AppShellRoot {...props} modules={allModules} />;
   };
 
   return WrappedAppShell;
@@ -453,13 +438,10 @@ AppShellInternal.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
 /**
  * The app shell: providers, routing, and layout for a Tailor application.
  *
- * Always browser routing. `memory` is pinned off rather than merely absent from
- * {@link AppShellProps}, so it holds for JS callers and `any` spreads too;
- * `@tailor-platform/app-shell/testing` is the only way to memory routing.
+ * Uses browser routing unless wrapped in AppShellTestingProvider from
+ * `@tailor-platform/app-shell/testing`. Routing mode is not an AppShell prop.
  */
-const AppShellPublic = (props: AppShellProps) => <AppShellInternal {...props} memory={false} />;
-AppShellPublic.WithPages = AppShellInternal.WithPages;
-
 export const AppShell: ((props: AppShellProps) => React.ReactNode) & {
+  /** @internal Used by the Vite plugin to inject pages. */
   WithPages: (pages: PageEntry[]) => FC<AppShellProps>;
-} = AppShellPublic;
+} = AppShellRoot;

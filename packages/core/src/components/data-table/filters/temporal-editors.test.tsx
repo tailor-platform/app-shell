@@ -1,6 +1,7 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { createAppShellWrapper } from "../../../../tests/test-utils";
 import {
   TestFilters,
   dateColumn,
@@ -108,7 +109,7 @@ describe("DateFilterEditor", () => {
     expect(control.removeFilter).toHaveBeenCalledWith("createdAt");
   });
 
-  it("labels date operators as exact date / after / before and formats the value", () => {
+  it("labels date operators as exact date / on or after / on or before and formats the value", () => {
     // The chip's operator segment shows the friendly date labels, and the value
     // segment shows a locale-formatted medium date (never the raw ISO string).
     const { rerender } = render(
@@ -132,7 +133,7 @@ describe("DateFilterEditor", () => {
         columns={[dateColumn]}
       />,
     );
-    expect(screen.getByText("after")).toBeDefined();
+    expect(screen.getByText("on or after")).toBeDefined();
     expect(screen.getByText("Feb 1, 2025")).toBeDefined();
     expect(screen.queryByText("greater than")).toBeNull();
 
@@ -144,9 +145,33 @@ describe("DateFilterEditor", () => {
         columns={[dateColumn]}
       />,
     );
-    expect(screen.getByText("before")).toBeDefined();
+    expect(screen.getByText("on or before")).toBeDefined();
     expect(screen.getByText("Mar 1, 2025")).toBeDefined();
   });
+
+  it.each([
+    ["gte", "以降"],
+    ["lte", "以前"],
+  ] as const)(
+    "uses the existing Japanese label for %s in chips and operator lists",
+    async (operator, label) => {
+      const user = userEvent.setup();
+      const control = makeControl({
+        filters: [{ field: "createdAt", operator, value: "2025-01-01" }],
+      });
+      render(<TestFilters control={control} columns={[dateColumn]} />, {
+        wrapper: createAppShellWrapper("ja"),
+      });
+
+      await user.click(screen.getByRole("button", { name: label }));
+
+      const popup = document.querySelector(
+        '[data-slot="data-table-filter-operator-popup"]',
+      ) as HTMLElement;
+      expect(within(popup).getByRole("button", { name: "以降" })).toBeDefined();
+      expect(within(popup).getByRole("button", { name: "以前" })).toBeDefined();
+    },
+  );
 
   it("preserves a legacy operator (e.g. gt) on Apply instead of coercing to eq", async () => {
     const user = userEvent.setup();

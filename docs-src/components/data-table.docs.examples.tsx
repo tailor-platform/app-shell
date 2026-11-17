@@ -4,8 +4,10 @@ import {
   DataTable,
   aggregations,
   createColumnHelper,
+  Sheet,
   Text,
   useDataTable,
+  useSearchParams,
 } from "@tailor-platform/app-shell";
 
 export function PerCellStyling() {
@@ -244,6 +246,96 @@ export function ComposedAggregations() {
         <DataTable.Table />
       </DataTable.Root>
     </div>
+  );
+}
+
+export function RowLinkInteraction() {
+  type Order = { id: string; orderNumber: string; status: string };
+  const [searchParams] = useSearchParams();
+  const { column } = createColumnHelper<Order>();
+  const table = useDataTable({
+    data: {
+      rows: [
+        { id: "1", orderNumber: "ORD-1001", status: "Open" },
+        { id: "2", orderNumber: "ORD-1002", status: "Archived" },
+      ],
+    },
+    columns: [
+      column({
+        id: "orderNumber",
+        label: "Order",
+        type: "text",
+        render: (row) => <Text.span>{row.orderNumber}</Text.span>,
+      }),
+      column({ id: "status", label: "Status", type: "text" }),
+    ],
+    rowInteraction: {
+      type: "link",
+      label: "Open",
+      getLabel: (row) => row.orderNumber,
+      canApply: (row) => row.status !== "Archived",
+      href: (row) => `?order=${row.id}`,
+    },
+  });
+
+  return (
+    <div className="space-y-3">
+      <Text.p>Opened order: {searchParams.get("order") ?? "None"}</Text.p>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    </div>
+  );
+}
+
+export function RowClickInteraction() {
+  type Order = { id: string; orderNumber: string; status: string };
+  const [selected, setSelected] = useState<Order | null>(null);
+  const { column } = createColumnHelper<Order>();
+  const table = useDataTable({
+    data: {
+      rows: [
+        { id: "1", orderNumber: "ORD-1001", status: "Open" },
+        { id: "2", orderNumber: "ORD-1002", status: "Ready" },
+      ],
+    },
+    columns: [
+      column({ id: "orderNumber", label: "Order", type: "text" }),
+      column({ id: "status", label: "Status", type: "text" }),
+    ],
+    rowInteraction: {
+      type: "click",
+      label: "Inspect",
+      getLabel: (row) => row.orderNumber,
+      onClick: setSelected,
+    },
+  });
+
+  return (
+    <>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+      <Sheet.Root
+        open={selected !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelected(null);
+        }}
+      >
+        <Sheet.Content>
+          <Sheet.Header>
+            <Sheet.Title>{selected?.orderNumber ?? "Order details"}</Sheet.Title>
+            <Sheet.Description>Inspect the selected order without navigating.</Sheet.Description>
+          </Sheet.Header>
+          <div className="p-4">
+            <Text.p>Status: {selected?.status}</Text.p>
+          </div>
+          <Sheet.Footer>
+            <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+          </Sheet.Footer>
+        </Sheet.Content>
+      </Sheet.Root>
+    </>
   );
 }
 

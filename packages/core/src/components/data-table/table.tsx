@@ -17,7 +17,7 @@ function DataTableTable({ className }: { className?: string }) {
   const pageSize = ctx?.pageSize;
   const hasSelection = !!ctx?.toggleRowSelection && !selectionInTreeColumn(ctx);
   const hasExpand = !!ctx?.rowExpansion;
-  const hasRowActions = !!ctx?.rowActions?.length;
+  const hasRowActions = !!ctx?.rowInteraction || !!ctx?.rowActions?.length;
 
   const widths = useTableMeasurements(containerRef, {
     visibleColumns,

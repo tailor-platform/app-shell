@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { MouseEventHandler, ReactNode } from "react";
 import { parseDate } from "@internationalized/date";
 import { Link } from "react-router";
 import { BadgeList, toValueArray } from "@/components/badge-list";
@@ -157,6 +157,7 @@ function renderBadge(
   value: unknown,
   options: BadgeCellOptions | undefined,
   choices: readonly SelectOption[] | undefined,
+  onControlClick?: MouseEventHandler<HTMLElement>,
 ): ReactNode {
   const items = toValueArray(value);
   const nonEmpty = items.filter((v) => v != null && v !== "");
@@ -166,6 +167,7 @@ function renderBadge(
       value={value}
       options={options}
       maxVisible={options?.maxVisible}
+      onOverflowClick={onControlClick}
       // An editable column's choices label its badges, like its dropdown does.
       resolveLabel={choices ? (v) => String(optionLabel(choices, v)) : undefined}
     />
@@ -176,13 +178,18 @@ function renderLink<TRow extends Record<string, unknown>>(
   value: unknown,
   row: TRow,
   options: LinkCellOptions<TRow>,
+  onControlClick?: MouseEventHandler<HTMLElement>,
 ): ReactNode {
   if (isEmpty(value)) return PLACEHOLDER;
   const label = String(value);
   const href = options.href(row);
   if (!href) return label;
   return (
-    <Link to={href} className="astw:text-primary astw:underline-offset-4 astw:hover:underline">
+    <Link
+      to={href}
+      className="astw:text-primary astw:underline-offset-4 astw:hover:underline"
+      onClick={onControlClick}
+    >
       {label}
     </Link>
   );
@@ -197,12 +204,13 @@ function renderLink<TRow extends Record<string, unknown>>(
 export function createTypedCellRenderer<TRow extends Record<string, unknown>>(
   col: Column<TRow>,
   timeZone: string,
+  onControlClick?: MouseEventHandler<HTMLElement>,
 ): (row: TRow) => ReactNode {
   if (col.type === "date") {
     const renderDate = createDateRenderer(col.typeOptions, timeZone);
     return (row) => renderDate(getCellValue(row, col));
   }
-  return (row) => renderTypedValue(row, col, getCellValue(row, col));
+  return (row) => renderTypedValue(row, col, getCellValue(row, col), { onControlClick });
 }
 
 /**
@@ -216,7 +224,11 @@ export function renderTypedValue<TRow extends Record<string, unknown>>(
   row: TRow,
   col: Column<TRow>,
   value: unknown,
-  options?: { linkAsText?: boolean; timeZone?: string },
+  options?: {
+    linkAsText?: boolean;
+    timeZone?: string;
+    onControlClick?: MouseEventHandler<HTMLElement>;
+  },
 ): ReactNode {
   switch (col.type) {
     case "number":
@@ -233,11 +245,14 @@ export function renderTypedValue<TRow extends Record<string, unknown>>(
         value,
         col.typeOptions,
         col.edit ? resolveBadgeOptions(col.edit.options, col.typeOptions, col.filter) : undefined,
+        options?.onControlClick,
       );
     case "link": {
       // A column with dropdown choices stores an option's value and shows its label.
       const label = optionLabel(col.edit?.options, value);
-      return options?.linkAsText ? renderText(label) : renderLink(label, row, col.typeOptions);
+      return options?.linkAsText
+        ? renderText(label)
+        : renderLink(label, row, col.typeOptions, options?.onControlClick);
     }
     case "text":
       return renderText(optionLabel(col.edit?.options, value));

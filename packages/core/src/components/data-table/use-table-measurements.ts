@@ -44,7 +44,7 @@ export function useTableMeasurements<TRow extends Record<string, unknown>>(
     // Own table only: an expanded row can contain another DataTable.
     const ownTable = el.querySelector("table");
     const cells = Array.from(
-      el.querySelectorAll<HTMLElement>("[data-slot='data-table-header'] [data-col-key]"),
+      el.querySelectorAll<HTMLElement>("[data-slot='data-table-header'] [data-measure-key]"),
     ).filter((cell) => cell.closest("table") === ownTable);
     let lastWidth = -1;
 
@@ -53,7 +53,7 @@ export function useTableMeasurements<TRow extends Record<string, unknown>>(
       lastWidth = width;
       const next: ColumnWidths = {};
       cells.forEach((cell) => {
-        const key = cell.dataset.colKey;
+        const key = cell.dataset.measureKey;
         // Fractional width (not the integer-rounded offsetWidth) so accumulated
         // sticky offsets land exactly on each column's real edge — otherwise the
         // rounding drift opens a sub-pixel gap between adjacent pinned columns

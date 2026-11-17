@@ -1,6 +1,8 @@
 import { useMemo, type ComponentProps, type ReactNode } from "react";
 import { BadgeList } from "@/components/badge-list";
 import { Table } from "@/components/table";
+import { cn } from "@/lib/utils";
+import { ICON_SPACE_CLASS_NAME } from "@/components/internals/table-core/editing/shared";
 import {
   createValueRenderer,
   getDisplayCellAdapter,
@@ -32,6 +34,8 @@ import type { LineItemsColumn } from "./types";
 interface LineItemsCellRenderers<T extends Record<string, unknown>> {
   /** Explicit column alignment, or the display type's default; shared by the header, preview, and input. */
   align: EditableCellOwnerProps["align"];
+  /** Reserve the concrete editor's icon space even in rows that cannot edit. */
+  reserveIconSpace?: boolean;
   /** Invoke directly with owner-bound values, callbacks, and session; do not mount this callback as a component. */
   renderCell: (props: EditableCellOwnerProps) => ReactNode;
   /** Render row data or custom content; editable selects the input-compatible preview, not permission or draft state. */
@@ -84,6 +88,7 @@ function bindEditor<TOptions, TOutput, TSettings>(
       const { options, align, renderDisplay } = prepare(settings, column);
       return {
         align,
+        reserveIconSpace: editor.icon !== undefined,
         renderCell: (props) => <EditableCell {...props} editor={editor} options={options} />,
         renderDisplay,
       };
@@ -227,6 +232,7 @@ export function useLineItemsCellRenderersByColumn<T extends Record<string, unkno
         column,
         id: column.id ?? column.accessorKey!,
         align: presentation.align,
+        reserveIconSpace: renderers?.reserveIconSpace ?? false,
         renderCell: renderers?.renderCell,
         renderDisplay: presentation.renderDisplay,
       };
@@ -300,6 +306,18 @@ export function LineItemsEditableCell<T extends Record<string, unknown>>({
   return renderCell(props);
 }
 
-export function LineItemsDisplayCell(props: ComponentProps<typeof Table.Cell>) {
-  return <Table.Cell {...props} />;
+export function LineItemsDisplayCell({
+  reserveIconSpace,
+  children,
+  ...props
+}: ComponentProps<typeof Table.Cell> & { reserveIconSpace: boolean }) {
+  return (
+    <Table.Cell {...props}>
+      {reserveIconSpace ? (
+        <span className={cn("astw:block", ICON_SPACE_CLASS_NAME)}>{children}</span>
+      ) : (
+        children
+      )}
+    </Table.Cell>
+  );
 }

@@ -107,36 +107,42 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                 </button>
               </Table.Cell>
             )}
-            {cellsByColumn.map(({ column, renderCell, id, align, renderDisplay }) => {
-              const edit = column.edit;
-              const customCellProps = column.cellProps?.(row);
-              const cellProps = {
-                align,
-                "data-col-key": id,
-                className: customCellProps?.className,
-                style: customCellProps?.style,
-                title: customCellProps?.title,
-              };
-              if (!edit || !renderCell || !(edit.canEdit?.(row) ?? true))
+            {cellsByColumn.map(
+              ({ column, renderCell, id, align, renderDisplay, reserveIconSpace }) => {
+                const edit = column.edit;
+                const customCellProps = column.cellProps?.(row);
+                const cellProps = {
+                  align,
+                  "data-col-key": id,
+                  className: customCellProps?.className,
+                  style: customCellProps?.style,
+                  title: customCellProps?.title,
+                };
+                if (!edit || !renderCell || !(edit.canEdit?.(row) ?? true))
+                  return (
+                    <LineItemsDisplayCell
+                      key={id}
+                      {...cellProps}
+                      reserveIconSpace={reserveIconSpace}
+                    >
+                      {renderDisplay(row, false)}
+                    </LineItemsDisplayCell>
+                  );
                 return (
-                  <LineItemsDisplayCell key={id} {...cellProps}>
-                    {renderDisplay(row, false)}
-                  </LineItemsDisplayCell>
+                  <LineItemsEditableCell
+                    key={id}
+                    row={row}
+                    column={column}
+                    edit={edit}
+                    renderCell={renderCell}
+                    index={index}
+                    editing={getLineItemsEditing(value)}
+                    display={renderDisplay(row, true)}
+                    cellProps={cellProps}
+                  />
                 );
-              return (
-                <LineItemsEditableCell
-                  key={id}
-                  row={row}
-                  column={column}
-                  edit={edit}
-                  renderCell={renderCell}
-                  index={index}
-                  editing={getLineItemsEditing(value)}
-                  display={renderDisplay(row, true)}
-                  cellProps={cellProps}
-                />
-              );
-            })}
+              },
+            )}
           </Table.Row>
         ))}
         {value.lines.length === 0 && (

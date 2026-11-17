@@ -199,7 +199,7 @@ test("public editor settings and confirmation values follow the concrete editors
     [K in keyof EditorCatalog]: ReturnType<EditorAdapter<K>["prepare"]>;
   };
   expectTypeOf<keyof PreparedEditors["text"]>().toEqualTypeOf<
-    "align" | "renderCell" | "renderDisplay"
+    "align" | "reserveIconSpace" | "renderCell" | "renderDisplay"
   >();
   expectTypeOf<PreparedEditors["text"]["align"]>().toEqualTypeOf<"left" | "center" | "right">();
   expectTypeOf<PreparedEditors>().toEqualTypeOf<

@@ -79,6 +79,7 @@ const LineItemsPage = () => {
         accessorKey: "quantity",
         label: "Quantity",
         type: "number",
+        typeOptions: { maxDecimals: 2 },
         edit: { editorType: "number", canEdit, onValueCommitted: validateQuantity },
       },
       {

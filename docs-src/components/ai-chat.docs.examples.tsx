@@ -1,4 +1,59 @@
-import { AIChat } from "@tailor-platform/app-shell";
+import { useState } from "react";
+import { AIChat, Card, Text, useAIChat, type AIGatewayClient } from "@tailor-platform/app-shell";
+
+export function BasicUsage() {
+  const [client] = useState<AIGatewayClient>(() => ({
+    async *streamChatCompletion({ signal }) {
+      const chunks = [
+        "This is a **local demo response**.",
+        "\n\n",
+        "The real `useAIChat()` hook ",
+        "manages this conversation ",
+        "and receives these chunks ",
+        "from an in-memory client.",
+        "\n\n",
+        "No prompt is sent to a server. ",
+        "Send another message, ",
+        "or press **Stop** while the response is streaming.",
+      ];
+      for (const text of chunks) {
+        if (signal?.aborted) return;
+        // Delay fixture chunks so streaming and Stop can be tried without a server.
+        await new Promise<void>((resolve) => setTimeout(resolve, 180));
+        if (signal?.aborted) return;
+        yield { type: "text-delta", text };
+      }
+      yield { type: "done" };
+    },
+  }));
+  const { messages, status, error, sendMessage, stop } = useAIChat({ client, model: "demo" });
+
+  return (
+    <div className="flex flex-col gap-3">
+      {error && <Text.p role="alert">{error.message}</Text.p>}
+      <Card.Root className="flex h-96 flex-col overflow-hidden">
+        <AIChat status={status}>
+          <AIChat.Header title="Assistant" />
+          <AIChat.Conversation>
+            {messages.length === 0 ? (
+              <AIChat.EmptyState
+                title="Try the assistant"
+                description="Replies are simulated locally. Send a message, then try Stop."
+              />
+            ) : (
+              messages.map((message) => (
+                <AIChat.Message key={message.id} from={message.role}>
+                  <AIChat.Response>{message.content}</AIChat.Response>
+                </AIChat.Message>
+              ))
+            )}
+          </AIChat.Conversation>
+          <AIChat.Composer onSubmit={sendMessage} onStop={stop} />
+        </AIChat>
+      </Card.Root>
+    </div>
+  );
+}
 
 export function Message() {
   return (

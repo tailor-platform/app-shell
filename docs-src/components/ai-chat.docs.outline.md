@@ -21,32 +21,22 @@ import { AIChat, useAIChat, createAIGatewayClient } from "@tailor-platform/app-s
 
 ## Basic usage
 
-```tsx
-function Assistant() {
-  const client = useMemo(() => createAIGatewayClient({ gatewayUri, authClient }), [authClient]);
-  const { messages, status, sendMessage, stop } = useAIChat({ client, model: "gpt-5" });
+This example uses the real `useAIChat()` hook with a local `AIGatewayClient` fixture. Send a message to see the waiting state, a streamed reply, and the Stop control. Replies are predefined chunks with a short delay, not model output; no prompts leave your browser and no authentication or API key is needed.
 
-  return (
-    // `overflow-hidden` keeps the header rule inside the card's rounded corners.
-    <Card.Root className="flex h-full flex-col overflow-hidden">
-      <AIChat status={status}>
-        <AIChat.Header title="Assistant" />
-        <AIChat.Conversation>
-          {messages.length === 0 ? (
-            <AIChat.EmptyState title="Ask the assistant" />
-          ) : (
-            messages.map((message) => (
-              <AIChat.Message key={message.id} from={message.role}>
-                <AIChat.Response>{message.content}</AIChat.Response>
-              </AIChat.Message>
-            ))
-          )}
-        </AIChat.Conversation>
-        <AIChat.Composer onSubmit={sendMessage} onStop={stop} />
-      </AIChat>
-    </Card.Root>
-  );
-}
+The example also imports `useState` from `react`, and `Card`, `Text`, and `type AIGatewayClient` from `@tailor-platform/app-shell`. Its fixed-height card keeps the transcript scrollable while the header and composer stay in place.
+
+<!-- example: basic-usage -->
+
+### Connecting to AI Gateway
+
+For real responses, replace the local client with `createAIGatewayClient` configured using your application's gateway URI and authenticated client, and select an available model. For example, inside your component, import `useMemo` from `react` and use:
+
+```tsx
+const client = useMemo(
+  () => createAIGatewayClient({ gatewayUri, authClient }),
+  [gatewayUri, authClient],
+);
+const { messages, status, error, sendMessage, stop } = useAIChat({ client, model: "gpt-5" });
 ```
 
 `message.role` ("user" | "assistant") from `useAIChat` lines up directly with `AIChat.Message`'s `from` prop — no mapping step. `AIChat` streams for real when the AI Gateway sends real SSE chunks; there is no client-side typewriter effect.

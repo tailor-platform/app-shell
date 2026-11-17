@@ -109,13 +109,13 @@ function Content({ className, padding = "default", ...props }: ContentProps) {
 }
 Content.displayName = "Card.Content";
 
-/** A right-aligned, wrapping action region separated from the body by a top border. */
+/** A wrapping footer region separated from the body by a top border. */
 function Footer({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-footer"
       className={cn(
-        "astw:flex astw:flex-wrap astw:items-center astw:justify-end astw:gap-2 astw:border-t astw:border-border astw:px-6 astw:py-4",
+        "astw:flex astw:flex-wrap astw:items-center astw:gap-2 astw:border-t astw:border-border astw:px-6 astw:py-4",
         className,
       )}
       {...props}

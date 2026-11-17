@@ -22,7 +22,20 @@ function FlushDataTable() {
 }
 
 describe("Card action layout", () => {
-  it("aligns header actions with the title and footer actions with the right inset", () => {
+  it("aligns footer content with the start inset by default", () => {
+    render(
+      <Card.Root style={{ width: 700 }}>
+        <Card.Footer data-testid="footer">
+          <span>Terms and conditions apply.</span>
+        </Card.Footer>
+      </Card.Root>,
+    );
+    expect(
+      screen.getByText("Terms and conditions apply.").getBoundingClientRect().left,
+    ).toBeCloseTo(screen.getByTestId("footer").getBoundingClientRect().left + 24, 0);
+  });
+
+  it("aligns header actions with the title and explicitly right-aligned footer actions with the right inset", () => {
     render(
       <Card.Root style={{ width: 700 }}>
         <Card.Header
@@ -34,7 +47,7 @@ describe("Card action layout", () => {
           <div>Additional content</div>
         </Card.Header>
         <Card.Content>Body</Card.Content>
-        <Card.Footer data-testid="footer">
+        <Card.Footer data-testid="footer" className="astw:justify-end">
           <Button>Cancel</Button>
           <Button>Save</Button>
         </Card.Footer>
@@ -78,7 +91,7 @@ describe("Card action layout", () => {
             </>
           }
         />
-        <Card.Footer data-testid="footer">
+        <Card.Footer data-testid="footer" className="astw:justify-end">
           <Button>Discard changes</Button>
           <Button>Save draft</Button>
           <Button>Publish order</Button>

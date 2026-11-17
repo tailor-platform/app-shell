@@ -39,7 +39,7 @@ function BasicUsage() {
 | `Card.Root`    | Outer container. Renders a `<div>` with surface styling applied.  |
 | `Card.Header`  | Top section with an optional title, description, and action slot. |
 | `Card.Content` | Body section with consistent padding, or edge-to-edge.            |
-| `Card.Footer`  | Right-aligned actions with consistent padding and a top border.   |
+| `Card.Footer`  | Footer content with consistent padding and a top border.          |
 
 ## Card.Root Props
 
@@ -79,7 +79,7 @@ function BasicUsage() {
 | `className` | `string`          | -       | Additional CSS classes                 |
 | `children`  | `React.ReactNode` | -       | Action buttons or other footer content |
 
-The footer uses a wrapping, right-aligned flex row with vertically centered items and an 8px gap (`gap-2`). It has 24px horizontal padding (`px-6`), 16px vertical padding (`py-4`), and a top border.
+The footer uses a wrapping flex row with start-aligned content, vertically centered items, and an 8px gap (`gap-2`). It has 24px horizontal padding (`px-6`), 16px vertical padding (`py-4`), and a top border. Use `className="justify-end"` for right-aligned actions or `className="justify-center"` for centered content.
 
 ## Header and footer actions
 

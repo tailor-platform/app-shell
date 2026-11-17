@@ -779,9 +779,9 @@
       ],
       "hashes": {
         "typeSurface": "6210ea28649026a8",
-        "outline": "ff671aa7c7774859",
+        "outline": "7c64761beea57d38",
         "snapshot": "b222cdafb62c9883",
-        "outputMd": "20cf2f9eb06a8423",
+        "outputMd": "bdbe2cece53829eb",
         "examples": "56c8f6cc9667bb78"
       }
     },
@@ -847,10 +847,10 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "ce5dc6acdf83ee6b",
+        "outline": "fbc09ef9994494cb",
         "snapshot": null,
-        "outputMd": "d2d2d5c439f4fa3a",
-        "examples": "d499d924a785beb5"
+        "outputMd": "851afb4672da6673",
+        "examples": "157ff03dc999d3d3"
       }
     },
     "global-header-layout": {
@@ -1397,23 +1397,6 @@
         "examples": "19131f441efe232f"
       }
     },
-    "stepper": {
-      "slug": "stepper",
-      "kind": "code-backed",
-      "outline": "docs-src/components/stepper.docs.outline.md",
-      "output": "docs/components/stepper.md",
-      "examples": "docs-src/components/stepper.docs.examples.tsx",
-      "sources": ["packages/core/src/components/stepper/**"],
-      "claims": [],
-      "symbols": ["Stepper", "StepperProps", "StepperStep"],
-      "hashes": {
-        "typeSurface": "03575b3ae95ff031",
-        "outline": "620afc4168680aa7",
-        "snapshot": "62a67309416ceed7",
-        "outputMd": "dfd07cfec2f84d5b",
-        "examples": "9a0f9bf7c9b8fb95"
-      }
-    },
     "styling-theming": {
       "slug": "styling-theming",
       "kind": "prose",
@@ -1889,7 +1872,7 @@
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "d0fb940f685f8869",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "224745760083ee35",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "5c3f247bae548418",
-    "packages/core/skills/app-shell-patterns/references/components/form-layout.md": "20cf2f9eb06a8423",
+    "packages/core/skills/app-shell-patterns/references/components/form-layout.md": "bdbe2cece53829eb",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "fe86450720c4d586",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "9051eb53dde4179f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "a3a6c9679af99d37",
@@ -1904,7 +1887,6 @@
     "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "af971809e42dfdb8",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "281cfa2dcbff14be",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "e05d94ba9c3d17da",
-    "packages/core/skills/app-shell-patterns/references/components/stepper.md": "dfd07cfec2f84d5b",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "f85ec64ceb7f4acf",
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "b8c595669cbe7353",
     "packages/core/skills/app-shell-patterns/references/components/text.md": "24262ae6cb49a138",
@@ -1944,7 +1926,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "a075c90ec7cdced3",
     "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "a0f1f5c5de01e16b",
     "packages/core/skills/app-shell-patterns/references/patterns/form-single-page.md": "4a39515f08e16dc4",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "d2d2d5c439f4fa3a",
+    "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "851afb4672da6673",
     "packages/core/skills/app-shell-patterns/references/patterns/i18n-labels.md": "d9f0851d9c98ecfe",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "253fcea1c4e5a42c",
@@ -1952,6 +1934,6 @@
     "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "e79d9120d86db198",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "e07c7fee2478a21d",
     "packages/core/skills/app-shell-patterns/references/migrations.md": "2b1c0ad9006a3c55",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "fd56f483e137420a"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "01b013a389d197e9"
   }
 }

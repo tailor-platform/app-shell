@@ -42,7 +42,6 @@ export type GeneratedRouteParams = {
   "/showcase/form-templates": {};
   "/showcase/form-templates/document": {};
   "/showcase/form-templates/page": {};
-  "/showcase/form-templates/wizard": {};
   "/showcase/forms": {};
   "/showcase/forms/zod-rhf": {};
   "/showcase/grid": {};
@@ -51,7 +50,6 @@ export type GeneratedRouteParams = {
   "/showcase/metric-card": {};
   "/showcase/primitives": {};
   "/showcase/spinner": {};
-  "/showcase/stepper": {};
   "/showcase/timeline": {};
   "/showcase/toolbar": {};
   "/showcase/tree": {};

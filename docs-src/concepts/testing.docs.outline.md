@@ -58,6 +58,7 @@ DOM environments are useful for component behavior, but do not verify popup posi
 | Only form controls and local state                                                 | The component itself; no `AppShell` required                           |
 | Router hooks such as `useNavigate`, `useParams`, or `Link`                         | `TestRouter` from `/testing`                                           |
 | AppShell configuration, `contextData`, shell features, or page/routing integration | Main-entry `AppShell` inside `AppShellTestingProvider` from `/testing` |
+| Authentication hooks or an authentication guard                                    | `MemoryAuthProvider` from `/testing`                                   |
 
 `TestRouter` supplies router context only. It does not supply AppShell configuration, theme, authentication, or command-palette state. Features requiring a data router, such as `useBlocker`, need `AppShell` inside `AppShellTestingProvider`, not `TestRouter`.
 
@@ -212,7 +213,7 @@ For DatePicker's calendar, click its “Open calendar” button, await the `dial
 
 ## Supply AppShell provider state without mocking internals
 
-Import `AppShell` from the main entry and `AppShellTestingProvider` from `/testing`. The testing provider selects memory routing; it does not supply AppShell state by itself. AppShell mounts the real providers. Use its normal props for configuration and pass test doubles through `contextData`. Do not import internal contexts, mock Base UI, or replace the entire AppShell package with an empty module.
+Import `AppShell` from the main entry and `AppShellTestingProvider` from `/testing`. The testing provider selects memory routing; it does not supply AppShell state by itself. AppShell mounts the real providers. Use its normal props for configuration and pass test doubles through `contextData`. Authentication is separate: use [`MemoryAuthProvider`](#supply-authentication-state) when the subject consumes authentication. Do not import internal contexts, mock Base UI, or replace the entire AppShell package with an empty module.
 
 ### Use a Testing Library wrapper
 
@@ -282,6 +283,8 @@ The provider requires `initialEntries: string[]`, the initial history stack — 
 ### Pages and integration tests
 
 Because AppShell owns the router, a page test mounts AppShell rather than building a router. Pass your typed modules to AppShell and render a layout such as `SidebarLayout`. Wrap it in `AppShellTestingProvider` to start at a known URL without touching `window.location`:
+
+Mock only the application boundary being exercised: callbacks, clients in `contextData`, or your data library's provider. `AppShell` does not automatically mount `AuthProvider`; add [`MemoryAuthProvider`](#supply-authentication-state) around the shell when the page consumes authentication, and add your application's data wrappers separately. App-specific user and permission fixtures remain in `contextData`, not in the authentication state. See [Authentication](./authentication.md) for production setup.
 
 ```tsx
 import { render, screen } from "@testing-library/react";
@@ -380,3 +383,129 @@ render(
 Here `SaveButton` and `OrderBadge` are your components under test. The matching route also matters for `useMatch` and relative `<Link>` targets. Compose your own providers — a GraphQL client, say — around `TestRouter` as needed. `AppShellTestingProvider` does not replace `TestRouter` or `TestRouterProps`; they remain supported for focused component unit tests.
 
 Import routing hooks and `Link` from AppShell, not from a separately installed `react-router` copy. See [Routing and Navigation](./routing-navigation.md#your-app-should-not-depend-on-react-router) for why this matters.
+
+## Supply authentication state
+
+Import `MemoryAuthProvider` and `createMemoryAuthClient` from `@tailor-platform/app-shell/testing`; keep importing `useAuth` and `useAuthSuspense` from the main package. The memory provider wraps the real `AuthProvider` with an in-memory client, so hooks and guards use the same context as production. It does not make sign-in requests, navigate the browser, persist a session, or provide tokens.
+
+| Prop             | Meaning                                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ |
+| `initialState`   | Initial `AuthState`: all three fields (`isReady`, `isAuthenticated`, `error`) are required when supplied.    |
+| `client`         | A client returned by `createMemoryAuthClient(initialState?)`, for test-controlled state changes.             |
+| `guardComponent` | The real `AuthProvider` guard: rendered instead of children while not ready or not authenticated.            |
+| `autoLogin`      | The real provider's auto-login behavior; omit or set to `false` when testing a persistent signed-out screen. |
+
+Without an explicit state, the client starts with `{ isReady: true, isAuthenticated: false, error: null }`. Supply either `initialState` or `client`, never both. `initialState` is read only on mount; rerendering with a different initial state does not reset the session. Use an external client's `setState` for later changes, or remount for a fresh fixture. Each provider-owned client is independent.
+
+### Exercise the real guard, login, and logout
+
+No AppShell or router is needed for a subject that only consumes authentication:
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { expect, it } from "vitest";
+import { Button, useAuth } from "@tailor-platform/app-shell";
+import { MemoryAuthProvider } from "@tailor-platform/app-shell/testing";
+
+function SignInGuard() {
+  const { isReady, error, login } = useAuth();
+
+  if (!isReady) return <p>Checking session...</p>;
+
+  return (
+    <>
+      <p>{error ?? "Please sign in."}</p>
+      <Button onClick={() => void login()}>Sign in</Button>
+    </>
+  );
+}
+
+function AccountActions() {
+  const { logout } = useAuth();
+
+  return (
+    <>
+      <p>Account ready</p>
+      <Button onClick={() => void logout()}>Sign out</Button>
+    </>
+  );
+}
+
+it("opens the account after sign-in and returns to the guard after sign-out", async () => {
+  const user = userEvent.setup();
+
+  render(
+    <MemoryAuthProvider guardComponent={SignInGuard}>
+      <AccountActions />
+    </MemoryAuthProvider>,
+  );
+
+  expect(screen.getByText("Please sign in.")).toBeDefined();
+  expect(screen.queryByText("Account ready")).toBeNull();
+
+  await user.click(screen.getByRole("button", { name: "Sign in" }));
+  expect(await screen.findByText("Account ready")).toBeDefined();
+  expect(screen.queryByText("Please sign in.")).toBeNull();
+
+  await user.click(screen.getByRole("button", { name: "Sign out" }));
+  expect(await screen.findByText("Please sign in.")).toBeDefined();
+  expect(screen.queryByText("Account ready")).toBeNull();
+});
+```
+
+The memory client's `login()` and `logout()` simulate successful local actions. Both mark the state ready and clear its error; they publish the corresponding `login` or `logout` event followed by `auth_state_changed`. With `autoLogin`, the real provider can immediately sign in again after logout, so the example leaves it disabled.
+
+For a page that should start signed in, use `initialState={{ isReady: true, isAuthenticated: true, error: null }}`. Nest the test `AppShell` inside this provider if the page also needs routing or shell configuration.
+
+### Control loading, Suspense, and error fixtures
+
+Use `createMemoryAuthClient` when the test needs to change state after rendering. `setState(next)` replaces the complete state and publishes `auth_state_changed`; it does not synthesize a `login` or `logout` action. Set `error` explicitly when testing an error message.
+
+An initially loading client remains loading until the test publishes a ready state. The real provider calls `checkAuthStatus()` during initialization, but the memory implementation waits rather than completing that fixture automatically. `ready()` waits for the same readiness transition, so `useAuthSuspense` works without timers:
+
+```tsx
+import { Suspense } from "react";
+import { act, render, screen } from "@testing-library/react";
+import { expect, it } from "vitest";
+import { useAuthSuspense } from "@tailor-platform/app-shell";
+import { createMemoryAuthClient, MemoryAuthProvider } from "@tailor-platform/app-shell/testing";
+
+function AccountStatus() {
+  const { isAuthenticated } = useAuthSuspense();
+  return <p>{isAuthenticated ? "Account ready" : "Please sign in."}</p>;
+}
+
+it("keeps the Suspense fallback until authentication is ready", async () => {
+  const auth = createMemoryAuthClient({
+    isReady: false,
+    isAuthenticated: false,
+    error: null,
+  });
+
+  render(
+    <MemoryAuthProvider client={auth}>
+      <Suspense fallback={<p>Checking session...</p>}>
+        <AccountStatus />
+      </Suspense>
+    </MemoryAuthProvider>,
+  );
+
+  expect(screen.getByText("Checking session...")).toBeDefined();
+
+  await act(async () => {
+    auth.setState({ isReady: true, isAuthenticated: true, error: null });
+  });
+
+  expect(await screen.findByText("Account ready")).toBeDefined();
+  expect(screen.queryByText("Checking session...")).toBeNull();
+});
+```
+
+Use an external client for a loading fixture that must later complete; an `initialState` alone gives the test no client handle to publish readiness. `checkAuthStatus()` returns the memory state once ready, without a network request. To assert a login argument or simulate an application-specific rejection, spy on the external client's public method instead of mocking authentication hooks.
+
+### Keep OAuth and data transport outside the memory fixture
+
+The client is compatible with `AuthProvider`'s client type, but it is not a full OAuth client. `getAuthUrl`, `handleCallback`, `refreshTokens`, `configure`, `getAuthHeaders`, `fetch`, and `getAppUri` fail explicitly as unsupported. Add your data library's provider and mock its application boundary separately; do not use the memory client as an authenticated HTTP transport.
+
+A memory login accepts `returnTo` but does not navigate or validate an OAuth return path. The real provider still derives the default `returnTo` from `window.location`, not from the test AppShell's memory route. These tests do not prove deep-link preservation, token refresh, callback handling, or persisted sessions. Keep those contracts in browser/integration tests against the appropriate production authentication boundary.

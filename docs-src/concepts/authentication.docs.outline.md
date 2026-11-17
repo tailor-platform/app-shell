@@ -299,3 +299,7 @@ useEffect(() => {
   });
 }, [authClient]);
 ```
+
+## Testing
+
+For component and page tests, use `MemoryAuthProvider` from `@tailor-platform/app-shell/testing` to exercise the real authentication hooks and guard without a sign-in request. Use `createMemoryAuthClient` when the test needs to control loading or change the authentication state after rendering. See [Testing: supply authentication state](./testing.md#supply-authentication-state) for guard, login/logout, and Suspense recipes. These helpers do not verify OAuth, token handling, or persisted sessions.

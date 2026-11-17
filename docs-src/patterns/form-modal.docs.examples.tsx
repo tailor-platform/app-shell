@@ -73,7 +73,7 @@ export function ModalFormRouted() {
           </Button>,
         ]}
       />
-      <Layout.Column>{/* products list — see list/dense-scan */}</Layout.Column>
+      <Layout.Column>{/* products list — see page/document-collection */}</Layout.Column>
 
       <Dialog.Root open={isCreateOpen} onOpenChange={setCreateOpen}>
         <Dialog.Content>

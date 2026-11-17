@@ -35,6 +35,8 @@ export default defineConfig({
 });
 ```
 
+For file-based routing, preserve `appShellRoutes()` as well: use the application's Vite config as shown in [File-based routing integration tests](#file-based-routing-integration-tests), rather than replacing its plugins with the React-only setup above.
+
 Clean up rendered components between tests, including popup portals:
 
 ```ts
@@ -299,7 +301,57 @@ expect(await screen.findByText("Order A42")).toBeDefined();
 
 Here `modules` is your test fixture with an `/orders/:id` page rendering `Order A42`. Tests use the main entry's `AppShellProps`, modules, and guards, so the `AppShellRegister` augmentation described in [useAppShell](../api/use-app-shell.md) applies without a separate testing props type.
 
-The same provider also works with file-based routing configured by the Vite plugin.
+### File-based routing integration tests
+
+**Important: `AppShellTestingProvider` selects memory routing only. It does not discover page files or register routes.** File-based application tests must still run `appShellRoutes()` through Vite, with the same page discovery and entrypoint configuration as the application.
+
+When `appShellRoutes({ entrypoint: "src/App.tsx" })` is configured, only the AppShell import inside `src/App.tsx` receives the discovered pages. Importing and rendering a new `AppShell` directly in a test file does not trigger that injection, even inside `AppShellTestingProvider`.
+
+Reuse the application's Vite config so Vitest runs the same plugins. For an object-style `vite.config.ts` beside the test config:
+
+```ts
+// vitest.config.ts
+import { defineConfig, mergeConfig } from "vitest/config";
+import viteConfig from "./vite.config.ts";
+
+export default mergeConfig(
+  viteConfig,
+  defineConfig({
+    root: import.meta.dirname,
+    test: {
+      environment: "happy-dom",
+      setupFiles: ["./src/test/setup.ts"],
+    },
+  }),
+);
+```
+
+Keep `root` at the application directory: the plugin resolves `entrypoint` and `pagesDir` relative to it; `pagesDir` defaults to `src/pages`, with routes discovered from `page.tsx` files. A separate `vitest.config.ts` does not automatically inherit the plugins from `vite.config.ts`.
+
+Render the real application component from the configured entrypoint, not a replacement AppShell in the test. The test file does not need to be the entrypoint or live beside it. For example, with `src/App.tsx` as the entrypoint and a Dashboard heading in `src/pages/dashboard/page.tsx`:
+
+```tsx
+// tests/app.test.tsx
+import { render, screen } from "@testing-library/react";
+import { AppShellTestingProvider } from "@tailor-platform/app-shell/testing";
+import { expect, it } from "vitest";
+import App from "../src/App";
+
+it("opens a file-based page without changing the browser URL", async () => {
+  const before = window.location.href;
+
+  render(
+    <AppShellTestingProvider initialEntries={["/dashboard"]}>
+      <App />
+    </AppShellTestingProvider>,
+  );
+
+  expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeDefined();
+  expect(window.location.href).toBe(before);
+});
+```
+
+Do not change `entrypoint` to the test file just to inject pages there. Keep the production configuration and import the configured application. For focused page tests that should not load the real page tree, use the explicit `modules` fixture in the previous example instead.
 
 ## Router-only component tests
 

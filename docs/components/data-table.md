@@ -1822,6 +1822,25 @@ const [result] = useQuery({
 });
 ```
 
+### Combining an external predicate
+
+Where a screen narrows the list outside the filter chips — a preset that a single filter can't express, or a forced scope such as "only my records" — combine that predicate with `variables.query` using `and` rather than spreading the two objects together:
+
+```tsx
+const query = presetPredicate ? { and: [presetPredicate, variables.query] } : variables.query;
+```
+
+A spread silently drops one side whenever both name the same field (a "Posted" preset plus a Status filter chip). Going through `and` also leaves `control.filters` untouched, so the external predicate does not appear as a removable filter chip.
+
+Changing the external predicate must reset pagination in the **same event** that changes it, not from a following effect — otherwise the query dispatches first and sends the previous cursor against the new predicate.
+
+```tsx
+const selectPreset = (id: string) => {
+  setPresetId(id);
+  control.resetPage();
+};
+```
+
 ## `useURLCollectionVariables`
 
 Wraps `useCollectionVariables` with automatic URL persistence. It seeds filter, sort, and page-size state from the current URL search params on mount and writes changes back to the URL as the user interacts with the table — using `replace` navigation so individual interactions don't push new history entries.
@@ -1850,6 +1869,8 @@ All options accepted by `useCollectionVariables` are accepted here too. `tableMe
 | `pageSize` | `p`                    | `?p=20`               |
 | Sort       | `s`                    | `?s=createdAt:desc`   |
 | Filter     | `f.<field>:<operator>` | `?f.status:eq=ACTIVE` |
+
+Cursor position is deliberately not persisted — `CollectionControl` owns it internally. A refresh or a shared link restores filters, sort and page size, and returns to the first page.
 
 ### Custom search-params binding: `withURLCollectionState`
 

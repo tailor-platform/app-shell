@@ -255,6 +255,7 @@ export {
   type CalendarProps,
   type RangeCalendarProps,
   type DateRange,
+  type RangeCalendarSelectionEvent,
 } from "./components/calendar";
 
 // @internationalized/date re-exports — consumers import date helpers/types from

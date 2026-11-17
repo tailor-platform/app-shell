@@ -81,23 +81,61 @@ describe("RangeCalendar", () => {
   it("selects a range with two clicks, firing onChange once on completion", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(
+    const onSelectionStateChange = vi.fn();
+    const { unmount } = render(
       <RangeCalendar
         aria-label="Select range"
         defaultFocusedValue={d("2025-06-01")}
         onChange={onChange}
+        onSelectionStateChange={onSelectionStateChange}
       />,
     );
+    expect(onSelectionStateChange).not.toHaveBeenCalled();
+    await user.hover(cell(9));
+    expect(onSelectionStateChange).not.toHaveBeenCalled();
 
     await user.click(cell(10));
     // First click only anchors the selection.
     expect(onChange).not.toHaveBeenCalled();
+    expect(onSelectionStateChange.mock.calls).toEqual([[{ type: "selection-start" }]]);
+    await user.hover(cell(12));
+    expect(onSelectionStateChange).toHaveBeenCalledTimes(1);
 
     await user.click(cell(15));
     expect(onChange).toHaveBeenCalledTimes(1);
     const range = onChange.mock.calls[0][0];
+    expect(onSelectionStateChange.mock.calls).toEqual([
+      [{ type: "selection-start" }],
+      [{ type: "range-complete", value: range }],
+    ]);
+    expect(onSelectionStateChange.mock.calls[1][0].value).toBe(range);
     expect(isSameDay(range.start, d("2025-06-10"))).toBe(true);
     expect(isSameDay(range.end, d("2025-06-15"))).toBe(true);
+    unmount();
+    expect(onSelectionStateChange).toHaveBeenCalledTimes(2);
+  });
+
+  it("supports event-only consumers with a typed, ordered completion range", async () => {
+    const user = userEvent.setup();
+    const onComplete = vi.fn<(start: CalendarDate, end: CalendarDate) => void>();
+    render(
+      <RangeCalendar<CalendarDate>
+        aria-label="Select range"
+        defaultFocusedValue={d("2025-06-01")}
+        onSelectionStateChange={(event) => {
+          if (event.type === "range-complete") {
+            onComplete(event.value.start, event.value.end);
+          }
+        }}
+      />,
+    );
+
+    await user.click(cell(15));
+    expect(onComplete).not.toHaveBeenCalled();
+    await user.click(cell(10));
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(isSameDay(onComplete.mock.calls[0][0], d("2025-06-10"))).toBe(true);
+    expect(isSameDay(onComplete.mock.calls[0][1], d("2025-06-15"))).toBe(true);
   });
 
   it("swaps the endpoints when the second pick is before the anchor", async () => {
@@ -161,11 +199,13 @@ describe("RangeCalendar", () => {
   it("anchors with Enter, extends with plain arrows, and commits with Enter", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
+    const onSelectionStateChange = vi.fn();
     render(
       <RangeCalendar
         aria-label="Select range"
         defaultFocusedValue={d("2025-06-15")}
         onChange={onChange}
+        onSelectionStateChange={onSelectionStateChange}
       />,
     );
 
@@ -174,13 +214,19 @@ describe("RangeCalendar", () => {
     // A keyboard-set anchor advances focus one day to signal range mode.
     expect(tabbable().textContent).toBe("16");
     expect(onChange).not.toHaveBeenCalled();
+    expect(onSelectionStateChange.mock.calls).toEqual([[{ type: "selection-start" }]]);
 
     await user.keyboard("{ArrowRight}");
     expect(inRangeDays()).toEqual(["15", "16", "17"]);
+    expect(onSelectionStateChange).toHaveBeenCalledTimes(1);
 
     await user.keyboard("{Enter}");
     expect(onChange).toHaveBeenCalledTimes(1);
     const range = onChange.mock.calls[0][0];
+    expect(onSelectionStateChange.mock.calls).toEqual([
+      [{ type: "selection-start" }],
+      [{ type: "range-complete", value: range }],
+    ]);
     expect(isSameDay(range.start, d("2025-06-15"))).toBe(true);
     expect(isSameDay(range.end, d("2025-06-17"))).toBe(true);
   });
@@ -188,24 +234,69 @@ describe("RangeCalendar", () => {
   it("cancels an in-progress selection with Escape", async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
-    render(
+    const onSelectionStateChange = vi.fn();
+    const { unmount } = render(
       <RangeCalendar
         aria-label="Select range"
         defaultFocusedValue={d("2025-06-15")}
         onChange={onChange}
+        onSelectionStateChange={onSelectionStateChange}
       />,
     );
 
     tabbable().focus();
+    await user.keyboard("{Escape}");
+    expect(onSelectionStateChange).not.toHaveBeenCalled();
+
     await user.keyboard("{Enter}");
     expect(inRangeDays()).toEqual(["15", "16"]);
+    expect(onSelectionStateChange.mock.calls).toEqual([[{ type: "selection-start" }]]);
 
     await user.keyboard("{Escape}");
     expect(inRangeDays()).toEqual([]);
+    expect(onSelectionStateChange.mock.calls).toEqual([
+      [{ type: "selection-start" }],
+      [{ type: "selection-cancel" }],
+    ]);
+
+    await user.keyboard("{Escape}");
+    expect(onSelectionStateChange).toHaveBeenCalledTimes(2);
 
     // The next confirm starts a fresh selection instead of completing the old one.
     await user.keyboard("{Enter}");
     expect(onChange).not.toHaveBeenCalled();
+    expect(onSelectionStateChange.mock.calls).toEqual([
+      [{ type: "selection-start" }],
+      [{ type: "selection-cancel" }],
+      [{ type: "selection-start" }],
+    ]);
+    unmount();
+    expect(onSelectionStateChange).toHaveBeenCalledTimes(3);
+  });
+
+  it.each([
+    { name: "disabled", props: { isDisabled: true } },
+    { name: "read-only", props: { isReadOnly: true } },
+    { name: "unavailable", props: { isDateUnavailable: () => true } },
+  ])("does not start a selection on $name dates", async ({ props }) => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const onSelectionStateChange = vi.fn();
+    render(
+      <RangeCalendar
+        aria-label="Select range"
+        defaultFocusedValue={d("2025-06-10")}
+        onChange={onChange}
+        onSelectionStateChange={onSelectionStateChange}
+        {...props}
+      />,
+    );
+
+    await user.click(cell(10));
+    await user.keyboard("{Enter}");
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onSelectionStateChange).not.toHaveBeenCalled();
   });
 
   it("prevents a range from crossing an unavailable date while anchored", async () => {

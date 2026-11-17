@@ -83,6 +83,7 @@ const AppInner = () => {
               <SidebarItem to="/showcase/date-picker" />
               <SidebarItem to="/showcase/toolbar" />
               <SidebarItem to="/showcase/data-table" />
+              <SidebarItem to="/showcase/data-table-empty" />
               <SidebarItem to="/showcase/data-table-lab" />
               <SidebarItem to="/showcase/data-table-selection" />
               <SidebarItem to="/showcase/data-table-tree" />

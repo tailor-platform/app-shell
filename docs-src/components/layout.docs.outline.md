@@ -180,17 +180,16 @@ The header displays:
 - **Actions** on the right (buttons, dropdowns, etc.)
 - **Children** (optional) full-width below the title/actions row
 
-### Header with Tabs
+### Header with children
+
+Children render full-width below the title and actions row, such as a line of context about the record:
 
 ```tsx
 <Layout>
-  <Layout.Header title="Purchase Orders" actions={[<Button key="create">Create</Button>]}>
-    <Tabs value={tab} onValueChange={setTab}>
-      <TabsList>
-        <TabsTrigger value="all">All</TabsTrigger>
-        <TabsTrigger value="open">Open</TabsTrigger>
-      </TabsList>
-    </Tabs>
+  <Layout.Header title="Order #12345" actions={[<Button key="edit">Edit</Button>]}>
+    <Text.p variant="body-sm" className="text-muted-foreground">
+      Acme Metals · Due 30 Nov 2026
+    </Text.p>
   </Layout.Header>
   <Layout.Column>…</Layout.Column>
 </Layout>

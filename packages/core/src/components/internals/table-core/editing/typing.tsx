@@ -78,6 +78,9 @@ function TypingEditor<TOutput>({
     text !== baselineText && (parsedDraft === undefined || !isUnchanged(parsedDraft, current)),
     state.status,
   );
+  const descriptionIds = callbackError
+    ? `${callbackError.id} ${callbackError.hintId}`
+    : draftStatus?.id;
 
   const revert = (notify = false) => {
     const previous = session.getState();
@@ -208,9 +211,14 @@ function TypingEditor<TOutput>({
     input: (
       <>
         {message !== undefined && (
-          <span id={errorId} className="astw:sr-only">
-            {message}. {hint}
-          </span>
+          <>
+            <span id={errorId} className="astw:sr-only">
+              {message}
+            </span>
+            <span id={`${errorId}-hint`} className="astw:sr-only">
+              {hint}
+            </span>
+          </>
         )}
         <Tooltip.Root open={message !== undefined && (focused || hovered)}>
           <Tooltip.Trigger
@@ -223,7 +231,7 @@ function TypingEditor<TOutput>({
                 aria-label={label}
                 aria-invalid={message !== undefined || callbackError ? true : undefined}
                 aria-describedby={
-                  message !== undefined ? errorId : (callbackError?.id ?? draftStatus?.id)
+                  message !== undefined ? `${errorId} ${errorId}-hint` : descriptionIds
                 }
                 aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
                 inputMode={numeric ? "text" : undefined}

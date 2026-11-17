@@ -134,6 +134,7 @@ export function useCellError(
       ? {
           failure,
           id: errorId,
+          hintId: `${errorId}-hint`,
           message: renderError ? labels.callbackError : message,
           content: renderError ? (
             renderError(failure.error)
@@ -357,8 +358,11 @@ export function EditableCellFrame({
       {callbackError && (
         <>
           <output id={callbackError.id} className="astw:sr-only">
-            {callbackError.message}. {labels.errorHint}
+            {callbackError.message}
           </output>
+          <span id={callbackError.hintId} className="astw:sr-only">
+            {labels.errorHint}
+          </span>
           <Popover.Root
             actionsRef={errorActionsRef}
             open={errorOpen}

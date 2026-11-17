@@ -351,7 +351,9 @@ function ChoiceEditor({
           ref={register}
           aria-label={label}
           aria-invalid={callbackError ? true : undefined}
-          aria-describedby={callbackError?.id ?? draftStatus?.id}
+          aria-describedby={
+            callbackError ? `${callbackError.id} ${callbackError.hintId}` : draftStatus?.id
+          }
           aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
           autoComplete="off"
           enterKeyHint="done"

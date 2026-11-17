@@ -190,7 +190,9 @@ function DateEditor({
           ref={register}
           aria-label={accessibleName}
           aria-invalid={callbackError ? true : undefined}
-          aria-describedby={callbackError?.id ?? draftStatus?.id}
+          aria-describedby={
+            callbackError ? `${callbackError.id} ${callbackError.hintId}` : draftStatus?.id
+          }
           aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
           className={cn(TRIGGER_CLASS_NAME, callbackError && CELL_ERROR_CLASS_NAME)}
           onKeyDown={(event) => {

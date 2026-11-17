@@ -29,6 +29,7 @@ export interface CellEditorNavigation {
 export interface CellErrorUI {
   failure: CellEditFailure;
   id: string;
+  hintId: string;
   message: string;
   content: ReactNode;
   triggerRef: RefObject<HTMLButtonElement | null>;

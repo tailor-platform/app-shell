@@ -96,10 +96,11 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
           !current ||
           source.getRevision() !== revision ||
           !currentColumn?.edit ||
-          currentColumn.accessorKey !== column.accessorKey ||
-          !(currentColumn.edit.canEdit?.(current) ?? true)
+          currentColumn.accessorKey !== column.accessorKey
         )
           return;
+        if (!(currentColumn.edit.canEdit?.(current) ?? true))
+          throw new Error("The cell is not editable");
         store.updateField(key, column.accessorKey!, value as T[keyof T & string]);
         cancelProperty(key, column.accessorKey!, source);
       };

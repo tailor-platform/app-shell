@@ -7,8 +7,8 @@ import { Button } from "@/components/button";
 import { Filter as FilterIcon, Search, Check, X } from "lucide-react";
 import { Input } from "@/components/input";
 import { parseDate } from "@internationalized/date";
-import { Calendar } from "@/components/calendar";
-import { useTimeZone, useResolvedLocale } from "@/contexts/appshell-context";
+import { Calendar, RangeCalendar } from "@/components/calendar";
+import { useTimeZone } from "@/contexts/appshell-context";
 import {
   localDateTimeParts,
   normalizeTemporalFilterValue,
@@ -20,7 +20,6 @@ import { isComposing } from "@/lib/is-composing";
 import { Tooltip } from "@/components/tooltip";
 import type { FilterableColumn } from "./types";
 import { getVisibleFilterOperators, getDefaultFilterOperator, getOperatorLabel } from "./operators";
-import { formatDateTimeValue, formatDateValue } from "./formatting";
 import {
   betweenOrderError,
   isAddFilterDraftValueValid,
@@ -83,6 +82,7 @@ function AddFilterPanel({
   // Field search: enterprise tables can have many filterable fields, so the
   // panel always offers a search box over the field list.
   const [fieldQuery, setFieldQuery] = useState("");
+  const [editorKey, setEditorKey] = useState(0);
   const fq = fieldQuery.trim().toLowerCase();
   const visibleFieldColumns = fq
     ? columns.filter((c) => (c.label ?? c.filter.field).toLowerCase().includes(fq))
@@ -132,6 +132,11 @@ function AddFilterPanel({
     }
   };
 
+  const clearAll = () => {
+    control.clearFilters();
+    setEditorKey((key) => key + 1);
+  };
+
   const activeFields = new Set(control.filters.map((f) => f.field));
   let effectiveOperator: FilterOperator | undefined;
   if (config) {
@@ -165,8 +170,7 @@ function AddFilterPanel({
               // names (up to a cap), column 2 (conditions) is fixed, and column 3 (the
               // value editor) is a fixed 260px. So a wider field column grows the panel
               // rightward (it's anchored left) instead of squeezing the value editor.
-              // Fixed height fits the tallest editor (datetime range: From/To tabs +
-              // calendar + "Choose time").
+              // Fixed height fits the tallest editor (calendar and time inputs).
               "astw:bg-popover astw:text-popover-foreground astw:z-(--z-portal) astw:flex astw:h-[28rem] astw:items-stretch astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:shadow-md",
               "astw:animate-in astw:fade-in-0 astw:zoom-in-95 astw:data-ending-style:animate-out astw:data-ending-style:fade-out-0 astw:data-ending-style:zoom-out-95",
             )}
@@ -222,7 +226,7 @@ function AddFilterPanel({
                   <Button
                     variant="ghost"
                     size="xs"
-                    onClick={() => control.clearFilters()}
+                    onClick={clearAll}
                     className="astw:w-full astw:justify-start astw:text-muted-foreground"
                   >
                     {t("clearAllFilters")}
@@ -258,7 +262,7 @@ function AddFilterPanel({
             <div className="astw:flex astw:w-[260px] astw:min-w-0 astw:flex-col astw:border-l astw:border-border">
               {selectedColumn && effectiveOperator && (
                 <PanelValueEditor
-                  key={`${fieldName}:${effectiveOperator}`}
+                  key={`${fieldName}:${effectiveOperator}:${editorKey}`}
                   column={selectedColumn}
                   operator={effectiveOperator}
                   filter={activeFilter}
@@ -315,16 +319,16 @@ function PanelDateInput({
 //                  time box, combined into an ISO string — see PanelDateTimeInput
 //                  and DateTimeFilterInput).
 //   - `datetime`/`date` "between" → a DateRangePicker / DateTimeRangePicker
-//                  (currently one inline calendar with From/To tabs, see
-//                  PanelDateRangeInput; the chip editor uses two From/To fields).
+//                  (currently an inline RangeCalendar with separate time inputs,
+//                  see PanelDateRangeInput; the chip uses two From/To fields).
 // These stopgaps intentionally emit the same ISO value shapes, so each swap is
 // UI-only — no change to the committed filter values.
 // -----------------------------------------------------------------------------
 
 /**
  * Single-datetime editor for the panel: the inline `Calendar` up front with a
- * labelled time picker beneath it, bridging an RFC 3339 instant. (The chip and
- * the "between" range keep the compact date-picker + time box to stay short.)
+ * labelled time picker beneath it, bridging an RFC 3339 instant. The chip keeps
+ * the compact date-picker + time box to stay short.
  */
 function PanelDateTimeInput({
   ariaLabel,
@@ -379,42 +383,68 @@ function PanelDateTimeInput({
   );
 }
 
+/** Events from the panel's calendar selection and per-bound datetime time inputs. */
+type RangeInputEvent =
+  | {
+      /** The first calendar pick starts a new range; existing bounds remain unchanged. */
+      type: "selection-start";
+    }
+  | {
+      /** The second calendar pick completes the range; both bounds are updated together. */
+      type: "range-complete";
+      /** Completed start bound in the filter's date/datetime string format. */
+      min: string;
+      /** Completed end bound in the filter's date/datetime string format. */
+      max: string;
+    }
+  | {
+      /** An unfinished calendar selection is cancelled; current bounds are retained. */
+      type: "selection-cancel";
+    }
+  | {
+      /** A time input changes one bound without completing any pending calendar selection. */
+      type: "time-change";
+      /** The bound whose time input changed. */
+      bound: "min" | "max";
+      /** Updated datetime filter string, or empty when no date is selected. */
+      value: string;
+    };
+
 /**
- * Range editor for date / datetime "between" in the panel: one inline calendar
- * (reusing the single-value editors) with a From/To tab bar on top. Picking a
- * bound edits whichever tab is active; each tab shows its current value. Keeps
- * the range on a single calendar instead of two stacked fields.
+ * Two-click range selection for date / datetime "between" filters, with
+ * independent time inputs for datetime bounds.
  */
 function PanelDateRangeInput({
   label,
   min,
   max,
-  onChangeMin,
-  onChangeMax,
+  onStateChange,
   withTime = false,
 }: {
   label: string;
   min: string;
   max: string;
-  onChangeMin: (value: string) => void;
-  onChangeMax: (value: string) => void;
-  /** datetime range — the active bound also gets a time picker. */
+  onStateChange: (event: RangeInputEvent) => void;
   withTime?: boolean;
 }) {
   const t = useDataTableT();
-  const { locale } = useResolvedLocale();
   const shellTz = useTimeZone();
-  const [active, setActive] = useState<"from" | "to">("from");
-
-  const fmt = (v: string) => {
-    if (!v) return "—";
-    return withTime ? formatDateTimeValue(v, locale, shellTz.value) : formatDateValue(v, locale);
-  };
   const bounds = [
-    { key: "from" as const, label: t("filterBetweenFrom"), value: min, onChange: onChangeMin },
-    { key: "to" as const, label: t("filterBetweenTo"), value: max, onChange: onChangeMax },
-  ];
-  const activeBound = bounds.find((b) => b.key === active) ?? bounds[0];
+    { key: "min" as const, label: t("filterBetweenFrom"), value: min },
+    { key: "max" as const, label: t("filterBetweenTo"), value: max },
+  ].map((bound) => ({
+    ...bound,
+    ...(withTime
+      ? localDateTimeParts(bound.value, shellTz.value)
+      : { date: /^\d{4}-\d{2}-\d{2}$/.test(bound.value) ? bound.value : "", time: "" }),
+  }));
+  const [from, to] = bounds;
+  const toValue = (date: string, time: string) => {
+    if (!date || !withTime) return date;
+    return (
+      normalizeTemporalFilterValue("datetime", `${date}T${time || "00:00"}:00`, shellTz.value) ?? ""
+    );
+  };
   const error = betweenOrderError(
     withTime ? "datetime" : "date",
     min,
@@ -427,44 +457,56 @@ function PanelDateRangeInput({
 
   return (
     <div className="astw:flex astw:flex-col astw:gap-3">
-      {/* From / To tab bar (each tab shows its picked value) */}
-      <div className="astw:grid astw:grid-cols-2 astw:gap-1 astw:rounded-md astw:bg-muted astw:p-1">
-        {bounds.map((b) => (
-          <button
-            key={b.key}
-            type="button"
-            onClick={() => setActive(b.key)}
-            className={cn(
-              "astw:flex astw:flex-col astw:items-start astw:gap-0.5 astw:overflow-hidden astw:rounded-sm astw:px-2 astw:py-1 astw:text-left",
-              active === b.key && "astw:bg-background astw:shadow-sm",
-            )}
-          >
-            <span className="astw:text-body-sm astw:text-muted-foreground">{b.label}</span>
-            <span
-              className={cn(
-                "astw:w-full astw:truncate astw:text-body-md",
-                active === b.key ? "astw:text-foreground" : "astw:text-muted-foreground",
-              )}
-            >
-              {fmt(b.value)}
-            </span>
-          </button>
-        ))}
+      <div
+        className="astw:flex astw:justify-center"
+        onPointerDownCapture={(e) => e.stopPropagation()}
+        onMouseDownCapture={(e) => e.stopPropagation()}
+      >
+        <RangeCalendar
+          aria-label={label}
+          value={
+            from.date && to.date ? { start: parseDate(from.date), end: parseDate(to.date) } : null
+          }
+          onSelectionStateChange={(event) => {
+            if (event.type !== "range-complete") {
+              onStateChange(event);
+              return;
+            }
+            const start = event.value.start.toString();
+            const end = event.value.end.toString();
+            // Unchanged dates retain their original sub-minute precision.
+            onStateChange({
+              type: "range-complete",
+              min: start === from.date ? min : toValue(start, from.time),
+              max: end === to.date ? max : toValue(end, to.time),
+            });
+          }}
+        />
       </div>
 
-      {/* Inline calendar (+ time) for the active bound */}
-      {withTime ? (
-        <PanelDateTimeInput
-          ariaLabel={`${label} — ${activeBound.label}`}
-          value={activeBound.value}
-          onChange={activeBound.onChange}
-        />
-      ) : (
-        <PanelDateInput
-          ariaLabel={`${label} — ${activeBound.label}`}
-          value={activeBound.value}
-          onChange={activeBound.onChange}
-        />
+      {withTime && (
+        <div className="astw:grid astw:grid-cols-2 astw:gap-2">
+          {bounds.map((b) => (
+            <label key={b.key} className="astw:flex astw:min-w-0 astw:flex-col astw:gap-1">
+              <Text.span variant="body-sm" className="astw:text-muted-foreground">
+                {b.label}
+              </Text.span>
+              <Input
+                type="time"
+                aria-label={`${label} — ${b.label} (${t("chooseTime")})`}
+                value={b.time}
+                onChange={(e) =>
+                  onStateChange({
+                    type: "time-change",
+                    bound: b.key,
+                    value: toValue(b.date, e.target.value),
+                  })
+                }
+                className="astw:h-8 astw:min-w-0 astw:text-body-md"
+              />
+            </label>
+          ))}
+        </div>
       )}
 
       {error && (
@@ -517,8 +559,31 @@ function PanelValueEditor({
       : null;
   const [min, setMin] = useState(range?.min != null ? String(range.min) : "");
   const [max, setMax] = useState(range?.max != null ? String(range.max) : "");
+  const [rangeKey, setRangeKey] = useState(0);
+  const [isSelectingRange, setIsSelectingRange] = useState(false);
+
+  const handleRangeStateChange = (event: RangeInputEvent) => {
+    switch (event.type) {
+      case "selection-start":
+        setIsSelectingRange(true);
+        break;
+      case "range-complete":
+        setMin(event.min);
+        setMax(event.max);
+        setIsSelectingRange(false);
+        break;
+      case "selection-cancel":
+        setIsSelectingRange(false);
+        break;
+      case "time-change":
+        if (event.bound === "min") setMin(event.value);
+        else setMax(event.value);
+        break;
+    }
+  };
 
   const apply = () => {
+    if (isSelectingRange) return;
     if (type === "enum") {
       if (enumSel.length === 0) control.removeFilter(field);
       else control.addFilter(field, "in", enumSel);
@@ -563,11 +628,15 @@ function PanelValueEditor({
     setText("");
     setMin("");
     setMax("");
+    // Also discard the calendar's unfinished two-click selection.
+    setRangeKey((key) => key + 1);
+    setIsSelectingRange(false);
   };
 
   // Gate the Apply button so it's disabled on invalid input (rather than enabled
   // but inert). An empty draft is allowed only when it clears an existing filter.
   const canApply = (() => {
+    if (isSelectingRange) return false;
     if (type === "enum") return enumSel.length > 0 || !!filter;
     if (type === "boolean") return true;
     if (isBetween) {
@@ -609,30 +678,17 @@ function PanelValueEditor({
         ))}
       </div>
     );
-  } else if (isBetween && type === "date") {
-    // Range dates: one inline calendar with From/To tabs on top.
+  } else if (isBetween && (type === "date" || type === "datetime")) {
+    // Leave room for all seven fixed-width calendar columns.
     editor = (
-      <div className="astw:p-2">
+      <div className="astw:px-0.5 astw:py-2">
         <PanelDateRangeInput
+          key={rangeKey}
           label={label}
           min={min}
           max={max}
-          onChangeMin={setMin}
-          onChangeMax={setMax}
-        />
-      </div>
-    );
-  } else if (isBetween && type === "datetime") {
-    // Range datetimes: one inline calendar + time with From/To tabs on top.
-    editor = (
-      <div className="astw:p-2">
-        <PanelDateRangeInput
-          label={label}
-          min={min}
-          max={max}
-          onChangeMin={setMin}
-          onChangeMax={setMax}
-          withTime
+          onStateChange={handleRangeStateChange}
+          withTime={type === "datetime"}
         />
       </div>
     );

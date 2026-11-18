@@ -33,19 +33,20 @@ const resolveDefault = (configured: ToastDefault | undefined): Required<ToastDef
 const isErrorOptions = (result: PromiseErrorResult): result is PromiseErrorOptions =>
   typeof result === "object" && result !== null && "message" in result;
 
-const applyDefault = (
-  data: ExternalToast | undefined,
+const applyDefault = <D extends Pick<ExternalToast, "duration" | "closeButton" | "dismissible">>(
+  data: D | undefined,
   fallback: Required<ToastDefault>,
-): ExternalToast | undefined => {
+): D | undefined => {
   // A toast the user cannot dismiss gets no close button from Sonner (it draws one that does
   // nothing) and must not stay open by default either, or nothing but `toast.dismiss(id)` ends
   // it. It keeps Sonner's defaults; a caller that closes it in code passes `duration: Infinity`.
   if (data?.dismissible === false) return data;
+  // Only `duration` and `closeButton` change, so the result keeps the caller's type.
   return {
     ...data,
     duration: data?.duration ?? fallback.duration,
     closeButton: data?.closeButton ?? fallback.closeButton,
-  };
+  } as D;
 };
 
 const createToast = (defaults: ToastDefaults): Toast => {
@@ -89,6 +90,17 @@ const createToast = (defaults: ToastDefaults): Toast => {
     };
   };
 
+  /**
+   * Sonner copies a call-level `action` into the loading toast and merges each later state into
+   * it, so the success state shows the action too. The action default therefore goes on the
+   * call. The error state is resolved first, from the call as the caller wrote it, so it keeps
+   * the error default.
+   */
+  const withPromiseDefaults = <T>(data: PromiseData<T>): PromiseData<T> => {
+    const withErrorDefaults = withPromiseErrorDefaults(data);
+    return data.action ? applyDefault(withErrorDefaults, actionDefault)! : withErrorDefaults;
+  };
+
   const methods: ToastMethods = {
     success: (message, data) => sonnerToast.success(message, withActionDefaults(data)),
     info: (message, data) => sonnerToast.info(message, withActionDefaults(data)),
@@ -96,8 +108,7 @@ const createToast = (defaults: ToastDefaults): Toast => {
     message: (message, data) => sonnerToast.message(message, withActionDefaults(data)),
     loading: (message, data) => sonnerToast.loading(message, withActionDefaults(data)),
     error: (message, data) => sonnerToast.error(message, applyDefault(data, errorDefault)),
-    promise: (promise, data) =>
-      sonnerToast.promise(promise, data && withPromiseErrorDefaults(data)),
+    promise: (promise, data) => sonnerToast.promise(promise, data && withPromiseDefaults(data)),
     // `custom` renders the caller's JSX alone: Sonner draws neither the action nor the close
     // button for it, so a sticky default would leave nothing to close with. It passes through.
     custom: sonnerToast.custom,

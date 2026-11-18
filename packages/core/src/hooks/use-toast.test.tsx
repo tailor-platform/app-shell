@@ -252,6 +252,51 @@ describe("useToast", () => {
       expect(t).not.toHaveProperty("closeButton");
     });
   });
+
+  it("keeps the success state of a toast.promise with an action until the user closes it", async () => {
+    vi.useFakeTimers();
+    renderToaster();
+    await act(async () => {
+      await toast
+        .promise(Promise.resolve(1), {
+          loading: "Saving",
+          success: "Saved with undo",
+          action: { label: "Undo", onClick: () => {} },
+        })
+        .unwrap();
+    });
+    expect(activeToast("Saved with undo")).toMatchObject({
+      type: "success",
+      duration: Infinity,
+      closeButton: true,
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+    expect(document.body.textContent).toContain("Saved with undo");
+    expect(closeButtonOf("Saved with undo")).toBeTruthy();
+  });
+
+  it("keeps the error default on a toast.promise with an action, and the caller still wins", async () => {
+    const t = useToastWith({ error: { duration: 7000 } });
+    const failing = t.promise(Promise.reject(new Error("boom")), {
+      loading: "Saving",
+      error: "Failed with undo",
+      action: { label: "Undo", onClick: () => {} },
+    });
+    const own = toast.promise(Promise.resolve(1), {
+      loading: "Saving",
+      success: "Saved quickly",
+      action: { label: "Undo", onClick: () => {} },
+      duration: 3000,
+    });
+    await expect(failing.unwrap()).rejects.toThrow("boom");
+    await own.unwrap();
+    await waitFor(() => {
+      expect(activeToast("Failed with undo")).toMatchObject({ duration: 7000, closeButton: true });
+      expect(activeToast("Saved quickly")).toMatchObject({ duration: 3000, closeButton: true });
+    });
+  });
 });
 
 describe("useToast with <AppShell toastDefaults>", () => {

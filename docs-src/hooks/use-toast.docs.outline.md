@@ -42,7 +42,7 @@ toast.error("Retrying in 5s", { duration: 5000 }); // closes after 5 seconds
 toast.error("Failed to save", { closeButton: false }); // stays; swipe, or Escape while it has focus, dismisses it
 ```
 
-For `toast.promise`, a `duration` or `closeButton` on the call applies to the error state, and an `error` result object (`{ message, duration, closeButton, ... }`) wins over both.
+For `toast.promise`, a `duration` or `closeButton` on the call applies to the error state, and an `error` result object (`{ message, duration, closeButton, ... }`) wins over both. An `action` on the call is shown in the loading and success states, so those states get the action defaults too.
 
 A toast with `dismissible: false` keeps sonner's defaults (no close button, closes after 4 seconds): the user cannot close it, so `useToast` does not keep it open. If the caller closes it with `toast.dismiss(id)`, pass `duration: Infinity`.
 

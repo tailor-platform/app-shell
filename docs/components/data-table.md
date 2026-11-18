@@ -1941,6 +1941,8 @@ All options accepted by `useCollectionVariables` are accepted here too. `tableMe
 | Sort       | `s`                    | `?s=createdAt:desc`   |
 | Filter     | `f.<field>:<operator>` | `?f.status:eq=ACTIVE` |
 
+When a filter explicitly sets `caseSensitive`, the value keeps its existing URL key and a separate `f.<field>:<operator>:cs` parameter stores `true` or `false`, for example `?f.title:contains=Alice&f.title:contains:cs=false`. `cs` is short for `caseSensitive`; named flags are independent of their order in the URL. Both values survive a refresh or shared link. Filters without an explicit setting keep the original URL format and behavior; older URLs remain supported.
+
 Cursor position is deliberately not persisted — `CollectionControl` owns it internally. A refresh or a shared link restores filters, sort and page size, and returns to the first page.
 
 ### Custom search-params binding: `withURLCollectionState`

@@ -209,7 +209,7 @@ export function FormTemplatesOverview() {
           <Text.h2 variant="heading-lg">Complex examples</Text.h2>
           <Text variant="body-md" className="text-muted-foreground max-w-3xl">
             How far FormLayout stretches: container-driven reflow, dense records, nested groups,
-            conditional fields, a summary panel, editable line items, and editing in place.
+            conditional fields, a summary panel and editable line items.
           </Text>
         </div>
         <ComplexExamples />

@@ -239,10 +239,12 @@ function Items<T extends ActivityCardBaseItem>({ children }: ActivityCardItemsPr
           <Dialog.Header>
             <Dialog.Title>All activities</Dialog.Title>
           </Dialog.Header>
-          <div
+          {/* `Dialog.Body` scrolls the list while the title stays in view.
+              Its left edge is pulled back in to keep the list where it was. */}
+          <Dialog.Body
             onScroll={handleScroll}
             className={cn(
-              "astw:overflow-y-auto astw:flex-1 astw:min-h-0 astw:-mr-6 astw:pr-6 astw:pl-1",
+              "astw:ml-0 astw:pl-1",
               "astw:[scrollbar-width:thin]",
               "astw:[&::-webkit-scrollbar]:w-1.5",
               "astw:[&::-webkit-scrollbar-track]:bg-transparent",
@@ -254,7 +256,7 @@ function Items<T extends ActivityCardBaseItem>({ children }: ActivityCardItemsPr
             )}
           >
             {renderList(items, children, groupBy)}
-          </div>
+          </Dialog.Body>
         </Dialog.Content>
       </Dialog.Root>
     </>

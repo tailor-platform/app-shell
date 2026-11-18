@@ -374,18 +374,27 @@ describe("Dialog", () => {
       expect(content.className).not.toContain("astw:overflow-y-auto");
     });
 
-    it("lets className switch to a flex column for a pinned header and footer", async () => {
+    it("scrolls Dialog.Body while the header and footer stay pinned", async () => {
       render(
         <Dialog.Root defaultOpen>
-          <Dialog.Content className="astw:flex astw:flex-col">
-            <Dialog.Title>Pinned</Dialog.Title>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Pinned</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>Long content</Dialog.Body>
+            <Dialog.Footer>Actions</Dialog.Footer>
           </Dialog.Content>
         </Dialog.Root>,
       );
 
       const content = await screen.findByRole("dialog");
-      expect(content.className).toContain("astw:flex");
-      expect(content.className).not.toMatch(/(^|\s)astw:grid(\s|$)/);
+      expect(content.className).toContain("astw:flex-col");
+      // Every child but the body keeps its height; the body shrinks and scrolls.
+      expect(content.className).toContain("astw:[&>*:not([data-slot=dialog-body])]:shrink-0");
+      const body = screen.getByText("Long content");
+      expect(body.dataset.slot).toBe("dialog-body");
+      expect(body.className).toContain("astw:min-h-0");
+      expect(body.className).toContain("astw:overflow-y-auto");
     });
   });
   // jsdom has no layout, so overflow is simulated by stubbing the popup's

@@ -17,6 +17,8 @@ The `Badge` component displays status indicators, labels, and tags with multiple
 import { Badge, type BadgeVariant, type BadgeOptions } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `badgeVariants` from `@tailor-platform/app-shell` and `AlertCircle`, `CheckCircle`, and `XCircle` from `lucide-react`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -27,31 +29,13 @@ import { Badge, type BadgeVariant, type BadgeOptions } from "@tailor-platform/ap
 
 Filled variants for high emphasis, plus subtle variants for lower-emphasis status labels:
 
-```tsx
-<Badge variant="default">Default</Badge>
-<Badge variant="success">Approved</Badge>
-<Badge variant="warning">Pending</Badge>
-<Badge variant="error">Rejected</Badge>
-<Badge variant="neutral">Draft</Badge>
-<Badge variant="info">New</Badge>
-<Badge variant="subtle-success">Matched</Badge>
-<Badge variant="subtle-warning">Needs Attention</Badge>
-<Badge variant="subtle-error">Needs Review</Badge>
-<Badge variant="subtle-info">In Progress</Badge>
-<Badge variant="subtle-neutral">Archived</Badge>
-```
+<!-- example: solid-and-subtle-variants -->
 
 ### Outline Variants with Status Dots
 
 Outlined badges with colored status dots for subtle emphasis:
 
-```tsx
-<Badge variant="outline-success">Active</Badge>
-<Badge variant="outline-warning">In Progress</Badge>
-<Badge variant="outline-error">Failed</Badge>
-<Badge variant="outline-info">Info</Badge>
-<Badge variant="outline-neutral">Inactive</Badge>
-```
+<!-- example: outline-variants -->
 
 <!-- api -->
 
@@ -98,19 +82,7 @@ interface BadgeOptions {
 
 ### Order Status
 
-```tsx
-function OrderStatus({ status }: { status: string }) {
-  const variantMap: Record<string, BadgeVariant> = {
-    pending: "outline-warning",
-    processing: "outline-info",
-    shipped: "outline-success",
-    delivered: "success",
-    cancelled: "outline-error",
-  };
-
-  return <Badge variant={variantMap[status] || "neutral"}>{status.toUpperCase()}</Badge>;
-}
-```
+<!-- example: order-statuses -->
 
 ### Priority Badges
 
@@ -133,53 +105,15 @@ const priorities = [
 
 ### With Icons
 
-```tsx
-import { CheckCircle, AlertCircle, XCircle } from "lucide-react";
-
-<div className="flex gap-2">
-  <Badge variant="success">
-    <CheckCircle className="w-3 h-3 mr-1" />
-    Verified
-  </Badge>
-  <Badge variant="warning">
-    <AlertCircle className="w-3 h-3 mr-1" />
-    Review
-  </Badge>
-  <Badge variant="error">
-    <XCircle className="w-3 h-3 mr-1" />
-    Blocked
-  </Badge>
-</div>;
-```
+<!-- example: with-icons -->
 
 ### Dynamic Variant Selection
 
-```tsx
-interface Product {
-  name: string;
-  stock: number;
-}
-
-function ProductBadge({ product }: { product: Product }) {
-  // Determine variant based on stock level
-  let variant: BadgeVariant = "success";
-  if (product.stock === 0) {
-    variant = "error";
-  } else if (product.stock < 10) {
-    variant = "warning";
-  }
-
-  return <Badge variant={variant}>{product.stock} in stock</Badge>;
-}
-```
+<!-- example: dynamic-variants -->
 
 ### Custom Styling
 
-```tsx
-<Badge variant="success" className="uppercase">
-  Premium
-</Badge>
-```
+<!-- example: custom-styling -->
 
 ## Visual Reference
 
@@ -274,9 +208,4 @@ Badges are styled with the library's internal `astw:`-prefixed utilities. Write 
 2. **Overriding CSS variables** in your theme
 3. **Creating custom variants** using the `badgeVariants` utility
 
-```tsx
-import { badgeVariants } from "@tailor-platform/app-shell";
-import { cn } from "@/lib/utils";
-
-<div className={cn(badgeVariants({ variant: "success" }), "mt-2")}>Custom Badge</div>;
-```
+<!-- example: styling-utility -->

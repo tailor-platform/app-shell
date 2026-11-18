@@ -80,18 +80,18 @@ The options type of sonner's `toast`. Inside an app that depends only on `@tailo
 
 ### Basic Toast
 
-```typescript
-import { useToast } from "@tailor-platform/app-shell";
+Import `Button` and `useToast` from `@tailor-platform/app-shell`. The button only displays the notification; no data is saved.
 
-function SaveButton() {
+<example-preview name="basic-toast"></example-preview>
+
+```tsx
+function BasicToast() {
   const toast = useToast();
-
-  const handleSave = () => {
-    // Save logic...
-    toast("Saved", { description: "Your changes have been saved." });
-  };
-
-  return <button onClick={handleSave}>Save</button>;
+  return (
+    <Button onClick={() => toast("Saved", { description: "Your changes have been saved." })}>
+      Show saved notification
+    </Button>
+  );
 }
 ```
 
@@ -150,8 +150,17 @@ function ArchiveButton({ item }: { item: Item }) {
 
 ### Custom Duration
 
-```typescript
-toast("Processing...", { duration: 5000 }); // 5 seconds
+<example-preview name="custom-duration"></example-preview>
+
+```tsx
+function CustomDuration() {
+  const toast = useToast();
+  return (
+    <Button onClick={() => toast("Processing...", { duration: 5000 })}>
+      Show a five-second toast
+    </Button>
+  );
+}
 ```
 
 ## Related

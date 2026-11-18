@@ -196,27 +196,33 @@ The date controls now follow the same composition model as `Field`, `Select`, `C
 
 TypeScript will error on the removed props; delete them and compose with `Field.Root` instead.
 
+Both examples use `useTimeZone()` at the top level of the component so the minimum date follows AppShell's configured timezone.
+
 Before:
 
 ```tsx
+const timeZone = useTimeZone();
+
 <DatePicker
   label="Delivery date"
   description="When should we ship your order?"
-  minValue={today(getLocalTimeZone())}
+  minValue={timeZone.today()}
   errorMessage={error}
   isInvalid={!!error}
-/>
+/>;
 ```
 
 After:
 
 ```tsx
+const timeZone = useTimeZone();
+
 <Field.Root invalid={!!error}>
   <Field.Label>Delivery date</Field.Label>
-  <DatePicker aria-label="Delivery date" minValue={today(getLocalTimeZone())} />
+  <DatePicker aria-label="Delivery date" minValue={timeZone.today()} />
   <Field.Description>When should we ship your order?</Field.Description>
   <Field.Error match={!!error}>{error}</Field.Error>
-</Field.Root>
+</Field.Root>;
 ```
 
 `isInvalid` remains a top-level prop for externally-controlled invalid styling. Semantic date props (`isRequired`, `isDisabled`, `isReadOnly`, `minValue`, `maxValue`, `isDateUnavailable`) remain top-level and unchanged. Standalone usage still works with an accessible name:

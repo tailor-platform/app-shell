@@ -196,9 +196,7 @@ Each intent has eight roles. The intents are `info`, `success`, `warning`, `dang
 | `contrast`      | `text-info-contrast`    | Text on a filled background         |
 | `indicator`     | `bg-info-indicator`     | Dots and small marks                |
 
-```tsx
-<span className="rounded-md bg-success-surface px-2 py-0.5 text-success-text">Paid</span>
-```
+<!-- example: semantic-color-roles -->
 
 The hue roles have the same values in every shipped palette. `cream` and `bloom` change brand and surface colors, not status colors. The `neutral` roles follow the palette, because they read the system tokens.
 
@@ -224,11 +222,7 @@ Most `surface` and `border` values are translucent tints, so an opacity modifier
 
 For new custom surfaces, use the roles instead of the alert slots:
 
-```tsx
-<div className="rounded-lg border bg-warning-surface text-warning-text border-warning-border">
-  …
-</div>
-```
+<!-- example: warning-surface -->
 
 Across all colour tokens:
 
@@ -297,17 +291,15 @@ Pair a role with a color token from the Color section above. These pairings are 
 
 For headings, body copy, labels, and captions, use the [`Text`](../components/text.md) component. Do not style a bare `p`, `h1` to `h6`, or `span` with `text-sm`, `text-xs`, or `font-*`. The `prefer-text-components` rule in `@tailor-platform/eslint-plugin-app-shell` reports a size on these elements, and a weight, line height, or letter spacing that is set without a role. It is not in `recommended`, so enable it in your `oxlint.config.ts`. A form field label is [`Field.Label`](../components/form.md), which already has the `label-md` role. `Text` applies the same roles with a `variant` prop. It renders a default element for each role (`h2` for headings, `p` for body text, `span` for the others). To set the element, such as the heading level, use an element component (`Text.h1` to `Text.h6`, `Text.p`, `Text.span`, `Text.div`):
 
-```tsx
-<Text.h3 variant="heading-md">Line items</Text.h3>
-<Text variant="body-md" className="text-muted-foreground">Description copy</Text>
-<Text variant="body-sm" className="text-muted-foreground">Updated 2h ago</Text>
-```
+Import `Text` from `@tailor-platform/app-shell`:
+
+<!-- example: text-typography -->
 
 Use the role utility when you style an element that you render yourself, such as a table header cell or a link:
 
-```tsx
-<th className="text-label-md text-muted-foreground">Amount</th>
-```
+The surrounding table uses `Table` from `@tailor-platform/app-shell`; the header cell itself is ordinary markup:
+
+<!-- example: table-header-role -->
 
 On an `h1` to `h6` element, the `cream` and `bloom` palettes replace the role's line height and letter spacing, including `leading-none`; see "Change a role" below. AppShell's own components use the roles: content text renders with `Text`, and controls use the role utility.
 
@@ -406,9 +398,9 @@ Higher shadow reads as "more transient" — match it to the component's lifetime
 | State change (toggle, select) | `duration-200 ease-in-out` |
 | Entrance, dialog open         | `duration-300 ease-out`    |
 
-```tsx
-<div className="transition-colors duration-150 ease-out motion-reduce:transition-none" />
-```
+This example uses `Button` from `@tailor-platform/app-shell`. Hover or keyboard-focus it to see the surface transition:
+
+<!-- example: reduced-motion -->
 
 Always give motion a reduced-motion escape (`motion-reduce:transition-none`, or a `@media (prefers-reduced-motion: reduce)` block in CSS). AppShell components handle this internally; custom components must do the same.
 
@@ -429,9 +421,9 @@ The old names are aliases with the same values and will be removed in the next m
 
 These exist as raw `:root` variables in the shipped base layer, but are **not** bridged into Tailwind — `z-portal` is not a class. Reference the variable:
 
-```tsx
-<div className="z-(--z-portal)" />
-```
+The following overlap is contained in an isolated stacking context; it illustrates the token without creating a real page-level portal:
+
+<!-- example: z-index-token -->
 
 **Popup or overlay.** The portal band has one token. Whether the page behind a layer stays usable is a separate axis, set by the component and its `modal` prop:
 
@@ -463,11 +455,9 @@ These exist as raw `:root` variables in the shipped base layer, but are **not** 
 | 18px: `text-lg`, `text-heading-md`                                  | `size-5`   |
 | 24px (title): `text-2xl`, `text-heading-lg`                         | `size-6`   |
 
-```tsx
-import { Check } from "lucide-react";
+Import `Check` from `lucide-react` and `Text` from `@tailor-platform/app-shell`:
 
-<Check className="size-4" />;
-```
+<!-- example: icon-sizing -->
 
 ### Breakpoints
 

@@ -17,6 +17,8 @@ sources:
 import { ActionPanel } from "@tailor-platform/app-shell";
 ```
 
+The loading example also imports `useEffect` and `useState` from `react`, `Text` from `@tailor-platform/app-shell`, and `Check` from `lucide-react`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -52,33 +54,9 @@ Pass `null` to hide the empty content and its additional vertical spacing while 
 
 ## With Loading State
 
-Use parent state to control which row is loading:
+Use parent state to control which row is loading. This example simulates confirmation with a one-second timer, which is cleaned up when the example unmounts. Click again after completion to repeat it. For a real request, set the loading key before awaiting it and clear it in `finally`.
 
-```tsx
-const [loadingKey, setLoadingKey] = useState<string | null>(null);
-
-const handleConfirm = async () => {
-  setLoadingKey("confirm");
-  try {
-    await confirmOrder(orderId);
-  } finally {
-    setLoadingKey(null);
-  }
-};
-
-<ActionPanel
-  title="Actions"
-  actions={[
-    {
-      key: "confirm",
-      label: "Confirm order",
-      icon: <CheckIcon />,
-      onClick: handleConfirm,
-      loading: loadingKey === "confirm",
-    },
-  ]}
-/>;
-```
+<!-- example: with-loading-state -->
 
 ## CommandPalette Integration
 

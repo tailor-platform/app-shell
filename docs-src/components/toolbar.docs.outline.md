@@ -11,58 +11,27 @@ sources:
 
 `Toolbar` is a full-width action bar. It is independent of `DataTable`: place any AppShell or application control in it, including buttons, search fields, selects, comboboxes, and tabs.
 
-```tsx
-import { Toolbar } from "@tailor-platform/app-shell";
+## Import
 
-<Toolbar.Root>
-  <Toolbar.Row justify="between" aria-label="Order actions">
-    <Toolbar.Group>
-      <Button variant="outline">Export</Button>
-    </Toolbar.Group>
-    <Toolbar.Group>
-      <Button>New order</Button>
-    </Toolbar.Group>
-  </Toolbar.Row>
-</Toolbar.Root>;
+```tsx
+import { Button, Input, Toolbar } from "@tailor-platform/app-shell";
 ```
+
+## Basic Usage
+
+<!-- example: basic-usage -->
 
 ## Structure
 
 `Toolbar.Root` stacks rows. `Toolbar.Row` is one horizontal, keyboard-navigable action row. Use `Toolbar.Group` to keep related controls together and `Toolbar.Separator` to divide groups.
 
-```tsx
-<Toolbar.Root>
-  <Toolbar.Row justify="between" aria-label="Text formatting">
-    <Toolbar.Group>
-      <Button>Bold</Button>
-      <Button>Italic</Button>
-      <Toolbar.Separator />
-      <Button>Copy</Button>
-    </Toolbar.Group>
-
-    <Toolbar.Group>
-      <Button>Save</Button>
-    </Toolbar.Group>
-  </Toolbar.Row>
-
-  <Toolbar.Row aria-label="Active filters">
-    <Toolbar.Group>
-      <Button variant="secondary">Status: Open</Button>
-    </Toolbar.Group>
-  </Toolbar.Row>
-</Toolbar.Root>
-```
+<!-- example: structure -->
 
 ### Row alignment
 
 Use `justify="between"` when a row has one leading and one trailing group. The row places those outer groups at opposite edges. The default, `"start"`, keeps every group at the leading edge.
 
-```tsx
-<Toolbar.Row justify="between" aria-label="List actions">
-  <Toolbar.Group>{/* search and filters */}</Toolbar.Group>
-  <Toolbar.Group>{/* export and create actions */}</Toolbar.Group>
-</Toolbar.Row>
-```
+<!-- example: row-alignment -->
 
 Keep controls that belong to the leading region in the same group. `justify="between"` distributes **direct** groups, so a separator should also stay inside that group.
 

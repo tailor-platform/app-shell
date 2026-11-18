@@ -15,6 +15,8 @@ The `Autocomplete` component provides a free-text input with a suggestion list. 
 import { Autocomplete } from "@tailor-platform/app-shell";
 ```
 
+The runnable examples also import `useRef` and `useState` from `react`, and `Button`, `Field`, `Form`, `Text`, and the `AutocompleteAsyncFetcher` type from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -71,52 +73,81 @@ interface ItemGroup<T> {
 
 ## Grouped Suggestions
 
-```tsx
-const cities = [
-  { label: "Japan", items: ["Tokyo", "Osaka", "Kyoto"] },
-  { label: "France", items: ["Paris", "Lyon", "Marseille"] },
-];
+<example-preview name="grouped-suggestions"></example-preview>
 
-<Autocomplete items={cities} placeholder="Search cities..." />;
+```tsx
+function GroupedSuggestions() {
+  const cities = [
+    { label: "Japan", items: ["Tokyo", "Osaka", "Kyoto"] },
+    { label: "France", items: ["Paris", "Lyon", "Marseille"] },
+  ];
+
+  return (
+    <Autocomplete items={cities} aria-label="Grouped city search" placeholder="Search cities..." />
+  );
+}
 ```
 
 ## Object Items with mapItem
 
 When items are objects, use `mapItem` to tell the component how to display them. The selected value is the item's `label` string returned by `mapItem`:
 
+<example-preview name="object-items"></example-preview>
+
 ```tsx
-type City = { code: string; name: string };
+function ObjectItems() {
+  type City = { code: string; name: string };
+  const cities: City[] = [
+    { code: "TYO", name: "Tokyo" },
+    { code: "OSA", name: "Osaka" },
+  ];
 
-const cities: City[] = [
-  { code: "TYO", name: "Tokyo" },
-  { code: "OSA", name: "Osaka" },
-];
-
-<Autocomplete
-  items={cities}
-  mapItem={(city) => ({ label: city.name, key: city.code })}
-  placeholder="Search cities..."
-  onValueChange={(name) => console.log(name)} // receives "Tokyo", "Osaka", etc.
-/>;
+  return (
+    <Autocomplete
+      items={cities}
+      mapItem={(city) => ({ label: city.name, key: city.code })}
+      aria-label="City name"
+      placeholder="Search cities..."
+      onValueChange={(name) => console.log(name)}
+    />
+  );
+}
 ```
 
 ## Async Suggestions
 
 Use `Autocomplete.Async` to fetch suggestions as the user types. The fetcher is called on each keystroke (debounced). When the dropdown first opens or the input is cleared, the fetcher receives `null` as the query — return initial/default suggestions for `null`, or return an empty array to show nothing until the user starts typing.
 
+Type **ap** or **ba** to try debounced lookups, a short loading state, and suggestion selection. The example filters local fixtures after a delay and checks the supplied `AbortSignal`; no network request is made. Its value remains the input text, including text that does not match a suggestion. In an application, replace the fixture lookup with your API and forward `signal` to `fetch`.
+
+<example-preview name="async-suggestions"></example-preview>
+
 ```tsx
-import { type AutocompleteAsyncFetcher } from "@tailor-platform/app-shell";
+function AsyncSuggestions() {
+  const [value, setValue] = useState("");
+  const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    signal.throwIfAborted();
+    return ["Apple", "Apricot", "Banana", "Cherry"].filter((fruit) =>
+      fruit.toLowerCase().includes((query ?? "").toLowerCase()),
+    );
+  };
 
-const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
-  const res = await fetch(`/api/suggestions?q=${query ?? ""}`, { signal });
-  return res.json();
-};
-
-<Autocomplete.Async
-  fetcher={fetcher}
-  placeholder="Search..."
-  onValueChange={(value) => console.log(value)}
-/>;
+  return (
+    <div className="max-w-sm space-y-3">
+      <Autocomplete.Async
+        aria-label="Async fruit suggestions"
+        fetcher={fetcher}
+        value={value}
+        onValueChange={setValue}
+        placeholder="Type ap or ba..."
+        loadingText="Finding fruit..."
+        emptyText="No matching fruit."
+      />
+      <Text.p role="status">Current text: {value || "Empty"}</Text.p>
+    </div>
+  );
+}
 ```
 
 ### Autocomplete.Async Props
@@ -198,18 +229,39 @@ const [query, setQuery] = useState("");
 
 ### Address Input with Async Suggestions
 
-```tsx
-const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
-  if (!query) return [];
-  const res = await fetch(`/api/address-lookup?q=${encodeURIComponent(query)}`, { signal });
-  return res.json();
-};
+Type **Maple** or **Oak**, choose a suggestion, and submit to inspect the address. You may also submit your own free text: Autocomplete does not require choosing an existing item. An empty address is blocked by the surrounding `Field` and `Form`. Suggestions and submission are local-only.
 
-<Autocomplete.Async
-  fetcher={fetcher}
-  placeholder="Start typing an address..."
-  onValueChange={(address) => form.setValue("address", address)}
-/>;
+<example-preview name="address-suggestions"></example-preview>
+
+```tsx
+function AddressSuggestions() {
+  const [submitted, setSubmitted] = useState<{ address: string } | null>(null);
+  const fetcher: AutocompleteAsyncFetcher<string> = async (query, { signal }) => {
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    signal.throwIfAborted();
+    if (!query) return [];
+    return ["10 Maple Street", "12 Maple Avenue", "20 Oak Road"].filter((address) =>
+      address.toLowerCase().includes(query.toLowerCase()),
+    );
+  };
+
+  return (
+    <Form<{ address: string }>
+      noValidate
+      onFormSubmit={setSubmitted}
+      className="max-w-sm space-y-3"
+    >
+      <Field.Root name="address">
+        <Field.Label>Shipping address</Field.Label>
+        <Autocomplete.Async fetcher={fetcher} placeholder="Type Maple or Oak..." required />
+        <Field.Description>Choose a suggestion or enter your own address.</Field.Description>
+        <Field.Error match="valueMissing">Enter an address.</Field.Error>
+      </Field.Root>
+      <Button type="submit">Use address</Button>
+      <Text.p role="status">Submitted address: {submitted?.address ?? "None"}</Text.p>
+    </Form>
+  );
+}
 ```
 
 ### Async with Parts (custom composition)
@@ -225,39 +277,78 @@ Combine `Autocomplete.useAsync` with `Autocomplete.Parts` for full control over 
 | `error`   | `unknown`    | The error thrown by the last fetch, if any              |
 | `retry`   | `() => void` | Re-runs the last fetch (use to build a custom retry UI) |
 
-```tsx
-const suggestions = Autocomplete.useAsync({
-  fetcher: async (query, { signal }) => {
-    const res = await fetch(`/api/suggestions?q=${query ?? ""}`, { signal });
-    return res.json();
-  },
-  onFetchError: (error) => reportError(error),
-});
+Type **k** or **to** to start a lookup. The first completed request deliberately fails; **Retry city search** retries the same query and succeeds. Later searches work normally. The custom composition shows loading, an error, Retry, empty results, and the current input text without a backend. `filter={null}` prevents a second filtering pass over the already-filtered results.
 
-<Autocomplete.Parts.Root {...suggestions} filter={null}>
-  <Autocomplete.Parts.InputGroup>
-    <Autocomplete.Parts.Input placeholder="Search..." />
-    <Autocomplete.Parts.Clear />
-  </Autocomplete.Parts.InputGroup>
-  <Autocomplete.Parts.Content>
-    <Autocomplete.Parts.List>
-      {suggestions.items.map((item) => (
-        <Autocomplete.Parts.Item key={item} value={item}>
-          {item}
-        </Autocomplete.Parts.Item>
-      ))}
-      <Autocomplete.Parts.Empty>
-        {suggestions.error ? (
-          <button onClick={suggestions.retry}>Couldn't load. Retry</button>
-        ) : suggestions.loading ? (
-          "Loading..."
-        ) : (
-          "No results."
-        )}
-      </Autocomplete.Parts.Empty>
-    </Autocomplete.Parts.List>
-  </Autocomplete.Parts.Content>
-</Autocomplete.Parts.Root>;
+<example-preview name="async-with-parts"></example-preview>
+
+```tsx
+function AsyncWithParts() {
+  const failNext = useRef(true);
+  const suggestions = Autocomplete.useAsync<string>({
+    fetcher: async (query, { signal }) => {
+      await new Promise((resolve) => setTimeout(resolve, 450));
+      signal.throwIfAborted();
+      if (failNext.current) {
+        failNext.current = false;
+        throw new Error("Simulated lookup failure");
+      }
+      return ["Tokyo", "Osaka", "Kyoto", "Kobe"].filter((city) =>
+        city.toLowerCase().includes((query ?? "").toLowerCase()),
+      );
+    },
+  });
+
+  return (
+    <div className="max-w-sm space-y-3">
+      <Text.p>The first lookup fails locally. Retry the same search to recover.</Text.p>
+      <Autocomplete.Parts.Root
+        items={suggestions.items}
+        value={suggestions.value}
+        onValueChange={suggestions.onValueChange}
+        filter={null}
+      >
+        <Autocomplete.Parts.InputGroup>
+          <Autocomplete.Parts.Input
+            aria-label="Custom async city search"
+            placeholder="Type k or to..."
+          />
+          <Autocomplete.Parts.Clear />
+          <Autocomplete.Parts.Trigger />
+        </Autocomplete.Parts.InputGroup>
+        <Autocomplete.Parts.Content>
+          <Autocomplete.Parts.Empty>
+            {suggestions.loading ? (
+              "Finding cities..."
+            ) : suggestions.error ? (
+              <div className="space-y-2">
+                <Text.p>Could not load cities.</Text.p>
+                <Button type="button" size="sm" variant="outline" onClick={suggestions.retry}>
+                  Retry city search
+                </Button>
+              </div>
+            ) : (
+              "No matching cities."
+            )}
+          </Autocomplete.Parts.Empty>
+          <Autocomplete.Parts.List>
+            {(city: string) => (
+              <Autocomplete.Parts.Item key={city} value={city}>
+                {city}
+              </Autocomplete.Parts.Item>
+            )}
+          </Autocomplete.Parts.List>
+        </Autocomplete.Parts.Content>
+      </Autocomplete.Parts.Root>
+      <Text.p role="status">
+        {suggestions.loading
+          ? "Loading cities..."
+          : suggestions.error
+            ? "Lookup failed; retry is available."
+            : `Current text: ${suggestions.value || "Empty"}`}
+      </Text.p>
+    </div>
+  );
+}
 ```
 
 ## Accessibility
@@ -267,8 +358,12 @@ const suggestions = Autocomplete.useAsync({
 - Selecting a suggestion fills the input with the item's label
 - When used standalone (no visible `<label>`), give the input an accessible name with `aria-label` or `aria-labelledby` — otherwise screen readers announce only the current value:
 
+<example-preview name="accessible-name"></example-preview>
+
 ```tsx
-<Autocomplete items={items} aria-label="City search" />
+function AccessibleName() {
+  return <Autocomplete items={["Tokyo", "Osaka", "Kyoto"]} aria-label="City search" />;
+}
 ```
 
 ## Related Components

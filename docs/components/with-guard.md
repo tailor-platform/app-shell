@@ -12,30 +12,42 @@ description: Conditionally render UI elements based on guard evaluation with sup
 ## Import
 
 ```tsx
-import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
+import { WithGuard, pass, hidden, type Guard } from "@tailor-platform/app-shell";
 ```
+
+The runnable examples also import `useMemo` and `useState` from `react`, and `Button`, `Checkbox`, `Select`, `Spinner`, and `Text` from `@tailor-platform/app-shell`.
+
+The previews use local role, subscription, and permission values captured by their guards. They reuse the surrounding AppShell provider without changing its `contextData` or performing real authentication. In an application, read those values from the guard's `{ context }` argument, as shown under [Creating Guards](#creating-guards). Keep each guards array stable with `useMemo` until its inputs change.
 
 ## Basic Usage
 
+Choose **Admin** to reveal the protected content, then switch back to **Viewer** to remove it from the DOM. Without a `fallback`, a hidden guard renders nothing.
+
+<example-preview name="basic-usage"></example-preview>
+
 ```tsx
-import { WithGuard, pass, hidden, Text } from "@tailor-platform/app-shell";
+function BasicUsage() {
+  const [role, setRole] = useState("Viewer");
+  const guards = useMemo<Guard[]>(() => [() => (role === "Admin" ? pass() : hidden())], [role]);
 
-const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
-
-function AdminPanel() {
   return (
-    <div>
-      <Text.h1>Dashboard</Text.h1>
-
-      <WithGuard guards={[isAdmin]}>
-        <Button>Delete All Users</Button>
+    <div className="max-w-sm space-y-3">
+      <Select
+        aria-label="Demo role"
+        items={["Viewer", "Admin"]}
+        value={role}
+        onValueChange={(value) => {
+          if (value) setRole(value);
+        }}
+      />
+      <Text.p>Current role: {role}</Text.p>
+      <WithGuard guards={guards}>
+        <Text.p role="status">Admin settings are available.</Text.p>
       </WithGuard>
     </div>
   );
 }
 ```
-
-If the user is not an admin, the button won't render.
 
 ## Props
 
@@ -100,70 +112,151 @@ const isOwner =
 
 ### Simple Role Check
 
-```tsx
-const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
-
-<WithGuard guards={[isAdmin]}>
-  <Button>Admin Settings</Button>
-</WithGuard>;
-```
+The [Basic Usage](#basic-usage) example demonstrates role-based visibility without a fallback.
 
 ### With Fallback
 
-Show alternative content when guard fails:
+Show alternative content when a guard fails. Toggle **Premium subscription** to switch between the upgrade prompt and the protected analytics content.
+
+<example-preview name="with-fallback"></example-preview>
 
 ```tsx
-<WithGuard guards={[isAdmin]} fallback={<Text.p>You need admin access to view this.</Text.p>}>
-  <AdminPanel />
-</WithGuard>
+function WithFallback() {
+  const [premium, setPremium] = useState(false);
+  const guards = useMemo<Guard[]>(() => [() => (premium ? pass() : hidden())], [premium]);
+
+  return (
+    <div className="space-y-3">
+      <Checkbox label="Premium subscription" checked={premium} onCheckedChange={setPremium} />
+      <WithGuard
+        guards={guards}
+        fallback={<Text.p role="status">Upgrade to view analytics.</Text.p>}
+      >
+        <Text.p role="status">Premium analytics are available.</Text.p>
+      </WithGuard>
+    </div>
+  );
+}
 ```
 
 ### With Loading State
 
-Show loading spinner while checking permissions:
+The local permission check waits briefly so its spinner and loading announcement can be observed without an API. Toggle **Allow permission check** to try both outcomes, or use **Check permission again** to repeat the current check. Each request gets a stable guards array; a new request reevaluates it without changing AppShell's context.
+
+<example-preview name="with-loading-state"></example-preview>
 
 ```tsx
-const checkPermission: Guard = async ({ context }) => {
-  const allowed = await api.checkPermission("admin");
-  return allowed ? pass() : hidden();
-};
+function WithLoadingState() {
+  const [request, setRequest] = useState({ allowed: false });
+  const guards = useMemo<Guard[]>(
+    () => [
+      async () => {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+        return request.allowed ? pass() : hidden();
+      },
+    ],
+    [request],
+  );
 
-<WithGuard guards={[checkPermission]} loading={<Spinner />} fallback={<UpgradePrompt />}>
-  <PremiumFeature />
-</WithGuard>;
+  return (
+    <div className="space-y-3">
+      <Checkbox
+        label="Allow permission check"
+        checked={request.allowed}
+        onCheckedChange={(allowed) => setRequest({ allowed })}
+      />
+      <Button variant="outline" onClick={() => setRequest((current) => ({ ...current }))}>
+        Check permission again
+      </Button>
+      <WithGuard
+        guards={guards}
+        loading={
+          <div role="status" className="flex items-center gap-2">
+            <Spinner />
+            <Text.span>Checking permission…</Text.span>
+          </div>
+        }
+        fallback={<Text.p role="status">Permission denied.</Text.p>}
+      >
+        <Text.p role="status">Permission granted.</Text.p>
+      </WithGuard>
+    </div>
+  );
+}
 ```
 
 ### Multiple Guards
 
-All guards must pass for content to render:
+All guards must pass for content to render. Enable **Admin access** and **Beta feature enabled** in either order; the protected feature appears only when both are enabled.
+
+<example-preview name="multiple-guards"></example-preview>
 
 ```tsx
-const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass() : hidden());
+function MultipleGuards() {
+  const [admin, setAdmin] = useState(false);
+  const [betaEnabled, setBetaEnabled] = useState(false);
+  const guards = useMemo<Guard[]>(
+    () => [() => (admin ? pass() : hidden()), () => (betaEnabled ? pass() : hidden())],
+    [admin, betaEnabled],
+  );
 
-const hasFeatureFlag = ({ context }) => (context.featureFlags?.betaFeatures ? pass() : hidden());
-
-<WithGuard guards={[isAdmin, hasFeatureFlag]}>
-  <BetaAdminFeature />
-</WithGuard>;
+  return (
+    <div className="space-y-3">
+      <Checkbox label="Admin access" checked={admin} onCheckedChange={setAdmin} />
+      <Checkbox
+        label="Beta feature enabled"
+        checked={betaEnabled}
+        onCheckedChange={setBetaEnabled}
+      />
+      <WithGuard
+        guards={guards}
+        fallback={
+          <Text.p role="status">Both admin access and the beta feature are required.</Text.p>
+        }
+      >
+        <Text.p role="status">Beta admin feature is available.</Text.p>
+      </WithGuard>
+    </div>
+  );
+}
 ```
 
 ### Parameterized Guards
 
-Use curried functions to create reusable parameterized guards:
+Use curried functions to create reusable parameterized guards. This preview signs in no one: **alex** is a local fixture for the current user. Change the record's owner to see the ownership check pass or fail. A real ownership guard reads the current user's ID from `{ context }`.
+
+<example-preview name="parameterized-guards"></example-preview>
 
 ```tsx
-const isOwner =
-  (resourceId: string): Guard =>
-  ({ context }) => {
-    return context.currentUser?.id === resourceId ? pass() : hidden();
-  };
+function ParameterizedGuards() {
+  const currentUserId = "alex";
+  const [ownerId, setOwnerId] = useState("alex");
+  const guards = useMemo<Guard[]>(() => {
+    const isOwner =
+      (resourceOwnerId: string): Guard =>
+      () =>
+        resourceOwnerId === currentUserId ? pass() : hidden();
+    return [isOwner(ownerId)];
+  }, [currentUserId, ownerId]);
 
-function ResourceActions({ resourceId }) {
   return (
-    <WithGuard guards={[isOwner(resourceId)]}>
-      <Button>Edit</Button>
-      <Button>Delete</Button>
-    </WithGuard>
+    <div className="max-w-sm space-y-3">
+      <Text.p>Signed in as: {currentUserId}</Text.p>
+      <Select
+        aria-label="Record owner"
+        items={["alex", "sam"]}
+        value={ownerId}
+        onValueChange={(value) => {
+          if (value) setOwnerId(value);
+        }}
+      />
+      <WithGuard
+        guards={guards}
+        fallback={<Text.p role="status">Only the record owner can edit.</Text.p>}
+      >
+        <Text.p role="status">You can edit this record.</Text.p>
+      </WithGuard>
+    </div>
   );
 }
 ```
@@ -190,63 +283,27 @@ const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass()
 
 ### Feature Flags
 
-Toggle features based on flags:
+The [Multiple Guards](#multiple-guards) example combines a feature flag with a role check. For a guard reusable in both routes and `WithGuard`, read the flag from your application's typed [context data](#context-data):
 
 ```tsx
-const hasBetaFeature = ({ context }) => (context.featureFlags?.newDashboard ? pass() : hidden());
-
-<WithGuard guards={[hasBetaFeature]} fallback={<OldDashboard />}>
-  <NewDashboard />
-</WithGuard>;
+const hasBetaFeature: Guard = ({ context }) =>
+  context.featureFlags?.newDashboard ? pass() : hidden();
 ```
 
 ### Subscription Tiers
 
-Show features based on user's subscription:
+The [With Fallback](#with-fallback) example switches between a free-tier prompt and premium content. The equivalent reusable guard reads the subscription from your application's typed [context data](#context-data):
 
 ```tsx
-const isPremium = ({ context }) =>
+const isPremium: Guard = ({ context }) =>
   context.currentUser?.subscription === "premium" ? pass() : hidden();
-
-<WithGuard
-  guards={[isPremium]}
-  fallback={
-    <Card>
-      <Text.h3>Premium Feature</Text.h3>
-      <Text.p>Upgrade to access advanced analytics.</Text.p>
-      <Button>Upgrade Now</Button>
-    </Card>
-  }
->
-  <AdvancedAnalytics />
-</WithGuard>;
 ```
+
+The fallback can also be a card or an upgrade link owned by your application.
 
 ### Dynamic Permissions
 
-Check permissions from API:
-
-```tsx
-const canDeleteOrder =
-  (orderId: string): Guard =>
-  async ({ context }) => {
-    const response = await fetch(`/api/orders/${orderId}/permissions`);
-    const { canDelete } = await response.json();
-    return canDelete ? pass() : hidden();
-  };
-
-function OrderActions({ orderId }) {
-  return (
-    <div>
-      <Button>View</Button>
-      <Button>Edit</Button>
-      <WithGuard guards={[canDeleteOrder(orderId)]} loading={<Spinner size="sm" />}>
-        <Button variant="destructive">Delete</Button>
-      </WithGuard>
-    </div>
-  );
-}
-```
+The [With Loading State](#with-loading-state) example demonstrates pending, allowed, and denied states with a local delayed check. Replace that check with your permission API in an application; the loading and fallback behavior is unchanged. See [Creating Guards](#creating-guards) for an API-backed guard shape.
 
 ### Combining with Route Guards
 
@@ -294,10 +351,11 @@ const guards = [guardA, guardB, guardC];
 
 ### Caching
 
-WithGuard caches guard results based on `contextData` reference:
+WithGuard caches guard results while both the `contextData` reference and the `guards` array remain unchanged:
 
-- Guards re-evaluate when `contextData` changes
-- Guards do NOT re-evaluate when props change (except `guards` array)
+- Guards re-evaluate when either `contextData` or the `guards` array reference changes.
+- Other prop changes do not re-evaluate guards.
+- Define fixed guards outside the component, or memoize a guards array with the values its functions capture. Creating a new array on an unrelated render starts another evaluation, including another asynchronous check.
 
 ### Suspense Integration
 

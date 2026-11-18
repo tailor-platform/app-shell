@@ -46,6 +46,8 @@ For `toast.promise`, a `duration` or `closeButton` on the call applies to the er
 
 A toast with `dismissible: false` keeps sonner's defaults (no close button, closes after 4 seconds): the user cannot close it, so `useToast` does not keep it open. If the caller closes it with `toast.dismiss(id)`, pass `duration: Infinity`.
 
+Because these toasts stay, an error that can fire again for the same operation (a retry, a repeated save, one per rejected edit) stacks up a toast for each call. Give the call a stable `id` so the new toast replaces the previous one: `toast.error(message, { id: "save-error" })`.
+
 A call without an `action` that updates an existing toast by `id`, such as `toast.success("Saved", { id })` after `toast.error`, resets `duration` and `closeButton` to sonner's defaults unless it passes its own, so the updated toast closes by itself.
 
 An app changes these defaults with the [`toastDefaults`](../components/app-shell.md#toastdefaults) prop of `AppShell`. A field set there replaces that field only; fields and kinds left out keep the default:

@@ -38,6 +38,7 @@ function InteractionToast() {
 - Up to three stay visible; older ones collapse behind the newest and leave as new ones arrive
 - Success, info and plain toasts close by themselves after 4s
 - Error toasts, and any toast with an `action`, stay until the user closes them and show a close button. `useToast` sets this; a `duration` or `closeButton` passed to the call wins
+- An error that can fire again for the same operation (a retry, a repeated save, one per rejected edit) passes a stable `id`, so the new toast replaces the previous one instead of stacking another toast the user has to close
 - Never make a toast the only way to do something. If a toast offers Undo, the page offers a way back too. While a dialog or sheet is open, the keyboard reaches a toast only through sonner's hotkey (Alt+T)
 
 ## Anti-patterns

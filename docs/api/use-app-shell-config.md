@@ -55,16 +55,17 @@ const useAppShellConfig: () => {
 
 ### Display App Info
 
-```typescript
-import { Text, useAppShellConfig } from "@tailor-platform/app-shell";
+Import `Text` and `useAppShellConfig` from `@tailor-platform/app-shell`. The previews below read the documentation browser's configuration.
 
+<example-preview name="app-info"></example-preview>
+
+```tsx
 function AppInfo() {
   const { title, configurations } = useAppShellConfig();
-
   return (
     <div>
       <Text.h2>{title}</Text.h2>
-      <Text.p>Base: {configurations.basePath}</Text.p>
+      <Text.p>Base: {configurations.basePath || "/"}</Text.p>
     </div>
   );
 }
@@ -74,14 +75,15 @@ function AppInfo() {
 
 Module titles are `LocalizedString` values (a string or a `(locale) => string` function), so the example lists `path` instead of rendering `meta.title` directly.
 
-```typescript
+<example-preview name="module-list"></example-preview>
+
+```tsx
 function ModuleList() {
   const { configurations } = useAppShellConfig();
-
   return (
-    <ul>
+    <ul className="list-inside list-disc">
       {configurations.modules.map((module) => (
-        <li key={module.path}>{module.path}</li>
+        <li key={module.path}>{module.path || "/"}</li>
       ))}
     </ul>
   );

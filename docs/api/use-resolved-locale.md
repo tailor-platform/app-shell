@@ -32,30 +32,34 @@ const useResolvedLocale: () => {
 
 ## Usage
 
-```typescript
-import { useResolvedLocale } from "@tailor-platform/app-shell";
+Import `Text` and `useResolvedLocale` from `@tailor-platform/app-shell`. These examples format fixed values using the documentation browser's locale.
 
-function DateDisplay({ date }: { date: Date }) {
+<example-preview name="date-display"></example-preview>
+
+```tsx
+function DateDisplay() {
   const { locale } = useResolvedLocale();
-
+  const date = new Date("2025-12-19T12:00:00Z");
   return (
-    <span>
-      {new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(date)}
-    </span>
+    <Text.span>
+      {new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(date)}
+    </Text.span>
   );
 }
 ```
 
 ### Locale-aware number formatting
 
-```typescript
-function PriceDisplay({ amount }: { amount: number }) {
-  const { locale } = useResolvedLocale();
+<example-preview name="price-display"></example-preview>
 
+```tsx
+function PriceDisplay() {
+  const { locale } = useResolvedLocale();
+  const amount = 1234.56;
   return (
-    <span>
+    <Text.span>
       {new Intl.NumberFormat(locale, { style: "currency", currency: "USD" }).format(amount)}
-    </span>
+    </Text.span>
   );
 }
 ```

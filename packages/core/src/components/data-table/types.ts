@@ -1,5 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import type { TreeSelectionBehaviorProps } from "@/lib/tree/types";
+import type { DateTimeDraft } from "@/components/internals/table-core/editing/date";
+export type { DateTimeDraft } from "@/components/internals/table-core/editing/date";
 import type {
   BadgeCellOptions,
   DateCellOptions,
@@ -40,12 +42,6 @@ export type { BadgeVariant } from "@/components/badge-list";
 export interface CellEditState {
   /** Whether the row is selected. Always `false` when row selection is off. */
   selected: boolean;
-}
-
-/** Incomplete date-time editor state, interpreted in the AppShell timezone. */
-export interface DateTimeDraft {
-  day: string | null;
-  time: string | null;
 }
 
 interface CellEditBase<TRow extends Record<string, unknown>, TValue, TDraft = TValue | null> {

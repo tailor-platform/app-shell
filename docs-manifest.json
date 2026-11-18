@@ -405,6 +405,8 @@
       "sources": [
         "packages/core/src/components/data-table/**",
         "packages/core/src/components/internals/table-core/column-types.ts",
+        "packages/core/src/components/internals/table-core/cell-edit-error.ts",
+        "packages/core/src/components/internals/table-core/editing/date.tsx",
         "packages/core/src/hooks/use-collection-variables.ts",
         "packages/core/src/lib/collection-url-state.ts",
         "packages/core/src/contexts/collection-control-context.tsx",
@@ -478,9 +480,9 @@
       ],
       "hashes": {
         "typeSurface": "8ada983257d51646",
-        "outline": "b35f6af1a5862a7e",
+        "outline": "40d0305327c04592",
         "snapshot": "a97e067c66e46ef6",
-        "outputMd": "5245e4f3e598fbd4",
+        "outputMd": "4a7f71a5234633a4",
         "examples": "e7100d7517f72495"
       }
     },
@@ -1823,7 +1825,7 @@
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "dfb775c7c4307409",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "53d3c795ca21b9dc",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "5245e4f3e598fbd4",
+    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "4a7f71a5234633a4",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "df6777c49ca5c7e2",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "8e24da61e95b6434",

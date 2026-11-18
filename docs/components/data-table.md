@@ -35,8 +35,8 @@ import {
   type NumberCellEditOptions,
   type BadgeCellEditOptions,
   type DateCellEditOptions,
-  type CellEditState,
   type DateTimeDraft,
+  type CellEditState,
   type FooterRenderContext,
 } from "@tailor-platform/app-shell";
 ```

@@ -5,10 +5,10 @@ import type {
   BadgeCellEditOptions,
   CellEditState,
   DateCellEditOptions,
-  DateTimeDraft,
   NumberCellEditOptions,
   TextCellEditOptions,
 } from "@/index";
+import type { DateTimeDraft } from "@/components/internals/table-core/editing/date";
 import { createAppShellWrapper } from "../../../../../tests/test-utils";
 import { DataTable } from "../../data-table";
 import { useDataTable } from "../../use-data-table";

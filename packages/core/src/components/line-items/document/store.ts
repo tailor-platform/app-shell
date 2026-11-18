@@ -38,7 +38,7 @@ export function createLineItemsDocumentStore<T extends Record<string, unknown>>(
     /** Cached immutable row view, suitable for both getSnapshot and getServerSnapshot. */
     getSnapshot: document.getRows,
     getLineKey: document.getLineKey,
-    setColumns: document.setColumns,
+    assertColumns: document.assertColumns,
     isDirty: document.isDirty,
     /**
      * Registers a payload-free listener without invoking it immediately. Notifications run

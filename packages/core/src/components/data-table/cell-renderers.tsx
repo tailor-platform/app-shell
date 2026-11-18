@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
-import { createValueRenderer } from "@/components/internals/table-core";
+import {
+  createValueRenderer,
+  type ValueRenderer,
+  type ValueRendererContext,
+} from "@/components/internals/table-core";
 import { optionLabel, resolveBadgeOptions } from "./cell-values";
 import type { Column } from "./types";
 
@@ -20,8 +24,36 @@ export function getCellValue<TRow extends Record<string, unknown>>(
   return undefined;
 }
 
+/** Bind DataTable's choice-label and editable-link policies before rendering rows. */
+export function createTypedValueRenderer<TRow extends Record<string, unknown>>(
+  col: Column<TRow>,
+  context: ValueRendererContext,
+  options?: { linkAsText?: boolean },
+): ValueRenderer<TRow> {
+  switch (col.type) {
+    case "badge": {
+      const choices = col.edit
+        ? resolveBadgeOptions(col.edit.options, col.typeOptions, col.filter)
+        : undefined;
+      return createValueRenderer(col, {
+        ...context,
+        resolveBadgeLabel: choices ? (item) => String(optionLabel(choices, item)) : undefined,
+      });
+    }
+    case "link":
+    case "text": {
+      const descriptor =
+        col.type === "link" && options?.linkAsText ? ({ type: "text" } as const) : col;
+      const renderValue = createValueRenderer(descriptor, context);
+      return (value, row) => renderValue(optionLabel(col.edit?.options, value), row);
+    }
+    default:
+      return createValueRenderer(col, context);
+  }
+}
+
 /**
- * Create a column renderer that reuses date formatters across rows.
+ * Prepare a column's built-in renderer once and reuse it across rows.
  * Callers should prefer `col.render` when it is defined.
  *
  * @internal
@@ -29,12 +61,10 @@ export function getCellValue<TRow extends Record<string, unknown>>(
 export function createTypedCellRenderer<TRow extends Record<string, unknown>>(
   col: Column<TRow>,
   timeZone: string,
+  options?: { linkAsText?: boolean },
 ): (row: TRow) => ReactNode {
-  if (col.type === "date") {
-    const renderDate = createValueRenderer(col, timeZone);
-    return (row) => renderDate(getCellValue(row, col), row);
-  }
-  return (row) => renderTypedValue(row, col, getCellValue(row, col));
+  const renderValue = createTypedValueRenderer(col, { timeZone }, options);
+  return (row) => renderValue(getCellValue(row, col), row);
 }
 
 /**
@@ -50,27 +80,9 @@ export function renderTypedValue<TRow extends Record<string, unknown>>(
   value: unknown,
   options?: { linkAsText?: boolean; timeZone?: string },
 ): ReactNode {
-  const timeZone =
-    options?.timeZone ??
-    (col.type === "date" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC");
-  switch (col.type) {
-    case "badge": {
-      const choices = col.edit
-        ? resolveBadgeOptions(col.edit.options, col.typeOptions, col.filter)
-        : undefined;
-      return createValueRenderer(col, timeZone, {
-        resolveBadgeLabel: choices ? (item) => String(optionLabel(choices, item)) : undefined,
-      })(value, row);
-    }
-    case "link": {
-      // An editable link is an input, not navigation; its choice label is resolved here.
-      const label = optionLabel(col.edit?.options, value);
-      const descriptor = options?.linkAsText ? ({ type: "text" } as const) : col;
-      return createValueRenderer(descriptor, timeZone)(label, row);
-    }
-    case "text":
-      return createValueRenderer(col, timeZone)(optionLabel(col.edit?.options, value), row);
-    default:
-      return createValueRenderer(col, timeZone)(value, row);
-  }
+  return createTypedValueRenderer(
+    col,
+    { timeZone: options?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone },
+    options,
+  )(value, row);
 }

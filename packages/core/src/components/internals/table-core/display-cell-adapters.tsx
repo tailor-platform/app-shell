@@ -5,17 +5,14 @@ import { BadgeList, toValueArray } from "@/components/badge-list";
 import { normalizeTemporalFilterValue } from "@/lib/temporal-filter-values";
 import type {
   BadgeCellOptions,
+  ColumnCellType,
   DateCellOptions,
   LinkCellOptions,
   MoneyCellOptions,
   NumberCellOptions,
-  ValueDisplayDescriptor,
+  TypedColumnDisplay,
 } from "./column-types";
-
-export interface ValueRendererOptions {
-  /** Optional, already-resolved display label policy for individual badge values. */
-  resolveBadgeLabel?: (value: string) => string;
-}
+import type { DisplayCellAdapter, ValueRenderer, ValueRendererContext } from "./cell-renderers";
 
 const PLACEHOLDER = (
   <span className="astw:text-muted-foreground" aria-hidden="true">
@@ -95,6 +92,7 @@ function resolveDateFormatOptions(format: string): Intl.DateTimeFormatOptions {
   return { month: "short", day: "numeric", year: "numeric" };
 }
 
+/** Bind date-only and datetime formatting to a timezone once, retaining independent formatter caches. */
 function createDateRenderer(
   options: DateCellOptions | undefined,
   timeZone: string,
@@ -164,24 +162,63 @@ function renderLink<TRow extends Record<string, unknown>>(
   );
 }
 
-/** Build once per display/timezone definition so date formatters are shared across rows. */
-export function createValueRenderer<TRow extends Record<string, unknown>>(
-  descriptor: ValueDisplayDescriptor<TRow>,
-  timeZone: string,
-  options: ValueRendererOptions = {},
-): (value: unknown, row: TRow) => ReactNode {
-  switch (descriptor.type) {
-    case "number":
-      return (value) => renderNumber(value, descriptor.typeOptions);
-    case "money":
-      return (value, row) => renderMoney(value, row, descriptor.typeOptions);
-    case "date":
-      return createDateRenderer(descriptor.typeOptions, timeZone);
-    case "badge":
-      return (value) => renderBadge(value, descriptor.typeOptions, options.resolveBadgeLabel);
-    case "link":
-      return (value, row) => renderLink(value, row, descriptor.typeOptions);
-    default:
-      return renderText;
-  }
-}
+/** Each display kind owns its formatting, dependencies, and default presentation policy. */
+export const displayCellAdapters = {
+  text: {
+    defaultAlign: "left",
+    createRenderer: <TRow extends Record<string, unknown>>(
+      _display: TypedColumnDisplay<TRow, "text">,
+      _context: ValueRendererContext,
+    ): ValueRenderer<TRow> => renderText,
+  },
+  number: {
+    defaultAlign: "right",
+    createRenderer:
+      <TRow extends Record<string, unknown>>(
+        display: TypedColumnDisplay<TRow, "number">,
+        _context: ValueRendererContext,
+      ): ValueRenderer<TRow> =>
+      (value) =>
+        renderNumber(value, display.typeOptions),
+  },
+  money: {
+    defaultAlign: "right",
+    createRenderer:
+      <TRow extends Record<string, unknown>>(
+        display: TypedColumnDisplay<TRow, "money">,
+        _context: ValueRendererContext,
+      ): ValueRenderer<TRow> =>
+      (value, row) =>
+        renderMoney(value, row, display.typeOptions),
+  },
+  date: {
+    defaultAlign: "left",
+    createRenderer: <TRow extends Record<string, unknown>>(
+      display: TypedColumnDisplay<TRow, "date">,
+      context: ValueRendererContext,
+    ): ValueRenderer<TRow> => {
+      if (!context?.timeZone) throw new Error("Date rendering requires a timezone.");
+      return createDateRenderer(display.typeOptions, context.timeZone);
+    },
+  },
+  badge: {
+    defaultAlign: "left",
+    createRenderer:
+      <TRow extends Record<string, unknown>>(
+        display: TypedColumnDisplay<TRow, "badge">,
+        context: ValueRendererContext,
+      ): ValueRenderer<TRow> =>
+      (value) =>
+        renderBadge(value, display.typeOptions, context.resolveBadgeLabel),
+  },
+  link: {
+    defaultAlign: "left",
+    createRenderer:
+      <TRow extends Record<string, unknown>>(
+        display: TypedColumnDisplay<TRow, "link">,
+        _context: ValueRendererContext,
+      ): ValueRenderer<TRow> =>
+      (value, row) =>
+        renderLink(value, row, display.typeOptions),
+  },
+} satisfies { [K in ColumnCellType]: DisplayCellAdapter<K> };

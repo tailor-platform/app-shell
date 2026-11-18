@@ -1,14 +1,19 @@
-import { useMemo, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { GripVerticalIcon } from "lucide-react";
 import { Table } from "@/components/table";
 import { Text } from "@/components/text";
 import { useTimeZone } from "@/contexts/appshell-context";
-import { createValueRenderer } from "@/components/internals/table-core";
 import { cn } from "@/lib/utils";
 import { LineItemsContext, useLineItemsContext } from "./line-items-context";
 import { useLineItemsT } from "./i18n";
 import { useLineItemsReorder } from "./use-line-items-reorder";
 import { clientKeyOf } from "./document/identity";
+import { getLineItemsEditing } from "./editing";
+import {
+  LineItemsDisplayCell,
+  LineItemsEditableCell,
+  useLineItemsCellRenderersByColumn,
+} from "./line-items-cell";
 import type { UseLineItemsReturn } from "./types";
 
 export type LineItemsRootProps<T extends Record<string, unknown>> = {
@@ -48,35 +53,36 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
   const { value: timeZone } = useTimeZone();
   const t = useLineItemsT();
   const reorder = useLineItemsReorder(value);
-  const columns = useMemo(
-    () =>
-      value.columns.map((column) => ({
-        column,
-        id: column.id ?? column.accessorKey!,
-        align:
-          column.align ??
-          (column.type === "number" || column.type === "money"
-            ? ("right" as const)
-            : ("left" as const)),
-        renderValue: column.render ? undefined : createValueRenderer(column, timeZone),
-      })),
-    [value.columns, timeZone],
-  );
+  const cellsByColumn = useLineItemsCellRenderersByColumn(value.columns, timeZone);
   return (
     <Table.Root data-slot="line-items-table" className={className}>
       <Table.Caption className="astw:sr-only">{label ?? t("title")}</Table.Caption>
       <Table.Header>
         <Table.Row>
           {value.orderer && (
-            <Table.Head scope="col" className="astw:w-0">
+            <Table.Head scope="col" className="astw:w-0 astw:px-0 astw:first:pl-0">
               <Text.span className="astw:sr-only">{t("order")}</Text.span>
             </Table.Head>
           )}
-          {columns.map(({ column, id, align }) => (
-            <Table.Head key={id} scope="col" align={align}>
-              {column.label}
-            </Table.Head>
-          ))}
+          {cellsByColumn.map(({ column, id, align }) => {
+            const headerProps = column.headerProps?.();
+            return (
+              <Table.Head
+                key={id}
+                data-col-key={id}
+                scope="col"
+                align={align}
+                className={headerProps?.className}
+                title={headerProps?.title}
+                style={{
+                  ...headerProps?.style,
+                  ...(column.width !== undefined ? { width: column.width } : {}),
+                }}
+              >
+                {column.label}
+              </Table.Head>
+            );
+          })}
         </Table.Row>
       </Table.Header>
       <Table.Body {...reorder.bodyProps}>
@@ -87,7 +93,7 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
             className="astw:data-dragging:opacity-40 astw:data-[drop-position=before]:[&>td]:shadow-[inset_0_2px_0_var(--primary)] astw:data-[drop-position=after]:[&>td]:shadow-[inset_0_-2px_0_var(--primary)]"
           >
             {value.orderer && (
-              <Table.Cell className="astw:w-0 astw:py-1.5 astw:pr-0">
+              <Table.Cell className="astw:w-0 astw:py-1.5 astw:px-0 astw:first:pl-0">
                 {/* shortcut: native dragging is desktop-only, add pointer dragging if touch dragging is required. */}
                 <button
                   type="button"
@@ -101,23 +107,47 @@ function LineItemsTable({ className, emptyMessage, "aria-label": label }: LineIt
                 </button>
               </Table.Cell>
             )}
-            {columns.map(({ column, id, align, renderValue }) => (
-              <Table.Cell key={id} align={align}>
-                {column.render
-                  ? column.render(row)
-                  : renderValue!(
-                      column.accessorKey !== undefined
-                        ? row[column.accessorKey]
-                        : column.accessor?.(row),
-                      row,
-                    )}
-              </Table.Cell>
-            ))}
+            {cellsByColumn.map(
+              ({ column, renderCell, id, align, renderDisplay, reserveIconSpace }) => {
+                const edit = column.edit;
+                const customCellProps = column.cellProps?.(row);
+                const cellProps = {
+                  align,
+                  "data-col-key": id,
+                  className: customCellProps?.className,
+                  style: customCellProps?.style,
+                  title: customCellProps?.title,
+                };
+                if (!edit || !renderCell || !(edit.canEdit?.(row) ?? true))
+                  return (
+                    <LineItemsDisplayCell
+                      key={id}
+                      {...cellProps}
+                      reserveIconSpace={reserveIconSpace}
+                    >
+                      {renderDisplay(row, false)}
+                    </LineItemsDisplayCell>
+                  );
+                return (
+                  <LineItemsEditableCell
+                    key={id}
+                    row={row}
+                    column={column}
+                    edit={edit}
+                    renderCell={renderCell}
+                    index={index}
+                    editing={getLineItemsEditing(value)}
+                    display={renderDisplay(row, true)}
+                    cellProps={cellProps}
+                  />
+                );
+              },
+            )}
           </Table.Row>
         ))}
         {value.lines.length === 0 && (
           <Table.Row>
-            <Table.Cell colSpan={Math.max(1, columns.length + (value.orderer ? 1 : 0))}>
+            <Table.Cell colSpan={Math.max(1, cellsByColumn.length + (value.orderer ? 1 : 0))}>
               <Text
                 variant="body-sm"
                 className="astw:py-6 astw:text-center astw:text-muted-foreground"

@@ -125,10 +125,27 @@ describe("DataTable.Pagination", () => {
       wrapper,
     });
 
-    // A narrow footer shows "1 / 5" in place of "Page 1 / 5"; only the full
+    // A narrow footer shows "1/5" in place of "Page 1 / 5"; only the full
     // text should be announced.
-    expect(screen.getByText("1 / 5").getAttribute("aria-hidden")).toBe("true");
+    expect(screen.getByText("1/5").getAttribute("aria-hidden")).toBe("true");
     expect(screen.getByText("Page 1 / 5").getAttribute("aria-hidden")).toBeNull();
+  });
+
+  it("drops the page-size switcher and shrinks the page buttons in a narrow footer", () => {
+    const { container } = render(
+      <TestPagination data={dataWithTotal} control={makeControl()} pageSizeOptions={[10, 20]} />,
+      { wrapper },
+    );
+
+    // jsdom has no container queries, so check the classes that apply them.
+    const select = screen.getByRole("combobox", { name: "Rows per page" });
+    const switcher = container.querySelector('[class*="data-table-footer:hidden"]');
+    expect(switcher?.contains(select)).toBe(true);
+    for (const name of ["First page", "Previous page", "Next page", "Last page"]) {
+      expect(screen.getByLabelText(name).className).toContain(
+        "astw:@max-[480px]/data-table-footer:size-7",
+      );
+    }
   });
 
   it("still shows Previous/Next buttons when total is not provided", () => {
@@ -314,7 +331,7 @@ describe("row info text", () => {
     render(<TestPagination data={dataWithRows} control={makeControl()} />, {
       wrapper,
     });
-    expect(screen.getByText("50 row(s)")).not.toBeNull();
+    expect(screen.getByText("50 rows")).not.toBeNull();
   });
 
   it("shows total rows when total is provided and selection enabled but nothing selected", () => {
@@ -322,10 +339,10 @@ describe("row info text", () => {
       <TestPagination data={dataWithRows} control={makeControl()} onSelectionChange={vi.fn()} />,
       { wrapper },
     );
-    expect(screen.getByText("50 row(s)")).not.toBeNull();
+    expect(screen.getByText("50 rows")).not.toBeNull();
   });
 
-  it("shows 'Y of X row(s) selected' when rows are selected and total is provided", async () => {
+  it("shows 'Y of X rows selected' when rows are selected and total is provided", async () => {
     const user = userEvent.setup();
 
     function TestWithTable() {
@@ -352,10 +369,12 @@ describe("row info text", () => {
     // checkboxes[0] is the "select all" checkbox, [1] is the first row
     await user.click(checkboxes[1]);
 
-    expect(screen.getByText("1 of 50 row(s) selected")).not.toBeNull();
+    expect(screen.getByText("1 of 50 rows selected").getAttribute("aria-hidden")).toBeNull();
+    // A narrow footer shows the short form; only the full text is announced.
+    expect(screen.getByText("1/50 selected").getAttribute("aria-hidden")).toBe("true");
   });
 
-  it("shows 'Y row(s) selected' when rows are selected and no total", async () => {
+  it("shows 'Y row selected' when rows are selected and no total", async () => {
     const user = userEvent.setup();
 
     function TestWithTable() {
@@ -380,7 +399,7 @@ describe("row info text", () => {
     const checkboxes = screen.getAllByRole("checkbox");
     await user.click(checkboxes[1]);
 
-    expect(screen.getByText("1 row(s) selected")).not.toBeNull();
+    expect(screen.getByText("1 row selected")).not.toBeNull();
   });
 
   it("shows nothing when no total and no selection enabled", () => {

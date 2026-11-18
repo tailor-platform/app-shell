@@ -19,10 +19,9 @@ import {
   Calendar,
   RangeCalendar,
   Field,
+  useTimeZone,
   // Date value helpers (re-exported from @internationalized/date)
   parseDate,
-  getLocalTimeZone,
-  today,
   type CalendarDate,
   type DateValue,
   type DateRange,
@@ -87,19 +86,29 @@ A `DateField` with a calendar popover.
 
 Constrained + unavailable dates:
 
+Use [`useTimeZone()`](../api/use-time-zone.md) to obtain today's date in AppShell's configured timezone, rather than calculating against the browser's timezone directly.
+
 ```tsx
-<label id="delivery-date-label" htmlFor="delivery-date">
-  Delivery date
-</label>
-<DatePicker
-  id="delivery-date"
-  aria-labelledby="delivery-date-label"
-  minValue={today(getLocalTimeZone())}
-  isDateUnavailable={(date) => {
-    const dow = date.toDate(getLocalTimeZone()).getDay();
-    return dow === 0 || dow === 6; // weekends
-  }}
-/>
+function DeliveryDatePicker() {
+  const timeZone = useTimeZone();
+
+  return (
+    <>
+      <label id="delivery-date-label" htmlFor="delivery-date">
+        Delivery date
+      </label>
+      <DatePicker
+        id="delivery-date"
+        aria-labelledby="delivery-date-label"
+        minValue={timeZone.today()}
+        isDateUnavailable={(date) => {
+          const dow = date.toDate("UTC").getUTCDay();
+          return dow === 0 || dow === 6; // weekends
+        }}
+      />
+    </>
+  );
+}
 ```
 
 Week start:

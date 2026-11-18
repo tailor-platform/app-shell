@@ -15,6 +15,8 @@ The `Button` component is a styled button with multiple visual variants and size
 import { Button } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Link` and `buttonVariants` from `@tailor-platform/app-shell` and `PlusIcon` from `lucide-react`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -94,13 +96,16 @@ function Sizes() {
 
 The `render` prop lets you use the button's styles on a custom element:
 
-```tsx
-import { Button } from "@tailor-platform/app-shell";
-import { Link } from "@tailor-platform/app-shell";
+<example-preview name="render-prop"></example-preview>
 
-<Button render={<Link to="/orders" />} variant="outline">
-  View Orders
-</Button>;
+```tsx
+function RenderProp() {
+  return (
+    <Button render={<Link to="/components/table" />} variant="outline">
+      View Table documentation
+    </Button>
+  );
+}
 ```
 
 This is the Base UI render pattern — the button's class names and event handlers are applied to the rendered element.
@@ -109,11 +114,17 @@ This is the Base UI render pattern — the button's class names and event handle
 
 ### Form Actions
 
+<example-preview name="form-actions"></example-preview>
+
 ```tsx
-<div className="flex gap-2 justify-end">
-  <Button variant="outline">Cancel</Button>
-  <Button>Save Changes</Button>
-</div>
+function FormActions() {
+  return (
+    <div className="flex justify-end gap-2">
+      <Button variant="outline">Cancel</Button>
+      <Button>Save Changes</Button>
+    </div>
+  );
+}
 ```
 
 ### Destructive Confirmation
@@ -126,12 +137,16 @@ This is the Base UI render pattern — the button's class names and event handle
 
 ### Icon Button
 
-```tsx
-import { PlusIcon } from "lucide-react";
+<example-preview name="icon-button"></example-preview>
 
-<Button size="icon" variant="outline">
-  <PlusIcon />
-</Button>;
+```tsx
+function IconButton() {
+  return (
+    <Button size="icon" variant="outline" aria-label="Add order">
+      <PlusIcon aria-hidden />
+    </Button>
+  );
+}
 ```
 
 ## TypeScript
@@ -144,12 +159,16 @@ import { type ButtonProps } from "@tailor-platform/app-shell";
 
 Use `buttonVariants` to apply button styles to non-button elements:
 
-```tsx
-import { buttonVariants } from "@tailor-platform/app-shell";
+<example-preview name="styling-utility"></example-preview>
 
-<a href="/orders" className={buttonVariants({ variant: "outline", size: "sm" })}>
-  View Orders
-</a>;
+```tsx
+function StylingUtility() {
+  return (
+    <a href="/components/table" className={buttonVariants({ variant: "outline", size: "sm" })}>
+      View Table documentation
+    </a>
+  );
+}
 ```
 
 ## Accessibility

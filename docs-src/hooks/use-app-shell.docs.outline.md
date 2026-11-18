@@ -64,13 +64,9 @@ function MyComponent() {
 
 ### Access Configuration
 
-```typescript
-function LocaleDisplay() {
-  const { configurations } = useAppShell();
+Import `Text` and `useAppShell` from `@tailor-platform/app-shell`. This preview reads the documentation browser's configured locale.
 
-  return <div>Current locale: {configurations.locale}</div>;
-}
-```
+<!-- example: locale-display -->
 
 ## Context Data
 

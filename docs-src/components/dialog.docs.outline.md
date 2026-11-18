@@ -17,6 +17,8 @@ The `Dialog` component provides a modal dialog with a compound component API. It
 import { Dialog } from "@tailor-platform/app-shell";
 ```
 
+The runnable examples also import `useState` from `react`, and `Button`, `Field`, `Form`, and `Text` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -70,53 +72,15 @@ Accept a `render` prop for custom element rendering (Base UI render pattern), pl
 
 ### Delete Confirmation
 
-```tsx
-function DeleteConfirmation({ onDelete }: { onDelete: () => void }) {
-  return (
-    <Dialog.Root>
-      <Dialog.Trigger render={<Button variant="destructive" />}>Delete</Dialog.Trigger>
-      <Dialog.Content>
-        <Dialog.Header>
-          <Dialog.Title>Delete Order</Dialog.Title>
-          <Dialog.Description>
-            This action cannot be undone. The order will be permanently deleted.
-          </Dialog.Description>
-        </Dialog.Header>
-        <Dialog.Footer>
-          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
-          <Button variant="destructive" onClick={onDelete}>
-            Delete
-          </Button>
-        </Dialog.Footer>
-      </Dialog.Content>
-    </Dialog.Root>
-  );
-}
-```
+Open the confirmation and cancel to keep the order, or confirm to remove it from this local example. No server data is changed. **Restore demo order** makes the example repeatable.
+
+<!-- example: delete-confirmation -->
 
 ### Form Dialog
 
-```tsx
-function EditDialog({ item }: { item: Item }) {
-  const [name, setName] = useState(item.name);
+Edit the item name and save to update the value outside the dialog. Empty or whitespace-only names are rejected through `Form` and `Field`. Cancel or close leaves the saved name unchanged; reopening restores it. Cancel is explicitly `type="button"` so it does not submit the form.
 
-  return (
-    <Dialog.Root>
-      <Dialog.Trigger render={<Button variant="outline" />}>Edit</Dialog.Trigger>
-      <Dialog.Content>
-        <Dialog.Header>
-          <Dialog.Title>Edit Item</Dialog.Title>
-        </Dialog.Header>
-        <Input value={name} onChange={(e) => setName(e.target.value)} />
-        <Dialog.Footer>
-          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
-          <Button onClick={() => handleSave(name)}>Save</Button>
-        </Dialog.Footer>
-      </Dialog.Content>
-    </Dialog.Root>
-  );
-}
-```
+<!-- example: form-dialog -->
 
 ## Stacking
 

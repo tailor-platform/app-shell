@@ -42,40 +42,19 @@ A `TimeZone` object with the following properties:
 
 ## Usage
 
-```typescript
-import { useTimeZone } from "@tailor-platform/app-shell";
+Import `Text` and `useTimeZone` from `@tailor-platform/app-shell`.
 
-function TodayDisplay() {
-  const timeZone = useTimeZone();
-  const todayDate = timeZone.today();
-
-  return <span>Today: {todayDate.toString()}</span>;
-}
-```
+<!-- example: today-display -->
 
 ### Current timestamp
 
-```typescript
-import { useTimeZone } from "@tailor-platform/app-shell";
+The timestamp is read when the component renders; this is not an automatically updating clock.
 
-function CurrentTimestamp() {
-  const timeZone = useTimeZone();
-
-  return <span>{timeZone.now().toString()}</span>;
-}
-```
+<!-- example: current-timestamp -->
 
 ### Accessing the raw IANA string
 
-```typescript
-import { useTimeZone } from "@tailor-platform/app-shell";
-
-function TimeZoneLabel() {
-  const { value } = useTimeZone();
-
-  return <span>Timezone: {value}</span>;
-}
-```
+<!-- example: time-zone-label -->
 
 ## Related
 

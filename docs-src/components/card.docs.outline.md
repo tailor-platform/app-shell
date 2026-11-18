@@ -17,6 +17,8 @@ sources:
 import { Card } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Button`, `Table`, and `Text` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -102,36 +104,15 @@ For a scrollable list, put the overflow on `Card.Content`. Rows supply their own
 
 ### Header only
 
-```tsx
-<Card.Root>
-  <Card.Header title="Summary" description="Key metrics for this period" />
-</Card.Root>
-```
+<!-- example: header-only -->
 
 ### Content only
 
-```tsx
-<Card.Root>
-  <Card.Content>
-    <Text.p>No header needed for this card.</Text.p>
-  </Card.Content>
-</Card.Root>
-```
+<!-- example: content-only -->
 
 ### Custom header content
 
-```tsx
-<Card.Root>
-  <Card.Header title="Recent Orders">
-    <Button size="sm" variant="outline">
-      View all
-    </Button>
-  </Card.Header>
-  <Card.Content padding="none">
-    <Table.Root>{/* ... */}</Table.Root>
-  </Card.Content>
-</Card.Root>
-```
+<!-- example: custom-header-content -->
 
 ## Related
 

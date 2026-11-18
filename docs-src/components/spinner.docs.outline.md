@@ -17,6 +17,8 @@ sources:
 import { Spinner } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Button` from `@tailor-platform/app-shell`.
+
 ## Basic usage
 
 <!-- example: basic-usage -->
@@ -48,28 +50,17 @@ Preset sizes map to:
 
 Use a label when the spinner is the primary visible loading affordance:
 
-```tsx
-<Spinner size="sm" aria-label="Loading orders" />
-```
+<!-- example: accessible-loading -->
 
 When the surrounding control already has its own accessible name, keep the spinner decorative:
 
-```tsx
-<Button disabled>
-  <Spinner size="sm" aria-hidden />
-  Saving
-</Button>
-```
+<!-- example: decorative-loading -->
 
 ## Sizing and styling
 
 Pass ordinary Tailwind utilities through `className` for color and layout, or override the dimensions directly with `width` / `height`.
 
-```tsx
-<Spinner className="text-muted-foreground" />
-<Spinner size="lg" className="text-primary" aria-label="Generating report" />
-<Spinner width={24} height={24} aria-label="Loading" />
-```
+<!-- example: sizing-and-styling -->
 
 ## Related
 

@@ -1,4 +1,5 @@
-import { AppearanceSwitcher, useTheme } from "@tailor-platform/app-shell";
+import { AppearanceSwitcher, Button, Table, Text, useTheme } from "@tailor-platform/app-shell";
+import { Check } from "lucide-react";
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
@@ -105,6 +106,86 @@ export function TypographyRoles() {
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+export function SemanticColorRoles() {
+  return (
+    <Text.span className="rounded-md bg-success-surface px-2 py-0.5 text-success-text">
+      Paid
+    </Text.span>
+  );
+}
+
+export function WarningSurface() {
+  return (
+    <div className="rounded-lg border border-warning-border bg-warning-surface p-4 text-warning-text">
+      <Text.p>Review the delivery date before confirming this order.</Text.p>
+    </div>
+  );
+}
+
+export function TextTypography() {
+  return (
+    <div className="flex flex-col gap-2">
+      <Text.h3 variant="heading-md">Line items</Text.h3>
+      <Text variant="body-md" className="text-muted-foreground">
+        Description copy
+      </Text>
+      <Text variant="body-sm" className="text-muted-foreground">
+        Updated 2h ago
+      </Text>
+    </div>
+  );
+}
+
+export function TableHeaderRole() {
+  return (
+    <Table.Root>
+      <Table.Header>
+        <Table.Row>
+          <th className="text-label-md text-muted-foreground">Amount</th>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        <Table.Row>
+          <Table.Cell>$1,240.00</Table.Cell>
+        </Table.Row>
+      </Table.Body>
+    </Table.Root>
+  );
+}
+
+export function ReducedMotion() {
+  return (
+    <Button
+      variant="outline"
+      className="transition-colors duration-150 ease-out motion-reduce:transition-none"
+    >
+      Hover or focus to change the surface
+    </Button>
+  );
+}
+
+export function ZIndexToken() {
+  return (
+    <div className="relative isolate h-40">
+      <Text.div className="absolute left-4 top-4 z-(--z-portal) rounded-md border bg-popover p-4 text-popover-foreground shadow-sm">
+        Portal token: in front
+      </Text.div>
+      <Text.div className="absolute left-16 top-12 rounded-md border bg-muted p-4 text-muted-foreground">
+        Later sibling: behind
+      </Text.div>
+    </div>
+  );
+}
+
+export function IconSizing() {
+  return (
+    <div className="flex items-center gap-2">
+      <Check className="size-4" aria-hidden="true" />
+      <Text.span>Confirmed</Text.span>
     </div>
   );
 }

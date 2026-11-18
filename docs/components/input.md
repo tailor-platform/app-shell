@@ -40,26 +40,42 @@ Accepts all standard HTML `<input>` props.
 
 ### Text Input
 
+<example-preview name="text-input"></example-preview>
+
 ```tsx
-<Input type="text" placeholder="Enter your name" />
+function TextInput() {
+  return <Input type="text" aria-label="Name" placeholder="Enter your name" />;
+}
 ```
 
 ### Email Input
 
+<example-preview name="email-input"></example-preview>
+
 ```tsx
-<Input type="email" placeholder="you@example.com" />
+function EmailInput() {
+  return <Input type="email" aria-label="Email" placeholder="you@example.com" />;
+}
 ```
 
 ### Number Input
 
+<example-preview name="number-input"></example-preview>
+
 ```tsx
-<Input type="number" placeholder="0" min={0} max={100} />
+function NumberInput() {
+  return <Input type="number" aria-label="Quantity" placeholder="0" min={0} max={100} />;
+}
 ```
 
 ### Disabled Input
 
+<example-preview name="disabled-input"></example-preview>
+
 ```tsx
-<Input value="Read-only value" disabled />
+function DisabledInput() {
+  return <Input aria-label="Unavailable value" value="Read-only value" disabled />;
+}
 ```
 
 ### With onChange Handler

@@ -8,6 +8,10 @@ import {
   type ToastDefaults,
 } from "@/contexts/appshell-context";
 import { Toaster } from "@/components/internals/sonner";
+import { AppShell } from "@/index";
+import { SidebarLayout } from "@/components/sidebar";
+import { defineModule } from "@/resource";
+import { AppShellTestingProvider } from "@/testing";
 import { useToast } from "./use-toast";
 
 const renderToaster = () =>
@@ -322,6 +326,41 @@ describe("useToast with <AppShell toastDefaults>", () => {
     // @ts-expect-error the same holds for `action`.
     const emptyAction: ToastDefaults = { action: {} };
     expect([...valid, emptyError, emptyAction]).toHaveLength(5);
+  });
+
+  it("keeps the toast object across AppShell renders with an inline toastDefaults", async () => {
+    const seen = new Set<ReturnType<typeof useToast>>();
+    const Page = () => {
+      seen.add(useToast());
+      return <div>Toast page</div>;
+    };
+    // Stable across renders, so only `toastDefaults` can change the configurations.
+    const modules = [
+      defineModule({ path: "toast", meta: { title: "Toast" }, component: Page, resources: [] }),
+    ];
+    const renderShell = (duration: number) => (
+      <AppShellTestingProvider initialEntries={["/toast"]}>
+        <AppShell title="Test" modules={modules} toastDefaults={{ error: { duration } }}>
+          <SidebarLayout />
+        </AppShell>
+      </AppShellTestingProvider>
+    );
+
+    const { findByText, rerender } = render(renderShell(10_000));
+    await findByText("Toast page");
+    rerender(renderShell(10_000));
+    rerender(renderShell(10_000));
+    await findByText("Toast page");
+    expect(seen.size).toBe(1);
+
+    // A changed value still reaches `useToast`.
+    rerender(renderShell(7000));
+    await waitFor(() => expect(seen.size).toBe(2));
+    const latest = Array.from(seen).at(-1)!;
+    await act(async () => {
+      latest.error("Changed");
+    });
+    expect(activeToast("Changed")).toMatchObject({ duration: 7000, closeButton: true });
   });
 
   it("returns the same toast object while the config does not change", () => {

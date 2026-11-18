@@ -3,6 +3,9 @@ import {
   GlobalHeaderLayout,
   SidebarLayout,
   createColumnHelper,
+  getLocalTimeZone,
+  today,
+  type CalendarDate,
 } from "@tailor-platform/app-shell";
 import { AppShellTestingProvider } from "@tailor-platform/app-shell/testing";
 
@@ -13,3 +16,4 @@ export const SidebarContent = SidebarLayout.ContentContainer;
 export const GlobalHeader = GlobalHeaderLayout.DefaultHeader;
 export const PublicAppShell = AppShell;
 export const TestingProvider = AppShellTestingProvider;
+export const localToday: CalendarDate = today(getLocalTimeZone());

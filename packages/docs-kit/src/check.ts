@@ -7,7 +7,7 @@ import { hash, normalizeText } from "./hash";
 import { readManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { loadSurface, snapshotHashForSlug } from "./project";
-import { computeSkill, computeStampedSkill } from "./skill";
+import { computeSkill, computeStampedSkill, unclaimedSkillDirFindings } from "./skill";
 import { unmanagedOutputs, walkMarkdown } from "./tree";
 
 export interface CheckResult {
@@ -111,11 +111,23 @@ export function check(repoRoot: string): CheckResult {
     }
   }
 
-  if (config.skill) {
+  findings.push(...unclaimedSkillDirFindings(config));
+  if (config.skills.length > 0) {
     const expected = manifest?.skill ?? {};
-    const actual = new Map(
-      [...computeSkill(repoRoot, config, outlines)].map(([p, c]) => [p, hash(normalizeText(c))]),
-    );
+    const actual = new Map<string, string>();
+    // A skill that can't be computed is reported once, and its manifest entries
+    // are left out of the removed-file comparison below.
+    const failedDirs: string[] = [];
+    for (const skill of config.skills) {
+      try {
+        for (const [p, c] of computeSkill(repoRoot, skill, outlines)) {
+          actual.set(p, hash(normalizeText(c)));
+        }
+      } catch (e) {
+        failedDirs.push(`${skill.outDir}/`);
+        findings.push({ level: "block", slug: "skill", message: (e as Error).message });
+      }
+    }
     for (const [p, h] of actual) {
       if (expected[p] === undefined) {
         findings.push({
@@ -132,7 +144,7 @@ export function check(repoRoot: string): CheckResult {
       }
     }
     for (const p of Object.keys(expected)) {
-      if (!actual.has(p)) {
+      if (!actual.has(p) && !failedDirs.some((d) => p.startsWith(d))) {
         findings.push({
           level: "block",
           slug: "skill",
@@ -142,10 +154,13 @@ export function check(repoRoot: string): CheckResult {
     }
     // The manifest hashes unstamped content, so validate the stamp separately —
     // otherwise a broken version source would only surface at publish time.
-    try {
-      computeStampedSkill(repoRoot, config, outlines);
-    } catch (e) {
-      findings.push({ level: "block", slug: "skill", message: (e as Error).message });
+    for (const skill of config.skills) {
+      if (failedDirs.includes(`${skill.outDir}/`)) continue;
+      try {
+        computeStampedSkill(repoRoot, skill, outlines);
+      } catch (e) {
+        findings.push({ level: "block", slug: "skill", message: (e as Error).message });
+      }
     }
   }
 

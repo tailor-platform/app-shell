@@ -108,6 +108,8 @@ type PropertyColumn<TRow extends Record<string, unknown>> = {
       accessorKey: K;
       accessor?: never;
       id?: string;
+      /** Pure comparison of saved and committed values; defaults to Object.is and never changes stored values. */
+      equals?: (baseline: TRow[K], current: TRow[K]) => boolean;
     };
 }[keyof TRow & string];
 
@@ -115,6 +117,7 @@ type ComputedColumn<TRow extends Record<string, unknown>> = DisplayProps<TRow> &
   id: string;
   accessorKey?: never;
   edit?: never;
+  equals?: never;
 } & (
     | { type?: undefined; typeOptions?: never; accessor: (row: TRow) => unknown }
     | {
@@ -130,6 +133,7 @@ type SourceLessColumn<TRow extends Record<string, unknown>> = DisplayProps<TRow>
     accessorKey?: never;
     accessor?: never;
     edit?: never;
+    equals?: never;
   };
 
 /** A property, computed value, or explicitly value-less display column. */
@@ -165,6 +169,18 @@ export type DocumentOptions<T extends Record<string, unknown>> = {
 export type LineItemsIdentity<T extends Record<string, unknown>> = ReturnType<
   typeof createLineItemsIdentity<T>
 >;
+
+/** Net changes from the saved baseline, containing only committed values. Inspection does not prepare or perform a save. */
+export type LineItemsChangeset<TRow> = {
+  /** Complete current creation rows, including non-displayed fields. */
+  readonly added: readonly TRow[];
+  /** Surviving saved rows with changed accessor-owned fields only; own undefined keys represent explicit clears. */
+  readonly updated: readonly { readonly lineKey: string; readonly changes: Partial<TRow> }[];
+  /** Complete baseline rows, even if edited before removal. */
+  readonly removed: readonly TRow[];
+  /** Final public line keys when ordered membership differs, including additions/removals; null means unchanged. */
+  readonly order: readonly string[] | null;
+};
 
 /** A validated row view, ordered client keys, and client-key index constructed together. */
 export type LineItemsSnapshot<T> = {

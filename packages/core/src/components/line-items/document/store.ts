@@ -39,6 +39,7 @@ export function createLineItemsDocumentStore<T extends Record<string, unknown>>(
     getSnapshot: document.getRows,
     getLineKey: document.getLineKey,
     assertColumns: document.assertColumns,
+    getChanges: document.getChanges,
     isDirty: document.isDirty,
     /**
      * Registers a payload-free listener without invoking it immediately. Notifications run

@@ -1,8 +1,8 @@
 import type { LineItemsColumn } from "./document";
-import type { LineItemsIdentityOptions } from "./document/types";
+import type { LineItemsChangeset, LineItemsIdentityOptions } from "./document/types";
 import type { LINE_ITEMS_EDITING } from "./editing";
 
-export type { LineItemsColumn, LineItemsEditor } from "./document/types";
+export type { LineItemsChangeset, LineItemsColumn, LineItemsEditor } from "./document/types";
 
 /** Initial document ownership, cell editing and row commands; persistence is not yet supported. */
 export type UseLineItemsOptions<TRow extends Record<string, unknown>> = {
@@ -21,6 +21,8 @@ export type UseLineItemsReturn<TRow extends Record<string, unknown>> = {
   readonly orderer: boolean;
   /** Adopted changes or unsaved creations; unconfirmed cell drafts are not included. */
   readonly isDirty: boolean;
+  /** Side-effect-free net changes using this render's column equality; does not confirm drafts, validate, save, or advance the baseline. */
+  getChanges: () => LineItemsChangeset<TRow>;
   getLineKey: (row: TRow) => string;
   /** Updates an accessorKey-owned property and discards its drafts; persisted identity cannot change. */
   updateField: <K extends keyof TRow & string>(lineKey: string, key: K, value: TRow[K]) => void;

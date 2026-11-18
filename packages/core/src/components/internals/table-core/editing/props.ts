@@ -47,7 +47,13 @@ export interface CellEditorView {
   onEditorCancel: () => void;
   getFailure: () => CellEditFailure | undefined;
   setErrorDetailsOpen?: (failure: CellEditFailure, open: boolean) => CellEditFailure | undefined;
-  draftStatus?: { id: string; message: string; confirming: boolean };
+  draftStatus?: {
+    id: string;
+    message: string;
+    confirming: boolean;
+    /** Suppress status tooltips and hide the unconfirmed marker while the cell has focus. */
+    quiet?: boolean;
+  };
   /** Date input preview; column formatting remains owned by the cell. */
   draftPreview?: string;
 }

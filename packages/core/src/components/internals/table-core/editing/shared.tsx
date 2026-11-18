@@ -244,8 +244,9 @@ export function EditableCellFrame({
     !callbackError.failure.detailsDismissed &&
     dismissedFailure !== callbackError.failure;
   const statusDescription = callbackError ? undefined : draftStatus;
-  const showTooltip =
-    !!statusDescription || (tooltipLabel !== undefined && !editing && !callbackError);
+  const showTooltip = statusDescription
+    ? !statusDescription.quiet
+    : tooltipLabel !== undefined && !editing && !callbackError;
   const changeErrorDetails = (failure: CellEditFailure, open: boolean) =>
     setErrorDetailsOpen?.(failure, open) ?? failure;
   const dismissForNavigation = () => {
@@ -342,17 +343,19 @@ export function EditableCellFrame({
           <span id={statusDescription.id} className="astw:sr-only">
             {statusDescription.message}
           </span>
-          <span
-            aria-hidden="true"
-            data-slot={`${slotPrefix}-cell-${statusDescription.confirming ? "confirming" : "unconfirmed"}`}
-            className="astw:pointer-events-none astw:absolute astw:top-1 astw:right-1 astw:text-muted-foreground"
-          >
-            {statusDescription.confirming ? (
-              <Spinner size="xs" />
-            ) : (
-              <span className="astw:block astw:size-1.5 astw:rounded-full astw:border astw:border-current" />
-            )}
-          </span>
+          {(statusDescription.confirming || !statusDescription.quiet || !focusedWithin) && (
+            <span
+              aria-hidden="true"
+              data-slot={`${slotPrefix}-cell-${statusDescription.confirming ? "confirming" : "unconfirmed"}`}
+              className="astw:pointer-events-none astw:absolute astw:top-1 astw:right-1 astw:text-muted-foreground"
+            >
+              {statusDescription.confirming ? (
+                <Spinner size="xs" />
+              ) : (
+                <span className="astw:block astw:size-1.5 astw:rounded-full astw:border astw:border-current" />
+              )}
+            </span>
+          )}
         </>
       )}
       {callbackError && (

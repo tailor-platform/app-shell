@@ -206,7 +206,7 @@ function TypingEditor<TOutput>({
     onEditorCancel: () => revert(true),
     getFailure: session.getFailure,
     setErrorDetailsOpen: external ? session.setErrorDetailsOpen : undefined,
-    draftStatus,
+    draftStatus: draftStatus && { ...draftStatus, quiet: true },
     confirming: state.status === "confirming",
     input: (
       <>

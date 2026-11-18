@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
@@ -7,6 +7,7 @@ import { LineItems } from "./line-items";
 import { useLineItems } from "./use-line-items";
 import type { UseLineItemsReturn } from "./types";
 import { Table } from "@/components/table";
+import { Tooltip } from "@/components/tooltip";
 import { createCellEditSession } from "@/components/internals/table-core/cell-session";
 import { EditableCell } from "@/components/internals/table-core/editing/cell";
 import { textEditor, numberEditor } from "@/components/internals/table-core/editing/typing";
@@ -37,27 +38,29 @@ function setup({ numeric = false, retained = true, commit = vi.fn() } = {}) {
   const session = createCellEditSession<unknown>();
   function View({ show = true }: { show?: boolean }) {
     return show ? (
-      <Table.Root>
-        <Table.Body>
-          <Table.Row>
-            <EditableCell<Record<string, never>, string | number | null>
-              editor={numeric ? numberEditor : textEditor}
-              options={{}}
-              current={numeric ? 2 : "Initial"}
-              display={numeric ? "2" : "Initial"}
-              cellProps={{}}
-              session={retained ? session : undefined}
-              commit={commit}
-              labels={labels}
-              slotPrefix="line-items"
-              rowKey="A"
-              colKey="value"
-              label="Value"
-              align="left"
-            />
-          </Table.Row>
-        </Table.Body>
-      </Table.Root>
+      <Tooltip.Provider delay={0}>
+        <Table.Root>
+          <Table.Body>
+            <Table.Row>
+              <EditableCell<Record<string, never>, string | number | null>
+                editor={numeric ? numberEditor : textEditor}
+                options={{}}
+                current={numeric ? 2 : "Initial"}
+                display={numeric ? "2" : "Initial"}
+                cellProps={{}}
+                session={retained ? session : undefined}
+                commit={commit}
+                labels={labels}
+                slotPrefix="line-items"
+                rowKey="A"
+                colKey="value"
+                label="Value"
+                align="left"
+              />
+            </Table.Row>
+          </Table.Body>
+        </Table.Root>
+      </Tooltip.Provider>
     ) : null;
   }
   const view = render(<View />);
@@ -109,7 +112,7 @@ describe("document-owned draft presentation", () => {
     act(() => field().focus());
     expect(marker()).toBeNull();
     fireEvent.change(field(), { target: { value: "Retained" } });
-    expect(marker()).not.toBeNull();
+    expect(marker()).toBeNull();
     view.rerender(<Owner show={false} />);
     expect(commit).not.toHaveBeenCalled();
     view.rerender(<Owner />);
@@ -131,54 +134,66 @@ describe("document-owned draft presentation", () => {
     expect(await screen.findByRole("dialog", { name: "Error for Name, Row 1" })).toBeDefined();
   });
 
-  it("marks actual changes, not focus or a cosmetic numeric change", () => {
-    const editor = setup({ numeric: true });
-    act(() => input().focus());
-    expect(marker()).toBeNull();
-    fireEvent.change(input(), { target: { value: "2.00" } });
-    expect(marker()).toBeNull();
-    fireEvent.change(input(), { target: { value: "2.5" } });
-    expect(marker()).not.toBeNull();
-    const description = document.getElementById(input().getAttribute("aria-describedby")!);
-    expect(description?.textContent).toBe("Unconfirmed input");
-    expect(marker()?.getAttribute("aria-hidden")).toBe("true");
-    expect(marker()?.hasAttribute("tabindex")).toBe(false);
-    expect(document.querySelector('[data-slot="tooltip-content"]')?.textContent).toBe(
-      "Unconfirmed input",
-    );
-    act(() => editor.session.cancel());
-    expect(marker()).toBeNull();
-  });
+  it.each([
+    { numeric: false, cosmetic: "Initial", changed: "Changed" },
+    { numeric: true, cosmetic: "2.00", changed: "2.5" },
+  ])(
+    "keeps focused typing quiet but accessible (numeric: $numeric)",
+    async ({ numeric, cosmetic, changed }) => {
+      const editor = setup({ numeric });
+      act(() => input().focus());
+      expect(marker()).toBeNull();
+      fireEvent.change(input(), { target: { value: cosmetic } });
+      expect(input().hasAttribute("aria-describedby")).toBe(false);
+      fireEvent.change(input(), { target: { value: changed } });
+      expect(marker()).toBeNull();
+      const description = document.getElementById(input().getAttribute("aria-describedby")!);
+      expect(description?.textContent).toBe("Unconfirmed input");
+      expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
+      await editor.user.hover(screen.getByRole("cell"));
+      expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
+      expect(editor.commit).not.toHaveBeenCalled();
+      act(() => editor.session.cancel());
+      expect(marker()).toBeNull();
+      expect(input().hasAttribute("aria-describedby")).toBe(false);
+    },
+  );
 
-  it("restores a marked draft without focusing or committing during teardown", async () => {
-    const editor = setup();
-    draft("Retained");
-    editor.show(false);
-    expect(editor.commit).not.toHaveBeenCalled();
-    editor.show(true);
-    expect(input().value).toBe("Retained");
-    expect(marker()).not.toBeNull();
-    expect(document.activeElement).not.toBe(input());
-    expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
-    expect(editor.commit).not.toHaveBeenCalled();
-    await editor.user.hover(screen.getByRole("cell"));
-    await waitFor(() =>
-      expect(document.querySelector('[data-slot="tooltip-content"]')?.textContent).toBe(
-        "Unconfirmed input",
-      ),
-    );
-    fireEvent.keyDown(input(), { key: "Escape" });
-    expect(input().value).toBe("Initial");
-    expect(marker()).toBeNull();
-  });
+  it.each([false, true])(
+    "restores a quiet marked draft without committing (numeric: %s)",
+    async (numeric) => {
+      const editor = setup({ numeric });
+      const value = numeric ? "2.5" : "Retained";
+      draft(value);
+      editor.show(false);
+      expect(editor.commit).not.toHaveBeenCalled();
+      editor.show(true);
+      expect(input().value).toBe(value);
+      expect(marker()).not.toBeNull();
+      expect(marker()?.getAttribute("aria-hidden")).toBe("true");
+      expect(marker()?.hasAttribute("tabindex")).toBe(false);
+      expect(document.activeElement).not.toBe(input());
+      expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
+      expect(editor.commit).not.toHaveBeenCalled();
+      await editor.user.hover(screen.getByRole("cell"));
+      expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
+      await editor.user.click(input());
+      expect(marker()).toBeNull();
+      expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
+      expect(editor.commit).not.toHaveBeenCalled();
+      fireEvent.keyDown(input(), { key: "Escape" });
+      expect(input().value).toBe(numeric ? "2" : "Initial");
+      expect(marker()).toBeNull();
+    },
+  );
 
-  it("uses a spinner while confirming and clears it on completion", async () => {
+  it.each([false, true])("uses only a spinner while confirming (numeric: %s)", async (numeric) => {
     let resolve!: () => void;
     const request = new Promise<void>((success) => {
       resolve = success;
     });
-    const editor = setup({ commit: vi.fn(() => request) });
-    draft("Pending");
+    const editor = setup({ numeric, commit: vi.fn(() => request) });
+    draft(numeric ? "2.5" : "Pending");
     fireEvent.keyDown(input(), { key: "Enter" });
     expect(marker()).toBeNull();
     const status = document.querySelector('[data-slot="line-items-cell-confirming"]');
@@ -187,6 +202,9 @@ describe("document-owned draft presentation", () => {
     expect(document.getElementById(input().getAttribute("aria-describedby")!)?.textContent).toBe(
       "Confirming input",
     );
+    expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
+    await editor.user.hover(screen.getByRole("cell"));
+    expect(document.querySelector('[data-slot="tooltip-content"]')).toBeNull();
     editor.show(false);
     editor.show(true);
     expect(document.querySelector('[data-slot="line-items-cell-confirming"]')).not.toBeNull();
@@ -280,6 +298,13 @@ describe("document-owned draft presentation", () => {
       expect(screen.queryByRole("listbox")).toBeNull();
       expect(document.querySelector('[data-slot="line-items-cell-calendar"]')).toBeNull();
       expect(common.commit).not.toHaveBeenCalled();
+      act(() =>
+        screen.getByRole(kind === "choice" ? "combobox" : "button", { name: /^Value/ }).focus(),
+      );
+      expect(marker()).not.toBeNull();
+      expect(document.querySelector('[data-slot="tooltip-content"]')?.textContent).toBe(
+        "Unconfirmed input",
+      );
     },
   );
 });

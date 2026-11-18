@@ -64,14 +64,20 @@ DOM environments are useful for component behavior, but do not verify popup posi
 
 ## Find form controls by role and accessible name
 
-Use the label a user sees:
+Use the label a user sees. Import `Field` from `@tailor-platform/app-shell`:
+
+<example-preview name="labeled-email"></example-preview>
 
 ```tsx
-<Field.Root name="email">
-  <Field.Label>Email</Field.Label>
-  <Field.Control type="email" />
-  <Field.Description>Used for order updates.</Field.Description>
-</Field.Root>
+function LabeledEmail() {
+  return (
+    <Field.Root name="email">
+      <Field.Label>Email</Field.Label>
+      <Field.Control type="email" />
+      <Field.Description>Used for order updates.</Field.Description>
+    </Field.Root>
+  );
+}
 ```
 
 This control is found with `screen.getByRole("textbox", { name: "Email" })`:

@@ -19,7 +19,10 @@ function DataTableFooter({ children, className }: { children?: ReactNode; classN
       data-slot="data-table-footer"
       data-selecting={selecting ? "" : undefined}
       className={cn(
-        "astw:flex astw:shrink-0 astw:items-center astw:border-t astw:border-border astw:px-4 astw:py-2",
+        // A named container so Pagination can compact itself by the footer's
+        // own width, not the viewport's. The selection bar measures the same
+        // width in JS (see NARROW_FOOTER_WIDTH in selection-bar.tsx).
+        "astw:@container/data-table-footer astw:flex astw:shrink-0 astw:items-center astw:border-t astw:border-border astw:px-4 astw:py-2",
         offersBulkActions && "astw:transition-colors astw:motion-reduce:transition-none",
         selecting && [
           "astw:flex-wrap astw:gap-x-3 astw:gap-y-2",

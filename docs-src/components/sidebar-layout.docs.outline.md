@@ -5,6 +5,9 @@ title: SidebarLayout
 description: Default AppShell layout with a built-in sidebar, content header, optional app-wide top bar, and an escape-hatch body slot
 sources:
   - packages/core/src/components/sidebar/sidebar-layout.tsx
+  - packages/core/src/components/sidebar/use-app-shell-sidebar.ts
+  - packages/core/src/components/sidebar/sidebar-separator.tsx
+  - packages/core/src/contexts/scroll-container-context.tsx
 ---
 
 # SidebarLayout

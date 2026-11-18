@@ -1,8 +1,10 @@
 ---
-kind: prose
+kind: code-backed
 group: use-override-breadcrumb
 title: useOverrideBreadcrumb
 description: Hook for dynamically overriding breadcrumb titles from within page components
+sources:
+  - packages/core/src/hooks/use-override-breadcrumb.ts
 ---
 
 # useOverrideBreadcrumb

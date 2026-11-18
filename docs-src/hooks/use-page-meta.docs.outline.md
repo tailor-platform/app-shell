@@ -1,8 +1,10 @@
 ---
-kind: prose
+kind: code-backed
 group: use-page-meta
 title: usePageMeta
 description: Hook to resolve page metadata from route path
+sources:
+  - packages/core/src/hooks/use-page-meta.ts
 ---
 
 # usePageMeta
@@ -70,14 +72,18 @@ function CustomLink({ to }: { to: string }) {
 
 ### Breadcrumb Builder
 
-```typescript
+```tsx
+function BreadcrumbItem({ path }: { path: string }) {
+  const meta = usePageMeta(path);
+  return <span>{meta?.title}</span>;
+}
+
 function Breadcrumb({ paths }: { paths: string[] }) {
   return (
     <div>
-      {paths.map((path) => {
-        const meta = usePageMeta(path);
-        return <span key={path}>{meta?.title}</span>;
-      })}
+      {paths.map((path) => (
+        <BreadcrumbItem key={path} path={path} />
+      ))}
     </div>
   );
 }

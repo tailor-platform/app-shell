@@ -5,6 +5,7 @@ title: DatePicker
 description: Accessible date input components (@internationalized/date + Base UI)
 sources:
   - packages/core/src/components/date-field/**
+  - packages/core/src/components/calendar/**
 ---
 
 # DatePicker

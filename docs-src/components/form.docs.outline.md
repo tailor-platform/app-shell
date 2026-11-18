@@ -5,6 +5,8 @@ title: Form, Field, and Fieldset
 description: Components for building validated forms with automatic accessibility wiring, validation state management, and optional React Hook Form integration
 sources:
   - packages/core/src/components/form/**
+  - packages/core/src/components/field/**
+  - packages/core/src/components/fieldset/**
 ---
 
 # Form, Field, and Fieldset

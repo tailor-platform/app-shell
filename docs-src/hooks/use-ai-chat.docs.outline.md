@@ -1,8 +1,10 @@
 ---
-kind: prose
+kind: code-backed
 group: use-ai-chat
 title: useAIChat
 description: AI Gateway chat hook with optional local tools
+sources:
+  - packages/core/src/ai/use-ai-chat.ts
 ---
 
 # useAIChat

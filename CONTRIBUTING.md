@@ -109,9 +109,10 @@ Conventions are encoded as skills under **`.agents/skills/`**. Read the relevant
 this guide won't restate their rules (they'd only go stale here).
 
 - **Changing implementation under `packages/**`** → `.agents/skills/code-review/SKILL.md` (the code review skill routes you to the shared cross-cutting and area references for the change).
-- **Building pages / picking UI patterns** → the **`app-shell-patterns`** skill. It is
-  **generated** by `docs-kit` from `docs-src/` into `packages/core/skills/app-shell-patterns/`,
-  which is gitignored and shipped to consumers via the npm package. **Edit the source under
+- **Building pages / picking UI patterns** → the **`app-shell-patterns`** skill. It and the
+  **`app-shell-upgrade`** skill (built from the migrations guide) are **generated** by `docs-kit`
+  from `docs-src/` into `packages/core/skills/<name>/`, which is gitignored and shipped to
+  consumers via the npm package. **Edit the source under
   `docs-src/` and regenerate with `pnpm docs:sync`** — never hand-edit the generated skill.
   `pnpm docs:check` blocks in CI if the two drift, so if you change a public API, design tokens,
   or a pattern, update the `docs-src/` source too.

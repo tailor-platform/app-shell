@@ -266,7 +266,6 @@ export {
   parseDateTime,
   parseAbsolute,
   parseZonedDateTime,
-  today,
   type CalendarDate,
   type CalendarDateTime,
   type ZonedDateTime,

@@ -1506,8 +1506,8 @@
         "typeSurface": "f1d9ac66cafae3d5",
         "outline": "76e6e33c6034cc3b",
         "snapshot": null,
-        "outputMd": "2c08d654e96b8ed1",
-        "examples": "5e404daca5fdeb59"
+        "outputMd": "5a0c1ec509b4c6dc",
+        "examples": "f2486bc05cde455f"
       }
     },
     "toolbar": {
@@ -1867,7 +1867,7 @@
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "a94b016f0c9709b7",
     "packages/core/skills/app-shell-patterns/references/components/text.md": "e5311b1891f3ff7b",
     "packages/core/skills/app-shell-patterns/references/components/textarea.md": "cf324904899ed318",
-    "packages/core/skills/app-shell-patterns/references/components/timeline.md": "2c08d654e96b8ed1",
+    "packages/core/skills/app-shell-patterns/references/components/timeline.md": "5a0c1ec509b4c6dc",
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "f8a45109e97391f5",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "c3faff5e48922922",
     "packages/core/skills/app-shell-patterns/references/components/tree.md": "6010470f3c41538a",

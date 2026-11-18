@@ -17,7 +17,8 @@ const SCROLLBAR_HIDE_DELAY = 800;
  */
 export const SIDEBAR_SCROLL_AREA_CLASS = [
   "astw:[scrollbar-width:thin] astw:[scrollbar-color:transparent_transparent]",
-  "astw:data-scrolling:[scrollbar-color:color-mix(in_oklab,var(--muted-foreground)_45%,transparent)_transparent]",
+  "astw:data-scrolling:[scrollbar-color:var(--muted-foreground)_transparent]",
+  "astw:[mask-image:linear-gradient(to_top,transparent_0,#000_2rem,#000_100%)] astw:[mask-size:100%_calc(100%_+_2rem)] astw:[mask-repeat:no-repeat]",
   "astw:[animation:appshell-sidebar-fade_auto_linear_both] astw:[animation-timeline:scroll(self_block)] astw:[animation-range:calc(100%_-_2rem)_100%]",
   "astw:scroll-pb-8",
 ].join(" ");

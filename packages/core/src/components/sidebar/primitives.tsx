@@ -651,7 +651,9 @@ function SidebarContent({ className, onScroll, ...props }: React.ComponentProps<
         SIDEBAR_SCROLL_AREA_CLASS,
         // The inset sidebar pads its panel by 8px; reach into that padding so
         // the scrollbar sits on the sidebar's edge, keeping the content in place.
-        "astw:group-data-[variant=inset]:-mr-2 astw:group-data-[variant=inset]:pr-2",
+        // Skipped when a resize handle is present: its hit area overlaps the last
+        // 6px of the panel and would sit on top of the scrollbar thumb.
+        "astw:group-data-[variant=inset]:not-group-has-[[data-slot=sidebar-resize-handle]]:-mr-2 astw:group-data-[variant=inset]:not-group-has-[[data-slot=sidebar-resize-handle]]:pr-2",
         className,
       )}
       {...props}

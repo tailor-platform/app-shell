@@ -19,6 +19,8 @@ Unlike `Input`, it has no fixed height: `rows` sets the visible line count (floo
 import { Textarea } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Field` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -57,29 +59,19 @@ const [note, setNote] = useState("");
 
 `min-h-16` (64px) is a hard floor, so `rows={1}` and `rows={2}` both render at 64px — `rows` only starts moving the height from 3 up. There is no supported way to go below the floor.
 
-```tsx
-<Textarea rows={8} placeholder="Paste the incident log…" />
-```
+<!-- example: height -->
 
 > The box does not auto-grow as you type. `field-sizing: content` would do that, but the browser then ignores `rows` — leaving height settable only through a `min-h-*` utility. Use `rows` instead.
 
 ### Disabled
 
-```tsx
-<Textarea value="Read-only value" disabled />
-```
+<!-- example: disabled -->
 
 ## Use With Field
 
 Placed inside a `Field.Root`, `Textarea` picks up the field's label, description, and invalid/disabled state automatically — no `error` prop of its own.
 
-```tsx
-<Field.Root name="description">
-  <Field.Label>Description</Field.Label>
-  <Textarea placeholder="What changed?" />
-  <Field.Description>Optional — visible to the whole team.</Field.Description>
-</Field.Root>
-```
+<!-- example: with-field -->
 
 ## React Hook Form
 

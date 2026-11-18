@@ -42,13 +42,14 @@ const useTheme: () => {
 
 ### Display Current Theme
 
-```typescript
-import { useTheme } from "@tailor-platform/app-shell";
+Import `Text` and `useTheme` from `@tailor-platform/app-shell`.
 
+<example-preview name="theme-display"></example-preview>
+
+```tsx
 function ThemeDisplay() {
   const { theme } = useTheme();
-
-  return <div>Current theme: {theme}</div>;
+  return <Text.p>Current theme: {theme}</Text.p>;
 }
 ```
 
@@ -86,15 +87,22 @@ function ThemeSelector() {
 
 Use `resolvedTheme` when you need a concrete `"light"` or `"dark"` value — it already accounts for `"system"`:
 
-```typescript
+The preview uses `Moon` and `Sun` from `lucide-react` instead of application-specific logo assets. Change the documentation theme to see the rendered logo change.
+
+<example-preview name="logo"></example-preview>
+
+```tsx
 function Logo() {
   const { resolvedTheme } = useTheme();
-
   return (
-    <img
-      src={resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
-      alt="Logo"
-    />
+    <div role="img" aria-label={`${resolvedTheme} mode logo`} className="flex items-center gap-2">
+      {resolvedTheme === "dark" ? (
+        <Moon aria-hidden className="size-6" />
+      ) : (
+        <Sun aria-hidden className="size-6" />
+      )}
+      <Text.span>{resolvedTheme === "dark" ? "Night workspace" : "Day workspace"}</Text.span>
+    </div>
   );
 }
 ```

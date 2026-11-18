@@ -1,4 +1,5 @@
-import { Text } from "@tailor-platform/app-shell";
+import { useId } from "react";
+import { Input, Table, Text } from "@tailor-platform/app-shell";
 
 export function BasicUsage() {
   return (
@@ -41,9 +42,61 @@ export function ColorAndModifiers() {
       <Text variant="body-md" className="text-muted-foreground">
         Orders sent this month.
       </Text>
+      <Text.h3 variant="heading-md" className="leading-none">
+        Card title
+      </Text.h3>
       <Text variant="label-md" className="tabular-nums">
         1,240.00
       </Text>
     </div>
+  );
+}
+
+export function ElementRoles() {
+  return (
+    <div className="flex flex-col gap-3">
+      <Text.h1 variant="heading-sm">A compact page title</Text.h1>
+      <Text.h3 variant="heading-lg">A visually prominent subsection</Text.h3>
+      <Text.span variant="body-sm">Updated recently</Text.span>
+    </div>
+  );
+}
+
+export function RenderLabel() {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-2">
+      <Text variant="label-md" render={<label htmlFor={id} />}>
+        Quantity
+      </Text>
+      <Input id={id} type="number" defaultValue={1} />
+    </div>
+  );
+}
+
+export function HeadingLevel() {
+  return <Text.h3 variant="heading-md">Line items</Text.h3>;
+}
+
+export function NonHeadingRole() {
+  return <Text.div variant="heading-md">1,240 orders</Text.div>;
+}
+
+export function RolesWithoutText() {
+  return (
+    <Table.Root>
+      <Table.Header>
+        <Table.Row>
+          <th scope="col" className="text-label-md text-muted-foreground">
+            Amount
+          </th>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        <Table.Row>
+          <Table.Cell>$1,240.00</Table.Cell>
+        </Table.Row>
+      </Table.Body>
+    </Table.Root>
   );
 }

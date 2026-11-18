@@ -19,6 +19,8 @@ sources:
 import { Grid } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Card` and `Text` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -69,52 +71,25 @@ All standard HTML `<div>` props are also accepted.
 
 `columns`, `rows`, `gap`, `gapX`, `gapY`, and every `Grid.Item` prop accept either a single value (applied at all breakpoints) or a breakpoint object. Breakpoints align with Tailwind: `initial` (base), `sm`, `md`, `lg`, `xl`, `2xl`.
 
-```tsx
-// 1 column on mobile, 2 from md, 4 from xl
-<Grid columns={{ initial: 1, md: 2, xl: 4 }} gap={4}>
-  {/* … */}
-</Grid>
-```
+<!-- example: responsive-values -->
 
 ## Sizing columns
 
 There are three ways to size columns; pick whichever fits.
 
-```tsx
-// 1. Equal columns
-<Grid columns={4} gap={4}>{/* … */}</Grid>
-
-// 2. Custom track widths (verbatim grid-template-columns)
-<Grid columns="280px 1fr" gap={6}>{/* … */}</Grid>
-
-// 3. Auto-fit — as many ≥240px columns as fit, no breakpoints needed
-<Grid minChildWidth={240} gap={4}>{/* … */}</Grid>
-```
+<!-- example: column-sizing -->
 
 `minChildWidth` accepts a number (pixels) or a string (e.g. `"16rem"`) and takes precedence over `columns` when set.
 
 ## Spanning with Grid.Item
 
-```tsx
-<Grid columns={4} gap={4}>
-  <Grid.Item colSpan={2}>Wide card</Grid.Item>
-  <Card.Root>Normal</Card.Root>
-  <Grid.Item colSpan={{ initial: "full", md: 1 }} rowSpan={2}>
-    Tall
-  </Grid.Item>
-  <Grid.Item colSpan="full">Full-width footer row</Grid.Item>
-</Grid>
-```
+<!-- example: spanning -->
 
 ## Alignment
 
 `align` aligns items within their row (visible when row height exceeds the item), `justify` distributes the columns when they are narrower than the container (e.g. fixed-width tracks), and `flow` controls placement order:
 
-```tsx
-<Grid columns="repeat(3, 96px)" gap={4} justify="between" align="center">
-  {/* fixed-width columns spread across the container */}
-</Grid>
-```
+<!-- example: alignment -->
 
 > **Note:** `justify` only has a visible effect when the tracks do not fill the container. With fluid `columns={n}` (which uses `1fr` tracks) the columns always fill the width, so `justify` is a no-op — use fixed-width tracks to distribute columns. Likewise, `flow="…-dense"` only differs from the default when items span multiple cells and leave gaps to backfill.
 
@@ -144,24 +119,11 @@ There are three ways to size columns; pick whichever fits.
 
 ### Sidebar + content (custom widths)
 
-```tsx
-<Grid columns="280px 1fr" gap={6}>
-  <Card.Root>{/* filters */}</Card.Root>
-  <Card.Root>{/* results */}</Card.Root>
-</Grid>
-```
+<!-- example: sidebar-content -->
 
 ### Dashboard with a featured panel
 
-```tsx
-<Grid columns={{ initial: 1, md: 4 }} gap={4}>
-  <Grid.Item colSpan={{ initial: "full", md: 2 }}>
-    <Card.Root>Featured</Card.Root>
-  </Grid.Item>
-  <Card.Root>Stat</Card.Root>
-  <Card.Root>Stat</Card.Root>
-</Grid>
-```
+<!-- example: featured-panel -->
 
 ## Styling
 

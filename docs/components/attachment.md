@@ -16,44 +16,83 @@ import { Attachment, useAttachment } from "@tailor-platform/app-shell";
 import type { AttachmentItem, AttachmentOperation } from "@tailor-platform/app-shell";
 ```
 
+The example below also imports `useState` from `react`, and `Button`, `Card`, and `Text` from `@tailor-platform/app-shell`.
+
 ## Basic usage
 
 Use `useAttachment` to manage upload/delete state locally, then flush operations to your backend on submit via `applyChanges`. Spread the returned `props` directly onto `<Attachment />`.
 
-```tsx
-import { Attachment, Card, useAttachment } from "@tailor-platform/app-shell";
-import type { AttachmentOperation } from "@tailor-platform/app-shell";
+This example starts with an image and a PDF tile. Add files through the upload tile, or use each item's menu to delete it. **Save changes** displays the buffered operations and clears the buffer without sending files to a server. **Download** displays the callback result instead of downloading a file. Files and changes remain in memory only for this preview.
 
-function ProductForm() {
-  const { props, applyChanges } = useAttachment({
-    initialItems: existingAttachments,
+<example-preview name="basic-usage"></example-preview>
+
+```tsx
+function BasicUsage() {
+  const initialItems: AttachmentItem[] = [
+    {
+      id: "sample-image",
+      fileName: "product.svg",
+      mimeType: "image/svg+xml",
+      previewUrl: `data:image/svg+xml,${encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120"><rect width="120" height="120" fill="#dbeafe"/><circle cx="60" cy="50" r="26" fill="#2563eb"/><text x="60" y="100" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#1e3a8a">Sample image</text></svg>',
+      )}`,
+    },
+    {
+      id: "sample-pdf",
+      fileName: "specification.pdf",
+      mimeType: "application/pdf",
+    },
+  ];
+  const { props, applyChanges, isApplying } = useAttachment({
+    initialItems,
     accept: "image/*,.pdf",
   });
-
-  async function handleSubmit() {
-    await applyChanges(async (operations) => {
-      for (const op of operations) {
-        if (op.type === "upload") await uploadToServer(op.file);
-        if (op.type === "delete") await deleteFromServer(op.item.id);
-      }
-    });
-  }
+  const [savedOperations, setSavedOperations] = useState<string[] | null>(null);
+  const [downloadMessage, setDownloadMessage] = useState("No download requested.");
 
   return (
     <Card.Root>
-      <Card.Header title="Product images" description="PNG, JPG, or PDF — max 10 MB per file." />
-      <Card.Content>
+      <Card.Header
+        title="Product attachments"
+        description="Files stay in this preview. Save and Download only display their results below."
+      />
+      <Card.Content className="flex flex-col gap-4">
         <Attachment
           {...props}
-          uploadLabel="Upload image"
-          uploadHint="PNG, JPG, or PDF — max 10 MB per file."
-          onDownload={(item) => console.log("download", item)}
+          disabled={isApplying}
+          uploadLabel="Add files"
+          uploadHint="Choose images or PDFs, or drop files here."
+          onDownload={(item) =>
+            setDownloadMessage(`Download requested: ${item.fileName} (demo only).`)
+          }
         />
+        <div>
+          <Button
+            disabled={isApplying}
+            onClick={() =>
+              applyChanges(async (operations) => {
+                setSavedOperations(
+                  operations.map((operation) => `${operation.type}: ${operation.item.fileName}`),
+                );
+              })
+            }
+          >
+            Save changes
+          </Button>
+        </div>
+        <Text.p role="status">
+          {savedOperations === null
+            ? "No changes saved yet."
+            : `Applied operations (demo): ${JSON.stringify(savedOperations)}`}
+        </Text.p>
+        <Text.p role="status">{downloadMessage}</Text.p>
       </Card.Content>
     </Card.Root>
   );
 }
 ```
+
+For a real integration, handle each upload operation's `file` and each delete operation's `item.id` inside the `applyChanges` callback. The `accept` prop only filters the file picker, and `uploadHint` is informational; validate file type and size in your application and on the server for real uploads.
 
 ## Composition with Card
 

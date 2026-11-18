@@ -82,6 +82,16 @@
   }
 }
 
+/* Sidebar list: fades its bottom edge while there is more to scroll. */
+@keyframes appshell-sidebar-fade {
+  from {
+    mask-image: linear-gradient(to top, #0000 0, #000 2rem, #000 100%);
+  }
+  to {
+    mask-image: linear-gradient(to top, #000 0, #000 2rem, #000 100%);
+  }
+}
+
 @layer utilities {
   /*
    * Sidebar active item — hairline border (~0.5px @ 30% black). Wrapper components in

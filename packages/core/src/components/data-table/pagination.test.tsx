@@ -127,8 +127,14 @@ describe("DataTable.Pagination", () => {
 
     // A narrow footer shows "1/5" in place of "Page 1 / 5"; only the full
     // text should be announced.
-    expect(screen.getByText("1/5").getAttribute("aria-hidden")).toBe("true");
-    expect(screen.getByText("Page 1 / 5").getAttribute("aria-hidden")).toBeNull();
+    const short = screen.getByText("1/5");
+    const full = screen.getByText("Page 1 / 5");
+    expect(short.getAttribute("aria-hidden")).toBe("true");
+    expect(full.getAttribute("aria-hidden")).toBeNull();
+    // jsdom has no container queries, so check the classes that swap them.
+    expect(short.className).toContain("astw:hidden");
+    expect(short.className).toContain("astw:@max-[480px]/data-table-footer:inline");
+    expect(full.className).toContain("astw:@max-[480px]/data-table-footer:sr-only");
   });
 
   it("drops the page-size switcher and shrinks the page buttons in a narrow footer", () => {
@@ -334,6 +340,13 @@ describe("row info text", () => {
     expect(screen.getByText("50 rows")).not.toBeNull();
   });
 
+  it("uses the singular for a single row", () => {
+    render(<TestPagination data={{ ...dataWithRows, total: 1 }} control={makeControl()} />, {
+      wrapper,
+    });
+    expect(screen.getByText("1 row")).not.toBeNull();
+  });
+
   it("shows total rows when total is provided and selection enabled but nothing selected", () => {
     render(
       <TestPagination data={dataWithRows} control={makeControl()} onSelectionChange={vi.fn()} />,
@@ -342,7 +355,10 @@ describe("row info text", () => {
     expect(screen.getByText("50 rows")).not.toBeNull();
   });
 
-  it("shows 'Y of X rows selected' when rows are selected and total is provided", async () => {
+  it.each([
+    { locale: "en", full: "1 of 50 rows selected", short: "1/50 selected" },
+    { locale: "ja", full: "50 行中 1 行を選択中", short: "1/50 行を選択中" },
+  ])("shows the selected count with a short form ($locale)", async ({ locale, full, short }) => {
     const user = userEvent.setup();
 
     function TestWithTable() {
@@ -362,19 +378,24 @@ describe("row info text", () => {
       );
     }
 
-    render(<TestWithTable />, { wrapper });
+    render(<TestWithTable />, { wrapper: createAppShellWrapper(locale) });
 
     // Click the first row's checkbox to select it
     const checkboxes = screen.getAllByRole("checkbox");
     // checkboxes[0] is the "select all" checkbox, [1] is the first row
     await user.click(checkboxes[1]);
 
-    expect(screen.getByText("1 of 50 rows selected").getAttribute("aria-hidden")).toBeNull();
     // A narrow footer shows the short form; only the full text is announced.
-    expect(screen.getByText("1/50 selected").getAttribute("aria-hidden")).toBe("true");
+    const fullText = screen.getByText(full);
+    const shortText = screen.getByText(short);
+    expect(fullText.getAttribute("aria-hidden")).toBeNull();
+    expect(fullText.className).toContain("astw:@max-[480px]/data-table-footer:sr-only");
+    expect(shortText.getAttribute("aria-hidden")).toBe("true");
+    expect(shortText.className).toContain("astw:hidden");
+    expect(shortText.className).toContain("astw:@max-[480px]/data-table-footer:inline");
   });
 
-  it("shows 'Y row selected' when rows are selected and no total", async () => {
+  it("shows 'Y row(s) selected' by count when rows are selected and no total", async () => {
     const user = userEvent.setup();
 
     function TestWithTable() {
@@ -398,8 +419,10 @@ describe("row info text", () => {
 
     const checkboxes = screen.getAllByRole("checkbox");
     await user.click(checkboxes[1]);
-
     expect(screen.getByText("1 row selected")).not.toBeNull();
+
+    await user.click(checkboxes[2]);
+    expect(screen.getByText("2 rows selected")).not.toBeNull();
   });
 
   it("shows nothing when no total and no selection enabled", () => {

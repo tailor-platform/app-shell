@@ -1,7 +1,7 @@
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import type { PropsWithChildren } from "react";
 import { createElement } from "react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, useSearchParams } from "react-router";
 import { describe, it, expect, vi } from "vitest";
 import { AppShellConfigContext, buildConfigurations } from "@/contexts/appshell-context";
 import type { CollectionPersistedState, TableMetadataMap } from "@/types/collection";
@@ -107,6 +107,57 @@ describe("parseCollectionSearchParams", () => {
     ]);
   });
 
+  it.each([true, false, undefined])("round-trips caseSensitive=%s", (caseSensitive) => {
+    const filter = {
+      field: "title",
+      operator: "contains" as const,
+      value: "Alice",
+      ...(caseSensitive !== undefined ? { caseSensitive } : {}),
+    };
+    const state = { filters: [filter], sortStates: [], pageSize: 20 };
+    const written = writeCollectionSearchParams(new URLSearchParams(), state);
+
+    expect(written.get("f.title:contains")).toBe("Alice");
+    expect(written.get("f.title:contains:cs")).toBe(
+      caseSensitive === undefined ? null : String(caseSensitive),
+    );
+    expect(parseCollectionSearchParams(tableMetadata.task, written).filters).toEqual([filter]);
+    expect(parseCollectionSearchParams(written).filters).toEqual([filter]);
+  });
+
+  it.each(["", "invalid", "0", "TRUE"])("ignores invalid cs value %j", (value) => {
+    const params = new URLSearchParams({
+      "f.title:contains": "Alice",
+      "f.title:contains:cs": value,
+    });
+    const expected = { filters: [{ field: "title", operator: "contains", value: "Alice" }] };
+
+    expect(parseCollectionSearchParams(tableMetadata.task, params)).toEqual(expected);
+    expect(parseCollectionSearchParams(params)).toEqual(expected);
+  });
+
+  it.each(["cs", "future"])("does not treat an orphan %s flag as a filter", (flag) => {
+    const params = new URLSearchParams({ [`f.title:contains:${flag}`]: "false" });
+
+    expect(parseCollectionSearchParams(tableMetadata.task, params)).toEqual({});
+    expect(parseCollectionSearchParams(params)).toEqual({});
+  });
+
+  it("reads flags before filter values, scopes them by operator, and ignores unknown flags", () => {
+    const params = new URLSearchParams(
+      "f.title:contains:cs=false&f.title:contains:future=true&f.title:contains=Alice&f.title:eq=Bob",
+    );
+    const expected = {
+      filters: [
+        { field: "title", operator: "contains", value: "Alice", caseSensitive: false },
+        { field: "title", operator: "eq", value: "Bob" },
+      ],
+    };
+
+    expect(parseCollectionSearchParams(tableMetadata.task, params)).toEqual(expected);
+    expect(parseCollectionSearchParams(params)).toEqual(expected);
+  });
+
   it.each(["eq", "in", "nin", "between"] as const)(
     "round-trips decimal %s values and sorting without losing precision",
     (operator) => {
@@ -141,6 +192,61 @@ describe("writeCollectionSearchParams", () => {
 
     expect(result.toString()).toBe("foo=bar&p=30&s=createdAt%3Adesc&f.status%3Aeq=pending");
   });
+
+  it("updates cs flags and removes them when unspecified or the filter is cleared", () => {
+    const state = {
+      filters: [{ field: "title", operator: "contains" as const, value: "Alice" }],
+      sortStates: [],
+      pageSize: 20,
+    };
+    const prev = new URLSearchParams(
+      "foo=bar&f.title:contains=Alice&f.title:contains:cs=false&p=20",
+    );
+    const sensitive = writeCollectionSearchParams(prev, {
+      ...state,
+      filters: [{ ...state.filters[0], caseSensitive: true }],
+    });
+    expect([...sensitive.entries()]).toEqual([
+      ["foo", "bar"],
+      ["p", "20"],
+      ["f.title:contains", "Alice"],
+      ["f.title:contains:cs", "true"],
+    ]);
+    expect(
+      writeCollectionSearchParams(sensitive, {
+        ...state,
+        filters: [{ ...state.filters[0], caseSensitive: true }],
+      }),
+    ).toBe(sensitive);
+
+    const unspecified = writeCollectionSearchParams(sensitive, state);
+    expect([...unspecified.entries()]).toEqual([
+      ["foo", "bar"],
+      ["p", "20"],
+      ["f.title:contains", "Alice"],
+    ]);
+    const cleared = writeCollectionSearchParams(sensitive, { ...state, filters: [] });
+    expect([...cleared.entries()]).toEqual([
+      ["foo", "bar"],
+      ["p", "20"],
+    ]);
+  });
+
+  it.each([true, false])(
+    "does not leak cs=%s onto an unspecified duplicate filter",
+    (caseSensitive) => {
+      const lastFilter = { field: "title", operator: "contains" as const, value: "Bob" };
+      const written = writeCollectionSearchParams(new URLSearchParams(), {
+        filters: [{ ...lastFilter, value: "Alice", caseSensitive }, lastFilter],
+        sortStates: [],
+        pageSize: 20,
+      });
+
+      expect(written.get("f.title:contains")).toBe("Bob");
+      expect(written.has("f.title:contains:cs")).toBe(false);
+      expect(parseCollectionSearchParams(written).filters).toEqual([lastFilter]);
+    },
+  );
 
   it("returns prev when param multiset is unchanged", () => {
     const prev = new URLSearchParams("f.b:eq=2&f.a:eq=1&p=20");
@@ -221,6 +327,42 @@ describe("withURLCollectionState", () => {
 });
 
 describe("useURLCollectionVariables", () => {
+  it.each([true, false])(
+    "preserves caseSensitive=%s and the generated query after a URL reload",
+    (caseSensitive) => {
+      const wrapper = ({ children }: PropsWithChildren) =>
+        createElement(MemoryRouter, { initialEntries: ["/"] }, children);
+      const { result, unmount } = renderHook(
+        () => {
+          const collection = useURLCollectionVariables({ tableMetadata: tableMetadata.task });
+          const [searchParams] = useSearchParams();
+          return { ...collection, searchParams };
+        },
+        { wrapper },
+      );
+
+      act(() => result.current.control.addFilter("title", "contains", "Alice", { caseSensitive }));
+      const expectedQuery = {
+        title: caseSensitive ? { contains: "Alice" } : { regex: "(?i)Alice" },
+      };
+      expect(result.current.variables.query).toEqual(expectedQuery);
+      const search = result.current.searchParams.toString();
+      unmount();
+
+      const restored = renderHook(
+        () => useURLCollectionVariables({ tableMetadata: tableMetadata.task }),
+        {
+          wrapper: ({ children }: PropsWithChildren) =>
+            createElement(MemoryRouter, { initialEntries: [`/?${search}`] }, children),
+        },
+      );
+      expect(restored.result.current.control.filters).toEqual([
+        { field: "title", operator: "contains", value: "Alice", caseSensitive },
+      ]);
+      expect(restored.result.current.variables.query).toEqual(expectedQuery);
+    },
+  );
+
   it("returns undefined query when the URL has no filters", () => {
     const wrapper = ({ children }: PropsWithChildren) =>
       createElement(MemoryRouter, { initialEntries: ["/"] }, children);

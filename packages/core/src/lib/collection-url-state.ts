@@ -139,8 +139,16 @@ export function parseCollectionSearchParams(
   const nextFilters: Filter[] = [];
   for (const [key, value] of params.entries()) {
     if (!key.startsWith(FILTER_PREFIX) || !value) continue;
-    const [field, operator] = key.slice(FILTER_PREFIX.length).split(":");
-    if (!field || !operator || !isValidFilter(tableMetadata, field, operator)) continue;
+    const [field, operator, flag] = key.slice(FILTER_PREFIX.length).split(":");
+    if (
+      !field ||
+      !operator ||
+      flag !== undefined ||
+      !isValidFilter(tableMetadata, field, operator)
+    ) {
+      continue;
+    }
+    const caseSensitive = params.get(`${key}:cs`);
     const decoded = decodeFilterValue(value);
     const fieldType = fieldTypeOf(tableMetadata, field);
     nextFilters.push({
@@ -150,6 +158,9 @@ export function parseCollectionSearchParams(
       // that `decodeFilterValue` returned as strings. Without metadata (untyped
       // overload) we can't, so the value stays a string.
       value: fieldType ? coerceFilterValueToFieldType(fieldType, decoded) : decoded,
+      ...(caseSensitive === "true" || caseSensitive === "false"
+        ? { caseSensitive: caseSensitive === "true" }
+        : {}),
     });
   }
   if (nextFilters.length > 0) nextState.filters = nextFilters;
@@ -185,7 +196,13 @@ export function writeCollectionSearchParams<
     if (key.startsWith(FILTER_PREFIX)) next.delete(key);
   }
   for (const filter of state.filters) {
-    next.set(`${FILTER_PREFIX}${filter.field}:${filter.operator}`, encodeFilterValue(filter.value));
+    const key = `${FILTER_PREFIX}${filter.field}:${filter.operator}`;
+    next.set(key, encodeFilterValue(filter.value));
+    if (filter.caseSensitive !== undefined) {
+      next.set(`${key}:cs`, String(filter.caseSensitive));
+    } else {
+      next.delete(`${key}:cs`);
+    }
   }
 
   // Bail out if nothing changed — avoids a no-op navigation that could still

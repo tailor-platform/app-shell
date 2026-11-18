@@ -22,10 +22,7 @@ type PromiseErrorOptions = Extract<PromiseErrorResult, { message: unknown }>;
  * The values are written out here, not left to Sonner, so a Sonner upgrade cannot change them.
  * Why: docs-src/patterns/interaction-toast.docs.outline.md (Constraints).
  */
-const STAY_UNTIL_CLOSED: Required<ToastDefault> = {
-  duration: Infinity,
-  closeButton: true,
-};
+const STAY_UNTIL_CLOSED: Required<ToastDefault> = { duration: Infinity, closeButton: true };
 
 /** A field the app sets replaces the built-in one; a field it leaves out keeps it. */
 const resolveDefault = (configured: ToastDefault | undefined): Required<ToastDefault> => ({

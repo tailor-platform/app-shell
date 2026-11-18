@@ -71,9 +71,7 @@ export type ToastDefault = {
  * `T` with at least one of its fields set. An empty object is a type error, and the
  * constraint follows `T` when fields are added to it.
  */
-type AtLeastOne<T> = {
-  [K in keyof T]-?: Required<Pick<T, K>> & Partial<T>;
-}[keyof T];
+type AtLeastOne<T> = { [K in keyof T]-?: Required<Pick<T, K>> & Partial<T> }[keyof T];
 
 /**
  * Defaults `useToast` applies per kind of toast. The built-in default for both kinds is
@@ -244,9 +242,5 @@ export interface TimeZone {
 export const useTimeZone = (): TimeZone => {
   const { configurations } = useContext(AppShellConfigContext);
   const timeZone = configurations.timeZone ?? getLocalTimeZone();
-  return {
-    value: timeZone,
-    today: () => today(timeZone),
-    now: () => now(timeZone),
-  };
+  return { value: timeZone, today: () => today(timeZone), now: () => now(timeZone) };
 };

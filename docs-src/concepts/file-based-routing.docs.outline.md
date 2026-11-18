@@ -104,9 +104,12 @@ Pages are automatically discovered and injected—no `modules` prop required!
 
 ### Minimal Example
 
-The simplest page is just a default-exported component. Put this component in `src/pages/about/page.tsx` and add `export default AboutPage` so the plugin can discover it:
+The simplest page is just a default-exported component:
 
-<!-- example: about-page -->
+```tsx
+// src/pages/about/page.tsx
+export default () => <div>About</div>;
+```
 
 ### Full Example
 

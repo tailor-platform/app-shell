@@ -209,7 +209,49 @@ Structured step timeline for agentic turns — the discrete plan being executed,
 
 ### Tool calls during the active flow
 
-`useAIChat()` returns a transient `toolCalls` list separately from `messages`. Render it with `AIChat.ToolCall` after the message history inside `AIChat.Conversation`:
+`useAIChat()` returns a transient `toolCalls` list separately from `messages`. Render it with `AIChat.ToolCall` after the message history inside `AIChat.Conversation`.
+
+For an application integration, pass a configured client and registered tools to the component below, and choose a model available through your Gateway. Unlike the local preview, submitting a message here calls that client and may execute the supplied tools:
+
+```tsx
+import {
+  AIChat,
+  Card,
+  useAIChat,
+  type AIGatewayClient,
+  type AILocalTool,
+} from "@tailor-platform/app-shell";
+
+function ToolCallAssistant({
+  client,
+  model,
+  tools,
+}: {
+  client: AIGatewayClient;
+  model: string;
+  tools: Record<string, AILocalTool>;
+}) {
+  const { messages, status, toolCalls, sendMessage, stop } = useAIChat({ client, model, tools });
+
+  return (
+    <Card.Root className="flex h-96 flex-col overflow-hidden">
+      <AIChat status={status}>
+        <AIChat.Conversation>
+          {messages.map((message) => (
+            <AIChat.Message key={message.id} from={message.role}>
+              <AIChat.Response>{message.content}</AIChat.Response>
+            </AIChat.Message>
+          ))}
+          {toolCalls.map((call) => (
+            <AIChat.ToolCall key={call.id} call={call} />
+          ))}
+        </AIChat.Conversation>
+        <AIChat.Composer onSubmit={sendMessage} onStop={stop} />
+      </AIChat>
+    </Card.Root>
+  );
+}
+```
 
 The following fixture shows two requested names. **Finish request** clears them, and **Show requested calls** restores them, making the transient presentation observable without executing a tool:
 

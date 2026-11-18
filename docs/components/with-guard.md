@@ -12,10 +12,10 @@ description: Conditionally render UI elements based on guard evaluation with sup
 ## Import
 
 ```tsx
-import { WithGuard, pass, hidden } from "@tailor-platform/app-shell";
+import { WithGuard, pass, hidden, type Guard } from "@tailor-platform/app-shell";
 ```
 
-The runnable examples also import `useMemo` and `useState` from `react`, and `Button`, `Checkbox`, `Select`, `Spinner`, `Text`, and the `Guard` type from `@tailor-platform/app-shell`.
+The runnable examples also import `useMemo` and `useState` from `react`, and `Button`, `Checkbox`, `Select`, `Spinner`, and `Text` from `@tailor-platform/app-shell`.
 
 The previews use local role, subscription, and permission values captured by their guards. They reuse the surrounding AppShell provider without changing its `contextData` or performing real authentication. In an application, read those values from the guard's `{ context }` argument, as shown under [Creating Guards](#creating-guards). Keep each guards array stable with `useMemo` until its inputs change.
 
@@ -283,11 +283,23 @@ const isAdmin = ({ context }) => (context.currentUser?.role === "admin" ? pass()
 
 ### Feature Flags
 
-The [Multiple Guards](#multiple-guards) example combines a feature flag with a role check. Use the same `pass()` / `hidden()` decision when reading a feature flag from `context`.
+The [Multiple Guards](#multiple-guards) example combines a feature flag with a role check. For a guard reusable in both routes and `WithGuard`, read the flag from your application's typed [context data](#context-data):
+
+```tsx
+const hasBetaFeature: Guard = ({ context }) =>
+  context.featureFlags?.newDashboard ? pass() : hidden();
+```
 
 ### Subscription Tiers
 
-The [With Fallback](#with-fallback) example switches between a free-tier prompt and premium content. The fallback can also be a card or an upgrade link owned by your application.
+The [With Fallback](#with-fallback) example switches between a free-tier prompt and premium content. The equivalent reusable guard reads the subscription from your application's typed [context data](#context-data):
+
+```tsx
+const isPremium: Guard = ({ context }) =>
+  context.currentUser?.subscription === "premium" ? pass() : hidden();
+```
+
+The fallback can also be a card or an upgrade link owned by your application.
 
 ### Dynamic Permissions
 

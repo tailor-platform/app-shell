@@ -48,16 +48,16 @@
       "kind": "code-backed",
       "outline": "docs-src/hooks/aggregations.docs.outline.md",
       "output": "docs/api/aggregations.md",
-      "examples": "docs-src/hooks/aggregations.docs.examples.tsx",
+      "examples": null,
       "sources": ["packages/core/src/lib/aggregations.ts"],
       "claims": [],
       "symbols": ["Aggregation", "aggregations"],
       "hashes": {
         "typeSurface": "0c11b3ba9d3529ad",
-        "outline": "cb5c2e1df2e6811b",
+        "outline": "e99d37770155fa5c",
         "snapshot": null,
-        "outputMd": "9cdbe8ff36288881",
-        "examples": "7b06909383caa04a"
+        "outputMd": "96c85ba79f5c64cc",
+        "examples": null
       }
     },
     "ai-chat": {
@@ -82,10 +82,10 @@
       ],
       "hashes": {
         "typeSurface": "932ff7674cc6df99",
-        "outline": "05833ccb8b4234b6",
+        "outline": "9557bfd7ad2088bc",
         "snapshot": "39edd53bc6562561",
-        "outputMd": "f9777af06e59494c",
-        "examples": "60a6e1915d6d562d"
+        "outputMd": "008761ccc93ef0fe",
+        "examples": "69f4f58f039d13fa"
       }
     },
     "alert": {
@@ -699,16 +699,16 @@
       "kind": "prose",
       "outline": "docs-src/concepts/file-based-routing.docs.outline.md",
       "output": "docs/concepts/file-based-routing.md",
-      "examples": "docs-src/concepts/file-based-routing.docs.examples.tsx",
+      "examples": null,
       "sources": [],
       "claims": [],
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "38ca45b8f69beb07",
+        "outline": "c3de8a342b4a7be3",
         "snapshot": null,
-        "outputMd": "0d246b4ca0669f76",
-        "examples": "dac441829a603f20"
+        "outputMd": "e189f95dbe4b0286",
+        "examples": null
       }
     },
     "filter-rail": {
@@ -1158,16 +1158,16 @@
       "kind": "prose",
       "outline": "docs-src/guides/quickstart.docs.outline.md",
       "output": "docs/quickstart.md",
-      "examples": "docs-src/guides/quickstart.docs.examples.tsx",
+      "examples": null,
       "sources": [],
       "claims": [],
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "24ea06d9cc1061ea",
+        "outline": "82b05468b438d199",
         "snapshot": null,
-        "outputMd": "83198465a694d524",
-        "examples": "aa349a307ebd8881"
+        "outputMd": "2261883b6d0069d3",
+        "examples": null
       }
     },
     "router/use-location": {
@@ -1807,9 +1807,9 @@
       "symbols": ["WithGuard", "WithGuardProps"],
       "hashes": {
         "typeSurface": "82ec0e51747a308b",
-        "outline": "026c7c8009600712",
+        "outline": "08d12a02e669b491",
         "snapshot": null,
-        "outputMd": "e3d054e74e4be1c8",
+        "outputMd": "86bb46eae81feb56",
         "examples": "413511111014e7b6"
       }
     }
@@ -1817,7 +1817,7 @@
   "skill": {
     "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "a3f7aa913d59fdd7",
     "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "efba56e470f4f164",
-    "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "0d246b4ca0669f76",
+    "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "e189f95dbe4b0286",
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "0acfb736bcf90eff",
     "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "bf15b5460f22d165",
     "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "225fb6e2b1efa4f6",
@@ -1826,7 +1826,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/testing.md": "777fd9ba9f4641f8",
     "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "1741cb78abd51827",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "230039d9f96fd264",
-    "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "f9777af06e59494c",
+    "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "008761ccc93ef0fe",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "9b237d9c19b54102",
     "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "cd57abd4909118a4",
     "packages/core/skills/app-shell-patterns/references/components/appearance-switcher.md": "b55f1d538651d467",
@@ -1871,8 +1871,8 @@
     "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "f8a45109e97391f5",
     "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "c3faff5e48922922",
     "packages/core/skills/app-shell-patterns/references/components/tree.md": "6010470f3c41538a",
-    "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "e3d054e74e4be1c8",
-    "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "9cdbe8ff36288881",
+    "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "86bb46eae81feb56",
+    "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "96c85ba79f5c64cc",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",
     "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "4c3a858d3eb02a2a",
     "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "3035dea9ac31b7f5",

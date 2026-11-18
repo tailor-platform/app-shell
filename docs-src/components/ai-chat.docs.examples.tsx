@@ -235,15 +235,21 @@ export function ActiveToolCalls() {
       <Button variant="outline" onClick={() => setActive((value) => !value)}>
         {active ? "Finish request" : "Show requested calls"}
       </Button>
-      {active ? (
-        <AIChat.Message from="assistant">
-          {calls.map((call) => (
-            <AIChat.ToolCall key={call.id} call={call} />
-          ))}
-        </AIChat.Message>
-      ) : (
-        <Text.p role="status">No active tool requests.</Text.p>
-      )}
+      <Card.Root className="flex h-40 flex-col overflow-hidden">
+        <AIChat>
+          <AIChat.Conversation>
+            {active ? (
+              <AIChat.Message from="assistant">
+                {calls.map((call) => (
+                  <AIChat.ToolCall key={call.id} call={call} />
+                ))}
+              </AIChat.Message>
+            ) : (
+              <Text.p role="status">No active tool requests.</Text.p>
+            )}
+          </AIChat.Conversation>
+        </AIChat>
+      </Card.Root>
       <Text.p>
         These fixture names represent requests, not execution results. No tools are executed.
       </Text.p>

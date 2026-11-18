@@ -14,12 +14,24 @@ sources:
 ## Import
 
 ```tsx
-import { aggregations, Text, type Aggregation } from "@tailor-platform/app-shell";
+import { aggregations, type Aggregation } from "@tailor-platform/app-shell";
 ```
 
 ## Basic usage
 
-<!-- example: basic-usage -->
+```tsx
+type Line = { quantity: number | null };
+
+const sum = aggregations.sum((row: Line) => row.quantity);
+sum({ rows: [{ quantity: 1 }, { quantity: 2 }, { quantity: null }] }); // 3
+sum({ rows: [{ quantity: 4 }, { quantity: 5 }] }); // 9: no previous aggregate state
+
+const summary: Aggregation<Line, string> = aggregations.sum(
+  (row: Line) => row.quantity,
+  (value) => (value === null ? "Unavailable" : `${value} units`),
+);
+summary({ rows: [{ quantity: 1 }, { quantity: 2 }] }); // "3 units"
+```
 
 ## Operations
 
@@ -45,7 +57,19 @@ Calculations use ordinary JavaScript numbers. A non-finite calculated result ret
 
 Pass a second function to transform the final result:
 
-<!-- example: optional-transformer -->
+```tsx
+const averageText = aggregations.avg(
+  (row: Line) => row.quantity,
+  (value) => value?.toFixed(2) ?? "–",
+);
+averageText({ rows: [{ quantity: 1 }, { quantity: null }, { quantity: 2 }] }); // "1.50"
+
+const detailed = aggregations.sum(
+  (row: Line) => row.quantity,
+  (total) => ({ total, valid: total !== null }),
+);
+detailed({ rows: [{ quantity: 1 }, { quantity: 2 }] }); // { total: 3, valid: true }
+```
 
 The transformer is called exactly once per aggregation invocation, including for empty or invalid input. Numeric transformers receive `number | null`; count transformers receive `number`. Its return type becomes the callback's result type, and may be text, JSX, an object, or another value. The aggregation library does not interpret the transformed result.
 
@@ -59,7 +83,37 @@ An aggregation is an ordinary callback, so a wrapper can validate the supplied r
 
 For example, reject mixed currencies before adding monetary amounts:
 
-<!-- example: business-validation -->
+```tsx
+type MoneyLine = { amount: number | null; currency: string };
+
+const sumAmount = aggregations.sum(
+  (row: MoneyLine) => row.amount,
+  (total) => (total === null ? "Invalid amount" : total.toLocaleString("en-US")),
+);
+
+const moneyFooter = (ctx: { rows: readonly MoneyLine[] }) => {
+  const currencies = new Set(
+    ctx.rows.filter((row) => row.amount != null).map((row) => row.currency),
+  );
+  if (currencies.size > 1) {
+    return `Mixed currencies: ${[...currencies].join(", ")}`;
+  }
+  return sumAmount(ctx);
+};
+
+moneyFooter({
+  rows: [
+    { amount: 1000, currency: "JPY" },
+    { amount: 500, currency: "JPY" },
+  ],
+}); // "1,500"
+moneyFooter({
+  rows: [
+    { amount: 1000, currency: "JPY" },
+    { amount: 500, currency: "USD" },
+  ],
+}); // "Mixed currencies: JPY, USD"
+```
 
 The guard ignores nullish amounts because they do not contribute to the sum. A rejected currency combination returns directly without evaluating the selector or transformer. Neither the wrapper nor the helper converts currencies or provides arbitrary-precision arithmetic.
 

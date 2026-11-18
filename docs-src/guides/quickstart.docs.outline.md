@@ -71,9 +71,22 @@ function App() {
 export default App;
 ```
 
-Create your first page at `src/pages/page.tsx`. Import `Text` from `@tailor-platform/app-shell` and add `export default HomePage` after the component:
+Create your first page at `src/pages/page.tsx`:
 
-<!-- example: home-page -->
+```tsx
+// src/pages/page.tsx
+import { Text } from "@tailor-platform/app-shell";
+
+const HomePage = () => {
+  return (
+    <div className="p-8">
+      <Text.h1>Welcome to AppShell</Text.h1>
+    </div>
+  );
+};
+
+export default HomePage;
+```
 
 ## Step 4: Run
 
@@ -98,9 +111,20 @@ src/pages/
 │           └── page.tsx            → /dashboard/orders/:id
 ```
 
-In `src/pages/dashboard/page.tsx`, import `Text` from `@tailor-platform/app-shell` and add `export default DashboardPage` after this component:
+```tsx
+// src/pages/dashboard/page.tsx
+import { Text } from "@tailor-platform/app-shell";
 
-<!-- example: dashboard-page -->
+const DashboardPage = () => {
+  return (
+    <div className="p-8">
+      <Text.h1>Dashboard</Text.h1>
+    </div>
+  );
+};
+
+export default DashboardPage;
+```
 
 ```tsx
 // src/pages/dashboard/orders/[id]/page.tsx

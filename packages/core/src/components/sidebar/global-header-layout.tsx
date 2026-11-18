@@ -9,11 +9,10 @@ import type { SidebarBehaviourProps } from "./sidebar-behaviour";
 
 /**
  * The default sidebar for {@link GlobalHeaderLayout}: `DefaultSidebar` with the
- * global-header mode baked in — its own header is dropped (the top bar owns the
- * title) and it collapses to a persistent icon rail, with the collapse toggle
- * pinned at the bottom-left. `hideHeader` and `iconRail` are forced so the mode
- * stays cohesive; everything else (`children`, `footer`, `hideSearch`) passes
- * through.
+ * global-header mode baked in — its stock header is dropped (the top bar owns
+ * the title) and it collapses to a persistent icon rail, with the collapse toggle
+ * pinned at the bottom-left. Explicit `header` content stays above navigation.
+ * `hideHeader` and `iconRail` are forced; other props pass through.
  */
 export const GlobalHeaderDefaultSidebar = ({ footer, ...rest }: DefaultSidebarProps) => (
   <DefaultSidebar

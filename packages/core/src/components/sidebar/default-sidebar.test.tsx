@@ -272,6 +272,30 @@ describe("DefaultSidebar opt-in props", () => {
     expect(document.querySelector('[data-slot="sidebar-header"]')).toBeNull();
   });
 
+  it("keeps an explicit header above navigation when the stock header is hidden", () => {
+    renderWithProps({
+      hideHeader: true,
+      header: <button type="button">Choose section</button>,
+      children: <SidebarItem to="/dashboard" />,
+    });
+
+    const header = screen.getByRole("button", { name: "Choose section" });
+    expect(header.nextElementSibling?.getAttribute("data-slot")).toBe("sidebar-content");
+    expect(document.querySelector('[data-slot="sidebar-header"]')).toBeNull();
+    expect(screen.queryByRole("button", { name: "Toggle Sidebar" })).toBeNull();
+    expect(screen.getByRole("button", { name: /search/i })).toBeDefined();
+  });
+
+  it("preserves the stock toggle beside an ordinary custom header", () => {
+    renderWithProps({
+      header: <button type="button">Choose section</button>,
+      children: <SidebarItem to="/dashboard" />,
+    });
+
+    expect(screen.getByRole("button", { name: "Choose section" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Toggle Sidebar" })).toBeDefined();
+  });
+
   it("collapses off-canvas by default", () => {
     renderWithProps({ children: <SidebarItem to="/dashboard" /> }, { defaultOpen: false });
     const sidebar = document.querySelector('[data-slot="sidebar"]');

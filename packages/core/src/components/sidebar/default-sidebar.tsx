@@ -87,7 +87,8 @@ const SearchEntry = () => {
 
 export type DefaultSidebarProps = {
   /**
-   * Header content.
+   * Header content. With `hideHeader`, renders directly above the navigation
+   * without the stock title/toggle row, including responsive rails and drawers.
    */
   header?: React.ReactNode;
 
@@ -103,8 +104,8 @@ export type DefaultSidebarProps = {
   children?: React.ReactNode;
 
   /**
-   * Hide the sidebar's own header row (org title + collapse toggle). Use when a
-   * global top bar already owns those — e.g. `SidebarLayout topBar`.
+   * Hide the stock header row (org title + collapse toggle), but keep any explicit
+   * `header` content. Use when a global top bar already owns the stock chrome.
    *
    * @default false
    */
@@ -175,6 +176,7 @@ export const DefaultSidebar = (props: DefaultSidebarProps) => {
 
   return (
     <Sidebar variant="inset" collapsible={collapsibleMode}>
+      {props.hideHeader && props.header}
       {!props.hideHeader && !isTablet && (
         <div className="astw:flex astw:justify-between astw:items-center">
           {props.header ?? DefaultHeader}

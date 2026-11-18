@@ -72,6 +72,40 @@ describe("GlobalHeaderLayout", () => {
     expect(sidebar.getAttribute("data-collapsible")).toBe("icon");
   });
 
+  it.each([1280, 1024, 375])(
+    "keeps an explicit sidebar header available in the rail and full menu at %ipx",
+    async (width) => {
+      vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
+      const onChoose = vi.fn();
+      renderLayout({
+        defaultOpen: false,
+        sidebar: (
+          <GlobalHeaderLayout.DefaultSidebar
+            header={
+              <button type="button" onClick={onChoose}>
+                Choose section
+              </button>
+            }
+          />
+        ),
+      });
+
+      const header = await screen.findByRole("button", { name: "Choose section" });
+      expect(header.nextElementSibling?.getAttribute("data-slot")).toBe("sidebar-content");
+      expect(document.querySelector('[data-slot="sidebar-header"]')).toBeNull();
+      fireEvent.click(header);
+      expect(onChoose).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(screen.getByRole("button", { name: "Toggle Sidebar" }));
+      const menu =
+        width < 1200
+          ? await screen.findByRole("dialog", { name: "Sidebar" })
+          : document.querySelector('[data-slot="sidebar"]')!;
+      fireEvent.click(within(menu as HTMLElement).getByRole("button", { name: "Choose section" }));
+      expect(onChoose).toHaveBeenCalledTimes(2);
+    },
+  );
+
   it("provides a desktop resize handle when collapsing is enabled", async () => {
     stubDesktopViewport();
     renderLayout();

@@ -12,7 +12,7 @@ sources:
 `GlobalHeaderLayout` is AppShell's opinionated "global top bar" layout. It is a thin wrapper over [`SidebarLayout`](./sidebar-layout.md) that wires together:
 
 - an app-wide header above both the sidebar and the content area
-- a default sidebar with its own header removed
+- a default sidebar with its stock title/toggle row removed and optional custom header content
 - icon-rail collapse behavior
 - the stock content container and outlet
 
@@ -72,6 +72,26 @@ function App() {
 
 `children` and `body` are mutually exclusive. Use `body` when you need to add your own side columns around the main content.
 
+## Custom sidebar header
+
+Pass `header` to `GlobalHeaderLayout.DefaultSidebar` to place application-specific controls above its scrolling navigation. The stock title/toggle row stays hidden and the bottom collapse toggle is unchanged. The custom content also appears in the icon rail and mobile/tablet drawers.
+
+```tsx
+<GlobalHeaderLayout
+  sidebar={
+    <GlobalHeaderLayout.DefaultSidebar
+      header={
+        <div className="shrink-0 p-2">
+          <SectionSwitcher />
+        </div>
+      }
+    />
+  }
+/>
+```
+
+`SectionSwitcher` here is your application's component. Custom header content owns its spacing and compact presentation when the sidebar is collapsed.
+
 ## Resizing the sidebar
 
 `sidebarBehaviour` selects the desktop operations and defaults to `"collapse-and-resize"`. The four modes are shared with [`SidebarLayout`](./sidebar-layout.md#resizing-the-sidebar):
@@ -98,14 +118,14 @@ Custom sidebars can read the effective, normalized `sidebarBehaviour` through [`
 
 `GlobalHeaderLayout` exposes the same composition pieces as `SidebarLayout`, plus the opinionated header and sidebar defaults:
 
-| Export                                | Description                                                                                              |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `GlobalHeaderLayout.DefaultHeader`    | The app-wide header (`GlobalHeader`) with app title + breadcrumb on the left and `actions` on the right. |
-| `GlobalHeaderLayout.DefaultSidebar`   | `DefaultSidebar` with `hideHeader` and `iconRail` forced on.                                             |
-| `GlobalHeaderLayout.ContentContainer` | The stock main content column.                                                                           |
-| `GlobalHeaderLayout.Outlet`           | The current route outlet.                                                                                |
-| `GlobalHeaderLayout.Trigger`          | The built-in sidebar toggle button.                                                                      |
-| `GlobalHeaderLayout.Breadcrumb`       | The route-driven breadcrumb component (`DynamicBreadcrumb`).                                             |
+| Export                                | Description                                                                                                    |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `GlobalHeaderLayout.DefaultHeader`    | The app-wide header (`GlobalHeader`) with app title + breadcrumb on the left and `actions` on the right.       |
+| `GlobalHeaderLayout.DefaultSidebar`   | `DefaultSidebar` with `hideHeader` and `iconRail` forced on; explicit `header` content stays above navigation. |
+| `GlobalHeaderLayout.ContentContainer` | The stock main content column.                                                                                 |
+| `GlobalHeaderLayout.Outlet`           | The current route outlet.                                                                                      |
+| `GlobalHeaderLayout.Trigger`          | The built-in sidebar toggle button.                                                                            |
+| `GlobalHeaderLayout.Breadcrumb`       | The route-driven breadcrumb component (`DynamicBreadcrumb`).                                                   |
 
 ## `GlobalHeader`
 

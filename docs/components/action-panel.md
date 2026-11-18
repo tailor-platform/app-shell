@@ -15,6 +15,8 @@ description: Display a title and a vertical list of actions with per-row loading
 import { ActionPanel } from "@tailor-platform/app-shell";
 ```
 
+The loading example also imports `useEffect` and `useState` from `react`, `Text` from `@tailor-platform/app-shell`, and `Check` from `lucide-react`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -109,32 +111,52 @@ Pass `null` to hide the empty content and its additional vertical spacing while 
 
 ## With Loading State
 
-Use parent state to control which row is loading:
+Use parent state to control which row is loading. This example simulates confirmation with a one-second timer, which is cleaned up when the example unmounts. Click again after completion to repeat it. For a real request, set the loading key before awaiting it and clear it in `finally`.
+
+<example-preview name="with-loading-state"></example-preview>
 
 ```tsx
-const [loadingKey, setLoadingKey] = useState<string | null>(null);
+function WithLoadingState() {
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
 
-const handleConfirm = async () => {
-  setLoadingKey("confirm");
-  try {
-    await confirmOrder(orderId);
-  } finally {
-    setLoadingKey(null);
-  }
-};
+  useEffect(() => {
+    if (loadingKey !== "confirm") return;
 
-<ActionPanel
-  title="Actions"
-  actions={[
-    {
-      key: "confirm",
-      label: "Confirm order",
-      icon: <CheckIcon />,
-      onClick: handleConfirm,
-      loading: loadingKey === "confirm",
-    },
-  ]}
-/>;
+    const timer = setTimeout(() => {
+      setConfirmed(true);
+      setLoadingKey(null);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [loadingKey]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <ActionPanel
+        title="Order actions"
+        actions={[
+          {
+            key: "confirm",
+            label: "Confirm order",
+            icon: <Check />,
+            onClick: () => {
+              setConfirmed(false);
+              setLoadingKey("confirm");
+            },
+            loading: loadingKey === "confirm",
+          },
+        ]}
+      />
+      <Text.p role="status">
+        {loadingKey === "confirm"
+          ? "Confirming order…"
+          : confirmed
+            ? "Order SO-1001 confirmed. You can try again."
+            : "Click Confirm order to simulate a request."}
+      </Text.p>
+    </div>
+  );
+}
 ```
 
 ## CommandPalette Integration

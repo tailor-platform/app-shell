@@ -17,20 +17,13 @@ sources:
 import { Form, Field, Fieldset } from "@tailor-platform/app-shell";
 ```
 
+The runnable examples also import `useId`, `useRef`, and `useState` from `react`, and `Button`, `Combobox`, `Select`, and `Text` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
-```tsx
-<Form onFormSubmit={(values) => save(values)}>
-  <Field.Root name="email">
-    <Field.Label>Email</Field.Label>
-    <Field.Control type="email" required />
-    <Field.Description>We'll never share your email.</Field.Description>
-    <Field.Error match="valueMissing">Email is required.</Field.Error>
-    <Field.Error match="typeMismatch">Enter a valid email address.</Field.Error>
-  </Field.Root>
-  <button type="submit">Save</button>
-</Form>
-```
+Submit an empty or malformed email to see validation errors, then enter a valid email to see the submitted value. This example keeps the result in local state; nothing is sent to a server. `noValidate` disables the browser's native validation popup so `Field.Error` displays the messages.
+
+<!-- example: basic-usage -->
 
 ---
 
@@ -56,41 +49,17 @@ A form element with consolidated error handling and validation. Wraps every chil
 
 Feed API validation errors back into the form via the `errors` prop. Errors are keyed by field `name` and cleared automatically when the user edits the corresponding field.
 
-```tsx
-const [errors, setErrors] = React.useState({});
+Save the prefilled `https://taken.example.com` to simulate a server rejection. Editing the URL clears the error; submitting a different valid URL shows a local success result. No network request is made. In an application, replace the simulated response with errors returned by your API.
 
-async function handleSubmit(values) {
-  const res = await api.save(values);
-  if (res.errors) setErrors(res.errors);
-}
-
-<Form errors={errors} onFormSubmit={handleSubmit}>
-  <Field.Root name="url">
-    <Field.Label>Homepage</Field.Label>
-    <Field.Control type="url" required />
-    <Field.Error />
-  </Field.Root>
-  <button type="submit">Submit</button>
-</Form>;
-```
+<!-- example: external-errors -->
 
 ### Programmatic Validation
 
 Use `actionsRef` to imperatively trigger validation (e.g. in a multi-step wizard).
 
-```tsx
-const actions = React.useRef(null);
+Leave the name empty and click **Check** to reveal the required-field error, then enter a name and check again. The button sits outside the form and triggers validation without submitting it.
 
-<Form actionsRef={actions}>
-  <Field.Root name="name">
-    <Field.Label>Name</Field.Label>
-    <Field.Control required />
-    <Field.Error>Name is required.</Field.Error>
-  </Field.Root>
-</Form>;
-
-<button onClick={() => actions.current?.validate()}>Check</button>;
-```
+<!-- example: programmatic-validation -->
 
 ---
 
@@ -171,20 +140,9 @@ There is no control for the label to point at, so `Field.Value` is a group named
 
 Do not pass the self-wired controls to `Field.Control`'s `render` prop. They draw their own frame, so `<Field.Control render={<Select />} />` renders a second border around the select. `Field.Control` also passes them `<input>` props they don't take. `Field.Control` logs a console warning when it is given one of these controls directly as an element. A wrapper component or the function form of `render` is not detected.
 
-```tsx
-const [country, setCountry] = React.useState<string | null>(null);
+Submit without choosing a country to see the required-field error, then choose one and submit again to inspect the values. The `Select` needs no `name`, `value`, or `onValueChange` of its own: `Field.Root` handles registration, and the only React state stores the submitted result.
 
-<Field.Root name="country">
-  <Field.Label>Country</Field.Label>
-  <Select
-    items={["Japan", "United States"]}
-    value={country}
-    onValueChange={setCountry}
-    placeholder="Select a country"
-  />
-  <Field.Error>Please select a country.</Field.Error>
-</Field.Root>;
-```
+<!-- example: with-select -->
 
 ### How values reach `onFormSubmit`
 
@@ -207,16 +165,9 @@ Non-string items are serialised into the submitted value:
 Multi-select submits an array. For arbitrary objects, pass `itemToStringValue` to choose what gets
 submitted — it is distinct from `mapItem`, which controls what the user sees:
 
-```tsx
-<Field.Root name="warehouse">
-  <Field.Label>Warehouse</Field.Label>
-  <Combobox
-    items={warehouses}
-    mapItem={(w) => ({ label: w.name, key: String(w.id) })}
-    itemToStringValue={(w) => String(w.id)}
-  />
-</Field.Root>
-```
+Choose a warehouse and submit to inspect the JSON result. For example, **Tokyo warehouse** is displayed as a name but submitted as `{ "warehouse": "1" }` — not the whole object. Selection remains owned by the field; the example keeps only fixture data and the submitted result in React state.
+
+<!-- example: submitted-values -->
 
 ### Composer-style textareas
 
@@ -286,38 +237,15 @@ its own `name`. `Select`, `Combobox`, and `Autocomplete` accept `name` (plus `fo
 Give the `Form` an `id` and point a detached submit button at it with the native `form` attribute —
 this is how a page-header Save reaches a form in the page body (1.13.0+).
 
-```tsx
-<Layout.Header
-  title="Create product"
-  actions={[
-    <Button key="save" type="submit" form="product-form">
-      Save
-    </Button>,
-  ]}
-/>
-<Form id="product-form" onFormSubmit={(values) => save(values)}>
-  {/* … */}
-</Form>
-```
+Here **Save product** is outside the form. Click it with an empty product name to see validation, then enter a name and click again to see the submitted values. `useId` keeps the association unique if multiple instances are rendered. No layout component or custom click handler is required.
+
+<!-- example: external-submit -->
 
 ### Custom Validation UI with Field.Validity
 
 `Field.Validity` exposes the field's `ValidityState` via a render callback, enabling fully custom validation UI.
 
-```tsx
-<Field.Root name="password">
-  <Field.Label>Password</Field.Label>
-  <Field.Control type="password" required minLength={8} />
-  <Field.Validity>
-    {(state) => (
-      <ul>
-        <li>{state.validity.valueMissing ? "❌" : "✅"} Required</li>
-        <li>{state.validity.tooShort ? "❌" : "✅"} At least 8 characters</li>
-      </ul>
-    )}
-  </Field.Validity>
-</Field.Root>
-```
+<!-- example: custom-validation -->
 
 ---
 
@@ -343,19 +271,7 @@ A compound component (`Fieldset.Root`, `Fieldset.Legend`) for grouping related f
 
 ### Example
 
-```tsx
-<Fieldset.Root>
-  <Fieldset.Legend>Billing details</Fieldset.Legend>
-  <Field.Root name="company">
-    <Field.Label>Company</Field.Label>
-    <Field.Control />
-  </Field.Root>
-  <Field.Root name="taxId">
-    <Field.Label>Tax ID</Field.Label>
-    <Field.Control />
-  </Field.Root>
-</Fieldset.Root>
-```
+<!-- example: billing-fieldset -->
 
 ---
 

@@ -36,27 +36,19 @@ Accepts all standard HTML `<input>` props.
 
 ### Text Input
 
-```tsx
-<Input type="text" placeholder="Enter your name" />
-```
+<!-- example: text-input -->
 
 ### Email Input
 
-```tsx
-<Input type="email" placeholder="you@example.com" />
-```
+<!-- example: email-input -->
 
 ### Number Input
 
-```tsx
-<Input type="number" placeholder="0" min={0} max={100} />
-```
+<!-- example: number-input -->
 
 ### Disabled Input
 
-```tsx
-<Input value="Read-only value" disabled />
-```
+<!-- example: disabled-input -->
 
 ### With onChange Handler
 

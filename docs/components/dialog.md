@@ -15,6 +15,8 @@ The `Dialog` component provides a modal dialog with a compound component API. It
 import { Dialog } from "@tailor-platform/app-shell";
 ```
 
+The runnable examples also import `useState` from `react`, and `Button`, `Field`, `Form`, and `Text` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -116,26 +118,57 @@ function Controlled() {
 
 ### Delete Confirmation
 
+Open the confirmation and cancel to keep the order, or confirm to remove it from this local example. No server data is changed. **Restore demo order** makes the example repeatable.
+
+<example-preview name="delete-confirmation"></example-preview>
+
 ```tsx
-function DeleteConfirmation({ onDelete }: { onDelete: () => void }) {
+function DeleteConfirmation() {
+  const [open, setOpen] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+
   return (
-    <Dialog.Root>
-      <Dialog.Trigger render={<Button variant="destructive" />}>Delete</Dialog.Trigger>
-      <Dialog.Content>
-        <Dialog.Header>
-          <Dialog.Title>Delete Order</Dialog.Title>
-          <Dialog.Description>
-            This action cannot be undone. The order will be permanently deleted.
-          </Dialog.Description>
-        </Dialog.Header>
-        <Dialog.Footer>
-          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
-          <Button variant="destructive" onClick={onDelete}>
-            Delete
-          </Button>
-        </Dialog.Footer>
-      </Dialog.Content>
-    </Dialog.Root>
+    <div className="space-y-3">
+      <Text.p role="status">{deleted ? "Demo order deleted." : "Demo order: ORD-1001"}</Text.p>
+      <div className="flex gap-2">
+        <Dialog.Root open={open} onOpenChange={setOpen}>
+          <Dialog.Trigger disabled={deleted} render={<Button variant="destructive" />}>
+            Delete demo order
+          </Dialog.Trigger>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Delete demo order?</Dialog.Title>
+              <Dialog.Description>
+                Remove ORD-1001 from this local example. No server data is changed.
+              </Dialog.Description>
+            </Dialog.Header>
+            <Dialog.Footer>
+              <Dialog.Close render={<Button type="button" variant="outline" />}>
+                Cancel
+              </Dialog.Close>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  setDeleted(true);
+                  setOpen(false);
+                }}
+              >
+                Delete order
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={!deleted}
+          onClick={() => setDeleted(false)}
+        >
+          Restore demo order
+        </Button>
+      </div>
+    </div>
   );
 }
 ```
@@ -144,45 +177,63 @@ function DeleteConfirmation({ onDelete }: { onDelete: () => void }) {
 
 Put the `Form` inside `Dialog.Body` and submit it from the footer with `form="<id>"`, so the Save button stays visible however long the form gets. [`FormLayout`](./form-layout.md) lays the fields out in columns that fit the dialog's width.
 
+In this example, empty or whitespace-only names are rejected through `Form` and `Field`. Cancel or close leaves the saved name unchanged; reopening restores it. Cancel is explicitly `type="button"` so it does not submit the form.
+
+<example-preview name="form-dialog"></example-preview>
+
 ```tsx
-function EditDialog({ item }: { item: Item }) {
+function FormDialog() {
   const [open, setOpen] = useState(false);
+  const [name, setName] = useState("Small carton");
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger render={<Button variant="outline" />}>Edit</Dialog.Trigger>
-      <Dialog.Content size="lg">
-        <Dialog.Header>
-          <Dialog.Title>Edit item</Dialog.Title>
-        </Dialog.Header>
-        <Dialog.Body>
-          <Form
-            id="edit-item-form"
-            onFormSubmit={(values) => {
-              handleSave(values);
-              setOpen(false);
-            }}
-          >
-            <FormLayout columns={2}>
-              <Field.Root name="name">
-                <Field.Label required>Name</Field.Label>
-                <Field.Control defaultValue={item.name} required />
-              </Field.Root>
-              <Field.Root name="code">
-                <Field.Label>Code</Field.Label>
-                <Field.Control defaultValue={item.code} />
-              </Field.Root>
-            </FormLayout>
-          </Form>
-        </Dialog.Body>
-        <Dialog.Footer>
-          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
-          <Button type="submit" form="edit-item-form">
-            Save
-          </Button>
-        </Dialog.Footer>
-      </Dialog.Content>
-    </Dialog.Root>
+    <div className="space-y-3">
+      <Text.p role="status">Saved item name: {name}</Text.p>
+      <Dialog.Root open={open} onOpenChange={setOpen}>
+        <Dialog.Trigger render={<Button variant="outline" />}>Edit item</Dialog.Trigger>
+        <Dialog.Content size="lg">
+          <Dialog.Header>
+            <Dialog.Title>Edit item</Dialog.Title>
+            <Dialog.Description>
+              Save a new name, or cancel to keep the saved name.
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Body>
+            <Form<{ name: string; sku: string }>
+              id="edit-item-form"
+              noValidate
+              onFormSubmit={(values) => {
+                setName(values.name.trim());
+                setOpen(false);
+              }}
+            >
+              <FormLayout columns={2}>
+                <Field.Root
+                  name="name"
+                  validate={(value) =>
+                    typeof value === "string" && value.trim() ? undefined : "Name is required."
+                  }
+                >
+                  <Field.Label required>Item name</Field.Label>
+                  <Field.Control defaultValue={name} required />
+                  <Field.Error>Name is required.</Field.Error>
+                </Field.Root>
+                <Field.Root name="sku">
+                  <Field.Label>SKU</Field.Label>
+                  <Field.Control defaultValue="CTN-S-01" />
+                </Field.Root>
+              </FormLayout>
+            </Form>
+          </Dialog.Body>
+          <Dialog.Footer>
+            <Dialog.Close render={<Button type="button" variant="outline" />}>Cancel</Dialog.Close>
+            <Button type="submit" form="edit-item-form">
+              Save item
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
+    </div>
   );
 }
 ```

@@ -260,7 +260,7 @@
       "hashes": {
         "typeSurface": "6ce6f0fdf2450cec",
         "outline": "95de4d29491affb3",
-        "snapshot": "e6783ef54e17e11e",
+        "snapshot": "4374ca5851d87d1c",
         "outputMd": "c1f88a287f197d79",
         "examples": "7357698425183256"
       }
@@ -694,6 +694,23 @@
         "examples": "d56bfd9ea31be76a"
       }
     },
+    "editable-card": {
+      "slug": "editable-card",
+      "kind": "code-backed",
+      "outline": "docs-src/components/editable-card.docs.outline.md",
+      "output": "docs/components/editable-card.md",
+      "examples": "docs-src/components/editable-card.docs.examples.tsx",
+      "sources": ["packages/core/src/components/editable-card/**"],
+      "claims": [],
+      "symbols": ["EditableCard", "EditableCardFieldProps", "EditableCardProps"],
+      "hashes": {
+        "typeSurface": "445fdd51e74d0c1a",
+        "outline": "2f6a7fe2b7b8b8b7",
+        "snapshot": "edd1b6ae6cf8ba36",
+        "outputMd": "d1efabe746318c10",
+        "examples": "b72a3c39c3ca18e2"
+      }
+    },
     "file-based-routing": {
       "slug": "file-based-routing",
       "kind": "prose",
@@ -779,9 +796,9 @@
       ],
       "hashes": {
         "typeSurface": "6210ea28649026a8",
-        "outline": "7c64761beea57d38",
+        "outline": "96ab58d9b67a4418",
         "snapshot": "b222cdafb62c9883",
-        "outputMd": "bdbe2cece53829eb",
+        "outputMd": "0feb0fece857a21e",
         "examples": "56c8f6cc9667bb78"
       }
     },
@@ -1426,7 +1443,7 @@
       "hashes": {
         "typeSurface": "bc60676f880b485b",
         "outline": "6df1a21eb91b6fbc",
-        "snapshot": "c788f8a131677ada",
+        "snapshot": "01fd5adff00216fb",
         "outputMd": "c5933b640a78c3bf",
         "examples": "d44fc86f972fd234"
       }
@@ -1870,9 +1887,10 @@
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "8930a410d7d45f89",
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "7117e72d36b059b0",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "cabfb86627aefd6f",
+    "packages/core/skills/app-shell-patterns/references/components/editable-card.md": "d1efabe746318c10",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "12021e27b57f45e9",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "75ba9388fea50563",
-    "packages/core/skills/app-shell-patterns/references/components/form-layout.md": "bdbe2cece53829eb",
+    "packages/core/skills/app-shell-patterns/references/components/form-layout.md": "0feb0fece857a21e",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "fe86450720c4d586",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "d048e972ae8aba3e",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "876dca4c3b3bc9c5",
@@ -1933,7 +1951,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "e79d9120d86db198",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "e07c7fee2478a21d",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "63874609c07182d7",
+    "packages/core/skills/app-shell-patterns/SKILL.md": "47ccd442d3ae2226",
     "packages/core/skills/app-shell-upgrade/references/migrations.md": "85b8177b2b14f3f8",
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   }

@@ -187,6 +187,7 @@ export function FormTemplatesOverview() {
                     "Has ordered steps that depend on earlier answers",
                     "A wizard (form/wizard pattern)",
                   ],
+                  ["Edits one card of a record that's already on screen", "Edit in place (E6)"],
                   ["Needs its own URL, or is long enough to scroll a page", "T3 Page form"],
                   ["Edits part of a record shown beside it", "T2 Side sheet"],
                   ["Everything else", "T1 Modal form, sized to fit"],
@@ -209,7 +210,7 @@ export function FormTemplatesOverview() {
           <Text.h2 variant="heading-lg">Complex examples</Text.h2>
           <Text variant="body-md" className="text-muted-foreground max-w-3xl">
             How far FormLayout stretches: container-driven reflow, dense records, nested groups,
-            conditional fields, a summary panel and editable line items.
+            conditional fields, a summary panel, editable line items, and editing in place.
           </Text>
         </div>
         <ComplexExamples />

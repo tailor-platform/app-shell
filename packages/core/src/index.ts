@@ -187,6 +187,11 @@ export {
 export { TreePicker, type TreePickerProps } from "./components/tree-picker";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export {
+  EditableCard,
+  type EditableCardProps,
+  type EditableCardFieldProps,
+} from "./components/editable-card";
+export {
   ActivityCard,
   type ActivityCardProps,
   type ActivityCardItem,

@@ -1,14 +1,11 @@
 import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
+import { getDisplayCellAdapter } from "@/components/internals/table-core";
 import type { Column } from "./types";
 
-// Resolve the effective horizontal alignment for a column. Numeric `type`
-// values default to `"right"` so digits line up along their decimal place;
-// everything else defaults to `"left"`. Explicit `col.align` always wins.
+// Explicit alignment overrides the display adapter's default, shared by header, body, and footer.
 function resolveAlign<TRow extends Record<string, unknown>>(col: Column<TRow>): "left" | "right" {
-  if (col.align) return col.align;
-  if (col.type === "number" || col.type === "money") return "right";
-  return "left";
+  return col.align ?? getDisplayCellAdapter(col.type).defaultAlign;
 }
 
 // Fallback widths of the built-in selection / row-actions columns, used as the

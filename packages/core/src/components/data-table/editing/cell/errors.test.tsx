@@ -17,6 +17,12 @@ afterEach(() => {
 type Row = { id: string; value: string | null };
 const ROWS: Row[] = [{ id: "1", value: "Original" }];
 const noop = () => {};
+const descriptionText = (input: HTMLElement) =>
+  input
+    .getAttribute("aria-describedby")
+    ?.split(/\s+/)
+    .map((id) => document.getElementById(id)?.textContent)
+    .join(" ");
 
 function Harness({ edit, rows = ROWS }: { edit: TextCellEditOptions<Row>; rows?: Row[] }) {
   const columns: Column<Row>[] = [{ id: "value", label: "Value", type: "text", edit }];
@@ -129,9 +135,7 @@ describe("DataTable callback error presentation", () => {
       if (source === "commit") fireEvent.keyDown(input, { key: "Enter" });
 
       expect(input.getAttribute("aria-invalid")).toBe("true");
-      expect(
-        document.getElementById(input.getAttribute("aria-describedby")!)?.textContent,
-      ).toContain(failure.message);
+      expect(descriptionText(input)).toContain(failure.message);
       const popup = await screen.findByRole("dialog", { name: "Error in Value" });
       expect(within(popup).getByText(failure.message)).toBeDefined();
       expect(within(popup).getByRole("button", { name: "Close error details" })).toBeDefined();
@@ -355,8 +359,8 @@ describe("DataTable callback error presentation", () => {
     change(input);
     const popup = await screen.findByRole("dialog", { name: "Error in Value" });
     expect(within(popup).getByText("Could not confirm this change")).toBeDefined();
-    expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toBe(
-      "Could not confirm this change. Press Alt+ArrowDown for error details",
+    expect(descriptionText(input)).toBe(
+      "Could not confirm this change Press Alt+ArrowDown for error details",
     );
     expect(popup.textContent).toBe("Could not confirm this change");
     expect(input.value).toBe("Changed");
@@ -376,8 +380,8 @@ describe("DataTable callback error presentation", () => {
       await rejectRequest(request, new Error("Internal server details"));
       const popup = await screen.findByRole("dialog", { name: "Error in Value" });
       expect(popup.textContent).toBe("Could not confirm this change");
-      expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toBe(
-        "Could not confirm this change. Press Alt+ArrowDown for error details",
+      expect(descriptionText(input)).toBe(
+        "Could not confirm this change Press Alt+ArrowDown for error details",
       );
       expect(input.value).toBe("Changed");
       expect(input.getAttribute("aria-invalid")).toBe("true");
@@ -398,8 +402,8 @@ describe("DataTable callback error presentation", () => {
     const popup = await screen.findByRole("dialog", { name: "Error in Value" });
     expect(popup.textContent).toBe("Custom feedback");
     expect(renderError).toHaveBeenCalledWith({ row: ROWS[0], error: failure });
-    expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toBe(
-      "Could not confirm this change. Press Alt+ArrowDown for error details",
+    expect(descriptionText(input)).toBe(
+      "Could not confirm this change Press Alt+ArrowDown for error details",
     );
   });
 
@@ -420,9 +424,7 @@ describe("DataTable callback error presentation", () => {
     const popup = await screen.findByRole("dialog", { name: "Valueのエラー" });
     expect(within(popup).getByText(message)).toBeDefined();
     expect(within(popup).getByRole("button", { name: "エラーの詳細を閉じる" })).toBeDefined();
-    expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toBe(
-      `${message}. Alt+↓キーでエラーの詳細を表示できます`,
-    );
+    expect(descriptionText(input)).toBe(`${message} Alt+↓キーでエラーの詳細を表示できます`);
   });
 
   it("clears an error on a newer successful input and ignores older rejection results", async () => {
@@ -441,9 +443,7 @@ describe("DataTable callback error presentation", () => {
     await rejectRequest(current, new CellEditError("Current failure"));
     expect(input.getAttribute("aria-invalid")).toBe("true");
     await rejectRequest(old, new Error("Outdated failure"));
-    expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toContain(
-      "Current failure",
-    );
+    expect(descriptionText(input)).toContain("Current failure");
     fireEvent.change(input, { target: { value: "Newer" } });
     expect(queryErrorTrigger()).toBeNull();
     expect(input.getAttribute("aria-invalid")).toBeNull();
@@ -532,9 +532,7 @@ describe("DataTable callback error presentation", () => {
     await user.click(outside);
     expect(input.value).toBe("Changed");
     expect(input.getAttribute("aria-invalid")).toBe("true");
-    expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toContain(
-      "Temporary save failure",
-    );
+    expect(descriptionText(input)).toContain("Temporary save failure");
     expect(queryErrorTrigger()).not.toBeNull();
     expect(onValueCommitted).toHaveBeenCalledTimes(1);
     await user.click(input);
@@ -583,9 +581,7 @@ describe("DataTable callback error presentation", () => {
       expect(input.getAttribute("aria-invalid")).toBe("true");
       expect(input.closest("td")?.getAttribute("aria-busy")).toBeNull();
       expect(queryErrorTrigger()).not.toBeNull();
-      expect(
-        document.getElementById(input.getAttribute("aria-describedby")!)?.textContent,
-      ).toContain("Save failed");
+      expect(descriptionText(input)).toContain("Save failed");
       expect(screen.queryByRole("dialog")).toBeNull();
 
       await user.click(input);
@@ -709,9 +705,7 @@ describe("DataTable callback error presentation", () => {
     change(input);
     await user.keyboard("{Enter}");
     expect(input.getAttribute("aria-keyshortcuts")).toBe("Alt+ArrowDown");
-    expect(document.getElementById(input.getAttribute("aria-describedby")!)?.textContent).toContain(
-      "Press Alt+ArrowDown for error details",
-    );
+    expect(descriptionText(input)).toContain("Press Alt+ArrowDown for error details");
     await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
     const popup = await screen.findByRole("dialog", { name: "Error in Value" });
     expect(within(popup).getByText("Not accepted")).toBeDefined();

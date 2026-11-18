@@ -5,6 +5,9 @@ title: DataTable
 description: Compound data table component with sortable columns, filter chips, cursor-based pagination, row actions, and multi-row selection
 sources:
   - packages/core/src/components/data-table/**
+  - packages/core/src/components/internals/table-core/column-types.ts
+  - packages/core/src/components/internals/table-core/cell-edit-error.ts
+  - packages/core/src/components/internals/table-core/editing/date.tsx
   - packages/core/src/hooks/use-collection-variables.ts
   - packages/core/src/lib/collection-url-state.ts
   - packages/core/src/contexts/collection-control-context.tsx
@@ -41,8 +44,8 @@ import {
   type NumberCellEditOptions,
   type BadgeCellEditOptions,
   type DateCellEditOptions,
-  type CellEditState,
   type DateTimeDraft,
+  type CellEditState,
   type FooterRenderContext,
 } from "@tailor-platform/app-shell";
 ```

@@ -9,11 +9,11 @@ import { Menu } from "@/components/menu";
 import { Tooltip } from "@/components/tooltip";
 import type { DataTableTreeRow, RowAction, RowExpansionOptions } from "./types";
 import { SubRowsCellContent } from "./sub-rows-cell";
-import { getCellValue, createTypedCellRenderer } from "./cell-renderers";
+import { getCellValue, createTypedValueRenderer } from "./cell-renderers";
 import { DataTableCellContextMenu, getCellContextValue } from "./context-menu";
 import { useCellContextMenu } from "./use-cell-context-menu";
 import { DataTableEditableCell, hasEditorIcon, isEditableColumn } from "./editing/cell/root";
-import { ICON_SPACE_CLASS_NAME } from "./editing/cell/shared";
+import { ICON_SPACE_CLASS_NAME } from "@/components/internals/table-core/editing/shared";
 import { useCellEditNavigation } from "./editing/use-navigation";
 import { RowExpandToggle, DataTableExpandedRow } from "./expanded-row";
 import { useDataTableT } from "./i18n";
@@ -83,7 +83,15 @@ function DataTableRows<TRow extends Record<string, unknown>>({
       new Map(
         ordered
           .filter((col) => !col.render)
-          .map((col) => [col, createTypedCellRenderer(col, timeZone)]),
+          .map((col) => {
+            const context = { timeZone };
+            const readonly = createTypedValueRenderer(col, context);
+            const editable =
+              col.type === "link"
+                ? createTypedValueRenderer(col, context, { linkAsText: true })
+                : readonly;
+            return [col, { readonly, editable }];
+          }),
       ),
     [ordered, timeZone],
   );
@@ -221,7 +229,10 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                 (col.edit?.canEdit?.(row, { selected }) ?? true);
               // An editable cell renders its own display; skip rendering it twice.
               let content: ReactNode;
-              if (!editable) content = col.render ? col.render(row) : cellRenderers.get(col)?.(row);
+              if (!editable)
+                content = col.render
+                  ? col.render(row)
+                  : cellRenderers.get(col)?.readonly(getCellValue(row, col), row);
 
               const customCellProps = col.cellProps?.(row);
               const { style: cellStyle, className: cellClassName } = pinCellProps(
@@ -333,7 +344,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                     label={headerLabel}
                     align={resolveAlign(col)}
                     navigation={navigation}
-                    dateRenderer={col.type === "date" ? cellRenderers.get(col) : undefined}
+                    valueRenderer={cellRenderers.get(col)?.editable}
                     tooltipLabel={tooltipLabel}
                     cellProps={cellProps}
                   />

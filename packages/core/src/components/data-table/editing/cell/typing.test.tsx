@@ -18,7 +18,11 @@ afterEach(() => {
 });
 
 const errorText = (input: HTMLElement) =>
-  document.getElementById(input.getAttribute("aria-describedby") ?? "")?.textContent;
+  input
+    .getAttribute("aria-describedby")
+    ?.split(/\s+/)
+    .map((id) => document.getElementById(id)?.textContent)
+    .join(" ");
 
 describe("DataTable inline editing", () => {
   describe("keyboard", () => {
@@ -204,7 +208,7 @@ describe("DataTable inline editing", () => {
       expect(input.getAttribute("aria-invalid")).toBeNull();
       await user.keyboard("{Enter}");
       expect(input.getAttribute("aria-invalid")).toBe("true");
-      expect(errorText(input)).toBe("Enter a number. Press Esc to undo");
+      expect(errorText(input)).toBe("Enter a number Press Esc to undo");
       expect(document.activeElement).toBe(input);
       await user.tab();
       expect(document.activeElement).toBe(input);
@@ -249,7 +253,7 @@ describe("DataTable inline editing", () => {
       );
       const [input] = screen.getAllByRole("textbox", { name: "Received" });
       await retype(user, input, "abc{Enter}");
-      expect(errorText(input)).toBe("数値を入力してください. Escキーで元に戻せます");
+      expect(errorText(input)).toBe("数値を入力してください Escキーで元に戻せます");
     });
   });
 

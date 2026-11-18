@@ -147,9 +147,16 @@ function DataTableStatusRow({ totalColSpan, state, children }: DataTableStatusRo
       <Table.Cell
         colSpan={totalColSpan}
         style={{ height: `${STATUS_ROWS * ROW_HEIGHT_PX}px` }}
-        className="astw:text-center astw:align-middle"
+        className="astw:p-0! astw:text-center astw:align-middle"
       >
-        {children}
+        {/* Match expanded rows: center within the scrollport, not the full column span. */}
+        <div
+          data-slot="data-table-status-content"
+          className="astw:sticky astw:left-0 astw:overflow-x-auto astw:px-6 astw:py-2 astw:whitespace-normal astw:wrap-break-word"
+          style={{ width: "min(100%, var(--data-table-viewport, 100%))" }}
+        >
+          {children}
+        </div>
       </Table.Cell>
     </Table.Row>
   );

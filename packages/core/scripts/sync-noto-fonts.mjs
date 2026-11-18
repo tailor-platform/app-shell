@@ -210,7 +210,7 @@ function renderCss(faces) {
   ascent-override: ${pct(INTER_ASCENT)};
   descent-override: ${pct(INTER_DESCENT)};
   line-gap-override: 0%;
-  src: url(./fonts/files/${file}) format("woff2-variations");
+  src: url(./files/${file}) format("woff2-variations");
   unicode-range: ${serializeRange(spans)};
 }`,
     );

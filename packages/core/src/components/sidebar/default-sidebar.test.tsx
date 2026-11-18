@@ -27,7 +27,7 @@ afterEach(() => {
 });
 
 /**
- * Force a true desktop width (>= 1200px) so `isIconMode` (tablet) is false —
+ * Force a true desktop width (>= 1200px) so `isTablet` is false.
  * the default test width lands in the tablet range, which forces the icon rail.
  */
 const stubDesktopViewport = () => {
@@ -225,6 +225,12 @@ describe("DefaultSidebar", () => {
   });
 });
 
+/** The open icon-rail flyout for the group called `title`, or null. */
+const openFlyout = (title: string) =>
+  document.querySelector(
+    `[data-slot="sidebar-group-flyout"][aria-label="${title}"]`,
+  ) as HTMLElement | null;
+
 describe("DefaultSidebar opt-in props", () => {
   const renderWithProps = (
     props: React.ComponentProps<typeof DefaultSidebar>,
@@ -404,14 +410,261 @@ describe("DefaultSidebar opt-in props", () => {
     );
 
     // No flyout until the group icon is hovered.
-    expect(document.querySelector('nav[aria-label="Main"]')).toBeNull();
+    expect(
+      document.querySelector('[data-slot="sidebar-group-flyout"][aria-label="Main"]'),
+    ).toBeNull();
 
     await user.hover(screen.getByRole("button", { name: "Main" }));
 
-    const flyout = document.querySelector('nav[aria-label="Main"]') as HTMLElement;
+    const flyout = document.querySelector(
+      '[data-slot="sidebar-group-flyout"][aria-label="Main"]',
+    ) as HTMLElement;
     expect(flyout).not.toBeNull();
     expect(within(flyout).getByRole("link", { name: /dashboard/i })).toBeDefined();
     expect(within(flyout).getByRole("link", { name: /products/i })).toBeDefined();
+  });
+
+  /** Renders a collapsed icon rail on a touch device (no hover) at `width`. */
+  const renderTouchRail = (width: number, to?: string) => {
+    // A touch screen cannot hover, so the rail's flyout must open on tap.
+    const matchMedia = window.matchMedia.bind(window);
+    vi.spyOn(window, "matchMedia").mockImplementation((query: string) =>
+      query === "(hover: hover)"
+        ? ({
+            matches: false,
+            media: query,
+            onchange: null,
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+          } as MediaQueryList)
+        : matchMedia(query),
+    );
+    vi.spyOn(window, "innerWidth", "get").mockReturnValue(width);
+    window.dispatchEvent(new Event("resize"));
+    render(
+      <MemoryRouter initialEntries={["/dashboard/overview"]}>
+        <AppShellConfigContext.Provider value={{ configurations: testConfig }}>
+          <CommandPaletteProvider>
+            <SidebarProvider defaultOpen={false}>
+              <DefaultSidebar iconRail hideHeader>
+                <SidebarGroup title="Main" icon={<Home />} to={to}>
+                  <SidebarItem to="/dashboard" />
+                  <SidebarItem to="/products" />
+                </SidebarGroup>
+                <SidebarGroup title="Other" icon={<Home />}>
+                  <SidebarItem to="/settings" />
+                </SidebarGroup>
+              </DefaultSidebar>
+            </SidebarProvider>
+          </CommandPaletteProvider>
+        </AppShellConfigContext.Provider>
+      </MemoryRouter>,
+    );
+  };
+
+  it.each([
+    { name: "a group", width: 375, to: undefined },
+    { name: "a group", width: 768, to: undefined },
+    { name: "a group with its own page", width: 1024, to: "/main" },
+    { name: "a group", width: 1280, to: undefined },
+  ])(
+    "opens the flyout when $name is tapped in the rail at $width px on a touch device",
+    async ({ width, to }) => {
+      const user = userEvent.setup();
+      renderTouchRail(width, to);
+
+      // A button rather than a link, so the tap opens the flyout instead of
+      // leaving the page.
+      const trigger = screen.getByRole("button", { name: "Main" });
+      expect(trigger.getAttribute("aria-expanded")).toBe("false");
+      expect(openFlyout("Main")).toBeNull();
+
+      await user.click(trigger);
+
+      const nav = openFlyout("Main");
+      expect(nav).not.toBeNull();
+      expect(trigger.getAttribute("aria-expanded")).toBe("true");
+      expect(trigger.getAttribute("aria-controls")).toBe(nav!.id);
+      expect(within(nav!).getByRole("link", { name: /dashboard/i })).toBeDefined();
+      expect(within(nav!).getByRole("link", { name: /products/i })).toBeDefined();
+      // The tap opens the flyout, not the slide-in drawer, and the sidebar stays a rail.
+      expect(document.querySelector('[data-slot="sidebar-overlay"]')).toBeNull();
+      expect(document.querySelector('[data-slot="sidebar"]')?.getAttribute("data-state")).toBe(
+        "collapsed",
+      );
+
+      // A second tap closes it.
+      await user.click(trigger);
+      expect(openFlyout("Main")).toBeNull();
+      expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    },
+  );
+
+  it("links the flyout heading to the group's own page", async () => {
+    const user = userEvent.setup();
+    renderTouchRail(768, "/main");
+
+    await user.click(screen.getByRole("button", { name: "Main" }));
+
+    const heading = within(openFlyout("Main")!).getByRole("link", { name: "Main" });
+    expect(heading.getAttribute("href")).toBe("/main");
+  });
+
+  it("closes the touch flyout on a tap outside, and opens only one group at a time", async () => {
+    const user = userEvent.setup();
+    renderTouchRail(768);
+
+    await user.click(screen.getByRole("button", { name: "Main" }));
+    expect(openFlyout("Main")).not.toBeNull();
+
+    // Tapping another group closes this flyout and opens that one.
+    await user.click(screen.getByRole("button", { name: "Other" }));
+    expect(openFlyout("Main")).toBeNull();
+    expect(openFlyout("Other")).not.toBeNull();
+
+    // A tap outside every group closes the open flyout.
+    await user.click(document.body);
+    expect(openFlyout("Other")).toBeNull();
+  });
+
+  it("closes the touch flyout on Escape and returns focus to the group icon", async () => {
+    const user = userEvent.setup();
+    renderTouchRail(768);
+
+    const trigger = screen.getByRole("button", { name: "Main" });
+    await user.click(trigger);
+    expect(openFlyout("Main")).not.toBeNull();
+
+    await user.keyboard("{Escape}");
+    expect(openFlyout("Main")).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("closes the touch flyout when a page in it is opened", async () => {
+    const user = userEvent.setup();
+    renderTouchRail(768);
+
+    await user.click(screen.getByRole("button", { name: "Main" }));
+    await user.click(within(openFlyout("Main")!).getByRole("link", { name: /products/i }));
+
+    expect(openFlyout("Main")).toBeNull();
+  });
+
+  it("marks the hover trigger expanded, links the heading, and closes on Escape on a hover device", async () => {
+    const user = userEvent.setup();
+    renderWithProps(
+      {
+        iconRail: true,
+        hideHeader: true,
+        children: (
+          <SidebarGroup title="Main" icon={<Home />} to="/main">
+            <SidebarItem to="/dashboard" />
+          </SidebarGroup>
+        ),
+      },
+      { defaultOpen: false },
+    );
+
+    // With a mouse, a group with its own page keeps its link as the trigger.
+    const trigger = screen.getByRole("link", { name: "Main" });
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+
+    await user.hover(trigger);
+    const nav = openFlyout("Main")!;
+    expect(nav).not.toBeNull();
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    expect(trigger.getAttribute("aria-controls")).toBe(nav.id);
+    expect(within(nav).getByRole("link", { name: "Main" }).getAttribute("href")).toBe("/main");
+
+    // Escape pressed elsewhere (a text field, the command palette) leaves a
+    // hover flyout alone and does not pull focus to the rail.
+    const field = document.body.appendChild(document.createElement("input"));
+    field.focus();
+    await user.keyboard("{Escape}");
+    expect(openFlyout("Main")).not.toBeNull();
+    expect(document.activeElement).toBe(field);
+    field.remove();
+
+    // With focus on the group, Escape closes it.
+    trigger.focus();
+    await user.keyboard("{Escape}");
+    expect(openFlyout("Main")).toBeNull();
+  });
+
+  it("keeps the link trigger a plain link on a hover device: a press does not toggle the flyout", async () => {
+    const user = userEvent.setup();
+    renderWithProps(
+      {
+        iconRail: true,
+        hideHeader: true,
+        children: (
+          <SidebarGroup title="Main" icon={<Home />} to="/main">
+            <SidebarItem to="/dashboard" />
+          </SidebarGroup>
+        ),
+      },
+      { defaultOpen: false },
+    );
+
+    const trigger = screen.getByRole("link", { name: "Main" });
+    expect(trigger.getAttribute("href")).toBe("/main");
+    await user.click(trigger);
+    expect(openFlyout("Main")).toBeNull();
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("moves focus into the flyout when it is opened from the keyboard", async () => {
+    const user = userEvent.setup();
+    renderTouchRail(768);
+
+    const trigger = screen.getByRole("button", { name: "Main" });
+    trigger.focus();
+    await user.keyboard("{Enter}");
+
+    const flyout = openFlyout("Main")!;
+    expect(flyout).not.toBeNull();
+    expect(flyout.contains(document.activeElement)).toBe(true);
+    // Tab stays inside the flyout's links.
+    await user.tab();
+    expect(flyout.contains(document.activeElement)).toBe(true);
+    expect(document.activeElement).toBe(within(flyout).getByRole("link", { name: /products/i }));
+  });
+
+  it("opens only one flyout when a second group is opened from the keyboard", async () => {
+    const user = userEvent.setup();
+    renderTouchRail(768);
+
+    screen.getByRole("button", { name: "Main" }).focus();
+    await user.keyboard("{Enter}");
+    expect(openFlyout("Main")).not.toBeNull();
+
+    // Tabbing past the end of the flyout leaves it and lands on the next group.
+    const other = screen.getByRole("button", { name: "Other" });
+    for (let i = 0; i < 6 && document.activeElement !== other; i += 1) {
+      await user.tab();
+    }
+    expect(document.activeElement).toBe(other);
+    await user.keyboard("{Enter}");
+
+    expect(openFlyout("Main")).toBeNull();
+    expect(openFlyout("Other")).not.toBeNull();
+  });
+
+  it("closes the touch flyout when the already-active page is selected again", async () => {
+    const user = userEvent.setup();
+    renderTouchRail(768);
+
+    await user.click(screen.getByRole("button", { name: "Main" }));
+    await user.click(within(openFlyout("Main")!).getByRole("link", { name: /dashboard/i }));
+    expect(openFlyout("Main")).toBeNull();
+
+    // Same path again: the pathname does not change, but the flyout still closes.
+    await user.click(screen.getByRole("button", { name: "Main" }));
+    await user.click(within(openFlyout("Main")!).getByRole("link", { name: /dashboard/i }));
+    expect(openFlyout("Main")).toBeNull();
   });
 
   it("reveals the group flyout on the mobile-width icon rail when hover-capable", async () => {
@@ -438,9 +691,13 @@ describe("DefaultSidebar opt-in props", () => {
       </MemoryRouter>,
     );
 
-    expect(document.querySelector('nav[aria-label="Main"]')).toBeNull();
+    expect(
+      document.querySelector('[data-slot="sidebar-group-flyout"][aria-label="Main"]'),
+    ).toBeNull();
     await user.hover(screen.getByRole("button", { name: "Main" }));
-    expect(document.querySelector('nav[aria-label="Main"]')).not.toBeNull();
+    expect(
+      document.querySelector('[data-slot="sidebar-group-flyout"][aria-label="Main"]'),
+    ).not.toBeNull();
   });
 });
 

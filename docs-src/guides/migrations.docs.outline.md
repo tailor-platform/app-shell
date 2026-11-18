@@ -15,6 +15,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.21.0        | [Testing helpers deprecated in favour of TestingProvider](#1210-testing-helpers-deprecated-in-favour-of-testingprovider)     |
 | 1.20.0        | [z-index tokens renamed; old names are aliases](#1200-z-index-tokens-renamed-old-names-are-aliases)                          |
 | 1.18.0        | [Destructive colours now resolve to the danger roles](#1180-destructive-colours-now-resolve-to-the-danger-roles)             |
 | 1.17.0        | [Status and alert tokens now resolve to the colour roles](#1170-status-and-alert-tokens-now-resolve-to-the-colour-roles)     |
@@ -28,6 +29,45 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
+
+## 1.21.0: testing helpers deprecated in favour of TestingProvider
+
+**Applies to:** tests importing `AppShell` or `TestAppShellProps` from `@tailor-platform/app-shell/testing`.
+
+The existing `/testing` exports `AppShell` and `TestAppShellProps` remain available but are marked `@deprecated`. No immediate migration is required. For new page and integration tests, import `AppShell` and `AppShellProps` from the main entry and move the initial history stack to `AppShellTestingProvider` from `/testing`. The provider requires `initialEntries: string[]`; neither the main AppShell nor the provider accepts a `memory` prop.
+
+Before:
+
+```tsx
+import { AppShell, type TestAppShellProps } from "@tailor-platform/app-shell/testing";
+
+const props: TestAppShellProps = {
+  modules,
+  memory: true,
+  initialEntries: ["/orders/A42"],
+};
+
+render(<AppShell {...props} />);
+```
+
+After:
+
+```tsx
+import { AppShell, type AppShellProps } from "@tailor-platform/app-shell";
+import { AppShellTestingProvider } from "@tailor-platform/app-shell/testing";
+
+const props: AppShellProps = { modules };
+
+render(
+  <AppShellTestingProvider initialEntries={["/orders/A42"]}>
+    <AppShell {...props} />
+  </AppShellTestingProvider>,
+);
+```
+
+Inside the provider, AppShell uses memory routing without changing `window.location`. Outside it, AppShell uses browser routing, so tests that use the deprecated testing AppShell without memory routing can migrate to the main AppShell without a provider. Provider-based tests use the same `AppShellRegister` augmentation as the application. `TestRouter` and `TestRouterProps` are unchanged and remain supported for focused component unit tests; they are not replaced by `AppShellTestingProvider`.
+
+To migrate existing page and integration tests, search imports for `AppShell` or `TestAppShellProps` from `/testing`, and move any `memory` / `initialEntries` AppShell props into the provider setup. Existing focused `TestRouter` tests may remain unchanged. See the [Testing guide](./concepts/testing.md) for the full testing setup.
 
 ## 1.20.0: z-index tokens renamed; old names are aliases
 
@@ -127,27 +167,33 @@ The date controls now follow the same composition model as `Field`, `Select`, `C
 
 TypeScript will error on the removed props; delete them and compose with `Field.Root` instead.
 
+Both examples use `useTimeZone()` at the top level of the component so the minimum date follows AppShell's configured timezone.
+
 Before:
 
 ```tsx
+const timeZone = useTimeZone();
+
 <DatePicker
   label="Delivery date"
   description="When should we ship your order?"
-  minValue={today(getLocalTimeZone())}
+  minValue={timeZone.today()}
   errorMessage={error}
   isInvalid={!!error}
-/>
+/>;
 ```
 
 After:
 
 ```tsx
+const timeZone = useTimeZone();
+
 <Field.Root invalid={!!error}>
   <Field.Label>Delivery date</Field.Label>
-  <DatePicker aria-label="Delivery date" minValue={today(getLocalTimeZone())} />
+  <DatePicker aria-label="Delivery date" minValue={timeZone.today()} />
   <Field.Description>When should we ship your order?</Field.Description>
   <Field.Error match={!!error}>{error}</Field.Error>
-</Field.Root>
+</Field.Root>;
 ```
 
 `isInvalid` remains a top-level prop for externally-controlled invalid styling. Semantic date props (`isRequired`, `isDisabled`, `isReadOnly`, `minValue`, `maxValue`, `isDateUnavailable`) remain top-level and unchanged. Standalone usage still works with an accessible name:

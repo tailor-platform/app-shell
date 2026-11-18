@@ -19,10 +19,9 @@ import {
   Calendar,
   RangeCalendar,
   Field,
+  useTimeZone,
   // Date value helpers (re-exported from @internationalized/date)
   parseDate,
-  getLocalTimeZone,
-  today,
   type CalendarDate,
   type DateValue,
   type DateRange,
@@ -87,19 +86,29 @@ A `DateField` with a calendar popover.
 
 Constrained + unavailable dates:
 
+Use [`useTimeZone()`](../api/use-time-zone.md) to obtain today's date in AppShell's configured timezone, rather than calculating against the browser's timezone directly.
+
 ```tsx
-<label id="delivery-date-label" htmlFor="delivery-date">
-  Delivery date
-</label>
-<DatePicker
-  id="delivery-date"
-  aria-labelledby="delivery-date-label"
-  minValue={today(getLocalTimeZone())}
-  isDateUnavailable={(date) => {
-    const dow = date.toDate(getLocalTimeZone()).getDay();
-    return dow === 0 || dow === 6; // weekends
-  }}
-/>
+function DeliveryDatePicker() {
+  const timeZone = useTimeZone();
+
+  return (
+    <>
+      <label id="delivery-date-label" htmlFor="delivery-date">
+        Delivery date
+      </label>
+      <DatePicker
+        id="delivery-date"
+        aria-labelledby="delivery-date-label"
+        minValue={timeZone.today()}
+        isDateUnavailable={(date) => {
+          const dow = date.toDate("UTC").getUTCDay();
+          return dow === 0 || dow === 6; // weekends
+        }}
+      />
+    </>
+  );
+}
 ```
 
 Week start:
@@ -252,6 +261,16 @@ A typed range with `end` before `start` sets the invalid state and reports a bui
 ### RangeCalendarProps
 
 Same surface as `CalendarProps`, with `value` / `defaultValue`: `DateRange | null` and `onChange`: `(v: DateRange) => void` (fired once per selection, when the second date completes the range).
+
+The optional `onSelectionStateChange` receives a discriminated event for each selection transition:
+
+| `event.type`       | Additional payload | Meaning                                    |
+| ------------------ | ------------------ | ------------------------------------------ |
+| `selection-start`  | —                  | The first pick anchors an unfinished range |
+| `range-complete`   | `value: DateRange` | The second pick completes an ordered range |
+| `selection-cancel` | —                  | Escape cancels an unfinished selection     |
+
+Use these events to disable external Apply actions until selection completes or is cancelled. Only `range-complete` carries a value; it contains the same range passed to the existing `onChange`, so event-only consumers do not need to subscribe to both callbacks. Events report interactions only, not initial render or unmount; when resetting or remounting the calendar, reset any parent-owned selection state too.
 
 ## Related
 

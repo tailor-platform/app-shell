@@ -14,7 +14,7 @@ skill — deterministically, with no LLM.
   or documents a non-exported symbol (always blocks).
 - **Assemble** each unit's Markdown from its outline (prose verbatim), extracted
   example fences, and opt-in auto prop tables (`<!-- api -->`).
-- **Emit** the consumer skill from the generated docs + `docs-src/skill/`.
+- **Emit** the consumer skills (`outputs.skills`) from the generated docs + the templates in `docs-src/skill/<name>/`. Every docs output dir must reach a skill or be listed under `policy.skills.unclaimed` with a reason, so a new docs category can't silently ship to no consumer.
 
 ## CLI
 

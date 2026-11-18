@@ -7,7 +7,7 @@ title: Wizard Form
 category: pattern
 subcategory: form
 description: Multi-stage create flow with 3-7 steps and per-step validation gates
-requiredImports: [Layout, Card, Badge, Form, Fieldset, Field, Select, Button]
+requiredImports: [Layout, Card, Badge, Form, FormLayout, Field, Select, Button]
 tags: [form, wizard, multi-step, stepper, onboarding]
 do:
   - Multi-stage Create with 3-7 steps

@@ -17,6 +17,8 @@ The `Dialog` component provides a modal dialog with a compound component API. It
 import { Dialog } from "@tailor-platform/app-shell";
 ```
 
+The runnable examples also import `useState` from `react`, and `Button`, `Field`, `Form`, and `Text` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -75,76 +77,17 @@ Accept a `render` prop for custom element rendering (Base UI render pattern), pl
 
 ### Delete Confirmation
 
-```tsx
-function DeleteConfirmation({ onDelete }: { onDelete: () => void }) {
-  return (
-    <Dialog.Root>
-      <Dialog.Trigger render={<Button variant="destructive" />}>Delete</Dialog.Trigger>
-      <Dialog.Content>
-        <Dialog.Header>
-          <Dialog.Title>Delete Order</Dialog.Title>
-          <Dialog.Description>
-            This action cannot be undone. The order will be permanently deleted.
-          </Dialog.Description>
-        </Dialog.Header>
-        <Dialog.Footer>
-          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
-          <Button variant="destructive" onClick={onDelete}>
-            Delete
-          </Button>
-        </Dialog.Footer>
-      </Dialog.Content>
-    </Dialog.Root>
-  );
-}
-```
+Open the confirmation and cancel to keep the order, or confirm to remove it from this local example. No server data is changed. **Restore demo order** makes the example repeatable.
+
+<!-- example: delete-confirmation -->
 
 ### Form Dialog
 
 Put the `Form` inside `Dialog.Body` and submit it from the footer with `form="<id>"`, so the Save button stays visible however long the form gets. [`FormLayout`](./form-layout.md) lays the fields out in columns that fit the dialog's width.
 
-```tsx
-function EditDialog({ item }: { item: Item }) {
-  const [open, setOpen] = useState(false);
+In this example, empty or whitespace-only names are rejected through `Form` and `Field`. Cancel or close leaves the saved name unchanged; reopening restores it. Cancel is explicitly `type="button"` so it does not submit the form.
 
-  return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger render={<Button variant="outline" />}>Edit</Dialog.Trigger>
-      <Dialog.Content size="lg">
-        <Dialog.Header>
-          <Dialog.Title>Edit item</Dialog.Title>
-        </Dialog.Header>
-        <Dialog.Body>
-          <Form
-            id="edit-item-form"
-            onFormSubmit={(values) => {
-              handleSave(values);
-              setOpen(false);
-            }}
-          >
-            <FormLayout columns={2}>
-              <Field.Root name="name">
-                <Field.Label required>Name</Field.Label>
-                <Field.Control defaultValue={item.name} required />
-              </Field.Root>
-              <Field.Root name="code">
-                <Field.Label>Code</Field.Label>
-                <Field.Control defaultValue={item.code} />
-              </Field.Root>
-            </FormLayout>
-          </Form>
-        </Dialog.Body>
-        <Dialog.Footer>
-          <Dialog.Close render={<Button variant="outline" />}>Cancel</Dialog.Close>
-          <Button type="submit" form="edit-item-form">
-            Save
-          </Button>
-        </Dialog.Footer>
-      </Dialog.Content>
-    </Dialog.Root>
-  );
-}
-```
+<!-- example: form-dialog -->
 
 ## Stacking
 

@@ -72,17 +72,17 @@ function FormWizard() {
             <Card.Header title={STEPS[step]} />
             <Card.Content>
               {step === 0 && (
-                <Fieldset.Root className="space-y-4">
+                <FormLayout columns={2}>
                   <Field.Root name="title">
                     <Field.Label>Title</Field.Label>
                     <Field.Control required defaultValue={draft.title} />
                     <Field.Error match="valueMissing">Title is required.</Field.Error>
                   </Field.Root>
-                  <Field.Root name="description">
+                  <Field.Root name="description" span="full">
                     <Field.Label>Description</Field.Label>
                     <Field.Control defaultValue={draft.description} />
                   </Field.Root>
-                </Fieldset.Root>
+                </FormLayout>
               )}
 
               {step === 1 && (
@@ -99,7 +99,7 @@ function FormWizard() {
               )}
 
               {step === 2 && (
-                <Fieldset.Root className="grid gap-4 md:grid-cols-2">
+                <FormLayout columns={2}>
                   <Field.Root name="startDate">
                     <Field.Label>Start date</Field.Label>
                     <Field.Control type="date" required defaultValue={draft.startDate} />
@@ -109,7 +109,7 @@ function FormWizard() {
                     <Field.Label>Estimate (hours)</Field.Label>
                     <Field.Control type="number" min={0} defaultValue={draft.estimate} />
                   </Field.Root>
-                </Fieldset.Root>
+                </FormLayout>
               )}
 
               {step === 3 && (

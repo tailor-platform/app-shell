@@ -29,50 +29,13 @@ import {
 } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Button` from `@tailor-platform/app-shell` and `useState` from `react`.
+
 ## Basic Usage
 
 Use the `useCsvImporter` hook to manage state, then render `<CsvImporter>` with the returned props.
 
-```tsx
-import { CsvImporter, useCsvImporter, csv } from "@tailor-platform/app-shell";
-import { Button } from "@tailor-platform/app-shell";
-
-function ProductImport() {
-  const { open, props } = useCsvImporter({
-    schema: {
-      columns: [
-        {
-          key: "name",
-          label: "Name",
-          required: true,
-          aliases: ["product_name"],
-          schema: csv.string({ min: 1 }),
-        },
-        {
-          key: "price",
-          label: "Price",
-          schema: csv.number({ min: 0 }),
-        },
-        {
-          key: "active",
-          label: "Active",
-          schema: csv.boolean(),
-        },
-      ],
-    },
-    onImport: (event) => {
-      console.log(event.summary);
-    },
-  });
-
-  return (
-    <>
-      <Button onClick={open}>Import CSV</Button>
-      <CsvImporter {...props} />
-    </>
-  );
-}
-```
+<!-- example: product-import -->
 
 ## `useCsvImporter`
 

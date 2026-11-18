@@ -75,66 +75,81 @@ The bar tiles `segments` left-to-right, each sized as `value / (total ?? sum of 
 
 By default the legend mirrors `segments`. Pass `legend` to render different rows — for example when buckets overlap and the bar shows a decomposition while the legend shows the raw figures:
 
+<example-preview name="custom-legend"></example-preview>
+
 ```tsx
-<DocumentProgressCard
-  percent={30}
-  total={40}
-  segments={[
-    { label: "Net received", value: 10, color: "indigo" },
-    { label: "Returned", value: 2, color: "pink" },
-  ]}
-  legend={[
-    { label: "Received items", value: 12, color: "indigo" },
-    { label: "Returned items", value: 2, color: "pink" },
-    { label: "Yet to receive", value: 28, color: "neutral" },
-  ]}
-/>
+function CustomLegend() {
+  return (
+    <DocumentProgressCard
+      title="Receiving status"
+      percent={30}
+      total={40}
+      segments={[
+        { label: "Net received", value: 10, color: "indigo" },
+        { label: "Returned", value: 2, color: "pink" },
+      ]}
+      legend={[
+        { label: "Received items", value: 12, color: "indigo" },
+        { label: "Returned items", value: 2, color: "pink" },
+        { label: "Yet to receive", value: 28, color: "neutral" },
+      ]}
+    />
+  );
+}
 ```
 
 ## Example: purchase-order fulfilment
 
 A common use is communicating a purchase order's receiving state — **received**, **returned**, and **yet to receive**. `DocumentProgressCard` stays generic, so derive the percentage and the bar breakdown in your component and pass them in. This recipe reproduces the recommended look (labels, indigo/pink/neutral colors, and a bar that decomposes received into "kept" + "returned" against the ordered total):
 
+<example-preview name="purchase-order-fulfilment"></example-preview>
+
 ```tsx
-function PurchaseOrderFulfilment({
-  received,
-  returned,
-  yetToReceive,
-  // Whether returned items still count as fulfilled. Set false to subtract them.
-  returnedCountsAsComplete = true,
-}: {
-  received: number;
-  returned: number;
-  yetToReceive: number;
-  returnedCountsAsComplete?: boolean;
-}) {
-  // Returned is a subset of received; clamp so the breakdown can't exceed it.
-  const effectiveReturned = Math.min(Math.max(returned, 0), Math.max(received, 0));
-  const total = Math.max(received, 0) + Math.max(yetToReceive, 0); // the ordered quantity
-  const complete = returnedCountsAsComplete ? received : received - effectiveReturned;
-  const percent = total > 0 ? Math.round((complete / total) * 100) : 0;
+function PurchaseOrderFulfilment() {
+  function Fulfilment({
+    received,
+    returned,
+    yetToReceive,
+    returnedCountsAsComplete = true,
+  }: {
+    received: number;
+    returned: number;
+    yetToReceive: number;
+    returnedCountsAsComplete?: boolean;
+  }) {
+    // Returned is a subset of received; clamp so the breakdown cannot exceed it.
+    const effectiveReturned = Math.min(Math.max(returned, 0), Math.max(received, 0));
+    const total = Math.max(received, 0) + Math.max(yetToReceive, 0);
+    const complete = returnedCountsAsComplete ? received : received - effectiveReturned;
+    const percent = total > 0 ? Math.round((complete / total) * 100) : 0;
+
+    return (
+      <DocumentProgressCard
+        title={
+          returnedCountsAsComplete ? "Returns count as fulfilled" : "Returns reduce fulfilment"
+        }
+        percent={percent}
+        total={total}
+        segments={[
+          { label: "Received items", value: received - effectiveReturned, color: "indigo" },
+          { label: "Returned items", value: effectiveReturned, color: "pink" },
+        ]}
+        legend={[
+          { label: "Received items", value: received, color: "indigo" },
+          { label: "Returned items", value: returned, color: "pink" },
+          { label: "Yet to receive", value: yetToReceive, color: "neutral" },
+        ]}
+      />
+    );
+  }
 
   return (
-    <DocumentProgressCard
-      title="Fulfilment rate"
-      percent={percent}
-      total={total} // ordered quantity — the shortfall renders as the "yet to receive" track
-      // Bar: net received (kept) + returned. Yet-to-receive is the unfilled remainder.
-      segments={[
-        { label: "Received items", value: received - effectiveReturned, color: "indigo" },
-        { label: "Returned items", value: effectiveReturned, color: "pink" },
-      ]}
-      // Legend: the three buckets as-is, so "Received items" shows the full amount.
-      legend={[
-        { label: "Received items", value: received, color: "indigo" },
-        { label: "Returned items", value: returned, color: "pink" },
-        { label: "Yet to receive", value: yetToReceive, color: "neutral" },
-      ]}
-    />
+    <div className="grid gap-4 md:grid-cols-2">
+      <Fulfilment received={12} returned={2} yetToReceive={28} />
+      <Fulfilment received={12} returned={2} yetToReceive={28} returnedCountsAsComplete={false} />
+    </div>
   );
 }
-
-// <PurchaseOrderFulfilment received={12} returned={2} yetToReceive={28} /> → 30%
 ```
 
 Notes for adapting it:

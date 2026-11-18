@@ -18,44 +18,17 @@ import { Attachment, useAttachment } from "@tailor-platform/app-shell";
 import type { AttachmentItem, AttachmentOperation } from "@tailor-platform/app-shell";
 ```
 
+The example below also imports `useState` from `react`, and `Button`, `Card`, and `Text` from `@tailor-platform/app-shell`.
+
 ## Basic usage
 
 Use `useAttachment` to manage upload/delete state locally, then flush operations to your backend on submit via `applyChanges`. Spread the returned `props` directly onto `<Attachment />`.
 
-```tsx
-import { Attachment, Card, useAttachment } from "@tailor-platform/app-shell";
-import type { AttachmentOperation } from "@tailor-platform/app-shell";
+This example starts with an image and a PDF tile. Add files through the upload tile, or use each item's menu to delete it. **Save changes** displays the buffered operations and clears the buffer without sending files to a server. **Download** displays the callback result instead of downloading a file. Files and changes remain in memory only for this preview.
 
-function ProductForm() {
-  const { props, applyChanges } = useAttachment({
-    initialItems: existingAttachments,
-    accept: "image/*,.pdf",
-  });
+<!-- example: basic-usage -->
 
-  async function handleSubmit() {
-    await applyChanges(async (operations) => {
-      for (const op of operations) {
-        if (op.type === "upload") await uploadToServer(op.file);
-        if (op.type === "delete") await deleteFromServer(op.item.id);
-      }
-    });
-  }
-
-  return (
-    <Card.Root>
-      <Card.Header title="Product images" description="PNG, JPG, or PDF — max 10 MB per file." />
-      <Card.Content>
-        <Attachment
-          {...props}
-          uploadLabel="Upload image"
-          uploadHint="PNG, JPG, or PDF — max 10 MB per file."
-          onDownload={(item) => console.log("download", item)}
-        />
-      </Card.Content>
-    </Card.Root>
-  );
-}
-```
+For a real integration, handle each upload operation's `file` and each delete operation's `item.id` inside the `applyChanges` callback. The `accept` prop only filters the file picker, and `uploadHint` is informational; validate file type and size in your application and on the server for real uploads.
 
 ## Composition with Card
 

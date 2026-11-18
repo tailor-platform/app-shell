@@ -19,6 +19,9 @@ import type {
 // a section card, a Dialog body…), not the viewport, so the same field
 // markup reflows inside a dialog, a sheet and a page. Thresholds match
 // DescriptionCard (400px for two columns) and leave about 190px per field.
+// A card section measures its outer edge, while its grid sits inside the
+// card's 24px padding, so there two columns start at a 352px grid (about
+// 165px per field) — still enough for a short value.
 //
 // Spans are applied from the grid side (`[&>[data-span=…]]`) because only the
 // grid knows its column count: a `span={3}` field in a two-column grid must

@@ -31,5 +31,5 @@ Supporting additions:
 
 Visual changes to existing components (snapshots of open dialogs and sheets will show the new classes):
 
-- `Dialog.Content` is now a flex column instead of a grid, so `Dialog.Body` can scroll while the header and footer stay in view. Direct children other than `Dialog.Body` don't shrink, so a tall dialog without a `Body` still scrolls as a whole. Its height limit and default width are unchanged.
-- `Dialog.Footer` and `Sheet.Footer` right-align their buttons at their natural width at every size. Previously `Sheet.Footer` stacked buttons full width, and `Dialog.Footer` did so below `sm`.
+- `Dialog.Content` is now a flex column instead of a grid, so `Dialog.Body` can scroll while the header and footer stay in view. Direct children other than `Dialog.Body` don't shrink, so a tall dialog without a `Body` still scrolls as a whole. Its height limit and default width are unchanged. If you made `Dialog.Content` a flex column yourself and gave a child `min-h-0 flex-1 overflow-y-auto`, wrap that content in `Dialog.Body` instead; see the migrations guide. `ActivityCard`'s "All activities" dialog now does this.
+- `Dialog.Footer` and `Sheet.Footer` right-align their buttons at their natural width at every size. Previously `Sheet.Footer` stacked buttons full width, and `Dialog.Footer` did so below `sm`. Buttons now show in source order from left to right, so put the primary button last.

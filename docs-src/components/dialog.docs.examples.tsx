@@ -1,6 +1,110 @@
 import { useState } from "react";
 
-import { Button, Dialog } from "@tailor-platform/app-shell";
+import { Button, Dialog, Field, Form, FormLayout, Text } from "@tailor-platform/app-shell";
+
+export function DeleteConfirmation() {
+  const [open, setOpen] = useState(false);
+  const [deleted, setDeleted] = useState(false);
+
+  return (
+    <div className="space-y-3">
+      <Text.p role="status">{deleted ? "Demo order deleted." : "Demo order: ORD-1001"}</Text.p>
+      <div className="flex gap-2">
+        <Dialog.Root open={open} onOpenChange={setOpen}>
+          <Dialog.Trigger disabled={deleted} render={<Button variant="destructive" />}>
+            Delete demo order
+          </Dialog.Trigger>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Title>Delete demo order?</Dialog.Title>
+              <Dialog.Description>
+                Remove ORD-1001 from this local example. No server data is changed.
+              </Dialog.Description>
+            </Dialog.Header>
+            <Dialog.Footer>
+              <Dialog.Close render={<Button type="button" variant="outline" />}>
+                Cancel
+              </Dialog.Close>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  setDeleted(true);
+                  setOpen(false);
+                }}
+              >
+                Delete order
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={!deleted}
+          onClick={() => setDeleted(false)}
+        >
+          Restore demo order
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function FormDialog() {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("Small carton");
+
+  return (
+    <div className="space-y-3">
+      <Text.p role="status">Saved item name: {name}</Text.p>
+      <Dialog.Root open={open} onOpenChange={setOpen}>
+        <Dialog.Trigger render={<Button variant="outline" />}>Edit item</Dialog.Trigger>
+        <Dialog.Content size="lg">
+          <Dialog.Header>
+            <Dialog.Title>Edit item</Dialog.Title>
+            <Dialog.Description>
+              Save a new name, or cancel to keep the saved name.
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Body>
+            <Form<{ name: string; sku: string }>
+              id="edit-item-form"
+              noValidate
+              onFormSubmit={(values) => {
+                setName(values.name.trim());
+                setOpen(false);
+              }}
+            >
+              <FormLayout columns={2}>
+                <Field.Root
+                  name="name"
+                  validate={(value) =>
+                    typeof value === "string" && value.trim() ? undefined : "Name is required."
+                  }
+                >
+                  <Field.Label required>Item name</Field.Label>
+                  <Field.Control defaultValue={name} required />
+                  <Field.Error>Name is required.</Field.Error>
+                </Field.Root>
+                <Field.Root name="sku">
+                  <Field.Label>SKU</Field.Label>
+                  <Field.Control defaultValue="CTN-S-01" />
+                </Field.Root>
+              </FormLayout>
+            </Form>
+          </Dialog.Body>
+          <Dialog.Footer>
+            <Dialog.Close render={<Button type="button" variant="outline" />}>Cancel</Dialog.Close>
+            <Button type="submit" form="edit-item-form">
+              Save item
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
+    </div>
+  );
+}
 
 export function BasicUsage() {
   return (

@@ -1909,7 +1909,8 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "f68bdab855730f48",
     "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "e79d9120d86db198",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "e07c7fee2478a21d",
-    "packages/core/skills/app-shell-patterns/references/migrations.md": "8e06396b04d62c2b",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "5e3664f725b4d546"
+    "packages/core/skills/app-shell-patterns/SKILL.md": "18efee79280174e7",
+    "packages/core/skills/app-shell-upgrade/references/migrations.md": "8e06396b04d62c2b",
+    "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   }
 }

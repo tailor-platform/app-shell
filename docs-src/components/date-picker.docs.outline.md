@@ -21,15 +21,16 @@ import {
   Calendar,
   RangeCalendar,
   Field,
+  useTimeZone,
   // Date value helpers (re-exported from @internationalized/date)
   parseDate,
-  getLocalTimeZone,
-  today,
   type CalendarDate,
   type DateValue,
   type DateRange,
 } from "@tailor-platform/app-shell";
 ```
+
+The examples below also import `Button`, `Form`, and `Text` from `@tailor-platform/app-shell`, and `useId` and `useState` from `react`.
 
 ## API shape
 
@@ -43,33 +44,15 @@ import {
 
 Standalone usage with an accessible name:
 
-```tsx
-<DateField aria-label="Invoice date" />
-```
+<!-- example: standalone-date-field -->
 
 With a visible label + description:
 
-```tsx
-<label id="invoice-date-label" htmlFor="invoice-date">
-  Invoice date
-</label>
-<DateField
-  id="invoice-date"
-  aria-labelledby="invoice-date-label"
-  aria-describedby="invoice-date-help"
-/>
-<Text.p id="invoice-date-help">Format follows your locale</Text.p>
-```
+<!-- example: labeled-date-field -->
 
 Inside `Field.Root`:
 
-```tsx
-<Field.Root name="invoiceDate">
-  <Field.Label>Invoice date</Field.Label>
-  <DateField />
-  <Field.Description>Format follows your locale</Field.Description>
-</Field.Root>
-```
+<!-- example: date-field-with-field -->
 
 Controlled:
 
@@ -83,87 +66,51 @@ const [date, setDate] = useState<CalendarDate | null>(null);
 
 A `DateField` with a calendar popover.
 
-```tsx
-<DatePicker aria-label="Ship date" />
-```
+<!-- example: standalone-date-picker -->
 
 Constrained + unavailable dates:
 
-```tsx
-<label id="delivery-date-label" htmlFor="delivery-date">
-  Delivery date
-</label>
-<DatePicker
-  id="delivery-date"
-  aria-labelledby="delivery-date-label"
-  minValue={today(getLocalTimeZone())}
-  isDateUnavailable={(date) => {
-    const dow = date.toDate(getLocalTimeZone()).getDay();
-    return dow === 0 || dow === 6; // weekends
-  }}
-/>
-```
+Use [`useTimeZone()`](../api/use-time-zone.md) to obtain today's date in AppShell's configured timezone, rather than calculating against the browser's timezone directly.
+
+<!-- example: constrained-dates -->
 
 Week start:
 
-```tsx
-<DatePicker aria-label="Date" firstDayOfWeek="mon" />
-```
+<!-- example: week-start -->
 
 ## Validation and errors
 
 Use standard HTML + ARIA when rendering the field standalone:
 
-```tsx
-<label id="delivery-date-label" htmlFor="delivery-date">
-  Delivery date
-</label>
-<DatePicker
-  id="delivery-date"
-  aria-labelledby="delivery-date-label"
-  aria-describedby={error ? "delivery-date-error" : undefined}
-  isInvalid={!!error}
-  value={value}
-  onChange={setValue}
-/>
-{error && <Text.p id="delivery-date-error">{error}</Text.p>}
-```
+Click **Check delivery date** while empty to show a consumer-owned error, then choose a date to clear it. `isInvalid` and `aria-describedby` connect the standalone control to the visible message; `useId` keeps the association unique.
+
+<!-- example: standalone-validation -->
 
 Or let `Field.Root` wire the label, description, and error elements:
 
-```tsx
-<Field.Root name="deliveryDate" error={error ? { message: error } : undefined}>
-  <Field.Label>Delivery date</Field.Label>
-  <DatePicker value={value} onChange={setValue} />
-  <Field.Error match={!!error}>{error}</Field.Error>
-</Field.Root>
-```
+Submit the empty field to see its required error. A date before April 1, 2026 can be typed, but the control's `minValue` validation blocks submission and surfaces through `Field.Error match="customError"`. A valid date is submitted as an ISO date string; the result stays local.
+
+<!-- example: field-validation -->
 
 ## Calendar
 
 A standalone calendar grid for custom date-selection UIs.
 
-```tsx
-<Calendar aria-label="Select date" onChange={(date) => console.log(date)} />
-```
+<!-- example: standalone-calendar -->
 
 ## DateRangePicker
 
 Start and end segmented inputs sharing one calendar popover, with a `{ start, end }` value (`DateRange`) — a **separate component** from `DatePicker`, not a mode. Same composition model as the other controls: standalone with `aria-*`, or inside `Field.Root`. Selection follows the react-aria model — the first calendar pick anchors the range and keeps the popover open, the highlight follows the pointer/arrows, and the second pick completes it; picking backwards swaps the endpoints, while a range **typed** in reverse is flagged invalid (`Field.Error match="customError"`) rather than swapped.
 
-```tsx
-const [range, setRange] = useState<DateRange | null>(null);
+The standalone controlled example keeps real `DateRange` values (`DateValue` endpoints), not strings. Choose two calendar days or edit the segments to see the complete range. **Clear range** resets both ends; a half-entered range reports `null` until both ends are complete. The clear action remounts the picker so incomplete drafts are reset even when the external value is already `null`.
 
-// standalone
-<DateRangePicker aria-label="Billing period" value={range} onChange={setRange} />
+<!-- example: standalone-date-range -->
 
-// composed
-<Field.Root name="period">
-  <Field.Label>Billing period</Field.Label>
-  <DateRangePicker />
-  <Field.Error match="customError" />
-</Field.Root>
-```
+Inside `Form`, the field owns the input value. Try submitting an empty range or only its start, then type an end date earlier than the start to see the built-in reversed-range error. Calendar selections normalize the endpoint order instead. Complete an ordered range to submit successfully.
+
+`onChange` exposes a `DateRange`, while `Form.onFormSubmit` receives the combined serialized string, for example `{ "period": "2026-04-09/2026-04-12" }`. The example displays that actual form payload without duplicating the input in string state.
+
+<!-- example: date-range-with-field -->
 
 A single combined proxy input is registered as the one Field control — its value is empty until **both** ends are complete, so `isRequired` blocks a partial range. Give that combined input a `name` for a single `start/end` native-POST field (a wrapping `Field.Root` name wins), or use `startName` / `endName` to emit two plain hidden inputs for classic form-POST.
 
@@ -171,25 +118,19 @@ A single combined proxy input is registered as the one Field control — its val
 
 The standalone inline range calendar (the grid inside `DateRangePicker`), for custom layouts.
 
-```tsx
-<RangeCalendar aria-label="Stay dates" onChange={(range) => console.log(range)} />
-```
+<!-- example: standalone-range-calendar -->
 
 ## Localization
 
 Locale and timezone come from AppShell automatically. Override per field with `locale` / `timeZone`:
 
-```tsx
-<DatePicker aria-label="Date" locale="ja-JP" />
-```
+<!-- example: localized-picker -->
 
 ### Day of the week
 
 `showDayOfWeek` adds the locale's short day of the week where the locale places it — `2025/12/19(金)` for ja-JP, `Fri, 12/19/2025` for en-US. It is read-only and derived from the entered date: it shows a placeholder until the date is complete, and while a date segment is mid-entry it keeps the previous day of the week (muted), so typing `25` into the day never flashes the 2nd's. Screen readers hear the full day name with each date segment's value.
 
-```tsx
-<DatePicker aria-label="Closing date" showDayOfWeek />
-```
+<!-- example: weekday -->
 
 ## Keyboard
 

@@ -17,6 +17,8 @@ The `Alert` component is a compound component for displaying contextual status m
 import { Alert } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `useState` from `react`, and `Button`, `Text`, and `alertVariants` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -37,32 +39,7 @@ All standard HTML `<div>` props are also accepted.
 
 Each variant automatically renders a contextual icon:
 
-```tsx
-<Alert.Root variant="neutral">
-  <Alert.Title>Note</Alert.Title>
-  <Alert.Description>General information.</Alert.Description>
-</Alert.Root>
-
-<Alert.Root variant="success">
-  <Alert.Title>Success</Alert.Title>
-  <Alert.Description>Operation completed successfully.</Alert.Description>
-</Alert.Root>
-
-<Alert.Root variant="warning">
-  <Alert.Title>Warning</Alert.Title>
-  <Alert.Description>Proceed with caution.</Alert.Description>
-</Alert.Root>
-
-<Alert.Root variant="error">
-  <Alert.Title>Error</Alert.Title>
-  <Alert.Description>Something went wrong.</Alert.Description>
-</Alert.Root>
-
-<Alert.Root variant="info">
-  <Alert.Title>Info</Alert.Title>
-  <Alert.Description>Here is some useful information.</Alert.Description>
-</Alert.Root>
-```
+<!-- example: variants -->
 
 | Variant   | Automatic Icon      | Color palette   |
 | --------- | ------------------- | --------------- |
@@ -76,79 +53,23 @@ Each variant automatically renders a contextual icon:
 
 Use the `action` prop to render an action element below the description:
 
-```tsx
-<Alert.Root
-  variant="warning"
-  action={
-    <Button size="sm" variant="outline">
-      Review
-    </Button>
-  }
->
-  <Alert.Title>Review Required</Alert.Title>
-  <Alert.Description>This record has pending changes that need review.</Alert.Description>
-</Alert.Root>
-```
+<!-- example: with-action -->
 
 ## Dismissible Alert
 
 Set `dismissible` to show a close button. Use `onDismiss` to react when the alert is dismissed:
 
-```tsx
-<Alert.Root variant="info" dismissible onDismiss={() => markAlertRead(alertId)}>
-  <Alert.Title>New Feature Available</Alert.Title>
-  <Alert.Description>Check out the new dashboard layout in Settings.</Alert.Description>
-</Alert.Root>
-```
+<!-- example: dismissible-alert -->
 
 > **Note:** When `dismissible` is `true`, clicking the close button hides the alert via internal state. The `onDismiss` callback fires after the alert is hidden.
 
 ## Examples
 
-### Form Validation Error
-
-```tsx
-function OrderForm() {
-  const [error, setError] = useState<string | null>(null);
-
-  return (
-    <form>
-      {error && (
-        <Alert.Root variant="error" dismissible onDismiss={() => setError(null)}>
-          <Alert.Title>Submission Failed</Alert.Title>
-          <Alert.Description>{error}</Alert.Description>
-        </Alert.Root>
-      )}
-      {/* form fields */}
-    </form>
-  );
-}
-```
-
-### Success Confirmation
-
-```tsx
-<Alert.Root variant="success">
-  <Alert.Title>Invoice Created</Alert.Title>
-  <Alert.Description>Invoice #INV-0042 has been sent to the customer.</Alert.Description>
-</Alert.Root>
-```
-
 ### Warning with Action
 
-```tsx
-<Alert.Root
-  variant="warning"
-  action={
-    <Button size="sm" variant="outline" onClick={() => navigate("/settings/billing")}>
-      Update Billing
-    </Button>
-  }
->
-  <Alert.Title>Payment Method Expiring</Alert.Title>
-  <Alert.Description>Your credit card on file expires at the end of this month.</Alert.Description>
-</Alert.Root>
-```
+This example records the action locally instead of navigating away from the documentation or changing billing information.
+
+<!-- example: warning-with-action -->
 
 ## Accessibility
 
@@ -163,12 +84,7 @@ Alerts are styled with the library's internal `astw:`-prefixed utilities. Write 
 1. **Using `className`** on `Alert.Root` for additional styles
 2. **Using `alertVariants`** utility to apply variant classes to custom elements
 
-```tsx
-import { alertVariants } from "@tailor-platform/app-shell";
-import { cn } from "@/lib/utils";
-
-<div className={cn(alertVariants({ variant: "info" }), "my-4")}>Custom alert container</div>;
-```
+<!-- example: styling-utility -->
 
 ## Related Components
 

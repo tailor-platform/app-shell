@@ -1,0 +1,8 @@
+/* Keep the preview canvas neutral; inherit all other tokens from the default palette. */
+:root {
+  --background: #fff;
+}
+
+:root.dark {
+  --background: #0a0a0a;
+}

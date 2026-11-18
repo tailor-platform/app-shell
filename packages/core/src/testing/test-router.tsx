@@ -18,8 +18,8 @@ export type TestRouterProps = PropsWithChildren<{
 
 /**
  * Router context for unit-testing a single component, without booting the whole
- * shell. For a page or integration test, mount `AppShell` with `memory`
- * instead, so the test exercises AppShell's own router.
+ * shell. For a page or integration test, mount main's `AppShell` inside
+ * `AppShellTestingProvider` instead, so the test exercises AppShell's own router.
  *
  * ```tsx
  * render(

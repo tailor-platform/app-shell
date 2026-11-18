@@ -5,7 +5,7 @@
 
 ## Context
 
-Tracking issue: to be filed.
+Tracking issue: tailor-inc/platform-planning#2484.
 
 AppShell defines no spacing tokens. `docs/concepts/styling-theming.md` tells consumers to use Tailwind's 4px scale, and each component writes its own `p-*`, `gap-*` and `m-*` classes. Measured on `main` at `b4ede51` and on the erp-kit templates at `6f68c339`:
 

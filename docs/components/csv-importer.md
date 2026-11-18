@@ -27,15 +27,17 @@ import {
 } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Button` from `@tailor-platform/app-shell` and `useState` from `react`.
+
 ## Basic Usage
 
 Use the `useCsvImporter` hook to manage state, then render `<CsvImporter>` with the returned props.
 
-```tsx
-import { CsvImporter, useCsvImporter, csv } from "@tailor-platform/app-shell";
-import { Button } from "@tailor-platform/app-shell";
+<example-preview name="product-import"></example-preview>
 
+```tsx
 function ProductImport() {
+  const [summary, setSummary] = useState("");
   const { open, props } = useCsvImporter({
     schema: {
       columns: [
@@ -59,15 +61,16 @@ function ProductImport() {
       ],
     },
     onImport: (event) => {
-      console.log(event.summary);
+      setSummary(JSON.stringify(event.summary, null, 2));
     },
   });
 
   return (
-    <>
+    <div className="flex flex-col items-start gap-4">
       <Button onClick={open}>Import CSV</Button>
       <CsvImporter {...props} />
-    </>
+      <output className="whitespace-pre-wrap">{summary || "No CSV imported yet."}</output>
+    </div>
   );
 }
 ```

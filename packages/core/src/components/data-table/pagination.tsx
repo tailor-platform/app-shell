@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
@@ -5,6 +6,14 @@ import { Select } from "@/components/select";
 import { useDataTableContext } from "./context";
 import { useDataTableT } from "./i18n";
 import { isSelectionBarOpen } from "./selection-bar";
+
+/**
+ * Visually hides a label while the footer is narrower than
+ * `NARROW_FOOTER_WIDTH` (see `selection-bar.tsx`), keeping it for screen
+ * readers. Outside `DataTable.Footer` the container never matches, so the
+ * label stays visible.
+ */
+const NARROW_FOOTER_SR_ONLY = "astw:@max-[480px]/data-table-footer:sr-only";
 
 export interface DataTablePaginationProps {
   /**
@@ -34,6 +43,7 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
     toggleRowSelection,
   } = ctx;
   const t = useDataTableT();
+  const pageSizeLabelId = useId();
 
   const selectionEnabled = toggleRowSelection !== undefined;
   const selectedCount = selectedIds.length;
@@ -57,35 +67,66 @@ export function DataTablePagination({ pageSizeOptions }: DataTablePaginationProp
   return (
     // Beside the bar, flex-1 instead of w-full lets both share one line and
     // wraps the controls onto a line of their own only when they don't fit.
+    // The row count, the page-size switcher and the page buttons are siblings
+    // in one wrapping row, so a narrow footer (phone widths) breaks between
+    // them instead of letting the table frame clip the buttons. The count's
+    // mr-auto keeps it on the left; everything else packs to the right.
     <div
       className={cn(
-        "astw:flex astw:items-center astw:justify-between astw:gap-2",
+        "astw:flex astw:flex-wrap astw:items-center astw:justify-end astw:gap-2",
         barOpen ? "astw:flex-1" : "astw:w-full",
       )}
     >
       {rowInfoText && (
-        <div className="astw:text-body-md astw:text-muted-foreground">{rowInfoText}</div>
+        <div className="astw:mr-auto astw:text-body-md astw:text-muted-foreground astw:whitespace-nowrap">
+          {rowInfoText}
+        </div>
       )}
-      <div className="astw:flex astw:items-center astw:justify-end astw:gap-2 astw:ml-auto">
-        {pageSizeOptions && pageSizeOptions.length > 0 && (
-          <div className="astw:flex astw:items-center astw:gap-1.5">
-            <span className="astw:text-body-md astw:text-muted-foreground astw:whitespace-nowrap">
-              {t("paginationRowsPerPage")}
-            </span>
-            <Select
-              items={pageSizeOptions.map(String)}
-              value={String(pageSize)}
-              onValueChange={(item) => {
-                if (item) setPageSize(Number(item));
-              }}
-              className="astw:w-17.5"
-            />
-          </div>
-        )}
-        {totalPages !== null && (
-          <span className="astw:text-body-md astw:text-muted-foreground astw:tabular-nums">
-            {t("paginationPage")} {currentPage} / {totalPages}
+      {pageSizeOptions && pageSizeOptions.length > 0 && (
+        <div className="astw:flex astw:items-center astw:gap-1.5">
+          {/* Names the select even while a narrow footer hides it visually. */}
+          <span
+            id={pageSizeLabelId}
+            className={cn(
+              "astw:text-body-md astw:text-muted-foreground astw:whitespace-nowrap",
+              NARROW_FOOTER_SR_ONLY,
+            )}
+          >
+            {t("paginationRowsPerPage")}
           </span>
+          <Select
+            aria-labelledby={pageSizeLabelId}
+            items={pageSizeOptions.map(String)}
+            value={String(pageSize)}
+            onValueChange={(item) => {
+              if (item) setPageSize(Number(item));
+            }}
+            className="astw:w-17.5"
+          />
+        </div>
+      )}
+      {/* The page text and its buttons wrap as one unit, so the buttons never
+            split across lines. */}
+      <div className="astw:flex astw:items-center astw:gap-2">
+        {totalPages !== null && (
+          <>
+            {/* The full "Page 1 / 5" stays one text node for screen readers
+                  and text queries; a narrow footer shows "1 / 5" in its place. */}
+            <span
+              className={cn(
+                "astw:text-body-md astw:text-muted-foreground astw:tabular-nums astw:whitespace-nowrap",
+                NARROW_FOOTER_SR_ONLY,
+              )}
+            >
+              {t("paginationPage")} {currentPage} / {totalPages}
+            </span>
+            <span
+              aria-hidden="true"
+              className="astw:hidden astw:text-body-md astw:text-muted-foreground astw:tabular-nums astw:whitespace-nowrap astw:@max-[480px]/data-table-footer:inline"
+            >
+              {currentPage} / {totalPages}
+            </span>
+          </>
         )}
         <Button
           variant="outline"

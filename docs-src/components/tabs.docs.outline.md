@@ -17,6 +17,8 @@ The `Tabs` component provides tab-based navigation for toggling between related 
 import { Tabs } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `FolderKanbanIcon`, `LayoutDashboardIcon`, and `SettingsIcon` from `lucide-react`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -115,20 +117,7 @@ another control, such as a `Select`, over relying on the scroll.
 
 ### With Disabled Tab
 
-```tsx
-<Tabs.Root defaultValue="active">
-  <Tabs.List>
-    <Tabs.Tab value="active">Active</Tabs.Tab>
-    <Tabs.Tab value="pending">Pending</Tabs.Tab>
-    <Tabs.Tab value="archived" disabled>
-      Archived
-    </Tabs.Tab>
-  </Tabs.List>
-  <Tabs.Panel value="active">Active items</Tabs.Panel>
-  <Tabs.Panel value="pending">Pending items</Tabs.Panel>
-  <Tabs.Panel value="archived">Archived items</Tabs.Panel>
-</Tabs.Root>
-```
+<!-- example: disabled-tab -->
 
 ### Use Icons in Tab
 
@@ -141,24 +130,7 @@ icons default to `16px`, so the square is consistent regardless of the icon.
 > **Accessibility:** an icon-only tab has no visible text, so give each one an
 > `aria-label`. Without it, screen readers announce an unnamed tab.
 
-```tsx
-<Tabs.Root defaultValue="overview" variant="capsule" size="default">
-  <Tabs.List>
-    <Tabs.Tab value="overview" aria-label="Overview">
-      <LayoutDashboardIcon />
-    </Tabs.Tab>
-    <Tabs.Tab value="projects" aria-label="Projects">
-      <FolderKanbanIcon />
-    </Tabs.Tab>
-    <Tabs.Tab value="settings" aria-label="Settings">
-      <SettingsIcon />
-    </Tabs.Tab>
-  </Tabs.List>
-  <Tabs.Panel value="overview">Overview content</Tabs.Panel>
-  <Tabs.Panel value="projects">Projects content</Tabs.Panel>
-  <Tabs.Panel value="settings">Settings content</Tabs.Panel>
-</Tabs.Root>
-```
+<!-- example: icon-tabs -->
 
 ### Sizing the capsule variant
 

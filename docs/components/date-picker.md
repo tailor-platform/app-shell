@@ -19,10 +19,9 @@ import {
   Calendar,
   RangeCalendar,
   Field,
+  useTimeZone,
   // Date value helpers (re-exported from @internationalized/date)
   parseDate,
-  getLocalTimeZone,
-  today,
   type CalendarDate,
   type DateValue,
   type DateRange,
@@ -108,11 +107,14 @@ function StandaloneDatePicker() {
 
 Constrained + unavailable dates:
 
+Use [`useTimeZone()`](../api/use-time-zone.md) to obtain today's date in AppShell's configured timezone, rather than calculating against the browser's timezone directly.
+
 <example-preview name="constrained-dates"></example-preview>
 
 ```tsx
 function ConstrainedDates() {
   const id = useId();
+  const timeZone = useTimeZone();
   return (
     <div className="flex flex-col gap-2">
       <label id={`${id}-label`} htmlFor={id}>
@@ -122,9 +124,9 @@ function ConstrainedDates() {
         id={id}
         aria-labelledby={`${id}-label`}
         defaultValue={parseDate("2025-12-19")}
-        minValue={parseDate("2025-12-01")}
+        minValue={timeZone.today()}
         isDateUnavailable={(date) => {
-          const dow = date.toDate(getLocalTimeZone()).getDay();
+          const dow = date.toDate("UTC").getUTCDay();
           return dow === 0 || dow === 6;
         }}
       />

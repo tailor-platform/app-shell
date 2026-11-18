@@ -9,8 +9,8 @@ import {
   Form,
   RangeCalendar,
   Text,
-  getLocalTimeZone,
   parseDate,
+  useTimeZone,
   type DateRange,
   type DateValue,
 } from "@tailor-platform/app-shell";
@@ -48,6 +48,7 @@ export function StandaloneDatePicker() {
 
 export function ConstrainedDates() {
   const id = useId();
+  const timeZone = useTimeZone();
   return (
     <div className="flex flex-col gap-2">
       <label id={`${id}-label`} htmlFor={id}>
@@ -57,9 +58,9 @@ export function ConstrainedDates() {
         id={id}
         aria-labelledby={`${id}-label`}
         defaultValue={parseDate("2025-12-19")}
-        minValue={parseDate("2025-12-01")}
+        minValue={timeZone.today()}
         isDateUnavailable={(date) => {
-          const dow = date.toDate(getLocalTimeZone()).getDay();
+          const dow = date.toDate("UTC").getUTCDay();
           return dow === 0 || dow === 6;
         }}
       />

@@ -501,10 +501,10 @@
       ],
       "hashes": {
         "typeSurface": "a0f5522359e8f81d",
-        "outline": "c14eb16a6ed93cab",
+        "outline": "328fcaa8d2f2b6df",
         "snapshot": null,
-        "outputMd": "ae89f55397bef7ac",
-        "examples": "02725fe17138b56e"
+        "outputMd": "376e7d4ad14c2934",
+        "examples": "b657b67c9745a60e"
       }
     },
     "default-header": {
@@ -1130,9 +1130,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "80dfe11d696ce694",
+        "outline": "e88bb360eb853c34",
         "snapshot": null,
-        "outputMd": "af237de157fd8691",
+        "outputMd": "19ca77c7802ca5f6",
         "examples": null
       }
     },
@@ -1773,9 +1773,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "bb783668bbf32860",
+        "outline": "c6a62197af16b977",
         "snapshot": null,
-        "outputMd": "61e225e58e2b8d81",
+        "outputMd": "717d6989930fb8c8",
         "examples": "b081c0e5992140e1"
       }
     },
@@ -1841,7 +1841,7 @@
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7e5bc675a593791a",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "10c04c78bb846c9a",
     "packages/core/skills/app-shell-patterns/references/components/data-table.md": "36bb587b7088fb1c",
-    "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "ae89f55397bef7ac",
+    "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "376e7d4ad14c2934",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "9b1672c71b6db3ff",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "8930a410d7d45f89",
@@ -1896,7 +1896,7 @@
     "packages/core/skills/app-shell-patterns/references/api/use-resolved-locale.md": "eb5e8371ba10d771",
     "packages/core/skills/app-shell-patterns/references/api/use-route-error.md": "1a44180ec84ce4b9",
     "packages/core/skills/app-shell-patterns/references/api/use-theme.md": "000e2603cef83d47",
-    "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "61e225e58e2b8d81",
+    "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "717d6989930fb8c8",
     "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "3f763c8074704709",
     "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
     "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "a0d3c952b0b10351",
@@ -1910,7 +1910,7 @@
     "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "e79d9120d86db198",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "e07c7fee2478a21d",
     "packages/core/skills/app-shell-patterns/SKILL.md": "18efee79280174e7",
-    "packages/core/skills/app-shell-upgrade/references/migrations.md": "2b1c0ad9006a3c55",
+    "packages/core/skills/app-shell-upgrade/references/migrations.md": "9bd2735c34fd35e3",
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   }
 }

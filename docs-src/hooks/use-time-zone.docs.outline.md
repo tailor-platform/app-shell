@@ -11,6 +11,10 @@ React hook that returns a `TimeZone` object for the timezone configured on `AppS
 
 Date/time components (`DateField`, `DatePicker`, `Calendar`) consume this hook automatically — use it when you need the same timezone in custom components.
 
+For the current date or time in React components, use `timeZone.today()` or `timeZone.now()` rather than importing standalone `today` or `now` helpers from AppShell. These methods respect AppShell's `timeZone` setting; calculating against the browser's timezone directly can produce a different date.
+
+Both methods read the current clock when called. They do not schedule re-renders when the date or time changes.
+
 ## Signature
 
 ```typescript

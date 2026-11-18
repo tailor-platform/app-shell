@@ -21,10 +21,9 @@ import {
   Calendar,
   RangeCalendar,
   Field,
+  useTimeZone,
   // Date value helpers (re-exported from @internationalized/date)
   parseDate,
-  getLocalTimeZone,
-  today,
   type CalendarDate,
   type DateValue,
   type DateRange,
@@ -70,6 +69,8 @@ A `DateField` with a calendar popover.
 <!-- example: standalone-date-picker -->
 
 Constrained + unavailable dates:
+
+Use [`useTimeZone()`](../api/use-time-zone.md) to obtain today's date in AppShell's configured timezone, rather than calculating against the browser's timezone directly.
 
 <!-- example: constrained-dates -->
 

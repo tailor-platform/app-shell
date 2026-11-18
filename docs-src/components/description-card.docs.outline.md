@@ -69,22 +69,7 @@ Badge values are rendered in sentence case by default. Set `meta.sentenceCaseBad
 
 When the field value is an array, each item is rendered as a separate badge. Use `maxVisible` to cap the number shown — extra items appear in a hover popover:
 
-```tsx
-<DescriptionCard
-  data={{ tags: ["urgent", "fragile", "international"] }}
-  fields={[
-    {
-      key: "tags",
-      label: "Tags",
-      type: "badge",
-      meta: {
-        badgeVariantMap: { urgent: "error", fragile: "warning", international: "outline-info" },
-        maxVisible: 2,
-      },
-    },
-  ]}
-/>
-```
+<!-- example: array-badges -->
 
 ### money
 
@@ -263,24 +248,7 @@ Control what displays when a field value is empty:
 
 Use dot notation to access nested properties:
 
-```tsx
-const data = {
-  customer: {
-    name: "Acme Corp",
-    contact: {
-      email: "contact@acme.com",
-    },
-  },
-};
-
-<DescriptionCard
-  data={data}
-  fields={[
-    { key: "customer.name", label: "Customer Name" },
-    { key: "customer.contact.email", label: "Email" },
-  ]}
-/>;
-```
+<!-- example: nested-data -->
 
 ## Column Layouts
 
@@ -306,143 +274,7 @@ The component is fully responsive:
 
 ## Complete Example
 
-```tsx
-import { DescriptionCard } from "@tailor-platform/app-shell";
-
-const orderData = {
-  // Order info
-  orderNumber: "ORD-12345",
-  orderDate: "2026-03-01T10:00:00Z",
-  status: "shipped",
-
-  // Customer
-  customer: {
-    name: "Acme Corporation",
-    id: "CUST-001",
-    email: "orders@acme.com",
-  },
-
-  // Financial
-  subtotal: 14000.0,
-  tax: 1750.0,
-  total: 15750.0,
-  currency: "USD",
-
-  // Shipping
-  shippingAddress: {
-    street: "123 Business Ave",
-    city: "San Francisco",
-    state: "CA",
-    zip: "94105",
-  },
-  trackingNumber: "1Z999AA10123456784",
-
-  // Notes
-  notes: "Rush delivery requested",
-};
-
-function OrderDetails() {
-  return (
-    <DescriptionCard
-      data={orderData}
-      columns={3}
-      fields={[
-        // Order Information
-        {
-          key: "orderNumber",
-          label: "Order Number",
-          meta: { copyable: true },
-        },
-        {
-          key: "orderDate",
-          label: "Order Date",
-          type: "date",
-          meta: { dateFormat: "medium" },
-        },
-        {
-          key: "status",
-          label: "Status",
-          type: "badge",
-          meta: {
-            badgeVariantMap: {
-              draft: "neutral",
-              pending: "subtle-warning",
-              shipped: "subtle-success",
-              delivered: "success",
-              cancelled: "subtle-error",
-            },
-          },
-        },
-
-        { type: "divider" },
-
-        // Customer Information
-        {
-          key: "customer.name",
-          label: "Customer",
-          type: "reference",
-          meta: {
-            referenceIdKey: "customer.id",
-            referenceUrlPattern: "/customers/{id}",
-          },
-        },
-        {
-          key: "customer.email",
-          label: "Email",
-          type: "link",
-          meta: { hrefKey: "customer.email" },
-        },
-
-        { type: "divider" },
-
-        // Financial
-        {
-          key: "subtotal",
-          label: "Subtotal",
-          type: "money",
-          meta: { currencyKey: "currency" },
-        },
-        {
-          key: "tax",
-          label: "Tax",
-          type: "money",
-          meta: { currencyKey: "currency" },
-        },
-        {
-          key: "total",
-          label: "Total",
-          type: "money",
-          meta: { currencyKey: "currency" },
-        },
-
-        { type: "divider" },
-
-        // Shipping
-        {
-          key: "shippingAddress",
-          label: "Shipping Address",
-          type: "address",
-        },
-        {
-          key: "trackingNumber",
-          label: "Tracking",
-          meta: { copyable: true },
-        },
-
-        { type: "divider" },
-
-        // Notes
-        {
-          key: "notes",
-          label: "Notes",
-          meta: { truncateLines: 2 },
-          emptyBehavior: "hide",
-        },
-      ]}
-    />
-  );
-}
-```
+<!-- example: complete-example -->
 
 ## Styling
 

@@ -64,7 +64,7 @@
   },
   "policy": {
     "coverage": {
-      "enforce": false,
+      "enforce": true,
       "exclusions": []
     },
     "skills": {

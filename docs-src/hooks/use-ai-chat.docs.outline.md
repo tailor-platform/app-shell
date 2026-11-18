@@ -5,6 +5,7 @@ title: useAIChat
 description: AI Gateway chat hook with optional local tools
 sources:
   - packages/core/src/ai/use-ai-chat.ts
+  - packages/core/src/ai/tools.ts
 ---
 
 # useAIChat
@@ -72,10 +73,26 @@ Calls become available before local tool execution. They record requested tool n
 
 Register local tools under a single object using `defineAIChatTool(...)`. Their schemas must implement both [Standard Schema](https://standardschema.dev/) validation and Standard JSON Schema generation (for example, Zod 4). Provider-native tools are not supported.
 
+## Local tool API
+
+`defineAIChatTool({ schema, execute, description? })` returns an `AILocalTool` with `kind: "local"`. The helper infers the first `execute` argument from the schema's **validated output**, including schema transformations. It does not execute or validate inputs when the tool is defined: `useAIChat` validates the model's arguments before calling `execute`.
+
+`AIChatToolSchema<Input, Output>` is the schema contract: it combines Standard Schema validation with Standard JSON Schema generation. Zod 4 implements both. AppShell sends the schema's input JSON Schema to the AI Gateway; the executor receives the validated output.
+
+The second `execute` argument is an `AIChatToolContext`:
+
+| Property   | Type              | Description                                                                                                 |
+| ---------- | ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| `signal`   | `AbortSignal`     | Cancellation signal for the active chat request. Forward it to `fetch` or other operations that support it. |
+| `messages` | `AIChatMessage[]` | User/assistant text available to the current turn, excluding internal tool-call and tool-result messages.   |
+
+Calling `stop()` or unmounting aborts the signal. Custom tool work must cooperate with cancellation; aborting does not undo side effects that have already happened. The example below forwards the signal to its request and checks the response status before returning a tool result.
+
 ## Usage
 
 ```tsx
 import {
+  Button,
   createAuthClient,
   createAIGatewayClient,
   defineAIChatTool,
@@ -98,8 +115,12 @@ const lookupCustomer = defineAIChatTool({
   schema: z.object({
     customerId: z.string(),
   }),
-  async execute({ customerId }) {
-    return { customerId, name: "Acme Corp" };
+  async execute({ customerId }, { signal }) {
+    const response = await fetch(`/api/customers/${encodeURIComponent(customerId)}`, { signal });
+    if (!response.ok) {
+      throw new Error(`Customer lookup failed: ${response.status}`);
+    }
+    return response.json();
   },
 });
 
@@ -123,15 +144,15 @@ export function ChatScreen() {
         <div key={call.id}>Tool call: {call.name}</div>
       ))}
 
-      <button
+      <Button
         onClick={() => void sendMessage("Hello")}
         disabled={status === "submitted" || status === "streaming"}
       >
         Send
-      </button>
-      <button onClick={stop} disabled={status !== "submitted" && status !== "streaming"}>
+      </Button>
+      <Button onClick={stop} disabled={status !== "submitted" && status !== "streaming"}>
         Stop
-      </button>
+      </Button>
       {error ? <div>{error.message}</div> : null}
     </div>
   );

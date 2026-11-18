@@ -1,8 +1,12 @@
 ---
-kind: prose
+kind: code-backed
 group: authentication
 title: Authentication
 description: Set up OAuth2/OIDC authentication with Tailor Platform's Auth service using the AuthProvider component
+sources:
+  - packages/core/src/contexts/auth-context.tsx
+claims:
+  - AuthClient
 ---
 
 # Authentication
@@ -84,6 +88,8 @@ const UserProfile = () => {
 | `logout`          | `() => Promise<void>`                                | Clears tokens and ends the session                                           |
 | `checkAuthStatus` | `() => Promise<AuthState>`                           | Re-checks auth status (always makes a network request)                       |
 
+`AuthState` is the exported state shape containing `isAuthenticated`, `isReady`, and `error`. `checkAuthStatus()` returns that shape; `useAuth()` exposes those fields together with the authentication methods above.
+
 ### Return to the current page
 
 `autoLogin` records the current path, query string, and hash before redirecting, then returns there after a successful callback. Manual `login()` calls do the same by default. Pass `returnTo` to choose another same-origin destination:
@@ -132,7 +138,9 @@ function ProtectedContent() {
 
 ## Auth Client
 
-Use `createAuthClient` to create an authentication client that you pass to `AuthProvider`. The client handles token management and provides an authenticated `fetch` method for use with GraphQL clients.
+Use `createAuthClient` to create an `EnhancedAuthClient` that you pass to `AuthProvider`. Create it once at module scope: if the URL contains OAuth callback parameters, client creation starts callback handling immediately, before React rendering. The client handles token management and provides an authenticated `fetch` method for use with GraphQL clients.
+
+`AuthClient` is the base type re-exported from [`@tailor-platform/auth-public-client`](https://www.npmjs.com/package/@tailor-platform/auth-public-client) for advanced integrations. `EnhancedAuthClient` extends that contract with AppShell helpers such as `getAppUri()`; `AuthProvider` requires this enhanced client, not just an arbitrary base client.
 
 ```tsx
 import { createAuthClient } from "@tailor-platform/app-shell";
@@ -291,13 +299,29 @@ The line is drawn on the shape of the response, not on how transient the underly
 To react to teardown yourself — clearing app-level caches, for instance — subscribe to the client's events:
 
 ```tsx
-useEffect(() => {
-  return authClient.addEventListener((event) => {
-    if (event.type === "logout") {
-      clearAppCaches();
-    }
-  });
-}, [authClient]);
+import { useEffect } from "react";
+import type { EnhancedAuthClient } from "@tailor-platform/app-shell";
+
+function SessionCleanup({
+  client,
+  clearAppCaches,
+}: {
+  client: EnhancedAuthClient;
+  clearAppCaches: () => void;
+}) {
+  useEffect(() => {
+    return client.addEventListener((event) => {
+      if (event.type === "logout") {
+        clearAppCaches();
+      }
+    });
+  }, [client, clearAppCaches]);
+
+  return null;
+}
+
+// Mount alongside your app, using the same client passed to AuthProvider.
+<SessionCleanup client={authClient} clearAppCaches={clearAppCaches} />;
 ```
 
 ## Testing

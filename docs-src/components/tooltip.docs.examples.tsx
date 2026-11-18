@@ -63,7 +63,7 @@ export function Placement() {
   return (
     <Tooltip.Root>
       <Tooltip.Trigger render={<Button />}>Trigger</Tooltip.Trigger>
-      <Tooltip.Content side="right" align="start">
+      <Tooltip.Content position={{ side: "right", align: "start" }}>
         Appears on the right
       </Tooltip.Content>
     </Tooltip.Root>

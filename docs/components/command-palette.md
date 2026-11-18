@@ -52,6 +52,34 @@ The CommandPalette will automatically:
 | `Enter`        | Navigate to selected route       |
 | Type to search | Filter routes by fuzzy search    |
 
+## Opening programmatically
+
+Call `useOpenCommandPalette()` at the top level of a component inside `AppShell`. It returns a function that opens the built-in palette; call that function from an event handler.
+
+```tsx
+import { Button, useOpenCommandPalette } from "@tailor-platform/app-shell";
+
+function SearchActions() {
+  const openCommandPalette = useOpenCommandPalette();
+
+  return (
+    <>
+      <Button onClick={() => openCommandPalette()}>Search</Button>
+      <Button onClick={() => openCommandPalette({ search: "orders" })}>Find order pages</Button>
+      <Button onClick={() => openCommandPalette({ search: "ORD: alice" })}>Find orders</Button>
+    </>
+  );
+}
+```
+
+The returned function accepts an optional `OpenCommandPaletteOptions` object:
+
+| Property | Type     | Description                                                                                                  |
+| -------- | -------- | ------------------------------------------------------------------------------------------------------------ |
+| `search` | `string` | Initial search text. Omit it to open with an empty search. A registered `PREFIX:` activates its search mode. |
+
+Each call initializes the search, even if the palette is already open. The `ORD:` example requires an `ORD` source in AppShell's `searchSources`; without a matching source, the text is treated as an ordinary page/action search.
+
 ## Features
 
 ### Fuzzy Search
@@ -117,6 +145,8 @@ function OrderDetailPage() {
     { key: "confirm", label: "Confirm order", onSelect: handleConfirm },
     { key: "cancel", label: "Cancel order", icon: <XIcon />, onSelect: handleCancel },
   ]);
+
+  return <div>{/* page content */}</div>;
 }
 ```
 
@@ -223,24 +253,27 @@ function App() {
 
 ### Prefix Syntax
 
-The prefix match is **case-sensitive**. When a user types `ORD:`, the string after the colon (including any space) is forwarded to `search` as the query:
+The prefix match is **case-sensitive**. When an initial value activates a search mode (for example, pasted text or programmatic opening), leading whitespace after the colon is removed from the initial query:
 
 ```
-User types: ORD:
+Initial input: ORD:
   → search("", { signal })  — empty query, show all or hint
 
-User types: ORD:12345
+Initial input: ORD:12345
   → search("12345", { signal })
 
-User types: ORD: alice
-  → search(" alice", { signal })  — leading space preserved
+Initial input: ORD: alice
+  → search("alice", { signal })  — leading space removed
 ```
+
+Once the mode is active, subsequent edits to its query are passed to `search` as entered.
 
 ## Extending the built-in palette
 
 The supported extension points are:
 
 - `searchSources` on `AppShell` for async, prefix-activated search modes
+- `useOpenCommandPalette` for opening with an optional initial search
 - [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md) for page-level actions
 - [`ActionPanel`](./action-panel.md), whose enabled rows are registered automatically
 
@@ -372,7 +405,7 @@ The CommandPalette follows these design principles:
 ## Related Components
 
 - [AppShell](./app-shell.md) - Root component that provides CommandPalette
-- [SidebarLayout](./sidebar-layout.md) - Layout that includes CommandPalette
+- [SidebarLayout](./sidebar-layout.md) - Default layout with a search entry for CommandPalette
 
 ## Related Concepts
 
@@ -409,5 +442,5 @@ The CommandPalette follows these design principles:
 **Solutions:**
 
 1. Check if another app is capturing the shortcut
-2. Verify you're using `SidebarLayout` (CommandPalette is included)
+2. Verify the page is inside `AppShell`, which provides the built-in CommandPalette
 3. Check browser console for JavaScript errors

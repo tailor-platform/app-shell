@@ -80,7 +80,7 @@ function OrderDetailPage() {
 ## Behavior
 
 - Actions are registered while the component is mounted and removed on unmount.
-- Re-rendering with a new `actions` array replaces the previously registered set.
+- Changes to action keys, labels, or the group update the registered set. The latest `onSelect` callbacks are used without requiring re-registration.
 - `icon` changes alone do not trigger re-registration. If you need to reflect a dynamic icon update, also change the action's `key` or `label`.
 - The hook requires `CommandPaletteProvider`, which is mounted automatically by `AppShell`.
 

@@ -27,6 +27,7 @@ const modules = [
     path: "dashboard",
     component: DashboardPage,
     meta: { title: "Dashboard" },
+    resources: [],
   }),
 ];
 
@@ -247,7 +248,7 @@ Toasts with `dismissible: false` always keep sonner's defaults, and a `duration`
 ### errorBoundary
 
 - **Type:** `ErrorBoundaryComponent` (optional)
-- **Description:** Global error boundary component applied to all routes
+- **Description:** Global error boundary element applied to all routes. Pass JSX such as `<GlobalErrorBoundary />`, not a component constructor.
 
 ```tsx
 import { Text, useRouteError } from "@tailor-platform/app-shell";
@@ -262,7 +263,7 @@ const GlobalErrorBoundary = () => {
   );
 };
 
-<AppShell modules={modules} errorBoundary={GlobalErrorBoundary}>
+<AppShell modules={modules} errorBoundary={<GlobalErrorBoundary />}>
   {/* ... */}
 </AppShell>;
 ```
@@ -278,6 +279,8 @@ First, define your context data type using module augmentation:
 
 ```typescript
 // types.d.ts — `User` and `ApiClient` are your application's own types
+import "@tailor-platform/app-shell";
+
 declare module "@tailor-platform/app-shell" {
   interface AppShellRegister {
     contextData: {
@@ -487,6 +490,7 @@ const modules = [
     path: "dashboard",
     component: DashboardPage,
     meta: { title: "Dashboard" },
+    resources: [],
   }),
   defineModule({
     path: "products",
@@ -524,7 +528,7 @@ function App() {
       settingsResources={settingsResources}
       locale="en"
       defaultColorTheme="system"
-      errorBoundary={ErrorBoundary}
+      errorBoundary={<ErrorBoundary />}
       contextData={{ currentUser }}
     >
       <SidebarLayout />

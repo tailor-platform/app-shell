@@ -7,6 +7,12 @@ const block = (key: string, body = "Docs: {{PACKAGE_ROOT}}/docs/") =>
   renderBlock(body, key, `${key}/node_modules/@tailor-platform/app-shell`);
 
 describe("renderBlock", () => {
+  it("fills in the package's own path", () => {
+    expect(renderBlock("Used by `{{PACKAGE_DIR}}/`.", "apps/web", "x")).toContain(
+      "Used by `apps/web/`.",
+    );
+  });
+
   it("wraps the source in markers that carry the package path", () => {
     const out = block("apps/ims/frontend");
     expect(out.startsWith("<!-- app-shell:agents:start apps/ims/frontend -->\n")).toBe(true);

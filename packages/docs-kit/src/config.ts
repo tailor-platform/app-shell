@@ -49,8 +49,27 @@ export function loadConfig(repoRoot: string): DocsConfig {
     }
   }
   const agents = c.outputs?.agents;
+  for (const skill of skills) {
+    if (skill.references !== undefined && !["copy", "redirect"].includes(skill.references)) {
+      throw new Error(
+        `docs-kit.config.json: skill ${skill.outDir} has unknown references mode "${skill.references}" — expected "copy" or "redirect"`,
+      );
+    }
+    // Redirect stubs point at the package docs, which only outputs.agents emits.
+    if (skill.references === "redirect" && !agents) {
+      throw new Error(
+        `docs-kit.config.json: skill ${skill.outDir} redirects its references, which needs outputs.agents`,
+      );
+    }
+  }
   if (agents) {
-    for (const key of ["templatePath", "packageDir", "docsDir", "blockFile"] as const) {
+    for (const key of [
+      "guideTemplatePath",
+      "blockTemplatePath",
+      "packageDir",
+      "docsDir",
+      "blockFile",
+    ] as const) {
       if (!agents[key]?.trim()) {
         throw new Error(`docs-kit.config.json: outputs.agents.${key} is required`);
       }

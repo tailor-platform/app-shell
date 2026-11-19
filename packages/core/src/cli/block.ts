@@ -3,6 +3,7 @@ import { PACKAGE_NAME, commandLine } from "./names";
 /** Resolved here rather than by docs-kit, because only the consumer's repo
  * layout knows the path into its `node_modules`. */
 const PACKAGE_ROOT_TOKEN = "{{PACKAGE_ROOT}}";
+const PACKAGE_DIR_TOKEN = "{{PACKAGE_DIR}}";
 
 const marker = (edge: "start" | "end", key: string): string =>
   `<!-- app-shell:agents:${edge} ${key} -->`;
@@ -21,7 +22,7 @@ export function renderBlock(source: string, key: string, packageRoot: string): s
     marker("start", key),
     `<!-- Generated from ${PACKAGE_NAME} by \`${commandLine("sync")}\`. Edits between these markers are overwritten. Delete the whole block to opt out. -->`,
     "",
-    source.replaceAll(PACKAGE_ROOT_TOKEN, packageRoot).trim(),
+    source.replaceAll(PACKAGE_ROOT_TOKEN, packageRoot).replaceAll(PACKAGE_DIR_TOKEN, key).trim(),
     "",
     marker("end", key),
   ].join("\n");

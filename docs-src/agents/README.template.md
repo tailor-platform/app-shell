@@ -1,10 +1,8 @@
-## AppShell UI (`@tailor-platform/app-shell`)
+# AppShell docs (`@tailor-platform/app-shell` {{APP_SHELL_VERSION}})
 
-The frontend is built with AppShell. The docs for the installed version ship inside the package:
+These are the docs for the installed version of AppShell. Read the matching doc before you write or change a screen, form, table, dialog, navigation or styling. Don't work from memory of the API, because it changes between versions.
 
-`{{DOCS_ROOT}}/`
-
-Read the matching doc before you write or change a screen, form, table, dialog, navigation or styling. Don't work from memory of the API, because it changes between versions. Each entry below is a file at `<category>/<slug>.md` under that path.
+Each entry below is a file at `<category>/<slug>.md` in this folder (the docs root that the AppShell block in `AGENTS.md` names).
 
 **Pages** (`pages/`). Start here for a whole screen. A page fixes the layout and names the pattern for each part.
 
@@ -20,7 +18,7 @@ Read the matching doc before you write or change a screen, form, table, dialog, 
 
 **Concepts** (`concepts/`): {{CONCEPTS_SLUGS}}
 
-### Rules
+## Rules
 
 - Build UI from AppShell components. Don't use raw HTML elements or another UI library where an AppShell component exists.
 - Match a whole screen to a page doc first, then each part to one pattern. Don't mix two patterns that solve the same problem.

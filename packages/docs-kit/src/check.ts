@@ -8,7 +8,13 @@ import { hash, normalizeText } from "./hash";
 import { readManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { loadSurface, snapshotHashForSlug } from "./project";
-import { computeSkill, computeStampedSkill, unclaimedSkillDirFindings } from "./skill";
+import {
+  computeSkill,
+  computeStampedSkill,
+  readSkillVersion,
+  stampSkill,
+  unclaimedSkillDirFindings,
+} from "./skill";
 import { unmanagedOutputs, walkMarkdown } from "./tree";
 
 export interface CheckResult {
@@ -167,15 +173,25 @@ export function check(repoRoot: string): CheckResult {
 
   if (config.agents) {
     try {
-      const { blockPath, block } = computeAgents(repoRoot, config.agents, outlines);
-      const expected = manifest?.agents?.[blockPath];
-      if (expected !== hash(normalizeText(block))) {
-        findings.push({
-          level: "block",
-          slug: "agents",
-          message: `AGENTS.md block ${blockPath} ${expected === undefined ? "is new" : "drifted"} — run sync.`,
-        });
+      const { generated } = computeAgents(repoRoot, config.agents, outlines);
+      const expected = manifest?.agents ?? {};
+      for (const [rel, content] of generated) {
+        if (expected[rel] !== hash(normalizeText(content))) {
+          findings.push({
+            level: "block",
+            slug: "agents",
+            message: `${rel} ${expected[rel] === undefined ? "is new" : "drifted"} — run sync.`,
+          });
+        }
       }
+      for (const rel of Object.keys(expected)) {
+        if (!generated.has(rel)) {
+          findings.push({ level: "block", slug: "agents", message: `${rel} removed — run sync.` });
+        }
+      }
+      // The manifest hashes unstamped content, so check the stamp separately.
+      const version = readSkillVersion(repoRoot, config.agents);
+      for (const content of generated.values()) stampSkill(content, version);
     } catch (e) {
       findings.push({ level: "block", slug: "agents", message: (e as Error).message });
     }

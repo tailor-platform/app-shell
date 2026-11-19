@@ -15,7 +15,13 @@ const outline = (dir: string, slug: string, description: string): Outline =>
     frontmatter: { title: slug, description },
   }) as unknown as Outline;
 
-const fixture = (template: string, overrides: Partial<AgentsConfig> = {}) => {
+const GUIDE = "# Docs {{APP_SHELL_VERSION}}\n\n{{COMPONENTS_SLUGS}}\n\n{{API_TEASERS}}\n";
+const BLOCK = "Docs in `{{DOCS_ROOT}}/` for `{{PACKAGE_DIR}}`.\n\n@{{GUIDE_PATH}}\n";
+
+const fixture = (
+  templates: { guide?: string; block?: string } = {},
+  overrides: Partial<AgentsConfig> = {},
+) => {
   const root = mkdtempSync(join(tmpdir(), "docs-kit-agents-"));
   const outlines = [
     outline("components", "button", "Clickable"),
@@ -27,57 +33,66 @@ const fixture = (template: string, overrides: Partial<AgentsConfig> = {}) => {
     mkdirSync(join(root, o.mdPath, ".."), { recursive: true });
     writeFileSync(join(root, o.mdPath), `# ${o.slug}\n`);
   }
-  writeFileSync(join(root, "AGENTS.template.md"), template);
+  writeFileSync(join(root, "guide.md"), templates.guide ?? GUIDE);
+  writeFileSync(join(root, "block.md"), templates.block ?? BLOCK);
   const config: AgentsConfig = {
-    templatePath: "AGENTS.template.md",
+    guideTemplatePath: "guide.md",
+    blockTemplatePath: "block.md",
     packageDir: "packages/core",
-    docsDir: "docs",
-    blockFile: "agents/AGENTS.block.md",
+    docsDir: "dist/docs",
+    blockFile: "dist/agents/AGENTS.block.md",
     ...overrides,
   };
   return computeAgents(root, config, outlines);
 };
 
-const TEMPLATE = "Docs: {{DOCS_ROOT}}/\n\n{{COMPONENTS_SLUGS}}\n\n{{API_TEASERS}}\n";
-
 describe("computeAgents", () => {
   it("ships each section's docs under the package docs dir, keeping nesting", () => {
-    const { docs } = fixture(TEMPLATE);
-    expect([...docs.keys()].toSorted()).toEqual([
-      "packages/core/docs/api/guards/pass.md",
-      "packages/core/docs/components/alert.md",
-      "packages/core/docs/components/button.md",
+    expect([...fixture().docs.keys()].toSorted()).toEqual([
+      "packages/core/dist/docs/api/guards/pass.md",
+      "packages/core/dist/docs/components/alert.md",
+      "packages/core/dist/docs/components/button.md",
     ]);
   });
 
-  it("fills sorted slug lists and teasers", () => {
-    const { block, blockPath } = fixture(TEMPLATE);
-    expect(blockPath).toBe("packages/core/agents/AGENTS.block.md");
-    expect(block).toContain("\nalert, button\n");
-    expect(block).toContain("- `guards/pass`: Allow the route");
+  it("writes the index into the docs root's README and leaves the version to stamp", () => {
+    const guide = fixture().generated.get("packages/core/dist/docs/README.md")!;
+    expect(guide).toContain("# Docs {{APP_SHELL_VERSION}}");
+    expect(guide).toContain("\nalert, button\n");
+    expect(guide).toContain("- `guards/pass`: Allow the route");
   });
 
-  it("leaves the package root for the CLI and bakes in the docs dir", () => {
-    expect(fixture(TEMPLATE).block).toContain("Docs: {{PACKAGE_ROOT}}/docs/");
-    expect(fixture(TEMPLATE, { docsDir: "dist/docs" }).block).toContain(
-      "Docs: {{PACKAGE_ROOT}}/dist/docs/",
+  it("points the block at the guide and leaves package paths for the CLI", () => {
+    const block = fixture().generated.get("packages/core/dist/agents/AGENTS.block.md")!;
+    expect(block).toBe(
+      "Docs in `{{PACKAGE_ROOT}}/dist/docs/` for `{{PACKAGE_DIR}}`.\n\n@{{PACKAGE_ROOT}}/dist/docs/README.md\n",
     );
   });
 
-  it("requires the docs root exactly once", () => {
-    expect(() => fixture("{{COMPONENTS_SLUGS}} {{API_SLUGS}}")).toThrow(/exactly once/);
-    expect(() => fixture(`{{DOCS_ROOT}} ${TEMPLATE}`)).toThrow(/exactly once/);
+  it("follows the docs dir in the block", () => {
+    const block = fixture({}, { docsDir: "docs" }).generated.get(
+      "packages/core/dist/agents/AGENTS.block.md",
+    );
+    expect(block).toContain("@{{PACKAGE_ROOT}}/docs/README.md");
   });
 
-  it("rejects a template that drops a section with docs", () => {
-    expect(() => fixture("{{DOCS_ROOT}} {{COMPONENTS_SLUGS}}")).toThrow(/indexes no api docs/);
+  it("requires the block to point at the guide", () => {
+    expect(() => fixture({ block: "Docs: {{DOCS_ROOT}}" })).toThrow(
+      /must include \{\{GUIDE_PATH\}\}/,
+    );
   });
 
-  it("rejects an unknown placeholder", () => {
-    expect(() => fixture(`${TEMPLATE}{{COMPONENT_SLUGS}}`)).toThrow(/unknown placeholder/);
+  it("rejects a guide that drops a section with docs", () => {
+    expect(() => fixture({ guide: "{{COMPONENTS_SLUGS}}" })).toThrow(/indexes no api docs/);
   });
 
-  it("enforces the size budget", () => {
-    expect(() => fixture(TEMPLATE, { maxBytes: 10 })).toThrow(/byte budget/);
+  it("rejects unknown placeholders in either template", () => {
+    expect(() => fixture({ guide: `${GUIDE}{{COMPONENT_SLUGS}}` })).toThrow(/unknown placeholder/);
+    expect(() => fixture({ block: `${BLOCK}{{VERSION}}` })).toThrow(/unknown placeholder/);
+  });
+
+  it("enforces both size budgets", () => {
+    expect(() => fixture({}, { maxBytes: 10 })).toThrow(/guide\.md: .* byte budget/);
+    expect(() => fixture({}, { blockMaxBytes: 10 })).toThrow(/block\.md: .* byte budget/);
   });
 });

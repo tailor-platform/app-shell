@@ -9,7 +9,7 @@ import { type Finding, reconcile } from "./coverage";
 import { hash, normalizeText } from "./hash";
 import { writeManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
-import { computeStampedSkill } from "./skill";
+import { computeStampedSkill, readSkillVersion, stampSkill } from "./skill";
 import { loadSurface, snapshotHashForSlug } from "./project";
 import type { Manifest, ManifestEntry } from "./types";
 
@@ -128,18 +128,23 @@ export function sync(repoRoot: string): SyncResult {
   // indexes them (gitignored output, like the skills).
   let agents: Record<string, string> | undefined;
   if (config.agents) {
-    const { docs, blockPath, block } = computeAgents(repoRoot, config.agents, outlines);
+    const { docs, generated } = computeAgents(repoRoot, config.agents, outlines);
+    const version = readSkillVersion(repoRoot, config.agents);
+    // Stamp before any write, so a bad version source leaves the old output.
+    const stamped = [...generated].map(([rel, content]) => [rel, stampSkill(content, version)]);
     rmSync(join(repoRoot, config.agents.packageDir, config.agents.docsDir), {
       recursive: true,
       force: true,
     });
-    for (const [rel, content] of [...docs, [blockPath, block] as const]) {
+    for (const [rel, content] of [...docs, ...stamped]) {
       const abs = join(repoRoot, rel);
       mkdirSync(dirname(abs), { recursive: true });
       writeFileSync(abs, content, "utf8");
       written.push(rel);
     }
-    agents = { [blockPath]: hash(normalizeText(block)) };
+    agents = Object.fromEntries(
+      [...generated].map(([rel, content]) => [rel, hash(normalizeText(content))]),
+    );
   }
 
   const manifest: Manifest = {

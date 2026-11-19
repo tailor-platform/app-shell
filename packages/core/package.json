@@ -44,7 +44,9 @@
     "./testing": {
       "types": "./dist/testing.d.ts",
       "default": "./dist/testing.js"
-    }
+    },
+    "./docs/*": "./dist/docs/*",
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public"

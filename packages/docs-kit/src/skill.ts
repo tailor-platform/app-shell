@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
 
 import type { Finding } from "./coverage";
 import type { DocsConfig, Outline, SkillConfig, SkillSection } from "./types";
@@ -34,19 +34,28 @@ function stripFrontmatter(s: string): string {
   return m ? s.slice(m[0].length) : s;
 }
 
+type DocLink = (text: string, dir: string, slug: string) => string;
+
+/** Copied references link into the skill; redirected ones name the path under
+ * the package's docs root, since the skill can't know where that is installed. */
+const docLink = (mode: SkillConfig["references"]): DocLink =>
+  mode === "redirect"
+    ? (text, dir, slug) => `${text} (\`${dir}/${slug}.md\`)`
+    : (text, dir, slug) => `[${text}](references/${dir}/${slug}.md)`;
+
 /** Flat Name | Description table (components, hooks/api). */
-function simpleTable(list: Outline[], dir: string): string {
+function simpleTable(list: Outline[], dir: string, link: DocLink): string {
   if (list.length === 0) return "";
   const rows: string[][] = [["Name", "Description"]];
   for (const o of list.toSorted((a, b) => a.slug.localeCompare(b.slug))) {
     const { title, description } = o.frontmatter;
-    rows.push([`[${title}](references/${dir}/${o.slug}.md)`, description]);
+    rows.push([link(title, dir, o.slug), description]);
   }
   return mdTable(rows);
 }
 
 /** Slug | Name | Description table grouped by `subcategory` (patterns, pages). */
-function entryTable(list: Outline[], dir: string): string {
+function entryTable(list: Outline[], dir: string, link: DocLink): string {
   if (list.length === 0) return "";
   const groups = new Map<string | null, Outline[]>();
   for (const o of list.toSorted((a, b) => a.slug.localeCompare(b.slug))) {
@@ -61,15 +70,21 @@ function entryTable(list: Outline[], dir: string): string {
     for (const o of items) {
       const { slug, name, description } = o.frontmatter;
       const displaySlug = (slug ?? o.slug).replace(/^[^/]+\//, "");
-      rows.push([
-        `[\`${displaySlug}\`](references/${dir}/${o.slug}.md)`,
-        name ?? o.slug,
-        description,
-      ]);
+      rows.push([link(`\`${displaySlug}\``, dir, o.slug), name ?? o.slug, description]);
     }
     blocks.push(group === null ? mdTable(rows) : `### ${group}\n\n${mdTable(rows)}`);
   }
   return blocks.join("\n\n");
+}
+
+/** Says up front that it is not the doc, so an agent can't build from it. */
+function redirectStub(o: Outline, section: string, skillDir: string): string {
+  return [
+    `# MOVED: ${o.frontmatter.title}. This file is a pointer, not documentation.`,
+    "",
+    `This doc now ships in the installed \`@tailor-platform/app-shell\` package as \`${section}/${o.slug}.md\` under its docs root. Find the docs root using "Where the docs are" in \`${skillDir}/SKILL.md\`, then read it there. Do not implement anything from this file.`,
+    "",
+  ].join("\n");
 }
 
 const VERSION_PLACEHOLDER = /\{\{APP_SHELL_VERSION\}\}/g;
@@ -124,7 +139,10 @@ export function unclaimedSkillDirFindings(config: DocsConfig): Finding[] {
 }
 
 /** Read the version stamped into the skill, or null when no source is configured. */
-export function readSkillVersion(repoRoot: string, skill: SkillConfig): string | null {
+export function readSkillVersion(
+  repoRoot: string,
+  skill: Pick<SkillConfig, "versionSource">,
+): string | null {
   const source = skill.versionSource;
   if (!source) return null;
   const { version } = JSON.parse(readFileSync(join(repoRoot, source), "utf8")) as {
@@ -185,14 +203,24 @@ export function computeSkill(
     if (section && included.has(section)) sections[section].push(o);
   }
 
-  // Reference docs: copy the generated markdown (docs/ is not published, so the
-  // shipped skill must carry the content). API keeps its guards/ router/ nesting.
+  // Reference docs: copy the generated markdown, or leave a redirect stub where
+  // a copy used to be. Stubs catch stale links and overwrite the real docs an
+  // older copy of the skill left behind. API keeps its guards/ router/ nesting.
   for (const [section, list] of Object.entries(sections)) {
     for (const o of list) {
       const srcAbs = join(repoRoot, o.mdPath);
       if (!existsSync(srcAbs)) continue;
       const destAbs = join(repoRoot, skill.outDir, "references", section, `${o.slug}.md`);
-      files.set(rel(destAbs), readFileSync(srcAbs, "utf8"));
+      files.set(
+        rel(destAbs),
+        skill.references === "redirect"
+          ? redirectStub(
+              o,
+              section,
+              toPosix(relative(dirname(destAbs), join(repoRoot, skill.outDir))),
+            )
+          : readFileSync(srcAbs, "utf8"),
+      );
     }
   }
 
@@ -221,13 +249,14 @@ export function computeSkill(
   }
 
   // SKILL.md: fill the template's category tables.
+  const link = docLink(skill.references);
   const template = readFileSync(join(repoRoot, skill.templatePath), "utf8");
   const skillMd = template
-    .replace("{{CONCEPTS_TABLE}}", simpleTable(sections.concepts, "concepts"))
-    .replace("{{COMPONENTS_TABLE}}", simpleTable(sections.components, "components"))
-    .replace("{{API_TABLE}}", simpleTable(sections.api, "api"))
-    .replace("{{PAGES_TABLE}}", entryTable(sections.pages, "pages"))
-    .replace("{{PATTERNS_TABLE}}", entryTable(sections.patterns, "patterns"));
+    .replace("{{CONCEPTS_TABLE}}", simpleTable(sections.concepts, "concepts", link))
+    .replace("{{COMPONENTS_TABLE}}", simpleTable(sections.components, "components", link))
+    .replace("{{API_TABLE}}", simpleTable(sections.api, "api", link))
+    .replace("{{PAGES_TABLE}}", entryTable(sections.pages, "pages", link))
+    .replace("{{PATTERNS_TABLE}}", entryTable(sections.patterns, "patterns", link));
   files.set(rel(join(repoRoot, skill.outDir, "SKILL.md")), skillMd);
 
   return files;

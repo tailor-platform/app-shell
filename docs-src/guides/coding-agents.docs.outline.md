@@ -7,7 +7,7 @@ description: Add an always-loaded AppShell block to your repo's AGENTS.md so cod
 
 # Coding Agents
 
-AppShell ships its docs inside the package, so they always match the version you have installed. The `app-shell` CLI adds a small block to your repo's `AGENTS.md` that tells coding agents where those docs are and lists the few rules lint can't check.
+AppShell ships its docs inside the package, so they always match the version you have installed. The `app-shell` CLI adds a short block to your repo's `AGENTS.md` that points coding agents at those docs.
 
 The block is read at the start of every session. Skills only load when something triggers them, so an agent can build a whole screen without ever opening one. The block is the part that is always there.
 
@@ -30,11 +30,22 @@ Commit the `AGENTS.md` change.
 
 ## What the block contains
 
-- The path to the docs, written once: `<your package>/node_modules/@tailor-platform/app-shell/dist/docs/`.
-- An index of those docs by category (pages, patterns, components, hooks and functions, concepts). Entries are slugs relative to the docs path.
-- A short list of rules, such as one primary action per view and forms going through `Form` and `Field`.
+The block is kept short and stable. It says which package uses AppShell, names the docs folder (`<your package>/node_modules/@tailor-platform/app-shell/dist/docs/`), and tells agents to read the guide in it:
 
-It has no version number, so it only changes when a doc is added, renamed or removed, or when the rules change.
+```md
+@apps/web/node_modules/@tailor-platform/app-shell/dist/docs/README.md
+```
+
+That guide is where the detail lives: an index of the docs by category (pages, patterns, components, hooks and functions, concepts), and the rules lint can't check, such as one primary action per view and forms going through `Form` and `Field`. It ships with the package, so it updates when you upgrade AppShell without changing your `AGENTS.md`.
+
+How agents pick the guide up depends on the tool:
+
+- **Claude Code, Amp and Gemini CLI** read a line that starts with `@` as an import, and load the guide into the session along with `AGENTS.md`. Gemini CLI reads `GEMINI.md` by default, so it needs `AGENTS.md` added to its `context.fileName` setting.
+- **Codex, Cursor, Copilot and others** have no import syntax. They see the line as a path and open the guide when they follow the instruction to read it.
+
+The path is gitignored, so agents need the exact path rather than finding it by search, which is why the block spells it out. Before `pnpm install` the file doesn't exist yet, and Claude Code skips a missing import quietly.
+
+The block has no version number. It only changes if the docs move inside the package or the block's own wording changes.
 
 The block sits between two HTML comment markers that carry the package path:
 
@@ -50,7 +61,7 @@ A repo with two frontends gets two blocks, and each package only rewrites its ow
 
 ## Keeping it current
 
-The block can go stale when you upgrade AppShell and the docs change. Refresh it by running this from the same package:
+Upgrading AppShell updates the guide and the docs with it, so most upgrades leave the block alone. A release that changes the block itself says so in its changelog. Refresh it by running this from the same package:
 
 ```bash
 pnpm exec app-shell agents sync
@@ -66,12 +77,12 @@ To have this happen on its own, pass `--add-prepare` to `init`:
 pnpm exec app-shell agents init --add-prepare
 ```
 
-This adds `app-shell agents sync` to the package's `prepare` script, chaining it after an existing one with `&&`. `sync` then runs whenever `pnpm install` installs something, and the block is refreshed as part of the upgrade.
+This adds `app-shell agents sync` to the package's `prepare` script, chaining it after an existing one with `&&`. `sync` then runs whenever `pnpm install` installs something, so a changed block is picked up as part of the upgrade.
 
 The trade-offs:
 
-- **Pros:** nobody has to remember to run `sync`, so the index stays in step with the installed docs.
-- **Cons:** it changes your `package.json`, and an `AGENTS.md` diff can show up after any install that changes dependencies, including in PRs that aren't about AppShell.
+- **Pros:** nobody has to remember to run `sync` when a release changes the block.
+- **Cons:** it changes your `package.json`, and when the block does change, the `AGENTS.md` diff shows up after whichever install picks it up, including in PRs that aren't about AppShell.
 - **Not covered:** `pnpm add @tailor-platform/app-shell@x` doesn't run `prepare`, and Renovate and Dependabot PRs don't run scripts. The block is refreshed by the next install on someone's machine.
 
 `sync` is kept quiet so it's safe in `prepare`: it does nothing when `CI` is set, and it always exits 0, so it can't fail an install.
@@ -85,6 +96,10 @@ pnpm exec app-shell agents init --target ../../docs/AGENTS.md
 ```
 
 The path is relative to the package you run it from. Pass the same `--target` to `sync`. With `--add-prepare`, `init` writes it into the `prepare` script for you. Paths inside the block are relative to the directory of the file it lives in.
+
+## Skills
+
+The `app-shell-patterns` skill in the package's `skills/` folder reads the same docs. It no longer carries its own copy: it finds the docs folder from the block in `AGENTS.md`, or by looking in `node_modules`, so the skill and the block always agree on the installed version. Its `references/` folder only holds short pointers, so a copy of an older skill in your repo, or an old link, sends the agent to the right place.
 
 ## Opting out
 

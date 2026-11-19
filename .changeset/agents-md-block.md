@@ -2,7 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add an `app-shell` CLI that puts an always-loaded AppShell block in your repo's `AGENTS.md`, so coding agents know where the docs are and which rules to follow without a skill having to trigger. The package now ships its docs at `dist/docs/` (`node_modules/@tailor-platform/app-shell/dist/docs/`), and the block indexes them.
+Add an `app-shell` CLI that puts a short AppShell block in your repo's `AGENTS.md`, so coding agents read the docs for the installed version without a skill having to trigger. The package now ships its docs at `dist/docs/`, with a guide at `dist/docs/README.md` that indexes them and lists the house rules. The block points at that guide (as an `@` import, which Claude Code, Amp and Gemini CLI load directly), so upgrading AppShell updates the guide without changing your `AGENTS.md`.
 
 Run this once from the package that depends on AppShell:
 
@@ -10,4 +10,6 @@ Run this once from the package that depends on AppShell:
 pnpm exec app-shell agents init
 ```
 
-It adds the block to the repo root `AGENTS.md`. Run `app-shell agents sync` after upgrading to refresh it, or pass `--add-prepare` to `init` to have the package's `prepare` script do that on install. `sync` only rewrites what is between its markers, does nothing in CI, and never fails an install. Delete the block to opt out. Use `--target <path>` to write to a different file.
+Pass `--add-prepare` to also refresh the block from the package's `prepare` script, and `--target <path>` to write to a file other than the repo root `AGENTS.md`. Delete the block to opt out.
+
+The `app-shell-patterns` skill no longer carries its own copy of the docs. It reads them from the installed package, and its `references/` folder now holds pointers to the new location. If you keep a copy of the skill in your repo, replace it with the one in the installed package's `skills/` folder.

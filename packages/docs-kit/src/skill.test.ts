@@ -79,6 +79,43 @@ describe("computeSkill", () => {
     expect(files.get("out/SKILL.md")).toContain("[Button](references/components/button.md)");
   });
 
+  it("leaves redirect stubs and lists docs-root paths in redirect mode", () => {
+    const { root } = fixture();
+    mkdirSync(join(root, "docs/api/guards"), { recursive: true });
+    writeFileSync(join(root, "docs/api/guards/pass.md"), "# pass\n");
+    writeFileSync(join(root, "SKILL.template.md"), "{{COMPONENTS_TABLE}}\n\n{{API_TABLE}}\n");
+    const outlines = [
+      {
+        slug: "button",
+        outDir: "docs/components",
+        mdPath: "docs/components/button.md",
+        frontmatter: { title: "Button", description: "Clickable" },
+      },
+      {
+        slug: "guards/pass",
+        outDir: "docs/api",
+        mdPath: "docs/api/guards/pass.md",
+        frontmatter: { title: "pass", description: "Allow" },
+      },
+    ] as unknown as Outline[];
+    const files = computeSkill(
+      root,
+      { outDir: "out", templatePath: "SKILL.template.md", references: "redirect" },
+      outlines,
+    );
+
+    const stub = files.get("out/references/components/button.md")!;
+    expect(stub).toMatch(/^# MOVED: Button\. This file is a pointer, not documentation\./);
+    expect(stub).toContain("`components/button.md`");
+    expect(stub).toContain("`../../SKILL.md`");
+    expect(stub).not.toContain("# Button");
+    expect(files.get("out/references/api/guards/pass.md")).toContain("`../../../SKILL.md`");
+
+    const skillMd = files.get("out/SKILL.md")!;
+    expect(skillMd).toContain("Button (`components/button.md`)");
+    expect(skillMd).not.toContain("](references/");
+  });
+
   it("ships only the migrations doc when sections is empty", () => {
     const { root, outlines } = fixture();
     const files = computeSkill(

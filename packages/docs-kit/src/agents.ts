@@ -7,14 +7,20 @@ import type { AgentsConfig, Outline, SkillSection } from "./types";
 /** Left in the emitted block for the package's CLI to resolve when it injects
  * the block, because only the consumer's repo layout knows the path. */
 export const PACKAGE_ROOT_TOKEN = "{{PACKAGE_ROOT}}";
-const DOCS_ROOT_TOKEN = "{{DOCS_ROOT}}";
+/** Likewise: the consumer's package that depends on AppShell. */
+export const PACKAGE_DIR_TOKEN = "{{PACKAGE_DIR}}";
+const VERSION_TOKEN = "{{APP_SHELL_VERSION}}";
+
+/** The guide is the docs root's README: the file `exports` can resolve, and the
+ * one the block imports. */
+export const GUIDE_FILE = "README.md";
 
 export interface AgentsOutput {
-  /** Repo-relative path → content of every doc shipped in the package. */
+  /** Repo-relative path → content of every doc copied into the package. */
   docs: Map<string, string>;
-  /** Repo-relative path of the emitted block. */
-  blockPath: string;
-  block: string;
+  /** Repo-relative path → content of the files generated from templates (the
+   * guide, unstamped, and the block). The manifest hashes these. */
+  generated: Map<string, string>;
 }
 
 const bySlug = (a: Outline, b: Outline): number => a.slug.localeCompare(b.slug);
@@ -33,9 +39,22 @@ function teaserList(list: Outline[]): string {
     .join("\n");
 }
 
-/** Compute the docs shipped in the package and the AGENTS.md block that indexes
- * them. Pure, like `computeSkill`: `sync` writes the result and `check`
- * recomputes it, so the (gitignored) output never has to exist. */
+function checkSize(path: string, content: string, max: number | undefined, why: string): void {
+  const bytes = Buffer.byteLength(content, "utf8");
+  if (max !== undefined && bytes > max) {
+    throw new Error(`${path}: ${bytes} bytes, over the ${max} byte budget. ${why}`);
+  }
+}
+
+function strayToken(content: string, allowed: string[]): string | null {
+  const stripped = allowed.reduce((s, token) => s.replaceAll(token, ""), content);
+  return stripped.match(/\{\{[^}]*\}\}/)?.[0] ?? null;
+}
+
+/** Compute the docs shipped in the package, the guide that indexes them, and
+ * the block that points agents at the guide. Pure, like `computeSkill`: `sync`
+ * writes the result and `check` recomputes it, so the (gitignored) output never
+ * has to exist. */
 export function computeAgents(
   repoRoot: string,
   agents: AgentsConfig,
@@ -60,39 +79,58 @@ export function computeAgents(
     }
   }
 
-  const template = readFileSync(join(repoRoot, agents.templatePath), "utf8");
-  const fail = (message: string): never => {
-    throw new Error(`${agents.templatePath}: ${message}`);
+  // The guide carries everything that changes between versions, so it lives in
+  // the package and the consumer's AGENTS.md doesn't churn on upgrades.
+  const guideFail = (message: string): never => {
+    throw new Error(`${agents.guideTemplatePath}: ${message}`);
   };
-
-  if (template.split(DOCS_ROOT_TOKEN).length !== 2) {
-    fail(`must use ${DOCS_ROOT_TOKEN} exactly once, so a docs move is a one-line diff.`);
-  }
-  let block = template.replace(
-    DOCS_ROOT_TOKEN,
-    posix.join(PACKAGE_ROOT_TOKEN, agents.docsDir.replace(/\/+$/, "")),
-  );
+  let guide = readFileSync(join(repoRoot, agents.guideTemplatePath), "utf8");
   for (const section of SKILL_SECTIONS) {
     const name = section.toUpperCase();
     const slugs = `{{${name}_SLUGS}}`;
     const teasers = `{{${name}_TEASERS}}`;
-    if (sections[section].length > 0 && !block.includes(slugs) && !block.includes(teasers)) {
-      fail(`indexes no ${section} docs. Add ${slugs} or ${teasers}.`);
+    if (sections[section].length > 0 && !guide.includes(slugs) && !guide.includes(teasers)) {
+      guideFail(`indexes no ${section} docs. Add ${slugs} or ${teasers}.`);
     }
-    block = block
+    guide = guide
       .replace(slugs, slugList(sections[section]))
       .replace(teasers, teaserList(sections[section]));
   }
+  const guideStray = strayToken(guide, [VERSION_TOKEN]);
+  if (guideStray) guideFail(`unknown placeholder ${guideStray}.`);
+  checkSize(
+    agents.guideTemplatePath,
+    guide,
+    agents.maxBytes,
+    "Agents load it every session: trim the prose or switch a _TEASERS list to _SLUGS.",
+  );
 
-  const stray = block.replaceAll(PACKAGE_ROOT_TOKEN, "").match(/\{\{[^}]*\}\}/);
-  if (stray) fail(`unknown placeholder ${stray[0]}.`);
-
-  const bytes = Buffer.byteLength(block, "utf8");
-  if (agents.maxBytes !== undefined && bytes > agents.maxBytes) {
-    fail(
-      `block is ${bytes} bytes, over the ${agents.maxBytes} byte budget. It loads in every agent session: trim the prose or switch a _TEASERS list to _SLUGS.`,
-    );
+  // The block holds only what stays put across versions: where the docs are.
+  const blockFail = (message: string): never => {
+    throw new Error(`${agents.blockTemplatePath}: ${message}`);
+  };
+  const docsRoot = posix.join(PACKAGE_ROOT_TOKEN, agents.docsDir.replace(/\/+$/, ""));
+  const blockTemplate = readFileSync(join(repoRoot, agents.blockTemplatePath), "utf8");
+  if (!blockTemplate.includes("{{GUIDE_PATH}}")) {
+    blockFail("must include {{GUIDE_PATH}}, the file agents are told to read.");
   }
+  const block = blockTemplate
+    .replaceAll("{{GUIDE_PATH}}", posix.join(docsRoot, GUIDE_FILE))
+    .replaceAll("{{DOCS_ROOT}}", docsRoot);
+  const blockStray = strayToken(block, [PACKAGE_ROOT_TOKEN, PACKAGE_DIR_TOKEN]);
+  if (blockStray) blockFail(`unknown placeholder ${blockStray}.`);
+  checkSize(
+    agents.blockTemplatePath,
+    block,
+    agents.blockMaxBytes,
+    "It sits in the consumer's AGENTS.md: move detail into the guide.",
+  );
 
-  return { docs, blockPath: posix.join(agents.packageDir, agents.blockFile), block };
+  return {
+    docs,
+    generated: new Map([
+      [posix.join(docsDir, GUIDE_FILE), guide],
+      [posix.join(agents.packageDir, agents.blockFile), block],
+    ]),
+  };
 }

@@ -19,17 +19,18 @@ Run this once, from the package that depends on `@tailor-platform/app-shell` (in
 pnpm exec app-shell agents init
 ```
 
-It does three things:
+It adds the block to `AGENTS.md` at the repo root, creating the file if there isn't one. It also prints a notice when:
 
-- Adds the block to `AGENTS.md` at the repo root, creating the file if there isn't one.
-- Adds `app-shell agents sync` to that package's `prepare` script. An existing `prepare` is kept and the command is chained after it with `&&`.
-- Warns if the repo has a `CLAUDE.md` that doesn't import `@AGENTS.md`. Claude Code ignores `AGENTS.md` in that case, so add a line with `@AGENTS.md` to it.
+- The repo has a `CLAUDE.md` that doesn't import `@AGENTS.md`. Claude Code ignores `AGENTS.md` in that case, so add a line with `@AGENTS.md` to it.
+- There is more than one `AGENTS.md` between the package and the repo root. Agents differ on which of them they load, and some only read the nearest one, so check that agents working in the package will see the block. Use `--target` to move it.
 
-Commit the `AGENTS.md` and `package.json` changes.
+`init` doesn't touch `package.json` unless you pass `--add-prepare` (see [Keeping it current](#keeping-it-current)).
+
+Commit the `AGENTS.md` change.
 
 ## What the block contains
 
-- The path to the docs, written once: `<your package>/node_modules/@tailor-platform/app-shell/docs/`.
+- The path to the docs, written once: `<your package>/node_modules/@tailor-platform/app-shell/dist/docs/`.
 - An index of those docs by category (pages, patterns, components, hooks and functions, concepts). Entries are slugs relative to the docs path.
 - A short list of rules, such as one primary action per view and forms going through `Form` and `Field`.
 
@@ -47,18 +48,33 @@ The block sits between two HTML comment markers that carry the package path:
 
 A repo with two frontends gets two blocks, and each package only rewrites its own. Anything you write outside the markers is left alone. Anything inside them is overwritten on the next refresh.
 
-## How it stays current
+## Keeping it current
 
-`app-shell agents sync` runs from `prepare`, so it runs when `pnpm install` installs something. If the docs index changed with the new version, `AGENTS.md` shows up as a diff to commit.
+The block can go stale when you upgrade AppShell and the docs change. Refresh it by running this from the same package:
 
-`sync` is deliberately quiet. It only writes when the block's content changed, it does nothing when `CI` is set, and it always exits 0, so it can't fail an install.
+```bash
+pnpm exec app-shell agents sync
+```
 
-Two cases don't refresh the block:
+`sync` rewrites only what's between the markers, and only when the content changed. It does nothing if the block isn't there, and never creates the file.
 
-- `pnpm add @tailor-platform/app-shell@x` doesn't run `prepare`.
-- Renovate and Dependabot PRs don't run scripts.
+### Refreshing on install (`--add-prepare`)
 
-In both, the block is refreshed by the next install on someone's machine. Until then it can be missing a new doc or list a renamed one.
+To have this happen on its own, pass `--add-prepare` to `init`:
+
+```bash
+pnpm exec app-shell agents init --add-prepare
+```
+
+This adds `app-shell agents sync` to the package's `prepare` script, chaining it after an existing one with `&&`. `sync` then runs whenever `pnpm install` installs something, and the block is refreshed as part of the upgrade.
+
+The trade-offs:
+
+- **Pros:** nobody has to remember to run `sync`, so the index stays in step with the installed docs.
+- **Cons:** it changes your `package.json`, and an `AGENTS.md` diff can show up after any install that changes dependencies, including in PRs that aren't about AppShell.
+- **Not covered:** `pnpm add @tailor-platform/app-shell@x` doesn't run `prepare`, and Renovate and Dependabot PRs don't run scripts. The block is refreshed by the next install on someone's machine.
+
+`sync` is kept quiet so it's safe in `prepare`: it does nothing when `CI` is set, and it always exits 0, so it can't fail an install.
 
 ## Writing to a different file
 
@@ -68,8 +84,8 @@ By default the block goes in `AGENTS.md` at the repo root, found by walking up f
 pnpm exec app-shell agents init --target ../../docs/AGENTS.md
 ```
 
-The path is relative to the package you run it from. `init` writes the same `--target` into the `prepare` script, so `sync` refreshes the same file. Paths inside the block are relative to the directory of the file it lives in.
+The path is relative to the package you run it from. Pass the same `--target` to `sync`. With `--add-prepare`, `init` writes it into the `prepare` script for you. Paths inside the block are relative to the directory of the file it lives in.
 
 ## Opting out
 
-Delete the block, markers included. `sync` does nothing when it can't find its markers and never creates the file, so the leftover `prepare` line is harmless. Remove it too if you want a clean `package.json`.
+Delete the block, markers included. `sync` does nothing when it can't find its markers and never creates the file, so a leftover `prepare` line is harmless. Remove it too if you want a clean `package.json`.

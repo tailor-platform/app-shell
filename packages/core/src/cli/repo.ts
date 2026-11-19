@@ -1,4 +1,4 @@
-import { existsSync, statSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 
 import { AGENTS_FILE, PACKAGE_NAME } from "./names";
@@ -18,6 +18,25 @@ export function findRepoRoot(start: string): string {
     if (dirname(dir) === dir) break;
   }
   return workspaceRoot ?? resolve(start);
+}
+
+/** Every AGENTS.md from the package up to the repo root, nearest first. Name
+ * matching ignores case, as a lowercase `agents.md` is loaded by some tools. */
+export function findAgentsFilesUpward(packageDir: string, repoRoot: string): string[] {
+  const found: string[] = [];
+  const stop = resolve(repoRoot);
+  for (let dir = resolve(packageDir); ; dir = dirname(dir)) {
+    let names: string[] = [];
+    try {
+      names = readdirSync(dir);
+    } catch {
+      // Unreadable directory: nothing to report for it.
+    }
+    for (const name of names) {
+      if (name.toLowerCase() === AGENTS_FILE.toLowerCase()) found.push(join(dir, name));
+    }
+    if (dir === stop || dirname(dir) === dir) return found;
+  }
 }
 
 /** The file the block lives in: `--target`, or `AGENTS.md` at the repo root. */

@@ -293,9 +293,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "a44a27df344c1164",
+        "outline": "1307f22b0e93389a",
         "snapshot": null,
-        "outputMd": "0cc972e2d87edb7c",
+        "outputMd": "2a08f4708e6244e3",
         "examples": null
       }
     },
@@ -1931,6 +1931,6 @@
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   },
   "agents": {
-    "packages/core/agents/AGENTS.block.md": "01124bc61442be77"
+    "packages/core/dist/agents/AGENTS.block.md": "bfd285314f0c4814"
   }
 }

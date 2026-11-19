@@ -64,8 +64,8 @@
     "agents": {
       "templatePath": "docs-src/agents/AGENTS.template.md",
       "packageDir": "packages/core",
-      "docsDir": "docs",
-      "blockFile": "agents/AGENTS.block.md",
+      "docsDir": "dist/docs",
+      "blockFile": "dist/agents/AGENTS.block.md",
       "maxBytes": 6000
     }
   },

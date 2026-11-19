@@ -25,9 +25,7 @@
     "app-shell": "./dist/cli.mjs"
   },
   "files": [
-    "agents/**",
     "dist/**",
-    "docs/**",
     "skills/**"
   ],
   "type": "module",

@@ -70,24 +70,44 @@ const prepareOf = (r: Repo, rel: string): string | undefined =>
     ?.prepare;
 
 describe("agents init", () => {
-  it("creates the root AGENTS.md and wires prepare", () => {
+  it("creates the root AGENTS.md and leaves package.json alone by default", () => {
     const r = repo();
     const cli = r.frontend("apps/ims/frontend");
-    expect(cli("agents init").code).toBe(0);
+    const pkg = r.read("apps/ims/frontend/package.json");
+    const result = cli("agents init");
+    expect(result.code).toBe(0);
+    expect(r.read("apps/ims/frontend/package.json")).toBe(pkg);
+    expect(result.out.join("\n")).toMatch(/rerun with --add-prepare/);
 
     const agents = r.read("AGENTS.md");
     expect(agents).toContain("<!-- app-shell:agents:start apps/ims/frontend -->");
     expect(agents).toContain(
       "Docs: `apps/ims/frontend/node_modules/@tailor-platform/app-shell/docs/`",
     );
-    expect(prepareOf(r, "apps/ims/frontend")).toBe("app-shell agents sync");
+  });
+
+  it("wires prepare with --add-prepare", () => {
+    const r = repo();
+    const cli = r.frontend("apps/web");
+    const result = cli("agents init --add-prepare");
+    expect(prepareOf(r, "apps/web")).toBe("app-shell agents sync");
+    expect(result.out.join("\n")).not.toMatch(/rerun with --add-prepare/);
+    // Already wired: no notice on a plain rerun either.
+    expect(cli("agents init").out.join("\n")).not.toMatch(/--add-prepare/);
+  });
+
+  it("rejects --add-prepare on sync", () => {
+    const r = repo();
+    expect(r.frontend("apps/web")("agents sync --add-prepare").warnings.join("\n")).toMatch(
+      /unknown or incomplete argument "--add-prepare"/,
+    );
   });
 
   it("appends to an existing file and chains an existing prepare", () => {
     const r = repo();
     r.write("AGENTS.md", "# Project\n\nHouse rules.\n");
     const cli = r.frontend("apps/web", { prepare: "lefthook install" });
-    cli("agents init");
+    cli("agents init --add-prepare");
 
     expect(r.read("AGENTS.md").startsWith("# Project\n\nHouse rules.\n\n<!-- app-shell:")).toBe(
       true,
@@ -98,10 +118,10 @@ describe("agents init", () => {
   it("changes nothing on a second run", () => {
     const r = repo();
     const cli = r.frontend("apps/web");
-    cli("agents init");
+    cli("agents init --add-prepare");
     const agents = r.read("AGENTS.md");
     const pkg = r.read("apps/web/package.json");
-    expect(cli("agents init").code).toBe(0);
+    expect(cli("agents init --add-prepare").code).toBe(0);
     expect(r.read("AGENTS.md")).toBe(agents);
     expect(r.read("apps/web/package.json")).toBe(pkg);
   });
@@ -118,7 +138,7 @@ describe("agents init", () => {
   it("writes to --target and passes it on to prepare", () => {
     const r = repo();
     const cli = r.frontend("apps/web");
-    expect(cli("agents init --target .").code).toBe(0);
+    expect(cli("agents init --target . --add-prepare").code).toBe(0);
     expect(existsSync(join(r.root, "AGENTS.md"))).toBe(false);
     expect(r.read("apps/web/AGENTS.md")).toContain(
       "Docs: `node_modules/@tailor-platform/app-shell/docs/`",
@@ -138,6 +158,24 @@ describe("agents init", () => {
 
     r.write("CLAUDE.md", "@AGENTS.md\n");
     expect(cli("agents init").warnings).toEqual([]);
+  });
+
+  it("notes when several AGENTS.md files sit between the package and the root", () => {
+    const r = repo();
+    r.write("AGENTS.md", "# Root\n");
+    const cli = r.frontend("apps/ims/frontend");
+    expect(cli("agents init").warnings).toEqual([]);
+
+    r.write("apps/ims/agents.md", "# IMS\n");
+    const warning = cli("agents init").warnings.join("\n");
+    expect(warning).toMatch(/Found 2 AGENTS\.md files/);
+    expect(warning).toContain("../agents.md");
+    expect(warning).toContain("../../../AGENTS.md");
+
+    // Writing to the nearer file still reports the other one.
+    expect(cli("agents init --target ../agents.md").warnings.join("\n")).toMatch(
+      /The block is in \.\.\/agents\.md/,
+    );
   });
 
   it("refuses to run outside a package that depends on AppShell", () => {

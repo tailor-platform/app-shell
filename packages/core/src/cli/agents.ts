@@ -2,9 +2,15 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 
 import { appendBlock, renderBlock, replaceBlock } from "./block";
-import { AGENTS_FILE, PACKAGE_NAME, commandLine } from "./names";
+import { AGENTS_FILE, GUIDE_URL, PACKAGE_NAME, commandLine } from "./names";
 import { chainPrepare, setPrepareScript } from "./prepare-script";
-import { blockPaths, resolveTargetFile, toPosix } from "./repo";
+import {
+  blockPaths,
+  findAgentsFilesUpward,
+  findRepoRoot,
+  resolveTargetFile,
+  toPosix,
+} from "./repo";
 
 export interface CliContext {
   /** The package that depends on AppShell: where `init` is run and where `prepare` runs. */
@@ -18,6 +24,8 @@ export interface CliContext {
 
 export interface AgentsOptions {
   target?: string;
+  /** `init` only: also chain `sync` into the package's `prepare` script. */
+  addPrepare?: boolean;
 }
 
 interface PackageJson {
@@ -48,8 +56,8 @@ function buildBlock(
   return { key, block: renderBlock(source, key, packageRoot) };
 }
 
-/** Opt in: write the block, wire the refresh into `prepare`, flag a CLAUDE.md
- * that would hide the file from Claude Code. Returns the exit code. */
+/** Opt in: write the block, wire the refresh into `prepare` when asked, and
+ * flag files that would hide or compete with it. Returns the exit code. */
 export function init(ctx: CliContext, options: AgentsOptions = {}): number {
   const display = (abs: string): string => toPosix(relative(ctx.cwd, abs)) || ".";
   const packageJsonPath = join(ctx.cwd, "package.json");
@@ -94,7 +102,11 @@ export function init(ctx: CliContext, options: AgentsOptions = {}): number {
     ...(options.target ? ["--target", quoteArg(options.target)] : []),
   ].join(" ");
   const { script, status } = chainPrepare(pkg.scripts?.prepare, command);
-  if (status === "added") {
+  if (status === "added" && !options.addPrepare) {
+    ctx.log(
+      `package.json: not changed. To refresh the block on install, rerun with --add-prepare; otherwise run \`${command}\` after upgrading ${PACKAGE_NAME}. See ${GUIDE_URL}`,
+    );
+  } else if (status === "added") {
     writeFileSync(packageJsonPath, setPrepareScript(packageJson, script), "utf8");
     ctx.log(`package.json: "prepare" now runs \`${command}\`, so the block refreshes on install.`);
   } else if (status === "differs") {
@@ -108,6 +120,17 @@ export function init(ctx: CliContext, options: AgentsOptions = {}): number {
   if (claude !== null && !claude.includes(`@${AGENTS_FILE}`)) {
     ctx.warn(
       `${display(claudeFile)} does not import ${AGENTS_FILE}, so Claude Code will not read the block. Add a line with \`@${AGENTS_FILE}\` to it.`,
+    );
+  }
+  // Tools differ on which of several AGENTS.md files they load (nearest, all, or
+  // root only), so an agent working in this package may not see the block.
+  const agentsFiles = new Set([
+    ...findAgentsFilesUpward(ctx.cwd, findRepoRoot(ctx.cwd)),
+    targetFile,
+  ]);
+  if (agentsFiles.size > 1) {
+    ctx.warn(
+      `Found ${agentsFiles.size} AGENTS.md files between this package and the repo root (${[...agentsFiles].map(display).join(", ")}). The block is in ${display(targetFile)}. Some agents only read the nearest one; use --target to move the block if needed.`,
     );
   }
   return 0;

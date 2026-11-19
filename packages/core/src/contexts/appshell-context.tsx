@@ -59,6 +59,32 @@ export type RouteParams = AppShellRegister extends { routeParams: infer T }
   ? T
   : Record<string, Record<string, string>>;
 
+/** Per-toast options `useToast` applies when the call does not set them itself. */
+export type ToastDefault = {
+  /** Milliseconds before the toast closes on its own; `Infinity` keeps it until the user closes it. */
+  duration?: number;
+  /** Whether the toast shows a close button. */
+  closeButton?: boolean;
+};
+
+/**
+ * `T` with at least one of its fields set. An empty object is a type error, and the
+ * constraint follows `T` when fields are added to it.
+ */
+type AtLeastOne<T> = { [K in keyof T]-?: Required<Pick<T, K>> & Partial<T> }[keyof T];
+
+/**
+ * Defaults `useToast` applies per kind of toast. The built-in default for both kinds is
+ * `{ duration: Infinity, closeButton: true }`. A field set here replaces that field only;
+ * fields and kinds left out keep the built-in default.
+ */
+export type ToastDefaults = {
+  /** `toast.error(...)` and the error state of `toast.promise(...)`. */
+  error?: AtLeastOne<ToastDefault>;
+  /** Any toast with an `action`. */
+  action?: AtLeastOne<ToastDefault>;
+};
+
 export type RootConfiguration = {
   modules: Modules;
   settingsResources: Resource[];
@@ -69,6 +95,8 @@ export type RootConfiguration = {
   resolvedLocale?: string;
   /** IANA timezone (e.g. "America/Los_Angeles"). Used by date/time components. */
   timeZone?: string;
+  /** Per-kind toast defaults for `useToast`. Omitted kinds keep the built-in defaults. */
+  toastDefaults?: ToastDefaults;
 };
 
 export type AppInfoEntry = {
@@ -90,6 +118,7 @@ export type ConfigurationOptions = {
   errorBoundary?: ErrorBoundaryComponent;
   locale?: string;
   timeZone?: string;
+  toastDefaults?: ToastDefaults;
 };
 
 /**
@@ -107,6 +136,7 @@ export const buildConfigurations = (options: ConfigurationOptions): RootConfigur
   locale: options.locale ? toLanguageSubtag(options.locale) : detectBrowserLocale(),
   resolvedLocale: options.locale ?? detectBrowserFullLocale(),
   timeZone: options.timeZone,
+  toastDefaults: options.toastDefaults,
 });
 
 /**

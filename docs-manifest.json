@@ -115,10 +115,10 @@
       "claims": [],
       "symbols": ["AppShell", "AppShellProps"],
       "hashes": {
-        "typeSurface": "51313066e142afc2",
-        "outline": "25fb9b8ab6949331",
+        "typeSurface": "5214717584b72041",
+        "outline": "9b3b04b96cf99581",
         "snapshot": null,
-        "outputMd": "cd57abd4909118a4",
+        "outputMd": "4f56932d1dab938a",
         "examples": null
       }
     },
@@ -1045,9 +1045,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "45b23abe90e466b2",
+        "outline": "4ede6f17c870d838",
         "snapshot": null,
-        "outputMd": "f68bdab855730f48",
+        "outputMd": "fbdc96bd3d3d0140",
         "examples": "7089e7331b95df31"
       }
     },
@@ -1147,9 +1147,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "e88bb360eb853c34",
+        "outline": "aa7644812db897fd",
         "snapshot": null,
-        "outputMd": "19ca77c7802ca5f6",
+        "outputMd": "597b3a3b3f96a89c",
         "examples": null
       }
     },
@@ -1807,9 +1807,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "9100b0606aa15761",
+        "outline": "0fc65140da8f7dff",
         "snapshot": null,
-        "outputMd": "3f763c8074704709",
+        "outputMd": "90d80eef666e4cb4",
         "examples": "0dce35625d5e56cf"
       }
     },
@@ -1927,7 +1927,7 @@
     "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "614ee4e4a47a3d1e",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "709614ee001970c9",
     "packages/core/skills/app-shell-patterns/SKILL.md": "d32b448c231b6de0",
-    "packages/core/skills/app-shell-upgrade/references/migrations.md": "9bd2735c34fd35e3",
+    "packages/core/skills/app-shell-upgrade/references/migrations.md": "565afc6a837ba8da",
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   },
   "agents": {

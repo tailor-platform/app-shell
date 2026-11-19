@@ -10,7 +10,7 @@ function toPosix(p: string): string {
 
 /** Generated-doc output dir → skill reference section. `docs/references` is
  * intentionally excluded. */
-const SECTION_BY_OUTDIR: Record<string, SkillSection> = {
+export const SECTION_BY_OUTDIR: Record<string, SkillSection> = {
   "docs/concepts": "concepts",
   "docs/components": "components",
   "docs/api": "api",

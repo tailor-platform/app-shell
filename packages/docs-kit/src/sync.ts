@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
+import { computeAgents } from "./agents";
 import { assembleMarkdown } from "./assemble";
 import { loadConfig } from "./config";
 import { type Finding, reconcile } from "./coverage";
@@ -123,7 +124,30 @@ export function sync(repoRoot: string): SyncResult {
     }
   }
 
-  const manifest: Manifest = { version: 1, units, ...(skill ? { skill } : {}) };
+  // Phase 5 — emit the docs shipped in the package and the AGENTS.md block that
+  // indexes them (gitignored output, like the skills).
+  let agents: Record<string, string> | undefined;
+  if (config.agents) {
+    const { docs, blockPath, block } = computeAgents(repoRoot, config.agents, outlines);
+    rmSync(join(repoRoot, config.agents.packageDir, config.agents.docsDir), {
+      recursive: true,
+      force: true,
+    });
+    for (const [rel, content] of [...docs, [blockPath, block] as const]) {
+      const abs = join(repoRoot, rel);
+      mkdirSync(dirname(abs), { recursive: true });
+      writeFileSync(abs, content, "utf8");
+      written.push(rel);
+    }
+    agents = { [blockPath]: hash(normalizeText(block)) };
+  }
+
+  const manifest: Manifest = {
+    version: 1,
+    units,
+    ...(skill ? { skill } : {}),
+    ...(agents ? { agents } : {}),
+  };
   writeManifest(repoRoot, config.manifestFile, manifest);
   // Format the manifest too, so a clean-tree `sync` is byte-idempotent: the
   // manifest's hashes are over the OUTPUT files, never over the manifest text

@@ -60,7 +60,14 @@
         "repoBlobUrl": "https://github.com/tailor-platform/app-shell/blob/main",
         "versionSource": "packages/core/package.json"
       }
-    ]
+    ],
+    "agents": {
+      "templatePath": "docs-src/agents/AGENTS.template.md",
+      "packageDir": "packages/core",
+      "docsDir": "docs",
+      "blockFile": "agents/AGENTS.block.md",
+      "maxBytes": 6000
+    }
   },
   "policy": {
     "coverage": {

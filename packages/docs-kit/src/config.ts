@@ -2,7 +2,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { SKILL_SECTIONS } from "./skill";
-import type { CategoryRule, DocsConfig, SkillConfig, UnclaimedSkillDir } from "./types";
+import type {
+  AgentsConfig,
+  CategoryRule,
+  DocsConfig,
+  SkillConfig,
+  UnclaimedSkillDir,
+} from "./types";
 
 /** On-disk shape of `docs-kit.config.json` — grouped by data flow (inputs →
  * outputs → policy). It is parsed into the flat internal {@link DocsConfig}. */
@@ -16,6 +22,7 @@ interface RawConfig {
     documents?: { mappings?: Array<{ match: string; dir: string }> };
     manifest?: string;
     skills?: SkillConfig[];
+    agents?: AgentsConfig;
   };
   policy?: {
     coverage?: { enforce?: boolean; exclusions?: string[] };
@@ -41,6 +48,22 @@ export function loadConfig(repoRoot: string): DocsConfig {
       }
     }
   }
+  const agents = c.outputs?.agents;
+  if (agents) {
+    for (const key of ["templatePath", "packageDir", "docsDir", "blockFile"] as const) {
+      if (!agents[key]?.trim()) {
+        throw new Error(`docs-kit.config.json: outputs.agents.${key} is required`);
+      }
+    }
+    // sync clears docsDir before writing, so it must stay inside the package.
+    for (const key of ["docsDir", "blockFile"] as const) {
+      if (agents[key].split("/").includes("..") || agents[key].startsWith("/")) {
+        throw new Error(
+          `docs-kit.config.json: outputs.agents.${key} must be a path inside packageDir`,
+        );
+      }
+    }
+  }
   return {
     roots: c.inputs?.outlines?.roots ?? ["docs-src"],
     tsconfig: c.inputs?.api?.tsconfig ?? "packages/core/tsconfig.json",
@@ -51,6 +74,7 @@ export function loadConfig(repoRoot: string): DocsConfig {
     exclusions: c.policy?.coverage?.exclusions ?? [],
     snapshotDir: c.inputs?.snapshots?.dir,
     skills,
+    agents,
     unclaimedSkillDirs: c.policy?.skills?.unclaimed ?? [],
   };
 }

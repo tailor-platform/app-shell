@@ -1,2 +1,5 @@
 node_modules
 skills
+# Emitted by `pnpm docs:sync` at publish time, like skills.
+/docs
+/agents

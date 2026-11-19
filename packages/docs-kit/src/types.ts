@@ -87,6 +87,9 @@ export interface Manifest {
   /** Generated skill file (repo-relative) -> content hash, across every configured
    * skill. Absent when no skill is configured. */
   skill?: Record<string, string>;
+  /** Generated AGENTS.md block (repo-relative) -> content hash. The docs shipped
+   * beside it are verbatim copies of unit outputs, which `units` already hashes. */
+  agents?: Record<string, string>;
 }
 
 export interface CategoryRule {
@@ -115,6 +118,22 @@ export interface SkillConfig {
   versionSource?: string;
 }
 
+/** The docs shipped in the published package and the AGENTS.md block that
+ * indexes them. The package's CLI injects the block into a consumer's repo. */
+export interface AgentsConfig {
+  /** Repo-relative template for the block: the authored rules plus index placeholders. */
+  templatePath: string;
+  /** Repo-relative dir of the published package. */
+  packageDir: string;
+  /** Docs dir inside the package. Written into the block, so moving the docs
+   * is a change here only. */
+  docsDir: string;
+  /** Block file inside the package. The package's CLI reads this exact path. */
+  blockFile: string;
+  /** Upper bound on the emitted block, which loads in every agent session. */
+  maxBytes?: number;
+}
+
 /** A docs output dir deliberately left out of every consumer skill. */
 export interface UnclaimedSkillDir {
   /** Repo-relative output dir, exactly as a `documents.mappings[].dir`. */
@@ -141,6 +160,8 @@ export interface DocsConfig {
   snapshotDir?: string;
   /** Consumer skills. sync emits each one and check validates each one. */
   skills: SkillConfig[];
+  /** Package docs + AGENTS.md block. Absent when not configured. */
+  agents?: AgentsConfig;
   /** Output dirs no skill carries. Any other unclaimed output dir blocks check. */
   unclaimedSkillDirs: UnclaimedSkillDir[];
 }

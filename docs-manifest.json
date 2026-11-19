@@ -282,6 +282,23 @@
         "examples": "afd839a3fc55cc52"
       }
     },
+    "coding-agents": {
+      "slug": "coding-agents",
+      "kind": "prose",
+      "outline": "docs-src/guides/coding-agents.docs.outline.md",
+      "output": "docs/coding-agents.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "a44a27df344c1164",
+        "snapshot": null,
+        "outputMd": "0cc972e2d87edb7c",
+        "examples": null
+      }
+    },
     "combobox": {
       "slug": "combobox",
       "kind": "code-backed",
@@ -1045,9 +1062,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "019ef7a912b92831",
+        "outline": "5b0a1f6615f35d67",
         "snapshot": null,
-        "outputMd": "6c212f2bd28ba8c6",
+        "outputMd": "1bcf638d0c505500",
         "examples": null
       }
     },
@@ -1912,5 +1929,8 @@
     "packages/core/skills/app-shell-patterns/SKILL.md": "18efee79280174e7",
     "packages/core/skills/app-shell-upgrade/references/migrations.md": "9bd2735c34fd35e3",
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
+  },
+  "agents": {
+    "packages/core/agents/AGENTS.block.md": "01124bc61442be77"
   }
 }

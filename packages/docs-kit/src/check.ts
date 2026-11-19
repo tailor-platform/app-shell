@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
+import { computeAgents } from "./agents";
 import { loadConfig } from "./config";
 import { type Finding, reconcile } from "./coverage";
 import { hash, normalizeText } from "./hash";
@@ -161,6 +162,22 @@ export function check(repoRoot: string): CheckResult {
       } catch (e) {
         findings.push({ level: "block", slug: "skill", message: (e as Error).message });
       }
+    }
+  }
+
+  if (config.agents) {
+    try {
+      const { blockPath, block } = computeAgents(repoRoot, config.agents, outlines);
+      const expected = manifest?.agents?.[blockPath];
+      if (expected !== hash(normalizeText(block))) {
+        findings.push({
+          level: "block",
+          slug: "agents",
+          message: `AGENTS.md block ${blockPath} ${expected === undefined ? "is new" : "drifted"} — run sync.`,
+        });
+      }
+    } catch (e) {
+      findings.push({ level: "block", slug: "agents", message: (e as Error).message });
     }
   }
 

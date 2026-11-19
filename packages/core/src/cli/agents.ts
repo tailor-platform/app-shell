@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 
 import { appendBlock, renderBlock, replaceBlock } from "./block";
@@ -29,9 +29,23 @@ interface PackageJson {
 
 const quoteArg = (arg: string): string => (/\s/.test(arg) ? JSON.stringify(arg) : arg);
 
-function buildBlock(ctx: CliContext, targetFile: string): { key: string; block: string } {
+/** One read instead of exists-then-read, so the file can't change between the two. */
+function readIfExists(path: string): string | null {
+  try {
+    return readFileSync(path, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+function buildBlock(
+  ctx: CliContext,
+  source: string,
+  targetFile: string,
+): { key: string; block: string } {
   const { key, packageRoot } = blockPaths(ctx.cwd, targetFile);
-  return { key, block: renderBlock(readFileSync(ctx.blockFile, "utf8"), key, packageRoot) };
+  return { key, block: renderBlock(source, key, packageRoot) };
 }
 
 /** Opt in: write the block, wire the refresh into `prepare`, flag a CLAUDE.md
@@ -39,7 +53,7 @@ function buildBlock(ctx: CliContext, targetFile: string): { key: string; block: 
 export function init(ctx: CliContext, options: AgentsOptions = {}): number {
   const display = (abs: string): string => toPosix(relative(ctx.cwd, abs)) || ".";
   const packageJsonPath = join(ctx.cwd, "package.json");
-  const packageJson = existsSync(packageJsonPath) ? readFileSync(packageJsonPath, "utf8") : null;
+  const packageJson = readIfExists(packageJsonPath);
   const pkg = packageJson === null ? null : (JSON.parse(packageJson) as PackageJson);
   const dependsOnAppShell =
     pkg !== null &&
@@ -52,14 +66,15 @@ export function init(ctx: CliContext, options: AgentsOptions = {}): number {
     );
     return 1;
   }
-  if (!existsSync(ctx.blockFile)) {
+  const source = readIfExists(ctx.blockFile);
+  if (source === null) {
     ctx.warn(`${commandLine("init")}: this build of ${PACKAGE_NAME} ships no agents block.`);
     return 1;
   }
 
   const targetFile = resolveTargetFile(ctx.cwd, options.target);
-  const { key, block } = buildBlock(ctx, targetFile);
-  const existing = existsSync(targetFile) ? readFileSync(targetFile, "utf8") : null;
+  const { key, block } = buildBlock(ctx, source, targetFile);
+  const existing = readIfExists(targetFile);
   const next =
     existing === null
       ? `${block}\n`
@@ -89,11 +104,8 @@ export function init(ctx: CliContext, options: AgentsOptions = {}): number {
   }
 
   const claudeFile = join(dirname(targetFile), "CLAUDE.md");
-  if (
-    basename(targetFile) === AGENTS_FILE &&
-    existsSync(claudeFile) &&
-    !readFileSync(claudeFile, "utf8").includes(`@${AGENTS_FILE}`)
-  ) {
+  const claude = basename(targetFile) === AGENTS_FILE ? readIfExists(claudeFile) : null;
+  if (claude !== null && !claude.includes(`@${AGENTS_FILE}`)) {
     ctx.warn(
       `${display(claudeFile)} does not import ${AGENTS_FILE}, so Claude Code will not read the block. Add a line with \`@${AGENTS_FILE}\` to it.`,
     );
@@ -107,12 +119,13 @@ export function sync(ctx: CliContext, options: AgentsOptions = {}): void {
   // CI installs from a clean checkout and must not leave it dirty.
   const ci = ctx.env.CI;
   if (ci && ci !== "false" && ci !== "0") return;
-  if (!existsSync(ctx.blockFile)) return;
+  const source = readIfExists(ctx.blockFile);
+  if (source === null) return;
 
   const targetFile = resolveTargetFile(ctx.cwd, options.target);
-  if (!existsSync(targetFile)) return;
-  const existing = readFileSync(targetFile, "utf8");
-  const { key, block } = buildBlock(ctx, targetFile);
+  const existing = readIfExists(targetFile);
+  if (existing === null) return;
+  const { key, block } = buildBlock(ctx, source, targetFile);
   const next = replaceBlock(existing, key, block);
   if (next === null || next === existing) return;
   writeFileSync(targetFile, next, "utf8");

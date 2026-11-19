@@ -54,6 +54,24 @@ describe("ActivityCard (standalone)", () => {
     expect(screen.getByText("All activities")).toBeDefined();
   });
 
+  it("scrolls the full list in the dialog's body, keeping the title in view", async () => {
+    const user = userEvent.setup();
+    const many = Array.from({ length: 8 }, (_, i) => ({
+      ...mockActivities[0],
+      id: `id-${i}`,
+    }));
+    render(<ActivityCard items={many} title="Updates" maxVisible={6} />);
+    await user.click(screen.getByText("2 more activities"));
+
+    // Only Dialog.Body shrinks in a dialog: a plain scrolling child would grow
+    // to its full height and scroll the whole panel, title included.
+    const dialog = await screen.findByRole("dialog");
+    const body = dialog.querySelector<HTMLElement>('[data-slot="dialog-body"]');
+    expect(body).not.toBeNull();
+    expect(body?.contains(screen.getByText("All activities"))).toBe(false);
+    expect(body?.querySelectorAll('[data-slot="activity-card-item"]')).toHaveLength(8);
+  });
+
   it("uses count overflow label when overflowLabel is count", () => {
     const many = Array.from({ length: 8 }, (_, i) => ({
       ...mockActivities[0],

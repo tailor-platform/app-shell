@@ -541,13 +541,13 @@ says "clickable" without a hover, and the resting underline is noise. Add
 
 The page decides the frame; these build what sits in it.
 
-| Need                                               | Pattern                                 |
-| -------------------------------------------------- | --------------------------------------- |
-| A related collection big enough for its own screen | `page/document-collection`              |
-| Editing a coherent group of header fields          | `pattern/form/modal`                    |
-| A full edit of the record and its line items       | `pattern/form/sectioned` on a sub-route |
-| Confirming a destructive transition                | `pattern/interaction/confirm`           |
-| Reporting an action's outcome                      | `pattern/interaction/toast`             |
+| Need                                               | Pattern                                  |
+| -------------------------------------------------- | ---------------------------------------- |
+| A related collection big enough for its own screen | `page/document-collection`               |
+| Editing a coherent group of header fields          | `pattern/forms` in a dialog              |
+| A full edit of the record and its line items       | `pattern/forms` as a page on a sub-route |
+| Confirming a destructive transition                | `pattern/interaction/confirm`            |
+| Reporting an action's outcome                      | `pattern/interaction/toast`              |
 
 ## Reference implementation
 

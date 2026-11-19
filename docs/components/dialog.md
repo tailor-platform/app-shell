@@ -49,6 +49,7 @@ function BasicUsage() {
 | `Dialog.Trigger`     | Element that opens the dialog when clicked                              |
 | `Dialog.Content`     | The main dialog panel (includes overlay and close button automatically) |
 | `Dialog.Header`      | Layout wrapper for title and description                                |
+| `Dialog.Body`        | Scrollable middle section; long content scrolls here, not off-screen    |
 | `Dialog.Footer`      | Layout wrapper for action buttons                                       |
 | `Dialog.Title`       | Dialog title (announced by screen readers)                              |
 | `Dialog.Description` | Additional context below the title                                      |
@@ -68,15 +69,19 @@ function BasicUsage() {
 
 ### Dialog.Content Props
 
-Accepts `className` and all standard HTML `<div>` props.
+| Prop   | Type                           | Default | Description                                                                                     |
+| ------ | ------------------------------ | ------- | ----------------------------------------------------------------------------------------------- |
+| `size` | `"sm" \| "md" \| "lg" \| "xl"` | `"md"`  | Max width of the panel: 24rem, 32rem, 45rem or 60rem — the same steps as `Sheet.Content` `size` |
+
+Also accepts `className` and all standard HTML `<div>` props. The panel never grows taller than the viewport; put long content in `Dialog.Body` so it scrolls while the header and footer stay in view.
 
 ## Tall Content
 
-`Dialog.Content` is never taller than the viewport minus 2rem (16px above and below, the same margin as on the sides). When the content is taller, the whole dialog scrolls, including the title and the close button. `Escape` and a click on the backdrop still close it.
+`Dialog.Content` is never taller than the viewport minus 2rem (16px above and below, the same margin as on the sides). Without a `Dialog.Body`, content that is taller makes the whole dialog scroll, including the title and the close button. `Escape` and a click on the backdrop still close it.
 
 On open, focus moves to the first control in the dialog. In a dialog that scrolls, this happens only when that control is in view at the top. When it is below the fold (for example, a footer button after a long body), the dialog itself takes focus instead, so it opens at the top rather than scrolled to that control. `Tab` then moves to the control. Pass `initialFocus` to choose the element yourself.
 
-To keep a header or footer in view while only the body scrolls, make `Dialog.Content` a flex column and give the body `min-h-0 flex-1 overflow-y-auto`. A `className` with its own `max-h-*` or `overflow-*` replaces the defaults.
+To keep the header and footer in view while only the middle scrolls, wrap the middle in `Dialog.Body`. `Dialog.Content` is already a flex column, and `Dialog.Body` is the only child that shrinks; the header, footer and anything else placed directly in `Dialog.Content` keep their height. A `className` with its own `max-h-*` or `overflow-*` replaces the defaults.
 
 ### Dialog.Trigger / Dialog.Close Props
 
@@ -170,7 +175,9 @@ function DeleteConfirmation() {
 
 ### Form Dialog
 
-Edit the item name and save to update the value outside the dialog. Empty or whitespace-only names are rejected through `Form` and `Field`. Cancel or close leaves the saved name unchanged; reopening restores it. Cancel is explicitly `type="button"` so it does not submit the form.
+Put the `Form` inside `Dialog.Body` and submit it from the footer with `form="<id>"`, so the Save button stays visible however long the form gets. A [`Grid`](./grid.md) with `maxColumns` lays the fields out in columns that fit the dialog's width; pick the dialog `size` from the [Forms pattern](../patterns/forms.md#modal-forms).
+
+In this example, empty or whitespace-only names are rejected through `Form` and `Field`. Cancel or close leaves the saved name unchanged; reopening restores it. Cancel is explicitly `type="button"` so it does not submit the form.
 
 <example-preview name="form-dialog"></example-preview>
 
@@ -184,38 +191,46 @@ function FormDialog() {
       <Text.p role="status">Saved item name: {name}</Text.p>
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Trigger render={<Button variant="outline" />}>Edit item</Dialog.Trigger>
-        <Dialog.Content>
+        <Dialog.Content size="lg">
           <Dialog.Header>
             <Dialog.Title>Edit item</Dialog.Title>
             <Dialog.Description>
               Save a new name, or cancel to keep the saved name.
             </Dialog.Description>
           </Dialog.Header>
-          <Form<{ name: string }>
-            noValidate
-            onFormSubmit={(values) => {
-              setName(values.name.trim());
-              setOpen(false);
-            }}
-          >
-            <Field.Root
-              name="name"
-              className="py-4"
-              validate={(value) =>
-                typeof value === "string" && value.trim() ? undefined : "Name is required."
-              }
+          <Dialog.Body>
+            <Form<{ name: string; sku: string }>
+              id="edit-item-form"
+              noValidate
+              onFormSubmit={(values) => {
+                setName(values.name.trim());
+                setOpen(false);
+              }}
             >
-              <Field.Label>Item name</Field.Label>
-              <Field.Control defaultValue={name} required />
-              <Field.Error>Name is required.</Field.Error>
-            </Field.Root>
-            <Dialog.Footer>
-              <Dialog.Close render={<Button type="button" variant="outline" />}>
-                Cancel
-              </Dialog.Close>
-              <Button type="submit">Save item</Button>
-            </Dialog.Footer>
-          </Form>
+              <Grid maxColumns={2} gapX={6} gapY={4}>
+                <Field.Root
+                  name="name"
+                  validate={(value) =>
+                    typeof value === "string" && value.trim() ? undefined : "Name is required."
+                  }
+                >
+                  <Field.Label required>Item name</Field.Label>
+                  <Field.Control defaultValue={name} required />
+                  <Field.Error>Name is required.</Field.Error>
+                </Field.Root>
+                <Field.Root name="sku">
+                  <Field.Label>SKU</Field.Label>
+                  <Field.Control defaultValue="CTN-S-01" />
+                </Field.Root>
+              </Grid>
+            </Form>
+          </Dialog.Body>
+          <Dialog.Footer>
+            <Dialog.Close render={<Button type="button" variant="outline" />}>Cancel</Dialog.Close>
+            <Button type="submit" form="edit-item-form">
+              Save item
+            </Button>
+          </Dialog.Footer>
         </Dialog.Content>
       </Dialog.Root>
     </div>
@@ -236,7 +251,7 @@ A dialog may open on top of another dialog, or on top of a sheet. Keep to these 
 
 The limits are a guideline. The component does not enforce them.
 
-A runnable example of a confirm dialog on top of a form dialog is in [Modal Form → Second Level](../patterns/form-modal.md#second-level-confirm-or-pick).
+A runnable example of a confirm dialog on top of a form dialog is in [Forms → Second level](../patterns/forms.md#second-level-confirm-or-pick).
 
 ## Accessibility
 

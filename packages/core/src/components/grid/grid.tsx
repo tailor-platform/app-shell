@@ -23,12 +23,17 @@ const Item = React.forwardRef<HTMLDivElement, GridItemProps>(function GridItem(
   { colSpan, rowSpan, colStart, colEnd, className, style, children, ...props },
   ref,
 ) {
+  // Static spans are exposed so a `maxColumns` grid can clamp them to the
+  // columns currently shown. Responsive spans keep their own behavior.
+  const staticSpan =
+    typeof colSpan === "number" || colSpan === "full" ? String(colSpan) : undefined;
   const { vars, classes } = resolveGridItemStyles({ colSpan, rowSpan, colStart, colEnd });
 
   return (
     <div
       ref={ref}
       data-slot="grid-item"
+      data-col-span={staticSpan}
       className={cn(classes, className)}
       style={{ ...vars, ...style } as React.CSSProperties}
       {...props}
@@ -52,6 +57,8 @@ Item.displayName = "Grid.Item";
  * - `columns="280px 1fr"` — custom track widths (verbatim `grid-template-columns`).
  * - `columns={{ initial: 1, md: 2, xl: 4 }}` — responsive reflow per breakpoint.
  * - `minChildWidth={240}` — auto-fit: as many ≥240px columns as fit, no breakpoints.
+ * - `maxColumns={3}` — container-responsive: up to three columns, stepping down
+ *   to one as the grid's container narrows; numeric `Grid.Item` spans are clamped.
  *
  * ### Spanning
  *
@@ -85,6 +92,7 @@ const GridRoot = React.forwardRef<HTMLDivElement, GridProps>(function Grid(
     gapX,
     gapY,
     minChildWidth,
+    maxColumns,
     flow,
     align,
     justify,
@@ -102,12 +110,13 @@ const GridRoot = React.forwardRef<HTMLDivElement, GridProps>(function Grid(
     gapX,
     gapY,
     minChildWidth,
+    maxColumns,
     flow,
     align,
     justify,
   });
 
-  return (
+  const grid = (
     <div
       ref={ref}
       data-slot="grid"
@@ -116,6 +125,15 @@ const GridRoot = React.forwardRef<HTMLDivElement, GridProps>(function Grid(
       {...props}
     >
       {children}
+    </div>
+  );
+
+  // Container queries only affect descendants, so `maxColumns` needs a wrapper
+  // that is the container.
+  if (maxColumns === undefined) return grid;
+  return (
+    <div data-slot="grid-container" className="astw:@container astw:w-full">
+      {grid}
     </div>
   );
 });

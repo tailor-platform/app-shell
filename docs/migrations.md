@@ -15,6 +15,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.22.0        | [Scroll a dialog's content in `Dialog.Body`](#1220-scroll-a-dialogs-content-in-dialogbody)                                   |
 | 1.21.0        | [Error and action toasts stay until the user closes them](#1210-error-and-action-toasts-stay-until-the-user-closes-them)     |
 | 1.21.0        | [Testing helpers deprecated in favour of TestingProvider](#1210-testing-helpers-deprecated-in-favour-of-testingprovider)     |
 | 1.20.0        | [z-index tokens renamed; old names are aliases](#1200-z-index-tokens-renamed-old-names-are-aliases)                          |
@@ -30,6 +31,32 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
+
+## 1.22.0: scroll a dialog's content in `Dialog.Body`
+
+**Applies to:** dialogs that made `Dialog.Content` a flex column themselves (for example `className="flex flex-col max-h-[85vh]"`) and gave a direct child its own scroll area (`min-h-0 flex-1 overflow-y-auto`) to keep the header and footer in view.
+
+`Dialog.Content` is now a flex column by default, and only `Dialog.Body` shrinks in it: every other direct child keeps its full height. A hand-made scroll area therefore grows to fit its content, and the whole dialog scrolls instead, header and footer included. Nothing errors.
+
+To find these, search for `Dialog.Content` with `flex-col` in its `className`, or for `overflow-y-auto` on a direct child of `Dialog.Content`.
+
+Before:
+
+```tsx
+<Dialog.Content className="flex max-h-[85vh] flex-col">
+  <Dialog.Header>…</Dialog.Header>
+  <div className="min-h-0 flex-1 overflow-y-auto">{list}</div>
+</Dialog.Content>
+```
+
+After:
+
+```tsx
+<Dialog.Content className="max-h-[85vh]">
+  <Dialog.Header>…</Dialog.Header>
+  <Dialog.Body>{list}</Dialog.Body>
+</Dialog.Content>
+```
 
 ## 1.21.0: error and action toasts stay until the user closes them
 

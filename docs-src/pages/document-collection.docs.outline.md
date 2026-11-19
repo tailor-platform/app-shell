@@ -365,18 +365,17 @@ If you are adding `MetricCard`s above the DataTable, these should render immedia
 
 The page decides the frame; these build what sits in it.
 
-| Need                                 | Pattern                                                                |
-| ------------------------------------ | ---------------------------------------------------------------------- |
-| Creating a new document              | [`form/single-page`](../patterns/form-single-page.md) on its own route |
-| A document with several field groups | [`form/sectioned`](../patterns/form-sectioned.md) on its own route     |
-| Confirming a destructive bulk action | [`interaction/confirm`](../patterns/interaction-confirm.md)            |
-| Reporting a bulk action's outcome    | [`interaction/toast`](../patterns/interaction-toast.md)                |
+| Need                                 | Pattern                                                               |
+| ------------------------------------ | --------------------------------------------------------------------- |
+| Creating a new document              | [`forms`](../patterns/forms.md#page-forms) as a page on its own route |
+| Confirming a destructive bulk action | [`interaction/confirm`](../patterns/interaction-confirm.md)           |
+| Reporting a bulk action's outcome    | [`interaction/toast`](../patterns/interaction-toast.md)               |
 
 ### Create new document
 
 Commonly the app should provide a way to create a new document that the collection lists. This is done by way of a Button passed as an action to [`Layout.Header`](../components/layout.md#header). This Button should render a Link to the document's create page – not open a creation form in a modal.
 
-The create page itself is a [single-page form](../patterns/form-single-page.md), or a [sectioned form](../patterns/form-sectioned.md) where the document has enough field groups to warrant it.
+The create page itself is a [page form](../patterns/forms.md#page-forms), with card sections where the document has enough field groups to warrant them.
 
 ### Confirming and reporting bulk actions
 

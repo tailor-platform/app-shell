@@ -13,7 +13,7 @@ do:
   - A free-text box the user fills and submits in place — add a note, reply on a thread, leave a comment, give a rejection reason
   - The prose IS the interaction; any other controls only qualify how the text is submitted
 dont:
-  - The text is one field among many on a record form — use form/modal, form/single-page or form/sectioned with a Textarea field
+  - The text is one field among many on a record form — use pattern/forms with a Textarea field
   - A chat input where Enter sends and there is no Discard — use the `AIChat` component instead
 ---
 

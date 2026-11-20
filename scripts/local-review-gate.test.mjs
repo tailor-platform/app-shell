@@ -27,7 +27,6 @@ const execute = new AsyncFunction("github", "context", "core", "process", script
 function report(sha = headSha) {
   return renderReport({
     plan: {
-      version: 1,
       repository,
       prNumber: 123,
       branch: "feature",
@@ -42,8 +41,6 @@ function report(sha = headSha) {
       completed: true,
       files: [{ path: "src/button.tsx", status: "reviewed" }],
       findings: [],
-      checks: ["Read the changed file and its callers."],
-      limitations: ["Tests were not run."],
     },
   });
 }
@@ -193,7 +190,7 @@ test("a report for an old head does not certify the current head", async () => {
 
 test("a real report for a different PR is rejected", async () => {
   const body = report();
-  const encoded = body.match(/local-review-data:v1 ([A-Za-z0-9+/=]+) -->$/)[1];
+  const encoded = body.match(/local-review-data ([A-Za-z0-9+/=]+) -->$/)[1];
   const payload = JSON.parse(Buffer.from(encoded, "base64").toString("utf8"));
   payload.plan.prNumber = 124;
   const result = await runGate({ comments: [comment(renderReport(payload))] });

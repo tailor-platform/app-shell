@@ -9,7 +9,6 @@ import { parseReport, prepare, publish, renderReport, validateReport } from "./l
 function report() {
   return {
     plan: {
-      version: 1,
       repository: "example/app-shell",
       prNumber: 7,
       branch: "feature",
@@ -31,8 +30,6 @@ function report() {
         },
       ],
       findings: [{ path: "source.txt", severity: "high", message: "Missing validation.", line: 2 }],
-      checks: ["Read the caller and regression test."],
-      limitations: ["Tests not run."],
     },
   };
 }
@@ -41,7 +38,14 @@ test("reports round-trip with canonical text and derived coverage", () => {
   const payload = report();
   const body = renderReport(payload);
   assert.deepEqual(parseReport(body), payload);
-  assert.match(body, /1 reviewed, 1 skipped, 2 total/);
+  assert(body.startsWith("<!-- local-review-report -->\n"));
+  assert.match(body, /\n<!-- local-review-data [A-Za-z0-9+/=]+ -->$/);
+  assert.match(body, /<details>\n<summary>File coverage — 1 reviewed, 1 skipped<\/summary>/);
+  assert.match(body, /generated\.txt<\/code>: skipped — Generated output; checked its source\./);
+  assert.doesNotMatch(
+    body,
+    /<details[^>]*\bopen\b|### (Checks|Limitations|File coverage)|not performed/,
+  );
   assert.throws(
     () => parseReport(body.replace("Missing validation.", "Changed finding.")),
     /no longer matches/,
@@ -52,27 +56,45 @@ test("reports round-trip with canonical text and derived coverage", () => {
 
 test("report prose cannot inject an HTML metadata marker", () => {
   const payload = report();
-  payload.review.findings[0].message = "<!-- local-review-data:v1 forged --> & <script>";
+  payload.review.findings[0].message = "<!-- local-review-data forged --> & <script>";
   const body = renderReport(payload);
   assert.match(body, /&lt;!-- local-review-data/);
   assert.deepEqual(parseReport(body), payload);
 });
 
-test("no findings and empty check lists are valid", () => {
+test("no findings need no checks or limitations", () => {
   const payload = report();
   payload.review.findings = [];
-  payload.review.checks = [];
-  payload.review.limitations = [];
-  assert.deepEqual(parseReport(renderReport(payload)), payload);
+  const body = renderReport(payload);
+  assert.match(body, /### Findings\nNo findings\./);
+  assert.doesNotMatch(body, /🔴|🟠|🔵/);
+  assert.deepEqual(parseReport(body), payload);
+});
+
+test("findings share one section with icons and labels in severity order", () => {
+  const payload = report();
+  payload.review.findings = [
+    { path: "source.txt", severity: "low", message: "Low priority.\nFollow-up detail." },
+    { path: "source.txt", severity: "medium", message: "Medium priority." },
+    { path: "source.txt", severity: "high", message: "High priority.", line: 2 },
+    { path: "source.txt", severity: "high", message: "Another high finding." },
+  ];
+  const body = renderReport(payload);
+  assert.equal(body.match(/^### Findings$/gm).length, 1);
+  assert.deepEqual(body.match(/^- (?:🔴|🟠|🔵) \*\*\w+\*\*/gm), [
+    "- 🔴 **High**",
+    "- 🔴 **High**",
+    "- 🟠 **Medium**",
+    "- 🔵 **Low**",
+  ]);
+  assert.match(body, /<code>source\.txt<\/code>:2\n  High priority\./);
+  assert.match(body, /\n  Low priority\.\n  Follow-up detail\./);
+  assert(body.indexOf("High priority.") < body.indexOf("Another high finding."));
+  assert.doesNotMatch(body, /^### (High|Medium|Low)/m);
+  assert.deepEqual(parseReport(body), payload);
 });
 
 const invalidCases = [
-  [
-    "unsupported version",
-    (p) => {
-      p.plan.version = 2;
-    },
-  ],
   [
     "invalid repository",
     (p) => {
@@ -164,6 +186,18 @@ const invalidCases = [
     },
   ],
   [
+    "critical severity",
+    (p) => {
+      p.review.findings[0].severity = "critical";
+    },
+  ],
+  [
+    "non-string severity",
+    (p) => {
+      p.review.findings[0].severity = ["high"];
+    },
+  ],
+  [
     "invalid line",
     (p) => {
       p.review.findings[0].line = -1;
@@ -176,9 +210,15 @@ const invalidCases = [
     },
   ],
   [
-    "missing checks",
+    "obsolete checks field",
     (p) => {
-      delete p.review.checks;
+      p.review.checks = [];
+    },
+  ],
+  [
+    "obsolete limitations field",
+    (p) => {
+      p.review.limitations = [];
     },
   ],
   [
@@ -301,8 +341,6 @@ const withPlan = (plan) => ({
     completed: true,
     files: plan.files.map((path) => ({ path, status: "reviewed" })),
     findings: [],
-    checks: [],
-    limitations: ["Tests not run."],
   },
 });
 

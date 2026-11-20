@@ -5,7 +5,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const marker = "<!-- local-review-report:v1 -->";
+const marker = "<!-- local-review-report -->";
+const severities = { high: "🔴 **High**", medium: "🟠 **Medium**", low: "🔵 **Low**" };
 const sha = /^[a-f0-9]{40}$/;
 const repository = /^[A-Za-z0-9][A-Za-z0-9-]*\/(?!\.{1,2}$)[A-Za-z0-9_.-]+$/;
 const isText = (value) => typeof value === "string" && value.trim().length > 0;
@@ -34,7 +35,6 @@ export function validateReport(payload, expected = {}) {
   object(
     plan,
     [
-      "version",
       "repository",
       "prNumber",
       "branch",
@@ -47,7 +47,6 @@ export function validateReport(payload, expected = {}) {
     ],
     "Plan",
   );
-  assert(plan.version === 1, "Unsupported report version.");
   assert(
     typeof plan.repository === "string" && repository.test(plan.repository),
     "Invalid repository.",
@@ -72,7 +71,7 @@ export function validateReport(payload, expected = {}) {
       assert(plan[field] === expected[field], `Report ${field} does not match the PR.`);
   }
 
-  object(review, ["completed", "files", "findings", "checks", "limitations"], "Review");
+  object(review, ["completed", "files", "findings"], "Review");
   assert(review.completed === true, "The review did not complete.");
   assert(Array.isArray(review.files), "Missing file review results.");
   const seen = new Set();
@@ -85,14 +84,12 @@ export function validateReport(payload, expected = {}) {
     seen.add(file.path);
   }
   assert(seen.size === paths.size, "Some changed files have no review result.");
-  texts(review.checks, "Checks");
-  texts(review.limitations, "Limitations");
   assert(Array.isArray(review.findings), "Findings must be an array.");
   for (const finding of review.findings) {
     object(finding, ["path", "severity", "message", "line"], "Finding");
     assert(paths.has(finding.path), "A finding must refer to a changed file.");
     assert(
-      ["critical", "high", "medium", "low"].includes(finding.severity),
+      typeof finding.severity === "string" && Object.hasOwn(severities, finding.severity),
       "Invalid finding severity.",
     );
     assert(isText(finding.message), "A finding needs a message.");
@@ -104,18 +101,20 @@ export function validateReport(payload, expected = {}) {
 
 const escape = (value) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const code = (value) => `<code>${escape(value)}</code>`;
-const bullets = (items, empty) =>
-  items.length ? items.map((item) => `- ${escape(item)}`).join("\n") : empty;
 
 export function renderReport(payload) {
   const { plan, review } = validateReport(payload);
   const reviewed = review.files.filter((file) => file.status === "reviewed").length;
-  const findings = review.findings
-    .map(
-      (finding) =>
-        `- **${finding.severity}** — ${code(finding.path)}${finding.line ? `:${finding.line}` : ""}: ${escape(finding.message)}`,
+  const findings = Object.entries(severities)
+    .flatMap(([severity, label]) =>
+      review.findings
+        .filter((finding) => finding.severity === severity)
+        .map(
+          (finding) =>
+            `- ${label} — ${code(finding.path)}${finding.line ? `:${finding.line}` : ""}\n  ${escape(finding.message).replace(/\n/g, "\n  ")}`,
+        ),
     )
-    .join("\n");
+    .join("\n\n");
   const files = review.files
     .map(
       (file) =>
@@ -128,21 +127,18 @@ export function renderReport(payload) {
 
 **Reviewed HEAD:** ${code(plan.headSha)}
 **Diff base:** ${code(plan.mergeBaseSha)}
-**Files:** ${reviewed} reviewed, ${plan.files.length - reviewed} skipped, ${plan.files.length} total.
 
 ### Findings
 ${findings || "No findings."}
 
-### Checks performed
-${bullets(review.checks, "No checks reported.")}
+<details>
+<summary>File coverage — ${reviewed} reviewed, ${plan.files.length - reviewed} skipped</summary>
 
-### Limitations / checks not performed
-${bullets(review.limitations, "No limitations reported.")}
-
-### File coverage
 ${files}
 
-<!-- local-review-data:v1 ${data} -->`;
+</details>
+
+<!-- local-review-data ${data} -->`;
   // shortcut: one GitHub comment per report; split the protocol if reports outgrow GitHub's comment limit.
   assert(
     body.length <= 65536,
@@ -153,7 +149,7 @@ ${files}
 
 export function parseReport(body) {
   assert(typeof body === "string" && body.startsWith(`${marker}\n`), "Not a local review report.");
-  const match = body.match(/\n<!-- local-review-data:v1 ([A-Za-z0-9+/]+={0,2}) -->$/);
+  const match = body.match(/\n<!-- local-review-data ([A-Za-z0-9+/]+={0,2}) -->$/);
   assert(match, "Missing local review data.");
   const decoded = Buffer.from(match[1], "base64");
   assert(decoded.toString("base64") === match[1], "Invalid local review encoding.");
@@ -254,7 +250,6 @@ export function prepare(run = command) {
     "Multiple or no open PRs match this head branch; resolve the ambiguity first.",
   );
   const plan = {
-    version: 1,
     repository: repo,
     prNumber: number,
     branch: local.branch,

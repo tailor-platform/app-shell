@@ -68,8 +68,8 @@ For every `plan.files` entry, record exactly one result:
 A completed report may contain intentional skips with reasons; 100% coverage and zero
 findings are not requirements. An interruption or execution error is **not** completion:
 stop and report the failure instead of turning unfinished work into intentional skips.
-Do not invent checks, findings, or reviewed status. Run only appropriate checks that do not
-modify tracked code, and record checks not performed and their implications.
+Do not invent findings or reviewed status. CI owns routine quality checks; run targeted
+checks only when needed to validate a finding, without modifying tracked code.
 
 ## 3. Build the review result
 
@@ -80,19 +80,22 @@ only the following top-level fields:
 - `plan`: the unchanged preparation output.
 - `review`: an object with these fields:
 
-| Field         | Content                                                                                                                |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `completed`   | `true`, only after the review has finished                                                                             |
-| `files`       | The per-file results above, covering every plan path exactly once                                                      |
-| `findings`    | Array of findings with `path`, `severity` (one of `critical`, `high`, `medium`, `low`), `message`, and optional `line` |
-| `checks`      | Array of non-empty strings describing checks actually performed                                                        |
-| `limitations` | Array of non-empty strings describing unperformed checks and remaining risks                                           |
+| Field       | Content                                                                                                |
+| ----------- | ------------------------------------------------------------------------------------------------------ |
+| `completed` | `true`, only after the review has finished                                                             |
+| `files`     | The per-file results above, covering every plan path exactly once                                      |
+| `findings`  | Array of findings with `path`, `severity` (`high`, `medium`, or `low`), `message`, and optional `line` |
 
 A finding must refer to a changed path; describe effects in related unchanged code within
 its message.
 An optional line is a positive line number in the reviewed content; omit it when not
 applicable, including deletion findings. Empty arrays are valid. Unknown fields are rejected.
 Do not include a separate count or coverage percentage: the publisher computes counts.
+Use `high` for the most severe issues; `critical` is not accepted. Do not include checks,
+limitations, or not-performed sections in the input or comment; CI owns routine checks.
+The publisher lists all findings under one heading, ordered high → medium → low, with
+🔴 **High**, 🟠 **Medium**, or 🔵 **Low** at the start of each item. File coverage and skip
+reasons are retained inside a collapsed section.
 
 Before publication, sanitize **all** prose fields for public visibility. Do not include
 specific company/customer names, credentials, private client context, absolute local paths,
@@ -117,9 +120,9 @@ file list against Git, and posts the canonical report through `gh`. It returns s
 with `prNumber`, `headSha`, and `commentUrl`. Publish even when `findings` is empty. A chat-only
 summary does not complete this skill.
 
-After successful publication, return the comment URL, a concise findings summary, and the
-important skipped checks/risks. Do not rewrite the generated comment manually: its visible
-text and machine data must remain consistent.
+After successful publication, return the comment URL and a concise findings summary.
+Do not rewrite the generated comment manually: its visible text and machine data must
+remain consistent.
 
 If publication fails or its outcome is uncertain, report the skill as incomplete. Inspect
 the current PR's conversation comments with `gh` before retrying; do not blindly create a
@@ -146,9 +149,9 @@ HEAD SHA likewise has no successful status until a fresh report is posted; no PR
 is needed. Comments on closed PRs are also revalidated so deleting or editing a report does
 not leave stale success when the PR is reopened.
 
-A new head commit needs a new review. Base-branch movement alone does not require re-review
-in this version. Report edits/deletions trigger revalidation, but revocation is asynchronous
-and statuses are commit-scoped, not strictly isolated between PRs sharing a SHA.
+A new head commit needs a new review. Base-branch movement alone does not require re-review.
+Report edits/deletions trigger revalidation, but revocation is asynchronous and statuses are
+commit-scoped, not strictly isolated between PRs sharing a SHA.
 
 This is a declared execution/reporting process, not a signature or proof that an agent
 faithfully checked every review criterion. It detects missing/stale reports and incomplete

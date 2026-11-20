@@ -230,7 +230,9 @@ function CopyButton({ value }: { value: string }) {
         render={
           <button
             onClick={handleCopy}
-            className="astw:ml-0.5 astw:inline-flex astw:items-center astw:justify-center astw:p-1 astw:rounded astw:hover:bg-muted astw:transition-colors astw:text-muted-foreground astw:hover:text-foreground"
+            // `p-1.5` makes the button 24×24 (WCAG 2.5.8 target size); the negative
+            // margins keep its 20×20 footprint next to the value, so nothing moves.
+            className="astw:-my-0.5 astw:-mr-0.5 astw:inline-flex astw:items-center astw:justify-center astw:p-1.5 astw:rounded astw:hover:bg-muted astw:transition-colors astw:text-muted-foreground astw:hover:text-foreground"
           />
         }
       >

@@ -283,7 +283,9 @@ function ComboboxChipRemove({
     <BaseCombobox.ChipRemove
       data-slot="combobox-chip-remove"
       className={cn(
-        "astw:rounded-sm astw:p-0.5 astw:text-inherit astw:outline-none",
+        // `p-1.5` makes the button 24×24 (WCAG 2.5.8 target size); the negative
+        // margin keeps its 16×16 footprint inside the chip.
+        "astw:-m-1 astw:rounded-sm astw:p-1.5 astw:text-inherit astw:outline-none",
         "astw:hover:bg-secondary-foreground/20",
         className,
       )}

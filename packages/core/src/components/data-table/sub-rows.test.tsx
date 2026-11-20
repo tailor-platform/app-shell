@@ -101,6 +101,9 @@ describe("DataTable subRows", () => {
 
     expect(screen.queryByText("Cash")).toBeNull();
     expect(caretFor("Assets").getAttribute("aria-expanded")).toBe("false");
+    // 24px hit area (WCAG 2.5.8) with a one-step footprint so children still line up.
+    expect(caretFor("Assets").className).toContain("astw:size-6");
+    expect(caretFor("Assets").className).toContain("astw:-m-0.5");
     await user.click(caretFor("Assets"));
     expect(caretFor("Assets").getAttribute("aria-expanded")).toBe("true");
     expect(screen.getByText("Cash")).toBeDefined();

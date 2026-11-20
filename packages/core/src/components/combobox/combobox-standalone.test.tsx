@@ -175,6 +175,24 @@ describe("Combobox (standalone, multiple)", () => {
     await user.click(screen.getByText("Apple"));
     expect(onValueChange).toHaveBeenCalledWith(["Apple"], expect.anything());
   });
+
+  it("gives each chip's remove button a 24px hit area inside the chip", async () => {
+    const user = userEvent.setup();
+    render(<Combobox items={fruits} multiple placeholder="Pick fruits" />);
+    await user.click(screen.getByRole("combobox"));
+    await waitFor(() => {
+      expect(screen.getByText("Apple")).toBeDefined();
+    });
+    await user.click(screen.getByText("Apple"));
+
+    const remove = await waitFor(() => {
+      const el = document.querySelector('[data-slot="combobox-chip-remove"]');
+      expect(el).not.toBeNull();
+      return el!;
+    });
+    expect(remove.className).toContain("astw:p-1.5");
+    expect(remove.className).toContain("astw:-m-1");
+  });
 });
 
 describe("Combobox (standalone, RHF integration)", () => {

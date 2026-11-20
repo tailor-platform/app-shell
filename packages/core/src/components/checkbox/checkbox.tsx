@@ -96,8 +96,13 @@ function Checkbox({ className, label, ...props }: CheckboxProps) {
       // When there's a label, the enclosing <label> owns the disabled dim
       // (`has-data-disabled:opacity-50`); dimming the box too would compound the
       // opacity. Only the bare box dims itself.
+      // The 16px box keeps its size; the pseudo element extends the hit area to
+      // 24×24 (WCAG 2.5.8 target size) without changing the layout. Same
+      // pattern as the sidebar menu buttons' mobile hit area. The inset is
+      // measured from the padding box, inside the 1px border, hence 5px.
       className={cn(
         checkboxBoxClasses,
+        "astw:relative astw:after:absolute astw:after:-inset-1.25",
         !label && "astw:data-disabled:opacity-50",
         !label && className,
       )}

@@ -2110,7 +2110,7 @@
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   },
   "agents": {
-    "packages/core/dist/docs/AGENTS.md": "6ec5a9dd73ae8bf3",
+    "packages/core/dist/docs/AGENTS.md": "c61e88c0693e8f67",
     "packages/core/dist/agents/AGENTS.block.md": "782d7ab5dec36296"
   }
 }

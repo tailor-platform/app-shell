@@ -25,7 +25,7 @@ Each entry below is a file at `<category>/<slug>.md` in this folder (the docs ro
 - One primary (filled) `Button` per view. Everything else is `outline`, `secondary` or `ghost`.
 - An action lives in one place: the primary action and status in `Layout.Header`, workflow actions in `ActionPanel`, back and navigation in the breadcrumb.
 - Creating or editing a document is a routed full-page form (`form-single-page`, `form-sectioned` or `form-wizard`). `form-modal` is for small entities with a handful of fields.
-- Forms use `Form` and `Field` and submit through `onFormSubmit`, never a bare `<form onSubmit>`.
+- Forms use `Form` and `Field` and submit through `onFormSubmit`, never a bare `<form onSubmit>`. See `components/form`, and "Form state" in `patterns/form-modal` for the rules every form pattern shares.
 - Status and feedback colour comes from a component variant (`Badge`, `Alert`) or a semantic colour role. See `concepts/styling-theming`.
 - Every data view handles loading, empty and error states.
 - Read `patterns/i18n-labels` before writing screen text. UI strings go through the app's label catalog.

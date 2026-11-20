@@ -141,11 +141,9 @@ function OrderDetailPage() {
 
 > **Note:** `icon` changes alone do not trigger re-registration. To reflect a dynamic icon update, also change the action's `key` or `label`.
 
-### ActionPanel Integration
+### Explicit ActionPanel Registration
 
-When you use the [`ActionPanel`](./action-panel.md) component, its enabled actions (not `disabled`, not `loading`, and with an `onClick` handler) are automatically registered to the CommandPalette under the panel's `title`. No additional setup is required.
-
-For more details see [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md).
+[`ActionPanel`](./action-panel.md#explicit-commandpalette-registration) only renders action rows; it does not register them to the CommandPalette. To expose selected panel actions here, use [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md) explicitly. Exclude disabled or loading actions and actions without an `onClick` handler, and map the handler to `onSelect`.
 
 ## Async Search Sources
 
@@ -244,7 +242,6 @@ The supported extension points are:
 
 - `searchSources` on `AppShell` for async, prefix-activated search modes
 - [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md) for page-level actions
-- [`ActionPanel`](./action-panel.md), whose enabled rows are registered automatically
 
 `CommandPalette` itself is built into `AppShell`; there is no separate public hook for rebuilding the palette UI from scratch.
 

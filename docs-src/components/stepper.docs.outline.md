@@ -1,0 +1,114 @@
+---
+kind: code-backed
+group: stepper
+title: Stepper
+description: Shows progress through a fixed sequence of steps — wizard steps, approval stages, quality gates
+sources:
+  - packages/core/src/components/stepper/**
+---
+
+# Stepper
+
+`Stepper` shows how far something has progressed through a fixed sequence of steps: the steps of a [wizard form](../patterns/form-wizard.md), the stages of an approval flow, the quality gates of a project. You give it the steps and one `progress` value saying how far the flow has got; it works out how each step looks.
+
+It only displays progress. The page owns `progress` and decides what happens when a step is clicked.
+
+## Import
+
+```tsx
+import { Stepper } from "@tailor-platform/app-shell";
+```
+
+## Basic Usage
+
+<!-- example: basic-usage -->
+
+## Props
+
+| Prop          | Type                         | Default        | Description                                                                                   |
+| ------------- | ---------------------------- | -------------- | --------------------------------------------------------------------------------------------- |
+| `steps`       | `StepperStep[]`              | -              | The steps, in order                                                                           |
+| `progress`    | `StepperProgress`            | -              | How far the flow has got (below)                                                              |
+| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | A row of steps, or a column for beside a form                                                 |
+| `onStepClick` | `(id: Id) => void`           | -              | Makes passed steps (completed or skipped) clickable — for example to go back to a wizard step |
+| `aria-label`  | `string`                     | "Progress"     | Accessible name for the list of steps (the default is translated)                             |
+| `className`   | `string`                     | -              | Additional CSS classes                                                                        |
+| `style`       | `CSSProperties`              | -              | Inline styles                                                                                 |
+
+### `StepperStep`
+
+| Field         | Type                | Description                                                                                  |
+| ------------- | ------------------- | -------------------------------------------------------------------------------------------- |
+| `id`          | `Id extends string` | Stable, unique id, used by `progress` and passed to `onStepClick`                            |
+| `label`       | `ReactNode`         | Step name                                                                                    |
+| `badge`       | `ReactNode`         | Shown beside the label — for example a "Next" or "Overdue" `Badge`                           |
+| `description` | `ReactNode`         | Shown under the label — a short hint, or a few lines of values such as plan and actual dates |
+
+## Progress
+
+`progress` is one of three states. Steps don't carry a status of their own, so a Stepper can't show two current steps or a completed step after the current one.
+
+```ts
+type StepperProgress<Id> =
+  | { state: "not-started" }
+  | { state: "in-progress"; currentStepId: Id; skippedStepIds?: Id[] }
+  | { state: "complete"; skippedStepIds?: Id[] };
+```
+
+| `state`         | How the steps look                                                                |
+| --------------- | --------------------------------------------------------------------------------- |
+| `"not-started"` | All upcoming                                                                      |
+| `"in-progress"` | Before `currentStepId`: complete (or skipped); at it: current; after it: upcoming |
+| `"complete"`    | All complete (or skipped)                                                         |
+
+| Look     | Marker                         |
+| -------- | ------------------------------ |
+| Complete | Filled, with a check           |
+| Current  | Outlined in the primary colour |
+| Upcoming | Outlined, muted                |
+| Skipped  | Dashed outline, muted          |
+
+The current step gets `aria-current="step"`, and screen readers hear how the others stand ("Completed", "Skipped", "Not started"). The line is filled up to the current step, or all the way once complete.
+
+### Skipping steps
+
+`skippedStepIds` names steps the user moved past without doing, for example by pressing "Skip" in a wizard. Only steps already passed can be skipped: those before `currentStepId`, or any step once `complete`. A skipped step stays clickable through `onStepClick`, so the user can go back and do it.
+
+Business states such as "Waiting for approval" or "Overdue" aren't progress; show them with `badge` or `description`.
+
+### Typed ids
+
+Step ids are typed from `steps`: `progress` only accepts those ids, and `onStepClick` receives them.
+
+```tsx
+<Stepper
+  steps={[
+    { id: "supplier", label: "Supplier" },
+    { id: "review", label: "Review" },
+  ]}
+  progress={{ state: "in-progress", currentStepId: "review" }} // "supplier" | "review"
+  onStepClick={(id) => goTo(id)} // id: "supplier" | "review"
+/>
+```
+
+Steps built at runtime can't be checked by types. In development the Stepper warns about an unknown or duplicate id, or a skipped step that hasn't been passed, and ignores it.
+
+## Stage progress
+
+Badges and descriptions turn the Stepper into a stage tracker on a detail page:
+
+<!-- example: stage-progress -->
+
+## Vertical
+
+A vertical Stepper suits a column beside a form, such as a wizard on a page:
+
+<!-- example: vertical -->
+
+## Narrow containers
+
+A horizontal Stepper adapts to the width of its container, not the viewport:
+
+- When the steps don't fit side by side, the row scrolls sideways rather than squeezing the labels.
+- Below 400px it shows only the markers and lines, with "Step 2 of 4" and the current step's label underneath. This is what a wizard needs in a dialog on a phone.
+- Each marker then names its step in a tooltip on hover, and the marker of a passed step becomes the button that goes back to it, so keyboard users still have one visible place to focus.

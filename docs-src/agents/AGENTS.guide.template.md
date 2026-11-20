@@ -1,6 +1,6 @@
 # AppShell docs (`@tailor-platform/app-shell` {{APP_SHELL_VERSION}})
 
-These are the docs for the installed version of AppShell. Read the matching doc before you write or change a screen, form, table, dialog, navigation or styling. Don't work from memory of the API, because it changes between versions.
+These are the docs for the installed version of AppShell. Read the matching doc before you write or change a screen, form, table, dialog, navigation or styling. Don't guess the API from shadcn/ui or Radix: those guesses look right and are wrong here (`asChild` is `render`, `<form onSubmit>` is `Form onFormSubmit`, and `useToast()` returns the toast function itself).
 
 Each entry below is a file at `<category>/<slug>.md` in this folder (the docs root that the AppShell block in `AGENTS.md` names).
 

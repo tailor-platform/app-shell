@@ -45,7 +45,7 @@ How agents pick the guide up depends on the tool:
 
 The path is gitignored, so agents need the exact path rather than finding it by search, which is why the block spells it out. Before `pnpm install` the file doesn't exist yet, and Claude Code skips a missing import quietly.
 
-The block has no version number. It only changes if the docs move inside the package or the block's own wording changes. This follows Next.js, whose `AGENTS.md` block is a short pointer into the docs bundled at `node_modules/next/dist/docs/`.
+The block has no version number. It only changes if the docs move inside the package or the block's own wording changes. This follows Next.js, whose `AGENTS.md` block is a short pointer into the docs bundled at `node_modules/next/dist/docs/`. One difference: our guide indexes the docs, and Next's doesn't. Models already know the shape of Next.js and only need its current details. They know next to nothing about AppShell, so the index is their only map of what exists.
 
 ### Starting an agent inside a package
 

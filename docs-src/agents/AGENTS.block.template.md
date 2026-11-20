@@ -1,6 +1,6 @@
 ## AppShell UI (`@tailor-platform/app-shell`)
 
-The package at `{{PACKAGE_DIR}}/` builds its UI with AppShell, and what you remember of its API is likely out of date. The docs for the installed version are in `{{DOCS_ROOT}}/`. Before you write or change UI code here, read the guide that indexes them:
+The package at `{{PACKAGE_DIR}}/` builds its UI with AppShell. You probably don't know AppShell's API, and it looks like shadcn/ui but differs, so don't guess it from that or other UI libraries. The docs for the installed version are in `{{DOCS_ROOT}}/`. Before you write or change UI code here, read the guide that indexes them:
 
 @{{GUIDE_PATH}}
 

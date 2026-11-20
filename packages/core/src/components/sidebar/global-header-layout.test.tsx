@@ -6,7 +6,7 @@ import { ContentContainer } from "./content-container";
 import { DynamicBreadcrumb } from "@/components/sidebar/dynamic-breadcrumb";
 import { useAppShellSidebar } from "./use-app-shell-sidebar";
 import { AppShell } from "@/components/appshell";
-import { defineModule } from "@/resource";
+import { defineModule, defineResource } from "@/resource";
 import { Home } from "lucide-react";
 
 afterEach(() => {
@@ -56,6 +56,79 @@ describe("GlobalHeaderLayout", () => {
       expect(header!.textContent).toContain("My App");
       expect(header!.textContent).toContain("Dashboard");
     });
+  });
+
+  it("hides the app title below md and keeps only the current page in a deep breadcrumb", async () => {
+    stubDesktopViewport();
+    const modules = [
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard", icon: <Home /> },
+        component: () => <div>Dashboard</div>,
+        resources: [defineResource({ path: "orders", component: () => <div>Orders</div> })],
+      }),
+    ];
+    window.history.pushState({}, "", "/dashboard/orders/ord-1");
+    render(
+      <AppShell title="My App" modules={modules}>
+        <GlobalHeaderLayout />
+      </AppShell>,
+    );
+
+    const items = await waitFor(() => {
+      const found = document.querySelectorAll('[data-slot="breadcrumb-item"]');
+      expect(found).toHaveLength(3);
+      return Array.from(found);
+    });
+
+    // The title is still rendered (desktop keeps it); only the responsive class hides it.
+    const header = document.querySelector("header")!;
+    const title = Array.from(header.querySelectorAll("span")).find(
+      (el) => el.textContent === "My App",
+    )!;
+    expect(title.className).toContain("astw:max-md:hidden");
+
+    // Three segments: the two ancestors carry the responsive class, the current page does not.
+    const wrappers = items.map((li) => li.parentElement!);
+    expect(wrappers.slice(0, 2).every((el) => el.className.includes("astw:max-md:hidden"))).toBe(
+      true,
+    );
+    expect(wrappers[2].className).not.toContain("astw:max-md:hidden");
+
+    // The trail never wraps and each link is 24px tall for touch.
+    expect(document.querySelector('[data-slot="breadcrumb-list"]')!.className).toContain(
+      "astw:flex-nowrap",
+    );
+    expect(document.querySelector('[data-slot="breadcrumb-link"]')!.className).toContain(
+      "astw:py-0.5",
+    );
+  });
+
+  it("keeps every segment of a two-level breadcrumb at all widths", async () => {
+    stubDesktopViewport();
+    const modules = [
+      defineModule({
+        path: "dashboard",
+        meta: { title: "Dashboard", icon: <Home /> },
+        component: () => <div>Dashboard</div>,
+        resources: [defineResource({ path: "orders", component: () => <div>Orders</div> })],
+      }),
+    ];
+    window.history.pushState({}, "", "/dashboard/orders");
+    render(
+      <AppShell title="My App" modules={modules}>
+        <GlobalHeaderLayout />
+      </AppShell>,
+    );
+
+    const items = await waitFor(() => {
+      const found = document.querySelectorAll('[data-slot="breadcrumb-item"]');
+      expect(found).toHaveLength(2);
+      return Array.from(found);
+    });
+    expect(items.some((li) => li.parentElement!.className.includes("astw:max-md:hidden"))).toBe(
+      false,
+    );
   });
 
   it("bakes hideHeader + iconRail into the default sidebar", async () => {

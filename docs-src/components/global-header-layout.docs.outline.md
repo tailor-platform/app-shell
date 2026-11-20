@@ -117,6 +117,8 @@ The layout's default header is also exported as a top-level `GlobalHeader` compo
 
 `actions` behaves the same way as on `SidebarLayout.DefaultHeader`: omitting it renders the built-in [`AppearanceSwitcher`](./appearance-switcher.md), and passing it replaces the entire right-hand cluster.
 
+Below the `md` breakpoint (768px) the title and its divider are hidden, so the breadcrumb gets the whole left side. The breadcrumb itself never wraps: a trail of three or more segments shows only the current page at those widths, and a long page title truncates with an ellipsis instead of pushing the trail out of the header.
+
 ```tsx
 import { AppearanceSwitcher, GlobalHeader } from "@tailor-platform/app-shell";
 

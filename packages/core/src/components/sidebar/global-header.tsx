@@ -49,10 +49,13 @@ export const GlobalHeader = ({ actions }: GlobalHeaderProps) => {
     <header className="astw:flex astw:h-14 astw:shrink-0 astw:items-center astw:justify-between astw:gap-2 astw:border-b astw:border-border astw:px-4">
       <div className="astw:flex astw:min-w-0 astw:flex-1 astw:items-center astw:gap-2">
         {icon}
-        <Text.span variant="heading-sm" className="astw:shrink-0 astw:truncate">
+        {/* Below `md` the breadcrumb (the current page) takes the whole left side:
+            the app title and its divider are hidden so the trail is not squeezed
+            to a few pixels at phone widths. */}
+        <Text.span variant="heading-sm" className="astw:max-md:hidden astw:shrink-0 astw:truncate">
           {title}
         </Text.span>
-        <div className="astw:mx-1 astw:h-5 astw:w-px astw:shrink-0 astw:bg-border" />
+        <div className="astw:max-md:hidden astw:mx-1 astw:h-5 astw:w-px astw:shrink-0 astw:bg-border" />
         <div className="astw:flex astw:min-w-0 astw:flex-1 astw:items-center astw:overflow-hidden">
           <DynamicBreadcrumb />
         </div>

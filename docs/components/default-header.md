@@ -11,6 +11,8 @@ description: The built-in SidebarLayout top bar, extensible via an actions slot
 
 It is exposed as `SidebarLayout.DefaultHeader` (and as a top-level `DefaultHeader` export) so you can slightly extend the built-in header — the common case being adding a notification bell or user menu — without reconstructing the trigger and breadcrumb yourself.
 
+The breadcrumb never wraps. Below the `md` breakpoint (768px) a trail of three or more segments shows only the current page, and a long page title truncates with an ellipsis.
+
 ## Import
 
 ```tsx

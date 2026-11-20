@@ -98,6 +98,14 @@ A compound component that groups all parts of a form field and manages its valid
 | `validationDebounceTime` | `number`                                 | -       | Debounce delay (ms) for `"onChange"` validation mode.                                               |
 | `className`              | `string`                                 | -       | Additional CSS classes for the field wrapper.                                                       |
 
+### Field.Label Props
+
+Accepts all standard `<label>` props, plus:
+
+| Prop       | Type      | Default | Description                                                                                                                               |
+| ---------- | --------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `required` | `boolean` | `false` | Shows the required marker (`*`) after the label. Visual only — also set `required` on the control, which is what's checked and announced. |
+
 ### Field.Error Props
 
 | Prop       | Type                                                             | Default | Description                                                                                                |
@@ -300,6 +308,8 @@ The `Field` context handles only accessibility wiring (`htmlFor`, `aria-describe
 
 ## Related
 
+- [Grid](./grid.md) — `maxColumns` lays fields out in columns that fit their container.
+- [Forms pattern](../patterns/forms.md) — Containers, sections and sizing rules for a whole form.
 - [Testing](../concepts/testing.md#find-form-controls-by-role-and-accessible-name) — Role-based field interactions, form submission, and validation tests.
 - [Input](./input.md) — Standalone styled input, useful outside of forms.
 - [Textarea](./textarea.md) — Multi-line text control that integrates automatically with `Field`.

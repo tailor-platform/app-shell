@@ -51,6 +51,22 @@ export interface GridProps extends React.ComponentProps<"div"> {
   /** Vertical (row) gap override, in spacing-scale units. Responsive. */
   gapY?: Responsive<number>;
   /**
+   * Container-responsive columns: show **at most** this many equal columns and
+   * step down to one as the grid's own container narrows (≥880px → 4,
+   * ≥640px → 3, ≥400px → 2). Unlike `columns`, the thresholds follow the
+   * container width, not the viewport, so the same markup reflows inside a
+   * page, a dialog or a sheet.
+   *
+   * Tracks are fixed per container size, so a short row keeps its column
+   * width instead of stretching. The grid renders inside a wrapper element
+   * that is the `@container`.
+   *
+   * Numeric (non-responsive) `Grid.Item` `colSpan`s are clamped to the columns
+   * currently shown: `colSpan={3}` covers 1, 2 or 3 columns, never creating
+   * an implicit column. **Overrides `columns` and `minChildWidth`** when set.
+   */
+  maxColumns?: 1 | 2 | 3 | 4;
+  /**
    * Auto-fit columns: each child is at least this wide and as many as fit are
    * placed per row (`repeat(auto-fit, minmax(w, 1fr))`). A number is treated as
    * pixels. **Overrides `columns`** when set.

@@ -312,6 +312,21 @@ describe("Sheet", () => {
     });
   });
 
+  it("right-aligns footer buttons at their own width instead of stacking them full width", () => {
+    render(
+      <Sheet.Root defaultOpen>
+        <Sheet.Content>
+          <Sheet.Footer>
+            <button>Save</button>
+          </Sheet.Footer>
+        </Sheet.Content>
+      </Sheet.Root>,
+    );
+    const footer = screen.getByText("Save").parentElement!;
+    expect(footer.className).toContain("astw:justify-end");
+    expect(footer.className).not.toContain("astw:flex-col");
+  });
+
   it("closes sheet when pressing Escape", async () => {
     const user = userEvent.setup();
 

@@ -266,4 +266,92 @@ describe("Grid", () => {
       expect(item.style.getPropertyValue("--gi-col-end")).toBe("4");
     });
   });
+
+  // ==========================================================================
+  // maxColumns — container-responsive columns
+  // ==========================================================================
+
+  describe("maxColumns", () => {
+    it("renders the grid inside an @container wrapper", () => {
+      const { container } = render(
+        <Grid maxColumns={3}>
+          <div>A</div>
+        </Grid>,
+      );
+      const wrapper = getRoot(container);
+      expect(wrapper.getAttribute("data-slot")).toBe("grid-container");
+      expect(wrapper.className).toContain("astw:@container");
+      expect(wrapper.firstElementChild?.getAttribute("data-slot")).toBe("grid");
+    });
+
+    it("steps columns down from the max as the container narrows", () => {
+      const { container } = render(
+        <Grid maxColumns={3}>
+          <div>A</div>
+        </Grid>,
+      );
+      const grid = getRoot(container).firstElementChild as HTMLElement;
+      expect(grid.className).toContain("astw:grid-cols-1");
+      expect(grid.className).toContain("astw:@[400px]:grid-cols-2");
+      expect(grid.className).toContain("astw:@[640px]:grid-cols-3");
+      expect(grid.className).not.toContain("grid-cols-4");
+    });
+
+    it("overrides columns and minChildWidth", () => {
+      const { container } = render(
+        <Grid maxColumns={2} columns={5} minChildWidth={100}>
+          <div>A</div>
+        </Grid>,
+      );
+      const grid = getRoot(container).firstElementChild as HTMLElement;
+      expect(grid.className).not.toContain("grid-cols-[var(--grid-cols)]");
+      expect(grid.style.gridTemplateColumns).toBe("");
+    });
+
+    it("clamps numeric spans to the columns shown", () => {
+      const { container } = render(
+        <Grid maxColumns={2}>
+          <Grid.Item colSpan={3}>Wide</Grid.Item>
+        </Grid>,
+      );
+      const grid = getRoot(container).firstElementChild as HTMLElement;
+      expect(grid.className).toContain("astw:@[400px]:[&>[data-col-span='3']]:col-span-2");
+      expect(grid.className).not.toContain("col-span-3");
+      expect(grid.querySelector("[data-slot=grid-item]")?.getAttribute("data-col-span")).toBe("3");
+    });
+
+    it("exposes full spans and skips responsive spans", () => {
+      render(
+        <Grid maxColumns={2}>
+          <Grid.Item colSpan="full">Full</Grid.Item>
+          <Grid.Item colSpan={{ initial: 1, md: 2 }}>Responsive</Grid.Item>
+        </Grid>,
+      );
+      const [full, responsive] = screen.getAllByText(/Full|Responsive/);
+      expect(full.getAttribute("data-col-span")).toBe("full");
+      expect(responsive.getAttribute("data-col-span")).toBeNull();
+    });
+
+    it("stretches fields to fill their cell", () => {
+      const { container } = render(
+        <Grid maxColumns={2}>
+          <div data-slot="field">A</div>
+        </Grid>,
+      );
+      const grid = getRoot(container).firstElementChild as HTMLElement;
+      expect(grid.className).toContain("astw:[&>[data-slot=field]]:items-stretch");
+      expect(grid.className).toContain(
+        "astw:[&>[data-slot=grid-item]>[data-slot=field]]:items-stretch",
+      );
+    });
+
+    it("does not wrap the grid without maxColumns", () => {
+      const { container } = render(
+        <Grid columns={2}>
+          <div>A</div>
+        </Grid>,
+      );
+      expect(getRoot(container).getAttribute("data-slot")).toBe("grid");
+    });
+  });
 });

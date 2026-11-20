@@ -38,19 +38,20 @@ Plain children occupy a single cell. Wrap a child in `Grid.Item` only when it ne
 
 ### Grid Props
 
-| Prop            | Type                                                                | Default    | Description                                                                                              |
-| --------------- | ------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------- |
-| `columns`       | `number \| string \| Responsive<number \| string>`                  | -          | A number creates that many equal columns; a string is a verbatim `grid-template-columns` value           |
-| `rows`          | `number \| string \| Responsive<number \| string>`                  | -          | Same shape as `columns`, for `grid-template-rows`                                                        |
-| `gap`           | `number \| Responsive<number>`                                      | `3` (12px) | Gap between rows and columns, in spacing-scale units (`4` → `1rem`)                                      |
-| `gapX`          | `number \| Responsive<number>`                                      | -          | Horizontal (column) gap override                                                                         |
-| `gapY`          | `number \| Responsive<number>`                                      | -          | Vertical (row) gap override                                                                              |
-| `minChildWidth` | `number \| string`                                                  | -          | Auto-fit: each item is at least this wide and as many as fit are placed per row. **Overrides `columns`** |
-| `flow`          | `"row" \| "column" \| "dense" \| "row-dense" \| "column-dense"`     | `"row"`    | `grid-auto-flow` — placement direction and dense packing                                                 |
-| `align`         | `"start" \| "center" \| "end" \| "stretch" \| "baseline"`           | -          | `align-items` — block-axis alignment of items within their tracks                                        |
-| `justify`       | `"start" \| "center" \| "end" \| "between" \| "around" \| "evenly"` | -          | `justify-content` — inline-axis distribution of tracks within the grid                                   |
-| `className`     | `string`                                                            | -          | Additional CSS classes                                                                                   |
-| `children`      | `React.ReactNode`                                                   | -          | Grid items (any elements, or `Grid.Item`)                                                                |
+| Prop            | Type                                                                | Default    | Description                                                                                                                  |
+| --------------- | ------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `columns`       | `number \| string \| Responsive<number \| string>`                  | -          | A number creates that many equal columns; a string is a verbatim `grid-template-columns` value                               |
+| `rows`          | `number \| string \| Responsive<number \| string>`                  | -          | Same shape as `columns`, for `grid-template-rows`                                                                            |
+| `gap`           | `number \| Responsive<number>`                                      | `3` (12px) | Gap between rows and columns, in spacing-scale units (`4` → `1rem`)                                                          |
+| `gapX`          | `number \| Responsive<number>`                                      | -          | Horizontal (column) gap override                                                                                             |
+| `gapY`          | `number \| Responsive<number>`                                      | -          | Vertical (row) gap override                                                                                                  |
+| `minChildWidth` | `number \| string`                                                  | -          | Auto-fit: each item is at least this wide and as many as fit are placed per row. **Overrides `columns`**                     |
+| `maxColumns`    | `1 \| 2 \| 3 \| 4`                                                  | -          | Container-based columns: up to this many, fewer as the grid's own width shrinks. **Overrides `columns` and `minChildWidth`** |
+| `flow`          | `"row" \| "column" \| "dense" \| "row-dense" \| "column-dense"`     | `"row"`    | `grid-auto-flow` — placement direction and dense packing                                                                     |
+| `align`         | `"start" \| "center" \| "end" \| "stretch" \| "baseline"`           | -          | `align-items` — block-axis alignment of items within their tracks                                                            |
+| `justify`       | `"start" \| "center" \| "end" \| "between" \| "around" \| "evenly"` | -          | `justify-content` — inline-axis distribution of tracks within the grid                                                       |
+| `className`     | `string`                                                            | -          | Additional CSS classes                                                                                                       |
+| `children`      | `React.ReactNode`                                                   | -          | Grid items (any elements, or `Grid.Item`)                                                                                    |
 
 All standard HTML `<div>` props are also accepted.
 
@@ -80,6 +81,27 @@ There are three ways to size columns; pick whichever fits.
 <!-- example: column-sizing -->
 
 `minChildWidth` accepts a number (pixels) or a string (e.g. `"16rem"`) and takes precedence over `columns` when set.
+
+## Container-based columns
+
+`maxColumns` sizes the grid by **its own width**, not the viewport. That is what a form or a field group needs: the same grid shows two columns on a page, two in a large dialog and one in a small one, without breakpoint props.
+
+<!-- example: max-columns -->
+
+| Grid width      | Columns shown |
+| --------------- | ------------- |
+| under 400px     | 1             |
+| 400px and wider | up to 2       |
+| 640px and wider | up to 3       |
+| 880px and wider | up to 4       |
+
+`maxColumns` is the most the grid ever shows; it steps down below each width. In this mode:
+
+- **Spans clamp to the columns shown.** A `Grid.Item colSpan={2}` covers both columns of a two-column grid and the only column of a one-column grid, so nothing overflows. `colSpan="full"` always covers the whole row. Responsive `colSpan` objects aren't clamped; use a plain number.
+- **Fields fill their cell.** A `Field.Root` placed directly in the grid (or in a `Grid.Item`) stretches its control to the cell width, so a `Select` or `Combobox` lines up with the inputs beside it.
+- **The grid renders a wrapper.** It is a `<div data-slot="grid-container">` that the width is measured from; it takes the full width of its parent.
+
+For laying out a whole form with it, see the [Forms pattern](../patterns/forms.md).
 
 ## Spanning with Grid.Item
 
@@ -127,10 +149,11 @@ There are three ways to size columns; pick whichever fits.
 
 ## Styling
 
-`Grid` is a presentational primitive: it renders a single `<div data-slot="grid">` (and `<div data-slot="grid-item">` for cells) styled with the library's internal `astw:`-prefixed utilities. Dynamic templates are applied via CSS custom properties, so arbitrary column counts and responsive values work without extra configuration. Pass `className` (**plain** utilities — see [Styling AppShell components](../concepts/styling-theming.md#styling-appshell-components)) or `style` to extend. Use `columns` and `gap` for the grid itself.
+`Grid` is a presentational primitive: it renders a single `<div data-slot="grid">`, wrapped in a `<div data-slot="grid-container">` when `maxColumns` is set, and `<div data-slot="grid-item">` for cells, styled with the library's internal `astw:`-prefixed utilities. Dynamic templates are applied via CSS custom properties, so arbitrary column counts and responsive values work without extra configuration. Pass `className` (**plain** utilities — see [Styling AppShell components](../concepts/styling-theming.md#styling-appshell-components)) or `style` to extend. Use `columns` and `gap` for the grid itself.
 
 ## Related Components
 
 - [Layout](./layout.md) - Page-level scaffold (header + sidebars + main)
 - [Card](./card.md) - Common child of a grid cell
+- [Form](./form.md) - `Field` and `Fieldset`, laid out with `maxColumns`
 - [MetricCard](./metric-card.md) - KPI cards for dashboard grids

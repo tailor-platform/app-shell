@@ -1,13 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Home } from "lucide-react";
-import { AppShell } from "@/testing";
-import { AppShell as PublicAppShell } from "@/index";
+import { AppShellTestingProvider } from "@/testing";
+import { AppShell } from "@/index";
 import { SidebarLayout } from "@/components/sidebar";
 import { defineModule, defineResource } from "@/resource";
-
-// `memory` lets a test mount at a known URL without touching
-// window.location. Reachable only from the /testing entry.
+import { routerFactories } from "@/routing/router";
 
 const modules = () => [
   defineModule({
@@ -26,14 +24,17 @@ const modules = () => [
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe("AppShell memory routing", () => {
-  it("mounts at the given initialEntries location", async () => {
+  it("mounts at the provider's initialEntries location", async () => {
     render(
-      <AppShell memory initialEntries={["/orders/A42"]} title="Test" modules={modules()}>
-        <SidebarLayout />
-      </AppShell>,
+      <AppShellTestingProvider initialEntries={["/orders/A42"]}>
+        <AppShell title="Test" modules={modules()}>
+          <SidebarLayout />
+        </AppShell>
+      </AppShellTestingProvider>,
     );
 
     expect(await screen.findByText("Order detail page")).toBeDefined();
@@ -43,18 +44,78 @@ describe("AppShell memory routing", () => {
     const before = window.location.pathname;
 
     render(
-      <AppShell memory initialEntries={["/orders/A42"]} title="Test" modules={modules()}>
-        <SidebarLayout />
-      </AppShell>,
+      <AppShellTestingProvider initialEntries={["/orders/A42"]}>
+        <AppShell title="Test" modules={modules()}>
+          <SidebarLayout />
+        </AppShell>
+      </AppShellTestingProvider>,
     );
 
     await screen.findByText("Order detail page");
     expect(window.location.pathname).toBe(before);
   });
 
-  it("ignores memory on the production component, even from untyped callers", async () => {
-    // The type already rejects this; the pin is what holds for JS callers and
-    // `any` spreads, where it does not apply.
+  it("uses the nearest testing provider", async () => {
+    render(
+      <AppShellTestingProvider initialEntries={["/orders"]}>
+        <AppShellTestingProvider initialEntries={["/orders/A42"]}>
+          <AppShell title="Test" modules={modules()}>
+            <SidebarLayout />
+          </AppShell>
+        </AppShellTestingProvider>
+      </AppShellTestingProvider>,
+    );
+
+    expect(await screen.findByText("Order detail page")).toBeDefined();
+  });
+
+  it("uses memory routing for a shell configured with WithPages", async () => {
+    const ConfiguredShell = AppShell.WithPages([
+      { path: "/orders/:id", component: () => <div>Configured order page</div> },
+    ]);
+
+    render(
+      <AppShellTestingProvider initialEntries={["/orders/A42"]}>
+        <ConfiguredShell title="Test">
+          <SidebarLayout />
+        </ConfiguredShell>
+      </AppShellTestingProvider>,
+    );
+
+    expect(await screen.findByText("Configured order page")).toBeDefined();
+  });
+
+  it("preserves its router when a provider rerenders with the same initialEntries", async () => {
+    const createMemoryRouter = vi.spyOn(routerFactories, "createMemoryRouter");
+    const initialEntries = ["/orders/A42"];
+    const shell = (
+      <AppShell title="Test" modules={modules()}>
+        <SidebarLayout />
+      </AppShell>
+    );
+    const { rerender } = render(
+      <AppShellTestingProvider initialEntries={initialEntries}>
+        {shell}
+        <span>Before</span>
+      </AppShellTestingProvider>,
+    );
+
+    await screen.findByText("Order detail page");
+    const creations = createMemoryRouter.mock.calls.length;
+    expect(creations).toBeGreaterThan(0);
+
+    rerender(
+      <AppShellTestingProvider initialEntries={initialEntries}>
+        {shell}
+        <span>After</span>
+      </AppShellTestingProvider>,
+    );
+
+    expect(screen.getByText("Order detail page")).toBeDefined();
+    expect(createMemoryRouter).toHaveBeenCalledTimes(creations);
+  });
+
+  it("ignores memory props without a testing provider, even from untyped callers", () => {
     const untyped = {
       memory: true,
       initialEntries: ["/orders/A42"],
@@ -63,12 +124,11 @@ describe("AppShell memory routing", () => {
     } as never;
 
     render(
-      <PublicAppShell {...(untyped as object)}>
+      <AppShell {...(untyped as object)}>
         <SidebarLayout />
-      </PublicAppShell>,
+      </AppShell>,
     );
 
-    // Browser routing won: jsdom's location is "/", so the order page never matches.
     expect(screen.queryByText("Order detail page")).toBeNull();
   });
 });

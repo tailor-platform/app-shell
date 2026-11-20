@@ -100,19 +100,26 @@ export function sync(repoRoot: string): SyncResult {
     };
   }
 
-  // Phase 4 — emit the consumer skill (gitignored output) from the generated
+  // Phase 4 — emit the consumer skills (gitignored output) from the generated
   // docs + authored guidance, and hash each file so `check` can validate it.
+  // Every skill is computed before any is written, so a bad version source
+  // leaves the previous output intact.
   let skill: Record<string, string> | undefined;
-  if (config.skill) {
-    const files = computeStampedSkill(repoRoot, config, outlines);
-    rmSync(join(repoRoot, config.skill.outDir), { recursive: true, force: true });
+  if (config.skills.length > 0) {
+    const computed = config.skills.map((s) => ({
+      outDir: s.outDir,
+      files: computeStampedSkill(repoRoot, s, outlines),
+    }));
     skill = {};
-    for (const [skillRel, { content, stamped }] of files) {
-      const abs = join(repoRoot, skillRel);
-      mkdirSync(dirname(abs), { recursive: true });
-      writeFileSync(abs, stamped, "utf8");
-      skill[skillRel] = hash(normalizeText(content));
-      written.push(skillRel);
+    for (const { outDir, files } of computed) {
+      rmSync(join(repoRoot, outDir), { recursive: true, force: true });
+      for (const [skillRel, { content, stamped }] of files) {
+        const abs = join(repoRoot, skillRel);
+        mkdirSync(dirname(abs), { recursive: true });
+        writeFileSync(abs, stamped, "utf8");
+        skill[skillRel] = hash(normalizeText(content));
+        written.push(skillRel);
+      }
     }
   }
 

@@ -4,6 +4,8 @@ import {
   Layout,
   LineItems,
   Tabs,
+  Text,
+  Textarea,
   useLineItems,
   type AppShellPageProps,
   type LineItemsColumn,
@@ -18,7 +20,11 @@ type OrderLine = {
   unitPrice: number | null;
   status: string | null;
   dueDate: string | null;
+  notes?: string;
 };
+
+const previewValue = (_key: string, value: unknown) =>
+  value === undefined ? "[undefined]" : value;
 
 const validateQuantity = (_row: Readonly<OrderLine>, value: number | null) => {
   if (value === null || value <= 0) {
@@ -39,6 +45,7 @@ const LineItemsPage = () => {
         unitPrice: 5,
         status: "open",
         dueDate: "2026-11-16",
+        notes: "Deliver together",
       },
       {
         id: "line-2",
@@ -74,7 +81,12 @@ const LineItemsPage = () => {
       },
     ],
     columns: [
-      { accessorKey: "item", label: "Item", edit: { editorType: "text", canEdit } },
+      {
+        accessorKey: "item",
+        label: "Item",
+        equals: (baseline, current) => baseline?.toLowerCase() === current?.toLowerCase(),
+        edit: { editorType: "text", canEdit },
+      },
       {
         accessorKey: "quantity",
         label: "Quantity",
@@ -114,6 +126,11 @@ const LineItemsPage = () => {
         type: "date",
         edit: { editorType: "date", canEdit },
       },
+      {
+        accessorKey: "notes",
+        label: "Notes",
+        edit: { editorType: "text", canEdit, clearValue: () => undefined },
+      },
       ...(editable
         ? [
             {
@@ -140,6 +157,7 @@ const LineItemsPage = () => {
         : []),
     ],
   });
+  const changes = lineItems.getChanges();
 
   return (
     <Layout>
@@ -155,16 +173,16 @@ const LineItemsPage = () => {
           </Tabs.List>
         </Tabs.Root>
         {editable && (
-          <p className="text-sm text-muted-foreground">
-            Clear Quantity or enter zero or a negative number, then press Enter to see a validation
-            error.
-          </p>
+          <Text variant="body-sm" className="text-muted-foreground">
+            Press Enter to commit a cell. Clear Quantity or enter zero or a negative number to see
+            validation feedback; rejected input stays out of the committed lines and changeset.
+          </Text>
         )}
         <LineItems.Root value={lineItems}>
           <LineItems.Table aria-label="Order line items" />
         </LineItems.Root>
         {editable && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               onClick={() =>
@@ -174,21 +192,86 @@ const LineItemsPage = () => {
                   unitPrice: 1,
                   status: "open",
                   dueDate: null,
+                  notes: "New line note",
                 })
               }
             >
               Add line
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={!lineItems.isDirty}
-              onClick={lineItems.revert}
-            >
+            <Button type="button" variant="outline" onClick={lineItems.revert}>
               Discard changes
             </Button>
           </div>
         )}
+        <section aria-labelledby="line-items-api-title" className="flex flex-col gap-3">
+          <Text.h2 id="line-items-api-title">API inspection</Text.h2>
+          <Text render={<output aria-label="Line change summary" />}>
+            isDirty: {String(lineItems.isDirty)} · Added: {changes.added.length} · Updated:{" "}
+            {changes.updated.length} · Removed: {changes.removed.length} · Order changed:{" "}
+            {String(changes.order !== null)}
+          </Text>
+          <Text variant="body-sm" className="text-muted-foreground">
+            These previews read committed state only. Reading changes does not confirm drafts,
+            validate, save, or reset the baseline. An empty changeset does not mean there are no
+            pending drafts.
+          </Text>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>
+              <Text variant="body-sm">
+                Change Notebook to NOTEBOOK: Item uses case-insensitive equals, so the committed
+                value changes without a field update. Discard still restores the original value.
+              </Text>
+            </li>
+            <li>
+              <Text variant="body-sm">
+                Change Quantity from 2 to 5, then back to 2, or add then delete a new line: the net
+                change disappears. Edit then delete a saved line to see its original baseline row in
+                removed.
+              </Text>
+            </li>
+            <li>
+              <Text variant="body-sm">
+                Clear Notes to commit undefined. This preview shows it as the string [undefined];
+                ordinary JSON serialization would omit that field. Consumers must map clears for
+                their transport.
+              </Text>
+            </li>
+            <li>
+              <Text variant="body-sm">
+                Drag a handle or focus it and use ArrowUp / ArrowDown. Order contains the complete
+                final line-key sequence, including added or removed membership; null means
+                unchanged.
+              </Text>
+            </li>
+          </ul>
+          <div className="grid min-w-0 gap-4 lg:grid-cols-2">
+            <section aria-labelledby="line-items-lines-title" className="min-w-0 space-y-2">
+              <Text.h3 id="line-items-lines-title">Committed lines</Text.h3>
+              <Textarea
+                aria-labelledby="line-items-lines-title"
+                readOnly
+                className="h-80 resize-y bg-muted font-mono"
+                value={JSON.stringify(
+                  lineItems.lines.map((line) => ({
+                    lineKey: lineItems.getLineKey(line),
+                    ...line,
+                  })),
+                  previewValue,
+                  2,
+                )}
+              />
+            </section>
+            <section aria-labelledby="line-items-changes-title" className="min-w-0 space-y-2">
+              <Text.h3 id="line-items-changes-title">getChanges()</Text.h3>
+              <Textarea
+                aria-labelledby="line-items-changes-title"
+                readOnly
+                className="h-80 resize-y bg-muted font-mono"
+                value={JSON.stringify(changes, previewValue, 2)}
+              />
+            </section>
+          </div>
+        </section>
       </Layout.Column>
     </Layout>
   );

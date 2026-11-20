@@ -53,6 +53,8 @@ export {
   type AppInfo,
   type AppInfoEntry,
   type TimeZone,
+  type ToastDefault,
+  type ToastDefaults,
 } from "./contexts/appshell-context";
 export { useAppShellScrollContainer } from "./contexts/scroll-container-context";
 export { useTheme, type ColorTheme, type ResolvedColorTheme } from "./contexts/theme-context";

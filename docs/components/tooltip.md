@@ -65,14 +65,14 @@ Wrap a section of your UI (e.g. a toolbar) with `Tooltip.Provider` to share dela
 
 ### Tooltip.Content Props
 
-| Prop         | Type                                     | Default    | Description                                              |
-| ------------ | ---------------------------------------- | ---------- | -------------------------------------------------------- |
-| `side`       | `"top" \| "right" \| "bottom" \| "left"` | `"top"`    | Preferred placement of the tooltip                       |
-| `align`      | `"start" \| "center" \| "end"`           | `"center"` | Alignment along the placement axis                       |
-| `sideOffset` | `number`                                 | `5`        | Distance in px from the trigger                          |
-| `noArrow`    | `boolean`                                | `false`    | When `true`, suppresses the arrow indicator on the popup |
-| `className`  | `string`                                 | -          | Additional CSS classes                                   |
-| `children`   | `React.ReactNode`                        | -          | Tooltip text or content                                  |
+| Prop        | Type              | Default                                           | Description                                               |
+| ----------- | ----------------- | ------------------------------------------------- | --------------------------------------------------------- |
+| `position`  | `PositionProps`   | `{ side: "top", align: "center", sideOffset: 5 }` | Preferred placement of the tooltip.                       |
+| `noArrow`   | `boolean`         | `false`                                           | When `true`, suppresses the arrow indicator on the popup. |
+| `className` | `string`          | -                                                 | Additional CSS classes.                                   |
+| `children`  | `React.ReactNode` | -                                                 | Tooltip text or content.                                  |
+
+[`PositionProps`](./menu.md#positionprops) is the public placement type shared with `Menu.Content`. Use `position={{ side: "right", align: "start" }}` to configure placement. The old flat `side`, `align`, and `sideOffset` props remain supported but deprecated; they are ignored when `position` is supplied.
 
 ## Placement
 
@@ -83,7 +83,7 @@ function Placement() {
   return (
     <Tooltip.Root>
       <Tooltip.Trigger render={<Button />}>Trigger</Tooltip.Trigger>
-      <Tooltip.Content side="right" align="start">
+      <Tooltip.Content position={{ side: "right", align: "start" }}>
         Appears on the right
       </Tooltip.Content>
     </Tooltip.Root>

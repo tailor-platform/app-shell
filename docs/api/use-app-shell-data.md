@@ -96,6 +96,8 @@ Define your context type with module augmentation:
 
 ```typescript
 // types.d.ts
+import "@tailor-platform/app-shell";
+
 type User = { name: string; email: string; role: string };
 
 declare module "@tailor-platform/app-shell" {
@@ -113,26 +115,30 @@ declare module "@tailor-platform/app-shell" {
 }
 ```
 
-Now `useAppShellData()` returns fully typed data:
+Now `useAppShellData()` returns fully typed data inside your components:
 
-```typescript
-const { contextData } = useAppShellData();
-contextData.currentUser; // Type: User | null
-contextData.permissions; // Type: string[]
-contextData.featureFlags; // Type: { newEditor: boolean, betaDashboard: boolean }
+```tsx
+function UserSummary() {
+  const { contextData } = useAppShellData();
+  // currentUser is User | null; permissions is string[].
+  // featureFlags has newEditor and betaDashboard boolean properties.
+  return <span>{contextData.currentUser?.name}</span>;
+}
 ```
 
 ## When to Use
 
 Use `useAppShellData` when you only need context data:
 
-```typescript
-// ✅ Good - subscribes to context data only
-const { contextData } = useAppShellData();
-
-// ❌ Overkill - useAppShell also subscribes to configuration changes
-const { contextData } = useAppShell();
+```tsx
+function PermissionCount() {
+  // Subscribes to context data only.
+  const { contextData } = useAppShellData();
+  return <span>{contextData.permissions.length} permissions</span>;
+}
 ```
+
+Using `useAppShell()` here would also subscribe to configuration changes that this component does not use.
 
 ## Comparison with Other Hooks
 

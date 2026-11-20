@@ -1,8 +1,12 @@
 ---
-kind: prose
+kind: code-backed
 group: authentication
 title: Authentication
 description: Set up OAuth2/OIDC authentication with Tailor Platform's Auth service using the AuthProvider component
+sources:
+  - packages/core/src/contexts/auth-context.tsx
+claims:
+  - AuthClient
 ---
 
 # Authentication
@@ -84,6 +88,8 @@ const UserProfile = () => {
 | `logout`          | `() => Promise<void>`                                | Clears tokens and ends the session                                           |
 | `checkAuthStatus` | `() => Promise<AuthState>`                           | Re-checks auth status (always makes a network request)                       |
 
+`AuthState` is the exported state shape containing `isAuthenticated`, `isReady`, and `error`. `checkAuthStatus()` returns that shape; `useAuth()` exposes those fields together with the authentication methods above.
+
 ### Return to the current page
 
 `autoLogin` records the current path, query string, and hash before redirecting, then returns there after a successful callback. Manual `login()` calls do the same by default. Pass `returnTo` to choose another same-origin destination:
@@ -132,7 +138,9 @@ function ProtectedContent() {
 
 ## Auth Client
 
-Use `createAuthClient` to create an authentication client that you pass to `AuthProvider`. The client handles token management and provides an authenticated `fetch` method for use with GraphQL clients.
+Use `createAuthClient` to create an `EnhancedAuthClient` that you pass to `AuthProvider`. Create it once at module scope: if the URL contains OAuth callback parameters, client creation starts callback handling immediately, before React rendering. The client handles token management and provides an authenticated `fetch` method for use with GraphQL clients.
+
+`AuthClient` is the base type re-exported from `@tailor-platform/auth-public-client` for advanced integrations. `EnhancedAuthClient` extends that contract with AppShell helpers such as `getAppUri()`; `AuthProvider` requires this enhanced client, not just an arbitrary base client.
 
 ```tsx
 import { createAuthClient } from "@tailor-platform/app-shell";
@@ -288,17 +296,15 @@ Not every failed refresh ends the session. A request timeout, a network failure,
 
 The line is drawn on the shape of the response, not on how transient the underlying cause is. Any rejection the token endpoint returns as a 4xx carrying an `error` code ends the session — the sole exception is `use_dpop_nonce`. A server that reports overload as `400 {"error":"server_error"}` or `400 {"error":"temporarily_unavailable"}` will therefore sign users out, as will a 5xx that carries a `WWW-Authenticate` header. If you operate the token endpoint, prefer a bare 5xx for conditions you want treated as retryable.
 
-To react to teardown yourself — clearing app-level caches, for instance — subscribe to the client's events:
+To react to teardown yourself — clearing app-level caches, for instance — subscribe to the client's events and return the unsubscribe function from your effect. In an application, use the same client passed to `AuthProvider` and clear your own cache when it emits `logout`.
 
-```tsx
-useEffect(() => {
-  return authClient.addEventListener((event) => {
-    if (event.type === "logout") {
-      clearAppCaches();
-    }
-  });
-}, [authClient]);
-```
+### Working example: logout cleanup
+
+Click **Simulate logout** to emit `logout` from an isolated memory client and clear the local cached items through the event subscription. **Reset logout demo** signs the memory client back in and restores the sample cache. This demonstrates event-driven cleanup, not OAuth, token expiry, persistence, or a redirect; the surrounding docs application's authentication is not changed.
+
+The example imports `useEffect` and `useState` from `react`, `Button` and `Text` from `@tailor-platform/app-shell`, and `createMemoryAuthClient` from `@tailor-platform/app-shell/testing`. The memory client is only a fixture for this preview; production code uses the auth client created during application setup.
+
+<!-- example: logout-cleanup -->
 
 ## Testing
 

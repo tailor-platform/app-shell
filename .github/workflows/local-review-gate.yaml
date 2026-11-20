@@ -1,21 +1,19 @@
 name: Local Review Gate
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened, ready_for_review]
   issue_comment:
     types: [created, edited, deleted]
 
-# Both event types must serialize against the same PR, without cancelling invalidations.
+# Serialize comment events per PR without cancelling invalidations.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.repository }}-${{ github.event.pull_request.number || github.event.issue.number }}
+  group: ${{ github.workflow }}-${{ github.repository }}-${{ github.event.issue.number }}
   cancel-in-progress: false
 
 permissions: {}
 
 jobs:
   report:
-    if: github.event_name != 'issue_comment' || github.event.issue.pull_request
+    if: github.event.issue.pull_request
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -31,23 +29,20 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
-            const number = context.payload.pull_request?.number ?? context.payload.issue.number;
+            const number = context.payload.issue.number;
             const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
             const getPR = async () => (await github.rest.pulls.get({ owner, repo, pull_number: number })).data;
             let headSha;
 
-            // Comment/target workflow jobs do not certify PR HEAD; publish an explicit status.
+            // Comment workflow jobs do not certify PR HEAD; publish an explicit status.
             const setStatus = (state, description, targetUrl = runUrl) => github.rest.repos.createCommitStatus({
               owner, repo, sha: headSha, context: 'local-review/report',
               state, description, target_url: targetUrl,
             });
 
             try {
+              // Revalidate closed PRs too so edited/deleted reports stay revoked on reopen.
               const pr = await getPR();
-              if (pr.state !== 'open') {
-                core.info('The PR is no longer open; nothing to gate.');
-                return;
-              }
               headSha = pr.head.sha;
               await setStatus('pending', 'Checking the local review report for current HEAD.');
 
@@ -95,7 +90,7 @@ jobs:
               const currentPR = await getPR();
               if (currentPR.head.sha !== headSha) {
                 headSha = currentPR.head.sha;
-                throw new Error('PR HEAD changed during validation; the next event will recheck it.');
+                throw new Error('PR HEAD changed during validation; run local-review for current HEAD.');
               }
               await setStatus(
                 report ? 'success' : 'failure',

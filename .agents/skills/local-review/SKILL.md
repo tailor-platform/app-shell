@@ -140,6 +140,12 @@ An administrator must then require `local-review/report` in the merge-target Rul
 GitHub Actions as its expected source. Adding a workflow alone does not block merging.
 Do not alter Rulesets as part of running this skill.
 
+The workflow runs only on PR conversation comment creation, editing, and deletion. Before
+any report is posted, the required status is missing, which blocks merging. A new unreviewed
+HEAD SHA likewise has no successful status until a fresh report is posted; no PR/push trigger
+is needed. Comments on closed PRs are also revalidated so deleting or editing a report does
+not leave stale success when the PR is reopened.
+
 A new head commit needs a new review. Base-branch movement alone does not require re-review
 in this version. Report edits/deletions trigger revalidation, but revocation is asynchronous
 and statuses are commit-scoped, not strictly isolated between PRs sharing a SHA.

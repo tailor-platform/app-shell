@@ -145,7 +145,7 @@ async function runGate(options = {}) {
   };
   const context = {
     repo: { owner: "example", repo: "app-shell" },
-    payload: options.payload ?? { pull_request: { number: 123 } },
+    payload: options.payload ?? { issue: { number: 123, pull_request: {} }, action: "created" },
     serverUrl: "https://github.com",
     runId: 789,
   };
@@ -161,6 +161,15 @@ function assertStatus(result, state, sha = headSha) {
   );
   assert.equal(result.statuses.at(-1).sha, sha);
 }
+
+test("only conversation comment events trigger the PR gate", () => {
+  assert.equal(
+    workflow.split("\n\n")[1],
+    "on:\n  issue_comment:\n    types: [created, edited, deleted]",
+  );
+  assert.match(workflow, /if: github\.event\.issue\.pull_request/);
+  assert.match(workflow, /group: .*github\.event\.issue\.number/);
+});
 
 test("no report fails the current PR head", async () => {
   const result = await runGate();
@@ -254,10 +263,30 @@ for (const [field, message] of [
   });
 }
 
-test("closed PRs receive no status writes", async () => {
-  const result = await runGate({ state: "closed" });
-  assert.deepEqual(result.statuses, []);
-  assert.deepEqual(result.validatorCalls, []);
+test("a report deleted while closed revokes success for the same SHA on reopen", async () => {
+  const accepted = await runGate({ comments: [comment()] });
+  assertStatus(accepted, "success");
+  const revoked = await runGate({
+    state: "closed",
+    payload: { issue: { number: 123, pull_request: {} }, comment: comment(), action: "deleted" },
+    comments: [],
+  });
+  assertStatus(revoked, "failure");
+  assert.equal(revoked.statuses.at(-1).sha, accepted.statuses.at(-1).sha);
+});
+
+test("a report edited while closed is revalidated", async () => {
+  const result = await runGate({
+    state: "closed",
+    payload: { issue: { number: 123, pull_request: {} }, comment: comment(), action: "edited" },
+    comments: [comment(report().replace("No findings.", "Changed by hand."))],
+  });
+  assertStatus(result, "failure");
+});
+
+test("a valid report is still accepted for a closed PR", async () => {
+  const result = await runGate({ state: "closed", comments: [comment()] });
+  assertStatus(result, "success");
 });
 
 test("an unavailable PR API cannot invent a SHA but marks the job failed", async () => {

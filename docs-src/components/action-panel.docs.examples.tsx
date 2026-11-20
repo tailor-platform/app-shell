@@ -1,11 +1,11 @@
+import { useEffect, useState } from "react";
 import {
   ActionPanel,
   type ActionPanelProps,
   Text,
   useRegisterCommandPaletteActions,
 } from "@tailor-platform/app-shell";
-import { useState } from "react";
-import { ExternalLink, Receipt, Trash2 } from "lucide-react";
+import { Check, ExternalLink, Receipt, Trash2 } from "lucide-react";
 
 export function BasicUsage() {
   return (
@@ -88,6 +88,48 @@ export function ExplicitCommandPaletteRegistration() {
   );
 
   return <ActionPanel title="Order Actions" actions={actions} />;
+}
+
+export function WithLoadingState() {
+  const [loadingKey, setLoadingKey] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (loadingKey !== "confirm") return;
+
+    const timer = setTimeout(() => {
+      setConfirmed(true);
+      setLoadingKey(null);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [loadingKey]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <ActionPanel
+        title="Order actions"
+        actions={[
+          {
+            key: "confirm",
+            label: "Confirm order",
+            icon: <Check />,
+            onClick: () => {
+              setConfirmed(false);
+              setLoadingKey("confirm");
+            },
+            loading: loadingKey === "confirm",
+          },
+        ]}
+      />
+      <Text.p role="status">
+        {loadingKey === "confirm"
+          ? "Confirming order…"
+          : confirmed
+            ? "Order SO-1001 confirmed. You can try again."
+            : "Click Confirm order to simulate a request."}
+      </Text.p>
+    </div>
+  );
 }
 
 export function CustomEmptyContent() {

@@ -64,14 +64,20 @@ DOM environments are useful for component behavior, but do not verify popup posi
 
 ## Find form controls by role and accessible name
 
-Use the label a user sees:
+Use the label a user sees. Import `Field` from `@tailor-platform/app-shell`:
+
+<example-preview name="labeled-email"></example-preview>
 
 ```tsx
-<Field.Root name="email">
-  <Field.Label>Email</Field.Label>
-  <Field.Control type="email" />
-  <Field.Description>Used for order updates.</Field.Description>
-</Field.Root>
+function LabeledEmail() {
+  return (
+    <Field.Root name="email">
+      <Field.Label>Email</Field.Label>
+      <Field.Control type="email" />
+      <Field.Description>Used for order updates.</Field.Description>
+    </Field.Root>
+  );
+}
 ```
 
 This control is found with `screen.getByRole("textbox", { name: "Email" })`:
@@ -279,6 +285,32 @@ it("supplies test context data and a fake save function", async () => {
 This also supplies `useAppShell()` and `useAppShellConfig()` with real provider values; you do not need to fabricate each hook's return shape. Create fresh fixtures and mocks per test. Keep the wrapper component, `initialEntries` array, and modules stable across Testing Library `rerender` calls so rerenders retain the mounted shell's memory history.
 
 The provider requires `initialEntries: string[]`, the initial history stack — the last entry is the current location. Each mounted AppShell owns its history. Nested providers use the nearest provider's settings. Neither the provider nor the main AppShell accepts a `memory` prop; `initialEntries` belongs to the provider, not AppShell. `modules: []` is sufficient for this provider-state test.
+
+### Test CommandPalette actions
+
+CommandPalette tests need `AppShell` inside `AppShellTestingProvider`, using the same wrapper pattern as above. `AppShellTestingProvider` alone only selects memory routing and does not provide command-palette state. For contextual action tests, `modules: []` is sufficient, so no page modules or layout are needed.
+
+Use `render` for components that register actions, or `renderHook` from `@testing-library/react` for application hooks that call `useRegisterCommandPaletteActions`. Both use the same wrapper.
+
+Inside your test, using an `actions` fixture and a `Wrapper` built as above:
+
+```tsx
+import { renderHook, waitFor } from "@testing-library/react";
+import { useRegisterCommandPaletteActions } from "@tailor-platform/app-shell";
+
+const { result } = renderHook(
+  () => {
+    useRegisterCommandPaletteActions("Order Actions", actions);
+    return true;
+  },
+  { wrapper: Wrapper },
+);
+
+// Wait for the router to initialize and mount the hook before interacting.
+await waitFor(() => expect(result.current).toBe(true));
+```
+
+Replace the `useRegisterCommandPaletteActions` call with your application hook when testing your own registration logic. To verify registration and execution, open the built-in palette with `await user.keyboard("{Control>}k{/Control}")`, find the action by its button role and accessible name, click it, and assert your application callback was called. Use these public interactions rather than importing internal command-palette contexts.
 
 ### Pages and integration tests
 

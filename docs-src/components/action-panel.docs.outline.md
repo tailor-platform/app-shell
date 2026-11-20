@@ -17,6 +17,8 @@ sources:
 import { ActionPanel } from "@tailor-platform/app-shell";
 ```
 
+The loading example also imports `useEffect` and `useState` from `react`, `Text` from `@tailor-platform/app-shell`, and `Check` from `lucide-react`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -53,33 +55,9 @@ Pass `null` to hide the empty content and its additional vertical spacing while 
 
 ## With Loading State
 
-Use parent state to control which row is loading:
+Use parent state to control which row is loading. This example simulates confirmation with a one-second timer, which is cleaned up when the example unmounts. Click again after completion to repeat it. For a real request, set the loading key before awaiting it and clear it in `finally`.
 
-```tsx
-const [loadingKey, setLoadingKey] = useState<string | null>(null);
-
-const handleConfirm = async () => {
-  setLoadingKey("confirm");
-  try {
-    await confirmOrder(orderId);
-  } finally {
-    setLoadingKey(null);
-  }
-};
-
-<ActionPanel
-  title="Actions"
-  actions={[
-    {
-      key: "confirm",
-      label: "Confirm order",
-      icon: <CheckIcon />,
-      onClick: handleConfirm,
-      loading: loadingKey === "confirm",
-    },
-  ]}
-/>;
-```
+<!-- example: with-loading-state -->
 
 ## Confirmation
 
@@ -122,7 +100,7 @@ This API handles descriptive confirmation only. For reason input, validation, cu
 
 `ActionPanel` does not register actions to the CommandPalette and can be rendered outside `AppShell`. Rendering a row only exposes its `onClick` through that row.
 
-To make selected actions discoverable via `Cmd+K` / `Ctrl+K`, register them explicitly with [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md). Filter out disabled or loading actions and actions without an `onClick` handler, then map `onClick` to `onSelect`. You can register only a subset of the panel's actions.
+To make selected actions discoverable via `Cmd+K` / `Ctrl+K`, register them explicitly with [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md). Filter out disabled, loading, or confirmed actions and actions without an `onClick` handler, then map `onClick` to `onSelect`. You can register only a subset of the panel's actions.
 
 <!-- example: explicit-command-palette-registration -->
 
@@ -130,7 +108,7 @@ The registration hook requires `AppShell` and unregisters actions when the calli
 
 Confirmation applies only to the panel row. Registering its raw `onClick` as `onSelect` executes it directly and does **not** open the panel's confirmation. The example excludes actions with `confirmation`; leave them out of the palette or provide a separate confirmation flow for that entry point.
 
-Apps upgrading from automatic registration should follow the [migration guide](../migrations.md#1210-actionpanel-no-longer-registers-commandpalette-actions).
+Apps upgrading from automatic registration should follow the [migration guide](../migrations.md#1220-actionpanel-no-longer-registers-commandpalette-actions).
 
 ## Backend-Driven Pattern
 

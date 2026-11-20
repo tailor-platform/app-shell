@@ -7,9 +7,9 @@ description: Shows progress through a fixed sequence of steps — wizard steps, 
 
 # Stepper
 
-`Stepper` shows how far something has progressed through a fixed sequence of steps: the steps of a [wizard form](../patterns/form-wizard.md), the stages of an approval flow, the quality gates of a project. Each step has a status, and the line between steps is filled up to the furthest step reached.
+`Stepper` shows how far something has progressed through a fixed sequence of steps: the steps of a [wizard form](../patterns/form-wizard.md), the stages of an approval flow, the quality gates of a project. You give it the steps and one `progress` value saying how far the flow has got; it works out how each step looks.
 
-It only displays progress. The page decides each step's status and what happens when a step is clicked.
+It only displays progress. The page owns `progress` and decides what happens when a step is clicked.
 
 ## Import
 
@@ -27,11 +27,12 @@ function BasicUsage() {
     <Stepper
       aria-label="New purchase order"
       steps={[
-        { id: "supplier", label: "Supplier", status: "complete" },
-        { id: "delivery", label: "Delivery", status: "current" },
-        { id: "approval", label: "Approval", status: "upcoming" },
-        { id: "review", label: "Review", status: "upcoming" },
+        { id: "supplier", label: "Supplier" },
+        { id: "delivery", label: "Delivery" },
+        { id: "approval", label: "Approval" },
+        { id: "review", label: "Review" },
       ]}
+      progress={{ state: "in-progress", currentStepId: "delivery" }}
     />
   );
 }
@@ -39,48 +40,73 @@ function BasicUsage() {
 
 ## Props
 
-| Prop          | Type                         | Default        | Description                                                                        |
-| ------------- | ---------------------------- | -------------- | ---------------------------------------------------------------------------------- |
-| `steps`       | `StepperStep[]`              | -              | The steps, in order                                                                |
-| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | A row of steps, or a column for beside a form                                      |
-| `onStepClick` | `(id: Id) => void`           | -              | Makes completed steps clickable — for example to go back to an earlier wizard step |
-| `aria-label`  | `string`                     | "Progress"     | Accessible name for the list of steps (the default is translated)                  |
-| `className`   | `string`                     | -              | Additional CSS classes                                                             |
-| `style`       | `CSSProperties`              | -              | Inline styles                                                                      |
+| Prop          | Type                         | Default        | Description                                                                                   |
+| ------------- | ---------------------------- | -------------- | --------------------------------------------------------------------------------------------- |
+| `steps`       | `StepperStep[]`              | -              | The steps, in order                                                                           |
+| `progress`    | `StepperProgress`            | -              | How far the flow has got (below)                                                              |
+| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | A row of steps, or a column for beside a form                                                 |
+| `onStepClick` | `(id: Id) => void`           | -              | Makes passed steps (completed or skipped) clickable — for example to go back to a wizard step |
+| `aria-label`  | `string`                     | "Progress"     | Accessible name for the list of steps (the default is translated)                             |
+| `className`   | `string`                     | -              | Additional CSS classes                                                                        |
+| `style`       | `CSSProperties`              | -              | Inline styles                                                                                 |
 
 ### `StepperStep`
 
-| Field         | Type                                                 | Description                                                                                  |
-| ------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `id`          | `Id extends string`                                  | Stable id, passed to `onStepClick`                                                           |
-| `label`       | `ReactNode`                                          | Step name                                                                                    |
-| `status`      | `"complete" \| "current" \| "upcoming" \| "skipped"` | Where the step stands (below)                                                                |
-| `badge`       | `ReactNode`                                          | Shown beside the label — for example a "Next" or "Overdue" `Badge`                           |
-| `description` | `ReactNode`                                          | Shown under the label — a short hint, or a few lines of values such as plan and actual dates |
+| Field         | Type                | Description                                                                                  |
+| ------------- | ------------------- | -------------------------------------------------------------------------------------------- |
+| `id`          | `Id extends string` | Stable, unique id, used by `progress` and passed to `onStepClick`                            |
+| `label`       | `ReactNode`         | Step name                                                                                    |
+| `badge`       | `ReactNode`         | Shown beside the label — for example a "Next" or "Overdue" `Badge`                           |
+| `description` | `ReactNode`         | Shown under the label — a short hint, or a few lines of values such as plan and actual dates |
 
-## Status
+## Progress
 
-| `status`     | Marker                         | Use for                                      |
-| ------------ | ------------------------------ | -------------------------------------------- |
-| `"complete"` | Filled, with a check           | Steps that are done                          |
-| `"current"`  | Outlined in the primary colour | The step the user is on, or the next one due |
-| `"upcoming"` | Outlined, muted                | Steps not started                            |
-| `"skipped"`  | Dashed outline, muted          | Steps that don't apply to this record        |
+`progress` is one of three states. Steps don't carry a status of their own, so a Stepper can't show two current steps or a completed step after the current one.
 
-Mark at most one step `current`. It gets `aria-current="step"`, and screen readers hear the status of the others ("Completed", "Skipped", "Not started").
+```ts
+type StepperProgress<Id> =
+  | { state: "not-started" }
+  | { state: "in-progress"; currentStepId: Id; skippedStepIds?: Id[] }
+  | { state: "complete"; skippedStepIds?: Id[] };
+```
 
-The line is filled up to the furthest step reached — the last step that is `complete` or `current`. A skipped step before it is filled through; one after it isn't.
+| `state`         | How the steps look                                                                |
+| --------------- | --------------------------------------------------------------------------------- |
+| `"not-started"` | All upcoming                                                                      |
+| `"in-progress"` | Before `currentStepId`: complete (or skipped); at it: current; after it: upcoming |
+| `"complete"`    | All complete (or skipped)                                                         |
 
-Step ids are typed: give `steps` a union of ids and `onStepClick` receives that union.
+| Look     | Marker                         |
+| -------- | ------------------------------ |
+| Complete | Filled, with a check           |
+| Current  | Outlined in the primary colour |
+| Upcoming | Outlined, muted                |
+| Skipped  | Dashed outline, muted          |
+
+The current step gets `aria-current="step"`, and screen readers hear how the others stand ("Completed", "Skipped", "Not started"). The line is filled up to the current step, or all the way once complete.
+
+### Skipping steps
+
+`skippedStepIds` names steps the user moved past without doing, for example by pressing "Skip" in a wizard. Only steps already passed can be skipped: those before `currentStepId`, or any step once `complete`. A skipped step stays clickable through `onStepClick`, so the user can go back and do it.
+
+Business states such as "Waiting for approval" or "Overdue" aren't progress; show them with `badge` or `description`.
+
+### Typed ids
+
+Step ids are typed from `steps`: `progress` only accepts those ids, and `onStepClick` receives them.
 
 ```tsx
-type StepId = "supplier" | "lines" | "review";
-const steps: StepperStep<StepId>[] = [
-  /* … */
-];
-
-<Stepper steps={steps} onStepClick={(id) => goTo(id)} />; // id: StepId
+<Stepper
+  steps={[
+    { id: "supplier", label: "Supplier" },
+    { id: "review", label: "Review" },
+  ]}
+  progress={{ state: "in-progress", currentStepId: "review" }} // "supplier" | "review"
+  onStepClick={(id) => goTo(id)} // id: "supplier" | "review"
+/>
 ```
+
+Steps built at runtime can't be checked by types. In development the Stepper warns about an unknown or duplicate id, or a skipped step that hasn't been passed, and ignores it.
 
 ## Stage progress
 
@@ -94,18 +120,18 @@ function StageProgress() {
     <Stepper
       aria-label="Quality gates"
       steps={[
-        { id: "qg1", label: "QG1", status: "complete", description: "Done 11 Aug" },
-        { id: "qg2", label: "QG2", status: "complete", description: "Done 6 Sep" },
-        { id: "qg3", label: "QG3", status: "skipped", description: "Not required" },
+        { id: "qg1", label: "QG1", description: "Done 11 Aug" },
+        { id: "qg2", label: "QG2", description: "Done 6 Sep" },
+        { id: "qg3", label: "QG3", description: "Skipped 2 Oct" },
         {
           id: "qg4",
           label: "QG4",
-          status: "current",
           badge: <Badge variant="outline-info">Next</Badge>,
           description: "Plan 18 Nov",
         },
-        { id: "qg5", label: "QG5", status: "upcoming", description: "Plan 9 Dec" },
+        { id: "qg5", label: "QG5", description: "Plan 9 Dec" },
       ]}
+      progress={{ state: "in-progress", currentStepId: "qg4", skippedStepIds: ["qg3"] }}
     />
   );
 }
@@ -124,11 +150,12 @@ function Vertical() {
       aria-label="Approval"
       orientation="vertical"
       steps={[
-        { id: "draft", label: "Draft", status: "complete", description: "Hanna Suzuki" },
-        { id: "manager", label: "Manager", status: "complete", description: "Kenji Mori · 3 Nov" },
-        { id: "finance", label: "Finance", status: "current", description: "Priya Nair" },
-        { id: "issued", label: "Issued", status: "upcoming" },
+        { id: "draft", label: "Draft", description: "Hanna Suzuki" },
+        { id: "manager", label: "Manager", description: "Kenji Mori · 3 Nov" },
+        { id: "finance", label: "Finance", description: "Priya Nair" },
+        { id: "issued", label: "Issued" },
       ]}
+      progress={{ state: "in-progress", currentStepId: "finance" }}
     />
   );
 }
@@ -140,4 +167,4 @@ A horizontal Stepper adapts to the width of its container, not the viewport:
 
 - When the steps don't fit side by side, the row scrolls sideways rather than squeezing the labels.
 - Below 400px it shows only the markers and lines, with "Step 2 of 4" and the current step's label underneath. This is what a wizard needs in a dialog on a phone.
-- Each marker then names its step in a tooltip on hover, and the marker of a completed step becomes the button that goes back to it, so keyboard users still have one visible place to focus.
+- Each marker then names its step in a tooltip on hover, and the marker of a passed step becomes the button that goes back to it, so keyboard users still have one visible place to focus.

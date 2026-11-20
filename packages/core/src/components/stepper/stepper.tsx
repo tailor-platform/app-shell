@@ -5,10 +5,74 @@ import { cn } from "@/lib/utils";
 import { Text } from "../text";
 import { Tooltip } from "../tooltip";
 import { useStepperT } from "./i18n";
-import type { StepperProps, StepperStep, StepperStepStatus } from "./types";
+import type { StepperProgress, StepperProps, StepperStep, StepperStepStatus } from "./types";
 
 /** Below this container width a horizontal Stepper shows only its markers. */
 const COMPACT_WIDTH = 400;
+
+// ============================================================================
+// Deriving step statuses from progress
+// ============================================================================
+
+/** A step with the status derived from `progress`. */
+type ResolvedStep<Id extends string> = StepperStep<Id> & { status: StepperStepStatus };
+
+/** Passed steps — completed or skipped — are the ones you can go back to. */
+const isPassed = (status: StepperStepStatus) => status === "complete" || status === "skipped";
+
+/**
+ * Turns the steps and one progress position into a status per step. Problems
+ * a type can't rule out — ids that aren't steps, duplicate ids, skipping a
+ * step not yet reached — are reported rather than drawn.
+ */
+function resolveSteps<Id extends string>(
+  steps: readonly StepperStep<Id>[],
+  progress: StepperProgress<Id>,
+) {
+  const problems: string[] = [];
+  const indexById = new Map<string, number>();
+  steps.forEach((step, index) => {
+    if (indexById.has(step.id)) problems.push(`duplicate step id "${step.id}"`);
+    else indexById.set(step.id, index);
+  });
+
+  let currentIndex = -1;
+  // Steps before this index have been passed.
+  let passedBefore = 0;
+  if (progress.state === "in-progress") {
+    currentIndex = indexById.get(progress.currentStepId) ?? -1;
+    if (currentIndex < 0) problems.push(`currentStepId "${progress.currentStepId}" is not a step`);
+    passedBefore = Math.max(currentIndex, 0);
+  } else if (progress.state === "complete") {
+    passedBefore = steps.length;
+  }
+
+  const skipped = new Set<number>();
+  if (progress.state !== "not-started") {
+    for (const id of progress.skippedStepIds ?? []) {
+      const index = indexById.get(id);
+      if (index == null) problems.push(`skipped step id "${id}" is not a step`);
+      else if (index >= passedBefore)
+        problems.push(`step "${id}" can't be skipped before it has been passed`);
+      else skipped.add(index);
+    }
+  }
+
+  const statusAt = (index: number): StepperStepStatus => {
+    if (index === currentIndex) return "current";
+    if (index >= passedBefore) return "upcoming";
+    return skipped.has(index) ? "skipped" : "complete";
+  };
+  const resolved: ResolvedStep<Id>[] = steps.map((step, index) => ({
+    ...step,
+    status: statusAt(index),
+  }));
+
+  // The line is filled up to the furthest step reached.
+  const reachedIndex = progress.state === "complete" ? steps.length - 1 : currentIndex;
+
+  return { steps: resolved, currentIndex, reachedIndex, problems };
+}
 
 // ============================================================================
 // Marker
@@ -48,13 +112,13 @@ function CompactMarker<Id extends string>({
   labelId,
   onStepClick,
 }: {
-  step: StepperStep<Id>;
+  step: ResolvedStep<Id>;
   index: number;
   labelId: string;
   onStepClick?: (id: Id) => void;
 }) {
   const t = useStepperT();
-  const clickable = onStepClick != null && step.status === "complete";
+  const clickable = onStepClick != null && isPassed(step.status);
   return (
     <Tooltip.Root>
       <Tooltip.Trigger
@@ -108,14 +172,14 @@ function StepText<Id extends string>({
   labelId,
   className,
 }: {
-  step: StepperStep<Id>;
+  step: ResolvedStep<Id>;
   /** Omitted when the label isn't the click target (the compact marker is). */
   onStepClick?: (id: Id) => void;
   labelId?: string;
   className?: string;
 }) {
   const t = useStepperT();
-  const clickable = onStepClick != null && step.status === "complete";
+  const clickable = onStepClick != null && isPassed(step.status);
   const muted = step.status === "upcoming" || step.status === "skipped";
 
   const label = (
@@ -205,26 +269,29 @@ function useCompact(ref: React.RefObject<HTMLElement | null>, enabled: boolean) 
  * of steps: the steps of a wizard form, the stages of an approval flow, the
  * quality gates of a project.
  *
- * Each step has a `status` (`complete`, `current`, `upcoming` or `skipped`),
- * and the line between steps is filled up to the furthest step reached. The
- * current step gets `aria-current="step"`. It only displays progress; the
- * page decides which step is current.
+ * `steps` lists the steps in order; `progress` says how far the flow has got
+ * — not started, on one current step, or complete — and which passed steps
+ * were skipped. Steps before the current one show as complete, the ones after
+ * it as upcoming, and the line is filled up to the current step. The current
+ * step gets `aria-current="step"`. It only displays progress; the page owns it.
  *
  * @example
  * ```tsx
  * <Stepper
  *   aria-label="New purchase order"
  *   steps={[
- *     { id: "supplier", label: "Supplier", status: "complete" },
- *     { id: "lines", label: "Lines", status: "current" },
- *     { id: "review", label: "Review", status: "upcoming" },
+ *     { id: "supplier", label: "Supplier" },
+ *     { id: "lines", label: "Lines" },
+ *     { id: "review", label: "Review" },
  *   ]}
+ *   progress={{ state: "in-progress", currentStepId: "lines" }}
  *   onStepClick={(id) => goTo(id)}
  * />
  * ```
  */
 export function Stepper<Id extends string = string>({
   steps,
+  progress,
   orientation = "horizontal",
   onStepClick,
   "aria-label": ariaLabel,
@@ -236,15 +303,14 @@ export function Stepper<Id extends string = string>({
   const baseId = React.useId();
   const vertical = orientation === "vertical";
   const compact = useCompact(rootRef, !vertical);
-  const currentIndex = steps.findIndex((step) => step.status === "current");
-  const current = currentIndex >= 0 ? steps[currentIndex] : undefined;
+  const { steps: resolved, currentIndex, reachedIndex, problems } = resolveSteps(steps, progress);
+  const current = currentIndex >= 0 ? resolved[currentIndex] : undefined;
 
-  // The furthest step reached: the last one that is complete or current.
-  // Skipped steps before it are passed; those after it were never reached.
-  let reachedIndex = -1;
-  steps.forEach((step, index) => {
-    if (step.status === "complete" || step.status === "current") reachedIndex = index;
-  });
+  const problemKey = problems.join("; ");
+  React.useEffect(() => {
+    if (problemKey) console.warn(`[Stepper] ${problemKey}.`);
+  }, [problemKey]);
+
   const filledAfter = (index: number) => index < reachedIndex;
 
   return (
@@ -266,8 +332,8 @@ export function Stepper<Id extends string = string>({
               "astw:-m-1 astw:overflow-x-auto astw:p-1",
         )}
       >
-        {steps.map((step, index) => {
-          const last = index === steps.length - 1;
+        {resolved.map((step, index) => {
+          const last = index === resolved.length - 1;
           const labelId = `${baseId}-${index}`;
           return (
             <li
@@ -338,7 +404,7 @@ export function Stepper<Id extends string = string>({
           className="astw:mt-2 astw:flex astw:min-w-0 astw:items-baseline astw:gap-1.5 astw:@[400px]:hidden"
         >
           <span className="astw:shrink-0 astw:text-muted-foreground">
-            {t("stepOf", { current: currentIndex + 1, total: steps.length })}
+            {t("stepOf", { current: currentIndex + 1, total: resolved.length })}
           </span>
           <span className="astw:truncate astw:text-label-md astw:text-foreground">
             {current.label}

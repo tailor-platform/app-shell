@@ -12,7 +12,7 @@ export const stepperLabels = defineI18nLabels({
   ja: {
     label: "進捗",
     complete: "完了",
-    skipped: "対象外",
+    skipped: "スキップ",
     upcoming: "未着手",
     stepOf: (props: { current: number; total: number }) =>
       `ステップ ${props.current} / ${props.total}`,

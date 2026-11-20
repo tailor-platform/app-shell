@@ -5,11 +5,12 @@ export function BasicUsage() {
     <Stepper
       aria-label="New purchase order"
       steps={[
-        { id: "supplier", label: "Supplier", status: "complete" },
-        { id: "delivery", label: "Delivery", status: "current" },
-        { id: "approval", label: "Approval", status: "upcoming" },
-        { id: "review", label: "Review", status: "upcoming" },
+        { id: "supplier", label: "Supplier" },
+        { id: "delivery", label: "Delivery" },
+        { id: "approval", label: "Approval" },
+        { id: "review", label: "Review" },
       ]}
+      progress={{ state: "in-progress", currentStepId: "delivery" }}
     />
   );
 }
@@ -19,18 +20,18 @@ export function StageProgress() {
     <Stepper
       aria-label="Quality gates"
       steps={[
-        { id: "qg1", label: "QG1", status: "complete", description: "Done 11 Aug" },
-        { id: "qg2", label: "QG2", status: "complete", description: "Done 6 Sep" },
-        { id: "qg3", label: "QG3", status: "skipped", description: "Not required" },
+        { id: "qg1", label: "QG1", description: "Done 11 Aug" },
+        { id: "qg2", label: "QG2", description: "Done 6 Sep" },
+        { id: "qg3", label: "QG3", description: "Skipped 2 Oct" },
         {
           id: "qg4",
           label: "QG4",
-          status: "current",
           badge: <Badge variant="outline-info">Next</Badge>,
           description: "Plan 18 Nov",
         },
-        { id: "qg5", label: "QG5", status: "upcoming", description: "Plan 9 Dec" },
+        { id: "qg5", label: "QG5", description: "Plan 9 Dec" },
       ]}
+      progress={{ state: "in-progress", currentStepId: "qg4", skippedStepIds: ["qg3"] }}
     />
   );
 }
@@ -41,11 +42,12 @@ export function Vertical() {
       aria-label="Approval"
       orientation="vertical"
       steps={[
-        { id: "draft", label: "Draft", status: "complete", description: "Hanna Suzuki" },
-        { id: "manager", label: "Manager", status: "complete", description: "Kenji Mori · 3 Nov" },
-        { id: "finance", label: "Finance", status: "current", description: "Priya Nair" },
-        { id: "issued", label: "Issued", status: "upcoming" },
+        { id: "draft", label: "Draft", description: "Hanna Suzuki" },
+        { id: "manager", label: "Manager", description: "Kenji Mori · 3 Nov" },
+        { id: "finance", label: "Finance", description: "Priya Nair" },
+        { id: "issued", label: "Issued" },
       ]}
+      progress={{ state: "in-progress", currentStepId: "finance" }}
     />
   );
 }

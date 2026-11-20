@@ -3,7 +3,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createAppShellWrapper } from "../../../tests/test-utils";
 import { Stepper } from "./stepper";
-import type { StepperStep } from "./types";
+import type { StepperProgress, StepperStep } from "./types";
 
 afterEach(() => {
   cleanup();
@@ -12,11 +12,18 @@ afterEach(() => {
 });
 
 const STEPS: StepperStep[] = [
-  { id: "supplier", label: "Supplier", status: "complete" },
-  { id: "lines", label: "Lines", status: "current", description: "Add at least one line" },
-  { id: "approval", label: "Approval", status: "skipped" },
-  { id: "review", label: "Review", status: "upcoming" },
+  { id: "supplier", label: "Supplier" },
+  { id: "approval", label: "Approval" },
+  { id: "lines", label: "Lines", description: "Add at least one line" },
+  { id: "review", label: "Review" },
 ];
+
+// Supplier done, approval skipped, on lines, review still to come
+const PROGRESS: StepperProgress = {
+  state: "in-progress",
+  currentStepId: "lines",
+  skippedStepIds: ["approval"],
+};
 
 const renderStepper = (ui: React.ReactElement, locale = "en") =>
   render(ui, { wrapper: createAppShellWrapper(locale) });
@@ -36,13 +43,15 @@ describe("Stepper", () => {
 
   describe("snapshots", () => {
     it("horizontal", () => {
-      const { container } = renderStepper(<Stepper aria-label="New order" steps={STEPS} />);
+      const { container } = renderStepper(
+        <Stepper aria-label="New order" steps={STEPS} progress={PROGRESS} />,
+      );
       expect(container.innerHTML).toMatchSnapshot();
     });
 
     it("vertical", () => {
       const { container } = renderStepper(
-        <Stepper aria-label="New order" orientation="vertical" steps={STEPS} />,
+        <Stepper aria-label="New order" orientation="vertical" steps={STEPS} progress={PROGRESS} />,
       );
       expect(container.innerHTML).toMatchSnapshot();
     });
@@ -53,27 +62,27 @@ describe("Stepper", () => {
   // ==========================================================================
 
   it("renders an ordered list of steps with their status", () => {
-    renderStepper(<Stepper aria-label="New order" steps={STEPS} />);
+    renderStepper(<Stepper aria-label="New order" steps={STEPS} progress={PROGRESS} />);
     const list = screen.getByRole("list", { name: "New order" });
     expect(list.tagName).toBe("OL");
     expect(stepEls().map((el) => el.getAttribute("data-status"))).toEqual([
       "complete",
-      "current",
       "skipped",
+      "current",
       "upcoming",
     ]);
   });
 
   it("marks only the current step with aria-current", () => {
-    renderStepper(<Stepper steps={STEPS} />);
+    renderStepper(<Stepper steps={STEPS} progress={PROGRESS} />);
     const current = stepEls().filter((el) => el.getAttribute("aria-current") === "step");
     expect(current).toHaveLength(1);
     expect(current[0].textContent).toContain("Lines");
   });
 
   it("tells screen readers where the other steps stand", () => {
-    renderStepper(<Stepper steps={STEPS} />);
-    const [supplier, lines, approval, review] = stepEls();
+    renderStepper(<Stepper steps={STEPS} progress={PROGRESS} />);
+    const [supplier, approval, lines, review] = stepEls();
     expect(supplier.textContent).toContain("Completed");
     expect(lines.textContent).not.toContain("Completed");
     expect(approval.textContent).toContain("Skipped");
@@ -81,51 +90,119 @@ describe("Stepper", () => {
   });
 
   it("numbers steps and shows a check on completed ones", () => {
-    renderStepper(<Stepper steps={STEPS} />);
+    renderStepper(<Stepper steps={STEPS} progress={PROGRESS} />);
     const markers = Array.from(document.querySelectorAll('[data-slot="stepper-marker"]'));
     expect(markers[0].querySelector("svg")).not.toBeNull();
     expect(markers.slice(1).map((m) => m.textContent)).toEqual(["2", "3", "4"]);
+    // Skipped steps keep their number rather than a check
   });
 
-  it("fills the line up to the furthest step reached", () => {
-    renderStepper(<Stepper steps={STEPS} />);
-    // Lines is current, so only supplier→lines is filled; the skipped step after it was never reached
-    expect(filledConnectors()).toEqual([true, false, false]);
-  });
-
-  it("fills through a skipped step that lies before the furthest step reached", () => {
-    renderStepper(
-      <Stepper
-        steps={[
-          { id: "qg1", label: "QG1", status: "complete" },
-          { id: "qg2", label: "QG2", status: "skipped" },
-          { id: "qg3", label: "QG3", status: "current" },
-          { id: "qg4", label: "QG4", status: "upcoming" },
-        ]}
-      />,
-    );
+  it("fills the line up to the current step, through skipped ones", () => {
+    renderStepper(<Stepper steps={STEPS} progress={PROGRESS} />);
     expect(filledConnectors()).toEqual([true, true, false]);
   });
 
+  it("shows every step upcoming before the flow starts", () => {
+    renderStepper(<Stepper steps={STEPS} progress={{ state: "not-started" }} />);
+    expect(stepEls().map((el) => el.getAttribute("data-status"))).toEqual([
+      "upcoming",
+      "upcoming",
+      "upcoming",
+      "upcoming",
+    ]);
+    expect(filledConnectors()).toEqual([false, false, false]);
+    expect(document.querySelector('[data-slot="stepper-caption"]')).toBeNull();
+  });
+
+  it("shows every step passed once complete, keeping skipped ones", () => {
+    renderStepper(
+      <Stepper
+        steps={STEPS}
+        progress={{ state: "complete", skippedStepIds: ["approval", "review"] }}
+      />,
+    );
+    expect(stepEls().map((el) => el.getAttribute("data-status"))).toEqual([
+      "complete",
+      "skipped",
+      "complete",
+      "skipped",
+    ]);
+    expect(filledConnectors()).toEqual([true, true, true]);
+    expect(stepEls().some((el) => el.hasAttribute("aria-current"))).toBe(false);
+  });
+
+  // ==========================================================================
+  // Invalid progress
+  // ==========================================================================
+
+  describe("warns about progress the types can't rule out", () => {
+    const warnings = () => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      return () => warn.mock.calls.map((call) => String(call[0]));
+    };
+
+    it("ignores skipping a step not yet passed", () => {
+      const calls = warnings();
+      renderStepper(
+        <Stepper
+          steps={STEPS}
+          progress={{ state: "in-progress", currentStepId: "lines", skippedStepIds: ["review"] }}
+        />,
+      );
+      expect(stepEls()[3].getAttribute("data-status")).toBe("upcoming");
+      expect(calls()[0]).toContain(`step "review" can't be skipped before it has been passed`);
+    });
+
+    it("shows nothing current for an unknown currentStepId", () => {
+      const calls = warnings();
+      renderStepper(
+        <Stepper steps={STEPS} progress={{ state: "in-progress", currentStepId: "x" }} />,
+      );
+      expect(stepEls().every((el) => el.getAttribute("data-status") === "upcoming")).toBe(true);
+      expect(calls()[0]).toContain(`currentStepId "x" is not a step`);
+    });
+
+    it("reports duplicate step ids", () => {
+      const calls = warnings();
+      renderStepper(
+        <Stepper
+          steps={[
+            { id: "a", label: "A" },
+            { id: "a", label: "A again" },
+          ]}
+          progress={{ state: "not-started" }}
+        />,
+      );
+      expect(calls()[0]).toContain(`duplicate step id "a"`);
+    });
+  });
+
   it("names the list with a translated default", () => {
-    renderStepper(<Stepper steps={STEPS} />);
+    renderStepper(<Stepper steps={STEPS} progress={PROGRESS} />);
     expect(screen.getByRole("list", { name: "Progress" })).toBeDefined();
     cleanup();
-    renderStepper(<Stepper steps={STEPS} />, "ja");
+    renderStepper(<Stepper steps={STEPS} progress={PROGRESS} />, "ja");
     expect(screen.getByRole("list", { name: "進捗" })).toBeDefined();
   });
 
-  it("types onStepClick with the step ids", () => {
-    const steps = [
-      { id: "supplier", label: "Supplier", status: "complete" },
-      { id: "review", label: "Review", status: "current" },
-    ] satisfies StepperStep<"supplier" | "review">[];
+  it("types onStepClick and progress with the step ids", () => {
     renderStepper(
       <Stepper
-        steps={steps}
+        steps={[
+          { id: "supplier", label: "Supplier" },
+          { id: "review", label: "Review" },
+        ]}
+        progress={{ state: "in-progress", currentStepId: "review" }}
         onStepClick={(id) => {
           expectTypeOf(id).toEqualTypeOf<"supplier" | "review">();
         }}
+      />,
+    );
+    renderStepper(
+      <Stepper
+        steps={[{ id: "supplier", label: "Supplier" }]}
+        // @ts-expect-error — progress can't name an id that isn't a step
+        progress={{ state: "in-progress", currentStepId: "nope" }}
       />,
     );
   });
@@ -133,15 +210,8 @@ describe("Stepper", () => {
   it("renders the badge and description slots", () => {
     renderStepper(
       <Stepper
-        steps={[
-          {
-            id: "qg1",
-            label: "QG1",
-            status: "current",
-            badge: <span>Next</span>,
-            description: "Due 12 Nov",
-          },
-        ]}
+        steps={[{ id: "qg1", label: "QG1", badge: <span>Next</span>, description: "Due 12 Nov" }]}
+        progress={{ state: "in-progress", currentStepId: "qg1" }}
       />,
     );
     expect(screen.getByText("Next")).toBeDefined();
@@ -153,19 +223,19 @@ describe("Stepper", () => {
   // ==========================================================================
 
   it("adds a 'Step n of total' caption for narrow containers when horizontal", () => {
-    const { rerender } = renderStepper(<Stepper steps={STEPS} />);
+    const { rerender } = renderStepper(<Stepper steps={STEPS} progress={PROGRESS} />);
     const caption = document.querySelector('[data-slot="stepper-caption"]');
-    expect(caption?.textContent).toBe("Step 2 of 4Lines");
+    expect(caption?.textContent).toBe("Step 3 of 4Lines");
     expect(caption?.getAttribute("aria-hidden")).toBe("true");
 
-    rerender(<Stepper orientation="vertical" steps={STEPS} />);
+    rerender(<Stepper orientation="vertical" steps={STEPS} progress={PROGRESS} />);
     expect(document.querySelector('[data-slot="stepper-caption"]')).toBeNull();
   });
 
   it("translates the caption and status text", () => {
-    renderStepper(<Stepper steps={STEPS} />, "ja");
+    renderStepper(<Stepper steps={STEPS} progress={PROGRESS} />, "ja");
     expect(document.querySelector('[data-slot="stepper-caption"]')?.textContent).toBe(
-      "ステップ 2 / 4Lines",
+      "ステップ 3 / 4Lines",
     );
     expect(stepEls()[0].textContent).toContain("完了");
   });
@@ -174,19 +244,21 @@ describe("Stepper", () => {
   // Clicking
   // ==========================================================================
 
-  it("makes only completed steps clickable when onStepClick is set", async () => {
+  it("makes only passed steps — completed or skipped — clickable when onStepClick is set", async () => {
     const user = userEvent.setup();
     const onStepClick = vi.fn();
-    renderStepper(<Stepper steps={STEPS} onStepClick={onStepClick} />);
+    renderStepper(<Stepper steps={STEPS} progress={PROGRESS} onStepClick={onStepClick} />);
 
     const buttons = screen.getAllByRole("button");
-    expect(buttons).toHaveLength(1);
+    expect(buttons).toHaveLength(2);
     await user.click(buttons[0]);
     expect(onStepClick).toHaveBeenCalledWith("supplier");
+    await user.click(buttons[1]);
+    expect(onStepClick).toHaveBeenCalledWith("approval");
   });
 
   it("renders no buttons without onStepClick", () => {
-    renderStepper(<Stepper steps={STEPS} />);
+    renderStepper(<Stepper steps={STEPS} progress={PROGRESS} />);
     expect(screen.queryAllByRole("button")).toHaveLength(0);
   });
 
@@ -203,11 +275,11 @@ describe("Stepper", () => {
       stubWidth(320);
       const user = userEvent.setup();
       const onStepClick = vi.fn();
-      renderStepper(<Stepper steps={STEPS} onStepClick={onStepClick} />);
+      renderStepper(<Stepper steps={STEPS} progress={PROGRESS} onStepClick={onStepClick} />);
 
       // One focus stop, and it's the visible marker — not the visually hidden label
       const button = await screen.findByRole("button", { name: /^Supplier ?, Completed$/ });
-      expect(screen.getAllByRole("button")).toHaveLength(1);
+      expect(screen.getAllByRole("button")).toHaveLength(2);
       expect(button.querySelector('[data-slot="stepper-marker"]')).not.toBeNull();
 
       await user.click(button);
@@ -217,7 +289,7 @@ describe("Stepper", () => {
     it("names each step in a tooltip on its marker", async () => {
       stubWidth(320);
       const user = userEvent.setup();
-      renderStepper(<Stepper steps={STEPS} />);
+      renderStepper(<Stepper steps={STEPS} progress={PROGRESS} />);
 
       const triggers = await waitFor(() => {
         const found = document.querySelectorAll<HTMLElement>(
@@ -239,7 +311,7 @@ describe("Stepper", () => {
 
     it("keeps the label as the click target and adds no tooltips when wide", () => {
       stubWidth(800);
-      renderStepper(<Stepper steps={STEPS} onStepClick={() => {}} />);
+      renderStepper(<Stepper steps={STEPS} progress={PROGRESS} onStepClick={() => {}} />);
       expect(document.querySelector('[data-slot="stepper-marker-trigger"]')).toBeNull();
       const button = screen.getByRole("button", { name: /^Supplier ?, Completed$/ });
       expect(button.querySelector('[data-slot="stepper-marker"]')).toBeNull();
@@ -247,7 +319,7 @@ describe("Stepper", () => {
 
     it("never goes compact when vertical", () => {
       stubWidth(320);
-      renderStepper(<Stepper orientation="vertical" steps={STEPS} />);
+      renderStepper(<Stepper orientation="vertical" steps={STEPS} progress={PROGRESS} />);
       expect(document.querySelector('[data-slot="stepper-marker-trigger"]')).toBeNull();
     });
   });

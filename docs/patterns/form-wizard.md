@@ -52,14 +52,11 @@ function FormWizard() {
     <Layout>
       <Layout.Header title="Create task" />
       <Layout.Column>
-        {/* Statuses come from the current step; completed steps go back on click */}
+        {/* Progress is the current step; completed steps go back on click */}
         <Stepper
           aria-label="Create task"
-          steps={STEPS.map((label, i) => ({
-            id: String(i),
-            label,
-            status: i < step ? "complete" : i === step ? "current" : "upcoming",
-          }))}
+          steps={STEPS.map((label, i) => ({ id: String(i), label }))}
+          progress={{ state: "in-progress", currentStepId: String(step) }}
           onStepClick={(id) => setStep(Number(id))}
         />
 

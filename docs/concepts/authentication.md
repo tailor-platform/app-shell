@@ -136,7 +136,7 @@ function ProtectedContent() {
 
 Use `createAuthClient` to create an `EnhancedAuthClient` that you pass to `AuthProvider`. Create it once at module scope: if the URL contains OAuth callback parameters, client creation starts callback handling immediately, before React rendering. The client handles token management and provides an authenticated `fetch` method for use with GraphQL clients.
 
-`AuthClient` is the base type re-exported from [`@tailor-platform/auth-public-client`](https://www.npmjs.com/package/@tailor-platform/auth-public-client) for advanced integrations. `EnhancedAuthClient` extends that contract with AppShell helpers such as `getAppUri()`; `AuthProvider` requires this enhanced client, not just an arbitrary base client.
+`AuthClient` is the base type re-exported from `@tailor-platform/auth-public-client` for advanced integrations. `EnhancedAuthClient` extends that contract with AppShell helpers such as `getAppUri()`; `AuthProvider` requires this enhanced client, not just an arbitrary base client.
 
 ```tsx
 import { createAuthClient } from "@tailor-platform/app-shell";

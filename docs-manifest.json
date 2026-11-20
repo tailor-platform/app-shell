@@ -168,7 +168,7 @@
       "kind": "code-backed",
       "outline": "docs-src/concepts/authentication.docs.outline.md",
       "output": "docs/concepts/authentication.md",
-      "examples": null,
+      "examples": "docs-src/concepts/authentication.docs.examples.tsx",
       "sources": ["packages/core/src/contexts/auth-context.tsx"],
       "claims": ["AuthClient"],
       "symbols": [
@@ -183,10 +183,10 @@
       ],
       "hashes": {
         "typeSurface": "a9c6468e0f121418",
-        "outline": "b4461f1fc158eb06",
+        "outline": "2e18891287812d61",
         "snapshot": null,
-        "outputMd": "29f86e4fca7452e7",
-        "examples": null
+        "outputMd": "62ff582b0c3228ba",
+        "examples": "7d8d821acbaf03a4"
       }
     },
     "autocomplete": {
@@ -316,7 +316,7 @@
       "kind": "code-backed",
       "outline": "docs-src/components/command-palette.docs.outline.md",
       "output": "docs/components/command-palette.md",
-      "examples": null,
+      "examples": "docs-src/components/command-palette.docs.examples.tsx",
       "sources": [
         "packages/core/src/components/command-palette/**",
         "packages/core/src/contexts/command-palette-context.tsx"
@@ -333,10 +333,10 @@
       ],
       "hashes": {
         "typeSurface": "177de62baffe68dd",
-        "outline": "14350665e19ce9ab",
+        "outline": "ca082d5cbd9b77db",
         "snapshot": null,
-        "outputMd": "60ca478a7a266726",
-        "examples": null
+        "outputMd": "7b70999b74804fdf",
+        "examples": "ccfa08e05ef0f056"
       }
     },
     "create-ai-gateway-client": {
@@ -369,16 +369,16 @@
       "kind": "code-backed",
       "outline": "docs-src/hooks/create-typed-paths.docs.outline.md",
       "output": "docs/api/create-typed-paths.md",
-      "examples": null,
+      "examples": "docs-src/hooks/create-typed-paths.docs.examples.tsx",
       "sources": ["packages/core/src/fs-routes/typed-paths.ts"],
       "claims": [],
       "symbols": ["createTypedPaths"],
       "hashes": {
         "typeSurface": "bee373b07c9b0579",
-        "outline": "09e50ed1cfbc56d7",
+        "outline": "51c1440a7d86624a",
         "snapshot": null,
-        "outputMd": "8296d75638c44123",
-        "examples": null
+        "outputMd": "fd88a9627e94116d",
+        "examples": "f6aee8897e5846ab"
       }
     },
     "csv-importer": {
@@ -562,10 +562,10 @@
       ],
       "hashes": {
         "typeSurface": "fb052f5803e23452",
-        "outline": "dd660b0a849469c9",
+        "outline": "8321769f74d28e37",
         "snapshot": null,
-        "outputMd": "0625c602d510a9ae",
-        "examples": "b657b67c9745a60e"
+        "outputMd": "f8bc1ff57c4e7d18",
+        "examples": "fb9a806f6e3c717b"
       }
     },
     "default-header": {
@@ -1389,10 +1389,10 @@
       "symbols": ["ItemGroup", "MappedItem", "Select", "SelectAsyncFetcher"],
       "hashes": {
         "typeSurface": "f2ada72158311d37",
-        "outline": "813f81e2f7809a60",
+        "outline": "f58808440c631158",
         "snapshot": "c7aa045d22de4cc7",
-        "outputMd": "a3127c163ee0d41a",
-        "examples": "260fb265390c4947"
+        "outputMd": "d396dd371f17e96c",
+        "examples": "e302c24677e96e88"
       }
     },
     "sheet": {
@@ -1737,7 +1737,7 @@
       "kind": "code-backed",
       "outline": "docs-src/hooks/use-ai-chat.docs.outline.md",
       "output": "docs/api/use-ai-chat.md",
-      "examples": null,
+      "examples": "docs-src/hooks/use-ai-chat.docs.examples.tsx",
       "sources": ["packages/core/src/ai/use-ai-chat.ts", "packages/core/src/ai/tools.ts"],
       "claims": [],
       "symbols": [
@@ -1751,10 +1751,10 @@
       ],
       "hashes": {
         "typeSurface": "6bcd382ee9880eaf",
-        "outline": "d89465e8df7eea67",
+        "outline": "447d4b2e2d794db1",
         "snapshot": null,
-        "outputMd": "23355a0bf39b25da",
-        "examples": null
+        "outputMd": "cf855854e4666328",
+        "examples": "f488fdd193b0e6c2"
       }
     },
     "use-app-shell": {
@@ -1861,16 +1861,16 @@
       "kind": "code-backed",
       "outline": "docs-src/hooks/use-page-meta.docs.outline.md",
       "output": "docs/api/use-page-meta.md",
-      "examples": null,
+      "examples": "docs-src/hooks/use-page-meta.docs.examples.tsx",
       "sources": ["packages/core/src/hooks/use-page-meta.ts"],
       "claims": [],
       "symbols": ["PageMeta", "usePageMeta"],
       "hashes": {
         "typeSurface": "ec87fba2d8ddf9a2",
-        "outline": "bde4b4db3694b04d",
+        "outline": "9d737a9d87a787ef",
         "snapshot": null,
-        "outputMd": "63e59386d0996c45",
-        "examples": null
+        "outputMd": "9470854e7bd710aa",
+        "examples": "3738035148b7b446"
       }
     },
     "use-register-command-palette-actions": {
@@ -1878,16 +1878,16 @@
       "kind": "prose",
       "outline": "docs-src/hooks/use-register-command-palette-actions.docs.outline.md",
       "output": "docs/api/use-register-command-palette-actions.md",
-      "examples": null,
+      "examples": "docs-src/hooks/use-register-command-palette-actions.docs.examples.tsx",
       "sources": [],
       "claims": [],
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "cfec989087062cb0",
+        "outline": "0e39fe568b365dfd",
         "snapshot": null,
-        "outputMd": "6122c68c72a17608",
-        "examples": null
+        "outputMd": "e693620e711ed19c",
+        "examples": "856bbb50d9b86aaf"
       }
     },
     "use-resolved-locale": {
@@ -1994,7 +1994,7 @@
     }
   },
   "skill": {
-    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "29f86e4fca7452e7",
+    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "62ff582b0c3228ba",
     "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "efba56e470f4f164",
     "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "17558cfa495ab026",
     "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "0acfb736bcf90eff",
@@ -2017,10 +2017,10 @@
     "packages/core/skills/app-shell-patterns/references/components/card.md": "c1f88a287f197d79",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "ebe55c40fb5fb2e6",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "c79cd0fe175187e3",
-    "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "60ca478a7a266726",
+    "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "7b70999b74804fdf",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "10c04c78bb846c9a",
     "packages/core/skills/app-shell-patterns/references/components/data-table.md": "c32c7ccf13528bf1",
-    "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "0625c602d510a9ae",
+    "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "f8bc1ff57c4e7d18",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "9b1672c71b6db3ff",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "8930a410d7d45f89",
@@ -2035,7 +2035,7 @@
     "packages/core/skills/app-shell-patterns/references/components/layout.md": "3b8bf269c15e2fa5",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "6ecd9a3297729b38",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "4742120c07f00991",
-    "packages/core/skills/app-shell-patterns/references/components/select.md": "a3127c163ee0d41a",
+    "packages/core/skills/app-shell-patterns/references/components/select.md": "d396dd371f17e96c",
     "packages/core/skills/app-shell-patterns/references/components/sheet.md": "0be1c6430a4b7ec1",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "370eccb532278bd1",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
@@ -2053,7 +2053,7 @@
     "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "86bb46eae81feb56",
     "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "96c85ba79f5c64cc",
     "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",
-    "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "8296d75638c44123",
+    "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "fd88a9627e94116d",
     "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "3035dea9ac31b7f5",
     "packages/core/skills/app-shell-patterns/references/api/define-module.md": "47bb307116c6f41f",
     "packages/core/skills/app-shell-patterns/references/api/define-resource.md": "83e9ee8ceb56d3c6",
@@ -2064,14 +2064,14 @@
     "packages/core/skills/app-shell-patterns/references/api/router/use-location.md": "ccf87add77994830",
     "packages/core/skills/app-shell-patterns/references/api/router/use-navigate.md": "d018cb13a7ddc38b",
     "packages/core/skills/app-shell-patterns/references/api/router/use-params.md": "78c15519a8339ebb",
-    "packages/core/skills/app-shell-patterns/references/api/use-ai-chat.md": "23355a0bf39b25da",
+    "packages/core/skills/app-shell-patterns/references/api/use-ai-chat.md": "cf855854e4666328",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell.md": "3ca2ab1005dd456d",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "c843db66f81d5d33",
     "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "4ef17ad66dd9522a",
     "packages/core/skills/app-shell-patterns/references/api/use-auth.md": "0137e56d7bd78957",
     "packages/core/skills/app-shell-patterns/references/api/use-override-breadcrumb.md": "6ec55fc3dfd8c21d",
-    "packages/core/skills/app-shell-patterns/references/api/use-page-meta.md": "63e59386d0996c45",
-    "packages/core/skills/app-shell-patterns/references/api/use-register-command-palette-actions.md": "6122c68c72a17608",
+    "packages/core/skills/app-shell-patterns/references/api/use-page-meta.md": "9470854e7bd710aa",
+    "packages/core/skills/app-shell-patterns/references/api/use-register-command-palette-actions.md": "e693620e711ed19c",
     "packages/core/skills/app-shell-patterns/references/api/use-resolved-locale.md": "eb5e8371ba10d771",
     "packages/core/skills/app-shell-patterns/references/api/use-route-error.md": "8a0bcc61b2640093",
     "packages/core/skills/app-shell-patterns/references/api/use-theme.md": "000e2603cef83d47",

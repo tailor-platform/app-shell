@@ -56,18 +56,21 @@ The CommandPalette will automatically:
 
 Call `useOpenCommandPalette()` at the top level of a component inside `AppShell`. It returns a function that opens the built-in palette; call that function from an event handler.
 
-```tsx
-import { Button, useOpenCommandPalette } from "@tailor-platform/app-shell";
+The example imports `Button` and `useOpenCommandPalette` from `@tailor-platform/app-shell`. In the docs browser, these buttons open the surrounding application's palette, not a separate preview. Try **Find Select docs** to prefill the search, then press **Esc** to close it without navigating.
 
-function SearchActions() {
+<example-preview name="opening-programmatically"></example-preview>
+
+```tsx
+function OpeningProgrammatically() {
   const openCommandPalette = useOpenCommandPalette();
 
   return (
-    <>
-      <Button onClick={() => openCommandPalette()}>Search</Button>
-      <Button onClick={() => openCommandPalette({ search: "orders" })}>Find order pages</Button>
-      <Button onClick={() => openCommandPalette({ search: "ORD: alice" })}>Find orders</Button>
-    </>
+    <div className="flex flex-wrap gap-2">
+      <Button onClick={() => openCommandPalette()}>Search docs</Button>
+      <Button variant="outline" onClick={() => openCommandPalette({ search: "Select" })}>
+        Find Select docs
+      </Button>
+    </div>
   );
 }
 ```
@@ -78,7 +81,7 @@ The returned function accepts an optional `OpenCommandPaletteOptions` object:
 | -------- | -------- | ------------------------------------------------------------------------------------------------------------ |
 | `search` | `string` | Initial search text. Omit it to open with an empty search. A registered `PREFIX:` activates its search mode. |
 
-Each call initializes the search, even if the palette is already open. The `ORD:` example requires an `ORD` source in AppShell's `searchSources`; without a matching source, the text is treated as an ordinary page/action search.
+Each call initializes the search, even if the palette is already open. For example, `openCommandPalette({ search: "ORD: alice" })` activates an `ORD` source only if it is registered in AppShell's `searchSources`; without a matching source, the text is treated as an ordinary page/action search. The live example uses ordinary page search and does not register a search source.
 
 ## Features
 
@@ -137,18 +140,7 @@ const productsModule = defineModule({
 
 In addition to navigation results, the CommandPalette can surface page-level actions. Use the `useRegisterCommandPaletteActions` hook to register actions that appear in the **Actions** section of the palette. Actions are unregistered automatically when the component unmounts.
 
-```tsx
-import { useRegisterCommandPaletteActions } from "@tailor-platform/app-shell";
-
-function OrderDetailPage() {
-  useRegisterCommandPaletteActions("Order Actions", [
-    { key: "confirm", label: "Confirm order", onSelect: handleConfirm },
-    { key: "cancel", label: "Cancel order", icon: <XIcon />, onSelect: handleCancel },
-  ]);
-
-  return <div>{/* page content */}</div>;
-}
-```
+Try the [working action-registration example](../api/use-register-command-palette-actions.md#usage): selecting its demo action increases a local count, and changing the increment demonstrates that the latest callback is used.
 
 ### Parameters
 

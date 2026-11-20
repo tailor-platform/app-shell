@@ -28,7 +28,7 @@ import {
 } from "@tailor-platform/app-shell";
 ```
 
-The examples below also import `Button`, `Form`, and `Text` from `@tailor-platform/app-shell`, and `useId` and `useState` from `react`.
+The examples below also import `Button`, `Form`, `Select`, `Text`, `parseAbsolute`, `parseDateTime`, and `parseZonedDateTime` from `@tailor-platform/app-shell`, and `useId` and `useState` from `react`.
 
 ## Date values and parsing helpers
 
@@ -47,20 +47,83 @@ AppShell re-exports these types and helpers from [`@internationalized/date`](htt
 | `parseZonedDateTime(text)`      | Parse a date/time with a bracketed IANA timezone into a `ZonedDateTime`, preserving the named zone.                          |
 | `getLocalTimeZone()`            | Read the environment's local IANA timezone. This does not read AppShell's `timeZone` setting.                                |
 
-The first five exports are **types only**, not constructor values. Use the parsing helpers to create date values:
+The first five exports are **types only**, not constructor values. Use the parsing helpers to create date values.
 
-```ts
-import {
-  parseDate,
-  parseDateTime,
-  parseAbsolute,
-  parseZonedDateTime,
-} from "@tailor-platform/app-shell";
+Switch the instant's display timezone between Tokyo and UTC: `parseAbsolute` represents the same instant at a different wall-clock time, while the other results keep their date-only, local, or explicitly named-zone meaning. Choose `not-a-date` to see an invalid `parseDate` input handled without interrupting the other examples. All inputs are fixed; the example does not change AppShell's timezone.
 
-const date = parseDate("2026-04-09");
-const localDateTime = parseDateTime("2026-04-09T09:30");
-const instantInTokyo = parseAbsolute("2026-04-09T00:30:00Z", "Asia/Tokyo");
-const zonedDateTime = parseZonedDateTime("2026-04-09T09:30[Asia/Tokyo]");
+<example-preview name="parsing-helpers"></example-preview>
+
+```tsx
+function ParsingHelpers() {
+  const [dateInput, setDateInput] = useState("2026-04-09");
+  const [timeZone, setTimeZone] = useState("Asia/Tokyo");
+  const parse = (read: () => DateValue) => {
+    try {
+      return { value: read().toString(), error: null };
+    } catch (error) {
+      return { value: null, error: error instanceof Error ? error.message : "Invalid date" };
+    }
+  };
+  const results = [
+    { name: "parseDate", input: dateInput, ...parse(() => parseDate(dateInput)) },
+    {
+      name: "parseDateTime",
+      input: "2026-04-09T09:30",
+      ...parse(() => parseDateTime("2026-04-09T09:30")),
+    },
+    {
+      name: "parseAbsolute",
+      input: `2026-04-09T00:30:00Z in ${timeZone}`,
+      ...parse(() => parseAbsolute("2026-04-09T00:30:00Z", timeZone)),
+    },
+    {
+      name: "parseZonedDateTime",
+      input: "2026-04-09T09:30[Asia/Tokyo]",
+      ...parse(() => parseZonedDateTime("2026-04-09T09:30[Asia/Tokyo]")),
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Field.Root name="parserDateInput">
+        <Field.Label>Date input</Field.Label>
+        <Select
+          items={["2026-04-09", "not-a-date"]}
+          value={dateInput}
+          onValueChange={(value) => {
+            if (value !== null) setDateInput(value);
+          }}
+        />
+        <Field.Description>Try the invalid preset to see a caught parsing error.</Field.Description>
+      </Field.Root>
+      <Field.Root name="parserTimeZone">
+        <Field.Label>Instant display timezone</Field.Label>
+        <Select
+          items={["Asia/Tokyo", "UTC"]}
+          value={timeZone}
+          onValueChange={(value) => {
+            if (value !== null) setTimeZone(value);
+          }}
+        />
+      </Field.Root>
+      <dl className="space-y-3" aria-live="polite">
+        {results.map((result) => (
+          <div key={result.name}>
+            <dt className="font-medium">{result.name}</dt>
+            <dd className="break-words font-mono text-sm">
+              <div>Input: {result.input}</div>
+              {result.error ? (
+                <div role="alert">Parsing error: {result.error}</div>
+              ) : (
+                <div>Result: {result.value}</div>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
 ```
 
 Parsing can throw for invalid input; validate or catch errors when the string is not trusted. For application-timezone behavior in React components, call [`useTimeZone()`](../api/use-time-zone.md) at the component's top level and pass its `value` to `parseAbsolute`. Use its `today()` and `now()` methods for the current date and instant, rather than assuming the user's local timezone matches the configured one.

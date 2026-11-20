@@ -292,32 +292,63 @@ Not every failed refresh ends the session. A request timeout, a network failure,
 
 The line is drawn on the shape of the response, not on how transient the underlying cause is. Any rejection the token endpoint returns as a 4xx carrying an `error` code ends the session — the sole exception is `use_dpop_nonce`. A server that reports overload as `400 {"error":"server_error"}` or `400 {"error":"temporarily_unavailable"}` will therefore sign users out, as will a 5xx that carries a `WWW-Authenticate` header. If you operate the token endpoint, prefer a bare 5xx for conditions you want treated as retryable.
 
-To react to teardown yourself — clearing app-level caches, for instance — subscribe to the client's events:
+To react to teardown yourself — clearing app-level caches, for instance — subscribe to the client's events and return the unsubscribe function from your effect. In an application, use the same client passed to `AuthProvider` and clear your own cache when it emits `logout`.
+
+### Working example: logout cleanup
+
+Click **Simulate logout** to emit `logout` from an isolated memory client and clear the local cached items through the event subscription. **Reset logout demo** signs the memory client back in and restores the sample cache. This demonstrates event-driven cleanup, not OAuth, token expiry, persistence, or a redirect; the surrounding docs application's authentication is not changed.
+
+The example imports `useEffect` and `useState` from `react`, `Button` and `Text` from `@tailor-platform/app-shell`, and `createMemoryAuthClient` from `@tailor-platform/app-shell/testing`. The memory client is only a fixture for this preview; production code uses the auth client created during application setup.
+
+<example-preview name="logout-cleanup"></example-preview>
 
 ```tsx
-import { useEffect } from "react";
-import type { EnhancedAuthClient } from "@tailor-platform/app-shell";
+function LogoutCleanup() {
+  const [client] = useState(() =>
+    createMemoryAuthClient({ isReady: true, isAuthenticated: true, error: null }),
+  );
+  const [cachedItems, setCachedItems] = useState(["Draft order", "Product list"]);
 
-function SessionCleanup({
-  client,
-  clearAppCaches,
-}: {
-  client: EnhancedAuthClient;
-  clearAppCaches: () => void;
-}) {
   useEffect(() => {
     return client.addEventListener((event) => {
       if (event.type === "logout") {
-        clearAppCaches();
+        setCachedItems([]);
       }
     });
-  }, [client, clearAppCaches]);
+  }, [client]);
 
-  return null;
+  return (
+    <div className="flex flex-col gap-3">
+      <Text.p>
+        This memory client emits real logout events locally. It does not simulate OAuth, token
+        expiry, or persisted sessions, and does not sign you out of the docs app.
+      </Text.p>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" onClick={() => void client.logout()}>
+          Simulate logout
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={async () => {
+            await client.login();
+            setCachedItems(["Draft order", "Product list"]);
+          }}
+        >
+          Reset logout demo
+        </Button>
+      </div>
+      <Text.p role="status">Cached items: {cachedItems.length}</Text.p>
+      {cachedItems.length > 0 && (
+        <ul className="list-inside list-disc">
+          {cachedItems.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
-
-// Mount alongside your app, using the same client passed to AuthProvider.
-<SessionCleanup client={authClient} clearAppCaches={clearAppCaches} />;
 ```
 
 ## Testing

@@ -86,9 +86,21 @@ The second `execute` argument is an `AIChatToolContext`:
 | `signal`   | `AbortSignal`     | Cancellation signal for the active chat request. Forward it to `fetch` or other operations that support it. |
 | `messages` | `AIChatMessage[]` | User/assistant text available to the current turn, excluding internal tool-call and tool-result messages.   |
 
-Calling `stop()` or unmounting aborts the signal. Custom tool work must cooperate with cancellation; aborting does not undo side effects that have already happened. The example below forwards the signal to its request and checks the response status before returning a tool result.
+Calling `stop()` or unmounting aborts the signal. Custom tool work must cooperate with cancellation; aborting does not undo side effects that have already happened. The authenticated AI Gateway example below forwards the signal to its request and checks the response status before returning a tool result.
 
-## Usage
+## Working example: local tool execution
+
+Click **Look up product** to run a real local tool through `useAIChat`: the scripted client requests `lookupProduct`, the hook validates its arguments, the tool reads a local inventory fixture, and the next scripted reply includes the internal tool result. The brief delay lets you see the requested tool name and try **Stop** before the lookup returns.
+
+**Try invalid arguments** requests a number where the schema expects a string. Validation prevents tool execution and returns a tool-result error to the scripted client; this is not a top-level chat `error`.
+
+The preview needs no authentication, backend, or model. It imports `useState` from `react`, and `Button`, `Text`, `defineAIChatTool`, `useAIChat`, `AIChatToolSchema`, and `AIGatewayClient` from `@tailor-platform/app-shell` (the last two are types). Its small dependency-free schema implements the Standard Schema contracts directly; an application can use a schema library such as Zod 4, as shown below.
+
+<!-- example: local-tool-execution -->
+
+## Usage with an authenticated AI Gateway
+
+Unlike the scripted preview, this setup calls a real AI Gateway and an application-owned API. Create the clients once outside rendering and supply your own endpoints and authentication configuration.
 
 ```tsx
 import {

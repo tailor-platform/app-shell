@@ -53,29 +53,13 @@ type CommandPaletteAction = {
 
 ## Usage
 
-```tsx
-import { useRegisterCommandPaletteActions } from "@tailor-platform/app-shell";
+The example imports `useState` from `react`, and `Button`, `Text`, `useOpenCommandPalette`, and `useRegisterCommandPaletteActions` from `@tailor-platform/app-shell`.
 
-function OrderDetailPage() {
-  const [loading, setLoading] = useState(false);
+Click **Open demo action**, then select **Increase preview count** in the surrounding docs browser's palette. Toggle **Add five at a time** and run the same action again: its key and label stay unchanged, but its latest callback uses the new increment. Only the local preview count changes; no request is sent and no application data is modified.
 
-  const handleConfirm = async () => {
-    setLoading(true);
-    try {
-      await confirmOrder(orderId);
-    } finally {
-      setLoading(false);
-    }
-  };
+<!-- example: contextual-actions -->
 
-  useRegisterCommandPaletteActions("Order Actions", [
-    { key: "confirm", label: "Confirm order", onSelect: handleConfirm },
-    { key: "cancel", label: "Cancel order", icon: <XIcon />, onSelect: handleCancel },
-  ]);
-
-  return <div>{/* page content */}</div>;
-}
-```
+The action appears under **Documentation demo** while the preview is mounted and is removed automatically when it unmounts, such as when you leave this page.
 
 ## Behavior
 

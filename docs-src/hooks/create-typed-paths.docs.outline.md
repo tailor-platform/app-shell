@@ -39,22 +39,13 @@ An object with a `for(template, params)` method:
 
 ### Basic Usage
 
-```typescript
-import { createTypedPaths } from "@tailor-platform/app-shell";
+Edit the product ID to compare a static route, an encoded dynamic route, and a dynamic route with a query suffix. These are generated strings only; the preview does not navigate or register routes.
 
-type Routes = {
-  "/products": {};
-  "/products/:id": { id: string };
-};
+The example imports `createTypedPaths`, `Field`, and `Text` from `@tailor-platform/app-shell`, and `useState` from `react`.
 
-const paths = createTypedPaths<Routes>();
+<!-- example: path-builder -->
 
-paths.for("/products"); // "/products"
-paths.for("/products/:id", { id: "123" }); // "/products/123"
-paths.for("/products/:id?tab=details", { id: "123" }); // "/products/123?tab=details"
-```
-
-The following examples reuse `paths` from above. Its type map must match the routes configured in your application.
+For the following snippets, create a module-scoped `paths` helper with the same route map using `createTypedPaths<Routes>()`. Its type map must match the routes configured in your application.
 
 ### With useNavigate
 

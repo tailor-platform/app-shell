@@ -73,6 +73,8 @@ The filter preserves the old eligibility rules and maps `onClick` to the hook's 
 
 `ActionPanel` itself no longer requires a CommandPalette provider and can be rendered outside `AppShell`. The registration hook still requires `AppShell`.
 
+Test `ActionPanel` or a presentation-only component directly without `AppShell`; a screen that calls the registration hook still needs `AppShell` in its tests. If you extract registration logic for reuse, use a custom hook and test it with `renderHook` and an `AppShell` + `AppShellTestingProvider` wrapper; see the [Testing guide](./concepts/testing.md#test-commandpalette-actions).
+
 ## 1.21.0: error and action toasts stay until the user closes them
 
 **Applies to:** apps that show toasts through `useToast`.

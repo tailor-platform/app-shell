@@ -1,21 +1,28 @@
 ---
 name: local-review
 description: >
-  Review the current branch's PR locally and publish the report as a PR comment.
-  Use when the user invokes local-review or the PR creation workflow requests it.
-  Completion includes publication; no separate request to post the report is needed.
+  Substantively review the current branch's PR using the code-review skill and publish
+  the report as a PR comment. Use when the user invokes local-review or the PR creation
+  workflow requests it. Completion requires both review and publication; no separate
+  request to post the report is needed.
 compatibility: Requires Node.js 24, Git, and an authenticated gh CLI with permission to comment on the PR.
 ---
 
 # Local PR Review
 
 Run preparation, review, and publication in the **current agent session**. Do not launch
-another AI, use OCR, or write intermediate files. Invoking this skill requests both the
-review and its PR report: do not ask for another publication confirmation. Do not modify
-code, commit, push, create a PR, or change repository settings as part of this skill.
+another agent or write intermediate files. Invoking this skill requests both the review
+and its PR report: do not ask for another publication confirmation. Do not modify code,
+commit, push, create a PR, or change repository settings as part of this skill.
 
-Run commands from the repository root.
-For Pi, the explicit invocation is `/skill:local-review`; no PR number is required.
+Run commands from the repository root; no PR number is required.
+
+**Required review:** execute [code-review](../code-review/SKILL.md) substantively before
+marking the review complete or publishing. Reading a diff for a commit/PR description,
+opening files, or passing tests/CI is not a substitute. If this review has not happened,
+is incomplete, or cannot be performed, stop and report that fact to the user. Do not set
+`completed: true`, invent an empty `findings` array, or claim `No findings.` as a fallback.
+An existing report is not a substitute for performing the required review.
 
 ## 1. Prepare the current branch's PR
 
@@ -35,11 +42,12 @@ and review again instead of publishing an incomplete result.
 
 ## 2. Review every listed file
 
-For `packages/**` changes, read [code-review](../code-review/SKILL.md) and the relevant shared
-references it links. For other changes, use the applicable repository instructions and
-inspect the affected behavior, callers, configuration, tests, and documentation. Keep the
-review criteria in their existing owning skills/references; this skill owns the execution
-and publication procedure, not a second checklist.
+Always read and execute [code-review](../code-review/SKILL.md), including its review
+procedure and relevant shared references, for the full PR. This is mandatory even when
+no files under `packages/**` changed. Other repository or area guidance may supplement
+that review, never replace it. Merely loading the skill does not count as executing it.
+Keep review criteria in their existing owning skills/references; this skill owns the
+execution and publication procedure, not a second checklist.
 
 Read the entire relevant diff, in file-sized chunks when needed. The command shape is:
 
@@ -62,7 +70,7 @@ files, lockfiles, or changesets: either review them or record a concrete skip re
 
 For every `plan.files` entry, record exactly one result:
 
-- `{ "path": "...", "status": "reviewed" }` after checking it, including when there are no findings.
+- `{ "path": "...", "status": "reviewed" }` only after substantive analysis under `code-review`, including when there are no findings.
 - `{ "path": "...", "status": "skipped", "reason": "..." }` for an explicit scope limitation.
 
 A completed report may contain intentional skips with reasons; 100% coverage and zero
@@ -82,14 +90,16 @@ only the following top-level fields:
 
 | Field       | Content                                                                                                |
 | ----------- | ------------------------------------------------------------------------------------------------------ |
-| `completed` | `true`, only after the review has finished                                                             |
+| `completed` | `true`, only after the required substantive `code-review` has finished                                 |
 | `files`     | The per-file results above, covering every plan path exactly once                                      |
 | `findings`  | Array of findings with `path`, `severity` (`high`, `medium`, or `low`), `message`, and optional `line` |
 
 A finding must refer to a changed path; describe effects in related unchanged code within
 its message.
 An optional line is a positive line number in the reviewed content; omit it when not
-applicable, including deletion findings. Empty arrays are valid. Unknown fields are rejected.
+applicable, including deletion findings. An empty `findings` array is valid only after the
+required substantive `code-review` is complete and found no issues in the reviewed scope.
+Unknown fields are rejected.
 Do not include a separate count or coverage percentage: the publisher computes counts.
 Use `high` for the most severe issues; `critical` is not accepted. Do not include checks,
 limitations, or not-performed sections in the input or comment; CI owns routine checks.
@@ -117,8 +127,9 @@ report. Keep JSON strings properly escaped and do not create temporary report fi
 
 The publisher validates the result, rechecks the local branch and PR HEAD, verifies the
 file list against Git, and posts the canonical report through `gh`. It returns stdout JSON
-with `prNumber`, `headSha`, and `commentUrl`. Publish even when `findings` is empty. A chat-only
-summary does not complete this skill.
+with `prNumber`, `headSha`, and `commentUrl`. After the required review is complete, publish
+even when `findings` is empty. Never call the publisher to manufacture a clean report for
+work that was not substantively reviewed. A chat-only summary does not complete this skill.
 
 After successful publication, return the comment URL and a concise findings summary.
 Do not rewrite the generated comment manually: its visible text and machine data must
@@ -126,7 +137,7 @@ remain consistent.
 
 If publication fails or its outcome is uncertain, report the skill as incomplete. Inspect
 the current PR's conversation comments with `gh` before retrying; do not blindly create a
-second report. If the expected current-HEAD report already exists, return its URL. If the
+second report. If a matching report from this completed review already exists, return its URL. If the
 branch or HEAD changed, prepare and review again. Never auto-fix findings as a prerequisite
 for publication; changes and a subsequent review are separate work.
 

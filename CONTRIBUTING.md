@@ -129,7 +129,8 @@ Use the **`quality-check`** skill (`.agents/skills/quality-check/SKILL.md`) for 
 commands and order — it's the source of truth for what "clean" means and stays current as
 tooling changes.
 
-For `packages/**` changes, use `.agents/skills/code-review/SKILL.md` for review guidance locally.
+Use `.agents/skills/code-review/SKILL.md` for substantive PR review; apply its package-specific
+checks where relevant. Quality checks alone are not a code review.
 
 ---
 
@@ -157,9 +158,10 @@ license checks). **Exact triggers, paths, and labels live in `.github/workflows/
 over time — check those files rather than trusting a copy here.**
 
 After opening the PR, run the [local-review skill](./.agents/skills/local-review/SKILL.md)
-from its working branch. The skill reviews the current branch's PR and posts its report as
-one operation; no PR number or separate instruction to publish is needed. It delegates the
-analysis to your current coding agent and does not launch another AI.
+from its working branch. The skill requires substantive review using
+[code-review](./.agents/skills/code-review/SKILL.md), then posts the report as one operation;
+no PR number or separate instruction to publish is needed. The same agent performs the
+review. An unperformed or incomplete review must not be reported as `No findings`.
 
 The [Local Review Gate](./.github/workflows/local-review-gate.yaml) validates that report.
 See the skill's **Gate and rollout** section for administrator setup and the guarantee's

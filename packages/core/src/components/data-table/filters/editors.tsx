@@ -6,7 +6,7 @@ import {
   normalizeTemporalFilterValue,
   isTemporalFilterValueValid,
 } from "@/lib/temporal-filter-values";
-import { Input } from "@/components/input";
+import { StandaloneInput } from "@/components/input/standalone-input";
 import type { Column, DataTableFilterConfig } from "../types";
 import type { Filter, CollectionControl } from "@/types/collection";
 import { useMemo, useCallback, useState } from "react";
@@ -101,7 +101,7 @@ function DateTimeFilterInput({
         onChange={(v) => emit(v ? v.toString() : "", timePart)}
         className="astw:min-w-0 astw:flex-1"
       />
-      <Input
+      <StandaloneInput
         type="time"
         aria-label={`${ariaLabel} (time)`}
         value={timePart}
@@ -355,7 +355,7 @@ function StringFilterEditor({
           className="astw:h-8 astw:text-body-md"
         />
       )}
-      <Input
+      <StandaloneInput
         value={localValue}
         placeholder={t("filterValuePlaceholder", { field: config.field })}
         onChange={(e) => setLocalValue(e.target.value)}
@@ -407,7 +407,7 @@ function UuidFilterEditor({
 
   return (
     <div data-slot="data-table-filter-uuid" className="astw:flex astw:flex-col astw:gap-2 astw:p-2">
-      <Input
+      <StandaloneInput
         value={localValue}
         placeholder={t("filterValuePlaceholder", { field: config.field })}
         onChange={(e) => setLocalValue(e.target.value)}
@@ -557,7 +557,7 @@ function NumericFilterEditor({
           )}
         />
       ) : (
-        <Input
+        <StandaloneInput
           type={config.type === "decimal" ? "text" : "number"}
           inputMode={config.type === "decimal" ? "decimal" : undefined}
           value={localValue}
@@ -745,7 +745,7 @@ function TemporalFilterEditor({
       isDate || isDateTime ? (
         <Picker ariaLabel={label} value={localValue} onChange={setLocalValue} />
       ) : (
-        <Input
+        <StandaloneInput
           {...getTemporalInputProps(config.type)}
           value={localValue}
           onChange={(e) => {

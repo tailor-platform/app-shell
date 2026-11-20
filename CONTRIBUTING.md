@@ -32,7 +32,7 @@ out of sync with what actually runs.
   │
   ├─ 5. Add a changeset ........... .agents/skills/create-changeset  (user-facing changes only)
   │
-  ├─ 6. Open a PR ................. CI runs automatically; request a code review
+  ├─ 6. Open a PR ................. CI runs automatically; run .agents/skills/local-review
   │
   ├─ 7. Address review → merge .... address review findings; CI green
   │
@@ -156,11 +156,21 @@ Opening a PR triggers CI (format/lint/test/type-check, e2e where relevant, doc l
 license checks). **Exact triggers, paths, and labels live in `.github/workflows/` and change
 over time — check those files rather than trusting a copy here.**
 
+After opening the PR, run the [local-review skill](./.agents/skills/local-review/SKILL.md)
+from its working branch. The skill reviews the current branch's PR and posts its report as
+one operation; no PR number or separate instruction to publish is needed. It delegates the
+analysis to your current coding agent and does not launch another AI.
+
+The [Local Review Gate](./.github/workflows/local-review-gate.yaml) validates that report.
+See the skill's **Gate and rollout** section for administrator setup and the guarantee's
+limits; the workflow must be deployed and its status made required before it blocks merging.
+
 ---
 
 ## 8. Review, merge, and what happens after
 
-- Address review findings and obtain approval; ensure all CI checks are green.
+- Address review findings and obtain approval; ensure all CI checks are green. Re-run
+  [local-review](./.agents/skills/local-review/SKILL.md) after pushing new head commits.
 - Include required documentation updates in the same PR as the code change (see §4).
   CI checks for documentation drift before merge.
 - After merge to `main`, the **Release** workflow opens/updates a "Version Packages" PR
@@ -173,8 +183,8 @@ over time — check those files rather than trusting a copy here.**
 Rather than duplicate file-by-file details here (they go stale — see `.agents/skills/**` and
 `.github/workflows/*.yaml` for what's actually authoritative), these are the places to look:
 
-- **`.agents/skills/`** — contributor procedures, primarily `code-review`, `quality-check`, and
-  `create-changeset`.
+- **`.agents/skills/`** — contributor procedures, primarily `code-review`, `local-review`,
+  `quality-check`, and `create-changeset`.
 - **`docs-src/`** — authored source for `docs/` and for the `app-shell-patterns` skill shipped to
   consumers; both generated via `pnpm docs:sync` (the skill into `packages/core/skills/`,
   gitignored).

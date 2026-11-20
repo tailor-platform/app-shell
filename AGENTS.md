@@ -21,6 +21,7 @@ design guidance. Follow their links rather than duplicating those instructions h
 | Setup, development commands, contribution workflow                         | [CONTRIBUTING.md](./CONTRIBUTING.md)                                         |
 | Implement or reshape code under `packages/**`                              | [Implementation Strategy](./.agents/skills/implementation-strategy/SKILL.md) |
 | Review code under `packages/**`, public API patterns, styling/export rules | [Code Review](./.agents/skills/code-review/SKILL.md)                         |
+| Review the current branch's PR locally and publish its report              | [Local Review](./.agents/skills/local-review/SKILL.md)                       |
 | Change documentation or resolve docs drift                                 | [Resync Docs](./.agents/skills/resync-docs/SKILL.md)                         |
 | Run formatting, type-check, lint, and tests                                | [Quality Check](./.agents/skills/quality-check/SKILL.md)                     |
 | Create a changeset for user-facing changes                                 | [Create Changeset](./.agents/skills/create-changeset/SKILL.md)               |

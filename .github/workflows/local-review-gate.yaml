@@ -1,0 +1,128 @@
+name: Local Review Gate
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+  issue_comment:
+    types: [created, edited, deleted]
+
+# Both event types must serialize against the same PR, without cancelling invalidations.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.repository }}-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  report:
+    if: github.event_name != 'issue_comment' || github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+      statuses: write
+    steps:
+      - name: Check the current PR's local review report
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          VALIDATOR_REF: ${{ github.workflow_sha }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const number = context.payload.pull_request?.number ?? context.payload.issue.number;
+            const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const getPR = async () => (await github.rest.pulls.get({ owner, repo, pull_number: number })).data;
+            let headSha;
+
+            // Comment/target workflow jobs do not certify PR HEAD; publish an explicit status.
+            const setStatus = (state, description, targetUrl = runUrl) => github.rest.repos.createCommitStatus({
+              owner, repo, sha: headSha, context: 'local-review/report',
+              state, description, target_url: targetUrl,
+            });
+
+            try {
+              const pr = await getPR();
+              if (pr.state !== 'open') {
+                core.info('The PR is no longer open; nothing to gate.');
+                return;
+              }
+              headSha = pr.head.sha;
+              await setStatus('pending', 'Checking the local review report for current HEAD.');
+
+              // Only load validation code from the trusted workflow commit, never the PR head.
+              const { data: validator } = await github.rest.repos.getContent({
+                owner, repo, path: 'scripts/local-review.mjs', ref: process.env.VALIDATOR_REF,
+              });
+              if (validator.type !== 'file' || validator.encoding !== 'base64') {
+                throw new Error('The trusted local review validator could not be loaded.');
+              }
+              const source = validator.content.replace(/\s/g, '');
+              const { parseReport, validateReport } = await import(`data:text/javascript;base64,${source}`);
+
+              // Read live comments, including every page; edits/deletions must revoke old success.
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner, repo, issue_number: number, per_page: 100,
+              });
+              const permissions = new Map();
+              let report;
+              for (const comment of comments) {
+                if (comment.user?.type !== 'User') continue;
+                try {
+                  validateReport(parseReport(comment.body ?? ''), {
+                    repository: `${owner}/${repo}`, prNumber: number, headSha,
+                  });
+                } catch {
+                  continue;
+                }
+
+                const login = comment.user.login;
+                if (login !== pr.user.login) {
+                  if (!permissions.has(login)) {
+                    const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
+                      owner, repo, username: login,
+                    });
+                    permissions.set(login, ['write', 'maintain', 'admin'].includes(data.permission));
+                  }
+                  if (!permissions.get(login)) continue;
+                }
+                report = comment;
+                break;
+              }
+
+              // A concurrent push must never receive success based on the previous HEAD's report.
+              const currentPR = await getPR();
+              if (currentPR.head.sha !== headSha) {
+                headSha = currentPR.head.sha;
+                throw new Error('PR HEAD changed during validation; the next event will recheck it.');
+              }
+              await setStatus(
+                report ? 'success' : 'failure',
+                report ? 'A valid local review report exists for current HEAD.' : 'Run the local-review skill for current HEAD.',
+                report?.html_url ?? runUrl,
+              );
+              await core.summary
+                .addHeading('Local review report gate')
+                .addRaw(report ? `Valid report: ${report.html_url}\n\n` : 'No valid local review report for current HEAD. Run the local-review skill.\n\n')
+                .addRaw('Require `local-review/report` in the merge-target ruleset; this workflow alone does not prevent merging.\n')
+                .write();
+            } catch (error) {
+              // Revoke prior success where possible, including validator/API failures.
+              try {
+                headSha = (await getPR()).head.sha;
+              } catch {
+                // Keep the last known PR HEAD if the API is unavailable.
+              }
+              if (headSha) {
+                try {
+                  await setStatus('failure', 'Local review validation failed; see the workflow run.');
+                } catch (statusError) {
+                  core.error(`Could not update the local review status: ${statusError.message}`);
+                }
+              }
+              core.setFailed(error.message);
+            }
+
+            // shortcut: commit statuses are SHA-scoped and revocation is asynchronous;
+            // use a PR-aware service if strict per-PR isolation or immediate revocation is required.

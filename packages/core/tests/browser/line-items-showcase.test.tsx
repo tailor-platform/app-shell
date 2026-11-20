@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SidebarLayout, defineModule } from "@tailor-platform/app-shell";
 import { AppShell } from "@tailor-platform/app-shell/testing";
-import LineItemsPage from "../../../examples/vite-app/src/pages/showcase/line-items/page";
+import LineItemsPage from "../../../../examples/vite-app/src/pages/showcase/line-items/page";
 
 afterEach(cleanup);
 const empty = { added: [], updated: [], removed: [], order: null };

@@ -1,8 +1,10 @@
 ---
-kind: prose
+kind: code-backed
 group: use-page-meta
 title: usePageMeta
 description: Hook to resolve page metadata from route path
+sources:
+  - packages/core/src/hooks/use-page-meta.ts
 ---
 
 # usePageMeta
@@ -34,24 +36,11 @@ Returns an object with `title` and optional `icon`, or `null` when the path is e
 
 ### Resolve Title and Icon
 
-```typescript
-import { usePageMeta } from "@tailor-platform/app-shell";
+Choose a route to resolve its title and optional icon from the surrounding docs app. The `/components` module has an icon; individual documentation pages may not. An unknown path or external URL returns `null`. This preview does not navigate or modify the app's metadata.
 
-function NavigationItem({ path }: { path: string }) {
-  const meta = usePageMeta(path);
+The example imports `Field`, `Select`, `Text`, and `usePageMeta` from `@tailor-platform/app-shell`, and `useState` from `react`.
 
-  if (!meta) {
-    return null;
-  }
-
-  return (
-    <div>
-      {meta.icon}
-      <span>{meta.title}</span>
-    </div>
-  );
-}
-```
+<!-- example: metadata-lookup -->
 
 ### Custom Link Component
 
@@ -70,14 +59,18 @@ function CustomLink({ to }: { to: string }) {
 
 ### Breadcrumb Builder
 
-```typescript
+```tsx
+function BreadcrumbItem({ path }: { path: string }) {
+  const meta = usePageMeta(path);
+  return <span>{meta?.title}</span>;
+}
+
 function Breadcrumb({ paths }: { paths: string[] }) {
   return (
     <div>
-      {paths.map((path) => {
-        const meta = usePageMeta(path);
-        return <span key={path}>{meta?.title}</span>;
-      })}
+      {paths.map((path) => (
+        <BreadcrumbItem key={path} path={path} />
+      ))}
     </div>
   );
 }

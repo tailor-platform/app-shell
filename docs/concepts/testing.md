@@ -286,6 +286,32 @@ This also supplies `useAppShell()` and `useAppShellConfig()` with real provider 
 
 The provider requires `initialEntries: string[]`, the initial history stack — the last entry is the current location. Each mounted AppShell owns its history. Nested providers use the nearest provider's settings. Neither the provider nor the main AppShell accepts a `memory` prop; `initialEntries` belongs to the provider, not AppShell. `modules: []` is sufficient for this provider-state test.
 
+### Test CommandPalette actions
+
+CommandPalette tests need `AppShell` inside `AppShellTestingProvider`, using the same wrapper pattern as above. `AppShellTestingProvider` alone only selects memory routing and does not provide command-palette state. For contextual action tests, `modules: []` is sufficient, so no page modules or layout are needed.
+
+Use `render` for components that register actions, or `renderHook` from `@testing-library/react` for application hooks that call `useRegisterCommandPaletteActions`. Both use the same wrapper.
+
+Inside your test, using an `actions` fixture and a `Wrapper` built as above:
+
+```tsx
+import { renderHook, waitFor } from "@testing-library/react";
+import { useRegisterCommandPaletteActions } from "@tailor-platform/app-shell";
+
+const { result } = renderHook(
+  () => {
+    useRegisterCommandPaletteActions("Order Actions", actions);
+    return true;
+  },
+  { wrapper: Wrapper },
+);
+
+// Wait for the router to initialize and mount the hook before interacting.
+await waitFor(() => expect(result.current).toBe(true));
+```
+
+Replace the `useRegisterCommandPaletteActions` call with your application hook when testing your own registration logic. To verify registration and execution, open the built-in palette with `await user.keyboard("{Control>}k{/Control}")`, find the action by its button role and accessible name, click it, and assert your application callback was called. Use these public interactions rather than importing internal command-palette contexts.
+
 ### Pages and integration tests
 
 Because AppShell owns the router, a page test mounts AppShell rather than building a router. Pass your typed modules to AppShell and render a layout such as `SidebarLayout`. Wrap it in `AppShellTestingProvider` to start at a known URL without touching `window.location`:

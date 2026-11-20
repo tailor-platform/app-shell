@@ -1,4 +1,4 @@
-import { render, screen, within, cleanup } from "@testing-library/react";
+import { act, fireEvent, render, screen, within, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { MemoryRouter } from "react-router";
@@ -462,6 +462,42 @@ describe("SidebarSeparator", () => {
       .querySelector('[data-sidebar="separator"]');
     expect(separator?.className).toContain("astw:mt-1");
     expect(separator?.className).toContain("astw:mb-2");
+  });
+});
+
+describe("SidebarContent scrolling", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    cleanup();
+  });
+
+  it("shows its scrollbar only while scrolling", () => {
+    vi.useFakeTimers();
+    const onScroll = vi.fn();
+    render(<SidebarContent data-testid="list" onScroll={onScroll} />);
+    const list = screen.getByTestId("list");
+    expect(list.dataset.scrolling).toBeUndefined();
+
+    fireEvent.scroll(list);
+    expect(list.dataset.scrolling).toBe("true");
+    // The consumer's own handler still runs.
+    expect(onScroll).toHaveBeenCalledTimes(1);
+
+    // Each scroll restarts the countdown.
+    act(() => vi.advanceTimersByTime(600));
+    fireEvent.scroll(list);
+    act(() => vi.advanceTimersByTime(600));
+    expect(list.dataset.scrolling).toBe("true");
+
+    act(() => vi.advanceTimersByTime(200));
+    expect(list.dataset.scrolling).toBeUndefined();
+  });
+
+  it("reaches into the inset sidebar's padding so the scrollbar sits on its edge", () => {
+    render(<SidebarContent data-testid="list" />);
+    const { className } = screen.getByTestId("list");
+    expect(className).toContain("astw:group-data-[variant=inset]:-mr-2");
+    expect(className).toContain("astw:group-data-[variant=inset]:pr-2");
   });
 });
 

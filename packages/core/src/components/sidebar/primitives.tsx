@@ -6,6 +6,7 @@ import { useRender } from "@base-ui/react/use-render";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { DEFAULT_SIDEBAR_WIDTH, MIN_WIDTH, SidebarResizeHandle } from "./sidebar-resize-handle";
+import { SIDEBAR_SCROLL_AREA_CLASS, useScrolling } from "./scroll-area";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
@@ -634,13 +635,25 @@ function SidebarSeparator({ className, ...props }: React.ComponentProps<typeof S
   );
 }
 
-function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
+function SidebarContent({ className, onScroll, ...props }: React.ComponentProps<"div">) {
+  const scroll = useScrolling();
   return (
     <div
       data-slot="sidebar-content"
       data-sidebar="content"
+      data-scrolling={scroll.scrolling || undefined}
+      onScroll={(event) => {
+        scroll.onScroll();
+        onScroll?.(event);
+      }}
       className={cn(
         "astw:flex astw:min-h-0 astw:flex-1 astw:flex-col astw:gap-2 astw:overflow-auto astw:group-data-[collapsible=icon]:overflow-hidden",
+        SIDEBAR_SCROLL_AREA_CLASS,
+        // The inset sidebar pads its panel by 8px; reach into that padding so
+        // the scrollbar sits on the sidebar's edge, keeping the content in place.
+        // Skipped when a resize handle is present: its hit area overlaps the last
+        // 6px of the panel and would sit on top of the scrollbar thumb.
+        "astw:group-data-[variant=inset]:not-group-has-[[data-slot=sidebar-resize-handle]]:-mr-2 astw:group-data-[variant=inset]:not-group-has-[[data-slot=sidebar-resize-handle]]:pr-2",
         className,
       )}
       {...props}

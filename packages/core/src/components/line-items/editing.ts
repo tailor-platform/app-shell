@@ -18,7 +18,28 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
 ) {
   let columns = initialColumns;
   let active = true;
+  let phase: "idle" | "preparing" | "locked" = "idle";
+  let saveRevision = 0;
+  const listeners = new Set<() => void>();
   const cells = new Map<string, Map<string, Cell>>();
+  function setPhase(next: typeof phase) {
+    phase = next;
+    for (const rowCells of cells.values())
+      for (const cell of rowCells.values()) cell.session.setLocked(next !== "idle");
+    // oxlint-disable-next-line unicorn/no-useless-spread -- Subscriptions can change during notification.
+    for (const listener of [...listeners]) listener();
+  }
+  function assertCanMutate() {
+    if (phase !== "idle") throw new Error("LineItems is locked for saving");
+  }
+  function retireCells() {
+    const previous = [...cells.values()].flatMap((rowCells) => [...rowCells.values()]);
+    cells.clear();
+    for (const cell of previous) {
+      cell.session.reset();
+      cell.session.deactivate();
+    }
+  }
   const columnFor = (id: string) => columns.find((column) => columnId(column) === id);
   let indexedSnapshot: readonly T[] | undefined;
   let rowsByKey = new Map<string, T>();
@@ -33,7 +54,7 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
 
   function cancelProperty(key: string, property: string, source?: Session) {
     for (const cell of cells.get(key)?.values() ?? [])
-      if (cell.property === property && cell.session !== source) cell.session.cancel();
+      if (cell.property === property && cell.session !== source) cell.session.reset();
   }
   function purgeRemoved() {
     for (const [key, rowCells] of cells) {
@@ -52,6 +73,57 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
   return {
     /** Validates proposed columns without changing committed configuration or drafts. */
     assertColumns,
+    assertCanMutate,
+    isSaveLocked: () => phase !== "idle",
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    async commitChanges() {
+      if (!active) throw new Error("The LineItems document is no longer active");
+      assertCanMutate();
+      const candidate = ++saveRevision;
+      const comparisonColumns = columns;
+      const sessions = [...cells.values()].flatMap((rowCells) =>
+        [...rowCells.values()].map((cell) => cell.session),
+      );
+      setPhase("preparing");
+      try {
+        // A normal commit supersedes sibling drafts; preparation must not choose one by column order.
+        for (const rowCells of cells.values()) {
+          const pendingProperties = new Set<string>();
+          for (const cell of rowCells.values()) {
+            if (cell.session.getState().status === "idle") continue;
+            if (pendingProperties.has(cell.property))
+              throw new Error("Confirm or discard duplicate-property drafts before saving");
+            pendingProperties.add(cell.property);
+          }
+        }
+        const results = await Promise.all(sessions.map((session) => session.confirmPending()));
+        if (!active || candidate !== saveRevision) return null;
+        if (results.some((success) => !success)) {
+          setPhase("idle");
+          return null;
+        }
+        const changes = store.getChanges(comparisonColumns);
+        setPhase("locked");
+        return changes;
+      } catch (error) {
+        if (active && candidate === saveRevision) setPhase("idle");
+        throw error;
+      }
+    },
+    finishSave() {
+      if (phase === "preparing") throw new Error("Cannot finish a save during cell preparation");
+      if (phase !== "idle") setPhase("idle");
+    },
+    replaceLines(confirmedLines: readonly T[]) {
+      if (!active) throw new Error("The LineItems document is no longer active");
+      if (phase === "preparing") throw new Error("Cannot replace lines during cell preparation");
+      store.replaceLines(confirmedLines, retireCells);
+    },
     getLineKey: store.getLineKey,
     /**
      * A cell deliberately reuses its session across rerenders and view remounts.
@@ -72,6 +144,7 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
       let cell = rowCells.get(columnId(column));
       if (!cell) {
         const session = createCellEditSession<unknown>();
+        session.setLocked(phase !== "idle");
         if (!active) session.deactivate();
         cell = { property: column.accessorKey!, session };
         rowCells.set(columnId(column), cell);
@@ -85,6 +158,7 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
       const source = cells.get(key)?.get(id)?.session;
       if (!active || !row || !column?.edit || column.accessorKey === undefined || !source)
         throw new Error("The edited cell no longer exists");
+      if (phase === "locked") throw new Error("LineItems is locked for saving");
       if (!(column.edit.canEdit?.(row) ?? true)) throw new Error("The cell is not editable");
       const revision = source.getRevision();
       if (value === null) {
@@ -112,6 +186,7 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
           currentColumn.accessorKey !== column.accessorKey
         )
           return;
+        if (phase === "locked") throw new Error("LineItems is locked for saving");
         if (!(currentColumn.edit.canEdit?.(current) ?? true))
           throw new Error("The cell is not editable");
         store.updateField(key, column.accessorKey!, value as T[keyof T & string]);
@@ -121,19 +196,26 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
       if (result && typeof result.then === "function") return Promise.resolve(result).then(adopt);
       return adopt();
     },
+    addLine(input: T) {
+      assertCanMutate();
+      return store.addLine(input);
+    },
     updateField<K extends keyof T & string>(key: string, property: K, value: T[K]) {
+      assertCanMutate();
       store.updateField(key, property, value);
       // Even a no-op direct write supersedes the editor's intent.
       cancelProperty(key, property);
     },
     removeLine(key: string) {
+      assertCanMutate();
       store.removeLine(key);
       purgeRemoved();
     },
     revert() {
+      assertCanMutate();
       store.revert();
       for (const rowCells of cells.values())
-        for (const cell of rowCells.values()) cell.session.cancel();
+        for (const cell of rowCells.values()) cell.session.reset();
       purgeRemoved();
     },
     /** Adopts committed columns and retires removed cells or denied drafts. */
@@ -144,17 +226,17 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
         for (const [id, cell] of rowCells) {
           const after = columnFor(id);
           if (!after?.edit) {
-            cell.session.cancel();
+            cell.session.reset();
             cell.session.deactivate();
             rowCells.delete(id);
             continue;
           }
           if (after.accessorKey !== cell.property) {
             cell.property = after.accessorKey!;
-            cell.session.cancel();
+            cell.session.reset();
           }
           const row = getCurrentRow(key);
-          if (row && !(after.edit.canEdit?.(row) ?? true)) cell.session.cancel();
+          if (row && !(after.edit.canEdit?.(row) ?? true)) cell.session.reset();
           if (active) cell.session.activate(true);
         }
         if (rowCells.size === 0) cells.delete(key);
@@ -162,8 +244,10 @@ export function createLineItemsEditing<T extends Record<string, unknown>>(
     },
     deactivate() {
       active = false;
+      saveRevision++;
       for (const rowCells of cells.values())
         for (const cell of rowCells.values()) cell.session.deactivate();
+      setPhase("idle");
     },
     activate() {
       active = true;

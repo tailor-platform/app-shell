@@ -31,6 +31,7 @@ function Root<T extends Record<string, unknown>>({
     <LineItemsContext.Provider value={value}>
       <div
         data-slot="line-items"
+        aria-busy={value.isSaveLocked}
         className={cn(
           "astw:min-w-0 astw:overflow-clip astw:rounded-md astw:border astw:border-border astw:bg-card",
           className,

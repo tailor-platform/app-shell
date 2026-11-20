@@ -1,4 +1,5 @@
 import {
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -72,7 +73,6 @@ function ChoiceEditor({
   );
   const register = useNavigationRef<HTMLInputElement>(navigation, rowKey, colKey);
   const value = toTextValue(current);
-  const shouldCommit = (next: string | null) => next !== value || (!!external && next === null);
   const noneLabel = labels.none;
   // Keyed on content: rebuilding columns must not reset the highlight mid-search.
   const optionsKey = (options ?? []).map((c) => `${c.value}\u0000${c.label}`).join("\u0001");
@@ -133,6 +133,7 @@ function ChoiceEditor({
   }, [items, listQuery]);
 
   const startEditing = () => {
+    if (session.isLocked()) return;
     session.begin(selected ?? { value, label: value ?? noneLabel });
     setQuery(selected?.label ?? "");
     setListQuery(null);
@@ -162,7 +163,21 @@ function ChoiceEditor({
     else cancelEditing();
   };
 
+  const confirmDraft = (onSuccess?: () => void) => {
+    const active = session.getState();
+    if (active.status === "idle" || active.status === "confirming") return;
+    const draft = active.draft;
+    // Query-only drafts never turn an unchanged empty value into an explicit clear.
+    const changed =
+      draft.value !== value || (!!external && draft.value === null && draft.notified !== undefined);
+    session.confirm(() => (changed ? commit(draft.value) : undefined), onSuccess);
+  };
+  useLayoutEffect(() => {
+    session.registerConfirmation(() => confirmDraft());
+  });
+
   const pick = (item: Choice) => {
+    if (session.isLocked()) return;
     const active = session.getState();
     if (active.status === "confirming" && active.draft.value === item.value) return;
     session.change(
@@ -170,7 +185,7 @@ function ChoiceEditor({
       item.value !== value ? () => change(item.value) : undefined,
     );
     setQuery(item.label);
-    session.confirm(() => (shouldCommit(item.value) ? commit(item.value) : undefined), closeEditor);
+    confirmDraft(closeEditor);
   };
 
   const explicitCandidate = () => {
@@ -189,7 +204,7 @@ function ChoiceEditor({
   const handleKeyDown: NonNullable<ComponentProps<typeof ComboboxParts.Input>["onKeyDown"]> = (
     event,
   ) => {
-    if (isComposing(event.nativeEvent, composingRef.current)) {
+    if (session.isLocked() || isComposing(event.nativeEvent, composingRef.current)) {
       event.preventBaseUIHandler();
       return;
     }
@@ -201,10 +216,7 @@ function ChoiceEditor({
         if (active.status === "confirming") return;
         if (!open) {
           if (active.status === "failed" && active.source === "commit") {
-            session.confirm(
-              () => (shouldCommit(active.draft.value) ? commit(active.draft.value) : undefined),
-              closeEditor,
-            );
+            confirmDraft(closeEditor);
             return;
           }
           if (active.status === "idle") startEditing();
@@ -291,6 +303,7 @@ function ChoiceEditor({
     input: (
       <BaseCombobox.Root<Choice>
         items={items}
+        disabled={session.locked}
         filteredItems={filtered}
         value={activeChoice}
         onValueChange={(item, details) => {
@@ -298,6 +311,7 @@ function ChoiceEditor({
         }}
         inputValue={query ?? activeChoice?.label ?? ""}
         onInputValueChange={(next, details) => {
+          if (session.isLocked()) return;
           if (details.reason === "input-change" || details.reason === "input-clear") {
             const active = session.getState();
             session.change(
@@ -312,6 +326,7 @@ function ChoiceEditor({
         }}
         open={open}
         onOpenChange={(next, details) => {
+          if (next && session.isLocked()) return;
           if (next) {
             if (session.getState().status === "idle") startEditing();
             setOpen(true);
@@ -357,7 +372,7 @@ function ChoiceEditor({
           aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
           autoComplete="off"
           enterKeyHint="done"
-          readOnly={!editing}
+          readOnly={!editing || session.locked}
           className={cn(
             INPUT_CLASS_NAME,
             ICON_INPUT_CLASS_NAME,

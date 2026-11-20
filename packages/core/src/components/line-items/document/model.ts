@@ -1,5 +1,5 @@
 import { assertLineItemsEditor } from "../editor-factory";
-import { createLineItemsIdentity, persistedId } from "./identity";
+import { clientKeyOf, createLineItemsIdentity, persistedId } from "./identity";
 import { createLineItemsSnapshots } from "./snapshot";
 import type { DocumentOptions, LineItemsChangeset, LineItemsColumn } from "./types";
 
@@ -50,8 +50,8 @@ function compileLineItemsColumns<T extends Record<string, unknown>>(
  * Initial rows and subsequent row copies are shallow-frozen. Nested values are not
  * cloned and must also be treated as immutable. Only initial rows with persisted IDs form
  * the persisted baseline; ID-less initial rows are unsaved creations, start dirty,
- * and are discarded by revert. This model does not advance the baseline or implement
- * draft editing, business validation, normalization, or persistence.
+ * and are discarded by revert. Confirmed full-collection replacement advances the
+ * baseline; draft editing, business validation, normalization, and persistence belong elsewhere.
  *
  * Inspection and configuration checks do not mutate state. Commands validate keys and
  * ownership before adopting a new row view. Returned functions are stable and do not
@@ -69,7 +69,7 @@ export function createLineItemsDocument<T extends Record<string, unknown>>(
   const snapshots = createLineItemsSnapshots(identity, idKey);
   let current = snapshots.adopt(lines.map((row) => identity.tag(row, identity.newClientKey())));
   // ID-less initial rows are unsaved creations, not part of the persisted baseline.
-  const baseline = snapshots.create(
+  let baseline = snapshots.create(
     current.lines.filter((row) => persistedId(row[idKey]) !== undefined),
   );
 
@@ -221,9 +221,34 @@ export function createLineItemsDocument<T extends Record<string, unknown>>(
         );
     },
     /**
-     * Restores the persisted initial rows, values, and order without advancing the baseline.
+     * Adopts confirmed rows as current state and the new saved baseline.
+     * Every row requires a persisted ID; validation completes before registering identities.
+     * Inputs remain untouched, and replacement rows receive fresh client identities.
+     */
+    replaceLines(confirmedLines: readonly T[]) {
+      const ids = new Set<string>();
+      for (const row of confirmedLines) {
+        const id = persistedId(row[idKey]);
+        if (id === undefined) throw new Error("Confirmed lines require persisted IDs");
+        if (ids.has(id)) throw new Error("Line IDs must be unique");
+        ids.add(id);
+        let taggedKey: string | undefined;
+        try {
+          taggedKey = clientKeyOf(row);
+        } catch {
+          // Confirmed transport rows are normally untagged.
+        }
+        if (taggedKey !== undefined) identity.clientKeyOf(row);
+      }
+      const confirmed = snapshots.adopt(
+        confirmedLines.map((row) => identity.tag(row, identity.newClientKey())),
+      );
+      current = baseline = confirmed;
+    },
+    /**
+     * Restores the saved baseline rows, values, and order without advancing the baseline.
      * Discards every unsaved creation, including ID-less rows supplied at initialization.
-     * Restored rows retain their initial frozen objects and identities. Always adopts a new
+     * Restored rows retain their saved frozen objects and identities. Always adopts a new
      * row array, even when already clean; this is restoration, not manual movement.
      */
     revert() {

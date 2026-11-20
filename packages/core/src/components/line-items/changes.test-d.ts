@@ -52,6 +52,14 @@ test("public changesets preserve full rows and property-typed partial updates", 
   function Contract() {
     const value = useLineItems<Row>({ columns: [{ accessorKey: "quantity" }] });
     expectTypeOf(value.getChanges).toEqualTypeOf<() => LineItemsChangeset<Row>>();
+    expectTypeOf(value.commitChanges).toEqualTypeOf<
+      () => Promise<LineItemsChangeset<Row> | null>
+    >();
+    expectTypeOf(value.isSaveLocked).toEqualTypeOf<boolean>();
+    expectTypeOf(value.replaceLines).toEqualTypeOf<(confirmedLines: readonly Row[]) => void>();
+    expectTypeOf(value.finishSave).toEqualTypeOf<() => void>();
+    // @ts-expect-error Confirmed replacements retain the consumer row type.
+    value.replaceLines([{ id: "saved", quantity: "invalid", detail: { count: 1 } }]);
     const changes = value.getChanges();
     expectTypeOf(changes.added).toEqualTypeOf<readonly Row[]>();
     expectTypeOf(changes.removed).toEqualTypeOf<readonly Row[]>();

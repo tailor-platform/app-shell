@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import type { UseLineItemsReturn } from "./types";
 import { clientKeyOf } from "./document/identity";
+import { getLineItemsEditing } from "./editing";
 
 function isAfter(event: DragEvent<HTMLTableRowElement>) {
   const rect = event.currentTarget.getBoundingClientRect();
@@ -11,7 +12,9 @@ function isAfter(event: DragEvent<HTMLTableRowElement>) {
 export function useLineItemsReorder<T extends Record<string, unknown>>(
   value: UseLineItemsReturn<T>,
 ) {
-  const { orderer, lines } = value;
+  const { orderer, lines, isSaveLocked } = value;
+  const canReorder = orderer && !isSaveLocked;
+  const isLocked = getLineItemsEditing<T>(value).isSaveLocked;
   const [drag, setDrag] = useState<{ clientKey: string; handle: HTMLButtonElement } | null>(null);
   const [dropTarget, setDropTarget] = useState<{ clientKey: string; after: boolean } | null>(null);
   const movedHandle = useRef<HTMLButtonElement | null>(null);
@@ -21,14 +24,14 @@ export function useLineItemsReorder<T extends Record<string, unknown>>(
   };
   useLayoutEffect(() => {
     if (
-      !orderer ||
+      !canReorder ||
       (drag &&
         (!drag.handle.isConnected || !lines.some((line) => clientKeyOf(line) === drag.clientKey)))
     ) {
       setDrag(null);
       setDropTarget(null);
     }
-  }, [orderer, lines, drag]);
+  }, [canReorder, lines, drag]);
   useLayoutEffect(() => {
     // Moving a keyed table row can blur its handle in the browser.
     movedHandle.current?.focus({ preventScroll: true });
@@ -38,6 +41,7 @@ export function useLineItemsReorder<T extends Record<string, unknown>>(
   const moveLine = (index: number, destination: number, handle: HTMLButtonElement) => {
     if (
       !value.orderer ||
+      isLocked() ||
       index < 0 ||
       destination < 0 ||
       destination >= value.lines.length ||
@@ -62,11 +66,11 @@ export function useLineItemsReorder<T extends Record<string, unknown>>(
     getRowProps(index: number) {
       const clientKey = clientKeyOf(value.lines[index]);
       return {
-        "data-dragging": value.orderer && drag?.clientKey === clientKey ? "" : undefined,
+        "data-dragging": canReorder && drag?.clientKey === clientKey ? "" : undefined,
         "data-drop-position":
-          value.orderer && drag && dropTarget?.clientKey === clientKey ? dropPosition : undefined,
+          canReorder && drag && dropTarget?.clientKey === clientKey ? dropPosition : undefined,
         onDragOver: (event: DragEvent<HTMLTableRowElement>) => {
-          if (!value.orderer || !drag) return;
+          if (!value.orderer || isLocked() || !drag) return;
           event.preventDefault();
           event.stopPropagation();
           event.dataTransfer.dropEffect = "move";
@@ -78,7 +82,7 @@ export function useLineItemsReorder<T extends Record<string, unknown>>(
           );
         },
         onDrop: (event: DragEvent<HTMLTableRowElement>) => {
-          if (!value.orderer || !drag) return;
+          if (!value.orderer || isLocked() || !drag) return;
           event.preventDefault();
           event.stopPropagation();
           const from = value.lines.findIndex((line) => clientKeyOf(line) === drag.clientKey);
@@ -91,11 +95,11 @@ export function useLineItemsReorder<T extends Record<string, unknown>>(
     getHandleProps(index: number) {
       const clientKey = clientKeyOf(value.lines[index]);
       return {
-        "aria-disabled": !value.orderer || value.lines.length < 2,
-        draggable: value.orderer && value.lines.length > 1,
+        "aria-disabled": !canReorder || value.lines.length < 2,
+        draggable: canReorder && value.lines.length > 1,
         onDragStart: (event: DragEvent<HTMLButtonElement>) => {
           event.stopPropagation();
-          if (!value.orderer || value.lines.length < 2) {
+          if (!value.orderer || isLocked() || value.lines.length < 2) {
             event.preventDefault();
             return;
           }

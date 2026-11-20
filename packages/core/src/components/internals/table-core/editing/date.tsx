@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import { useLayoutEffect, useState, type KeyboardEvent } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { CalendarDays } from "lucide-react";
 import type { CalendarDate } from "@internationalized/date";
@@ -9,6 +9,7 @@ import { Input } from "@/components/input";
 import { sameDate, toCalendarDate, toIsoDateTime, toTimeText } from "../input-values";
 import type { CellEditor, CellEditorNavigation, CellEditorProps } from "./props";
 import { useCellEditSession } from "./use-session";
+import { CellEditError } from "../cell-edit-error";
 import {
   OVERLAY_CLASS_NAME,
   CELL_FOCUS_CLASS_NAME,
@@ -45,6 +46,9 @@ export interface DateTimeDraft {
   time: string | null;
 }
 
+/** Explicit Clear is not the same as opening an already-empty editor. */
+type RetainedDateTimeDraft = DateTimeDraft & { clear?: true };
+
 type DateEditorOptions = {
   withTime?: boolean;
   /** Owner-resolved timezone for date/datetime conversion; not part of the common cell contract. */
@@ -70,7 +74,7 @@ function DateEditor({
   children,
 }: CellEditorProps<DateEditorOptions, string | null>) {
   const { withTime = false, timeZone, minValue, maxValue, isDateUnavailable } = options;
-  const session = useCellEditSession<DateTimeDraft>(interceptErrors, external);
+  const session = useCellEditSession<RetainedDateTimeDraft>(interceptErrors, external);
   const { state } = session;
   const { callbackError, containsErrorTarget } = useCellError(
     { labels, renderError },
@@ -90,12 +94,15 @@ function DateEditor({
   }
   const differs = (a: DateTimeDraft, b: DateTimeDraft) =>
     a.day !== b.day || (withTime && a.time !== b.time);
-  const notifyDraft = (next: DateTimeDraft) => change(withTime ? { ...next } : next.day);
-  const setDraft = (next: DateTimeDraft) => {
+  const notifyDraft = (next: DateTimeDraft) =>
+    change(withTime ? { day: next.day, time: next.time } : next.day);
+  const setDraft = (next: RetainedDateTimeDraft) => {
+    if (session.isLocked()) return;
     const active = session.getState();
-    const previous = active.status === "idle" ? baseline : active.draft;
+    const previous: RetainedDateTimeDraft = active.status === "idle" ? baseline : active.draft;
     if (!differs(previous, next)) {
-      session.begin(next);
+      if (next.clear && !previous.clear) session.change(next);
+      else session.begin(next);
       return;
     }
     session.change(next, () => notifyDraft(next));
@@ -109,15 +116,35 @@ function DateEditor({
     );
     setOpen(false);
   };
-  const finish = (next: string | null) => {
-    session.confirm(
-      () => {
-        if (sameDate(next, current, withTime, timeZone) && (!external || next !== null)) return;
-        return commit(next);
-      },
-      () => setOpen(false),
-    );
+  const confirmDraft = (onSuccess?: () => void) => {
+    const active = session.getState();
+    if (active.status === "idle" || active.status === "confirming") return;
+    const draft = active.draft;
+    session.confirm(() => {
+      if (!draft.clear && !differs(draft, baseline)) return;
+      if (draft.clear && draft.day === null && draft.time === null) {
+        if (!external && sameDate(null, current, withTime, timeZone)) return;
+        return commit(null);
+      }
+      const day = toCalendarDate(draft.day, timeZone);
+      if (
+        !day ||
+        (minValue && day.compare(minValue) < 0) ||
+        (maxValue && day.compare(maxValue) > 0) ||
+        isDateUnavailable?.(day)
+      )
+        throw new CellEditError(labels.callbackError);
+      const next = withTime
+        ? draft.time && toIsoDateTime(day, draft.time, timeZone)
+        : day.toString();
+      if (!next) throw new CellEditError(labels.callbackError);
+      if (sameDate(next, current, withTime, timeZone)) return;
+      return commit(next);
+    }, onSuccess);
   };
+  useLayoutEffect(() => {
+    session.registerConfirmation(() => confirmDraft());
+  });
   const activeDraft = state.status === "idle" ? baseline : state.draft;
   const draftStatus = useDraftStatus(
     labels,
@@ -155,12 +182,13 @@ function DateEditor({
       return;
     }
     if (next) {
+      if (session.isLocked()) return;
       session.begin(baseline);
     } else {
       const active = session.getState();
       if (
         details?.reason === "escape-key" ||
-        (active.status !== "failed" && active.status !== "confirming")
+        (!external && active.status !== "failed" && active.status !== "confirming")
       ) {
         cancelEditing();
         return;
@@ -170,9 +198,14 @@ function DateEditor({
   };
 
   const handlePick = (day: CalendarDate) => {
+    if (session.isLocked()) return;
     const active = session.getState();
-    setDraft({ ...(active.status === "idle" ? baseline : active.draft), day: day.toString() });
-    if (!withTime) finish(day.toString());
+    setDraft({
+      ...(active.status === "idle" ? baseline : active.draft),
+      day: day.toString(),
+      clear: undefined,
+    });
+    if (!withTime) confirmDraft(() => setOpen(false));
   };
 
   return children({
@@ -188,6 +221,7 @@ function DateEditor({
       <Popover.Root open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger
           ref={register}
+          disabled={session.locked}
           aria-label={accessibleName}
           aria-invalid={callbackError ? true : undefined}
           aria-describedby={
@@ -196,6 +230,7 @@ function DateEditor({
           aria-keyshortcuts={callbackError ? "Alt+ArrowDown" : undefined}
           className={cn(TRIGGER_CLASS_NAME, callbackError && CELL_ERROR_CLASS_NAME)}
           onKeyDown={(event) => {
+            if (session.isLocked()) return;
             if (event.key === "Escape" && !open && session.getState().status !== "idle") {
               event.preventDefault();
               event.stopPropagation();
@@ -220,6 +255,7 @@ function DateEditor({
             >
               <Calendar
                 aria-label={label}
+                isDisabled={session.locked}
                 value={pickedDay}
                 defaultFocusedValue={pickedDay ?? undefined}
                 onChange={handlePick}
@@ -230,6 +266,7 @@ function DateEditor({
               {withTime && (
                 <Input
                   type="time"
+                  disabled={session.locked}
                   aria-label={`${label} (${labels.chooseTime})`}
                   value={activeDraft.time ?? ""}
                   onChange={(event) =>
@@ -252,9 +289,11 @@ function DateEditor({
                     <Button
                       variant="ghost"
                       size="sm"
+                      disabled={session.locked}
                       onClick={() => {
-                        setDraft({ day: null, time: null });
-                        finish(null);
+                        if (session.isLocked()) return;
+                        setDraft({ day: null, time: null, clear: true });
+                        confirmDraft(() => setOpen(false));
                       }}
                     >
                       {labels.clear}
@@ -263,9 +302,10 @@ function DateEditor({
                   {withTime && (
                     <Button
                       size="sm"
-                      disabled={timestamp === undefined}
+                      disabled={session.locked || timestamp === undefined}
                       onClick={() => {
-                        if (timestamp !== undefined) finish(timestamp);
+                        if (!session.isLocked() && timestamp !== undefined)
+                          confirmDraft(() => setOpen(false));
                       }}
                     >
                       {labels.done}

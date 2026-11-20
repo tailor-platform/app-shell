@@ -68,6 +68,14 @@ export function createLineItemsDocumentStore<T extends Record<string, unknown>>(
     reorderLine(lineKey: string, afterLineKey: string | null) {
       mutate(() => document.reorderLine(lineKey, afterLineKey));
     },
+    /** Publishes confirmed rows only after replacing both current state and saved baseline. */
+    replaceLines(lines: readonly T[], onAdopt?: () => void) {
+      mutate(() => {
+        document.replaceLines(lines);
+        // Retire drafts after successful validation, but before publishing the new document.
+        onAdopt?.();
+      });
+    },
     /** Restores the model baseline and notifies even if the document was already clean. */
     revert() {
       mutate(() => document.revert());

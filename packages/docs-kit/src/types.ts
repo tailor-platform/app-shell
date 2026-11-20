@@ -87,6 +87,10 @@ export interface Manifest {
   /** Generated skill file (repo-relative) -> content hash, across every configured
    * skill. Absent when no skill is configured. */
   skill?: Record<string, string>;
+  /** Generated guide and AGENTS.md block (repo-relative) -> content hash. The
+   * docs shipped beside them are verbatim copies of unit outputs, which `units`
+   * already hashes. */
+  agents?: Record<string, string>;
 }
 
 export interface CategoryRule {
@@ -111,6 +115,35 @@ export interface SkillConfig {
   /** Base blob URL for rewriting the migrations doc's relative links. Required with `migrationsSource`. */
   repoBlobUrl?: string;
   /** Repo-relative package.json whose `version` is stamped into SKILL.md's
+   * `{{APP_SHELL_VERSION}}` at write time. */
+  versionSource?: string;
+  /** "copy" (default) ships each doc under `references/`. "redirect" leaves a
+   * stub there pointing at the docs shipped in the package (`outputs.agents`),
+   * and the SKILL.md tables list paths relative to that docs root. */
+  references?: "copy" | "redirect";
+}
+
+/** The docs shipped in the published package, the guide that indexes them
+ * (`<docsDir>/AGENTS.md`), and the AGENTS.md block that points at the guide.
+ * The package's CLI injects the block into a consumer's repo. */
+export interface AgentsConfig {
+  /** Repo-relative template for the guide: the rules plus index placeholders. */
+  guideTemplatePath: string;
+  /** Repo-relative template for the block. Kept to what is stable across
+   * versions, so upgrades don't change the consumer's AGENTS.md. */
+  blockTemplatePath: string;
+  /** Repo-relative dir of the published package. */
+  packageDir: string;
+  /** Docs dir inside the package. Written into the block, so moving the docs
+   * is a change here only. */
+  docsDir: string;
+  /** Block file inside the package. The package's CLI reads this exact path. */
+  blockFile: string;
+  /** Upper bound on the guide, which agents load every session. */
+  maxBytes?: number;
+  /** Upper bound on the block. */
+  blockMaxBytes?: number;
+  /** Repo-relative package.json whose `version` is stamped into the guide's
    * `{{APP_SHELL_VERSION}}` at write time. */
   versionSource?: string;
 }
@@ -141,6 +174,8 @@ export interface DocsConfig {
   snapshotDir?: string;
   /** Consumer skills. sync emits each one and check validates each one. */
   skills: SkillConfig[];
+  /** Package docs + AGENTS.md block. Absent when not configured. */
+  agents?: AgentsConfig;
   /** Output dirs no skill carries. Any other unclaimed output dir blocks check. */
   unclaimedSkillDirs: UnclaimedSkillDir[];
 }

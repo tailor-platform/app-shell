@@ -1,13 +1,20 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 
+import { computeAgents } from "./agents";
 import { loadConfig } from "./config";
 import { type Finding, reconcile } from "./coverage";
 import { hash, normalizeText } from "./hash";
 import { readManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { loadSurface, snapshotHashForSlug } from "./project";
-import { computeSkill, computeStampedSkill, unclaimedSkillDirFindings } from "./skill";
+import {
+  computeSkill,
+  computeStampedSkill,
+  readSkillVersion,
+  stampSkill,
+  unclaimedSkillDirFindings,
+} from "./skill";
 import { unmanagedOutputs, walkMarkdown } from "./tree";
 
 export interface CheckResult {
@@ -161,6 +168,32 @@ export function check(repoRoot: string): CheckResult {
       } catch (e) {
         findings.push({ level: "block", slug: "skill", message: (e as Error).message });
       }
+    }
+  }
+
+  if (config.agents) {
+    try {
+      const { generated } = computeAgents(repoRoot, config.agents, outlines);
+      const expected = manifest?.agents ?? {};
+      for (const [rel, content] of generated) {
+        if (expected[rel] !== hash(normalizeText(content))) {
+          findings.push({
+            level: "block",
+            slug: "agents",
+            message: `${rel} ${expected[rel] === undefined ? "is new" : "drifted"} — run sync.`,
+          });
+        }
+      }
+      for (const rel of Object.keys(expected)) {
+        if (!generated.has(rel)) {
+          findings.push({ level: "block", slug: "agents", message: `${rel} removed — run sync.` });
+        }
+      }
+      // The manifest hashes unstamped content, so check the stamp separately.
+      const version = readSkillVersion(repoRoot, config.agents);
+      for (const content of generated.values()) stampSkill(content, version);
+    } catch (e) {
+      findings.push({ level: "block", slug: "agents", message: (e as Error).message });
     }
   }
 

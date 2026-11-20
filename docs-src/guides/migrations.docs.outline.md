@@ -59,7 +59,7 @@ function OrderActions({ actions }: { actions: ActionPanelProps["actions"] }) {
   useRegisterCommandPaletteActions(
     "Order Actions",
     actions.flatMap((action) =>
-      !action.disabled && !action.loading && action.onClick
+      !action.disabled && !action.loading && !action.confirmation && action.onClick
         ? [{ key: action.key, label: action.label, icon: action.icon, onSelect: action.onClick }]
         : [],
     ),

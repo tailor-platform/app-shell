@@ -143,7 +143,7 @@ function OrderDetailPage() {
 
 ### Explicit ActionPanel Registration
 
-[`ActionPanel`](./action-panel.md#explicit-commandpalette-registration) only renders action rows; it does not register them to the CommandPalette. To expose selected panel actions here, use [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md) explicitly. Exclude disabled or loading actions and actions without an `onClick` handler, and map the handler to `onSelect`.
+[`ActionPanel`](./action-panel.md#explicit-commandpalette-registration) only renders action rows; it does not register them to the CommandPalette. To expose selected panel actions here, use [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md) explicitly. Exclude disabled or loading actions and actions without an `onClick` handler, and map the handler to `onSelect`. An action's `confirmation` applies only to its panel row: registering the raw callback does not open that confirmation. Leave confirmed actions out of the palette unless that entry point has its own confirmation flow.
 
 ## Async Search Sources
 

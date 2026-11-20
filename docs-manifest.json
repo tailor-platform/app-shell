@@ -12,10 +12,10 @@
       "symbols": ["ActionPanel", "ActionPanelProps"],
       "hashes": {
         "typeSurface": "f497e4e3021d029a",
-        "outline": "7beb83365b36eaff",
-        "snapshot": null,
-        "outputMd": "a01ce6025c3885db",
-        "examples": "b404f54486b4c3fd"
+        "outline": "e6be548d991a8b70",
+        "snapshot": "edd766c1f0dd3afb",
+        "outputMd": "ccc1400da2d0d28b",
+        "examples": "0e618ed83a3c120b"
       }
     },
     "activity-card": {
@@ -310,9 +310,9 @@
       "symbols": ["CommandPalette"],
       "hashes": {
         "typeSurface": "818f6808b94f8041",
-        "outline": "e5853516a3b8b031",
+        "outline": "3b809e7310326957",
         "snapshot": null,
-        "outputMd": "8a3ef2de651416fc",
+        "outputMd": "52bfae24bfb19f2d",
         "examples": null
       }
     },
@@ -1130,9 +1130,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "dd37a482764cebc7",
+        "outline": "be319e4c90ab9154",
         "snapshot": null,
-        "outputMd": "12a1e61a5d3c81a6",
+        "outputMd": "5660767d8f9e20eb",
         "examples": null
       }
     },
@@ -1824,7 +1824,7 @@
     "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
     "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "ba49357df367615b",
     "packages/core/skills/app-shell-patterns/references/concepts/testing.md": "eca561c1e5396563",
-    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "a01ce6025c3885db",
+    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "ccc1400da2d0d28b",
     "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "230039d9f96fd264",
     "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "008761ccc93ef0fe",
     "packages/core/skills/app-shell-patterns/references/components/alert.md": "9b237d9c19b54102",
@@ -1838,7 +1838,7 @@
     "packages/core/skills/app-shell-patterns/references/components/card.md": "c1f88a287f197d79",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "ebe55c40fb5fb2e6",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "c79cd0fe175187e3",
-    "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "8a3ef2de651416fc",
+    "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "52bfae24bfb19f2d",
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "10c04c78bb846c9a",
     "packages/core/skills/app-shell-patterns/references/components/data-table.md": "c32c7ccf13528bf1",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "376e7d4ad14c2934",
@@ -1910,7 +1910,7 @@
     "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "e79d9120d86db198",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "e07c7fee2478a21d",
     "packages/core/skills/app-shell-patterns/SKILL.md": "18efee79280174e7",
-    "packages/core/skills/app-shell-upgrade/references/migrations.md": "17556b547fa2e75f",
+    "packages/core/skills/app-shell-upgrade/references/migrations.md": "8861aa88d2428c85",
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   }
 }

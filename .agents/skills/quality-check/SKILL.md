@@ -39,6 +39,12 @@ Run tests:
 pnpm test
 ```
 
+Also run the dependency-free local review script and workflow tests:
+
+```sh
+node --test scripts/*.test.mjs
+```
+
 If there are test failures, attempt to fix them in the source code and re-run until clean.
 
 ### Step 4: Check published declarations

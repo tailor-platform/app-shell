@@ -17,6 +17,8 @@ The `Tooltip` component displays contextual information on hover or focus. It is
 import { Tooltip } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `useState` from `react`, `Button` and `Text` from `@tailor-platform/app-shell`, and `PencilIcon` from `lucide-react`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -36,12 +38,12 @@ import { Tooltip } from "@tailor-platform/app-shell";
 
 Wrap a section of your UI (e.g. a toolbar) with `Tooltip.Provider` to share delay settings across multiple tooltips.
 
-| Prop         | Type              | Default | Description                                         |
-| ------------ | ----------------- | ------- | --------------------------------------------------- |
-| `delay`      | `number`          | `0`     | Delay in ms before the tooltip opens (milliseconds) |
-| `closeDelay` | `number`          | -       | Delay in ms before the tooltip closes               |
-| `timeout`    | `number`          | -       | Timeout in ms after which the tooltip auto-closes   |
-| `children`   | `React.ReactNode` | -       | Nested tooltip components                           |
+| Prop         | Type              | Default | Description                                                                                |
+| ------------ | ----------------- | ------- | ------------------------------------------------------------------------------------------ |
+| `delay`      | `number`          | `0`     | Delay in ms before the tooltip opens (milliseconds)                                        |
+| `closeDelay` | `number`          | -       | Delay in ms before the tooltip closes                                                      |
+| `timeout`    | `number`          | `400`   | Window in ms during which the next tooltip opens immediately after the previous one closes |
+| `children`   | `React.ReactNode` | -       | Nested tooltip components                                                                  |
 
 ### Tooltip.Root Props
 
@@ -65,64 +67,27 @@ Wrap a section of your UI (e.g. a toolbar) with `Tooltip.Provider` to share dela
 
 ## Placement
 
-```tsx
-<Tooltip.Root>
-  <Tooltip.Trigger render={<Button />}>Trigger</Tooltip.Trigger>
-  <Tooltip.Content side="right" align="start">
-    Appears on the right
-  </Tooltip.Content>
-</Tooltip.Root>
-```
+<!-- example: placement -->
 
 ## Shared Delay with Provider
 
 Use `Tooltip.Provider` to avoid tooltips opening immediately in dense UIs like toolbars:
 
-```tsx
-<Tooltip.Provider delay={300}>
-  <Toolbar>
-    <Tooltip.Root>
-      <Tooltip.Trigger render={<Button size="icon" />}>
-        <BoldIcon />
-      </Tooltip.Trigger>
-      <Tooltip.Content>Bold</Tooltip.Content>
-    </Tooltip.Root>
-    <Tooltip.Root>
-      <Tooltip.Trigger render={<Button size="icon" />}>
-        <ItalicIcon />
-      </Tooltip.Trigger>
-      <Tooltip.Content>Italic</Tooltip.Content>
-    </Tooltip.Root>
-  </Toolbar>
-</Tooltip.Provider>
-```
+Hover a help button and wait for the initial 600 ms delay, then move directly to its neighbor. Once a tooltip is visible, the provider's shared timeout lets adjacent tooltips open immediately. Keyboard focus also reveals the help.
+
+<!-- example: shared-delay -->
 
 ## Examples
 
 ### Icon Button with Tooltip
 
-```tsx
-import { PencilIcon } from "lucide-react";
-
-<Tooltip.Root>
-  <Tooltip.Trigger render={<Button size="icon" variant="ghost" />}>
-    <PencilIcon />
-    <span className="sr-only">Edit</span>
-  </Tooltip.Trigger>
-  <Tooltip.Content>Edit order</Tooltip.Content>
-</Tooltip.Root>;
-```
+<!-- example: icon-button -->
 
 ### Controlled Tooltip
 
-```tsx
-const [open, setOpen] = useState(false);
+Use **Show tooltip** and **Hide tooltip** to set the open state from outside the trigger. Explicit actions avoid toggling twice when the tooltip also dismisses on an outside press. Hovering or focusing **Details target** updates the same controlled state, reflected in the status text.
 
-<Tooltip.Root open={open} onOpenChange={setOpen}>
-  <Tooltip.Trigger render={<Button />}>Info</Tooltip.Trigger>
-  <Tooltip.Content>Additional details here</Tooltip.Content>
-</Tooltip.Root>;
-```
+<!-- example: controlled-tooltip -->
 
 ## Accessibility
 

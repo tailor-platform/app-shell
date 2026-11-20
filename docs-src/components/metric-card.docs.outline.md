@@ -17,6 +17,8 @@ sources:
 import { MetricCard } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Grid` from `@tailor-platform/app-shell` and `ShoppingCart` from `lucide-react`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -29,33 +31,11 @@ import { MetricCard } from "@tailor-platform/app-shell";
 - **down** — Negative change (destructive styling, e.g. red).
 - **neutral** — No change or neutral (muted styling).
 
-```tsx
-<MetricCard
-  title="Revenue"
-  value="$2,400"
-  trend={{ direction: "up", value: "+12%" }}
-  description="vs last month"
-/>
-
-<MetricCard
-  title="Costs"
-  value="$800"
-  trend={{ direction: "down", value: "-5%" }}
-  description="vs last quarter"
-/>
-
-<MetricCard
-  title="Balance"
-  value="$0"
-  trend={{ direction: "neutral", value: "0%" }}
-/>
-```
+<!-- example: trend-directions -->
 
 ## With Icon
 
-```tsx
-<MetricCard title="Total orders" value="142" icon={<OrderIcon />} description="this week" />
-```
+<!-- example: with-icon -->
 
 ## Related
 

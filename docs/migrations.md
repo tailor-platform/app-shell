@@ -15,7 +15,8 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| 1.21.0        | [ActionPanel no longer registers CommandPalette actions](#1210-actionpanel-no-longer-registers-commandpalette-actions)       |
+| 1.22.0        | [ActionPanel no longer registers CommandPalette actions](#1220-actionpanel-no-longer-registers-commandpalette-actions)       |
+| 1.21.0        | [Error and action toasts stay until the user closes them](#1210-error-and-action-toasts-stay-until-the-user-closes-them)     |
 | 1.21.0        | [Testing helpers deprecated in favour of TestingProvider](#1210-testing-helpers-deprecated-in-favour-of-testingprovider)     |
 | 1.20.0        | [z-index tokens renamed; old names are aliases](#1200-z-index-tokens-renamed-old-names-are-aliases)                          |
 | 1.18.0        | [Destructive colours now resolve to the danger roles](#1180-destructive-colours-now-resolve-to-the-danger-roles)             |
@@ -31,9 +32,9 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
 
-## 1.21.0: ActionPanel no longer registers CommandPalette actions
+## 1.22.0: ActionPanel no longer registers CommandPalette actions
 
-**Applies to:** apps upgrading to 1.21.0 or later that rely on `ActionPanel` actions appearing in the CommandPalette automatically. This is a breaking behavior change shipped in a minor release.
+**Applies to:** apps upgrading to 1.22.0 or later that rely on `ActionPanel` actions appearing in the CommandPalette automatically. This is a breaking behavior change shipped in a minor release.
 
 `ActionPanel` now only renders action rows. Rendering a panel no longer makes its actions searchable or executable through `Cmd+K` / `Ctrl+K`. There is no TypeScript error: those actions silently disappear from the palette unless the app registers them explicitly. Row clicks, `disabled`, `loading`, and `variant` keep their existing behavior.
 
@@ -71,6 +72,34 @@ function OrderActions({ actions }: { actions: ActionPanelProps["actions"] }) {
 The filter preserves the old eligibility rules and maps `onClick` to the hook's `onSelect`. You can instead register only the actions you want in the palette. Registration is removed when the calling component unmounts. If panel actions should not appear in the palette, no application change is needed.
 
 `ActionPanel` itself no longer requires a CommandPalette provider and can be rendered outside `AppShell`. The registration hook still requires `AppShell`.
+
+## 1.21.0: error and action toasts stay until the user closes them
+
+**Applies to:** apps that show toasts through `useToast`.
+
+Before 1.21.0, every toast closed after 4 seconds and had no close button, because AppShell passed no options and Sonner's defaults applied. From 1.21.0, `toast.error(...)`, the error state of `toast.promise(...)`, and any toast with an `action` get `duration: Infinity` and `closeButton: true`: they stay until the user closes them. Success, info, warning and plain toasts without an `action` are unchanged. Nothing errors; the change is only visible on screen.
+
+How to detect it: search the app for `toast.error(`, `toast.promise(` and toasts with `action:`. Look for places that show many errors in a row (for example, one per rejected edit): up to 3 toasts are visible, and with sticky errors they now stay until closed. Also check code that relied on an error toast closing by itself.
+
+What to change:
+
+- To keep the previous behavior, set both fields for the kind in the `toastDefaults` prop of `AppShell`. A field set there replaces that field only, so both fields are needed:
+
+  ```tsx
+  <AppShell
+    toastDefaults={{
+      error: { duration: 4000, closeButton: false },
+      action: { duration: 4000, closeButton: false },
+    }}
+    modules={modules}
+  />
+  ```
+
+- To change one field, set only that field. `toastDefaults={{ error: { duration: 10_000 } }}` closes errors after 10 seconds and keeps the close button.
+- To change a single call, pass `duration` or `closeButton` to it. The call's options win over `toastDefaults`.
+- If a screen shows many errors in a row, give the call an `id` so that the new toast replaces the previous one: `toast.error(message, { id: "price-error" })`.
+
+An empty object for a kind, such as `error: {}`, is a type error. The prop is documented in [AppShell](./components/app-shell.md#toastdefaults), and the toast rules in [`useToast`](./api/use-toast.md).
 
 ## 1.21.0: testing helpers deprecated in favour of TestingProvider
 
@@ -209,27 +238,33 @@ The date controls now follow the same composition model as `Field`, `Select`, `C
 
 TypeScript will error on the removed props; delete them and compose with `Field.Root` instead.
 
+Both examples use `useTimeZone()` at the top level of the component so the minimum date follows AppShell's configured timezone.
+
 Before:
 
 ```tsx
+const timeZone = useTimeZone();
+
 <DatePicker
   label="Delivery date"
   description="When should we ship your order?"
-  minValue={today(getLocalTimeZone())}
+  minValue={timeZone.today()}
   errorMessage={error}
   isInvalid={!!error}
-/>
+/>;
 ```
 
 After:
 
 ```tsx
+const timeZone = useTimeZone();
+
 <Field.Root invalid={!!error}>
   <Field.Label>Delivery date</Field.Label>
-  <DatePicker aria-label="Delivery date" minValue={today(getLocalTimeZone())} />
+  <DatePicker aria-label="Delivery date" minValue={timeZone.today()} />
   <Field.Description>When should we ship your order?</Field.Description>
   <Field.Error match={!!error}>{error}</Field.Error>
-</Field.Root>
+</Field.Root>;
 ```
 
 `isInvalid` remains a top-level prop for externally-controlled invalid styling. Semantic date props (`isRequired`, `isDisabled`, `isReadOnly`, `minValue`, `maxValue`, `isDateUnavailable`) remain top-level and unchanged. Standalone usage still works with an accessible name:

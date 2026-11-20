@@ -75,92 +75,116 @@ All other sub-components (`Table.Header`, `Table.Body`, `Table.Footer`, `Table.R
 
 ### With Footer
 
+<example-preview name="with-footer"></example-preview>
+
 ```tsx
-<Table.Root>
-  <Table.Header>
-    <Table.Row>
-      <Table.Head>Product</Table.Head>
-      <Table.Head>Qty</Table.Head>
-      <Table.Head>Price</Table.Head>
-    </Table.Row>
-  </Table.Header>
-  <Table.Body>
-    <Table.Row>
-      <Table.Cell>Widget A</Table.Cell>
-      <Table.Cell>10</Table.Cell>
-      <Table.Cell>$100.00</Table.Cell>
-    </Table.Row>
-    <Table.Row>
-      <Table.Cell>Widget B</Table.Cell>
-      <Table.Cell>5</Table.Cell>
-      <Table.Cell>$75.00</Table.Cell>
-    </Table.Row>
-  </Table.Body>
-  <Table.Footer>
-    <Table.Row>
-      <Table.Cell colSpan={2}>Total</Table.Cell>
-      <Table.Cell>$175.00</Table.Cell>
-    </Table.Row>
-  </Table.Footer>
-</Table.Root>
+function WithFooter() {
+  return (
+    <Table.Root>
+      <Table.Header>
+        <Table.Row>
+          <Table.Head>Product</Table.Head>
+          <Table.Head>Qty</Table.Head>
+          <Table.Head>Price</Table.Head>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        <Table.Row>
+          <Table.Cell>Widget A</Table.Cell>
+          <Table.Cell>10</Table.Cell>
+          <Table.Cell>$100.00</Table.Cell>
+        </Table.Row>
+        <Table.Row>
+          <Table.Cell>Widget B</Table.Cell>
+          <Table.Cell>5</Table.Cell>
+          <Table.Cell>$75.00</Table.Cell>
+        </Table.Row>
+      </Table.Body>
+      <Table.Footer>
+        <Table.Row>
+          <Table.Cell colSpan={2}>Total</Table.Cell>
+          <Table.Cell>$175.00</Table.Cell>
+        </Table.Row>
+      </Table.Footer>
+    </Table.Root>
+  );
+}
 ```
 
 ### With Caption
 
+<example-preview name="with-caption"></example-preview>
+
 ```tsx
-<Table.Root>
-  <Table.Caption>Order line items</Table.Caption>
-  <Table.Header>
-    <Table.Row>
-      <Table.Head>Item</Table.Head>
-      <Table.Head>Status</Table.Head>
-    </Table.Row>
-  </Table.Header>
-  <Table.Body>
-    <Table.Row>
-      <Table.Cell>Item 1</Table.Cell>
-      <Table.Cell>Shipped</Table.Cell>
-    </Table.Row>
-  </Table.Body>
-</Table.Root>
+function WithCaption() {
+  return (
+    <Table.Root>
+      <Table.Caption>Order line items</Table.Caption>
+      <Table.Header>
+        <Table.Row>
+          <Table.Head>Item</Table.Head>
+          <Table.Head>Status</Table.Head>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        <Table.Row>
+          <Table.Cell>Item 1</Table.Cell>
+          <Table.Cell>Shipped</Table.Cell>
+        </Table.Row>
+      </Table.Body>
+    </Table.Root>
+  );
+}
 ```
 
 ### Right-aligned numeric columns
 
+<example-preview name="numeric-alignment"></example-preview>
+
 ```tsx
-<Table.Root>
-  <Table.Header>
-    <Table.Row>
-      <Table.Head>Item</Table.Head>
-      <Table.Head align="right">Amount</Table.Head>
-    </Table.Row>
-  </Table.Header>
-  <Table.Body>
-    <Table.Row>
-      <Table.Cell>Widget A</Table.Cell>
-      <Table.Cell align="right">123</Table.Cell>
-    </Table.Row>
-  </Table.Body>
-</Table.Root>
+function NumericAlignment() {
+  return (
+    <Table.Root>
+      <Table.Header>
+        <Table.Row>
+          <Table.Head>Item</Table.Head>
+          <Table.Head align="right">Amount</Table.Head>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        <Table.Row>
+          <Table.Cell>Widget A</Table.Cell>
+          <Table.Cell align="right">123</Table.Cell>
+        </Table.Row>
+      </Table.Body>
+    </Table.Root>
+  );
+}
 ```
 
 ### Center-aligned status column
 
+<example-preview name="centered-status"></example-preview>
+
 ```tsx
-<Table.Root>
-  <Table.Header>
-    <Table.Row>
-      <Table.Head>Item</Table.Head>
-      <Table.Head align="center">Status</Table.Head>
-    </Table.Row>
-  </Table.Header>
-  <Table.Body>
-    <Table.Row>
-      <Table.Cell>Widget A</Table.Cell>
-      <Table.Cell align="center">Active</Table.Cell>
-    </Table.Row>
-  </Table.Body>
-</Table.Root>
+function CenteredStatus() {
+  return (
+    <Table.Root>
+      <Table.Header>
+        <Table.Row>
+          <Table.Head>Item</Table.Head>
+          <Table.Head align="center">Status</Table.Head>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        <Table.Row>
+          <Table.Cell>Widget A</Table.Cell>
+          <Table.Cell align="center">Active</Table.Cell>
+        </Table.Row>
+      </Table.Body>
+    </Table.Root>
+  );
+}
 ```
 
 ### Constrained Height with Scroll

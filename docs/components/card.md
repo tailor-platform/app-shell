@@ -15,6 +15,8 @@ description: General-purpose container with consistent styling using a compound 
 import { Card } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Button`, `Table`, and `Text` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -143,35 +145,66 @@ For a scrollable list, put the overflow on `Card.Content`. Rows supply their own
 
 ### Header only
 
+<example-preview name="header-only"></example-preview>
+
 ```tsx
-<Card.Root>
-  <Card.Header title="Summary" description="Key metrics for this period" />
-</Card.Root>
+function HeaderOnly() {
+  return (
+    <Card.Root>
+      <Card.Header title="Summary" description="Key metrics for this period" />
+    </Card.Root>
+  );
+}
 ```
 
 ### Content only
 
+<example-preview name="content-only"></example-preview>
+
 ```tsx
-<Card.Root>
-  <Card.Content>
-    <Text.p>No header needed for this card.</Text.p>
-  </Card.Content>
-</Card.Root>
+function ContentOnly() {
+  return (
+    <Card.Root>
+      <Card.Content>
+        <Text.p>No header needed for this card.</Text.p>
+      </Card.Content>
+    </Card.Root>
+  );
+}
 ```
 
 ### Custom header content
 
+<example-preview name="custom-header-content"></example-preview>
+
 ```tsx
-<Card.Root>
-  <Card.Header title="Recent Orders">
-    <Button size="sm" variant="outline">
-      View all
-    </Button>
-  </Card.Header>
-  <Card.Content padding="none">
-    <Table.Root>{/* ... */}</Table.Root>
-  </Card.Content>
-</Card.Root>
+function CustomHeaderContent() {
+  return (
+    <Card.Root>
+      <Card.Header title="Recent Orders">
+        <Button size="sm" variant="outline">
+          View all
+        </Button>
+      </Card.Header>
+      <Card.Content padding="none">
+        <Table.Root>
+          <Table.Header>
+            <Table.Row>
+              <Table.Head>Order</Table.Head>
+              <Table.Head>Status</Table.Head>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            <Table.Row>
+              <Table.Cell>ORD-12345</Table.Cell>
+              <Table.Cell>Confirmed</Table.Cell>
+            </Table.Row>
+          </Table.Body>
+        </Table.Root>
+      </Card.Content>
+    </Card.Root>
+  );
+}
 ```
 
 ## Related

@@ -47,7 +47,17 @@ import {
 } from "@tailor-platform/app-shell";
 ```
 
+The runnable examples also import `useRef` and `useState` from `react`, and `aggregations`, `Button`, `Checkbox`, `Dialog`, `Select`, `Text`, `Toolbar`, and `withURLCollectionState` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
+
+Start with a row array and a few typed columns. This example needs no query client, collection control, or backend.
+
+<!-- example: basic-usage -->
+
+### Connecting to GraphQL
+
+For a remote collection, pass the collection variables to your query and map its connection response into `data`. This integration snippet requires your application's GraphQL schema and client.
 
 ```tsx
 import { gql, useQuery } from "urql";
@@ -205,6 +215,12 @@ Without a height constraint, empty and error regions keep their existing three-r
 
 When columns overflow horizontally, empty and error content stays centered within the visible scrollport rather than the full table width. Messages remain visible at the initial scroll position, while scrolling sideways, and after resizing. The status cell still spans all visible columns; headers and data rows retain their normal horizontal scrolling. Custom markup wider than the viewport has its own horizontal scroll area, independent of the columns, so off-screen content and actions remain reachable.
 
+Switch between loaded rows, loading skeletons, an empty result, and an error to see the default states without a network request.
+
+<!-- example: loading-state -->
+
+For custom status content:
+
 <!-- example: empty-content | An empty approval table with custom markup centered in a fixed-height root. -->
 
 <!-- example: error-content | A failed approval table with custom error markup centered in a fixed-height root. -->
@@ -233,24 +249,9 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 - `"chips"` — only the active chips (renders nothing when there are none).
 - `"add"` — only the **Add filter** trigger.
 
-```tsx
-// Add filter in a header row (with tabs, etc.); chips on the row below.
-<Toolbar.Root>
-  <Toolbar.Row justify="between" aria-label="List controls">
-    <Toolbar.Group>
-      <MyViewTabs />
-    </Toolbar.Group>
-    <Toolbar.Group>
-      <DataTable.Filters slot="add" />
-    </Toolbar.Group>
-  </Toolbar.Row>
-  <Toolbar.Row aria-label="Active filters">
-    <Toolbar.Group>
-      <DataTable.Filters slot="chips" />
-    </Toolbar.Group>
-  </Toolbar.Row>
-</Toolbar.Root>
-```
+Add a name, minimum-quantity, or status filter, then edit or remove its chip. The add button and active chips occupy separate toolbar rows. This example applies the configured operators to local fixture rows and displays the generated query; in an application, send that query to your data source.
+
+<!-- example: filtering -->
 
 ### `DataTable.Pagination` Props
 
@@ -269,7 +270,13 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 
 Row selection is enabled by providing `rowSelection` or `onSelectionChange` to `useDataTable`. The `total` value comes from `DataTableData.total`. While the footer shows the bulk-action bar (see [Selection actions](#selection-actions)), the bar owns the selection count and this text is omitted.
 
+In a narrow footer (under 480px wide, such as on a phone), the controls wrap onto more lines instead of being clipped. The **Rows per page** label is hidden, and the page text is shortened to `1 / 5`. Both stay available to screen readers. This only works inside `DataTable.Footer`, because the footer's own width is measured, not the viewport's.
+
 When pagination changes page or page size, `DataTable.Table` resets its own scroll container to the top automatically. That applies whether navigation comes from the built-in `DataTable.Pagination` or from custom controls using the same table context.
+
+Try First, Previous, Next, Last, and the page-size selector. This example supplies a small local cursor-based data source, including backward requests; `DataTable` itself does not slice the rows.
+
+<!-- example: pagination -->
 
 ## Column pinning, visibility & ordering
 
@@ -277,27 +284,9 @@ When pagination changes page or page size, `DataTable.Table` resets its own scro
 - **Column settings.** `DataTable.ColumnSettings` renders a popover to show/hide columns, reorder them (drag), and change pinning by dragging a column between the **Fixed left**, **Scrollable**, and **Fixed right** zones. Place it in a generic [`Toolbar`](./toolbar.md), or pass `columnSettings` to `DataTable.Toolbar` for its fixed top-right placement.
 - **Persistence.** Pass a stable, **unique** `tableId` to persist each user's column layout (visibility, order, pinning) to `localStorage` (key `as:data-table:v1:<tableId>`). This is a per-user preference — it is deliberately **not** stored in the URL like filters/sort/pagination, so it survives reloads and isn't reset by shared/filtered links. Omit `tableId` for in-memory-only layout (state simply isn't persisted). Two tables mounted with the same `tableId` share one storage key and overwrite each other — use a unique id per table (e.g. `<route>:<entity>`); a dev-mode warning fires on duplicates.
 
-```tsx
-const table = useDataTable<Order>({
-  columns, // e.g. [{ id: "ref", label: "Ref", width: 140, pin: "left" }, ...]
-  data,
-  tableId: "orders-list",
-});
+Scroll horizontally to keep the pinned columns in view, then open **Columns** to hide, reorder, or repin columns. This preview deliberately omits `tableId`, so its changes stay in memory instead of writing preferences to localStorage.
 
-<DataTable.Root value={table}>
-  <Toolbar.Root>
-    <Toolbar.Row justify="between" aria-label="Order table controls">
-      <Toolbar.Group>
-        <DataTable.Filters />
-      </Toolbar.Group>
-      <Toolbar.Group>
-        <DataTable.ColumnSettings />
-      </Toolbar.Group>
-    </Toolbar.Row>
-  </Toolbar.Root>
-  <DataTable.Table />
-</DataTable.Root>;
-```
+<!-- example: column-layout -->
 
 ## Reading sort state
 
@@ -313,6 +302,10 @@ Sortable `header(ctx)` and `headerProps(ctx)` callbacks also receive:
 | `sortCount` | `number`              | Total number of active sort keys, including hidden or unrepresented columns. `0` when no sort is active; not the number of sortable columns. |
 
 These properties are available after narrowing with `ctx.sortable`, alongside `sortDirection` and `activateSort()`. They let custom headers read priority without depending on the table context. Built-in header visuals are unchanged: sorted columns show only `▲` / `▼`, and unsorted columns show no indicator. No built-in priority badges, multi-sort announcements, or sort toolbar controls are added.
+
+Click the column headers to cycle sorting, or enable multi-column sorting to combine keys. The example applies the active sort keys to its fixture rows and shows their priority order; a remote collection would send `variables.order` to its backend instead.
+
+<!-- example: sorting -->
 
 ## Per-cell styling
 
@@ -397,6 +390,8 @@ These APIs use “footer” at different scopes:
 - **Headers** can copy the label, pin/unpin, sort, reset sort, and hide the column.
 - **Cells** can copy the value, copy `"[header] [value]"`, and add a filter from that cell's value.
 
+Try the header and cell menus in the runnable [sorting](#reading-sort-state) and [filtering](#datatablefilters-props) examples. The [custom-renderer example](#overriding-a-built-in-renderer) also retains a raw accessor, so its custom JSX does not disable value-copy actions.
+
 ### Behavior contract
 
 `DataTable` treats column configuration as two layers:
@@ -445,18 +440,9 @@ Pass `rowExpansion` to `useDataTable` and each row gets a chevron that reveals a
 
 The parts are grouped rather than flat so the type system rejects incoherent setups: a `getLabel` or `canExpand` with no `render`, or `expandedIds` without `onChange`, are compile errors rather than silently inert configurations.
 
-```tsx
-const table = useDataTable<Order>({
-  columns,
-  data,
-  control,
-  rowExpansion: {
-    render: (row) => <OrderLineItems orderId={row.id} />,
-    canExpand: (row) => row.lineItemCount > 0,
-    getLabel: (row) => row.orderNumber,
-  },
-});
-```
+Open ORD-1001 to see its delivery note. ORD-1002 has no note, so `canExpand` omits its chevron.
+
+<!-- example: expandable-rows -->
 
 - **Rows must have an `id`.** Expansion is keyed by `row.id`, the same constraint as row selection. Rows without one render **no chevron** (not a disabled one) — a row must never be un-toggleable.
 - **`canExpand`** suppresses the chevron per row (e.g. an order with no line items). The cell is still rendered, empty, so the column count stays consistent. The predicate gates the panel in **both** directions: a row whose result flips to `false` while open closes immediately, and an id sitting in `expandedIds` never opens a panel for a row the predicate rejects. That matters when restoring `expandedIds` from a URL or storage — the excluded row may have no detail data to render at all. Its id stays in `expandedIds` but is inert; `collapseAllRows()` clears it.
@@ -469,19 +455,9 @@ const table = useDataTable<Order>({
 
 Pass `expandedIds` to own the state yourself; internal state is then never written and you update the array from `onChange`. The two must be passed together — the type rejects either alone.
 
-```tsx
-const [expandedIds, setExpandedIds] = useState<string[]>([]);
+Expand either order and inspect the consumer-owned IDs, then use **Collapse all** to reset them.
 
-const table = useDataTable<Order>({
-  columns,
-  data,
-  rowExpansion: {
-    render: (row) => <OrderLineItems orderId={row.id} />,
-    expandedIds,
-    onChange: setExpandedIds,
-  },
-});
-```
+<!-- example: controlled-expansion -->
 
 `useDataTable` also returns `expandedIds`, `isRowExpanded(row)`, `toggleRowExpansion(row)`, and `collapseAllRows()`. The last two are `undefined` when `rowExpansion` is not provided, and both keep a stable identity across renders, so they are safe to list in an effect's dependency array:
 
@@ -510,22 +486,9 @@ The trigger is a native `<button>`, so Enter/Space activation and the focus ring
 
 Pass `subRows` to show nested rows under each row, like a chart of accounts or a bill of materials. The page's rows are the top level: pagination counts them, and each parent's sub-rows stay on its page, so a family is never split across pages.
 
-```tsx
-const table = useDataTable<Account>({
-  columns, // the other columns: code, balance…
-  data, // the page's top-level accounts
-  subRows: {
-    getSubRows: (account) => account.children,
-    hierarchyColumn: {
-      label: "Account",
-      accessor: (account) => account.name,
-      width: 280,
-      truncate: true,
-    },
-  },
-  rowSelection: { actions: [exportAccounts] },
-});
-```
+Collapse and expand **Assets**, then select its checkbox. With the default `"leaves"` strategy, the selected IDs belong to Cash and Receivables, not the parent account.
+
+<!-- example: sub-rows -->
 
 - **`subRows` brings its own column.** `hierarchyColumn` defines the column that carries the indent, the open / close caret, the checkbox (except under `"independent"`) and the row's label. Like the row-actions column, the feature owns its place: it's always first and pinned left, it isn't in column settings or saved layout, and it leaves your other columns exactly as you defined them.
 - **It's a column for display.** It takes `label` and `accessor` (both required), `render`, `type` and `typeOptions`, `width` and `truncate`, `header` and `footer`, and `headerProps`, `footerProps` and `cellProps`, typed as on any column. `truncate` cuts the label only, never the indent or caret. Its `footer` gets the page's top-level rows. It has no `id`, `pin`, `align`, `edit`, `sort` or `filter`.
@@ -565,37 +528,13 @@ Give a typed column an `edit` config to use its built-in editor. This standardiz
 
 Callback types describe the **editor's output**, not the original row field's runtime type. For example, text/link/badge editors confirm strings or `null` even when their display accepts numbers or booleans. The editing option types, `CellEditState`, and `DateTimeDraft` are exported from the package root; parsing and navigation helpers remain internal.
 
-For example, inside a receipt page, accept or reject each proposed quantity yourself. Throw `CellEditError` for invalid quantities to retain the draft and show the message in the cell's error popover. Patch the changed field with a functional state update rather than replacing a whole row captured before another edit:
+Click an item or quantity to edit it. Enter confirms and Escape cancels. Quantities must be non-negative whole numbers or empty; an invalid quantity throws `CellEditError`, retaining the draft and showing its message in the cell's error popover. Functional updates adopt only the changed field. The JSON below the table shows confirmed row data, not unfinished drafts.
 
-```tsx
-const { column } = createColumnHelper<ReceiptLine>();
-const [lines, setLines] = useState<ReceiptLine[]>(initialLines);
+<!-- example: inline-editing -->
 
-const columns = [
-  column({ id: "sku", label: "SKU", type: "text" }),
-  column({
-    id: "received",
-    label: "Received",
-    type: "number",
-    typeOptions: { maxDecimals: 0 }, // Display precision, not an input rule.
-    edit: {
-      canEdit: (_row, { selected }) => selected,
-      onValueCommitted: (row, value) => {
-        if (value !== null && (!Number.isInteger(value) || value < 0 || value > row.ordered)) {
-          throw new CellEditError(`Enter a whole number from 0 to ${row.ordered}`);
-        }
-        setLines((current) =>
-          current.map((line) => (line.id === row.id ? { ...line, received: value } : line)),
-        );
-      },
-    },
-  }),
-];
+Badge choices and date editors use the same confirmation contract. Try a status choice, a calendar date, or an appointment with both a day and time; appointments use the containing AppShell timezone.
 
-const table = useDataTable({ columns, data: { rows: lines }, rowSelection: {} });
-```
-
-`ReceiptLine` and `initialLines` are the page's row type and initial data. `useState` comes from React; `CellEditError`, `createColumnHelper`, and `useDataTable` come from AppShell.
+<!-- example: choice-and-date-editing -->
 
 ### Editing options
 
@@ -745,15 +684,9 @@ Pass `rowSelection` to `useDataTable` to enable the checkbox column. Rows must h
 
 Provide `selectedIds` and `onChange` together to own the selection. The `RowSelectionOptions` type requires `onChange` in controlled mode and rejects combining `selectedIds` with `defaultSelectedIds`.
 
-```tsx
-const [selectedIds, setSelectedIds] = useState<string[]>([]);
+Select rows to update the visible IDs, then clear them from the external button.
 
-const table = useDataTable<Order>({
-  columns,
-  data,
-  rowSelection: { selectedIds, onChange: setSelectedIds },
-});
-```
+<!-- example: controlled-selection -->
 
 Commands such as `toggleRowSelection(row)` request a new array through `onChange`; the rendered selection changes only when the owner updates `selectedIds`. Each command derives from the current committed value, so multiple commands before the owner commits share the same base. Compute batched changes yourself and set `selectedIds` directly instead of issuing repeated commands.
 
@@ -761,13 +694,9 @@ Commands such as `toggleRowSelection(row)` request a new array through `onChange
 
 Omit `selectedIds` to let the table own selection state. `defaultSelectedIds` initializes it only when the hook mounts; later changes to that default do not reset selection. `onChange` is optional.
 
-```tsx
-const table = useDataTable<Order>({
-  columns,
-  data,
-  rowSelection: { defaultSelectedIds: ["INV-1001"] },
-});
-```
+INV-1001 starts selected. The example reads `table.selectedIds` directly; no consumer selection state is needed.
+
+<!-- example: uncontrolled-selection -->
 
 Keep the controlled/uncontrolled mode stable while mounted. Callbacks notify user-driven selection changes, not mounting or external `selectedIds` updates. `onSelectionChange` is deprecated but remains supported for compatibility. Replace `onSelectionChange: handleSelectionChange` with `rowSelection: { onChange: handleSelectionChange }` to keep uncontrolled notification behavior. `rowSelection.onChange` takes precedence when both callbacks are supplied, and `onSelectionChange` is used when the new configuration has no callback.
 
@@ -777,59 +706,21 @@ Selection spans pages. The header checkbox adds or removes only the current page
 
 Pass `rowSelection.actions` to `useDataTable` and, while at least one id is selected, `DataTable.Footer` becomes a bulk-action bar: the selection count, your actions, and a **Clear** button, with the footer's own children (usually `DataTable.Pagination`) kept alongside. `rowSelection: { actions }` enables uncontrolled selection without an `onChange` callback. Omitted or empty `actions` show no bar, while the `rowSelection` object still enables checkboxes. There is nothing new to compose in JSX — just keep `DataTable.Footer` in the tree.
 
-```tsx
-const [selectedIds, setSelectedIds] = useState<string[]>([]);
-const [deleteTargetIds, setDeleteTargetIds] = useState<string[] | null>(null);
+Select rows to reveal **Record selected IDs**. The action records its click-time ID snapshot without deleting data or clearing selection.
 
-const table = useDataTable<Vendor>({
-  columns,
-  data,
-  control,
-  rowSelection: {
-    selectedIds,
-    onChange: setSelectedIds,
-    actions: [
-      {
-        id: "delete",
-        label: "Delete",
-        variant: "destructive",
-        onClick: (ids) => setDeleteTargetIds([...ids]),
-      },
-    ],
-  },
-});
+<!-- example: selection-actions -->
 
-return (
-  <>
-    <DataTable.Root value={table}>
-      <DataTable.Table />
-      <DataTable.Footer>
-        <DataTable.Pagination />
-      </DataTable.Footer>
-    </DataTable.Root>
+For a destructive action, capture that snapshot and ask for confirmation. This example removes only local fixture rows; **Cancel** leaves rows and selection unchanged.
 
-    {deleteTargetIds !== null && (
-      <DeleteVendorsDialog
-        ids={deleteTargetIds}
-        onCancel={() => setDeleteTargetIds(null)}
-        onDeleted={(deletedIds: string[]) => {
-          const deleted = new Set(deletedIds);
-          setSelectedIds((current) => current.filter((id) => !deleted.has(id)));
-          setDeleteTargetIds(null);
-        }}
-      />
-    )}
-  </>
-);
-```
+<!-- example: bulk-delete-confirmation -->
 
-`DeleteVendorsDialog` is a consumer-owned component, not an AppShell component. It can fetch the target records, explain eligibility (for example, “Three of five selected vendors can be deleted; two are in use”), confirm, and execute. Backend validation remains authoritative; `onDeleted` reports only ids actually deleted. Removing those ids from the **current** selection preserves ineligible records and records selected after the dialog opened. Cancellation or failure leaves selection unchanged.
+Confirmation, eligibility checks, and execution remain consumer-owned. A real application can fetch the target records, explain eligibility (for example, “Three of five selected records can be deleted; two are in use”), and report only successfully deleted IDs. Backend validation remains authoritative. Remove successful IDs from the **current** selection to preserve ineligible records and records selected after the dialog opened. Cancellation or failure must leave selection unchanged.
 
 - **`onClick` receives a click-time snapshot of all selected ids.** The array is a copy, in selection order, including ids whose rows have not been loaded. Page visits and loaded-row availability do not change the target. Selection actions have no row-based `canApply`, automatic eligible count, or eligibility-based disabled state; the consumer owns eligibility checks, required fetching, confirmation UI, and execution. Row actions can still use `canApply` for their concrete row.
 - **Return the promise from `onClick`.** While it is pending, the bar disables every action and shows a spinner on the running one, so a slow request can't be fired twice. Neither success nor rejection changes selection; there is no `keepSelection` option. A rejection is logged as `[DataTable] Selection action "…" failed`; showing it to the user is up to your handler.
 - **Confirm dialogs can hand a later request back with `run`.** An `onClick` that only opens a dialog returns nothing. Keep the `run` helper and call it from the dialog's confirm button — `await run(deleteVendors(ids))` — to track that request in the bar. This only tracks pending state; it does not clear selection. Clear is disabled while a request is pending, and pending state survives the bar closing and reopening. Use controlled `rowSelection` to remove only successful ids, or call the explicit `clearSelection` helper if clearing every page is intentional.
 - **Selection spans pages.** The header checkbox adds or removes only the current page; **Clear** empties everything.
-- **Three actions stay inline.** The fourth onward collapse into a **More actions** menu, in array order. Put the most frequent first; a destructive action placed last sits safely in the menu.
+- **Three actions stay inline.** The fourth onward collapse into a **More actions** menu, in array order. Put the most frequent first; a destructive action placed last sits safely in the menu. When the footer is narrower than 480px (for example, on a phone), every action moves into the menu, so the bar keeps to one line and the table rows stay visible. The menu button then gets an outline, like the inline actions.
 - **Confirm destructive actions.** `variant: "destructive"` only styles the action. Open a confirm dialog from `onClick` before deleting — see the [confirm pattern](../patterns/interaction-confirm.md).
 - **The bar stays reachable.** In `<Layout fill>` the footer is already pinned. On a page that scrolls, the bar sticks to the bottom of the viewport while rows are selected and settles back into place at the end of the table. It sticks to the nearest scrolling container: inside a scrolling drawer or panel it rides that container instead, and inside a wrapper that clips its overflow (such as a card with `overflow: hidden`) it simply stays in the footer.
 - **Share presentation with `rowActions`.** Both action types extend the non-generic [`DataTableAction`](#datatableaction) (`id`, `label`, `icon`, `variant`). Keep row predicates on `RowAction<TRow>` and bulk business rules in the consumer's ID-based handler.
@@ -960,13 +851,9 @@ Each column type follows the same three-step shape: pick a `type`, point `access
 
 ### `text` — plain string
 
-```tsx
-column({
-  label: "Name",
-  accessor: (row) => row.name,
-  type: "text",
-});
-```
+Compare a normal string with empty and null values.
+
+<!-- example: text-cells -->
 
 - `null` / `undefined` / `""` render a muted `—`.
 - No `typeOptions` are accepted on `text` columns.
@@ -974,14 +861,9 @@ column({
 
 ### `number` — locale-formatted number
 
-```tsx
-column({
-  label: "Stock",
-  accessor: (row) => row.stockOnHand,
-  type: "number",
-  typeOptions: { minDecimals: 0, maxDecimals: 0, locale: "en-US" },
-});
-```
+The same quantity is shown as whole units and with decimal precision. Zero remains a number; null becomes the placeholder.
+
+<!-- example: number-cells -->
 
 - `minDecimals` / `maxDecimals` default to `0`.
 - `maxDecimals` defaults to `minDecimals` when only `minDecimals` is set — pass both for ranges (e.g. `min: 2, max: 4`).
@@ -989,28 +871,9 @@ column({
 
 ### `money` — currency
 
-```tsx
-column({
-  label: "Total",
-  accessor: (row) => row.total,
-  type: "money",
-  typeOptions: { currency: "USD" },
-});
-```
+Use a fixed currency or read it from each row. This example formats the same amount in both ways; formatting does not perform currency conversion.
 
-For mixed-currency tables, read `currency` from the row:
-
-```tsx
-column({
-  label: "Total",
-  accessor: (row) => row.total,
-  type: "money",
-  typeOptions: {
-    currency: (row) => row.currencyCode, // "USD", "JPY", "EUR", …
-    maxDecimals: 4, // raise the cap above the currency default
-  },
-});
-```
+<!-- example: money-cells -->
 
 - Default `currency` is `"USD"` when omitted or when the accessor returns falsy.
 - Invalid ISO codes fall back to USD (rather than throwing).
@@ -1018,14 +881,9 @@ column({
 
 ### `date` — formatted date
 
-```tsx
-column({
-  label: "Placed",
-  accessor: (row) => row.placedAt, // Date | ISO string | epoch ms
-  type: "date",
-  typeOptions: { dateFormat: "short" }, // "short" | "long" | "datetime"
-});
-```
+Compare short, long, and date-time formats for the same instant. Timestamp output follows the containing AppShell timezone.
+
+<!-- example: date-cells -->
 
 | `dateFormat`        | Example output         |
 | ------------------- | ---------------------- |
@@ -1038,26 +896,9 @@ column({
 
 ### `badge` — status pill
 
-```tsx
-column({
-  label: "Status",
-  accessor: (row) => row.status,
-  type: "badge",
-  typeOptions: {
-    badgeVariantMap: {
-      shipped: "success",
-      processing: "outline-warning",
-      cancelled: "subtle-error",
-    },
-    badgeLabelMap: {
-      shipped: "Shipped",
-      processing: "Processing",
-      cancelled: "Cancelled",
-    },
-    defaultBadgeVariant: "outline-neutral", // unmapped values fall back here
-  },
-});
-```
+Map status values to labels and variants, with a fallback for an unmapped value.
+
+<!-- example: badge-cells -->
 
 - The cell value is stringified before lookup, so `accessor` can return strings, numbers, or booleans.
 - `accessor` may also return an **array** of values — each item is rendered as a separate badge.
@@ -1067,27 +908,15 @@ column({
 
 Use `maxVisible` to cap the number of badges shown. Extra values are hidden behind a hover popover:
 
-```tsx
-column({
-  ...infer("tags"),
-  type: "badge",
-  typeOptions: {
-    badgeVariantMap: { Premium: "warning", Office: "outline-info" },
-    maxVisible: 2,
-  },
-});
-```
+Hover the overflow count to inspect the remaining tags.
+
+<!-- example: array-badges -->
 
 ### `link` — clickable text
 
-```tsx
-column({
-  label: "Order",
-  accessor: (row) => row.reference,
-  type: "link",
-  typeOptions: { href: (row) => `/orders/${row.id}` },
-});
-```
+The links below navigate to real documentation pages. The final row has a null destination and renders as plain text.
+
+<!-- example: link-cells -->
 
 - `href` is **required** on `link` columns — it's enforced by the type.
 - Returning `null` / `undefined` from `href` renders the cell value as plain text (useful for "no detail page yet" rows).
@@ -1097,26 +926,13 @@ column({
 
 `render` always wins over the built-in renderer, so the escape hatch stays open per column:
 
-```tsx
-column({
-  label: "Status",
-  accessor: (row) => row.status,
-  type: "badge",
-  typeOptions: { badgeVariantMap: { active: "success" } },
-  // Custom render with an icon — type/typeOptions are still required for
-  // sort/filter scaffolding but are bypassed for rendering.
-  render: (row) => (
-    <span className="flex items-center gap-1">
-      <CircleCheck className="size-3" />
-      {row.status}
-    </span>
-  ),
-});
-```
+The stock renderer adds custom markup while the accessor retains the raw numeric value for built-in behaviors such as copying from the cell menu.
+
+<!-- example: custom-renderer -->
 
 ### Combining `type` with `inferColumns`
 
-`inferColumns` (from `@tailor-platform/sdk-plugin-app-shell`) derives `label`, `sort`, `filter`, and `id` from TailorDB metadata. You can layer a `type` on top to get a built-in renderer without losing the inferred sort/filter config:
+`inferColumns` returned by `createColumnHelper` derives `label`, `sort`, `filter`, and `id` from TailorDB metadata generated by `@tailor-platform/sdk-plugin-app-shell`. You can layer a `type` on top to get a built-in renderer without losing the inferred sort/filter config. The runnable [metadata filter playground](#filter-types-and-operators) shows this composition with local metadata; the integration snippet below uses generated application metadata:
 
 ```tsx
 const infer = inferColumns(tableMetadata.order);
@@ -1182,6 +998,10 @@ The `filter` property on a column accepts the same base shape as `FilterConfig`,
 | `uuid`     | Text                         | `eq`, `ne`, `in`, `nin`                                                                                      |
 
 When the `between` operator is selected on a `number`, `decimal`, `datetime`, `date`, or `time` column, the value editor renders a range input with **min**/**max** (or **From**/**To** for dates) bounds.
+
+Try the decimal, date, datetime, time, boolean, and UUID editors generated from local metadata. This playground demonstrates editor behavior and query generation only: it does not fetch records or apply filters to a result table. Decimal values remain strings, and datetime values are normalized using the containing AppShell timezone.
+
+<!-- example: metadata-filters -->
 
 ### Decimal Filters
 
@@ -1284,6 +1104,10 @@ A row action in the kebab-menu column. `RowAction<TRow>` extends the non-generic
 | `isDisabled` | `(row: TRow) => boolean` | **Deprecated** — use `canApply`, which reads the other way round. Still honoured: the action is disabled if either one says so. |
 | `onClick`    | `(row: TRow) => void`    | Called when the action is clicked.                                                                                              |
 
+Use a row's menu to **Approve** a draft. The action is disabled for an already-approved row. Clicking the row itself displays its reference without navigating away.
+
+<!-- example: row-actions -->
+
 ## `SelectionAction`
 
 A non-generic bulk action for selected ids. Extends [`DataTableAction`](#datatableaction). See [Selection actions](#selection-actions).
@@ -1346,7 +1170,7 @@ column({ label: "Actions", render: (row) => <button>Edit {row.name}</button> });
 
 ### `inferColumns(tableMetadata)`
 
-Binds table metadata and returns a per-field column factory. The factory derives `label`, `sort`, `filter` config, and `id` automatically from the field's metadata. `id` is always pinned to the metadata field name — this stabilizes the React key / column-visibility identifier and enables the `truncate` tooltip without an explicit `accessor`. Requires metadata generated by `@tailor-platform/sdk-plugin-app-shell`.
+Binds table metadata and returns a per-field column factory. The factory derives `label`, `sort`, `filter` config, and `id` automatically from the field's metadata. `id` is always pinned to the metadata field name — this stabilizes the React key / column-visibility identifier and enables the `truncate` tooltip without an explicit `accessor`. Applications normally use metadata generated by `@tailor-platform/sdk-plugin-app-shell`; the runnable [metadata filter playground](#filter-types-and-operators) uses a small local metadata fixture.
 
 ```tsx
 const infer = inferColumns(tableMetadata.order);
@@ -1383,7 +1207,7 @@ const { variables, control } = useCollectionVariables({
 // variables.order      → sort input array or undefined
 ```
 
-When you need an object for `Object.keys` or destructuring, use `variables.query ?? {}`.
+When you need an object for `Object.keys` or destructuring, use `variables.query ?? {}`. The runnable [filtering](#datatablefilters-props), [sorting](#reading-sort-state), and [pagination](#datatablepagination-props) examples show how control state changes the displayed fixture rows; the [metadata playground](#filter-types-and-operators) exposes generated queries for the other filter editors.
 
 ### Options
 
@@ -1482,18 +1306,9 @@ Cursor position is deliberately not persisted — `CollectionControl` owns it in
 
 If you need URL persistence but cannot use react-router's `useSearchParams` (e.g. a different router or test environment), use the pure `withURLCollectionState` decorator to compose URL state with `useCollectionVariables` directly:
 
-```tsx
-import { withURLCollectionState, useCollectionVariables } from "@tailor-platform/app-shell";
+This preview supplies a local `URLSearchParams` binding and displays its serialized query string alongside the collection variables. It does **not** change the docs-browser URL or demonstrate browser-refresh persistence. In an application, replace the local binding with your router's `useSearchParams()` result.
 
-const [searchParams, setSearchParams] = useSearchParams();
-
-const { variables, control } = useCollectionVariables(
-  withURLCollectionState({ tableMetadata, params: { pageSize: 20 } }, [
-    searchParams,
-    setSearchParams,
-  ]),
-);
-```
+<!-- example: collection-url-state -->
 
 `withURLCollectionState` returns augmented `useCollectionVariables` options — it does not call the hook itself. The `[searchParams, setSearchParams]` tuple must match the `URLSearchParams` + setter shape that `useSearchParams()` returns.
 
@@ -1501,14 +1316,9 @@ const { variables, control } = useCollectionVariables(
 
 Accesses the full DataTable state from any component rendered inside `DataTable.Root`. Use this to build custom sub-components when the built-in ones don't fit.
 
-```tsx
-import { useDataTableContext } from "@tailor-platform/app-shell";
+A child of `DataTable.Root` can read the selected count and clear selection without receiving the table object as a prop. Select rows, then try the custom control below the table.
 
-function MyCustomPagination() {
-  const { pageInfo, goToNextPage, goToPrevPage, hasNextPage, hasPrevPage } = useDataTableContext();
-  // ...
-}
-```
+<!-- example: table-context -->
 
 The selection is here too — `selectedIds`, `selectAllRows` / `deselectAllRows` for the current page, and `clearSelection` — for the rare case the built-in [selection actions](#selection-actions) bar doesn't fit. Selection exposes IDs only; consumers fetch any row objects they need.
 

@@ -49,12 +49,18 @@ export const dataTableLabels = defineI18nLabels({
     // Clear button's accessible name extends its visible text, so it is still
     // unambiguous when read outside the bar.
     bulkActionsLabel: "Bulk actions",
-    // Shorter than Pagination's "N of M row(s) selected": the bar shares the
+    // Shorter than Pagination's "N of M rows selected": the bar shares the
     // footer line with the pagination controls.
     selectionCount: (props: { selected: number; total: number | null }) =>
       props.total === null
         ? `${props.selected} selected`
         : `${props.selected} of ${props.total} selected`,
+    // Shown in place of `selectionCount` in a footer under 480px wide; the
+    // full text stays for screen readers.
+    selectionCountShort: (props: { selected: number; total: number | null }) =>
+      props.total === null
+        ? `${props.selected} selected`
+        : `${props.selected}/${props.total} selected`,
     selectionMoreActions: "More actions",
     selectionClear: "Clear",
     selectionClearLabel: "Clear selection",
@@ -77,10 +83,15 @@ export const dataTableLabels = defineI18nLabels({
     paginationLast: "Last page",
     paginationRowsPerPage: "Rows per page",
     paginationPage: "Page",
-    paginationTotalRows: (props: { total: number }) => `${props.total} row(s)`,
+    paginationTotalRows: (props: { total: number }) =>
+      `${props.total} ${props.total === 1 ? "row" : "rows"}`,
     paginationSelectedOfTotal: (props: { selected: number; total: number }) =>
-      `${props.selected} of ${props.total} row(s) selected`,
-    paginationSelectedRows: (props: { selected: number }) => `${props.selected} row(s) selected`,
+      `${props.selected} of ${props.total} ${props.total === 1 ? "row" : "rows"} selected`,
+    // Shown in place of `paginationSelectedOfTotal` in a footer under 480px wide.
+    paginationSelectedOfTotalShort: (props: { selected: number; total: number }) =>
+      `${props.selected}/${props.total} selected`,
+    paginationSelectedRows: (props: { selected: number }) =>
+      `${props.selected} ${props.selected === 1 ? "row" : "rows"} selected`,
 
     // Filters
     addFilter: "Add filter",
@@ -188,6 +199,10 @@ export const dataTableLabels = defineI18nLabels({
       props.total === null
         ? `${props.selected} 行を選択中`
         : `${props.total} 行中 ${props.selected} 行を選択中`,
+    selectionCountShort: (props: { selected: number; total: number | null }) =>
+      props.total === null
+        ? `${props.selected} 行を選択中`
+        : `${props.selected}/${props.total} 行を選択中`,
     selectionMoreActions: "その他の操作",
     selectionClear: "解除",
     selectionClearLabel: "選択を解除",
@@ -210,6 +225,8 @@ export const dataTableLabels = defineI18nLabels({
     paginationTotalRows: (props: { total: number }) => `${props.total} 行`,
     paginationSelectedOfTotal: (props: { selected: number; total: number }) =>
       `${props.total} 行中 ${props.selected} 行を選択中`,
+    paginationSelectedOfTotalShort: (props: { selected: number; total: number }) =>
+      `${props.selected}/${props.total} 行を選択中`,
     paginationSelectedRows: (props: { selected: number }) => `${props.selected} 行を選択中`,
 
     // Filters

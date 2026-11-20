@@ -5,6 +5,7 @@ title: CommandPalette
 description: Keyboard-driven quick navigation with fuzzy search for all routes in your application
 sources:
   - packages/core/src/components/command-palette/**
+  - packages/core/src/contexts/command-palette-context.tsx
 ---
 
 # CommandPalette
@@ -53,6 +54,22 @@ The CommandPalette will automatically:
 | `↑` / `↓`      | Navigate up/down through results |
 | `Enter`        | Navigate to selected route       |
 | Type to search | Filter routes by fuzzy search    |
+
+## Opening programmatically
+
+Call `useOpenCommandPalette()` at the top level of a component inside `AppShell`. It returns a function that opens the built-in palette; call that function from an event handler.
+
+The example imports `Button` and `useOpenCommandPalette` from `@tailor-platform/app-shell`. In the docs browser, these buttons open the surrounding application's palette, not a separate preview. Try **Find Select docs** to prefill the search, then press **Esc** to close it without navigating.
+
+<!-- example: opening-programmatically -->
+
+The returned function accepts an optional `OpenCommandPaletteOptions` object:
+
+| Property | Type     | Description                                                                                                  |
+| -------- | -------- | ------------------------------------------------------------------------------------------------------------ |
+| `search` | `string` | Initial search text. Omit it to open with an empty search. A registered `PREFIX:` activates its search mode. |
+
+Each call initializes the search, even if the palette is already open. For example, `openCommandPalette({ search: "ORD: alice" })` activates an `ORD` source only if it is registered in AppShell's `searchSources`; without a matching source, the text is treated as an ordinary page/action search. The live example uses ordinary page search and does not register a search source.
 
 ## Features
 
@@ -111,16 +128,7 @@ const productsModule = defineModule({
 
 In addition to navigation results, the CommandPalette can surface page-level actions. Use the `useRegisterCommandPaletteActions` hook to register actions that appear in the **Actions** section of the palette. Actions are unregistered automatically when the component unmounts.
 
-```tsx
-import { useRegisterCommandPaletteActions } from "@tailor-platform/app-shell";
-
-function OrderDetailPage() {
-  useRegisterCommandPaletteActions("Order Actions", [
-    { key: "confirm", label: "Confirm order", onSelect: handleConfirm },
-    { key: "cancel", label: "Cancel order", icon: <XIcon />, onSelect: handleCancel },
-  ]);
-}
-```
+Try the [working action-registration example](../api/use-register-command-palette-actions.md#usage): selecting its demo action increases a local count, and changing the increment demonstrates that the latest callback is used.
 
 ### Parameters
 
@@ -223,24 +231,27 @@ function App() {
 
 ### Prefix Syntax
 
-The prefix match is **case-sensitive**. When a user types `ORD:`, the string after the colon (including any space) is forwarded to `search` as the query:
+The prefix match is **case-sensitive**. When an initial value activates a search mode (for example, pasted text or programmatic opening), leading whitespace after the colon is removed from the initial query:
 
 ```
-User types: ORD:
+Initial input: ORD:
   → search("", { signal })  — empty query, show all or hint
 
-User types: ORD:12345
+Initial input: ORD:12345
   → search("12345", { signal })
 
-User types: ORD: alice
-  → search(" alice", { signal })  — leading space preserved
+Initial input: ORD: alice
+  → search("alice", { signal })  — leading space removed
 ```
+
+Once the mode is active, subsequent edits to its query are passed to `search` as entered.
 
 ## Extending the built-in palette
 
 The supported extension points are:
 
 - `searchSources` on `AppShell` for async, prefix-activated search modes
+- `useOpenCommandPalette` for opening with an optional initial search
 - [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md) for page-level actions
 
 `CommandPalette` itself is built into `AppShell`; there is no separate public hook for rebuilding the palette UI from scratch.
@@ -371,7 +382,7 @@ The CommandPalette follows these design principles:
 ## Related Components
 
 - [AppShell](./app-shell.md) - Root component that provides CommandPalette
-- [SidebarLayout](./sidebar-layout.md) - Layout that includes CommandPalette
+- [SidebarLayout](./sidebar-layout.md) - Default layout with a search entry for CommandPalette
 
 ## Related Concepts
 
@@ -408,5 +419,5 @@ The CommandPalette follows these design principles:
 **Solutions:**
 
 1. Check if another app is capturing the shortcut
-2. Verify you're using `SidebarLayout` (CommandPalette is included)
+2. Verify the page is inside `AppShell`, which provides the built-in CommandPalette
 3. Check browser console for JavaScript errors

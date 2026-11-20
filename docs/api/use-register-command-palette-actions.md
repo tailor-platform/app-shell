@@ -53,34 +53,53 @@ type CommandPaletteAction = {
 
 ## Usage
 
+The example imports `useState` from `react`, and `Button`, `Text`, `useOpenCommandPalette`, and `useRegisterCommandPaletteActions` from `@tailor-platform/app-shell`.
+
+Click **Open demo action**, then select **Increase preview count** in the surrounding docs browser's palette. Toggle **Add five at a time** and run the same action again: its key and label stay unchanged, but its latest callback uses the new increment. Only the local preview count changes; no request is sent and no application data is modified.
+
+<example-preview name="contextual-actions"></example-preview>
+
 ```tsx
-import { useRegisterCommandPaletteActions } from "@tailor-platform/app-shell";
+function ContextualActions() {
+  const [count, setCount] = useState(0);
+  const [increment, setIncrement] = useState(1);
+  const openCommandPalette = useOpenCommandPalette();
 
-function OrderDetailPage() {
-  const [loading, setLoading] = useState(false);
-
-  const handleConfirm = async () => {
-    setLoading(true);
-    try {
-      await confirmOrder(orderId);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useRegisterCommandPaletteActions("Order Actions", [
-    { key: "confirm", label: "Confirm order", onSelect: handleConfirm },
-    { key: "cancel", label: "Cancel order", icon: <XIcon />, onSelect: handleCancel },
+  useRegisterCommandPaletteActions("Documentation demo", [
+    {
+      key: "increase-preview-count",
+      label: "Increase preview count",
+      onSelect: () => setCount((value) => value + increment),
+    },
   ]);
 
-  return <div>{/* page content */}</div>;
+  return (
+    <div className="flex flex-col gap-3">
+      <Text.p role="status">Preview count: {count}</Text.p>
+      <Text.p>Current increment: {increment}</Text.p>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={() => openCommandPalette({ search: "Increase preview count" })}>
+          Open demo action
+        </Button>
+        <Button
+          variant="outline"
+          aria-pressed={increment === 5}
+          onClick={() => setIncrement((value) => (value === 1 ? 5 : 1))}
+        >
+          Add five at a time
+        </Button>
+      </div>
+    </div>
+  );
 }
 ```
+
+The action appears under **Documentation demo** while the preview is mounted and is removed automatically when it unmounts, such as when you leave this page.
 
 ## Behavior
 
 - Actions are registered while the component is mounted and removed on unmount.
-- Re-rendering with a new `actions` array replaces the previously registered set.
+- Changes to action keys, labels, or the group update the registered set. The latest `onSelect` callbacks are used without requiring re-registration.
 - `icon` changes alone do not trigger re-registration. If you need to reflect a dynamic icon update, also change the action's `key` or `label`.
 - The hook requires `CommandPaletteProvider`, which is mounted automatically by `AppShell`.
 

@@ -1,4 +1,11 @@
-import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { createLineItemsDocumentStore } from "./document/store";
 import { createLineItemsEditing, LINE_ITEMS_EDITING } from "./editing";
 import type { UseLineItemsOptions, UseLineItemsReturn } from "./types";
@@ -21,11 +28,17 @@ export function useLineItems<T extends Record<string, unknown>>(
   // Validate without changing configuration or drafts from an abandoned render.
   editing.assertColumns(options.columns);
   const lines = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+  const isSaveLocked = useSyncExternalStore(
+    editing.subscribe,
+    editing.isSaveLocked,
+    editing.isSaveLocked,
+  );
   // Retained commands must not observe a movement policy from an abandoned render.
   useLayoutEffect(() => {
     committedOrderer.current = orderer;
   }, [orderer]);
-  useLayoutEffect(() => {
+  // Suspense disconnects layout effects without destroying the document or its save lock.
+  useEffect(() => {
     editing.activate();
     return editing.deactivate;
   }, [editing]);
@@ -35,20 +48,26 @@ export function useLineItems<T extends Record<string, unknown>>(
   });
   const reorderLine = useCallback(
     (lineKey: string, afterLineKey: string | null) => {
+      editing.assertCanMutate();
       if (!committedOrderer.current) throw new Error("Manual reordering is disabled");
       store.reorderLine(lineKey, afterLineKey);
     },
-    [store],
+    [store, editing],
   );
   return {
     [LINE_ITEMS_EDITING]: editing,
     columns: options.columns,
     lines,
     orderer,
-    isDirty: store.isDirty(),
+    isDirty: store.isDirty(options.columns),
+    getChanges: () => store.getChanges(options.columns),
+    isSaveLocked,
+    commitChanges: editing.commitChanges,
+    replaceLines: editing.replaceLines,
+    finishSave: editing.finishSave,
     getLineKey: store.getLineKey,
     updateField: editing.updateField,
-    addLine: store.addLine,
+    addLine: editing.addLine,
     removeLine: editing.removeLine,
     reorderLine,
     revert: editing.revert,

@@ -226,6 +226,7 @@ export {
   type LineItemsTableProps,
   type UseLineItemsOptions,
   type UseLineItemsReturn,
+  type LineItemsChangeset,
 } from "./components/line-items";
 export type { LineItemsColumn } from "./components/line-items/document";
 export { Card } from "./components/card";

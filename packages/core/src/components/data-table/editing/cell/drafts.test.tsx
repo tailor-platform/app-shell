@@ -129,7 +129,7 @@ describe("DataTable editor drafts", () => {
     expect(onValueCommitted).not.toHaveBeenCalled();
   });
 
-  it("holds malformed numeric drafts on Enter and Tab, then notifies restoration on blur", () => {
+  it("holds malformed numeric drafts on Enter, Tab, and blur until explicit discard", () => {
     const { input, onValueCommitted, drafts, rerender } = renderEditor();
     act(() => input.focus());
     fireEvent.change(input, { target: { value: "-" } });
@@ -142,6 +142,10 @@ describe("DataTable editor drafts", () => {
     rerender(20);
     expect(input.value).toBe("-");
     act(() => input.blur());
+    expect(input.value).toBe("-");
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(drafts()).toEqual(["-"]);
+    fireEvent.keyDown(input, { key: "Escape" });
     expect(input.value).toBe("20");
     expect(input.getAttribute("aria-invalid")).toBeNull();
     expect(drafts()).toEqual(["-", "20"]);

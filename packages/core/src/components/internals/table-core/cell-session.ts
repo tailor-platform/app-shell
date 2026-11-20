@@ -34,6 +34,10 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
   let active = true;
   let enabled = interceptErrors;
   let pendingChange: Promise<boolean> | null = null;
+  let confirmation: { promise: Promise<boolean>; resolve: (success: boolean) => void } | null =
+    null;
+  let confirmDraft: (() => void) | undefined;
+  let locked = false;
   const listeners = new Set<() => void>();
 
   function transition(next: CellEditSessionState<TDraft>) {
@@ -41,20 +45,27 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
     // oxlint-disable-next-line unicorn/no-useless-spread -- Subscriptions can change during notification.
     for (const listener of [...listeners]) listener();
   }
+  function settleConfirmation(success: boolean) {
+    const pending = confirmation;
+    confirmation = null;
+    pending?.resolve(success);
+  }
   function invalidate() {
     revision++;
     pendingChange = null;
+    settleConfirmation(false);
   }
   const isCurrent = (candidate: number) => active && revision === candidate;
+  const getState = () => state;
 
   function begin(draft: TDraft) {
-    if (!active || state.status !== "idle") return;
+    if (!active || locked || state.status !== "idle") return;
     invalidate();
     transition({ status: "editing", draft });
   }
 
   function change(draft: TDraft, callback?: () => unknown) {
-    if (!active) return;
+    if (!active || locked) return;
     invalidate();
     const candidate = revision;
     transition({ status: "editing", draft });
@@ -64,7 +75,10 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
       return;
     }
     function reject(error: unknown) {
-      if (isCurrent(candidate)) transition({ status: "failed", draft, error, source: "change" });
+      if (isCurrent(candidate)) {
+        transition({ status: "failed", draft, error, source: "change" });
+        if (isCurrent(candidate)) settleConfirmation(false);
+      }
     }
     try {
       const result = callback();
@@ -112,15 +126,27 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
     const { draft } = current;
     const candidate = revision;
     const waiting = pendingChange;
+    let resolve!: (success: boolean) => void;
+    const promise = new Promise<boolean>((fulfill) => {
+      resolve = fulfill;
+    });
+    confirmation = { promise, resolve };
     transition({ status: "confirming", draft });
     const isConfirming = () => isCurrent(candidate) && state.status === "confirming";
     function complete() {
       if (!isConfirming()) return;
+      const pending = confirmation;
       transition({ status: "idle" });
+      if (confirmation === pending)
+        settleConfirmation(isCurrent(candidate) && state.status === "idle");
       onSuccess?.();
     }
     function reject(error: unknown) {
-      if (isConfirming()) transition({ status: "failed", draft, error, source: "commit" });
+      if (isConfirming()) {
+        const pending = confirmation;
+        transition({ status: "failed", draft, error, source: "commit" });
+        if (confirmation === pending) settleConfirmation(false);
+      }
     }
     function run() {
       if (!isConfirming()) return;
@@ -151,7 +177,7 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
   }
 
   function cancel(callback?: () => unknown) {
-    if (!active) return;
+    if (!active || locked) return;
     discard();
     if (!callback) return;
     if (!enabled) {
@@ -171,7 +197,7 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
     getRevision: () => revision,
     /** Explicit discard also retires local popup/search state in retained editor controls. */
     getCancellationRevision: () => cancellationRevision,
-    getState: () => state,
+    getState,
     getFailure: () => (state.status === "failed" ? state : undefined),
     setErrorDetailsOpen(failure: CellEditFailure, open: boolean): CellEditFailure | undefined {
       if (!active || state.status !== "failed" || state !== failure) return undefined;
@@ -190,6 +216,29 @@ export function createCellEditSession<TDraft>(interceptErrors = true) {
     begin,
     change,
     confirm,
+    /** Retained editors register in a committed layout effect, not during render. */
+    registerConfirmation(handler: () => void) {
+      confirmDraft = handler;
+    },
+    /** Waits for the current confirmation without replaying an in-flight callback. */
+    confirmPending(): Promise<boolean> {
+      if (!active) return Promise.resolve(false);
+      if (state.status === "idle") return Promise.resolve(true);
+      if (state.status === "confirming") return confirmation!.promise;
+      if (state.status === "failed" && state.source !== "commit") return Promise.resolve(false);
+      if (!confirmDraft) throw new Error("The cell editor has no confirmation handler");
+      confirmDraft();
+      return confirmation?.promise ?? Promise.resolve(getState().status === "idle");
+    },
+    isLocked: () => locked,
+    setLocked(next: boolean) {
+      if (locked === next) return;
+      locked = next;
+      // oxlint-disable-next-line unicorn/no-useless-spread -- Subscriptions can change during notification.
+      for (const listener of [...listeners]) listener();
+    },
+    /** Owner-driven replacement/discard is distinct from a user's locked cancel action. */
+    reset: discard,
     fail,
     cancel,
     /** Resumes the retained draft; an invalidated confirmation requires an explicit retry. */

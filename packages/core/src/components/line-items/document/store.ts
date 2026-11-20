@@ -39,6 +39,7 @@ export function createLineItemsDocumentStore<T extends Record<string, unknown>>(
     getSnapshot: document.getRows,
     getLineKey: document.getLineKey,
     assertColumns: document.assertColumns,
+    getChanges: document.getChanges,
     isDirty: document.isDirty,
     /**
      * Registers a payload-free listener without invoking it immediately. Notifications run
@@ -66,6 +67,14 @@ export function createLineItemsDocumentStore<T extends Record<string, unknown>>(
     /** Publishes a valid model move; movement permission remains the caller's responsibility. */
     reorderLine(lineKey: string, afterLineKey: string | null) {
       mutate(() => document.reorderLine(lineKey, afterLineKey));
+    },
+    /** Publishes confirmed rows only after replacing both current state and saved baseline. */
+    replaceLines(lines: readonly T[], onAdopt?: () => void) {
+      mutate(() => {
+        document.replaceLines(lines);
+        // Retire drafts after successful validation, but before publishing the new document.
+        onAdopt?.();
+      });
     },
     /** Restores the model baseline and notifies even if the document was already clean. */
     revert() {

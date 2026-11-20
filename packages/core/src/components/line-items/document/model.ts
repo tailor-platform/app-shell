@@ -1,14 +1,16 @@
 import { assertLineItemsEditor } from "../editor-factory";
-import { createLineItemsIdentity, persistedId } from "./identity";
+import { clientKeyOf, createLineItemsIdentity, persistedId } from "./identity";
 import { createLineItemsSnapshots } from "./snapshot";
-import type { DocumentOptions, LineItemsColumn } from "./types";
+import type { DocumentOptions, LineItemsChangeset, LineItemsColumn } from "./types";
 
-/** Resolve document property ownership independently of display column identities. */
+type FieldEquality = (baseline: unknown, current: unknown) => boolean;
+
+/** Resolve document property ownership and equality independently of display column identities. */
 function compileLineItemsColumns<T extends Record<string, unknown>>(
   columns: readonly LineItemsColumn<T>[],
-): ReadonlySet<keyof T & string> {
+): ReadonlyMap<keyof T & string, FieldEquality | undefined> {
   const ids = new Set<string>();
-  const properties = new Set<keyof T & string>();
+  const properties = new Map<keyof T & string, FieldEquality | undefined>();
   for (const column of columns) {
     const id = column.id ?? column.accessorKey;
     if (typeof id !== "string" || id === "" || ids.has(id))
@@ -25,7 +27,17 @@ function compileLineItemsColumns<T extends Record<string, unknown>>(
         throw new Error("Combobox badge labels must be defined in editorOptions.options only");
     }
     ids.add(id);
-    if (column.accessorKey !== undefined) properties.add(column.accessorKey);
+    if (column.equals !== undefined && typeof column.equals !== "function")
+      throw new Error("LineItems equals must be a function");
+    if (column.accessorKey === undefined) {
+      if (column.equals !== undefined) throw new Error("LineItems equals requires an accessorKey");
+      continue;
+    }
+    const previous = properties.get(column.accessorKey);
+    if (previous && column.equals && previous !== column.equals)
+      throw new Error(`Conflicting equality functions for property "${column.accessorKey}"`);
+    // Property/value correlation is established by LineItemsColumn before this heterogeneous map.
+    properties.set(column.accessorKey, (column.equals as FieldEquality | undefined) ?? previous);
   }
   return properties;
 }
@@ -38,8 +50,8 @@ function compileLineItemsColumns<T extends Record<string, unknown>>(
  * Initial rows and subsequent row copies are shallow-frozen. Nested values are not
  * cloned and must also be treated as immutable. Only initial rows with persisted IDs form
  * the persisted baseline; ID-less initial rows are unsaved creations, start dirty,
- * and are discarded by revert. This model does not advance the baseline or implement
- * draft editing, business validation, normalization, or persistence.
+ * and are discarded by revert. Confirmed full-collection replacement advances the
+ * baseline; draft editing, business validation, normalization, and persistence belong elsewhere.
  *
  * Inspection and configuration checks do not mutate state. Commands validate keys and
  * ownership before adopting a new row view. Returned functions are stable and do not
@@ -57,9 +69,53 @@ export function createLineItemsDocument<T extends Record<string, unknown>>(
   const snapshots = createLineItemsSnapshots(identity, idKey);
   let current = snapshots.adopt(lines.map((row) => identity.tag(row, identity.newClientKey())));
   // ID-less initial rows are unsaved creations, not part of the persisted baseline.
-  const baseline = snapshots.create(
+  let baseline = snapshots.create(
     current.lines.filter((row) => persistedId(row[idKey]) !== undefined),
   );
+
+  function assertColumns(nextColumns: readonly LineItemsColumn<T>[]) {
+    const next = compileLineItemsColumns(nextColumns);
+    if (next.size !== properties.size || [...next.keys()].some((key) => !properties.has(key)))
+      throw new Error("Remount LineItems to change document property ownership");
+    return next;
+  }
+
+  function getChanges(nextColumns: readonly LineItemsColumn<T>[] = columns): LineItemsChangeset<T> {
+    const equalities = assertColumns(nextColumns);
+    const added: T[] = [];
+    const updated: LineItemsChangeset<T>["updated"][number][] = [];
+    for (const [clientKey, row] of current.byClientKey) {
+      const base = baseline.byClientKey.get(clientKey);
+      if (!base) {
+        added.push(row);
+        continue;
+      }
+      const fields: [string, unknown][] = [];
+      for (const [property, equals] of equalities) {
+        if (property === idKey) continue;
+        const equal = (equals ?? Object.is)(base[property], row[property]);
+        if (typeof equal !== "boolean") throw new Error("LineItems equals must return a boolean");
+        if (!equal) fields.push([property, row[property]]);
+      }
+      if (fields.length > 0)
+        updated.push({
+          lineKey: identity.getLineKey(row),
+          changes: Object.fromEntries(fields) as Partial<T>,
+        });
+    }
+    const removed = baseline.lines.filter(
+      (row) => !current.byClientKey.has(identity.clientKeyOf(row)),
+    );
+    const orderChanged =
+      current.clientKeys.length !== baseline.clientKeys.length ||
+      current.clientKeys.some((key, index) => key !== baseline.clientKeys[index]);
+    return {
+      added,
+      updated,
+      removed,
+      order: orderChanged ? current.lines.map(identity.getLineKey) : null,
+    };
+  }
 
   return {
     /** Identity property captured at creation; a different idKey requires a new model. */
@@ -83,31 +139,18 @@ export function createLineItemsDocument<T extends Record<string, unknown>>(
      * allowed; changing the accessorKey property set requires a new document instance.
      * @throws If column definitions are invalid or document property ownership changes.
      */
-    assertColumns(nextColumns: readonly LineItemsColumn<T>[]) {
-      const next = compileLineItemsColumns(nextColumns);
-      if (next.size !== properties.size || [...next].some((key) => !properties.has(key)))
-        throw new Error("Remount LineItems to change document property ownership");
-    },
-    /**
-     * Inspects differences from the persisted initial baseline without modifying the model.
-     * Membership or adopted order changes are dirty, including ID-less initial creations.
-     * Owned field values use Object.is, not deep equality or formatted display precision;
-     * replacing a row object alone does not make it dirty. Drafts are not tracked here.
-     */
-    isDirty() {
-      if (
-        current.clientKeys.length !== baseline.clientKeys.length ||
-        current.clientKeys.some((clientKey, index) => clientKey !== baseline.clientKeys[index])
-      )
-        return true;
-      for (const clientKey of current.clientKeys) {
-        const row = current.byClientKey.get(clientKey)!;
-        const base = baseline.byClientKey.get(clientKey)!;
-        for (const property of properties) {
-          if (property !== idKey && !Object.is(row[property], base[property])) return true;
-        }
-      }
-      return false;
+    assertColumns,
+    /** Pure inspection with optional render-local comparison configuration; never adopts it. */
+    getChanges,
+    /** Uses exactly the same net comparison as changeset inspection; cell drafts are excluded. */
+    isDirty(nextColumns: readonly LineItemsColumn<T>[] = columns) {
+      const changes = getChanges(nextColumns);
+      return (
+        changes.added.length > 0 ||
+        changes.updated.length > 0 ||
+        changes.removed.length > 0 ||
+        changes.order !== null
+      );
     },
     /**
      * Replaces one current row with a copy containing an updated accessorKey-owned property,
@@ -178,9 +221,34 @@ export function createLineItemsDocument<T extends Record<string, unknown>>(
         );
     },
     /**
-     * Restores the persisted initial rows, values, and order without advancing the baseline.
+     * Adopts confirmed rows as current state and the new saved baseline.
+     * Every row requires a persisted ID; validation completes before registering identities.
+     * Inputs remain untouched, and replacement rows receive fresh client identities.
+     */
+    replaceLines(confirmedLines: readonly T[]) {
+      const ids = new Set<string>();
+      for (const row of confirmedLines) {
+        const id = persistedId(row[idKey]);
+        if (id === undefined) throw new Error("Confirmed lines require persisted IDs");
+        if (ids.has(id)) throw new Error("Line IDs must be unique");
+        ids.add(id);
+        let taggedKey: string | undefined;
+        try {
+          taggedKey = clientKeyOf(row);
+        } catch {
+          // Confirmed transport rows are normally untagged.
+        }
+        if (taggedKey !== undefined) identity.clientKeyOf(row);
+      }
+      const confirmed = snapshots.adopt(
+        confirmedLines.map((row) => identity.tag(row, identity.newClientKey())),
+      );
+      current = baseline = confirmed;
+    },
+    /**
+     * Restores the saved baseline rows, values, and order without advancing the baseline.
      * Discards every unsaved creation, including ID-less rows supplied at initialization.
-     * Restored rows retain their initial frozen objects and identities. Always adopts a new
+     * Restored rows retain their saved frozen objects and identities. Always adopts a new
      * row array, even when already clean; this is restoration, not manual movement.
      */
     revert() {

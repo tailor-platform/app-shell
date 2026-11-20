@@ -232,7 +232,7 @@ describe("DataTable inline editing", () => {
       expect(onValueCommitted).toHaveBeenCalledWith("1", -3);
     });
 
-    it("discards an unparseable draft on blur without changing data", async () => {
+    it("retains an unparseable draft on blur without changing data", async () => {
       const onValueCommitted = vi.fn();
       const user = renderTable(
         <Harness columns={(update) => [receivedColumn(onValueCommitted, update)]} />,
@@ -241,9 +241,8 @@ describe("DataTable inline editing", () => {
       await retype(user, input, "1,5{Enter}");
       await user.click(document.body);
       expect(onValueCommitted).not.toHaveBeenCalled();
-      expect((input as HTMLInputElement).value).toBe("12");
-      expect(input.getAttribute("aria-invalid")).toBeNull();
-      expect(input.className).not.toContain("astw:ring-status-attention");
+      expect((input as HTMLInputElement).value).toBe("1,5");
+      expect(input.getAttribute("aria-invalid")).toBe("true");
     });
 
     it("localizes the parsing message", async () => {

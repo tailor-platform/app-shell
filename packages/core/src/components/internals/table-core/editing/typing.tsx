@@ -1,5 +1,6 @@
 import {
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -105,6 +106,13 @@ function TypingEditor<TOutput>({
     return true;
   };
 
+  // Registration survives external view detach; confirmation reads the retained draft.
+  useLayoutEffect(() => {
+    session.registerConfirmation(() => {
+      commitDraft();
+    });
+  });
+
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const next = event.target.value;
     const active = session.getState();
@@ -119,7 +127,7 @@ function TypingEditor<TOutput>({
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     // While an IME is composing, Enter confirms the conversion, not the cell.
-    if (isComposing(event.nativeEvent, composingRef.current)) return;
+    if (session.isLocked() || isComposing(event.nativeEvent, composingRef.current)) return;
     const from = { rowKey, colKey };
     switch (event.key) {
       case "Enter":
@@ -162,13 +170,8 @@ function TypingEditor<TOutput>({
 
   const handleBlur = () => {
     setFocused(false);
-    const active = session.getState();
-    if (active.status === "failed") {
-      // Preserve callback failures; malformed numeric blur still cancels the edit.
-      if (active.source === "parse") revert(true);
-      return;
-    }
-    if (!commitDraft()) revert(true);
+    if (session.isLocked() || session.getState().status === "failed") return;
+    commitDraft();
   };
 
   const handleMouseDown = (event: MouseEvent<HTMLInputElement>) => {
@@ -227,7 +230,8 @@ function TypingEditor<TOutput>({
                 ref={register}
                 type="text"
                 value={text}
-                readOnly={!editing}
+                readOnly={!editing || session.locked}
+                aria-disabled={session.locked || undefined}
                 aria-label={label}
                 aria-invalid={message !== undefined || callbackError ? true : undefined}
                 aria-describedby={

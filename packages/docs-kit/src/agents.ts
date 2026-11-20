@@ -9,6 +9,8 @@ import type { AgentsConfig, Outline, SkillSection } from "./types";
 export const PACKAGE_ROOT_TOKEN = "{{PACKAGE_ROOT}}";
 /** Likewise: the consumer's package that depends on AppShell. */
 export const PACKAGE_DIR_TOKEN = "{{PACKAGE_DIR}}";
+/** Likewise: the refresh command, whose name the CLI owns. */
+export const SYNC_COMMAND_TOKEN = "{{SYNC_COMMAND}}";
 const VERSION_TOKEN = "{{APP_SHELL_VERSION}}";
 
 /** Named for its audience, as Next.js names its in-package agent file, which
@@ -119,7 +121,7 @@ export function computeAgents(
   const block = blockTemplate
     .replaceAll("{{GUIDE_PATH}}", posix.join(docsRoot, GUIDE_FILE))
     .replaceAll("{{DOCS_ROOT}}", docsRoot);
-  const blockStray = strayToken(block, [PACKAGE_ROOT_TOKEN, PACKAGE_DIR_TOKEN]);
+  const blockStray = strayToken(block, [PACKAGE_ROOT_TOKEN, PACKAGE_DIR_TOKEN, SYNC_COMMAND_TOKEN]);
   if (blockStray) blockFail(`unknown placeholder ${blockStray}.`);
   checkSize(
     agents.blockTemplatePath,

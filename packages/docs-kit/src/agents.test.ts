@@ -89,6 +89,7 @@ describe("computeAgents", () => {
   it("rejects unknown placeholders in either template", () => {
     expect(() => fixture({ guide: `${GUIDE}{{COMPONENT_SLUGS}}` })).toThrow(/unknown placeholder/);
     expect(() => fixture({ block: `${BLOCK}{{VERSION}}` })).toThrow(/unknown placeholder/);
+    expect(() => fixture({ block: `${BLOCK}{{SYNC_COMMAND}}` })).not.toThrow();
   });
 
   it("enforces both size budgets", () => {

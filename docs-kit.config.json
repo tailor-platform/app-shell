@@ -63,7 +63,7 @@
       }
     ],
     "agents": {
-      "guideTemplatePath": "docs-src/agents/README.template.md",
+      "guideTemplatePath": "docs-src/agents/AGENTS.guide.template.md",
       "blockTemplatePath": "docs-src/agents/AGENTS.block.template.md",
       "packageDir": "packages/core",
       "docsDir": "dist/docs",

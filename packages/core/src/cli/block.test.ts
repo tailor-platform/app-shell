@@ -7,10 +7,9 @@ const block = (key: string, body = "Docs: {{PACKAGE_ROOT}}/docs/") =>
   renderBlock(body, key, `${key}/node_modules/@tailor-platform/app-shell`);
 
 describe("renderBlock", () => {
-  it("fills in the package's own path", () => {
-    expect(renderBlock("Used by `{{PACKAGE_DIR}}/`.", "apps/web", "x")).toContain(
-      "Used by `apps/web/`.",
-    );
+  it("fills in the package's own path and the sync command", () => {
+    const out = renderBlock("Used by `{{PACKAGE_DIR}}/`. Run `{{SYNC_COMMAND}}`.", "apps/web", "x");
+    expect(out).toContain("Used by `apps/web/`. Run `app-shell agents sync`.");
   });
 
   it("wraps the source in markers that carry the package path", () => {

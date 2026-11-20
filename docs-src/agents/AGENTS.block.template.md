@@ -7,3 +7,5 @@ The package at `{{PACKAGE_DIR}}/` builds its UI with AppShell, and what you reme
 The path is relative to this file. It is gitignored, so open it by its exact path: search tools skip it. If it's missing, install dependencies first.
 
 Build UI from AppShell components. Don't use raw HTML elements or another UI library where an AppShell component exists.
+
+This block is managed by `{{SYNC_COMMAND}}`, which overwrites edits between its markers. Put project notes outside it.

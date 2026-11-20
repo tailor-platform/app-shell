@@ -1,8 +1,10 @@
 ---
-kind: prose
+kind: code-backed
 group: use-toast
 title: useToast
 description: Hook for displaying toast notifications
+sources:
+  - packages/core/src/hooks/use-toast.ts
 ---
 
 # useToast

@@ -8,12 +8,87 @@ import {
   Field,
   Form,
   RangeCalendar,
+  Select,
   Text,
+  parseAbsolute,
   parseDate,
+  parseDateTime,
+  parseZonedDateTime,
   useTimeZone,
   type DateRange,
   type DateValue,
 } from "@tailor-platform/app-shell";
+
+export function ParsingHelpers() {
+  const [dateInput, setDateInput] = useState("2026-04-09");
+  const [timeZone, setTimeZone] = useState("Asia/Tokyo");
+  const parse = (read: () => DateValue) => {
+    try {
+      return { value: read().toString(), error: null };
+    } catch (error) {
+      return { value: null, error: error instanceof Error ? error.message : "Invalid date" };
+    }
+  };
+  const results = [
+    { name: "parseDate", input: dateInput, ...parse(() => parseDate(dateInput)) },
+    {
+      name: "parseDateTime",
+      input: "2026-04-09T09:30",
+      ...parse(() => parseDateTime("2026-04-09T09:30")),
+    },
+    {
+      name: "parseAbsolute",
+      input: `2026-04-09T00:30:00Z in ${timeZone}`,
+      ...parse(() => parseAbsolute("2026-04-09T00:30:00Z", timeZone)),
+    },
+    {
+      name: "parseZonedDateTime",
+      input: "2026-04-09T09:30[Asia/Tokyo]",
+      ...parse(() => parseZonedDateTime("2026-04-09T09:30[Asia/Tokyo]")),
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Field.Root name="parserDateInput">
+        <Field.Label>Date input</Field.Label>
+        <Select
+          items={["2026-04-09", "not-a-date"]}
+          value={dateInput}
+          onValueChange={(value) => {
+            if (value !== null) setDateInput(value);
+          }}
+        />
+        <Field.Description>Try the invalid preset to see a caught parsing error.</Field.Description>
+      </Field.Root>
+      <Field.Root name="parserTimeZone">
+        <Field.Label>Instant display timezone</Field.Label>
+        <Select
+          items={["Asia/Tokyo", "UTC"]}
+          value={timeZone}
+          onValueChange={(value) => {
+            if (value !== null) setTimeZone(value);
+          }}
+        />
+      </Field.Root>
+      <dl className="space-y-3" aria-live="polite">
+        {results.map((result) => (
+          <div key={result.name}>
+            <dt className="font-medium">{result.name}</dt>
+            <dd className="break-words font-mono text-sm">
+              <div>Input: {result.input}</div>
+              {result.error ? (
+                <div role="alert">Parsing error: {result.error}</div>
+              ) : (
+                <div>Result: {result.value}</div>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
 
 export function StandaloneDateField() {
   return <DateField aria-label="Invoice date" />;

@@ -120,7 +120,7 @@ guards: [
 ];
 ```
 
-If all guards return `pass()`, access is granted.
+If all guards return `pass()`, guard evaluation permits access. This does not create a landing page or redirect: a module/resource without a `component` still returns 404 at its exact path while its child routes remain accessible.
 
 ## Related
 

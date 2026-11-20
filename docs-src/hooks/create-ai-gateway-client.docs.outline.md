@@ -1,8 +1,10 @@
 ---
-kind: prose
+kind: code-backed
 group: create-ai-gateway-client
 title: createAIGatewayClient
 description: Create a low-level AI Gateway client that reuses AppShell authentication
+sources:
+  - packages/core/src/ai/client.ts
 ---
 
 # createAIGatewayClient

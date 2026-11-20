@@ -101,7 +101,9 @@ _Generated from the type surface — first-party props only._
 ## Exports
 
 - `Badge` — function
+- `BadgeOptions` — interface
 - `BadgeProps` — interface
+- `BadgeVariant` — type
 - `badgeVariants` — const
 
 ### Badge Variants

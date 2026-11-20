@@ -15,7 +15,7 @@ skill — deterministically, with no LLM.
 - **Assemble** each unit's Markdown from its outline (prose verbatim), extracted
   example fences, and opt-in auto prop tables (`<!-- api -->`).
 - **Emit** the consumer skills (`outputs.skills`) from the generated docs + the templates in `docs-src/skill/<name>/`. Every docs output dir must reach a skill or be listed under `policy.skills.unclaimed` with a reason, so a new docs category can't silently ship to no consumer.
-- **Emit** the docs shipped in the published package (`outputs.agents`): the docs themselves, a guide at the docs root's `README.md` that indexes them, and a short `AGENTS.md` block that points at the guide. Both come from templates in `docs-src/agents/`. The block keeps `{{PACKAGE_ROOT}}` and `{{PACKAGE_DIR}}` placeholders that the package's `app-shell` CLI resolves when it injects the block into a consumer's repo. A skill with `"references": "redirect"` leaves pointer stubs under `references/` instead of copies.
+- **Emit** the docs shipped in the published package (`outputs.agents`): the docs themselves, a guide at the docs root's `AGENTS.md` that indexes them, and a short `AGENTS.md` block that points at the guide. Both come from templates in `docs-src/agents/`. The block keeps `{{PACKAGE_ROOT}}` and `{{PACKAGE_DIR}}` placeholders that the package's `app-shell` CLI resolves when it injects the block into a consumer's repo. A skill with `"references": "redirect"` leaves pointer stubs under `references/` instead of copies.
 
 ## CLI
 

@@ -293,9 +293,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "bb05beefbc48cc2b",
+        "outline": "b391daaa007a19de",
         "snapshot": null,
-        "outputMd": "a7783f4e7939c128",
+        "outputMd": "ff4999633589f4a5",
         "examples": null
       }
     },
@@ -1926,12 +1926,12 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "500699cceeeee1e9",
     "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "614ee4e4a47a3d1e",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "709614ee001970c9",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "d32b448c231b6de0",
+    "packages/core/skills/app-shell-patterns/SKILL.md": "e2fdf68865b8329d",
     "packages/core/skills/app-shell-upgrade/references/migrations.md": "565afc6a837ba8da",
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   },
   "agents": {
-    "packages/core/dist/docs/README.md": "6ec5a9dd73ae8bf3",
-    "packages/core/dist/agents/AGENTS.block.md": "7374ba01d814170d"
+    "packages/core/dist/docs/AGENTS.md": "6ec5a9dd73ae8bf3",
+    "packages/core/dist/agents/AGENTS.block.md": "e2355e25aec22d12"
   }
 }

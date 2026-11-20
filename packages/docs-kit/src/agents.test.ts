@@ -55,8 +55,8 @@ describe("computeAgents", () => {
     ]);
   });
 
-  it("writes the index into the docs root's README and leaves the version to stamp", () => {
-    const guide = fixture().generated.get("packages/core/dist/docs/README.md")!;
+  it("writes the index into the docs root's AGENTS.md and leaves the version to stamp", () => {
+    const guide = fixture().generated.get("packages/core/dist/docs/AGENTS.md")!;
     expect(guide).toContain("# Docs {{APP_SHELL_VERSION}}");
     expect(guide).toContain("\nalert, button\n");
     expect(guide).toContain("- `guards/pass`: Allow the route");
@@ -65,7 +65,7 @@ describe("computeAgents", () => {
   it("points the block at the guide and leaves package paths for the CLI", () => {
     const block = fixture().generated.get("packages/core/dist/agents/AGENTS.block.md")!;
     expect(block).toBe(
-      "Docs in `{{PACKAGE_ROOT}}/dist/docs/` for `{{PACKAGE_DIR}}`.\n\n@{{PACKAGE_ROOT}}/dist/docs/README.md\n",
+      "Docs in `{{PACKAGE_ROOT}}/dist/docs/` for `{{PACKAGE_DIR}}`.\n\n@{{PACKAGE_ROOT}}/dist/docs/AGENTS.md\n",
     );
   });
 
@@ -73,7 +73,7 @@ describe("computeAgents", () => {
     const block = fixture({}, { docsDir: "docs" }).generated.get(
       "packages/core/dist/agents/AGENTS.block.md",
     );
-    expect(block).toContain("@{{PACKAGE_ROOT}}/docs/README.md");
+    expect(block).toContain("@{{PACKAGE_ROOT}}/docs/AGENTS.md");
   });
 
   it("requires the block to point at the guide", () => {

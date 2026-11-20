@@ -21,8 +21,8 @@ This skill was generated from `@tailor-platform/app-shell` **{{APP_SHELL_VERSION
 The reference docs are not in this folder. They ship inside the installed `@tailor-platform/app-shell` package at `dist/docs/`, so they always match the installed version. Every doc path below is relative to that **docs root**. Find it once per session, stopping at the first step that works:
 
 1. **AGENTS.md.** Read `AGENTS.md` at the repository root and find the `<!-- app-shell:agents:start <package-path> -->` block whose `<package-path>` contains the file you are editing. Use the docs root it names (relative to the repository root).
-2. **Look directly.** In the folder of the nearest `package.json` that lists `@tailor-platform/app-shell`, open `node_modules/@tailor-platform/app-shell/dist/docs/README.md`. If it isn't there, try each parent folder up to the repository root. Open the exact path: search and glob tools usually skip `node_modules`.
-3. **Ask Node** (if you can run commands). From that package folder: `node -p "require('path').dirname(require.resolve('@tailor-platform/app-shell/docs/README.md'))"`.
+2. **Look directly.** In the folder of the nearest `package.json` that lists `@tailor-platform/app-shell`, open `node_modules/@tailor-platform/app-shell/dist/docs/AGENTS.md`, the guide that indexes the docs. If it isn't there, try each parent folder up to the repository root. Open the exact path: search and glob tools usually skip `node_modules`.
+3. **Ask Node** (if you can run commands). From that package folder: `node -p "require('path').join(require.resolve('@tailor-platform/app-shell/package.json'), '../dist/docs')"`.
 4. **Still nothing:** stop. Tell the user the AppShell docs could not be found, and suggest running `pnpm exec app-shell agents init` in the frontend package. Don't fall back on remembered AppShell APIs.
 
 Files under this skill's `references/` folder are pointers left for old links. Don't read them for content.

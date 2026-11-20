@@ -124,7 +124,7 @@ export interface SkillConfig {
 }
 
 /** The docs shipped in the published package, the guide that indexes them
- * (`<docsDir>/README.md`), and the AGENTS.md block that points at the guide.
+ * (`<docsDir>/AGENTS.md`), and the AGENTS.md block that points at the guide.
  * The package's CLI injects the block into a consumer's repo. */
 export interface AgentsConfig {
   /** Repo-relative template for the guide: the rules plus index placeholders. */

@@ -2,7 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add an `app-shell` CLI that puts a short AppShell block in your repo's `AGENTS.md`, so coding agents read the docs for the installed version without a skill having to trigger. The package now ships its docs at `dist/docs/`, with a guide at `dist/docs/README.md` that indexes them and lists the house rules. The block points at that guide (as an `@` import, which Claude Code, Amp and Gemini CLI load directly), so upgrading AppShell updates the guide without changing your `AGENTS.md`.
+Add an `app-shell` CLI that puts a short AppShell block in your repo's `AGENTS.md`, so coding agents read the docs for the installed version without a skill having to trigger. The package now ships its docs at `dist/docs/`, with a guide at `dist/docs/AGENTS.md` that indexes them and lists the house rules. The block points at that guide (as an `@` import, which Claude Code, Amp and Gemini CLI load directly), so upgrading AppShell updates the guide without changing your `AGENTS.md`. This follows the pattern Next.js uses for its bundled docs.
 
 Run this once from the package that depends on AppShell:
 

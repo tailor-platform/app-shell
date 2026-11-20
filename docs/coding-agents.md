@@ -33,7 +33,7 @@ Commit the `AGENTS.md` change.
 The block is kept short and stable. It says which package uses AppShell, names the docs folder (`<your package>/node_modules/@tailor-platform/app-shell/dist/docs/`), and tells agents to read the guide in it:
 
 ```md
-@apps/web/node_modules/@tailor-platform/app-shell/dist/docs/README.md
+@apps/web/node_modules/@tailor-platform/app-shell/dist/docs/AGENTS.md
 ```
 
 That guide is where the detail lives: an index of the docs by category (pages, patterns, components, hooks and functions, concepts), and the rules lint can't check, such as one primary action per view and forms going through `Form` and `Field`. It ships with the package, so it updates when you upgrade AppShell without changing your `AGENTS.md`.
@@ -45,7 +45,18 @@ How agents pick the guide up depends on the tool:
 
 The path is gitignored, so agents need the exact path rather than finding it by search, which is why the block spells it out. Before `pnpm install` the file doesn't exist yet, and Claude Code skips a missing import quietly.
 
-The block has no version number. It only changes if the docs move inside the package or the block's own wording changes.
+The block has no version number. It only changes if the docs move inside the package or the block's own wording changes. This follows Next.js, whose `AGENTS.md` block is a short pointer into the docs bundled at `node_modules/next/dist/docs/`.
+
+### Starting an agent inside a package
+
+Claude Code only follows an import that points inside the folder it was started in. The block lives at the repo root but points into the frontend package, so:
+
+- **Started at the repo root, or inside the frontend package:** the guide loads. Claude Code also reads the `AGENTS.md` files above the folder it starts in, so the root block is picked up from inside the package too.
+- **Started in another folder**, such as a backend package next to the frontend: the guide points outside that folder, so Claude Code skips it. The rest of the block still loads, including the path to the guide.
+
+If people regularly start agents in another folder and still work on the frontend from there, have them start in the frontend package or the repo root instead.
+
+Some tools only read the `AGENTS.md` nearest to the folder they work in. If the frontend package has its own `AGENTS.md`, `init` points this out. Run it with `--target .` from the package to put the block in that file, so tools that stop at the nearest file still see it.
 
 The block sits between two HTML comment markers that carry the package path:
 

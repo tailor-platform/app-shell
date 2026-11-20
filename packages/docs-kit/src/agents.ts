@@ -11,9 +11,11 @@ export const PACKAGE_ROOT_TOKEN = "{{PACKAGE_ROOT}}";
 export const PACKAGE_DIR_TOKEN = "{{PACKAGE_DIR}}";
 const VERSION_TOKEN = "{{APP_SHELL_VERSION}}";
 
-/** The guide is the docs root's README: the file `exports` can resolve, and the
- * one the block imports. */
-export const GUIDE_FILE = "README.md";
+/** Named for its audience, as Next.js names its in-package agent file, which
+ * leaves `README.md` / `index.md` free for a human-facing docs home. Kept in
+ * the docs root rather than the package root, where tools would load it as a
+ * nested instruction file for this repo's own contributors. */
+export const GUIDE_FILE = "AGENTS.md";
 
 export interface AgentsOutput {
   /** Repo-relative path → content of every doc copied into the package. */

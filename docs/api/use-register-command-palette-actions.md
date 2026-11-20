@@ -106,4 +106,4 @@ The action appears under **Documentation demo** while the preview is mounted and
 ## Related
 
 - [CommandPalette](../components/command-palette.md) — Keyboard-driven navigation and action palette
-- [ActionPanel](../components/action-panel.md) — Automatically uses this hook to expose its actions in the palette
+- [ActionPanel](../components/action-panel.md#explicit-commandpalette-registration) — Register selected panel actions explicitly with this hook

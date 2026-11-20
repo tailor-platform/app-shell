@@ -179,7 +179,7 @@ it("does not persist rejected input and retains malformed numeric drafts across 
   expect(preview("getChanges()")).toEqual(empty);
 });
 
-it("retains failed saves and saves creations once with confirmed IDs and explicit clears", async () => {
+it("retains failed saves and saves creations, clears, and deletions with confirmed IDs", async () => {
   const { user, edit, draft } = await setup();
   await edit("Notes", "");
   await user.click(screen.getByRole("button", { name: "Add line" }));
@@ -218,5 +218,22 @@ it("retains failed saves and saves creations once with confirmed IDs and explici
   expect(preview("getChanges()").removed).toMatchObject([{ id: saved.id }]);
   await user.click(screen.getByRole("button", { name: "Discard changes" }));
   expect(preview("Committed lines")).toHaveLength(6);
+  expect(preview("getChanges()")).toEqual(empty);
+
+  await user.click(screen.getByRole("button", { name: "Delete Pen" }));
+  const remainingLines = preview("Committed lines");
+  await user.click(screen.getByRole("button", { name: "Save" }));
+  await waitForSave("Saved. Confirmed data is the new baseline.");
+  expect(preview("Committed lines")).toEqual(remainingLines);
+  expect(preview("Committed lines").map((line: { id: string }) => line.id)).toEqual([
+    "line-1",
+    "line-3",
+    "line-4",
+    "line-5",
+    saved.id,
+  ]);
+  expect(preview("getChanges()")).toEqual(empty);
+  await user.click(screen.getByRole("button", { name: "Discard changes" }));
+  expect(preview("Committed lines")).toEqual(remainingLines);
   expect(preview("getChanges()")).toEqual(empty);
 });

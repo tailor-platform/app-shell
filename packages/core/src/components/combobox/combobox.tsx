@@ -283,9 +283,10 @@ function ComboboxChipRemove({
     <BaseCombobox.ChipRemove
       data-slot="combobox-chip-remove"
       className={cn(
-        // `p-1.5` makes the button 24×24 (WCAG 2.5.8 target size); the negative
-        // margin keeps its 16×16 footprint inside the chip.
-        "astw:-m-1 astw:rounded-sm astw:p-1.5 astw:text-inherit astw:outline-none",
+        // The `::after` extends the 16×16 button to a 24×24 hit area (WCAG 2.5.8
+        // target size) that stays inside the 24px chip; the button's box, hover
+        // background and focus ring keep their size.
+        "astw:relative astw:after:absolute astw:after:-inset-1 astw:rounded-sm astw:p-0.5 astw:text-inherit astw:outline-none",
         "astw:hover:bg-secondary-foreground/20",
         className,
       )}

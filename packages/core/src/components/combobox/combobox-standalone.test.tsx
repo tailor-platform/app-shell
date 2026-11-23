@@ -190,8 +190,11 @@ describe("Combobox (standalone, multiple)", () => {
       expect(el).not.toBeNull();
       return el!;
     });
-    expect(remove.className).toContain("astw:p-1.5");
-    expect(remove.className).toContain("astw:-m-1");
+    // The 16×16 box keeps its size; the `::after` makes the hit area 24×24.
+    expect(remove.className).toContain("astw:p-0.5");
+    expect(remove.className).toContain("astw:relative");
+    expect(remove.className).toContain("astw:after:-inset-1");
+    expect(remove.className).not.toContain("astw:-m-1");
   });
 });
 

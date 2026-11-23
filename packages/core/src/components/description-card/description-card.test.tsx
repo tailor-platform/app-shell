@@ -54,9 +54,11 @@ describe("DescriptionCard", () => {
     );
 
     const button = document.querySelector('[data-slot="tooltip-trigger"]')!;
-    expect(button.className).toContain("astw:p-1.5");
-    expect(button.className).toContain("astw:-my-0.5");
-    expect(button.className).toContain("astw:-mr-0.5");
+    // The 20×20 box keeps its size; the `::after` makes the hit area 24×24.
+    expect(button.className).toContain("astw:p-1 ");
+    expect(button.className).toContain("astw:relative");
+    expect(button.className).toContain("astw:after:-inset-0.5");
+    expect(button.className).not.toContain("astw:-my-0.5");
   });
 
   it("renders multiple badges from array value", () => {

@@ -62,9 +62,10 @@ function SubRowsCellContent({
             onToggle();
           }}
           className={cn(
-            // 24×24 hit area (WCAG 2.5.8 target size); the negative margin keeps the
-            // caret's footprint at one indent step so children still line up.
-            "astw:-m-0.5 astw:size-6 astw:shrink-0",
+            STEP_CLASS,
+            // The `::after` extends the 20×20 caret to a 24×24 hit area (WCAG 2.5.8
+            // target size); the caret stays one indent step wide so children line up.
+            "astw:relative astw:after:absolute astw:after:-inset-0.5",
             // Overrides the "not allowed" cursor of a read-only cell in an editable table.
             "astw:cursor-pointer",
             "astw:text-muted-foreground astw:hover:bg-muted astw:flex astw:items-center astw:justify-center astw:rounded",

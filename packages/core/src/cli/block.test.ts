@@ -12,6 +12,18 @@ describe("renderBlock", () => {
     expect(out).toContain("Used by `apps/web/`. Run `app-shell agents sync`.");
   });
 
+  it("escapes spaces in the import line only", () => {
+    const out = renderBlock(
+      "Docs in `{{PACKAGE_ROOT}}/docs/`:\n\n@{{PACKAGE_ROOT}}/docs/AGENTS.md\n",
+      "apps/my app",
+      "apps/my app/node_modules/@tailor-platform/app-shell",
+    );
+    expect(out).toContain("Docs in `apps/my app/node_modules/@tailor-platform/app-shell/docs/`:");
+    expect(out).toContain(
+      "\n@apps/my\\ app/node_modules/@tailor-platform/app-shell/docs/AGENTS.md\n",
+    );
+  });
+
   it("wraps the source in markers that carry the package path", () => {
     const out = block("apps/ims/frontend");
     expect(out.startsWith("<!-- app-shell:agents:start apps/ims/frontend -->\n")).toBe(true);

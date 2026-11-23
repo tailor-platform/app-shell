@@ -16,6 +16,10 @@ const markerPattern = (edge: "start" | "end", key: string): string =>
 
 const normalize = (s: string): string => s.replace(/\s+/g, " ").trim();
 
+/** Claude Code ends an `@` import at the first unescaped space. */
+const escapeImportLines = (s: string): string =>
+  s.replace(/^@.*$/gm, (line) => line.replace(/(?<!\\) /g, "\\ "));
+
 /** The block as it sits in the consumer's file. `key` is the frontend package's
  * path, so each package in a repo owns one block. */
 export function renderBlock(source: string, key: string, packageRoot: string): string {
@@ -23,11 +27,12 @@ export function renderBlock(source: string, key: string, packageRoot: string): s
     marker("start", key),
     `<!-- Generated from ${PACKAGE_NAME} by \`${commandLine("sync")}\`. Edits between these markers are overwritten. Delete the whole block to opt out. -->`,
     "",
-    source
-      .replaceAll(PACKAGE_ROOT_TOKEN, packageRoot)
-      .replaceAll(PACKAGE_DIR_TOKEN, key)
-      .replaceAll(SYNC_COMMAND_TOKEN, commandLine("sync"))
-      .trim(),
+    escapeImportLines(
+      source
+        .replaceAll(PACKAGE_ROOT_TOKEN, packageRoot)
+        .replaceAll(PACKAGE_DIR_TOKEN, key)
+        .replaceAll(SYNC_COMMAND_TOKEN, commandLine("sync")),
+    ).trim(),
     "",
     marker("end", key),
   ].join("\n");

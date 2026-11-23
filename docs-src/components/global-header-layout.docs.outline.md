@@ -5,6 +5,7 @@ title: GlobalHeaderLayout
 description: Opinionated layout with an app-wide header above the whole shell and a sidebar that collapses to a persistent icon rail
 sources:
   - packages/core/src/components/sidebar/global-header-layout.tsx
+  - packages/core/src/components/sidebar/global-header.tsx
 ---
 
 # GlobalHeaderLayout

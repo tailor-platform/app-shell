@@ -121,14 +121,16 @@ const conditionalHide: Guard = ({ context }) => {
 ### Async Permission Check
 
 ```typescript
-const asyncHide: Guard = async ({ context }) => {
-  const allowed = await fetch("/api/check-access");
-  if (!allowed) {
+const asyncHide: Guard = async () => {
+  const response = await fetch("/api/check-access");
+  if (!response.ok) {
     return hidden();
   }
   return pass();
 };
 ```
+
+This endpoint must return a successful HTTP status only when access is allowed (for example, 204 for allowed and 403 for denied). A `Response` object is always truthy, including for 403 or 500 responses, so test `response.ok`, not the response itself. A rejected request propagates to the route error boundary rather than granting access.
 
 ## vs redirectTo()
 

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Field, Select, Text, type SelectAsyncFetcher } from "@tailor-platform/app-shell";
+import { useRef, useState } from "react";
+import { Button, Field, Select, Text, type SelectAsyncFetcher } from "@tailor-platform/app-shell";
 
 export function BasicUsage() {
   return (
@@ -76,6 +76,68 @@ export function AsyncLoading() {
         loadingText="Loading fruits..."
       />
       <Text.p>Selected fruit: {selected?.name ?? "None"}</Text.p>
+    </div>
+  );
+}
+
+export function AsyncWithParts() {
+  type Fruit = { id: number; name: string };
+  const attempts = useRef(0);
+  const [items] = useState<Fruit[]>([
+    { id: 1, name: "Apple" },
+    { id: 2, name: "Banana" },
+    { id: 3, name: "Cherry" },
+  ]);
+  const [selected, setSelected] = useState<Fruit | null>(null);
+  const fruits = Select.useAsync({
+    fetcher: async ({ signal }) => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      signal.throwIfAborted();
+      if (attempts.current++ === 0) throw new Error("The first demo request fails.");
+      return items;
+    },
+  });
+
+  return (
+    <div className="space-y-3">
+      <Select.Parts.Root<Fruit>
+        modal={false}
+        value={selected}
+        onValueChange={setSelected}
+        onOpenChange={fruits.onOpenChange}
+        itemToStringLabel={(fruit) => fruit.name}
+      >
+        <Select.Parts.Trigger aria-label="Fruit with custom async loading">
+          <Select.Parts.Value placeholder="Pick a fruit" />
+        </Select.Parts.Trigger>
+        <Select.Parts.Content alignItemWithTrigger={false}>
+          {fruits.loading ? (
+            <div className="px-4 py-2 text-sm" role="status">
+              Loading fruits...
+            </div>
+          ) : fruits.error ? (
+            <div className="space-y-2 px-4 py-2">
+              <Text.p role="alert">Couldn't load fruits. The first demo request fails.</Text.p>
+              <Button
+                type="button"
+                variant="outline"
+                // Keep trigger focus so clicking Retry does not close the popup.
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={fruits.retry}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : (
+            fruits.items.map((fruit) => (
+              <Select.Parts.Item key={fruit.id} value={fruit}>
+                {fruit.name}
+              </Select.Parts.Item>
+            ))
+          )}
+        </Select.Parts.Content>
+      </Select.Parts.Root>
+      <Text.p role="status">Selected fruit: {selected?.name ?? "None"}</Text.p>
     </div>
   );
 }

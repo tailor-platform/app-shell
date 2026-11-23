@@ -70,10 +70,144 @@ Calls become available before local tool execution. They record requested tool n
 
 Register local tools under a single object using `defineAIChatTool(...)`. Their schemas must implement both [Standard Schema](https://standardschema.dev/) validation and Standard JSON Schema generation (for example, Zod 4). Provider-native tools are not supported.
 
-## Usage
+## Local tool API
+
+`defineAIChatTool({ schema, execute, description? })` returns an `AILocalTool` with `kind: "local"`. The helper infers the first `execute` argument from the schema's **validated output**, including schema transformations. It does not execute or validate inputs when the tool is defined: `useAIChat` validates the model's arguments before calling `execute`.
+
+`AIChatToolSchema<Input, Output>` is the schema contract: it combines Standard Schema validation with Standard JSON Schema generation. Zod 4 implements both. AppShell sends the schema's input JSON Schema to the AI Gateway; the executor receives the validated output.
+
+The second `execute` argument is an `AIChatToolContext`:
+
+| Property   | Type              | Description                                                                                                 |
+| ---------- | ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| `signal`   | `AbortSignal`     | Cancellation signal for the active chat request. Forward it to `fetch` or other operations that support it. |
+| `messages` | `AIChatMessage[]` | User/assistant text available to the current turn, excluding internal tool-call and tool-result messages.   |
+
+Calling `stop()` or unmounting aborts the signal. Custom tool work must cooperate with cancellation; aborting does not undo side effects that have already happened. The authenticated AI Gateway example below forwards the signal to its request and checks the response status before returning a tool result.
+
+## Working example: local tool execution
+
+Click **Look up product** to run a real local tool through `useAIChat`: the scripted client requests `lookupProduct`, the hook validates its arguments, the tool reads a local inventory fixture, and the next scripted reply includes the internal tool result. The brief delay lets you see the requested tool name and try **Stop** before the lookup returns.
+
+**Try invalid arguments** requests a number where the schema expects a string. Validation prevents tool execution and returns a tool-result error to the scripted client; this is not a top-level chat `error`.
+
+The preview needs no authentication, backend, or model. It imports `useState` from `react`, and `Button`, `Text`, `defineAIChatTool`, `useAIChat`, `AIChatToolSchema`, and `AIGatewayClient` from `@tailor-platform/app-shell` (the last two are types). Its small dependency-free schema implements the Standard Schema contracts directly; an application can use a schema library such as Zod 4, as shown below.
+
+<example-preview name="local-tool-execution"></example-preview>
+
+```tsx
+function LocalToolExecution() {
+  const [config] = useState(() => {
+    const jsonSchema = {
+      type: "object",
+      properties: { sku: { type: "string", minLength: 1 } },
+      required: ["sku"],
+    };
+    const schema: AIChatToolSchema<{ sku: string }> = {
+      "~standard": {
+        version: 1,
+        vendor: "documentation-demo",
+        validate(value) {
+          if (
+            typeof value === "object" &&
+            value !== null &&
+            "sku" in value &&
+            typeof value.sku === "string" &&
+            value.sku.length > 0
+          ) {
+            return { value: { sku: value.sku } };
+          }
+          return { issues: [{ message: "sku must be a non-empty string." }] };
+        },
+        jsonSchema: {
+          input: () => jsonSchema,
+          output: () => jsonSchema,
+        },
+      },
+    };
+    const lookupProduct = defineAIChatTool({
+      description: "Look up a product in the local demo inventory",
+      schema,
+      async execute({ sku }, { signal }) {
+        // Keep the tool active briefly so its requested name and Stop can be tried.
+        await new Promise<void>((resolve) => setTimeout(resolve, 800));
+        signal.throwIfAborted();
+        const products = [{ sku: "NOTE-1", name: "Notebook", available: 12 }];
+        return products.find((product) => product.sku === sku) ?? { sku, error: "Not found" };
+      },
+    });
+    const client: AIGatewayClient = {
+      async *streamChatCompletion({ messages, signal }) {
+        signal?.throwIfAborted();
+        const lastMessage = messages.at(-1);
+        if (lastMessage?.role === "user") {
+          yield {
+            type: "tool-call",
+            toolCallId: crypto.randomUUID(),
+            toolName: "lookupProduct",
+            argumentsText: JSON.stringify({
+              sku: lastMessage.content === "Try invalid arguments" ? 42 : "NOTE-1",
+            }),
+          };
+          yield { type: "done", finishReason: "tool_calls" };
+          return;
+        }
+        if (lastMessage?.role === "tool") {
+          yield { type: "text-delta", text: `Local tool result: ${lastMessage.content}` };
+        }
+        yield { type: "done", finishReason: "stop" };
+      },
+    };
+    return { client, model: "scripted-demo", tools: { lookupProduct } };
+  });
+  const { messages, toolCalls, status, error, sendMessage, stop } = useAIChat(config);
+  const busy = status === "submitted" || status === "streaming";
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Text.p>
+        Replies are scripted locally, but useAIChat validates and executes the real local tool. No
+        prompt is sent to a server or model.
+      </Text.p>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" disabled={busy} onClick={() => void sendMessage("Look up NOTE-1")}>
+          Look up product
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy}
+          onClick={() => void sendMessage("Try invalid arguments")}
+        >
+          Try invalid arguments
+        </Button>
+        <Button type="button" variant="outline" disabled={!busy} onClick={stop}>
+          Stop
+        </Button>
+      </div>
+      <Text.p role="status">Status: {status}</Text.p>
+      <Text.p>Requested tools: {toolCalls.map((call) => call.name).join(", ") || "None"}</Text.p>
+      <div role="log" aria-label="Local tool conversation" className="flex flex-col gap-2">
+        {messages.length === 0 && <Text.p>Run a lookup to start the conversation.</Text.p>}
+        {messages.map((message) => (
+          <Text.p key={message.id}>
+            <strong>{message.role}:</strong> {message.content}
+          </Text.p>
+        ))}
+      </div>
+      {error && <Text.p role="alert">{error.message}</Text.p>}
+    </div>
+  );
+}
+```
+
+## Usage with an authenticated AI Gateway
+
+Unlike the scripted preview, this setup calls a real AI Gateway and an application-owned API. Create the clients once outside rendering and supply your own endpoints and authentication configuration.
 
 ```tsx
 import {
+  Button,
   createAuthClient,
   createAIGatewayClient,
   defineAIChatTool,
@@ -96,8 +230,12 @@ const lookupCustomer = defineAIChatTool({
   schema: z.object({
     customerId: z.string(),
   }),
-  async execute({ customerId }) {
-    return { customerId, name: "Acme Corp" };
+  async execute({ customerId }, { signal }) {
+    const response = await fetch(`/api/customers/${encodeURIComponent(customerId)}`, { signal });
+    if (!response.ok) {
+      throw new Error(`Customer lookup failed: ${response.status}`);
+    }
+    return response.json();
   },
 });
 
@@ -121,15 +259,15 @@ export function ChatScreen() {
         <div key={call.id}>Tool call: {call.name}</div>
       ))}
 
-      <button
+      <Button
         onClick={() => void sendMessage("Hello")}
         disabled={status === "submitted" || status === "streaming"}
       >
         Send
-      </button>
-      <button onClick={stop} disabled={status !== "submitted" && status !== "streaming"}>
+      </Button>
+      <Button onClick={stop} disabled={status !== "submitted" && status !== "streaming"}>
         Stop
-      </button>
+      </Button>
       {error ? <div>{error.message}</div> : null}
     </div>
   );

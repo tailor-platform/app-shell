@@ -32,6 +32,18 @@ const useAppShell: () => {
 
 The hook merges the results of [`useAppShellConfig`](./use-app-shell-config.md) and [`useAppShellData`](./use-app-shell-data.md). Prefer one of those when you only need configuration or only need context data, so the component does not re-render for changes it does not use.
 
+## Context API family
+
+| API                               | Reference                                                                     |
+| --------------------------------- | ----------------------------------------------------------------------------- |
+| `useAppShellConfig`               | [Configuration-only subscription](./use-app-shell-config.md)                  |
+| `useAppShellData`                 | [Context-data-only subscription](./use-app-shell-data.md)                     |
+| `useResolvedLocale`               | [Full locale and language code](./use-resolved-locale.md)                     |
+| `useTimeZone`, `TimeZone`         | [Configured timezone and bound date/time helpers](./use-time-zone.md)         |
+| `AppInfo`, `AppInfoEntry`         | [Metadata for the built-in app-info page](../components/app-shell.md#appinfo) |
+| `AppShellRegister`, `ContextData` | [Context-data registration](#context-data)                                    |
+| `RouteParams`                     | [Registered route-parameter map](#route-parameter-types)                      |
+
 ## Return Value
 
 ### `contextData`
@@ -81,6 +93,8 @@ Define your context type with module augmentation:
 
 ```typescript
 // types.d.ts
+import "@tailor-platform/app-shell";
+
 type User = { name: string; email: string; role: string };
 
 declare module "@tailor-platform/app-shell" {
@@ -92,7 +106,13 @@ declare module "@tailor-platform/app-shell" {
     };
   }
 }
+```
 
+`AppShellRegister.contextData` sets the exported `ContextData` type. Without registration, `ContextData` falls back to `Record<string, unknown>`. The side-effect import makes this declaration a module augmentation rather than a replacement module declaration.
+
+Pass matching data to `AppShell`:
+
+```tsx
 // App.tsx
 <AppShell
   modules={modules}
@@ -101,13 +121,54 @@ declare module "@tailor-platform/app-shell" {
     permissions,
     tenantId,
   }}
-/>
-
-// MyComponent.tsx
-const { contextData } = useAppShell();
-contextData.currentUser  // Fully typed!
-contextData.permissions  // Fully typed!
+>
+  <SidebarLayout />
+</AppShell>
 ```
+
+Read the registered data inside a component:
+
+```tsx
+// MyComponent.tsx
+import { useAppShell } from "@tailor-platform/app-shell";
+
+function MyComponent() {
+  const { contextData } = useAppShell();
+
+  // currentUser is User | null; permissions is string[].
+  return (
+    <div>
+      {contextData.currentUser?.name} ({contextData.permissions.length} permissions)
+    </div>
+  );
+}
+```
+
+## Route parameter types
+
+The exported `RouteParams` type reads `AppShellRegister.routeParams`. With no registration it falls back to `Record<string, Record<string, string>>`; register a route map to retain literal paths and parameter names:
+
+```typescript
+// types.d.ts
+import "@tailor-platform/app-shell";
+
+declare module "@tailor-platform/app-shell" {
+  interface AppShellRegister {
+    routeParams: {
+      "/": {};
+      "/orders/:id": { id: string };
+    };
+  }
+}
+```
+
+```typescript
+import type { RouteParams } from "@tailor-platform/app-shell";
+
+type OrderParams = RouteParams["/orders/:id"]; // { id: string }
+```
+
+The Vite plugin registers its generated map for you when [typed-route generation](../concepts/file-based-routing.md#typed-routes) is enabled; do not also register a conflicting manual map. See [`createTypedPaths`](./create-typed-paths.md) for using a route map to build paths.
 
 ## Examples
 

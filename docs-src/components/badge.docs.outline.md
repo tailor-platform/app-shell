@@ -5,6 +5,7 @@ title: Badge
 description: Display status, labels, and tags with customizable variants
 sources:
   - packages/core/src/components/badge/**
+  - packages/core/src/components/badge-list/**
 ---
 
 # Badge

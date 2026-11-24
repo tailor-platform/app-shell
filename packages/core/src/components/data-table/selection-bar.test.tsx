@@ -199,10 +199,50 @@ describe("DataTable selection actions", () => {
       wrapper,
     });
     expect(within(getBar()).queryByRole("button", { name: "Delete" })).toBeNull();
-    await user.click(within(getBar()).getByRole("button", { name: "More actions" }));
+    const menuTrigger = within(getBar()).getByRole("button", { name: "More actions" });
+    expect(menuTrigger.className).not.toContain("astw:border-border");
+    await user.click(menuTrigger);
     await user.click(await screen.findByRole("menuitem", { name: "Delete" }));
     expect(onDelete).toHaveBeenCalledExactlyOnceWith(["unseen", "3"], expect.any(Object));
   });
+
+  it.each([
+    { footerWidth: 360, inline: false },
+    { footerWidth: 800, inline: true },
+  ])(
+    "keeps actions inline only when the footer is wide enough (footer $footerWidth px)",
+    async ({ footerWidth, inline }) => {
+      // jsdom has no layout: stand in for the footer's measured width.
+      const clientWidth = vi
+        .spyOn(HTMLElement.prototype, "clientWidth", "get")
+        .mockReturnValue(footerWidth);
+      try {
+        const user = userEvent.setup();
+        const onArchive = vi.fn();
+        render(
+          <Harness rowSelection={{ actions: [archive(onArchive)], defaultSelectedIds: ["1"] }} />,
+          {
+            wrapper,
+          },
+        );
+        const inlineButton = within(getBar()).queryByRole("button", { name: "Archive" });
+        const menuTrigger = within(getBar()).queryByRole("button", { name: "More actions" });
+        if (inline) {
+          expect(inlineButton).not.toBeNull();
+          expect(menuTrigger).toBeNull();
+          return;
+        }
+        expect(inlineButton).toBeNull();
+        // The menu holds every action here, so it is outlined like them.
+        expect(menuTrigger!.className).toContain("astw:border-border");
+        await user.click(menuTrigger!);
+        await user.click(await screen.findByRole("menuitem", { name: "Archive" }));
+        expect(onArchive).toHaveBeenCalledExactlyOnceWith(["1"], expect.any(Object));
+      } finally {
+        clientWidth.mockRestore();
+      }
+    },
+  );
 
   it("Clear empties selection and hands focus back to the header checkbox", async () => {
     const user = userEvent.setup();

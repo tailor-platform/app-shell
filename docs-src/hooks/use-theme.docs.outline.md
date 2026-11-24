@@ -1,8 +1,10 @@
 ---
-kind: prose
+kind: code-backed
 group: use-theme
 title: useTheme
 description: Hook for accessing and controlling theme (light/dark mode)
+sources:
+  - packages/core/src/contexts/theme-context.tsx
 ---
 
 # useTheme

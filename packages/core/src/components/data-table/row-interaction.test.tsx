@@ -1,10 +1,19 @@
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
-import { cleanup, fireEvent, render, renderHook, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createPortal } from "react-dom";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, MemoryRouter, useLocation } from "react-router";
 import type { Column, RowInteraction, UseDataTableOptions } from "@/index";
+import { Sheet } from "@/components/sheet";
 import { testData, wrapper as AppShellWrapper, type TestRow } from "./test-utils";
 import { DataTable } from "./data-table";
 import { useDataTable } from "./use-data-table";
@@ -55,6 +64,39 @@ function Harness({
       <DataTable.Root value={table}>
         <DataTable.Table />
       </DataTable.Root>
+    </>
+  );
+}
+
+function SheetHarness() {
+  const [selected, setSelected] = useState<TestRow | null>(null);
+  const table = useDataTable({
+    ...base,
+    rowInteraction: {
+      type: "click",
+      label: "Edit",
+      getLabel: (row) => row.name,
+      onClick: setSelected,
+    },
+  });
+  return (
+    <>
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+      <Sheet.Root
+        open={selected !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelected(null);
+        }}
+      >
+        <Sheet.Content>
+          <Sheet.Header>
+            <Sheet.Title>Details: {selected?.name}</Sheet.Title>
+            <Sheet.Description>Inspect the selected record.</Sheet.Description>
+          </Sheet.Header>
+        </Sheet.Content>
+      </Sheet.Root>
     </>
   );
 }
@@ -542,6 +584,33 @@ describe("DataTable row interaction", () => {
     expect(onClick).toHaveBeenCalledTimes(2);
     expect(onClick).toHaveBeenLastCalledWith(testData.rows[1]);
   });
+
+  it.each(["row background", "keyboard"] as const)(
+    "returns focus to the row's primary button after dismissing a Sheet opened from %s",
+    async (source) => {
+      const user = userEvent.setup();
+      render(<SheetHarness />, { wrapper });
+      const primary = screen.getByRole("button", { name: "Edit: Bob" });
+      await user.tab();
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "Edit: Alice" }));
+
+      if (source === "row background") {
+        await user.click(screen.getByText("Bob"));
+      } else {
+        await user.tab();
+        expect(document.activeElement).toBe(primary);
+        await user.keyboard("{Enter}");
+      }
+
+      const sheet = await screen.findByRole("dialog", { name: "Details: Bob" });
+      await waitFor(() => expect(sheet.contains(document.activeElement)).toBe(true));
+      await user.keyboard("{Escape}");
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).toBeNull();
+        expect(document.activeElement).toBe(primary);
+      });
+    },
+  );
 
   it("disables a primary button and its row shortcut together", async () => {
     const user = userEvent.setup();

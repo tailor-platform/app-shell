@@ -223,7 +223,9 @@ const guards = [
 ```typescript
 const dashboardModule = defineModule({
   path: "dashboard",
+  meta: { title: "Dashboard" },
   component: DashboardPage,
+  resources: [],
   guards: [
     ({ context }) => {
       if (!context.currentUser) {

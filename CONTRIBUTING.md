@@ -5,8 +5,8 @@ applications on Tailor Platform. This guide is the **end-to-end development work
 picking up an issue to a published release.
 
 It's the human-facing walkthrough of _how a contribution flows through the repo_. Its
-companion, [`CLAUDE.md`](./CLAUDE.md), is the terse orientation doc auto-loaded by coding
-agents (the architecture map — where things live in the code); it links here for the workflow.
+companion, [`AGENTS.md`](./AGENTS.md), is the shared orientation and task-routing entrypoint for
+coding agents (the architecture map — where things live in the code); it links here for the workflow.
 
 ## The core idea: one source of truth, many executors
 
@@ -109,9 +109,10 @@ Conventions are encoded as skills under **`.agents/skills/`**. Read the relevant
 this guide won't restate their rules (they'd only go stale here).
 
 - **Changing implementation under `packages/**`** → `.agents/skills/code-review/SKILL.md` (the code review skill routes you to the shared cross-cutting and area references for the change).
-- **Building pages / picking UI patterns** → the **`app-shell-patterns`** skill. It is
-  **generated** by `docs-kit` from `docs-src/` into `packages/core/skills/app-shell-patterns/`,
-  which is gitignored and shipped to consumers via the npm package. **Edit the source under
+- **Building pages / picking UI patterns** → the **`app-shell-patterns`** skill. It and the
+  **`app-shell-upgrade`** skill (built from the migrations guide) are **generated** by `docs-kit`
+  from `docs-src/` into `packages/core/skills/<name>/`, which is gitignored and shipped to
+  consumers via the npm package. **Edit the source under
   `docs-src/` and regenerate with `pnpm docs:sync`** — never hand-edit the generated skill.
   `pnpm docs:check` blocks in CI if the two drift, so if you change a public API, design tokens,
   or a pattern, update the `docs-src/` source too.
@@ -178,7 +179,7 @@ Rather than duplicate file-by-file details here (they go stale — see `.agents/
   consumers; both generated via `pnpm docs:sync` (the skill into `packages/core/skills/`,
   gitignored).
 - **`.github/workflows/`** — CI and release workflows.
-- **`CLAUDE.md`** — architecture orientation for coding agents.
+- **`AGENTS.md`** — shared architecture orientation and task routing for coding agents.
 - **`README.md`** — quickstart and development commands.
 
 ### Tooling & conventions

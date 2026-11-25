@@ -3,6 +3,31 @@ kind: prose
 group: routing-navigation
 title: Routing and Navigation
 description: Learn how to navigate between pages using React Router hooks and components re-exported from AppShell
+claims:
+  - Blocker
+  - BlockerFunction
+  - Link
+  - LinkProps
+  - Location
+  - NavLink
+  - NavLinkProps
+  - Navigate
+  - NavigateFunction
+  - NavigateOptions
+  - Navigation
+  - Params
+  - PathMatch
+  - To
+  - useBeforeUnload
+  - useBlocker
+  - useLocation
+  - useMatch
+  - useNavigate
+  - useNavigation
+  - useParams
+  - useResolvedPath
+  - useRouteError
+  - useSearchParams
 ---
 
 # Routing and Navigation
@@ -66,7 +91,7 @@ Types come with them: `Location`, `NavigateFunction`, `NavigateOptions`, `To`, `
 
 ### What it deliberately does not give you
 
-**Router construction** — `createBrowserRouter`, `RouterProvider`, `BrowserRouter`, `MemoryRouter`, `Routes`, `Route`. AppShell builds the router from your modules and resources; a second one nested inside it is the bug this page is about. To control routing in tests, use the [`/testing` entry point](#testing) rather than building your own router.
+**Router construction** — `createBrowserRouter`, `RouterProvider`, `BrowserRouter`, `MemoryRouter`, `Routes`, `Route`. AppShell builds the router from your modules and resources; a second one nested inside it is the bug this page is about. For test wrappers and memory routing, see the [Testing guide](./testing.md).
 
 **Data-router APIs** — `useLoaderData`, `Form`, `useSubmit`, `useFetcher`, `useActionData`, `useRevalidator`. AppShell does not wire up React Router's data layer, so these have nothing to talk to. Load data in the page component or your own data layer. (AppShell exports its own `Form`, which is part of the [form system](../components/form.md) and unrelated to React Router's.)
 
@@ -75,60 +100,6 @@ Missing something you need? Ask for it to be added here rather than adding a dir
 ### One caveat
 
 A third-party library that itself depends on `react-router` can still pull in a second copy. That is rare, and outside what AppShell can control. If routing starts throwing the error above, look for a duplicate — under pnpm, `pnpm why react-router`.
-
-## Testing
-
-For test setup, form interactions, and provider fixtures, see the [Testing guide](./testing.md).
-
-Test helpers live in a separate entry point, `@tailor-platform/app-shell/testing`. Memory routing is kept out of the main entry because an app that shipped it would render correctly while the URL bar silently stopped tracking navigation — the `AppShell` you import from `@tailor-platform/app-shell` always uses browser routing, and pins it off regardless of what you pass.
-
-### Pages and integration tests
-
-Because AppShell owns the router, a test mounts AppShell rather than building a router. The `AppShell` exported from `/testing` is the same shell, and additionally accepts `memory` with `initialEntries` so it starts at a known URL without touching `window.location`:
-
-```tsx
-import { render, screen } from "@testing-library/react";
-import { AppShell } from "@tailor-platform/app-shell/testing";
-import { SidebarLayout } from "@tailor-platform/app-shell";
-
-render(
-  <AppShell memory initialEntries={["/orders/A42"]} modules={modules}>
-    <SidebarLayout />
-  </AppShell>,
-);
-
-expect(await screen.findByText("Order A42")).toBeDefined();
-```
-
-`initialEntries` is the history stack to start with — the last entry is the current location. Each render owns its history, so tests do not leak navigation state into one another.
-
-### Unit tests
-
-A component that calls `useNavigate` or renders a `<Link>` needs a router above it, but mounting a whole AppShell for that is heavy. `TestRouter` provides just the router context:
-
-```tsx
-import { TestRouter } from "@tailor-platform/app-shell/testing";
-
-render(
-  <TestRouter initialEntries={["/orders/A42"]}>
-    <SaveButton />
-  </TestRouter>,
-);
-```
-
-**If the component reads the route**, pass `path`. A router on its own matches nothing, so `useParams()` comes back empty even when `initialEntries` holds a URL that looks like it should match:
-
-```tsx
-render(
-  <TestRouter path="/orders/:id" initialEntries={["/orders/A42"]}>
-    <OrderBadge /> {/* useParams() -> { id: "A42" } */}
-  </TestRouter>,
-);
-```
-
-The same applies to `useMatch` and to relative `<Link>` targets. Compose your own providers — a GraphQL client, say — around `TestRouter` as needed.
-
-Reach for `TestRouter` when the component under test is the subject; mount `AppShell memory` when the routing itself is.
 
 ## Example
 

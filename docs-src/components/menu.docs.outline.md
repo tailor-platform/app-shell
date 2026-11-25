@@ -5,6 +5,7 @@ title: Menu
 description: Dropdown menu with a compound component API, supporting checkbox/radio items, groups, separators, and nested sub-menus
 sources:
   - packages/core/src/components/menu/**
+  - packages/core/src/lib/position.ts
 ---
 
 # Menu
@@ -16,6 +17,8 @@ The `Menu` component provides a dropdown menu with a compound component API. It 
 ```tsx
 import { Menu } from "@tailor-platform/app-shell";
 ```
+
+The runnable examples also import `useState` from `react`, `Button` and `Text` from `@tailor-platform/app-shell`, and `EllipsisVerticalIcon` from `lucide-react`.
 
 ## Basic Usage
 
@@ -56,11 +59,23 @@ import { Menu } from "@tailor-platform/app-shell";
 
 ### Menu.Content Props
 
-| Prop        | Type                                                                                                           | Default                                             | Description                         |
-| ----------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------- |
-| `position`  | `{ side?: "top" \| "right" \| "bottom" \| "left"; align?: "start" \| "center" \| "end"; sideOffset?: number }` | `{ side: "bottom", align: "start", sideOffset: 4 }` | Placement of the popup              |
-| `className` | `string`                                                                                                       | -                                                   | Additional CSS classes              |
-| `children`  | `React.ReactNode`                                                                                              | -                                                   | Menu items and other sub-components |
+| Prop        | Type              | Default                                             | Description                         |
+| ----------- | ----------------- | --------------------------------------------------- | ----------------------------------- |
+| `position`  | `PositionProps`   | `{ side: "bottom", align: "start", sideOffset: 4 }` | Placement of the popup              |
+| `className` | `string`          | -                                                   | Additional CSS classes              |
+| `children`  | `React.ReactNode` | -                                                   | Menu items and other sub-components |
+
+### PositionProps
+
+The public `PositionProps` type is shared by the `position` prop on `Menu.Content` and [`Tooltip.Content`](./tooltip.md#tooltipcontent-props). Import it from `@tailor-platform/app-shell` when reusing a placement configuration.
+
+| Property     | Type                                     | Description                          |
+| ------------ | ---------------------------------------- | ------------------------------------ |
+| `side`       | `"top" \| "right" \| "bottom" \| "left"` | Preferred side of the trigger.       |
+| `align`      | `"start" \| "center" \| "end"`           | Alignment along the cross axis.      |
+| `sideOffset` | `number`                                 | Distance in pixels from the trigger. |
+
+All properties are optional. Defaults belong to the component: Menu uses bottom/start/4px, while Tooltip uses top/center/5px.
 
 ### Menu.Item Props
 
@@ -80,115 +95,31 @@ Accepts `className`, `disabled`, and all standard Base UI `Menu.Item` props.
 
 Use `Menu.Group` and `Menu.GroupLabel` to visually group related items:
 
-```tsx
-<Menu.Root>
-  <Menu.Trigger>Actions</Menu.Trigger>
-  <Menu.Content>
-    <Menu.Group>
-      <Menu.GroupLabel>File</Menu.GroupLabel>
-      <Menu.Item>New</Menu.Item>
-      <Menu.Item>Open</Menu.Item>
-    </Menu.Group>
-    <Menu.Separator />
-    <Menu.Group>
-      <Menu.GroupLabel>Edit</Menu.GroupLabel>
-      <Menu.Item>Cut</Menu.Item>
-      <Menu.Item>Copy</Menu.Item>
-      <Menu.Item>Paste</Menu.Item>
-    </Menu.Group>
-  </Menu.Content>
-</Menu.Root>
-```
+<!-- example: grouped-items -->
 
 ## Checkbox Items
 
-```tsx
-const [bold, setBold] = useState(false);
-const [italic, setItalic] = useState(false);
+Open **Format text** and toggle Bold or Italic. The sample text and the reported settings update together.
 
-<Menu.Root>
-  <Menu.Trigger>Format</Menu.Trigger>
-  <Menu.Content>
-    <Menu.CheckboxItem checked={bold} onCheckedChange={setBold}>
-      <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
-      Bold
-    </Menu.CheckboxItem>
-    <Menu.CheckboxItem checked={italic} onCheckedChange={setItalic}>
-      <Menu.CheckboxItemIndicator>✓</Menu.CheckboxItemIndicator>
-      Italic
-    </Menu.CheckboxItem>
-  </Menu.Content>
-</Menu.Root>;
-```
+<!-- example: checkbox-items -->
 
 ## Radio Items
 
-```tsx
-const [align, setAlign] = useState("left");
+Choose an alignment from **Align text**. Only one radio item is selected, and the sample text moves to that alignment.
 
-<Menu.Root>
-  <Menu.Trigger>Align</Menu.Trigger>
-  <Menu.Content>
-    <Menu.RadioGroup value={align} onValueChange={setAlign}>
-      <Menu.RadioItem value="left">
-        <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
-        Left
-      </Menu.RadioItem>
-      <Menu.RadioItem value="center">
-        <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
-        Center
-      </Menu.RadioItem>
-      <Menu.RadioItem value="right">
-        <Menu.RadioItemIndicator>●</Menu.RadioItemIndicator>
-        Right
-      </Menu.RadioItem>
-    </Menu.RadioGroup>
-  </Menu.Content>
-</Menu.Root>;
-```
+<!-- example: radio-items -->
 
 ## Nested Sub-menus
 
-```tsx
-<Menu.Root>
-  <Menu.Trigger>Edit</Menu.Trigger>
-  <Menu.Content>
-    <Menu.Item>Cut</Menu.Item>
-    <Menu.Item>Copy</Menu.Item>
-    <Menu.SubmenuRoot>
-      <Menu.SubmenuTrigger>Paste Special ›</Menu.SubmenuTrigger>
-      <Menu.Content>
-        <Menu.Item>Paste as Plain Text</Menu.Item>
-        <Menu.Item>Paste and Match Style</Menu.Item>
-      </Menu.Content>
-    </Menu.SubmenuRoot>
-  </Menu.Content>
-</Menu.Root>
-```
+<!-- example: nested-submenus -->
 
 ## Examples
 
-### Context Menu
+### Row Actions Menu
 
-```tsx
-function OrderActions({ order }: { order: Order }) {
-  return (
-    <Menu.Root>
-      <Menu.Trigger>
-        <Button variant="ghost" size="icon">
-          <EllipsisVerticalIcon />
-        </Button>
-      </Menu.Trigger>
-      <Menu.Content>
-        <Menu.Item onSelect={() => handleEdit(order)}>Edit</Menu.Item>
-        <Menu.Item onSelect={() => handleDuplicate(order)}>Duplicate</Menu.Item>
-        <Menu.Separator />
-        <Menu.Item onSelect={() => handleDelete(order)}>Delete</Menu.Item>
-      </Menu.Content>
-    </Menu.Root>
-  );
-}
-```
+Open the order's three-dot button and choose an action. This is a button-triggered dropdown, not a right-click context menu. The example records the chosen action locally without modifying an order or navigating away. Use `render` to make the styled `Button` the trigger itself, rather than nesting two buttons.
+
+<!-- example: row-actions -->
 
 ## Accessibility
 

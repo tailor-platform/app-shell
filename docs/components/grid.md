@@ -17,6 +17,8 @@ description: Generic CSS-Grid layout primitive for equal or custom-width columns
 import { Grid } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Card` and `Text` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -79,51 +81,111 @@ All standard HTML `<div>` props are also accepted.
 
 `columns`, `rows`, `gap`, `gapX`, `gapY`, and every `Grid.Item` prop accept either a single value (applied at all breakpoints) or a breakpoint object. Breakpoints align with Tailwind: `initial` (base), `sm`, `md`, `lg`, `xl`, `2xl`.
 
+<example-preview name="responsive-values"></example-preview>
+
 ```tsx
-// 1 column on mobile, 2 from md, 4 from xl
-<Grid columns={{ initial: 1, md: 2, xl: 4 }} gap={4}>
-  {/* … */}
-</Grid>
+function ResponsiveValues() {
+  return (
+    <Grid columns={{ initial: 1, md: 2, xl: 4 }} gap={4}>
+      {["Revenue", "Orders", "Customers", "Returns"].map((title) => (
+        <Card.Root key={title}>
+          <Card.Content>{title}</Card.Content>
+        </Card.Root>
+      ))}
+    </Grid>
+  );
+}
 ```
 
 ## Sizing columns
 
 There are three ways to size columns; pick whichever fits.
 
+<example-preview name="column-sizing"></example-preview>
+
 ```tsx
-// 1. Equal columns
-<Grid columns={4} gap={4}>{/* … */}</Grid>
-
-// 2. Custom track widths (verbatim grid-template-columns)
-<Grid columns="280px 1fr" gap={6}>{/* … */}</Grid>
-
-// 3. Auto-fit — as many ≥240px columns as fit, no breakpoints needed
-<Grid minChildWidth={240} gap={4}>{/* … */}</Grid>
+function ColumnSizing() {
+  return (
+    <div className="space-y-4">
+      <Text.p>Equal columns</Text.p>
+      <Grid columns={4} gap={4}>
+        {["One", "Two", "Three", "Four"].map((label) => (
+          <Card.Root key={label}>
+            <Card.Content>{label}</Card.Content>
+          </Card.Root>
+        ))}
+      </Grid>
+      <Text.p>Custom track widths</Text.p>
+      <Grid columns="280px 1fr" gap={6}>
+        <Card.Root>
+          <Card.Content>280px</Card.Content>
+        </Card.Root>
+        <Card.Root>
+          <Card.Content>Remaining width</Card.Content>
+        </Card.Root>
+      </Grid>
+      <Text.p>Auto-fit columns, at least 240px wide</Text.p>
+      <Grid minChildWidth={240} gap={4}>
+        {["One", "Two", "Three"].map((label) => (
+          <Card.Root key={label}>
+            <Card.Content>{label}</Card.Content>
+          </Card.Root>
+        ))}
+      </Grid>
+    </div>
+  );
+}
 ```
 
 `minChildWidth` accepts a number (pixels) or a string (e.g. `"16rem"`) and takes precedence over `columns` when set.
 
 ## Spanning with Grid.Item
 
+<example-preview name="spanning"></example-preview>
+
 ```tsx
-<Grid columns={4} gap={4}>
-  <Grid.Item colSpan={2}>Wide card</Grid.Item>
-  <Card.Root>Normal</Card.Root>
-  <Grid.Item colSpan={{ initial: "full", md: 1 }} rowSpan={2}>
-    Tall
-  </Grid.Item>
-  <Grid.Item colSpan="full">Full-width footer row</Grid.Item>
-</Grid>
+function Spanning() {
+  return (
+    <Grid columns={4} gap={4}>
+      <Grid.Item colSpan={2} className="rounded-lg border p-4">
+        Wide card
+      </Grid.Item>
+      <Card.Root>
+        <Card.Content>Normal</Card.Content>
+      </Card.Root>
+      <Grid.Item colSpan={{ initial: "full", md: 1 }} rowSpan={2} className="rounded-lg border p-4">
+        Tall
+      </Grid.Item>
+      <Grid.Item colSpan="full" className="rounded-lg border p-4">
+        Full-width footer row
+      </Grid.Item>
+    </Grid>
+  );
+}
 ```
 
 ## Alignment
 
 `align` aligns items within their row (visible when row height exceeds the item), `justify` distributes the columns when they are narrower than the container (e.g. fixed-width tracks), and `flow` controls placement order:
 
+<example-preview name="alignment"></example-preview>
+
 ```tsx
-<Grid columns="repeat(3, 96px)" gap={4} justify="between" align="center">
-  {/* fixed-width columns spread across the container */}
-</Grid>
+function Alignment() {
+  return (
+    <Grid columns="repeat(3, 96px)" rows="120px" gap={4} justify="between" align="center">
+      <Card.Root>
+        <Card.Content>One</Card.Content>
+      </Card.Root>
+      <Card.Root>
+        <Card.Content>Two</Card.Content>
+      </Card.Root>
+      <Card.Root>
+        <Card.Content>Three</Card.Content>
+      </Card.Root>
+    </Grid>
+  );
+}
 ```
 
 > **Note:** `justify` only has a visible effect when the tracks do not fill the container. With fluid `columns={n}` (which uses `1fr` tracks) the columns always fill the width, so `justify` is a no-op — use fixed-width tracks to distribute columns. Likewise, `flow="…-dense"` only differs from the default when items span multiple cells and leave gaps to backfill.
@@ -154,23 +216,51 @@ There are three ways to size columns; pick whichever fits.
 
 ### Sidebar + content (custom widths)
 
+<example-preview name="sidebar-content"></example-preview>
+
 ```tsx
-<Grid columns="280px 1fr" gap={6}>
-  <Card.Root>{/* filters */}</Card.Root>
-  <Card.Root>{/* results */}</Card.Root>
-</Grid>
+function SidebarContent() {
+  return (
+    <Grid columns="280px 1fr" gap={6}>
+      <Card.Root>
+        <Card.Header title="Filters" />
+        <Card.Content>
+          <Text.p>Status: Confirmed</Text.p>
+        </Card.Content>
+      </Card.Root>
+      <Card.Root>
+        <Card.Header title="Results" />
+        <Card.Content>
+          <Text.p>12 matching orders</Text.p>
+        </Card.Content>
+      </Card.Root>
+    </Grid>
+  );
+}
 ```
 
 ### Dashboard with a featured panel
 
+<example-preview name="featured-panel"></example-preview>
+
 ```tsx
-<Grid columns={{ initial: 1, md: 4 }} gap={4}>
-  <Grid.Item colSpan={{ initial: "full", md: 2 }}>
-    <Card.Root>Featured</Card.Root>
-  </Grid.Item>
-  <Card.Root>Stat</Card.Root>
-  <Card.Root>Stat</Card.Root>
-</Grid>
+function FeaturedPanel() {
+  return (
+    <Grid columns={{ initial: 1, md: 4 }} gap={4}>
+      <Grid.Item colSpan={{ initial: "full", md: 2 }}>
+        <Card.Root>
+          <Card.Content>Featured</Card.Content>
+        </Card.Root>
+      </Grid.Item>
+      <Card.Root>
+        <Card.Content>Revenue: $2,400</Card.Content>
+      </Card.Root>
+      <Card.Root>
+        <Card.Content>Orders: 142</Card.Content>
+      </Card.Root>
+    </Grid>
+  );
+}
 ```
 
 ## Styling

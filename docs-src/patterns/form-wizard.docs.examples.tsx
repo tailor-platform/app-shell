@@ -8,10 +8,16 @@ import {
   Layout,
   Select,
   Stepper,
+  useStepper,
 } from "@tailor-platform/app-shell";
 
 const OWNERS = ["Tanaka", "Sato", "Suzuki", "Yamada"];
-const STEPS = ["Basic info", "Assignment", "Schedule", "Review"] as const;
+const STEPS = [
+  { id: "basic", label: "Basic info" },
+  { id: "assignment", label: "Assignment" },
+  { id: "schedule", label: "Schedule" },
+  { id: "review", label: "Review" },
+] as const;
 
 type Draft = {
   title: string;
@@ -33,12 +39,11 @@ export function FormWizard() {
   const onComplete = (finalDraft: Draft) => window.alert(`Creating ${finalDraft.title}`);
   const onCancel = () => {};
 
-  const [step, setStep] = useState(0);
+  const flow = useStepper({ steps: STEPS });
+  const step = flow.currentStepIndex;
   // Accumulated values. Each step's Form unmounts on navigation, so the draft
   // is what makes Back non-destructive — fields re-read it via `defaultValue`.
   const [draft, setDraft] = useState<Draft>(INITIAL);
-
-  const isLastStep = step === STEPS.length - 1;
 
   /**
    * Each step is its own `Form`, and "Next" is a `type="submit"` button.
@@ -49,11 +54,11 @@ export function FormWizard() {
   const handleStepSubmit = (values: Record<string, unknown>) => {
     const merged = { ...draft, ...(values as Partial<Draft>) };
     setDraft(merged);
-    if (isLastStep) {
+    if (flow.isLastStep) {
       onComplete(merged);
       return;
     }
-    setStep(step + 1);
+    flow.next();
   };
 
   return (
@@ -63,14 +68,14 @@ export function FormWizard() {
         {/* Progress is the current step; completed steps go back on click */}
         <Stepper
           aria-label="Create task"
-          steps={STEPS.map((label, i) => ({ id: String(i), label }))}
-          progress={{ state: "in-progress", currentStepId: String(step) }}
-          onStepClick={(id) => setStep(Number(id))}
+          steps={flow.steps}
+          progress={flow.progress}
+          onStepClick={flow.moveStep}
         />
 
         <Form key={step} noValidate onFormSubmit={handleStepSubmit}>
           <Card.Root>
-            <Card.Header title={STEPS[step]} />
+            <Card.Header title={STEPS[step].label} />
             <Card.Content>
               {step === 0 && (
                 <Fieldset.Root className="space-y-4">
@@ -132,11 +137,11 @@ export function FormWizard() {
             <Button
               type="button"
               variant="ghost"
-              onClick={() => (step === 0 ? onCancel() : setStep(step - 1))}
+              onClick={() => (flow.canBack ? flow.back() : onCancel())}
             >
               {step === 0 ? "Cancel" : "Back"}
             </Button>
-            <Button type="submit">{isLastStep ? "Create" : "Next"}</Button>
+            <Button type="submit">{flow.isLastStep ? "Create" : "Next"}</Button>
           </div>
         </Form>
       </Layout.Column>

@@ -9,12 +9,12 @@ description: Shows progress through a fixed sequence of steps — wizard steps, 
 
 `Stepper` shows how far something has progressed through a fixed sequence of steps: the steps of a [wizard form](../patterns/form-wizard.md), the stages of an approval flow, the quality gates of a project. You give it the steps and one `progress` value saying how far the flow has got; it works out how each step looks.
 
-It only displays progress. The page owns `progress` and decides what happens when a step is clicked.
+It only displays progress. The page owns `progress` and decides what happens when a step is clicked. For local wizard navigation, `useStepper` manages that state; for server-owned approval stages or quality gates, keep passing `progress` directly.
 
 ## Import
 
 ```tsx
-import { Stepper } from "@tailor-platform/app-shell";
+import { Stepper, useStepper } from "@tailor-platform/app-shell";
 ```
 
 ## Basic Usage
@@ -37,6 +37,64 @@ function BasicUsage() {
   );
 }
 ```
+
+## Wizard navigation with `useStepper`
+
+`useStepper({ steps, initialStepId? })` returns `steps` and `progress` to pass to `Stepper`, plus navigation actions. It starts at the first step unless `initialStepId` is supplied. Inline definitions preserve literal ids without `as const`: both `initialStepId` and `moveStep` only accept ids from `steps`.
+
+<example-preview name="wizard-navigation"></example-preview>
+
+```tsx
+function WizardNavigation() {
+  const flow = useStepper({
+    steps: [
+      { id: "supplier", label: "Supplier" },
+      { id: "delivery", label: "Delivery" },
+      { id: "approval", label: "Approval" },
+      { id: "review", label: "Review" },
+    ],
+  });
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Stepper
+        aria-label="New purchase order"
+        steps={flow.steps}
+        progress={flow.progress}
+        onStepClick={flow.moveStep}
+      />
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" disabled={!flow.canBack} onClick={flow.back}>
+          Back
+        </Button>
+        <Button variant="ghost" disabled={flow.isComplete} onClick={flow.skip}>
+          Skip
+        </Button>
+        <Button disabled={flow.isComplete} onClick={flow.isLastStep ? flow.finish : flow.next}>
+          {flow.isLastStep || flow.isComplete ? "Finish" : "Next"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+```
+
+| Action                            | Behaviour                                                                                                 |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `next()`                          | Complete the current step and advance; on the last step, complete the flow                                |
+| `back()`                          | Go back one step; after completion, reopen the last step                                                  |
+| `skip()`                          | Skip exactly the current step and advance; on the last step, complete the flow with that step skipped     |
+| `finish()`                        | Complete the last step and the flow; throws if called before the last step                                |
+| `moveStep(id)`                    | Move to an existing step; forward moves complete the steps passed                                         |
+| `moveStep(id, { skipped: true })` | On a forward move, skip the current step and every step before the destination, excluding the destination |
+
+For example, moving from `supplier` to `review` with `{ skipped: true }` skips `supplier`, `delivery`, and `approval`. Without the option, all three are complete. Skip records before the departure point are preserved. Backward moves discard skip records at and after the destination, so revisiting and completing a skipped step replaces its skipped status. The option has no effect on backward moves.
+
+`currentStepId` identifies the current step, or is `undefined` once complete. `currentStepIndex` is zero-based and equals `steps.length` once complete. `isLastStep`, `isComplete`, and `canBack` support button labels and disabled states. `back()` at the first step and `next()` / `skip()` / `finish()` after completion are no-ops.
+
+The hook requires non-empty steps with unique ids and throws for unknown initial or destination ids. Step ids and their order must stay fixed for the hook's lifetime; labels, badges, and descriptions can change. `initialStepId` is read only on mount. Remount the owner (for example with a React `key`) to reset the flow or change its sequence.
+
+Navigation does not validate forms or submit data. Call the actions only after page-level validation succeeds, as in the [wizard form pattern](../patterns/form-wizard.md).
 
 ## Props
 

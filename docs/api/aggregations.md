@@ -9,9 +9,15 @@ description: Reusable selector-based sum, average, minimum, maximum, and non-nul
 
 `aggregations` creates reusable callbacks that select values from a row collection and aggregate them. Each callback accepts `{ rows: readonly TRow[] }`; the module has no dependency on React, DataTable, or column definitions.
 
+## Import
+
 ```tsx
 import { aggregations, type Aggregation } from "@tailor-platform/app-shell";
+```
 
+## Basic usage
+
+```tsx
 type Line = { quantity: number | null };
 
 const sum = aggregations.sum((row: Line) => row.quantity);

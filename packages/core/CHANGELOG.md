@@ -1,5 +1,83 @@
 # @tailor-platform/app-shell
 
+## 1.21.0
+
+### Minor Changes
+
+- c90cdf6: Add `AppShellTestingProvider` for memory-routing tests of applications using the recommended file-based routing API. Render the existing application, with its pages configured by the Vite plugin, inside the provider instead of rebuilding its route tree as test modules.
+  The provider requires `initialEntries: string[]`, leaves the browser URL unchanged, and lets tests use the application's main-entry `AppShell`, `AppShellProps`, and `AppShellRegister` augmentation.
+  
+  For example, when `src/App.tsx` is the configured entrypoint:
+  
+  ```tsx
+  import { render } from "@testing-library/react";
+  import { AppShellTestingProvider } from "@tailor-platform/app-shell/testing";
+  import App from "../src/App";
+  
+  render(
+    <AppShellTestingProvider initialEntries={["/dashboard"]}>
+      <App />
+    </AppShellTestingProvider>,
+  );
+  ```
+  
+  Keep `appShellRoutes()` active in Vitest by reusing the application's Vite config, with `root`, `pagesDir`, and `entrypoint` pointing to the same application files. The provider selects memory routing only; it does not discover or register pages. With `entrypoint: "src/App.tsx"`, importing a new `AppShell` directly in a test file does not inject the application's pages. See the [Testing guide](https://github.com/tailor-platform/app-shell/blob/main/docs/concepts/testing.md#file-based-routing-integration-tests) for the full setup.
+  
+  For new application tests, prefer the provider-based setup above. When migrating tests that construct AppShell props, use `AppShellProps` from the main entry, move `initialEntries` into the provider, and remove `memory` from AppShell. `TestRouter` and `TestRouterProps` are unchanged and remain supported for focused component unit tests.
+  
+  `AppShell` and `TestAppShellProps` from `@tailor-platform/app-shell/testing` are now deprecated but remain available for compatibility.
+- f782c48: Add `MemoryAuthProvider` and `createMemoryAuthClient` to the `/testing` entry point for isolated authentication UI tests using the real providers and hooks, without OAuth, network requests, or persisted sessions.
+  
+  Use `MemoryAuthProvider` for initial state fixtures, or supply a memory client and call `setState` to control loading, authentication, and error transitions. The testing guide includes guard, login/logout, and Suspense recipes.
+  
+  ```tsx
+  import { MemoryAuthProvider } from "@tailor-platform/app-shell/testing";
+  
+  <MemoryAuthProvider initialState={{ isReady: true, isAuthenticated: true, error: null }}>
+    <ProfilePage />
+  </MemoryAuthProvider>;
+  ```
+- b3734c4: Add `DataTable.Table`'s `emptyContent` and `errorContent` props to replace empty and error messages with text or custom markup, for example `<DataTable.Table emptyContent="No requests awaiting approval" errorContent="Unable to load requests" />`. Omitting either prop preserves its existing default message.
+  
+  Empty and error states now fill the available body area when the table root has a fixed height or fills a bounded flex parent, while headers, footers, and data rows keep their natural heights. Their content stays centered in the visible viewport even when columns overflow horizontally, and oversized custom content can be scrolled independently of the columns.
+- 8ab89c9: Ship a second agent skill, `skills/app-shell-upgrade/`, for upgrading `@tailor-platform/app-shell`. It carries the migration list and a step-by-step procedure: select the entries between the old and new versions, detect and apply each one, then verify. `app-shell-patterns` no longer includes `references/migrations.md` and now points to `app-shell-upgrade` instead. Its description also now lists the screens and patterns it covers, so agents load it more reliably.
+  
+  If your app keeps a copy of `app-shell-patterns` (for example under `.claude/skills/`), copy `app-shell-upgrade` next to it from the installed package.
+- 0b6e1c8: Expose the 1-based `sortIndex` (undefined when unsorted) and active-key `sortCount` in sortable DataTable `header(ctx)` and `headerProps(ctx)` callbacks, without changing built-in header visuals. After narrowing with `ctx.sortable`, read `ctx.sortIndex` and `ctx.sortCount` to access sort priority without using table context.
+  
+  Add `aria-sort="ascending"` or `"descending"` to the primary sorted header, including custom headers. Unsorted and secondary headers omit the attribute; use the existing `useDataTable().sortStates` array to read all active sorts.
+- b4ede51: Add the optional `RangeCalendar.onSelectionStateChange` callback with `selection-start`, `range-complete`, and `selection-cancel` events.
+  Only `range-complete` carries the selected `DateRange`; the existing `onChange` callback remains unchanged.
+  Export `RangeCalendarSelectionEvent` for explicitly typed selection event handlers.
+  
+  ```tsx
+  import { RangeCalendar } from "@tailor-platform/app-shell";
+  
+  <RangeCalendar
+    aria-label="Date range"
+    onSelectionStateChange={(event) => {
+      if (event.type === "range-complete") {
+        console.log(event.value);
+      }
+    }}
+  />;
+  ```
+
+### Patch Changes
+
+- b4ede51: Use a two-click range calendar with highlighted dates for date and datetime "between" filters in the Add filter panel.
+  Remove redundant From/To date summaries while keeping separate start/end time inputs, timezone conversion, and reversed-range validation.
+  Preserve unchanged datetime bounds' seconds and fractions, block applying unfinished selections, and reset drafts on Clear all.
+- 1b8514a: Correct the DatePicker documentation and migration examples to use `useTimeZone().today()` instead of a standalone `today` import.
+  Keep date constraints aligned with AppShell's configured timezone, and clarify how to obtain the current date and time without adding public exports.
+- e4b5616: Keep the `DataTable` footer usable at phone widths. `DataTable.Pagination` now wraps its controls onto more lines instead of letting the frame clip them, so **Next** and **Last** stay tappable. When the footer is narrower than 480px, the **Rows per page** label is hidden and the page text is shortened to `1 / 5` (both stay available to screen readers, and the label now names the page-size select). The bulk-action bar also moves every action into the **More actions** menu at that width, so it keeps to one line and the table rows stay visible. The menu button gets an outline at that width, so it stands out more than **Clear**.
+- f1e9a31: Clarify English date filter labels in operator lists and filter chips with "on or after" / "on or before".
+  The labels now explicitly state that `gte` / `lte` include the selected date; Japanese labels and filter semantics are unchanged.
+- 923933d: Replace static documentation snippets with runnable, self-contained examples for components and hooks, including forms, data tables, and AI chat.
+  Improve the documentation browser with grouped sidebar navigation, a global header, and a neutral preview background.
+- 9b02ecd: Document accessible form-control testing and provider fixtures using the public testing entry point.
+  Add guidance for memory routing, application-owned mocks, validation, portals, and segmented date inputs.
+
 ## 1.20.0
 
 ### Minor Changes

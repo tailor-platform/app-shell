@@ -1,8 +1,10 @@
 ---
-kind: prose
+kind: code-backed
 group: modules-and-resources
 title: Modules and Resources
 description: Learn how to structure your AppShell application using modules and resources for automatic routing, navigation, and breadcrumbs
+sources:
+  - packages/core/src/resource.tsx
 ---
 
 # Modules and Resources
@@ -15,6 +17,8 @@ Modules and Resources both share core interface. Of interest:
 - `component: (props: ResourceComponentProps) => ReactNode` - the component to render when the router navigates to that module/resource (optional — omitting it causes the path to return a 404 while child routes remain accessible)
 - `guards?: Guard[]` - optional array of guard functions to control access based on permissions or feature flags
 
+Module options also require `resources` and `meta`; use `[]` for no child resources and `{}` for default metadata. Resource options make `subResources` and `meta` optional.
+
 A trivial `modules` example:
 
 ```tsx
@@ -23,6 +27,7 @@ import { defineModule, defineResource, pass, hidden } from "@tailor-platform/app
 const appShellPropModule = [
   defineModule({
     path: "purchasing",
+    meta: { title: "Purchasing" },
     component: PurchasingLandingPage,
     resources: [
       defineResource({
@@ -44,6 +49,7 @@ const appShellPropModule = [
   }),
   defineModule({
     path: "sales",
+    meta: { title: "Sales" },
     component: SalesLandingPage,
     resources: [
       defineResource({
@@ -57,6 +63,7 @@ const appShellPropModule = [
   // Module without component - /dashboard returns 404, child routes remain accessible
   defineModule({
     path: "dashboard",
+    meta: { title: "Dashboard" },
     resources: [
       defineResource({
         path: "overview",
@@ -71,14 +78,13 @@ const appShellPropModule = [
   // Module with guards for access control
   defineModule({
     path: "reports",
+    meta: { title: "Reports" },
     component: ReportsPage,
     resources: [reportsListResource],
     guards: [
-      async ({ context, signal }) => {
-        const ok = await fetch("/api/me/permissions?scope=reports", {
-          signal,
-        }).then((r) => r.ok);
-        return ok ? pass() : hidden();
+      async () => {
+        const response = await fetch("/api/me/permissions?scope=reports");
+        return response.ok ? pass() : hidden();
       },
     ],
   }),
@@ -111,6 +117,25 @@ Guards on component-less modules and resources execute correctly. For example, a
 
 > Read more about [client-side navigation](./routing-navigation.md) in AppShell apps
 
+## Page Props and Error Boundaries
+
+`ResourceComponentProps` is the public type for a module or resource page's props. AppShell passes the localized `title` and the child `resources` (a module's `resources` or a resource's `subResources`). Although the type also declares an optional `icon`, the definers do not inject it into page props; icons belong to navigation metadata.
+
+```tsx
+import { Text, type ResourceComponentProps } from "@tailor-platform/app-shell";
+
+function ProductsPage({ title, resources }: ResourceComponentProps) {
+  return (
+    <div>
+      <Text.h1>{title}</Text.h1>
+      <Text.p>{resources?.length ?? 0} child resources</Text.p>
+    </div>
+  );
+}
+```
+
+`ErrorBoundaryComponent` is the public type accepted by `errorBoundary`: a `ReactNode`, such as `<ErrorBoundary />`, **not** the component function `ErrorBoundary`. Read errors inside that element with [`useRouteError`](../api/use-route-error.md). See [`defineModule`](../api/define-module.md) and [`defineResource`](../api/define-resource.md) for examples and option types derived from their public signatures.
+
 ## Route Guards
 
 Both modules and resources support `guards` - an array of functions that control access based on permissions, feature flags, or any other criteria. Guards are executed in order and provide:
@@ -119,7 +144,9 @@ Both modules and resources support `guards` - an array of functions that control
 - Reusability: Share common guards across routes
 - Semantic constraints: Clear `pass()`, `hidden()`, or `redirectTo()` results
 
-See the [Guards documentation](../api/guards/overview.md) for full details.
+The public `Guard` function receives a `GuardContext` containing only `{ context: ContextData }` and returns a `GuardResult`, synchronously or asynchronously. Use `pass()`, `hidden()`, or `redirectTo(path)` to construct that result. No abort signal is passed to guards.
+
+See the [Guards documentation](../api/guards/overview.md) for the complete types and helper references. These client-side guards control navigation and rendering; the server must still enforce authorization for protected data and operations.
 
 ### Guard Examples
 
@@ -130,12 +157,13 @@ import { defineModule, pass, hidden } from "@tailor-platform/app-shell";
 
 const reportsModule = defineModule({
   path: "reports",
+  meta: { title: "Reports" },
   component: ReportsPage,
   resources: [reportsListResource],
   guards: [
-    async ({ context }) => {
-      const ok = await fetch("/api/me/permissions?scope=reports").then((r) => r.ok);
-      return ok ? pass() : hidden();
+    async () => {
+      const response = await fetch("/api/me/permissions?scope=reports");
+      return response.ok ? pass() : hidden();
     },
   ],
 });
@@ -148,6 +176,7 @@ import { pass, hidden } from "@tailor-platform/app-shell";
 
 const betaFeaturesModule = defineModule({
   path: "beta",
+  meta: { title: "Beta Features" },
   component: BetaFeaturesPage,
   resources: [newFeatureResource],
   guards: [
@@ -166,8 +195,9 @@ import { pass, hidden } from "@tailor-platform/app-shell";
 
 const billingModule = defineModule({
   path: "billing",
+  meta: { title: "Billing" },
   component: BillingPage,
-  resources: [billingResources],
+  resources: billingResources,
   guards: [
     async ({ context }) => {
       const plan = await getCurrentTenantPlan();

@@ -1,14 +1,33 @@
+import { Fragment, type ReactNode, useState } from "react";
 import {
+  BookOpenIcon,
+  CodeXmlIcon,
+  ComponentIcon,
+  LayersIcon,
+  LightbulbIcon,
+  PanelsTopLeftIcon,
+} from "lucide-react";
+
+import {
+  AppearanceSwitcher,
   AppShell,
-  DefaultSidebar,
   defineModule,
   defineResource,
-  SidebarLayout,
+  GlobalHeaderLayout,
+  Link,
+  Select,
+  SidebarItem,
+  SidebarSection,
+  SidebarSeparator,
+  Text,
+  useAppShell,
+  useLocation,
 } from "@tailor-platform/app-shell";
 
 import { DocPage } from "./_lib/DocPage";
 import { type DocUnit, units } from "./docs";
 import HomePage from "./pages/page";
+import { sectionForPath, sections } from "./sections";
 
 // Declarative routing: the module/resource tree is derived from the same
 // manifest the renderer already consumes (see docs.tsx). This dogfoods the
@@ -17,13 +36,13 @@ import HomePage from "./pages/page";
 
 type Res = ReturnType<typeof defineResource>;
 
-const CATEGORY_LABEL: Record<string, string> = {
-  guides: "Guides",
-  concepts: "Concepts",
-  components: "Components",
-  patterns: "Patterns",
-  pages: "Pages",
-  api: "API",
+const CATEGORY_META: Record<string, { title: string; icon: ReactNode }> = {
+  guides: { title: "Guides", icon: <BookOpenIcon /> },
+  concepts: { title: "Concepts", icon: <LightbulbIcon /> },
+  components: { title: "Components", icon: <ComponentIcon /> },
+  patterns: { title: "Patterns", icon: <LayersIcon /> },
+  pages: { title: "Pages", icon: <PanelsTopLeftIcon /> },
+  api: { title: "API", icon: <CodeXmlIcon /> },
 };
 // Sidebar order; any category not listed falls to the end alphabetically.
 const CATEGORY_ORDER = ["guides", "concepts", "components", "patterns", "pages", "api"];
@@ -81,16 +100,100 @@ function buildModules(): ReturnType<typeof defineModule>[] {
     .map((category) =>
       defineModule({
         path: category,
-        meta: { title: CATEGORY_LABEL[category] ?? category },
+        meta: CATEGORY_META[category] ?? { title: category },
         resources: buildResources(byCategory.get(category) ?? []),
       }),
     );
 }
 
+const modules = buildModules();
+
+function ResourceItems({ resources, basePath }: { resources: Res[]; basePath: string }) {
+  return resources.map((resource, index) => {
+    const path = `${basePath}/${resource.path}`;
+    return resource.subResources?.length ? (
+      <Fragment key={path}>
+        {index > 0 && <SidebarSeparator />}
+        <SidebarSection title={resource.meta.title}>
+          <ResourceItems resources={resource.subResources} basePath={path} />
+        </SidebarSection>
+      </Fragment>
+    ) : (
+      <SidebarItem key={path} to={path} />
+    );
+  });
+}
+
+function DocsLayout() {
+  const { title } = useAppShell();
+  const { pathname } = useLocation();
+  const [selection, setSelection] = useState(() => ({
+    pathname,
+    section: sectionForPath(pathname),
+  }));
+
+  // Follow document navigation without remounting the layout and resetting the sidebar.
+  if (selection.pathname !== pathname) {
+    setSelection({ pathname, section: sectionForPath(pathname) });
+  }
+
+  return (
+    <GlobalHeaderLayout
+      header={
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-3 sm:gap-3 sm:px-4">
+          <Link
+            to="/"
+            className="shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <Text.span variant="heading-sm">{title}</Text.span>
+          </Link>
+          <div className="min-w-0 flex-1 sm:w-56 sm:flex-none">
+            <Select.Parts.Root
+              value={selection.section}
+              itemToStringLabel={(section) => section.label}
+              onValueChange={(section) => {
+                if (section) setSelection({ pathname, section });
+              }}
+            >
+              <Select.Parts.Trigger aria-label="Documentation section" className="min-w-0">
+                <Select.Parts.Value className="truncate" />
+              </Select.Parts.Trigger>
+              <Select.Parts.Content className="min-w-56">
+                {sections.map((section) => (
+                  <Select.Parts.Item key={section.label} value={section}>
+                    {section.label}
+                  </Select.Parts.Item>
+                ))}
+              </Select.Parts.Content>
+            </Select.Parts.Root>
+          </div>
+          <div className="ml-auto shrink-0">
+            <AppearanceSwitcher />
+          </div>
+        </header>
+      }
+      sidebar={
+        <GlobalHeaderLayout.DefaultSidebar>
+          {modules
+            .filter((module) => selection.section.categories.includes(module.path))
+            .map((module, index) => (
+              <Fragment key={module.path}>
+                {index > 0 && <SidebarSeparator />}
+                <SidebarSection title={module.meta.title}>
+                  <ResourceItems resources={module.resources} basePath={`/${module.path}`} />
+                </SidebarSection>
+              </Fragment>
+            ))}
+        </GlobalHeaderLayout.DefaultSidebar>
+      }
+    />
+  );
+}
+
 const App = () => {
   return (
-    <AppShell title="app-shell docs" modules={buildModules()} rootComponent={HomePage}>
-      <SidebarLayout sidebar={<DefaultSidebar />} />
+    <AppShell title="AppShell Docs" modules={modules} rootComponent={HomePage}>
+      <DocsLayout />
     </AppShell>
   );
 };

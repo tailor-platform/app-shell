@@ -61,9 +61,9 @@ export function useTableMeasurements<TRow extends Record<string, unknown>>(
         if (key) next[key] = cell.getBoundingClientRect().width;
       });
       setWidths((prev) => (sameWidths(prev, next) ? prev : next));
-      // Publish the scrollport width for an expanded row's sticky panel to cap
-      // itself to. Skipping zero keeps a hidden-tab mount from collapsing every
-      // panel via `min(100%, 0px)`; writing only on change keeps this mutation
+      // Publish the scrollport width for status content and expanded panels.
+      // Skipping zero keeps a hidden-tab mount from collapsing their content
+      // via `min(100%, 0px)`; writing only on change keeps this mutation
       // from feeding back into the ResizeObserver.
       if (width > 0) {
         const value = `${width}px`;

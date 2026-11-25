@@ -55,28 +55,36 @@ export interface UseStepperOptions<Id extends string = string> {
   initialStepId?: NoInfer<Id>;
 }
 
-export interface UseStepperReturn<Id extends string = string> {
+export type UseStepperReturn<Id extends string = string> = {
   steps: readonly StepperStep<Id>[];
-  progress: StepperProgress<Id>;
-  /** Undefined once the flow is complete. */
-  currentStepId: Id | undefined;
   /** Zero-based position; equals steps.length once complete. */
   currentStepIndex: number;
-  isLastStep: boolean;
-  isComplete: boolean;
   canBack: boolean;
-  /** Complete the current step and advance; completes the flow at the last step. */
-  next: () => void;
   /** Go back one step; after completion, reopens the last step. */
   back: () => void;
-  /** Skip the current step and advance; completes the flow at the last step. */
-  skip: () => void;
-  /** Complete the last step. Throws if called before the last step. */
-  finish: () => void;
   /**
    * Move to an existing step. Forward moves complete the steps passed.
    * With skipped: true, skip the current step through the destination's predecessor.
    * Backward moves discard skip records at and after the destination.
    */
   moveStep: (id: Id, options?: { skipped?: boolean }) => void;
-}
+} & (
+  | {
+      isComplete: false;
+      progress: Extract<StepperProgress<Id>, { state: "in-progress" }>;
+      currentStepId: Id;
+      isLastStep: boolean;
+      /** Complete the current step and advance; completes the flow at the last step. */
+      next: () => void;
+      /** Skip the current step and advance; completes the flow at the last step. */
+      skip: () => void;
+    }
+  | {
+      isComplete: true;
+      progress: Extract<StepperProgress<Id>, { state: "complete" }>;
+      currentStepId: undefined;
+      isLastStep: false;
+      next: undefined;
+      skip: undefined;
+    }
+);

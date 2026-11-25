@@ -30,37 +30,41 @@ describe("useStepper", () => {
 
   it("processes batched navigation in order and reopens the last step after completion", () => {
     const { result } = renderHook(() => useStepper({ steps: STEPS }));
+    const { next, skip } = result.current;
     act(() => {
-      result.current.next();
-      result.current.next();
-      result.current.next();
+      next!();
+      next!();
+      next!();
     });
     expect(result.current.currentStepId).toBe("review");
     expect(result.current.isLastStep).toBe(true);
-    act(() => result.current.finish());
+    act(() => result.current.next!());
     expect(result.current.progress).toEqual({ state: "complete", skippedStepIds: [] });
     expect(result.current.currentStepId).toBeUndefined();
     expect(result.current.currentStepIndex).toBe(STEPS.length);
     expect(result.current.isComplete).toBe(true);
     expect(result.current.isLastStep).toBe(false);
+    expect(result.current.next).toBeUndefined();
+    expect(result.current.skip).toBeUndefined();
     act(() => {
-      result.current.next();
-      result.current.skip();
-      result.current.finish();
+      next!();
+      skip!();
     });
     expect(result.current.progress).toEqual({ state: "complete", skippedStepIds: [] });
     act(() => result.current.back());
     expect(result.current.currentStepId).toBe("review");
     expect(result.current.isComplete).toBe(false);
-    act(() => result.current.next());
+    expect(result.current.next).toBe(next);
+    expect(result.current.skip).toBe(skip);
+    act(() => result.current.next!());
     expect(result.current.isComplete).toBe(true);
   });
 
   it("skips exactly one step and preserves earlier skips when advancing normally", () => {
     const { result } = renderHook(() => useStepper({ steps: STEPS }));
     act(() => {
-      result.current.skip();
-      result.current.next();
+      result.current.skip!();
+      result.current.next!();
     });
     expect(result.current.progress).toEqual({
       state: "in-progress",
@@ -91,7 +95,7 @@ describe("useStepper", () => {
       currentStepId: "approval",
       skippedStepIds: ["supplier", "delivery"],
     });
-    act(() => result.current.next());
+    act(() => result.current.next!());
     expect(result.current.progress).toEqual({
       state: "in-progress",
       currentStepId: "review",
@@ -113,26 +117,34 @@ describe("useStepper", () => {
 
   it("can skip the last step, including a single-step flow, then reopen it", () => {
     const { result } = renderHook(() => useStepper({ steps: [STEPS[0]] }));
-    act(() => result.current.skip());
+    act(() => result.current.skip!());
     expect(result.current.progress).toEqual({
       state: "complete",
       skippedStepIds: ["supplier"],
     });
+    expect(result.current.next).toBeUndefined();
+    expect(result.current.skip).toBeUndefined();
     act(() => result.current.back());
     expect(result.current.progress).toEqual({
       state: "in-progress",
       currentStepId: "supplier",
       skippedStepIds: [],
     });
-    act(() => result.current.finish());
+    act(() => result.current.next!());
     expect(result.current.progress).toEqual({ state: "complete", skippedStepIds: [] });
   });
 
-  it("rejects finishing before the last step", () => {
-    const { result } = renderHook(() => useStepper({ steps: STEPS }));
-    expect(() => act(() => result.current.finish())).toThrow(
-      "finish can only be called on the last step",
-    );
+  it("restores navigation when moving to a step after completion", () => {
+    const { result } = renderHook(() => useStepper({ steps: [STEPS[0]] }));
+    act(() => result.current.next!());
+    expect(result.current.isComplete).toBe(true);
+    act(() => result.current.moveStep("supplier"));
+    expect(result.current.isComplete).toBe(false);
+    expect(result.current.currentStepId).toBe("supplier");
+    expect(result.current.next).toBeTypeOf("function");
+    expect(result.current.skip).toBeTypeOf("function");
+    act(() => result.current.skip!());
+    expect(result.current.progress).toEqual({ state: "complete", skippedStepIds: ["supplier"] });
   });
 
   it("rejects empty, duplicate, and unknown initial ids", () => {
@@ -162,7 +174,7 @@ describe("useStepper", () => {
       ({ steps, initialStepId }) => useStepper({ steps, initialStepId }),
       { initialProps },
     );
-    act(() => result.current.skip());
+    act(() => result.current.skip!());
     rerender({
       steps: STEPS.map((step) => ({ ...step, label: `${step.label} updated` })),
       initialStepId: "review",

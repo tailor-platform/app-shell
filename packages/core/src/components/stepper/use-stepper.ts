@@ -1,5 +1,5 @@
 import { useCallback, useReducer } from "react";
-import type { StepperProgress, UseStepperOptions, UseStepperReturn } from "./types";
+import type { UseStepperOptions, UseStepperReturn } from "./types";
 
 type State<Id extends string> = {
   stepIds: readonly Id[];
@@ -8,7 +8,7 @@ type State<Id extends string> = {
 };
 
 type Action =
-  | { type: "next" | "back" | "skip" | "finish" }
+  | { type: "next" | "back" | "skip" }
   | { type: "move"; index: number; skipped: boolean };
 
 function initialize<Id extends string>({ steps, initialStepId }: UseStepperOptions<Id>): State<Id> {
@@ -40,10 +40,6 @@ function reducer<Id extends string>(state: State<Id>, action: Action): State<Id>
       return state.index === count ? state : move(state, state.index + 1, action.type === "skip");
     case "back":
       return state.index === 0 ? state : move(state, state.index - 1);
-    case "finish":
-      if (state.index < count - 1)
-        throw new Error("[useStepper] finish can only be called on the last step.");
-      return state.index === count ? state : move(state, count);
     case "move":
       return move(state, action.index, action.skipped);
   }
@@ -70,7 +66,6 @@ export function useStepper<const Id extends string>(
   const next = useCallback(() => dispatch({ type: "next" }), []);
   const back = useCallback(() => dispatch({ type: "back" }), []);
   const skip = useCallback(() => dispatch({ type: "skip" }), []);
-  const finish = useCallback(() => dispatch({ type: "finish" }), []);
   const moveStep = useCallback(
     (id: Id, { skipped = false }: { skipped?: boolean } = {}) => {
       const index = state.stepIds.indexOf(id);
@@ -80,28 +75,36 @@ export function useStepper<const Id extends string>(
     [state.stepIds],
   );
 
-  const isComplete = state.index === steps.length;
   const skippedStepIds = state.skipped.map((index) => state.stepIds[index]);
-  const progress: StepperProgress<Id> = isComplete
-    ? { state: "complete", skippedStepIds }
-    : {
-        state: "in-progress",
-        currentStepId: state.stepIds[state.index],
-        skippedStepIds,
-      };
-
-  return {
+  const common = {
     steps,
-    progress,
-    currentStepId: isComplete ? undefined : state.stepIds[state.index],
     currentStepIndex: state.index,
-    isLastStep: state.index === steps.length - 1,
-    isComplete,
     canBack: state.index > 0,
-    next,
     back,
-    skip,
-    finish,
     moveStep,
   };
+
+  return state.index === steps.length
+    ? {
+        ...common,
+        isComplete: true,
+        progress: { state: "complete", skippedStepIds },
+        currentStepId: undefined,
+        isLastStep: false,
+        next: undefined,
+        skip: undefined,
+      }
+    : {
+        ...common,
+        isComplete: false,
+        progress: {
+          state: "in-progress",
+          currentStepId: state.stepIds[state.index],
+          skippedStepIds,
+        },
+        currentStepId: state.stepIds[state.index],
+        isLastStep: state.index === steps.length - 1,
+        next,
+        skip,
+      };
 }

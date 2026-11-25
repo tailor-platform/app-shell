@@ -34,13 +34,14 @@ import { Stepper, useStepper } from "@tailor-platform/app-shell";
 | `next()`                          | Complete the current step and advance; on the last step, complete the flow                                |
 | `back()`                          | Go back one step; after completion, reopen the last step                                                  |
 | `skip()`                          | Skip exactly the current step and advance; on the last step, complete the flow with that step skipped     |
-| `finish()`                        | Complete the last step and the flow; throws if called before the last step                                |
 | `moveStep(id)`                    | Move to an existing step; forward moves complete the steps passed                                         |
 | `moveStep(id, { skipped: true })` | On a forward move, skip the current step and every step before the destination, excluding the destination |
 
 For example, moving from `supplier` to `review` with `{ skipped: true }` skips `supplier`, `delivery`, and `approval`. Without the option, all three are complete. Skip records before the departure point are preserved. Backward moves discard skip records at and after the destination, so revisiting and completing a skipped step replaces its skipped status. The option has no effect on backward moves.
 
-`currentStepId` identifies the current step, or is `undefined` once complete. `currentStepIndex` is zero-based and equals `steps.length` once complete. `isLastStep`, `isComplete`, and `canBack` support button labels and disabled states. `back()` at the first step and `next()` / `skip()` / `finish()` after completion are no-ops.
+`UseStepperReturn` is a discriminated union: when `isComplete` is `false`, `currentStepId` is a step id and `next` / `skip` are callable. When `isComplete` is `true`, all three are `undefined` and `isLastStep` is `false`. Check `!flow.isComplete` before calling `flow.next()` or `flow.skip()` directly. Button handlers can use `onClick={flow.next}` with `disabled={flow.isComplete}`. `next()` completes the flow on the last step; there is no separate `finish` action.
+
+`currentStepIndex` is zero-based and equals `steps.length` once complete. `isLastStep`, `isComplete`, and `canBack` support button labels and disabled states. `back()` and `moveStep(id)` remain callable after completion and reopen a step, restoring `next` / `skip`. `back()` at the first step is a no-op. Previously captured `next` / `skip` callbacks are also no-ops if called after completion.
 
 The hook requires non-empty steps with unique ids and throws for unknown initial or destination ids. Step ids and their order must stay fixed for the hook's lifetime; labels, badges, and descriptions can change. `initialStepId` is read only on mount. Remount the owner (for example with a React `key`) to reset the flow or change its sequence.
 

@@ -894,8 +894,8 @@
         "typeSurface": null,
         "outline": "a06eb07de008e72d",
         "snapshot": null,
-        "outputMd": "94f42044c6ccae27",
-        "examples": "8c3f77e51ddc41b9"
+        "outputMd": "3d180c2f6ac4af38",
+        "examples": "4c4b642dfe5dfa85"
       }
     },
     "global-header-layout": {
@@ -1549,11 +1549,11 @@
         "useStepper"
       ],
       "hashes": {
-        "typeSurface": "a5ff97eae011c9fc",
-        "outline": "f32d2ca0a0852c27",
+        "typeSurface": "785b518188acd15a",
+        "outline": "1cc99003a3b9011c",
         "snapshot": "1fbf52f6178108d9",
-        "outputMd": "9d8d913822170ecb",
-        "examples": "e11005f75c59ba98"
+        "outputMd": "faab485530e65f57",
+        "examples": "cce71488af653480"
       }
     },
     "styling-theming": {
@@ -2067,7 +2067,7 @@
     "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "872a4d374bdf1923",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "281cfa2dcbff14be",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "eec440408611a233",
-    "packages/core/skills/app-shell-patterns/references/components/stepper.md": "9d8d913822170ecb",
+    "packages/core/skills/app-shell-patterns/references/components/stepper.md": "faab485530e65f57",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "c5933b640a78c3bf",
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "a94b016f0c9709b7",
     "packages/core/skills/app-shell-patterns/references/components/text.md": "e5311b1891f3ff7b",
@@ -2107,7 +2107,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "a0d3c952b0b10351",
     "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",
     "packages/core/skills/app-shell-patterns/references/patterns/form-single-page.md": "10a0f4d91a120752",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "94f42044c6ccae27",
+    "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "3d180c2f6ac4af38",
     "packages/core/skills/app-shell-patterns/references/patterns/i18n-labels.md": "d9f0851d9c98ecfe",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "253fcea1c4e5a42c",

@@ -38,6 +38,7 @@ function FormWizard() {
    * no deferring every error to the final submit.
    */
   const handleStepSubmit = (values: Record<string, unknown>) => {
+    if (flow.isComplete) return;
     const merged = { ...draft, ...(values as Partial<Draft>) };
     setDraft(merged);
     if (flow.isLastStep) {

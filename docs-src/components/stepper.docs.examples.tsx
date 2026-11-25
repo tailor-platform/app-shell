@@ -40,7 +40,7 @@ export function WizardNavigation() {
         <Button variant="ghost" disabled={flow.isComplete} onClick={flow.skip}>
           Skip
         </Button>
-        <Button disabled={flow.isComplete} onClick={flow.isLastStep ? flow.finish : flow.next}>
+        <Button disabled={flow.isComplete} onClick={flow.next}>
           {flow.isLastStep || flow.isComplete ? "Finish" : "Next"}
         </Button>
       </div>

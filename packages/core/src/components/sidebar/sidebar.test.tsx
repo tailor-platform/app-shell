@@ -496,8 +496,8 @@ describe("SidebarContent scrolling", () => {
   it("reaches into the inset sidebar's padding so the scrollbar sits on its edge", () => {
     render(<SidebarContent data-testid="list" />);
     const { className } = screen.getByTestId("list");
-    expect(className).toContain("astw:group-data-[variant=inset]:-mr-2");
-    expect(className).toContain("astw:group-data-[variant=inset]:pr-2");
+    expect(className).toContain("astw:group-data-[variant=inset]:-mr-[8px]");
+    expect(className).toContain("astw:group-data-[variant=inset]:pr-[8px]");
   });
 });
 

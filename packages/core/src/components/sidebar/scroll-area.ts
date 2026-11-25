@@ -10,7 +10,7 @@ const SCROLLBAR_HIDE_DELAY = 800;
  * - A thin scrollbar with no track, visible only while `data-scrolling` is set,
  *   like an overlay scrollbar, so it doesn't draw a stripe down the list at rest.
  * - A bottom fade while there is more to scroll, mirroring the content area's
- *   top fade: it clears over the last 2rem of scroll, and a list that fits has
+ *   top fade: it clears over the last 32px of scroll, and a list that fits has
  *   no scroll range, so no fade. Keyframes live in globals.css.
  * - Scroll padding as tall as the fade, so an item scrolled into view by
  *   keyboard focus stops clear of it.
@@ -18,9 +18,9 @@ const SCROLLBAR_HIDE_DELAY = 800;
 export const SIDEBAR_SCROLL_AREA_CLASS = [
   "astw:[scrollbar-width:thin] astw:[scrollbar-color:transparent_transparent]",
   "astw:data-scrolling:[scrollbar-color:var(--muted-foreground)_transparent]",
-  "astw:[mask-image:linear-gradient(to_top,transparent_0,#000_2rem,#000_100%)] astw:[mask-size:100%_calc(100%_+_2rem)] astw:[mask-repeat:no-repeat]",
-  "astw:[animation:appshell-sidebar-fade_auto_linear_both] astw:[animation-timeline:scroll(self_block)] astw:[animation-range:calc(100%_-_2rem)_100%]",
-  "astw:scroll-pb-8",
+  "astw:[mask-image:linear-gradient(to_top,transparent_0,#000_32px,#000_100%)] astw:[mask-size:100%_calc(100%_+_32px)] astw:[mask-repeat:no-repeat]",
+  "astw:[animation:appshell-sidebar-fade_auto_linear_both] astw:[animation-timeline:scroll(self_block)] astw:[animation-range:calc(100%_-_32px)_100%]",
+  "astw:scroll-pb-[32px]",
 ].join(" ");
 
 /**

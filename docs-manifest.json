@@ -270,11 +270,11 @@
       "claims": [],
       "symbols": ["Card"],
       "hashes": {
-        "typeSurface": "6ce6f0fdf2450cec",
-        "outline": "95de4d29491affb3",
-        "snapshot": "e6783ef54e17e11e",
-        "outputMd": "c1f88a287f197d79",
-        "examples": "7357698425183256"
+        "typeSurface": "d454951a1c8028c5",
+        "outline": "09ad75bebce6aa6a",
+        "snapshot": "a7cc8c2bbd00f1a8",
+        "outputMd": "dc3fe184d95e9669",
+        "examples": "6548e4b180f79849"
       }
     },
     "checkbox": {

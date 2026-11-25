@@ -79,7 +79,7 @@ export function useStepper<const Id extends string>(
   const common = {
     steps,
     currentStepIndex: state.index,
-    canBack: state.index > 0,
+    hasPrevious: state.index > 0,
     back,
     moveStep,
   };
@@ -87,23 +87,21 @@ export function useStepper<const Id extends string>(
   return state.index === steps.length
     ? {
         ...common,
-        isComplete: true,
+        hasNext: false,
         progress: { state: "complete", skippedStepIds },
         currentStepId: undefined,
-        isLastStep: false,
         next: undefined,
         skip: undefined,
       }
     : {
         ...common,
-        isComplete: false,
+        hasNext: true,
         progress: {
           state: "in-progress",
           currentStepId: state.stepIds[state.index],
           skippedStepIds,
         },
         currentStepId: state.stepIds[state.index],
-        isLastStep: state.index === steps.length - 1,
         next,
         skip,
       };

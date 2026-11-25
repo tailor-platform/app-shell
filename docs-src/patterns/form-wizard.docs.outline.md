@@ -57,7 +57,10 @@ dropdowns need only a wrapping `Field.Root` (no `name`, no state), server errors
 The wizard's specific mechanic: **make "Next" a `type="submit"` button.** `onFormSubmit` fires only
 after the current step's fields pass validation, so progression is gated natively — no manual
 validity check, and no deferring errors to the final submit. The handler merges that step's values
-into `draft` and advances; on the last step it calls the completion callback instead.
+into `draft` and advances with `next()`; on the final submission step, identified by `currentStepId`,
+it calls the page's completion callback before `next()`. For asynchronous submission, await success
+before advancing; a failed submission must leave the step in progress. `hasNext` stays `true` on
+that final step and becomes `false` only after `next()` completes it.
 
 Because each step's `Form` unmounts on navigation, values must be lifted into `draft` — that is
 what makes Back non-destructive. Every field, dropdowns included, is uncontrolled and re-reads its

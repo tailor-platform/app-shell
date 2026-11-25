@@ -52,12 +52,11 @@ export function FormWizard() {
    * no deferring every error to the final submit.
    */
   const handleStepSubmit = (values: Record<string, unknown>) => {
-    if (flow.isComplete) return;
+    if (!flow.hasNext) return;
     const merged = { ...draft, ...(values as Partial<Draft>) };
     setDraft(merged);
-    if (flow.isLastStep) {
+    if (flow.currentStepId === "review") {
       onComplete(merged);
-      return;
     }
     flow.next();
   };
@@ -74,77 +73,83 @@ export function FormWizard() {
           onStepClick={flow.moveStep}
         />
 
-        <Form key={step} noValidate onFormSubmit={handleStepSubmit}>
-          <Card.Root>
-            <Card.Header title={STEPS[step].label} />
-            <Card.Content>
-              {step === 0 && (
-                <Fieldset.Root className="space-y-4">
-                  <Field.Root name="title">
-                    <Field.Label>Title</Field.Label>
-                    <Field.Control required defaultValue={draft.title} />
-                    <Field.Error match="valueMissing">Title is required.</Field.Error>
-                  </Field.Root>
-                  <Field.Root name="description">
-                    <Field.Label>Description</Field.Label>
-                    <Field.Control defaultValue={draft.description} />
-                  </Field.Root>
-                </Fieldset.Root>
-              )}
+        {flow.hasNext ? (
+          <Form key={step} noValidate onFormSubmit={handleStepSubmit}>
+            <Card.Root>
+              <Card.Header title={STEPS[step].label} />
+              <Card.Content>
+                {step === 0 && (
+                  <Fieldset.Root className="space-y-4">
+                    <Field.Root name="title">
+                      <Field.Label>Title</Field.Label>
+                      <Field.Control required defaultValue={draft.title} />
+                      <Field.Error match="valueMissing">Title is required.</Field.Error>
+                    </Field.Root>
+                    <Field.Root name="description">
+                      <Field.Label>Description</Field.Label>
+                      <Field.Control defaultValue={draft.description} />
+                    </Field.Root>
+                  </Fieldset.Root>
+                )}
 
-              {step === 1 && (
-                <Field.Root name="owner">
-                  <Field.Label>Owner</Field.Label>
-                  {/* Uncontrolled like every other field — `defaultValue`
+                {step === 1 && (
+                  <Field.Root name="owner">
+                    <Field.Label>Owner</Field.Label>
+                    {/* Uncontrolled like every other field — `defaultValue`
                       restores the prior choice when the user steps Back. */}
-                  <Select
-                    items={OWNERS}
-                    defaultValue={draft.owner || null}
-                    placeholder="Assign owner"
-                  />
-                </Field.Root>
-              )}
-
-              {step === 2 && (
-                <Fieldset.Root className="grid gap-4 md:grid-cols-2">
-                  <Field.Root name="startDate">
-                    <Field.Label>Start date</Field.Label>
-                    <Field.Control type="date" required defaultValue={draft.startDate} />
-                    <Field.Error match="valueMissing">Start date is required.</Field.Error>
+                    <Select
+                      items={OWNERS}
+                      defaultValue={draft.owner || null}
+                      placeholder="Assign owner"
+                    />
                   </Field.Root>
-                  <Field.Root name="estimate">
-                    <Field.Label>Estimate (hours)</Field.Label>
-                    <Field.Control type="number" min={0} defaultValue={draft.estimate} />
-                  </Field.Root>
-                </Fieldset.Root>
-              )}
+                )}
 
-              {step === 3 && (
-                <dl className="grid grid-cols-2 gap-2 text-sm">
-                  <dt className="text-muted-foreground">Title</dt>
-                  <dd>{draft.title}</dd>
-                  <dt className="text-muted-foreground">Owner</dt>
-                  <dd>{draft.owner || "—"}</dd>
-                  <dt className="text-muted-foreground">Start date</dt>
-                  <dd>{draft.startDate || "—"}</dd>
-                  <dt className="text-muted-foreground">Estimate</dt>
-                  <dd>{draft.estimate ? `${draft.estimate}h` : "—"}</dd>
-                </dl>
-              )}
-            </Card.Content>
+                {step === 2 && (
+                  <Fieldset.Root className="grid gap-4 md:grid-cols-2">
+                    <Field.Root name="startDate">
+                      <Field.Label>Start date</Field.Label>
+                      <Field.Control type="date" required defaultValue={draft.startDate} />
+                      <Field.Error match="valueMissing">Start date is required.</Field.Error>
+                    </Field.Root>
+                    <Field.Root name="estimate">
+                      <Field.Label>Estimate (hours)</Field.Label>
+                      <Field.Control type="number" min={0} defaultValue={draft.estimate} />
+                    </Field.Root>
+                  </Fieldset.Root>
+                )}
+
+                {step === 3 && (
+                  <dl className="grid grid-cols-2 gap-2 text-sm">
+                    <dt className="text-muted-foreground">Title</dt>
+                    <dd>{draft.title}</dd>
+                    <dt className="text-muted-foreground">Owner</dt>
+                    <dd>{draft.owner || "—"}</dd>
+                    <dt className="text-muted-foreground">Start date</dt>
+                    <dd>{draft.startDate || "—"}</dd>
+                    <dt className="text-muted-foreground">Estimate</dt>
+                    <dd>{draft.estimate ? `${draft.estimate}h` : "—"}</dd>
+                  </dl>
+                )}
+              </Card.Content>
+            </Card.Root>
+
+            <div className="flex justify-between pt-4">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => (flow.hasPrevious ? flow.back() : onCancel())}
+              >
+                {flow.hasPrevious ? "Back" : "Cancel"}
+              </Button>
+              <Button type="submit">{flow.currentStepId === "review" ? "Create" : "Next"}</Button>
+            </div>
+          </Form>
+        ) : (
+          <Card.Root>
+            <Card.Header title="Task created" />
           </Card.Root>
-
-          <div className="flex justify-between pt-4">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => (flow.canBack ? flow.back() : onCancel())}
-            >
-              {step === 0 ? "Cancel" : "Back"}
-            </Button>
-            <Button type="submit">{flow.isLastStep ? "Create" : "Next"}</Button>
-          </div>
-        </Form>
+        )}
       </Layout.Column>
     </Layout>
   );

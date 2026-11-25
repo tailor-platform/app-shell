@@ -59,7 +59,8 @@ export type UseStepperReturn<Id extends string = string> = {
   steps: readonly StepperStep<Id>[];
   /** Zero-based position; equals steps.length once complete. */
   currentStepIndex: number;
-  canBack: boolean;
+  /** Whether back can move to or reopen a step. */
+  hasPrevious: boolean;
   /** Go back one step; after completion, reopens the last step. */
   back: () => void;
   /**
@@ -70,20 +71,20 @@ export type UseStepperReturn<Id extends string = string> = {
   moveStep: (id: Id, options?: { skipped?: boolean }) => void;
 } & (
   | {
-      isComplete: false;
+      /** next / skip are available, including on the last step. */
+      hasNext: true;
       progress: Extract<StepperProgress<Id>, { state: "in-progress" }>;
       currentStepId: Id;
-      isLastStep: boolean;
       /** Complete the current step and advance; completes the flow at the last step. */
       next: () => void;
       /** Skip the current step and advance; completes the flow at the last step. */
       skip: () => void;
     }
   | {
-      isComplete: true;
+      /** The flow is complete; next / skip are unavailable. */
+      hasNext: false;
       progress: Extract<StepperProgress<Id>, { state: "complete" }>;
       currentStepId: undefined;
-      isLastStep: false;
       next: undefined;
       skip: undefined;
     }

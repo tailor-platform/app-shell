@@ -17,10 +17,10 @@ it("infers literal ids without as const and does not widen them from initialStep
   // @ts-expect-error next completes the last step; there is no separate finish action.
   flow.finish();
 
-  if (flow.isComplete) {
+  if (!flow.hasNext) {
     expectTypeOf(flow.currentStepId).toEqualTypeOf<undefined>();
     expectTypeOf(flow.progress.state).toEqualTypeOf<"complete">();
-    expectTypeOf(flow.isLastStep).toEqualTypeOf<false>();
+    expectTypeOf(flow.hasNext).toEqualTypeOf<false>();
     expectTypeOf(flow.next).toEqualTypeOf<undefined>();
     expectTypeOf(flow.skip).toEqualTypeOf<undefined>();
     // @ts-expect-error Completed flows cannot advance.
@@ -30,6 +30,7 @@ it("infers literal ids without as const and does not widen them from initialStep
     flow.back();
     flow.moveStep("review");
   } else {
+    expectTypeOf(flow.hasNext).toEqualTypeOf<true>();
     expectTypeOf(flow.currentStepId).toEqualTypeOf<"supplier" | "review">();
     expectTypeOf(flow.progress.state).toEqualTypeOf<"in-progress">();
     expectTypeOf(flow.progress.currentStepId).toEqualTypeOf<"supplier" | "review">();

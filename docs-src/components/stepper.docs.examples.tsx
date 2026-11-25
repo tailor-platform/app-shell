@@ -34,14 +34,14 @@ export function WizardNavigation() {
         onStepClick={flow.moveStep}
       />
       <div className="flex justify-end gap-2">
-        <Button variant="outline" disabled={!flow.canBack} onClick={flow.back}>
+        <Button variant="outline" disabled={!flow.hasPrevious} onClick={flow.back}>
           Back
         </Button>
-        <Button variant="ghost" disabled={flow.isComplete} onClick={flow.skip}>
+        <Button variant="ghost" disabled={!flow.hasNext} onClick={flow.skip}>
           Skip
         </Button>
-        <Button disabled={flow.isComplete} onClick={flow.next}>
-          {flow.isLastStep || flow.isComplete ? "Finish" : "Next"}
+        <Button disabled={!flow.hasNext} onClick={flow.next}>
+          {flow.currentStepId === "review" || !flow.hasNext ? "Finish" : "Next"}
         </Button>
       </div>
     </div>

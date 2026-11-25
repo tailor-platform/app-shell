@@ -19,7 +19,7 @@ it("infers literal ids without as const and does not widen them from initialStep
 
   if (!flow.hasNext) {
     expectTypeOf(flow.currentStepId).toEqualTypeOf<undefined>();
-    expectTypeOf(flow.progress.state).toEqualTypeOf<"complete">();
+    expectTypeOf(flow.progress.state).toEqualTypeOf<"started">();
     expectTypeOf(flow.hasNext).toEqualTypeOf<false>();
     expectTypeOf(flow.next).toEqualTypeOf<undefined>();
     expectTypeOf(flow.skip).toEqualTypeOf<undefined>();
@@ -32,14 +32,18 @@ it("infers literal ids without as const and does not widen them from initialStep
   } else {
     expectTypeOf(flow.hasNext).toEqualTypeOf<true>();
     expectTypeOf(flow.currentStepId).toEqualTypeOf<"supplier" | "review">();
-    expectTypeOf(flow.progress.state).toEqualTypeOf<"in-progress">();
-    expectTypeOf(flow.progress.currentStepId).toEqualTypeOf<"supplier" | "review">();
+    expectTypeOf(flow.progress.state).toEqualTypeOf<"started">();
+    expectTypeOf(flow.progress.passedSteps).toEqualTypeOf<readonly ("complete" | "skipped")[]>();
     expectTypeOf(flow.next).toEqualTypeOf<() => void>();
     expectTypeOf(flow.skip).toEqualTypeOf<() => void>();
     flow.next();
     flow.skip();
   }
 
+  // @ts-expect-error Progress derives the current step from the passed prefix.
+  void flow.progress.currentStepId;
+  // @ts-expect-error Skipped outcomes are part of the passed prefix, not independent IDs.
+  void flow.progress.skippedStepIds;
   flow.moveStep("review", { skipped: true });
   // @ts-expect-error Destinations must come from steps.
   flow.moveStep("missing");

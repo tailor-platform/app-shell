@@ -13,11 +13,7 @@ const STEPS = [
 describe("useStepper", () => {
   it("starts at the first step, or at the initial id", () => {
     const { result } = renderHook(() => useStepper({ steps: STEPS }));
-    expect(result.current.progress).toEqual({
-      state: "in-progress",
-      currentStepId: "supplier",
-      skippedStepIds: [],
-    });
+    expect(result.current.progress).toEqual({ state: "started", passedSteps: [] });
     expect(result.current.hasNext).toBe(true);
     expect(result.current.hasPrevious).toBe(false);
     act(() => result.current.back());
@@ -26,6 +22,10 @@ describe("useStepper", () => {
     const initial = renderHook(() => useStepper({ steps: STEPS, initialStepId: "approval" }));
     expect(initial.result.current.currentStepId).toBe("approval");
     expect(initial.result.current.currentStepIndex).toBe(2);
+    expect(initial.result.current.progress).toEqual({
+      state: "started",
+      passedSteps: ["complete", "complete"],
+    });
     expect(initial.result.current.hasPrevious).toBe(true);
   });
 
@@ -40,7 +40,10 @@ describe("useStepper", () => {
     expect(result.current.currentStepId).toBe("review");
     expect(result.current.hasNext).toBe(true);
     act(() => result.current.next!());
-    expect(result.current.progress).toEqual({ state: "complete", skippedStepIds: [] });
+    expect(result.current.progress).toEqual({
+      state: "started",
+      passedSteps: ["complete", "complete", "complete", "complete"],
+    });
     expect(result.current.currentStepId).toBeUndefined();
     expect(result.current.currentStepIndex).toBe(STEPS.length);
     expect(result.current.hasNext).toBe(false);
@@ -51,7 +54,10 @@ describe("useStepper", () => {
       next!();
       skip!();
     });
-    expect(result.current.progress).toEqual({ state: "complete", skippedStepIds: [] });
+    expect(result.current.progress).toEqual({
+      state: "started",
+      passedSteps: ["complete", "complete", "complete", "complete"],
+    });
     act(() => result.current.back());
     expect(result.current.currentStepId).toBe("review");
     expect(result.current.hasNext).toBe(true);
@@ -68,9 +74,8 @@ describe("useStepper", () => {
       result.current.next!();
     });
     expect(result.current.progress).toEqual({
-      state: "in-progress",
-      currentStepId: "approval",
-      skippedStepIds: ["supplier"],
+      state: "started",
+      passedSteps: ["skipped", "complete"],
     });
   });
 
@@ -80,9 +85,10 @@ describe("useStepper", () => {
       const { result } = renderHook(() => useStepper({ steps: STEPS }));
       act(() => result.current.moveStep("review", skipped ? { skipped: true } : undefined));
       expect(result.current.progress).toEqual({
-        state: "in-progress",
-        currentStepId: "review",
-        skippedStepIds: skipped ? ["supplier", "delivery", "approval"] : [],
+        state: "started",
+        passedSteps: skipped
+          ? ["skipped", "skipped", "skipped"]
+          : ["complete", "complete", "complete"],
       });
     },
   );
@@ -92,27 +98,20 @@ describe("useStepper", () => {
     act(() => result.current.moveStep("review", { skipped: true }));
     act(() => result.current.back());
     expect(result.current.progress).toEqual({
-      state: "in-progress",
-      currentStepId: "approval",
-      skippedStepIds: ["supplier", "delivery"],
+      state: "started",
+      passedSteps: ["skipped", "skipped"],
     });
     act(() => result.current.next!());
     expect(result.current.progress).toEqual({
-      state: "in-progress",
-      currentStepId: "review",
-      skippedStepIds: ["supplier", "delivery"],
+      state: "started",
+      passedSteps: ["skipped", "skipped", "complete"],
     });
     act(() => result.current.moveStep("delivery", { skipped: true }));
-    expect(result.current.progress).toEqual({
-      state: "in-progress",
-      currentStepId: "delivery",
-      skippedStepIds: ["supplier"],
-    });
+    expect(result.current.progress).toEqual({ state: "started", passedSteps: ["skipped"] });
     act(() => result.current.moveStep("review"));
     expect(result.current.progress).toEqual({
-      state: "in-progress",
-      currentStepId: "review",
-      skippedStepIds: ["supplier"],
+      state: "started",
+      passedSteps: ["skipped", "complete", "complete"],
     });
   });
 
@@ -122,23 +121,19 @@ describe("useStepper", () => {
     expect(result.current.hasPrevious).toBe(false);
     act(() => result.current.skip!());
     expect(result.current.progress).toEqual({
-      state: "complete",
-      skippedStepIds: ["supplier"],
+      state: "started",
+      passedSteps: ["skipped"],
     });
     expect(result.current.hasNext).toBe(false);
     expect(result.current.hasPrevious).toBe(true);
     expect(result.current.next).toBeUndefined();
     expect(result.current.skip).toBeUndefined();
     act(() => result.current.back());
-    expect(result.current.progress).toEqual({
-      state: "in-progress",
-      currentStepId: "supplier",
-      skippedStepIds: [],
-    });
+    expect(result.current.progress).toEqual({ state: "started", passedSteps: [] });
     expect(result.current.hasNext).toBe(true);
     expect(result.current.hasPrevious).toBe(false);
     act(() => result.current.next!());
-    expect(result.current.progress).toEqual({ state: "complete", skippedStepIds: [] });
+    expect(result.current.progress).toEqual({ state: "started", passedSteps: ["complete"] });
   });
 
   it("restores navigation when moving to a step after completion", () => {
@@ -151,7 +146,7 @@ describe("useStepper", () => {
     expect(result.current.next).toBeTypeOf("function");
     expect(result.current.skip).toBeTypeOf("function");
     act(() => result.current.skip!());
-    expect(result.current.progress).toEqual({ state: "complete", skippedStepIds: ["supplier"] });
+    expect(result.current.progress).toEqual({ state: "started", passedSteps: ["skipped"] });
   });
 
   it("completes the last step only after the application submits successfully", async () => {
@@ -169,10 +164,10 @@ describe("useStepper", () => {
 
     await expect(submit()).rejects.toThrow("Submission failed");
     expect(result.current.hasNext).toBe(true);
-    expect(result.current.progress.state).toBe("in-progress");
+    expect(result.current.progress).toEqual({ state: "started", passedSteps: [] });
     await act(submit);
     expect(result.current.hasNext).toBe(false);
-    expect(result.current.progress.state).toBe("complete");
+    expect(result.current.progress).toEqual({ state: "started", passedSteps: ["complete"] });
   });
 
   it("rejects empty, duplicate, and unknown initial ids", () => {
@@ -208,11 +203,7 @@ describe("useStepper", () => {
       initialStepId: "review",
     });
     expect(result.current.currentStepId).toBe("delivery");
-    expect(result.current.progress).toEqual({
-      state: "in-progress",
-      currentStepId: "delivery",
-      skippedStepIds: ["supplier"],
-    });
+    expect(result.current.progress).toEqual({ state: "started", passedSteps: ["skipped"] });
     expect(() => rerender({ steps: STEPS.toReversed(), initialStepId: "supplier" })).toThrow(
       "step ids and order must stay fixed",
     );

@@ -10,7 +10,7 @@ export function BasicUsage() {
         { id: "approval", label: "Approval" },
         { id: "review", label: "Review" },
       ]}
-      progress={{ state: "in-progress", currentStepId: "delivery" }}
+      progress={{ state: "started", passedSteps: ["complete"] }}
     />
   );
 }
@@ -64,7 +64,7 @@ export function StageProgress() {
         },
         { id: "qg5", label: "QG5", description: "Plan 9 Dec" },
       ]}
-      progress={{ state: "in-progress", currentStepId: "qg4", skippedStepIds: ["qg3"] }}
+      progress={{ state: "started", passedSteps: ["complete", "complete", "skipped"] }}
     />
   );
 }

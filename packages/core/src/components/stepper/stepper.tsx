@@ -20,58 +20,39 @@ type ResolvedStep<Id extends string> = StepperStep<Id> & { status: StepperStepSt
 /** Passed steps — completed or skipped — are the ones you can go back to. */
 const isPassed = (status: StepperStepStatus) => status === "complete" || status === "skipped";
 
-/**
- * Turns the steps and one progress position into a status per step. Problems
- * a type can't rule out — ids that aren't steps, duplicate ids, skipping a
- * step not yet reached — are reported rather than drawn.
- */
+/** Derives statuses from passed outcomes, reporting invalid runtime input rather than drawing it. */
 function resolveSteps<Id extends string>(
   steps: readonly StepperStep<Id>[],
-  progress: StepperProgress<Id>,
+  progress: StepperProgress,
 ) {
   const problems: string[] = [];
-  const indexById = new Map<string, number>();
-  steps.forEach((step, index) => {
-    if (indexById.has(step.id)) problems.push(`duplicate step id "${step.id}"`);
-    else indexById.set(step.id, index);
-  });
-
-  let currentIndex = -1;
-  // Steps before this index have been passed.
-  let passedBefore = 0;
-  if (progress.state === "in-progress") {
-    currentIndex = indexById.get(progress.currentStepId) ?? -1;
-    if (currentIndex < 0) problems.push(`currentStepId "${progress.currentStepId}" is not a step`);
-    passedBefore = Math.max(currentIndex, 0);
-  } else if (progress.state === "complete") {
-    passedBefore = steps.length;
+  const seen = new Set<Id>();
+  for (const step of steps) {
+    if (seen.has(step.id)) problems.push(`duplicate step id "${step.id}"`);
+    seen.add(step.id);
   }
 
-  const skipped = new Set<number>();
-  if (progress.state !== "not-started") {
-    for (const id of progress.skippedStepIds ?? []) {
-      const index = indexById.get(id);
-      if (index == null) problems.push(`skipped step id "${id}" is not a step`);
-      else if (index >= passedBefore)
-        problems.push(`step "${id}" can't be skipped before it has been passed`);
-      else skipped.add(index);
-    }
-  }
+  const passedSteps = progress.state === "started" ? progress.passedSteps : [];
+  if (passedSteps.length > steps.length)
+    problems.push("passedSteps contains more entries than steps; extra outcomes are ignored");
+  const passedBefore = Math.min(passedSteps.length, steps.length);
+  const currentIndex =
+    progress.state === "started" && passedBefore < steps.length ? passedBefore : -1;
 
   const statusAt = (index: number): StepperStepStatus => {
     if (index === currentIndex) return "current";
     if (index >= passedBefore) return "upcoming";
-    return skipped.has(index) ? "skipped" : "complete";
+    const outcome = passedSteps[index];
+    if (outcome === "complete" || outcome === "skipped") return outcome;
+    problems.push(`passedSteps[${index}] must be "complete" or "skipped"; shown as complete`);
+    return "complete";
   };
   const resolved: ResolvedStep<Id>[] = steps.map((step, index) => ({
     ...step,
     status: statusAt(index),
   }));
 
-  // The line is filled up to the furthest step reached.
-  const reachedIndex = progress.state === "complete" ? steps.length - 1 : currentIndex;
-
-  return { steps: resolved, currentIndex, reachedIndex, problems };
+  return { steps: resolved, currentIndex, passedBefore, problems };
 }
 
 // ============================================================================
@@ -264,10 +245,10 @@ function useCompact(ref: React.RefObject<HTMLElement | null>) {
  * of steps: the steps of a wizard form, the stages of an approval flow, the
  * quality gates of a project.
  *
- * `steps` lists the steps in order; `progress` says how far the flow has got
- * — not started, on one current step, or complete — and which passed steps
- * were skipped. Steps before the current one show as complete, the ones after
- * it as upcoming, and the line is filled up to the current step. The current
+ * `steps` lists the steps in order; `progress` gives an outcome for each passed
+ * step, starting at the first. The next step is current, the ones after it
+ * are upcoming, and all steps are passed once the outcomes cover the sequence.
+ * The line is filled up to the current step. The current
  * step gets `aria-current="step"`. It only displays progress; the page owns it.
  *
  * The steps sit in a row, which scrolls sideways when they don't fit. Below
@@ -283,7 +264,7 @@ function useCompact(ref: React.RefObject<HTMLElement | null>) {
  *     { id: "lines", label: "Lines" },
  *     { id: "review", label: "Review" },
  *   ]}
- *   progress={{ state: "in-progress", currentStepId: "lines" }}
+ *   progress={{ state: "started", passedSteps: ["complete"] }}
  *   onStepClick={(id) => goTo(id)}
  * />
  * ```
@@ -300,7 +281,7 @@ export function Stepper<Id extends string = string>({
   const rootRef = React.useRef<HTMLDivElement>(null);
   const baseId = React.useId();
   const compact = useCompact(rootRef);
-  const { steps: resolved, currentIndex, reachedIndex, problems } = resolveSteps(steps, progress);
+  const { steps: resolved, currentIndex, passedBefore, problems } = resolveSteps(steps, progress);
   const current = currentIndex >= 0 ? resolved[currentIndex] : undefined;
 
   const problemKey = problems.join("; ");
@@ -308,7 +289,7 @@ export function Stepper<Id extends string = string>({
     if (problemKey) console.warn(`[Stepper] ${problemKey}.`);
   }, [problemKey]);
 
-  const filledAfter = (index: number) => index < reachedIndex;
+  const filledAfter = (index: number) => index < passedBefore;
 
   return (
     <div

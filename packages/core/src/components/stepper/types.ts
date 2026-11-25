@@ -4,7 +4,7 @@ import type * as React from "react";
 export type StepperStepStatus = "complete" | "current" | "upcoming" | "skipped";
 
 export interface StepperStep<Id extends string = string> {
-  /** Stable, unique id, used by `progress` and passed to `onStepClick`. */
+  /** Stable, unique id, used for navigation and passed to `onStepClick`. */
   id: Id;
   /** Step name. */
   label: React.ReactNode;
@@ -15,23 +15,18 @@ export interface StepperStep<Id extends string = string> {
 }
 
 /**
- * How far the flow has got. Steps before the current one are complete, the
- * current one is current, and the ones after it are upcoming.
- *
- * `skippedStepIds` names steps the user moved past without doing — for
- * example by pressing "Skip" in a wizard. Only steps already passed can be
- * skipped: before `currentStepId` while in progress, or any step once complete.
+ * Outcomes for the passed prefix of `steps`, in the same order.
+ * The next step is current; when every step has an outcome, the flow is complete.
  */
-export type StepperProgress<Id extends string = string> =
+export type StepperProgress =
   | { state: "not-started" }
-  | { state: "in-progress"; currentStepId: Id; skippedStepIds?: readonly Id[] }
-  | { state: "complete"; skippedStepIds?: readonly Id[] };
+  | { state: "started"; passedSteps: readonly ("complete" | "skipped")[] };
 
 export interface StepperProps<Id extends string = string> {
   /** The steps, in order. */
   steps: readonly StepperStep<Id>[];
-  /** How far the flow has got. Its ids must be ids of `steps`. */
-  progress: StepperProgress<NoInfer<Id>>;
+  /** How far the flow has got. Outcomes correspond to the passed prefix of `steps`. */
+  progress: StepperProgress;
   /**
    * Makes passed steps (completed or skipped) clickable — for example to go
    * back to an earlier step of a wizard. Called with the step's `id`.
@@ -57,6 +52,8 @@ export interface UseStepperOptions<Id extends string = string> {
 
 export type UseStepperReturn<Id extends string = string> = {
   steps: readonly StepperStep<Id>[];
+  /** Passed-step outcomes; the hook starts immediately, even for an empty prefix. */
+  progress: Extract<StepperProgress, { state: "started" }>;
   /** Zero-based position; equals steps.length once complete. */
   currentStepIndex: number;
   /** Whether back can move to or reopen a step. */
@@ -73,7 +70,6 @@ export type UseStepperReturn<Id extends string = string> = {
   | {
       /** next / skip are available, including on the last step. */
       hasNext: true;
-      progress: Extract<StepperProgress<Id>, { state: "in-progress" }>;
       currentStepId: Id;
       /** Complete the current step and advance; completes the flow at the last step. */
       next: () => void;
@@ -83,7 +79,6 @@ export type UseStepperReturn<Id extends string = string> = {
   | {
       /** The flow is complete; next / skip are unavailable. */
       hasNext: false;
-      progress: Extract<StepperProgress<Id>, { state: "complete" }>;
       currentStepId: undefined;
       next: undefined;
       skip: undefined;

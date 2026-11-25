@@ -86,13 +86,15 @@ function SettingsMenu() {
 
 Use `useAppShellConfig` when you only need configuration data:
 
-```typescript
-// ✅ Good - subscribes to configuration only
-const { configurations } = useAppShellConfig();
-
-// ❌ Overkill - useAppShell also subscribes to contextData changes
-const { configurations } = useAppShell();
+```tsx
+function ModuleCount() {
+  // Subscribes to configuration only.
+  const { configurations } = useAppShellConfig();
+  return <span>{configurations.modules.length} modules</span>;
+}
 ```
+
+Using `useAppShell()` here would also subscribe to context-data changes that this component does not use.
 
 ## Comparison with Other Hooks
 

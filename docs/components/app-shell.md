@@ -25,6 +25,7 @@ const modules = [
     path: "dashboard",
     component: DashboardPage,
     meta: { title: "Dashboard" },
+    resources: [],
   }),
 ];
 
@@ -226,10 +227,26 @@ Supported locales: `en`, `ja`
 
 Access the configured timezone in components using [`useTimeZone`](../api/use-time-zone.md).
 
+### toastDefaults
+
+- **Type:** `{ error?: ToastDefault; action?: ToastDefault }` where `ToastDefault` is `{ duration?: number; closeButton?: boolean }` with at least one field set (optional)
+- **Default:** `error` and `action` both `{ duration: Infinity, closeButton: true }`
+- **Description:** Options [`useToast`](../api/use-toast.md) applies to a toast when the call does not set them. `error` covers `toast.error(...)` and the error state of `toast.promise(...)`; `action` covers any toast with an `action`. With the defaults, these toasts stay until the user closes them and show a close button. A field set here replaces that field only; fields and kinds left out keep the default. An empty object such as `error: {}` is a type error; leave the kind out instead.
+
+```tsx
+// Errors close after 4 seconds without a close button, as before 1.21.0;
+// toasts with an action still stay.
+<AppShell toastDefaults={{ error: { duration: 4000, closeButton: false } }} modules={modules}>
+  {/* ... */}
+</AppShell>
+```
+
+Toasts with `dismissible: false` always keep sonner's defaults, and a `duration` or `closeButton` passed to the call always wins. See [useToast → Defaults](../api/use-toast.md#defaults).
+
 ### errorBoundary
 
 - **Type:** `ErrorBoundaryComponent` (optional)
-- **Description:** Global error boundary component applied to all routes
+- **Description:** Global error boundary element applied to all routes. Pass JSX such as `<GlobalErrorBoundary />`, not a component constructor.
 
 ```tsx
 import { Text, useRouteError } from "@tailor-platform/app-shell";
@@ -244,7 +261,7 @@ const GlobalErrorBoundary = () => {
   );
 };
 
-<AppShell modules={modules} errorBoundary={GlobalErrorBoundary}>
+<AppShell modules={modules} errorBoundary={<GlobalErrorBoundary />}>
   {/* ... */}
 </AppShell>;
 ```
@@ -260,6 +277,8 @@ First, define your context data type using module augmentation:
 
 ```typescript
 // types.d.ts — `User` and `ApiClient` are your application's own types
+import "@tailor-platform/app-shell";
+
 declare module "@tailor-platform/app-shell" {
   interface AppShellRegister {
     contextData: {
@@ -469,6 +488,7 @@ const modules = [
     path: "dashboard",
     component: DashboardPage,
     meta: { title: "Dashboard" },
+    resources: [],
   }),
   defineModule({
     path: "products",
@@ -506,7 +526,7 @@ function App() {
       settingsResources={settingsResources}
       locale="en"
       defaultColorTheme="system"
-      errorBoundary={ErrorBoundary}
+      errorBoundary={<ErrorBoundary />}
       contextData={{ currentUser }}
     >
       <SidebarLayout />

@@ -155,6 +155,21 @@ For a dynamic label, use `breadcrumbTitle: (segment) => labels.t("order", { id: 
 Other callbacks receive the URL segment; AppShell resolves any returned `LocalizedString` with the current locale.
 The existing `() => labels.t("orders")` form remains supported. Wrap handwritten locale functions in an outer callback rather than passing them directly.
 
+### PageComponent Type
+
+`PageComponent` is the exported React function-component type with an optional `appShellPageProps: AppShellPageProps` static field. Use it when you want to annotate the component itself rather than applying `satisfies AppShellPageProps` to the metadata object:
+
+```tsx
+import type { PageComponent } from "@tailor-platform/app-shell";
+
+const AboutPage: PageComponent = () => <div>About</div>;
+AboutPage.appShellPageProps = {
+  meta: { title: "About" },
+};
+
+export default AboutPage;
+```
+
 ## Path Conventions
 
 | Directory Name | Converts To | Description                                    |
@@ -254,6 +269,7 @@ const ordersResource = defineResource({
 });
 const purchasingModule = defineModule({
   path: "purchasing",
+  meta: { title: "Purchasing" },
   resources: [ordersResource],
 });
 

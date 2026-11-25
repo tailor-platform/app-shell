@@ -700,11 +700,11 @@
       "claims": [],
       "symbols": ["Dialog"],
       "hashes": {
-        "typeSurface": "b1614970f950ceb6",
-        "outline": "5ba9ca06b0385f80",
-        "snapshot": "86c672f1c58f27fd",
-        "outputMd": "cd9fa9c4b8ccb108",
-        "examples": "f5540beaf3f36609"
+        "typeSurface": "970c4f4b295f98ac",
+        "outline": "d99d7d41e14a5962",
+        "snapshot": "7883d34cf5f88fe5",
+        "outputMd": "4f92da57b8cc194a",
+        "examples": "97db8015ba11e816"
       }
     },
     "document-collection": {
@@ -718,9 +718,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "69c9b4ebd152c5a0",
+        "outline": "141fa39a83ffb864",
         "snapshot": null,
-        "outputMd": "e79d9120d86db198",
+        "outputMd": "c91988333b4c509d",
         "examples": "aaa5dfa2cd5b39e7"
       }
     },
@@ -735,9 +735,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "d63e6b8789939570",
+        "outline": "ce097f6164ad3c79",
         "snapshot": null,
-        "outputMd": "e07c7fee2478a21d",
+        "outputMd": "d7fa11ec49dd2569",
         "examples": null
       }
     },
@@ -807,9 +807,9 @@
       "symbols": ["Field", "Fieldset", "Form", "FormProps"],
       "hashes": {
         "typeSurface": "1f163cea5d23f327",
-        "outline": "7eb7d87a97e6ba42",
+        "outline": "7f2c5d2cd317a6d6",
         "snapshot": "5d7a7904c5256f29",
-        "outputMd": "c97c3d6e426d8b29",
+        "outputMd": "d91a94b40e60105b",
         "examples": "c56460c1a93d532b"
       }
     },
@@ -824,78 +824,27 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "89deaf65c35cc3d9",
+        "outline": "ce62f9096f1fa245",
         "snapshot": null,
         "outputMd": "ed187ac3a0773d3d",
         "examples": "abd682c0980d1e21"
       }
     },
-    "form-modal": {
-      "slug": "form-modal",
+    "forms": {
+      "slug": "forms",
       "kind": "prose",
-      "outline": "docs-src/patterns/form-modal.docs.outline.md",
-      "output": "docs/patterns/form-modal.md",
-      "examples": "docs-src/patterns/form-modal.docs.examples.tsx",
+      "outline": "docs-src/patterns/forms.docs.outline.md",
+      "output": "docs/patterns/forms.md",
+      "examples": "docs-src/patterns/forms.docs.examples.tsx",
       "sources": [],
       "claims": [],
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "8adb1ebff87dda10",
+        "outline": "a9a5faf3167e2354",
         "snapshot": null,
-        "outputMd": "a0d3c952b0b10351",
-        "examples": "2d4e2f50bb0d2ef7"
-      }
-    },
-    "form-sectioned": {
-      "slug": "form-sectioned",
-      "kind": "prose",
-      "outline": "docs-src/patterns/form-sectioned.docs.outline.md",
-      "output": "docs/patterns/form-sectioned.md",
-      "examples": "docs-src/patterns/form-sectioned.docs.examples.tsx",
-      "sources": [],
-      "claims": [],
-      "symbols": [],
-      "hashes": {
-        "typeSurface": null,
-        "outline": "af8e73b07f01cef4",
-        "snapshot": null,
-        "outputMd": "d31cd3ae6ad0790c",
-        "examples": "e66de48697da4786"
-      }
-    },
-    "form-single-page": {
-      "slug": "form-single-page",
-      "kind": "prose",
-      "outline": "docs-src/patterns/form-single-page.docs.outline.md",
-      "output": "docs/patterns/form-single-page.md",
-      "examples": "docs-src/patterns/form-single-page.docs.examples.tsx",
-      "sources": [],
-      "claims": [],
-      "symbols": [],
-      "hashes": {
-        "typeSurface": null,
-        "outline": "828493750c9e7dbf",
-        "snapshot": null,
-        "outputMd": "10a0f4d91a120752",
-        "examples": "c160f4883aff98f3"
-      }
-    },
-    "form-wizard": {
-      "slug": "form-wizard",
-      "kind": "prose",
-      "outline": "docs-src/patterns/form-wizard.docs.outline.md",
-      "output": "docs/patterns/form-wizard.md",
-      "examples": "docs-src/patterns/form-wizard.docs.examples.tsx",
-      "sources": [],
-      "claims": [],
-      "symbols": [],
-      "hashes": {
-        "typeSurface": null,
-        "outline": "fbc09ef9994494cb",
-        "snapshot": null,
-        "outputMd": "851afb4672da6673",
-        "examples": "157ff03dc999d3d3"
+        "outputMd": "8d580e1662eade63",
+        "examples": "f53ece537992099a"
       }
     },
     "global-header-layout": {
@@ -951,10 +900,10 @@
       "symbols": ["Grid", "GridItemProps", "GridProps"],
       "hashes": {
         "typeSurface": "e14ecb0505a2a8bf",
-        "outline": "bc138127204f0efd",
-        "snapshot": "40fca09bec6804cf",
-        "outputMd": "d048e972ae8aba3e",
-        "examples": "26def49133539478"
+        "outline": "6d70f63ccd85cdea",
+        "snapshot": "75c3ac996c7927f0",
+        "outputMd": "cd9a63edcbee1d0f",
+        "examples": "15a5ffbaf1ed7eee"
       }
     },
     "guards/hidden": {
@@ -1155,9 +1104,9 @@
       "symbols": ["Layout", "LayoutProps"],
       "hashes": {
         "typeSurface": "c7e8fec79020d657",
-        "outline": "b5f77b82d71d0eae",
+        "outline": "eb1d5b8a4c2b2487",
         "snapshot": "03dedb3cc14b1eaf",
-        "outputMd": "3b8bf269c15e2fa5",
+        "outputMd": "54869a7b91f2a356",
         "examples": "c34348bb6d088ad1"
       }
     },
@@ -1206,9 +1155,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "dd37a482764cebc7",
+        "outline": "97e729d48d49dec9",
         "snapshot": null,
-        "outputMd": "12a1e61a5d3c81a6",
+        "outputMd": "c7b1bf58c0f22418",
         "examples": null
       }
     },
@@ -1407,7 +1356,7 @@
       "hashes": {
         "typeSurface": "e760949efcbe4c38",
         "outline": "3c51b0bd7cc290ab",
-        "snapshot": "8c75bb4dad18f7b8",
+        "snapshot": "c6018473d903f2af",
         "outputMd": "0be1c6430a4b7ec1",
         "examples": "8f93acd2d478616f"
       }
@@ -1727,7 +1676,7 @@
       "hashes": {
         "typeSurface": "95d4d96e2c7cad05",
         "outline": "1044541495fff6fd",
-        "snapshot": "e63b60420ec5113f",
+        "snapshot": "1e3e80f9664bcd2b",
         "outputMd": "6010470f3c41538a",
         "examples": "7e372a50c2939317"
       }
@@ -2024,15 +1973,15 @@
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "9b1672c71b6db3ff",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "8930a410d7d45f89",
-    "packages/core/skills/app-shell-patterns/references/components/dialog.md": "cd9fa9c4b8ccb108",
+    "packages/core/skills/app-shell-patterns/references/components/dialog.md": "4f92da57b8cc194a",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "cabfb86627aefd6f",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "12021e27b57f45e9",
-    "packages/core/skills/app-shell-patterns/references/components/form.md": "c97c3d6e426d8b29",
+    "packages/core/skills/app-shell-patterns/references/components/form.md": "d91a94b40e60105b",
     "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "fe86450720c4d586",
-    "packages/core/skills/app-shell-patterns/references/components/grid.md": "d048e972ae8aba3e",
+    "packages/core/skills/app-shell-patterns/references/components/grid.md": "cd9a63edcbee1d0f",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "876dca4c3b3bc9c5",
     "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",
-    "packages/core/skills/app-shell-patterns/references/components/layout.md": "3b8bf269c15e2fa5",
+    "packages/core/skills/app-shell-patterns/references/components/layout.md": "54869a7b91f2a356",
     "packages/core/skills/app-shell-patterns/references/components/menu.md": "6ecd9a3297729b38",
     "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "4742120c07f00991",
     "packages/core/skills/app-shell-patterns/references/components/select.md": "d396dd371f17e96c",
@@ -2078,18 +2027,15 @@
     "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "717d6989930fb8c8",
     "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "90d80eef666e4cb4",
     "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "a0d3c952b0b10351",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-single-page.md": "10a0f4d91a120752",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "851afb4672da6673",
+    "packages/core/skills/app-shell-patterns/references/patterns/forms.md": "8d580e1662eade63",
     "packages/core/skills/app-shell-patterns/references/patterns/i18n-labels.md": "d9f0851d9c98ecfe",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "253fcea1c4e5a42c",
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "fbdc96bd3d3d0140",
-    "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "e79d9120d86db198",
-    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "e07c7fee2478a21d",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "dfc2f40438ad075c",
-    "packages/core/skills/app-shell-upgrade/references/migrations.md": "17556b547fa2e75f",
+    "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "c91988333b4c509d",
+    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "d7fa11ec49dd2569",
+    "packages/core/skills/app-shell-patterns/SKILL.md": "0d761a44c2c3b6bd",
+    "packages/core/skills/app-shell-upgrade/references/migrations.md": "7310248d84b398aa",
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   }
 }

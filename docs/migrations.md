@@ -16,6 +16,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | 1.22.0        | [ActionPanel no longer registers CommandPalette actions](#1220-actionpanel-no-longer-registers-commandpalette-actions)       |
+| 1.22.0        | [Scroll a dialog's content in `Dialog.Body`](#1220-scroll-a-dialogs-content-in-dialogbody)                                   |
 | 1.21.0        | [Error and action toasts stay until the user closes them](#1210-error-and-action-toasts-stay-until-the-user-closes-them)     |
 | 1.21.0        | [Testing helpers deprecated in favour of TestingProvider](#1210-testing-helpers-deprecated-in-favour-of-testingprovider)     |
 | 1.20.0        | [z-index tokens renamed; old names are aliases](#1200-z-index-tokens-renamed-old-names-are-aliases)                          |
@@ -74,6 +75,32 @@ The filter preserves the old eligibility rules and maps `onClick` to the hook's 
 `ActionPanel` itself no longer requires a CommandPalette provider and can be rendered outside `AppShell`. The registration hook still requires `AppShell`.
 
 Test `ActionPanel` or a presentation-only component directly without `AppShell`; a screen that calls the registration hook still needs `AppShell` in its tests. If you extract registration logic for reuse, use a custom hook and test it with `renderHook` and an `AppShell` + `AppShellTestingProvider` wrapper; see the [Testing guide](./concepts/testing.md#test-commandpalette-actions).
+
+## 1.22.0: scroll a dialog's content in `Dialog.Body`
+
+**Applies to:** dialogs that made `Dialog.Content` a flex column themselves (for example `className="flex flex-col max-h-[85vh]"`) and gave a direct child its own scroll area (`min-h-0 flex-1 overflow-y-auto`) to keep the header and footer in view.
+
+`Dialog.Content` is now a flex column by default, and only `Dialog.Body` shrinks in it: every other direct child keeps its full height. A hand-made scroll area therefore grows to fit its content, and the whole dialog scrolls instead, header and footer included. Nothing errors.
+
+To find these, search for `Dialog.Content` with `flex-col` in its `className`, or for `overflow-y-auto` on a direct child of `Dialog.Content`.
+
+Before:
+
+```tsx
+<Dialog.Content className="flex max-h-[85vh] flex-col">
+  <Dialog.Header>…</Dialog.Header>
+  <div className="min-h-0 flex-1 overflow-y-auto">{list}</div>
+</Dialog.Content>
+```
+
+After:
+
+```tsx
+<Dialog.Content className="max-h-[85vh]">
+  <Dialog.Header>…</Dialog.Header>
+  <Dialog.Body>{list}</Dialog.Body>
+</Dialog.Content>
+```
 
 ## 1.21.0: error and action toasts stay until the user closes them
 

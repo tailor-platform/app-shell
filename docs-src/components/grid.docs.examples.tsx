@@ -1,4 +1,4 @@
-import { Card, Grid, Text } from "@tailor-platform/app-shell";
+import { Card, Field, Grid, Text, Textarea } from "@tailor-platform/app-shell";
 
 export function BasicUsage() {
   return (
@@ -122,6 +122,27 @@ export function FeaturedPanel() {
       <Card.Root>
         <Card.Content>Orders: 142</Card.Content>
       </Card.Root>
+    </Grid>
+  );
+}
+
+export function MaxColumns() {
+  return (
+    <Grid maxColumns={2} gapX={6} gapY={4}>
+      <Field.Root name="supplier">
+        <Field.Label>Supplier</Field.Label>
+        <Field.Control defaultValue="Kansai Textile Co." />
+      </Field.Root>
+      <Field.Root name="code">
+        <Field.Label>Code</Field.Label>
+        <Field.Control defaultValue="SUP-0042" />
+      </Field.Root>
+      <Grid.Item colSpan="full">
+        <Field.Root name="notes">
+          <Field.Label>Notes</Field.Label>
+          <Textarea />
+        </Field.Root>
+      </Grid.Item>
     </Grid>
   );
 }

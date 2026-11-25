@@ -76,6 +76,30 @@ describe("Field", () => {
     expect(screen.getByText("Test Label")).toBeDefined();
   });
 
+  it("shows a visual-only required marker on the label", () => {
+    render(
+      <Field.Root name="test">
+        <Field.Label required>Name</Field.Label>
+        <Field.Control required />
+      </Field.Root>,
+    );
+    const marker = document.querySelector('[data-slot="field-required-marker"]');
+    expect(marker!.getAttribute("aria-hidden")).toBe("true");
+    expect(marker?.textContent).toBe("*");
+    // The accessible name stays the label text; `required` on the control is what's announced.
+    expect((screen.getByRole("textbox", { name: "Name" }) as HTMLInputElement).required).toBe(true);
+  });
+
+  it("renders no required marker by default", () => {
+    render(
+      <Field.Root name="test">
+        <Field.Label>Name</Field.Label>
+        <Field.Control />
+      </Field.Root>,
+    );
+    expect(document.querySelector('[data-slot="field-required-marker"]')).toBeNull();
+  });
+
   it("renders description text", () => {
     render(
       <Field.Root name="test">

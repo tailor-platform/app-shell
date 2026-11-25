@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Button, Dialog, Field, Form, Text } from "@tailor-platform/app-shell";
+import { Button, Dialog, Field, Form, Grid, Text } from "@tailor-platform/app-shell";
 
 export function DeleteConfirmation() {
   const [open, setOpen] = useState(false);
@@ -60,38 +60,46 @@ export function FormDialog() {
       <Text.p role="status">Saved item name: {name}</Text.p>
       <Dialog.Root open={open} onOpenChange={setOpen}>
         <Dialog.Trigger render={<Button variant="outline" />}>Edit item</Dialog.Trigger>
-        <Dialog.Content>
+        <Dialog.Content size="lg">
           <Dialog.Header>
             <Dialog.Title>Edit item</Dialog.Title>
             <Dialog.Description>
               Save a new name, or cancel to keep the saved name.
             </Dialog.Description>
           </Dialog.Header>
-          <Form<{ name: string }>
-            noValidate
-            onFormSubmit={(values) => {
-              setName(values.name.trim());
-              setOpen(false);
-            }}
-          >
-            <Field.Root
-              name="name"
-              className="py-4"
-              validate={(value) =>
-                typeof value === "string" && value.trim() ? undefined : "Name is required."
-              }
+          <Dialog.Body>
+            <Form<{ name: string; sku: string }>
+              id="edit-item-form"
+              noValidate
+              onFormSubmit={(values) => {
+                setName(values.name.trim());
+                setOpen(false);
+              }}
             >
-              <Field.Label>Item name</Field.Label>
-              <Field.Control defaultValue={name} required />
-              <Field.Error>Name is required.</Field.Error>
-            </Field.Root>
-            <Dialog.Footer>
-              <Dialog.Close render={<Button type="button" variant="outline" />}>
-                Cancel
-              </Dialog.Close>
-              <Button type="submit">Save item</Button>
-            </Dialog.Footer>
-          </Form>
+              <Grid maxColumns={2} gapX={6} gapY={4}>
+                <Field.Root
+                  name="name"
+                  validate={(value) =>
+                    typeof value === "string" && value.trim() ? undefined : "Name is required."
+                  }
+                >
+                  <Field.Label required>Item name</Field.Label>
+                  <Field.Control defaultValue={name} required />
+                  <Field.Error>Name is required.</Field.Error>
+                </Field.Root>
+                <Field.Root name="sku">
+                  <Field.Label>SKU</Field.Label>
+                  <Field.Control defaultValue="CTN-S-01" />
+                </Field.Root>
+              </Grid>
+            </Form>
+          </Dialog.Body>
+          <Dialog.Footer>
+            <Dialog.Close render={<Button type="button" variant="outline" />}>Cancel</Dialog.Close>
+            <Button type="submit" form="edit-item-form">
+              Save item
+            </Button>
+          </Dialog.Footer>
         </Dialog.Content>
       </Dialog.Root>
     </div>

@@ -225,11 +225,58 @@ const ITEM_COLEND_CLASS: Record<Breakpoint, string> = {
   "2xl": "astw:2xl:[grid-column-end:var(--gi-col-end-2xl)]",
 };
 
+// --- Container-responsive columns (`maxColumns`) ----------------------------
+//
+// Container queries style descendants of the container, so Grid renders a
+// wrapper that is the `@container` and the grid inside it follows its width.
+// Spans are applied from the grid side because only the grid knows its
+// current column count: a `colSpan={3}` cell in a two-column grid must stop at
+// two, or the browser adds an implicit third column. The `[data-col-span]`
+// rules are more specific than the cell's own `--gi-col` class, so they win.
+// Class strings MUST stay literal so Tailwind's compiler emits them.
+
+export const MAX_COLUMNS_CLASS: Record<NonNullable<GridProps["maxColumns"]>, string> = {
+  1: "astw:grid-cols-1",
+  2: "astw:grid-cols-1 astw:@[400px]:grid-cols-2",
+  3: "astw:grid-cols-1 astw:@[400px]:grid-cols-2 astw:@[640px]:grid-cols-3",
+  4: "astw:grid-cols-1 astw:@[400px]:grid-cols-2 astw:@[640px]:grid-cols-3 astw:@[880px]:grid-cols-4",
+};
+
+// Field.Root aligns its children to the start; in a form cell every control
+// should fill the column instead, whether the field is a direct child or sits
+// inside a Grid.Item. Cells may also shrink below their content width.
+export const MAX_COLUMNS_CELL_CLASS =
+  "astw:[&>*]:min-w-0 astw:[&>[data-slot=field]]:items-stretch astw:[&>[data-slot=grid-item]>[data-slot=field]]:items-stretch";
+
+const SPAN_BASE =
+  "astw:[&>[data-col-span=full]]:col-span-full astw:[&>[data-col-span='2']]:col-span-1 astw:[&>[data-col-span='3']]:col-span-1 astw:[&>[data-col-span='4']]:col-span-1";
+const SPAN_TWO =
+  "astw:@[400px]:[&>[data-col-span='2']]:col-span-2 astw:@[400px]:[&>[data-col-span='3']]:col-span-2 astw:@[400px]:[&>[data-col-span='4']]:col-span-2";
+const SPAN_THREE =
+  "astw:@[640px]:[&>[data-col-span='3']]:col-span-3 astw:@[640px]:[&>[data-col-span='4']]:col-span-3";
+const SPAN_FOUR = "astw:@[880px]:[&>[data-col-span='4']]:col-span-4";
+
+export const MAX_COLUMNS_SPAN_CLASS: Record<NonNullable<GridProps["maxColumns"]>, string> = {
+  1: SPAN_BASE,
+  2: `${SPAN_BASE} ${SPAN_TWO}`,
+  3: `${SPAN_BASE} ${SPAN_TWO} ${SPAN_THREE}`,
+  4: `${SPAN_BASE} ${SPAN_TWO} ${SPAN_THREE} ${SPAN_FOUR}`,
+};
+
 // --- Resolvers --------------------------------------------------------------
 
 type GridStyleProps = Pick<
   GridProps,
-  "columns" | "rows" | "gap" | "gapX" | "gapY" | "minChildWidth" | "flow" | "align" | "justify"
+  | "columns"
+  | "rows"
+  | "gap"
+  | "gapX"
+  | "gapY"
+  | "minChildWidth"
+  | "maxColumns"
+  | "flow"
+  | "align"
+  | "justify"
 >;
 
 /** Resolve the container's CSS variables, utility classes, and inline style. */
@@ -240,6 +287,7 @@ export function resolveGridStyles({
   gapX,
   gapY,
   minChildWidth,
+  maxColumns,
   flow,
   align,
   justify,
@@ -248,8 +296,15 @@ export function resolveGridStyles({
 
   // `minChildWidth` (auto-fit) is applied as an inline template and takes
   // precedence over `columns`.
-  const usingMinChild = minChildWidth !== undefined;
-  if (!usingMinChild) {
+  const usingMaxColumns = maxColumns !== undefined;
+  const usingMinChild = !usingMaxColumns && minChildWidth !== undefined;
+  if (usingMaxColumns) {
+    out.classes.push(
+      MAX_COLUMNS_CLASS[maxColumns],
+      MAX_COLUMNS_SPAN_CLASS[maxColumns],
+      MAX_COLUMNS_CELL_CLASS,
+    );
+  } else if (!usingMinChild) {
     applyResponsive(columns, COLS_VAR, COLS_CLASS, trackTemplate, out);
   }
   applyResponsive(rows, ROWS_VAR, ROWS_CLASS, trackTemplate, out);

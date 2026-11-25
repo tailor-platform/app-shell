@@ -124,14 +124,37 @@ Root.displayName = "Field.Root";
  * Any Base UI control inside the same `Field.Root` (Field.Control, Select,
  * Combobox, Autocomplete) registers its ID with the context, so clicking
  * this label will focus the correct control.
+ *
+ * Set `required` to show the required marker. It is visual only: put
+ * `required` on the control as well, which is what screen readers announce
+ * and what validation checks.
  */
-function Label({ className, ...props }: React.ComponentProps<typeof BaseField.Label>) {
+function Label({
+  className,
+  required,
+  children,
+  ...props
+}: React.ComponentProps<typeof BaseField.Label> & {
+  /** Shows the required marker (`*`) after the label text. */
+  required?: boolean;
+}) {
   return (
     <Text
       variant="label-md"
       className={cn(className)}
       render={<BaseField.Label data-slot="field-label" {...props} />}
-    />
+    >
+      {children}
+      {required && (
+        <span
+          aria-hidden="true"
+          data-slot="field-required-marker"
+          className="astw:ml-0.5 astw:text-danger-text"
+        >
+          *
+        </span>
+      )}
+    </Text>
   );
 }
 Label.displayName = "Field.Label";

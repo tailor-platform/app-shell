@@ -15,6 +15,11 @@ export type ColumnCount = 1 | 2 | 3;
 export type ColumnArea = "left" | "main" | "right";
 
 /**
+ * Supported max-width presets for Layout
+ */
+export type LayoutMaxWidth = "md" | "lg" | "xl";
+
+/**
  * Props for the Layout component
  */
 export interface LayoutProps {
@@ -59,6 +64,17 @@ export interface LayoutProps {
    * disable its own scrolling (the fill layout bounds everything internally).
    */
   fill?: boolean;
+  /**
+   * Centres the page and caps its width — header and columns together — so
+   * forms and other reading-width pages don't stretch across wide screens.
+   * - `"md"`: 48rem (768px) — single-column forms
+   * - `"lg"`: 64rem (1024px) — two-column forms
+   * - `"xl"`: 80rem (1280px) — document forms with line items, and forms
+   *   with a section nav column
+   *
+   * Omit for full-width pages (lists, dashboards).
+   */
+  maxWidth?: LayoutMaxWidth;
   /** Child elements - Layout.Header and/or Layout.Column components */
   children: ReactNode;
 }

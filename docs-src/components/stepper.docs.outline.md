@@ -11,17 +11,43 @@ sources:
 
 `Stepper` shows how far something has progressed through a fixed sequence of steps: the steps of a [wizard form](../patterns/form-wizard.md), the stages of an approval flow, the quality gates of a project. You give it the steps and one `progress` value saying how far the flow has got; it works out how each step looks.
 
-It only displays progress. The page owns `progress` and decides what happens when a step is clicked.
+It only displays progress. The page owns `progress` and decides what happens when a step is clicked. For local wizard navigation, `useStepper` manages that state; for server-owned approval stages or quality gates, keep passing `progress` directly.
 
 ## Import
 
 ```tsx
-import { Stepper } from "@tailor-platform/app-shell";
+import { Stepper, useStepper } from "@tailor-platform/app-shell";
 ```
 
 ## Basic Usage
 
 <!-- example: basic-usage -->
+
+## Wizard navigation with `useStepper`
+
+`useStepper({ steps, initialStepId? })` returns `steps` and `progress` to pass to `Stepper`, plus navigation actions. It starts at the first step unless `initialStepId` is supplied. Inline definitions preserve literal ids without `as const`: both `initialStepId` and `moveStep` only accept ids from `steps`.
+
+<!-- example: wizard-navigation -->
+
+| Action                            | Behaviour                                                                                                 |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `next()`                          | Complete the current step and advance; on the last step, complete the flow                                |
+| `back()`                          | Go back one step; after completion, reopen the last step                                                  |
+| `skip()`                          | Skip exactly the current step and advance; on the last step, complete the flow with that step skipped     |
+| `moveStep(id)`                    | Move to an existing step; forward moves complete the steps passed                                         |
+| `moveStep(id, { skipped: true })` | On a forward move, skip the current step and every step before the destination, excluding the destination |
+
+For example, moving from `supplier` to `review` with `{ skipped: true }` skips `supplier`, `delivery`, and `approval`. Without the option, all three are complete. Skip records before the departure point are preserved. Backward moves discard skip records at and after the destination, so revisiting and completing a skipped step replaces its skipped status. The option has no effect on backward moves.
+
+`UseStepperReturn` is a discriminated union based on `hasNext`: when `true`, `currentStepId` is a step id and `next` / `skip` are callable. When `false`, the flow is complete and all three are `undefined`. Check `flow.hasNext` before calling `flow.next()` or `flow.skip()` directly. Button handlers can use `onClick={flow.next}` with `disabled={!flow.hasNext}`.
+
+`hasNext` means the next action is available, not that another step exists: it stays `true` on the last step, including a single-step flow. `next()` completes the flow on the last step; there is no separate `finish` action. Identify a final submission step by `currentStepId`, or compare `currentStepIndex` with `steps.length - 1`. The page owns submission and its success/failure state. For asynchronous submission, await success before calling `next()`; on failure, leave the current step in progress.
+
+`currentStepIndex` is zero-based and equals `steps.length` once complete. `hasPrevious` indicates whether `back()` can move to or reopen a step: it is `false` at the first step and `true` after completion. `back()` and `moveStep(id)` remain callable after completion and reopen a step, restoring `next` / `skip`. `back()` at the first step is a no-op. Previously captured `next` / `skip` callbacks are also no-ops if called after completion.
+
+The hook requires non-empty steps with unique ids and throws for unknown initial or destination ids. Step ids and their order must stay fixed for the hook's lifetime; labels, badges, and descriptions can change. `initialStepId` is read only on mount. Remount the owner (for example with a React `key`) to reset the flow or change its sequence.
+
+Navigation does not validate forms or submit data. Call the actions only after page-level validation succeeds, as in the [wizard form pattern](../patterns/form-wizard.md).
 
 ## Props
 

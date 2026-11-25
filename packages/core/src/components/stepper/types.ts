@@ -47,3 +47,45 @@ export interface StepperProps<Id extends string = string> {
   /** Inline styles for the root element. */
   style?: React.CSSProperties;
 }
+
+export interface UseStepperOptions<Id extends string = string> {
+  /** Non-empty steps with unique ids, in a fixed order for the hook's lifetime. */
+  steps: readonly StepperStep<Id>[];
+  /** Start on this step; defaults to the first step. Read only on mount. */
+  initialStepId?: NoInfer<Id>;
+}
+
+export type UseStepperReturn<Id extends string = string> = {
+  steps: readonly StepperStep<Id>[];
+  /** Zero-based position; equals steps.length once complete. */
+  currentStepIndex: number;
+  /** Whether back can move to or reopen a step. */
+  hasPrevious: boolean;
+  /** Go back one step; after completion, reopens the last step. */
+  back: () => void;
+  /**
+   * Move to an existing step. Forward moves complete the steps passed.
+   * With skipped: true, skip the current step through the destination's predecessor.
+   * Backward moves discard skip records at and after the destination.
+   */
+  moveStep: (id: Id, options?: { skipped?: boolean }) => void;
+} & (
+  | {
+      /** next / skip are available, including on the last step. */
+      hasNext: true;
+      progress: Extract<StepperProgress<Id>, { state: "in-progress" }>;
+      currentStepId: Id;
+      /** Complete the current step and advance; completes the flow at the last step. */
+      next: () => void;
+      /** Skip the current step and advance; completes the flow at the last step. */
+      skip: () => void;
+    }
+  | {
+      /** The flow is complete; next / skip are unavailable. */
+      hasNext: false;
+      progress: Extract<StepperProgress<Id>, { state: "complete" }>;
+      currentStepId: undefined;
+      next: undefined;
+      skip: undefined;
+    }
+);

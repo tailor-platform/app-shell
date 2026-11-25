@@ -1,4 +1,3 @@
-import * as React from "react";
 import {
   Badge,
   Button,
@@ -6,6 +5,7 @@ import {
   Layout,
   Stepper,
   Text,
+  useStepper,
   type AppShellPageProps,
   type StepperProgress,
   type StepperStep,
@@ -81,53 +81,39 @@ const APPROVAL: StepperStep[] = [
 ];
 
 // 🧪 Dummy Data: Replace with real data later
-const WIZARD_STEPS = ["Supplier", "Delivery", "Approval", "Review"];
+const WIZARD_STEPS = [
+  { id: "supplier", label: "Supplier" },
+  { id: "delivery", label: "Delivery" },
+  { id: "approval", label: "Approval" },
+  { id: "review", label: "Review" },
+] as const;
 
-// 🔽 Wizard steps — the page owns progress; the Stepper only displays it
+// 🔽 Wizard steps — useStepper owns progress; the Stepper only displays it
 function WizardStepsDemo() {
-  const [current, setCurrent] = React.useState(1);
-  const [skipped, setSkipped] = React.useState<string[]>([]);
-  const done = current === WIZARD_STEPS.length;
-  const steps: StepperStep[] = WIZARD_STEPS.map((label, i) => ({ id: String(i), label }));
-  const passedSkips = skipped.filter((id) => Number(id) < current);
-  const progress: StepperProgress = done
-    ? { state: "complete", skippedStepIds: passedSkips }
-    : { state: "in-progress", currentStepId: String(current), skippedStepIds: passedSkips };
-
-  const advance = (skip: boolean) => {
-    const id = String(current);
-    setSkipped((ids) =>
-      skip ? [...ids.filter((x) => x !== id), id] : ids.filter((x) => x !== id),
-    );
-    setCurrent((c) => Math.min(WIZARD_STEPS.length, c + 1));
-  };
+  const flow = useStepper({ steps: WIZARD_STEPS, initialStepId: "delivery" });
 
   return (
     <Card.Root>
       <Card.Header
         title="Wizard steps"
-        description="Progress comes from the page's current step and the steps the user skipped. Completed and skipped steps are clickable."
+        description="useStepper manages navigation and skipped steps. Completed and skipped steps are clickable."
       />
       <Card.Content className="flex flex-col gap-6">
         <Stepper
           aria-label="New purchase order"
-          steps={steps}
-          progress={progress}
-          onStepClick={(id) => setCurrent(Number(id))}
+          steps={flow.steps}
+          progress={flow.progress}
+          onStepClick={flow.moveStep}
         />
         <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            disabled={current === 0}
-            onClick={() => setCurrent((c) => Math.max(0, c - 1))}
-          >
+          <Button variant="outline" disabled={!flow.hasPrevious} onClick={flow.back}>
             Back
           </Button>
-          <Button variant="ghost" disabled={done} onClick={() => advance(true)}>
+          <Button variant="ghost" disabled={!flow.hasNext} onClick={flow.skip}>
             Skip
           </Button>
-          <Button disabled={done} onClick={() => advance(false)}>
-            {current >= WIZARD_STEPS.length - 1 ? "Finish" : "Next"}
+          <Button disabled={!flow.hasNext} onClick={flow.next}>
+            {flow.currentStepId === "review" || !flow.hasNext ? "Finish" : "Next"}
           </Button>
         </div>
       </Card.Content>

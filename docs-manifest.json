@@ -1542,10 +1542,10 @@
       "symbols": ["Stepper", "StepperProgress", "StepperProps", "StepperStep"],
       "hashes": {
         "typeSurface": "47700dc3010ae604",
-        "outline": "6043e5de15222b96",
-        "snapshot": "59839dd04922cd5c",
-        "outputMd": "a8895cc8ddaccdc9",
-        "examples": "9d93950dbd1f1943"
+        "outline": "9842789540c26afa",
+        "snapshot": "1fbf52f6178108d9",
+        "outputMd": "0f18c1e033d004c4",
+        "examples": "09674d1faac80324"
       }
     },
     "styling-theming": {
@@ -2059,7 +2059,7 @@
     "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "872a4d374bdf1923",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "281cfa2dcbff14be",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "eec440408611a233",
-    "packages/core/skills/app-shell-patterns/references/components/stepper.md": "a8895cc8ddaccdc9",
+    "packages/core/skills/app-shell-patterns/references/components/stepper.md": "0f18c1e033d004c4",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "c5933b640a78c3bf",
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "a94b016f0c9709b7",
     "packages/core/skills/app-shell-patterns/references/components/text.md": "e5311b1891f3ff7b",

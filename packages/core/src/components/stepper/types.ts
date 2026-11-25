@@ -33,14 +33,6 @@ export interface StepperProps<Id extends string = string> {
   /** How far the flow has got. Its ids must be ids of `steps`. */
   progress: StepperProgress<NoInfer<Id>>;
   /**
-   * `horizontal` lays the steps out in a row. Below 400px of container width it
-   * shows only the markers plus "Step 2 of 4" and the current step's label;
-   * each marker then names its step in a tooltip.
-   * `vertical` stacks them, for a column beside a form.
-   * @default "horizontal"
-   */
-  orientation?: "horizontal" | "vertical";
-  /**
    * Makes passed steps (completed or skipped) clickable — for example to go
    * back to an earlier step of a wizard. Called with the step's `id`.
    */

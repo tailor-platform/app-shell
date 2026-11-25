@@ -41,20 +41,11 @@ describe("Stepper", () => {
   // Snapshots
   // ==========================================================================
 
-  describe("snapshots", () => {
-    it("horizontal", () => {
-      const { container } = renderStepper(
-        <Stepper aria-label="New order" steps={STEPS} progress={PROGRESS} />,
-      );
-      expect(container.innerHTML).toMatchSnapshot();
-    });
-
-    it("vertical", () => {
-      const { container } = renderStepper(
-        <Stepper aria-label="New order" orientation="vertical" steps={STEPS} progress={PROGRESS} />,
-      );
-      expect(container.innerHTML).toMatchSnapshot();
-    });
+  it("matches the snapshot", () => {
+    const { container } = renderStepper(
+      <Stepper aria-label="New order" steps={STEPS} progress={PROGRESS} />,
+    );
+    expect(container.innerHTML).toMatchSnapshot();
   });
 
   // ==========================================================================
@@ -222,14 +213,11 @@ describe("Stepper", () => {
   // Narrow containers
   // ==========================================================================
 
-  it("adds a 'Step n of total' caption for narrow containers when horizontal", () => {
-    const { rerender } = renderStepper(<Stepper steps={STEPS} progress={PROGRESS} />);
+  it("adds a 'Step n of total' caption for narrow containers", () => {
+    renderStepper(<Stepper steps={STEPS} progress={PROGRESS} />);
     const caption = document.querySelector('[data-slot="stepper-caption"]');
     expect(caption?.textContent).toBe("Step 3 of 4Lines");
     expect(caption?.getAttribute("aria-hidden")).toBe("true");
-
-    rerender(<Stepper orientation="vertical" steps={STEPS} progress={PROGRESS} />);
-    expect(document.querySelector('[data-slot="stepper-caption"]')).toBeNull();
   });
 
   it("translates the caption and status text", () => {
@@ -315,12 +303,6 @@ describe("Stepper", () => {
       expect(document.querySelector('[data-slot="stepper-marker-trigger"]')).toBeNull();
       const button = screen.getByRole("button", { name: /^Supplier ?, Completed$/ });
       expect(button.querySelector('[data-slot="stepper-marker"]')).toBeNull();
-    });
-
-    it("never goes compact when vertical", () => {
-      stubWidth(320);
-      renderStepper(<Stepper orientation="vertical" steps={STEPS} progress={PROGRESS} />);
-      expect(document.querySelector('[data-slot="stepper-marker-trigger"]')).toBeNull();
     });
   });
 });

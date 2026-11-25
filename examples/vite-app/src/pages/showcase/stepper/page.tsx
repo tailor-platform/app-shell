@@ -141,9 +141,9 @@ const StepperDemoPage = () => (
     <Layout.Column>
       <Text variant="body-md" className="text-muted-foreground max-w-3xl">
         The page passes the steps and one progress value — not started, on a step (with any skipped
-        steps), or complete — and the Stepper works out how each step looks. A horizontal Stepper
-        scrolls sideways when its steps don&apos;t fit; below 400px of container width it shows only
-        its markers and names the current step.
+        steps), or complete — and the Stepper works out how each step looks. The Stepper scrolls
+        sideways when its steps don&apos;t fit; below 400px of container width it shows only its
+        markers and names the current step.
       </Text>
 
       <WizardStepsDemo />
@@ -175,18 +175,6 @@ const StepperDemoPage = () => (
           </Card.Content>
         </Card.Root>
       </div>
-
-      <Card.Root className="max-w-md">
-        <Card.Header title="Vertical" />
-        <Card.Content>
-          <Stepper
-            aria-label="Approval"
-            orientation="vertical"
-            steps={APPROVAL}
-            progress={APPROVAL_PROGRESS}
-          />
-        </Card.Content>
-      </Card.Root>
     </Layout.Column>
   </Layout>
 );

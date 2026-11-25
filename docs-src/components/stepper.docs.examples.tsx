@@ -35,19 +35,3 @@ export function StageProgress() {
     />
   );
 }
-
-export function Vertical() {
-  return (
-    <Stepper
-      aria-label="Approval"
-      orientation="vertical"
-      steps={[
-        { id: "draft", label: "Draft", description: "Hanna Suzuki" },
-        { id: "manager", label: "Manager", description: "Kenji Mori · 3 Nov" },
-        { id: "finance", label: "Finance", description: "Priya Nair" },
-        { id: "issued", label: "Issued" },
-      ]}
-      progress={{ state: "in-progress", currentStepId: "finance" }}
-    />
-  );
-}

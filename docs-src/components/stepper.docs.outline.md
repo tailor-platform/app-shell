@@ -25,15 +25,14 @@ import { Stepper } from "@tailor-platform/app-shell";
 
 ## Props
 
-| Prop          | Type                         | Default        | Description                                                                                   |
-| ------------- | ---------------------------- | -------------- | --------------------------------------------------------------------------------------------- |
-| `steps`       | `StepperStep[]`              | -              | The steps, in order                                                                           |
-| `progress`    | `StepperProgress`            | -              | How far the flow has got (below)                                                              |
-| `orientation` | `"horizontal" \| "vertical"` | `"horizontal"` | A row of steps, or a column for beside a form                                                 |
-| `onStepClick` | `(id: Id) => void`           | -              | Makes passed steps (completed or skipped) clickable — for example to go back to a wizard step |
-| `aria-label`  | `string`                     | "Progress"     | Accessible name for the list of steps (the default is translated)                             |
-| `className`   | `string`                     | -              | Additional CSS classes                                                                        |
-| `style`       | `CSSProperties`              | -              | Inline styles                                                                                 |
+| Prop          | Type               | Default    | Description                                                                                   |
+| ------------- | ------------------ | ---------- | --------------------------------------------------------------------------------------------- |
+| `steps`       | `StepperStep[]`    | -          | The steps, in order                                                                           |
+| `progress`    | `StepperProgress`  | -          | How far the flow has got (below)                                                              |
+| `onStepClick` | `(id: Id) => void` | -          | Makes passed steps (completed or skipped) clickable — for example to go back to a wizard step |
+| `aria-label`  | `string`           | "Progress" | Accessible name for the list of steps (the default is translated)                             |
+| `className`   | `string`           | -          | Additional CSS classes                                                                        |
+| `style`       | `CSSProperties`    | -          | Inline styles                                                                                 |
 
 ### `StepperStep`
 
@@ -91,7 +90,7 @@ Step ids are typed from `steps`: `progress` only accepts those ids, and `onStepC
 />
 ```
 
-Steps built at runtime can't be checked by types. In development the Stepper warns about an unknown or duplicate id, or a skipped step that hasn't been passed, and ignores it.
+Steps built at runtime can't be checked by types. The Stepper warns in the console about an unknown or duplicate id, or a skipped step that hasn't been passed, and ignores it.
 
 ## Stage progress
 
@@ -99,15 +98,9 @@ Badges and descriptions turn the Stepper into a stage tracker on a detail page:
 
 <!-- example: stage-progress -->
 
-## Vertical
-
-A vertical Stepper suits a column beside a form, such as a wizard on a page:
-
-<!-- example: vertical -->
-
 ## Narrow containers
 
-A horizontal Stepper adapts to the width of its container, not the viewport:
+The Stepper adapts to the width of its container, not the viewport:
 
 - When the steps don't fit side by side, the row scrolls sideways rather than squeezing the labels.
 - Below 400px it shows only the markers and lines, with "Step 2 of 4" and the current step's label underneath. This is what a wizard needs in a dialog on a phone.

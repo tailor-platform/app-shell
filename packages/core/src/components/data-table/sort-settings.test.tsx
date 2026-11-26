@@ -101,7 +101,8 @@ describe("DataTable.SortSettings", () => {
       />,
       { wrapper },
     );
-    expect(screen.getByRole("button", { name: /^sort/i }).textContent).toContain("2");
+    // Same wording as FilterRail's trigger; the visual badge is aria-hidden.
+    expect(screen.getByRole("button", { name: "Sort, 2 active" })).toBeTruthy();
   });
 
   it("lists active keys in priority order with an empty state otherwise", async () => {

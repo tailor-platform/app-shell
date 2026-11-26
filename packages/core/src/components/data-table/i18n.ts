@@ -31,6 +31,8 @@ export const dataTableLabels = defineI18nLabels({
     sort: "Sort",
     sortSettings: "Sort settings",
     sortBy: "Sort by",
+    activeSortCount: (props: { label: string; count: number }) =>
+      `${props.label}, ${props.count} active`,
     clearSort: "Clear",
     noSortApplied: "No sort applied",
     addSort: "Add sort",
@@ -181,6 +183,8 @@ export const dataTableLabels = defineI18nLabels({
     sort: "ソート",
     sortSettings: "ソート設定",
     sortBy: "ソート条件",
+    activeSortCount: (props: { label: string; count: number }) =>
+      `${props.label}、${props.count}件適用中`,
     clearSort: "クリア",
     noSortApplied: "ソートは設定されていません",
     addSort: "ソートを追加",

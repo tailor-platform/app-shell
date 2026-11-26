@@ -85,28 +85,21 @@ function DataTableSortSettings({ className }: { className?: string }) {
     replaceSorts(sortStates.map((s) => (s.field === field ? { ...s, direction } : s)));
 
   // Removing a row, clearing, or adding the last candidate unmounts the
-  // control that had focus. Move focus to the popup's group so keyboard users
-  // stay in the popover instead of landing on <body>.
-  const keepFocusInPopup = () => {
-    requestAnimationFrame(() => {
-      const group = groupRef.current;
-      if (group && !group.contains(document.activeElement)) group.focus();
-    });
-  };
-
+  // control that has focus. Move focus to the popup's group first, in the same
+  // event, so keyboard users stay in the popover instead of landing on <body>.
   const removeSort = (field: string) => {
+    groupRef.current?.focus();
     onSort(field);
-    keepFocusInPopup();
   };
 
   const addSort = (field: string) => {
+    groupRef.current?.focus();
     onSort(field, "Asc");
-    keepFocusInPopup();
   };
 
   const clearAll = () => {
+    groupRef.current?.focus();
     for (const s of sortStates) onSort(s.field);
-    keepFocusInPopup();
   };
 
   const resetDrag = () => {
@@ -128,11 +121,23 @@ function DataTableSortSettings({ className }: { className?: string }) {
     <Popover.Root>
       <Popover.Trigger
         render={
-          <Button variant="outline" size="xs" className={className}>
-            <ArrowUpDown className="astw:size-3" />
+          <Button
+            variant="outline"
+            size="xs"
+            className={className}
+            aria-label={
+              sortStates.length > 0
+                ? t("activeSortCount", { label: t("sort"), count: sortStates.length })
+                : undefined
+            }
+          >
+            <ArrowUpDown className="astw:size-3" aria-hidden />
             {t("sort")}
             {sortStates.length > 0 && (
-              <span className="astw:ml-0.5 astw:rounded-full astw:bg-primary astw:px-1.5 astw:text-label-sm astw:text-primary-foreground astw:tabular-nums">
+              <span
+                aria-hidden
+                className="astw:ml-0.5 astw:rounded-full astw:bg-primary astw:px-1.5 astw:text-label-sm astw:text-primary-foreground astw:tabular-nums"
+              >
                 {sortStates.length}
               </span>
             )}

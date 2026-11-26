@@ -16,10 +16,9 @@ import {
 
 // ─── Column settings prototype ──────────────────────────────────────────────────
 //
-// The real DataTable.ColumnSettings popover (fixed left / scrollable / fixed right
-// zones, drag to reorder or pin), extended with a visibility checkbox on the left
-// and a per-column sort select on the right. The change lives in core's
-// column-settings.tsx — this page only mounts the stock component.
+// Sorting gets its own toolbar button: DataTable.SortSettings sits next to the
+// stock DataTable.ColumnSettings, so Columns keeps only visibility, order and
+// pinning. Both live in core — this page only mounts them.
 
 // ─── Dummy data ─────────────────────────────────────────────────────────────────
 // 🧪 Dummy Data: Replace with real data later
@@ -146,6 +145,7 @@ function Demo({
             <SortReadout />
           </Toolbar.Group>
           <Toolbar.Group>
+            <DataTable.SortSettings />
             <DataTable.ColumnSettings />
           </Toolbar.Group>
         </Toolbar.Row>
@@ -182,17 +182,17 @@ const Section = ({
 
 const DataTableColumnSettingsPage = () => (
   <Layout>
-    <Layout.Header title="Column settings + sort" />
+    <Layout.Header title="Sort + column settings" />
     <Layout.Column>
       <div className="mb-6 rounded-md border border-border bg-muted/40 px-4 py-3 text-sm">
-        <strong>Prototype.</strong> The stock Columns popover with the visibility checkbox on the
-        left and a sort select on the right. Open <em>Columns</em> on each example below. Compare
-        with the Sorting tab in PR #716.
+        <strong>Prototype.</strong> Sorting moves to its own <em>Sort</em> button beside{" "}
+        <em>Columns</em>. Add a key from the menu, change direction, drag to change priority, or
+        clear. Compare with the Sorting tab in PR #716.
       </div>
 
       <Section
         title="1. Multi-column sort"
-        hint="Starts sorted by Status, then Amount (desc), then Due date. The number beside each select is its priority; the read-out on the left updates live."
+        hint="Starts sorted by Status, then Amount (desc), then Due date. Open Sort: the number on each row is its priority, and dragging a row changes it. The read-out on the left updates live."
       >
         <Demo
           multiple
@@ -206,14 +206,14 @@ const DataTableColumnSettingsPage = () => (
 
       <Section
         title="2. Single-column sort (library default)"
-        hint="Picking a sort on another column replaces the current one, so no priority numbers appear."
+        hint="Only one key at a time: the Add menu hides once a sort is set, and there are no priority numbers or drag handles."
       >
         <Demo multiple={false} initialSort={[{ field: "customer", direction: "Asc" }]} />
       </Section>
 
       <Section
         title="3. With fixed columns"
-        hint="Invoice is fixed left and Created fixed right. Sorting, pinning and visibility all live in the same popover."
+        hint="Invoice is fixed left and Created fixed right. Pinning and visibility stay in Columns; Sort is unaffected by where a column is pinned."
       >
         <Demo
           multiple
@@ -224,7 +224,7 @@ const DataTableColumnSettingsPage = () => (
 
       <Section
         title="4. Hide a sorted column"
-        hint="In example 1, untick Status in Columns. The sort stays active (see the read-out) even though its column is gone. This is the hidden-sort case to design for."
+        hint="In example 1, untick Status in Columns. The sort stays listed in Sort, so it can still be seen and removed even though its column is hidden."
       >
         <p className="text-body-sm text-muted-foreground">Use example 1 above.</p>
       </Section>

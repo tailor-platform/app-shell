@@ -2,4 +2,15 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Prototype: add a per-column sort select to `DataTable.ColumnSettings` and move the visibility checkbox to the left of each row. Sortable columns show Ascending / Descending / No sort on the right, with a priority number when more than one sort is active. Changing a column's direction keeps its priority. The popover is wider to fit the select.
+Add `DataTable.SortSettings`, a "Sort" toolbar control next to `DataTable.ColumnSettings`. Its popover lists the active sort keys in priority order, each with an Ascending / Descending select and a remove button, adds keys from a menu of sortable columns, and clears them all. With `sort: { multiple: true }`, drag a key's handle (or focus it and press Arrow Up / Arrow Down) to change its priority. The trigger shows how many keys are active.
+
+```tsx
+<Toolbar.Group>
+  <DataTable.SortSettings />
+  <DataTable.ColumnSettings />
+</Toolbar.Group>
+```
+
+Sorted column headers now show stacked up/down carets with the active direction highlighted, replacing the single ▲/▼ glyph. The caret slot is reserved on every sortable header, so applying a sort no longer widens the column; unsorted sortable headers are about 8px wider than before as a result.
+
+`useDataTable` now also returns `sortMultiple`.

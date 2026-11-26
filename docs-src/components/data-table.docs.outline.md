@@ -152,6 +152,7 @@ function JournalsPage() {
             <DataTable.Filters />
           </Toolbar.Group>
           <Toolbar.Group>
+            <DataTable.SortSettings />
             <DataTable.ColumnSettings />
           </Toolbar.Group>
         </Toolbar.Row>
@@ -175,6 +176,7 @@ function JournalsPage() {
 | `DataTable.Table`          | Renders the `<table>` with headers, body, and an optional [column footer](#column-footers). Required.                                                                                                 |
 | `DataTable.Toolbar`        | DataTable-specific toolbar container. Optional; pass `columnSettings` for the built-in Columns control.                                                                                               |
 | `DataTable.ColumnSettings` | The placeable Columns control (show/hide + reorder + pin). Use it in a generic [`Toolbar`](./toolbar.md) for custom layouts.                                                                          |
+| `DataTable.SortSettings`   | The placeable Sort control: add, reorder, change direction, and remove sort keys. Renders nothing when sorting is disabled. See [Sorting](#sorting).                                                  |
 | `DataTable.Filters`        | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                                                                  |
 | `DataTable.Footer`         | Container outside the `<table>` for pagination and other content, not the column footer. Optional. Becomes the bulk-action bar while rows are selected — see [Selection actions](#selection-actions). |
 | `DataTable.Pagination`     | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`.                                          |
@@ -248,6 +250,23 @@ By default `DataTable.Filters` renders the active filter chips plus the **Add fi
 Row selection is enabled by providing `rowSelection` or `onSelectionChange` to `useDataTable`. The `total` value comes from `DataTableData.total`. While the footer shows the bulk-action bar (see [Selection actions](#selection-actions)), the bar owns the selection count and this text is omitted.
 
 When pagination changes page or page size, `DataTable.Table` resets its own scroll container to the top automatically. That applies whether navigation comes from the built-in `DataTable.Pagination` or from custom controls using the same table context.
+
+## Sorting
+
+A column is sortable when it has `sort: { field, type }` and `useDataTable` receives `control`. Clicking a sortable header cycles ascending → descending → off; the header context menu offers the same choices. Sorted headers show stacked up/down carets with the active direction highlighted. The caret slot is reserved on every sortable header, so applying a sort doesn't change the header's width.
+
+`DataTable.SortSettings` is a "Sort" toolbar button whose popover lists the active sort keys in priority order. Each key has an Ascending / Descending select and a remove button; **Add sort** picks from the sortable columns that aren't sorted yet, and **Clear** removes every key. The trigger shows how many keys are active.
+
+- **Multi-column sort.** With `sort: { multiple: true }`, keys stack. Each row shows its priority; drag the handle, or focus it and press Arrow Up / Arrow Down, to change priority.
+- **Single-column sort** (the default) holds one key. Once it is set, the add menu hides; change the direction in place or remove the key to pick another column.
+- Sort keys whose column is hidden stay listed, so they can still be seen and removed.
+
+```tsx
+<Toolbar.Group>
+  <DataTable.SortSettings />
+  <DataTable.ColumnSettings />
+</Toolbar.Group>
+```
 
 ## Column pinning, visibility & ordering
 

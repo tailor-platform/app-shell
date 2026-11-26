@@ -227,3 +227,51 @@ describe("DataTable", () => {
     });
   });
 });
+
+describe("DataTable header sort indicator", () => {
+  function IndicatorHarness({ control }: { control?: CollectionControl }) {
+    const table = useDataTable<TestRow>({
+      columns: [
+        { label: "Name", sort: { field: "name", type: "string" }, render: (r) => r.name },
+        { label: "Status", render: (r) => r.status },
+      ],
+      data: testData,
+      control,
+    });
+    return (
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    );
+  }
+
+  const indicatorIn = (label: string) =>
+    headByText(document.body, label)?.querySelector('[data-slot="data-table-sort-indicator"]');
+
+  it("reserves the indicator slot on unsorted sortable headers so sorting doesn't resize them", () => {
+    render(<IndicatorHarness control={makeControl()} />, { wrapper });
+    const indicator = indicatorIn("Name");
+    expect(indicator).not.toBeNull();
+    expect(indicator?.getAttribute("data-direction")).toBeNull();
+    expect(indicator?.getAttribute("class")).toContain("astw:invisible");
+    // Non-sortable headers get no slot.
+    expect(indicatorIn("Status")).toBeNull();
+  });
+
+  it("marks the active direction when sorted", () => {
+    const { rerender } = render(
+      <IndicatorHarness
+        control={makeControl({ sortStates: [{ field: "name", direction: "Asc" }] })}
+      />,
+      { wrapper },
+    );
+    expect(indicatorIn("Name")?.getAttribute("data-direction")).toBe("asc");
+    rerender(
+      <IndicatorHarness
+        control={makeControl({ sortStates: [{ field: "name", direction: "Desc" }] })}
+      />,
+    );
+    expect(indicatorIn("Name")?.getAttribute("data-direction")).toBe("desc");
+    expect(indicatorIn("Name")?.getAttribute("class")).not.toContain("astw:invisible");
+  });
+});

@@ -270,11 +270,11 @@
       "claims": [],
       "symbols": ["Card"],
       "hashes": {
-        "typeSurface": "6ce6f0fdf2450cec",
-        "outline": "95de4d29491affb3",
-        "snapshot": "e6783ef54e17e11e",
-        "outputMd": "c1f88a287f197d79",
-        "examples": "7357698425183256"
+        "typeSurface": "d454951a1c8028c5",
+        "outline": "09ad75bebce6aa6a",
+        "snapshot": "a7cc8c2bbd00f1a8",
+        "outputMd": "dc3fe184d95e9669",
+        "examples": "6548e4b180f79849"
       }
     },
     "checkbox": {
@@ -2039,7 +2039,7 @@
     "packages/core/skills/app-shell-patterns/references/components/avatar.md": "1a98b46e63c2cf7c",
     "packages/core/skills/app-shell-patterns/references/components/badge.md": "f274f45e7ad34758",
     "packages/core/skills/app-shell-patterns/references/components/button.md": "be862b0bff15cc1a",
-    "packages/core/skills/app-shell-patterns/references/components/card.md": "c1f88a287f197d79",
+    "packages/core/skills/app-shell-patterns/references/components/card.md": "dc3fe184d95e9669",
     "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "ebe55c40fb5fb2e6",
     "packages/core/skills/app-shell-patterns/references/components/combobox.md": "c79cd0fe175187e3",
     "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "65313ac7b2979f45",

@@ -145,6 +145,38 @@ describe("Tabs", () => {
       expect(container.innerHTML).toMatchSnapshot();
     });
 
+    it("keeps every capsule tab at least 24px tall, shrinking the xs track padding instead", () => {
+      const { container, unmount } = render(
+        <Tabs.Root defaultValue="tab1" variant="capsule" size="xs">
+          <Tabs.List>
+            <Tabs.Tab value="tab1" aria-label="Table view">
+              <svg viewBox="0 0 16 16" />
+            </Tabs.Tab>
+          </Tabs.List>
+          <Tabs.Panel value="tab1">Content 1</Tabs.Panel>
+        </Tabs.Root>,
+      );
+      const tab = container.querySelector('[data-slot="tabs-tab"]')!;
+      expect(tab.className).toContain("astw:min-h-6");
+      expect(tab.className).toContain("astw:has-[>svg:only-child]:min-w-6");
+      expect(container.querySelector('[data-slot="tabs-list-track"]')!.className).toContain(
+        "astw:p-0.5",
+      );
+      unmount();
+
+      const sm = render(
+        <Tabs.Root defaultValue="tab1" variant="capsule" size="sm">
+          <Tabs.List>
+            <Tabs.Tab value="tab1">Tab 1</Tabs.Tab>
+          </Tabs.List>
+          <Tabs.Panel value="tab1">Content 1</Tabs.Panel>
+        </Tabs.Root>,
+      );
+      expect(sm.container.querySelector('[data-slot="tabs-list-track"]')!.className).not.toContain(
+        "astw:p-0.5",
+      );
+    });
+
     it.each(["xs", "sm", "lg"] as const)("capsule variant with %s size", (size) => {
       const { container } = render(
         <Tabs.Root defaultValue="tab1" variant="capsule" size={size}>

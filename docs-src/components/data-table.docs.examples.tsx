@@ -930,7 +930,7 @@ export function MoneyCells() {
         label: "USD formatting",
         accessor: (row) => row.amount,
         type: "money",
-        typeOptions: { currency: "USD", locale: "en-US" },
+        typeOptions: { currency: "USD", currencySign: "accounting", locale: "en-US" },
       }),
       column({
         id: "amount",
@@ -944,6 +944,7 @@ export function MoneyCells() {
         { id: "1", amount: 12.3456, currency: "USD" },
         { id: "2", amount: 1500, currency: "JPY" },
         { id: "3", amount: 19.9, currency: "EUR" },
+        { id: "4", amount: -12.35, currency: "USD" },
       ],
     },
   });

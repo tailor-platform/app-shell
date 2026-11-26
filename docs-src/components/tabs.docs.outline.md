@@ -143,3 +143,5 @@ button. The value sets a **minimum** height — taller content still grows.
 | `sm`      | 32px         | `size="sm"`    |
 | `default` | 36px         | default        |
 | `lg`      | 40px         | `size="lg"`    |
+
+Every tab is at least 24×24px (the WCAG 2.5.8 target size). `xs` keeps its 28px track by using 2px of track padding around a 24px tab instead of 4px around a 20px one.

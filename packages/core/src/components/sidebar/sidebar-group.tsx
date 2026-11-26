@@ -11,6 +11,7 @@ import {
   SidebarMenuSub,
 } from "./primitives";
 import { SidebarButtonIcon } from "./sidebar-button-icon";
+import { SIDEBAR_SCROLL_AREA_CLASS, useScrolling } from "./scroll-area";
 import { useHasHover } from "@/hooks/use-has-hover";
 import { cn } from "@/lib/utils";
 import { useT } from "@/i18n-labels";
@@ -71,8 +72,10 @@ function useIsIconRail(): boolean {
  * an `expanded` sidebar context so the child items show labels and drop their
  * own icon-rail tooltips.
  */
+// The popup only frames the flyout; the list inside scrolls, so its bottom
+// fade (a mask) doesn't also erase the popup's border and shadow.
 const FLYOUT_POPUP_CLASS =
-  "astw:z-(--z-portal) astw:max-h-[calc(100dvh-1rem)] astw:min-w-48 astw:overflow-y-auto astw:rounded-md astw:border astw:border-border astw:bg-popover astw:p-1 astw:text-popover-foreground astw:shadow-md astw:outline-none";
+  "astw:z-(--z-portal) astw:flex astw:max-h-[calc(100dvh-1rem)] astw:min-w-48 astw:flex-col astw:overflow-hidden astw:rounded-md astw:border astw:border-border astw:bg-popover astw:text-popover-foreground astw:shadow-md astw:outline-none";
 const FLYOUT_HEADING_CLASS =
   "astw:block astw:px-2 astw:py-1.5 astw:text-label-sm astw:text-muted-foreground";
 
@@ -94,6 +97,7 @@ const IconRailFlyout = ({
   const [open, setOpen] = useState(false);
   const itemRef = useRef<HTMLLIElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
+  const scroll = useScrolling();
   // On a hover device the group's own page is the trigger's link.
   const linkTrigger = hasHover && to !== undefined;
 
@@ -178,28 +182,38 @@ const IconRailFlyout = ({
             data-slot="sidebar-group-flyout"
             className={FLYOUT_POPUP_CLASS}
           >
-            {/* A group with its own page links to it from the heading, so the
+            <div
+              data-slot="sidebar-group-flyout-content"
+              data-scrolling={scroll.scrolling || undefined}
+              onScroll={scroll.onScroll}
+              className={cn(
+                "astw:min-h-0 astw:overflow-y-auto astw:p-1",
+                SIDEBAR_SCROLL_AREA_CLASS,
+              )}
+            >
+              {/* A group with its own page links to it from the heading, so the
                 page is reachable from the flyout on every device. */}
-            {to ? (
-              <Link
-                to={to}
-                aria-current={isActive ? "page" : undefined}
-                className={cn(
-                  FLYOUT_HEADING_CLASS,
-                  "astw:rounded-sm astw:hover:text-foreground astw:focus-visible:outline-2 astw:focus-visible:outline-ring",
-                )}
-              >
-                {title}
-              </Link>
-            ) : (
-              <div className={FLYOUT_HEADING_CLASS}>{title}</div>
-            )}
-            {/* Inside the flyout the items are no longer in the icon rail: they
+              {to ? (
+                <Link
+                  to={to}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    FLYOUT_HEADING_CLASS,
+                    "astw:rounded-sm astw:hover:text-foreground astw:focus-visible:outline-2 astw:focus-visible:outline-ring",
+                  )}
+                >
+                  {title}
+                </Link>
+              ) : (
+                <div className={FLYOUT_HEADING_CLASS}>{title}</div>
+              )}
+              {/* Inside the flyout the items are no longer in the icon rail: they
                 show their labels (the popover escapes the rail's icon-collapse
                 styling) and drop their own redundant icon-rail tooltips. */}
-            <SidebarRailContext.Provider value={false}>
-              <ul className="astw:flex astw:min-w-0 astw:flex-col astw:gap-0.5">{children}</ul>
-            </SidebarRailContext.Provider>
+              <SidebarRailContext.Provider value={false}>
+                <ul className="astw:flex astw:min-w-0 astw:flex-col astw:gap-0.5">{children}</ul>
+              </SidebarRailContext.Provider>
+            </div>
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>

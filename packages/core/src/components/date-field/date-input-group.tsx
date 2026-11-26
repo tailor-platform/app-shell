@@ -324,6 +324,9 @@ export function DateFieldRow({
             onBlur={settleEntry}
             onKeyDown={(e) => handleKeyDown(e, segment, editableIndex)}
             className={cn(
+              // `min-h-6 min-w-6` keeps every segment at least 24×24 (WCAG 2.5.8
+              // target size); the day segment is 23.9px wide and 20px tall otherwise.
+              "astw:inline-flex astw:min-h-6 astw:min-w-6 astw:items-center astw:justify-center",
               "astw:rounded astw:px-0.5 astw:tabular-nums astw:caret-transparent astw:outline-none",
               "astw:focus:bg-primary astw:focus:text-primary-foreground",
               "astw:data-[placeholder]:text-muted-foreground",

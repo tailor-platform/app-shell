@@ -6,6 +6,7 @@ import { useRender } from "@base-ui/react/use-render";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useIsTablet } from "@/hooks/use-tablet";
 import { DEFAULT_SIDEBAR_WIDTH, MIN_WIDTH, SidebarResizeHandle } from "./sidebar-resize-handle";
+import { SIDEBAR_SCROLL_AREA_CLASS, useScrolling } from "./scroll-area";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
@@ -236,8 +237,10 @@ function SidebarProvider({
           className={cn(
             // h-svh (not min-h-svh): the shell is viewport-bounded so scrolling
             // happens in the content area (or inside components like DataTable),
-            // never on the document itself.
-            "astw:group/sidebar-wrapper astw:has-data-[variant=inset]:bg-sidebar astw:flex astw:h-svh astw:w-full astw:overflow-hidden",
+            // never on the document itself. `overflow-clip` rather than
+            // `hidden`: a hidden box can still be scrolled by anchor jumps,
+            // scrollIntoView and focus, which would shift the whole shell.
+            "astw:group/sidebar-wrapper astw:has-data-[variant=inset]:bg-sidebar astw:flex astw:h-svh astw:w-full astw:overflow-clip",
             className,
           )}
           {...props}
@@ -634,13 +637,24 @@ function SidebarSeparator({ className, ...props }: React.ComponentProps<typeof S
   );
 }
 
-function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
+function SidebarContent({ className, onScroll, ...props }: React.ComponentProps<"div">) {
+  const scroll = useScrolling();
   return (
     <div
       data-slot="sidebar-content"
       data-sidebar="content"
+      data-scrolling={scroll.scrolling || undefined}
+      onScroll={(event) => {
+        scroll.onScroll();
+        onScroll?.(event);
+      }}
       className={cn(
         "astw:flex astw:min-h-0 astw:flex-1 astw:flex-col astw:gap-2 astw:overflow-auto astw:group-data-[collapsible=icon]:overflow-hidden",
+        SIDEBAR_SCROLL_AREA_CLASS,
+        // The inset sidebar pads its panel by 8px; reach into that padding so
+        // the scrollbar sits on the sidebar's edge, keeping the content in place.
+        // The resize handle starts at that edge, so it never covers the scrollbar.
+        "astw:group-data-[variant=inset]:-mr-[8px] astw:group-data-[variant=inset]:pr-[8px]",
         className,
       )}
       {...props}

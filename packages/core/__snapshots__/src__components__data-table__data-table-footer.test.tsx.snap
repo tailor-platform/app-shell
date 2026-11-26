@@ -10,14 +10,14 @@ exports[`DataTable column footer > renders typed and render-only footers after t
     data-slot="table-row"
   >
     <td
-      class="astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:text-left"
+      class="astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-1 astw:text-left"
       data-col-key="name"
       data-slot="data-table-column-footer-cell"
     >
       Total
     </td>
     <td
-      class="astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:text-right"
+      class="astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-1 astw:text-right"
       data-col-key="quantity"
       data-slot="data-table-column-footer-cell"
     >
@@ -26,12 +26,12 @@ exports[`DataTable column footer > renders typed and render-only footers after t
       </strong>
     </td>
     <td
-      class="astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:text-left"
+      class="astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-1 astw:text-left"
       data-col-key="note"
       data-slot="data-table-column-footer-cell"
     />
     <td
-      class="astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0 astw:text-left"
+      class="astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-1 astw:text-left"
       data-col-key="id"
       data-slot="data-table-column-footer-cell"
     />

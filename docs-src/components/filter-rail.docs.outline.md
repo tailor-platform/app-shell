@@ -13,24 +13,19 @@ sources:
 
 It writes the same `CollectionControl` a `DataTable` reads, so there is no second filter engine: a checkbox section **is** the `in` operator, a radio section is `eq`, a range is `between`.
 
+## Import
+
 ```tsx
 import { FilterRail, type FilterRailSection } from "@tailor-platform/app-shell";
-
-const sections: FilterRailSection[] = [
-  {
-    id: "category",
-    label: "Category",
-    control: "checkbox",
-    field: "category",
-    options: categories,
-  },
-  { id: "status", label: "Status", control: "radio", field: "status", options: statuses },
-];
-
-<FilterRail.Root control={control} sections={sections}>
-  <FilterRail.Sections />
-</FilterRail.Root>;
 ```
+
+The runnable examples also import `Button`, `DataTable`, `Text`, `useCollectionVariables`, `useDataTable`, and `useFilterRailLayout` from `@tailor-platform/app-shell`.
+
+## Basic Usage
+
+Choose categories and a status to filter the local product rows. The checkbox list supports search and **Show more**; each section can be collapsed without clearing its selection. **Clear product filters** restores all rows. This example evaluates only its two configured fields locally; a real application sends the derived query to its backend. There is no second `DataTable.Filters` surface for the same fields.
+
+<!-- example: basic-usage -->
 
 ## Sections and parts
 
@@ -46,15 +41,7 @@ What the rail shows is **config**: `sections`, one entry per axis, in screen ord
 | `FilterRail.Provider` | Holds the config when a `Trigger` sits outside the rail (see Narrow screens). |
 | `FilterRail.Trigger`  | The narrow-screen "Filters" button, placed anywhere inside `Provider`.        |
 
-```tsx
-<FilterRail.Root control={control} sections={sections} layout={layout}>
-  <FilterRail.Header>
-    <FilterRail.ClearAll />
-    <FilterRail.Settings />
-  </FilterRail.Header>
-  <FilterRail.Sections />
-</FilterRail.Root>
-```
+The [layout example](#user-layout) assembles the header, clear action, settings, and sections. Leave out `Settings` when users do not need to customize the rail.
 
 ### Section types
 
@@ -73,6 +60,10 @@ Every section has an `id`, a `label` and an optional `hint`. The operator is fix
 
 A checkbox list long enough to be truncated also gets a search box, so a value can be found without scrolling (`searchThreshold` overrides when it appears).
 
+The following playground covers the other six section types: text, boolean, number range, date, date range, and custom. Text commits after its debounce; numeric bounds commit on blur or Enter. Try the **April 2026** preset or **Low stock: 1–20**, and inspect the generated query below. This playground generates filter values only, not backend results.
+
+<!-- example: section-controls -->
+
 A field holds one filter, so two sections must not share a field; the rail warns in the console when they do.
 
 #### Typing fields
@@ -88,23 +79,7 @@ const sections: FilterRailSection<keyof Product & string>[] = [
 
 With a typed control (from `useCollectionVariables({ tableMetadata })`), a section whose field the control does not have is also rejected.
 
-```tsx
-const stockLevel: FilterRailSection = {
-  id: "stockLevel",
-  label: "Stock level",
-  control: "custom",
-  fields: ["stock"],
-  render: ({ getFilter, setFilter }) => (
-    <Button
-      variant="outline"
-      size="xs"
-      onClick={() => setFilter("stock", { operator: "between", value: { min: 1, max: 20 } })}
-    >
-      Low stock
-    </Button>
-  ),
-};
-```
+The **Custom stock filter** in the playground uses `getFilter` and `setFilter` to toggle a `between` filter. Its `fields: ["stock"]` declaration makes that filter participate in **Clear all**.
 
 The rail never hides state: a selected option is never truncated away, never disabled and never hidden by a section's search box.
 
@@ -136,6 +111,10 @@ In development the rail warns in the console when a checkbox or radio section li
 
 `useFilterRailLayout(storageKey)` persists the user's section order, hidden sections and option sort to localStorage. Pass it as `layout` and add `FilterRail.Settings`. Hiding a section that carries a filter also clears that filter. To share a layout across a team, pass your own `{ value, onChange, onReset }` binding instead.
 
+Open settings to hide sections, sort checkbox options, or reorder sections by dragging or using the reorder handle's arrow keys. **Availability** starts collapsed. This example saves only its own preferences under the namespaced key `docs:filter-rail:layout-example`; settings' Reset restores the authored defaults. The separate **Open demo filters** trigger appears below the `lg` breakpoint, without adding application breakpoint code.
+
+<!-- example: layout-and-responsive -->
+
 ## Beside a DataTable
 
 The rail sits in its own `Layout.Column`, outside `DataTable.Root`, which is why `control` is a prop. Do not also render `DataTable.Filters` for the same fields — one fact in two places can drift.
@@ -146,22 +125,4 @@ Below the `lg` breakpoint there is no room for a side column, so the rail turns 
 
 By default the button appears where the rail would have been. To put it somewhere else — a table toolbar, a page header — wrap the page in `FilterRail.Provider`, move the config there, and place `FilterRail.Trigger` wherever you want it. The Trigger renders nothing on wide screens, and while one is mounted the rail skips its own button.
 
-```tsx
-<FilterRail.Provider control={control} sections={sections}>
-  <Layout fill>
-    <Layout.Column area="left">
-      <FilterRail.Root>
-        <FilterRail.Sections />
-      </FilterRail.Root>
-    </Layout.Column>
-    <Layout.Column area="main">
-      <DataTable.Root value={table}>
-        <DataTable.Toolbar>
-          <FilterRail.Trigger />
-        </DataTable.Toolbar>
-        <DataTable.Table />
-      </DataTable.Root>
-    </Layout.Column>
-  </Layout>
-</FilterRail.Provider>
-```
+Narrow the browser below 1024px in the [layout example](#user-layout). **Open demo filters** opens the same sections in a left sheet and shows the active count. Press Escape or click the backdrop to close it, then reopen the sheet to verify that filters and collapsed sections remain intact. The example uses `FilterRail.Provider` to share configuration with the trigger outside `Root`, without requiring any Shell layout component.

@@ -5,6 +5,7 @@ title: Tree
 description: Browse, pick one, or tick many items in a hierarchy — inline with Tree, or in a search dialog with TreePicker
 sources:
   - packages/core/src/components/tree/**
+  - packages/core/src/lib/tree/**
   - packages/core/src/components/tree-picker/**
 ---
 
@@ -22,25 +23,13 @@ Trees are single-column. If you need a hierarchy with real columns (sorting, pin
 import { Tree, TreePicker } from "@tailor-platform/app-shell";
 ```
 
+The interactive examples also use `useEffect` and `useState` from React, plus `Button`, `Field`, `Select`, `Text`, and the `TreeSelectionStrategy` type from AppShell.
+
 ## Basic Usage
 
 Pass your own items and say how to read them with `mapItem`, as with `Select` and `Combobox`. `children` points at your own child array, and an item with no children is a leaf.
 
-```tsx
-type Account = { code: string; name: string; children?: Account[] };
-
-<Tree
-  aria-label="Chart of accounts"
-  className="h-96"
-  items={accounts}
-  mapItem={(account) => ({
-    key: account.code,
-    label: `${account.code} ${account.name}`,
-    children: account.children,
-  })}
-  onAction={(account) => navigate(`/accounts/${account.code}`)}
-/>;
-```
+<!-- example: basic-usage -->
 
 ### Item types
 
@@ -62,15 +51,7 @@ When codes repeat with different meanings, like bin `A1` in two warehouses, comp
 
 A key can't be a parent in one place and a leaf in another. One key is one item, and an item can't both have children and not, so those rows can't tick consistently. The tree logs a console warning naming any such keys.
 
-```tsx
-const isWarehouse = (node: Warehouse | Bin): node is Warehouse => "bins" in node;
-
-mapItem={(item, { parents }) =>
-  isWarehouse(item)
-    ? { key: item.id, label: item.name, children: item.bins }
-    : { key: `${parents.find(isWarehouse)?.id}/${item.code}`, label: item.code }
-}
-```
+<!-- example: keys -->
 
 `parents` has the same union type as `items`, so the example narrows it with a type guard rather than a cast (`parents[0] as Warehouse`). A cast tells TypeScript to trust you, and throws at runtime if there's no warehouse above. The guard has TypeScript check it, so that case stays visible (`?.id`) and you decide how to handle it.
 
@@ -88,16 +69,7 @@ Enter runs `onAction(item, key)` on any enabled row, in every mode. The props ar
 
 ### Single
 
-```tsx
-const [selected, setSelected] = useState<string | null>(null);
-
-<Tree
-  {...props}
-  selectionMode="single"
-  selectedKey={selected}
-  onSelectedKeyChange={(key) => setSelected(key)}
-/>;
-```
+<!-- example: single-selection -->
 
 Selecting a closed parent opens it. Its caret closes it again, so selecting an open parent never hides what you were looking at.
 
@@ -105,11 +77,7 @@ The selected row is always revealed: when it starts out inside closed groups, or
 
 ### Checkbox
 
-```tsx
-const [skus, setSkus] = useState<string[]>([]);
-
-<Tree {...props} selectionMode="checkbox" value={skus} onValueChange={setSkus} />;
-```
+<!-- example: checkbox-selection -->
 
 `onValueChange(value, { selected })` gives the new value plus the items it lists, as `{ key, item, parents }[]` in tree order. Keys in the value that aren't in `items` (not loaded yet, say) are kept as they were.
 
@@ -131,13 +99,9 @@ Take a parent P with two leaves, A and B, starting from nothing ticked:
 - **`"cascade"`** makes parents items in their own right. Ticking one ticks everything beneath it too, but unticking A leaves `[P, B]`, with P still ticked.
 - **`"independent"`** ticks every item on its own.
 
-```tsx
-// Everything in a warehouse comes back as the warehouse key, not every bin.
-<Tree {...props} selectionMode="checkbox" selectionStrategy="topmost" />
+Switch strategies below, then tick P or its children to compare the returned value. Changing strategy clears the selection.
 
-// A parent purchase order can be approved without its child orders.
-<Tree {...props} selectionMode="checkbox" selectionStrategy="independent" />
-```
+<!-- example: selection-strategies -->
 
 Every combination round-trips: passing a value back in shows the same ticks. With `"leaves"`, `"topmost"` or `"all"`, a parent key in the value stands for every leaf beneath it, so `defaultValue={["wh-x"]}` ticks all of Warehouse X.
 
@@ -145,18 +109,7 @@ Every combination round-trips: passing a value back in shows the same ticks. Wit
 
 The row shows the item's `label` by default. `renderItem` replaces it, and receives the row's state.
 
-```tsx
-renderItem={({ item, isLeaf }) =>
-  isLeaf ? (
-    <span className="flex w-full justify-between gap-3">
-      <span>{item.name}</span>
-      <span className="text-muted-foreground tabular-nums">{money(item.price)}</span>
-    </span>
-  ) : (
-    <strong>{item.name}</strong>
-  )
-}
-```
+<!-- example: custom-rows -->
 
 | Row state       | Type      | Description                                                                                       |
 | --------------- | --------- | ------------------------------------------------------------------------------------------------- |
@@ -175,16 +128,7 @@ renderItem={({ item, isLeaf }) =>
 
 `filter` narrows the tree to matching items plus their ancestors, and opens the groups they're in. It receives the item with its `label` and `parents`. A parent that matches with no matching children keeps all of them, so it can still be opened.
 
-```tsx
-const [query, setQuery] = useState("");
-const filter = useMemo(
-  () => (query ? (_: Account, { label }: { label: string }) => label.includes(query) : undefined),
-  [query],
-);
-
-<Input value={query} onChange={(event) => setQuery(event.target.value)} />
-<Tree {...props} filter={filter} />
-```
+<!-- example: filtering -->
 
 Groups a filter opened can still be closed. They stay closed until the matches change, so an inline `filter` recreated on every render won't reopen them.
 
@@ -194,16 +138,7 @@ In checkbox mode, ticking a group while filtering acts on what's visible: it tic
 
 In checkbox mode, `Tree` works like `Select` and the other form controls: as a plain form field, inside `Field.Root`, and with React Hook Form.
 
-```tsx
-<form action={saveCount}>
-  <Field.Root name="bins">
-    <Field.Label>Bins to count</Field.Label>
-    <Tree {...props} selectionMode="checkbox" required />
-    <Field.Description>Pick at least one bin.</Field.Description>
-  </Field.Root>
-  <Button type="submit">Start count</Button>
-</form>
-```
+<!-- example: with-form -->
 
 - **Submitting:** `name` (or the `Field.Root`'s name) renders one hidden input per value key, so the server reads `formData.getAll("bins")`. `itemToStringValue(item, { parents })` changes the submitted string.
 - **`required`** blocks submission until at least one item is ticked.
@@ -218,9 +153,7 @@ Only checkbox mode is a form control. In `"none"` and `"single"` modes the tree 
 
 Return `disabled: true` from `mapItem` to lock an item. A disabled parent locks everything beneath it, and `disabled` on the tree locks every row. A locked row can't be ticked or selected, and Enter doesn't run `onAction` on it. A disabled item that's already ticked stays ticked.
 
-```tsx
-mapItem={(bin) => ({ key: bin.code, label: bin.code, disabled: bin.status === "counting" })}
-```
+<!-- example: disabled-items -->
 
 How a parent behaves next to disabled children depends on whether it's a container or an item:
 
@@ -235,20 +168,7 @@ How a parent behaves next to disabled children depends on whether it's a contain
 
 A checkbox tree in a dialog, with search. It takes the same item, row and ticking props as `Tree`, plus the search and commit props. Each open starts empty, and `onCommit` receives the value's items in tree order. Ticking a group while searching ticks its matching items, as described under [Filtering](#filtering).
 
-```tsx
-const isProduct = (item: Category | Product): item is Product => "sku" in item;
-
-<TreePicker
-  open={open}
-  onOpenChange={setOpen}
-  title="Add items from catalogue"
-  items={categories}
-  mapItem={mapCatalogItem}
-  renderItem={renderCatalogItem}
-  matchesSearch={(item, query) => item.name.toLowerCase().includes(query.toLowerCase())}
-  onCommit={(picked) => addToOrder(picked.flatMap(({ item }) => (isProduct(item) ? [item] : [])))}
-/>;
-```
+<!-- example: picker -->
 
 `onCommit`'s items have the union type too, so narrow them with a type guard rather than casting to `Product`. With the default `"leaves"` only products come back, but a guard keeps that true if you later switch to `"topmost"` or `"all"`, which can return categories.
 
@@ -325,18 +245,9 @@ The default labels are localised (English and Japanese) through the app's locale
 
 There's deliberately no async variant yet: filtering and auto-expanding need the whole tree up front. Fetch once before or on open, and drive `emptyText` from your own loading flag. Keys in `value` for items that haven't loaded yet are kept, so a controlled selection survives the load.
 
-```tsx
-const { data, isLoading } = useCatalogQuery();
+This example simulates loading the whole catalogue on each open. Closing the picker cancels the pending timer; in an app, replace the timer with your query or fetch logic.
 
-<TreePicker
-  open={open}
-  onOpenChange={setOpen}
-  items={data ?? []}
-  mapItem={mapCatalogItem}
-  emptyText={isLoading ? "Loading catalogue…" : undefined}
-  onCommit={handleCommit}
-/>;
-```
+<!-- example: async-catalogue -->
 
 ## Related
 

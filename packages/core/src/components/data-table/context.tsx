@@ -1,5 +1,12 @@
 import { createContext, useContext } from "react";
-import type { Column, RowAction, RowExpansionOptions, RowSelectionOptions } from "./types";
+import type {
+  Column,
+  DataTableTreeRow,
+  RowAction,
+  RowExpansionOptions,
+  RowSelectionOptions,
+  SubRowsOptions,
+} from "./types";
 import type { PageInfo, SortState } from "@/types/collection";
 import type { ColumnWidths } from "./column-layout";
 
@@ -103,6 +110,57 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   collapseAllRows?: () => void;
   /** Expansion config. Its presence enables the expand column and detail rows. */
   rowExpansion?: RowExpansionOptions<TRow>;
+
+  // Sub-rows (optional for the same hand-constructible reason; see UseDataTableReturn)
+  /** Sub-rows config. Its presence turns the table into a tree. */
+  subRows?: SubRowsOptions<TRow>;
+  /** The rows to render with sub-rows: each page row followed by its open sub-rows. */
+  visibleRows?: DataTableTreeRow<TRow>[];
+  /** Key of the hierarchy column. */
+  treeColumnKey?: string;
+  /**
+   * The hierarchy column. It's owned by `subRows`, so it's not in `columns`,
+   * but it leads `visibleColumns`.
+   */
+  hierarchyColumn?: Column<TRow>;
+  /** Ids of the rows whose sub-rows are open. */
+  expandedSubRowIds?: string[];
+  /** Opens or closes `row`'s sub-rows. */
+  toggleSubRows?: (row: TRow) => void;
+  /** A row's checkbox, derived as `rowSelection.selectionStrategy` says. */
+  getRowCheckState?: (row: TRow) => { checked: boolean; indeterminate: boolean };
+}
+
+/**
+ * Whether the table draws a hierarchy column. A hand-built context needs the
+ * rows to draw and the column that holds them, not just `subRows`.
+ */
+export function hasTreeColumn(
+  ctx: Pick<
+    DataTableContextValue<Record<string, unknown>>,
+    "subRows" | "visibleRows" | "treeColumnKey"
+  >,
+): boolean {
+  return !!ctx.subRows && !!ctx.visibleRows && ctx.treeColumnKey !== undefined;
+}
+
+/**
+ * Where a tree's selection checkboxes go. When selection propagates ("full" or
+ * "down"), they sit in the hierarchy column, indented with the row, so a parent
+ * and the rows it ticks line up. With "none", or without sub-rows, every row is
+ * independent and they stay in the left-hand selection column.
+ */
+export function selectionInTreeColumn(
+  ctx: Pick<
+    DataTableContextValue<Record<string, unknown>>,
+    "subRows" | "visibleRows" | "treeColumnKey" | "toggleRowSelection" | "rowSelection"
+  >,
+): boolean {
+  return (
+    hasTreeColumn(ctx) &&
+    !!ctx.toggleRowSelection &&
+    ctx.rowSelection?.selectionStrategy !== "independent"
+  );
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

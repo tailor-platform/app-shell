@@ -54,9 +54,10 @@ import { defineModule } from "@tailor-platform/app-shell";
 
 const myModule = defineModule({
   path: "dashboard",
+  meta: { title: "Dashboard" },
   component: DashboardPage,
   errorBoundary: <ErrorBoundary />,
-  resources: [...]
+  resources: [],
 });
 ```
 
@@ -65,6 +66,7 @@ const myModule = defineModule({
 ```typescript
 const productsModule = defineModule({
   path: "products",
+  meta: { title: "Products" },
   component: ProductsPage,
   resources: [
     defineResource({
@@ -79,17 +81,22 @@ const productsModule = defineModule({
 ### Advanced Error Handling
 
 ```typescript
-import { isRouteErrorResponse, Text, useRouteError } from "@tailor-platform/app-shell";
+import { Text, useRouteError } from "@tailor-platform/app-shell";
 
 function ErrorBoundary() {
   const error = useRouteError();
 
-  // Handle route error responses (404, 500, etc.)
-  if (isRouteErrorResponse(error)) {
+  // Narrow the unknown error before reading an HTTP status.
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof error.status === "number"
+  ) {
     return (
       <div>
-        <Text.h1>{error.status} {error.statusText}</Text.h1>
-        <Text.p>{error.data}</Text.p>
+        <Text.h1>HTTP {error.status}</Text.h1>
+        <Text.p>The requested page could not be loaded.</Text.p>
       </div>
     );
   }
@@ -142,7 +149,12 @@ function ErrorBoundary() {
 function ErrorBoundary() {
   const error = useRouteError();
 
-  if (isRouteErrorResponse(error)) {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof error.status === "number"
+  ) {
     if (error.status === 404) {
       return <NotFoundPage />;
     }
@@ -168,8 +180,9 @@ Error boundaries can be defined at different levels:
 // Module-level - catches errors in all resources
 defineModule({
   path: "products",
+  meta: { title: "Products" },
   errorBoundary: <ModuleErrorBoundary />,
-  resources: [...]
+  resources: [],
 })
 
 // Resource-level - catches errors in specific resource

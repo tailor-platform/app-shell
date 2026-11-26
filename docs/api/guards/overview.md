@@ -17,7 +17,7 @@ Guards are executed sequentially and can return one of three results:
 - **`hidden()`** - Deny access, return 404
 - **`redirectTo(path)`** - Redirect to another page
 
-If any guard returns `hidden()` or `redirectTo()`, execution stops immediately.
+If any guard returns `hidden()` or `redirectTo()`, execution stops immediately. These client-side guards control navigation and rendering; protected APIs must enforce authorization on the server as well.
 
 ## Guard Function Signature
 
@@ -38,7 +38,7 @@ type GuardResult = { type: "pass" } | { type: "hidden" } | { type: "redirect"; t
 Allows access and continues to the next guard.
 
 ```typescript
-import { pass } from "@tailor-platform/app-shell";
+import { pass, type Guard } from "@tailor-platform/app-shell";
 
 const allowAll: Guard = () => pass();
 ```
@@ -50,7 +50,7 @@ const allowAll: Guard = () => pass();
 Denies access and shows 404 Not Found.
 
 ```typescript
-import { hidden } from "@tailor-platform/app-shell";
+import { hidden, type Guard } from "@tailor-platform/app-shell";
 
 const denyAll: Guard = () => hidden();
 ```
@@ -62,7 +62,7 @@ const denyAll: Guard = () => hidden();
 Redirects to another page.
 
 ```typescript
-import { redirectTo } from "@tailor-platform/app-shell";
+import { redirectTo, type Guard } from "@tailor-platform/app-shell";
 
 const redirectToLogin: Guard = () => redirectTo("/login");
 ```
@@ -80,7 +80,9 @@ import { defineModule, pass, hidden } from "@tailor-platform/app-shell";
 
 const adminModule = defineModule({
   path: "admin",
+  meta: { title: "Admin" },
   component: AdminPage,
+  resources: [],
   guards: [
     ({ context }) => {
       return context.currentUser?.role === "admin" ? pass() : hidden();
@@ -109,7 +111,9 @@ const isAdmin = ({ context }) =>
 Guards receive context data from AppShell:
 
 ```typescript
-// Define your context type
+// Define your context type in a module augmentation
+import "@tailor-platform/app-shell";
+
 declare module "@tailor-platform/app-shell" {
   interface AppShellRegister {
     contextData: {
@@ -198,10 +202,12 @@ const requireFeature =
 ### Async Permission Check
 
 ```typescript
-const checkApiPermission: Guard = async ({ context }) => {
+const checkApiPermission: Guard = async () => {
   const response = await fetch("/api/permissions/admin");
+  if (!response.ok) return hidden();
+
   const { allowed } = await response.json();
-  return allowed ? pass() : hidden();
+  return allowed === true ? pass() : hidden();
 };
 ```
 
@@ -213,6 +219,9 @@ const guards = [requireAuth, requireAdmin, requireFeature("beta")];
 // All must pass() for access to be granted
 defineModule({
   path: "admin",
+  meta: { title: "Admin" },
+  component: AdminPage,
+  resources: [],
   guards: guards,
 });
 ```
@@ -242,6 +251,9 @@ import { requireAuth, requireRole } from "./guards";
 
 defineModule({
   path: "admin",
+  meta: { title: "Admin" },
+  component: AdminPage,
+  resources: [],
   guards: [requireAuth, requireRole("admin")],
 });
 ```
@@ -326,12 +338,14 @@ const isAdmin: Guard = ({ context }) => {
 ### Async Guards (Slower)
 
 ```typescript
-const checkPermission: Guard = async ({ context }) => {
-  const allowed = await fetch("/api/check");
-  return allowed ? pass() : hidden();
+const checkPermission: Guard = async () => {
+  const response = await fetch("/api/check");
+  return response.ok ? pass() : hidden();
 };
 // ~50-200ms - Network request
 ```
+
+This endpoint uses HTTP status as the permission result: success means allowed, while 403 or any other non-success status means denied. If an endpoint returns a permission flag in JSON instead, validate that flag as in [Async Permission Check](#async-permission-check). A rejected request propagates to the route error boundary rather than granting access.
 
 **Tip:** Prefer sync guards when possible. Cache API results in context data.
 

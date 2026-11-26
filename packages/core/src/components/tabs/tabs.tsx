@@ -25,10 +25,12 @@ const TAB_VARIANT_CLASSES: Record<TabsVariant, string> = {
 // content taller than it (e.g. a badge) still grows — while icon-only tabs
 // (detected via `>svg:only-child`) also pick up a matching min-width so they
 // stay square. Sizes only affect the `capsule` variant, whose track height is
-// item min-height + the list's `p-1`, keeping it aligned with a sibling Button:
+// item min-height + the list's padding, keeping it aligned with a sibling Button:
 // xs → 28px (h-7), sm → 32px (h-8), default → 36px (h-9), lg → 40px (h-10).
+// Every tab is at least 24×24 (WCAG 2.5.8 target size), so `xs` keeps its 28px
+// track by shrinking the list padding to `p-0.5` instead of a 20px tab.
 const TAB_SIZE_CLASSES: Record<TabsSize, string> = {
-  xs: "astw:min-h-5 astw:has-[>svg:only-child]:min-w-5",
+  xs: "astw:min-h-6 astw:has-[>svg:only-child]:min-w-6",
   sm: "astw:min-h-6 astw:has-[>svg:only-child]:min-w-6",
   default: "astw:min-h-7 astw:has-[>svg:only-child]:min-w-7",
   lg: "astw:min-h-8 astw:has-[>svg:only-child]:min-w-8",
@@ -85,20 +87,40 @@ function Root({ className, children, variant = "default", size = "default", ...p
 }
 Root.displayName = "Tabs.Root";
 
-/** Groups the individual tab buttons. */
-function List({ className, children, ...props }: React.ComponentProps<typeof BaseTabs.List>) {
+// The tablist itself scrolls, because Base UI scrolls that element to reveal
+// the focused or active tab. The 4px padding (also the scroll-padding) keeps the
+// focus ring from being clipped; the negative margin and wider max-width cancel it.
+const LIST_CONTAINER_CLASSES =
+  "astw:-m-[4px] astw:flex astw:max-w-[calc(100%+8px)] astw:overflow-x-auto astw:overflow-y-hidden astw:overscroll-x-contain astw:p-[4px] astw:[scroll-padding-inline:4px] astw:[scrollbar-width:none] astw:[&::-webkit-scrollbar]:hidden";
+
+/**
+ * Groups the individual tab buttons. Tabs stay on one row and scroll sideways
+ * when they do not fit. `className` applies to the inner track.
+ */
+function List({
+  className,
+  children,
+  ...props
+}: Omit<React.ComponentProps<typeof BaseTabs.List>, "render">) {
   const variant = React.useContext(TabsVariantContext);
+  const size = React.useContext(TabsSizeContext);
   return (
     <BaseTabs.List
       data-slot="tabs-list"
-      className={cn(
-        "astw:relative astw:inline-flex astw:items-center astw:justify-center",
-        LIST_VARIANT_CLASSES[variant],
-        className,
-      )}
       {...props}
+      render={<div className={LIST_CONTAINER_CLASSES} />}
     >
-      {children}
+      <div
+        data-slot="tabs-list-track"
+        className={cn(
+          "astw:relative astw:inline-flex astw:items-center astw:justify-center",
+          LIST_VARIANT_CLASSES[variant],
+          variant === "capsule" && size === "xs" && "astw:p-0.5",
+          className,
+        )}
+      >
+        {children}
+      </div>
     </BaseTabs.List>
   );
 }

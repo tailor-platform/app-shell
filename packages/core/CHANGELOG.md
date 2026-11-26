@@ -1,5 +1,255 @@
 # @tailor-platform/app-shell
 
+## 1.21.0
+
+### Minor Changes
+
+- c90cdf6: Add `AppShellTestingProvider` for memory-routing tests of applications using the recommended file-based routing API. Render the existing application, with its pages configured by the Vite plugin, inside the provider instead of rebuilding its route tree as test modules.
+  The provider requires `initialEntries: string[]`, leaves the browser URL unchanged, and lets tests use the application's main-entry `AppShell`, `AppShellProps`, and `AppShellRegister` augmentation.
+  
+  For example, when `src/App.tsx` is the configured entrypoint:
+  
+  ```tsx
+  import { render } from "@testing-library/react";
+  import { AppShellTestingProvider } from "@tailor-platform/app-shell/testing";
+  import App from "../src/App";
+  
+  render(
+    <AppShellTestingProvider initialEntries={["/dashboard"]}>
+      <App />
+    </AppShellTestingProvider>,
+  );
+  ```
+  
+  Keep `appShellRoutes()` active in Vitest by reusing the application's Vite config, with `root`, `pagesDir`, and `entrypoint` pointing to the same application files. The provider selects memory routing only; it does not discover or register pages. With `entrypoint: "src/App.tsx"`, importing a new `AppShell` directly in a test file does not inject the application's pages. See the [Testing guide](https://github.com/tailor-platform/app-shell/blob/main/docs/concepts/testing.md#file-based-routing-integration-tests) for the full setup.
+  
+  For new application tests, prefer the provider-based setup above. When migrating tests that construct AppShell props, use `AppShellProps` from the main entry, move `initialEntries` into the provider, and remove `memory` from AppShell. `TestRouter` and `TestRouterProps` are unchanged and remain supported for focused component unit tests.
+  
+  `AppShell` and `TestAppShellProps` from `@tailor-platform/app-shell/testing` are now deprecated but remain available for compatibility.
+- f782c48: Add `MemoryAuthProvider` and `createMemoryAuthClient` to the `/testing` entry point for isolated authentication UI tests using the real providers and hooks, without OAuth, network requests, or persisted sessions.
+  
+  Use `MemoryAuthProvider` for initial state fixtures, or supply a memory client and call `setState` to control loading, authentication, and error transitions. The testing guide includes guard, login/logout, and Suspense recipes.
+  
+  ```tsx
+  import { MemoryAuthProvider } from "@tailor-platform/app-shell/testing";
+  
+  <MemoryAuthProvider initialState={{ isReady: true, isAuthenticated: true, error: null }}>
+    <ProfilePage />
+  </MemoryAuthProvider>;
+  ```
+- b3734c4: Add `DataTable.Table`'s `emptyContent` and `errorContent` props to replace empty and error messages with text or custom markup, for example `<DataTable.Table emptyContent="No requests awaiting approval" errorContent="Unable to load requests" />`. Omitting either prop preserves its existing default message.
+  
+  Empty and error states now fill the available body area when the table root has a fixed height or fills a bounded flex parent, while headers, footers, and data rows keep their natural heights. Their content stays centered in the visible viewport even when columns overflow horizontally, and oversized custom content can be scrolled independently of the columns.
+- 8ab89c9: Ship a second agent skill, `skills/app-shell-upgrade/`, for upgrading `@tailor-platform/app-shell`. It carries the migration list and a step-by-step procedure: select the entries between the old and new versions, detect and apply each one, then verify. `app-shell-patterns` no longer includes `references/migrations.md` and now points to `app-shell-upgrade` instead. Its description also now lists the screens and patterns it covers, so agents load it more reliably.
+  
+  If your app keeps a copy of `app-shell-patterns` (for example under `.claude/skills/`), copy `app-shell-upgrade` next to it from the installed package.
+- 0b6e1c8: Expose the 1-based `sortIndex` (undefined when unsorted) and active-key `sortCount` in sortable DataTable `header(ctx)` and `headerProps(ctx)` callbacks, without changing built-in header visuals. After narrowing with `ctx.sortable`, read `ctx.sortIndex` and `ctx.sortCount` to access sort priority without using table context.
+  
+  Add `aria-sort="ascending"` or `"descending"` to the primary sorted header, including custom headers. Unsorted and secondary headers omit the attribute; use the existing `useDataTable().sortStates` array to read all active sorts.
+- b4ede51: Add the optional `RangeCalendar.onSelectionStateChange` callback with `selection-start`, `range-complete`, and `selection-cancel` events.
+  Only `range-complete` carries the selected `DateRange`; the existing `onChange` callback remains unchanged.
+  Export `RangeCalendarSelectionEvent` for explicitly typed selection event handlers.
+  
+  ```tsx
+  import { RangeCalendar } from "@tailor-platform/app-shell";
+  
+  <RangeCalendar
+    aria-label="Date range"
+    onSelectionStateChange={(event) => {
+      if (event.type === "range-complete") {
+        console.log(event.value);
+      }
+    }}
+  />;
+  ```
+
+### Patch Changes
+
+- b4ede51: Use a two-click range calendar with highlighted dates for date and datetime "between" filters in the Add filter panel.
+  Remove redundant From/To date summaries while keeping separate start/end time inputs, timezone conversion, and reversed-range validation.
+  Preserve unchanged datetime bounds' seconds and fractions, block applying unfinished selections, and reset drafts on Clear all.
+- 1b8514a: Correct the DatePicker documentation and migration examples to use `useTimeZone().today()` instead of a standalone `today` import.
+  Keep date constraints aligned with AppShell's configured timezone, and clarify how to obtain the current date and time without adding public exports.
+- e4b5616: Keep the `DataTable` footer usable at phone widths. `DataTable.Pagination` now wraps its controls onto more lines instead of letting the frame clip them, so **Next** and **Last** stay tappable. When the footer is narrower than 480px, the **Rows per page** label is hidden and the page text is shortened to `1 / 5` (both stay available to screen readers, and the label now names the page-size select). The bulk-action bar also moves every action into the **More actions** menu at that width, so it keeps to one line and the table rows stay visible. The menu button gets an outline at that width, so it stands out more than **Clear**.
+- f1e9a31: Clarify English date filter labels in operator lists and filter chips with "on or after" / "on or before".
+  The labels now explicitly state that `gte` / `lte` include the selected date; Japanese labels and filter semantics are unchanged.
+- 923933d: Replace static documentation snippets with runnable, self-contained examples for components and hooks, including forms, data tables, and AI chat.
+  Improve the documentation browser with grouped sidebar navigation, a global header, and a neutral preview background.
+- 9b02ecd: Document accessible form-control testing and provider fixtures using the public testing entry point.
+  Add guidance for memory routing, application-owned mocks, validation, portals, and segmented date inputs.
+
+## 1.20.0
+
+### Minor Changes
+
+- 4a183fd: Add local tool support to `useAIChat()` and the AI Gateway transport layer. Streamed function names and arguments are assembled across chunks independently for each tool call.
+  
+  You can now register **local tools** via the `tools` option on `useAIChat()`. Tool-call and tool-result protocol messages stay internal to the hook — the public `messages` array remains user/assistant text only. Provider-native tools are not supported.
+  
+  Stopped or failed requests retain user messages, partial assistant text, and completed tool exchanges in subsequent request history. Unanswered tool calls are excluded. Stopping does not undo tool side effects or guarantee safe retries of tools that were already running.
+  
+  **Low-level API compatibility:** `AIGatewayChatMessage` now includes `role: "tool"`, and `AIChatCompletionEvent` now includes `type: "tool-call"`. Exhaustive handlers for these exported unions must handle the new cases, even when tools are not enabled. The high-level `useAIChat().messages` role union remains `"user" | "assistant"`.
+  
+  ## Local tools
+  
+  Define tools that run inside AppShell using `defineAIChatTool`. The model decides when to call them, AppShell validates arguments with the schema, executes the handler, and feeds results back into the next model turn automatically.
+  
+  ```ts
+  import { defineAIChatTool } from "@tailor-platform/app-shell";
+  import { z } from "zod/v4";
+  
+  const lookupCustomer = defineAIChatTool({
+    description: "Look up a customer by ID and return their profile",
+    schema: z.object({
+      customerId: z.string().describe("Customer ID"),
+      includeInactive: z.boolean().optional(),
+    }),
+    async execute({ customerId, includeInactive }, { signal }) {
+      const res = await fetch(`/api/customers/${customerId}?inactive=${includeInactive ?? false}`, {
+        signal,
+      });
+      return res.json();
+    },
+  });
+  ```
+  
+  Tool schemas must implement both [Standard Schema](https://standardschema.dev/) validation and Standard JSON Schema generation; Zod 4 does this directly.
+  
+  ### Tool context
+  
+  The `execute` function receives a second argument with:
+  
+  - `signal` — the `AbortSignal` for the in-flight chat request
+  - `messages` — the public user/assistant message history at the time of execution
+  
+  Stopping a request while tool arguments are being validated prevents the tool from starting. Cancellation is propagated rather than returned to the model as a tool error.
+  
+  ## Registering tools with `useAIChat`
+  
+  Pass tools as a record to the `tools` option. The key becomes the tool name sent to the model.
+  
+  ```tsx
+  import { useAIChat, defineAIChatTool } from "@tailor-platform/app-shell";
+  import { z } from "zod/v4";
+  
+  const lookupCustomer = defineAIChatTool({
+    description: "Look up a customer by ID",
+    schema: z.object({
+      customerId: z.string(),
+    }),
+    async execute({ customerId }) {
+      return { customerId, name: "Acme Corp", plan: "enterprise" };
+    },
+  });
+  
+  function ChatPanel({ client }) {
+    const { messages, status, sendMessage } = useAIChat({
+      client,
+      model: "gpt-5-mini",
+      tools: {
+        lookupCustomer,
+      },
+    });
+  
+    // messages only contains user/assistant text — tool calls are handled internally
+    // status transitions: "submitted" → "streaming" → ("submitted" during tool rounds) → "ready"
+  }
+  ```
+  
+  The hook runs up to 8 tool rounds per user message, then allows a final model response using the eighth round's results. If the model requests a ninth tool batch, the request fails before those tools execute.
+- 8a2368c: Add `Tree` and `TreePicker`. `Tree` shows your own hierarchical items as an ARIA tree, for browsing, picking one node, or ticking many as a form control. `TreePicker` is a checkbox tree in a fixed-height dialog with search and an "Add N items" commit, the way `DatePicker` wraps `DateField`.
+  
+  Pass your own items with `mapItem`, as with `Select` and `Combobox`. A key is the item's identity across the whole tree, and `mapItem` receives the item's `parents` so you can compose a unique key when codes repeat. The item type comes from `items`; when levels are different types, type `items` as their union (here `categories: (Category | Product)[]`).
+  
+  ```tsx
+  import { Tree } from "@tailor-platform/app-shell";
+  
+  <Tree
+    aria-label="Products"
+    items={categories}
+    mapItem={(item) =>
+      "products" in item
+        ? { key: item.id, label: item.name, children: item.products }
+        : { key: item.sku, label: item.name }
+    }
+    selectionMode="checkbox"
+    value={skus}
+    onValueChange={setSkus}
+  />;
+  ```
+  
+  - **Selection modes:** `selectionMode` is `"none"` (the default, for browsing with `onAction`), `"single"` (one selected row through `selectedKey`), or `"checkbox"` (a multi-select `value`). Each mode's props are ruled out in the others, so a form prop without checkbox mode is a type error.
+  - **How ticking works:** `selectionStrategy` is `"leaves"` (the default), `"topmost"` or `"all"`, where parents are containers and the value lists leaves, a fully ticked parent in place of its leaves, or everything ticked; or `"cascade"` or `"independent"`, where a parent can be ticked on its own, with or without ticking everything beneath it.
+  - **Filtering:** `filter` narrows the tree to matches and their ancestors and opens the groups they're in. The tree has no search box of its own; `TreePicker` adds one, with `matchesSearch` and `filterSlot`.
+  - **Forms:** in checkbox mode, `name` submits one hidden input per value key; `required`, `disabled`, `itemToStringValue`, and `Field.Root` integration (label, description, error, invalid state) work as on `Select`.
+  - **Keyboard:** `role="tree"` with roving focus. Arrows move and open, Space selects or ticks, and Enter runs `onAction` (or, in checkbox mode with no `onAction`, submits the owning form; the picker commits).
+  - **Disabled items:** `disabled` from `mapItem`, cascading from a parent to its children.
+  
+  Built-in labels are localised (English and Japanese) through the app locale; any label prop overrides them.
+- 4a183fd: Show a localized waiting indicator in `AIChat.Conversation` while a response or tool round is pending.
+  
+  Expose requested tool names in a transient `toolCalls` list from `useAIChat()`. Render them with `toolCalls.map(call => <AIChat.ToolCall key={call.id} call={call} />)`; the localized labels stack vertically and the list clears on completion, stop, or error without changing the message history. Call metadata does not imply successful execution, and tool arguments/results remain internal.
+- 2e41a0b: Add `subRows` to `DataTable`, for nested rows such as a chart of accounts or a bill of materials.
+  
+  ```tsx
+  const table = useDataTable<Account>({
+    columns,
+    data,
+    subRows: {
+      getSubRows: (account) => account.children,
+      hierarchyColumn: { label: "Account", accessor: (account) => account.name },
+    },
+    rowSelection: { actions: [exportAccounts] },
+  });
+  ```
+  
+  - **Hierarchy column:** `subRows.hierarchyColumn` defines a column of its own that carries the indent, the open / close caret, the checkbox and the row's label. Like the row-actions column, it's added by the feature: always first and pinned left, outside column settings and saved layout, and your other columns stay as defined. It takes the regular column display options (`label`, `accessor`, `render`, `type`, `width`, `truncate`, `header`, `footer` and the props hooks).
+  - **Pagination:** the page's rows are the top level, and each parent's sub-rows stay on its page.
+  - **Selection:** `rowSelection` takes the same `selectionStrategy` as `Tree`, defaulting to `"leaves"`. With `"independent"`, rows are ticked on their own and the checkboxes stay in the left-hand column.
+  - **Open rows:** controlled with `expandedIds` + `onExpandedChange`, or started with `defaultExpandedIds`.
+  - `subRows` can't be combined with `rowExpansion`: passing both is a type error.
+- 1ada9c7: Add `sidebarBehaviour` to `<SidebarLayout />` and `<GlobalHeaderLayout />` with `"fixed"`, `"collapse"`, `"resize"`, and `"collapse-and-resize"` desktop modes; the default enables both operations. `useAppShellSidebar()` exposes the effective, normalized mode alongside its existing state and actions.
+  
+  Reuse the desktop edge handle for continuous drag-to-expand/resize/collapse, keyboard controls, and double-click reset to 256px. Resize-only mode clamps to 192–480px without resistance or collapsing; double-click never collapses it. Live CSS widths and ARIA updates avoid per-move React renders, with committed width updates at mode changes and gesture completion.
+  
+  Deprecate the boolean `collapsible` prop: explicit `false` maps to `"fixed"`, explicit `true` maps to `"collapse"`, and specifying both old and new props is a type error. All modes use normal responsive mobile/tablet drawers and overlays. This intentionally changes legacy `collapsible={false}`, which no longer forces a fixed sidebar on mobile/tablet.
+  
+  ```tsx
+  // Before
+  <SidebarLayout collapsible={false} />;
+  
+  // After: fixed desktop, normal responsive drawer/overlay
+  <SidebarLayout sidebarBehaviour="fixed" />;
+  
+  // Resize without collapsing
+  <GlobalHeaderLayout sidebarBehaviour="resize" />;
+  ```
+- dd8bef3: Toasts now appear above open dialogs and sheets. The `Toaster` renders through a portal to the end of `body` instead of inside the content column, where the scroll container's stacking context kept it behind the dialog backdrop. A new `--z-toast` token (100) sits above `--z-popup` and `--z-overlay` (50).
+  
+  The layout root (the sidebar wrapper shared by `SidebarLayout` and `GlobalHeaderLayout`) now has `isolation: isolate`, so a z-index set inside the page is ordered within the page and never reaches the portaled dialogs, sheets, popups and toasts. Nothing inside AppShell changes; a consumer who relied on an in-page element with a high z-index covering a dialog will see the dialog on top instead.
+  
+  The `Toaster` element moves from the content column to the end of `body`. Styles that targeted it through the column's ancestors no longer match. The toast position, theme and colours are unchanged.
+- b75bfc9: The z-index tokens are named by layer: `--z-nav` (10), `--z-portal` (50) and `--z-toast` (100). The old names keep working as aliases: `--z-sidebar` is `var(--z-nav)`, and `--z-popup` and `--z-overlay` are `var(--z-portal)`. They are deprecated and will be removed in the next major. Nothing moves on screen.
+  
+  A theme that overrides an old name no longer reaches the components, which read the new names. `--z-sidebar-rail` is no longer read by the sidebar rail; the variable stays declared for elements of your own. See the 1.20.0 note in the migration guide.
+
+### Patch Changes
+
+- d1aacf9: Fix the focus ring offset on the `Dialog` and `Sheet` close buttons. The offset now uses the card color, so in dark mode it no longer shows a white gap around the button. Also remove an unused `pt-4` class from the welcome text that `AppShell` shows when there is no root module. The spacing does not change.
+- 18bac15: `Dialog.Content` now stays inside the viewport. Its height is capped at the viewport height minus 2rem, and it scrolls when the content is taller. Before, a tall dialog ran off the top and bottom of the screen, and its title, close button and footer could not be reached.
+  
+  Because the dialog is now a scroll container, content wider than the dialog no longer spills past its edge. It scrolls sideways inside the dialog instead.
+  
+  When the content overflows and the first control is below the fold, the dialog itself takes focus on open, so it opens at the top. A first control that is in view, and any dialog that fits, still get focus as before, and `initialFocus` still overrides this.
+- 907409a: Refine the title-initial fallback for icon-less `SidebarItem` and `SidebarGroup` in the collapsed icon rail. The initial is now larger and sits in a 22px box with a subtle 0.5px hairline frame (20% of the text color) instead of a heavy 2px outline, so it stays legible for dense CJK characters such as 請 or 発.
+- e2240e3: The `Select` list now stays inside the viewport. When it opens below or above the trigger, it is at most 15rem tall, scrolls when there are more options, and opens on the side with more room. Before, a `Select` near the bottom of the screen opened a list whose last options were off screen and could not be scrolled to or clicked.
+  
+  If you added a global CSS override on `[data-slot="select-content"]` to work around this, you can remove it.
+- 60db493: `Tabs.List` now scrolls sideways when the tabs are wider than their container, instead of growing the page. The `tablist` element is the scroll container (scrollbar hidden), and Base UI scrolls the active tab into view on mount and the tab focused with the arrow keys into view, so keyboard navigation never lands on a hidden tab. The container has 4px of padding, a matching negative margin and the same `scroll-padding`, so the focus ring is not clipped and the list keeps its footprint. Nothing changes while the tabs fit.
+  
+  The tabs now sit in a visual track (`data-slot="tabs-list-track"`) inside the `tablist`, and `className` applies to that track. The `tablist` is a block-level element, so a `Tabs.List` placed next to inline content starts on its own line. `Tabs.List` no longer accepts `render`.
+- 7264f4b: On touch devices, tapping a group in the sidebar icon rail now opens its flyout, the same popover a mouse opens on hover, so its pages can be reached. Before, nothing happened: the flyout only opened on hover, and the group's own submenu is hidden at icon width. The flyout closes on a second tap, a tap outside, `Escape`, or when a page in it is opened, and only one group's flyout is open at a time. On a touch device, a group with its own page is a button in the rail; its page is linked from the flyout heading instead. Opening the flyout from the keyboard moves focus into it, and closing it returns focus to the icon. The flyout is now built on Base UI `Popover`, which also keeps it on screen next to its icon. Devices with a mouse keep the hover behaviour. Sidebar item tooltips are now disabled, rather than hidden, outside the icon rail, and `Tooltip.Root` accepts Base UI's `disabled` prop.
+
 ## 1.19.0
 
 ### Minor Changes

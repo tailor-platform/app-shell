@@ -57,7 +57,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-0-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-0-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+25EE8, U+25F23, U+25F5C, U+25FD4, U+25FE0, U+25FFB, U+2600C, U+26017, U+26060, U+260ED,
     U+26222, U+2626A, U+26270, U+26286, U+2634C, U+26402, U+2667E, U+266B0, U+2671D, U+268DD,
@@ -92,7 +92,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-1-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-1-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+2000B, U+20089-2008A, U+200A2, U+200A4, U+200B0, U+200F5, U+20158, U+201A2, U+20213, U+2032B,
     U+20371, U+20381, U+203F9, U+2044A, U+20509, U+2053F, U+205B1, U+205D6, U+20611, U+20628,
@@ -125,7 +125,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-2-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-2-wght-normal.woff2) format("woff2-variations");
   unicode-range: U+FFD7, U+FFDA-FFDC, U+FFE0-FFE2, U+FFE4, U+FFE6, U+FFE8-FFEE;
 }
 
@@ -138,7 +138,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-3-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-3-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+FA10, U+FA12-FA6D, U+FE30-FE42, U+FE44-FE4F, U+FF02, U+FF04, U+FF07, U+FF51, U+FF5B, U+FF5D,
     U+FF5F-FF60, U+FF66, U+FF69, U+FF87, U+FFA1-FFBE, U+FFC2-FFC7, U+FFCA-FFCF, U+FFD2-FFD6;
@@ -153,7 +153,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-4-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-4-wght-normal.woff2) format("woff2-variations");
   unicode-range: U+F92D-F959, U+F95B-F9F2, U+F9F4-FA0B, U+FA0E-FA0F;
 }
 
@@ -166,7 +166,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-5-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-5-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+9E8B-9E8C, U+9E8E-9E8F, U+9E91-9E92, U+9E95-9E96, U+9E98, U+9E9B, U+9E9D-9E9E, U+9EA4-9EA5,
     U+9EA8-9EAA, U+9EAC-9EB0, U+9EB3-9EB5, U+9EB8, U+9EBC-9EBF, U+9EC3, U+9EC6, U+9EC8, U+9ECB-9ECD,
@@ -187,7 +187,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-6-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-6-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+9C3E, U+9C41, U+9C43-9C4A, U+9C4E-9C50, U+9C52-9C54, U+9C56, U+9C58, U+9C5A-9C61, U+9C63,
     U+9C65, U+9C67-9C6B, U+9C6D-9C6E, U+9C70, U+9C72, U+9C75-9C78, U+9C7A-9C7C, U+9CE6-9CE7,
@@ -211,7 +211,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-7-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-7-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+9AE5-9AE7, U+9AE9, U+9AEB-9AEC, U+9AEE-9AEF, U+9AF1-9AF5, U+9AF7, U+9AF9-9AFB, U+9AFD,
     U+9AFF-9B06, U+9B08-9B09, U+9B0B-9B0E, U+9B10, U+9B12, U+9B16, U+9B18-9B1D, U+9B1F-9B20,
@@ -234,7 +234,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-8-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-8-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+98EB, U+98ED-98EE, U+98F0-98F1, U+98F3, U+98F6, U+9902, U+9907-9909, U+9911-9912, U+9914-9918,
     U+991A-9922, U+9924, U+9926-9927, U+992B-992C, U+992E, U+9931-9935, U+9939-993E, U+9940-9942,
@@ -258,7 +258,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-9-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-9-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+971D, U+9721-9724, U+9728, U+972A, U+9730-9731, U+9733, U+9736, U+9738-9739, U+973B,
     U+973D-973E, U+9741-9744, U+9746-974A, U+974D-974F, U+9751, U+9755, U+9757-9758, U+975A-975C,
@@ -283,7 +283,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-10-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-10-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+944A, U+944C, U+9452-9453, U+9455, U+9459-945C, U+945E-9463, U+9468, U+946A-946B, U+946D-9472,
     U+9475, U+9477, U+947C-947F, U+9481, U+9483-9485, U+9578-9579, U+957E-957F, U+9582, U+9584,
@@ -308,7 +308,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-11-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-11-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+92BC-92BD, U+92BF-92C3, U+92C5-92C8, U+92CB-92D0, U+92D2-92D3, U+92D5, U+92D7-92D9,
     U+92DC-92DD, U+92DF-92E1, U+92E3-92E5, U+92E7-92EA, U+92EC, U+92EE, U+92F0, U+92F2, U+92F7-92FB,
@@ -332,7 +332,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-12-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-12-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+9143, U+9146-914C, U+914F, U+9153, U+9156-915B, U+9161, U+9163-9165, U+9167, U+9169, U+916D,
     U+9172-9174, U+9179-917B, U+9181-9183, U+9185-9187, U+9189-918B, U+918E, U+9191, U+9193-9195,
@@ -355,7 +355,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-13-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-13-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+8F52-8F55, U+8F57-8F58, U+8F5C-8F5E, U+8F61-8F66, U+8F9C-8F9D, U+8F9F-8FA2, U+8FA4-8FA8,
     U+8FAD-8FAF, U+8FB4-8FB8, U+8FBE, U+8FC0-8FC2, U+8FC6, U+8FC8, U+8FCA-8FCB, U+8FCD, U+8FD0,
@@ -380,7 +380,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-14-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-14-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+8DC0, U+8DC2, U+8DC5-8DC8, U+8DCA-8DCC, U+8DCE-8DCF, U+8DD1, U+8DD4-8DD7, U+8DD9-8DDB, U+8DDF,
     U+8DE3-8DE5, U+8DE7, U+8DEA-8DEC, U+8DF0-8DF2, U+8DF4, U+8DFC-8DFD, U+8DFF, U+8E01, U+8E04-8E06,
@@ -404,7 +404,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-15-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-15-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+8B2D, U+8B30, U+8B37, U+8B3C, U+8B3E, U+8B41-8B46, U+8B48-8B49, U+8B4C-8B4F, U+8B51-8B54,
     U+8B56, U+8B59, U+8B5B, U+8B5E-8B5F, U+8B63, U+8B69, U+8B6B-8B6D, U+8B6F, U+8B71, U+8B74,
@@ -430,7 +430,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-16-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-16-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+8973-8975, U+8977, U+897A-897E, U+8980, U+8983, U+8988-898A, U+898D, U+8990, U+8993-8995,
     U+8998, U+899B-899C, U+899F-89A1, U+89A5-89A6, U+89A9, U+89AC, U+89AF-89B0, U+89B2, U+89B4-89B7,
@@ -456,7 +456,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-17-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-17-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+87E2-87E6, U+87EA-87ED, U+87EF, U+87F1, U+87F3, U+87F5-87F8, U+87FA-87FB, U+87FE-87FF, U+8801,
     U+8803, U+8805-8807, U+8809-880B, U+880D-8816, U+8818-881C, U+881E-881F, U+8821-8822,
@@ -481,7 +481,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-18-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-18-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+8655-8659, U+865B, U+865D-8664, U+8667, U+8669, U+866C, U+866F, U+8671, U+8675-8677,
     U+867A-867B, U+867D, U+8687-8689, U+868B-868D, U+8691, U+8693, U+8695-8696, U+8698, U+869A,
@@ -506,7 +506,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-19-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-19-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+84B4, U+84B9-84BB, U+84BD-84C2, U+84C6-84CA, U+84CC-84D1, U+84D3, U+84D6, U+84D9-84DA, U+84DC,
     U+84E7, U+84EA, U+84EC, U+84EF-84F2, U+84F4, U+84F7, U+84FA-84FD, U+84FF-8500, U+8502-8503,
@@ -531,7 +531,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-20-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-20-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+82E8, U+82EA, U+82ED, U+82EF, U+82F3-82F4, U+82F6-82F7, U+82F9, U+82FB, U+82FD-82FE,
     U+8300-8301, U+8303, U+8306-8308, U+830A-830C, U+8316-8318, U+831B, U+831D-831F, U+8321-8323,
@@ -556,7 +556,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-21-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-21-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+814A, U+814C, U+8151-8153, U+8157, U+815F-8161, U+8165-8169, U+816D-816F, U+8171, U+8173-8174,
     U+8177, U+8180-8186, U+8188, U+818A-818B, U+818E, U+8190, U+8193, U+8195-8196, U+8198, U+819B,
@@ -581,7 +581,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-22-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-22-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+7F77-7F79, U+7F7D-7F80, U+7F82-7F83, U+7F86-7F88, U+7F8B-7F8D, U+7F8F-7F91, U+7F94,
     U+7F96-7F97, U+7F9A, U+7F9C-7F9D, U+7FA1-7FA3, U+7FA6, U+7FAA, U+7FAD-7FAF, U+7FB2, U+7FB4,
@@ -607,7 +607,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-23-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-23-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+7D57, U+7D59-7D5D, U+7D63, U+7D65, U+7D67, U+7D6A, U+7D6E, U+7D70, U+7D72-7D73, U+7D78,
     U+7D7A-7D7B, U+7D7D, U+7D7F, U+7D81-7D83, U+7D85-7D86, U+7D88-7D89, U+7D8B-7D8D, U+7D8F, U+7D91,
@@ -631,7 +631,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-24-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-24-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+7BC8, U+7BCA-7BCC, U+7BCF, U+7BD4, U+7BD6-7BD7, U+7BD9-7BDB, U+7BDD, U+7BE5-7BE6, U+7BE8-7BEA,
     U+7BF0, U+7BF2-7BFA, U+7BFC, U+7BFE, U+7C00-7C04, U+7C06-7C07, U+7C09, U+7C0B-7C0F, U+7C11-7C14,
@@ -656,7 +656,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-25-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-25-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+7A17-7A19, U+7A1B, U+7A1E-7A21, U+7A27, U+7A2B, U+7A2D, U+7A2F-7A31, U+7A34-7A35, U+7A37-7A3B,
     U+7A3E, U+7A43-7A49, U+7A4C, U+7A4E, U+7A50, U+7A55-7A57, U+7A59, U+7A5C-7A5D, U+7A5F-7A63,
@@ -681,7 +681,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-26-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-26-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+7851-7852, U+785C, U+785E, U+7860-7861, U+7863-7864, U+7868, U+786A, U+786E-786F, U+7872,
     U+7874, U+787A, U+787C, U+787E, U+7886-7887, U+788A, U+788C-788F, U+7893-7895, U+7898, U+789A,
@@ -706,7 +706,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-27-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-27-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+768C-768E, U+7690, U+7693, U+7695-7696, U+7699-76A8, U+76AA, U+76AD, U+76AF-76B0, U+76B4,
     U+76B6-76BA, U+76BD, U+76C1-76C3, U+76C5, U+76C8-76C9, U+76CB-76CE, U+76D2, U+76D4, U+76D6,
@@ -732,7 +732,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-28-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-28-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+7511-7513, U+7515-7517, U+751C, U+751E, U+7520-7522, U+7524, U+7526-7527, U+7529-752C, U+752F,
     U+7536, U+7538-7539, U+753C-7540, U+7543-7544, U+7546-754B, U+754D-7550, U+7552, U+7557,
@@ -755,7 +755,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-29-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-29-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+736C, U+736E-7371, U+7375, U+7377-737C, U+7380-7381, U+7383, U+7385-7386, U+738A, U+738E,
     U+7390, U+7393-7398, U+739C, U+739E-73A0, U+73A2, U+73A5-73A6, U+73A8, U+73AA-73AB, U+73AD,
@@ -780,7 +780,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-30-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-30-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+7166, U+7168, U+716C, U+7179, U+7180, U+7184-7185, U+7187-7188, U+718C, U+718F, U+7192,
     U+7194-7196, U+7199-719B, U+71A0, U+71A2, U+71A8, U+71AC, U+71AE-71B0, U+71B2-71B3, U+71B9-71BA,
@@ -807,7 +807,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-31-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-31-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+6F58-6F5B, U+6F5D-6F5E, U+6F60-6F62, U+6F66, U+6F68, U+6F6C-6F6D, U+6F6F, U+6F74, U+6F78,
     U+6F7A, U+6F7C-6F7E, U+6F80, U+6F82-6F83, U+6F86-6F88, U+6F8B-6F8E, U+6F90-6F94, U+6F96-6F98,
@@ -834,7 +834,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-32-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-32-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+6D7C, U+6D80-6D82, U+6D85, U+6D87, U+6D89-6D8A, U+6D8C-6D8E, U+6D91-6D98, U+6D9C, U+6DAA-6DAC,
     U+6DAE, U+6DB4-6DB5, U+6DB7-6DB9, U+6DBD, U+6DBF, U+6DC2, U+6DC4-6DC8, U+6DCA, U+6DCC,
@@ -860,7 +860,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-33-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-33-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+6B85, U+6B89, U+6B8D, U+6B95, U+6B97-6B98, U+6B9B, U+6B9E-6BA0, U+6BA2-6BA4, U+6BA8-6BB3,
     U+6BB7-6BB9, U+6BBC-6BBE, U+6BC0, U+6BC3-6BC4, U+6BC6-6BC9, U+6BCB-6BCC, U+6BCF, U+6BD3,
@@ -886,7 +886,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-34-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-34-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+69DD-69DE, U+69E2-69E3, U+69E5, U+69E7-69EB, U+69ED-69EF, U+69F1-69F6, U+69F9, U+69FE-6A01,
     U+6A03, U+6A05, U+6A0A, U+6A0C, U+6A0F, U+6A11-6A15, U+6A17, U+6A1A-6A1B, U+6A1D-6A20,
@@ -912,7 +912,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-35-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-35-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+6855, U+6857-6859, U+685B, U+685D, U+685F, U+6863, U+6867, U+686B, U+686E-6872, U+6874-6875,
     U+6877, U+6879-687C, U+687E-687F, U+6882-6884, U+6886, U+6888, U+688D-6890, U+6894, U+6896,
@@ -937,7 +937,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-36-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-36-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+667E-6680, U+6683-6684, U+6688, U+668B-668E, U+6690, U+6692, U+6698-669D, U+669F-66A0, U+66A2,
     U+66A4, U+66AD, U+66B1-66B3, U+66B5, U+66B8-66B9, U+66BB-66BC, U+66BE-66C4, U+66C6, U+66C8-66C9,
@@ -963,7 +963,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-37-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-37-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+64D2, U+64D4-64D5, U+64D7-64D8, U+64DA, U+64E0-64E1, U+64E3-64E5, U+64E7, U+64E9-64EA, U+64ED,
     U+64EF-64F2, U+64F4-64F7, U+64FA-64FB, U+64FD-6501, U+6504-6505, U+6508-650A, U+650F,
@@ -989,7 +989,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-38-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-38-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+62CF, U+62D1, U+62D4-62D6, U+62DA, U+62DC, U+62EA, U+62EE-62EF, U+62F1-62F2, U+62F4-62F5,
     U+62FC-62FD, U+62FF, U+6302-6304, U+6308-630D, U+6310, U+6313, U+6316, U+6318, U+631B, U+6327,
@@ -1015,7 +1015,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-39-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-39-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+6117, U+6119, U+611C, U+611E, U+6120-6122, U+6127-6128, U+612A-612C, U+6130-6131, U+6134-6137,
     U+6139-613A, U+613C-613F, U+6141-6142, U+6144-6147, U+6149-614A, U+614D, U+6153, U+6158-615A,
@@ -1040,7 +1040,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-40-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-40-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+5F6C-5F6D, U+5F6F, U+5F72-5F75, U+5F78, U+5F7A, U+5F7D-5F7F, U+5F82-5F83, U+5F87-5F89, U+5F8D,
     U+5F8F, U+5F91, U+5F96, U+5F99, U+5F9C-5F9D, U+5FA0, U+5FA2, U+5FA4, U+5FA7-5FA8, U+5FAB-5FAD,
@@ -1065,7 +1065,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-41-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-41-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+5D9B, U+5D9D, U+5D9F-5DA0, U+5DA2, U+5DA4, U+5DA7, U+5DAB-5DAC, U+5DAE, U+5DB0, U+5DB2,
     U+5DB4, U+5DB7-5DB9, U+5DBC-5DBD, U+5DC3, U+5DC7, U+5DC9, U+5DCB-5DCE, U+5DD0-5DD3, U+5DD6-5DD9,
@@ -1091,7 +1091,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-42-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-42-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+5BBC, U+5BC0-5BC1, U+5BC3, U+5BC7, U+5BC9, U+5BCD-5BD0, U+5BD3-5BD4, U+5BD6-5BDA, U+5BDE,
     U+5BE0-5BE2, U+5BE4-5BE6, U+5BE8, U+5BEB-5BEC, U+5BEF-5BF1, U+5BF3-5BF6, U+5BFD, U+5C03, U+5C05,
@@ -1117,7 +1117,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-43-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-43-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+598B-598E, U+5992, U+5995, U+5997, U+599B, U+599D, U+599F, U+59A3-59A4, U+59A7, U+59AD-59B0,
     U+59B2-59B3, U+59B7, U+59BA, U+59BC, U+59BE, U+59C1, U+59C3-59C4, U+59C6, U+59C8, U+59CA,
@@ -1146,7 +1146,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-44-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-44-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+57B3, U+57B8, U+57BD, U+57C0, U+57C3, U+57C6-57C8, U+57CC, U+57CF, U+57D2-57D7, U+57DC-57DE,
     U+57E0-57E1, U+57E3-57E4, U+57E6-57E7, U+57E9, U+57ED, U+57F0, U+57F4-57F6, U+57F8, U+57FB,
@@ -1172,7 +1172,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-45-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-45-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+5616-5617, U+5619, U+561B, U+5620, U+5628, U+562C, U+562F-5639, U+563B-563D, U+563F-5641,
     U+5643-5644, U+5646-5647, U+5649, U+564B, U+564D-5650, U+5653-5654, U+565E, U+5660-5664, U+5666,
@@ -1197,7 +1197,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-46-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-46-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+543F-5440, U+5443-5444, U+5447, U+544C-544F, U+5455, U+545E, U+5462, U+5464, U+5466-5467,
     U+5469, U+546B-546E, U+5470-5471, U+5474-5477, U+547B, U+547F-5481, U+5483-5486, U+5488-548B,
@@ -1222,7 +1222,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-47-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-47-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+528D, U+5291-5298, U+529A, U+529C, U+52A4-52A7, U+52AB-52AD, U+52AF-52B0, U+52B5-52B8,
     U+52BA-52BE, U+52C0-52C1, U+52C4-52C6, U+52C8, U+52CA, U+52CC-52CD, U+52CF-52D2, U+52D4,
@@ -1247,7 +1247,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-48-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-48-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+50DD-50DF, U+50E1-50E6, U+50E8-50E9, U+50ED-50F6, U+50F9-50FB, U+50FE, U+5101-5103,
     U+5106-5109, U+510B-510E, U+5110, U+5112, U+5114-511E, U+5121, U+5123, U+5127-5128, U+512C-512D,
@@ -1272,7 +1272,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-49-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-49-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4F57-4F58, U+4F5A-4F5B, U+4F5D-4F5F, U+4F63-4F64, U+4F69-4F6A, U+4F6C, U+4F6E-4F71,
     U+4F76-4F7E, U+4F81-4F85, U+4F88-4F8A, U+4F8C, U+4F8E-4F90, U+4F92-4F94, U+4F96-4F9A,
@@ -1296,7 +1296,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-50-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-50-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4093, U+4103, U+4105, U+4148, U+414F, U+4163, U+41B4, U+41BF, U+41E6, U+41EE, U+41F3, U+4207,
     U+420E, U+4264, U+4293, U+42C6, U+42D6, U+42DD, U+4302, U+432B, U+4343, U+43EE, U+43F0, U+4408,
@@ -1325,7 +1325,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-51-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-51-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3395-339B, U+339E-33A0, U+33A2-33FF, U+3402, U+3405-3406, U+3427, U+342C, U+342E, U+3468,
     U+346A, U+3488, U+3492, U+34B5, U+34BC, U+34C1, U+34C7, U+34DB, U+351F, U+353E, U+355D-355E,
@@ -1349,7 +1349,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-52-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-52-wght-normal.woff2) format("woff2-variations");
   unicode-range: U+32B5-332B, U+332D-3394;
 }
 
@@ -1362,7 +1362,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-53-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-53-wght-normal.woff2) format("woff2-variations");
   unicode-range: U+31F0-321E, U+3220-3230, U+3232-32B4;
 }
 
@@ -1375,7 +1375,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-54-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-54-wght-normal.woff2) format("woff2-variations");
   unicode-range: U+3028-303F, U+3094-3096, U+309F-30A0, U+30EE, U+30F7-30FA, U+30FF, U+3190-319F;
 }
 
@@ -1388,7 +1388,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-55-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-55-wght-normal.woff2) format("woff2-variations");
   unicode-range: U+3004, U+3013, U+3016-301B, U+301E, U+3020-3027;
 }
 
@@ -1401,7 +1401,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-60-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-60-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+301F, U+4FF8, U+5239, U+526A, U+54FA, U+5740, U+5937, U+5993, U+59FB, U+5A3C, U+5C41, U+6028,
     U+626E, U+646F, U+647A, U+64B0, U+64E2, U+65A7, U+66FE, U+6727, U+6955, U+6BEF, U+6F23, U+724C,
@@ -1418,7 +1418,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-61-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-61-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3090, U+30F1, U+339C, U+535C, U+53D9, U+56A2, U+56C1, U+5806, U+589F, U+59D0, U+5A7F, U+60E0,
     U+639F, U+65AF, U+68FA, U+69AE, U+6D1B, U+6EF2, U+71FB, U+725D, U+7262, U+75BC, U+7768, U+7940,
@@ -1435,7 +1435,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-62-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-62-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+301D, U+515C, U+52FE, U+5420, U+5750, U+5766, U+5954, U+5B95, U+5F8A, U+5F98, U+620C, U+621F,
     U+641C, U+66D9, U+676D, U+6775, U+67F5, U+694A, U+6A02, U+6A3A, U+6A80, U+6C23, U+6C72, U+6DCB,
@@ -1452,7 +1452,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-63-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-63-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4EC0, U+4F60, U+4FB6, U+5347, U+540E, U+543B, U+5B0C, U+5D4C, U+5F14, U+5F9E, U+6155, U+62D0,
     U+6602, U+6666, U+66F3, U+67A2, U+67CA, U+69CC, U+6D29, U+6D9B, U+6E3E, U+6F81, U+7109, U+73C0,
@@ -1469,7 +1469,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-64-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-64-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4ECE, U+4ED4, U+4F91, U+4FAE, U+534D, U+53C9, U+54B3, U+586B, U+5944, U+5B78, U+5DF7, U+5F77,
     U+6101, U+6167-6168, U+61A4, U+62D9, U+698A, U+699B, U+6A59, U+6CC4, U+6E07, U+7099, U+75D2,
@@ -1487,7 +1487,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-65-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-65-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+309B, U+4E5E, U+51F1, U+5506, U+55C5, U+58CC, U+59D1, U+5C51, U+5EF7, U+6284, U+62D7, U+6689,
     U+673D, U+6A2B, U+6A8E, U+6A9C, U+6D63, U+6DD1, U+70B8, U+7235, U+72DB, U+72F8, U+7560, U+7C9B,
@@ -1505,7 +1505,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-66-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-66-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3003, U+3231, U+4E9B, U+4F3D, U+4F47, U+51B6, U+51DC, U+53E1, U+5BC5, U+602F, U+60BC, U+61C9,
     U+633D, U+637B, U+6492, U+65FA, U+660F, U+66F0, U+6703, U+681E, U+6876, U+6893, U+6912, U+698E,
@@ -1523,7 +1523,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-67-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-67-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4EAB, U+4FE3, U+4FF5, U+51A5, U+51F0, U+536F, U+53D4, U+53F1, U+54A5, U+559D, U+55E3, U+58FA,
     U+5962, U+59EA, U+5C16, U+5CEF, U+5D16, U+5F10, U+5FD6, U+6190, U+6216, U+634F, U+63BB, U+66D6,
@@ -1540,7 +1540,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-68-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-68-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E14, U+545F, U+54BD, U+553E, U+55DC, U+56DA, U+589C, U+5B55, U+5BB5, U+5CE1, U+5DF4, U+5EB6,
     U+5EC9, U+6191, U+62F7, U+6357, U+64A5, U+6591, U+65BC, U+6897, U+6E1A, U+7063, U+711A, U+721B,
@@ -1557,7 +1557,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-69-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-69-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4F86, U+51EA, U+5243, U+5256, U+541F, U+5841, U+59DC, U+5DF3, U+601C, U+60E7, U+632B, U+638C,
     U+64AD, U+6881, U+697C, U+69CD, U+6C50, U+6D2A, U+6FC1, U+7027, U+7058, U+70F9, U+714E, U+7345,
@@ -1574,7 +1574,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-70-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-70-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3006, U+5176, U+5197, U+51A8, U+51C6, U+52F2, U+5614, U+5875, U+5A2F, U+5B54, U+5CE0, U+5DBA,
     U+5DEB, U+5E63, U+5F59, U+5FCC, U+6068, U+6367, U+68B6, U+6A0B, U+6B64, U+6E15, U+6EBA, U+7272,
@@ -1592,7 +1592,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-71-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-71-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+33A1, U+4F10, U+50C5, U+51B4, U+5384, U+5606, U+5BB0, U+5CAC, U+5EE3, U+618E, U+61F2, U+62C9,
     U+66AB, U+66F9, U+6816, U+6960, U+6B3E, U+6F20, U+7078, U+72D0, U+73ED, U+7AD9, U+7B1B, U+7BE4,
@@ -1609,7 +1609,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-72-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-72-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E91, U+508D, U+50E7, U+514E, U+51F6, U+5446, U+5504, U+584A, U+59A8, U+59D3, U+5A46, U+5AC9,
     U+6020, U+60A6, U+6148, U+621A, U+6234, U+64C1, U+6523, U+675C, U+67D1, U+6953, U+6CCC, U+6DF5,
@@ -1627,7 +1627,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-73-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-73-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+51F9, U+5270, U+5449, U+5824, U+59A5, U+5A29, U+5D07, U+5E16, U+60E3, U+614C, U+6276, U+643E,
     U+64AB, U+6562, U+6681, U+670B, U+6734, U+67AF, U+6A3D, U+6B05, U+6DC0, U+6E4A, U+7259, U+732A,
@@ -1644,7 +1644,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-74-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-74-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4F8D, U+51E1, U+51F8, U+5507, U+5598, U+58F1, U+5983, U+59AC, U+5C3C, U+5DE7, U+5E7D, U+5ECA,
     U+5F61, U+606D, U+60F9, U+636E, U+64EC, U+67DA, U+67FF, U+6813, U+68F2, U+693F, U+6B6A, U+6BBB,
@@ -1661,7 +1661,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-75-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-75-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+339D, U+4F0E, U+5091, U+50B5, U+5132, U+51CC, U+558B, U+55AA, U+585E, U+5BEE, U+5DFE, U+60B6,
     U+62B9, U+6349, U+6566, U+6590, U+6842, U+689D, U+6A58, U+6C70, U+6FF1, U+7815, U+7881, U+7AAA,
@@ -1678,7 +1678,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-76-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-76-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4F2F, U+5208, U+5451, U+546A, U+5589, U+576A, U+5815, U+5A9A, U+5B9B, U+5C3A, U+5EFB, U+5FAA,
     U+6109, U+6643, U+6652, U+695A, U+69FD, U+6B86, U+6BB4, U+6DAF, U+7089, U+70CF, U+7A00, U+7A4F,
@@ -1695,7 +1695,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-77-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-77-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+309C, U+4E4F, U+5146, U+51DD, U+5351, U+540A, U+5629, U+5EB5, U+5F04, U+5F13, U+60DC, U+6212,
     U+63B4, U+642C, U+6627, U+66A6, U+66C7, U+66FD, U+674E, U+6B96, U+6C4E, U+6DF3, U+6E67, U+6F84,
@@ -1712,7 +1712,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-78-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-78-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E32, U+51DB, U+53A8, U+53EA, U+5609, U+5674, U+5A92, U+5E7E, U+6115, U+611A, U+62CC, U+62ED,
     U+63C9, U+64B9, U+64E6, U+65CB, U+6606, U+6731, U+683D, U+6AFB, U+7460, U+771E, U+78EF, U+7B26,
@@ -1730,7 +1730,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-79-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-79-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+30F5, U+4EAE, U+4F46, U+4F51, U+5203, U+52FF, U+55A7, U+564C, U+565B, U+57F9, U+5805, U+5B64,
     U+5E06, U+5F70, U+5F90, U+60E8, U+6182, U+62F3, U+62FE, U+63AA, U+64A4, U+65D7, U+673A, U+6851,
@@ -1748,7 +1748,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-80-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-80-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4EF0, U+5076, U+5098, U+51FD, U+5302, U+5448, U+54C9, U+570B, U+583A, U+5893, U+58A8, U+58EE,
     U+5949, U+5BDB, U+5F26, U+5F81, U+6052, U+6170, U+61C7, U+631F, U+635C, U+664B, U+69FB, U+6F01,
@@ -1765,7 +1765,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-81-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-81-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4F3A, U+514B, U+5265, U+52C3, U+5339, U+53EC, U+54C0, U+55B0, U+5854, U+5B8F, U+5CB3, U+5E84,
     U+60DA, U+6247, U+6249, U+628A, U+62CD, U+65AC, U+6838, U+690E, U+6CF0, U+6F02, U+6F2C, U+6F70,
@@ -1782,7 +1782,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-82-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-82-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+5049, U+52B1, U+5320, U+5553, U+572D, U+58C7, U+5B5D, U+5BC2, U+5DE3, U+5E61, U+5F80, U+61A9,
     U+67D0, U+67F4, U+6C88, U+6CA1, U+6CE5, U+6D78, U+6E9C, U+6F54, U+731B, U+73B2, U+74A7, U+74F6,
@@ -1800,7 +1800,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-83-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-83-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3008-3009, U+4EAD, U+4F0F, U+4FCA, U+53EB, U+543E, U+57A2, U+5CF0, U+5E8F, U+5FE0, U+61B2,
     U+62D8, U+6442, U+64B2, U+6589, U+659C, U+67F1, U+68C4, U+6CB8, U+6D12, U+6DE1, U+6FE1, U+70C8,
@@ -1818,7 +1818,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-84-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-84-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3014-3015, U+4E3C, U+5036, U+5075, U+533F, U+53E9, U+5531, U+5642, U+5984, U+59E6, U+5A01,
     U+5B6B, U+5C0B, U+5F25, U+6069, U+60A0, U+614E, U+62B5, U+62D2-62D3, U+6597, U+660C, U+674F,
@@ -1836,7 +1836,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-85-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-85-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3007, U+504F, U+507D, U+51A0, U+52A3, U+5410, U+5510, U+559A, U+5782, U+582A, U+5C0A, U+5C3F,
     U+5C48, U+5F6B, U+6176, U+622F, U+6279, U+62BD, U+62DD, U+65ED, U+67B6, U+6817, U+6850, U+6D6A,
@@ -1854,7 +1854,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-86-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-86-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4ECF, U+5100, U+51CD, U+52D8, U+5378, U+53F6, U+574A, U+5982, U+5996, U+5C1A, U+5E1D, U+5F84,
     U+609F, U+61A7, U+61F8, U+6398, U+63EE, U+6676, U+6691, U+6EB6, U+7126, U+71E5, U+7687, U+7965,
@@ -1871,7 +1871,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-87-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-87-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E39, U+4FC3, U+4FD7, U+50BE, U+50DA, U+5200, U+5211, U+54F2, U+5618, U+596A, U+5B22, U+5BB4,
     U+5D50, U+60A3, U+63FA, U+658E, U+65E8, U+6669, U+6795, U+679D, U+67A0, U+6B3A, U+6E09, U+757F,
@@ -1888,7 +1888,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-88-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-88-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E59, U+4EC1, U+4FF3, U+515A, U+518A, U+525B, U+5375, U+552F, U+57A3, U+5B9C, U+5C3D, U+5E3D,
     U+5E7B, U+5F0A, U+6094, U+6458, U+654F, U+67F3, U+6B8A, U+6BD2, U+6C37, U+6CE1, U+6E56, U+6E7F,
@@ -1906,7 +1906,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-89-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-89-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E80, U+4F34, U+4F73, U+4F75, U+511F, U+5192, U+52AA, U+53C8, U+570F, U+57CB, U+596E, U+5D8B,
     U+5F66, U+5FD9, U+62DB, U+62F6, U+6328, U+633F, U+63A7, U+6469, U+6BBF, U+6C41, U+6C57, U+6D44,
@@ -1924,7 +1924,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-90-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-90-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E18, U+4FB5, U+5104, U+52C7, U+5353, U+5374, U+53E5, U+587E, U+594F, U+5A20, U+5DE1, U+5F18,
     U+5FCD, U+6291, U+62AB, U+6355, U+6392, U+63DA, U+63E1, U+656C, U+6687, U+68B0-68B1, U+68D2,
@@ -1942,7 +1942,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-91-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-91-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+517C, U+526F, U+5800, U+5B97, U+5BF8, U+5C01, U+5D29, U+5E4C, U+5E81, U+6065, U+61D0, U+667A,
     U+6696, U+6843, U+6C99, U+6D99, U+6EC5, U+6F22, U+6F6E, U+6FA4, U+6FEF, U+71C3, U+72D9, U+7384,
@@ -1959,7 +1959,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-92-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-92-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E5F, U+4E7E, U+4ED9, U+501F, U+502B, U+5968, U+5974, U+5AC1, U+5B99, U+5BA3, U+5BE7, U+5BE9,
     U+5C64, U+5CB8, U+5EC3, U+5F1F, U+616E, U+6297, U+62E0, U+62EC, U+6368, U+642D, U+65E6, U+6717,
@@ -1977,7 +1977,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-93-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-93-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+300A-300B, U+4E89, U+4E9C, U+4EA1, U+5263, U+53CC, U+5426, U+5869, U+5947, U+598A, U+5999,
     U+5E55, U+5E72, U+5E79, U+5FAE, U+5FB9, U+602A, U+6163, U+624D, U+6749, U+6C5A, U+6CBF, U+6D45,
@@ -1994,7 +1994,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-94-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-94-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E43, U+5019, U+5247, U+52E7, U+5438, U+54B2, U+55AB, U+57F7, U+5BD2, U+5E8A, U+5EF6, U+6016,
     U+60B2, U+6162, U+6319, U+6551, U+6607, U+66B4, U+675F, U+67D4, U+6B20, U+6B53, U+6CE3, U+719F,
@@ -2011,7 +2011,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-95-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-95-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E4B, U+516D, U+51C4, U+529F, U+52C9, U+5360, U+5442, U+5857, U+5915, U+59EB, U+5A9B, U+5C3B,
     U+6012, U+61B6, U+62B1, U+6311, U+6577, U+65E2, U+65EC, U+6613, U+6790, U+6CB9, U+7372, U+76AE,
@@ -2028,7 +2028,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-96-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-96-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E03, U+4F38, U+50B7, U+5264, U+5348, U+5371, U+585A, U+58CA, U+5951, U+59B9, U+59D4, U+5B98,
     U+5F8B, U+6388, U+64CD, U+65E7, U+6803, U+6B6F, U+6D66, U+6E0B, U+6ECB, U+6FC3, U+72AC, U+773C,
@@ -2046,7 +2046,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-97-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-97-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E92, U+4EEE, U+4FFA, U+5144, U+5237, U+5287, U+52B4, U+58C1, U+5BFF, U+5C04, U+5C06, U+5E95,
     U+5F31, U+5F93, U+63C3, U+640D, U+6557, U+6614, U+662F, U+67D3, U+690D, U+6BBA, U+6E6F, U+72AF,
@@ -2063,7 +2063,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-98-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-98-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E71, U+4F59, U+50D5, U+520A, U+5217, U+5230, U+523A-523B, U+541B, U+5439, U+5747, U+59C9,
     U+5BDF, U+5C31, U+5DE8, U+5E7C, U+5F69, U+6050, U+60D1, U+63CF, U+663C, U+67C4, U+6885, U+6C38,
@@ -2081,7 +2081,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-99-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-99-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+505C, U+52E4, U+5305, U+535A, U+56E0, U+59BB, U+5ACC, U+5B09, U+5B87, U+5C90, U+5DF1, U+5E2D,
     U+5E33, U+5F3E, U+6298, U+6383, U+653B, U+6697, U+6804, U+6A39, U+6CCA, U+6E90, U+6F2B, U+702C,
@@ -2099,7 +2099,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-100-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-100-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E08, U+4F9D, U+5012, U+514D, U+51B7, U+5275, U+53CA, U+53F8, U+5584, U+57FC, U+5B9D, U+5BFA,
     U+5C3E, U+5F01, U+5FB4, U+5FD7, U+606F, U+62E1, U+6563, U+6674, U+6CB3, U+6D3E, U+6D74, U+6E1B,
@@ -2117,7 +2117,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-101-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-101-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3012, U+4EF2, U+4F0A, U+516B, U+5373, U+539A, U+53B3, U+559C, U+56F0, U+5727, U+5742, U+5965,
     U+59FF, U+5BC6, U+5DFB, U+5E45, U+5EAD, U+5FB3, U+6211, U+6253, U+639B, U+63A8, U+6545, U+6575,
@@ -2135,7 +2135,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-102-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-102-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E0E, U+4E5D, U+4E73, U+4E94, U+4F3C, U+5009, U+5145, U+51AC, U+5238, U+524A, U+53F3, U+547C,
     U+5802, U+5922, U+5A66, U+5C0E, U+5DE6, U+5FD8, U+5FEB, U+6797, U+685C, U+6B7B, U+6C5F-6C60,
@@ -2152,7 +2152,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-103-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-103-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+500D, U+5074, U+50CD, U+5175, U+52E2, U+5352, U+5354, U+53F2, U+5409, U+56FA, U+5A18, U+5B88,
     U+5BDD, U+5CA9, U+5F92, U+5FA9, U+60A9, U+623F, U+6483, U+653F, U+666F, U+66AE, U+66F2, U+6A21,
@@ -2170,7 +2170,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-104-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-104-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E01, U+4E21, U+4E38, U+52A9, U+547D, U+592E, U+5931, U+5B63, U+5C40, U+5DDE, U+5E78, U+5EFA,
     U+5FA1, U+604B, U+6075, U+62C5, U+632F, U+6A19, U+6C0F, U+6C11, U+6C96, U+6E05, U+70BA, U+71B1,
@@ -2188,7 +2188,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-105-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-105-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E26, U+4F4E, U+5341, U+56F2, U+5BBF, U+5C45, U+5C55, U+5C5E, U+5DEE, U+5E9C, U+5F7C, U+6255,
     U+627F, U+62BC, U+65CF, U+661F, U+666E, U+66DC, U+67FB, U+6975, U+6A4B, U+6B32, U+6DF1, U+6E29,
@@ -2205,7 +2205,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-106-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-106-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+30F6, U+50AC, U+5178, U+51E6, U+5224, U+52DD, U+5883, U+5897, U+590F, U+5A5A, U+5BB3, U+5C65,
     U+5E03, U+5E2B, U+5E30, U+5EB7, U+6271, U+63F4, U+64AE, U+6574, U+672B, U+679A, U+6A29-6A2A,
@@ -2223,7 +2223,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-107-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-107-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E45, U+4EFB, U+4F50, U+4F8B, U+4FC2, U+5024, U+5150, U+5272, U+5370, U+53BB, U+542B, U+56DB,
     U+56E3, U+57CE, U+5BC4, U+5BCC, U+5F71, U+60AA, U+6238, U+6280, U+629C, U+6539, U+66FF, U+670D,
@@ -2240,7 +2240,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-108-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-108-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+301C, U+4E57, U+4FEE, U+5065, U+52DF, U+533B, U+5357, U+57DF, U+58EB, U+58F0, U+591C,
     U+592A-592B, U+5948, U+5B85, U+5D0E, U+5EA7, U+5FF5, U+6025, U+63A1, U+63A5, U+63DB, U+643A,
@@ -2258,7 +2258,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-109-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-109-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4F11, U+533A, U+5343, U+534A, U+53CD, U+5404, U+56F3, U+5B57-5B58, U+5BAE, U+5C4A, U+5E0C,
     U+5E2F, U+5EAB, U+5F35, U+5F79, U+614B, U+6226, U+629E, U+65C5, U+6625, U+6751, U+6821, U+6B69,
@@ -2275,7 +2275,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-110-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-110-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E86, U+4E95, U+4F01, U+4F1D, U+4FBF, U+5099, U+5171, U+5177, U+53CB, U+53CE, U+53F0, U+5668,
     U+5712, U+5BA4, U+5CA1, U+5F85, U+60F3, U+653E, U+65AD, U+65E9, U+6620, U+6750, U+6761, U+6B62,
@@ -2293,7 +2293,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-111-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-111-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+300E-300F, U+4E07, U+4E8C, U+512A, U+5149, U+518D, U+5236, U+52B9, U+52D9, U+5468, U+578B,
     U+57FA, U+5B8C, U+5BA2, U+5C02, U+5DE5, U+5F37, U+5F62, U+623B, U+63D0, U+652F, U+672A, U+6848,
@@ -2310,7 +2310,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-112-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-112-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E16, U+4E3B, U+4EA4, U+4EE4, U+4F4D, U+4F4F, U+4F55, U+4F9B, U+5317, U+5358, U+53C2, U+53E4,
     U+548C, U+571F, U+59CB, U+5CF6, U+5E38, U+63A2, U+63B2, U+6559, U+662D, U+679C, U+6C7A, U+72B6,
@@ -2328,7 +2328,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-113-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-113-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+4E09, U+4EAC, U+4ED5, U+4FA1, U+5143, U+5199, U+5207, U+539F, U+53E3, U+53F7, U+5411, U+5473,
     U+5546, U+55B6, U+5929, U+597D, U+5BB9, U+5C11, U+5C4B, U+5DDD, U+5F97, U+5FC5, U+6295, U+6301,
@@ -2345,7 +2345,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-114-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-114-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3005, U+4E0D, U+4E88, U+4ECB, U+4EE3, U+4EF6, U+4FDD, U+4FE1, U+500B, U+50CF, U+5186, U+5316,
     U+53D7, U+540C, U+544A, U+54E1, U+5728, U+58F2, U+5973, U+5B89, U+5C71, U+5E02, U+5E97, U+5F15,
@@ -2363,7 +2363,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-115-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-115-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3080, U+4EE5, U+5148, U+516C, U+521D, U+5225, U+529B, U+52A0, U+53EF, U+56DE, U+56FD, U+5909,
     U+591A, U+5B66, U+5B9F, U+5BB6, U+5BFE, U+5E73, U+5E83, U+5EA6, U+5F53, U+6027, U+610F, U+6210,
@@ -2381,7 +2381,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-116-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-116-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3010-3011, U+30E2, U+4E0B, U+4ECA, U+4ED6, U+4ED8, U+4F53, U+4F5C, U+4F7F, U+53D6, U+540D,
     U+54C1, U+5730, U+5916, U+5B50, U+5C0F, U+5F8C, U+624B, U+6570, U+6587, U+6599, U+691C, U+696D,
@@ -2399,7 +2399,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-117-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-117-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3000, U+300C-300D, U+4E00, U+4E0A, U+4E2D, U+4E8B, U+4EBA, U+4F1A, U+5165, U+5168, U+5185,
     U+51FA, U+5206, U+5229, U+524D, U+52D5, U+5408, U+554F, U+5831, U+5834, U+5927, U+5B9A, U+5E74,
@@ -2416,7 +2416,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-118-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-118-wght-normal.woff2) format("woff2-variations");
   unicode-range: U+65E5, U+6708, U+70B9;
 }
 
@@ -2429,7 +2429,7 @@
   ascent-override: 103.2%;
   descent-override: 25.5%;
   line-gap-override: 0%;
-  src: url(./fonts/files/noto-sans-jp-119-wght-normal.woff2) format("woff2-variations");
+  src: url(./files/noto-sans-jp-119-wght-normal.woff2) format("woff2-variations");
   unicode-range:
     U+3001-3002, U+3041-307F, U+3081-308F, U+3091-3093, U+3099-309A, U+309D-309E, U+30A1-30E1,
     U+30E3-30ED, U+30EF-30F0, U+30F2-30F4, U+30FB-30FE, U+FF0C, U+FF0E;

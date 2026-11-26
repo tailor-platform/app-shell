@@ -53,6 +53,8 @@ export {
   type AppInfo,
   type AppInfoEntry,
   type TimeZone,
+  type ToastDefault,
+  type ToastDefaults,
 } from "./contexts/appshell-context";
 export { useAppShellScrollContainer } from "./contexts/scroll-container-context";
 export { useTheme, type ColorTheme, type ResolvedColorTheme } from "./contexts/theme-context";
@@ -187,6 +189,15 @@ export {
 export { TreePicker, type TreePickerProps } from "./components/tree-picker";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export {
+  Stepper,
+  useStepper,
+  type StepperProgress,
+  type StepperProps,
+  type StepperStep,
+  type UseStepperOptions,
+  type UseStepperReturn,
+} from "./components/stepper";
+export {
   ActivityCard,
   type ActivityCardProps,
   type ActivityCardItem,
@@ -254,6 +265,7 @@ export {
   type CalendarProps,
   type RangeCalendarProps,
   type DateRange,
+  type RangeCalendarSelectionEvent,
 } from "./components/calendar";
 
 // @internationalized/date re-exports — consumers import date helpers/types from
@@ -333,12 +345,15 @@ export {
   type Column,
   type DataTableData,
   type DataTableFilterConfig,
+  type DataTableTreeRow,
   type HeaderRenderContext,
   type FooterRenderContext,
   type DataTableAction,
   type RowAction,
   type SelectionAction,
   type SelectionActionHelpers,
+  type SubRowsOptions,
+  type HierarchyColumn,
   type UseDataTableOptions,
   type UseDataTableReturn,
   type MetadataFieldOptions,

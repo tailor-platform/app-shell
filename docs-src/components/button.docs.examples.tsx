@@ -1,6 +1,6 @@
 import { PlusIcon } from "lucide-react";
 
-import { Button } from "@tailor-platform/app-shell";
+import { Button, Link, buttonVariants } from "@tailor-platform/app-shell";
 
 export function BasicUsage() {
   return (
@@ -36,5 +36,38 @@ export function Sizes() {
         <PlusIcon />
       </Button>
     </div>
+  );
+}
+
+export function RenderProp() {
+  return (
+    <Button render={<Link to="/components/table" />} variant="outline">
+      View Table documentation
+    </Button>
+  );
+}
+
+export function FormActions() {
+  return (
+    <div className="flex justify-end gap-2">
+      <Button variant="outline">Cancel</Button>
+      <Button>Save Changes</Button>
+    </div>
+  );
+}
+
+export function IconButton() {
+  return (
+    <Button size="icon" variant="outline" aria-label="Add order">
+      <PlusIcon aria-hidden />
+    </Button>
+  );
+}
+
+export function StylingUtility() {
+  return (
+    <a href="/components/table" className={buttonVariants({ variant: "outline", size: "sm" })}>
+      View Table documentation
+    </a>
   );
 }

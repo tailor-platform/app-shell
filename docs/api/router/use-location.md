@@ -31,13 +31,14 @@ interface Location {
 
 ### Access Current Path
 
-```typescript
-import { useLocation } from "@tailor-platform/app-shell";
+Import `Text` and `useLocation` from `@tailor-platform/app-shell`. This preview reads the documentation page's current route without navigating.
 
-function Breadcrumb() {
+<example-preview name="current-path"></example-preview>
+
+```tsx
+function CurrentPath() {
   const location = useLocation();
-
-  return <div>Current path: {location.pathname}</div>;
+  return <Text.p>Current path: {location.pathname}</Text.p>;
 }
 ```
 

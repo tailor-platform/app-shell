@@ -55,38 +55,15 @@ const useAppShellConfig: () => {
 
 ### Display App Info
 
-```typescript
-import { Text, useAppShellConfig } from "@tailor-platform/app-shell";
+Import `Text` and `useAppShellConfig` from `@tailor-platform/app-shell`. The previews below read the documentation browser's configuration.
 
-function AppInfo() {
-  const { title, configurations } = useAppShellConfig();
-
-  return (
-    <div>
-      <Text.h2>{title}</Text.h2>
-      <Text.p>Base: {configurations.basePath}</Text.p>
-    </div>
-  );
-}
-```
+<!-- example: app-info -->
 
 ### Access Modules
 
 Module titles are `LocalizedString` values (a string or a `(locale) => string` function), so the example lists `path` instead of rendering `meta.title` directly.
 
-```typescript
-function ModuleList() {
-  const { configurations } = useAppShellConfig();
-
-  return (
-    <ul>
-      {configurations.modules.map((module) => (
-        <li key={module.path}>{module.path}</li>
-      ))}
-    </ul>
-  );
-}
-```
+<!-- example: module-list -->
 
 ### Settings Resources
 
@@ -109,13 +86,15 @@ function SettingsMenu() {
 
 Use `useAppShellConfig` when you only need configuration data:
 
-```typescript
-// ✅ Good - subscribes to configuration only
-const { configurations } = useAppShellConfig();
-
-// ❌ Overkill - useAppShell also subscribes to contextData changes
-const { configurations } = useAppShell();
+```tsx
+function ModuleCount() {
+  // Subscribes to configuration only.
+  const { configurations } = useAppShellConfig();
+  return <span>{configurations.modules.length} modules</span>;
+}
 ```
+
+Using `useAppShell()` here would also subscribe to context-data changes that this component does not use.
 
 ## Comparison with Other Hooks
 

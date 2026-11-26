@@ -78,13 +78,16 @@ const AppInner = () => {
               <SidebarItem to="/showcase/layouts" />
               <SidebarItem to="/showcase/grid" />
               <SidebarItem to="/showcase/timeline" />
+              <SidebarItem to="/showcase/stepper" />
               <SidebarItem to="/showcase/ai-chat" />
               <SidebarItem to="/showcase/document-progress" />
               <SidebarItem to="/showcase/date-picker" />
               <SidebarItem to="/showcase/toolbar" />
               <SidebarItem to="/showcase/data-table" />
+              <SidebarItem to="/showcase/data-table-empty" />
               <SidebarItem to="/showcase/data-table-lab" />
               <SidebarItem to="/showcase/data-table-selection" />
+              <SidebarItem to="/showcase/data-table-tree" />
               <SidebarItem to="/showcase/filter-rail" />
               <SidebarItem to="/showcase/tree" />
               <SidebarItem to="/showcase/alert-tokens" />

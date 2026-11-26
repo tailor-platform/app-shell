@@ -31,8 +31,10 @@ export type GeneratedRouteParams = {
   "/showcase/colors": {};
   "/showcase/csv-importer": {};
   "/showcase/data-table": {};
+  "/showcase/data-table-empty": {};
   "/showcase/data-table-lab": {};
   "/showcase/data-table-selection": {};
+  "/showcase/data-table-tree": {};
   "/showcase/date-picker": {};
   "/showcase/document-progress": {};
   "/showcase/dropdown": {};
@@ -46,6 +48,7 @@ export type GeneratedRouteParams = {
   "/showcase/metric-card": {};
   "/showcase/primitives": {};
   "/showcase/spinner": {};
+  "/showcase/stepper": {};
   "/showcase/timeline": {};
   "/showcase/toolbar": {};
   "/showcase/tree": {};

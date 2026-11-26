@@ -1,8 +1,10 @@
 ---
-kind: prose
+kind: code-backed
 group: use-theme
 title: useTheme
 description: Hook for accessing and controlling theme (light/dark mode)
+sources:
+  - packages/core/src/contexts/theme-context.tsx
 ---
 
 # useTheme
@@ -42,15 +44,9 @@ const useTheme: () => {
 
 ### Display Current Theme
 
-```typescript
-import { useTheme } from "@tailor-platform/app-shell";
+Import `Text` and `useTheme` from `@tailor-platform/app-shell`.
 
-function ThemeDisplay() {
-  const { theme } = useTheme();
-
-  return <div>Current theme: {theme}</div>;
-}
-```
+<!-- example: theme-display -->
 
 ### Theme Toggle
 
@@ -86,18 +82,9 @@ function ThemeSelector() {
 
 Use `resolvedTheme` when you need a concrete `"light"` or `"dark"` value — it already accounts for `"system"`:
 
-```typescript
-function Logo() {
-  const { resolvedTheme } = useTheme();
+The preview uses `Moon` and `Sun` from `lucide-react` instead of application-specific logo assets. Change the documentation theme to see the rendered logo change.
 
-  return (
-    <img
-      src={resolvedTheme === "dark" ? "/logo-dark.png" : "/logo-light.png"}
-      alt="Logo"
-    />
-  );
-}
-```
+<!-- example: logo -->
 
 ## Theme Persistence
 

@@ -12,8 +12,13 @@ Creates a nested resource (page) within a module. Resources represent individual
 ## Signature
 
 ```typescript
-function defineResource(props: DefineResourceProps): Resource;
+import { defineResource } from "@tailor-platform/app-shell";
+
+type ResourceOptions = Parameters<typeof defineResource>[0];
+type AppResource = ReturnType<typeof defineResource>;
 ```
+
+The option and return types can be derived from the public function; `DefineResourceProps` and `Resource` are not package-root exports.
 
 ## Parameters
 
@@ -24,27 +29,27 @@ function defineResource(props: DefineResourceProps): Resource;
 - **Description:** URL path segment for the resource. Supports dynamic parameters with `:param` syntax.
 
 ```typescript
-defineResource({
-  path: ":id", // Dynamic: /products/:id
-  path: "categories", // Static: /products/categories
-});
+defineResource({ path: ":id" }); // Dynamic: /products/:id
+defineResource({ path: "categories" }); // Static: /products/categories
 ```
 
 ### `component`
 
 - **Type:** `(props: ResourceComponentProps) => React.ReactNode`
-- **Required:** Yes
-- **Description:** Page component to render
+- **Required:** No
+- **Description:** Page component to render. If omitted, the exact resource path returns 404 while its `subResources` remain accessible. Guards still run: `redirectTo()` can redirect; if all guards pass, the component-less path remains a 404.
 
 **ResourceComponentProps:**
 
 ```typescript
-{
-  title: string;          // Resolved title
-  icon?: React.ReactNode; // Inherited from module
-  resources?: Resource[]; // Child resources
-}
+type ResourceComponentProps = {
+  title: string; // Resolved title
+  icon?: React.ReactNode;
+  resources?: Array<ReturnType<typeof defineResource>>; // Sub-resources
+};
 ```
+
+Import `ResourceComponentProps` from AppShell when typing a page. AppShell passes `title` and `resources`; the optional `icon` field is not injected into page props.
 
 ### `meta`
 
@@ -61,7 +66,7 @@ defineResource({
 **meta.icon**
 
 - **Type:** `React.ReactNode`
-- **Description:** Icon override (inherits from module by default)
+- **Description:** Icon associated with this resource's navigation metadata. It is not inherited from the module or injected into page props.
 
 **meta.breadcrumbTitle**
 
@@ -70,7 +75,7 @@ defineResource({
 
 ### `subResources`
 
-- **Type:** `Resource[]`
+- **Type:** `Array<ReturnType<typeof defineResource>>`
 - **Required:** No
 - **Description:** Nested resources within this resource
 
@@ -84,14 +89,14 @@ See [Guards Overview](./guards/overview.md) for details.
 
 ### `errorBoundary`
 
-- **Type:** `React.ReactNode`
+- **Type:** `ErrorBoundaryComponent` (`React.ReactNode`)
 - **Required:** No
 - **Description:** Error boundary component for this resource
 
 ## Return Type
 
 ```typescript
-Resource;
+type AppResource = ReturnType<typeof defineResource>;
 ```
 
 A resource object used in the `resources` array of `defineModule`.
@@ -123,18 +128,20 @@ const categoriesResource = defineResource({
 
 ### Dynamic Route with useParams
 
-```typescript
-import { useParams } from "@tailor-platform/app-shell";
+```tsx
+import { defineResource, useParams } from "@tailor-platform/app-shell";
+
+function ProductDetailPage() {
+  const { id } = useParams();
+  return <div>Product {id}</div>;
+}
 
 const productDetailResource = defineResource({
   path: ":id",
   meta: {
     title: "Product Details",
   },
-  component: () => {
-    const { id } = useParams();
-    return <div>Product {id}</div>;
-  },
+  component: ProductDetailPage,
 });
 ```
 
@@ -217,6 +224,7 @@ const orderResource = defineResource({
 ```typescript
 const productsModule = defineModule({
   path: "products",
+  meta: { title: "Products" },
   component: ProductsPage,
   resources: [
     defineResource({
@@ -252,6 +260,7 @@ Resources appear in:
 ```typescript
 defineModule({
   path: "products",
+  meta: { title: "Products" },
   component: ProductsPage,
   resources: [
     defineResource({
@@ -288,15 +297,18 @@ Products > Product Details > Edit
 ## TypeScript
 
 ```typescript
-import { type DefineResourceProps, type Resource } from "@tailor-platform/app-shell";
+import { defineResource } from "@tailor-platform/app-shell";
 
-const props: DefineResourceProps = {
+type ResourceOptions = Parameters<typeof defineResource>[0];
+type AppResource = ReturnType<typeof defineResource>;
+
+const props: ResourceOptions = {
   path: ":id",
   component: DetailPage,
   guards: [],
 };
 
-const resource: Resource = defineResource(props);
+const resource: AppResource = defineResource(props);
 ```
 
 ## Related

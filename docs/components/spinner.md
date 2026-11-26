@@ -15,6 +15,8 @@ description: Lightweight loading indicator component with accessible defaults an
 import { Spinner } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Button` from `@tailor-platform/app-shell`.
+
 ## Basic usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -52,27 +54,45 @@ Preset sizes map to:
 
 Use a label when the spinner is the primary visible loading affordance:
 
+<example-preview name="accessible-loading"></example-preview>
+
 ```tsx
-<Spinner size="sm" aria-label="Loading orders" />
+function AccessibleLoading() {
+  return <Spinner size="sm" aria-label="Loading orders" />;
+}
 ```
 
 When the surrounding control already has its own accessible name, keep the spinner decorative:
 
+<example-preview name="decorative-loading"></example-preview>
+
 ```tsx
-<Button disabled>
-  <Spinner size="sm" aria-hidden />
-  Saving
-</Button>
+function DecorativeLoading() {
+  return (
+    <Button disabled>
+      <Spinner size="sm" aria-hidden />
+      Saving
+    </Button>
+  );
+}
 ```
 
 ## Sizing and styling
 
 Pass ordinary Tailwind utilities through `className` for color and layout, or override the dimensions directly with `width` / `height`.
 
+<example-preview name="sizing-and-styling"></example-preview>
+
 ```tsx
-<Spinner className="text-muted-foreground" />
-<Spinner size="lg" className="text-primary" aria-label="Generating report" />
-<Spinner width={24} height={24} aria-label="Loading" />
+function SizingAndStyling() {
+  return (
+    <div className="flex items-center gap-3">
+      <Spinner className="text-muted-foreground" />
+      <Spinner size="lg" className="text-primary" aria-label="Generating report" />
+      <Spinner width={24} height={24} aria-label="Loading" />
+    </div>
+  );
+}
 ```
 
 ## Related

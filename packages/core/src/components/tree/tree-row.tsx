@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { checkboxBoxClasses } from "@/components/checkbox/checkbox";
 
 import { useTreeT } from "./i18n";
-import type { TreeNode } from "./tree-model";
+import type { TreeNode } from "@/lib/tree/model";
 import type { TreeContentProps, TreeRowState, TreeSelectionMode } from "./types";
 
 /**

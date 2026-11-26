@@ -5,6 +5,7 @@ import { DefaultSidebar, type DefaultSidebarProps } from "./default-sidebar";
 import { ContentContainer } from "./content-container";
 import { Trigger } from "./sidebar-trigger";
 import { GlobalHeader } from "./global-header";
+import type { SidebarBehaviourProps } from "./sidebar-behaviour";
 
 /**
  * The default sidebar for {@link GlobalHeaderLayout}: `DefaultSidebar` with the
@@ -30,7 +31,7 @@ export const GlobalHeaderDefaultSidebar = ({ footer, ...rest }: DefaultSidebarPr
 );
 GlobalHeaderDefaultSidebar.displayName = "GlobalHeaderLayout.DefaultSidebar";
 
-type GlobalHeaderLayoutCommonProps = {
+type GlobalHeaderLayoutCommonProps = SidebarBehaviourProps & {
   /**
    * The app-wide top bar, spanning above the sidebar and content.
    *
@@ -47,9 +48,6 @@ type GlobalHeaderLayoutCommonProps = {
 
   /** Whether the sidebar is expanded by default on desktop. @default true */
   defaultOpen?: boolean;
-
-  /** Whether the sidebar can be collapsed. @default true */
-  collapsible?: boolean;
 };
 
 /** Default content layout — you render the page via the `Outlet` render prop. */
@@ -100,7 +98,7 @@ export type GlobalHeaderLayoutProps = GlobalHeaderLayoutDefaultProps | GlobalHea
  * ```
  */
 export function GlobalHeaderLayout(props: GlobalHeaderLayoutProps) {
-  const { header, sidebar, body, children, defaultOpen, collapsible } = props;
+  const { header, sidebar, body, children, defaultOpen, ...controls } = props;
 
   // The global top bar is the app-wide header, so the content column carries no
   // header of its own — compose everything beside the sidebar via the body slot.
@@ -116,7 +114,7 @@ export function GlobalHeaderLayout(props: GlobalHeaderLayoutProps) {
       sidebar={sidebar ?? <GlobalHeaderDefaultSidebar />}
       body={content}
       defaultOpen={defaultOpen}
-      collapsible={collapsible}
+      {...controls}
     />
   );
 }

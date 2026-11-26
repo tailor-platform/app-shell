@@ -16,10 +16,15 @@ function resolveAlign<TRow extends Record<string, unknown>>(col: Column<TRow>): 
 const SELECTION_WIDTH = 52;
 const ACTIONS_WIDTH = 50;
 const EXPAND_WIDTH = 44;
+// Beside the hierarchy column the selection column drops its trailing space,
+// so a checkbox sits as close to its row's caret as in the tree column itself.
+const SELECTION_WIDTH_BESIDE_TREE = 36;
 // Keys for the built-in selection / row-actions columns in the measured-width map.
 const SELECTION_KEY = "__datatable_selection__";
 const ACTIONS_KEY = "__datatable_actions__";
 const EXPAND_KEY = "__datatable_expand__";
+// Key of the sub-rows hierarchy column, which `subRows.hierarchyColumn` defines.
+const HIERARCHY_KEY = "__datatable_hierarchy__";
 
 type PinSide = "left" | "right";
 type ColumnWidths = Record<string, number>;
@@ -61,6 +66,23 @@ function resolveWidth(key: string, declared: number | undefined, widths: ColumnW
   return measured && measured > 0 ? measured : (declared ?? 0);
 }
 
+/** Base props of the selection column's cells, in every section. */
+function selectionCellBase(besideTree: boolean): { style: CSSProperties; className: string } {
+  return {
+    style: { width: besideTree ? SELECTION_WIDTH_BESIDE_TREE : SELECTION_WIDTH },
+    className: "astw:pl-3!",
+  };
+}
+
+/**
+ * The hierarchy column's leading padding. First in the row, it takes the
+ * selection column's inset, so its carets line up with checkboxes elsewhere;
+ * after the selection column, none, so the caret follows the checkbox closely.
+ */
+function treeCellPadding(first: boolean): string {
+  return first ? "astw:pl-3!" : "astw:pl-0!";
+}
+
 /**
  * Resolve a column's effective pin: the per-user override wins over the static
  * default. `"none"` is an explicit unpin (overrides a pinned default).
@@ -85,8 +107,11 @@ function resolvePin(
  */
 function buildColumnKeys<TRow extends Record<string, unknown>>(
   columns: Column<TRow>[],
+  /** The sub-rows hierarchy column: owned by the feature, so it's not in `columns`. */
+  hierarchyColumn?: Column<TRow>,
 ): Map<Column<TRow>, string> {
   const keys = new Map<Column<TRow>, string>();
+  if (hierarchyColumn) keys.set(hierarchyColumn, HIERARCHY_KEY);
   columns.forEach((col, index) => keys.set(col, columnKeyAt(col, index)));
   return keys;
 }
@@ -226,8 +251,11 @@ export {
   SELECTION_KEY,
   ACTIONS_KEY,
   EXPAND_KEY,
+  HIERARCHY_KEY,
   columnKeyAt,
   resolvePin,
+  selectionCellBase,
+  treeCellPadding,
   buildColumnKeys,
   computePinLayout,
   pinCellProps,

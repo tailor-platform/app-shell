@@ -15,6 +15,8 @@ The `Select` component provides a fully assembled single or multi-select dropdow
 import { Select } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `useRef` and `useState` from `react`, and `Button`, `Field`, `Text`, and the `SelectAsyncFetcher` type from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -53,6 +55,8 @@ function BasicUsage() {
 
 ### MappedItem
 
+`MappedItem` and `ItemGroup` are public types shared by `Select`, `Combobox`, and `Autocomplete`; import them from `@tailor-platform/app-shell`.
+
 ```ts
 interface MappedItem {
   label: string; // Display text, used for filtering and a11y
@@ -74,63 +78,101 @@ interface ItemGroup<T> {
 
 ## Grouped Items
 
-```tsx
-const fruits = [
-  { label: "Citrus", items: ["Orange", "Lemon", "Lime"] },
-  { label: "Berries", items: ["Strawberry", "Blueberry"] },
-];
+<example-preview name="grouped-items"></example-preview>
 
-<Select items={fruits} placeholder="Pick a fruit" />;
+```tsx
+function GroupedItems() {
+  const fruits = [
+    { label: "Citrus", items: ["Orange", "Lemon", "Lime"] },
+    { label: "Berries", items: ["Strawberry", "Blueberry"] },
+  ];
+
+  return <Select items={fruits} aria-label="Grouped fruits" placeholder="Pick a fruit" />;
+}
 ```
 
 ## Object Items with mapItem
 
 When items are objects, use `mapItem` to tell the component how to display them:
 
+<example-preview name="object-items"></example-preview>
+
 ```tsx
-type Fruit = { id: number; name: string };
+function ObjectItems() {
+  type Fruit = { id: number; name: string };
+  const fruits: Fruit[] = [
+    { id: 1, name: "Apple" },
+    { id: 2, name: "Banana" },
+  ];
 
-const fruits: Fruit[] = [
-  { id: 1, name: "Apple" },
-  { id: 2, name: "Banana" },
-];
-
-<Select
-  items={fruits}
-  mapItem={(fruit) => ({ label: fruit.name, key: String(fruit.id) })}
-  onValueChange={(fruit) => console.log(fruit?.id)}
-/>;
+  return (
+    <Select
+      items={fruits}
+      mapItem={(fruit) => ({ label: fruit.name, key: String(fruit.id) })}
+      aria-label="Fruit"
+      placeholder="Pick a fruit"
+      onValueChange={(fruit) => console.log(fruit?.id)}
+    />
+  );
+}
 ```
 
 ## Multi-select
 
+<example-preview name="multi-select"></example-preview>
+
 ```tsx
-<Select
-  items={["Red", "Green", "Blue"]}
-  multiple
-  placeholder="Pick colors"
-  onValueChange={(colors) => console.log(colors)}
-/>
+function MultiSelect() {
+  return (
+    <Select
+      items={["Red", "Green", "Blue"]}
+      multiple
+      aria-label="Colors"
+      placeholder="Pick colors"
+      onValueChange={(colors) => console.log(colors)}
+    />
+  );
+}
 ```
 
 ## Async Loading
 
 Use `Select.Async` to load items from an API. The fetcher is called each time the dropdown is opened.
 
+This example uses local data with a short delay so you can try loading and selection without a backend. Reopen the dropdown to load the items again. For a real API, replace the mock fetcher with `fetch(url, { signal })` and parse the response, forwarding the supplied `AbortSignal` to cancel requests when the dropdown closes.
+
+<example-preview name="async-loading"></example-preview>
+
 ```tsx
-import { type SelectAsyncFetcher } from "@tailor-platform/app-shell";
+function AsyncLoading() {
+  type Fruit = { id: number; name: string };
+  const [fruits] = useState<Fruit[]>([
+    { id: 1, name: "Apple" },
+    { id: 2, name: "Banana" },
+    { id: 3, name: "Cherry" },
+  ]);
+  const [selected, setSelected] = useState<Fruit | null>(null);
+  const fetcher: SelectAsyncFetcher<Fruit> = async ({ signal }) => {
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    signal.throwIfAborted();
+    return fruits;
+  };
 
-const fetcher: SelectAsyncFetcher<Fruit> = async ({ signal }) => {
-  const res = await fetch("/api/fruits", { signal });
-  return res.json();
-};
-
-<Select.Async
-  fetcher={fetcher}
-  mapItem={(fruit) => ({ label: fruit.name, key: String(fruit.id) })}
-  placeholder="Pick a fruit"
-  onValueChange={(fruit) => console.log(fruit)}
-/>;
+  return (
+    <div className="flex flex-col gap-3">
+      <Select.Async
+        fetcher={fetcher}
+        mapItem={(fruit) => ({ label: fruit.name, key: String(fruit.id) })}
+        value={selected}
+        onValueChange={setSelected}
+        aria-label="Async fruit"
+        placeholder="Pick a fruit"
+        loadingText="Loading fruits..."
+      />
+      <Text.p>Selected fruit: {selected?.name ?? "None"}</Text.p>
+    </div>
+  );
+}
 ```
 
 ### Select.Async Props
@@ -161,6 +203,14 @@ type SelectAsyncFetcher<T> = (options: { signal: AbortSignal }) => Promise<T[]>;
 
 If the fetcher throws or rejects, `Select.Async` renders a built-in inline error state in the dropdown — the `errorText` message plus a **Retry** button that re-runs the fetch — instead of the misleading empty state. Aborted requests (the dropdown closed before the fetch settled) are ignored, and announcements are de-duped per outage. Pass `onFetchError` to run a side effect (logging, toast) — it fires once per outage and re-arms after the next successful fetch.
 
+## Long Lists
+
+The list is at most 15rem tall and scrolls when there are more options. To change the height, compose with `Select.Parts` and pass a plain class with a trailing `!` to `Content`:
+
+```tsx
+<Select.Parts.Content className="max-h-96!">{/* items */}</Select.Parts.Content>
+```
+
 ## Low-level Primitives
 
 `Select.Parts` exposes the styled sub-components for fully custom compositions:
@@ -174,11 +224,17 @@ const { Root, Trigger, Value, Content, Item, Group, GroupLabel, Separator } = Se
 Inside a form, place `Select` directly under `Field.Root`, not inside `Field.Control`. `Select` draws
 its own trigger and registers with the field itself.
 
+<example-preview name="with-field"></example-preview>
+
 ```tsx
-<Field.Root name="country">
-  <Field.Label>Country</Field.Label>
-  <Select items={["Japan", "United States"]} placeholder="Select a country" />
-</Field.Root>
+function WithField() {
+  return (
+    <Field.Root name="country">
+      <Field.Label>Country</Field.Label>
+      <Select items={["Japan", "United States"]} placeholder="Select a country" />
+    </Field.Root>
+  );
+}
 ```
 
 Inside a `Field.Root`, the field's `name` identifies the value and these props are unnecessary —
@@ -198,14 +254,19 @@ or a server action.
 ### Controlled Select
 
 ```tsx
-const [selected, setSelected] = useState<string | null>(null);
+function ControlledSelect() {
+  const [selected, setSelected] = useState<string | null>(null);
 
-<Select
-  items={["Draft", "Pending", "Approved", "Rejected"]}
-  value={selected}
-  onValueChange={setSelected}
-  placeholder="Select status"
-/>;
+  return (
+    <Select
+      aria-label="Status"
+      items={["Draft", "Pending", "Approved", "Rejected"]}
+      value={selected}
+      onValueChange={setSelected}
+      placeholder="Select status"
+    />
+  );
+}
 ```
 
 ### Custom Render
@@ -231,46 +292,84 @@ const [selected, setSelected] = useState<string | null>(null);
 
 Combine `Select.useAsync` with `Select.Parts` for full control over layout and rendering:
 
-`Select.useAsync` accepts the same options as `Select.Async` (including `onFetchError`) and returns:
+`Select.useAsync` accepts `fetcher` and optional `onFetchError`, and returns:
 
-| Property  | Type         | Description                                             |
-| --------- | ------------ | ------------------------------------------------------- |
-| `items`   | `T[]`        | Currently loaded items                                  |
-| `loading` | `boolean`    | Whether a fetch is in progress                          |
-| `error`   | `unknown`    | The error thrown by the last fetch, if any              |
-| `retry`   | `() => void` | Re-runs the last fetch (use to build a custom retry UI) |
+| Property       | Type                      | Description                                             |
+| -------------- | ------------------------- | ------------------------------------------------------- |
+| `items`        | `T[]`                     | Currently loaded items                                  |
+| `loading`      | `boolean`                 | Whether a fetch is in progress                          |
+| `error`        | `unknown`                 | The error thrown by the last fetch, if any              |
+| `retry`        | `() => void`              | Re-runs the last fetch (use to build a custom retry UI) |
+| `onOpenChange` | `(open: boolean) => void` | Pass to the Root to fetch on open and cancel on close.  |
+
+Open the dropdown to start a local request. The first completed request fails deliberately; click **Retry** to load the fruits, then select one to see its value. Closing the dropdown during the delay aborts that request without consuming the initial failure. No network request is made.
+
+This composition uses the same `modal={false}` and `alignItemWithTrigger={false}` settings as `Select.Async` to avoid its dynamic-content positioning constraints. Loading is rendered before the previous error so retry progress remains visible. For a real endpoint, forward `signal` to `fetch`, check `response.ok`, and return the parsed items.
+
+<example-preview name="async-with-parts"></example-preview>
 
 ```tsx
-type Fruit = { id: number; name: string };
+function AsyncWithParts() {
+  type Fruit = { id: number; name: string };
+  const attempts = useRef(0);
+  const [items] = useState<Fruit[]>([
+    { id: 1, name: "Apple" },
+    { id: 2, name: "Banana" },
+    { id: 3, name: "Cherry" },
+  ]);
+  const [selected, setSelected] = useState<Fruit | null>(null);
+  const fruits = Select.useAsync({
+    fetcher: async ({ signal }) => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      signal.throwIfAborted();
+      if (attempts.current++ === 0) throw new Error("The first demo request fails.");
+      return items;
+    },
+  });
 
-const fruits = Select.useAsync({
-  fetcher: async ({ signal }) => {
-    const res = await fetch("/api/fruits", { signal });
-    return res.json() as Promise<Fruit[]>;
-  },
-  onFetchError: (error) => reportError(error),
-});
-
-<Select.Parts.Root {...fruits} itemToStringLabel={(f) => f.name}>
-  <Select.Parts.Trigger>
-    <Select.Parts.Value placeholder="Pick a fruit" />
-  </Select.Parts.Trigger>
-  <Select.Parts.Content>
-    {fruits.error ? (
-      <div className="px-4 py-2 text-center text-sm">
-        Couldn't load. <button onClick={fruits.retry}>Retry</button>
-      </div>
-    ) : fruits.loading ? (
-      <div className="px-4 py-2 text-center text-sm text-muted-foreground">Loading...</div>
-    ) : (
-      fruits.items.map((f) => (
-        <Select.Parts.Item key={f.id} value={f}>
-          {f.name}
-        </Select.Parts.Item>
-      ))
-    )}
-  </Select.Parts.Content>
-</Select.Parts.Root>;
+  return (
+    <div className="space-y-3">
+      <Select.Parts.Root<Fruit>
+        modal={false}
+        value={selected}
+        onValueChange={setSelected}
+        onOpenChange={fruits.onOpenChange}
+        itemToStringLabel={(fruit) => fruit.name}
+      >
+        <Select.Parts.Trigger aria-label="Fruit with custom async loading">
+          <Select.Parts.Value placeholder="Pick a fruit" />
+        </Select.Parts.Trigger>
+        <Select.Parts.Content alignItemWithTrigger={false}>
+          {fruits.loading ? (
+            <div className="px-4 py-2 text-sm" role="status">
+              Loading fruits...
+            </div>
+          ) : fruits.error ? (
+            <div className="space-y-2 px-4 py-2">
+              <Text.p role="alert">Couldn't load fruits. The first demo request fails.</Text.p>
+              <Button
+                type="button"
+                variant="outline"
+                // Keep trigger focus so clicking Retry does not close the popup.
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={fruits.retry}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : (
+            fruits.items.map((fruit) => (
+              <Select.Parts.Item key={fruit.id} value={fruit}>
+                {fruit.name}
+              </Select.Parts.Item>
+            ))
+          )}
+        </Select.Parts.Content>
+      </Select.Parts.Root>
+      <Text.p role="status">Selected fruit: {selected?.name ?? "None"}</Text.p>
+    </div>
+  );
+}
 ```
 
 ## Accessibility

@@ -17,6 +17,8 @@ The `Tabs` component provides tab-based navigation for toggling between related 
 import { Tabs } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `FolderKanbanIcon`, `LayoutDashboardIcon`, and `SettingsIcon` from `lucide-react`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -26,7 +28,7 @@ import { Tabs } from "@tailor-platform/app-shell";
 | Sub-component | Description                                                    |
 | ------------- | -------------------------------------------------------------- |
 | `Tabs.Root`   | Manages tab selection state                                    |
-| `Tabs.List`   | Groups the individual tab buttons                              |
+| `Tabs.List`   | Groups the individual tab buttons on one scrolling row         |
 | `Tabs.Tab`    | An interactive tab button that toggles the corresponding panel |
 | `Tabs.Panel`  | A panel displayed when the corresponding tab is active         |
 
@@ -46,7 +48,9 @@ import { Tabs } from "@tailor-platform/app-shell";
 
 ### Tabs.List Props
 
-Accepts `className` and all standard HTML `<div>` props.
+Accepts `className` and all standard HTML `<div>` props except `render`. The
+HTML props apply to the `tablist` element, which is also the scroll container;
+`className` applies to the visual track inside it (see [Overflow](#overflow)).
 
 ### Tabs.Tab Props
 
@@ -81,24 +85,39 @@ const [activeTab, setActiveTab] = useState("overview");
 </Tabs.Root>;
 ```
 
+## Overflow
+
+Tabs stay on one row. When they are wider than the space available, the list
+scrolls sideways instead of wrapping or growing the page. The scrollbar is
+hidden: touch, a trackpad, Shift + mouse wheel, and the arrow keys scroll it,
+and the tab cut off at the edge shows that there is more. Base UI scrolls the
+active tab into view when the tabs mount, and scrolls the tab that the arrow
+keys, Home or End move focus to into view, so keyboard navigation never lands
+on a hidden tab. Nothing changes while the tabs fit.
+
+To make this work, the `tablist` element (`data-slot="tabs-list"`) is the
+scroll container, and the tabs sit in a visual track inside it
+(`data-slot="tabs-list-track"`) that carries the variant styles and your
+`className`. The scroll container has 4px of padding, a matching negative
+margin and the same `scroll-padding`, so the tabs' focus ring is not clipped
+and the list keeps its footprint. A `Tabs.List` placed next to inline content
+starts on its own line.
+
+Two cases are not scrolled into view automatically: a tab selected by changing
+a controlled `value` from outside (a deep link, for example), and a list that
+mounts while hidden, such as inside a closed dialog. Call
+`scrollIntoView({ inline: "nearest", block: "nearest" })` on the tab if you
+need either.
+
+Scrolling keeps every tab reachable, but it does not shorten the list. If a
+list regularly overflows at the widths your users have, prefer fewer tabs or
+another control, such as a `Select`, over relying on the scroll.
+
 ## Examples
 
 ### With Disabled Tab
 
-```tsx
-<Tabs.Root defaultValue="active">
-  <Tabs.List>
-    <Tabs.Tab value="active">Active</Tabs.Tab>
-    <Tabs.Tab value="pending">Pending</Tabs.Tab>
-    <Tabs.Tab value="archived" disabled>
-      Archived
-    </Tabs.Tab>
-  </Tabs.List>
-  <Tabs.Panel value="active">Active items</Tabs.Panel>
-  <Tabs.Panel value="pending">Pending items</Tabs.Panel>
-  <Tabs.Panel value="archived">Archived items</Tabs.Panel>
-</Tabs.Root>
-```
+<!-- example: disabled-tab -->
 
 ### Use Icons in Tab
 
@@ -111,24 +130,7 @@ icons default to `16px`, so the square is consistent regardless of the icon.
 > **Accessibility:** an icon-only tab has no visible text, so give each one an
 > `aria-label`. Without it, screen readers announce an unnamed tab.
 
-```tsx
-<Tabs.Root defaultValue="overview" variant="capsule" size="default">
-  <Tabs.List>
-    <Tabs.Tab value="overview" aria-label="Overview">
-      <LayoutDashboardIcon />
-    </Tabs.Tab>
-    <Tabs.Tab value="projects" aria-label="Projects">
-      <FolderKanbanIcon />
-    </Tabs.Tab>
-    <Tabs.Tab value="settings" aria-label="Settings">
-      <SettingsIcon />
-    </Tabs.Tab>
-  </Tabs.List>
-  <Tabs.Panel value="overview">Overview content</Tabs.Panel>
-  <Tabs.Panel value="projects">Projects content</Tabs.Panel>
-  <Tabs.Panel value="settings">Settings content</Tabs.Panel>
-</Tabs.Root>
-```
+<!-- example: icon-tabs -->
 
 ### Sizing the capsule variant
 
@@ -141,3 +143,5 @@ button. The value sets a **minimum** height — taller content still grows.
 | `sm`      | 32px         | `size="sm"`    |
 | `default` | 36px         | default        |
 | `lg`      | 40px         | `size="lg"`    |
+
+Every tab is at least 24×24px (the WCAG 2.5.8 target size). `xs` keeps its 28px track by using 2px of track padding around a 24px tab instead of 4px around a 20px one.

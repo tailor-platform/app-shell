@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { CollectionControlProvider } from "@/contexts/collection-control-context";
 import { Tooltip } from "@/components/tooltip";
@@ -17,6 +17,13 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
   children,
   className,
 }: DataTableRootProps<TRow>) {
+  // The sub-rows hierarchy column leads the rendered columns, but isn't one of
+  // the user's, so column settings and saved layout never see it.
+  const { hierarchyColumn, visibleColumns: userVisibleColumns } = value;
+  const visibleColumns = useMemo(
+    () => (hierarchyColumn ? [hierarchyColumn, ...userVisibleColumns] : userVisibleColumns),
+    [hierarchyColumn, userVisibleColumns],
+  );
   const dataTableValue: DataTableContextValue<TRow> = {
     columns: value.columns,
     rows: value.rows,
@@ -24,7 +31,7 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     error: value.error,
     sortStates: value.sortStates ?? [],
     onSort: value.onSort,
-    visibleColumns: value.visibleColumns,
+    visibleColumns,
     isColumnVisible: value.isColumnVisible,
     toggleColumn: value.toggleColumn,
     showAllColumns: value.showAllColumns,
@@ -64,6 +71,13 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     toggleRowExpansion: value.toggleRowExpansion,
     collapseAllRows: value.collapseAllRows,
     rowExpansion: value.rowExpansion,
+    subRows: value.subRows,
+    visibleRows: value.visibleRows,
+    treeColumnKey: value.treeColumnKey,
+    hierarchyColumn,
+    expandedSubRowIds: value.expandedSubRowIds,
+    toggleSubRows: value.toggleSubRows,
+    getRowCheckState: value.getRowCheckState,
   };
 
   const controlValue = value.control ?? null;

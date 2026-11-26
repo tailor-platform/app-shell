@@ -120,7 +120,9 @@ function Head({ className, align = "left", ...props }: HeadProps) {
     <th
       data-slot="table-head"
       className={cn(
-        "astw:text-foreground astw:h-10 astw:px-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:text-label-md astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0",
+        // A checkbox cell keeps 4px on the right so the checkbox's 24px hit area
+        // stays inside the cell when the column is squeezed to its minimum width.
+        "astw:text-foreground astw:h-10 astw:px-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:text-label-md astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-1",
         cellAlignClassName[align],
         className,
       )}
@@ -136,7 +138,8 @@ function Cell({ className, align = "left", ...props }: CellProps) {
     <td
       data-slot="table-cell"
       className={cn(
-        "astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-0",
+        // Same 4px as the head cell: room for the checkbox's 24px hit area.
+        "astw:px-2 astw:py-2 astw:first:pl-6 astw:last:pr-6 astw:align-middle astw:whitespace-nowrap astw:[&:has([role=checkbox])]:pr-1",
         cellAlignClassName[align],
         className,
       )}

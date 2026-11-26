@@ -12,8 +12,13 @@ Creates a top-level module that appears in the main navigation. Modules can cont
 ## Signature
 
 ```typescript
-function defineModule(props: DefineModuleProps): Module;
+import { defineModule } from "@tailor-platform/app-shell";
+
+type ModuleOptions = Parameters<typeof defineModule>[0];
+type AppModule = ReturnType<typeof defineModule>;
 ```
+
+The option and return types can be derived from the public function; `DefineModuleProps` and `Module` are not package-root exports.
 
 ## Parameters
 
@@ -26,6 +31,8 @@ function defineModule(props: DefineModuleProps): Module;
 ```typescript
 defineModule({
   path: "products", // URL: /products
+  meta: {},
+  resources: [],
 });
 ```
 
@@ -33,29 +40,31 @@ defineModule({
 
 - **Type:** `(props: ResourceComponentProps) => React.ReactNode`
 - **Required:** No
-- **Description:** Landing page component for the module. If omitted, the module redirects to its first resource, and its breadcrumb segment is rendered as plain text (not a link).
+- **Description:** Landing page component for the module. If omitted, the exact module path returns 404 while its child resource routes remain accessible, and its breadcrumb segment is plain text (not a link). Guards still run: use `redirectTo()` explicitly for a redirect; if all guards pass, the component-less path remains a 404.
 
 **ResourceComponentProps:**
 
 ```typescript
-{
-  title: string;          // Resolved title
-  icon?: React.ReactNode; // Module icon
-  resources?: Resource[]; // Child resources
-}
+type ResourceComponentProps = {
+  title: string; // Resolved title
+  icon?: React.ReactNode;
+  resources?: Array<ReturnType<typeof defineResource>>; // Child resources
+};
 ```
+
+Import `ResourceComponentProps` from AppShell when typing a page. AppShell passes `title` and `resources`; the optional `icon` field is not injected into page props.
 
 ### `resources`
 
-- **Type:** `Resource[]`
+- **Type:** `Array<ReturnType<typeof defineResource>>`
 - **Required:** Yes
 - **Description:** Array of resources within this module. Define using `defineResource()`.
 
 ### `meta`
 
 - **Type:** `object`
-- **Required:** No
-- **Description:** Metadata configuration for the module
+- **Required:** Yes
+- **Description:** Metadata configuration for the module. Pass `{}` to use the title derived from `path`.
 
 **meta.title**
 
@@ -77,20 +86,20 @@ defineModule({
 
 - **Type:** `Guard[]`
 - **Required:** No
-- **Description:** Access control guards executed in order. If any guard returns non-pass, access is denied.
+- **Description:** Access control guards executed in order. The first non-pass result stops execution: `hidden()` denies access and `redirectTo()` redirects.
 
 See [Guards Overview](./guards/overview.md) for details.
 
 ### `errorBoundary`
 
-- **Type:** `React.ReactNode`
+- **Type:** `ErrorBoundaryComponent` (`React.ReactNode`)
 - **Required:** No
 - **Description:** Error boundary component for this module and its child resources. Use `useRouteError` hook to access error details.
 
 ## Return Type
 
 ```typescript
-Module;
+type AppModule = ReturnType<typeof defineModule>;
 ```
 
 A module object that can be passed to the `modules` prop of `AppShell`.
@@ -104,6 +113,7 @@ import { defineModule, Text } from "@tailor-platform/app-shell";
 
 const dashboardModule = defineModule({
   path: "dashboard",
+  meta: { title: "Dashboard" },
   component: () => <Text.h1>Dashboard</Text.h1>,
   resources: [],
 });
@@ -130,6 +140,7 @@ const dashboardModule = defineModule({
 ```typescript
 const productsModule = defineModule({
   path: "products",
+  meta: { title: "Products" },
   component: ProductsListPage,
   resources: [
     defineResource({
@@ -144,12 +155,13 @@ const productsModule = defineModule({
 });
 ```
 
-### Module without Component (Auto-redirect)
+### Module without Component (Grouping Only)
 
 ```typescript
 const dashboardModule = defineModule({
   path: "dashboard",
-  // No component - automatically redirects to first resource
+  meta: { title: "Dashboard" },
+  // /dashboard returns 404; /dashboard/overview and /dashboard/analytics work
   resources: [
     defineResource({
       path: "overview",
@@ -170,8 +182,9 @@ import { pass, hidden } from "@tailor-platform/app-shell";
 
 const adminModule = defineModule({
   path: "admin",
+  meta: { title: "Admin" },
   component: AdminPage,
-  resources: [adminResources],
+  resources: adminResources,
   guards: [
     ({ context }) => {
       return context.currentUser?.role === "admin" ? pass() : hidden();
@@ -197,6 +210,7 @@ const ErrorBoundary = () => {
 
 const productsModule = defineModule({
   path: "products",
+  meta: { title: "Products" },
   component: ProductsPage,
   resources: [],
   errorBoundary: <ErrorBoundary />,
@@ -226,15 +240,19 @@ const dashboardModule = defineModule({
 ## TypeScript
 
 ```typescript
-import { type DefineModuleProps, type Module } from "@tailor-platform/app-shell";
+import { defineModule } from "@tailor-platform/app-shell";
 
-const props: DefineModuleProps = {
+type ModuleOptions = Parameters<typeof defineModule>[0];
+type AppModule = ReturnType<typeof defineModule>;
+
+const props: ModuleOptions = {
   path: "products",
+  meta: { title: "Products" },
   component: ProductsPage,
   resources: [],
 };
 
-const module: Module = defineModule(props);
+const productsModule: AppModule = defineModule(props);
 ```
 
 ## Related

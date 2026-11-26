@@ -17,6 +17,8 @@ sources:
 import { Layout } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Button` and `Text` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 The column count is auto-detected from the number of `Layout.Column` children:
@@ -140,14 +142,7 @@ Left sidebar, main content, right sidebar:
 
 When more than 3 `Layout.Column` children are provided, all columns share equal width:
 
-```tsx
-<Layout>
-  <Layout.Column>{/* 25% */}</Layout.Column>
-  <Layout.Column>{/* 25% */}</Layout.Column>
-  <Layout.Column>{/* 25% */}</Layout.Column>
-  <Layout.Column>{/* 25% */}</Layout.Column>
-</Layout>
-```
+<!-- example: four-columns -->
 
 **Responsive behavior:**
 
@@ -158,21 +153,7 @@ When more than 3 `Layout.Column` children are provided, all columns share equal 
 
 Use `Layout.Header` to add a page-level header with title, actions, and optional full-width content:
 
-```tsx
-<Layout>
-  <Layout.Header
-    title="Order #12345"
-    actions={[
-      <Button key="edit">Edit</Button>,
-      <Button key="delete" variant="destructive">
-        Delete
-      </Button>,
-    ]}
-  />
-  <Layout.Column>{/* ... */}</Layout.Column>
-  <Layout.Column>{/* ... */}</Layout.Column>
-</Layout>
-```
+<!-- example: page-header -->
 
 The header displays:
 
@@ -180,21 +161,11 @@ The header displays:
 - **Actions** on the right (buttons, dropdowns, etc.)
 - **Children** (optional) full-width below the title/actions row
 
-### Header with Tabs
+### Header with children
 
-```tsx
-<Layout>
-  <Layout.Header title="Purchase Orders" actions={[<Button key="create">Create</Button>]}>
-    <Tabs value={tab} onValueChange={setTab}>
-      <TabsList>
-        <TabsTrigger value="all">All</TabsTrigger>
-        <TabsTrigger value="open">Open</TabsTrigger>
-      </TabsList>
-    </Tabs>
-  </Layout.Header>
-  <Layout.Column>…</Layout.Column>
-</Layout>
-```
+Children render full-width below the title and actions row, such as a line of context about the record:
+
+<!-- example: header-with-children -->
 
 ## Area Mode
 
@@ -209,16 +180,7 @@ By default, column widths are determined by position (first, second, third). You
 
 If any `Layout.Column` has an `area` prop, all columns switch to area-based widths. Columns without an `area` default to flexible (`1fr`).
 
-```tsx
-<Layout>
-  <Layout.Column area="left">
-    <nav>Sidebar</nav>
-  </Layout.Column>
-  <Layout.Column area="main">
-    <Text.h2>Content</Text.h2>
-  </Layout.Column>
-</Layout>
-```
+<!-- example: area-mode -->
 
 Columns are rendered in source order — place them in the visual order you want.
 
@@ -231,9 +193,16 @@ By default, `<Layout>` grows with its content and the AppShell content area scro
   <Layout.Header title="Products" />
   <Layout.Column>
     <DataTable.Root value={table}>
-      <DataTable.Toolbar>
-        <DataTable.Filters />
-      </DataTable.Toolbar>
+      <Toolbar.Root>
+        <Toolbar.Row justify="between" aria-label="Product table controls">
+          <Toolbar.Group>
+            <DataTable.Filters />
+          </Toolbar.Group>
+          <Toolbar.Group>
+            <DataTable.ColumnSettings />
+          </Toolbar.Group>
+        </Toolbar.Row>
+      </Toolbar.Root>
       <DataTable.Table />
       <DataTable.Footer>
         <DataTable.Pagination />
@@ -253,12 +222,7 @@ Use `fill` for pages whose main content manages its own scrolling (typically a `
 
 Use the `gap` prop to control the space between columns. Supported steps are `4`, `6` and `8`:
 
-```tsx
-<Layout gap={6}>
-  <Layout.Column>{/* ... */}</Layout.Column>
-  <Layout.Column>{/* ... */}</Layout.Column>
-</Layout>
-```
+<!-- example: gap-spacing -->
 
 ## Examples
 
@@ -474,18 +438,11 @@ The Layout component validates its children:
 
 Add custom classes to the layout container. Keep to properties the layout doesn't set itself — it manages its own vertical padding and column gap (`gap`):
 
-```tsx
-<Layout className="bg-muted rounded-lg">{/* ... */}</Layout>
-```
+<!-- example: custom-layout -->
 
 Add custom classes to individual columns:
 
-```tsx
-<Layout>
-  <Layout.Column className="bg-card shadow-sm">{/* Main content with background */}</Layout.Column>
-  <Layout.Column className="space-y-4">{/* Sidebar with extra spacing */}</Layout.Column>
-</Layout>
-```
+<!-- example: column-styling -->
 
 ## Best Practices
 

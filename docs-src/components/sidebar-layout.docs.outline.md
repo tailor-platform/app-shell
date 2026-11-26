@@ -5,6 +5,11 @@ title: SidebarLayout
 description: Default AppShell layout with a built-in sidebar, content header, optional app-wide top bar, and an escape-hatch body slot
 sources:
   - packages/core/src/components/sidebar/sidebar-layout.tsx
+  - packages/core/src/components/sidebar/use-app-shell-sidebar.ts
+  - packages/core/src/components/sidebar/sidebar-separator.tsx
+  - packages/core/src/components/sidebar/dynamic-breadcrumb.tsx
+  - packages/core/src/components/sidebar/content-container.tsx
+  - packages/core/src/contexts/scroll-container-context.tsx
 ---
 
 # SidebarLayout
@@ -218,6 +223,16 @@ Use `body` when the stock content column is too restrictive and you need your ow
 
 `SidebarLayout.ContentContainer` is the stock main column: inset padding, pinned header slot, scroll region, and `useAppShellScrollContainer()` support. `SidebarLayout.Trigger` exposes the built-in sidebar toggle so custom headers do not need DOM workarounds.
 
+### ContentContainerProps
+
+The exported `ContentContainerProps` type describes `SidebarLayout.ContentContainer` and `GlobalHeaderLayout.ContentContainer`:
+
+| Prop        | Type              | Description                                                                      |
+| ----------- | ----------------- | -------------------------------------------------------------------------------- |
+| `header`    | `React.ReactNode` | Optional pinned content above the scroll region. Omit for a bare content column. |
+| `className` | `string`          | Optional additional classes for the outer `<main>` element.                      |
+| `children`  | `React.ReactNode` | Optional scrolling content, usually the layout's `Outlet`.                       |
+
 ## Reading and controlling the sidebar
 
 Use `useAppShellSidebar()` to read and control the sidebar state instead of observing internal DOM attributes or clicking the trigger through the DOM. It also exposes the effective `sidebarBehaviour`, already normalized from either public prop, so custom sidebars do not need to handle the deprecated boolean themselves.
@@ -260,6 +275,23 @@ import { DynamicBreadcrumb, SidebarLayout } from "@tailor-platform/app-shell";
   <DynamicBreadcrumb />
 </header>;
 ```
+
+### Reading path segments
+
+`usePathSegments()` returns `{ basePath, segments }` for the current route. `basePath` is the configured base path or `null`. Each segment has `segment` (the URL segment), `path` (the accumulated path without the base path or a leading slash), `title` (the resolved, localized breadcrumb title), and `clickable` (whether it links to a page).
+
+Call the hook at the top level of a component, then iterate over its result:
+
+```tsx
+import { usePathSegments } from "@tailor-platform/app-shell";
+
+function CurrentPathTitles() {
+  const { segments } = usePathSegments();
+  return <span>{segments.map(({ title }) => title).join(" / ")}</span>;
+}
+```
+
+These titles come from route metadata; they do not include overrides from `useOverrideBreadcrumb()`. Use `DynamicBreadcrumb` for the built-in rendering, which also applies those overrides.
 
 ## Accessing the content scroll container
 

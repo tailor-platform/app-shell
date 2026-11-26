@@ -15,7 +15,7 @@ The `Select` component provides a fully assembled single or multi-select dropdow
 import { Select } from "@tailor-platform/app-shell";
 ```
 
-The examples below also import `useState` from `react`, and `Field`, `Text`, and the `SelectAsyncFetcher` type from `@tailor-platform/app-shell`.
+The examples below also import `useRef` and `useState` from `react`, and `Button`, `Field`, `Text`, and the `SelectAsyncFetcher` type from `@tailor-platform/app-shell`.
 
 ## Basic Usage
 
@@ -54,6 +54,8 @@ function BasicUsage() {
 | `id`              | `string`                                                                   | -       | ID applied to the combobox trigger element                          |
 
 ### MappedItem
+
+`MappedItem` and `ItemGroup` are public types shared by `Select`, `Combobox`, and `Autocomplete`; import them from `@tailor-platform/app-shell`.
 
 ```ts
 interface MappedItem {
@@ -252,14 +254,19 @@ or a server action.
 ### Controlled Select
 
 ```tsx
-const [selected, setSelected] = useState<string | null>(null);
+function ControlledSelect() {
+  const [selected, setSelected] = useState<string | null>(null);
 
-<Select
-  items={["Draft", "Pending", "Approved", "Rejected"]}
-  value={selected}
-  onValueChange={setSelected}
-  placeholder="Select status"
-/>;
+  return (
+    <Select
+      aria-label="Status"
+      items={["Draft", "Pending", "Approved", "Rejected"]}
+      value={selected}
+      onValueChange={setSelected}
+      placeholder="Select status"
+    />
+  );
+}
 ```
 
 ### Custom Render
@@ -285,46 +292,84 @@ const [selected, setSelected] = useState<string | null>(null);
 
 Combine `Select.useAsync` with `Select.Parts` for full control over layout and rendering:
 
-`Select.useAsync` accepts the same options as `Select.Async` (including `onFetchError`) and returns:
+`Select.useAsync` accepts `fetcher` and optional `onFetchError`, and returns:
 
-| Property  | Type         | Description                                             |
-| --------- | ------------ | ------------------------------------------------------- |
-| `items`   | `T[]`        | Currently loaded items                                  |
-| `loading` | `boolean`    | Whether a fetch is in progress                          |
-| `error`   | `unknown`    | The error thrown by the last fetch, if any              |
-| `retry`   | `() => void` | Re-runs the last fetch (use to build a custom retry UI) |
+| Property       | Type                      | Description                                             |
+| -------------- | ------------------------- | ------------------------------------------------------- |
+| `items`        | `T[]`                     | Currently loaded items                                  |
+| `loading`      | `boolean`                 | Whether a fetch is in progress                          |
+| `error`        | `unknown`                 | The error thrown by the last fetch, if any              |
+| `retry`        | `() => void`              | Re-runs the last fetch (use to build a custom retry UI) |
+| `onOpenChange` | `(open: boolean) => void` | Pass to the Root to fetch on open and cancel on close.  |
+
+Open the dropdown to start a local request. The first completed request fails deliberately; click **Retry** to load the fruits, then select one to see its value. Closing the dropdown during the delay aborts that request without consuming the initial failure. No network request is made.
+
+This composition uses the same `modal={false}` and `alignItemWithTrigger={false}` settings as `Select.Async` to avoid its dynamic-content positioning constraints. Loading is rendered before the previous error so retry progress remains visible. For a real endpoint, forward `signal` to `fetch`, check `response.ok`, and return the parsed items.
+
+<example-preview name="async-with-parts"></example-preview>
 
 ```tsx
-type Fruit = { id: number; name: string };
+function AsyncWithParts() {
+  type Fruit = { id: number; name: string };
+  const attempts = useRef(0);
+  const [items] = useState<Fruit[]>([
+    { id: 1, name: "Apple" },
+    { id: 2, name: "Banana" },
+    { id: 3, name: "Cherry" },
+  ]);
+  const [selected, setSelected] = useState<Fruit | null>(null);
+  const fruits = Select.useAsync({
+    fetcher: async ({ signal }) => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      signal.throwIfAborted();
+      if (attempts.current++ === 0) throw new Error("The first demo request fails.");
+      return items;
+    },
+  });
 
-const fruits = Select.useAsync({
-  fetcher: async ({ signal }) => {
-    const res = await fetch("/api/fruits", { signal });
-    return res.json() as Promise<Fruit[]>;
-  },
-  onFetchError: (error) => reportError(error),
-});
-
-<Select.Parts.Root {...fruits} itemToStringLabel={(f) => f.name}>
-  <Select.Parts.Trigger>
-    <Select.Parts.Value placeholder="Pick a fruit" />
-  </Select.Parts.Trigger>
-  <Select.Parts.Content>
-    {fruits.error ? (
-      <div className="px-4 py-2 text-center text-sm">
-        Couldn't load. <button onClick={fruits.retry}>Retry</button>
-      </div>
-    ) : fruits.loading ? (
-      <div className="px-4 py-2 text-center text-sm text-muted-foreground">Loading...</div>
-    ) : (
-      fruits.items.map((f) => (
-        <Select.Parts.Item key={f.id} value={f}>
-          {f.name}
-        </Select.Parts.Item>
-      ))
-    )}
-  </Select.Parts.Content>
-</Select.Parts.Root>;
+  return (
+    <div className="space-y-3">
+      <Select.Parts.Root<Fruit>
+        modal={false}
+        value={selected}
+        onValueChange={setSelected}
+        onOpenChange={fruits.onOpenChange}
+        itemToStringLabel={(fruit) => fruit.name}
+      >
+        <Select.Parts.Trigger aria-label="Fruit with custom async loading">
+          <Select.Parts.Value placeholder="Pick a fruit" />
+        </Select.Parts.Trigger>
+        <Select.Parts.Content alignItemWithTrigger={false}>
+          {fruits.loading ? (
+            <div className="px-4 py-2 text-sm" role="status">
+              Loading fruits...
+            </div>
+          ) : fruits.error ? (
+            <div className="space-y-2 px-4 py-2">
+              <Text.p role="alert">Couldn't load fruits. The first demo request fails.</Text.p>
+              <Button
+                type="button"
+                variant="outline"
+                // Keep trigger focus so clicking Retry does not close the popup.
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={fruits.retry}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : (
+            fruits.items.map((fruit) => (
+              <Select.Parts.Item key={fruit.id} value={fruit}>
+                {fruit.name}
+              </Select.Parts.Item>
+            ))
+          )}
+        </Select.Parts.Content>
+      </Select.Parts.Root>
+      <Text.p role="status">Selected fruit: {selected?.name ?? "None"}</Text.p>
+    </div>
+  );
+}
 ```
 
 ## Accessibility

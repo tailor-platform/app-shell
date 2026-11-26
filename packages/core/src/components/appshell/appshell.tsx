@@ -16,6 +16,7 @@ import {
   buildConfigurations,
   type AppInfo,
   type ContextData,
+  type ToastDefaults,
 } from "@/contexts/appshell-context";
 import { RouterContainer, type RouterContainerProps } from "@/routing/router";
 import { ThemeProvider, type ColorTheme } from "@/contexts/theme-context";
@@ -27,6 +28,31 @@ import { convertPagesToModules } from "@/fs-routes/converter";
 import type { PageEntry } from "@/fs-routes/types";
 import { Text } from "../text";
 import { AppShellTestingContext } from "./testing-context";
+
+/**
+ * `toastDefaults={{ ... }}` written inline is a new object on every render. Keyed by its
+ * values, it keeps the configurations, and the `toast` that `useToast` returns, the same
+ * object while the values stay the same. Keyed by identity, every render would rebuild the
+ * config context, and an effect that depends on `toast` would run again.
+ */
+const useToastDefaultsByValue = (value: ToastDefaults | undefined): ToastDefaults | undefined => {
+  const isSet = value !== undefined;
+  const errorDuration = value?.error?.duration;
+  const errorCloseButton = value?.error?.closeButton;
+  const actionDuration = value?.action?.duration;
+  const actionCloseButton = value?.action?.closeButton;
+  return useMemo(
+    () =>
+      isSet
+        ? // A field left out stays `undefined`, which `useToast` reads as "keep the built-in one".
+          ({
+            error: { duration: errorDuration, closeButton: errorCloseButton },
+            action: { duration: actionDuration, closeButton: actionCloseButton },
+          } as ToastDefaults)
+        : undefined,
+    [isSet, errorDuration, errorCloseButton, actionDuration, actionCloseButton],
+  );
+};
 
 /**
  * Shared props for manual and file-based route configuration.
@@ -125,6 +151,22 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * If not provided, date/time components fall back to the user's local timezone.
    */
   timeZone?: string;
+
+  /**
+   * Defaults `useToast` applies per kind of toast when the call does not set them.
+   *
+   * Built-in: `toast.error(...)`, the error state of `toast.promise(...)`, and any toast
+   * with an `action` get `{ duration: Infinity, closeButton: true }`, so they stay until
+   * the user closes them. A field set here replaces that field only; fields and kinds left
+   * out keep the built-in default. An empty object for a kind is a type error.
+   *
+   * @example
+   * ```tsx
+   * // Errors close after 4 s without a close button, as before; toasts with an action still stay.
+   * <AppShell toastDefaults={{ error: { duration: 4000, closeButton: false } }} modules={[...]} />
+   * ```
+   */
+  toastDefaults?: ToastDefaults;
 
   /**
    * Global error boundary component applied to all routes.
@@ -315,6 +357,8 @@ const AppShellRoot = (props: AppShellProps) => {
     return propsModules;
   }, [propsModules, rootComponent, rootGuards]);
 
+  const toastDefaults = useToastDefaultsByValue(props.toastDefaults);
+
   // Memoize configurations to prevent unnecessary re-renders
   // configurations will be null if modules is not provided
   const configurations = useMemo(
@@ -327,6 +371,7 @@ const AppShellRoot = (props: AppShellProps) => {
             errorBoundary: props.errorBoundary,
             locale: props.locale,
             timeZone: props.timeZone,
+            toastDefaults,
           })
         : null,
     [
@@ -336,6 +381,7 @@ const AppShellRoot = (props: AppShellProps) => {
       props.errorBoundary,
       props.locale,
       props.timeZone,
+      toastDefaults,
     ],
   );
 

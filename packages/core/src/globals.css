@@ -82,6 +82,21 @@
   }
 }
 
+/*
+ * Sidebar list: fades its bottom edge while there is more to scroll. `mask-image`
+ * itself animates discretely, so the mask is one fixed gradient, 2rem taller than
+ * the list, and the keyframes slide it with `mask-position`, which interpolates:
+ * at `from` the gradient's fade sits on the bottom edge, at `to` its opaque end does.
+ */
+@keyframes appshell-sidebar-fade {
+  from {
+    mask-position: 0 100%;
+  }
+  to {
+    mask-position: 0 0;
+  }
+}
+
 @layer utilities {
   /*
    * Sidebar active item — hairline border (~0.5px @ 30% black). Wrapper components in

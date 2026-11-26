@@ -53,6 +53,8 @@ export {
   type AppInfo,
   type AppInfoEntry,
   type TimeZone,
+  type ToastDefault,
+  type ToastDefaults,
 } from "./contexts/appshell-context";
 export { useAppShellScrollContainer } from "./contexts/scroll-container-context";
 export { useTheme, type ColorTheme, type ResolvedColorTheme } from "./contexts/theme-context";
@@ -186,6 +188,15 @@ export {
 } from "./components/tree";
 export { TreePicker, type TreePickerProps } from "./components/tree-picker";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
+export {
+  Stepper,
+  useStepper,
+  type StepperProgress,
+  type StepperProps,
+  type StepperStep,
+  type UseStepperOptions,
+  type UseStepperReturn,
+} from "./components/stepper";
 export {
   ActivityCard,
   type ActivityCardProps,

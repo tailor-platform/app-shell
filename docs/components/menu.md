@@ -72,11 +72,23 @@ function BasicUsage() {
 
 ### Menu.Content Props
 
-| Prop        | Type                                                                                                           | Default                                             | Description                         |
-| ----------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------- |
-| `position`  | `{ side?: "top" \| "right" \| "bottom" \| "left"; align?: "start" \| "center" \| "end"; sideOffset?: number }` | `{ side: "bottom", align: "start", sideOffset: 4 }` | Placement of the popup              |
-| `className` | `string`                                                                                                       | -                                                   | Additional CSS classes              |
-| `children`  | `React.ReactNode`                                                                                              | -                                                   | Menu items and other sub-components |
+| Prop        | Type              | Default                                             | Description                         |
+| ----------- | ----------------- | --------------------------------------------------- | ----------------------------------- |
+| `position`  | `PositionProps`   | `{ side: "bottom", align: "start", sideOffset: 4 }` | Placement of the popup              |
+| `className` | `string`          | -                                                   | Additional CSS classes              |
+| `children`  | `React.ReactNode` | -                                                   | Menu items and other sub-components |
+
+### PositionProps
+
+The public `PositionProps` type is shared by the `position` prop on `Menu.Content` and [`Tooltip.Content`](./tooltip.md#tooltipcontent-props). Import it from `@tailor-platform/app-shell` when reusing a placement configuration.
+
+| Property     | Type                                     | Description                          |
+| ------------ | ---------------------------------------- | ------------------------------------ |
+| `side`       | `"top" \| "right" \| "bottom" \| "left"` | Preferred side of the trigger.       |
+| `align`      | `"start" \| "center" \| "end"`           | Alignment along the cross axis.      |
+| `sideOffset` | `number`                                 | Distance in pixels from the trigger. |
+
+All properties are optional. Defaults belong to the component: Menu uses bottom/start/4px, while Tooltip uses top/center/5px.
 
 ### Menu.Item Props
 

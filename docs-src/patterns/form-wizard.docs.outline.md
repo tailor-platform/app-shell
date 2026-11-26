@@ -7,7 +7,7 @@ title: Wizard Form
 category: pattern
 subcategory: form
 description: Multi-stage create flow with 3-7 steps and per-step validation gates
-requiredImports: [Layout, Card, Badge, Form, Fieldset, Field, Select, Button]
+requiredImports: [Layout, Card, Stepper, useStepper, Form, Fieldset, Field, Select, Button]
 tags: [form, wizard, multi-step, stepper, onboarding]
 do:
   - Multi-stage Create with 3-7 steps
@@ -41,7 +41,8 @@ the upload → map → validate → confirm flow. Don't rebuild it here.
 - Max 7 steps — more than that causes user abandonment
 - Back-navigation must preserve prior step's input
 - Validation must be per-step — don't defer until final submit
-- Step indicator collapses to "Step 2 of 4" label below 1024px
+- Show the steps with `Stepper`; it collapses to "Step 2 of 4" when its container is narrower than 400px
+- Use `useStepper` for local progress and navigation; keep validation and submission in the page
 - One `<Form>` rendered per step, keyed by step index so it remounts cleanly
 - Accumulated values live in a `draft` state object above the `Form`; each step's fields read
   their initial value from it via `defaultValue`
@@ -56,7 +57,10 @@ dropdowns need only a wrapping `Field.Root` (no `name`, no state), server errors
 The wizard's specific mechanic: **make "Next" a `type="submit"` button.** `onFormSubmit` fires only
 after the current step's fields pass validation, so progression is gated natively — no manual
 validity check, and no deferring errors to the final submit. The handler merges that step's values
-into `draft` and advances; on the last step it calls the completion callback instead.
+into `draft` and advances with `next()`; on the final submission step, identified by `currentStepId`,
+it calls the page's completion callback before `next()`. For asynchronous submission, await success
+before advancing; a failed submission must leave the step in progress. `hasNext` stays `true` on
+that final step and becomes `false` only after `next()` completes it.
 
 Because each step's `Form` unmounts on navigation, values must be lifted into `draft` — that is
 what makes Back non-destructive. Every field, dropdowns included, is uncontrolled and re-reads its

@@ -37,6 +37,7 @@ function DataTableBody({
     loading,
     error,
     onClickRow,
+    rowInteraction,
     rowActions,
     isRowSelected,
     toggleRowSelection,
@@ -51,7 +52,7 @@ function DataTableBody({
   } = ctx;
   const t = useDataTableT();
   const widths = useContext(PinMeasureContext);
-  const hasRowActions = !!(rowActions && rowActions.length > 0);
+  const hasRowActions = !!rowInteraction || !!rowActions?.length;
   // The selection column; with propagating sub-rows the checkboxes move into the tree column.
   const hasSelection = !!toggleRowSelection && !selectionInTreeColumn(ctx);
   const besideTree = hasTreeColumn(ctx);
@@ -135,6 +136,7 @@ function DataTableBody({
         toggleRowSelection={toggleRowSelection}
         rowActions={rowActions}
         onClickRow={onClickRow}
+        rowInteraction={rowInteraction}
         totalColSpan={totalColSpan}
         rowExpansion={rowExpansion}
         isRowExpanded={isRowExpanded}

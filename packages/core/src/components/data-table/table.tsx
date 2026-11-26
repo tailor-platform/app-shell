@@ -28,7 +28,7 @@ function DataTableTable({
   const pageSize = ctx?.pageSize;
   const hasSelection = !!ctx?.toggleRowSelection && !selectionInTreeColumn(ctx);
   const hasExpand = !!ctx?.rowExpansion;
-  const hasRowActions = !!ctx?.rowActions?.length;
+  const hasRowActions = !!ctx?.rowInteraction || !!ctx?.rowActions?.length;
   // Only stretch empty/error rows; data and loading rows keep their natural heights.
   const hasStatusRow = !ctx?.loading && (!!ctx?.error || !ctx?.rows.length);
 

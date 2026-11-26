@@ -720,6 +720,51 @@ export interface DataTableTreeRow<TRow extends Record<string, unknown>> {
   key: string;
 }
 
+/** A primary row action, rendered in the pinned actions column rather than a data column. */
+export type RowInteraction<TRow extends Record<string, unknown>> = {
+  /** Visible, consumer-localized action text, such as "Open" or "Edit". */
+  label: string;
+  /** Bare record identity appended to the action's accessible name, e.g. "ORD-123". */
+  getLabel?: (row: TRow) => string;
+  /** Whether this row's primary action can run. Defaults to `true`. */
+  canApply?: (row: TRow) => boolean;
+} & (
+  | {
+      type: "link";
+      /** Destination shared by the real link and the row's plain-click shortcut. */
+      href: (row: TRow) => string;
+      onClick?: never;
+    }
+  | {
+      type: "click";
+      /** Non-navigation action, such as opening a detail drawer. */
+      onClick: (row: TRow) => void;
+      href?: never;
+    }
+);
+
+/** Legacy and explicit row interactions cannot be configured together, including through spreads. */
+type DataTableRowInteractionOptions<TRow extends Record<string, unknown>> =
+  | {
+      /**
+       * Creates a visible primary link/button in the right-pinned actions column.
+       * Plain row clicks activate the same control. Built-in controls and columns
+       * with `edit` stop propagation; custom interactive renderers must do the same.
+       * Modified clicks and browser link operations are supported on the link itself.
+       * The primary control is independent of data-column visibility and rendering.
+       */
+      rowInteraction?: RowInteraction<TRow>;
+      onClickRow?: never;
+    }
+  | {
+      rowInteraction?: never;
+      /**
+       * Called when the user clicks a row. Adds a pointer cursor to rows.
+       * @deprecated Use `rowInteraction` to also provide a keyboard-accessible control.
+       */
+      onClickRow?: (row: TRow) => void;
+    };
+
 /**
  * Options for `useDataTable` hook.
  */
@@ -750,11 +795,10 @@ export type UseDataTableOptions<
    * in-memory only and resets on reload.
    */
   tableId?: string;
-  /** Called when the user clicks a row. Adds a pointer cursor to rows. */
-  onClickRow?: (row: TRow) => void;
   /**
-   * Per-row action items rendered in a kebab-menu column on the right.
-   * The column is omitted when this array is empty or not provided.
+   * Secondary per-row actions in a right-pinned kebab menu, beside the primary
+   * `rowInteraction` control when present. An empty or omitted array hides the
+   * menu; the column remains when `rowInteraction` is configured.
    */
   rowActions?: RowAction<TRow>[];
   /**
@@ -788,7 +832,8 @@ export type UseDataTableOptions<
    * - Omitted or `{}` — single-column sort (default).
    */
   sort?: false | { multiple?: boolean };
-} & DataTableExpansionOptions<TRow>;
+} & DataTableExpansionOptions<TRow> &
+  DataTableRowInteractionOptions<TRow>;
 
 /**
  * `rowExpansion` and `subRows` are mutually exclusive. The `never` members reject
@@ -957,7 +1002,9 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
    */
   control: CollectionControl | undefined;
 
-  // Row interaction (passthrough for DataTable.Provider)
+  // Row interaction (passthrough for DataTable.Root)
+  rowInteraction?: RowInteraction<TRow>;
+  /** @deprecated Use `rowInteraction` instead. */
   onClickRow?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
 

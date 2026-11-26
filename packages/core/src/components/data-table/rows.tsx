@@ -1,4 +1,12 @@
-import { Fragment, useId, useMemo, useRef, type CSSProperties, type ReactNode } from "react";
+import {
+  Fragment,
+  useId,
+  useMemo,
+  useRef,
+  type CSSProperties,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTimeZone } from "@/contexts/appshell-context";
@@ -7,7 +15,8 @@ import { Button } from "@/components/button";
 import { Checkbox } from "@/components/checkbox";
 import { Menu } from "@/components/menu";
 import { Tooltip } from "@/components/tooltip";
-import type { DataTableTreeRow, RowAction, RowExpansionOptions } from "./types";
+import type { DataTableTreeRow, RowAction, RowExpansionOptions, RowInteraction } from "./types";
+import { activateRowPrimaryAction, DataTableRowPrimaryAction } from "./row-interaction";
 import { SubRowsCellContent } from "./sub-rows-cell";
 import { getCellValue, createTypedCellRenderer } from "./cell-renderers";
 import { DataTableCellContextMenu, getCellContextValue } from "./context-menu";
@@ -27,6 +36,8 @@ import {
   type PinLayout,
 } from "./column-layout";
 
+const stopClickPropagation = (event: MouseEvent<HTMLElement>) => event.stopPropagation();
+
 interface DataTableRowsProps<TRow extends Record<string, unknown>> {
   rows: TRow[];
   pinLayout: PinLayout<TRow>;
@@ -36,6 +47,7 @@ interface DataTableRowsProps<TRow extends Record<string, unknown>> {
   toggleRowSelection?: (row: TRow) => void;
   rowActions?: RowAction<TRow>[];
   onClickRow?: (row: TRow) => void;
+  rowInteraction?: RowInteraction<TRow>;
   totalColSpan: number;
   rowExpansion?: RowExpansionOptions<TRow>;
   /** Optional — `DataTableContextValue` may be hand-constructed without it. */
@@ -61,6 +73,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   toggleRowSelection,
   rowActions,
   onClickRow,
+  rowInteraction,
   totalColSpan,
   rowExpansion,
   isRowExpanded,
@@ -77,15 +90,16 @@ function DataTableRows<TRow extends Record<string, unknown>>({
   const { value: timeZone } = useTimeZone();
   const hasExpand = !!rowExpansion;
   const { ordered, keys, placements, selection, expand, actions } = pinLayout;
+  const onControlClick = rowInteraction ? stopClickPropagation : undefined;
   // Intl formatter construction is costly; avoid repeating it for every cell render.
   const cellRenderers = useMemo(
     () =>
       new Map(
         ordered
           .filter((col) => !col.render)
-          .map((col) => [col, createTypedCellRenderer(col, timeZone)]),
+          .map((col) => [col, createTypedCellRenderer(col, timeZone, onControlClick)]),
       ),
-    [ordered, timeZone],
+    [ordered, timeZone, onControlClick],
   );
   const {
     contextMenu: cellContextMenu,
@@ -94,7 +108,7 @@ function DataTableRows<TRow extends Record<string, unknown>>({
     handleContextMenuCloseComplete: handleCellContextMenuCloseComplete,
     getCellContextMenuHandlers,
   } = useCellContextMenu();
-  const navigation = useCellEditNavigation();
+  const navigation = useCellEditNavigation(!rowInteraction);
   // Namespaced so an id-less row's index fallback can't collide with a real
   // id of the same digits — React reconciles duplicate keys by position,
   // pairing a detail panel with the wrong row.
@@ -109,22 +123,28 @@ function DataTableRows<TRow extends Record<string, unknown>>({
     return rowId != null ? `id:${String(rowId)}` : `idx:${rowIndex}`;
   });
   const selectionEnabled = !!toggleRowSelection;
-  // Tab / Shift+Tab move between editable cells in the order they render.
-  navigation.setOrder(rowKeys, ordered?.map((col) => keys.get(col) as string) ?? []);
+  // Legacy tables retain editor-to-editor moves; row interactions use native Tab order.
+  navigation.setOrder(
+    rowKeys,
+    ordered.map((col) => keys.get(col) as string),
+  );
   // In a table people edit, every data cell says what a click does: editors
   // show a text or pointer cursor, and the rest show "not allowed". Skipped when
   // rows are clickable, where the row click is what the cursor should promise.
-  const blockReadOnlyCells = !onClickRow && (ordered?.some(isEditableColumn) ?? false);
+  const blockReadOnlyCells =
+    !onClickRow && !rowInteraction && (ordered?.some(isEditableColumn) ?? false);
   const warnedMissingIdRef = useRef(false);
 
   return (
     <>
       {items.map((item, rowIndex) => {
         const { row } = item;
+        const primaryEnabled = !!rowInteraction && (rowInteraction.canApply?.(row) ?? true);
         const rowId = (row as Record<string, unknown>)["id"];
         const checkState = getRowCheckState?.(row);
         const selected = checkState?.checked ?? isRowSelected?.(row) ?? false;
         const rowKey = rowKeys[rowIndex];
+        const primaryActionId = `${baseId}-action-${rowIndex}`;
         // Expansion is keyed by id, so a row without one gets no chevron at all
         // rather than a disabled one — it must never be un-toggleable (D5).
         const expandable = hasExpand && rowId != null && (rowExpansion?.canExpand?.(row) ?? true);
@@ -146,8 +166,18 @@ function DataTableRows<TRow extends Record<string, unknown>>({
             // their own `group-aria-selected:bg-muted`) tint on selection, leaving
             // the scrollable cells un-highlighted. `aria-selected` stays for a11y.
             data-state={selectionEnabled && selected ? "selected" : undefined}
-            className={cn("astw:group", onClickRow && "astw:cursor-pointer")}
-            onClick={onClickRow ? () => onClickRow(row) : undefined}
+            className={cn("astw:group", (onClickRow || primaryEnabled) && "astw:cursor-pointer")}
+            onClick={
+              onClickRow || primaryEnabled
+                ? (event) => {
+                    if (rowInteraction) {
+                      if (!cellContextMenuOpen) activateRowPrimaryAction(event, primaryActionId);
+                    } else {
+                      onClickRow?.(row);
+                    }
+                  }
+                : undefined
+            }
           >
             {hasSelection &&
               toggleRowSelection &&
@@ -313,10 +343,15 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               });
               const cellProps = {
                 "data-slot": "data-table-cell" as const,
+                onClick:
+                  rowInteraction && col.edit !== undefined
+                    ? (event: MouseEvent) => event.stopPropagation()
+                    : undefined,
                 title: customCellProps?.title,
                 style: { ...cellStyle, WebkitTouchCallout: "none" } satisfies CSSProperties,
                 className: cn(
                   cellClassName,
+                  rowInteraction && col.edit !== undefined && !editable && "astw:cursor-default",
                   blockReadOnlyCells && !editable && "astw:cursor-not-allowed",
                   customCellProps?.className,
                 ),
@@ -358,7 +393,6 @@ function DataTableRows<TRow extends Record<string, unknown>>({
               );
             })}
             {hasRowActions &&
-              rowActions &&
               (() => {
                 const { style, className } = pinCellProps(
                   actions,
@@ -371,7 +405,19 @@ function DataTableRows<TRow extends Record<string, unknown>>({
                     className={className}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <RowActionsMenu actions={rowActions} row={row} />
+                    {rowInteraction ? (
+                      <div className="astw:inline-flex astw:items-center astw:gap-1 astw:whitespace-nowrap">
+                        <DataTableRowPrimaryAction
+                          id={primaryActionId}
+                          interaction={rowInteraction}
+                          row={row}
+                          enabled={primaryEnabled}
+                        />
+                        {!!rowActions?.length && <RowActionsMenu actions={rowActions} row={row} />}
+                      </div>
+                    ) : (
+                      rowActions && <RowActionsMenu actions={rowActions} row={row} />
+                    )}
                   </Table.Cell>
                 );
               })()}

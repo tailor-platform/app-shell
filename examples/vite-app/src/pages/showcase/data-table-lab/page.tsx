@@ -13,6 +13,7 @@ import { FlaskConical } from "lucide-react";
 import { useMemo } from "react";
 import { InlineEditingDemo } from "./inline-editing-demo";
 import { EditingErrorsDemo } from "./editing-errors-demo";
+import { RowInteractionDemo } from "./row-interaction-demo";
 
 // ─── Dummy data ──────────────────────────────────────────────────────────────
 // 🧪 Dummy Data: Replace with a real GraphQL-backed source later.
@@ -549,6 +550,21 @@ const DataTableLabPage = () => {
           left / Scrollable / Fixed right zones; scroll horizontally to see pinned columns stay put.
           Layout persists per table via <code>tableId</code>.
         </div>
+
+        <Section
+          title="Row interaction — prototype"
+          description={
+            <>
+              A single <code>rowInteraction</code> definition generates the visible primary link or
+              button in the right-pinned actions column, beside the optional secondary menu. No data
+              column is promoted to a primary cell: column visibility and rendering remain
+              independent. Ordinary row clicks activate the same action through normal React event
+              bubbling. Custom interactive renderers keep their own event boundaries.
+            </>
+          }
+        >
+          <RowInteractionDemo />
+        </Section>
 
         <Section
           title="Inline editing + column footers"

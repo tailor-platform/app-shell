@@ -909,10 +909,10 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "fbc09ef9994494cb",
+        "outline": "c3b171559e39c712",
         "snapshot": null,
-        "outputMd": "851afb4672da6673",
-        "examples": "157ff03dc999d3d3"
+        "outputMd": "cc1f836348e860c8",
+        "examples": "15d25c39f98b949c"
       }
     },
     "global-header-layout": {
@@ -1548,6 +1548,31 @@
         "examples": "2782e1f9f3822dfe"
       }
     },
+    "stepper": {
+      "slug": "stepper",
+      "kind": "code-backed",
+      "outline": "docs-src/components/stepper.docs.outline.md",
+      "output": "docs/components/stepper.md",
+      "examples": "docs-src/components/stepper.docs.examples.tsx",
+      "sources": ["packages/core/src/components/stepper/**"],
+      "claims": [],
+      "symbols": [
+        "Stepper",
+        "StepperProgress",
+        "StepperProps",
+        "StepperStep",
+        "UseStepperOptions",
+        "UseStepperReturn",
+        "useStepper"
+      ],
+      "hashes": {
+        "typeSurface": "18aa2238fe3750e7",
+        "outline": "6e9f916a8167951c",
+        "snapshot": "1fbf52f6178108d9",
+        "outputMd": "f06b0b09559fcdcc",
+        "examples": "71940ac6845de695"
+      }
+    },
     "styling-theming": {
       "slug": "styling-theming",
       "kind": "prose",
@@ -2059,6 +2084,7 @@
     "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "31bb8213005e8349",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "283e556e5281c3d6",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "119ed390c23e57f2",
+    "packages/core/skills/app-shell-patterns/references/components/stepper.md": "a8da8c2f8ef6e3ba",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "e7f8f9fde1769973",
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "e99cccaf1c46aefb",
     "packages/core/skills/app-shell-patterns/references/components/text.md": "def4976a92404ca9",
@@ -2105,12 +2131,12 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "500699cceeeee1e9",
     "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "614ee4e4a47a3d1e",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "709614ee001970c9",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "d920326bf85ee11f",
+    "packages/core/skills/app-shell-patterns/SKILL.md": "ad36861c08c1357d",
     "packages/core/skills/app-shell-upgrade/references/migrations.md": "17556b547fa2e75f",
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   },
   "agents": {
-    "packages/core/dist/docs/AGENTS.md": "b4eb4a4fb7eb00e6",
+    "packages/core/dist/docs/AGENTS.md": "d645b6cd55239ff0",
     "packages/core/dist/agents/AGENTS.block.md": "c64f473e6b8b1d1b"
   }
 }

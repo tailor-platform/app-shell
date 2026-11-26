@@ -5,6 +5,19 @@ title: DatePicker
 description: Accessible date input components (@internationalized/date + Base UI)
 sources:
   - packages/core/src/components/date-field/**
+  - packages/core/src/components/calendar/**
+claims:
+  - CalendarDate
+  - CalendarDateTime
+  - DateValue
+  - Time
+  - ZonedDateTime
+  - getLocalTimeZone
+  - parseAbsolute
+  - parseDate
+  - parseDateTime
+  - parseZonedDateTime
+upstream: https://react-spectrum.adobe.com/internationalized/date/
 ---
 
 # DatePicker
@@ -30,7 +43,32 @@ import {
 } from "@tailor-platform/app-shell";
 ```
 
-The examples below also import `Button`, `Form`, and `Text` from `@tailor-platform/app-shell`, and `useId` and `useState` from `react`.
+The examples below also import `Button`, `Form`, `Select`, `Text`, `parseAbsolute`, `parseDateTime`, and `parseZonedDateTime` from `@tailor-platform/app-shell`, and `useId` and `useState` from `react`.
+
+## Date values and parsing helpers
+
+AppShell re-exports these types and helpers from [`@internationalized/date`](https://react-spectrum.adobe.com/internationalized/date/) so applications can import them from `@tailor-platform/app-shell` without an additional dependency.
+
+| Export                          | Purpose                                                                                                                      |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `CalendarDate`                  | Date-only value, without a time or timezone.                                                                                 |
+| `CalendarDateTime`              | Date and time without a timezone; it does not identify a unique instant.                                                     |
+| `ZonedDateTime`                 | Date and time with a timezone and UTC offset.                                                                                |
+| `Time`                          | Time of day without a date or timezone.                                                                                      |
+| `DateValue`                     | Union of `CalendarDate`, `CalendarDateTime`, and `ZonedDateTime`, accepted by the date controls. It does not include `Time`. |
+| `parseDate(text)`               | Parse an ISO date into a `CalendarDate`.                                                                                     |
+| `parseDateTime(text)`           | Parse an ISO date/time without a timezone into a `CalendarDateTime`.                                                         |
+| `parseAbsolute(text, timeZone)` | Parse an ISO instant containing `Z` or an offset and represent it in the supplied IANA timezone as a `ZonedDateTime`.        |
+| `parseZonedDateTime(text)`      | Parse a date/time with a bracketed IANA timezone into a `ZonedDateTime`, preserving the named zone.                          |
+| `getLocalTimeZone()`            | Read the environment's local IANA timezone. This does not read AppShell's `timeZone` setting.                                |
+
+The first five exports are **types only**, not constructor values. Use the parsing helpers to create date values.
+
+Switch the instant's display timezone between Tokyo and UTC: `parseAbsolute` represents the same instant at a different wall-clock time, while the other results keep their date-only, local, or explicitly named-zone meaning. Choose `not-a-date` to see an invalid `parseDate` input handled without interrupting the other examples. All inputs are fixed; the example does not change AppShell's timezone.
+
+<!-- example: parsing-helpers -->
+
+Parsing can throw for invalid input; validate or catch errors when the string is not trusted. For application-timezone behavior in React components, call [`useTimeZone()`](../api/use-time-zone.md) at the component's top level and pass its `value` to `parseAbsolute`. Use its `today()` and `now()` methods for the current date and instant, rather than assuming the user's local timezone matches the configured one.
 
 ## API shape
 
@@ -57,9 +95,10 @@ Inside `Field.Root`:
 Controlled:
 
 ```tsx
-const [date, setDate] = useState<CalendarDate | null>(null);
-
-<DateField aria-label="Invoice date" value={date} onChange={setDate} />;
+function ControlledDateField() {
+  const [date, setDate] = useState<DateValue | null>(null);
+  return <DateField aria-label="Invoice date" value={date} onChange={setDate} />;
+}
 ```
 
 ## DatePicker

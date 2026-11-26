@@ -5,6 +5,7 @@ title: DefaultSidebar
 description: Built-in sidebar component for auto-generated or composed navigation, with optional search suppression and icon-rail mode
 sources:
   - packages/core/src/components/sidebar/default-sidebar.tsx
+  - packages/core/src/components/sidebar/primitives.tsx
 ---
 
 # DefaultSidebar

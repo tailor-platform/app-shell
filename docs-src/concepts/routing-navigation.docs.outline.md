@@ -3,6 +3,31 @@ kind: prose
 group: routing-navigation
 title: Routing and Navigation
 description: Learn how to navigate between pages using React Router hooks and components re-exported from AppShell
+claims:
+  - Blocker
+  - BlockerFunction
+  - Link
+  - LinkProps
+  - Location
+  - NavLink
+  - NavLinkProps
+  - Navigate
+  - NavigateFunction
+  - NavigateOptions
+  - Navigation
+  - Params
+  - PathMatch
+  - To
+  - useBeforeUnload
+  - useBlocker
+  - useLocation
+  - useMatch
+  - useNavigate
+  - useNavigation
+  - useParams
+  - useResolvedPath
+  - useRouteError
+  - useSearchParams
 ---
 
 # Routing and Navigation

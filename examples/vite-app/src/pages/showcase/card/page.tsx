@@ -1,11 +1,13 @@
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   Layout,
   Badge,
   Button,
   Card,
   DataTable,
+  Select,
   Table,
+  Text,
   useDataTable,
   useCollectionVariables,
   createColumnHelper,
@@ -95,6 +97,75 @@ function paginate(rows: Line[], { pagination }: CollectionVariables): DataTableD
   };
 }
 
+// ─── Header and footer actions ─────────────────────────────────────────────────
+
+function OrderActionsCard() {
+  const [savedStatus, setSavedStatus] = useState("all");
+  const [draftStatus, setDraftStatus] = useState("all");
+  const hasChanges = draftStatus !== savedStatus;
+  const rows = LINES.filter((line) => draftStatus === "all" || line.status === draftStatus).slice(
+    0,
+    3,
+  );
+
+  return (
+    <Card.Root>
+      <Card.Header
+        title="Order fulfillment"
+        description="Preview a status filter, then save or cancel below. Changes are local to this demo."
+        action={
+          <Select
+            aria-label="Order status filter"
+            items={["all", ...STATUSES]}
+            value={draftStatus}
+            onValueChange={(value) => setDraftStatus(value ?? "all")}
+          />
+        }
+      >
+        <Text variant="body-sm" className="text-muted-foreground" render={<output />}>
+          Saved filter: {savedStatus}
+          {hasChanges ? " · Unsaved changes" : ""}
+        </Text>
+      </Card.Header>
+      <Card.Content padding="none">
+        <Table.Root>
+          <Table.Header>
+            <Table.Row>
+              <Table.Head>Item</Table.Head>
+              <Table.Head>Status</Table.Head>
+              <Table.Head align="right">Qty</Table.Head>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {rows.map((line) => (
+              <Table.Row key={line.id}>
+                <Table.Cell>{line.description}</Table.Cell>
+                <Table.Cell>
+                  <Badge variant={statusVariant(line.status)}>{line.status}</Badge>
+                </Table.Cell>
+                <Table.Cell align="right">{line.qty}</Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+      </Card.Content>
+      <Card.Footer>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={!hasChanges}
+          onClick={() => setDraftStatus(savedStatus)}
+        >
+          Cancel
+        </Button>
+        <Button type="button" disabled={!hasChanges} onClick={() => setSavedStatus(draftStatus)}>
+          Save
+        </Button>
+      </Card.Footer>
+    </Card.Root>
+  );
+}
+
 // ─── Basics ────────────────────────────────────────────────────────────────────
 
 function BasicCards() {
@@ -116,19 +187,6 @@ function BasicCards() {
           <p className="text-sm">
             Content only. With no header above it, the content also gets 24px top padding.
           </p>
-        </Card.Content>
-      </Card.Root>
-
-      <Card.Root>
-        <Card.Header title="Custom header content">
-          <div>
-            <Button size="sm" variant="outline">
-              View all
-            </Button>
-          </div>
-        </Card.Header>
-        <Card.Content>
-          <p className="text-sm">Header children render below the title and description.</p>
         </Card.Content>
       </Card.Root>
 
@@ -290,10 +348,26 @@ const CardDemoPage = () => (
   <Layout>
     <Layout.Header title="Card Demo" />
     <Layout.Column>
+      <Text.h2>Header and footer actions</Text.h2>
+      <Text.p variant="body-sm" className="mb-4 text-muted-foreground">
+        Change the header selector to preview a filter. Save keeps it; Cancel restores the saved
+        filter. The second card is only 320px wide, even on a desktop, to demonstrate wrapping.
+      </Text.p>
+      <Example title="Interactive actions">
+        <div className="max-w-3xl">
+          <OrderActionsCard />
+        </div>
+      </Example>
+      <Example title="Narrow card (320px)">
+        <div className="w-80 max-w-full">
+          <OrderActionsCard />
+        </div>
+      </Example>
+
       <h2 className="mb-1 text-base font-semibold">Basics</h2>
       <p className="mb-4 text-sm text-muted-foreground">
-        <code>Card.Root</code>, <code>Card.Header</code> and <code>Card.Content</code> in their
-        common combinations.
+        <code>Card.Root</code>, <code>Card.Header</code>, <code>Card.Content</code> and{" "}
+        <code>Card.Footer</code> in their common combinations.
       </p>
       <section className="mb-10">
         <BasicCards />

@@ -28,7 +28,105 @@ import {
 } from "@tailor-platform/app-shell";
 ```
 
-The examples below also import `Button`, `Form`, and `Text` from `@tailor-platform/app-shell`, and `useId` and `useState` from `react`.
+The examples below also import `Button`, `Form`, `Select`, `Text`, `parseAbsolute`, `parseDateTime`, and `parseZonedDateTime` from `@tailor-platform/app-shell`, and `useId` and `useState` from `react`.
+
+## Date values and parsing helpers
+
+AppShell re-exports these types and helpers from [`@internationalized/date`](https://react-spectrum.adobe.com/internationalized/date/) so applications can import them from `@tailor-platform/app-shell` without an additional dependency.
+
+| Export                          | Purpose                                                                                                                      |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `CalendarDate`                  | Date-only value, without a time or timezone.                                                                                 |
+| `CalendarDateTime`              | Date and time without a timezone; it does not identify a unique instant.                                                     |
+| `ZonedDateTime`                 | Date and time with a timezone and UTC offset.                                                                                |
+| `Time`                          | Time of day without a date or timezone.                                                                                      |
+| `DateValue`                     | Union of `CalendarDate`, `CalendarDateTime`, and `ZonedDateTime`, accepted by the date controls. It does not include `Time`. |
+| `parseDate(text)`               | Parse an ISO date into a `CalendarDate`.                                                                                     |
+| `parseDateTime(text)`           | Parse an ISO date/time without a timezone into a `CalendarDateTime`.                                                         |
+| `parseAbsolute(text, timeZone)` | Parse an ISO instant containing `Z` or an offset and represent it in the supplied IANA timezone as a `ZonedDateTime`.        |
+| `parseZonedDateTime(text)`      | Parse a date/time with a bracketed IANA timezone into a `ZonedDateTime`, preserving the named zone.                          |
+| `getLocalTimeZone()`            | Read the environment's local IANA timezone. This does not read AppShell's `timeZone` setting.                                |
+
+The first five exports are **types only**, not constructor values. Use the parsing helpers to create date values.
+
+Switch the instant's display timezone between Tokyo and UTC: `parseAbsolute` represents the same instant at a different wall-clock time, while the other results keep their date-only, local, or explicitly named-zone meaning. Choose `not-a-date` to see an invalid `parseDate` input handled without interrupting the other examples. All inputs are fixed; the example does not change AppShell's timezone.
+
+<example-preview name="parsing-helpers"></example-preview>
+
+```tsx
+function ParsingHelpers() {
+  const [dateInput, setDateInput] = useState("2026-04-09");
+  const [timeZone, setTimeZone] = useState("Asia/Tokyo");
+  const parse = (read: () => DateValue) => {
+    try {
+      return { value: read().toString(), error: null };
+    } catch (error) {
+      return { value: null, error: error instanceof Error ? error.message : "Invalid date" };
+    }
+  };
+  const results = [
+    { name: "parseDate", input: dateInput, ...parse(() => parseDate(dateInput)) },
+    {
+      name: "parseDateTime",
+      input: "2026-04-09T09:30",
+      ...parse(() => parseDateTime("2026-04-09T09:30")),
+    },
+    {
+      name: "parseAbsolute",
+      input: `2026-04-09T00:30:00Z in ${timeZone}`,
+      ...parse(() => parseAbsolute("2026-04-09T00:30:00Z", timeZone)),
+    },
+    {
+      name: "parseZonedDateTime",
+      input: "2026-04-09T09:30[Asia/Tokyo]",
+      ...parse(() => parseZonedDateTime("2026-04-09T09:30[Asia/Tokyo]")),
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <Field.Root name="parserDateInput">
+        <Field.Label>Date input</Field.Label>
+        <Select
+          items={["2026-04-09", "not-a-date"]}
+          value={dateInput}
+          onValueChange={(value) => {
+            if (value !== null) setDateInput(value);
+          }}
+        />
+        <Field.Description>Try the invalid preset to see a caught parsing error.</Field.Description>
+      </Field.Root>
+      <Field.Root name="parserTimeZone">
+        <Field.Label>Instant display timezone</Field.Label>
+        <Select
+          items={["Asia/Tokyo", "UTC"]}
+          value={timeZone}
+          onValueChange={(value) => {
+            if (value !== null) setTimeZone(value);
+          }}
+        />
+      </Field.Root>
+      <dl className="space-y-3" aria-live="polite">
+        {results.map((result) => (
+          <div key={result.name}>
+            <dt className="font-medium">{result.name}</dt>
+            <dd className="break-words font-mono text-sm">
+              <div>Input: {result.input}</div>
+              {result.error ? (
+                <div role="alert">Parsing error: {result.error}</div>
+              ) : (
+                <div>Result: {result.value}</div>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+```
+
+Parsing can throw for invalid input; validate or catch errors when the string is not trusted. For application-timezone behavior in React components, call [`useTimeZone()`](../api/use-time-zone.md) at the component's top level and pass its `value` to `parseAbsolute`. Use its `today()` and `now()` methods for the current date and instant, rather than assuming the user's local timezone matches the configured one.
 
 ## API shape
 
@@ -88,9 +186,10 @@ function DateFieldWithField() {
 Controlled:
 
 ```tsx
-const [date, setDate] = useState<CalendarDate | null>(null);
-
-<DateField aria-label="Invoice date" value={date} onChange={setDate} />;
+function ControlledDateField() {
+  const [date, setDate] = useState<DateValue | null>(null);
+  return <DateField aria-label="Invoice date" value={date} onChange={setDate} />;
+}
 ```
 
 ## DatePicker

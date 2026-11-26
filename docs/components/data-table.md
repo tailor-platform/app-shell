@@ -582,7 +582,7 @@ function ColumnLayout() {
 
 A column is sortable when it has `sort: { field, type }` and `useDataTable` receives `control`. Clicking a sortable header cycles ascending → descending → off; the header context menu offers the same choices. Sorted headers show stacked up/down carets with the active direction highlighted. The caret slot is reserved on every sortable header, so applying a sort doesn't change the header's width.
 
-`DataTable.SortSettings` is a "Sort" toolbar button whose popover lists the active sort keys in priority order. Each key has an Ascending / Descending select and a remove button; **Add sort** picks from the sortable columns that aren't sorted yet, and **Clear** removes every key. The trigger shows how many keys are active.
+`DataTable.SortSettings` is a "Sort" toolbar button whose popover lists the active sort keys in priority order. Each key has an Ascending / Descending select and a remove button; **Add sort** opens a searchable list of the sortable columns that aren't sorted yet (Enter adds the first match), and **Clear** removes every key. The trigger shows how many keys are active.
 
 - **Multi-column sort.** With `sort: { multiple: true }`, keys stack. Each row shows its priority; drag the handle, or focus it and press Arrow Up / Arrow Down, to change priority.
 - **Single-column sort** (the default) holds one key. Once it is set, the add menu hides; change the direction in place or remove the key to pick another column.

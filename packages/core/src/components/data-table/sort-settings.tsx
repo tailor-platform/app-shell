@@ -1,9 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Popover } from "@base-ui/react/popover";
-import { ArrowUpDown, GripVertical, Plus, X } from "lucide-react";
+import { ArrowUpDown, GripVertical, Plus, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
-import { Menu } from "@/components/menu";
+import { Input } from "@/components/input";
 import { Select } from "@/components/select";
 import type { SortState } from "@/types/collection";
 import { useDataTableContext } from "./context";
@@ -46,6 +46,7 @@ function DataTableSortSettings({ className }: { className?: string }) {
     return map;
   }, [columns]);
 
+  const groupRef = useRef<HTMLFieldSetElement>(null);
   const [dragField, setDragField] = useState<string | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
@@ -82,8 +83,29 @@ function DataTableSortSettings({ className }: { className?: string }) {
   const setDirection = (field: string, direction: "Asc" | "Desc") =>
     replaceSorts(sortStates.map((s) => (s.field === field ? { ...s, direction } : s)));
 
+  // Removing a row, clearing, or adding the last candidate unmounts the
+  // control that had focus. Move focus to the popup's group so keyboard users
+  // stay in the popover instead of landing on <body>.
+  const keepFocusInPopup = () => {
+    requestAnimationFrame(() => {
+      const group = groupRef.current;
+      if (group && !group.contains(document.activeElement)) group.focus();
+    });
+  };
+
+  const removeSort = (field: string) => {
+    onSort(field);
+    keepFocusInPopup();
+  };
+
+  const addSort = (field: string) => {
+    onSort(field, "Asc");
+    keepFocusInPopup();
+  };
+
   const clearAll = () => {
     for (const s of sortStates) onSort(s.field);
+    keepFocusInPopup();
   };
 
   const resetDrag = () => {
@@ -120,8 +142,12 @@ function DataTableSortSettings({ className }: { className?: string }) {
         <Popover.Positioner sideOffset={4} side="bottom" align="end">
           <Popover.Popup data-slot="data-table-sort-settings-popup" className={POPUP_CLASS}>
             <fieldset
+              ref={groupRef}
+              tabIndex={-1}
               aria-label={t("sortSettings")}
-              className="astw:m-0 astw:flex astw:flex-col astw:border-0 astw:p-2"
+              // min-w-0: a fieldset's default min-inline-size is min-content,
+              // which stops long labels from truncating and overflows the popup.
+              className="astw:m-0 astw:flex astw:min-w-0 astw:flex-col astw:border-0 astw:p-2 astw:outline-none"
             >
               <div className="astw:flex astw:items-center astw:justify-between astw:px-1.5 astw:pt-0.5 astw:pb-1.5">
                 <span className="astw:text-label-sm astw:text-muted-foreground">{t("sortBy")}</span>
@@ -243,7 +269,7 @@ function DataTableSortSettings({ className }: { className?: string }) {
                           className="astw:size-6 astw:text-muted-foreground"
                           aria-label={t("removeSortFor", { column: label })}
                           title={t("removeSortFor", { column: label })}
-                          onClick={() => onSort(sort.field)}
+                          onClick={() => removeSort(sort.field)}
                         >
                           <X className="astw:size-3.5" aria-hidden />
                         </Button>
@@ -255,27 +281,11 @@ function DataTableSortSettings({ className }: { className?: string }) {
 
               {/* 🔽 Add a sort key */}
               {canAdd && (
-                <Menu.Root>
-                  <Menu.Trigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        className="astw:mt-1 astw:self-start astw:text-muted-foreground"
-                      >
-                        <Plus className="astw:size-3.5" />
-                        {t(sortStates.length === 0 ? "addSort" : "addAnotherSort")}
-                      </Button>
-                    }
-                  />
-                  <Menu.Content className="astw:max-h-[min(50vh,20rem)] astw:overflow-y-auto">
-                    {available.map(([field, label]) => (
-                      <Menu.Item key={field} onClick={() => onSort(field, "Asc")}>
-                        {label}
-                      </Menu.Item>
-                    ))}
-                  </Menu.Content>
-                </Menu.Root>
+                <AddSortPopover
+                  label={t(sortStates.length === 0 ? "addSort" : "addAnotherSort")}
+                  candidates={available}
+                  onAdd={addSort}
+                />
               )}
             </fieldset>
           </Popover.Popup>
@@ -285,5 +295,109 @@ function DataTableSortSettings({ className }: { className?: string }) {
   );
 }
 DataTableSortSettings.displayName = "DataTable.SortSettings";
+
+// Row styling shared with the DataTable filter panel's field list.
+const CANDIDATE_ROW_CLASS =
+  "astw:flex astw:w-full astw:cursor-pointer astw:items-center astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-left astw:text-body-md astw:hover:bg-accent astw:focus-visible:bg-accent astw:focus-visible:outline-none";
+
+/**
+ * "Add sort" button with a searchable list of the sortable columns that aren't
+ * sorted yet. Enter in the search box adds the first match.
+ *
+ * @internal
+ */
+function AddSortPopover({
+  label,
+  candidates,
+  onAdd,
+}: {
+  label: string;
+  candidates: [field: string, label: string][];
+  onAdd: (field: string) => void;
+}) {
+  const t = useDataTableT();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const q = query.trim().toLowerCase();
+  const matches = q ? candidates.filter(([, l]) => l.toLowerCase().includes(q)) : candidates;
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (!next) setQuery("");
+  };
+
+  const add = (field: string) => {
+    handleOpenChange(false);
+    onAdd(field);
+  };
+
+  return (
+    <Popover.Root open={open} onOpenChange={handleOpenChange}>
+      <Popover.Trigger
+        render={
+          <Button
+            variant="ghost"
+            size="xs"
+            className="astw:mt-1 astw:self-start astw:text-muted-foreground"
+          >
+            <Plus className="astw:size-3.5" />
+            {label}
+          </Button>
+        }
+      />
+      <Popover.Portal style={{ position: "relative", zIndex: "var(--z-portal)" }}>
+        <Popover.Positioner sideOffset={4} side="bottom" align="start">
+          <Popover.Popup
+            initialFocus={inputRef}
+            data-slot="data-table-sort-add-popup"
+            className={cn(POPUP_CLASS, "astw:w-60 astw:p-1")}
+          >
+            {/* Search — spacing/style mirrors the ColumnSettings search. */}
+            <div className="astw:relative astw:mb-1">
+              <Search className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-2.5 astw:size-3.5 astw:-translate-y-1/2 astw:text-muted-foreground" />
+              <Input
+                ref={inputRef}
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter" || matches.length === 0) return;
+                  e.preventDefault();
+                  add(matches[0][0]);
+                }}
+                placeholder={t("searchColumns")}
+                aria-label={t("searchColumns")}
+                className="astw:h-8 astw:pl-8 astw:text-body-md"
+              />
+            </div>
+            <fieldset
+              aria-label={label}
+              className="astw:m-0 astw:flex astw:max-h-[min(40vh,16rem)] astw:min-w-0 astw:flex-col astw:overflow-y-auto astw:border-0 astw:p-0"
+            >
+              {matches.length === 0 ? (
+                <div className="astw:px-2 astw:py-3 astw:text-center astw:text-body-sm astw:text-muted-foreground">
+                  {t("noColumnsMatch")}
+                </div>
+              ) : (
+                matches.map(([field, columnLabel]) => (
+                  <button
+                    key={field}
+                    type="button"
+                    title={columnLabel}
+                    onClick={() => add(field)}
+                    className={CANDIDATE_ROW_CLASS}
+                  >
+                    <span className="astw:min-w-0 astw:flex-1 astw:truncate">{columnLabel}</span>
+                  </button>
+                ))
+              )}
+            </fieldset>
+          </Popover.Popup>
+        </Popover.Positioner>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
 
 export { DataTableSortSettings };

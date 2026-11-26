@@ -391,6 +391,18 @@ describe("useDataTable", () => {
   // Sort delegation
   // -------------------------------------------------------------------------
   describe("sort delegation", () => {
+    it.each([
+      [undefined, false],
+      [{}, false],
+      [{ multiple: true }, true],
+      [false, false],
+    ] as const)("returns sortMultiple for sort: %o", (sort, multiple) => {
+      const { result } = renderHook(() =>
+        useDataTable({ columns, data: testData, control: makeControl(), sort }),
+      );
+      expect(result.current.sortMultiple).toBe(multiple);
+    });
+
     it("passes sortStates from control", () => {
       const control = makeControl({
         sortStates: [{ field: "name", direction: "Asc" }],

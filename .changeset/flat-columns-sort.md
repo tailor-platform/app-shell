@@ -2,7 +2,7 @@
 "@tailor-platform/app-shell": minor
 ---
 
-Add `DataTable.SortSettings`, a "Sort" toolbar control next to `DataTable.ColumnSettings`. Its popover lists the active sort keys in priority order, each with an Ascending / Descending select and a remove button, adds keys from a menu of sortable columns, and clears them all. With `sort: { multiple: true }`, drag a key's handle (or focus it and press Arrow Up / Arrow Down) to change its priority. The trigger shows how many keys are active.
+Add `DataTable.SortSettings`, a "Sort" toolbar control next to `DataTable.ColumnSettings`. Its popover lists the active sort keys in priority order, each with an Ascending / Descending select and a remove button, adds keys from a searchable list of sortable columns, and clears them all. With `sort: { multiple: true }`, drag a key's handle (or focus it and press Arrow Up / Arrow Down) to change its priority. The trigger shows how many keys are active.
 
 ```tsx
 <Toolbar.Group>

@@ -894,8 +894,8 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   loading: boolean;
   error: Error | null;
   sortStates: SortState[];
-  /** Whether multiple sort keys are enabled (`sort: { multiple: true }`). */
-  sortMultiple: boolean;
+  /** Whether multiple sort keys are enabled (`sort: { multiple: true }`). Optional so hand-built values stay valid; treated as `false` when omitted. */
+  sortMultiple?: boolean;
   onSort?: (field: string, direction?: "Asc" | "Desc") => void;
 
   // Pagination (derived from data)

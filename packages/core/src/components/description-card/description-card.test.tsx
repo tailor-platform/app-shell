@@ -43,6 +43,24 @@ describe("DescriptionCard", () => {
     expect(screen.getByText("NOT_RECEIVED")).toBeDefined();
   });
 
+  it("gives the copy button a 24px hit area without moving the value", () => {
+    render(
+      <DescriptionCard
+        title="Order"
+        data={{ id: "ord-1001" }}
+        fields={[{ key: "id", label: "ID", meta: { copyable: true } }]}
+      />,
+      { wrapper },
+    );
+
+    const button = document.querySelector('[data-slot="tooltip-trigger"]')!;
+    // The 20×20 box keeps its size; the `::after` makes the hit area 24×24.
+    expect(button.className).toContain("astw:p-1 ");
+    expect(button.className).toContain("astw:relative");
+    expect(button.className).toContain("astw:after:-inset-0.5");
+    expect(button.className).not.toContain("astw:-my-0.5");
+  });
+
   it("renders multiple badges from array value", () => {
     render(
       <DescriptionCard

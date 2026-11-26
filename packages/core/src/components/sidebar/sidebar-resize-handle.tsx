@@ -118,8 +118,9 @@ export function SidebarResizeHandle({
       data-focus={focusSource ?? undefined}
       className={cn(
         "astw:group/resize astw:absolute astw:inset-y-0 astw:z-20 astw:w-5 astw:touch-none astw:select-none astw:outline-none",
-        // 6px over the sidebar, 14px over the content so the pill beside the border stays hoverable.
-        side === "left" ? "astw:-right-3.5" : "astw:-left-3.5",
+        // Starts at the sidebar's edge, entirely over the content, so it never covers the
+        // sidebar's scrollbar. Resizing is rarer than scrolling, so scrolling gets the edge.
+        side === "left" ? "astw:-right-[20px]" : "astw:-left-[20px]",
         !collapsed && "astw:cursor-ew-resize",
         collapsed && side === "left" && "astw:cursor-e-resize",
         collapsed && side === "right" && "astw:cursor-w-resize",
@@ -255,7 +256,9 @@ export function SidebarResizeHandle({
         data-slot="sidebar-resize-indicator"
         className={cn(
           // Slides out from the border as it fades in.
-          side === "left" ? "astw:left-3 astw:-translate-x-1" : "astw:right-3 astw:translate-x-1",
+          side === "left"
+            ? "astw:left-[6px] astw:-translate-x-1"
+            : "astw:right-[6px] astw:translate-x-1",
           "astw:pointer-events-none astw:absolute astw:top-[clamp(1rem,var(--sidebar-handle-y,50%),calc(100%_-_1rem))] astw:h-8 astw:w-1 astw:-translate-y-1/2 astw:rounded-full astw:bg-muted-foreground/40 astw:opacity-0 astw:transition-[opacity,translate] astw:duration-150 astw:ease-out astw:motion-reduce:transition-opacity astw:group-hover/resize:translate-x-0 astw:group-hover/resize:opacity-100 astw:group-data-[focus=keyboard]/resize:translate-x-0 astw:group-data-[focus=keyboard]/resize:opacity-100 astw:group-data-[focus=keyboard]/resize:bg-ring astw:group-data-[resizing=true]/resize:bg-muted-foreground/70 astw:group-data-[resizing=true]/resize:translate-x-0 astw:group-data-[resizing=true]/resize:opacity-100",
         )}
       />

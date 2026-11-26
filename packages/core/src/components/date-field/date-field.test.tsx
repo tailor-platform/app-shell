@@ -117,6 +117,14 @@ describe("DateField", () => {
     expect(segments.length).toBeGreaterThan(0);
   });
 
+  it("gives every segment a 24px minimum hit area", () => {
+    render(<DateField aria-label="Date" />);
+    for (const segment of screen.getAllByRole("spinbutton")) {
+      expect(segment.className).toContain("astw:min-h-6");
+      expect(segment.className).toContain("astw:min-w-6");
+    }
+  });
+
   it("focuses the first segment when a linked external label is clicked", async () => {
     const user = userEvent.setup();
     render(

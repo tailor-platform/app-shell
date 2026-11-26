@@ -1206,9 +1206,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "dd37a482764cebc7",
+        "outline": "7055eb48c010a187",
         "snapshot": null,
-        "outputMd": "12a1e61a5d3c81a6",
+        "outputMd": "0aedc6394a388300",
         "examples": null
       }
     },
@@ -2089,7 +2089,7 @@
     "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "e79d9120d86db198",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "e07c7fee2478a21d",
     "packages/core/skills/app-shell-patterns/SKILL.md": "dfc2f40438ad075c",
-    "packages/core/skills/app-shell-upgrade/references/migrations.md": "17556b547fa2e75f",
+    "packages/core/skills/app-shell-upgrade/references/migrations.md": "3267fc8f68bd1f4f",
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   }
 }

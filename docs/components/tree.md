@@ -19,24 +19,47 @@ Trees are single-column. If you need a hierarchy with real columns (sorting, pin
 import { Tree, TreePicker } from "@tailor-platform/app-shell";
 ```
 
+The interactive examples also use `useEffect` and `useState` from React, plus `Button`, `Field`, `Select`, `Text`, and the `TreeSelectionStrategy` type from AppShell.
+
 ## Basic Usage
 
 Pass your own items and say how to read them with `mapItem`, as with `Select` and `Combobox`. `children` points at your own child array, and an item with no children is a leaf.
 
-```tsx
-type Account = { code: string; name: string; children?: Account[] };
+<example-preview name="basic-usage"></example-preview>
 
-<Tree
-  aria-label="Chart of accounts"
-  className="h-96"
-  items={accounts}
-  mapItem={(account) => ({
-    key: account.code,
-    label: `${account.code} ${account.name}`,
-    children: account.children,
-  })}
-  onAction={(account) => navigate(`/accounts/${account.code}`)}
-/>;
+```tsx
+function BasicUsage() {
+  type Account = { code: string; name: string; children?: Account[] };
+  const accounts: Account[] = [
+    {
+      code: "1000",
+      name: "Assets",
+      children: [
+        { code: "1110", name: "Cash at bank" },
+        { code: "1120", name: "Accounts receivable" },
+      ],
+    },
+    { code: "2000", name: "Liabilities" },
+  ];
+  const [lastAction, setLastAction] = useState("None");
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Tree
+        aria-label="Chart of accounts"
+        className="h-48"
+        items={accounts}
+        mapItem={(account) => ({
+          key: account.code,
+          label: `${account.code} ${account.name}`,
+          children: account.children,
+        })}
+        onAction={(account) => setLastAction(`${account.code} ${account.name}`)}
+      />
+      <Text.p role="status">Last action: {lastAction}</Text.p>
+    </div>
+  );
+}
 ```
 
 ### Item types
@@ -59,13 +82,38 @@ When codes repeat with different meanings, like bin `A1` in two warehouses, comp
 
 A key can't be a parent in one place and a leaf in another. One key is one item, and an item can't both have children and not, so those rows can't tick consistently. The tree logs a console warning naming any such keys.
 
-```tsx
-const isWarehouse = (node: Warehouse | Bin): node is Warehouse => "bins" in node;
+<example-preview name="keys"></example-preview>
 
-mapItem={(item, { parents }) =>
-  isWarehouse(item)
-    ? { key: item.id, label: item.name, children: item.bins }
-    : { key: `${parents.find(isWarehouse)?.id}/${item.code}`, label: item.code }
+```tsx
+function Keys() {
+  type Bin = { code: string };
+  type Warehouse = { id: string; name: string; bins: Bin[] };
+  type StockNode = Warehouse | Bin;
+  const isWarehouse = (node: StockNode): node is Warehouse => "bins" in node;
+  const warehouses: StockNode[] = [
+    { id: "wh-east", name: "East warehouse", bins: [{ code: "A1" }, { code: "A2" }] },
+    { id: "wh-west", name: "West warehouse", bins: [{ code: "A1" }, { code: "A2" }] },
+  ];
+  const [value, setValue] = useState<string[]>([]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Tree
+        aria-label="Warehouse bins with unique keys"
+        className="h-56"
+        items={warehouses}
+        mapItem={(item, { parents }) =>
+          isWarehouse(item)
+            ? { key: item.id, label: item.name, children: item.bins }
+            : { key: `${parents.find(isWarehouse)?.id}/${item.code}`, label: item.code }
+        }
+        selectionMode="checkbox"
+        value={value}
+        onValueChange={setValue}
+      />
+      <Text.p role="status">Selected keys: {JSON.stringify(value)}</Text.p>
+    </div>
+  );
 }
 ```
 
@@ -85,15 +133,43 @@ Enter runs `onAction(item, key)` on any enabled row, in every mode. The props ar
 
 ### Single
 
-```tsx
-const [selected, setSelected] = useState<string | null>(null);
+<example-preview name="single-selection"></example-preview>
 
-<Tree
-  {...props}
-  selectionMode="single"
-  selectedKey={selected}
-  onSelectedKeyChange={(key) => setSelected(key)}
-/>;
+```tsx
+function SingleSelection() {
+  type Account = { code: string; name: string; children?: Account[] };
+  const accounts: Account[] = [
+    {
+      code: "1000",
+      name: "Assets",
+      children: [
+        { code: "1110", name: "Cash at bank" },
+        { code: "1120", name: "Accounts receivable" },
+      ],
+    },
+    { code: "2000", name: "Liabilities" },
+  ];
+  const [selected, setSelected] = useState<string | null>("1110");
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Tree
+        aria-label="Choose an account"
+        className="h-48"
+        items={accounts}
+        mapItem={(account) => ({
+          key: account.code,
+          label: `${account.code} ${account.name}`,
+          children: account.children,
+        })}
+        selectionMode="single"
+        selectedKey={selected}
+        onSelectedKeyChange={setSelected}
+      />
+      <Text.p role="status">Selected account: {selected ?? "None"}</Text.p>
+    </div>
+  );
+}
 ```
 
 Selecting a closed parent opens it. Its caret closes it again, so selecting an open parent never hides what you were looking at.
@@ -102,10 +178,38 @@ The selected row is always revealed: when it starts out inside closed groups, or
 
 ### Checkbox
 
-```tsx
-const [skus, setSkus] = useState<string[]>([]);
+<example-preview name="checkbox-selection"></example-preview>
 
-<Tree {...props} selectionMode="checkbox" value={skus} onValueChange={setSkus} />;
+```tsx
+function CheckboxSelection() {
+  type Item = { sku: string; name: string; children?: Item[] };
+  const items: Item[] = [
+    {
+      sku: "accessories",
+      name: "Accessories",
+      children: [
+        { sku: "CAP", name: "Embroidered cap" },
+        { sku: "TOTE", name: "Canvas tote" },
+      ],
+    },
+  ];
+  const [skus, setSkus] = useState<string[]>([]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Tree
+        aria-label="Products to order"
+        className="h-40"
+        items={items}
+        mapItem={(item) => ({ key: item.sku, label: item.name, children: item.children })}
+        selectionMode="checkbox"
+        value={skus}
+        onValueChange={setSkus}
+      />
+      <Text.p role="status">Selected SKUs: {JSON.stringify(skus)}</Text.p>
+    </div>
+  );
+}
 ```
 
 `onValueChange(value, { selected })` gives the new value plus the items it lists, as `{ key, item, parents }[]` in tree order. Keys in the value that aren't in `items` (not loaded yet, say) are kept as they were.
@@ -128,12 +232,52 @@ Take a parent P with two leaves, A and B, starting from nothing ticked:
 - **`"cascade"`** makes parents items in their own right. Ticking one ticks everything beneath it too, but unticking A leaves `[P, B]`, with P still ticked.
 - **`"independent"`** ticks every item on its own.
 
-```tsx
-// Everything in a warehouse comes back as the warehouse key, not every bin.
-<Tree {...props} selectionMode="checkbox" selectionStrategy="topmost" />
+Switch strategies below, then tick P or its children to compare the returned value. Changing strategy clears the selection.
 
-// A parent purchase order can be approved without its child orders.
-<Tree {...props} selectionMode="checkbox" selectionStrategy="independent" />
+<example-preview name="selection-strategies"></example-preview>
+
+```tsx
+function SelectionStrategies() {
+  type Node = { key: string; children?: Node[] };
+  const items: Node[] = [{ key: "P", children: [{ key: "A" }, { key: "B" }] }];
+  const strategies: TreeSelectionStrategy[] = [
+    "leaves",
+    "topmost",
+    "all",
+    "cascade",
+    "independent",
+  ];
+  const [strategy, setStrategy] = useState<TreeSelectionStrategy>("leaves");
+  const [value, setValue] = useState<string[]>([]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Select
+        aria-label="Selection strategy"
+        items={strategies}
+        value={strategy}
+        onValueChange={(next) => {
+          if (next) {
+            setStrategy(next);
+            setValue([]);
+          }
+        }}
+      />
+      <Tree
+        key={strategy}
+        aria-label="Compare selection strategies"
+        className="h-40"
+        items={items}
+        mapItem={(item) => ({ key: item.key, label: item.key, children: item.children })}
+        selectionMode="checkbox"
+        selectionStrategy={strategy}
+        value={value}
+        onValueChange={setValue}
+      />
+      <Text.p role="status">Value: {JSON.stringify(value)}</Text.p>
+    </div>
+  );
+}
 ```
 
 Every combination round-trips: passing a value back in shows the same ticks. With `"leaves"`, `"topmost"` or `"all"`, a parent key in the value stands for every leaf beneath it, so `defaultValue={["wh-x"]}` ticks all of Warehouse X.
@@ -142,16 +286,46 @@ Every combination round-trips: passing a value back in shows the same ticks. Wit
 
 The row shows the item's `label` by default. `renderItem` replaces it, and receives the row's state.
 
+<example-preview name="custom-rows"></example-preview>
+
 ```tsx
-renderItem={({ item, isLeaf }) =>
-  isLeaf ? (
-    <span className="flex w-full justify-between gap-3">
-      <span>{item.name}</span>
-      <span className="text-muted-foreground tabular-nums">{money(item.price)}</span>
-    </span>
-  ) : (
-    <strong>{item.name}</strong>
-  )
+function CustomRows() {
+  type Product = { sku: string; name: string; price: number };
+  type Category = { id: string; name: string; products: Product[] };
+  type CatalogNode = Category | Product;
+  const items: CatalogNode[] = [
+    {
+      id: "accessories",
+      name: "Accessories",
+      products: [
+        { sku: "CAP", name: "Embroidered cap", price: 14.25 },
+        { sku: "TOTE", name: "Canvas tote", price: 22 },
+      ],
+    },
+  ];
+
+  return (
+    <Tree
+      aria-label="Products with prices"
+      className="h-40"
+      items={items}
+      mapItem={(item) =>
+        "products" in item
+          ? { key: item.id, label: item.name, children: item.products }
+          : { key: item.sku, label: item.name }
+      }
+      renderItem={({ item }) =>
+        "price" in item ? (
+          <span className="flex w-full justify-between gap-3">
+            <span>{item.name}</span>
+            <span className="text-muted-foreground tabular-nums">${item.price.toFixed(2)}</span>
+          </span>
+        ) : (
+          <strong>{item.name}</strong>
+        )
+      }
+    />
+  );
 }
 ```
 
@@ -172,15 +346,61 @@ renderItem={({ item, isLeaf }) =>
 
 `filter` narrows the tree to matching items plus their ancestors, and opens the groups they're in. It receives the item with its `label` and `parents`. A parent that matches with no matching children keeps all of them, so it can still be opened.
 
-```tsx
-const [query, setQuery] = useState("");
-const filter = useMemo(
-  () => (query ? (_: Account, { label }: { label: string }) => label.includes(query) : undefined),
-  [query],
-);
+<example-preview name="filtering"></example-preview>
 
-<Input value={query} onChange={(event) => setQuery(event.target.value)} />
-<Tree {...props} filter={filter} />
+```tsx
+function Filtering() {
+  type Account = { code: string; name: string; children?: Account[] };
+  const accounts: Account[] = [
+    {
+      code: "1000",
+      name: "Assets",
+      children: [
+        { code: "1110", name: "Cash at bank" },
+        { code: "1120", name: "Accounts receivable" },
+      ],
+    },
+    {
+      code: "2000",
+      name: "Liabilities",
+      children: [{ code: "2100", name: "Accounts payable" }],
+    },
+  ];
+  const [query, setQuery] = useState("");
+  const [value, setValue] = useState<string[]>([]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Field.Root>
+        <Field.Label>Filter accounts</Field.Label>
+        <Field.Control
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Try Accounts"
+        />
+      </Field.Root>
+      <Tree
+        aria-label="Filtered accounts"
+        className="h-56"
+        items={accounts}
+        mapItem={(account) => ({
+          key: account.code,
+          label: `${account.code} ${account.name}`,
+          children: account.children,
+        })}
+        filter={
+          query.trim()
+            ? (_, { label }) => label.toLowerCase().includes(query.trim().toLowerCase())
+            : undefined
+        }
+        selectionMode="checkbox"
+        value={value}
+        onValueChange={setValue}
+      />
+      <Text.p role="status">Selected keys: {JSON.stringify(value)}</Text.p>
+    </div>
+  );
+}
 ```
 
 Groups a filter opened can still be closed. They stay closed until the matches change, so an inline `filter` recreated on every render won't reopen them.
@@ -191,15 +411,52 @@ In checkbox mode, ticking a group while filtering acts on what's visible: it tic
 
 In checkbox mode, `Tree` works like `Select` and the other form controls: as a plain form field, inside `Field.Root`, and with React Hook Form.
 
+<example-preview name="with-form"></example-preview>
+
 ```tsx
-<form action={saveCount}>
-  <Field.Root name="bins">
-    <Field.Label>Bins to count</Field.Label>
-    <Tree {...props} selectionMode="checkbox" required />
-    <Field.Description>Pick at least one bin.</Field.Description>
-  </Field.Root>
-  <Button type="submit">Start count</Button>
-</form>
+function WithForm() {
+  type Bin = { code: string; name: string; children?: Bin[] };
+  const bins: Bin[] = [
+    {
+      code: "east",
+      name: "East warehouse",
+      children: [
+        { code: "east/A1", name: "A1" },
+        { code: "east/A2", name: "A2" },
+      ],
+    },
+  ];
+  const [submitted, setSubmitted] = useState<string[] | null>(null);
+
+  return (
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={(event) => {
+        event.preventDefault();
+        setSubmitted(new FormData(event.currentTarget).getAll("bins").map(String));
+      }}
+    >
+      <Field.Root name="bins">
+        <Field.Label>Bins to count</Field.Label>
+        <Tree
+          className="h-40"
+          items={bins}
+          mapItem={(bin) => ({ key: bin.code, label: bin.name, children: bin.children })}
+          selectionMode="checkbox"
+          required
+        />
+        <Field.Description>Pick at least one bin. Enter on a row also submits.</Field.Description>
+        <Field.Error match="valueMissing">Pick at least one bin.</Field.Error>
+      </Field.Root>
+      <Button type="submit">Start count</Button>
+      <Text.p role="status">
+        {submitted === null
+          ? "Nothing submitted yet."
+          : `Submitted bins: ${JSON.stringify(submitted)}`}
+      </Text.p>
+    </form>
+  );
+}
 ```
 
 - **Submitting:** `name` (or the `Field.Root`'s name) renders one hidden input per value key, so the server reads `formData.getAll("bins")`. `itemToStringValue(item, { parents })` changes the submitted string.
@@ -215,8 +472,49 @@ Only checkbox mode is a form control. In `"none"` and `"single"` modes the tree 
 
 Return `disabled: true` from `mapItem` to lock an item. A disabled parent locks everything beneath it, and `disabled` on the tree locks every row. A locked row can't be ticked or selected, and Enter doesn't run `onAction` on it. A disabled item that's already ticked stays ticked.
 
+<example-preview name="disabled-items"></example-preview>
+
 ```tsx
-mapItem={(bin) => ({ key: bin.code, label: bin.code, disabled: bin.status === "counting" })}
+function DisabledItems() {
+  type Bin = { code: string; name: string; counting?: boolean; children?: Bin[] };
+  const bins: Bin[] = [
+    {
+      code: "east",
+      name: "East warehouse",
+      children: [
+        { code: "east/A1", name: "A1 — available" },
+        { code: "east/A2", name: "A2 — counting", counting: true },
+      ],
+    },
+    {
+      code: "west",
+      name: "West warehouse — counting",
+      counting: true,
+      children: [{ code: "west/A1", name: "A1" }],
+    },
+  ];
+  const [value, setValue] = useState<string[]>([]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Tree
+        aria-label="Bins with disabled items"
+        className="h-48"
+        items={bins}
+        mapItem={(bin) => ({
+          key: bin.code,
+          label: bin.name,
+          children: bin.children,
+          disabled: bin.counting,
+        })}
+        selectionMode="checkbox"
+        value={value}
+        onValueChange={setValue}
+      />
+      <Text.p role="status">Selected bins: {JSON.stringify(value)}</Text.p>
+    </div>
+  );
+}
 ```
 
 How a parent behaves next to disabled children depends on whether it's a container or an item:
@@ -232,19 +530,56 @@ How a parent behaves next to disabled children depends on whether it's a contain
 
 A checkbox tree in a dialog, with search. It takes the same item, row and ticking props as `Tree`, plus the search and commit props. Each open starts empty, and `onCommit` receives the value's items in tree order. Ticking a group while searching ticks its matching items, as described under [Filtering](#filtering).
 
-```tsx
-const isProduct = (item: Category | Product): item is Product => "sku" in item;
+<example-preview name="picker"></example-preview>
 
-<TreePicker
-  open={open}
-  onOpenChange={setOpen}
-  title="Add items from catalogue"
-  items={categories}
-  mapItem={mapCatalogItem}
-  renderItem={renderCatalogItem}
-  matchesSearch={(item, query) => item.name.toLowerCase().includes(query.toLowerCase())}
-  onCommit={(picked) => addToOrder(picked.flatMap(({ item }) => (isProduct(item) ? [item] : [])))}
-/>;
+```tsx
+function Picker() {
+  type Product = { sku: string; name: string };
+  type Category = { id: string; name: string; products: Product[] };
+  type CatalogNode = Category | Product;
+  const isProduct = (item: CatalogNode): item is Product => "sku" in item;
+  const categories: CatalogNode[] = [
+    {
+      id: "accessories",
+      name: "Accessories",
+      products: [
+        { sku: "CAP", name: "Embroidered cap" },
+        { sku: "TOTE", name: "Canvas tote" },
+      ],
+    },
+    {
+      id: "clothing",
+      name: "Clothing",
+      products: [{ sku: "TEE", name: "Cotton tee" }],
+    },
+  ];
+  const [open, setOpen] = useState(false);
+  const [picked, setPicked] = useState<Product[]>([]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Button onClick={() => setOpen(true)}>Add items from catalogue</Button>
+      <Text.p role="status">
+        Added items: {picked.map((item) => item.name).join(", ") || "None"}
+      </Text.p>
+      <TreePicker
+        open={open}
+        onOpenChange={setOpen}
+        title="Add items from catalogue"
+        items={categories}
+        mapItem={(item) =>
+          isProduct(item)
+            ? { key: item.sku, label: item.name }
+            : { key: item.id, label: item.name, children: item.products }
+        }
+        matchesSearch={(item, query) => item.name.toLowerCase().includes(query.toLowerCase())}
+        onCommit={(selected) =>
+          setPicked(selected.flatMap(({ item }) => (isProduct(item) ? [item] : [])))
+        }
+      />
+    </div>
+  );
+}
 ```
 
 `onCommit`'s items have the union type too, so narrow them with a type guard rather than casting to `Product`. With the default `"leaves"` only products come back, but a guard keeps that true if you later switch to `"topmost"` or `"all"`, which can return categories.
@@ -322,17 +657,60 @@ The default labels are localised (English and Japanese) through the app's locale
 
 There's deliberately no async variant yet: filtering and auto-expanding need the whole tree up front. Fetch once before or on open, and drive `emptyText` from your own loading flag. Keys in `value` for items that haven't loaded yet are kept, so a controlled selection survives the load.
 
-```tsx
-const { data, isLoading } = useCatalogQuery();
+This example simulates loading the whole catalogue on each open. Closing the picker cancels the pending timer; in an app, replace the timer with your query or fetch logic.
 
-<TreePicker
-  open={open}
-  onOpenChange={setOpen}
-  items={data ?? []}
-  mapItem={mapCatalogItem}
-  emptyText={isLoading ? "Loading catalogue…" : undefined}
-  onCommit={handleCommit}
-/>;
+<example-preview name="async-catalogue"></example-preview>
+
+```tsx
+function AsyncCatalogue() {
+  type Item = { id: string; name: string; children?: Item[] };
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    const timer = setTimeout(() => {
+      setItems([
+        {
+          id: "accessories",
+          name: "Accessories",
+          children: [
+            { id: "CAP", name: "Embroidered cap" },
+            { id: "TOTE", name: "Canvas tote" },
+          ],
+        },
+      ]);
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [open]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Button
+        onClick={() => {
+          setItems([]);
+          setLoading(true);
+          setOpen(true);
+        }}
+      >
+        Load catalogue
+      </Button>
+      <Text.p role="status">Added items: {picked.join(", ") || "None"}</Text.p>
+      <TreePicker
+        open={open}
+        onOpenChange={setOpen}
+        title="Load items from catalogue"
+        items={items}
+        mapItem={(item) => ({ key: item.id, label: item.name, children: item.children })}
+        emptyText={loading ? "Loading catalogue…" : undefined}
+        onCommit={(selected) => setPicked(selected.map(({ item }) => item.name))}
+      />
+    </div>
+  );
+}
 ```
 
 ## Related

@@ -46,10 +46,12 @@ function TestPagination({
   data,
   control,
   onSelectionChange,
+  pageSizeOptions,
 }: {
   data: DataTableData<TestRow>;
   control: CollectionControl;
   onSelectionChange?: (ids: string[]) => void;
+  pageSizeOptions?: number[];
 }) {
   const table = useDataTable<TestRow>({
     columns: testColumns,
@@ -60,7 +62,7 @@ function TestPagination({
   return (
     <DataTable.Root value={table}>
       <DataTable.Footer>
-        <DataTable.Pagination />
+        <DataTable.Pagination pageSizeOptions={pageSizeOptions} />
       </DataTable.Footer>
     </DataTable.Root>
   );
@@ -107,6 +109,26 @@ describe("DataTable.Pagination", () => {
 
     expect(screen.queryByLabelText("First page")).not.toBeNull();
     expect(screen.queryByLabelText("Last page")).toBeNull();
+  });
+
+  it("names the page-size select with the Rows per page label", () => {
+    render(
+      <TestPagination data={dataWithTotal} control={makeControl()} pageSizeOptions={[10, 20]} />,
+      { wrapper },
+    );
+
+    expect(screen.getByRole("combobox", { name: "Rows per page" })).not.toBeNull();
+  });
+
+  it("hides the short page text from assistive tech", () => {
+    render(<TestPagination data={dataWithTotal} control={makeControl()} />, {
+      wrapper,
+    });
+
+    // A narrow footer shows "1 / 5" in place of "Page 1 / 5"; only the full
+    // text should be announced.
+    expect(screen.getByText("1 / 5").getAttribute("aria-hidden")).toBe("true");
+    expect(screen.getByText("Page 1 / 5").getAttribute("aria-hidden")).toBeNull();
   });
 
   it("still shows Previous/Next buttons when total is not provided", () => {

@@ -225,6 +225,10 @@ interface SortableHeaderRenderContext {
   label?: string;
   sortable: true;
   sortDirection: "Asc" | "Desc" | undefined;
+  /** 1-based position in the active sort keys; undefined when this column is not sorted. */
+  sortIndex?: number;
+  /** Number of active sort keys, including hidden columns. */
+  sortCount: number;
   activateSort: () => void;
 }
 
@@ -348,8 +352,8 @@ export interface ColumnBase<TRow extends Record<string, unknown>> {
    * `header` is a **presentation** hook. When omitted, the built-in header
    * renders `label` and, for sortable columns, owns the sort button and
    * indicator. When provided, the return value replaces the built-in header
-   * entirely. Sortable custom headers receive `sortDirection` and
-   * `activateSort()` and must render their own click surface and sort
+   * entirely. Sortable custom headers receive `sortDirection`, `sortIndex`,
+   * `sortCount`, and `activateSort()` and must render their own click surface and sort
    * indicator for left-click sorting; built-in header context-menu actions are
    * still driven by `label`, `sort`, and other column metadata.
    */

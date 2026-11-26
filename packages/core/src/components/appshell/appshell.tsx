@@ -6,7 +6,7 @@ import {
   setContextData,
   defineModule,
 } from "@/resource";
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
 import { type FC } from "react";
 import { HouseIcon } from "lucide-react";
 import { labels } from "@/i18n-labels";
@@ -16,6 +16,7 @@ import {
   buildConfigurations,
   type AppInfo,
   type ContextData,
+  type ToastDefaults,
 } from "@/contexts/appshell-context";
 import { RouterContainer, type RouterContainerProps } from "@/routing/router";
 import { ThemeProvider, type ColorTheme } from "@/contexts/theme-context";
@@ -26,9 +27,35 @@ import { useIsClient } from "@/hooks/use-is-client";
 import { convertPagesToModules } from "@/fs-routes/converter";
 import type { PageEntry } from "@/fs-routes/types";
 import { Text } from "../text";
+import { AppShellTestingContext } from "./testing-context";
 
 /**
- * Shared props between `AppShellProps` and the internal `WithPages` wrapper.
+ * `toastDefaults={{ ... }}` written inline is a new object on every render. Keyed by its
+ * values, it keeps the configurations, and the `toast` that `useToast` returns, the same
+ * object while the values stay the same. Keyed by identity, every render would rebuild the
+ * config context, and an effect that depends on `toast` would run again.
+ */
+const useToastDefaultsByValue = (value: ToastDefaults | undefined): ToastDefaults | undefined => {
+  const isSet = value !== undefined;
+  const errorDuration = value?.error?.duration;
+  const errorCloseButton = value?.error?.closeButton;
+  const actionDuration = value?.action?.duration;
+  const actionCloseButton = value?.action?.closeButton;
+  return useMemo(
+    () =>
+      isSet
+        ? // A field left out stays `undefined`, which `useToast` reads as "keep the built-in one".
+          ({
+            error: { duration: errorDuration, closeButton: errorCloseButton },
+            action: { duration: actionDuration, closeButton: actionCloseButton },
+          } as ToastDefaults)
+        : undefined,
+    [isSet, errorDuration, errorCloseButton, actionDuration, actionCloseButton],
+  );
+};
+
+/**
+ * Shared props for manual and file-based route configuration.
  *
  * These props are available regardless of whether routes are configured
  * automatically (via vite-plugin) or manually (via `modules` prop).
@@ -90,7 +117,7 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * Guards for the root route.
    *
    * When using file-based routing, this is automatically set from
-   * the root page's guards via `AppShell.WithPages()`.
+   * the root page's guards by the Vite plugin.
    *
    * @example
    * ```tsx
@@ -124,6 +151,22 @@ type SharedAppShellProps = React.PropsWithChildren<{
    * If not provided, date/time components fall back to the user's local timezone.
    */
   timeZone?: string;
+
+  /**
+   * Defaults `useToast` applies per kind of toast when the call does not set them.
+   *
+   * Built-in: `toast.error(...)`, the error state of `toast.promise(...)`, and any toast
+   * with an `action` get `{ duration: Infinity, closeButton: true }`, so they stay until
+   * the user closes them. A field set here replaces that field only; fields and kinds left
+   * out keep the built-in default. An empty object for a kind is a type error.
+   *
+   * @example
+   * ```tsx
+   * // Errors close after 4 s without a close button, as before; toasts with an action still stay.
+   * <AppShell toastDefaults={{ error: { duration: 4000, closeButton: false } }} modules={[...]} />
+   * ```
+   */
+  toastDefaults?: ToastDefaults;
 
   /**
    * Global error boundary component applied to all routes.
@@ -230,7 +273,7 @@ type SharedAppShellProps = React.PropsWithChildren<{
  *
  * Routes can be configured in two ways:
  * 1. **Automatic (recommended)**: Use the vite-plugin which automatically
- *    configures pages via `AppShell.WithPages()`.
+ *    configures pages.
  * 2. **Explicit modules**: Pass the `modules` prop for manual configuration.
  *
  * @example
@@ -257,22 +300,15 @@ export type AppShellProps = SharedAppShellProps & {
   /**
    * Navigation configuration.
    *
-   * When using vite-plugin, this is automatically set via `AppShell.WithPages()`.
+   * When using vite-plugin, this is automatically set by the plugin.
    * For manual configuration, pass modules directly.
    */
   modules?: Modules;
 };
 
-/**
- * AppShell's props plus the routing mode. Memory routing is absent from the
- * public {@link AppShellProps} so it cannot be shipped by accident; tests reach
- * it via `@tailor-platform/app-shell/testing`, which re-exports this as
- * `TestAppShellProps`.
- */
-export type AppShellInternalProps = AppShellProps & RouterContainerProps;
-
-export const AppShellInternal = (props: AppShellInternalProps) => {
+const AppShellRoot = (props: AppShellProps) => {
   const clientSide = useIsClient();
+  const initialEntries = useContext(AppShellTestingContext);
 
   // Set context data for guards (module scope)
   const contextData = (props.contextData ?? {}) as ContextData;
@@ -280,9 +316,8 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
 
   const { modules: propsModules, rootComponent, rootGuards } = props;
 
-  // Narrow the union once so the router gets a well-typed pair.
-  const routingMode: RouterContainerProps = props.memory
-    ? { memory: true, initialEntries: props.initialEntries }
+  const routingMode: RouterContainerProps = initialEntries
+    ? { memory: true, initialEntries }
     : { memory: false };
 
   const modules = useMemo(() => {
@@ -322,6 +357,8 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
     return propsModules;
   }, [propsModules, rootComponent, rootGuards]);
 
+  const toastDefaults = useToastDefaultsByValue(props.toastDefaults);
+
   // Memoize configurations to prevent unnecessary re-renders
   // configurations will be null if modules is not provided
   const configurations = useMemo(
@@ -334,6 +371,7 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
             errorBoundary: props.errorBoundary,
             locale: props.locale,
             timeZone: props.timeZone,
+            toastDefaults,
           })
         : null,
     [
@@ -343,6 +381,7 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
       props.errorBoundary,
       props.locale,
       props.timeZone,
+      toastDefaults,
     ],
   );
 
@@ -411,20 +450,12 @@ export const AppShellInternal = (props: AppShellInternalProps) => {
   );
 };
 
-/**
- * Create an AppShell component with pages pre-configured.
- *
- * @internal
- * This method is used internally by the vite-plugin to inject pages.
- * Users should not call this directly. Use the vite-plugin for automatic
- * page configuration, or pass the `modules` prop for manual configuration.
- */
-AppShellInternal.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
+AppShellRoot.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
   // Convert pages to modules at component creation time (not render time)
   const allModules = convertPagesToModules(pages);
 
   const WrappedAppShell: FC<AppShellProps> = (props) => {
-    return <AppShellInternal {...props} modules={allModules} memory={false} />;
+    return <AppShellRoot {...props} modules={allModules} />;
   };
 
   return WrappedAppShell;
@@ -433,13 +464,10 @@ AppShellInternal.WithPages = (pages: PageEntry[]): FC<AppShellProps> => {
 /**
  * The app shell: providers, routing, and layout for a Tailor application.
  *
- * Always browser routing. `memory` is pinned off rather than merely absent from
- * {@link AppShellProps}, so it holds for JS callers and `any` spreads too;
- * `@tailor-platform/app-shell/testing` is the only way to memory routing.
+ * Uses browser routing unless wrapped in AppShellTestingProvider from
+ * `@tailor-platform/app-shell/testing`. Routing mode is not an AppShell prop.
  */
-const AppShellPublic = (props: AppShellProps) => <AppShellInternal {...props} memory={false} />;
-AppShellPublic.WithPages = AppShellInternal.WithPages;
-
 export const AppShell: ((props: AppShellProps) => React.ReactNode) & {
+  /** @internal Used by the Vite plugin to inject pages. */
   WithPages: (pages: PageEntry[]) => FC<AppShellProps>;
-} = AppShellPublic;
+} = AppShellRoot;

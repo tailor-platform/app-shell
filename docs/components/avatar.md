@@ -52,19 +52,27 @@ function BasicUsage() {
 
 The smallest size, `xs` (16px), is intended for compact/inline contexts and single-glyph or icon content; two-letter initials will be cramped.
 
+<example-preview name="sizes"></example-preview>
+
 ```tsx
-<Avatar.Root size="xs">
-  <Avatar.Fallback>A</Avatar.Fallback>
-</Avatar.Root>
-<Avatar.Root size="sm">
-  <Avatar.Fallback>AB</Avatar.Fallback>
-</Avatar.Root>
-<Avatar.Root size="default">
-  <Avatar.Fallback>CD</Avatar.Fallback>
-</Avatar.Root>
-<Avatar.Root size="lg">
-  <Avatar.Fallback>EF</Avatar.Fallback>
-</Avatar.Root>
+function Sizes() {
+  return (
+    <div className="flex items-center gap-3">
+      <Avatar.Root size="xs">
+        <Avatar.Fallback>A</Avatar.Fallback>
+      </Avatar.Root>
+      <Avatar.Root size="sm">
+        <Avatar.Fallback>AB</Avatar.Fallback>
+      </Avatar.Root>
+      <Avatar.Root size="default">
+        <Avatar.Fallback>CD</Avatar.Fallback>
+      </Avatar.Root>
+      <Avatar.Root size="lg">
+        <Avatar.Fallback>EF</Avatar.Fallback>
+      </Avatar.Root>
+    </div>
+  );
+}
 ```
 
 ## Types

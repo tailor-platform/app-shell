@@ -17,6 +17,8 @@ sources:
 import { ActionPanel } from "@tailor-platform/app-shell";
 ```
 
+The loading example also imports `useEffect` and `useState` from `react`, `Text` from `@tailor-platform/app-shell`, and `Check` from `lucide-react`.
+
 ## Basic Usage
 
 <!-- example: basic-usage -->
@@ -52,52 +54,21 @@ Pass `null` to hide the empty content and its additional vertical spacing while 
 
 ## With Loading State
 
-Use parent state to control which row is loading:
+Use parent state to control which row is loading. This example simulates confirmation with a one-second timer, which is cleaned up when the example unmounts. Click again after completion to repeat it. For a real request, set the loading key before awaiting it and clear it in `finally`.
 
-```tsx
-const [loadingKey, setLoadingKey] = useState<string | null>(null);
+<!-- example: with-loading-state -->
 
-const handleConfirm = async () => {
-  setLoadingKey("confirm");
-  try {
-    await confirmOrder(orderId);
-  } finally {
-    setLoadingKey(null);
-  }
-};
+## Explicit CommandPalette Registration
 
-<ActionPanel
-  title="Actions"
-  actions={[
-    {
-      key: "confirm",
-      label: "Confirm order",
-      icon: <CheckIcon />,
-      onClick: handleConfirm,
-      loading: loadingKey === "confirm",
-    },
-  ]}
-/>;
-```
+`ActionPanel` does not register actions to the CommandPalette and can be rendered outside `AppShell`. Rendering a row only exposes its `onClick` through that row.
 
-## CommandPalette Integration
+To make selected actions discoverable via `Cmd+K` / `Ctrl+K`, register them explicitly with [`useRegisterCommandPaletteActions`](../api/use-register-command-palette-actions.md). Filter out disabled or loading actions and actions without an `onClick` handler, then map `onClick` to `onSelect`. You can register only a subset of the panel's actions.
 
-`ActionPanel` automatically registers its enabled actions to the CommandPalette. Actions that are not `disabled`, not `loading`, and have an `onClick` handler are registered under the panel's `title` as the group name. Registration is cleaned up when the component unmounts.
+<!-- example: explicit-command-palette-registration -->
 
-This means users can discover and trigger any visible ActionPanel action via `Cmd+K` / `Ctrl+K` without any additional setup.
+The registration hook requires `AppShell` and unregisters actions when the calling component unmounts. The panel itself does not require a CommandPalette provider.
 
-```tsx
-// Actions in this panel will automatically appear in the CommandPalette
-<ActionPanel
-  title="Order Actions"
-  actions={[
-    { key: "confirm", label: "Confirm order", icon: <CheckIcon />, onClick: handleConfirm },
-    { key: "cancel", label: "Cancel order", icon: <XIcon />, onClick: handleCancel },
-  ]}
-/>
-```
-
-> **Note:** `ActionPanel` must be rendered inside `AppShell` (which provides the required `CommandPaletteProvider`). Rendering it outside that tree will throw.
+Apps upgrading from automatic registration should follow the [migration guide](../migrations.md#1220-actionpanel-no-longer-registers-commandpalette-actions).
 
 ## Backend-Driven Pattern
 

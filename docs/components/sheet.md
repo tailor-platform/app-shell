@@ -15,6 +15,8 @@ The `Sheet` component is a slide-in panel that appears from any edge of the scre
 import { Sheet } from "@tailor-platform/app-shell";
 ```
 
+The examples below also import `Button`, `Input`, and `Text` from `@tailor-platform/app-shell`.
+
 ## Basic Usage
 
 <example-preview name="basic-usage"></example-preview>
@@ -91,40 +93,58 @@ Accept a `render` prop for custom element rendering (Base UI render pattern), pl
 
 Control the width of the sheet panel using the `size` prop on `Sheet.Content`. This applies to `left` and `right` side sheets.
 
+<example-preview name="sizes"></example-preview>
+
 ```tsx
-<Sheet.Root side="right">
-  <Sheet.Trigger render={<Button />}>Open Small</Sheet.Trigger>
-  <Sheet.Content size="sm">…</Sheet.Content>  {/* 384px (24rem) — default */}
-</Sheet.Root>
-
-<Sheet.Root side="right">
-  <Sheet.Trigger render={<Button />}>Open Medium</Sheet.Trigger>
-  <Sheet.Content size="md">…</Sheet.Content>  {/* 512px (32rem) */}
-</Sheet.Root>
-
-<Sheet.Root side="right">
-  <Sheet.Trigger render={<Button />}>Open Large</Sheet.Trigger>
-  <Sheet.Content size="lg">…</Sheet.Content>  {/* 720px (45rem) */}
-</Sheet.Root>
-
-<Sheet.Root side="right">
-  <Sheet.Trigger render={<Button />}>Open XL</Sheet.Trigger>
-  <Sheet.Content size="xl">…</Sheet.Content>  {/* 960px (60rem) */}
-</Sheet.Root>
-
-<Sheet.Root side="right">
-  <Sheet.Trigger render={<Button />}>Open Full</Sheet.Trigger>
-  <Sheet.Content size="full">…</Sheet.Content>  {/* 100% width */}
-</Sheet.Root>
+function Sizes() {
+  const sizes = [
+    { size: "sm", label: "Small", width: "384px (24rem) — default" },
+    { size: "md", label: "Medium", width: "512px (32rem)" },
+    { size: "lg", label: "Large", width: "720px (45rem)" },
+    { size: "xl", label: "XL", width: "960px (60rem)" },
+    { size: "full", label: "Full", width: "100% width" },
+  ] as const;
+  return (
+    <div className="flex flex-wrap gap-2">
+      {sizes.map(({ size, label, width }) => (
+        <Sheet.Root key={size} side="right">
+          <Sheet.Trigger render={<Button variant="outline" />}>Open {label}</Sheet.Trigger>
+          <Sheet.Content size={size}>
+            <Sheet.Header>
+              <Sheet.Title>{label} sheet</Sheet.Title>
+              <Sheet.Description>{width}</Sheet.Description>
+            </Sheet.Header>
+            <Text.p className="p-4">Resize the viewport to see the panel's maximum width.</Text.p>
+          </Sheet.Content>
+        </Sheet.Root>
+      ))}
+    </div>
+  );
+}
 ```
 
 ## Sides
 
+<example-preview name="sides"></example-preview>
+
 ```tsx
-<Sheet.Root side="right">…</Sheet.Root>   {/* default — slides from right */}
-<Sheet.Root side="left">…</Sheet.Root>    {/* slides from left */}
-<Sheet.Root side="top">…</Sheet.Root>     {/* slides from top */}
-<Sheet.Root side="bottom">…</Sheet.Root>  {/* slides from bottom */}
+function Sides() {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {(["right", "left", "top", "bottom"] as const).map((side) => (
+        <Sheet.Root key={side} side={side}>
+          <Sheet.Trigger render={<Button variant="outline" />}>Open {side}</Sheet.Trigger>
+          <Sheet.Content>
+            <Sheet.Header>
+              <Sheet.Title>Sheet from the {side}</Sheet.Title>
+            </Sheet.Header>
+            <Text.p className="p-4">Swipe toward the {side} edge to dismiss.</Text.p>
+          </Sheet.Content>
+        </Sheet.Root>
+      ))}
+    </div>
+  );
+}
 ```
 
 The swipe-to-dismiss gesture direction is automatically determined by the `side` prop.
@@ -149,15 +169,22 @@ const [open, setOpen] = useState(false);
 
 ## Non-modal Sheet
 
+<example-preview name="non-modal"></example-preview>
+
 ```tsx
-<Sheet.Root side="right" modal={false}>
-  <Sheet.Trigger render={<Button />}>Open Inspector</Sheet.Trigger>
-  <Sheet.Content>
-    <Sheet.Header>
-      <Sheet.Title>Inspector</Sheet.Title>
-    </Sheet.Header>
-  </Sheet.Content>
-</Sheet.Root>
+function NonModal() {
+  return (
+    <Sheet.Root side="right" modal={false}>
+      <Sheet.Trigger render={<Button />}>Open Inspector</Sheet.Trigger>
+      <Sheet.Content>
+        <Sheet.Header>
+          <Sheet.Title>Inspector</Sheet.Title>
+        </Sheet.Header>
+        <Text.p className="p-4">The page remains interactive without a backdrop.</Text.p>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
 ```
 
 ## Examples
@@ -166,21 +193,29 @@ const [open, setOpen] = useState(false);
 
 Place action buttons (e.g., save, edit) to the right of the title using the `action` prop on `Sheet.Header`.
 
+<example-preview name="header-with-actions"></example-preview>
+
 ```tsx
-<Sheet.Root side="right">
-  <Sheet.Trigger render={<Button />}>Edit Record</Sheet.Trigger>
-  <Sheet.Content size="lg">
-    <Sheet.Header action={<Button size="sm">Save</Button>}>
-      <Sheet.Title>Edit Customer</Sheet.Title>
-    </Sheet.Header>
-    <div className="p-4">
-      <Input placeholder="Customer name" />
-    </div>
-  </Sheet.Content>
-</Sheet.Root>
+function HeaderWithActions() {
+  return (
+    <Sheet.Root side="right">
+      <Sheet.Trigger render={<Button />}>Edit Record</Sheet.Trigger>
+      <Sheet.Content size="lg">
+        <Sheet.Header action={<Sheet.Close render={<Button size="sm" />}>Done</Sheet.Close>}>
+          <Sheet.Title>Edit Customer</Sheet.Title>
+        </Sheet.Header>
+        <div className="p-4">
+          <Input aria-label="Customer name" placeholder="Customer name" />
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
 ```
 
 ### Filter Panel
+
+<example-preview name="filter-panel"></example-preview>
 
 ```tsx
 function FilterPanel() {
@@ -193,12 +228,12 @@ function FilterPanel() {
           <Sheet.Description>Narrow down orders by criteria.</Sheet.Description>
         </Sheet.Header>
         <div className="p-4 flex flex-col gap-4">
-          <Input placeholder="Customer name" />
-          <Input placeholder="Order number" />
+          <Input aria-label="Customer name" placeholder="Customer name" />
+          <Input aria-label="Order number" placeholder="Order number" />
         </div>
         <Sheet.Footer>
-          <Sheet.Close render={<Button variant="outline" />}>Clear</Sheet.Close>
-          <Button>Apply Filters</Button>
+          <Sheet.Close render={<Button variant="outline" />}>Close</Sheet.Close>
+          <Sheet.Close render={<Button />}>Apply Filters</Sheet.Close>
         </Sheet.Footer>
       </Sheet.Content>
     </Sheet.Root>
@@ -208,21 +243,33 @@ function FilterPanel() {
 
 ### Bottom Sheet on Mobile
 
+<example-preview name="bottom-sheet"></example-preview>
+
 ```tsx
-<Sheet.Root side="bottom">
-  <Sheet.Trigger render={<Button />}>More Options</Sheet.Trigger>
-  <Sheet.Content>
-    <Sheet.Header>
-      <Sheet.Title>Actions</Sheet.Title>
-    </Sheet.Header>
-    <div className="p-4 flex flex-col gap-2">
-      <Button variant="ghost">Edit</Button>
-      <Button variant="ghost">Duplicate</Button>
-      <Button variant="destructive">Delete</Button>
-    </div>
-  </Sheet.Content>
-</Sheet.Root>
+function BottomSheet() {
+  return (
+    <Sheet.Root side="bottom">
+      <Sheet.Trigger render={<Button />}>More Options</Sheet.Trigger>
+      <Sheet.Content>
+        <Sheet.Header>
+          <Sheet.Title>Actions</Sheet.Title>
+        </Sheet.Header>
+        <div className="p-4 flex flex-col gap-2">
+          <Sheet.Close render={<Button variant="ghost" />}>Edit</Sheet.Close>
+          <Sheet.Close render={<Button variant="ghost" />}>Duplicate</Sheet.Close>
+          <Sheet.Close render={<Button variant="destructive" />}>Delete</Sheet.Close>
+        </div>
+      </Sheet.Content>
+    </Sheet.Root>
+  );
+}
 ```
+
+## Stacking
+
+`Sheet` renders through a portal to the end of `body`, in the portal band (`--z-portal`). A modal sheet is an overlay: a scrim covers the page and page scrolling is locked. A non-modal sheet (`modal={false}`) does not block the page. A menu or select opened inside the sheet renders above it, because it was opened later. A toast is always above the sheet. See [Styling and Theming → Z-index](../concepts/styling-theming.md#z-index).
+
+A dialog may open on top of a sheet, for example a confirmation before discarding an edit made in the sheet. The same limits apply as for a dialog on a dialog: two levels at most, the second level for a confirmation or a warning only, rendered inside the sheet content. See [Dialog → Stacking](./dialog.md#stacking).
 
 ## Accessibility
 

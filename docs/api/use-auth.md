@@ -16,7 +16,7 @@ const useAuth: () => {
   error: string | null;
   isAuthenticated: boolean;
   isReady: boolean;
-  login: () => Promise<void>;
+  login: (options?: { returnTo?: string }) => Promise<void>;
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<AuthState>;
 };
@@ -41,8 +41,8 @@ const useAuth: () => {
 
 ### `login()`
 
-- **Type:** `() => Promise<void>`
-- **Description:** Initiates the login process. Redirects to Tailor Platform authentication page.
+- **Type:** `(options?: { returnTo?: string }) => Promise<void>`
+- **Description:** Initiates the login process. Returns to the current path, query string, and hash after authentication by default. Pass `login({ returnTo: "/orders" })` to choose another same-origin destination. See [return to the current page](../concepts/authentication.md#return-to-the-current-page).
 
 ### `logout()`
 
@@ -120,17 +120,25 @@ function AuthStatus() {
 
 ## With AuthProvider
 
-```typescript
-import { AuthProvider, AppShell, useAuth } from "@tailor-platform/app-shell";
+Create the client once at module scope, outside React rendering, then pass it to the provider:
+
+```tsx
+import {
+  createAuthClient,
+  AuthProvider,
+  AppShell,
+  SidebarLayout,
+} from "@tailor-platform/app-shell";
+
+const authClient = createAuthClient({
+  clientId: "your-client-id",
+  appUri: "https://your-app.erp.dev",
+  redirectUri: "http://localhost:3000/callback",
+});
 
 function App() {
   return (
-    <AuthProvider
-      apiEndpoint="https://api.tailor.tech"
-      clientId="your-client-id"
-      redirectUri="http://localhost:3000/callback"
-      autoLogin={true}
-    >
+    <AuthProvider client={authClient} autoLogin={true}>
       <AppShell modules={modules}>
         <SidebarLayout />
       </AppShell>

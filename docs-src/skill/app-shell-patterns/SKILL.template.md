@@ -1,6 +1,7 @@
 ---
 name: app-shell-patterns
-description: "Best-practice UI patterns and correct component usage for building pages in apps that use @tailor-platform/app-shell. Use when: building or editing any screen, page, list, table, detail view, form, modal, dialog, wizard, or bulk/confirm/toast interaction in an app with @tailor-platform/app-shell installed — when choosing the right AppShell component, layout, or design token for a UI — or when upgrading @tailor-platform/app-shell, or diagnosing styling, theming, or dark-mode breakage that appeared after a version bump."
+description: "Builds and edits UI in apps that depend on @tailor-platform/app-shell (Tailor ERP and erp-kit frontends). Use before writing or changing any page, screen, route, module or resource, list or table, detail view, form (modal, wizard, sectioned, single-page, composer), dialog, confirm-to-delete, toast, bulk multi-select, sidebar or nav item, guard, or UI label — and when choosing an AppShell component, layout, hook, or design token. Gives the endorsed page and pattern for the screen, its exact imports, and the house rules (AppShell components only; no raw HTML or other UI libraries). For upgrading @tailor-platform/app-shell, updating the app's code after a version bump, or styling, theming or dark-mode breakage after one, use app-shell-upgrade."
+compatibility: "Requires @tailor-platform/app-shell in the project. Use the copy shipped in the installed package's skills/ directory, so its guidance matches the installed version."
 metadata:
   app-shell-version: "{{APP_SHELL_VERSION}}"
 ---
@@ -21,11 +22,9 @@ Cross-cutting guides that underpin every screen — styling & theming and the to
 
 {{CONCEPTS_TABLE}}
 
-## Migrations
+## Upgrading
 
-[`migrations.md`](references/migrations.md) lists every change that requires editing the consuming app, newest first — what breaks, how to detect it, and what to change.
-
-Read it when upgrading `@tailor-platform/app-shell`, and whenever styling, theming, or dark mode looks wrong after a version bump. These breakages are silent: the build succeeds and nothing warns, so the cause is not discoverable from the error output. The package ships no CHANGELOG, so this file is the only migration record available locally.
+Upgrading `@tailor-platform/app-shell`, updating the app's code after a version bump, or fixing styling, theming or dark-mode breakage that appeared after one, is the `app-shell-upgrade` skill's job. It ships alongside this one in the package's `skills/` directory and carries the migration list.
 
 ## Available Components
 
@@ -61,8 +60,8 @@ A page is the shape of a whole screen — the outer choice, made before picking 
 
 ## Rules
 
-- ALWAYS cite the entry slug in a comment at the top of the file:
-  `/* pattern: list/dense-scan */`. Cite the pattern you implemented, even when a page entry sent you to it.
+- ALWAYS cite the entry slugs in a comment at the top of the file: the page entry when the file is a whole screen, then each pattern it implements, one per line —
+  `/* page: document-collection */`, `/* pattern: interaction/confirm */`. Cite a pattern even when a page entry sent you to it.
 - NEVER mix two patterns that solve the same problem in one component — one part, one recipe. Composing patterns for _different_ parts of a screen is expected, and the screen's page entry says which.
 - ALWAYS use AppShell components — do NOT use raw HTML or third-party UI libraries
 - If no entry matches, compose directly from the concept references and component docs
@@ -78,7 +77,8 @@ Full rationale in [`styling-theming`](references/concepts/styling-theming.md) �
 - **No duplicate actions:** an action lives in exactly one place — never repeat the same action in both `Layout.Header` and `ActionPanel`.
 - **Action placement:** primary CTA + status in `Layout.Header`; workflow actions in `ActionPanel`; back/navigation in the breadcrumb — never in `ActionPanel`.
 - **Metric tiles always go in a `Grid`** (`columns={{ initial: 1, md: 2, xl: 4 }}`) — never one-per-row.
-- **Forms default to `form/modal`** — only build a routed full-page form when the design explicitly calls for one.
+- **Creating or editing a document is a routed full-page form** (`form/single-page`, `form/sectioned`, or `form/wizard`). Documents carry line items and several field groups, and a dialog has nowhere to put them. `form/modal` is for sub-elements and small entities instead — a product's variants, a user's or warehouse location's properties, an item's BOM rules — where the whole form is a handful of fields.
 - **Forms use AppShell `Form` + `Field`**, submitting via `onFormSubmit` — never a bare `<form onSubmit>` with `FormData`. `onFormSubmit` reads registered `Field.Root`s, so every control (dropdowns included) just needs a wrapping `Field.Root name="…"` — no `name` on the control, no `useState`. React Hook Form is optional, consumer-installed, and only warranted for cross-field validation, field arrays, or a Zod resolver. Details in [`Form`](references/components/form.md) and the `form/*` patterns.
+- **Show progress through a fixed sequence of steps with `Stepper`** — wizard steps, approval stages, quality gates — not Badges or hand-built dots. For local wizards, use `useStepper` for typed steps and `next` / `back` / `skip` / `moveStep` navigation, and pass its `steps` and `progress` to `Stepper`. `hasNext` / `hasPrevious` indicate navigation availability; `hasNext` stays true on the last step, and false means the flow is complete. Gate actions behind form validation, and call `next()` after successful final submission; the page owns submission state. For server-owned stages, pass the steps plus one `progress` value directly (`not-started`, or `started` with a `passedSteps` prefix of `complete` / `skipped` results). The current step and completion are derived from the prefix length — never supply per-step current/upcoming statuses; it collapses to "Step 2 of 4" in narrow containers by itself. Details in [`Stepper`](references/components/stepper.md).
 - **Handle every state:** loading (skeleton), empty (labelled empty state), and error (inline + retry) — never ship only the happy path.
 - **Keep UI language consistent:** apply the chosen language to navigation, component text, accessibility labels, and feedback. Use the catalog's `useT()` for rendered strings and `labels.t()` for `LocalizedString` metadata; keep server codes and comparison values untranslated. See [`i18n/labels`](references/patterns/i18n-labels.md).

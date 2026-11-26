@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { Ellipsis } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
@@ -11,6 +11,38 @@ import type { SelectionAction, SelectionActionHelpers } from "./types";
 
 /** Actions past this many collapse into the "More actions" menu. */
 const MAX_INLINE_ACTIONS = 3;
+
+/**
+ * Below this footer width (px) every action collapses into the menu, so the
+ * bar fits on one line and leaves room for the table rows. Pagination hides
+ * its labels at the same width through the `data-table-footer` container.
+ */
+const NARROW_FOOTER_WIDTH = 480;
+
+/** Whether the footer around `ref` is narrower than `NARROW_FOOTER_WIDTH`. */
+function useIsNarrowFooter(ref: RefObject<HTMLElement | null>): boolean {
+  const [narrow, setNarrow] = useState(false);
+  useLayoutEffect(() => {
+    const footer = ref.current?.closest<HTMLElement>('[data-slot="data-table-footer"]');
+    if (!footer) return;
+    // Content-box width, to match the container query. Skipping zero keeps a
+    // hidden-tab mount from collapsing the actions.
+    const measure = () => {
+      const style = getComputedStyle(footer);
+      const width =
+        footer.clientWidth -
+        (parseFloat(style.paddingLeft) || 0) -
+        (parseFloat(style.paddingRight) || 0);
+      if (width > 0) setNarrow(width < NARROW_FOOTER_WIDTH);
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, [ref]);
+  return narrow;
+}
 
 /**
  * Whether the table offers bulk actions at all: selection is on and the hook
@@ -55,6 +87,7 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
   const t = useDataTableT();
   const countText = useSelectionCountText();
   const rowRef = useRef<HTMLDivElement>(null);
+  const narrow = useIsNarrowFooter(rowRef);
 
   // The bar unmounts as soon as the selection empties, usually from its own
   // Clear button or an action that clears. Hand focus to the header checkbox
@@ -80,8 +113,9 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
 
   const clear = () => clearSelection?.();
   const actions = rowSelection?.actions ?? [];
-  const inline = actions.slice(0, MAX_INLINE_ACTIONS);
-  const overflow = actions.slice(MAX_INLINE_ACTIONS);
+  const maxInline = narrow ? 0 : MAX_INLINE_ACTIONS;
+  const inline = actions.slice(0, maxInline);
+  const overflow = actions.slice(maxInline);
 
   const run = (action: SelectionAction) => {
     if (busy || selectedIds.length === 0) return;
@@ -112,7 +146,7 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
         <span className="astw:text-label-md astw:whitespace-nowrap astw:tabular-nums">
           {countText}
         </span>
-        <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />
+        {!narrow && <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />}
         {inline.map((action) => {
           return (
             <Button
@@ -132,7 +166,13 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
             <Menu.Trigger
               disabled={busy}
               render={
-                <Button variant="ghost" size="sm" aria-label={t("selectionMoreActions")}>
+                // When narrow, the menu holds every action, so it takes the
+                // inline actions' outline and stands out from Clear.
+                <Button
+                  variant={narrow ? "outline" : "ghost"}
+                  size="sm"
+                  aria-label={t("selectionMoreActions")}
+                >
                   {overflow.some((action) => action.id === pendingId) ? (
                     <Spinner />
                   ) : (
@@ -160,7 +200,7 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
             </Menu.Content>
           </Menu.Root>
         )}
-        <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />
+        {!narrow && <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />}
         <Button
           size="sm"
           variant="ghost"

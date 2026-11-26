@@ -43,6 +43,25 @@ function SortPage() {
   );
 }
 
+function UnsortedPage() {
+  const { control } = useCollectionVariables({ params: {} });
+  const table = useDataTable({
+    columns: [
+      { id: "name", label: longLabel, sort: { field: "name", type: "string" } },
+      { id: "status", label: "Status", sort: { field: "status", type: "string" } },
+    ],
+    data: { rows: [{ id: "1", name: "Alex", status: "Active" }] },
+    control,
+    sort: { multiple: true },
+  });
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.SortSettings />
+      <DataTable.Table />
+    </DataTable.Root>
+  );
+}
+
 // Testing Library's drag helpers clone DataTransfer without its stored data.
 const dragEvent = (type: string, target: Element, dataTransfer: DataTransfer, clientY = 0) =>
   fireEvent(
@@ -105,6 +124,24 @@ describe.each(["light", "dark"] as const)("DataTable.SortSettings / %s", (mode) 
     );
     expect(screen.getByRole("columnheader", { name: "Status" }).hasAttribute("aria-sort")).toBe(
       false,
+    );
+  });
+
+  it("highlights the first search match and follows the pointer", async () => {
+    const user = userEvent.setup();
+    render(<UnsortedPage />, { wrapper });
+    await user.click(await screen.findByRole("button", { name: /^Sort/ }));
+    await user.click(screen.getByRole("button", { name: "Add sort" }));
+    const highlighted = () =>
+      screen.getAllByRole("option").find((el) => el.hasAttribute("data-highlighted"));
+
+    await waitFor(() => expect(highlighted()?.textContent).toBe(longLabel));
+    const status = screen.getByRole("option", { name: "Status" });
+    await user.hover(status);
+    await waitFor(() => expect(highlighted()).toBe(status));
+    // The highlight is visible, not just an attribute.
+    expect(getComputedStyle(status).backgroundColor).not.toBe(
+      getComputedStyle(status.parentElement!).backgroundColor,
     );
   });
 });

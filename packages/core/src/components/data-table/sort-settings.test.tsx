@@ -72,11 +72,13 @@ function Harness({
 
 const order = () => screen.getByTestId("sort-order").textContent;
 
-// Candidate buttons in the "Add sort" popover, by visible label.
+// Options in the "Add sort" list, by visible label.
 const candidates = (name: string) =>
-  within(screen.getByRole("group", { name }))
-    .queryAllByRole("button")
+  within(screen.getByRole("listbox", { name }))
+    .queryAllByRole("option")
     .map((el) => el.textContent);
+const highlighted = () =>
+  screen.getAllByRole("option").find((el) => el.hasAttribute("data-highlighted"))?.textContent;
 
 async function openPopover(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: /^sort/i }));
@@ -115,16 +117,16 @@ describe("DataTable.SortSettings", () => {
     const popup = await openPopover(user);
     await user.click(within(popup).getByRole("button", { name: "Add another sort" }));
 
-    expect(document.activeElement).toBe(screen.getByRole("searchbox", { name: "Search columns" }));
+    expect(document.activeElement).toBe(screen.getByRole("combobox", { name: "Search columns" }));
     expect(candidates("Add another sort")).toEqual(["Amount", "Status"]);
 
     await user.click(
-      within(screen.getByRole("group", { name: "Add another sort" })).getByRole("button", {
+      within(screen.getByRole("listbox", { name: "Add another sort" })).getByRole("option", {
         name: "Status",
       }),
     );
     expect(order()).toBe("name:Asc,status:Asc");
-    expect(screen.queryByRole("searchbox", { name: "Search columns" })).toBeNull();
+    expect(screen.queryByRole("combobox", { name: "Search columns" })).toBeNull();
   });
 
   it("filters candidates with a trimmed, case-insensitive search and adds the first match on Enter", async () => {
@@ -132,7 +134,7 @@ describe("DataTable.SortSettings", () => {
     render(<Harness />, { wrapper });
     const popup = await openPopover(user);
     await user.click(within(popup).getByRole("button", { name: "Add sort" }));
-    const search = screen.getByRole("searchbox", { name: "Search columns" });
+    const search = screen.getByRole("combobox", { name: "Search columns" });
 
     await user.type(search, "  AMO ");
     expect(candidates("Add sort")).toEqual(["Amount"]);
@@ -146,6 +148,31 @@ describe("DataTable.SortSettings", () => {
     await user.clear(search);
     await user.type(search, "stat{Enter}");
     expect(order()).toBe("status:Asc");
+  });
+
+  it("highlights the first match and moves the highlight with the arrow keys", async () => {
+    const user = userEvent.setup();
+    render(<Harness />, { wrapper });
+    const popup = await openPopover(user);
+    await user.click(within(popup).getByRole("button", { name: "Add sort" }));
+    const search = screen.getByRole("combobox", { name: "Search columns" });
+
+    await waitFor(() => expect(highlighted()).toBe("Name"));
+    await user.keyboard("{ArrowDown}");
+    expect(highlighted()).toBe("Amount");
+
+    // Typing re-highlights the first match.
+    await user.type(search, "s");
+    await waitFor(() => expect(highlighted()).toBe("Status"));
+
+    // Pointer hover is covered by the Chromium test; jsdom doesn't move a pointer.
+    await user.clear(search);
+    await user.keyboard("{ArrowDown}");
+    expect(highlighted()).toBe("Amount");
+    expect(document.activeElement).toBe(search);
+
+    await user.keyboard("{Enter}");
+    expect(order()).toBe("amount:Asc");
   });
 
   it("changes direction in place without changing priority", async () => {

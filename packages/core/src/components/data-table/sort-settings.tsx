@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { Autocomplete as BaseAutocomplete } from "@base-ui/react/autocomplete";
 import { Popover } from "@base-ui/react/popover";
 import { ArrowUpDown, GripVertical, Plus, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -296,13 +297,19 @@ function DataTableSortSettings({ className }: { className?: string }) {
 }
 DataTableSortSettings.displayName = "DataTable.SortSettings";
 
-// Row styling shared with the DataTable filter panel's field list.
+// The highlighted row is the one Enter adds. Base UI highlights on pointer
+// hover too, so hover and keyboard share one visual state, as in Select and
+// Combobox lists.
 const CANDIDATE_ROW_CLASS =
-  "astw:flex astw:w-full astw:cursor-pointer astw:items-center astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-left astw:text-body-md astw:hover:bg-accent astw:focus-visible:bg-accent astw:focus-visible:outline-none";
+  "astw:flex astw:w-full astw:cursor-pointer astw:items-center astw:rounded-sm astw:px-2 astw:py-1.5 astw:text-left astw:text-body-md astw:outline-none astw:data-highlighted:bg-accent astw:data-highlighted:text-accent-foreground";
+
+type Candidate = { value: string; label: string };
 
 /**
  * "Add sort" button with a searchable list of the sortable columns that aren't
- * sorted yet. Enter in the search box adds the first match.
+ * sorted yet. Built on Base UI Autocomplete rendered inline: the first match is
+ * always highlighted, Arrow Up / Arrow Down and pointer hover move the
+ * highlight, and Enter or a click adds that column.
  *
  * @internal
  */
@@ -319,8 +326,10 @@ function AddSortPopover({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const q = query.trim().toLowerCase();
-  const matches = q ? candidates.filter(([, l]) => l.toLowerCase().includes(q)) : candidates;
+  const items = useMemo<Candidate[]>(
+    () => candidates.map(([value, columnLabel]) => ({ value, label: columnLabel })),
+    [candidates],
+  );
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
@@ -353,46 +362,45 @@ function AddSortPopover({
             data-slot="data-table-sort-add-popup"
             className={cn(POPUP_CLASS, "astw:w-60 astw:p-1")}
           >
-            {/* Search — spacing/style mirrors the ColumnSettings search. */}
-            <div className="astw:relative astw:mb-1">
-              <Search className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-2.5 astw:size-3.5 astw:-translate-y-1/2 astw:text-muted-foreground" />
-              <Input
-                ref={inputRef}
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key !== "Enter" || matches.length === 0) return;
-                  e.preventDefault();
-                  add(matches[0][0]);
-                }}
-                placeholder={t("searchColumns")}
-                aria-label={t("searchColumns")}
-                className="astw:h-8 astw:pl-8 astw:text-body-md"
-              />
-            </div>
-            <fieldset
-              aria-label={label}
-              className="astw:m-0 astw:flex astw:max-h-[min(40vh,16rem)] astw:min-w-0 astw:flex-col astw:overflow-y-auto astw:border-0 astw:p-0"
+            <BaseAutocomplete.Root
+              inline
+              open
+              items={items}
+              autoHighlight="always"
+              value={query}
+              onValueChange={setQuery}
             >
-              {matches.length === 0 ? (
-                <div className="astw:px-2 astw:py-3 astw:text-center astw:text-body-sm astw:text-muted-foreground">
-                  {t("noColumnsMatch")}
-                </div>
-              ) : (
-                matches.map(([field, columnLabel]) => (
-                  <button
-                    key={field}
-                    type="button"
-                    title={columnLabel}
-                    onClick={() => add(field)}
+              {/* Search — spacing/style mirrors the ColumnSettings search. */}
+              <div className="astw:relative astw:mb-1">
+                <Search className="astw:pointer-events-none astw:absolute astw:top-1/2 astw:left-2.5 astw:size-3.5 astw:-translate-y-1/2 astw:text-muted-foreground" />
+                <BaseAutocomplete.Input
+                  ref={inputRef}
+                  render={<Input type="search" />}
+                  placeholder={t("searchColumns")}
+                  aria-label={t("searchColumns")}
+                  className="astw:h-8 astw:pl-8 astw:text-body-md"
+                />
+              </div>
+              <BaseAutocomplete.Empty className="astw:px-2 astw:py-3 astw:text-center astw:text-body-sm astw:text-muted-foreground astw:empty:hidden">
+                {t("noColumnsMatch")}
+              </BaseAutocomplete.Empty>
+              <BaseAutocomplete.List
+                aria-label={label}
+                className="astw:flex astw:max-h-[min(40vh,16rem)] astw:flex-col astw:overflow-y-auto astw:empty:hidden"
+              >
+                {(item: Candidate) => (
+                  <BaseAutocomplete.Item
+                    key={item.value}
+                    value={item}
+                    title={item.label}
+                    onClick={() => add(item.value)}
                     className={CANDIDATE_ROW_CLASS}
                   >
-                    <span className="astw:min-w-0 astw:flex-1 astw:truncate">{columnLabel}</span>
-                  </button>
-                ))
-              )}
-            </fieldset>
+                    <span className="astw:min-w-0 astw:flex-1 astw:truncate">{item.label}</span>
+                  </BaseAutocomplete.Item>
+                )}
+              </BaseAutocomplete.List>
+            </BaseAutocomplete.Root>
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>

@@ -45,6 +45,13 @@ describe("Checkbox", () => {
     expect(checkbox.getAttribute("aria-checked")).toBe("false");
   });
 
+  it("keeps the 16px box and extends the hit area to 24px with a pseudo element", () => {
+    render(<Checkbox aria-label="Accept" />);
+    const checkbox = screen.getByRole("checkbox", { name: "Accept" });
+    expect(checkbox.className).toContain("astw:size-4");
+    expect(checkbox.className).toContain("astw:after:-inset-1.25");
+  });
+
   it("renders the label text", () => {
     render(<Checkbox label="Subscribe to updates" />);
     expect(screen.getByText("Subscribe to updates")).toBeDefined();

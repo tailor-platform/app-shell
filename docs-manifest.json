@@ -288,9 +288,9 @@
       "symbols": ["Checkbox", "CheckboxProps"],
       "hashes": {
         "typeSurface": "3886bf7012f24283",
-        "outline": "c6eabaf24988d251",
-        "snapshot": "8d4d6148a3df5d61",
-        "outputMd": "ebe55c40fb5fb2e6",
+        "outline": "e48ef761fa0e22ef",
+        "snapshot": "a62d4fba4df0f913",
+        "outputMd": "5b54b536b58cb7a9",
         "examples": "afd839a3fc55cc52"
       }
     },
@@ -526,7 +526,7 @@
       "hashes": {
         "typeSurface": "413c66caec0a0bf8",
         "outline": "a4288a1435b46ed4",
-        "snapshot": "a97e067c66e46ef6",
+        "snapshot": "086508560262377e",
         "outputMd": "c32c7ccf13528bf1",
         "examples": "8adc119ac0d7152c"
       }
@@ -719,7 +719,7 @@
       "hashes": {
         "typeSurface": "b1614970f950ceb6",
         "outline": "5ba9ca06b0385f80",
-        "snapshot": "86c672f1c58f27fd",
+        "snapshot": "11bff790f38ef94e",
         "outputMd": "cd9fa9c4b8ccb108",
         "examples": "f5540beaf3f36609"
       }
@@ -804,7 +804,7 @@
       "hashes": {
         "typeSurface": "b795ce4e10be0653",
         "outline": "52990644d6ca82ab",
-        "snapshot": "ddebbf9718587cff",
+        "snapshot": "2ff3191d1827c612",
         "outputMd": "12021e27b57f45e9",
         "examples": "3d2e95eb69cb74fe"
       }
@@ -1602,7 +1602,7 @@
       "hashes": {
         "typeSurface": "bc60676f880b485b",
         "outline": "6df1a21eb91b6fbc",
-        "snapshot": "c788f8a131677ada",
+        "snapshot": "4e1d9dc6035ba4a2",
         "outputMd": "c5933b640a78c3bf",
         "examples": "d44fc86f972fd234"
       }
@@ -1618,9 +1618,9 @@
       "symbols": ["Tabs"],
       "hashes": {
         "typeSurface": "f6795191b952e110",
-        "outline": "f32b0cf0789281f4",
-        "snapshot": "43ed7df4bd0f3c75",
-        "outputMd": "a94b016f0c9709b7",
+        "outline": "4347062f59b919c5",
+        "snapshot": "388a9aed985933c8",
+        "outputMd": "88dbf25acb19f685",
         "examples": "f94b62a568ca61ee"
       }
     },
@@ -1769,7 +1769,7 @@
       "hashes": {
         "typeSurface": "95d4d96e2c7cad05",
         "outline": "1044541495fff6fd",
-        "snapshot": "e63b60420ec5113f",
+        "snapshot": "abb1d50b2f53d002",
         "outputMd": "6010470f3c41538a",
         "examples": "7e372a50c2939317"
       }

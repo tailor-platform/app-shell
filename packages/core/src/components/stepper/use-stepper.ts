@@ -1,5 +1,5 @@
 import { useCallback, useReducer } from "react";
-import type { UseStepperOptions, UseStepperReturn } from "./types";
+import type { StepperProgress, UseStepperOptions, UseStepperReturn } from "./types";
 
 type State<Id extends string> = {
   stepIds: readonly Id[];
@@ -75,9 +75,16 @@ export function useStepper<const Id extends string>(
     [state.stepIds],
   );
 
-  const skippedStepIds = state.skipped.map((index) => state.stepIds[index]);
+  const skipped = new Set(state.skipped);
+  const progress: Extract<StepperProgress, { state: "started" }> = {
+    state: "started",
+    passedSteps: Array.from({ length: state.index }, (_, index) =>
+      skipped.has(index) ? "skipped" : "complete",
+    ),
+  };
   const common = {
     steps,
+    progress,
     currentStepIndex: state.index,
     hasPrevious: state.index > 0,
     back,
@@ -88,7 +95,6 @@ export function useStepper<const Id extends string>(
     ? {
         ...common,
         hasNext: false,
-        progress: { state: "complete", skippedStepIds },
         currentStepId: undefined,
         next: undefined,
         skip: undefined,
@@ -96,11 +102,6 @@ export function useStepper<const Id extends string>(
     : {
         ...common,
         hasNext: true,
-        progress: {
-          state: "in-progress",
-          currentStepId: state.stepIds[state.index],
-          skippedStepIds,
-        },
         currentStepId: state.stepIds[state.index],
         next,
         skip,

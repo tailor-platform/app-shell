@@ -1549,11 +1549,11 @@
         "useStepper"
       ],
       "hashes": {
-        "typeSurface": "df4151f7f81652af",
-        "outline": "482cff499942ee98",
+        "typeSurface": "18aa2238fe3750e7",
+        "outline": "6e9f916a8167951c",
         "snapshot": "1fbf52f6178108d9",
-        "outputMd": "3277fa4deaaa8623",
-        "examples": "f8b3b4a6acb63501"
+        "outputMd": "f06b0b09559fcdcc",
+        "examples": "71940ac6845de695"
       }
     },
     "styling-theming": {
@@ -2067,7 +2067,7 @@
     "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "872a4d374bdf1923",
     "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "281cfa2dcbff14be",
     "packages/core/skills/app-shell-patterns/references/components/spinner.md": "eec440408611a233",
-    "packages/core/skills/app-shell-patterns/references/components/stepper.md": "3277fa4deaaa8623",
+    "packages/core/skills/app-shell-patterns/references/components/stepper.md": "f06b0b09559fcdcc",
     "packages/core/skills/app-shell-patterns/references/components/table.md": "c5933b640a78c3bf",
     "packages/core/skills/app-shell-patterns/references/components/tabs.md": "a94b016f0c9709b7",
     "packages/core/skills/app-shell-patterns/references/components/text.md": "e5311b1891f3ff7b",
@@ -2114,7 +2114,7 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "fbdc96bd3d3d0140",
     "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "e79d9120d86db198",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "e07c7fee2478a21d",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "d03066f6ff36e6c9",
+    "packages/core/skills/app-shell-patterns/SKILL.md": "f656fd6e696eea95",
     "packages/core/skills/app-shell-upgrade/references/migrations.md": "17556b547fa2e75f",
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   }

@@ -9,7 +9,7 @@ sources:
 
 # Stepper
 
-`Stepper` shows how far something has progressed through a fixed sequence of steps: the steps of a [wizard form](../patterns/form-wizard.md), the stages of an approval flow, the quality gates of a project. You give it the steps and one `progress` value saying how far the flow has got; it works out how each step looks.
+`Stepper` shows how far something has progressed through a fixed sequence of steps: the steps of a [wizard form](../patterns/form-wizard.md), the stages of an approval flow, the quality gates of a project. You give it the steps and one `progress` value containing the results of the steps already passed, in order; it derives the current step and completion from that prefix.
 
 It only displays progress. The page owns `progress` and decides what happens when a step is clicked. For local wizard navigation, `useStepper` manages that state; for server-owned approval stages or quality gates, keep passing `progress` directly.
 
@@ -43,7 +43,7 @@ For example, moving from `supplier` to `review` with `{ skipped: true }` skips `
 
 `hasNext` means the next action is available, not that another step exists: it stays `true` on the last step, including a single-step flow. `next()` completes the flow on the last step; there is no separate `finish` action. Identify a final submission step by `currentStepId`, or compare `currentStepIndex` with `steps.length - 1`. The page owns submission and its success/failure state. For asynchronous submission, await success before calling `next()`; on failure, leave the current step in progress.
 
-`currentStepIndex` is zero-based and equals `steps.length` once complete. `hasPrevious` indicates whether `back()` can move to or reopen a step: it is `false` at the first step and `true` after completion. `back()` and `moveStep(id)` remain callable after completion and reopen a step, restoring `next` / `skip`. `back()` at the first step is a no-op. Previously captured `next` / `skip` callbacks are also no-ops if called after completion.
+The hook always returns `progress.state: "started"`, with `passedSteps` containing the completed or skipped prefix, including after completion. `currentStepIndex` is zero-based and equals `steps.length` once complete. `hasPrevious` indicates whether `back()` can move to or reopen a step: it is `false` at the first step and `true` after completion. `back()` and `moveStep(id)` remain callable after completion and reopen a step, restoring `next` / `skip`. `back()` at the first step is a no-op. Previously captured `next` / `skip` callbacks are also no-ops if called after completion.
 
 The hook requires non-empty steps with unique ids and throws for unknown initial or destination ids. Step ids and their order must stay fixed for the hook's lifetime; labels, badges, and descriptions can change. `initialStepId` is read only on mount. Remount the owner (for example with a React `key`) to reset the flow or change its sequence.
 
@@ -64,27 +64,29 @@ Navigation does not validate forms or submit data. Call the actions only after p
 
 | Field         | Type                | Description                                                                                  |
 | ------------- | ------------------- | -------------------------------------------------------------------------------------------- |
-| `id`          | `Id extends string` | Stable, unique id, used by `progress` and passed to `onStepClick`                            |
+| `id`          | `Id extends string` | Stable, unique id, used for navigation and passed to `onStepClick`                           |
 | `label`       | `ReactNode`         | Step name                                                                                    |
 | `badge`       | `ReactNode`         | Shown beside the label — for example a "Next" or "Overdue" `Badge`                           |
 | `description` | `ReactNode`         | Shown under the label — a short hint, or a few lines of values such as plan and actual dates |
 
 ## Progress
 
-`progress` is one of three states. Steps don't carry a status of their own, so a Stepper can't show two current steps or a completed step after the current one.
+`progress` is either not started or started with the results of the steps already passed. `passedSteps` corresponds to a prefix of `steps`, in the same order. Its length is the current step's zero-based index; when it contains a result for every step, the flow is complete. The type is not generic because progress does not name step ids.
 
 ```ts
-type StepperProgress<Id> =
+type StepperProgress =
   | { state: "not-started" }
-  | { state: "in-progress"; currentStepId: Id; skippedStepIds?: Id[] }
-  | { state: "complete"; skippedStepIds?: Id[] };
+  | { state: "started"; passedSteps: readonly ("complete" | "skipped")[] };
 ```
 
-| `state`         | How the steps look                                                                |
-| --------------- | --------------------------------------------------------------------------------- |
-| `"not-started"` | All upcoming                                                                      |
-| `"in-progress"` | Before `currentStepId`: complete (or skipped); at it: current; after it: upcoming |
-| `"complete"`    | All complete (or skipped)                                                         |
+| Progress                               | How the steps look                                                          |
+| -------------------------------------- | --------------------------------------------------------------------------- |
+| `state: "not-started"`                 | All upcoming                                                                |
+| `state: "started", passedSteps: []`    | First step current; the rest upcoming                                       |
+| Started, with fewer results than steps | Prefix complete or skipped; the next step current; all later steps upcoming |
+| Started, with a result for every step  | All complete or skipped; no current step                                    |
+
+For `details → approval → review`, `passedSteps: ["complete", "skipped"]` means details is complete, approval was skipped, and review is current. The current step cannot also be skipped, and a future step cannot be marked skipped: only the passed prefix has results. Completion is derived rather than supplied as another state.
 
 | Look     | Marker                         |
 | -------- | ------------------------------ |
@@ -97,13 +99,13 @@ The current step gets `aria-current="step"`, and screen readers hear how the oth
 
 ### Skipping steps
 
-`skippedStepIds` names steps the user moved past without doing, for example by pressing "Skip" in a wizard. Only steps already passed can be skipped: those before `currentStepId`, or any step once `complete`. A skipped step stays clickable through `onStepClick`, so the user can go back and do it.
+A `"skipped"` result marks a step the user moved past without doing, for example by pressing "Skip" in a wizard. For each passed step, use `"complete"` or `"skipped"` at its position in `passedSteps`. A skipped step stays clickable through `onStepClick`, so the user can go back and do it.
 
 Business states such as "Waiting for approval" or "Overdue" aren't progress; show them with `badge` or `description`.
 
 ### Typed ids
 
-Step ids are typed from `steps`: `progress` only accepts those ids, and `onStepClick` receives them.
+Step ids are typed from `steps`: `onStepClick` receives those ids, and `useStepper` navigation accepts them. `progress` uses ordered results rather than ids.
 
 ```tsx
 <Stepper
@@ -111,12 +113,12 @@ Step ids are typed from `steps`: `progress` only accepts those ids, and `onStepC
     { id: "supplier", label: "Supplier" },
     { id: "review", label: "Review" },
   ]}
-  progress={{ state: "in-progress", currentStepId: "review" }} // "supplier" | "review"
+  progress={{ state: "started", passedSteps: ["complete"] }} // supplier passed; review current
   onStepClick={(id) => goTo(id)} // id: "supplier" | "review"
 />
 ```
 
-Steps built at runtime can't be checked by types. The Stepper warns in the console about an unknown or duplicate id, or a skipped step that hasn't been passed, and ignores it.
+The Stepper warns in the console about duplicate step ids. It also warns and ignores surplus `passedSteps` entries beyond the number of steps. Unsupported runtime outcomes warn and display as complete. Dynamic input still needs runtime validation, but valid results cannot conflict with the derived current step.
 
 ## Stage progress
 

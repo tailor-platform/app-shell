@@ -20,9 +20,8 @@ const STEPS: StepperStep[] = [
 
 // Supplier done, approval skipped, on lines, review still to come
 const PROGRESS: StepperProgress = {
-  state: "in-progress",
-  currentStepId: "lines",
-  skippedStepIds: ["approval"],
+  state: "started",
+  passedSteps: ["complete", "skipped"],
 };
 
 const renderStepper = (ui: React.ReactElement, locale = "en") =>
@@ -105,11 +104,31 @@ describe("Stepper", () => {
     expect(document.querySelector('[data-slot="stepper-caption"]')).toBeNull();
   });
 
+  it("starts at the first step with an empty outcome prefix", () => {
+    renderStepper(<Stepper steps={STEPS} progress={{ state: "started", passedSteps: [] }} />);
+    expect(stepEls().map((el) => el.getAttribute("data-status"))).toEqual([
+      "current",
+      "upcoming",
+      "upcoming",
+      "upcoming",
+    ]);
+    expect(filledConnectors()).toEqual([false, false, false]);
+  });
+
+  it("completes a single-step flow when its outcome is supplied", () => {
+    renderStepper(
+      <Stepper steps={[STEPS[0]]} progress={{ state: "started", passedSteps: ["skipped"] }} />,
+    );
+    expect(stepEls()[0].getAttribute("data-status")).toBe("skipped");
+    expect(stepEls()[0].hasAttribute("aria-current")).toBe(false);
+    expect(document.querySelector('[data-slot="stepper-caption"]')).toBeNull();
+  });
+
   it("shows every step passed once complete, keeping skipped ones", () => {
     renderStepper(
       <Stepper
         steps={STEPS}
-        progress={{ state: "complete", skippedStepIds: ["approval", "review"] }}
+        progress={{ state: "started", passedSteps: ["complete", "skipped", "complete", "skipped"] }}
       />,
     );
     expect(stepEls().map((el) => el.getAttribute("data-status"))).toEqual([
@@ -132,25 +151,44 @@ describe("Stepper", () => {
       return () => warn.mock.calls.map((call) => String(call[0]));
     };
 
-    it("ignores skipping a step not yet passed", () => {
+    it("ignores outcomes beyond the step sequence", () => {
       const calls = warnings();
       renderStepper(
         <Stepper
           steps={STEPS}
-          progress={{ state: "in-progress", currentStepId: "lines", skippedStepIds: ["review"] }}
+          progress={{
+            state: "started",
+            passedSteps: ["complete", "skipped", "complete", "complete", "skipped"],
+          }}
         />,
       );
-      expect(stepEls()[3].getAttribute("data-status")).toBe("upcoming");
-      expect(calls()[0]).toContain(`step "review" can't be skipped before it has been passed`);
+      expect(stepEls().map((el) => el.getAttribute("data-status"))).toEqual([
+        "complete",
+        "skipped",
+        "complete",
+        "complete",
+      ]);
+      expect(stepEls().some((el) => el.hasAttribute("aria-current"))).toBe(false);
+      expect(filledConnectors()).toEqual([true, true, true]);
+      expect(calls()[0]).toContain("passedSteps contains more entries than steps");
     });
 
-    it("shows nothing current for an unknown currentStepId", () => {
+    it("warns about invalid runtime outcomes and shows them as complete", () => {
       const calls = warnings();
       renderStepper(
-        <Stepper steps={STEPS} progress={{ state: "in-progress", currentStepId: "x" }} />,
+        <Stepper
+          steps={STEPS}
+          // @ts-expect-error Only complete and skipped are valid passed outcomes.
+          progress={{ state: "started", passedSteps: ["current"] }}
+        />,
       );
-      expect(stepEls().every((el) => el.getAttribute("data-status") === "upcoming")).toBe(true);
-      expect(calls()[0]).toContain(`currentStepId "x" is not a step`);
+      expect(stepEls().map((el) => el.getAttribute("data-status"))).toEqual([
+        "complete",
+        "current",
+        "upcoming",
+        "upcoming",
+      ]);
+      expect(calls()[0]).toContain('passedSteps[0] must be "complete" or "skipped"');
     });
 
     it("reports duplicate step ids", () => {
@@ -176,14 +214,14 @@ describe("Stepper", () => {
     expect(screen.getByRole("list", { name: "進捗" })).toBeDefined();
   });
 
-  it("types onStepClick and progress with the step ids", () => {
+  it("types onStepClick with the step ids and restricts passed outcomes", () => {
     renderStepper(
       <Stepper
         steps={[
           { id: "supplier", label: "Supplier" },
           { id: "review", label: "Review" },
         ]}
-        progress={{ state: "in-progress", currentStepId: "review" }}
+        progress={{ state: "started", passedSteps: ["complete"] }}
         onStepClick={(id) => {
           expectTypeOf(id).toEqualTypeOf<"supplier" | "review">();
         }}
@@ -192,8 +230,8 @@ describe("Stepper", () => {
     renderStepper(
       <Stepper
         steps={[{ id: "supplier", label: "Supplier" }]}
-        // @ts-expect-error — progress can't name an id that isn't a step
-        progress={{ state: "in-progress", currentStepId: "nope" }}
+        // @ts-expect-error Progress no longer accepts an independent current step ID.
+        progress={{ state: "started", passedSteps: [], currentStepId: "supplier" }}
       />,
     );
   });
@@ -202,7 +240,7 @@ describe("Stepper", () => {
     renderStepper(
       <Stepper
         steps={[{ id: "qg1", label: "QG1", badge: <span>Next</span>, description: "Due 12 Nov" }]}
-        progress={{ state: "in-progress", currentStepId: "qg1" }}
+        progress={{ state: "started", passedSteps: [] }}
       />,
     );
     expect(screen.getByText("Next")).toBeDefined();

@@ -59,13 +59,15 @@ const QUALITY_GATES: StepperStep[] = [
 
 // 🧪 Dummy Data: Replace with real data later
 const QUALITY_GATES_PROGRESS: StepperProgress = {
-  state: "in-progress",
-  currentStepId: "qg4",
-  skippedStepIds: ["qg3"],
+  state: "started",
+  passedSteps: ["complete", "complete", "skipped"],
 };
 
 // 🧪 Dummy Data: Replace with real data later
-const APPROVAL_PROGRESS: StepperProgress = { state: "in-progress", currentStepId: "finance" };
+const APPROVAL_PROGRESS: StepperProgress = {
+  state: "started",
+  passedSteps: ["complete", "complete"],
+};
 
 // 🧪 Dummy Data: Replace with real data later
 const APPROVAL: StepperStep[] = [
@@ -126,10 +128,10 @@ const StepperDemoPage = () => (
     <Layout.Header title="Stepper" />
     <Layout.Column>
       <Text variant="body-md" className="text-muted-foreground max-w-3xl">
-        The page passes the steps and one progress value — not started, on a step (with any skipped
-        steps), or complete — and the Stepper works out how each step looks. The Stepper scrolls
-        sideways when its steps don&apos;t fit; below 400px of container width it shows only its
-        markers and names the current step.
+        The page passes the steps and one progress value — not started, or started with the ordered
+        results of the steps already passed — and the Stepper derives the current step and
+        completion. The Stepper scrolls sideways when its steps don&apos;t fit; below 400px of
+        container width it shows only its markers and names the current step.
       </Text>
 
       <WizardStepsDemo />

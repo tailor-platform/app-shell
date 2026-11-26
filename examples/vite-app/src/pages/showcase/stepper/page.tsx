@@ -49,8 +49,17 @@ const QUALITY_GATES: StepperStep[] = [
   {
     id: "qg4",
     label: "QG4",
-    badge: <Badge variant="outline-info">Next</Badge>,
-    description: <GateDates planned="18 Nov" />,
+    render: ({ label, status }) => (
+      <span className="flex flex-col gap-1">
+        <span className="flex items-center gap-2">
+          <Text.span>{label}</Text.span>
+          {status === "current" && <Badge variant="outline-info">Next</Badge>}
+        </span>
+        <Text.span variant="body-sm" className="text-muted-foreground">
+          <GateDates planned="18 Nov" />
+        </Text.span>
+      </span>
+    ),
   },
   { id: "qg5", label: "QG5", description: <GateDates planned="9 Dec" /> },
   { id: "qg6", label: "QG6", description: <GateDates planned="13 Jan" /> },
@@ -76,8 +85,17 @@ const APPROVAL: StepperStep[] = [
   {
     id: "finance",
     label: "Finance",
-    badge: <Badge variant="outline-warning">Waiting 2 days</Badge>,
-    description: "Priya Nair",
+    render: ({ label }) => (
+      <span className="flex flex-col gap-1">
+        <span className="flex items-center gap-2">
+          <Text.span>{label}</Text.span>
+          <Badge variant="outline-warning">Waiting 2 days</Badge>
+        </span>
+        <Text.span variant="body-sm" className="text-muted-foreground">
+          Priya Nair
+        </Text.span>
+      </span>
+    ),
   },
   { id: "issued", label: "Issued" },
 ];

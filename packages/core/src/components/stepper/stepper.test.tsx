@@ -236,15 +236,75 @@ describe("Stepper", () => {
     );
   });
 
-  it("renders the badge and description slots", () => {
+  it("renders the default label and description", () => {
     renderStepper(
       <Stepper
-        steps={[{ id: "qg1", label: "QG1", badge: <span>Next</span>, description: "Due 12 Nov" }]}
+        steps={[{ id: "qg1", label: "QG1", description: "Due 12 Nov" }]}
         progress={{ state: "started", passedSteps: [] }}
       />,
     );
-    expect(screen.getByText("Next")).toBeDefined();
+    expect(stepEls()[0].textContent).toContain("QG1");
     expect(screen.getByText("Due 12 Nov")).toBeDefined();
+  });
+
+  it("renders custom text with the label and derived status, keeping markers and announcements", () => {
+    const renderText = vi.fn(({ label }: { label: React.ReactNode }) => (
+      <span>
+        {label} <span>Custom badge</span>
+      </span>
+    ));
+    renderStepper(
+      <Stepper
+        steps={STEPS.map(({ id, label }) => ({ id, label, render: renderText }))}
+        progress={PROGRESS}
+      />,
+    );
+    expect(renderText.mock.calls.map(([state]) => state)).toEqual([
+      { label: "Supplier", status: "complete" },
+      { label: "Approval", status: "skipped" },
+      { label: "Lines", status: "current" },
+      { label: "Review", status: "upcoming" },
+    ]);
+    expect(screen.getAllByText("Custom badge")).toHaveLength(4);
+    expect(screen.queryByText("Add at least one line")).toBeNull();
+    const [supplier, approval, lines, review] = stepEls();
+    expect(supplier.textContent).toContain("Completed");
+    expect(approval.textContent).toContain("Skipped");
+    expect(lines.getAttribute("aria-current")).toBe("step");
+    expect(review.textContent).toContain("Not started");
+    expect(document.querySelectorAll('[data-slot="stepper-marker"]')).toHaveLength(4);
+    expect(filledConnectors()).toEqual([true, true, false]);
+  });
+
+  it("keeps custom passed steps keyboard-clickable with the common name and custom description", async () => {
+    const user = userEvent.setup();
+    const onStepClick = vi.fn();
+    renderStepper(
+      <Stepper
+        steps={STEPS.map(({ id, label }) => ({
+          id,
+          label,
+          render: () => (
+            <span>
+              <span>Overdue</span> <span>Due 12 Nov</span>
+            </span>
+          ),
+        }))}
+        progress={PROGRESS}
+        onStepClick={onStepClick}
+      />,
+    );
+    expect(screen.getAllByRole("button")).toHaveLength(2);
+    const supplier = screen.getByRole("button", {
+      name: /^Supplier ?, Completed$/,
+      description: /Overdue.*Due 12 Nov/,
+    });
+    await user.tab();
+    expect(document.activeElement).toBe(supplier);
+    await user.keyboard("{Enter}");
+    expect(onStepClick).toHaveBeenCalledWith("supplier");
+    await user.click(screen.getByRole("button", { name: /^Approval ?, Skipped$/ }));
+    expect(onStepClick).toHaveBeenCalledWith("approval");
   });
 
   // ==========================================================================
@@ -333,6 +393,38 @@ describe("Stepper", () => {
       });
       expect(tooltip.textContent).toContain("Review");
       expect(tooltip.textContent).toContain("Not started");
+    });
+
+    it("uses the common label instead of custom content for captions, markers, and tooltips", async () => {
+      stubWidth(320);
+      const user = userEvent.setup();
+      const onStepClick = vi.fn();
+      renderStepper(
+        <Stepper
+          steps={STEPS.map(({ id, label }) => ({
+            id,
+            label,
+            render: () => <span>Custom content</span>,
+          }))}
+          progress={PROGRESS}
+          onStepClick={onStepClick}
+        />,
+      );
+      const supplier = await screen.findByRole("button", { name: /^Supplier ?, Completed$/ });
+      expect(supplier.querySelector('[data-slot="stepper-marker"]')).not.toBeNull();
+      expect(screen.getAllByRole("button")).toHaveLength(2);
+      expect(screen.queryByText("Custom content")).toBeNull();
+      expect(document.querySelector('[data-slot="stepper-caption"]')?.textContent).toBe(
+        "Step 3 of 4Lines",
+      );
+      await user.hover(supplier);
+      await waitFor(() => {
+        const tooltip = document.querySelector('[data-slot="tooltip-content"]');
+        expect(tooltip?.textContent).toContain("Supplier");
+        expect(tooltip?.textContent).not.toContain("Custom content");
+      });
+      await user.click(supplier);
+      expect(onStepClick).toHaveBeenCalledWith("supplier");
     });
 
     it("keeps the label as the click target and adds no tooltips when wide", () => {

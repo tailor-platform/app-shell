@@ -45,7 +45,7 @@ For example, moving from `supplier` to `review` with `{ skipped: true }` skips `
 
 The hook always returns `progress.state: "started"`, with `passedSteps` containing the completed or skipped prefix, including after completion. `currentStepIndex` is zero-based and equals `steps.length` once complete. `hasPrevious` indicates whether `back()` can move to or reopen a step: it is `false` at the first step and `true` after completion. `back()` and `moveStep(id)` remain callable after completion and reopen a step, restoring `next` / `skip`. `back()` at the first step is a no-op. Previously captured `next` / `skip` callbacks are also no-ops if called after completion.
 
-The hook requires non-empty steps with unique ids and throws for unknown initial or destination ids. Step ids and their order must stay fixed for the hook's lifetime; labels, badges, and descriptions can change. `initialStepId` is read only on mount. Remount the owner (for example with a React `key`) to reset the flow or change its sequence.
+The hook requires non-empty steps with unique ids and throws for unknown initial or destination ids. Step ids and their order must stay fixed for the hook's lifetime; labels, descriptions, and render callbacks can change. `initialStepId` is read only on mount. Remount the owner (for example with a React `key`) to reset the flow or change its sequence.
 
 Navigation does not validate forms or submit data. Call the actions only after page-level validation succeeds, as in the [wizard form pattern](../patterns/form-wizard.md).
 
@@ -62,12 +62,20 @@ Navigation does not validate forms or submit data. Call the actions only after p
 
 ### `StepperStep`
 
-| Field         | Type                | Description                                                                                  |
-| ------------- | ------------------- | -------------------------------------------------------------------------------------------- |
-| `id`          | `Id extends string` | Stable, unique id, used for navigation and passed to `onStepClick`                           |
-| `label`       | `ReactNode`         | Step name                                                                                    |
-| `badge`       | `ReactNode`         | Shown beside the label — for example a "Next" or "Overdue" `Badge`                           |
-| `description` | `ReactNode`         | Shown under the label — a short hint, or a few lines of values such as plan and actual dates |
+| Field         | Type                               | Description                                                                     |
+| ------------- | ---------------------------------- | ------------------------------------------------------------------------------- |
+| `id`          | `Id extends string`                | Stable, unique id, used for navigation and passed to `onStepClick`              |
+| `label`       | `ReactNode`                        | Required step name; also used by the caption and tooltip in narrow containers   |
+| `description` | `ReactNode`                        | Optional content under the standard label; cannot be combined with `render`     |
+| `render`      | `({ label, status }) => ReactNode` | Optional custom text-area renderer; replaces the standard label and description |
+
+### Custom rendering
+
+Use either `description` for the standard label-and-description layout or `render` to compose the entire text area, including badges. They are mutually exclusive. `render` receives the common `label` and the derived status (`"complete"`, `"current"`, `"upcoming"`, or `"skipped"`); it does not replace the markers or connectors.
+
+The common `label` remains required even with `render`: below 400px of container width, custom content is not shown and the caption and tooltip use `label`. Stepper still owns progress, `aria-current`, and status announcements.
+
+Return non-interactive content only — no buttons, links, or other controls. When `onStepClick` is set, Stepper wraps the entire custom content of a completed or skipped step in its own button.
 
 ## Progress
 
@@ -101,7 +109,7 @@ The current step gets `aria-current="step"`, and screen readers hear how the oth
 
 A `"skipped"` result marks a step the user moved past without doing, for example by pressing "Skip" in a wizard. For each passed step, use `"complete"` or `"skipped"` at its position in `passedSteps`. A skipped step stays clickable through `onStepClick`, so the user can go back and do it.
 
-Business states such as "Waiting for approval" or "Overdue" aren't progress; show them with `badge` or `description`.
+Business states such as "Waiting for approval" or "Overdue" aren't progress; show them with `description` or compose a badge inside `render`.
 
 ### Typed ids
 
@@ -122,7 +130,7 @@ The Stepper warns in the console about duplicate step ids. It also warns and ign
 
 ## Stage progress
 
-Badges and descriptions turn the Stepper into a stage tracker on a detail page:
+Descriptions and custom-rendered badges turn the Stepper into a stage tracker on a detail page:
 
 <!-- example: stage-progress -->
 

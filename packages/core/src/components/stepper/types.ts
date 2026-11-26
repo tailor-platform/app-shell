@@ -3,16 +3,27 @@ import type * as React from "react";
 /** How a step is drawn. Derived from `progress`; never passed in. */
 export type StepperStepStatus = "complete" | "current" | "upcoming" | "skipped";
 
-export interface StepperStep<Id extends string = string> {
+export type StepperStep<Id extends string = string> = {
   /** Stable, unique id, used for navigation and passed to `onStepClick`. */
   id: Id;
-  /** Step name. */
+  /** Step name, also used by the caption, tooltip, and click target in narrow containers. */
   label: React.ReactNode;
-  /** Shown beside the label — for example a "Next" or "Overdue" Badge. */
-  badge?: React.ReactNode;
-  /** Shown under the label — a short hint, or a few lines of values such as planned and actual dates. */
-  description?: React.ReactNode;
-}
+} & (
+  | {
+      /** Shown under the label — a short hint, or a few lines of values such as planned and actual dates. */
+      description?: React.ReactNode;
+      render?: never;
+    }
+  | {
+      description?: never;
+      /**
+       * Replaces the label and description area with non-interactive content.
+       * Passed steps wrap the content in a button when `onStepClick` is set.
+       * Narrow containers use the common `label` instead.
+       */
+      render: (state: { label: React.ReactNode; status: StepperStepStatus }) => React.ReactNode;
+    }
+);
 
 /**
  * Outcomes for the passed prefix of `steps`, in the same order.

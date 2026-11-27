@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, posix } from "node:path";
 
 import { computeAgents } from "./agents";
 import { assembleMarkdown } from "./assemble";
@@ -11,7 +11,7 @@ import { writeManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { computeStampedSkill, readSkillVersion, stampSkill } from "./skill";
 import { loadSurface, snapshotHashForSlug } from "./project";
-import type { Manifest, ManifestEntry } from "./types";
+import type { Manifest, ManifestEntry, ManifestSkill } from "./types";
 
 export interface SyncResult {
   manifest: Manifest;
@@ -101,27 +101,33 @@ export function sync(repoRoot: string): SyncResult {
     };
   }
 
-  // Phase 4 — emit the consumer skills (gitignored output) from the generated
-  // docs + authored guidance, and hash each file so `check` can validate it.
+  // Phase 4 — emit the consumer skills (gitignored output) and record their paths.
   // Every skill is computed before any is written, so a bad version source
   // leaves the previous output intact.
-  let skill: Record<string, string> | undefined;
-  if (config.skills.length > 0) {
-    const computed = config.skills.map((s) => ({
-      outDir: s.outDir,
-      files: computeStampedSkill(repoRoot, s, outlines),
-    }));
-    skill = {};
-    for (const { outDir, files } of computed) {
-      rmSync(join(repoRoot, outDir), { recursive: true, force: true });
-      for (const [skillRel, { content, stamped }] of files) {
-        const abs = join(repoRoot, skillRel);
-        mkdirSync(dirname(abs), { recursive: true });
-        writeFileSync(abs, stamped, "utf8");
-        skill[skillRel] = hash(normalizeText(content));
-        written.push(skillRel);
+  const computed = Object.entries(config.skills).map(([id, s]) => ({
+    id,
+    outDir: s.outDir,
+    outputs: computeStampedSkill(repoRoot, s, outlines),
+  }));
+  const skills: Record<string, ManifestSkill> = Object.create(null);
+  for (const { id, outDir, outputs } of computed) {
+    rmSync(join(repoRoot, outDir), { recursive: true, force: true });
+    const files: ManifestSkill["files"] = {};
+    for (const [path, file] of outputs) {
+      const repoRel = posix.join(outDir, path);
+      const abs = join(repoRoot, repoRel);
+      mkdirSync(dirname(abs), { recursive: true });
+      writeFileSync(abs, file.stamped, "utf8");
+      if (file.kind === "copy") {
+        (units[file.slug].skillCopies ??= Object.create(null))[id] = path.slice(
+          "references/".length,
+        );
+      } else {
+        files[path] = { hash: file.kind === "index" ? null : hash(normalizeText(file.content)) };
       }
+      written.push(repoRel);
     }
+    skills[id] = { outDir, files };
   }
 
   // Phase 5 — emit the docs shipped in the package and the guide that indexes
@@ -145,9 +151,9 @@ export function sync(repoRoot: string): SyncResult {
   );
 
   const manifest: Manifest = {
-    version: 1,
+    version: 2,
     units,
-    ...(skill ? { skill } : {}),
+    ...(computed.length ? { skills } : {}),
     agents,
   };
   writeManifest(repoRoot, config.manifestFile, manifest);

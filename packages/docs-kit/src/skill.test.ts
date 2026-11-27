@@ -1,10 +1,12 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { check } from "./check";
 import { computeSkill, readSkillVersion, stampSkill, unclaimedSkillDirFindings } from "./skill";
+import { sync } from "./sync";
 import type { DocsConfig, Outline, SkillConfig, UnclaimedSkillDir } from "./types";
 
 const configWith = (versionSource?: string): SkillConfig => ({
@@ -72,10 +74,7 @@ describe("computeSkill", () => {
       { outDir: "out", templatePath: "SKILL.template.md" },
       outlines,
     );
-    expect([...files.keys()].toSorted()).toEqual([
-      "out/SKILL.md",
-      "out/references/components/button.md",
-    ]);
+    expect([...files.keys()].toSorted()).toEqual(["SKILL.md", "references/components/button.md"]);
   });
 
   it("leaves pointer stubs and lists docs-root paths", () => {
@@ -103,16 +102,34 @@ describe("computeSkill", () => {
       outlines,
     );
 
-    const stub = files.get("out/references/components/button.md")!;
+    const stub = files.get("references/components/button.md")?.content;
     expect(stub).toMatch(/^# MOVED: Button\. This file is a pointer, not documentation\./);
     expect(stub).toContain("`components/button.md`");
     expect(stub).toContain("`../../SKILL.md`");
     expect(stub).not.toContain("# Button");
-    expect(files.get("out/references/api/guards/pass.md")).toContain("`../../../SKILL.md`");
+    expect(files.get("references/api/guards/pass.md")?.content).toContain("`../../../SKILL.md`");
 
-    const skillMd = files.get("out/SKILL.md")!;
+    const skillMd = files.get("SKILL.md")?.content;
     expect(skillMd).toContain("Button (`components/button.md`)");
     expect(skillMd).not.toContain("](references/");
+  });
+
+  it("updates table links when a document is added or removed", () => {
+    const { root, outlines } = fixture();
+    const tabPath = "docs/components/tabs.md";
+    writeFileSync(join(root, tabPath), "# Tabs\n");
+    const tabs: Outline = {
+      ...outlines[0],
+      slug: "tabs",
+      mdPath: tabPath,
+      frontmatter: { ...outlines[0].frontmatter, title: "Tabs" },
+    };
+    const config = { outDir: "out", templatePath: "SKILL.template.md" };
+    const withTabs = computeSkill(root, config, [...outlines, tabs]);
+    expect(withTabs.get("SKILL.md")?.content).toContain("Button (`components/button.md`)");
+    expect(withTabs.get("SKILL.md")?.content).toContain("Tabs (`components/tabs.md`)");
+    const withoutButton = computeSkill(root, config, [tabs]);
+    expect(withoutButton.get("SKILL.md")?.content).not.toContain("components/button.md");
   });
 
   it("ships only the migrations doc when sections is empty", () => {
@@ -128,8 +145,8 @@ describe("computeSkill", () => {
       },
       outlines,
     );
-    expect([...files.keys()].toSorted()).toEqual(["up/SKILL.md", "up/references/migrations.md"]);
-    expect(files.get("up/references/migrations.md")).toBe(
+    expect([...files.keys()].toSorted()).toEqual(["SKILL.md", "references/migrations.md"]);
+    expect(files.get("references/migrations.md")?.content).toBe(
       "See [x](https://example.test/blob/main/docs/concepts/a.md)\n",
     );
   });
@@ -162,8 +179,99 @@ describe("computeSkill", () => {
   });
 });
 
+it("checks skill output paths and non-index content", () => {
+  const root = mkdtempSync(join(tmpdir(), "docs-kit-manifest-"));
+  const write = (p: string, value: string) => writeFileSync(join(root, p), value);
+  const configure = (outDir: string, id = "patterns") =>
+    write(
+      "docs-kit.config.json",
+      JSON.stringify({
+        inputs: { api: { tsconfig: "tsconfig.json", entrypoint: "index.ts" } },
+        outputs: {
+          documents: { mappings: [{ match: "docs-src/components/**", dir: "docs/components" }] },
+          agents: { guideTemplatePath: "AGENTS.template.md", packageDir: "pkg", docsDir: "docs" },
+          skills: {
+            [id]: { outDir, templatePath: "SKILL.template.md" },
+            upgrade: { outDir: "upgrade", templatePath: "upgrade.template.md", sections: [] },
+          },
+        },
+      }),
+    );
+  const messages = () => check(root).findings.map((f) => f.message);
+  try {
+    mkdirSync(join(root, "docs-src/components"), { recursive: true });
+    write("tsconfig.json", "{}");
+    write("index.ts", "export {};\n");
+    write(
+      "docs-src/components/button.docs.outline.md",
+      "---\nkind: prose\ngroup: button\ntitle: Button\ndescription: Clickable\n---\n\nButton docs.\n",
+    );
+    write("SKILL.template.md", "{{COMPONENTS_TABLE}}\n");
+    write("upgrade.template.md", "Upgrade guide.\n");
+    write("AGENTS.template.md", "{{COMPONENTS_TEASERS}}\n");
+    configure("patterns");
+    const { manifest } = sync(root);
+    expect(manifest.units.button.skillCopies).toEqual({ patterns: "components/button.md" });
+    expect(manifest.skills).toEqual({
+      patterns: { outDir: "patterns", files: { "SKILL.md": { hash: null } } },
+      upgrade: { outDir: "upgrade", files: { "SKILL.md": { hash: expect.any(String) } } },
+    });
+    expect(check(root).ok).toBe(true);
+    configure("patterns", "renamed");
+    expect(messages()).toContain("skill file patterns/SKILL.md drifted — run sync.");
+    configure("patterns");
+
+    // Only the aggregate's prose changes; its path still matches the baseline.
+    write("SKILL.template.md", "Read these first.\n\n{{COMPONENTS_TABLE}}\n");
+    expect(check(root).ok).toBe(true);
+    write("upgrade.template.md", "Changed upgrade guide.\n");
+    expect(messages()).toContain("skill file upgrade/SKILL.md drifted — run sync.");
+    write("upgrade.template.md", "Upgrade guide.\n");
+
+    const output = "docs/components/button.md";
+    const original = readFileSync(join(root, output), "utf8");
+    write(output, "Stale output.\n");
+    expect(check(root).findings).toContainEqual(
+      expect.objectContaining({ level: "block", slug: "button" }),
+    );
+    write(output, original);
+
+    configure("moved");
+    expect(messages().toSorted()).toEqual(
+      [
+        "skill file patterns/SKILL.md removed — run sync.",
+        "skill file patterns/references/components/button.md removed — run sync.",
+        "skill file moved/SKILL.md is new — run sync.",
+        "skill file moved/references/components/button.md is new — run sync.",
+      ].toSorted(),
+    );
+    const moved = sync(root).manifest;
+    expect(moved.units).toEqual(manifest.units);
+    expect(moved.skills?.patterns.outDir).toBe("moved");
+    expect(check(root).ok).toBe(true);
+
+    const broken = structuredClone(moved);
+    broken.units.button.skillCopies = { patterns: "components/old-button.md" };
+    write("docs-manifest.json", JSON.stringify(broken));
+    expect(messages().toSorted()).toEqual([
+      "skill file moved/references/components/button.md is new — run sync.",
+      "skill file moved/references/components/old-button.md removed — run sync.",
+    ]);
+    broken.units.button.skillCopies = { unknown: "components/button.md" };
+    write("docs-manifest.json", JSON.stringify(broken));
+    expect(messages()).toContain(
+      "skill copy components/button.md refers to unknown skill unknown — run sync.",
+    );
+
+    write("docs-kit.config.json", JSON.stringify({ outputs: { skills: [] } }));
+    expect(() => check(root)).toThrow(/outputs\.skills must be an object keyed by skill ID/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 const docsConfig = (
-  skills: SkillConfig[],
+  skills: DocsConfig["skills"],
   unclaimedSkillDirs: UnclaimedSkillDir[] = [],
 ): DocsConfig => ({
   roots: [],
@@ -185,31 +293,30 @@ const docsException = { dir: "docs", reason: "guides are for people" };
 
 describe("unclaimedSkillDirFindings", () => {
   it("passes when every dir is claimed or excepted", () => {
-    expect(messages(docsConfig([{ outDir: "s", templatePath: "" }], [docsException]))).toEqual([]);
+    expect(messages(docsConfig({ s: { outDir: "s", templatePath: "" } }, [docsException]))).toEqual(
+      [],
+    );
   });
 
   it("blocks a dir no skill carries", () => {
-    expect(messages(docsConfig([{ outDir: "s", templatePath: "" }]))).toEqual([
+    expect(messages(docsConfig({ s: { outDir: "s", templatePath: "" } }))).toEqual([
       expect.stringMatching(/^docs has no skill section/),
     ]);
   });
 
   it("blocks a section that every skill leaves out", () => {
     expect(
-      messages(docsConfig([{ outDir: "s", templatePath: "", sections: [] }], [docsException])),
+      messages(docsConfig({ s: { outDir: "s", templatePath: "", sections: [] } }, [docsException])),
     ).toEqual([expect.stringMatching(/^docs\/patterns \(section "patterns"\) is in no skill/)]);
   });
 
   it("blocks stale and reasonless exceptions", () => {
     const found = messages(
-      docsConfig(
-        [{ outDir: "s", templatePath: "" }],
-        [
-          { dir: "docs", reason: " " },
-          { dir: "docs/patterns", reason: "x" },
-          { dir: "docs/gone", reason: "x" },
-        ],
-      ),
+      docsConfig({ s: { outDir: "s", templatePath: "" } }, [
+        { dir: "docs", reason: " " },
+        { dir: "docs/patterns", reason: "x" },
+        { dir: "docs/gone", reason: "x" },
+      ]),
     );
     expect(found).toEqual([
       expect.stringMatching(/^docs\/patterns is listed .* but a skill carries it/),
@@ -219,6 +326,6 @@ describe("unclaimedSkillDirFindings", () => {
   });
 
   it("is off when no skill is configured", () => {
-    expect(messages(docsConfig([]))).toEqual([]);
+    expect(messages(docsConfig({}))).toEqual([]);
   });
 });

@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, posix, relative } from "node:path";
 
 import { computeAgents } from "./agents";
 import { loadConfig } from "./config";
@@ -8,13 +8,7 @@ import { hash, normalizeText } from "./hash";
 import { readManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { loadSurface, snapshotHashForSlug } from "./project";
-import {
-  computeSkill,
-  computeStampedSkill,
-  readSkillVersion,
-  stampSkill,
-  unclaimedSkillDirFindings,
-} from "./skill";
+import { computeStampedSkill, readSkillVersion, stampSkill, unclaimedSkillDirFindings } from "./skill";
 import { unmanagedOutputs, walkMarkdown } from "./tree";
 
 export interface CheckResult {
@@ -119,55 +113,70 @@ export function check(repoRoot: string): CheckResult {
   }
 
   findings.push(...unclaimedSkillDirFindings(config));
-  if (config.skills.length > 0) {
-    const expected = manifest?.skill ?? {};
-    const actual = new Map<string, string>();
-    // A skill that can't be computed is reported once, and its manifest entries
-    // are left out of the removed-file comparison below.
-    const failedDirs: string[] = [];
-    for (const skill of config.skills) {
-      try {
-        for (const [p, c] of computeSkill(repoRoot, skill, outlines)) {
-          actual.set(p, hash(normalizeText(c)));
-        }
-      } catch (e) {
-        failedDirs.push(`${skill.outDir}/`);
-        findings.push({ level: "block", slug: "skill", message: (e as Error).message });
-      }
+  const recorded = manifest?.skills ?? {};
+  const expected = new Map<string, { id: string; hash: string | null }>();
+  for (const [id, skill] of Object.entries(recorded)) {
+    for (const [path, file] of Object.entries(skill.files)) {
+      expected.set(posix.join(skill.outDir, path), { id, hash: file.hash });
     }
-    for (const [p, h] of actual) {
-      if (expected[p] === undefined) {
+  }
+  for (const entry of Object.values(manifest?.units ?? {})) {
+    for (const [id, path] of Object.entries(entry.skillCopies ?? {})) {
+      if (!Object.hasOwn(recorded, id)) {
         findings.push({
           level: "block",
-          slug: "skill",
-          message: `skill file ${p} is new — run sync.`,
+          slug: entry.slug,
+          message: `skill copy ${path} refers to unknown skill ${id} — run sync.`,
         });
-      } else if (expected[p] !== h) {
-        findings.push({
-          level: "block",
-          slug: "skill",
-          message: `skill file ${p} drifted — run sync.`,
-        });
+        continue;
       }
+      // Use the recorded location, not the current config, to catch skill moves.
+      expected.set(posix.join(recorded[id].outDir, "references", path), {
+        id,
+        hash: null,
+      });
     }
-    for (const p of Object.keys(expected)) {
-      if (!actual.has(p) && !failedDirs.some((d) => p.startsWith(d))) {
-        findings.push({
-          level: "block",
-          slug: "skill",
-          message: `skill file ${p} removed — run sync.`,
+  }
+  const actual = new Map<string, { id: string; hash: string | null }>();
+  // A skill that can't be computed is reported once, not as a series of removals.
+  const failedSkills = new Set<string>();
+  for (const [id, skill] of Object.entries(config.skills)) {
+    try {
+      // Validate version stamping even though the hashes are for unstamped content.
+      for (const [path, file] of computeStampedSkill(repoRoot, skill, outlines)) {
+        actual.set(posix.join(skill.outDir, path), {
+          id,
+          hash: file.kind === "generated" ? hash(normalizeText(file.content)) : null,
         });
       }
+    } catch (e) {
+      failedSkills.add(id);
+      findings.push({ level: "block", slug: "skill", message: (e as Error).message });
     }
-    // The manifest hashes unstamped content, so validate the stamp separately —
-    // otherwise a broken version source would only surface at publish time.
-    for (const skill of config.skills) {
-      if (failedDirs.includes(`${skill.outDir}/`)) continue;
-      try {
-        computeStampedSkill(repoRoot, skill, outlines);
-      } catch (e) {
-        findings.push({ level: "block", slug: "skill", message: (e as Error).message });
-      }
+  }
+  for (const [path, file] of actual) {
+    const baseline = expected.get(path);
+    if (!baseline) {
+      findings.push({
+        level: "block",
+        slug: "skill",
+        message: `skill file ${path} is new — run sync.`,
+      });
+    } else if (baseline.id !== file.id || baseline.hash !== file.hash) {
+      findings.push({
+        level: "block",
+        slug: "skill",
+        message: `skill file ${path} drifted — run sync.`,
+      });
+    }
+  }
+  for (const [path, file] of expected) {
+    if (!actual.has(path) && !failedSkills.has(file.id)) {
+      findings.push({
+        level: "block",
+        slug: "skill",
+        message: `skill file ${path} removed — run sync.`,
+      });
     }
   }
 

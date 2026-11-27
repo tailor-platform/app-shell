@@ -2,13 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { SKILL_SECTIONS } from "./skill";
-import type {
-  AgentsConfig,
-  CategoryRule,
-  DocsConfig,
-  SkillConfig,
-  UnclaimedSkillDir,
-} from "./types";
+import type { AgentsConfig, CategoryRule, DocsConfig, UnclaimedSkillDir } from "./types";
 
 /** On-disk shape of `docs-kit.config.json` — grouped by data flow (inputs →
  * outputs → policy). It is parsed into the flat internal {@link DocsConfig}. */
@@ -21,7 +15,7 @@ interface RawConfig {
   outputs?: {
     documents?: { mappings?: Array<{ match: string; dir: string }> };
     manifest?: string;
-    skills?: SkillConfig[];
+    skills?: DocsConfig["skills"];
     agents?: AgentsConfig;
   };
   policy?: {
@@ -38,12 +32,15 @@ export function loadConfig(repoRoot: string): DocsConfig {
     match: m.match,
     outDir: m.dir,
   }));
-  const skills = c.outputs?.skills ?? [];
-  for (const skill of skills) {
+  const skills = c.outputs?.skills ?? {};
+  if (typeof skills !== "object" || Array.isArray(skills)) {
+    throw new Error("docs-kit.config.json: outputs.skills must be an object keyed by skill ID");
+  }
+  for (const [id, skill] of Object.entries(skills)) {
     for (const section of skill.sections ?? []) {
       if (!(SKILL_SECTIONS as readonly string[]).includes(section)) {
         throw new Error(
-          `docs-kit.config.json: skill ${skill.outDir} has unknown section "${section}" — expected one of ${SKILL_SECTIONS.join(", ")}`,
+          `docs-kit.config.json: skill ${id} has unknown section "${section}" — expected one of ${SKILL_SECTIONS.join(", ")}`,
         );
       }
     }

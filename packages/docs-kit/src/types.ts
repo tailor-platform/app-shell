@@ -78,15 +78,23 @@ export interface ManifestEntry {
   claims: string[];
   /** Resolved public export names this unit owns via `sources`, plus its `claims`. */
   symbols: string[];
+  /** Skill ID -> pointer path under that skill's `references/` for this unit. */
+  skillCopies?: Record<string, string>;
   hashes: UnitHashes;
+}
+
+export interface ManifestSkill {
+  /** Repo-relative output directory. */
+  outDir: string;
+  /** Non-copy outputs relative to `outDir`. A null hash tracks only the path. */
+  files: Record<string, { hash: string | null }>;
 }
 
 export interface Manifest {
   version: number;
   units: Record<string, ManifestEntry>;
-  /** Generated skill file (repo-relative) -> content hash, across every configured
-   * skill. Absent when no skill is configured. */
-  skill?: Record<string, string>;
+  /** Consumer skills by stable ID. Absent when no skill is configured. */
+  skills?: Record<string, ManifestSkill>;
   /** Generated guide (repo-relative) -> content hash. The
    * docs shipped beside them are verbatim copies of unit outputs, which `units`
    * already hashes. */
@@ -160,8 +168,8 @@ export interface DocsConfig {
   exclusions: string[];
   /** Repo-relative dir holding centralized test snapshots (advisory signal). */
   snapshotDir?: string;
-  /** Consumer skills. sync emits each one and check validates each one. */
-  skills: SkillConfig[];
+  /** Consumer skills keyed by stable ID, independent of their output dirs. */
+  skills: Record<string, SkillConfig>;
   /** Package docs + guide. Skills point at these docs, so it's required. */
   agents: AgentsConfig;
   /** Output dirs no skill carries. Any other unclaimed output dir blocks check. */

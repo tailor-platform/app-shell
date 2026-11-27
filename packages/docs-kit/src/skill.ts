@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { join, posix } from "node:path";
 
 import type { Finding } from "./coverage";
 import type { DocsConfig, Outline, SkillConfig, SkillSection } from "./types";
@@ -98,12 +98,13 @@ export const SKILL_SECTIONS: readonly SkillSection[] = [
  * `policy.skills.unclaimed` with a reason, so a new docs category can't
  * silently ship to no consumer. Stale exceptions block too. */
 export function unclaimedSkillDirFindings(config: DocsConfig): Finding[] {
-  if (config.skills.length === 0) return [];
+  const skills = Object.values(config.skills);
+  if (skills.length === 0) return [];
   const findings: Finding[] = [];
   const block = (message: string): void => {
     findings.push({ level: "block", slug: "skill", message });
   };
-  const claimed = new Set(config.skills.flatMap((s) => s.sections ?? SKILL_SECTIONS));
+  const claimed = new Set(skills.flatMap((s) => s.sections ?? SKILL_SECTIONS));
   const unclaimed = new Map(config.unclaimedSkillDirs.map((u) => [u.dir, u]));
   const outDirs = new Set(config.categories.map((c) => c.outDir));
 
@@ -161,21 +162,26 @@ export function stampSkill(content: string, version: string | null): string {
   return content;
 }
 
+type SkillFile = { content: string } & (
+  | { kind: "copy"; slug: string }
+  | { kind: "index" | "generated" }
+);
+
 /** Compute the skill and stamp it, so a bad version source fails before any write. */
 export function computeStampedSkill(
   repoRoot: string,
   skill: SkillConfig,
   outlines: Outline[],
-): Map<string, { content: string; stamped: string }> {
+): Map<string, SkillFile & { stamped: string }> {
   const version = readSkillVersion(repoRoot, skill);
-  const files = new Map<string, { content: string; stamped: string }>();
-  for (const [p, content] of computeSkill(repoRoot, skill, outlines)) {
-    files.set(p, { content, stamped: stampSkill(content, version) });
+  const files = new Map<string, SkillFile & { stamped: string }>();
+  for (const [p, file] of computeSkill(repoRoot, skill, outlines)) {
+    files.set(p, { ...file, stamped: stampSkill(file.content, version) });
   }
   return files;
 }
 
-/** Compute the whole consumer skill as a map of repo-relative path → content.
+/** Compute the whole consumer skill, keyed by path relative to its output dir.
  * Pure: reads only committed inputs (the generated docs incl. concepts, the SKILL template, and the migrations doc) and writes nothing — so `sync`
  * can emit it and `check` can recompute and validate it without the (gitignored)
  * output needing to exist. */
@@ -183,10 +189,9 @@ export function computeSkill(
   repoRoot: string,
   skill: SkillConfig,
   outlines: Outline[],
-): Map<string, string> {
-  const files = new Map<string, string>();
+): Map<string, SkillFile> {
+  const files = new Map<string, SkillFile>();
   const included = new Set(skill.sections ?? SKILL_SECTIONS);
-  const rel = (abs: string): string => toPosix(relative(repoRoot, abs));
 
   const sections: Record<SkillSection, Outline[]> = {
     concepts: [],
@@ -207,11 +212,12 @@ export function computeSkill(
     for (const o of list) {
       const srcAbs = join(repoRoot, o.mdPath);
       if (!existsSync(srcAbs)) continue;
-      const destAbs = join(repoRoot, skill.outDir, "references", section, `${o.slug}.md`);
-      files.set(
-        rel(destAbs),
-        redirectStub(o, section, toPosix(relative(dirname(destAbs), join(repoRoot, skill.outDir)))),
-      );
+      const path = `references/${section}/${o.slug}.md`;
+      files.set(path, {
+        kind: "copy",
+        slug: o.slug,
+        content: redirectStub(o, section, posix.relative(posix.dirname(path), ".")),
+      });
     }
   }
 
@@ -236,19 +242,26 @@ export function computeSkill(
         /\]\((\.{1,2}\/[^)\s]+)\)/g,
         (_m, target: string) => `](${blobUrl}/${toPosix(join("docs", target))})`,
       );
-    files.set(rel(join(repoRoot, skill.outDir, "references", "migrations.md")), `${body}\n`);
+    files.set("references/migrations.md", {
+      kind: "generated",
+      content: `${body}\n`,
+    });
   }
 
-  // SKILL.md: fill the template's category tables.
-  const link = docLink;
+  // An index aggregates independently changing units; track its path, not its hash.
   const template = readFileSync(join(repoRoot, skill.templatePath), "utf8");
-  const skillMd = template
-    .replace("{{CONCEPTS_TABLE}}", simpleTable(sections.concepts, "concepts", link))
-    .replace("{{COMPONENTS_TABLE}}", simpleTable(sections.components, "components", link))
-    .replace("{{API_TABLE}}", simpleTable(sections.api, "api", link))
-    .replace("{{PAGES_TABLE}}", entryTable(sections.pages, "pages", link))
-    .replace("{{PATTERNS_TABLE}}", entryTable(sections.patterns, "patterns", link));
-  files.set(rel(join(repoRoot, skill.outDir, "SKILL.md")), skillMd);
+  const tables = [
+    ["{{CONCEPTS_TABLE}}", simpleTable(sections.concepts, "concepts", docLink)],
+    ["{{COMPONENTS_TABLE}}", simpleTable(sections.components, "components", docLink)],
+    ["{{API_TABLE}}", simpleTable(sections.api, "api", docLink)],
+    ["{{PAGES_TABLE}}", entryTable(sections.pages, "pages", docLink)],
+    ["{{PATTERNS_TABLE}}", entryTable(sections.patterns, "patterns", docLink)],
+  ] as const;
+  const content = tables.reduce((md, [token, table]) => md.replace(token, table), template);
+  files.set("SKILL.md", {
+    kind: tables.some(([token]) => template.includes(token)) ? "index" : "generated",
+    content,
+  });
 
   return files;
 }

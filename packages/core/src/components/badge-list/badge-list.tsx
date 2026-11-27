@@ -143,7 +143,9 @@ export function BadgeList({
         <Popover.Root>
           <Popover.Trigger
             openOnHover
-            className="astw:cursor-default astw:rounded-md astw:px-2 astw:py-0.5 astw:text-label-sm astw:text-muted-foreground astw:hover:bg-muted astw:transition-colors"
+            // The pseudo element extends the 20px-tall trigger's hit area to 24px
+            // (WCAG 2.5.8 target size) without changing the badge row's height.
+            className="astw:relative astw:cursor-default astw:rounded-md astw:px-2 astw:py-0.5 astw:text-label-sm astw:text-muted-foreground astw:hover:bg-muted astw:transition-colors astw:after:absolute astw:after:inset-x-0 astw:after:-inset-y-0.5"
           >
             +{overflow.length}
           </Popover.Trigger>

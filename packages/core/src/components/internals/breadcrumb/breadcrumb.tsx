@@ -14,7 +14,9 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
     <ol
       data-slot="breadcrumb-list"
       className={cn(
-        "astw:text-muted-foreground astw:flex astw:flex-wrap astw:items-center astw:gap-1.5 astw:text-body-md astw:break-words astw:sm:gap-2.5",
+        // Never wraps: a trail that does not fit truncates its items (see
+        // `BreadcrumbLink` / `BreadcrumbPage`) instead of stacking rows.
+        "astw:text-muted-foreground astw:flex astw:flex-nowrap astw:items-center astw:gap-1.5 astw:text-body-md astw:sm:gap-2.5",
         className,
       )}
       {...props}
@@ -26,7 +28,7 @@ function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
   return (
     <li
       data-slot="breadcrumb-item"
-      className={cn("astw:inline-flex astw:items-center astw:gap-1.5", className)}
+      className={cn("astw:inline-flex astw:min-w-0 astw:items-center astw:gap-1.5", className)}
       {...props}
     />
   );
@@ -41,7 +43,13 @@ function BreadcrumbLink({
 }: React.ComponentProps<typeof Link> & {
   render?: React.ReactElement;
 }) {
-  const linkClassName = cn("astw:hover:text-foreground astw:transition-colors", className);
+  // `py-0.5` makes the link 24px tall (WCAG 2.5.8 target size) around the
+  // 20px line without changing the text; `min-w-0 truncate` lets a long title
+  // ellipsize instead of pushing the trail past the header.
+  const linkClassName = cn(
+    "astw:min-w-0 astw:truncate astw:py-0.5 astw:hover:text-foreground astw:transition-colors",
+    className,
+  );
 
   return useRender({
     defaultTagName: "a",
@@ -67,7 +75,10 @@ function BreadcrumbPage({
       data-slot="breadcrumb-page"
       aria-disabled="true"
       aria-current={ariaCurrent}
-      className={cn("astw:text-foreground astw:font-normal", className)}
+      className={cn(
+        "astw:min-w-0 astw:truncate astw:py-0.5 astw:text-foreground astw:font-normal",
+        className,
+      )}
       {...props}
     />
   );
@@ -79,7 +90,7 @@ function BreadcrumbSeparator({ children, className, ...props }: React.ComponentP
       data-slot="breadcrumb-separator"
       role="presentation"
       aria-hidden="true"
-      className={cn("astw:[&>svg]:size-3.5", className)}
+      className={cn("astw:shrink-0 astw:[&>svg]:size-3.5", className)}
       {...props}
     >
       {children ?? <ChevronRight />}

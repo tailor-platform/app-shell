@@ -579,9 +579,9 @@
       "symbols": ["DefaultHeader", "DefaultHeaderProps"],
       "hashes": {
         "typeSurface": "dfc505929b8ef505",
-        "outline": "efdd10f3fe946e62",
+        "outline": "bfe0749a841cef02",
         "snapshot": null,
-        "outputMd": "375e55f4b12fa2be",
+        "outputMd": "e12bad2199a487d4",
         "examples": null
       }
     },
@@ -917,9 +917,9 @@
       ],
       "hashes": {
         "typeSurface": "1e8c3a931efa81dd",
-        "outline": "bea325cb238fa1cc",
+        "outline": "98455b1f8db0a0b9",
         "snapshot": null,
-        "outputMd": "fe86450720c4d586",
+        "outputMd": "16fa26b5097b3b35",
         "examples": null
       }
     },
@@ -2046,14 +2046,14 @@
     "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "10c04c78bb846c9a",
     "packages/core/skills/app-shell-patterns/references/components/data-table.md": "c32c7ccf13528bf1",
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "f8bc1ff57c4e7d18",
-    "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
+    "packages/core/skills/app-shell-patterns/references/components/default-header.md": "e12bad2199a487d4",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "9b1672c71b6db3ff",
     "packages/core/skills/app-shell-patterns/references/components/description-card.md": "8930a410d7d45f89",
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "cd9fa9c4b8ccb108",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "cabfb86627aefd6f",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "12021e27b57f45e9",
     "packages/core/skills/app-shell-patterns/references/components/form.md": "c97c3d6e426d8b29",
-    "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "fe86450720c4d586",
+    "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "16fa26b5097b3b35",
     "packages/core/skills/app-shell-patterns/references/components/grid.md": "d048e972ae8aba3e",
     "packages/core/skills/app-shell-patterns/references/components/input.md": "876dca4c3b3bc9c5",
     "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",

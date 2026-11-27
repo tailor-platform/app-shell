@@ -15,6 +15,7 @@ skill — deterministically, with no LLM.
 - **Assemble** each unit's Markdown from its outline (prose verbatim), extracted
   example fences, and opt-in auto prop tables (`<!-- api -->`).
 - **Emit** the consumer skills (`outputs.skills`) from the generated docs + the templates in `docs-src/skill/<name>/`. Every docs output dir must reach a skill or be listed under `policy.skills.unclaimed` with a reason, so a new docs category can't silently ship to no consumer.
+- **Emit** the docs shipped in the published package (`outputs.agents`): the docs themselves, and a guide at the docs root's `AGENTS.md` that indexes them, from `docs-src/agents/AGENTS.guide.template.md`. Consumers import the guide from their own `AGENTS.md`, so its path is a public contract. Skills list paths under that docs root and leave pointer stubs under `references/` where copies used to be, so `outputs.agents` is required.
 
 ## CLI
 
@@ -42,5 +43,6 @@ and the `resync-docs` skill.
 | `coverage.ts`                              | two-way `index.ts` reconciliation                        |
 | `assemble.ts`                              | outline + examples + API tables → Markdown               |
 | `skill.ts`                                 | consumer-skill emitter                                   |
+| `agents.ts`                                | package docs + `AGENTS.md` guide emitter                 |
 | `outline.ts` / `config.ts` / `manifest.ts` | discovery, config, manifest I/O                          |
 | `sync.ts` / `check.ts` / `cli.ts`          | commands                                                 |

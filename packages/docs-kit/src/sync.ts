@@ -2,13 +2,14 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
+import { computeAgents } from "./agents";
 import { assembleMarkdown } from "./assemble";
 import { loadConfig } from "./config";
 import { type Finding, reconcile } from "./coverage";
 import { hash, normalizeText } from "./hash";
 import { writeManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
-import { computeStampedSkill } from "./skill";
+import { computeStampedSkill, readSkillVersion, stampSkill } from "./skill";
 import { loadSurface, snapshotHashForSlug } from "./project";
 import type { Manifest, ManifestEntry } from "./types";
 
@@ -123,7 +124,32 @@ export function sync(repoRoot: string): SyncResult {
     }
   }
 
-  const manifest: Manifest = { version: 1, units, ...(skill ? { skill } : {}) };
+  // Phase 5 — emit the docs shipped in the package and the guide that indexes
+  // them (gitignored output, like the skills).
+  const { docs, generated } = computeAgents(repoRoot, config.agents, outlines);
+  const version = readSkillVersion(repoRoot, config.agents);
+  // Stamp before any write, so a bad version source leaves the old output.
+  const stamped = [...generated].map(([rel, content]) => [rel, stampSkill(content, version)]);
+  rmSync(join(repoRoot, config.agents.packageDir, config.agents.docsDir), {
+    recursive: true,
+    force: true,
+  });
+  for (const [rel, content] of [...docs, ...stamped]) {
+    const abs = join(repoRoot, rel);
+    mkdirSync(dirname(abs), { recursive: true });
+    writeFileSync(abs, content, "utf8");
+    written.push(rel);
+  }
+  const agents = Object.fromEntries(
+    [...generated].map(([rel, content]) => [rel, hash(normalizeText(content))]),
+  );
+
+  const manifest: Manifest = {
+    version: 1,
+    units,
+    ...(skill ? { skill } : {}),
+    agents,
+  };
   writeManifest(repoRoot, config.manifestFile, manifest);
   // Format the manifest too, so a clean-tree `sync` is byte-idempotent: the
   // manifest's hashes are over the OUTPUT files, never over the manifest text

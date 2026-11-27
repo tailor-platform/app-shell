@@ -107,10 +107,10 @@ export function sync(repoRoot: string): SyncResult {
   const computed = Object.entries(config.skills).map(([id, s]) => ({
     id,
     outDir: s.outDir,
-    outputs: computeStampedSkill(repoRoot, s, outlines),
+    ...computeStampedSkill(repoRoot, s, outlines),
   }));
   const skills: Record<string, ManifestSkill> = Object.create(null);
-  for (const { id, outDir, outputs } of computed) {
+  for (const { id, outDir, template, files: outputs } of computed) {
     rmSync(join(repoRoot, outDir), { recursive: true, force: true });
     const files: ManifestSkill["files"] = {};
     for (const [path, file] of outputs) {
@@ -122,12 +122,12 @@ export function sync(repoRoot: string): SyncResult {
         (units[file.slug].skillCopies ??= Object.create(null))[id] = path.slice(
           "references/".length,
         );
-      } else {
-        files[path] = { hash: file.kind === "index" ? null : hash(normalizeText(file.content)) };
+      } else if (path !== template.output) {
+        files[path] = { hash: hash(normalizeText(file.content)) };
       }
       written.push(repoRel);
     }
-    skills[id] = { outDir, files };
+    skills[id] = { outDir, template, files };
   }
 
   // Phase 5 — emit the docs shipped in the package and the guide that indexes
@@ -157,10 +157,8 @@ export function sync(repoRoot: string): SyncResult {
     agents,
   };
   writeManifest(repoRoot, config.manifestFile, manifest);
-  // Format the manifest too, so a clean-tree `sync` is byte-idempotent: the
-  // manifest's hashes are over the OUTPUT files, never over the manifest text
-  // itself, so this reformatting is safe and only prevents the pre-commit oxfmt
-  // hook from later collapsing its arrays into a whitespace-only diff.
+  // Format the manifest too, so a clean-tree `sync` is byte-idempotent and the
+  // pre-commit formatter doesn't introduce a whitespace-only diff.
   formatFiles(repoRoot, [join(repoRoot, config.manifestFile)]);
   return { manifest, findings, written };
 }

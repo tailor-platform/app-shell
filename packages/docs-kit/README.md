@@ -20,9 +20,10 @@ skill — deterministically, with no LLM.
 Skill IDs are the keys in `outputs.skills`, independent of their output directories. The
 manifest records each skill's `outDir` once. Units record pointer destinations by skill ID and
 path under `references/`. The source Markdown is already checked by the unit's output hash.
-Other outputs use paths relative
-to the skill's `outDir` and have a `hash` field: `null` tracks a generated table index by path
-only, while rewritten outputs such as the migrations guide keep their own content hash.
+Each skill's `template` records the source path and hash before table expansion or version
+stamping, plus the generated `SKILL.md` path relative to its `outDir`. Changes to individual table
+entries don't update a shared hash. `files` records the content hashes of other outputs, such as
+the rewritten migrations guide.
 
 ## CLI
 

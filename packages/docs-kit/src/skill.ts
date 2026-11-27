@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, posix } from "node:path";
 
 import type { Finding } from "./coverage";
+import { hash, normalizeText } from "./hash";
 import type { DocsConfig, Outline, SkillConfig, SkillSection } from "./types";
 
 function toPosix(p: string): string {
@@ -151,8 +152,8 @@ export function readSkillVersion(
 }
 
 /** Substitute the package version into a computed skill file. Applied only when
- * writing — the manifest hashes the unstamped content, so a changesets version
- * bump never registers as skill drift. Throws rather than ship a literal
+ * writing — the manifest doesn't hash version-stamped content, so a changesets
+ * version bump never registers as skill drift. Throws rather than ship a literal
  * placeholder, which would tell every consumer their copy is stale. */
 export function stampSkill(content: string, version: string | null): string {
   if (version !== null) return content.replace(VERSION_PLACEHOLDER, version);
@@ -162,34 +163,22 @@ export function stampSkill(content: string, version: string | null): string {
   return content;
 }
 
-type SkillFile = { content: string } & (
-  | { kind: "copy"; slug: string }
-  | { kind: "index" | "generated" }
-);
+type SkillFile = { content: string } & ({ kind: "copy"; slug: string } | { kind: "generated" });
 
 /** Compute the skill and stamp it, so a bad version source fails before any write. */
-export function computeStampedSkill(
-  repoRoot: string,
-  skill: SkillConfig,
-  outlines: Outline[],
-): Map<string, SkillFile & { stamped: string }> {
+export function computeStampedSkill(repoRoot: string, skill: SkillConfig, outlines: Outline[]) {
   const version = readSkillVersion(repoRoot, skill);
+  const computed = computeSkill(repoRoot, skill, outlines);
   const files = new Map<string, SkillFile & { stamped: string }>();
-  for (const [p, file] of computeSkill(repoRoot, skill, outlines)) {
+  for (const [p, file] of computed.files) {
     files.set(p, { ...file, stamped: stampSkill(file.content, version) });
   }
-  return files;
+  return { files, template: computed.template };
 }
 
-/** Compute the whole consumer skill, keyed by path relative to its output dir.
- * Pure: reads only committed inputs (the generated docs incl. concepts, the SKILL template, and the migrations doc) and writes nothing — so `sync`
- * can emit it and `check` can recompute and validate it without the (gitignored)
- * output needing to exist. */
-export function computeSkill(
-  repoRoot: string,
-  skill: SkillConfig,
-  outlines: Outline[],
-): Map<string, SkillFile> {
+/** Compute skill files (keyed by path relative to the output dir) and fingerprint
+ * the authored template. Reads only committed inputs; writes nothing. */
+export function computeSkill(repoRoot: string, skill: SkillConfig, outlines: Outline[]) {
   const files = new Map<string, SkillFile>();
   const included = new Set(skill.sections ?? SKILL_SECTIONS);
 
@@ -248,20 +237,19 @@ export function computeSkill(
     });
   }
 
-  // An index aggregates independently changing units; track its path, not its hash.
+  // Hash the authored template, not its expansion, so unrelated docs don't share a hash.
   const template = readFileSync(join(repoRoot, skill.templatePath), "utf8");
-  const tables = [
-    ["{{CONCEPTS_TABLE}}", simpleTable(sections.concepts, "concepts", docLink)],
-    ["{{COMPONENTS_TABLE}}", simpleTable(sections.components, "components", docLink)],
-    ["{{API_TABLE}}", simpleTable(sections.api, "api", docLink)],
-    ["{{PAGES_TABLE}}", entryTable(sections.pages, "pages", docLink)],
-    ["{{PATTERNS_TABLE}}", entryTable(sections.patterns, "patterns", docLink)],
-  ] as const;
-  const content = tables.reduce((md, [token, table]) => md.replace(token, table), template);
-  files.set("SKILL.md", {
-    kind: tables.some(([token]) => template.includes(token)) ? "index" : "generated",
-    content,
-  });
+  const content = template
+    .replace("{{CONCEPTS_TABLE}}", simpleTable(sections.concepts, "concepts", docLink))
+    .replace("{{COMPONENTS_TABLE}}", simpleTable(sections.components, "components", docLink))
+    .replace("{{API_TABLE}}", simpleTable(sections.api, "api", docLink))
+    .replace("{{PAGES_TABLE}}", entryTable(sections.pages, "pages", docLink))
+    .replace("{{PATTERNS_TABLE}}", entryTable(sections.patterns, "patterns", docLink));
+  const output = "SKILL.md";
+  files.set(output, { kind: "generated", content });
 
-  return files;
+  return {
+    files,
+    template: { path: skill.templatePath, hash: hash(normalizeText(template)), output },
+  };
 }

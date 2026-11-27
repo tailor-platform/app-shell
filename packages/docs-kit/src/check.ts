@@ -119,6 +119,9 @@ export function check(repoRoot: string): CheckResult {
     for (const [path, file] of Object.entries(skill.files)) {
       expected.set(posix.join(skill.outDir, path), { id, hash: file.hash });
     }
+    if (skill.template?.output) {
+      expected.set(posix.join(skill.outDir, skill.template.output), { id, hash: null });
+    }
   }
   for (const entry of Object.values(manifest?.units ?? {})) {
     for (const [id, path] of Object.entries(entry.skillCopies ?? {})) {
@@ -143,10 +146,28 @@ export function check(repoRoot: string): CheckResult {
   for (const [id, skill] of Object.entries(config.skills)) {
     try {
       // Validate version stamping even though the hashes are for unstamped content.
-      for (const [path, file] of computeStampedSkill(repoRoot, skill, outlines)) {
+      const { template, files } = computeStampedSkill(repoRoot, skill, outlines);
+      if (Object.hasOwn(recorded, id)) {
+        const baseline = recorded[id].template;
+        if (
+          !baseline?.output ||
+          baseline.path !== template.path ||
+          baseline.hash !== template.hash
+        ) {
+          findings.push({
+            level: "block",
+            slug: "skill",
+            message: `skill template ${template.path} drifted — run sync.`,
+          });
+        }
+      }
+      for (const [path, file] of files) {
         actual.set(posix.join(skill.outDir, path), {
           id,
-          hash: file.kind === "generated" ? hash(normalizeText(file.content)) : null,
+          hash:
+            path === template.output || file.kind === "copy"
+              ? null
+              : hash(normalizeText(file.content)),
         });
       }
     } catch (e) {

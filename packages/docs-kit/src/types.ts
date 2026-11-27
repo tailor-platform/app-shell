@@ -86,8 +86,10 @@ export interface ManifestEntry {
 export interface ManifestSkill {
   /** Repo-relative output directory. */
   outDir: string;
-  /** Non-copy outputs relative to `outDir`. A null hash tracks only the path. */
-  files: Record<string, { hash: string | null }>;
+  /** Authored template and its input hash, with the generated path under `outDir`. */
+  template: { path: string; hash: string; output: string };
+  /** Other non-copy outputs relative to `outDir`, hashed after transformation. */
+  files: Record<string, { hash: string }>;
 }
 
 export interface Manifest {

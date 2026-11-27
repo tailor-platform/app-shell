@@ -22,7 +22,7 @@ The guide's path is stable across releases. Upgrading AppShell updates the guide
 
 ### erp-kit projects
 
-`erp-kit update agents` adds and maintains an AppShell block in the `AGENTS.md` of every package that depends on AppShell, and keeps it out of packages that don't. `erp-kit app init` does the same for a new app. See the erp-kit docs for the details.
+From erp-kit 0.60.0, `erp-kit update agents` adds and maintains an AppShell block in the `AGENTS.md` of every package that depends on AppShell, and keeps it out of packages that don't. `erp-kit app init` does the same for a new app. See the erp-kit docs for the details. On an older erp-kit, upgrade it or add the line by hand as below.
 
 ### Everything else
 

@@ -22,7 +22,8 @@ The reference docs are not in this folder. They ship inside the installed `@tail
 
 1. **Look directly.** In the folder of the nearest `package.json` that lists `@tailor-platform/app-shell`, open `node_modules/@tailor-platform/app-shell/dist/docs/AGENTS.md`, the guide that indexes the docs. If it isn't there, try each parent folder up to the repository root. Open the exact path: search and glob tools usually skip `node_modules`.
 2. **Ask Node** (if you can run commands). From that package folder: `node -p "require('path').join(require.resolve('@tailor-platform/app-shell/package.json'), '../dist/docs')"`.
-3. **Still nothing:** stop. Tell the user the AppShell docs could not be found: dependencies may not be installed, or the installed AppShell may predate `dist/docs`. Don't rely on AppShell APIs you know from elsewhere, which may be from another version, or guess them from shadcn/ui or other UI libraries.
+3. **Not installed** (a fresh clone, or a sandbox that hasn't run the install yet): install dependencies if you can and go back to step 1. If you can't, read the docs for this skill's version on GitHub, where `docs/` has the same layout as the docs root: `https://github.com/tailor-platform/app-shell/tree/%40tailor-platform/app-shell%40{{APP_SHELL_VERSION}}/docs`. Tell the user you're working from the published docs rather than the installed package.
+4. **Still nothing:** stop. Tell the user the AppShell docs could not be found: the installed AppShell may predate `dist/docs`. Don't rely on AppShell APIs you know from elsewhere, which may be from another version, or guess them from shadcn/ui or other UI libraries.
 
 Files under this skill's `references/` folder are pointers left for old links. Don't read them for content.
 

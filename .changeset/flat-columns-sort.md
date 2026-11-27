@@ -13,4 +13,4 @@ Add `DataTable.SortSettings`, a "Sort" toolbar control next to `DataTable.Column
 
 Sorted column headers now show stacked up/down carets with the active direction highlighted, replacing the single ▲/▼ glyph. The caret slot is reserved on every sortable header, so applying a sort no longer widens the column; unsorted sortable headers are about 8px wider than before as a result.
 
-`useDataTable` now also returns `sortMultiple`.
+`useDataTable` now also returns `sortMultiple` and `onSortStatesChange`. Custom collection controls can implement `setSortStates` to support atomic multi-key edits in SortSettings.

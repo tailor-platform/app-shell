@@ -586,7 +586,7 @@ A column is sortable when it has `sort: { field, type }` and `useDataTable` rece
 
 - **Multi-column sort.** With `sort: { multiple: true }`, keys stack. Each row shows its priority; drag the handle, or focus it and press Arrow Up / Arrow Down, to change priority.
 - **Single-column sort** (the default) holds one key. Once it is set, the add menu hides; change the direction in place or remove the key to pick another column.
-- Sort keys whose column is hidden stay listed, so they can still be seen and removed.
+- Sort keys whose column is hidden or missing stay listed, so they can still be seen and removed.
 
 ```tsx
 <Toolbar.Group>
@@ -594,6 +594,8 @@ A column is sortable when it has `sort: { field, type }` and `useDataTable` rece
   <DataTable.ColumnSettings />
 </Toolbar.Group>
 ```
+
+`useCollectionVariables` supplies the atomic `control.setSortStates` callback used to replace the ordered keys and reset pagination. A custom collection control can provide the same callback, or a hand-built `DataTable.Root` value can provide `onSortStatesChange`. Without an atomic callback, single-key actions and individual add/remove remain available, but changing direction, clearing, or reordering multiple keys is disabled to avoid losing keys.
 
 ## Reading sort state
 

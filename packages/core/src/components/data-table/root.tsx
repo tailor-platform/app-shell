@@ -32,6 +32,7 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     sortStates: value.sortStates ?? [],
     sortMultiple: value.sortMultiple,
     onSort: value.onSort,
+    onSortStatesChange: value.onSortStatesChange,
     visibleColumns,
     isColumnVisible: value.isColumnVisible,
     toggleColumn: value.toggleColumn,

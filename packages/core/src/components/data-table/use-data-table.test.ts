@@ -391,6 +391,19 @@ describe("useDataTable", () => {
   // Sort delegation
   // -------------------------------------------------------------------------
   describe("sort delegation", () => {
+    it("exposes the atomic sort setter only when sorting is enabled", () => {
+      const setSortStates = vi.fn();
+      const control = makeControl({ setSortStates });
+      const { result, rerender } = renderHook(
+        ({ sort }: { sort: false | undefined }) =>
+          useDataTable({ columns, data: testData, control, sort }),
+        { initialProps: { sort: undefined as false | undefined } },
+      );
+      expect(result.current.onSortStatesChange).toBe(setSortStates);
+      rerender({ sort: false });
+      expect(result.current.onSortStatesChange).toBeUndefined();
+    });
+
     it.each([
       [undefined, false],
       [{}, false],

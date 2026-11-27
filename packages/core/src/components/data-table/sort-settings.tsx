@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
 import { Input } from "@/components/input";
 import { Select } from "@/components/select";
-import type { SortState } from "@/types/collection";
 import { useDataTableContext } from "./context";
 import { useDataTableT } from "./i18n";
 
@@ -34,7 +33,13 @@ const POPUP_CLASS = cn(
  */
 function DataTableSortSettings({ className }: { className?: string }) {
   const t = useDataTableT();
-  const { columns, sortStates, sortMultiple = false, onSort } = useDataTableContext();
+  const {
+    columns,
+    sortStates,
+    sortMultiple = false,
+    onSort,
+    onSortStatesChange,
+  } = useDataTableContext();
 
   // Sortable fields and their column labels, in column order (first label wins
   // when two columns share a sort field).
@@ -51,7 +56,7 @@ function DataTableSortSettings({ className }: { className?: string }) {
   const [dragField, setDragField] = useState<string | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
-  if (!onSort || labels.size === 0) return null;
+  if (!onSort || (labels.size === 0 && sortStates.length === 0)) return null;
 
   const directionItems: { value: "Asc" | "Desc"; label: string }[] = [
     { value: "Asc", label: t("sortColumnAsc") },
@@ -64,25 +69,21 @@ function DataTableSortSettings({ className }: { className?: string }) {
   // the row's own controls change or clear it.
   const canAdd = available.length > 0 && (sortMultiple || sortStates.length === 0);
 
-  // onSort appends a key at the lowest priority, so a reorder or an in-place
-  // direction change removes every key and replays them in the wanted order.
-  // Going through onSort (not the collection control) keeps this working for
-  // any DataTable.Root value, including hand-built ones.
-  const replaceSorts = (next: SortState[]) => {
-    for (const s of sortStates) onSort(s.field);
-    for (const s of next) onSort(s.field, s.direction);
-  };
-
   const moveSort = (from: number, to: number) => {
-    if (from < 0 || to < 0 || to >= sortStates.length || from === to) return;
+    if (!onSortStatesChange || from < 0 || to < 0 || to >= sortStates.length || from === to) return;
     const next = [...sortStates];
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
-    replaceSorts(next);
+    onSortStatesChange(next);
   };
 
-  const setDirection = (field: string, direction: "Asc" | "Desc") =>
-    replaceSorts(sortStates.map((s) => (s.field === field ? { ...s, direction } : s)));
+  const setDirection = (field: string, direction: "Asc" | "Desc") => {
+    if (onSortStatesChange) {
+      onSortStatesChange(sortStates.map((s) => (s.field === field ? { ...s, direction } : s)));
+    } else if (sortStates.length === 1) {
+      onSort(field, direction);
+    }
+  };
 
   // Removing a row, clearing, or adding the last candidate unmounts the
   // control that has focus. Move focus to the popup's group first, in the same
@@ -99,7 +100,8 @@ function DataTableSortSettings({ className }: { className?: string }) {
 
   const clearAll = () => {
     groupRef.current?.focus();
-    for (const s of sortStates) onSort(s.field);
+    if (onSortStatesChange) onSortStatesChange([]);
+    else if (sortStates.length === 1) onSort(sortStates[0].field);
   };
 
   const resetDrag = () => {
@@ -115,7 +117,7 @@ function DataTableSortSettings({ className }: { className?: string }) {
     resetDrag();
   };
 
-  const canReorder = sortMultiple && sortStates.length > 1;
+  const canReorder = sortMultiple && sortStates.length > 1 && !!onSortStatesChange;
 
   return (
     <Popover.Root>
@@ -161,7 +163,8 @@ function DataTableSortSettings({ className }: { className?: string }) {
                   <button
                     type="button"
                     onClick={clearAll}
-                    className="astw:cursor-pointer astw:text-label-sm astw:text-muted-foreground astw:hover:text-foreground"
+                    disabled={!onSortStatesChange && sortStates.length > 1}
+                    className="astw:cursor-pointer astw:text-label-sm astw:text-muted-foreground astw:hover:text-foreground astw:disabled:cursor-not-allowed astw:disabled:opacity-50"
                   >
                     {t("clearSort")}
                   </button>
@@ -175,7 +178,7 @@ function DataTableSortSettings({ className }: { className?: string }) {
                 </div>
               ) : (
                 <ol
-                  className="astw:m-0 astw:flex astw:list-none astw:flex-col astw:p-0"
+                  className="astw:m-0 astw:flex astw:max-h-[min(50vh,20rem)] astw:list-none astw:flex-col astw:overflow-y-auto astw:p-0"
                   onDragOver={(e) => {
                     if (!dragField) return;
                     e.preventDefault();
@@ -209,7 +212,7 @@ function DataTableSortSettings({ className }: { className?: string }) {
                           setDropIndex(index + (e.clientY > rect.top + rect.height / 2 ? 1 : 0));
                         }}
                         className={cn(
-                          "astw:relative astw:flex astw:h-9 astw:items-center astw:gap-2 astw:rounded-sm astw:pr-1 astw:pl-1.5 astw:hover:bg-accent",
+                          "astw:relative astw:flex astw:h-9 astw:shrink-0 astw:items-center astw:gap-2 astw:rounded-sm astw:pr-1 astw:pl-1.5 astw:hover:bg-accent",
                           dragField === sort.field && "astw:opacity-40",
                         )}
                       >
@@ -265,6 +268,7 @@ function DataTableSortSettings({ className }: { className?: string }) {
                             if (!next || Array.isArray(next)) return;
                             setDirection(sort.field, next.value);
                           }}
+                          disabled={!onSortStatesChange && sortStates.length > 1}
                           aria-label={t("sortDirectionFor", { column: label })}
                           className="astw:w-[7.5rem] astw:shrink-0 astw:[&_[data-slot=select-trigger]]:h-7 astw:[&_[data-slot=select-trigger]]:text-body-sm"
                         />

@@ -62,6 +62,28 @@ function UnsortedPage() {
   );
 }
 
+function ManySortsPage() {
+  const { control } = useCollectionVariables({
+    params: {
+      initialSort: Array.from({ length: 15 }, (_, i) => ({
+        field: `field${i}`,
+        direction: "Asc" as const,
+      })),
+    },
+  });
+  const table = useDataTable({
+    columns: [{ id: "name", label: "Name", sort: { field: "name", type: "string" } }],
+    data: { rows: [{ id: "1", name: "Alex" }] },
+    control,
+    sort: { multiple: true },
+  });
+  return (
+    <DataTable.Root value={table}>
+      <DataTable.SortSettings />
+    </DataTable.Root>
+  );
+}
+
 // Testing Library's drag helpers clone DataTransfer without its stored data.
 const dragEvent = (type: string, target: Element, dataTransfer: DataTransfer, clientY = 0) =>
   fireEvent(
@@ -94,6 +116,31 @@ describe.each(["light", "dark"] as const)("DataTable.SortSettings / %s", (mode) 
       );
       expect(remove.getBoundingClientRect().right).toBeLessThanOrEqual(bounds.right);
     });
+  });
+
+  it("scrolls long sort lists without shrinking rows or hiding the other controls", async () => {
+    const user = userEvent.setup();
+    render(<ManySortsPage />, { wrapper });
+    await user.click(await screen.findByRole("button", { name: /^Sort/ }));
+    const group = screen.getByRole("group", { name: "Sort settings" });
+    const list = within(group).getByRole("list");
+    const rows = within(list).getAllByRole("listitem");
+    const add = within(group).getByRole("button", { name: "Add another sort" });
+    const clear = within(group).getByRole("button", { name: "Clear" });
+    expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+    expect(rows[0].offsetHeight).toBe(36);
+    expect(clear.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      list.getBoundingClientRect().top,
+    );
+    expect(add.getBoundingClientRect().top).toBeGreaterThanOrEqual(
+      list.getBoundingClientRect().bottom,
+    );
+    expect(add.getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
+    list.scrollTop = list.scrollHeight;
+    await waitFor(() => expect(list.scrollTop).toBeGreaterThan(0));
+    expect(rows[14].getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      list.getBoundingClientRect().bottom + 1,
+    );
   });
 
   it("reorders priority with a real DataTransfer drag and updates aria-sort", async () => {

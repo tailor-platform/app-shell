@@ -172,6 +172,8 @@ export function useDataTable<
     };
   }, [control, sortDisabled, sortMultiple]);
 
+  const onSortStatesChange = sortDisabled ? undefined : control?.setSortStates;
+
   // ---------------------------------------------------------------------------
   // Row selection and expansion share one row-id convention.
   // ---------------------------------------------------------------------------
@@ -220,6 +222,7 @@ export function useDataTable<
     sortStates,
     sortMultiple,
     onSort,
+    onSortStatesChange,
     pageInfo,
     total,
     totalPages,

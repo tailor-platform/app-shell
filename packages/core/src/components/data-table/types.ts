@@ -897,6 +897,8 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   /** Whether multiple sort keys are enabled (`sort: { multiple: true }`). Optional so hand-built values stay valid; treated as `false` when omitted. */
   sortMultiple?: boolean;
   onSort?: (field: string, direction?: "Asc" | "Desc") => void;
+  /** Replace the ordered sort keys atomically, used by SortSettings. */
+  onSortStatesChange?: (sortStates: SortState[]) => void;
 
   // Pagination (derived from data)
   pageInfo: PageInfo;

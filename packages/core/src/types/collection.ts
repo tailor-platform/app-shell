@@ -443,6 +443,8 @@ export interface CollectionControl<
   // Sort operations
   sortStates: SortState[];
   setSort(field: TFieldName, direction?: "Asc" | "Desc"): void;
+  /** Replace the ordered sort keys in one update and reset pagination. */
+  setSortStates?: (sortStates: SortState[]) => void;
   clearSort: () => void;
 
   // Pagination operations

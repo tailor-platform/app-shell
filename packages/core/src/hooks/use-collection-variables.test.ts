@@ -325,6 +325,25 @@ describe("useCollectionVariables", () => {
   // Sort operations
   // ---------------------------------------------------------------------------
   describe("sort operations", () => {
+    it("replaces ordered sort keys atomically and resets pagination", () => {
+      const onParamsChange = vi.fn();
+      const { result } = renderHook(() => useCollectionVariables({ onParamsChange }));
+      act(() => result.current.control.goToNextPage({ endCursor: "cursor1" }));
+      const next = [
+        { field: "name", direction: "Asc" as const },
+        { field: "createdAt", direction: "Desc" as const },
+      ];
+      act(() => result.current.control.setSortStates?.(next));
+      expect(result.current.control.sortStates).toEqual(next);
+      expect(result.current.variables.order).toEqual(next);
+      expect(result.current.variables.pagination).toEqual({ first: 20 });
+      expect(onParamsChange).toHaveBeenLastCalledWith({
+        initialFilters: [],
+        initialSort: next,
+        pageSize: 20,
+      });
+    });
+
     it("sets sort", () => {
       const { result } = renderHook(() => useCollectionVariables({}));
 

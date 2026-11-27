@@ -1,5 +1,144 @@
 # @tailor-platform/app-shell
 
+## 1.22.0
+
+### Minor Changes
+
+- 9b110a5: The package now ships its docs at `dist/docs/`, with a guide at `dist/docs/AGENTS.md` that indexes them and lists the house rules, so coding agents can read the docs for the installed version without a skill having to trigger. Point your `AGENTS.md` at the guide with an `@` import (Claude Code, Amp and Gemini CLI load it directly; other agents follow the path):
+  
+  ```md
+  @node_modules/@tailor-platform/app-shell/dist/docs/AGENTS.md
+  ```
+  
+  See the new Coding Agents guide for the details.
+  
+  The `app-shell-patterns` skill no longer carries its own copy of the docs. It reads them from the installed package, and its `references/` folder now holds pointers to the new location. If you keep a copy of the skill in your repo, replace it with the one in the installed package's `skills/` folder.
+- a4898de: Add `DataTable.SortSettings`, a "Sort" toolbar control next to `DataTable.ColumnSettings`. Its popover lists the active sort keys in priority order, each with an Ascending / Descending select and a remove button, adds keys from a searchable list of sortable columns, and clears them all. With `sort: { multiple: true }`, drag a key's handle (or focus it and press Arrow Up / Arrow Down) to change its priority. The trigger shows how many keys are active.
+  
+  ```tsx
+  <Toolbar.Group>
+    <DataTable.SortSettings />
+    <DataTable.ColumnSettings />
+  </Toolbar.Group>
+  ```
+  
+  Sorted column headers now show stacked up/down carets with the active direction highlighted, replacing the single ▲/▼ glyph. In forced-colors mode, only the active caret is shown. The caret slot is reserved on every sortable header, so applying a sort no longer widens the column; unsorted sortable headers are about 8px wider than before as a result.
+  
+  **Breaking:** `useDataTable`, `UseDataTableReturn`, and `DataTableContextValue` replace `onSort(field, direction)` with `onSortStatesChange(nextStates)`. Every header and SortSettings action now replaces the ordered keys in one call. `CollectionControl.setSortStates` is required and must reset pagination; its existing `setSort` and `clearSort` methods remain available. On metadata-backed controls, `sortStates` and `setSortStates` share the same field-name type, so the current keys can be reordered without a cast.
+  
+  ```ts
+  // Before
+  table.onSort?.("name", "Desc");
+  // After: update the existing key without dropping other keys or changing priority.
+  table.onSortStatesChange?.(
+    table.sortStates.map((sort) => (sort.field === "name" ? { ...sort, direction: "Desc" } : sort)),
+  );
+  ```
+  
+  `useDataTable` also returns `sortMultiple`. In single-sort mode, adding a new field replaces existing keys; changing direction or removing an existing field preserves the other keys, including persisted multiple keys. See the [migration guide](../docs/migrations.md#1220-datatable-sorting-uses-one-ordered-state-callback) for custom control and hand-built root migrations.
+- a878213: Breaking change: remove automatic CommandPalette registration from `ActionPanel`. Panel rows keep their existing behavior, and the panel can now render outside `AppShell`.
+  Apps that need panel actions in the palette must register them explicitly with `useRegisterCommandPaletteActions` inside `AppShell`.
+  
+  Before:
+  
+  ```tsx
+  <ActionPanel title="Order Actions" actions={actions} />
+  ```
+  
+  After, inside the component that renders the panel:
+  
+  ```tsx
+  useRegisterCommandPaletteActions(
+    "Order Actions",
+    actions.flatMap((action) =>
+      !action.disabled && !action.loading && action.onClick
+        ? [{ key: action.key, label: action.label, icon: action.icon, onSelect: action.onClick }]
+        : [],
+    ),
+  );
+  
+  return <ActionPanel title="Order Actions" actions={actions} />;
+  ```
+  
+  Import `useRegisterCommandPaletteActions` from `@tailor-platform/app-shell`. The filter preserves the previous eligibility rules; register only a subset if desired.
+- 268c833: Add `Stepper` for showing progress through a fixed sequence of steps: the steps of a wizard form, the stages of an approval flow, the quality gates of a project. Pass the `steps` in order (each with an `id`, a `label`, an optional `badge` beside it and an optional `description` under it) and one `progress` value: `not-started`, or `started` with `passedSteps`, an ordered prefix of `"complete"` / `"skipped"` results. The prefix length determines the current step; a result for every step means the flow is complete. This prevents a current or future step from also being marked skipped. The steps sit in a row that scrolls sideways when they don't fit and, below 400px of container width, shows only its markers with "Step 2 of 4" and the current step's label, and each marker names its step in a tooltip. `onStepClick` makes completed and skipped steps clickable, and its ids are inferred from `steps`.
+  
+  For local wizard navigation, `useStepper` manages typed progress with `next`, `back`, `skip`, and `moveStep`. `next()` completes the flow on the last step. The return type is a discriminated union: narrow with `flow.hasNext` to call `next` / `skip`, which are `undefined` once complete. `hasNext` stays true on the last step; call `next()` after successful final submission, whose state belongs to the page. `hasPrevious` indicates whether Back can move to or reopen a step. `back` and `moveStep` remain available after completion. Use `moveStep(id, { skipped: true })` to skip the current step through the destination's predecessor; the default completes them. Server-owned flows can pass `progress` directly.
+  
+  ```tsx
+  import { Stepper, useStepper } from "@tailor-platform/app-shell";
+  
+  const flow = useStepper({
+    steps: [
+      { id: "supplier", label: "Supplier" },
+      { id: "delivery", label: "Delivery" },
+      { id: "review", label: "Review" },
+    ],
+    initialStepId: "delivery",
+  });
+  
+  <Stepper
+    aria-label="New purchase order"
+    steps={flow.steps}
+    progress={flow.progress}
+    onStepClick={flow.moveStep}
+  />;
+  ```
+- 8a193ac: Error toasts, and toasts with an `action`, now stay until the user closes them. `useToast` gives `toast.error(...)`, the error state of `toast.promise(...)`, and any call with an `action` the defaults `duration: Infinity` and `closeButton: true`. Before, Sonner closed every toast after 4 seconds, so a failed save could disappear before the user read it, and an Undo could vanish while the user reached for it.
+  
+  This changes what users see after the update. To keep the previous behavior, or to set your own defaults, use the new `toastDefaults` prop of `AppShell`. A field set there replaces that field only; fields and kinds left out keep the new default. An empty object such as `error: {}` is a type error. See the migration guide (`docs/migrations.md`, 1.22.0).
+  
+  ```tsx
+  // The previous behavior (4 seconds, no close button) for both kinds
+  <AppShell
+    toastDefaults={{
+      error: { duration: 4000, closeButton: false },
+      action: { duration: 4000, closeButton: false },
+    }}
+    modules={modules}
+  />
+  ```
+  
+  A `duration` or `closeButton` passed to the call still wins:
+  
+  ```ts
+  toast.error("Retrying in 5s", { duration: 5000 }); // closes after 5 seconds
+  ```
+  
+  A call without an `action` that updates one of these toasts by `id` resets `duration` and `closeButton` to Sonner's defaults unless it passes its own. `toast.custom`, toasts with `dismissible: false`, and success, info, warning and plain toasts without an `action` keep Sonner's defaults. The position (bottom right), the number of visible toasts (3) and the z-index are unchanged. A `toast` imported from `sonner` directly does not get the new defaults.
+  
+  The toast docs (`patterns/interaction-toast`, `api/use-toast`) now describe the real position, count and durations. They used to say top right, one at a time, and 3 seconds for success.
+- 6ce3d2b: Add `Card.Header.action` for controls beside the title and `Card.Footer` for footer content with consistent padding and a top border.
+  Header descriptions and children keep their existing below-title layout; action groups wrap in narrow cards. Footer content is start-aligned by default; use `className="justify-end"` for right-aligned actions.
+  
+  ```tsx
+  <Card.Root>
+    <Card.Header title="Order details" action={<Button type="button">Edit</Button>} />
+    <Card.Content>{/* Order details */}</Card.Content>
+    <Card.Footer className="justify-end">
+      <Button type="button" variant="outline">
+        Cancel
+      </Button>
+      <Button type="button">Save</Button>
+    </Card.Footer>
+  </Card.Root>
+  ```
+
+### Patch Changes
+
+- 30a0197: The sidebar's item list and the icon rail's group flyout scroll more quietly.
+  
+  - The scrollbar is thin with no track, and shows only while the list is scrolling.
+  - In the default inset sidebar, it sits on the sidebar's edge instead of 8px inside it, including when the sidebar is resizable.
+  - The resize handle's hit area now starts at the sidebar's edge instead of overlapping its last 6px, so it no longer covers the scrollbar. The handle's pill stays where it was.
+  - While there is more to scroll, the bottom of the list fades out, like the top of the page content does.
+  
+  The global scrollbar style and every other scroll area are unchanged.
+- 88e13ce: The shell no longer shifts when a page jumps to an anchor, calls `scrollIntoView` or focuses a field below the fold. On long forms, the hidden inputs inside `Select` and `Combobox` made the shell's outer frame taller than the window, and those jumps scrolled the frame itself, pushing the header out of view. The content scroll area now contains those inputs, and the frame can no longer be scrolled.
+- dda13c7: Expand public API documentation with more complete reference coverage and usage examples.
+- 3cfe6b0: Give small controls a 24×24px hit area (WCAG 2.5.8 target size) without changing their look: `Checkbox` (16px box), the date field segments, `Dialog`'s close button, `Combobox` chip remove buttons, `DescriptionCard`'s copy button, `DataTable`'s sub-row caret and `BadgeList`'s "+N" trigger.
+  Capsule `Tabs` with `size="xs"` now use a 24px tab inside 2px of track padding; the 28px track is unchanged, the active capsule is 4px taller.
+
 ## 1.21.0
 
 ### Minor Changes

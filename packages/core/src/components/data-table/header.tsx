@@ -273,8 +273,8 @@ DataTableHeaders.displayName = "DataTable.Headers";
 
 /**
  * Stacked up/down carets beside a sorted header label. The active direction is
- * drawn in the foreground color and the other is muted, so both directions are
- * always visible and the current one reads at a glance.
+ * drawn in the foreground color. The other is muted in regular colors and
+ * hidden in forced colors, where the fills may look identical.
  *
  * @internal
  */
@@ -282,7 +282,7 @@ function SortIndicator({ direction }: { direction?: "Asc" | "Desc" }) {
   // Fill-only triangles with the corners rounded in the path itself (a stroke
   // would leave a visible outline on the translucent inactive caret).
   const active = "astw:fill-foreground";
-  const inactive = "astw:fill-muted-foreground/30";
+  const inactive = "astw:fill-muted-foreground/30 astw:forced-colors:invisible";
   return (
     <svg
       data-slot="data-table-sort-indicator"

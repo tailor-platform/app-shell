@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { DataTable, useCollectionVariables, useDataTable } from "@tailor-platform/app-shell";
 import { AppShell } from "@tailor-platform/app-shell/testing";
 import { beforeEach, describe, expect, it } from "vitest";
-import { page } from "vitest/browser";
+import { cdp, page } from "vitest/browser";
 import { applyPalette } from "./theme-utils";
 
 const longLabel = "Customer display name with a very long column label";
@@ -96,6 +96,29 @@ const dragEvent = (type: string, target: Element, dataTransfer: DataTransfer, cl
   );
 
 const sortOrder = () => JSON.parse(screen.getByLabelText("Sort order").textContent!);
+
+const caretVisibility = (header: HTMLElement) =>
+  Array.from(
+    header.querySelectorAll('[data-slot="data-table-sort-indicator"] path'),
+    (path) => getComputedStyle(path).visibility,
+  );
+
+it("shows only the active sort caret in forced colors", async () => {
+  const session = cdp();
+  await session.send("Emulation.setEmulatedMedia", {
+    features: [{ name: "forced-colors", value: "active" }],
+  });
+  try {
+    expect(matchMedia("(forced-colors: active)").matches).toBe(true);
+    render(<SortPage />, { wrapper });
+    const descending = await screen.findByRole("columnheader", { name: "Status" });
+    const ascending = screen.getByRole("columnheader", { name: longLabel });
+    expect(caretVisibility(ascending)).toEqual(["visible", "hidden"]);
+    expect(caretVisibility(descending)).toEqual(["hidden", "visible"]);
+  } finally {
+    await session.send("Emulation.setEmulatedMedia", { features: [] });
+  }
+});
 
 describe.each(["light", "dark"] as const)("DataTable.SortSettings / %s", (mode) => {
   beforeEach(() => applyPalette("default", mode));

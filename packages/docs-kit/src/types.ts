@@ -84,8 +84,8 @@ export interface ManifestEntry {
 }
 
 export interface ManifestSkill {
-  /** Repo-relative directory and skill entrypoint filename within it. */
-  output: { dir: string; filename: string };
+  /** Repo-relative path to the skill entrypoint. */
+  output: string;
   /** Authored template path and input hash. */
   template: { path: string; hash: string };
 }

@@ -2325,20 +2325,14 @@
   },
   "skills": {
     "app-shell-patterns": {
-      "output": {
-        "dir": "packages/core/skills/app-shell-patterns",
-        "filename": "SKILL.md"
-      },
+      "output": "packages/core/skills/app-shell-patterns/SKILL.md",
       "template": {
         "path": "docs-src/skill/app-shell-patterns/SKILL.template.md",
         "hash": "5639352e160452ee"
       }
     },
     "app-shell-upgrade": {
-      "output": {
-        "dir": "packages/core/skills/app-shell-upgrade",
-        "filename": "SKILL.md"
-      },
+      "output": "packages/core/skills/app-shell-upgrade/SKILL.md",
       "template": {
         "path": "docs-src/skill/app-shell-upgrade/SKILL.template.md",
         "hash": "f9be942f3e596c00"

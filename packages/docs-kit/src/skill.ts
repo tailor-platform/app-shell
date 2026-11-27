@@ -250,12 +250,12 @@ export function computeSkill(repoRoot: string, skill: SkillConfig, outlines: Out
     .replace("{{API_TABLE}}", simpleTable(sections.api, "api", docLink))
     .replace("{{PAGES_TABLE}}", entryTable(sections.pages, "pages", docLink))
     .replace("{{PATTERNS_TABLE}}", entryTable(sections.patterns, "patterns", docLink));
-  const output = { dir: skill.outDir, filename: "SKILL.md" };
-  files.set(output.filename, { content });
+  const filename = "SKILL.md";
+  files.set(filename, { content });
 
   return {
     files,
-    output,
+    output: posix.join(skill.outDir, filename),
     template: { path: skill.templatePath, hash: hash(normalizeText(template)) },
   };
 }

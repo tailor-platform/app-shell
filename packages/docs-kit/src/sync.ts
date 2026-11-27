@@ -110,9 +110,10 @@ export function sync(repoRoot: string): SyncResult {
   }));
   const skills: Record<string, ManifestSkill> = Object.create(null);
   for (const { id, output, template, files } of computed) {
-    rmSync(join(repoRoot, output.dir), { recursive: true, force: true });
+    const outDir = posix.dirname(output);
+    rmSync(join(repoRoot, outDir), { recursive: true, force: true });
     for (const [path, file] of files) {
-      const repoRel = posix.join(output.dir, path);
+      const repoRel = posix.join(outDir, path);
       const abs = join(repoRoot, repoRel);
       mkdirSync(dirname(abs), { recursive: true });
       writeFileSync(abs, file.stamped, "utf8");

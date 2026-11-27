@@ -122,8 +122,8 @@ export function check(repoRoot: string): CheckResult {
   type SkillOutput = { id: string; unitSlug?: string };
   const expected = new Map<string, SkillOutput>();
   for (const [id, skill] of Object.entries(recorded)) {
-    if (skill.output) {
-      expected.set(posix.join(skill.output.dir, skill.output.filename), { id });
+    if (typeof skill.output === "string") {
+      expected.set(skill.output, { id });
     }
   }
   for (const entry of Object.values(manifest?.units ?? {})) {
@@ -138,9 +138,10 @@ export function check(repoRoot: string): CheckResult {
       }
       // Use the recorded location, not the current config, to catch skill moves.
       const output = recorded[id].output;
-      if (!output) continue;
+      if (typeof output !== "string") continue;
+      const outDir = posix.dirname(output);
       for (const path of paths) {
-        expected.set(posix.join(output.dir, "references", path), {
+        expected.set(posix.join(outDir, "references", path), {
           id,
           unitSlug: entry.slug,
         });
@@ -164,8 +165,9 @@ export function check(repoRoot: string): CheckResult {
           });
         }
       }
+      const outDir = posix.dirname(output);
       for (const [path, file] of files) {
-        actual.set(posix.join(output.dir, path), { id, unitSlug: file.unitSlug });
+        actual.set(posix.join(outDir, path), { id, unitSlug: file.unitSlug });
       }
     } catch (e) {
       failedSkills.add(id);

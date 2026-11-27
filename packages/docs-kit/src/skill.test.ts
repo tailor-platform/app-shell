@@ -257,11 +257,11 @@ it("checks template edits and the paths and source units of skill outputs", () =
     expect(manifest.units.migrations.skillReferences).toEqual({ upgrade: ["migrations.md"] });
     expect(manifest.skills).toEqual({
       patterns: {
-        output: { dir: "patterns", filename: "SKILL.md" },
+        output: "patterns/SKILL.md",
         template: { path: "SKILL.template.md", hash: expect.any(String) },
       },
       upgrade: {
-        output: { dir: "upgrade", filename: "SKILL.md" },
+        output: "upgrade/SKILL.md",
         template: { path: "upgrade.template.md", hash: expect.any(String) },
       },
     });
@@ -323,18 +323,18 @@ it("checks template edits and the paths and source units of skill outputs", () =
     );
     const moved = sync(root).manifest;
     expect(moved.units).toEqual(manifest.units);
-    expect(moved.skills?.patterns.output.dir).toBe("moved");
+    expect(moved.skills?.patterns.output).toBe("moved/SKILL.md");
     expect(check(root).ok).toBe(true);
 
     const broken = structuredClone(moved);
-    const skillOutput = broken.skills!.patterns.output;
-    skillOutput.filename = "old-SKILL.md";
+    const patterns = broken.skills!.patterns;
+    patterns.output = "moved/old-SKILL.md";
     write("docs-manifest.json", JSON.stringify(broken));
     expect(messages().toSorted()).toEqual([
       "skill file moved/SKILL.md is new — run sync.",
       "skill file moved/old-SKILL.md removed — run sync.",
     ]);
-    skillOutput.filename = "SKILL.md";
+    patterns.output = "moved/SKILL.md";
     broken.units.button.skillReferences = { patterns: ["components/old-button.md"] };
     write("docs-manifest.json", JSON.stringify(broken));
     expect(messages().toSorted()).toEqual([

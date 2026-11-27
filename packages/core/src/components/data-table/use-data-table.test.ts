@@ -391,8 +391,10 @@ describe("useDataTable", () => {
   // Sort delegation
   // -------------------------------------------------------------------------
   describe("sort delegation", () => {
-    it("exposes the atomic sort setter only when sorting is enabled", () => {
-      const setSortStates = vi.fn();
+    it("calls the atomic sort setter on its control only when sorting is enabled", () => {
+      const setSortStates = vi.fn(function (this: CollectionControl) {
+        this.resetPage();
+      });
       const control = makeControl({ setSortStates });
       const { result, rerender } = renderHook(
         ({ sort }: { sort: false | undefined }) =>
@@ -405,6 +407,7 @@ describe("useDataTable", () => {
       ];
       act(() => result.current.onSortStatesChange?.(next));
       expect(setSortStates).toHaveBeenCalledExactlyOnceWith(next);
+      expect(control.resetPage).toHaveBeenCalledTimes(1);
       rerender({ sort: false });
       expect(result.current.onSortStatesChange).toBeUndefined();
     });

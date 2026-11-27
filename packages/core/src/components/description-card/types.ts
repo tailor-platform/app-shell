@@ -50,6 +50,8 @@ export interface FieldMeta {
   maxVisible?: number;
   /** Key path to currency code in data object (for money fields) */
   currencyKey?: string;
+  /** Currency sign format for money fields. Default: `"standard"`. */
+  currencySign?: Intl.NumberFormatOptions["currencySign"];
   /** Key path to href in data object (for link fields) */
   hrefKey?: string;
   /** Whether the link opens in a new tab */

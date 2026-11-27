@@ -517,24 +517,68 @@ describe("renderField", () => {
   });
 
   describe("money", () => {
-    it("renders formatted currency", () => {
+    it.each([
+      [1234.5, undefined, "$1,234.50"],
+      [-1234.5, undefined, "-$1,234.50"],
+      [-1234.5, "standard", "-$1,234.50"],
+      [-1234.5, "accounting", "($1,234.50)"],
+      [1234.5, "accounting", "$1,234.50"],
+      ["-1234.5", "accounting", "($1,234.50)"],
+      [0, "accounting", "$0.00"],
+    ] as const)("formats money %s with %s", (value, currencySign, expected) => {
       const { container } = render(
         renderField(
           makeField({
             type: "money",
-            value: 1234.5,
+            value,
             data: { currency: "USD" },
-            meta: { currencyKey: "currency" },
+            meta: { currencyKey: "currency", currencySign },
           }),
         ),
       );
-      expect(container.textContent).toContain("1,234.50");
+      expect(container.textContent).toBe(expected);
     });
 
-    it("renders dash for empty value", () => {
-      const { container } = render(renderField(makeField({ type: "money", value: null })));
-      expect(container.textContent).toBe("–");
+    it("uses accounting notation with a nested currency key", () => {
+      const { container } = render(
+        renderField(
+          makeField({
+            type: "money",
+            value: -1234.5,
+            data: { payment: { currency: "EUR" } },
+            meta: { currencyKey: "payment.currency", currencySign: "accounting" },
+          }),
+        ),
+      );
+      expect(container.textContent).toBe("(€1,234.50)");
     });
+
+    it.each([
+      [{}, "($1,234.50)"],
+      [{ currency: "invalid" }, "invalid-1234.50"],
+    ])("preserves currency fallbacks for %j with accounting notation", (data, expected) => {
+      const { container } = render(
+        renderField(
+          makeField({
+            type: "money",
+            value: -1234.5,
+            data,
+            meta: { currencySign: "accounting" },
+          }),
+        ),
+      );
+      expect(container.textContent).toBe(expected);
+    });
+
+    it.each([null, undefined, ""])(
+      "renders dash for empty value %s with accounting notation",
+      (value) => {
+        const { container } = render(
+          renderField(makeField({ type: "money", value, meta: { currencySign: "accounting" } })),
+        );
+        expect(container.textContent).toBe("–");
+      },
+    );
   });
 
   describe("link", () => {

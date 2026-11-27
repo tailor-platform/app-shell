@@ -667,9 +667,9 @@
       "symbols": ["DescriptionCard", "DescriptionCardProps"],
       "hashes": {
         "typeSurface": "04d576b0cf725dfe",
-        "outline": "114ca11b5431342c",
+        "outline": "74f1b19e0e2a020b",
         "snapshot": null,
-        "outputMd": "8930a410d7d45f89",
+        "outputMd": "44adc5ae25a27246",
         "examples": "a5eb77c04d06ab08"
       }
     },
@@ -2048,7 +2048,7 @@
     "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "f8bc1ff57c4e7d18",
     "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
     "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "9b1672c71b6db3ff",
-    "packages/core/skills/app-shell-patterns/references/components/description-card.md": "8930a410d7d45f89",
+    "packages/core/skills/app-shell-patterns/references/components/description-card.md": "44adc5ae25a27246",
     "packages/core/skills/app-shell-patterns/references/components/dialog.md": "cd9fa9c4b8ccb108",
     "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "cabfb86627aefd6f",
     "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "12021e27b57f45e9",

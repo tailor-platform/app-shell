@@ -2,7 +2,7 @@
 
 These are the docs for the installed version of AppShell. Read the matching doc before you write or change a screen, form, table, dialog, navigation or styling, even if you've used AppShell before: other projects and older docs may be on a different version. Don't guess the API from shadcn/ui or Radix either: those guesses look right and are wrong here (`asChild` is `render`, `<form onSubmit>` is `Form onFormSubmit`, and `useToast()` returns the toast function itself).
 
-Each entry below is a file at `<category>/<slug>.md` in this folder (the docs root that the AppShell block in `AGENTS.md` names).
+Each entry below is a file at `<category>/<slug>.md` in the folder this guide is in.
 
 **Pages** (`pages/`). Start here for a whole screen. A page fixes the layout and names the pattern for each part.
 

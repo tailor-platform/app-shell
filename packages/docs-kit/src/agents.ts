@@ -4,26 +4,20 @@ import { join, posix } from "node:path";
 import { SECTION_BY_OUTDIR, SKILL_SECTIONS } from "./skill";
 import type { AgentsConfig, Outline, SkillSection } from "./types";
 
-/** Left in the emitted block for the package's CLI to resolve when it injects
- * the block, because only the consumer's repo layout knows the path. */
-export const PACKAGE_ROOT_TOKEN = "{{PACKAGE_ROOT}}";
-/** Likewise: the consumer's package that depends on AppShell. */
-export const PACKAGE_DIR_TOKEN = "{{PACKAGE_DIR}}";
-/** Likewise: the refresh command, whose name the CLI owns. */
-export const SYNC_COMMAND_TOKEN = "{{SYNC_COMMAND}}";
 const VERSION_TOKEN = "{{APP_SHELL_VERSION}}";
 
 /** Named for its audience, as Next.js names its in-package agent file, which
  * leaves `README.md` / `index.md` free for a human-facing docs home. Kept in
  * the docs root rather than the package root, where tools would load it as a
- * nested instruction file for this repo's own contributors. */
+ * nested instruction file for this repo's own contributors. Consumers' tooling
+ * (erp-kit) imports this exact path, so moving it is a breaking change. */
 export const GUIDE_FILE = "AGENTS.md";
 
 export interface AgentsOutput {
   /** Repo-relative path → content of every doc copied into the package. */
   docs: Map<string, string>;
   /** Repo-relative path → content of the files generated from templates (the
-   * guide, unstamped, and the block). The manifest hashes these. */
+   * guide, unstamped). The manifest hashes these. */
   generated: Map<string, string>;
 }
 
@@ -55,8 +49,8 @@ function strayToken(content: string, allowed: string[]): string | null {
   return stripped.match(/\{\{[^}]*\}\}/)?.[0] ?? null;
 }
 
-/** Compute the docs shipped in the package, the guide that indexes them, and
- * the block that points agents at the guide. Pure, like `computeSkill`: `sync`
+/** Compute the docs shipped in the package and the guide that indexes them.
+ * Pure, like `computeSkill`: `sync`
  * writes the result and `check` recomputes it, so the (gitignored) output never
  * has to exist. */
 export function computeAgents(
@@ -109,32 +103,8 @@ export function computeAgents(
     "Agents load it every session: trim the prose or switch a _TEASERS list to _SLUGS.",
   );
 
-  // The block holds only what stays put across versions: where the docs are.
-  const blockFail = (message: string): never => {
-    throw new Error(`${agents.blockTemplatePath}: ${message}`);
-  };
-  const docsRoot = posix.join(PACKAGE_ROOT_TOKEN, agents.docsDir.replace(/\/+$/, ""));
-  const blockTemplate = readFileSync(join(repoRoot, agents.blockTemplatePath), "utf8");
-  if (!blockTemplate.includes("{{GUIDE_PATH}}")) {
-    blockFail("must include {{GUIDE_PATH}}, the file agents are told to read.");
-  }
-  const block = blockTemplate
-    .replaceAll("{{GUIDE_PATH}}", posix.join(docsRoot, GUIDE_FILE))
-    .replaceAll("{{DOCS_ROOT}}", docsRoot);
-  const blockStray = strayToken(block, [PACKAGE_ROOT_TOKEN, PACKAGE_DIR_TOKEN, SYNC_COMMAND_TOKEN]);
-  if (blockStray) blockFail(`unknown placeholder ${blockStray}.`);
-  checkSize(
-    agents.blockTemplatePath,
-    block,
-    agents.blockMaxBytes,
-    "It sits in the consumer's AGENTS.md: move detail into the guide.",
-  );
-
   return {
     docs,
-    generated: new Map([
-      [posix.join(docsDir, GUIDE_FILE), guide],
-      [posix.join(agents.packageDir, agents.blockFile), block],
-    ]),
+    generated: new Map([[posix.join(docsDir, GUIDE_FILE), guide]]),
   };
 }

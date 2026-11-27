@@ -124,8 +124,8 @@ export function sync(repoRoot: string): SyncResult {
     }
   }
 
-  // Phase 5 — emit the docs shipped in the package and the AGENTS.md block that
-  // indexes them (gitignored output, like the skills).
+  // Phase 5 — emit the docs shipped in the package and the guide that indexes
+  // them (gitignored output, like the skills).
   let agents: Record<string, string> | undefined;
   if (config.agents) {
     const { docs, generated } = computeAgents(repoRoot, config.agents, outlines);

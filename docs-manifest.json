@@ -305,9 +305,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "748e92b6eb9b1bfb",
+        "outline": "d5d161ebb48393c8",
         "snapshot": null,
-        "outputMd": "49d3117d0ce9a117",
+        "outputMd": "9bb10b72cfbcba69",
         "examples": null
       }
     },
@@ -2131,12 +2131,11 @@
     "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "500699cceeeee1e9",
     "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "614ee4e4a47a3d1e",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "709614ee001970c9",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "ad36861c08c1357d",
+    "packages/core/skills/app-shell-patterns/SKILL.md": "8ee14c4ed0fc1685",
     "packages/core/skills/app-shell-upgrade/references/migrations.md": "3267fc8f68bd1f4f",
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   },
   "agents": {
-    "packages/core/dist/docs/AGENTS.md": "d645b6cd55239ff0",
-    "packages/core/dist/agents/AGENTS.block.md": "c64f473e6b8b1d1b"
+    "packages/core/dist/docs/AGENTS.md": "e1a4855c7e727c03"
   }
 }

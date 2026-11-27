@@ -63,24 +63,16 @@ export function loadConfig(repoRoot: string): DocsConfig {
     }
   }
   if (agents) {
-    for (const key of [
-      "guideTemplatePath",
-      "blockTemplatePath",
-      "packageDir",
-      "docsDir",
-      "blockFile",
-    ] as const) {
+    for (const key of ["guideTemplatePath", "packageDir", "docsDir"] as const) {
       if (!agents[key]?.trim()) {
         throw new Error(`docs-kit.config.json: outputs.agents.${key} is required`);
       }
     }
     // sync clears docsDir before writing, so it must stay inside the package.
-    for (const key of ["docsDir", "blockFile"] as const) {
-      if (agents[key].split("/").includes("..") || agents[key].startsWith("/")) {
-        throw new Error(
-          `docs-kit.config.json: outputs.agents.${key} must be a path inside packageDir`,
-        );
-      }
+    if (agents.docsDir.split("/").includes("..") || agents.docsDir.startsWith("/")) {
+      throw new Error(
+        "docs-kit.config.json: outputs.agents.docsDir must be a path inside packageDir",
+      );
     }
   }
   return {

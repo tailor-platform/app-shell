@@ -64,12 +64,9 @@
     ],
     "agents": {
       "guideTemplatePath": "docs-src/agents/AGENTS.guide.template.md",
-      "blockTemplatePath": "docs-src/agents/AGENTS.block.template.md",
       "packageDir": "packages/core",
       "docsDir": "dist/docs",
-      "blockFile": "dist/agents/AGENTS.block.md",
       "maxBytes": 6000,
-      "blockMaxBytes": 1500,
       "versionSource": "packages/core/package.json"
     }
   },

@@ -9,8 +9,8 @@ const VERSION_TOKEN = "{{APP_SHELL_VERSION}}";
 /** Named for its audience, as Next.js names its in-package agent file, which
  * leaves `README.md` / `index.md` free for a human-facing docs home. Kept in
  * the docs root rather than the package root, where tools would load it as a
- * nested instruction file for this repo's own contributors. Consumers' tooling
- * (erp-kit) imports this exact path, so moving it is a breaking change. */
+ * nested instruction file for this repo's own contributors. Consumers import
+ * this exact path from their AGENTS.md, so moving it is a breaking change. */
 export const GUIDE_FILE = "AGENTS.md";
 
 export interface AgentsOutput {

@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, posix, relative } from "node:path";
 
 import { computeAgents } from "./agents";
 import { loadConfig } from "./config";
@@ -9,7 +9,6 @@ import { readManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { loadSurface, snapshotHashForSlug } from "./project";
 import {
-  computeSkill,
   computeStampedSkill,
   readSkillVersion,
   stampSkill,
@@ -119,78 +118,103 @@ export function check(repoRoot: string): CheckResult {
   }
 
   findings.push(...unclaimedSkillDirFindings(config));
-  if (config.skills.length > 0) {
-    const expected = manifest?.skill ?? {};
-    const actual = new Map<string, string>();
-    // A skill that can't be computed is reported once, and its manifest entries
-    // are left out of the removed-file comparison below.
-    const failedDirs: string[] = [];
-    for (const skill of config.skills) {
-      try {
-        for (const [p, c] of computeSkill(repoRoot, skill, outlines)) {
-          actual.set(p, hash(normalizeText(c)));
+  const recorded = manifest?.skills ?? {};
+  type SkillOutput = { id: string; unitSlug?: string };
+  const expected = new Map<string, SkillOutput>();
+  for (const [id, skill] of Object.entries(recorded)) {
+    if (typeof skill.output === "string") {
+      expected.set(skill.output, { id });
+    }
+  }
+  for (const entry of Object.values(manifest?.units ?? {})) {
+    for (const [id, paths] of Object.entries(entry.skillReferences ?? {})) {
+      if (!Object.hasOwn(recorded, id)) {
+        findings.push({
+          level: "block",
+          slug: entry.slug,
+          message: `skill references for ${entry.slug} refer to unknown skill ${id} — run sync.`,
+        });
+        continue;
+      }
+      // Use the recorded location, not the current config, to catch skill moves.
+      const output = recorded[id].output;
+      if (typeof output !== "string") continue;
+      const outDir = posix.dirname(output);
+      for (const path of paths) {
+        expected.set(posix.join(outDir, "references", path), {
+          id,
+          unitSlug: entry.slug,
+        });
+      }
+    }
+  }
+  const actual = new Map<string, SkillOutput>();
+  // A skill that can't be computed is reported once, not as a series of removals.
+  const failedSkills = new Set<string>();
+  for (const [id, skill] of Object.entries(config.skills)) {
+    try {
+      // Validate version stamping even though it is not part of drift detection.
+      const { output, template, files } = computeStampedSkill(repoRoot, skill, outlines);
+      if (Object.hasOwn(recorded, id)) {
+        const baseline = recorded[id].template;
+        if (baseline?.path !== template.path || baseline.hash !== template.hash) {
+          findings.push({
+            level: "block",
+            slug: "skill",
+            message: `skill template ${template.path} drifted — run sync.`,
+          });
         }
-      } catch (e) {
-        failedDirs.push(`${skill.outDir}/`);
-        findings.push({ level: "block", slug: "skill", message: (e as Error).message });
       }
+      const outDir = posix.dirname(output);
+      for (const [path, file] of files) {
+        actual.set(posix.join(outDir, path), { id, unitSlug: file.unitSlug });
+      }
+    } catch (e) {
+      failedSkills.add(id);
+      findings.push({ level: "block", slug: "skill", message: (e as Error).message });
     }
-    for (const [p, h] of actual) {
-      if (expected[p] === undefined) {
-        findings.push({
-          level: "block",
-          slug: "skill",
-          message: `skill file ${p} is new — run sync.`,
-        });
-      } else if (expected[p] !== h) {
-        findings.push({
-          level: "block",
-          slug: "skill",
-          message: `skill file ${p} drifted — run sync.`,
-        });
-      }
+  }
+  for (const [path, file] of actual) {
+    const baseline = expected.get(path);
+    if (!baseline) {
+      findings.push({
+        level: "block",
+        slug: "skill",
+        message: `skill file ${path} is new — run sync.`,
+      });
+    } else if (baseline.id !== file.id || baseline.unitSlug !== file.unitSlug) {
+      findings.push({
+        level: "block",
+        slug: "skill",
+        message: `skill file ${path} drifted — run sync.`,
+      });
     }
-    for (const p of Object.keys(expected)) {
-      if (!actual.has(p) && !failedDirs.some((d) => p.startsWith(d))) {
-        findings.push({
-          level: "block",
-          slug: "skill",
-          message: `skill file ${p} removed — run sync.`,
-        });
-      }
-    }
-    // The manifest hashes unstamped content, so validate the stamp separately —
-    // otherwise a broken version source would only surface at publish time.
-    for (const skill of config.skills) {
-      if (failedDirs.includes(`${skill.outDir}/`)) continue;
-      try {
-        computeStampedSkill(repoRoot, skill, outlines);
-      } catch (e) {
-        findings.push({ level: "block", slug: "skill", message: (e as Error).message });
-      }
+  }
+  for (const [path, file] of expected) {
+    if (!actual.has(path) && !failedSkills.has(file.id)) {
+      findings.push({
+        level: "block",
+        slug: "skill",
+        message: `skill file ${path} removed — run sync.`,
+      });
     }
   }
 
   try {
-    const { generated } = computeAgents(repoRoot, config.agents, outlines);
-    const expected = manifest?.agents ?? {};
-    for (const [rel, content] of generated) {
-      if (expected[rel] !== hash(normalizeText(content))) {
-        findings.push({
-          level: "block",
-          slug: "agents",
-          message: `${rel} ${expected[rel] === undefined ? "is new" : "drifted"} — run sync.`,
-        });
-      }
+    const { guide } = computeAgents(repoRoot, config.agents, outlines);
+    const baseline = manifest?.agents;
+    if (
+      baseline?.output !== guide.output ||
+      baseline.template?.path !== guide.template.path ||
+      baseline.template.hash !== guide.template.hash
+    ) {
+      findings.push({
+        level: "block",
+        slug: "agents",
+        message: `${guide.output} guide path or template drifted — run sync.`,
+      });
     }
-    for (const rel of Object.keys(expected)) {
-      if (!generated.has(rel)) {
-        findings.push({ level: "block", slug: "agents", message: `${rel} removed — run sync.` });
-      }
-    }
-    // The manifest hashes unstamped content, so check the stamp separately.
-    const version = readSkillVersion(repoRoot, config.agents);
-    for (const content of generated.values()) stampSkill(content, version);
+    stampSkill(guide.content, readSkillVersion(repoRoot, config.agents));
   } catch (e) {
     findings.push({ level: "block", slug: "agents", message: (e as Error).message });
   }

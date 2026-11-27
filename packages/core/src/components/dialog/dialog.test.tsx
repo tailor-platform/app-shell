@@ -137,6 +137,8 @@ describe("Dialog", () => {
     // Click the close button (has sr-only text "Close")
     const closeButton = screen.getByText("Close").closest("button");
     expect(closeButton).toBeDefined();
+    // 16px icon + 4px padding on each side = the 24px WCAG target size.
+    expect(closeButton!.className).toContain("astw:p-1");
     await user.click(closeButton!);
 
     await waitFor(() => {

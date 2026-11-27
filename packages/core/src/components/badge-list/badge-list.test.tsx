@@ -100,6 +100,8 @@ describe("BadgeList", () => {
     expect(container.textContent).toContain("a");
     expect(container.textContent).toContain("b");
     expect(container.textContent).toContain("+3");
+    // The trigger's hit area is extended to 24px without changing the row height.
+    expect(screen.getByText("+3").className).toContain("astw:after:-inset-y-0.5");
     expect(container.textContent).not.toContain("c");
     expect(container.textContent).not.toContain("d");
     expect(container.textContent).not.toContain("e");

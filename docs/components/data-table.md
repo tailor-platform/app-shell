@@ -1985,7 +1985,7 @@ column({
 | -------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `text`   | `string \| number \| boolean \| bigint \| null \| undefined`                             | `String(value)` — falls back to `—` when nullish.                         | _(no options)_                                                                                                                |
 | `number` | `number \| null \| undefined`                                                            | `Intl.NumberFormat`. `—` for nullish / NaN.                               | `NumberCellOptions`: `minDecimals`, `maxDecimals`, `locale`                                                                   |
-| `money`  | `number \| null \| undefined`                                                            | `Intl.NumberFormat` currency. `—` for nullish.                            | `MoneyCellOptions<TRow>`: `currency` (string or `(row) => string`), `maxDecimals`, `locale`                                   |
+| `money`  | `number \| null \| undefined`                                                            | `Intl.NumberFormat` currency. `—` for nullish.                            | `MoneyCellOptions<TRow>`: `currency` (string or `(row) => string`), `currencySign`, `maxDecimals`, `locale`                   |
 | `date`   | `Date \| string \| number \| null \| undefined`                                          | `Intl.DateTimeFormat`. Accepts `Date`/ISO/epoch.                          | `DateCellOptions`: `dateFormat` (`"short"` \| `"long"` \| `"datetime"`), `locale`                                             |
 | `badge`  | `string \| number \| boolean \| null \| undefined \| Array<string \| number \| boolean>` | `<Badge>` keyed off the stringified value. Arrays render multiple badges. | `BadgeCellOptions`: `badgeVariantMap`, `badgeLabelMap`, `defaultBadgeVariant` (defaults to `"outline-neutral"`), `maxVisible` |
 | `link`   | `string \| number \| boolean \| null \| undefined`                                       | app-shell `<Link>` to `typeOptions.href(row)`.                            | `LinkCellOptions<TRow>`: `href: (row) => string \| null \| undefined` (returning nullish renders plain text; **required**)    |
@@ -2112,7 +2112,7 @@ function MoneyCells() {
         label: "USD formatting",
         accessor: (row) => row.amount,
         type: "money",
-        typeOptions: { currency: "USD", locale: "en-US" },
+        typeOptions: { currency: "USD", currencySign: "accounting", locale: "en-US" },
       }),
       column({
         id: "amount",
@@ -2126,6 +2126,7 @@ function MoneyCells() {
         { id: "1", amount: 12.3456, currency: "USD" },
         { id: "2", amount: 1500, currency: "JPY" },
         { id: "3", amount: 19.9, currency: "EUR" },
+        { id: "4", amount: -12.35, currency: "USD" },
       ],
     },
   });
@@ -2142,6 +2143,7 @@ function MoneyCells() {
 ```
 
 - Default `currency` is `"USD"` when omitted or when the accessor returns falsy.
+- `currencySign` accepts `"standard"` (the default) or `"accounting"`. Accounting notation follows the locale; for example, a negative USD amount in `en-US` displays as `($12.35)`. Invalid currency codes retain this setting when falling back to USD.
 - Invalid ISO codes fall back to USD (rather than throwing).
 - The minimum decimals always stays at the currency default (2 for USD, 0 for JPY); `maxDecimals` raises the cap without padding with trailing zeros.
 

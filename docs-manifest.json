@@ -588,10 +588,10 @@
       ],
       "hashes": {
         "typeSurface": "413c66caec0a0bf8",
-        "outline": "a4288a1435b46ed4",
+        "outline": "99b8307d6ae9f179",
         "snapshot": "086508560262377e",
-        "outputMd": "c32c7ccf13528bf1",
-        "examples": "8adc119ac0d7152c"
+        "outputMd": "e01131347a746b4b",
+        "examples": "ac4f428db740836f"
       },
       "skillReferences": {
         "app-shell-patterns": ["components/data-table.md"]
@@ -768,9 +768,9 @@
       "symbols": ["DescriptionCard", "DescriptionCardProps"],
       "hashes": {
         "typeSurface": "04d576b0cf725dfe",
-        "outline": "114ca11b5431342c",
+        "outline": "74f1b19e0e2a020b",
         "snapshot": null,
-        "outputMd": "8930a410d7d45f89",
+        "outputMd": "44adc5ae25a27246",
         "examples": "a5eb77c04d06ab08"
       },
       "skillReferences": {

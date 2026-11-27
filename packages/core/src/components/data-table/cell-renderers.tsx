@@ -99,6 +99,7 @@ function renderMoney<TRow extends Record<string, unknown>>(
   const formatOptions: Intl.NumberFormatOptions = {
     style: "currency",
     currency,
+    currencySign: options?.currencySign,
   };
   if (options?.maxDecimals != null) {
     formatOptions.maximumFractionDigits = options.maxDecimals;
@@ -111,6 +112,7 @@ function renderMoney<TRow extends Record<string, unknown>>(
     formatted = new Intl.NumberFormat(options?.locale, {
       style: "currency",
       currency: "USD",
+      currencySign: options?.currencySign,
     }).format(num);
   }
   return <span className="astw:tabular-nums">{formatted}</span>;

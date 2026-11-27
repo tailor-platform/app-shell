@@ -176,16 +176,25 @@ describe("DataTable", () => {
       expect(container.textContent).toContain("—");
     });
 
-    it("renders money cells with currency formatting", () => {
-      const { container } = renderTypedTable([
-        {
-          label: "Total",
-          type: "money",
-          accessor: (r) => r.total,
-          typeOptions: { currency: "USD", locale: "en-US" },
-        },
+    it.each([
+      [1234.5, undefined, "USD", "$1,234.50"],
+      [-1234.5, "standard", "USD", "-$1,234.50"],
+      [-1234.5, "accounting", "USD", "($1,234.50)"],
+      [1234.5, "accounting", "USD", "$1,234.50"],
+      [-1234.5, "accounting", "invalid", "($1,234.50)"],
+    ] as const)("formats money %s with %s and %s", (value, currencySign, currency, expected) => {
+      const moneyColumn: Column<TypedRow> = {
+        label: "Total",
+        type: "money",
+        accessor: (r) => (r.total == null ? null : value),
+        typeOptions: { currency, currencySign, locale: "en-US" },
+      };
+      renderTypedTable([
+        moneyColumn,
+        { ...moneyColumn, label: "Editable total", edit: { onValueCommitted: vi.fn() } },
       ]);
-      expect(container.textContent).toContain("$1,234.50");
+      expect(screen.getAllByText(expected)).toHaveLength(2);
+      expect(screen.getAllByText("—")).toHaveLength(2);
     });
 
     it("reads currency from row via function accessor", () => {

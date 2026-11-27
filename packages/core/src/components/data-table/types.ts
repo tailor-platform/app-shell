@@ -50,6 +50,8 @@ export interface MoneyCellOptions<TRow extends Record<string, unknown>> {
    * to read it from the row. Default: `"USD"`.
    */
   currency?: string | ((row: TRow) => string);
+  /** Currency sign format. Default: `"standard"`. */
+  currencySign?: Intl.NumberFormatOptions["currencySign"];
   /**
    * Maximum decimals. Raises the cap above the currency default while keeping
    * the minimum at the currency default (e.g. USD stays at ≥2, but a price

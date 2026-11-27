@@ -89,6 +89,25 @@ Formats currency values with proper locale formatting.
 // Renders: $1,234.56
 ```
 
+Set `meta.currencySign` to `"accounting"` to use locale-specific accounting notation for negative amounts, such as `($1,234.56)` for USD in `en-US`. The default is `"standard"`, which uses a minus sign.
+
+```tsx
+{
+  key: "amount",
+  label: "Amount",
+  type: "money",
+  meta: {
+    currencyKey: "currency",
+    currencySign: "accounting",
+  },
+}
+
+// Data: { amount: -1234.56, currency: "USD" }
+// Renders in en-US: ($1,234.56)
+```
+
+Money formatting uses the environment's locale. The default currency key is `"currency"`; missing currency codes fall back to USD. Invalid currency codes retain the existing plain-text fallback rather than applying accounting notation.
+
 ### date
 
 Formats date/time values with multiple format options.

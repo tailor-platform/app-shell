@@ -155,7 +155,11 @@ function formatDate(
 /**
  * Format a money value with currency
  */
-function formatMoney(value: unknown, currencyCode?: string): string {
+function formatMoney(
+  value: unknown,
+  currencyCode?: string,
+  currencySign?: Intl.NumberFormatOptions["currencySign"],
+): string {
   if (isEmpty(value)) return "";
 
   const numValue = typeof value === "number" ? value : parseFloat(String(value));
@@ -166,6 +170,7 @@ function formatMoney(value: unknown, currencyCode?: string): string {
     return new Intl.NumberFormat(undefined, {
       style: "currency",
       currency: currencyCode || "USD",
+      currencySign,
     }).format(numValue);
   } catch {
     // Fallback if currency code is invalid
@@ -385,7 +390,7 @@ function MoneyFieldRenderer({ field }: { field: ResolvedField }) {
 
   const currencyKey = field.meta?.currencyKey || "currency";
   const currency = getNestedValue(field.data, currencyKey) as string | undefined;
-  const formatted = formatMoney(field.value, currency);
+  const formatted = formatMoney(field.value, currency, field.meta?.currencySign);
 
   return (
     <Text.span variant="body-md" className="astw:text-foreground astw:tabular-nums">

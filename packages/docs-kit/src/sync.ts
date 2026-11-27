@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, posix } from "node:path";
 
 import { computeAgents } from "./agents";
 import { assembleMarkdown } from "./assemble";
@@ -11,7 +11,7 @@ import { writeManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { computeStampedSkill, readSkillVersion, stampSkill } from "./skill";
 import { loadSurface, snapshotHashForSlug } from "./project";
-import type { Manifest, ManifestEntry } from "./types";
+import type { Manifest, ManifestEntry, ManifestSkill } from "./types";
 
 export interface SyncResult {
   manifest: Manifest;
@@ -101,60 +101,56 @@ export function sync(repoRoot: string): SyncResult {
     };
   }
 
-  // Phase 4 — emit the consumer skills (gitignored output) from the generated
-  // docs + authored guidance, and hash each file so `check` can validate it.
+  // Phase 4 — emit the consumer skills (gitignored output) and record their paths.
   // Every skill is computed before any is written, so a bad version source
   // leaves the previous output intact.
-  let skill: Record<string, string> | undefined;
-  if (config.skills.length > 0) {
-    const computed = config.skills.map((s) => ({
-      outDir: s.outDir,
-      files: computeStampedSkill(repoRoot, s, outlines),
-    }));
-    skill = {};
-    for (const { outDir, files } of computed) {
-      rmSync(join(repoRoot, outDir), { recursive: true, force: true });
-      for (const [skillRel, { content, stamped }] of files) {
-        const abs = join(repoRoot, skillRel);
-        mkdirSync(dirname(abs), { recursive: true });
-        writeFileSync(abs, stamped, "utf8");
-        skill[skillRel] = hash(normalizeText(content));
-        written.push(skillRel);
+  const computed = Object.entries(config.skills).map(([id, s]) => ({
+    id,
+    ...computeStampedSkill(repoRoot, s, outlines),
+  }));
+  const skills: Record<string, ManifestSkill> = Object.create(null);
+  for (const { id, output, template, files } of computed) {
+    const outDir = posix.dirname(output);
+    rmSync(join(repoRoot, outDir), { recursive: true, force: true });
+    for (const [path, file] of files) {
+      const repoRel = posix.join(outDir, path);
+      const abs = join(repoRoot, repoRel);
+      mkdirSync(dirname(abs), { recursive: true });
+      writeFileSync(abs, file.stamped, "utf8");
+      if (file.unitSlug !== undefined) {
+        const references = (units[file.unitSlug].skillReferences ??= Object.create(null));
+        (references[id] ??= []).push(path.slice("references/".length));
       }
+      written.push(repoRel);
     }
+    skills[id] = { output, template };
   }
 
   // Phase 5 — emit the docs shipped in the package and the guide that indexes
   // them (gitignored output, like the skills).
-  const { docs, generated } = computeAgents(repoRoot, config.agents, outlines);
-  const version = readSkillVersion(repoRoot, config.agents);
-  // Stamp before any write, so a bad version source leaves the old output.
-  const stamped = [...generated].map(([rel, content]) => [rel, stampSkill(content, version)]);
+  const { docs, guide } = computeAgents(repoRoot, config.agents, outlines);
+  // Stamp before clearing the output, so a bad version source leaves it intact.
+  docs.set(guide.output, stampSkill(guide.content, readSkillVersion(repoRoot, config.agents)));
   rmSync(join(repoRoot, config.agents.packageDir, config.agents.docsDir), {
     recursive: true,
     force: true,
   });
-  for (const [rel, content] of [...docs, ...stamped]) {
+  for (const [rel, content] of docs) {
     const abs = join(repoRoot, rel);
     mkdirSync(dirname(abs), { recursive: true });
     writeFileSync(abs, content, "utf8");
     written.push(rel);
   }
-  const agents = Object.fromEntries(
-    [...generated].map(([rel, content]) => [rel, hash(normalizeText(content))]),
-  );
 
   const manifest: Manifest = {
-    version: 1,
+    version: 2,
     units,
-    ...(skill ? { skill } : {}),
-    agents,
+    ...(computed.length ? { skills } : {}),
+    agents: { output: guide.output, template: guide.template },
   };
   writeManifest(repoRoot, config.manifestFile, manifest);
-  // Format the manifest too, so a clean-tree `sync` is byte-idempotent: the
-  // manifest's hashes are over the OUTPUT files, never over the manifest text
-  // itself, so this reformatting is safe and only prevents the pre-commit oxfmt
-  // hook from later collapsing its arrays into a whitespace-only diff.
+  // Format the manifest too, so a clean-tree `sync` is byte-idempotent and the
+  // pre-commit formatter doesn't introduce a whitespace-only diff.
   formatFiles(repoRoot, [join(repoRoot, config.manifestFile)]);
   return { manifest, findings, written };
 }

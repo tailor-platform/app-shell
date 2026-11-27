@@ -78,19 +78,25 @@ export interface ManifestEntry {
   claims: string[];
   /** Resolved public export names this unit owns via `sources`, plus its `claims`. */
   symbols: string[];
+  /** Skill ID -> paths under that skill's `references/` derived from this unit. */
+  skillReferences?: Record<string, string[]>;
   hashes: UnitHashes;
+}
+
+export interface ManifestSkill {
+  /** Repo-relative path to the skill entrypoint. */
+  output: string;
+  /** Authored template path and input hash. */
+  template: { path: string; hash: string };
 }
 
 export interface Manifest {
   version: number;
   units: Record<string, ManifestEntry>;
-  /** Generated skill file (repo-relative) -> content hash, across every configured
-   * skill. Absent when no skill is configured. */
-  skill?: Record<string, string>;
-  /** Generated guide (repo-relative) -> content hash. The
-   * docs shipped beside them are verbatim copies of unit outputs, which `units`
-   * already hashes. */
-  agents?: Record<string, string>;
+  /** Consumer skills by stable ID. Absent when no skill is configured. */
+  skills?: Record<string, ManifestSkill>;
+  /** Package guide path and authored template fingerprint, before index expansion. */
+  agents?: { output: string; template: { path: string; hash: string } };
 }
 
 export interface CategoryRule {
@@ -111,7 +117,7 @@ export interface SkillConfig {
   /** Doc categories listed in SKILL.md, with a pointer stub per doc under
    * `references/`. Defaults to all of them; `[]` lists none. */
   sections?: SkillSection[];
-  /** Repo-relative migrations doc copied (with links rewritten) into the skill. */
+  /** Repo-relative generated migrations doc from a unit, copied with links rewritten. */
   migrationsSource?: string;
   /** Base blob URL for rewriting the migrations doc's relative links. Required with `migrationsSource`. */
   repoBlobUrl?: string;
@@ -160,8 +166,8 @@ export interface DocsConfig {
   exclusions: string[];
   /** Repo-relative dir holding centralized test snapshots (advisory signal). */
   snapshotDir?: string;
-  /** Consumer skills. sync emits each one and check validates each one. */
-  skills: SkillConfig[];
+  /** Consumer skills keyed by stable ID, independent of their output dirs. */
+  skills: Record<string, SkillConfig>;
   /** Package docs + guide. Skills point at these docs, so it's required. */
   agents: AgentsConfig;
   /** Output dirs no skill carries. Any other unclaimed output dir blocks check. */

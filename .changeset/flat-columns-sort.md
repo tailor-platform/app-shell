@@ -1,5 +1,5 @@
 ---
-"@tailor-platform/app-shell": major
+"@tailor-platform/app-shell": minor
 ---
 
 Add `DataTable.SortSettings`, a "Sort" toolbar control next to `DataTable.ColumnSettings`. Its popover lists the active sort keys in priority order, each with an Ascending / Descending select and a remove button, adds keys from a searchable list of sortable columns, and clears them all. With `sort: { multiple: true }`, drag a key's handle (or focus it and press Arrow Up / Arrow Down) to change its priority. The trigger shows how many keys are active.
@@ -24,4 +24,4 @@ table.onSortStatesChange?.(
 );
 ```
 
-`useDataTable` also returns `sortMultiple`. In single-sort mode, adding a new field replaces existing keys; changing direction or removing an existing field preserves the other keys, including persisted multiple keys. See the [migration guide](../docs/migrations.md#200-datatable-sorting-uses-one-ordered-state-callback) for custom control and hand-built root migrations.
+`useDataTable` also returns `sortMultiple`. In single-sort mode, adding a new field replaces existing keys; changing direction or removing an existing field preserves the other keys, including persisted multiple keys. See the [migration guide](../docs/migrations.md#1220-datatable-sorting-uses-one-ordered-state-callback) for custom control and hand-built root migrations.

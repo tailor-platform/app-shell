@@ -15,7 +15,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| 2.0.0         | [DataTable sorting uses one ordered-state callback](#200-datatable-sorting-uses-one-ordered-state-callback)                  |
+| 1.22.0        | [DataTable sorting uses one ordered-state callback](#1220-datatable-sorting-uses-one-ordered-state-callback)                 |
 | 1.22.0        | [ActionPanel no longer registers CommandPalette actions](#1220-actionpanel-no-longer-registers-commandpalette-actions)       |
 | 1.22.0        | [Error and action toasts stay until the user closes them](#1220-error-and-action-toasts-stay-until-the-user-closes-them)     |
 | 1.21.0        | [Testing helpers deprecated in favour of TestingProvider](#1210-testing-helpers-deprecated-in-favour-of-testingprovider)     |
@@ -33,9 +33,9 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
 
-## 2.0.0: DataTable sorting uses one ordered-state callback
+## 1.22.0: DataTable sorting uses one ordered-state callback
 
-**Applies to:** apps upgrading to 2.0.0 or later that call `useDataTable().onSort`, supply hand-built `DataTable.Root` values or contexts with `onSort`, or implement custom `CollectionControl` objects.
+**Applies to:** apps upgrading to 1.22.0 or later that call `useDataTable().onSort`, supply hand-built `DataTable.Root` values or contexts with `onSort`, or implement custom `CollectionControl` objects.
 
 `onSort(field, direction)` has been removed from `UseDataTableReturn` and `DataTableContextValue`. All sorting actions now use `onSortStatesChange(nextStates)`, passing the complete ordered list once. This is an update request, not a notification fired when sorting changes elsewhere. Apps that only pass `control` from `useCollectionVariables` to `useDataTable` need no wiring changes.
 

@@ -178,8 +178,7 @@ function StepText<Id extends string>({
         {clickable ? (
           <button
             type="button"
-            aria-labelledby={labelId}
-            aria-describedby={`${labelId}-content`}
+            aria-labelledby={`${labelId}-content ${labelId}`}
             onClick={() => onStepClick(step.id)}
             className="astw:w-full astw:cursor-pointer astw:rounded-sm astw:text-left astw:outline-none astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50"
           >

@@ -276,7 +276,7 @@ describe("Stepper", () => {
     expect(filledConnectors()).toEqual([true, true, false]);
   });
 
-  it("keeps custom passed steps keyboard-clickable with the common name and custom description", async () => {
+  it("keeps custom passed steps keyboard-clickable with visible text, the common label, and status in the name", async () => {
     const user = userEvent.setup();
     const onStepClick = vi.fn();
     renderStepper(
@@ -296,14 +296,16 @@ describe("Stepper", () => {
     );
     expect(screen.getAllByRole("button")).toHaveLength(2);
     const supplier = screen.getByRole("button", {
-      name: /^Supplier ?, Completed$/,
-      description: /Overdue.*Due 12 Nov/,
+      name: /^Overdue Due 12 Nov Supplier ?, Completed$/,
+      description: "",
     });
     await user.tab();
     expect(document.activeElement).toBe(supplier);
     await user.keyboard("{Enter}");
     expect(onStepClick).toHaveBeenCalledWith("supplier");
-    await user.click(screen.getByRole("button", { name: /^Approval ?, Skipped$/ }));
+    await user.click(
+      screen.getByRole("button", { name: /^Overdue Due 12 Nov Approval ?, Skipped$/ }),
+    );
     expect(onStepClick).toHaveBeenCalledWith("approval");
   });
 

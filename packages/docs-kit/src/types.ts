@@ -87,6 +87,10 @@ export interface Manifest {
   /** Generated skill file (repo-relative) -> content hash, across every configured
    * skill. Absent when no skill is configured. */
   skill?: Record<string, string>;
+  /** Generated guide (repo-relative) -> content hash. The
+   * docs shipped beside them are verbatim copies of unit outputs, which `units`
+   * already hashes. */
+  agents?: Record<string, string>;
 }
 
 export interface CategoryRule {
@@ -104,13 +108,30 @@ export interface SkillConfig {
   outDir: string;
   /** Repo-relative SKILL.md template with {{CATEGORY_TABLE}} placeholders. */
   templatePath: string;
-  /** Doc categories copied into `references/`. Defaults to all of them; `[]` ships none. */
+  /** Doc categories listed in SKILL.md, with a pointer stub per doc under
+   * `references/`. Defaults to all of them; `[]` lists none. */
   sections?: SkillSection[];
   /** Repo-relative migrations doc copied (with links rewritten) into the skill. */
   migrationsSource?: string;
   /** Base blob URL for rewriting the migrations doc's relative links. Required with `migrationsSource`. */
   repoBlobUrl?: string;
   /** Repo-relative package.json whose `version` is stamped into SKILL.md's
+   * `{{APP_SHELL_VERSION}}` at write time. */
+  versionSource?: string;
+}
+
+/** The docs shipped in the published package and the guide that indexes them
+ * (`<docsDir>/AGENTS.md`), which a consumer's AGENTS.md imports. */
+export interface AgentsConfig {
+  /** Repo-relative template for the guide: the rules plus index placeholders. */
+  guideTemplatePath: string;
+  /** Repo-relative dir of the published package. */
+  packageDir: string;
+  /** Docs dir inside the package. */
+  docsDir: string;
+  /** Upper bound on the guide, which agents load every session. */
+  maxBytes?: number;
+  /** Repo-relative package.json whose `version` is stamped into the guide's
    * `{{APP_SHELL_VERSION}}` at write time. */
   versionSource?: string;
 }
@@ -141,6 +162,8 @@ export interface DocsConfig {
   snapshotDir?: string;
   /** Consumer skills. sync emits each one and check validates each one. */
   skills: SkillConfig[];
+  /** Package docs + guide. Skills point at these docs, so it's required. */
+  agents: AgentsConfig;
   /** Output dirs no skill carries. Any other unclaimed output dir blocks check. */
   unclaimedSkillDirs: UnclaimedSkillDir[];
 }

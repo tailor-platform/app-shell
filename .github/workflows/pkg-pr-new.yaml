@@ -32,6 +32,8 @@ jobs:
           node-version-file: "./package.json"
       - run: pnpm install
       - run: pnpm build
+      # Emits the skills and dist/docs into packages/core, as the release does.
+      - run: pnpm docs:sync
       # pkg.pr.new recommends executing from the lockfile instead of pnpm dlx in CI.
       # This repo also uses pnpm catalogs, so packing must go through pnpm rather than
       # npm's default pack implementation.

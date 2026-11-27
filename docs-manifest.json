@@ -1779,11 +1779,11 @@
         "useStepper"
       ],
       "hashes": {
-        "typeSurface": "18aa2238fe3750e7",
-        "outline": "6e9f916a8167951c",
+        "typeSurface": "b5e79a5bd50a4ddf",
+        "outline": "20749c0df571f15b",
         "snapshot": "1fbf52f6178108d9",
-        "outputMd": "f06b0b09559fcdcc",
-        "examples": "71940ac6845de695"
+        "outputMd": "ed7f6af9119126a7",
+        "examples": "f2c6254ee13bdf34"
       },
       "skillReferences": {
         "app-shell-patterns": ["components/stepper.md"]

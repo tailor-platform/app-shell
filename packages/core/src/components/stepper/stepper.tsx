@@ -149,12 +149,14 @@ function StepText<Id extends string>({
   step,
   onStepClick,
   labelId,
+  compact,
   className,
 }: {
   step: ResolvedStep<Id>;
   /** Omitted when the label isn't the click target (the compact marker is). */
   onStepClick?: (id: Id) => void;
-  labelId?: string;
+  labelId: string;
+  compact: boolean;
   className?: string;
 }) {
   const t = useStepperT();
@@ -168,6 +170,32 @@ function StepText<Id extends string>({
       {step.status !== "current" && <span className="astw:sr-only">, {t(step.status)}</span>}
     </>
   );
+
+  if (!compact && step.render) {
+    const content = step.render({ label: step.label, status: step.status });
+    return (
+      <div className={cn("astw:min-w-0", className)}>
+        {clickable ? (
+          <button
+            type="button"
+            aria-labelledby={`${labelId}-content ${labelId}`}
+            onClick={() => onStepClick(step.id)}
+            className="astw:w-full astw:cursor-pointer astw:rounded-sm astw:text-left astw:outline-none astw:focus-visible:ring-[3px] astw:focus-visible:ring-ring/50"
+          >
+            <span id={labelId} className="astw:sr-only">
+              {label}
+            </span>
+            <span id={`${labelId}-content`}>{content}</span>
+          </button>
+        ) : (
+          <div id={labelId}>
+            {content}
+            {step.status !== "current" && <span className="astw:sr-only">, {t(step.status)}</span>}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={cn("astw:flex astw:min-w-0 astw:flex-col astw:gap-0.5", className)}>
@@ -192,7 +220,6 @@ function StepText<Id extends string>({
             {label}
           </span>
         )}
-        {step.badge}
       </div>
       {step.description != null && (
         <Text.div variant="body-sm" className="astw:text-muted-foreground">
@@ -343,6 +370,7 @@ export function Stepper<Id extends string = string>({
                     step={step}
                     onStepClick={compact ? undefined : onStepClick}
                     labelId={labelId}
+                    compact={compact}
                     className={last ? undefined : "astw:pr-4"}
                   />
                 </div>

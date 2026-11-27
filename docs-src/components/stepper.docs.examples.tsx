@@ -1,4 +1,4 @@
-import { Badge, Button, Stepper, useStepper } from "@tailor-platform/app-shell";
+import { Badge, Button, Stepper, Text, useStepper } from "@tailor-platform/app-shell";
 
 export function BasicUsage() {
   return (
@@ -59,8 +59,17 @@ export function StageProgress() {
         {
           id: "qg4",
           label: "QG4",
-          badge: <Badge variant="outline-info">Next</Badge>,
-          description: "Plan 18 Nov",
+          render: ({ label, status }) => (
+            <span className="flex flex-col gap-1">
+              <span className="flex items-center gap-2">
+                <Text.span>{label}</Text.span>
+                {status === "current" && <Badge variant="outline-info">Next</Badge>}
+              </span>
+              <Text.span variant="body-sm" className="text-muted-foreground">
+                Plan 18 Nov
+              </Text.span>
+            </span>
+          ),
         },
         { id: "qg5", label: "QG5", description: "Plan 9 Dec" },
       ]}

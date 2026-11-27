@@ -8,7 +8,12 @@ import { hash, normalizeText } from "./hash";
 import { readManifest } from "./manifest";
 import { discoverOutlines } from "./outline";
 import { loadSurface, snapshotHashForSlug } from "./project";
-import { computeStampedSkill, readSkillVersion, stampSkill, unclaimedSkillDirFindings } from "./skill";
+import {
+  computeStampedSkill,
+  readSkillVersion,
+  stampSkill,
+  unclaimedSkillDirFindings,
+} from "./skill";
 import { unmanagedOutputs, walkMarkdown } from "./tree";
 
 export interface CheckResult {
@@ -117,8 +122,8 @@ export function check(repoRoot: string): CheckResult {
   type SkillOutput = { id: string; unitSlug?: string };
   const expected = new Map<string, SkillOutput>();
   for (const [id, skill] of Object.entries(recorded)) {
-    if (skill.template?.output) {
-      expected.set(posix.join(skill.outDir, skill.template.output), { id });
+    if (skill.output) {
+      expected.set(posix.join(skill.output.dir, skill.output.filename), { id });
     }
   }
   for (const entry of Object.values(manifest?.units ?? {})) {
@@ -132,8 +137,10 @@ export function check(repoRoot: string): CheckResult {
         continue;
       }
       // Use the recorded location, not the current config, to catch skill moves.
+      const output = recorded[id].output;
+      if (!output) continue;
       for (const path of paths) {
-        expected.set(posix.join(recorded[id].outDir, "references", path), {
+        expected.set(posix.join(output.dir, "references", path), {
           id,
           unitSlug: entry.slug,
         });
@@ -146,14 +153,10 @@ export function check(repoRoot: string): CheckResult {
   for (const [id, skill] of Object.entries(config.skills)) {
     try {
       // Validate version stamping even though it is not part of drift detection.
-      const { template, files } = computeStampedSkill(repoRoot, skill, outlines);
+      const { output, template, files } = computeStampedSkill(repoRoot, skill, outlines);
       if (Object.hasOwn(recorded, id)) {
         const baseline = recorded[id].template;
-        if (
-          !baseline?.output ||
-          baseline.path !== template.path ||
-          baseline.hash !== template.hash
-        ) {
+        if (baseline?.path !== template.path || baseline.hash !== template.hash) {
           findings.push({
             level: "block",
             slug: "skill",
@@ -162,7 +165,7 @@ export function check(repoRoot: string): CheckResult {
         }
       }
       for (const [path, file] of files) {
-        actual.set(posix.join(skill.outDir, path), { id, unitSlug: file.unitSlug });
+        actual.set(posix.join(output.dir, path), { id, unitSlug: file.unitSlug });
       }
     } catch (e) {
       failedSkills.add(id);
@@ -196,25 +199,20 @@ export function check(repoRoot: string): CheckResult {
   }
 
   try {
-    const { generated } = computeAgents(repoRoot, config.agents, outlines);
-    const expected = manifest?.agents ?? {};
-    for (const [rel, content] of generated) {
-      if (expected[rel] !== hash(normalizeText(content))) {
-        findings.push({
-          level: "block",
-          slug: "agents",
-          message: `${rel} ${expected[rel] === undefined ? "is new" : "drifted"} — run sync.`,
-        });
-      }
+    const { guide } = computeAgents(repoRoot, config.agents, outlines);
+    const baseline = manifest?.agents;
+    if (
+      baseline?.output !== guide.output ||
+      baseline.template?.path !== guide.template.path ||
+      baseline.template.hash !== guide.template.hash
+    ) {
+      findings.push({
+        level: "block",
+        slug: "agents",
+        message: `${guide.output} guide path or template drifted — run sync.`,
+      });
     }
-    for (const rel of Object.keys(expected)) {
-      if (!generated.has(rel)) {
-        findings.push({ level: "block", slug: "agents", message: `${rel} removed — run sync.` });
-      }
-    }
-    // The manifest hashes unstamped content, so check the stamp separately.
-    const version = readSkillVersion(repoRoot, config.agents);
-    for (const content of generated.values()) stampSkill(content, version);
+    stampSkill(guide.content, readSkillVersion(repoRoot, config.agents));
   } catch (e) {
     findings.push({ level: "block", slug: "agents", message: (e as Error).message });
   }

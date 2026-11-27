@@ -257,15 +257,32 @@ it("checks template edits and the paths and source units of skill outputs", () =
     expect(manifest.units.migrations.skillReferences).toEqual({ upgrade: ["migrations.md"] });
     expect(manifest.skills).toEqual({
       patterns: {
-        outDir: "patterns",
-        template: { path: "SKILL.template.md", hash: expect.any(String), output: "SKILL.md" },
+        output: { dir: "patterns", filename: "SKILL.md" },
+        template: { path: "SKILL.template.md", hash: expect.any(String) },
       },
       upgrade: {
-        outDir: "upgrade",
-        template: { path: "upgrade.template.md", hash: expect.any(String), output: "SKILL.md" },
+        output: { dir: "upgrade", filename: "SKILL.md" },
+        template: { path: "upgrade.template.md", hash: expect.any(String) },
       },
     });
     expect(check(root).ok).toBe(true);
+    const outline = "docs-src/components/button.docs.outline.md";
+    const originalOutline = readFileSync(join(root, outline), "utf8");
+    write(outline, originalOutline.replace("Clickable", "Pressable"));
+    const updated = sync(root).manifest;
+    expect(updated).toEqual({
+      ...manifest,
+      units: { ...manifest.units, button: updated.units.button },
+    });
+    expect(readFileSync(join(root, "pkg/docs/AGENTS.md"), "utf8")).toContain("Pressable");
+    expect(check(root).ok).toBe(true);
+    write(outline, originalOutline);
+    sync(root);
+
+    write("AGENTS.template.md", "Read these first.\n\n{{COMPONENTS_TEASERS}}\n");
+    expect(messages()).toEqual(["pkg/docs/AGENTS.md guide path or template drifted — run sync."]);
+    write("AGENTS.template.md", "{{COMPONENTS_TEASERS}}\n");
+
     upgrade.repoBlobUrl = "https://example.test/blob/next";
     configure("patterns");
     expect(check(root).ok).toBe(true);
@@ -306,18 +323,18 @@ it("checks template edits and the paths and source units of skill outputs", () =
     );
     const moved = sync(root).manifest;
     expect(moved.units).toEqual(manifest.units);
-    expect(moved.skills?.patterns.outDir).toBe("moved");
+    expect(moved.skills?.patterns.output.dir).toBe("moved");
     expect(check(root).ok).toBe(true);
 
     const broken = structuredClone(moved);
-    const template = broken.skills!.patterns.template;
-    template.output = "old-SKILL.md";
+    const skillOutput = broken.skills!.patterns.output;
+    skillOutput.filename = "old-SKILL.md";
     write("docs-manifest.json", JSON.stringify(broken));
     expect(messages().toSorted()).toEqual([
       "skill file moved/SKILL.md is new — run sync.",
       "skill file moved/old-SKILL.md removed — run sync.",
     ]);
-    template.output = "SKILL.md";
+    skillOutput.filename = "SKILL.md";
     broken.units.button.skillReferences = { patterns: ["components/old-button.md"] };
     write("docs-manifest.json", JSON.stringify(broken));
     expect(messages().toSorted()).toEqual([

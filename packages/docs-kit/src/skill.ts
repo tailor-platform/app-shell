@@ -173,7 +173,7 @@ export function computeStampedSkill(repoRoot: string, skill: SkillConfig, outlin
   for (const [p, file] of computed.files) {
     files.set(p, { ...file, stamped: stampSkill(file.content, version) });
   }
-  return { files, template: computed.template };
+  return { ...computed, files };
 }
 
 /** Compute skill files (keyed by path relative to the output dir) and fingerprint
@@ -250,11 +250,12 @@ export function computeSkill(repoRoot: string, skill: SkillConfig, outlines: Out
     .replace("{{API_TABLE}}", simpleTable(sections.api, "api", docLink))
     .replace("{{PAGES_TABLE}}", entryTable(sections.pages, "pages", docLink))
     .replace("{{PATTERNS_TABLE}}", entryTable(sections.patterns, "patterns", docLink));
-  const output = "SKILL.md";
-  files.set(output, { content });
+  const output = { dir: skill.outDir, filename: "SKILL.md" };
+  files.set(output.filename, { content });
 
   return {
     files,
-    template: { path: skill.templatePath, hash: hash(normalizeText(template)), output },
+    output,
+    template: { path: skill.templatePath, hash: hash(normalizeText(template)) },
   };
 }

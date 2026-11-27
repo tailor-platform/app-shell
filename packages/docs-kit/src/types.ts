@@ -84,10 +84,10 @@ export interface ManifestEntry {
 }
 
 export interface ManifestSkill {
-  /** Repo-relative output directory. */
-  outDir: string;
-  /** Authored template and its input hash, with the generated path under `outDir`. */
-  template: { path: string; hash: string; output: string };
+  /** Repo-relative directory and skill entrypoint filename within it. */
+  output: { dir: string; filename: string };
+  /** Authored template path and input hash. */
+  template: { path: string; hash: string };
 }
 
 export interface Manifest {
@@ -95,10 +95,8 @@ export interface Manifest {
   units: Record<string, ManifestEntry>;
   /** Consumer skills by stable ID. Absent when no skill is configured. */
   skills?: Record<string, ManifestSkill>;
-  /** Generated guide (repo-relative) -> content hash. The
-   * docs shipped beside them are verbatim copies of unit outputs, which `units`
-   * already hashes. */
-  agents?: Record<string, string>;
+  /** Package guide path and authored template fingerprint, before index expansion. */
+  agents?: { output: string; template: { path: string; hash: string } };
 }
 
 export interface CategoryRule {

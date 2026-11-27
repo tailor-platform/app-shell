@@ -106,14 +106,13 @@ export function sync(repoRoot: string): SyncResult {
   // leaves the previous output intact.
   const computed = Object.entries(config.skills).map(([id, s]) => ({
     id,
-    outDir: s.outDir,
     ...computeStampedSkill(repoRoot, s, outlines),
   }));
   const skills: Record<string, ManifestSkill> = Object.create(null);
-  for (const { id, outDir, template, files } of computed) {
-    rmSync(join(repoRoot, outDir), { recursive: true, force: true });
+  for (const { id, output, template, files } of computed) {
+    rmSync(join(repoRoot, output.dir), { recursive: true, force: true });
     for (const [path, file] of files) {
-      const repoRel = posix.join(outDir, path);
+      const repoRel = posix.join(output.dir, path);
       const abs = join(repoRoot, repoRel);
       mkdirSync(dirname(abs), { recursive: true });
       writeFileSync(abs, file.stamped, "utf8");
@@ -123,34 +122,30 @@ export function sync(repoRoot: string): SyncResult {
       }
       written.push(repoRel);
     }
-    skills[id] = { outDir, template };
+    skills[id] = { output, template };
   }
 
   // Phase 5 — emit the docs shipped in the package and the guide that indexes
   // them (gitignored output, like the skills).
-  const { docs, generated } = computeAgents(repoRoot, config.agents, outlines);
-  const version = readSkillVersion(repoRoot, config.agents);
-  // Stamp before any write, so a bad version source leaves the old output.
-  const stamped = [...generated].map(([rel, content]) => [rel, stampSkill(content, version)]);
+  const { docs, guide } = computeAgents(repoRoot, config.agents, outlines);
+  // Stamp before clearing the output, so a bad version source leaves it intact.
+  docs.set(guide.output, stampSkill(guide.content, readSkillVersion(repoRoot, config.agents)));
   rmSync(join(repoRoot, config.agents.packageDir, config.agents.docsDir), {
     recursive: true,
     force: true,
   });
-  for (const [rel, content] of [...docs, ...stamped]) {
+  for (const [rel, content] of docs) {
     const abs = join(repoRoot, rel);
     mkdirSync(dirname(abs), { recursive: true });
     writeFileSync(abs, content, "utf8");
     written.push(rel);
   }
-  const agents = Object.fromEntries(
-    [...generated].map(([rel, content]) => [rel, hash(normalizeText(content))]),
-  );
 
   const manifest: Manifest = {
     version: 2,
     units,
     ...(computed.length ? { skills } : {}),
-    agents,
+    agents: { output: guide.output, template: guide.template },
   };
   writeManifest(repoRoot, config.manifestFile, manifest);
   // Format the manifest too, so a clean-tree `sync` is byte-idempotent and the

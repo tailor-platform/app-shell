@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { DataTable, useCollectionVariables, useDataTable } from "@tailor-platform/app-shell";
 import { AppShell } from "@tailor-platform/app-shell/testing";
 import { beforeEach, describe, expect, it } from "vitest";
+import { page } from "vitest/browser";
 import { applyPalette } from "./theme-utils";
 
 const longLabel = "Customer display name with a very long column label";
@@ -63,7 +64,7 @@ function UnsortedPage() {
 }
 
 function ManySortsPage() {
-  const { control } = useCollectionVariables({
+  const { variables, control } = useCollectionVariables({
     params: {
       initialSort: Array.from({ length: 15 }, (_, i) => ({
         field: `field${i}`,
@@ -80,6 +81,9 @@ function ManySortsPage() {
   return (
     <DataTable.Root value={table}>
       <DataTable.SortSettings />
+      <output aria-label="Sort order" hidden>
+        {JSON.stringify(variables.order)}
+      </output>
     </DataTable.Root>
   );
 }
@@ -118,29 +122,46 @@ describe.each(["light", "dark"] as const)("DataTable.SortSettings / %s", (mode) 
     });
   });
 
-  it("scrolls long sort lists without shrinking rows or hiding the other controls", async () => {
-    const user = userEvent.setup();
-    render(<ManySortsPage />, { wrapper });
-    await user.click(await screen.findByRole("button", { name: /^Sort/ }));
-    const group = screen.getByRole("group", { name: "Sort settings" });
-    const list = within(group).getByRole("list");
-    const rows = within(list).getAllByRole("listitem");
-    const add = within(group).getByRole("button", { name: "Add another sort" });
-    const clear = within(group).getByRole("button", { name: "Clear" });
-    expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
-    expect(rows[0].offsetHeight).toBe(36);
-    expect(clear.getBoundingClientRect().bottom).toBeLessThanOrEqual(
-      list.getBoundingClientRect().top,
-    );
-    expect(add.getBoundingClientRect().top).toBeGreaterThanOrEqual(
-      list.getBoundingClientRect().bottom,
-    );
-    expect(add.getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
-    list.scrollTop = list.scrollHeight;
-    await waitFor(() => expect(list.scrollTop).toBeGreaterThan(0));
-    expect(rows[14].getBoundingClientRect().bottom).toBeLessThanOrEqual(
-      list.getBoundingClientRect().bottom + 1,
-    );
+  it("scrolls and reorders long sort lists on a short viewport", async () => {
+    const viewport = { width: window.innerWidth, height: window.innerHeight };
+    await page.viewport(420, 360);
+    try {
+      const user = userEvent.setup();
+      render(<ManySortsPage />, { wrapper });
+      await user.click(await screen.findByRole("button", { name: /^Sort/ }));
+      const group = within(screen.getByRole("group", { name: "Sort settings" }));
+      const list = group.getByRole("list");
+      const add = group.getByRole("button", { name: "Add another sort" });
+      const clear = group.getByRole("button", { name: "Clear" });
+      const handle = group.getByRole("button", { name: /Reorder sort for field14 / });
+      const lastRow = handle.closest("li")!;
+      expect(list.scrollHeight).toBeGreaterThan(list.clientHeight);
+      expect(lastRow.offsetHeight).toBe(36);
+
+      handle.focus();
+      expect(list.scrollTop).toBeGreaterThan(0);
+      expect(list.scrollHeight - list.scrollTop - list.clientHeight).toBeLessThanOrEqual(1);
+      expect(list.contains(clear)).toBe(false);
+      expect(list.contains(add)).toBe(false);
+      expect(clear.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+      expect(add.getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
+
+      const last = { field: "field14", direction: "Asc" };
+      const penultimate = { field: "field13", direction: "Asc" };
+      await user.keyboard("{ArrowUp}");
+      expect(sortOrder().slice(-2)).toEqual([last, penultimate]);
+
+      const targetRow = group.getByText("field13").closest("li")!;
+      const transfer = new DataTransfer();
+      dragEvent("dragstart", lastRow, transfer);
+      const target = targetRow.getBoundingClientRect();
+      dragEvent("dragover", targetRow, transfer, target.top + (target.height * 3) / 4);
+      dragEvent("drop", targetRow, transfer);
+      dragEvent("dragend", lastRow, transfer);
+      expect(sortOrder().slice(-2)).toEqual([penultimate, last]);
+    } finally {
+      await page.viewport(viewport.width, viewport.height);
+    }
   });
 
   it("reorders priority with a real DataTransfer drag and updates aria-sort", async () => {

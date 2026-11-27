@@ -9,7 +9,7 @@ import { DEFAULT_SIDEBAR_WIDTH, MIN_WIDTH, SidebarResizeHandle } from "./sidebar
 import { SIDEBAR_SCROLL_AREA_CLASS, useScrolling } from "./scroll-area";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/button";
-import { Input } from "@/components/input";
+import { StandaloneInput } from "@/components/input/standalone-input";
 import { Separator } from "@/components/internals/separator";
 import { Sheet } from "@/components/sheet";
 import { Tooltip } from "@/components/tooltip";
@@ -593,9 +593,9 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
   );
 }
 
-function SidebarInput({ className, ...props }: React.ComponentProps<typeof Input>) {
+function SidebarInput({ className, ...props }: React.ComponentProps<typeof StandaloneInput>) {
   return (
-    <Input
+    <StandaloneInput
       data-slot="sidebar-input"
       data-sidebar="input"
       className={cn("astw:bg-background astw:h-8 astw:w-full astw:shadow-none", className)}

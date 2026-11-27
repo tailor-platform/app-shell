@@ -1,4 +1,4 @@
-import { Input } from "@/components/input";
+import { StandaloneInput } from "@/components/input/standalone-input";
 import { cn } from "@/lib/utils";
 import { isComposing } from "@/lib/is-composing";
 import { Text } from "../../text";
@@ -23,7 +23,7 @@ function BetweenInputGroup({
   onChangeMin: (value: string) => void;
   onChangeMax: (value: string) => void;
   onSubmit: () => void;
-  inputProps?: React.ComponentProps<typeof Input>;
+  inputProps?: React.ComponentProps<typeof StandaloneInput>;
   /** Validation message shown below the inputs (e.g. a reversed range). */
   error?: string;
 }) {
@@ -40,7 +40,7 @@ function BetweenInputGroup({
     <div className="astw:flex astw:flex-col astw:gap-1.5">
       <div className={cn(rowBase, rowOk)}>
         <span className={labelCell}>{labels[0]}</span>
-        <Input
+        <StandaloneInput
           {...inputProps}
           aria-label={labels[0]}
           value={values[0]}
@@ -54,7 +54,7 @@ function BetweenInputGroup({
       </div>
       <div className={cn(rowBase, error ? rowError : rowOk)}>
         <span className={labelCell}>{labels[1]}</span>
-        <Input
+        <StandaloneInput
           {...inputProps}
           aria-label={labels[1]}
           aria-invalid={error ? true : undefined}

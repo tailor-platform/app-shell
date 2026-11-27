@@ -14,10 +14,24 @@ const MAX_INLINE_ACTIONS = 3;
 
 /**
  * Below this footer width (px) every action collapses into the menu, so the
- * bar fits on one line and leaves room for the table rows. Pagination hides
- * its labels at the same width through the `data-table-footer` container.
+ * bar fits on one line and leaves room for the table rows. Pagination compacts
+ * itself at the same width through the `data-table-footer` container.
  */
 const NARROW_FOOTER_WIDTH = 480;
+
+/**
+ * Visually hides an element while the footer is narrower than
+ * `NARROW_FOOTER_WIDTH`, keeping it for screen readers. Outside
+ * `DataTable.Footer` the container never matches, so it stays visible.
+ */
+export const NARROW_FOOTER_SR_ONLY = "astw:@max-[480px]/data-table-footer:sr-only";
+
+/**
+ * Shows an element only while the footer is narrower than
+ * `NARROW_FOOTER_WIDTH`. Pair it with `aria-hidden` and a full-text sibling
+ * marked `NARROW_FOOTER_SR_ONLY`, so screen readers get one text either way.
+ */
+export const NARROW_FOOTER_ONLY = "astw:hidden astw:@max-[480px]/data-table-footer:inline";
 
 /** Whether the footer around `ref` is narrower than `NARROW_FOOTER_WIDTH`. */
 function useIsNarrowFooter(ref: RefObject<HTMLElement | null>): boolean {
@@ -80,12 +94,14 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
   const {
     rowSelection,
     selectedIds,
+    total,
     clearSelection,
     pendingActionId = null,
     runSelectionAction,
   } = useDataTableContext<TRow>();
   const t = useDataTableT();
   const countText = useSelectionCountText();
+  const shortCountText = t("selectionCountShort", { selected: selectedIds.length, total });
   const rowRef = useRef<HTMLDivElement>(null);
   const narrow = useIsNarrowFooter(rowRef);
 
@@ -143,8 +159,20 @@ export function DataTableSelectionBar<TRow extends Record<string, unknown>>() {
       className="astw:max-w-full astw:shrink-0"
     >
       <Toolbar.Group>
+        {/* A narrow footer shows "3/240 selected"; the full text stays one
+            text node for screen readers and text queries. Without a total
+            both read "3 selected", so only one is rendered. */}
         <span className="astw:text-label-md astw:whitespace-nowrap astw:tabular-nums">
-          {countText}
+          {shortCountText === countText ? (
+            countText
+          ) : (
+            <>
+              <span className={NARROW_FOOTER_SR_ONLY}>{countText}</span>
+              <span aria-hidden="true" className={NARROW_FOOTER_ONLY}>
+                {shortCountText}
+              </span>
+            </>
+          )}
         </span>
         {!narrow && <Toolbar.Separator className="astw:mx-0.5 astw:h-4" />}
         {inline.map((action) => {

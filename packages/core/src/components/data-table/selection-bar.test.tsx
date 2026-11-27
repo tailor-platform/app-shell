@@ -102,14 +102,21 @@ describe("DataTable selection actions", () => {
     const { container } = render(<Harness rowSelection={{ actions: [archive()] }} />, { wrapper });
     expect(queryBar()).toBeNull();
     expect(footerOf(container).hasAttribute("data-selecting")).toBe(false);
-    expect(screen.getByText("3 row(s)")).toBeDefined();
+    expect(screen.getByText("3 rows")).toBeDefined();
     fireEvent.click(rowCheckbox(0));
     expect(within(getBar()).getByText("1 of 3 selected")).toBeDefined();
+    // A narrow footer shows "1/3 selected"; only the full text is announced.
+    const shortCount = within(getBar()).getByText("1/3 selected");
+    expect(shortCount.getAttribute("aria-hidden")).toBe("true");
+    expect(shortCount.className).toContain("astw:@max-[480px]/data-table-footer:inline");
+    expect(within(getBar()).getByText("1 of 3 selected").className).toContain(
+      "astw:@max-[480px]/data-table-footer:sr-only",
+    );
     expect(actionButton()).toHaveProperty("disabled", false);
     expect(within(getBar()).getByRole("button", { name: "Clear selection" })).toBeDefined();
     expect(footerOf(container).hasAttribute("data-selecting")).toBe(true);
     expect(footerOf(container).className).toContain("astw:sticky");
-    expect(screen.queryByText("3 row(s)")).toBeNull();
+    expect(screen.queryByText("3 rows")).toBeNull();
     expect(screen.getByLabelText("Next page")).toBeDefined();
     fireEvent.click(rowCheckbox(0));
     expect(queryBar()).toBeNull();
@@ -296,7 +303,7 @@ describe("DataTable selection actions", () => {
       expect(rowCheckbox(0).getAttribute("aria-checked")).toBe("true");
       expect(queryBar()).toBeNull();
       expect(footerOf(container).hasAttribute("data-selecting")).toBe(false);
-      expect(screen.getByText("1 of 3 row(s) selected")).toBeDefined();
+      expect(screen.getByText("1 of 3 rows selected")).toBeDefined();
     },
   );
 
@@ -305,7 +312,7 @@ describe("DataTable selection actions", () => {
     fireEvent.click(rowCheckbox(0));
     expect(queryBar()).toBeNull();
     expect(footerOf(container).hasAttribute("data-selecting")).toBe(false);
-    expect(screen.getByText("1 of 3 row(s) selected")).toBeDefined();
+    expect(screen.getByText("1 of 3 rows selected")).toBeDefined();
     expect(container.querySelector('[aria-live="polite"]')).toBeNull();
   });
 

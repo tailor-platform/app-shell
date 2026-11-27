@@ -447,16 +447,22 @@ function Filtering() {
 
 `DataTable.Pagination` automatically displays a row count and selection info text on the left side of the pagination bar based on context state:
 
-| Condition                                 | Displayed text           |
-| ----------------------------------------- | ------------------------ |
-| `total` is provided                       | `X row(s)`               |
-| Rows selected and `total` is provided     | `Y of X row(s) selected` |
-| Rows selected and `total` is not provided | `Y row(s) selected`      |
-| No selection enabled and no `total`       | _(nothing displayed)_    |
+| Condition                                 | Displayed text                                      |
+| ----------------------------------------- | --------------------------------------------------- |
+| `total` is provided                       | `X rows` (`1 row`)                                  |
+| Rows selected and `total` is provided     | `Y of X rows selected` (`Y/X selected` when narrow) |
+| Rows selected and `total` is not provided | `Y rows selected` (`1 row selected`)                |
+| No selection enabled and no `total`       | _(nothing displayed)_                               |
 
 Row selection is enabled by providing `rowSelection` or `onSelectionChange` to `useDataTable`. The `total` value comes from `DataTableData.total`. While the footer shows the bulk-action bar (see [Selection actions](#selection-actions)), the bar owns the selection count and this text is omitted.
 
-In a narrow footer (under 480px wide, such as on a phone), the controls wrap onto more lines instead of being clipped. The **Rows per page** label is hidden, and the page text is shortened to `1 / 5`. Both stay available to screen readers. This only works inside `DataTable.Footer`, because the footer's own width is measured, not the viewport's.
+In a narrow footer (under 480px wide, such as on a phone), the footer is compacted so the row count and the page buttons fit on one line:
+
+- The page-size switcher is hidden.
+- The page text is shortened from `Page 1 / 5` to `1/5`, and the selection text from `Y of X rows selected` to `Y/X selected`. Screen readers still get the full text.
+- The page buttons shrink from 36px to 28px, which stays above the 24px minimum target size.
+
+Controls that still do not fit wrap onto another line instead of being clipped. This only works inside `DataTable.Footer`, because the footer's own width is measured, not the viewport's.
 
 When pagination changes page or page size, `DataTable.Table` resets its own scroll container to the top automatically. That applies whether navigation comes from the built-in `DataTable.Pagination` or from custom controls using the same table context.
 
@@ -1884,7 +1890,7 @@ Confirmation, eligibility checks, and execution remain consumer-owned. A real ap
 - **Return the promise from `onClick`.** While it is pending, the bar disables every action and shows a spinner on the running one, so a slow request can't be fired twice. Neither success nor rejection changes selection; there is no `keepSelection` option. A rejection is logged as `[DataTable] Selection action "…" failed`; showing it to the user is up to your handler.
 - **Confirm dialogs can hand a later request back with `run`.** An `onClick` that only opens a dialog returns nothing. Keep the `run` helper and call it from the dialog's confirm button — `await run(deleteVendors(ids))` — to track that request in the bar. This only tracks pending state; it does not clear selection. Clear is disabled while a request is pending, and pending state survives the bar closing and reopening. Use controlled `rowSelection` to remove only successful ids, or call the explicit `clearSelection` helper if clearing every page is intentional.
 - **Selection spans pages.** The header checkbox adds or removes only the current page; **Clear** empties everything.
-- **Three actions stay inline.** The fourth onward collapse into a **More actions** menu, in array order. Put the most frequent first; a destructive action placed last sits safely in the menu. When the footer is narrower than 480px (for example, on a phone), every action moves into the menu, so the bar keeps to one line and the table rows stay visible. The menu button then gets an outline, like the inline actions.
+- **Three actions stay inline.** The fourth onward collapse into a **More actions** menu, in array order. Put the most frequent first; a destructive action placed last sits safely in the menu. When the footer is narrower than 480px (for example, on a phone), every action moves into the menu, so the bar keeps to one line and the table rows stay visible. The menu button then gets an outline, like the inline actions, and the count is shortened to `3/240 selected` (screen readers still get `3 of 240 selected`).
 - **Confirm destructive actions.** `variant: "destructive"` only styles the action. Open a confirm dialog from `onClick` before deleting — see the [confirm pattern](../patterns/interaction-confirm.md).
 - **The bar stays reachable.** In `<Layout fill>` the footer is already pinned. On a page that scrolls, the bar sticks to the bottom of the viewport while rows are selected and settles back into place at the end of the table. It sticks to the nearest scrolling container: inside a scrolling drawer or panel it rides that container instead, and inside a wrapper that clips its overflow (such as a card with `overflow: hidden`) it simply stays in the footer.
 - **Share presentation with `rowActions`.** Both action types extend the non-generic [`DataTableAction`](#datatableaction) (`id`, `label`, `icon`, `variant`). Keep row predicates on `RowAction<TRow>` and bulk business rules in the consumer's ID-based handler.

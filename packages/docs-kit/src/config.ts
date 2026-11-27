@@ -49,31 +49,18 @@ export function loadConfig(repoRoot: string): DocsConfig {
     }
   }
   const agents = c.outputs?.agents;
-  for (const skill of skills) {
-    if (skill.references !== undefined && !["copy", "redirect"].includes(skill.references)) {
-      throw new Error(
-        `docs-kit.config.json: skill ${skill.outDir} has unknown references mode "${skill.references}" — expected "copy" or "redirect"`,
-      );
-    }
-    // Redirect stubs point at the package docs, which only outputs.agents emits.
-    if (skill.references === "redirect" && !agents) {
-      throw new Error(
-        `docs-kit.config.json: skill ${skill.outDir} redirects its references, which needs outputs.agents`,
-      );
+  // Skills list paths under the package docs, so they're always emitted.
+  if (!agents) throw new Error("docs-kit.config.json: outputs.agents is required");
+  for (const key of ["guideTemplatePath", "packageDir", "docsDir"] as const) {
+    if (!agents[key]?.trim()) {
+      throw new Error(`docs-kit.config.json: outputs.agents.${key} is required`);
     }
   }
-  if (agents) {
-    for (const key of ["guideTemplatePath", "packageDir", "docsDir"] as const) {
-      if (!agents[key]?.trim()) {
-        throw new Error(`docs-kit.config.json: outputs.agents.${key} is required`);
-      }
-    }
-    // sync clears docsDir before writing, so it must stay inside the package.
-    if (agents.docsDir.split("/").includes("..") || agents.docsDir.startsWith("/")) {
-      throw new Error(
-        "docs-kit.config.json: outputs.agents.docsDir must be a path inside packageDir",
-      );
-    }
+  // sync clears docsDir before writing, so it must stay inside the package.
+  if (agents.docsDir.split("/").includes("..") || agents.docsDir.startsWith("/")) {
+    throw new Error(
+      "docs-kit.config.json: outputs.agents.docsDir must be a path inside packageDir",
+    );
   }
   return {
     roots: c.inputs?.outlines?.roots ?? ["docs-src"],

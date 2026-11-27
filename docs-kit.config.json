@@ -50,8 +50,7 @@
       {
         "outDir": "packages/core/skills/app-shell-patterns",
         "templatePath": "docs-src/skill/app-shell-patterns/SKILL.template.md",
-        "versionSource": "packages/core/package.json",
-        "references": "redirect"
+        "versionSource": "packages/core/package.json"
       },
       {
         "outDir": "packages/core/skills/app-shell-upgrade",

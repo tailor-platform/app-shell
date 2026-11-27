@@ -126,32 +126,29 @@ export function sync(repoRoot: string): SyncResult {
 
   // Phase 5 — emit the docs shipped in the package and the guide that indexes
   // them (gitignored output, like the skills).
-  let agents: Record<string, string> | undefined;
-  if (config.agents) {
-    const { docs, generated } = computeAgents(repoRoot, config.agents, outlines);
-    const version = readSkillVersion(repoRoot, config.agents);
-    // Stamp before any write, so a bad version source leaves the old output.
-    const stamped = [...generated].map(([rel, content]) => [rel, stampSkill(content, version)]);
-    rmSync(join(repoRoot, config.agents.packageDir, config.agents.docsDir), {
-      recursive: true,
-      force: true,
-    });
-    for (const [rel, content] of [...docs, ...stamped]) {
-      const abs = join(repoRoot, rel);
-      mkdirSync(dirname(abs), { recursive: true });
-      writeFileSync(abs, content, "utf8");
-      written.push(rel);
-    }
-    agents = Object.fromEntries(
-      [...generated].map(([rel, content]) => [rel, hash(normalizeText(content))]),
-    );
+  const { docs, generated } = computeAgents(repoRoot, config.agents, outlines);
+  const version = readSkillVersion(repoRoot, config.agents);
+  // Stamp before any write, so a bad version source leaves the old output.
+  const stamped = [...generated].map(([rel, content]) => [rel, stampSkill(content, version)]);
+  rmSync(join(repoRoot, config.agents.packageDir, config.agents.docsDir), {
+    recursive: true,
+    force: true,
+  });
+  for (const [rel, content] of [...docs, ...stamped]) {
+    const abs = join(repoRoot, rel);
+    mkdirSync(dirname(abs), { recursive: true });
+    writeFileSync(abs, content, "utf8");
+    written.push(rel);
   }
+  const agents = Object.fromEntries(
+    [...generated].map(([rel, content]) => [rel, hash(normalizeText(content))]),
+  );
 
   const manifest: Manifest = {
     version: 1,
     units,
     ...(skill ? { skill } : {}),
-    ...(agents ? { agents } : {}),
+    agents,
   };
   writeManifest(repoRoot, config.manifestFile, manifest);
   // Format the manifest too, so a clean-tree `sync` is byte-idempotent: the

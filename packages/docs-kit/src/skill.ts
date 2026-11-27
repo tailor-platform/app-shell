@@ -36,12 +36,9 @@ function stripFrontmatter(s: string): string {
 
 type DocLink = (text: string, dir: string, slug: string) => string;
 
-/** Copied references link into the skill; redirected ones name the path under
- * the package's docs root, since the skill can't know where that is installed. */
-const docLink = (mode: SkillConfig["references"]): DocLink =>
-  mode === "redirect"
-    ? (text, dir, slug) => `${text} (\`${dir}/${slug}.md\`)`
-    : (text, dir, slug) => `[${text}](references/${dir}/${slug}.md)`;
+/** Names the path under the package's docs root (`outputs.agents`), since the
+ * skill can't know where the package is installed. */
+const docLink: DocLink = (text, dir, slug) => `${text} (\`${dir}/${slug}.md\`)`;
 
 /** Flat Name | Description table (components, hooks/api). */
 function simpleTable(list: Outline[], dir: string, link: DocLink): string {
@@ -203,8 +200,8 @@ export function computeSkill(
     if (section && included.has(section)) sections[section].push(o);
   }
 
-  // Reference docs: copy the generated markdown, or leave a redirect stub where
-  // a copy used to be. Stubs catch stale links and overwrite the real docs an
+  // Reference docs ship in the package, not the skill. Leave a stub where each
+  // copy used to be: stubs catch stale links and overwrite the real docs an
   // older copy of the skill left behind. API keeps its guards/ router/ nesting.
   for (const [section, list] of Object.entries(sections)) {
     for (const o of list) {
@@ -213,13 +210,7 @@ export function computeSkill(
       const destAbs = join(repoRoot, skill.outDir, "references", section, `${o.slug}.md`);
       files.set(
         rel(destAbs),
-        skill.references === "redirect"
-          ? redirectStub(
-              o,
-              section,
-              toPosix(relative(dirname(destAbs), join(repoRoot, skill.outDir))),
-            )
-          : readFileSync(srcAbs, "utf8"),
+        redirectStub(o, section, toPosix(relative(dirname(destAbs), join(repoRoot, skill.outDir)))),
       );
     }
   }
@@ -249,7 +240,7 @@ export function computeSkill(
   }
 
   // SKILL.md: fill the template's category tables.
-  const link = docLink(skill.references);
+  const link = docLink;
   const template = readFileSync(join(repoRoot, skill.templatePath), "utf8");
   const skillMd = template
     .replace("{{CONCEPTS_TABLE}}", simpleTable(sections.concepts, "concepts", link))

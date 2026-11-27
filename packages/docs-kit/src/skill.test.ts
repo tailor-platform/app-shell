@@ -65,7 +65,7 @@ describe("computeSkill", () => {
     return { root, outlines: [button] };
   };
 
-  it("copies every section by default", () => {
+  it("covers every section by default", () => {
     const { root, outlines } = fixture();
     const files = computeSkill(
       root,
@@ -76,10 +76,9 @@ describe("computeSkill", () => {
       "out/SKILL.md",
       "out/references/components/button.md",
     ]);
-    expect(files.get("out/SKILL.md")).toContain("[Button](references/components/button.md)");
   });
 
-  it("leaves redirect stubs and lists docs-root paths in redirect mode", () => {
+  it("leaves pointer stubs and lists docs-root paths", () => {
     const { root } = fixture();
     mkdirSync(join(root, "docs/api/guards"), { recursive: true });
     writeFileSync(join(root, "docs/api/guards/pass.md"), "# pass\n");
@@ -100,7 +99,7 @@ describe("computeSkill", () => {
     ] as unknown as Outline[];
     const files = computeSkill(
       root,
-      { outDir: "out", templatePath: "SKILL.template.md", references: "redirect" },
+      { outDir: "out", templatePath: "SKILL.template.md" },
       outlines,
     );
 
@@ -178,6 +177,7 @@ const docsConfig = (
   enforceCoverage: false,
   exclusions: [],
   skills,
+  agents: { guideTemplatePath: "", packageDir: "", docsDir: "" },
   unclaimedSkillDirs,
 });
 const messages = (c: DocsConfig): string[] => unclaimedSkillDirFindings(c).map((f) => f.message);

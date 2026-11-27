@@ -108,7 +108,8 @@ export interface SkillConfig {
   outDir: string;
   /** Repo-relative SKILL.md template with {{CATEGORY_TABLE}} placeholders. */
   templatePath: string;
-  /** Doc categories copied into `references/`. Defaults to all of them; `[]` ships none. */
+  /** Doc categories listed in SKILL.md, with a pointer stub per doc under
+   * `references/`. Defaults to all of them; `[]` lists none. */
   sections?: SkillSection[];
   /** Repo-relative migrations doc copied (with links rewritten) into the skill. */
   migrationsSource?: string;
@@ -117,10 +118,6 @@ export interface SkillConfig {
   /** Repo-relative package.json whose `version` is stamped into SKILL.md's
    * `{{APP_SHELL_VERSION}}` at write time. */
   versionSource?: string;
-  /** "copy" (default) ships each doc under `references/`. "redirect" leaves a
-   * stub there pointing at the docs shipped in the package (`outputs.agents`),
-   * and the SKILL.md tables list paths relative to that docs root. */
-  references?: "copy" | "redirect";
 }
 
 /** The docs shipped in the published package and the guide that indexes them
@@ -165,8 +162,8 @@ export interface DocsConfig {
   snapshotDir?: string;
   /** Consumer skills. sync emits each one and check validates each one. */
   skills: SkillConfig[];
-  /** Package docs + guide. Absent when not configured. */
-  agents?: AgentsConfig;
+  /** Package docs + guide. Skills point at these docs, so it's required. */
+  agents: AgentsConfig;
   /** Output dirs no skill carries. Any other unclaimed output dir blocks check. */
   unclaimedSkillDirs: UnclaimedSkillDir[];
 }

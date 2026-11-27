@@ -595,7 +595,7 @@ A column is sortable when it has `sort: { field, type }` and `useDataTable` rece
 </Toolbar.Group>
 ```
 
-`useCollectionVariables` supplies the atomic `control.setSortStates` callback used to replace the ordered keys and reset pagination. A custom collection control can provide the same callback, or a hand-built `DataTable.Root` value can provide `onSortStatesChange`. Without an atomic callback, single-key actions and individual add/remove remain available, but changing direction, clearing, or reordering multiple keys is disabled to avoid losing keys.
+`useCollectionVariables` supplies the atomic `control.setSortStates` callback used to replace the ordered keys and reset pagination. When table metadata is provided, TypeScript checks each field name against it, just as with `setSort`. A custom collection control can provide the same callback, or a hand-built `DataTable.Root` value can provide `onSortStatesChange`. Without an atomic callback, single-key actions and individual add/remove remain available, but changing direction, clearing, or reordering multiple keys is disabled to avoid losing keys.
 
 ## Reading sort state
 

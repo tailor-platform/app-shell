@@ -172,7 +172,11 @@ export function useDataTable<
     };
   }, [control, sortDisabled, sortMultiple]);
 
-  const onSortStatesChange = sortDisabled ? undefined : control?.setSortStates;
+  const setSortStates = control?.setSortStates;
+  const onSortStatesChange = useMemo(() => {
+    if (sortDisabled || !setSortStates) return undefined;
+    return (next: SortState[]) => setSortStates(next as SortState<TFieldName>[]);
+  }, [setSortStates, sortDisabled]);
 
   // ---------------------------------------------------------------------------
   // Row selection and expansion share one row-id convention.

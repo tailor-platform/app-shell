@@ -1,7 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useDataTable } from "./use-data-table";
-import type { CollectionControl } from "@/types/collection";
+import type { CollectionControl, SortState } from "@/types/collection";
 import type { Column, DataTableData } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -399,7 +399,12 @@ describe("useDataTable", () => {
           useDataTable({ columns, data: testData, control, sort }),
         { initialProps: { sort: undefined as false | undefined } },
       );
-      expect(result.current.onSortStatesChange).toBe(setSortStates);
+      const next: SortState[] = [
+        { field: "value", direction: "Desc" },
+        { field: "name", direction: "Asc" },
+      ];
+      act(() => result.current.onSortStatesChange?.(next));
+      expect(setSortStates).toHaveBeenCalledExactlyOnceWith(next);
       rerender({ sort: false });
       expect(result.current.onSortStatesChange).toBeUndefined();
     });

@@ -211,8 +211,8 @@ export type TableMetadataFilter<TTable extends TableMetadata> =
 /**
  * Active sort state for a single field.
  */
-export interface SortState {
-  field: string;
+export interface SortState<TFieldName extends string = string> {
+  field: TFieldName;
   direction: "Asc" | "Desc";
 }
 
@@ -444,7 +444,7 @@ export interface CollectionControl<
   sortStates: SortState[];
   setSort(field: TFieldName, direction?: "Asc" | "Desc"): void;
   /** Replace the ordered sort keys in one update and reset pagination. */
-  setSortStates?: (sortStates: SortState[]) => void;
+  setSortStates?: (sortStates: SortState<TFieldName>[]) => void;
   clearSort: () => void;
 
   // Pagination operations

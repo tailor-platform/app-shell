@@ -163,7 +163,7 @@ export function stampSkill(content: string, version: string | null): string {
   return content;
 }
 
-type SkillFile = { content: string } & ({ kind: "copy"; slug: string } | { kind: "generated" });
+type SkillFile = { content: string; unitSlug?: string };
 
 /** Compute the skill and stamp it, so a bad version source fails before any write. */
 export function computeStampedSkill(repoRoot: string, skill: SkillConfig, outlines: Outline[]) {
@@ -203,8 +203,7 @@ export function computeSkill(repoRoot: string, skill: SkillConfig, outlines: Out
       if (!existsSync(srcAbs)) continue;
       const path = `references/${section}/${o.slug}.md`;
       files.set(path, {
-        kind: "copy",
-        slug: o.slug,
+        unitSlug: o.slug,
         content: redirectStub(o, section, posix.relative(posix.dirname(path), ".")),
       });
     }
@@ -221,6 +220,12 @@ export function computeSkill(repoRoot: string, skill: SkillConfig, outlines: Out
         `skill ${skill.outDir}: migrationsSource ${skill.migrationsSource} does not exist`,
       );
     }
+    const source = outlines.find((o) => join(repoRoot, o.mdPath) === migAbs);
+    if (!source) {
+      throw new Error(
+        `skill ${skill.outDir}: migrationsSource ${skill.migrationsSource} has no unit`,
+      );
+    }
     if (!skill.repoBlobUrl) {
       throw new Error(`skill ${skill.outDir}: migrationsSource needs repoBlobUrl`);
     }
@@ -232,7 +237,7 @@ export function computeSkill(repoRoot: string, skill: SkillConfig, outlines: Out
         (_m, target: string) => `](${blobUrl}/${toPosix(join("docs", target))})`,
       );
     files.set("references/migrations.md", {
-      kind: "generated",
+      unitSlug: source.slug,
       content: `${body}\n`,
     });
   }
@@ -246,7 +251,7 @@ export function computeSkill(repoRoot: string, skill: SkillConfig, outlines: Out
     .replace("{{PAGES_TABLE}}", entryTable(sections.pages, "pages", docLink))
     .replace("{{PATTERNS_TABLE}}", entryTable(sections.patterns, "patterns", docLink));
   const output = "SKILL.md";
-  files.set(output, { kind: "generated", content });
+  files.set(output, { content });
 
   return {
     files,

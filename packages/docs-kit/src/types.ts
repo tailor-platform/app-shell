@@ -78,8 +78,8 @@ export interface ManifestEntry {
   claims: string[];
   /** Resolved public export names this unit owns via `sources`, plus its `claims`. */
   symbols: string[];
-  /** Skill ID -> pointer path under that skill's `references/` for this unit. */
-  skillCopies?: Record<string, string>;
+  /** Skill ID -> paths under that skill's `references/` derived from this unit. */
+  skillReferences?: Record<string, string[]>;
   hashes: UnitHashes;
 }
 
@@ -88,8 +88,6 @@ export interface ManifestSkill {
   outDir: string;
   /** Authored template and its input hash, with the generated path under `outDir`. */
   template: { path: string; hash: string; output: string };
-  /** Other non-copy outputs relative to `outDir`, hashed after transformation. */
-  files: Record<string, { hash: string }>;
 }
 
 export interface Manifest {
@@ -121,7 +119,7 @@ export interface SkillConfig {
   /** Doc categories listed in SKILL.md, with a pointer stub per doc under
    * `references/`. Defaults to all of them; `[]` lists none. */
   sections?: SkillSection[];
-  /** Repo-relative migrations doc copied (with links rewritten) into the skill. */
+  /** Repo-relative generated migrations doc from a unit, copied with links rewritten. */
   migrationsSource?: string;
   /** Base blob URL for rewriting the migrations doc's relative links. Required with `migrationsSource`. */
   repoBlobUrl?: string;

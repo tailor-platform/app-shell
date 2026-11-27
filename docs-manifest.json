@@ -17,8 +17,8 @@
         "outputMd": "a01ce6025c3885db",
         "examples": "b404f54486b4c3fd"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/action-panel.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/action-panel.md"]
       }
     },
     "activity-card": {
@@ -45,8 +45,8 @@
         "outputMd": "230039d9f96fd264",
         "examples": "c566c6f9fd4e00f6"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/activity-card.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/activity-card.md"]
       }
     },
     "aggregations": {
@@ -65,8 +65,8 @@
         "outputMd": "96c85ba79f5c64cc",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/aggregations.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/aggregations.md"]
       }
     },
     "ai-chat": {
@@ -96,8 +96,8 @@
         "outputMd": "008761ccc93ef0fe",
         "examples": "69f4f58f039d13fa"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/ai-chat.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/ai-chat.md"]
       }
     },
     "alert": {
@@ -116,8 +116,8 @@
         "outputMd": "9b237d9c19b54102",
         "examples": "8d745ceb610be06d"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/alert.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/alert.md"]
       }
     },
     "app-shell": {
@@ -136,8 +136,8 @@
         "outputMd": "1980c966aa4cbf75",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/app-shell.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/app-shell.md"]
       }
     },
     "appearance-switcher": {
@@ -156,8 +156,8 @@
         "outputMd": "b55f1d538651d467",
         "examples": "5628b20a03385bdf"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/appearance-switcher.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/appearance-switcher.md"]
       }
     },
     "attachment": {
@@ -183,8 +183,8 @@
         "outputMd": "8922f126009ee1df",
         "examples": "6b3ce930e0731c54"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/attachment.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/attachment.md"]
       }
     },
     "authentication": {
@@ -212,8 +212,8 @@
         "outputMd": "62ff582b0c3228ba",
         "examples": "7d8d821acbaf03a4"
       },
-      "skillCopies": {
-        "app-shell-patterns": "concepts/authentication.md"
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/authentication.md"]
       }
     },
     "autocomplete": {
@@ -232,8 +232,8 @@
         "outputMd": "f3179004d35f8c88",
         "examples": "ad7c86260bdea0da"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/autocomplete.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/autocomplete.md"]
       }
     },
     "avatar": {
@@ -252,8 +252,8 @@
         "outputMd": "1a98b46e63c2cf7c",
         "examples": "5de32d52039cd035"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/avatar.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/avatar.md"]
       }
     },
     "badge": {
@@ -275,8 +275,8 @@
         "outputMd": "f274f45e7ad34758",
         "examples": "e1241d5ce9845e2e"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/badge.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/badge.md"]
       }
     },
     "button": {
@@ -295,8 +295,8 @@
         "outputMd": "be862b0bff15cc1a",
         "examples": "4cd35b34c317297a"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/button.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/button.md"]
       }
     },
     "card": {
@@ -315,8 +315,8 @@
         "outputMd": "dc3fe184d95e9669",
         "examples": "6548e4b180f79849"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/card.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/card.md"]
       }
     },
     "checkbox": {
@@ -335,8 +335,8 @@
         "outputMd": "5b54b536b58cb7a9",
         "examples": "afd839a3fc55cc52"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/checkbox.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/checkbox.md"]
       }
     },
     "coding-agents": {
@@ -372,8 +372,8 @@
         "outputMd": "c79cd0fe175187e3",
         "examples": "ca8cc80aeca713e6"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/combobox.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/combobox.md"]
       }
     },
     "command-palette": {
@@ -403,8 +403,8 @@
         "outputMd": "65313ac7b2979f45",
         "examples": "ccfa08e05ef0f056"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/command-palette.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/command-palette.md"]
       }
     },
     "create-ai-gateway-client": {
@@ -431,8 +431,8 @@
         "outputMd": "ed0db6372d25e2f9",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/create-ai-gateway-client.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/create-ai-gateway-client.md"]
       }
     },
     "create-typed-paths": {
@@ -451,8 +451,8 @@
         "outputMd": "fd88a9627e94116d",
         "examples": "f6aee8897e5846ab"
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/create-typed-paths.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/create-typed-paths.md"]
       }
     },
     "csv-importer": {
@@ -483,8 +483,8 @@
         "outputMd": "10c04c78bb846c9a",
         "examples": "cc53461be2050a28"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/csv-importer.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/csv-importer.md"]
       }
     },
     "custom-components": {
@@ -503,8 +503,8 @@
         "outputMd": "efba56e470f4f164",
         "examples": "e11850a33b559643"
       },
-      "skillCopies": {
-        "app-shell-patterns": "concepts/custom-components.md"
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/custom-components.md"]
       }
     },
     "data-table": {
@@ -593,8 +593,8 @@
         "outputMd": "c32c7ccf13528bf1",
         "examples": "8adc119ac0d7152c"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/data-table.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/data-table.md"]
       }
     },
     "date-picker": {
@@ -650,8 +650,8 @@
         "outputMd": "f8bc1ff57c4e7d18",
         "examples": "fb9a806f6e3c717b"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/date-picker.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/date-picker.md"]
       }
     },
     "default-header": {
@@ -670,8 +670,8 @@
         "outputMd": "375e55f4b12fa2be",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/default-header.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/default-header.md"]
       }
     },
     "default-sidebar": {
@@ -693,8 +693,8 @@
         "outputMd": "9b1672c71b6db3ff",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/default-sidebar.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/default-sidebar.md"]
       }
     },
     "define-i18n-labels": {
@@ -713,8 +713,8 @@
         "outputMd": "3035dea9ac31b7f5",
         "examples": "e477bcbfa866cfda"
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/define-i18n-labels.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/define-i18n-labels.md"]
       }
     },
     "define-module": {
@@ -733,8 +733,8 @@
         "outputMd": "47bb307116c6f41f",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/define-module.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/define-module.md"]
       }
     },
     "define-resource": {
@@ -753,8 +753,8 @@
         "outputMd": "83e9ee8ceb56d3c6",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/define-resource.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/define-resource.md"]
       }
     },
     "description-card": {
@@ -773,8 +773,8 @@
         "outputMd": "8930a410d7d45f89",
         "examples": "a5eb77c04d06ab08"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/description-card.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/description-card.md"]
       }
     },
     "design-philosophy": {
@@ -810,8 +810,8 @@
         "outputMd": "cd9fa9c4b8ccb108",
         "examples": "f5540beaf3f36609"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/dialog.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/dialog.md"]
       }
     },
     "document-collection": {
@@ -830,8 +830,8 @@
         "outputMd": "e79d9120d86db198",
         "examples": "aaa5dfa2cd5b39e7"
       },
-      "skillCopies": {
-        "app-shell-patterns": "pages/document-collection.md"
+      "skillReferences": {
+        "app-shell-patterns": ["pages/document-collection.md"]
       }
     },
     "document-detail": {
@@ -850,8 +850,8 @@
         "outputMd": "e07c7fee2478a21d",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "pages/document-detail.md"
+      "skillReferences": {
+        "app-shell-patterns": ["pages/document-detail.md"]
       }
     },
     "document-progress-card": {
@@ -870,8 +870,8 @@
         "outputMd": "cabfb86627aefd6f",
         "examples": "d56bfd9ea31be76a"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/document-progress-card.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/document-progress-card.md"]
       }
     },
     "file-based-routing": {
@@ -890,8 +890,8 @@
         "outputMd": "17558cfa495ab026",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "concepts/file-based-routing.md"
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/file-based-routing.md"]
       }
     },
     "filter-rail": {
@@ -910,8 +910,8 @@
         "outputMd": "12021e27b57f45e9",
         "examples": "3d2e95eb69cb74fe"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/filter-rail.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/filter-rail.md"]
       }
     },
     "form": {
@@ -934,8 +934,8 @@
         "outputMd": "c97c3d6e426d8b29",
         "examples": "c56460c1a93d532b"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/form.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/form.md"]
       }
     },
     "form-composer": {
@@ -954,8 +954,8 @@
         "outputMd": "ed187ac3a0773d3d",
         "examples": "abd682c0980d1e21"
       },
-      "skillCopies": {
-        "app-shell-patterns": "patterns/form-composer.md"
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/form-composer.md"]
       }
     },
     "form-modal": {
@@ -974,8 +974,8 @@
         "outputMd": "a0d3c952b0b10351",
         "examples": "2d4e2f50bb0d2ef7"
       },
-      "skillCopies": {
-        "app-shell-patterns": "patterns/form-modal.md"
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/form-modal.md"]
       }
     },
     "form-sectioned": {
@@ -994,8 +994,8 @@
         "outputMd": "d31cd3ae6ad0790c",
         "examples": "e66de48697da4786"
       },
-      "skillCopies": {
-        "app-shell-patterns": "patterns/form-sectioned.md"
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/form-sectioned.md"]
       }
     },
     "form-single-page": {
@@ -1014,8 +1014,8 @@
         "outputMd": "10a0f4d91a120752",
         "examples": "c160f4883aff98f3"
       },
-      "skillCopies": {
-        "app-shell-patterns": "patterns/form-single-page.md"
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/form-single-page.md"]
       }
     },
     "form-wizard": {
@@ -1034,8 +1034,8 @@
         "outputMd": "cc1f836348e860c8",
         "examples": "15d25c39f98b949c"
       },
-      "skillCopies": {
-        "app-shell-patterns": "patterns/form-wizard.md"
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/form-wizard.md"]
       }
     },
     "global-header-layout": {
@@ -1062,8 +1062,8 @@
         "outputMd": "fe86450720c4d586",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/global-header-layout.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/global-header-layout.md"]
       }
     },
     "graphql": {
@@ -1082,8 +1082,8 @@
         "outputMd": "0acfb736bcf90eff",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "concepts/graphql.md"
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/graphql.md"]
       }
     },
     "grid": {
@@ -1102,8 +1102,8 @@
         "outputMd": "d048e972ae8aba3e",
         "examples": "26def49133539478"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/grid.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/grid.md"]
       }
     },
     "guards/hidden": {
@@ -1122,8 +1122,8 @@
         "outputMd": "4bdb31f22224dfc3",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/guards/hidden.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/guards/hidden.md"]
       }
     },
     "guards/overview": {
@@ -1142,8 +1142,8 @@
         "outputMd": "246bd29aea5d4333",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/guards/overview.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/guards/overview.md"]
       }
     },
     "guards/pass": {
@@ -1162,8 +1162,8 @@
         "outputMd": "b35b6e0f0e685b4f",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/guards/pass.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/guards/pass.md"]
       }
     },
     "guards/redirect-to": {
@@ -1182,8 +1182,8 @@
         "outputMd": "be1dfedfe13174e5",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/guards/redirect-to.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/guards/redirect-to.md"]
       }
     },
     "i18n-labels": {
@@ -1202,8 +1202,8 @@
         "outputMd": "d9f0851d9c98ecfe",
         "examples": "36ed6ed7b6040de0"
       },
-      "skillCopies": {
-        "app-shell-patterns": "patterns/i18n-labels.md"
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/i18n-labels.md"]
       }
     },
     "input": {
@@ -1222,8 +1222,8 @@
         "outputMd": "876dca4c3b3bc9c5",
         "examples": "72db89e4438a02c8"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/input.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/input.md"]
       }
     },
     "interaction-confirm": {
@@ -1242,8 +1242,8 @@
         "outputMd": "2db70f423c6fdf97",
         "examples": "c76447e12f161a81"
       },
-      "skillCopies": {
-        "app-shell-patterns": "patterns/interaction-confirm.md"
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/interaction-confirm.md"]
       }
     },
     "interaction-multi-select": {
@@ -1262,8 +1262,8 @@
         "outputMd": "253fcea1c4e5a42c",
         "examples": "f0779197b3ba9e47"
       },
-      "skillCopies": {
-        "app-shell-patterns": "patterns/interaction-multi-select.md"
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/interaction-multi-select.md"]
       }
     },
     "interaction-toast": {
@@ -1282,8 +1282,8 @@
         "outputMd": "fbdc96bd3d3d0140",
         "examples": "7089e7331b95df31"
       },
-      "skillCopies": {
-        "app-shell-patterns": "patterns/interaction-toast.md"
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/interaction-toast.md"]
       }
     },
     "introduction": {
@@ -1319,8 +1319,8 @@
         "outputMd": "0190e797cd8ed318",
         "examples": "771eb7a57d7fdc63"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/item-list.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/item-list.md"]
       }
     },
     "layout": {
@@ -1339,8 +1339,8 @@
         "outputMd": "3b8bf269c15e2fa5",
         "examples": "c34348bb6d088ad1"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/layout.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/layout.md"]
       }
     },
     "menu": {
@@ -1359,8 +1359,8 @@
         "outputMd": "6ecd9a3297729b38",
         "examples": "8c07f9e1d03c5524"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/menu.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/menu.md"]
       }
     },
     "metric-card": {
@@ -1379,8 +1379,8 @@
         "outputMd": "4742120c07f00991",
         "examples": "19b8f138685f0b1a"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/metric-card.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/metric-card.md"]
       }
     },
     "migrations": {
@@ -1398,6 +1398,9 @@
         "snapshot": null,
         "outputMd": "0aedc6394a388300",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-upgrade": ["migrations.md"]
       }
     },
     "modules-and-resources": {
@@ -1427,8 +1430,8 @@
         "outputMd": "4bc8fd13b43174ed",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "concepts/modules-and-resources.md"
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/modules-and-resources.md"]
       }
     },
     "quickstart": {
@@ -1464,8 +1467,8 @@
         "outputMd": "ccf87add77994830",
         "examples": "21dcaa18e4be0323"
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/router/use-location.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/router/use-location.md"]
       }
     },
     "router/use-navigate": {
@@ -1484,8 +1487,8 @@
         "outputMd": "d018cb13a7ddc38b",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/router/use-navigate.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/router/use-navigate.md"]
       }
     },
     "router/use-params": {
@@ -1504,8 +1507,8 @@
         "outputMd": "78c15519a8339ebb",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/router/use-params.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/router/use-params.md"]
       }
     },
     "routing-navigation": {
@@ -1574,8 +1577,8 @@
         "outputMd": "225fb6e2b1efa4f6",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "concepts/routing-navigation.md"
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/routing-navigation.md"]
       }
     },
     "select": {
@@ -1597,8 +1600,8 @@
         "outputMd": "d396dd371f17e96c",
         "examples": "e302c24677e96e88"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/select.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/select.md"]
       }
     },
     "sheet": {
@@ -1617,8 +1620,8 @@
         "outputMd": "0be1c6430a4b7ec1",
         "examples": "8f93acd2d478616f"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/sheet.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/sheet.md"]
       }
     },
     "sidebar-group": {
@@ -1637,8 +1640,8 @@
         "outputMd": "370eccb532278bd1",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/sidebar-group.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/sidebar-group.md"]
       }
     },
     "sidebar-item": {
@@ -1657,8 +1660,8 @@
         "outputMd": "9236c03e53aa79f2",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/sidebar-item.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/sidebar-item.md"]
       }
     },
     "sidebar-layout": {
@@ -1694,8 +1697,8 @@
         "outputMd": "872a4d374bdf1923",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/sidebar-layout.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/sidebar-layout.md"]
       }
     },
     "sidebar-navigation": {
@@ -1714,8 +1717,8 @@
         "outputMd": "5a3c8bac248061f9",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "concepts/sidebar-navigation.md"
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/sidebar-navigation.md"]
       }
     },
     "sidebar-section": {
@@ -1734,8 +1737,8 @@
         "outputMd": "281cfa2dcbff14be",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/sidebar-section.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/sidebar-section.md"]
       }
     },
     "spinner": {
@@ -1754,8 +1757,8 @@
         "outputMd": "eec440408611a233",
         "examples": "2782e1f9f3822dfe"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/spinner.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/spinner.md"]
       }
     },
     "stepper": {
@@ -1782,8 +1785,8 @@
         "outputMd": "f06b0b09559fcdcc",
         "examples": "71940ac6845de695"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/stepper.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/stepper.md"]
       }
     },
     "styling-theming": {
@@ -1802,8 +1805,8 @@
         "outputMd": "ba49357df367615b",
         "examples": "1ea2346b99b568b7"
       },
-      "skillCopies": {
-        "app-shell-patterns": "concepts/styling-theming.md"
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/styling-theming.md"]
       }
     },
     "table": {
@@ -1822,8 +1825,8 @@
         "outputMd": "c5933b640a78c3bf",
         "examples": "d44fc86f972fd234"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/table.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/table.md"]
       }
     },
     "tabs": {
@@ -1842,8 +1845,8 @@
         "outputMd": "88dbf25acb19f685",
         "examples": "f94b62a568ca61ee"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/tabs.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/tabs.md"]
       }
     },
     "testing": {
@@ -1862,8 +1865,8 @@
         "outputMd": "eca561c1e5396563",
         "examples": "47cbf43f26e6afeb"
       },
-      "skillCopies": {
-        "app-shell-patterns": "concepts/testing.md"
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/testing.md"]
       }
     },
     "text": {
@@ -1882,8 +1885,8 @@
         "outputMd": "e5311b1891f3ff7b",
         "examples": "0e5a568ccf1638c6"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/text.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/text.md"]
       }
     },
     "textarea": {
@@ -1902,8 +1905,8 @@
         "outputMd": "cf324904899ed318",
         "examples": "26a86dec35082a06"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/textarea.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/textarea.md"]
       }
     },
     "timeline": {
@@ -1939,8 +1942,8 @@
         "outputMd": "5a0c1ec509b4c6dc",
         "examples": "f2486bc05cde455f"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/timeline.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/timeline.md"]
       }
     },
     "toolbar": {
@@ -1959,8 +1962,8 @@
         "outputMd": "f8a45109e97391f5",
         "examples": "fde91e48c8a1a500"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/toolbar.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/toolbar.md"]
       }
     },
     "tooltip": {
@@ -1979,8 +1982,8 @@
         "outputMd": "0bcfb46bb66dffdc",
         "examples": "5dd806683aaefa43"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/tooltip.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/tooltip.md"]
       }
     },
     "tree": {
@@ -2013,8 +2016,8 @@
         "outputMd": "6010470f3c41538a",
         "examples": "7e372a50c2939317"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/tree.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/tree.md"]
       }
     },
     "use-ai-chat": {
@@ -2041,8 +2044,8 @@
         "outputMd": "cf855854e4666328",
         "examples": "f488fdd193b0e6c2"
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-ai-chat.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-ai-chat.md"]
       }
     },
     "use-app-shell": {
@@ -2075,8 +2078,8 @@
         "outputMd": "3ca2ab1005dd456d",
         "examples": "f70172b3ffe4a317"
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-app-shell.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-app-shell.md"]
       }
     },
     "use-app-shell-config": {
@@ -2095,8 +2098,8 @@
         "outputMd": "c843db66f81d5d33",
         "examples": "2de13d7a01e94807"
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-app-shell-config.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-app-shell-config.md"]
       }
     },
     "use-app-shell-data": {
@@ -2115,8 +2118,8 @@
         "outputMd": "4ef17ad66dd9522a",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-app-shell-data.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-app-shell-data.md"]
       }
     },
     "use-auth": {
@@ -2135,8 +2138,8 @@
         "outputMd": "0137e56d7bd78957",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-auth.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-auth.md"]
       }
     },
     "use-override-breadcrumb": {
@@ -2155,8 +2158,8 @@
         "outputMd": "6ec55fc3dfd8c21d",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-override-breadcrumb.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-override-breadcrumb.md"]
       }
     },
     "use-page-meta": {
@@ -2175,8 +2178,8 @@
         "outputMd": "9470854e7bd710aa",
         "examples": "3738035148b7b446"
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-page-meta.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-page-meta.md"]
       }
     },
     "use-register-command-palette-actions": {
@@ -2195,8 +2198,8 @@
         "outputMd": "4112ca0f6705cd05",
         "examples": "856bbb50d9b86aaf"
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-register-command-palette-actions.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-register-command-palette-actions.md"]
       }
     },
     "use-resolved-locale": {
@@ -2215,8 +2218,8 @@
         "outputMd": "eb5e8371ba10d771",
         "examples": "5f231ea108de7aab"
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-resolved-locale.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-resolved-locale.md"]
       }
     },
     "use-route-error": {
@@ -2235,8 +2238,8 @@
         "outputMd": "8a0bcc61b2640093",
         "examples": null
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-route-error.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-route-error.md"]
       }
     },
     "use-theme": {
@@ -2255,8 +2258,8 @@
         "outputMd": "000e2603cef83d47",
         "examples": "c2942d679a2b5ee3"
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-theme.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-theme.md"]
       }
     },
     "use-time-zone": {
@@ -2275,8 +2278,8 @@
         "outputMd": "717d6989930fb8c8",
         "examples": "b081c0e5992140e1"
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-time-zone.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-time-zone.md"]
       }
     },
     "use-toast": {
@@ -2295,8 +2298,8 @@
         "outputMd": "90d80eef666e4cb4",
         "examples": "0dce35625d5e56cf"
       },
-      "skillCopies": {
-        "app-shell-patterns": "api/use-toast.md"
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-toast.md"]
       }
     },
     "with-guard": {
@@ -2315,8 +2318,8 @@
         "outputMd": "86bb46eae81feb56",
         "examples": "413511111014e7b6"
       },
-      "skillCopies": {
-        "app-shell-patterns": "components/with-guard.md"
+      "skillReferences": {
+        "app-shell-patterns": ["components/with-guard.md"]
       }
     }
   },
@@ -2327,8 +2330,7 @@
         "path": "docs-src/skill/app-shell-patterns/SKILL.template.md",
         "hash": "5639352e160452ee",
         "output": "SKILL.md"
-      },
-      "files": {}
+      }
     },
     "app-shell-upgrade": {
       "outDir": "packages/core/skills/app-shell-upgrade",
@@ -2336,11 +2338,6 @@
         "path": "docs-src/skill/app-shell-upgrade/SKILL.template.md",
         "hash": "f9be942f3e596c00",
         "output": "SKILL.md"
-      },
-      "files": {
-        "references/migrations.md": {
-          "hash": "3267fc8f68bd1f4f"
-        }
       }
     }
   },

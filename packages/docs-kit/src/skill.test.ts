@@ -64,7 +64,12 @@ describe("computeSkill", () => {
       mdPath: "docs/components/button.md",
       frontmatter: { title: "Button", description: "Clickable" },
     } as unknown as Outline;
-    return { root, outlines: [button] };
+    const migrations = {
+      slug: "migrations",
+      outDir: "docs",
+      mdPath: "docs/migrations.md",
+    } as Outline;
+    return { root, outlines: [button, migrations] };
   };
 
   it("covers every section by default", () => {
@@ -75,6 +80,7 @@ describe("computeSkill", () => {
       outlines,
     );
     expect([...files.keys()].toSorted()).toEqual(["SKILL.md", "references/components/button.md"]);
+    expect(files.get("references/components/button.md")?.unitSlug).toBe("button");
   });
 
   it("leaves pointer stubs and lists docs-root paths", () => {
@@ -147,9 +153,10 @@ describe("computeSkill", () => {
       outlines,
     );
     expect([...files.keys()].toSorted()).toEqual(["SKILL.md", "references/migrations.md"]);
-    expect(files.get("references/migrations.md")?.content).toBe(
-      "See [x](https://example.test/blob/main/docs/concepts/a.md)\n",
-    );
+    expect(files.get("references/migrations.md")).toEqual({
+      unitSlug: "migrations",
+      content: "See [x](https://example.test/blob/main/docs/concepts/a.md)\n",
+    });
   });
 
   it("throws when the configured migrations source is missing", () => {
@@ -168,6 +175,22 @@ describe("computeSkill", () => {
     ).toThrow(/docs\/moved\.md does not exist/);
   });
 
+  it("requires the migrations source to belong to a unit", () => {
+    const { root, outlines } = fixture();
+    expect(() =>
+      computeSkill(
+        root,
+        {
+          outDir: "up",
+          templatePath: "SKILL.template.md",
+          migrationsSource: "docs/migrations.md",
+          repoBlobUrl: "https://example.test/blob/main",
+        },
+        outlines.filter((outline) => outline.slug !== "migrations"),
+      ),
+    ).toThrow(/docs\/migrations\.md has no unit/);
+  });
+
   it("requires repoBlobUrl alongside migrationsSource", () => {
     const { root, outlines } = fixture();
     expect(() =>
@@ -180,27 +203,38 @@ describe("computeSkill", () => {
   });
 });
 
-it("checks template edits, docs drift, and output paths", () => {
+it("checks template edits and the paths and source units of skill outputs", () => {
   const root = mkdtempSync(join(tmpdir(), "docs-kit-manifest-"));
   const write = (p: string, value: string) => writeFileSync(join(root, p), value);
+  const upgrade: SkillConfig = {
+    outDir: "upgrade",
+    templatePath: "upgrade.template.md",
+    sections: [],
+    migrationsSource: "docs/migrations.md",
+    repoBlobUrl: "https://example.test/blob/main",
+  };
   const configure = (outDir: string, id = "patterns", templatePath = "SKILL.template.md") =>
     write(
       "docs-kit.config.json",
       JSON.stringify({
         inputs: { api: { tsconfig: "tsconfig.json", entrypoint: "index.ts" } },
         outputs: {
-          documents: { mappings: [{ match: "docs-src/components/**", dir: "docs/components" }] },
-          agents: { guideTemplatePath: "AGENTS.template.md", packageDir: "pkg", docsDir: "docs" },
-          skills: {
-            [id]: { outDir, templatePath },
-            upgrade: { outDir: "upgrade", templatePath: "upgrade.template.md", sections: [] },
+          documents: {
+            mappings: [
+              { match: "docs-src/components/**", dir: "docs/components" },
+              { match: "docs-src/guides/**", dir: "docs" },
+            ],
           },
+          agents: { guideTemplatePath: "AGENTS.template.md", packageDir: "pkg", docsDir: "docs" },
+          skills: { [id]: { outDir, templatePath }, upgrade },
         },
+        policy: { skills: { unclaimed: [{ dir: "docs", reason: "Guides are opt-in" }] } },
       }),
     );
   const messages = () => check(root).findings.map((f) => f.message);
   try {
     mkdirSync(join(root, "docs-src/components"), { recursive: true });
+    mkdirSync(join(root, "docs-src/guides"), { recursive: true });
     write(
       "tsconfig.json",
       JSON.stringify({ compilerOptions: { noLib: true }, files: ["index.ts"] }),
@@ -210,25 +244,35 @@ it("checks template edits, docs drift, and output paths", () => {
       "docs-src/components/button.docs.outline.md",
       "---\nkind: prose\ngroup: button\ntitle: Button\ndescription: Clickable\n---\n\nButton docs.\n",
     );
+    write(
+      "docs-src/guides/migrations.docs.outline.md",
+      "---\nkind: prose\ngroup: migrations\ntitle: Migrations\ndescription: Upgrade notes\n---\n\nSee [Button](./components/button.md).\n",
+    );
     write("SKILL.template.md", "{{COMPONENTS_TABLE}}\n");
     write("upgrade.template.md", "Upgrade guide.\n");
     write("AGENTS.template.md", "{{COMPONENTS_TEASERS}}\n");
     configure("patterns");
     const { manifest } = sync(root);
-    expect(manifest.units.button.skillCopies).toEqual({ patterns: "components/button.md" });
+    expect(manifest.units.button.skillReferences).toEqual({ patterns: ["components/button.md"] });
+    expect(manifest.units.migrations.skillReferences).toEqual({ upgrade: ["migrations.md"] });
     expect(manifest.skills).toEqual({
       patterns: {
         outDir: "patterns",
         template: { path: "SKILL.template.md", hash: expect.any(String), output: "SKILL.md" },
-        files: {},
       },
       upgrade: {
         outDir: "upgrade",
         template: { path: "upgrade.template.md", hash: expect.any(String), output: "SKILL.md" },
-        files: {},
       },
     });
     expect(check(root).ok).toBe(true);
+    upgrade.repoBlobUrl = "https://example.test/blob/next";
+    configure("patterns");
+    expect(check(root).ok).toBe(true);
+    upgrade.migrationsSource = "docs/components/button.md";
+    configure("patterns");
+    expect(messages()).toEqual(["skill file upgrade/references/migrations.md drifted — run sync."]);
+    upgrade.migrationsSource = "docs/migrations.md";
     configure("patterns", "renamed");
     expect(messages()).toContain("skill file patterns/SKILL.md drifted — run sync.");
     write("renamed.template.md", "{{COMPONENTS_TABLE}}\n");
@@ -246,9 +290,9 @@ it("checks template edits, docs drift, and output paths", () => {
     const output = "docs/components/button.md";
     const original = readFileSync(join(root, output), "utf8");
     write(output, "Stale output.\n");
-    expect(check(root).findings).toContainEqual(
-      expect.objectContaining({ level: "block", slug: "button" }),
-    );
+    expect(messages()).toEqual([
+      `${output} was hand-edited or is stale — never edit generated files; run sync.`,
+    ]);
     write(output, original);
 
     configure("moved");
@@ -274,17 +318,26 @@ it("checks template edits, docs drift, and output paths", () => {
       "skill file moved/old-SKILL.md removed — run sync.",
     ]);
     template.output = "SKILL.md";
-    broken.units.button.skillCopies = { patterns: "components/old-button.md" };
+    broken.units.button.skillReferences = { patterns: ["components/old-button.md"] };
     write("docs-manifest.json", JSON.stringify(broken));
     expect(messages().toSorted()).toEqual([
       "skill file moved/references/components/button.md is new — run sync.",
       "skill file moved/references/components/old-button.md removed — run sync.",
     ]);
-    broken.units.button.skillCopies = { unknown: "components/button.md" };
+    broken.units.button.skillReferences = { unknown: ["components/button.md"] };
     write("docs-manifest.json", JSON.stringify(broken));
     expect(messages()).toContain(
-      "skill copy components/button.md refers to unknown skill unknown — run sync.",
+      "skill references for button refer to unknown skill unknown — run sync.",
     );
+
+    upgrade.sections = ["components"];
+    upgrade.migrationsSource = "docs/components/button.md";
+    configure("moved");
+    expect(sync(root).manifest.units.button.skillReferences?.upgrade).toEqual([
+      "components/button.md",
+      "migrations.md",
+    ]);
+    expect(check(root).ok).toBe(true);
 
     write("docs-kit.config.json", JSON.stringify({ outputs: { skills: [] } }));
     expect(() => check(root)).toThrow(/outputs\.skills must be an object keyed by skill ID/);

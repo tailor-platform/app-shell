@@ -110,24 +110,20 @@ export function sync(repoRoot: string): SyncResult {
     ...computeStampedSkill(repoRoot, s, outlines),
   }));
   const skills: Record<string, ManifestSkill> = Object.create(null);
-  for (const { id, outDir, template, files: outputs } of computed) {
+  for (const { id, outDir, template, files } of computed) {
     rmSync(join(repoRoot, outDir), { recursive: true, force: true });
-    const files: ManifestSkill["files"] = {};
-    for (const [path, file] of outputs) {
+    for (const [path, file] of files) {
       const repoRel = posix.join(outDir, path);
       const abs = join(repoRoot, repoRel);
       mkdirSync(dirname(abs), { recursive: true });
       writeFileSync(abs, file.stamped, "utf8");
-      if (file.kind === "copy") {
-        (units[file.slug].skillCopies ??= Object.create(null))[id] = path.slice(
-          "references/".length,
-        );
-      } else if (path !== template.output) {
-        files[path] = { hash: hash(normalizeText(file.content)) };
+      if (file.unitSlug !== undefined) {
+        const references = (units[file.unitSlug].skillReferences ??= Object.create(null));
+        (references[id] ??= []).push(path.slice("references/".length));
       }
       written.push(repoRel);
     }
-    skills[id] = { outDir, template, files };
+    skills[id] = { outDir, template };
   }
 
   // Phase 5 — emit the docs shipped in the package and the guide that indexes

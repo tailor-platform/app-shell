@@ -114,38 +114,38 @@ export function check(repoRoot: string): CheckResult {
 
   findings.push(...unclaimedSkillDirFindings(config));
   const recorded = manifest?.skills ?? {};
-  const expected = new Map<string, { id: string; hash: string | null }>();
+  type SkillOutput = { id: string; unitSlug?: string };
+  const expected = new Map<string, SkillOutput>();
   for (const [id, skill] of Object.entries(recorded)) {
-    for (const [path, file] of Object.entries(skill.files)) {
-      expected.set(posix.join(skill.outDir, path), { id, hash: file.hash });
-    }
     if (skill.template?.output) {
-      expected.set(posix.join(skill.outDir, skill.template.output), { id, hash: null });
+      expected.set(posix.join(skill.outDir, skill.template.output), { id });
     }
   }
   for (const entry of Object.values(manifest?.units ?? {})) {
-    for (const [id, path] of Object.entries(entry.skillCopies ?? {})) {
+    for (const [id, paths] of Object.entries(entry.skillReferences ?? {})) {
       if (!Object.hasOwn(recorded, id)) {
         findings.push({
           level: "block",
           slug: entry.slug,
-          message: `skill copy ${path} refers to unknown skill ${id} — run sync.`,
+          message: `skill references for ${entry.slug} refer to unknown skill ${id} — run sync.`,
         });
         continue;
       }
       // Use the recorded location, not the current config, to catch skill moves.
-      expected.set(posix.join(recorded[id].outDir, "references", path), {
-        id,
-        hash: null,
-      });
+      for (const path of paths) {
+        expected.set(posix.join(recorded[id].outDir, "references", path), {
+          id,
+          unitSlug: entry.slug,
+        });
+      }
     }
   }
-  const actual = new Map<string, { id: string; hash: string | null }>();
+  const actual = new Map<string, SkillOutput>();
   // A skill that can't be computed is reported once, not as a series of removals.
   const failedSkills = new Set<string>();
   for (const [id, skill] of Object.entries(config.skills)) {
     try {
-      // Validate version stamping even though the hashes are for unstamped content.
+      // Validate version stamping even though it is not part of drift detection.
       const { template, files } = computeStampedSkill(repoRoot, skill, outlines);
       if (Object.hasOwn(recorded, id)) {
         const baseline = recorded[id].template;
@@ -162,13 +162,7 @@ export function check(repoRoot: string): CheckResult {
         }
       }
       for (const [path, file] of files) {
-        actual.set(posix.join(skill.outDir, path), {
-          id,
-          hash:
-            path === template.output || file.kind === "copy"
-              ? null
-              : hash(normalizeText(file.content)),
-        });
+        actual.set(posix.join(skill.outDir, path), { id, unitSlug: file.unitSlug });
       }
     } catch (e) {
       failedSkills.add(id);
@@ -183,7 +177,7 @@ export function check(repoRoot: string): CheckResult {
         slug: "skill",
         message: `skill file ${path} is new — run sync.`,
       });
-    } else if (baseline.id !== file.id || baseline.hash !== file.hash) {
+    } else if (baseline.id !== file.id || baseline.unitSlug !== file.unitSlug) {
       findings.push({
         level: "block",
         slug: "skill",

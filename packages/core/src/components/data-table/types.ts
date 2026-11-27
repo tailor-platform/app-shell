@@ -741,7 +741,7 @@ export type UseDataTableOptions<
   error?: Error | null;
   /**
    * Collection control returned by `useCollectionVariables()`. Required when
-   * using `DataTable.Pagination` or `DataTable.Filters`.
+   * using sorting, `DataTable.Pagination`, or `DataTable.Filters`.
    */
   control?: CollectionControl<TFieldName, TFilter>;
   /**
@@ -785,7 +785,8 @@ export type UseDataTableOptions<
    *
    * - `false` — disables sorting entirely (headers become non-clickable).
    * - `{ multiple: true }` — allows sorting by multiple columns at once.
-   * - Omitted or `{}` — single-column sort (default).
+   * - Omitted or `{}` — adding a sort key replaces existing keys (default).
+   *   Editing or removing an existing key preserves the other keys and their order.
    */
   sort?: false | { multiple?: boolean };
 } & DataTableExpansionOptions<TRow>;
@@ -896,8 +897,7 @@ export interface UseDataTableReturn<TRow extends Record<string, unknown>> {
   sortStates: SortState[];
   /** Whether multiple sort keys are enabled (`sort: { multiple: true }`). Optional so hand-built values stay valid; treated as `false` when omitted. */
   sortMultiple?: boolean;
-  onSort?: (field: string, direction?: "Asc" | "Desc") => void;
-  /** Replace the ordered sort keys atomically, used by SortSettings. */
+  /** The sole sorting update callback: replace the ordered keys atomically. Omit to disable sorting. */
   onSortStatesChange?: (sortStates: SortState[]) => void;
 
   // Pagination (derived from data)

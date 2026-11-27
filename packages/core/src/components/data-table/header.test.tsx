@@ -265,9 +265,9 @@ describe("DataTable", () => {
 
       fireEvent.click(button);
 
-      expect(control.clearSort).toHaveBeenCalledTimes(1);
-      expect(control.setSort).toHaveBeenCalledTimes(1);
-      expect(control.setSort).toHaveBeenCalledWith("name", "Asc");
+      expect(control.setSortStates).toHaveBeenCalledExactlyOnceWith([
+        { field: "name", direction: "Asc" },
+      ]);
 
       openHeaderContextMenu(container, "Name");
       expect(screen.getByRole("menuitem", { name: "Copy label" })).toBeDefined();
@@ -353,9 +353,9 @@ describe("DataTable", () => {
       expect(screen.getByRole("columnheader").getAttribute("aria-sort")).toBe("ascending");
       fireEvent.click(screen.getByRole("button", { name: "Name Asc" }));
 
-      expect(control.clearSort).toHaveBeenCalledTimes(1);
-      expect(control.setSort).toHaveBeenCalledTimes(1);
-      expect(control.setSort).toHaveBeenCalledWith("name", "Desc");
+      expect(control.setSortStates).toHaveBeenCalledExactlyOnceWith([
+        { field: "name", direction: "Desc" },
+      ]);
 
       rerender(
         <SortableHeaderHarness
@@ -367,6 +367,61 @@ describe("DataTable", () => {
       rerender(<SortableHeaderHarness control={makeControl()} />);
       expect(screen.getByRole("columnheader").hasAttribute("aria-sort")).toBe(false);
     });
+
+    it("changes an existing header direction without losing persisted keys in single-sort mode", () => {
+      const control = makeControl({
+        sortStates: [
+          { field: "createdAt", direction: "Desc" },
+          { field: "name", direction: "Asc" },
+        ],
+      });
+      render(<SortableHeaderHarness control={control} />, { wrapper });
+      fireEvent.click(screen.getByRole("button", { name: "Name Asc" }));
+      expect(control.setSortStates).toHaveBeenCalledExactlyOnceWith([
+        { field: "createdAt", direction: "Desc" },
+        { field: "name", direction: "Desc" },
+      ]);
+      expect(control.clearSort).not.toHaveBeenCalled();
+      expect(control.setSort).not.toHaveBeenCalled();
+    });
+
+    it.each([false, true])(
+      "applies the sort mode only when adding a header key (multiple: %s)",
+      (multiple) => {
+        const control = makeControl({
+          sortStates: [{ field: "status", direction: "Desc" }],
+        });
+        function Harness() {
+          const table = useDataTable<TestRow>({
+            columns: [
+              {
+                label: "Name",
+                sort: { field: "name", type: "string" },
+                render: (row) => row.name,
+              },
+            ],
+            data: testData,
+            control,
+            sort: { multiple },
+          });
+          return (
+            <DataTable.Root value={table}>
+              <DataTable.Table />
+            </DataTable.Root>
+          );
+        }
+        render(<Harness />, { wrapper });
+        fireEvent.click(screen.getByRole("button", { name: "Name" }));
+        expect(control.setSortStates).toHaveBeenCalledExactlyOnceWith(
+          multiple
+            ? [
+                { field: "status", direction: "Desc" },
+                { field: "name", direction: "Asc" },
+              ]
+            : [{ field: "name", direction: "Asc" }],
+        );
+      },
+    );
 
     it("updates sortIndex and sortCount for both header callbacks in sort-priority order", () => {
       const header = vi.fn((ctx: HeaderRenderContext) => ctx.label);

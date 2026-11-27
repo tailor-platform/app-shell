@@ -11,6 +11,7 @@ import {
 } from "./context";
 import { DataTableHeaderContextMenu } from "./context-menu";
 import { useDataTableT } from "./i18n";
+import { updateSortStates } from "./sort-state";
 import {
   selectionCellBase,
   treeCellPadding,
@@ -70,7 +71,8 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     hierarchyColumn,
     pinnedColumns,
     sortStates,
-    onSort,
+    sortMultiple,
+    onSortStatesChange,
     rowActions,
     setPin,
     toggleRowSelection,
@@ -172,14 +174,15 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           const sortField = col.sort?.field;
           const sortStateIndex = sortStates.findIndex((s) => s.field === sortField);
           const currentSort = sortStates[sortStateIndex];
-          const isSortable = !!sortField && !!onSort;
+          const isSortable = !!sortField && !!onSortStatesChange;
           const ariaSort =
             currentSort && (currentSort.direction === "Asc" ? "ascending" : "descending");
 
-          const activateSort = () => {
-            if (!sortField || !onSort) return;
-            onSort(sortField, nextSortDirection(currentSort?.direction));
+          const changeSortDirection = (direction: "Asc" | "Desc" | undefined) => {
+            if (!sortField || !onSortStatesChange) return;
+            onSortStatesChange(updateSortStates(sortStates, sortField, direction, sortMultiple));
           };
+          const activateSort = () => changeSortDirection(nextSortDirection(currentSort?.direction));
 
           const headerContext: HeaderRenderContext = isSortable
             ? {
@@ -241,9 +244,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                   pinnedColumns={pinnedColumns}
                   setPin={setPin}
                   sortDirection={currentSort?.direction}
-                  onSortDirectionChange={
-                    isSortable ? (direction) => onSort(sortField, direction) : undefined
-                  }
+                  onSortDirectionChange={isSortable ? changeSortDirection : undefined}
                 >
                   {content}
                 </DataTableHeaderContextMenu>

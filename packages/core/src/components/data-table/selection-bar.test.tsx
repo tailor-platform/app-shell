@@ -26,6 +26,7 @@ function makeControl(): CollectionControl {
     clearFilters: vi.fn(),
     sortStates: [],
     setSort: vi.fn(),
+    setSortStates: vi.fn(),
     clearSort: vi.fn(),
     pageSize: 10,
     setPageSize: vi.fn(),

@@ -585,7 +585,7 @@ A column is sortable when it has `sort: { field, type }` and `useDataTable` rece
 `DataTable.SortSettings` is a "Sort" toolbar button whose popover lists the active sort keys in priority order. Each key has an Ascending / Descending select and a remove button; **Add sort** opens a searchable list of the sortable columns that aren't sorted yet (the first match is highlighted; Arrow Up / Arrow Down move the highlight and Enter adds it), and **Clear** removes every key. The trigger shows how many keys are active.
 
 - **Multi-column sort.** With `sort: { multiple: true }`, keys stack. Each row shows its priority; drag the handle, or focus it and press Arrow Up / Arrow Down, to change priority.
-- **Single-column sort** (the default) holds one key. Once it is set, the add menu hides; change the direction in place or remove the key to pick another column.
+- **Single-column sort** (the default) replaces existing keys when adding a new field. Once a key is set, the add menu hides; change its direction in place or remove it to pick another column. Editing or removing an existing key preserves other keys and their priority, including multiple keys restored from persisted state. The header and Sort control follow the same rules.
 - Sort keys whose column is hidden or missing stay listed, so they can still be seen and removed.
 
 ```tsx
@@ -595,7 +595,9 @@ A column is sortable when it has `sort: { field, type }` and `useDataTable` rece
 </Toolbar.Group>
 ```
 
-`useCollectionVariables` supplies the atomic `control.setSortStates` callback used to replace the ordered keys and reset pagination. When table metadata is provided, TypeScript checks each field name against it, just as with `setSort`. A custom collection control can provide the same callback, or a hand-built `DataTable.Root` value can provide `onSortStatesChange`. Without an atomic callback, single-key actions and individual add/remove remain available, but changing direction, clearing, or reordering multiple keys is disabled to avoid losing keys.
+`onSortStatesChange(nextStates)` is the only DataTable sorting update callback. Every header and Sort control action submits the complete ordered list; it is an update request, not a notification of external state changes. `useDataTable` delegates it to the required `control.setSortStates` method supplied by `useCollectionVariables`, which replaces the keys and resets pagination. When table metadata is provided, TypeScript checks each field name against it, just as with `setSort`.
+
+Custom collection controls must implement `setSortStates`. A hand-built `DataTable.Root` value can instead provide `sortStates` and `onSortStatesChange` directly, plus `sortMultiple: true` for multi-sort. Without `onSortStatesChange`, headers are non-sortable and `DataTable.SortSettings` renders nothing. The former `onSort(field, direction)` callback has been removed; see the [migration guide](../migrations.md#200-datatable-sorting-uses-one-ordered-state-callback).
 
 ## Reading sort state
 

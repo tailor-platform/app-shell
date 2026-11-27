@@ -333,7 +333,7 @@ describe("useCollectionVariables", () => {
         { field: "name", direction: "Asc" as const },
         { field: "createdAt", direction: "Desc" as const },
       ];
-      act(() => result.current.control.setSortStates?.(next));
+      act(() => result.current.control.setSortStates(next));
       expect(result.current.control.sortStates).toEqual(next);
       expect(result.current.variables.order).toEqual(next);
       expect(result.current.variables.pagination).toEqual({ first: 20 });

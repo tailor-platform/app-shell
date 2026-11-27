@@ -162,19 +162,9 @@ export function useDataTable<
     return control?.sortStates ?? [];
   }, [control?.sortStates, sortDisabled]);
 
-  const onSort = useMemo<((field: string, direction?: "Asc" | "Desc") => void) | undefined>(() => {
-    if (sortDisabled || !control) return undefined;
-    return (field: string, direction?: "Asc" | "Desc") => {
-      if (!sortMultiple && direction !== undefined) {
-        control.clearSort();
-      }
-      control.setSort(field as TFieldName, direction);
-    };
-  }, [control, sortDisabled, sortMultiple]);
-
   const onSortStatesChange = useMemo(() => {
-    if (sortDisabled || !control?.setSortStates) return undefined;
-    return (next: SortState[]) => control.setSortStates?.(next as SortState<TFieldName>[]);
+    if (sortDisabled || !control) return undefined;
+    return (next: SortState[]) => control.setSortStates(next as SortState<TFieldName>[]);
   }, [control, sortDisabled]);
 
   // ---------------------------------------------------------------------------
@@ -224,7 +214,6 @@ export function useDataTable<
     error,
     sortStates,
     sortMultiple,
-    onSort,
     onSortStatesChange,
     pageInfo,
     total,

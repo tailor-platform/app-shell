@@ -525,9 +525,9 @@
       ],
       "hashes": {
         "typeSurface": "633381d79c4c4da0",
-        "outline": "171e9097086904f6",
+        "outline": "1f7f7b7846193857",
         "snapshot": "086508560262377e",
-        "outputMd": "2eea872ed2ebcb86",
+        "outputMd": "678a33851818c2ea",
         "examples": "8adc119ac0d7152c"
       }
     },
@@ -1223,9 +1223,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "7055eb48c010a187",
+        "outline": "d62c4e5c9220ebed",
         "snapshot": null,
-        "outputMd": "0aedc6394a388300",
+        "outputMd": "fb8c5711239ba747",
         "examples": null
       }
     },
@@ -2132,7 +2132,7 @@
     "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "614ee4e4a47a3d1e",
     "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "709614ee001970c9",
     "packages/core/skills/app-shell-patterns/SKILL.md": "c8c50048aaa38b5a",
-    "packages/core/skills/app-shell-upgrade/references/migrations.md": "3267fc8f68bd1f4f",
+    "packages/core/skills/app-shell-upgrade/references/migrations.md": "4a96465b5eab8ac1",
     "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
   },
   "agents": {

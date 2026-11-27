@@ -61,14 +61,14 @@ declare const tableMetadata: TestTable;
 describe("useCollectionVariables sort fields", () => {
   it("rejects unknown sort fields when metadata is provided", () => {
     const { control } = useCollectionVariables({ tableMetadata });
-    control.setSortStates?.([{ field: "title", direction: "Asc" }]);
+    control.setSortStates([{ field: "title", direction: "Asc" }]);
     // @ts-expect-error Not a field in the table metadata.
-    control.setSortStates?.([{ field: "nonexistent", direction: "Asc" }]);
+    control.setSortStates([{ field: "nonexistent", direction: "Asc" }]);
   });
 
   it("allows free-form sort fields without metadata", () => {
     const { control } = useCollectionVariables({});
-    control.setSortStates?.([{ field: "customField", direction: "Desc" }]);
+    control.setSortStates([{ field: "customField", direction: "Desc" }]);
   });
 });
 

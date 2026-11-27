@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { useState } from "react";
 import {
   cleanup,
@@ -290,6 +290,7 @@ describe("DataTable.SortSettings", () => {
   });
 
   it("uses one ordered update for hand-built table values", async () => {
+    const onSortStatesChange = vi.fn();
     function HandBuilt() {
       const [sortStates, setSortStates] = useState<SortState[]>([
         { field: "createdAt", direction: "Desc" },
@@ -302,13 +303,10 @@ describe("DataTable.SortSettings", () => {
             ...table,
             sortStates,
             sortMultiple: true,
-            onSort: (field, direction) =>
-              setSortStates(
-                direction
-                  ? [...sortStates.filter((s) => s.field !== field), { field, direction }]
-                  : sortStates.filter((s) => s.field !== field),
-              ),
-            onSortStatesChange: setSortStates,
+            onSortStatesChange: (next) => {
+              onSortStatesChange(next);
+              setSortStates(next);
+            },
           }}
         >
           <DataTable.SortSettings />
@@ -323,54 +321,51 @@ describe("DataTable.SortSettings", () => {
     await user.click(within(popup).getByRole("combobox", { name: "Sort direction for Name" }));
     await user.click(screen.getByRole("option", { name: "Descending" }));
     expect(order()).toBe("createdAt:Desc,name:Desc");
+    expect(onSortStatesChange).toHaveBeenCalledTimes(1);
     within(popup)
       .getByRole("button", { name: /Reorder sort for Name/ })
       .focus();
     await user.keyboard("{ArrowUp}");
     expect(order()).toBe("name:Desc,createdAt:Desc");
+    expect(onSortStatesChange).toHaveBeenCalledTimes(2);
+    await user.click(within(popup).getByRole("button", { name: "Remove sort for Name" }));
+    expect(order()).toBe("createdAt:Desc");
+    expect(onSortStatesChange).toHaveBeenCalledTimes(3);
+    await user.click(within(popup).getByRole("button", { name: "Add another sort" }));
+    await user.click(
+      within(screen.getByRole("listbox", { name: "Add another sort" })).getByRole("option", {
+        name: "Status",
+      }),
+    );
+    expect(order()).toBe("createdAt:Desc,status:Asc");
+    expect(onSortStatesChange).toHaveBeenCalledTimes(4);
     await user.click(within(popup).getByRole("button", { name: "Clear" }));
     expect(order()).toBe("");
+    expect(onSortStatesChange).toHaveBeenCalledTimes(5);
   });
 
-  it("does not offer unsafe multi-key edits without an atomic callback", async () => {
-    const user = userEvent.setup();
-    function Legacy() {
-      const { control } = useCollectionVariables({
-        params: {
-          initialSort: [
-            { field: "name", direction: "Asc" },
-            { field: "status", direction: "Desc" },
-          ],
-        },
-      });
-      const table = useDataTable<Row>({
-        columns,
-        data,
-        control: { ...control, setSortStates: undefined },
-        sort: { multiple: true },
-      });
+  it("disables all sorting UI when a hand-built root has no ordered callback", () => {
+    function ReadOnly() {
+      const table = useDataTable<Row>({ columns, data });
       return (
-        <DataTable.Root value={table}>
+        <DataTable.Root
+          value={{
+            ...table,
+            sortStates: [{ field: "name", direction: "Asc" }],
+            sortMultiple: true,
+          }}
+        >
           <DataTable.SortSettings />
-          <SortOrder />
+          <DataTable.Table />
         </DataTable.Root>
       );
     }
-    render(<Legacy />, { wrapper });
-    const popup = await openPopover(user);
-    expect(within(popup).getByRole("button", { name: "Clear" }).hasAttribute("disabled")).toBe(
-      true,
+    render(<ReadOnly />, { wrapper });
+    expect(screen.queryByRole("button", { name: /^sort/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Name" })).toBeNull();
+    expect(screen.getByRole("columnheader", { name: "Name" }).hasAttribute("aria-sort")).toBe(
+      false,
     );
-    expect(
-      within(popup)
-        .getByRole("combobox", { name: "Sort direction for Name" })
-        .hasAttribute("disabled"),
-    ).toBe(true);
-    expect(within(popup).queryByRole("button", { name: /Reorder sort/ })).toBeNull();
-    await user.click(within(popup).getByRole("button", { name: "Remove sort for Status" }));
-    await user.click(within(popup).getByRole("combobox", { name: "Sort direction for Name" }));
-    await user.click(screen.getByRole("option", { name: "Descending" }));
-    expect(order()).toBe("name:Desc");
   });
 
   it("keeps sort keys that have no column when editing the others", async () => {

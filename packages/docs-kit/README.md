@@ -17,6 +17,17 @@ skill — deterministically, with no LLM.
 - **Emit** the consumer skills (`outputs.skills`) from the generated docs + the templates in `docs-src/skill/<name>/`. Every docs output dir must reach a skill or be listed under `policy.skills.unclaimed` with a reason, so a new docs category can't silently ship to no consumer.
 - **Emit** the docs shipped in the published package (`outputs.agents`): the docs themselves, and a guide at the docs root's `AGENTS.md` that indexes them, from `docs-src/agents/AGENTS.guide.template.md`. Consumers import the guide from their own `AGENTS.md`, so its path is a public contract. Skills list paths under that docs root and leave pointer stubs under `references/` where copies used to be, so `outputs.agents` is required.
 
+Skill IDs are the keys in `outputs.skills`, independent of their output directories. The
+manifest records each skill's repo-relative `SKILL.md` path as `output`. The `template` records
+the authored source path and hash before table expansion or version stamping.
+All other outputs, including the rewritten migrations guide, are recorded under their source
+unit's `skillReferences` by skill ID and path under `references/`.
+The check compares reference paths and source units, not shipped content hashes; committed
+Markdown is still checked against each unit's `outputMd` hash. The package guide follows the
+same rule as the skills: the manifest records its path and authored template hash, not the hash
+of the expanded index. Check still validates the expanded guide's sections, placeholders, and
+size budget.
+
 ## CLI
 
 ```bash

@@ -49,20 +49,15 @@ describe("computeAgents", () => {
   });
 
   it("writes the index into the docs root's AGENTS.md and leaves the version to stamp", () => {
-    const guide = fixture().generated.get("packages/core/dist/docs/AGENTS.md")!;
-    expect(guide).toContain("# Docs {{APP_SHELL_VERSION}}");
-    expect(guide).toContain("\nalert, button\n");
-    expect(guide).toContain("- `guards/pass`: Allow the route");
-  });
-
-  it("emits only the guide besides the docs", () => {
-    expect([...fixture().generated.keys()]).toEqual(["packages/core/dist/docs/AGENTS.md"]);
+    const { guide } = fixture();
+    expect(guide.output).toBe("packages/core/dist/docs/AGENTS.md");
+    expect(guide.content).toContain("# Docs {{APP_SHELL_VERSION}}");
+    expect(guide.content).toContain("\nalert, button\n");
+    expect(guide.content).toContain("- `guards/pass`: Allow the route");
   });
 
   it("follows the docs dir", () => {
-    expect([...fixture({}, { docsDir: "docs" }).generated.keys()]).toEqual([
-      "packages/core/docs/AGENTS.md",
-    ]);
+    expect(fixture({}, { docsDir: "docs" }).guide.output).toBe("packages/core/docs/AGENTS.md");
   });
 
   it("rejects a guide that drops a section with docs", () => {

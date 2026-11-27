@@ -1,8 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, posix } from "node:path";
 
+import { hash, normalizeText } from "./hash";
 import { SECTION_BY_OUTDIR, SKILL_SECTIONS } from "./skill";
-import type { AgentsConfig, Outline, SkillSection } from "./types";
+import type { AgentsConfig, Manifest, Outline, SkillSection } from "./types";
 
 const VERSION_TOKEN = "{{APP_SHELL_VERSION}}";
 
@@ -16,9 +17,7 @@ export const GUIDE_FILE = "AGENTS.md";
 export interface AgentsOutput {
   /** Repo-relative path → content of every doc copied into the package. */
   docs: Map<string, string>;
-  /** Repo-relative path → content of the files generated from templates (the
-   * guide, unstamped). The manifest hashes these. */
-  generated: Map<string, string>;
+  guide: NonNullable<Manifest["agents"]> & { content: string };
 }
 
 const bySlug = (a: Outline, b: Outline): number => a.slug.localeCompare(b.slug);
@@ -82,7 +81,8 @@ export function computeAgents(
   const guideFail = (message: string): never => {
     throw new Error(`${agents.guideTemplatePath}: ${message}`);
   };
-  let guide = readFileSync(join(repoRoot, agents.guideTemplatePath), "utf8");
+  const template = readFileSync(join(repoRoot, agents.guideTemplatePath), "utf8");
+  let guide = template;
   for (const section of SKILL_SECTIONS) {
     const name = section.toUpperCase();
     const slugs = `{{${name}_SLUGS}}`;
@@ -105,6 +105,10 @@ export function computeAgents(
 
   return {
     docs,
-    generated: new Map([[posix.join(docsDir, GUIDE_FILE), guide]]),
+    guide: {
+      output: posix.join(docsDir, GUIDE_FILE),
+      template: { path: agents.guideTemplatePath, hash: hash(normalizeText(template)) },
+      content: guide,
+    },
   };
 }

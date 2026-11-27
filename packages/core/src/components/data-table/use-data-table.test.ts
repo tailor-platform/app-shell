@@ -1,7 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useDataTable } from "./use-data-table";
-import type { CollectionControl } from "@/types/collection";
+import type { CollectionControl, SortState } from "@/types/collection";
 import type { Column, DataTableData } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -38,6 +38,7 @@ function makeControl(overrides?: Partial<CollectionControl>): CollectionControl 
     clearFilters: vi.fn(),
     sortStates: [],
     setSort: vi.fn(),
+    setSortStates: vi.fn(),
     clearSort: vi.fn(),
     pageSize: 10,
     setPageSize: vi.fn(),
@@ -391,6 +392,46 @@ describe("useDataTable", () => {
   // Sort delegation
   // -------------------------------------------------------------------------
   describe("sort delegation", () => {
+    it.each([undefined, { multiple: true }] as const)(
+      "delegates ordered updates without field-level calls for sort: %o",
+      (sortOption) => {
+        const setSortStates = vi.fn(function (this: CollectionControl) {
+          this.resetPage();
+        });
+        const control = makeControl({ setSortStates });
+        const initialProps: { sort: false | { multiple?: boolean } | undefined } = {
+          sort: sortOption,
+        };
+        const { result, rerender } = renderHook(
+          ({ sort }) => useDataTable({ columns, data: testData, control, sort }),
+          { initialProps },
+        );
+        const next: SortState[] = [
+          { field: "value", direction: "Desc" },
+          { field: "name", direction: "Asc" },
+        ];
+        act(() => result.current.onSortStatesChange?.(next));
+        expect(setSortStates).toHaveBeenCalledExactlyOnceWith(next);
+        expect(control.resetPage).toHaveBeenCalledTimes(1);
+        expect(control.setSort).not.toHaveBeenCalled();
+        expect(control.clearSort).not.toHaveBeenCalled();
+        rerender({ sort: false });
+        expect(result.current.onSortStatesChange).toBeUndefined();
+      },
+    );
+
+    it.each([
+      [undefined, false],
+      [{}, false],
+      [{ multiple: true }, true],
+      [false, false],
+    ] as const)("returns sortMultiple for sort: %o", (sort, multiple) => {
+      const { result } = renderHook(() =>
+        useDataTable({ columns, data: testData, control: makeControl(), sort }),
+      );
+      expect(result.current.sortMultiple).toBe(multiple);
+    });
+
     it("passes sortStates from control", () => {
       const control = makeControl({
         sortStates: [{ field: "name", direction: "Asc" }],
@@ -399,52 +440,12 @@ describe("useDataTable", () => {
       expect(result.current.sortStates).toEqual([{ field: "name", direction: "Asc" }]);
     });
 
-    it("onSort calls clearSort then setSort in single mode (default)", () => {
-      const control = makeControl();
-      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
-
-      act(() => {
-        result.current.onSort?.("name", "Desc");
-      });
-      expect(control.clearSort).toHaveBeenCalled();
-      expect(control.setSort).toHaveBeenCalledWith("name", "Desc");
-    });
-
-    it("onSort does not call clearSort when removing sort (direction undefined) in single mode", () => {
-      const control = makeControl();
-      const { result } = renderHook(() => useDataTable({ columns, data: testData, control }));
-
-      act(() => {
-        result.current.onSort?.("name", undefined);
-      });
-      expect(control.clearSort).not.toHaveBeenCalled();
-      expect(control.setSort).toHaveBeenCalledWith("name", undefined);
-    });
-
-    it("onSort delegates directly to control.setSort in multiple mode", () => {
-      const control = makeControl();
-      const { result } = renderHook(() =>
-        useDataTable({
-          columns,
-          data: testData,
-          control,
-          sort: { multiple: true },
-        }),
-      );
-
-      act(() => {
-        result.current.onSort?.("name", "Desc");
-      });
-      expect(control.clearSort).not.toHaveBeenCalled();
-      expect(control.setSort).toHaveBeenCalledWith("name", "Desc");
-    });
-
-    it("onSort is undefined when sort is false", () => {
+    it("onSortStatesChange is undefined when sort is false", () => {
       const control = makeControl();
       const { result } = renderHook(() =>
         useDataTable({ columns, data: testData, control, sort: false }),
       );
-      expect(result.current.onSort).toBeUndefined();
+      expect(result.current.onSortStatesChange).toBeUndefined();
     });
 
     it("sortStates is empty when sort is false", () => {
@@ -457,9 +458,9 @@ describe("useDataTable", () => {
       expect(result.current.sortStates).toEqual([]);
     });
 
-    it("onSort is undefined when no control", () => {
+    it("onSortStatesChange is undefined when no control", () => {
       const { result } = renderHook(() => useDataTable({ columns, data: testData }));
-      expect(result.current.onSort).toBeUndefined();
+      expect(result.current.onSortStatesChange).toBeUndefined();
     });
   });
 

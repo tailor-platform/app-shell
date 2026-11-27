@@ -28,7 +28,10 @@ export interface DataTableContextValue<TRow extends Record<string, unknown>> {
   loading: boolean;
   error: Error | null;
   sortStates: SortState[];
-  onSort?: (field: string, direction?: "Asc" | "Desc") => void;
+  /** Whether multiple sort keys are enabled. Defaults to false for hand-built contexts. */
+  sortMultiple?: boolean;
+  /** Replace the ordered sort keys atomically. Omit to disable sorting. */
+  onSortStatesChange?: (sortStates: SortState[]) => void;
 
   // Pagination (derived from data)
   pageInfo: PageInfo;

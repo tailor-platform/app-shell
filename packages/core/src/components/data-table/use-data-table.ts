@@ -162,15 +162,10 @@ export function useDataTable<
     return control?.sortStates ?? [];
   }, [control?.sortStates, sortDisabled]);
 
-  const onSort = useMemo<((field: string, direction?: "Asc" | "Desc") => void) | undefined>(() => {
+  const onSortStatesChange = useMemo(() => {
     if (sortDisabled || !control) return undefined;
-    return (field: string, direction?: "Asc" | "Desc") => {
-      if (!sortMultiple && direction !== undefined) {
-        control.clearSort();
-      }
-      control.setSort(field as TFieldName, direction);
-    };
-  }, [control, sortDisabled, sortMultiple]);
+    return (next: SortState[]) => control.setSortStates(next as SortState<TFieldName>[]);
+  }, [control, sortDisabled]);
 
   // ---------------------------------------------------------------------------
   // Row selection and expansion share one row-id convention.
@@ -218,7 +213,8 @@ export function useDataTable<
     loading,
     error,
     sortStates,
-    onSort,
+    sortMultiple,
+    onSortStatesChange,
     pageInfo,
     total,
     totalPages,

@@ -30,7 +30,8 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
     loading: value.loading,
     error: value.error,
     sortStates: value.sortStates ?? [],
-    onSort: value.onSort,
+    sortMultiple: value.sortMultiple,
+    onSortStatesChange: value.onSortStatesChange,
     visibleColumns,
     isColumnVisible: value.isColumnVisible,
     toggleColumn: value.toggleColumn,
@@ -97,6 +98,7 @@ function DataTableRoot<TRow extends Record<string, unknown>>({
             instead of letting it ride the page's scroll container. */}
         <div
           data-slot="data-table"
+          tabIndex={value.onSortStatesChange ? -1 : undefined}
           className={cn(
             "astw:flex astw:flex-col astw:min-h-0 astw:overflow-clip astw:border astw:border-border astw:rounded-md astw:bg-card",
             // A generic Toolbar becomes the table's top edge: preserve its top

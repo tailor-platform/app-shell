@@ -27,6 +27,7 @@ const makeControl = (
   clearFilters: vi.fn(),
   sortStates: [],
   setSort: vi.fn(),
+  setSortStates: vi.fn(),
   clearSort: vi.fn(),
   pageSize: 20,
   setPageSize: vi.fn(),

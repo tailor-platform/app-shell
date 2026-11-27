@@ -15,6 +15,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1.22.0        | [DataTable sorting uses one ordered-state callback](#1220-datatable-sorting-uses-one-ordered-state-callback)                 |
 | 1.22.0        | [ActionPanel no longer registers CommandPalette actions](#1220-actionpanel-no-longer-registers-commandpalette-actions)       |
 | 1.22.0        | [Error and action toasts stay until the user closes them](#1220-error-and-action-toasts-stay-until-the-user-closes-them)     |
 | 1.21.0        | [Testing helpers deprecated in favour of TestingProvider](#1210-testing-helpers-deprecated-in-favour-of-testingprovider)     |
@@ -31,6 +32,47 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | 1.3.0         | [Column inference and badge defaults changed](#130-column-inference-and-badge-defaults-changed)                              |
 | 1.0.2         | [`Toaster` no longer accepts `richColors`](#102-toaster-no-longer-accepts-richcolors)                                        |
 | before 1.0    | [Pre-1.0 breaking changes](#before-10)                                                                                       |
+
+## 1.22.0: DataTable sorting uses one ordered-state callback
+
+**Applies to:** apps upgrading to 1.22.0 or later that call `useDataTable().onSort`, supply hand-built `DataTable.Root` values or contexts with `onSort`, or implement custom `CollectionControl` objects.
+
+`onSort(field, direction)` has been removed from `UseDataTableReturn` and `DataTableContextValue`. All sorting actions now use `onSortStatesChange(nextStates)`, passing the complete ordered list once. This is an update request, not a notification fired when sorting changes elsewhere. Apps that only pass `control` from `useCollectionVariables` to `useDataTable` need no wiring changes.
+
+How to detect it: search for `onSort`, custom `CollectionControl` implementations, and manually constructed `DataTable.Root` values. Old callback accesses and typed values fail TypeScript checks; an untyped hand-built root with only `onSort` no longer enables sortable headers or the Sort control.
+
+For direct calls, build the desired next list explicitly:
+
+```ts
+// Before: set a field's sort direction.
+table.onSort?.("name", "Desc");
+
+// After: update it in place if present, or add it according to the sort mode.
+const existing = table.sortStates.some((sort) => sort.field === "name");
+const next = existing
+  ? table.sortStates.map((sort) =>
+      sort.field === "name" ? { ...sort, direction: "Desc" as const } : sort,
+    )
+  : table.sortMultiple
+    ? [...table.sortStates, { field: "name", direction: "Desc" as const }]
+    : [{ field: "name", direction: "Desc" as const }];
+table.onSortStatesChange?.(next);
+```
+
+For a hand-built root, replace the field-level callback with an ordered-list setter:
+
+```tsx
+<DataTable.Root
+  value={{ ...table, sortStates, sortMultiple: true, onSortStatesChange: setSortStates }}
+>
+  <DataTable.Table />
+  <DataTable.SortSettings />
+</DataTable.Root>
+```
+
+`CollectionControl.setSortStates` is now required. Custom controls must replace their sort list and reset pagination in the same operation, for example `setSortStates(next) { setSortStatesState(next); resetPage(); }`. DataTable invokes it on the control, so methods may use `this`. The collection's existing `setSort` and `clearSort` remain available for non-DataTable callers; there is no fallback to those methods.
+
+There is also a behavior change in single-sort mode: only adding a new field replaces the existing keys. Changing direction or removing an existing field preserves all other keys and their priority, even if multiple keys were restored from persisted state. Previously a header direction change cleared the other keys. Headers and SortSettings now share the same rules. To enforce exactly one key on every update in application code, explicitly pass only that key.
 
 ## 1.22.0: ActionPanel no longer registers CommandPalette actions
 

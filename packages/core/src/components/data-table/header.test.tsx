@@ -23,6 +23,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+const sortDirectionOf = (button: HTMLElement) =>
+  button.querySelector('[data-slot="data-table-sort-indicator"]')?.getAttribute("data-direction") ??
+  null;
+
 function SortableHeaderHarness({ control }: { control: CollectionControl }) {
   const table = useDataTable<TestRow>({
     columns: [
@@ -130,14 +134,14 @@ describe("DataTable", () => {
       expect(status.getAttribute("aria-sort")).toBe("ascending");
       expect(name.hasAttribute("aria-sort")).toBe(false);
       expect(container.querySelectorAll("[aria-sort]")).toHaveLength(1);
-      expect(statusButton.textContent).toBe("Status▲");
-      expect(nameButton.textContent).toBe("Name▼");
+      expect(sortDirectionOf(statusButton)).toBe("asc");
+      expect(sortDirectionOf(nameButton)).toBe("desc");
 
       fireEvent.click(statusButton);
       fireEvent.click(statusButton);
       expect(name.getAttribute("aria-sort")).toBe("descending");
       expect(status.hasAttribute("aria-sort")).toBe(false);
-      expect(statusButton.textContent).toBe("Status");
+      expect(sortDirectionOf(statusButton)).toBeNull();
       expect(container.querySelectorAll("[aria-sort]")).toHaveLength(1);
     });
 
@@ -261,9 +265,9 @@ describe("DataTable", () => {
 
       fireEvent.click(button);
 
-      expect(control.clearSort).toHaveBeenCalledTimes(1);
-      expect(control.setSort).toHaveBeenCalledTimes(1);
-      expect(control.setSort).toHaveBeenCalledWith("name", "Asc");
+      expect(control.setSortStates).toHaveBeenCalledExactlyOnceWith([
+        { field: "name", direction: "Asc" },
+      ]);
 
       openHeaderContextMenu(container, "Name");
       expect(screen.getByRole("menuitem", { name: "Copy label" })).toBeDefined();
@@ -349,9 +353,9 @@ describe("DataTable", () => {
       expect(screen.getByRole("columnheader").getAttribute("aria-sort")).toBe("ascending");
       fireEvent.click(screen.getByRole("button", { name: "Name Asc" }));
 
-      expect(control.clearSort).toHaveBeenCalledTimes(1);
-      expect(control.setSort).toHaveBeenCalledTimes(1);
-      expect(control.setSort).toHaveBeenCalledWith("name", "Desc");
+      expect(control.setSortStates).toHaveBeenCalledExactlyOnceWith([
+        { field: "name", direction: "Desc" },
+      ]);
 
       rerender(
         <SortableHeaderHarness
@@ -363,6 +367,61 @@ describe("DataTable", () => {
       rerender(<SortableHeaderHarness control={makeControl()} />);
       expect(screen.getByRole("columnheader").hasAttribute("aria-sort")).toBe(false);
     });
+
+    it("changes an existing header direction without losing persisted keys in single-sort mode", () => {
+      const control = makeControl({
+        sortStates: [
+          { field: "createdAt", direction: "Desc" },
+          { field: "name", direction: "Asc" },
+        ],
+      });
+      render(<SortableHeaderHarness control={control} />, { wrapper });
+      fireEvent.click(screen.getByRole("button", { name: "Name Asc" }));
+      expect(control.setSortStates).toHaveBeenCalledExactlyOnceWith([
+        { field: "createdAt", direction: "Desc" },
+        { field: "name", direction: "Desc" },
+      ]);
+      expect(control.clearSort).not.toHaveBeenCalled();
+      expect(control.setSort).not.toHaveBeenCalled();
+    });
+
+    it.each([false, true])(
+      "applies the sort mode only when adding a header key (multiple: %s)",
+      (multiple) => {
+        const control = makeControl({
+          sortStates: [{ field: "status", direction: "Desc" }],
+        });
+        function Harness() {
+          const table = useDataTable<TestRow>({
+            columns: [
+              {
+                label: "Name",
+                sort: { field: "name", type: "string" },
+                render: (row) => row.name,
+              },
+            ],
+            data: testData,
+            control,
+            sort: { multiple },
+          });
+          return (
+            <DataTable.Root value={table}>
+              <DataTable.Table />
+            </DataTable.Root>
+          );
+        }
+        render(<Harness />, { wrapper });
+        fireEvent.click(screen.getByRole("button", { name: "Name" }));
+        expect(control.setSortStates).toHaveBeenCalledExactlyOnceWith(
+          multiple
+            ? [
+                { field: "status", direction: "Desc" },
+                { field: "name", direction: "Asc" },
+              ]
+            : [{ field: "name", direction: "Asc" }],
+        );
+      },
+    );
 
     it("updates sortIndex and sortCount for both header callbacks in sort-priority order", () => {
       const header = vi.fn((ctx: HeaderRenderContext) => ctx.label);
@@ -469,5 +528,53 @@ describe("DataTable", () => {
 
       expect(column).toBeDefined();
     });
+  });
+});
+
+describe("DataTable header sort indicator", () => {
+  function IndicatorHarness({ control }: { control?: CollectionControl }) {
+    const table = useDataTable<TestRow>({
+      columns: [
+        { label: "Name", sort: { field: "name", type: "string" }, render: (r) => r.name },
+        { label: "Status", render: (r) => r.status },
+      ],
+      data: testData,
+      control,
+    });
+    return (
+      <DataTable.Root value={table}>
+        <DataTable.Table />
+      </DataTable.Root>
+    );
+  }
+
+  const indicatorIn = (label: string) =>
+    headByText(document.body, label)?.querySelector('[data-slot="data-table-sort-indicator"]');
+
+  it("reserves the indicator slot on unsorted sortable headers so sorting doesn't resize them", () => {
+    render(<IndicatorHarness control={makeControl()} />, { wrapper });
+    const indicator = indicatorIn("Name");
+    expect(indicator).not.toBeNull();
+    expect(indicator?.getAttribute("data-direction")).toBeNull();
+    expect(indicator?.getAttribute("class")).toContain("astw:invisible");
+    // Non-sortable headers get no slot.
+    expect(indicatorIn("Status")).toBeNull();
+  });
+
+  it("marks the active direction when sorted", () => {
+    const { rerender } = render(
+      <IndicatorHarness
+        control={makeControl({ sortStates: [{ field: "name", direction: "Asc" }] })}
+      />,
+      { wrapper },
+    );
+    expect(indicatorIn("Name")?.getAttribute("data-direction")).toBe("asc");
+    rerender(
+      <IndicatorHarness
+        control={makeControl({ sortStates: [{ field: "name", direction: "Desc" }] })}
+      />,
+    );
+    expect(indicatorIn("Name")?.getAttribute("data-direction")).toBe("desc");
+    expect(indicatorIn("Name")?.getAttribute("class")).not.toContain("astw:invisible");
   });
 });

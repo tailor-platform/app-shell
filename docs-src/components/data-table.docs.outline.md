@@ -162,6 +162,7 @@ function JournalsPage() {
             <DataTable.Filters />
           </Toolbar.Group>
           <Toolbar.Group>
+            <DataTable.SortSettings />
             <DataTable.ColumnSettings />
           </Toolbar.Group>
         </Toolbar.Row>
@@ -185,6 +186,7 @@ function JournalsPage() {
 | `DataTable.Table`          | Renders the `<table>` with headers, body, and an optional [column footer](#column-footers). Required.                                                                                                 |
 | `DataTable.Toolbar`        | DataTable-specific toolbar container. Optional; pass `columnSettings` for the built-in Columns control.                                                                                               |
 | `DataTable.ColumnSettings` | The placeable Columns control (show/hide + reorder + pin). Use it in a generic [`Toolbar`](./toolbar.md) for custom layouts.                                                                          |
+| `DataTable.SortSettings`   | The placeable Sort control: add, reorder, change direction, and remove sort keys. Renders nothing when sorting is disabled. See [Sorting](#sorting).                                                  |
 | `DataTable.Filters`        | Add-filter panel + active filter chips, auto-generated from column filter configs. Requires `control` from `useCollectionVariables`.                                                                  |
 | `DataTable.Footer`         | Container outside the `<table>` for pagination and other content, not the column footer. Optional. Becomes the bulk-action bar while rows are selected — see [Selection actions](#selection-actions). |
 | `DataTable.Pagination`     | Pre-built pagination controls with optional row count and selection info. Requires `control` from `useCollectionVariables`. Place inside `DataTable.Footer`.                                          |
@@ -288,6 +290,27 @@ Scroll horizontally to keep the pinned columns in view, then open **Columns** to
 
 <!-- example: column-layout -->
 
+## Sorting
+
+A column is sortable when it has `sort: { field, type }` and `useDataTable` receives `control`. Clicking a sortable header cycles ascending → descending → off; the header context menu offers the same choices. Sorted headers show stacked up/down carets with the active direction highlighted. In forced-colors mode, only the active caret is visible. The caret slot is reserved on every sortable header, so applying a sort doesn't change the header's width.
+
+`DataTable.SortSettings` is a "Sort" toolbar button whose popover lists the active sort keys in priority order. Each key has an Ascending / Descending select and a remove button; **Add sort** opens a searchable list of the sortable columns that aren't sorted yet (the first match is highlighted; Arrow Up / Arrow Down move the highlight and Enter adds it), and **Clear** removes every key. The trigger shows how many keys are active.
+
+- **Multi-column sort.** With `sort: { multiple: true }`, keys stack. Each row shows its priority; drag the handle, or focus it and press Arrow Up / Arrow Down, to change priority.
+- **Single-column sort** (the default) replaces existing keys when adding a new field. Once a key is set, the add menu hides; change its direction in place or remove it to pick another column. Editing or removing an existing key preserves other keys and their priority, including multiple keys restored from persisted state. The header and Sort control follow the same rules.
+- Sort keys whose column is hidden or missing stay listed, so they can still be seen and removed.
+
+```tsx
+<Toolbar.Group>
+  <DataTable.SortSettings />
+  <DataTable.ColumnSettings />
+</Toolbar.Group>
+```
+
+`onSortStatesChange(nextStates)` is the only DataTable sorting update callback. Every header and Sort control action submits the complete ordered list; it is an update request, not a notification of external state changes. `useDataTable` delegates it to the required `control.setSortStates` method supplied by `useCollectionVariables`, which replaces the keys and resets pagination. When table metadata is provided, `control.sortStates` and `control.setSortStates` use the same field names, so you can reorder the current list and pass it back without a cast.
+
+Custom collection controls must implement `setSortStates`. A hand-built `DataTable.Root` value can instead provide `sortStates` and `onSortStatesChange` directly, plus `sortMultiple: true` for multi-sort. Without `onSortStatesChange`, headers are non-sortable and `DataTable.SortSettings` renders nothing. The former `onSort(field, direction)` callback has been removed; see the [migration guide](../migrations.md#1220-datatable-sorting-uses-one-ordered-state-callback).
+
 ## Reading sort state
 
 The primary sorted column exposes `aria-sort="ascending"` or `"descending"` on its actual `<th>`, including when `header(ctx)` renders custom content. Following WAI-ARIA guidance, at most one header has the attribute. Unsorted and secondary sort columns omit it, as do all columns when no `control` is supplied or `sort: false` disables sorting. If the primary sort column is hidden or not represented by a column, no visible header receives `aria-sort`; a secondary key is not promoted just for accessibility. Tests can assert this attribute instead of relying on the internal sort-indicator markup.
@@ -301,7 +324,7 @@ Sortable `header(ctx)` and `headerProps(ctx)` callbacks also receive:
 | `sortIndex` | `number \| undefined` | This column's 1-based position in the active sort keys; `undefined` when unsorted.                                                           |
 | `sortCount` | `number`              | Total number of active sort keys, including hidden or unrepresented columns. `0` when no sort is active; not the number of sortable columns. |
 
-These properties are available after narrowing with `ctx.sortable`, alongside `sortDirection` and `activateSort()`. They let custom headers read priority without depending on the table context. Built-in header visuals are unchanged: sorted columns show only `▲` / `▼`, and unsorted columns show no indicator. No built-in priority badges, multi-sort announcements, or sort toolbar controls are added.
+These properties are available after narrowing with `ctx.sortable`, alongside `sortDirection` and `activateSort()`. They let custom headers read priority without depending on the table context. The built-in header shows direction only (see [Sorting](#sorting)); priority appears in `DataTable.SortSettings`, not as header badges.
 
 Click the column headers to cycle sorting, or enable multi-column sorting to combine keys. The example applies the active sort keys to its fixture rows and shows their priority order; a remote collection would send `variables.order` to its backend instead.
 

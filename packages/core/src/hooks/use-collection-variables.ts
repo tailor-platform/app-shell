@@ -168,7 +168,7 @@ export function useCollectionVariables(
   const [filters, setFiltersState] = useState<Filter[]>(() =>
     initialFilters.map((filter) => normalizeCollectionFilter(filter, tableMetadata, timeZone)),
   );
-  const [sortStates, setSortStates] = useState<SortState[]>(initialSort);
+  const [sortStates, setSortStatesState] = useState<SortState[]>(initialSort);
 
   const {
     pageSize,
@@ -243,7 +243,7 @@ export function useCollectionVariables(
   // ---------------------------------------------------------------------------
   const setSort = useCallback(
     (field: string, direction?: "Asc" | "Desc") => {
-      setSortStates((prev) => {
+      setSortStatesState((prev) => {
         if (direction === undefined) {
           return prev.filter((s) => s.field !== field);
         }
@@ -256,10 +256,15 @@ export function useCollectionVariables(
     [resetPage],
   );
 
-  const clearSort = useCallback(() => {
-    setSortStates([]);
-    resetPage();
-  }, [resetPage]);
+  const setSortStates = useCallback(
+    (next: SortState[]) => {
+      setSortStatesState(next);
+      resetPage();
+    },
+    [resetPage],
+  );
+
+  const clearSort = useCallback(() => setSortStates([]), [setSortStates]);
 
   // ---------------------------------------------------------------------------
   // Build collection variables (Tailor Platform format)
@@ -326,6 +331,7 @@ export function useCollectionVariables(
       clearFilters,
       sortStates,
       setSort,
+      setSortStates,
       clearSort,
       pageSize,
       setPageSize,

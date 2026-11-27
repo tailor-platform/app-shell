@@ -11,6 +11,7 @@ import {
 } from "./context";
 import { DataTableHeaderContextMenu } from "./context-menu";
 import { useDataTableT } from "./i18n";
+import { updateSortStates } from "./sort-state";
 import {
   selectionCellBase,
   treeCellPadding,
@@ -51,7 +52,9 @@ function renderDefaultHeader(
       )}
     >
       {content}
-      {ctx.sortDirection && <SortIndicator direction={ctx.sortDirection} />}
+      {/* Always rendered on sortable headers (invisible until sorted) so
+          applying a sort doesn't widen the column. */}
+      <SortIndicator direction={ctx.sortDirection} />
     </button>
   );
 }
@@ -68,7 +71,8 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
     hierarchyColumn,
     pinnedColumns,
     sortStates,
-    onSort,
+    sortMultiple,
+    onSortStatesChange,
     rowActions,
     setPin,
     toggleRowSelection,
@@ -170,14 +174,15 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
           const sortField = col.sort?.field;
           const sortStateIndex = sortStates.findIndex((s) => s.field === sortField);
           const currentSort = sortStates[sortStateIndex];
-          const isSortable = !!sortField && !!onSort;
+          const isSortable = !!sortField && !!onSortStatesChange;
           const ariaSort =
             currentSort && (currentSort.direction === "Asc" ? "ascending" : "descending");
 
-          const activateSort = () => {
-            if (!sortField || !onSort) return;
-            onSort(sortField, nextSortDirection(currentSort?.direction));
+          const changeSortDirection = (direction: "Asc" | "Desc" | undefined) => {
+            if (!sortField || !onSortStatesChange) return;
+            onSortStatesChange(updateSortStates(sortStates, sortField, direction, sortMultiple));
           };
+          const activateSort = () => changeSortDirection(nextSortDirection(currentSort?.direction));
 
           const headerContext: HeaderRenderContext = isSortable
             ? {
@@ -239,9 +244,7 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
                   pinnedColumns={pinnedColumns}
                   setPin={setPin}
                   sortDirection={currentSort?.direction}
-                  onSortDirectionChange={
-                    isSortable ? (direction) => onSort(sortField, direction) : undefined
-                  }
+                  onSortDirectionChange={isSortable ? changeSortDirection : undefined}
                 >
                   {content}
                 </DataTableHeaderContextMenu>
@@ -268,16 +271,38 @@ function DataTableHeaders({ className: headerClassName }: { className?: string }
 }
 DataTableHeaders.displayName = "DataTable.Headers";
 
-/** @internal */
-function SortIndicator({ direction }: { direction: "Asc" | "Desc" }) {
+/**
+ * Stacked up/down carets beside a sorted header label. The active direction is
+ * drawn in the foreground color. The other is muted in regular colors and
+ * hidden in forced colors, where the fills may look identical.
+ *
+ * @internal
+ */
+function SortIndicator({ direction }: { direction?: "Asc" | "Desc" }) {
+  // Fill-only triangles with the corners rounded in the path itself (a stroke
+  // would leave a visible outline on the translucent inactive caret).
+  const active = "astw:fill-foreground";
+  const inactive = "astw:fill-muted-foreground/30 astw:forced-colors:invisible";
   return (
-    <span
+    <svg
       data-slot="data-table-sort-indicator"
-      className="astw:text-muted-foreground astw:text-label-sm"
+      data-direction={direction?.toLowerCase()}
+      viewBox="0 0 8 14"
+      className={cn(
+        "astw:ml-0.5 astw:h-3.5 astw:w-2 astw:shrink-0",
+        !direction && "astw:invisible",
+      )}
       aria-hidden
     >
-      {direction === "Asc" ? "▲" : "▼"}
-    </span>
+      <path
+        d="M3.2 1.4Q4 .3 4.8 1.4L7.1 4.6Q7.7 5.5 6.6 5.5H1.4Q.3 5.5.9 4.6Z"
+        className={direction === "Asc" ? active : inactive}
+      />
+      <path
+        d="M3.2 12.6Q4 13.7 4.8 12.6L7.1 9.4Q7.7 8.5 6.6 8.5H1.4Q.3 8.5.9 9.4Z"
+        className={direction === "Desc" ? active : inactive}
+      />
+    </svg>
   );
 }
 

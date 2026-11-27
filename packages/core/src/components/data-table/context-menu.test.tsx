@@ -132,9 +132,14 @@ describe("DataTable", () => {
       });
     });
 
-    it("sorts a column from the sort submenu", async () => {
+    it("changes direction from the sort submenu without dropping persisted keys in single mode", async () => {
       const user = userEvent.setup();
-      const control = makeControl();
+      const control = makeControl({
+        sortStates: [
+          { field: "status", direction: "Asc" },
+          { field: "name", direction: "Asc" },
+        ],
+      });
 
       function Harness() {
         const table = useDataTable<TestRow>({
@@ -163,15 +168,20 @@ describe("DataTable", () => {
       await user.click(await screen.findByRole("menuitem", { name: "Descending" }));
 
       await waitFor(() => {
-        expect(control.clearSort).toHaveBeenCalledTimes(1);
-        expect(control.setSort).toHaveBeenCalledWith("name", "Desc");
+        expect(control.setSortStates).toHaveBeenCalledExactlyOnceWith([
+          { field: "status", direction: "Asc" },
+          { field: "name", direction: "Desc" },
+        ]);
       });
     });
 
     it("resets sort from the sort submenu", async () => {
       const user = userEvent.setup();
       const control = makeControl({
-        sortStates: [{ field: "name", direction: "Asc" }],
+        sortStates: [
+          { field: "status", direction: "Desc" },
+          { field: "name", direction: "Asc" },
+        ],
       });
 
       function Harness() {
@@ -201,8 +211,9 @@ describe("DataTable", () => {
       await user.click(await screen.findByRole("menuitem", { name: "Reset sort" }));
 
       await waitFor(() => {
-        expect(control.clearSort).not.toHaveBeenCalled();
-        expect(control.setSort).toHaveBeenCalledWith("name", undefined);
+        expect(control.setSortStates).toHaveBeenCalledExactlyOnceWith([
+          { field: "status", direction: "Desc" },
+        ]);
       });
     });
   });

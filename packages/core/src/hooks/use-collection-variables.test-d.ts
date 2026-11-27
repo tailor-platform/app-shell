@@ -1,13 +1,7 @@
-/**
- * Vitest type tests for `BuildQueryVariables`.
- *
- * These tests verify that `BuildQueryVariables` produces the correct
- * filter input types from table metadata using Vitest's `expectTypeOf`.
- *
- * To run: `pnpm test`
- */
+/** Type tests for metadata-backed collection filters and sorting. Run with `pnpm test`. */
 
 import { describe, it, expectTypeOf } from "vitest";
+import { useCollectionVariables } from "./use-collection-variables";
 import type {
   BuildQueryVariables,
   CollectionVariables,
@@ -61,6 +55,31 @@ type TestTable = {
     },
   ];
 };
+
+declare const tableMetadata: TestTable;
+
+describe("useCollectionVariables sort fields", () => {
+  it("can reuse and reorder the current sort state when metadata is provided", () => {
+    const { control } = useCollectionVariables({ tableMetadata });
+    expectTypeOf<(typeof control.sortStates)[number]["field"]>().toEqualTypeOf<
+      TableFieldName<TestTable>
+    >();
+    control.setSortStates(control.sortStates);
+    control.setSortStates(control.sortStates.toReversed());
+  });
+
+  it("rejects unknown sort fields when metadata is provided", () => {
+    const { control } = useCollectionVariables({ tableMetadata });
+    control.setSortStates([{ field: "title", direction: "Asc" }]);
+    // @ts-expect-error Not a field in the table metadata.
+    control.setSortStates([{ field: "nonexistent", direction: "Asc" }]);
+  });
+
+  it("allows free-form sort fields without metadata", () => {
+    const { control } = useCollectionVariables({});
+    control.setSortStates([{ field: "customField", direction: "Desc" }]);
+  });
+});
 
 type TestQuery = BuildQueryVariables<TestTable>;
 type TestTypedCollectionVariables = TypedCollectionVariables<TestTable>;

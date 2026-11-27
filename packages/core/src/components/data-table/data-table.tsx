@@ -2,6 +2,7 @@ import { DataTableRoot } from "./root";
 import { DataTableToolbar } from "./toolbar";
 import { DataTableFilters } from "./filters/filters";
 import { DataTableColumnSettings } from "./column-settings";
+import { DataTableSortSettings } from "./sort-settings";
 import { DataTableTable } from "./table";
 import { DataTableFooter } from "./footer";
 import { DataTablePagination } from "./pagination";
@@ -30,6 +31,8 @@ export const DataTable = {
   Filters: DataTableFilters,
   /** Built-in column visibility, ordering, and pinning controls. */
   ColumnSettings: DataTableColumnSettings,
+  /** Built-in "Sort" popover: add, reorder, flip, and remove sort keys. */
+  SortSettings: DataTableSortSettings,
   /**
    * Renders `<table>` with built-in headers, body, and a sticky footer row
    * when a visible column defines `footer`.

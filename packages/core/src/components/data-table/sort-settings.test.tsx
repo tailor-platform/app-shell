@@ -92,17 +92,24 @@ describe("DataTable.SortSettings", () => {
     expect(screen.queryByRole("button", { name: /^sort/i })).toBeNull();
   });
 
-  it("shows and clears active keys even when no columns are sortable", async () => {
-    const user = userEvent.setup();
-    render(
-      <Harness cols={[columns[0]]} initialSort={[{ field: "createdAt", direction: "Desc" }]} />,
-      { wrapper },
-    );
-    const popup = await openPopover(user);
-    expect(within(popup).getByText("createdAt")).toBeTruthy();
-    await user.click(within(popup).getByRole("button", { name: "Clear" }));
-    expect(order()).toBe("");
-  });
+  it.each(["Clear", "Remove sort for createdAt"])(
+    "returns focus to the table after %s removes its only sort and the trigger disappears",
+    async (buttonName) => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <Harness cols={[columns[0]]} initialSort={[{ field: "createdAt", direction: "Desc" }]} />,
+        { wrapper },
+      );
+      const popup = await openPopover(user);
+      expect(within(popup).getByText("createdAt")).toBeTruthy();
+
+      within(popup).getByRole("button", { name: buttonName }).focus();
+      await user.keyboard("{Enter}");
+      expect(order()).toBe("");
+      expect(screen.queryByRole("button", { name: /^sort/i })).toBeNull();
+      expect(document.activeElement).toBe(container.querySelector('[data-slot="data-table"]'));
+    },
+  );
 
   it("shows the active key count on the trigger", () => {
     render(

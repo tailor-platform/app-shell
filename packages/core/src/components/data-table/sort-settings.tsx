@@ -53,6 +53,7 @@ function DataTableSortSettings({ className }: { className?: string }) {
   }, [columns]);
 
   const groupRef = useRef<HTMLFieldSetElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [dragField, setDragField] = useState<string | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
@@ -85,11 +86,18 @@ function DataTableSortSettings({ className }: { className?: string }) {
     }
   };
 
-  // Removing a row, clearing, or adding the last candidate unmounts the
-  // control that has focus. Move focus to the popup's group first, in the same
-  // event, so keyboard users stay in the popover instead of landing on <body>.
+  // Move focus before the active control unmounts. If the trigger also goes
+  // away, return focus to the table instead of leaving it on <body>.
+  const focusAfterRemoval = (clearsAll: boolean) => {
+    if (clearsAll && labels.size === 0) {
+      triggerRef.current?.closest<HTMLElement>('[data-slot="data-table"]')?.focus();
+    } else {
+      groupRef.current?.focus();
+    }
+  };
+
   const removeSort = (field: string) => {
-    groupRef.current?.focus();
+    focusAfterRemoval(sortStates.every((sort) => sort.field === field));
     onSort(field);
   };
 
@@ -99,7 +107,7 @@ function DataTableSortSettings({ className }: { className?: string }) {
   };
 
   const clearAll = () => {
-    groupRef.current?.focus();
+    focusAfterRemoval(true);
     if (onSortStatesChange) onSortStatesChange([]);
     else if (sortStates.length === 1) onSort(sortStates[0].field);
   };
@@ -124,6 +132,7 @@ function DataTableSortSettings({ className }: { className?: string }) {
       <Popover.Trigger
         render={
           <Button
+            ref={triggerRef}
             variant="outline"
             size="xs"
             className={className}

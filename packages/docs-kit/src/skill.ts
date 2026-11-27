@@ -1,7 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, posix } from "node:path";
 
 import type { Finding } from "./coverage";
+import { hash, normalizeText } from "./hash";
 import type { DocsConfig, Outline, SkillConfig, SkillSection } from "./types";
 
 function toPosix(p: string): string {
@@ -10,7 +11,7 @@ function toPosix(p: string): string {
 
 /** Generated-doc output dir → skill reference section. `docs/references` is
  * intentionally excluded. */
-const SECTION_BY_OUTDIR: Record<string, SkillSection> = {
+export const SECTION_BY_OUTDIR: Record<string, SkillSection> = {
   "docs/concepts": "concepts",
   "docs/components": "components",
   "docs/api": "api",
@@ -34,19 +35,25 @@ function stripFrontmatter(s: string): string {
   return m ? s.slice(m[0].length) : s;
 }
 
+type DocLink = (text: string, dir: string, slug: string) => string;
+
+/** Names the path under the package's docs root (`outputs.agents`), since the
+ * skill can't know where the package is installed. */
+const docLink: DocLink = (text, dir, slug) => `${text} (\`${dir}/${slug}.md\`)`;
+
 /** Flat Name | Description table (components, hooks/api). */
-function simpleTable(list: Outline[], dir: string): string {
+function simpleTable(list: Outline[], dir: string, link: DocLink): string {
   if (list.length === 0) return "";
   const rows: string[][] = [["Name", "Description"]];
   for (const o of list.toSorted((a, b) => a.slug.localeCompare(b.slug))) {
     const { title, description } = o.frontmatter;
-    rows.push([`[${title}](references/${dir}/${o.slug}.md)`, description]);
+    rows.push([link(title, dir, o.slug), description]);
   }
   return mdTable(rows);
 }
 
 /** Slug | Name | Description table grouped by `subcategory` (patterns, pages). */
-function entryTable(list: Outline[], dir: string): string {
+function entryTable(list: Outline[], dir: string, link: DocLink): string {
   if (list.length === 0) return "";
   const groups = new Map<string | null, Outline[]>();
   for (const o of list.toSorted((a, b) => a.slug.localeCompare(b.slug))) {
@@ -61,15 +68,21 @@ function entryTable(list: Outline[], dir: string): string {
     for (const o of items) {
       const { slug, name, description } = o.frontmatter;
       const displaySlug = (slug ?? o.slug).replace(/^[^/]+\//, "");
-      rows.push([
-        `[\`${displaySlug}\`](references/${dir}/${o.slug}.md)`,
-        name ?? o.slug,
-        description,
-      ]);
+      rows.push([link(`\`${displaySlug}\``, dir, o.slug), name ?? o.slug, description]);
     }
     blocks.push(group === null ? mdTable(rows) : `### ${group}\n\n${mdTable(rows)}`);
   }
   return blocks.join("\n\n");
+}
+
+/** Says up front that it is not the doc, so an agent can't build from it. */
+function redirectStub(o: Outline, section: string, skillDir: string): string {
+  return [
+    `# MOVED: ${o.frontmatter.title}. This file is a pointer, not documentation.`,
+    "",
+    `This doc now ships in the installed \`@tailor-platform/app-shell\` package as \`${section}/${o.slug}.md\` under its docs root. Find the docs root using "Where the docs are" in \`${skillDir}/SKILL.md\`, then read it there. Do not implement anything from this file.`,
+    "",
+  ].join("\n");
 }
 
 const VERSION_PLACEHOLDER = /\{\{APP_SHELL_VERSION\}\}/g;
@@ -86,12 +99,13 @@ export const SKILL_SECTIONS: readonly SkillSection[] = [
  * `policy.skills.unclaimed` with a reason, so a new docs category can't
  * silently ship to no consumer. Stale exceptions block too. */
 export function unclaimedSkillDirFindings(config: DocsConfig): Finding[] {
-  if (config.skills.length === 0) return [];
+  const skills = Object.values(config.skills);
+  if (skills.length === 0) return [];
   const findings: Finding[] = [];
   const block = (message: string): void => {
     findings.push({ level: "block", slug: "skill", message });
   };
-  const claimed = new Set(config.skills.flatMap((s) => s.sections ?? SKILL_SECTIONS));
+  const claimed = new Set(skills.flatMap((s) => s.sections ?? SKILL_SECTIONS));
   const unclaimed = new Map(config.unclaimedSkillDirs.map((u) => [u.dir, u]));
   const outDirs = new Set(config.categories.map((c) => c.outDir));
 
@@ -124,7 +138,10 @@ export function unclaimedSkillDirFindings(config: DocsConfig): Finding[] {
 }
 
 /** Read the version stamped into the skill, or null when no source is configured. */
-export function readSkillVersion(repoRoot: string, skill: SkillConfig): string | null {
+export function readSkillVersion(
+  repoRoot: string,
+  skill: Pick<SkillConfig, "versionSource">,
+): string | null {
   const source = skill.versionSource;
   if (!source) return null;
   const { version } = JSON.parse(readFileSync(join(repoRoot, source), "utf8")) as {
@@ -135,8 +152,8 @@ export function readSkillVersion(repoRoot: string, skill: SkillConfig): string |
 }
 
 /** Substitute the package version into a computed skill file. Applied only when
- * writing — the manifest hashes the unstamped content, so a changesets version
- * bump never registers as skill drift. Throws rather than ship a literal
+ * writing — the manifest doesn't hash version-stamped content, so a changesets
+ * version bump never registers as skill drift. Throws rather than ship a literal
  * placeholder, which would tell every consumer their copy is stale. */
 export function stampSkill(content: string, version: string | null): string {
   if (version !== null) return content.replace(VERSION_PLACEHOLDER, version);
@@ -146,32 +163,24 @@ export function stampSkill(content: string, version: string | null): string {
   return content;
 }
 
+type SkillFile = { content: string; unitSlug?: string };
+
 /** Compute the skill and stamp it, so a bad version source fails before any write. */
-export function computeStampedSkill(
-  repoRoot: string,
-  skill: SkillConfig,
-  outlines: Outline[],
-): Map<string, { content: string; stamped: string }> {
+export function computeStampedSkill(repoRoot: string, skill: SkillConfig, outlines: Outline[]) {
   const version = readSkillVersion(repoRoot, skill);
-  const files = new Map<string, { content: string; stamped: string }>();
-  for (const [p, content] of computeSkill(repoRoot, skill, outlines)) {
-    files.set(p, { content, stamped: stampSkill(content, version) });
+  const computed = computeSkill(repoRoot, skill, outlines);
+  const files = new Map<string, SkillFile & { stamped: string }>();
+  for (const [p, file] of computed.files) {
+    files.set(p, { ...file, stamped: stampSkill(file.content, version) });
   }
-  return files;
+  return { ...computed, files };
 }
 
-/** Compute the whole consumer skill as a map of repo-relative path → content.
- * Pure: reads only committed inputs (the generated docs incl. concepts, the SKILL template, and the migrations doc) and writes nothing — so `sync`
- * can emit it and `check` can recompute and validate it without the (gitignored)
- * output needing to exist. */
-export function computeSkill(
-  repoRoot: string,
-  skill: SkillConfig,
-  outlines: Outline[],
-): Map<string, string> {
-  const files = new Map<string, string>();
+/** Compute skill files (keyed by path relative to the output dir) and fingerprint
+ * the authored template. Reads only committed inputs; writes nothing. */
+export function computeSkill(repoRoot: string, skill: SkillConfig, outlines: Outline[]) {
+  const files = new Map<string, SkillFile>();
   const included = new Set(skill.sections ?? SKILL_SECTIONS);
-  const rel = (abs: string): string => toPosix(relative(repoRoot, abs));
 
   const sections: Record<SkillSection, Outline[]> = {
     concepts: [],
@@ -185,14 +194,18 @@ export function computeSkill(
     if (section && included.has(section)) sections[section].push(o);
   }
 
-  // Reference docs: copy the generated markdown (docs/ is not published, so the
-  // shipped skill must carry the content). API keeps its guards/ router/ nesting.
+  // Reference docs ship in the package, not the skill. Leave a stub where each
+  // copy used to be: stubs catch stale links and overwrite the real docs an
+  // older copy of the skill left behind. API keeps its guards/ router/ nesting.
   for (const [section, list] of Object.entries(sections)) {
     for (const o of list) {
       const srcAbs = join(repoRoot, o.mdPath);
       if (!existsSync(srcAbs)) continue;
-      const destAbs = join(repoRoot, skill.outDir, "references", section, `${o.slug}.md`);
-      files.set(rel(destAbs), readFileSync(srcAbs, "utf8"));
+      const path = `references/${section}/${o.slug}.md`;
+      files.set(path, {
+        unitSlug: o.slug,
+        content: redirectStub(o, section, posix.relative(posix.dirname(path), ".")),
+      });
     }
   }
 
@@ -207,6 +220,12 @@ export function computeSkill(
         `skill ${skill.outDir}: migrationsSource ${skill.migrationsSource} does not exist`,
       );
     }
+    const source = outlines.find((o) => join(repoRoot, o.mdPath) === migAbs);
+    if (!source) {
+      throw new Error(
+        `skill ${skill.outDir}: migrationsSource ${skill.migrationsSource} has no unit`,
+      );
+    }
     if (!skill.repoBlobUrl) {
       throw new Error(`skill ${skill.outDir}: migrationsSource needs repoBlobUrl`);
     }
@@ -217,18 +236,26 @@ export function computeSkill(
         /\]\((\.{1,2}\/[^)\s]+)\)/g,
         (_m, target: string) => `](${blobUrl}/${toPosix(join("docs", target))})`,
       );
-    files.set(rel(join(repoRoot, skill.outDir, "references", "migrations.md")), `${body}\n`);
+    files.set("references/migrations.md", {
+      unitSlug: source.slug,
+      content: `${body}\n`,
+    });
   }
 
-  // SKILL.md: fill the template's category tables.
+  // Hash the authored template, not its expansion, so unrelated docs don't share a hash.
   const template = readFileSync(join(repoRoot, skill.templatePath), "utf8");
-  const skillMd = template
-    .replace("{{CONCEPTS_TABLE}}", simpleTable(sections.concepts, "concepts"))
-    .replace("{{COMPONENTS_TABLE}}", simpleTable(sections.components, "components"))
-    .replace("{{API_TABLE}}", simpleTable(sections.api, "api"))
-    .replace("{{PAGES_TABLE}}", entryTable(sections.pages, "pages"))
-    .replace("{{PATTERNS_TABLE}}", entryTable(sections.patterns, "patterns"));
-  files.set(rel(join(repoRoot, skill.outDir, "SKILL.md")), skillMd);
+  const content = template
+    .replace("{{CONCEPTS_TABLE}}", simpleTable(sections.concepts, "concepts", docLink))
+    .replace("{{COMPONENTS_TABLE}}", simpleTable(sections.components, "components", docLink))
+    .replace("{{API_TABLE}}", simpleTable(sections.api, "api", docLink))
+    .replace("{{PAGES_TABLE}}", entryTable(sections.pages, "pages", docLink))
+    .replace("{{PATTERNS_TABLE}}", entryTable(sections.patterns, "patterns", docLink));
+  const filename = "SKILL.md";
+  files.set(filename, { content });
 
-  return files;
+  return {
+    files,
+    output: posix.join(skill.outDir, filename),
+    template: { path: skill.templatePath, hash: hash(normalizeText(template)) },
+  };
 }

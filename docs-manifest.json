@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "units": {
     "action-panel": {
       "slug": "action-panel",
@@ -16,6 +16,9 @@
         "snapshot": null,
         "outputMd": "a01ce6025c3885db",
         "examples": "b404f54486b4c3fd"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/action-panel.md"]
       }
     },
     "activity-card": {
@@ -41,6 +44,9 @@
         "snapshot": null,
         "outputMd": "230039d9f96fd264",
         "examples": "c566c6f9fd4e00f6"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/activity-card.md"]
       }
     },
     "aggregations": {
@@ -58,6 +64,9 @@
         "snapshot": null,
         "outputMd": "96c85ba79f5c64cc",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/aggregations.md"]
       }
     },
     "ai-chat": {
@@ -86,6 +95,9 @@
         "snapshot": "39edd53bc6562561",
         "outputMd": "008761ccc93ef0fe",
         "examples": "69f4f58f039d13fa"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/ai-chat.md"]
       }
     },
     "alert": {
@@ -103,6 +115,9 @@
         "snapshot": "049e72553f5b7a6f",
         "outputMd": "9b237d9c19b54102",
         "examples": "8d745ceb610be06d"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/alert.md"]
       }
     },
     "app-shell": {
@@ -120,6 +135,9 @@
         "snapshot": null,
         "outputMd": "1980c966aa4cbf75",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/app-shell.md"]
       }
     },
     "appearance-switcher": {
@@ -137,6 +155,9 @@
         "snapshot": null,
         "outputMd": "b55f1d538651d467",
         "examples": "5628b20a03385bdf"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/appearance-switcher.md"]
       }
     },
     "attachment": {
@@ -161,6 +182,9 @@
         "snapshot": "a5bfea8fbe1224ea",
         "outputMd": "8922f126009ee1df",
         "examples": "6b3ce930e0731c54"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/attachment.md"]
       }
     },
     "authentication": {
@@ -187,6 +211,9 @@
         "snapshot": null,
         "outputMd": "62ff582b0c3228ba",
         "examples": "7d8d821acbaf03a4"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/authentication.md"]
       }
     },
     "autocomplete": {
@@ -204,6 +231,9 @@
         "snapshot": "dbd3c11b7dab615d",
         "outputMd": "f3179004d35f8c88",
         "examples": "ad7c86260bdea0da"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/autocomplete.md"]
       }
     },
     "avatar": {
@@ -221,6 +251,9 @@
         "snapshot": "ef0699939dd47de5",
         "outputMd": "1a98b46e63c2cf7c",
         "examples": "5de32d52039cd035"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/avatar.md"]
       }
     },
     "badge": {
@@ -241,6 +274,9 @@
         "snapshot": null,
         "outputMd": "f274f45e7ad34758",
         "examples": "e1241d5ce9845e2e"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/badge.md"]
       }
     },
     "button": {
@@ -258,6 +294,9 @@
         "snapshot": "f57af2cc49c8b4d8",
         "outputMd": "be862b0bff15cc1a",
         "examples": "4cd35b34c317297a"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/button.md"]
       }
     },
     "card": {
@@ -275,6 +314,9 @@
         "snapshot": "a7cc8c2bbd00f1a8",
         "outputMd": "dc3fe184d95e9669",
         "examples": "6548e4b180f79849"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/card.md"]
       }
     },
     "checkbox": {
@@ -292,6 +334,26 @@
         "snapshot": "a62d4fba4df0f913",
         "outputMd": "5b54b536b58cb7a9",
         "examples": "afd839a3fc55cc52"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/checkbox.md"]
+      }
+    },
+    "coding-agents": {
+      "slug": "coding-agents",
+      "kind": "prose",
+      "outline": "docs-src/guides/coding-agents.docs.outline.md",
+      "output": "docs/coding-agents.md",
+      "examples": null,
+      "sources": [],
+      "claims": [],
+      "symbols": [],
+      "hashes": {
+        "typeSurface": null,
+        "outline": "a5128126e868a7c0",
+        "snapshot": null,
+        "outputMd": "35b5972a3af78eb3",
+        "examples": null
       }
     },
     "combobox": {
@@ -309,6 +371,9 @@
         "snapshot": "6fe89974e3712977",
         "outputMd": "c79cd0fe175187e3",
         "examples": "ca8cc80aeca713e6"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/combobox.md"]
       }
     },
     "command-palette": {
@@ -337,6 +402,9 @@
         "snapshot": null,
         "outputMd": "65313ac7b2979f45",
         "examples": "ccfa08e05ef0f056"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/command-palette.md"]
       }
     },
     "create-ai-gateway-client": {
@@ -362,6 +430,9 @@
         "snapshot": null,
         "outputMd": "ed0db6372d25e2f9",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/create-ai-gateway-client.md"]
       }
     },
     "create-typed-paths": {
@@ -379,6 +450,9 @@
         "snapshot": null,
         "outputMd": "fd88a9627e94116d",
         "examples": "f6aee8897e5846ab"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/create-typed-paths.md"]
       }
     },
     "csv-importer": {
@@ -408,6 +482,9 @@
         "snapshot": null,
         "outputMd": "10c04c78bb846c9a",
         "examples": "cc53461be2050a28"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/csv-importer.md"]
       }
     },
     "custom-components": {
@@ -425,6 +502,9 @@
         "snapshot": null,
         "outputMd": "efba56e470f4f164",
         "examples": "e11850a33b559643"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/custom-components.md"]
       }
     },
     "data-table": {
@@ -512,6 +592,9 @@
         "snapshot": "086508560262377e",
         "outputMd": "e01131347a746b4b",
         "examples": "ac4f428db740836f"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/data-table.md"]
       }
     },
     "date-picker": {
@@ -566,6 +649,9 @@
         "snapshot": null,
         "outputMd": "f8bc1ff57c4e7d18",
         "examples": "fb9a806f6e3c717b"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/date-picker.md"]
       }
     },
     "default-header": {
@@ -583,6 +669,9 @@
         "snapshot": null,
         "outputMd": "375e55f4b12fa2be",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/default-header.md"]
       }
     },
     "default-sidebar": {
@@ -603,6 +692,9 @@
         "snapshot": null,
         "outputMd": "9b1672c71b6db3ff",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/default-sidebar.md"]
       }
     },
     "define-i18n-labels": {
@@ -620,6 +712,9 @@
         "snapshot": null,
         "outputMd": "3035dea9ac31b7f5",
         "examples": "e477bcbfa866cfda"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/define-i18n-labels.md"]
       }
     },
     "define-module": {
@@ -637,6 +732,9 @@
         "snapshot": null,
         "outputMd": "47bb307116c6f41f",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/define-module.md"]
       }
     },
     "define-resource": {
@@ -654,6 +752,9 @@
         "snapshot": null,
         "outputMd": "83e9ee8ceb56d3c6",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/define-resource.md"]
       }
     },
     "description-card": {
@@ -671,6 +772,9 @@
         "snapshot": null,
         "outputMd": "44adc5ae25a27246",
         "examples": "a5eb77c04d06ab08"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/description-card.md"]
       }
     },
     "design-philosophy": {
@@ -705,6 +809,9 @@
         "snapshot": "11bff790f38ef94e",
         "outputMd": "cd9fa9c4b8ccb108",
         "examples": "f5540beaf3f36609"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/dialog.md"]
       }
     },
     "document-collection": {
@@ -722,6 +829,9 @@
         "snapshot": null,
         "outputMd": "e79d9120d86db198",
         "examples": "aaa5dfa2cd5b39e7"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["pages/document-collection.md"]
       }
     },
     "document-detail": {
@@ -739,6 +849,9 @@
         "snapshot": null,
         "outputMd": "e07c7fee2478a21d",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["pages/document-detail.md"]
       }
     },
     "document-progress-card": {
@@ -756,6 +869,9 @@
         "snapshot": "b2cfca0400f29ba0",
         "outputMd": "cabfb86627aefd6f",
         "examples": "d56bfd9ea31be76a"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/document-progress-card.md"]
       }
     },
     "file-based-routing": {
@@ -773,6 +889,9 @@
         "snapshot": null,
         "outputMd": "17558cfa495ab026",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/file-based-routing.md"]
       }
     },
     "filter-rail": {
@@ -790,6 +909,9 @@
         "snapshot": "2ff3191d1827c612",
         "outputMd": "12021e27b57f45e9",
         "examples": "3d2e95eb69cb74fe"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/filter-rail.md"]
       }
     },
     "form": {
@@ -811,6 +933,9 @@
         "snapshot": "5d7a7904c5256f29",
         "outputMd": "c97c3d6e426d8b29",
         "examples": "c56460c1a93d532b"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/form.md"]
       }
     },
     "form-composer": {
@@ -828,6 +953,9 @@
         "snapshot": null,
         "outputMd": "ed187ac3a0773d3d",
         "examples": "abd682c0980d1e21"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/form-composer.md"]
       }
     },
     "form-modal": {
@@ -845,6 +973,9 @@
         "snapshot": null,
         "outputMd": "a0d3c952b0b10351",
         "examples": "2d4e2f50bb0d2ef7"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/form-modal.md"]
       }
     },
     "form-sectioned": {
@@ -862,6 +993,9 @@
         "snapshot": null,
         "outputMd": "d31cd3ae6ad0790c",
         "examples": "e66de48697da4786"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/form-sectioned.md"]
       }
     },
     "form-single-page": {
@@ -879,6 +1013,9 @@
         "snapshot": null,
         "outputMd": "10a0f4d91a120752",
         "examples": "c160f4883aff98f3"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/form-single-page.md"]
       }
     },
     "form-wizard": {
@@ -896,6 +1033,9 @@
         "snapshot": null,
         "outputMd": "cc1f836348e860c8",
         "examples": "15d25c39f98b949c"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/form-wizard.md"]
       }
     },
     "global-header-layout": {
@@ -921,6 +1061,9 @@
         "snapshot": null,
         "outputMd": "fe86450720c4d586",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/global-header-layout.md"]
       }
     },
     "graphql": {
@@ -938,6 +1081,9 @@
         "snapshot": null,
         "outputMd": "0acfb736bcf90eff",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/graphql.md"]
       }
     },
     "grid": {
@@ -955,6 +1101,9 @@
         "snapshot": "40fca09bec6804cf",
         "outputMd": "d048e972ae8aba3e",
         "examples": "26def49133539478"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/grid.md"]
       }
     },
     "guards/hidden": {
@@ -972,6 +1121,9 @@
         "snapshot": null,
         "outputMd": "4bdb31f22224dfc3",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/guards/hidden.md"]
       }
     },
     "guards/overview": {
@@ -989,6 +1141,9 @@
         "snapshot": null,
         "outputMd": "246bd29aea5d4333",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/guards/overview.md"]
       }
     },
     "guards/pass": {
@@ -1006,6 +1161,9 @@
         "snapshot": null,
         "outputMd": "b35b6e0f0e685b4f",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/guards/pass.md"]
       }
     },
     "guards/redirect-to": {
@@ -1023,6 +1181,9 @@
         "snapshot": null,
         "outputMd": "be1dfedfe13174e5",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/guards/redirect-to.md"]
       }
     },
     "i18n-labels": {
@@ -1040,6 +1201,9 @@
         "snapshot": null,
         "outputMd": "d9f0851d9c98ecfe",
         "examples": "36ed6ed7b6040de0"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/i18n-labels.md"]
       }
     },
     "input": {
@@ -1057,6 +1221,9 @@
         "snapshot": "9e448d8e65418e9b",
         "outputMd": "876dca4c3b3bc9c5",
         "examples": "72db89e4438a02c8"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/input.md"]
       }
     },
     "interaction-confirm": {
@@ -1074,6 +1241,9 @@
         "snapshot": null,
         "outputMd": "2db70f423c6fdf97",
         "examples": "c76447e12f161a81"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/interaction-confirm.md"]
       }
     },
     "interaction-multi-select": {
@@ -1091,6 +1261,9 @@
         "snapshot": null,
         "outputMd": "253fcea1c4e5a42c",
         "examples": "f0779197b3ba9e47"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/interaction-multi-select.md"]
       }
     },
     "interaction-toast": {
@@ -1108,6 +1281,9 @@
         "snapshot": null,
         "outputMd": "fbdc96bd3d3d0140",
         "examples": "7089e7331b95df31"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["patterns/interaction-toast.md"]
       }
     },
     "introduction": {
@@ -1121,9 +1297,9 @@
       "symbols": [],
       "hashes": {
         "typeSurface": null,
-        "outline": "019ef7a912b92831",
+        "outline": "5b0a1f6615f35d67",
         "snapshot": null,
-        "outputMd": "6c212f2bd28ba8c6",
+        "outputMd": "1bcf638d0c505500",
         "examples": null
       }
     },
@@ -1142,6 +1318,9 @@
         "snapshot": null,
         "outputMd": "0190e797cd8ed318",
         "examples": "771eb7a57d7fdc63"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/item-list.md"]
       }
     },
     "layout": {
@@ -1159,6 +1338,9 @@
         "snapshot": "03dedb3cc14b1eaf",
         "outputMd": "3b8bf269c15e2fa5",
         "examples": "c34348bb6d088ad1"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/layout.md"]
       }
     },
     "menu": {
@@ -1176,6 +1358,9 @@
         "snapshot": "212e64b91be708c9",
         "outputMd": "6ecd9a3297729b38",
         "examples": "8c07f9e1d03c5524"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/menu.md"]
       }
     },
     "metric-card": {
@@ -1193,6 +1378,9 @@
         "snapshot": null,
         "outputMd": "4742120c07f00991",
         "examples": "19b8f138685f0b1a"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/metric-card.md"]
       }
     },
     "migrations": {
@@ -1210,6 +1398,9 @@
         "snapshot": null,
         "outputMd": "0aedc6394a388300",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-upgrade": ["migrations.md"]
       }
     },
     "modules-and-resources": {
@@ -1238,6 +1429,9 @@
         "snapshot": null,
         "outputMd": "4bc8fd13b43174ed",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/modules-and-resources.md"]
       }
     },
     "quickstart": {
@@ -1272,6 +1466,9 @@
         "snapshot": null,
         "outputMd": "ccf87add77994830",
         "examples": "21dcaa18e4be0323"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/router/use-location.md"]
       }
     },
     "router/use-navigate": {
@@ -1289,6 +1486,9 @@
         "snapshot": null,
         "outputMd": "d018cb13a7ddc38b",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/router/use-navigate.md"]
       }
     },
     "router/use-params": {
@@ -1306,6 +1506,9 @@
         "snapshot": null,
         "outputMd": "78c15519a8339ebb",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/router/use-params.md"]
       }
     },
     "routing-navigation": {
@@ -1373,6 +1576,9 @@
         "snapshot": null,
         "outputMd": "225fb6e2b1efa4f6",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/routing-navigation.md"]
       }
     },
     "select": {
@@ -1393,6 +1599,9 @@
         "snapshot": "c7aa045d22de4cc7",
         "outputMd": "d396dd371f17e96c",
         "examples": "e302c24677e96e88"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/select.md"]
       }
     },
     "sheet": {
@@ -1410,6 +1619,9 @@
         "snapshot": "8c75bb4dad18f7b8",
         "outputMd": "0be1c6430a4b7ec1",
         "examples": "8f93acd2d478616f"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/sheet.md"]
       }
     },
     "sidebar-group": {
@@ -1427,6 +1639,9 @@
         "snapshot": null,
         "outputMd": "370eccb532278bd1",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/sidebar-group.md"]
       }
     },
     "sidebar-item": {
@@ -1444,6 +1659,9 @@
         "snapshot": null,
         "outputMd": "9236c03e53aa79f2",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/sidebar-item.md"]
       }
     },
     "sidebar-layout": {
@@ -1478,6 +1696,9 @@
         "snapshot": null,
         "outputMd": "872a4d374bdf1923",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/sidebar-layout.md"]
       }
     },
     "sidebar-navigation": {
@@ -1495,6 +1716,9 @@
         "snapshot": null,
         "outputMd": "5a3c8bac248061f9",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/sidebar-navigation.md"]
       }
     },
     "sidebar-section": {
@@ -1512,6 +1736,9 @@
         "snapshot": null,
         "outputMd": "281cfa2dcbff14be",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/sidebar-section.md"]
       }
     },
     "spinner": {
@@ -1529,6 +1756,9 @@
         "snapshot": null,
         "outputMd": "eec440408611a233",
         "examples": "2782e1f9f3822dfe"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/spinner.md"]
       }
     },
     "stepper": {
@@ -1554,6 +1784,9 @@
         "snapshot": "1fbf52f6178108d9",
         "outputMd": "f06b0b09559fcdcc",
         "examples": "71940ac6845de695"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/stepper.md"]
       }
     },
     "styling-theming": {
@@ -1571,6 +1804,9 @@
         "snapshot": null,
         "outputMd": "ba49357df367615b",
         "examples": "1ea2346b99b568b7"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/styling-theming.md"]
       }
     },
     "table": {
@@ -1588,6 +1824,9 @@
         "snapshot": "4e1d9dc6035ba4a2",
         "outputMd": "c5933b640a78c3bf",
         "examples": "d44fc86f972fd234"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/table.md"]
       }
     },
     "tabs": {
@@ -1605,6 +1844,9 @@
         "snapshot": "388a9aed985933c8",
         "outputMd": "88dbf25acb19f685",
         "examples": "f94b62a568ca61ee"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/tabs.md"]
       }
     },
     "testing": {
@@ -1622,6 +1864,9 @@
         "snapshot": null,
         "outputMd": "eca561c1e5396563",
         "examples": "47cbf43f26e6afeb"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["concepts/testing.md"]
       }
     },
     "text": {
@@ -1639,6 +1884,9 @@
         "snapshot": "83be7198ffac5470",
         "outputMd": "e5311b1891f3ff7b",
         "examples": "0e5a568ccf1638c6"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/text.md"]
       }
     },
     "textarea": {
@@ -1656,6 +1904,9 @@
         "snapshot": "c8500808c03baa29",
         "outputMd": "cf324904899ed318",
         "examples": "26a86dec35082a06"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/textarea.md"]
       }
     },
     "timeline": {
@@ -1690,6 +1941,9 @@
         "snapshot": null,
         "outputMd": "5a0c1ec509b4c6dc",
         "examples": "f2486bc05cde455f"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/timeline.md"]
       }
     },
     "toolbar": {
@@ -1707,6 +1961,9 @@
         "snapshot": "56d61f993125508c",
         "outputMd": "f8a45109e97391f5",
         "examples": "fde91e48c8a1a500"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/toolbar.md"]
       }
     },
     "tooltip": {
@@ -1724,6 +1981,9 @@
         "snapshot": "19ed635d615f04af",
         "outputMd": "0bcfb46bb66dffdc",
         "examples": "5dd806683aaefa43"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/tooltip.md"]
       }
     },
     "tree": {
@@ -1755,6 +2015,9 @@
         "snapshot": "abb1d50b2f53d002",
         "outputMd": "6010470f3c41538a",
         "examples": "7e372a50c2939317"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/tree.md"]
       }
     },
     "use-ai-chat": {
@@ -1780,6 +2043,9 @@
         "snapshot": null,
         "outputMd": "cf855854e4666328",
         "examples": "f488fdd193b0e6c2"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-ai-chat.md"]
       }
     },
     "use-app-shell": {
@@ -1811,6 +2077,9 @@
         "snapshot": null,
         "outputMd": "3ca2ab1005dd456d",
         "examples": "f70172b3ffe4a317"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-app-shell.md"]
       }
     },
     "use-app-shell-config": {
@@ -1828,6 +2097,9 @@
         "snapshot": null,
         "outputMd": "c843db66f81d5d33",
         "examples": "2de13d7a01e94807"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-app-shell-config.md"]
       }
     },
     "use-app-shell-data": {
@@ -1845,6 +2117,9 @@
         "snapshot": null,
         "outputMd": "4ef17ad66dd9522a",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-app-shell-data.md"]
       }
     },
     "use-auth": {
@@ -1862,6 +2137,9 @@
         "snapshot": null,
         "outputMd": "0137e56d7bd78957",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-auth.md"]
       }
     },
     "use-override-breadcrumb": {
@@ -1879,6 +2157,9 @@
         "snapshot": null,
         "outputMd": "6ec55fc3dfd8c21d",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-override-breadcrumb.md"]
       }
     },
     "use-page-meta": {
@@ -1896,6 +2177,9 @@
         "snapshot": null,
         "outputMd": "9470854e7bd710aa",
         "examples": "3738035148b7b446"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-page-meta.md"]
       }
     },
     "use-register-command-palette-actions": {
@@ -1913,6 +2197,9 @@
         "snapshot": null,
         "outputMd": "4112ca0f6705cd05",
         "examples": "856bbb50d9b86aaf"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-register-command-palette-actions.md"]
       }
     },
     "use-resolved-locale": {
@@ -1930,6 +2217,9 @@
         "snapshot": null,
         "outputMd": "eb5e8371ba10d771",
         "examples": "5f231ea108de7aab"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-resolved-locale.md"]
       }
     },
     "use-route-error": {
@@ -1947,6 +2237,9 @@
         "snapshot": null,
         "outputMd": "8a0bcc61b2640093",
         "examples": null
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-route-error.md"]
       }
     },
     "use-theme": {
@@ -1964,6 +2257,9 @@
         "snapshot": null,
         "outputMd": "000e2603cef83d47",
         "examples": "c2942d679a2b5ee3"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-theme.md"]
       }
     },
     "use-time-zone": {
@@ -1981,6 +2277,9 @@
         "snapshot": null,
         "outputMd": "717d6989930fb8c8",
         "examples": "b081c0e5992140e1"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-time-zone.md"]
       }
     },
     "use-toast": {
@@ -1998,6 +2297,9 @@
         "snapshot": null,
         "outputMd": "90d80eef666e4cb4",
         "examples": "0dce35625d5e56cf"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["api/use-toast.md"]
       }
     },
     "with-guard": {
@@ -2015,107 +2317,33 @@
         "snapshot": null,
         "outputMd": "86bb46eae81feb56",
         "examples": "413511111014e7b6"
+      },
+      "skillReferences": {
+        "app-shell-patterns": ["components/with-guard.md"]
       }
     }
   },
-  "skill": {
-    "packages/core/skills/app-shell-patterns/references/concepts/authentication.md": "62ff582b0c3228ba",
-    "packages/core/skills/app-shell-patterns/references/concepts/custom-components.md": "efba56e470f4f164",
-    "packages/core/skills/app-shell-patterns/references/concepts/file-based-routing.md": "17558cfa495ab026",
-    "packages/core/skills/app-shell-patterns/references/concepts/graphql.md": "0acfb736bcf90eff",
-    "packages/core/skills/app-shell-patterns/references/concepts/modules-and-resources.md": "4bc8fd13b43174ed",
-    "packages/core/skills/app-shell-patterns/references/concepts/routing-navigation.md": "225fb6e2b1efa4f6",
-    "packages/core/skills/app-shell-patterns/references/concepts/sidebar-navigation.md": "5a3c8bac248061f9",
-    "packages/core/skills/app-shell-patterns/references/concepts/styling-theming.md": "ba49357df367615b",
-    "packages/core/skills/app-shell-patterns/references/concepts/testing.md": "eca561c1e5396563",
-    "packages/core/skills/app-shell-patterns/references/components/action-panel.md": "a01ce6025c3885db",
-    "packages/core/skills/app-shell-patterns/references/components/activity-card.md": "230039d9f96fd264",
-    "packages/core/skills/app-shell-patterns/references/components/ai-chat.md": "008761ccc93ef0fe",
-    "packages/core/skills/app-shell-patterns/references/components/alert.md": "9b237d9c19b54102",
-    "packages/core/skills/app-shell-patterns/references/components/app-shell.md": "1980c966aa4cbf75",
-    "packages/core/skills/app-shell-patterns/references/components/appearance-switcher.md": "b55f1d538651d467",
-    "packages/core/skills/app-shell-patterns/references/components/attachment.md": "8922f126009ee1df",
-    "packages/core/skills/app-shell-patterns/references/components/autocomplete.md": "f3179004d35f8c88",
-    "packages/core/skills/app-shell-patterns/references/components/avatar.md": "1a98b46e63c2cf7c",
-    "packages/core/skills/app-shell-patterns/references/components/badge.md": "f274f45e7ad34758",
-    "packages/core/skills/app-shell-patterns/references/components/button.md": "be862b0bff15cc1a",
-    "packages/core/skills/app-shell-patterns/references/components/card.md": "dc3fe184d95e9669",
-    "packages/core/skills/app-shell-patterns/references/components/checkbox.md": "5b54b536b58cb7a9",
-    "packages/core/skills/app-shell-patterns/references/components/combobox.md": "c79cd0fe175187e3",
-    "packages/core/skills/app-shell-patterns/references/components/command-palette.md": "65313ac7b2979f45",
-    "packages/core/skills/app-shell-patterns/references/components/csv-importer.md": "10c04c78bb846c9a",
-    "packages/core/skills/app-shell-patterns/references/components/data-table.md": "e01131347a746b4b",
-    "packages/core/skills/app-shell-patterns/references/components/date-picker.md": "f8bc1ff57c4e7d18",
-    "packages/core/skills/app-shell-patterns/references/components/default-header.md": "375e55f4b12fa2be",
-    "packages/core/skills/app-shell-patterns/references/components/default-sidebar.md": "9b1672c71b6db3ff",
-    "packages/core/skills/app-shell-patterns/references/components/description-card.md": "44adc5ae25a27246",
-    "packages/core/skills/app-shell-patterns/references/components/dialog.md": "cd9fa9c4b8ccb108",
-    "packages/core/skills/app-shell-patterns/references/components/document-progress-card.md": "cabfb86627aefd6f",
-    "packages/core/skills/app-shell-patterns/references/components/filter-rail.md": "12021e27b57f45e9",
-    "packages/core/skills/app-shell-patterns/references/components/form.md": "c97c3d6e426d8b29",
-    "packages/core/skills/app-shell-patterns/references/components/global-header-layout.md": "fe86450720c4d586",
-    "packages/core/skills/app-shell-patterns/references/components/grid.md": "d048e972ae8aba3e",
-    "packages/core/skills/app-shell-patterns/references/components/input.md": "876dca4c3b3bc9c5",
-    "packages/core/skills/app-shell-patterns/references/components/item-list.md": "0190e797cd8ed318",
-    "packages/core/skills/app-shell-patterns/references/components/layout.md": "3b8bf269c15e2fa5",
-    "packages/core/skills/app-shell-patterns/references/components/menu.md": "6ecd9a3297729b38",
-    "packages/core/skills/app-shell-patterns/references/components/metric-card.md": "4742120c07f00991",
-    "packages/core/skills/app-shell-patterns/references/components/select.md": "d396dd371f17e96c",
-    "packages/core/skills/app-shell-patterns/references/components/sheet.md": "0be1c6430a4b7ec1",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-group.md": "370eccb532278bd1",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-item.md": "9236c03e53aa79f2",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-layout.md": "872a4d374bdf1923",
-    "packages/core/skills/app-shell-patterns/references/components/sidebar-section.md": "281cfa2dcbff14be",
-    "packages/core/skills/app-shell-patterns/references/components/spinner.md": "eec440408611a233",
-    "packages/core/skills/app-shell-patterns/references/components/stepper.md": "f06b0b09559fcdcc",
-    "packages/core/skills/app-shell-patterns/references/components/table.md": "c5933b640a78c3bf",
-    "packages/core/skills/app-shell-patterns/references/components/tabs.md": "88dbf25acb19f685",
-    "packages/core/skills/app-shell-patterns/references/components/text.md": "e5311b1891f3ff7b",
-    "packages/core/skills/app-shell-patterns/references/components/textarea.md": "cf324904899ed318",
-    "packages/core/skills/app-shell-patterns/references/components/timeline.md": "5a0c1ec509b4c6dc",
-    "packages/core/skills/app-shell-patterns/references/components/toolbar.md": "f8a45109e97391f5",
-    "packages/core/skills/app-shell-patterns/references/components/tooltip.md": "0bcfb46bb66dffdc",
-    "packages/core/skills/app-shell-patterns/references/components/tree.md": "6010470f3c41538a",
-    "packages/core/skills/app-shell-patterns/references/components/with-guard.md": "86bb46eae81feb56",
-    "packages/core/skills/app-shell-patterns/references/api/aggregations.md": "96c85ba79f5c64cc",
-    "packages/core/skills/app-shell-patterns/references/api/create-ai-gateway-client.md": "ed0db6372d25e2f9",
-    "packages/core/skills/app-shell-patterns/references/api/create-typed-paths.md": "fd88a9627e94116d",
-    "packages/core/skills/app-shell-patterns/references/api/define-i18n-labels.md": "3035dea9ac31b7f5",
-    "packages/core/skills/app-shell-patterns/references/api/define-module.md": "47bb307116c6f41f",
-    "packages/core/skills/app-shell-patterns/references/api/define-resource.md": "83e9ee8ceb56d3c6",
-    "packages/core/skills/app-shell-patterns/references/api/guards/hidden.md": "4bdb31f22224dfc3",
-    "packages/core/skills/app-shell-patterns/references/api/guards/overview.md": "246bd29aea5d4333",
-    "packages/core/skills/app-shell-patterns/references/api/guards/pass.md": "b35b6e0f0e685b4f",
-    "packages/core/skills/app-shell-patterns/references/api/guards/redirect-to.md": "be1dfedfe13174e5",
-    "packages/core/skills/app-shell-patterns/references/api/router/use-location.md": "ccf87add77994830",
-    "packages/core/skills/app-shell-patterns/references/api/router/use-navigate.md": "d018cb13a7ddc38b",
-    "packages/core/skills/app-shell-patterns/references/api/router/use-params.md": "78c15519a8339ebb",
-    "packages/core/skills/app-shell-patterns/references/api/use-ai-chat.md": "cf855854e4666328",
-    "packages/core/skills/app-shell-patterns/references/api/use-app-shell.md": "3ca2ab1005dd456d",
-    "packages/core/skills/app-shell-patterns/references/api/use-app-shell-config.md": "c843db66f81d5d33",
-    "packages/core/skills/app-shell-patterns/references/api/use-app-shell-data.md": "4ef17ad66dd9522a",
-    "packages/core/skills/app-shell-patterns/references/api/use-auth.md": "0137e56d7bd78957",
-    "packages/core/skills/app-shell-patterns/references/api/use-override-breadcrumb.md": "6ec55fc3dfd8c21d",
-    "packages/core/skills/app-shell-patterns/references/api/use-page-meta.md": "9470854e7bd710aa",
-    "packages/core/skills/app-shell-patterns/references/api/use-register-command-palette-actions.md": "4112ca0f6705cd05",
-    "packages/core/skills/app-shell-patterns/references/api/use-resolved-locale.md": "eb5e8371ba10d771",
-    "packages/core/skills/app-shell-patterns/references/api/use-route-error.md": "8a0bcc61b2640093",
-    "packages/core/skills/app-shell-patterns/references/api/use-theme.md": "000e2603cef83d47",
-    "packages/core/skills/app-shell-patterns/references/api/use-time-zone.md": "717d6989930fb8c8",
-    "packages/core/skills/app-shell-patterns/references/api/use-toast.md": "90d80eef666e4cb4",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-composer.md": "ed187ac3a0773d3d",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-modal.md": "a0d3c952b0b10351",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-sectioned.md": "d31cd3ae6ad0790c",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-single-page.md": "10a0f4d91a120752",
-    "packages/core/skills/app-shell-patterns/references/patterns/form-wizard.md": "cc1f836348e860c8",
-    "packages/core/skills/app-shell-patterns/references/patterns/i18n-labels.md": "d9f0851d9c98ecfe",
-    "packages/core/skills/app-shell-patterns/references/patterns/interaction-confirm.md": "2db70f423c6fdf97",
-    "packages/core/skills/app-shell-patterns/references/patterns/interaction-multi-select.md": "253fcea1c4e5a42c",
-    "packages/core/skills/app-shell-patterns/references/patterns/interaction-toast.md": "fbdc96bd3d3d0140",
-    "packages/core/skills/app-shell-patterns/references/pages/document-collection.md": "e79d9120d86db198",
-    "packages/core/skills/app-shell-patterns/references/pages/document-detail.md": "e07c7fee2478a21d",
-    "packages/core/skills/app-shell-patterns/SKILL.md": "f656fd6e696eea95",
-    "packages/core/skills/app-shell-upgrade/references/migrations.md": "3267fc8f68bd1f4f",
-    "packages/core/skills/app-shell-upgrade/SKILL.md": "f9be942f3e596c00"
+  "skills": {
+    "app-shell-patterns": {
+      "output": "packages/core/skills/app-shell-patterns/SKILL.md",
+      "template": {
+        "path": "docs-src/skill/app-shell-patterns/SKILL.template.md",
+        "hash": "5639352e160452ee"
+      }
+    },
+    "app-shell-upgrade": {
+      "output": "packages/core/skills/app-shell-upgrade/SKILL.md",
+      "template": {
+        "path": "docs-src/skill/app-shell-upgrade/SKILL.template.md",
+        "hash": "f9be942f3e596c00"
+      }
+    }
+  },
+  "agents": {
+    "output": "packages/core/dist/docs/AGENTS.md",
+    "template": {
+      "path": "docs-src/agents/AGENTS.guide.template.md",
+      "hash": "894f711c764f8767"
+    }
   }
 }

@@ -40,6 +40,7 @@ For a deeper look at the tradeoffs and principles behind these choices, see [Des
 - **[File-Based Routing](./concepts/file-based-routing.md)** — Learn how directory structure drives navigation
 - **[Authentication](./concepts/authentication.md)** — Configure OAuth2 and identity providers
 - **[Styling & Theming](./concepts/styling-theming.md)** — Customize the look and feel
+- **[Coding Agents](./coding-agents.md)** — Point coding agents at the docs and rules through your repo's `AGENTS.md`
 
 ## Hosted References
 

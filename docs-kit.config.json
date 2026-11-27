@@ -46,13 +46,13 @@
       ]
     },
     "manifest": "docs-manifest.json",
-    "skills": [
-      {
+    "skills": {
+      "app-shell-patterns": {
         "outDir": "packages/core/skills/app-shell-patterns",
         "templatePath": "docs-src/skill/app-shell-patterns/SKILL.template.md",
         "versionSource": "packages/core/package.json"
       },
-      {
+      "app-shell-upgrade": {
         "outDir": "packages/core/skills/app-shell-upgrade",
         "templatePath": "docs-src/skill/app-shell-upgrade/SKILL.template.md",
         "sections": [],
@@ -60,7 +60,14 @@
         "repoBlobUrl": "https://github.com/tailor-platform/app-shell/blob/main",
         "versionSource": "packages/core/package.json"
       }
-    ]
+    },
+    "agents": {
+      "guideTemplatePath": "docs-src/agents/AGENTS.guide.template.md",
+      "packageDir": "packages/core",
+      "docsDir": "dist/docs",
+      "maxBytes": 6000,
+      "versionSource": "packages/core/package.json"
+    }
   },
   "policy": {
     "coverage": {

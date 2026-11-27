@@ -59,6 +59,15 @@ type TestTable = {
 declare const tableMetadata: TestTable;
 
 describe("useCollectionVariables sort fields", () => {
+  it("can reuse and reorder the current sort state when metadata is provided", () => {
+    const { control } = useCollectionVariables({ tableMetadata });
+    expectTypeOf<(typeof control.sortStates)[number]["field"]>().toEqualTypeOf<
+      TableFieldName<TestTable>
+    >();
+    control.setSortStates(control.sortStates);
+    control.setSortStates(control.sortStates.toReversed());
+  });
+
   it("rejects unknown sort fields when metadata is provided", () => {
     const { control } = useCollectionVariables({ tableMetadata });
     control.setSortStates([{ field: "title", direction: "Asc" }]);

@@ -11,9 +11,9 @@ Add `DataTable.SortSettings`, a "Sort" toolbar control next to `DataTable.Column
 </Toolbar.Group>
 ```
 
-Sorted column headers now show stacked up/down carets with the active direction highlighted, replacing the single ▲/▼ glyph. The caret slot is reserved on every sortable header, so applying a sort no longer widens the column; unsorted sortable headers are about 8px wider than before as a result.
+Sorted column headers now show stacked up/down carets with the active direction highlighted, replacing the single ▲/▼ glyph. In forced-colors mode, only the active caret is shown. The caret slot is reserved on every sortable header, so applying a sort no longer widens the column; unsorted sortable headers are about 8px wider than before as a result.
 
-**Breaking:** `useDataTable`, `UseDataTableReturn`, and `DataTableContextValue` replace `onSort(field, direction)` with `onSortStatesChange(nextStates)`. Every header and SortSettings action now replaces the ordered keys in one call. `CollectionControl.setSortStates` is required and must reset pagination; its existing `setSort` and `clearSort` methods remain available.
+**Breaking:** `useDataTable`, `UseDataTableReturn`, and `DataTableContextValue` replace `onSort(field, direction)` with `onSortStatesChange(nextStates)`. Every header and SortSettings action now replaces the ordered keys in one call. `CollectionControl.setSortStates` is required and must reset pagination; its existing `setSort` and `clearSort` methods remain available. On metadata-backed controls, `sortStates` and `setSortStates` share the same field-name type, so the current keys can be reordered without a cast.
 
 ```ts
 // Before

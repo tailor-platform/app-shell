@@ -441,7 +441,7 @@ export interface CollectionControl<
   clearFilters: () => void;
 
   // Sort operations
-  sortStates: SortState[];
+  sortStates: SortState<TFieldName>[];
   setSort(field: TFieldName, direction?: "Asc" | "Desc"): void;
   /** Replace the ordered sort keys in one update and reset pagination. */
   setSortStates: (sortStates: SortState<TFieldName>[]) => void;

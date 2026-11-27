@@ -16,7 +16,7 @@ Each entry states which versions are affected, what breaks, how to detect it, an
 | Version       | Change                                                                                                                       |
 | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | 1.22.0        | [ActionPanel no longer registers CommandPalette actions](#1220-actionpanel-no-longer-registers-commandpalette-actions)       |
-| 1.21.0        | [Error and action toasts stay until the user closes them](#1210-error-and-action-toasts-stay-until-the-user-closes-them)     |
+| 1.22.0        | [Error and action toasts stay until the user closes them](#1220-error-and-action-toasts-stay-until-the-user-closes-them)     |
 | 1.21.0        | [Testing helpers deprecated in favour of TestingProvider](#1210-testing-helpers-deprecated-in-favour-of-testingprovider)     |
 | 1.20.0        | [z-index tokens renamed; old names are aliases](#1200-z-index-tokens-renamed-old-names-are-aliases)                          |
 | 1.18.0        | [Destructive colours now resolve to the danger roles](#1180-destructive-colours-now-resolve-to-the-danger-roles)             |
@@ -75,11 +75,11 @@ The filter preserves the old eligibility rules and maps `onClick` to the hook's 
 
 Test `ActionPanel` or a presentation-only component directly without `AppShell`; a screen that calls the registration hook still needs `AppShell` in its tests. If you extract registration logic for reuse, use a custom hook and test it with `renderHook` and an `AppShell` + `AppShellTestingProvider` wrapper; see the [Testing guide](./concepts/testing.md#test-commandpalette-actions).
 
-## 1.21.0: error and action toasts stay until the user closes them
+## 1.22.0: error and action toasts stay until the user closes them
 
 **Applies to:** apps that show toasts through `useToast`.
 
-Before 1.21.0, every toast closed after 4 seconds and had no close button, because AppShell passed no options and Sonner's defaults applied. From 1.21.0, `toast.error(...)`, the error state of `toast.promise(...)`, and any toast with an `action` get `duration: Infinity` and `closeButton: true`: they stay until the user closes them. Success, info, warning and plain toasts without an `action` are unchanged. Nothing errors; the change is only visible on screen.
+Before 1.22.0, every toast closed after 4 seconds and had no close button, because AppShell passed no options and Sonner's defaults applied. From 1.22.0, `toast.error(...)`, the error state of `toast.promise(...)`, and any toast with an `action` get `duration: Infinity` and `closeButton: true`: they stay until the user closes them. Success, info, warning and plain toasts without an `action` are unchanged. Nothing errors; the change is only visible on screen.
 
 How to detect it: search the app for `toast.error(`, `toast.promise(` and toasts with `action:`. Look for places that show many errors in a row (for example, one per rejected edit): up to 3 toasts are visible, and with sticky errors they now stay until closed. Also check code that relied on an error toast closing by itself.
 

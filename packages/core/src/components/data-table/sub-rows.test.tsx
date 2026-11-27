@@ -101,6 +101,12 @@ describe("DataTable subRows", () => {
 
     expect(screen.queryByText("Cash")).toBeNull();
     expect(caretFor("Assets").getAttribute("aria-expanded")).toBe("false");
+    // 24px hit area (WCAG 2.5.8) from the `::after`; the caret stays one indent step
+    // (20px) wide so children still line up.
+    expect(caretFor("Assets").className).toContain("astw:size-5");
+    expect(caretFor("Assets").className).toContain("astw:relative");
+    expect(caretFor("Assets").className).toContain("astw:after:-inset-0.5");
+    expect(caretFor("Assets").className).not.toContain("astw:-m-0.5");
     await user.click(caretFor("Assets"));
     expect(caretFor("Assets").getAttribute("aria-expanded")).toBe("true");
     expect(screen.getByText("Cash")).toBeDefined();

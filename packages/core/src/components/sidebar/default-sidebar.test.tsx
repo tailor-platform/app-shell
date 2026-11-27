@@ -424,6 +424,37 @@ describe("DefaultSidebar opt-in props", () => {
     expect(within(flyout).getByRole("link", { name: /products/i })).toBeDefined();
   });
 
+  it("scrolls the flyout's list inside the popup, showing its scrollbar while scrolling", async () => {
+    const user = userEvent.setup();
+    renderWithProps(
+      {
+        iconRail: true,
+        hideHeader: true,
+        children: (
+          <SidebarGroup title="Main" icon={<Home />}>
+            <SidebarItem to="/dashboard" />
+          </SidebarGroup>
+        ),
+      },
+      { defaultOpen: false },
+    );
+    await user.hover(screen.getByRole("button", { name: "Main" }));
+
+    const flyout = openFlyout("Main");
+    assert(flyout);
+    // The list scrolls, not the popup, so the list's bottom fade (a mask)
+    // leaves the popup's border and shadow alone.
+    expect(flyout.className).toContain("astw:overflow-hidden");
+    const list = flyout.querySelector<HTMLElement>('[data-slot="sidebar-group-flyout-content"]');
+    assert(list);
+    expect(list.className).toContain("astw:overflow-y-auto");
+    expect(within(list).getByRole("link", { name: /dashboard/i })).toBeDefined();
+
+    expect(list.dataset.scrolling).toBeUndefined();
+    fireEvent.scroll(list);
+    expect(list.dataset.scrolling).toBe("true");
+  });
+
   /** Renders a collapsed icon rail on a touch device (no hover) at `width`. */
   const renderTouchRail = (width: number, to?: string) => {
     // A touch screen cannot hover, so the rail's flyout must open on tap.

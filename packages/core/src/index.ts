@@ -189,6 +189,15 @@ export {
 export { TreePicker, type TreePickerProps } from "./components/tree-picker";
 export { DescriptionCard, type DescriptionCardProps } from "./components/description-card";
 export {
+  Stepper,
+  useStepper,
+  type StepperProgress,
+  type StepperProps,
+  type StepperStep,
+  type UseStepperOptions,
+  type UseStepperReturn,
+} from "./components/stepper";
+export {
   ActivityCard,
   type ActivityCardProps,
   type ActivityCardItem,
